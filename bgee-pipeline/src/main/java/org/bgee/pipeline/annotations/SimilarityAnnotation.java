@@ -244,6 +244,11 @@ public class SimilarityAnnotation {
      * for non-reviewed annotations.
      */
     public final static String AUTOMATIC_CURATOR = "vHOG";
+    /**
+     * A {@code String} that is the value to use in the column {@link #ASSIGN_COL_NAME} 
+     * for non-reviewed annotations.
+     */
+    public final static String AUTOMATIC_ASSIGNED_BY = "bgee";
     
     /**
      * Several actions can be launched from this main method, depending on the first 
@@ -840,7 +845,7 @@ public class SimilarityAnnotation {
         
         this.idsNotExistingInTaxa = new HashMap<String, Set<Integer>>();
     }
-//    
+    
 //    
 //    /**
 //     * Check the correctness of the annotations provided. This methods perform many checks, 
@@ -944,7 +949,7 @@ public class SimilarityAnnotation {
 //            //store a String of Uberon IDs to be used to store association to positive/negative annots.
 //            String uberonIdsConcat = "";
 //            for (String uberonId: uberonIds) {
-//                uberonIdsConcat += uberonId.trim() + "-";
+//                uberonIdsConcat += uberonId + "-";
 //            }
 //            //taxon
 //            //store taxon to be used to store association to positive/negative annots. 
@@ -993,39 +998,17 @@ public class SimilarityAnnotation {
 //        //as a structure can disappear in a taxon, so we can only log an error)
 //        if (fileType == GeneratedFileType.RAW || 
 //                fileType == GeneratedFileType.RAW_CLEAN) {
-//            for (Entry<String, Set<Integer>> negativeAnnot: negativeAnnotsToTaxa.entrySet()) {
-//                log.trace("Checking negative annotations: {}", negativeAnnot);
-//                //check positive annotation for same HOM and Uberon IDs, in parent taxa.
-//                Set<Integer> positiveAnnotTaxa = positiveAnnotsToTaxa.get(negativeAnnot.getKey());
-//                if (positiveAnnotTaxa == null) {
-//                    continue;
-//                }
-//                log.trace("Taxa associated to positive annotations: {}", positiveAnnotTaxa);
-//                
-//                //first, get all parent taxa of all taxa associated to these negative annotations
-//                Set<Integer> parentTaxonIds = new HashSet<Integer>();
-//                for (int taxId: negativeAnnot.getValue()) {
-//                    for (OWLClass parentTaxon: taxOntWrapper.getAncestorsThroughIsA(
-//                            taxOntWrapper.getOWLClassByIdentifier(
-//                                    OntologyUtils.getTaxOntologyId(taxId)))) {
-//                        parentTaxonIds.add(OntologyUtils.getTaxNcbiId(
-//                                taxOntWrapper.getIdentifier(parentTaxon)));
-//                    }
-//                }
-//                //now, we keep only the parent taxa associated to a positive annotation
-//                parentTaxonIds.retainAll(positiveAnnotTaxa);
-//                //and we remove all taxa already associated to a negative annotation
-//                parentTaxonIds.removeAll(negativeAnnot.getValue());
-//                //what remains are potentially missing annotations
-//                if (!parentTaxonIds.isEmpty()) {
-//                    log.warn("Potentially missing annotation(s)! There exist negative annotation(s) "
-//                            + "for HOM ID - Uberon ID: " + negativeAnnot.getKey() 
-//                            + " in taxon IDs: " + negativeAnnot.getValue() + 
-//                            " - There are also positive annotations in parent taxa for same "
-//                            + "HOM ID - Uberon ID, but some miss a corresponding negative annotation. "
-//                            + "Negative annotations potentially missing in taxa: " 
-//                            + parentTaxonIds);
-//                }
+//            
+//            for (Entry<String, Set<Integer>> missingNegativeAnnots: 
+//                this.checkNegativeAnnotsParentTaxa(positiveAnnotsToTaxa, negativeAnnotsToTaxa, 
+//                        taxOntWrapper).entrySet()) {
+//                log.warn("Potentially missing annotation(s)! There exist negative annotation(s) "
+//                        + "for HOM ID - Uberon ID: " + missingNegativeAnnots.getKey() 
+//                        + " in taxon IDs: " + negativeAnnotsToTaxa.get(missingNegativeAnnots.getKey()) 
+//                        + " - There are also positive annotations in parent taxa for same "
+//                        + "HOM ID - Uberon ID, but some miss a corresponding negative annotation. "
+//                        + "Negative annotations potentially missing in taxa: " 
+//                        + missingNegativeAnnots.getValue());
 //            }
 //        }
 //        
@@ -1342,6 +1325,74 @@ public class SimilarityAnnotation {
 //    }
 //
 //
+//    /**
+//     * Identify potentially missing negative annotations: if there is a negative annotation 
+//     * in a taxon, most likely there should be also a negative annotation for all parent taxa 
+//     * annotated. This is not formally an error (maybe a structure can have been lost 
+//     * in a taxon, then reappeared independently later?). 
+//     * 
+//     * @param positiveAnnotsToTaxa  A {@code Map} where keys represent IDs of annotations 
+//     *                              (most likely the concatenation of HOM ID and Uberon IDs), 
+//     *                              the associated values being {@code Set}s of {@code Integer}s, 
+//     *                              representing the ID of the taxa which the annotation 
+//     *                              is valid in.
+//     * @param negativeAnnotsToTaxa  A {@code Map} where keys represent IDs of annotations 
+//     *                              (most likely the concatenation of HOM ID and Uberon IDs), 
+//     *                              the associated values being {@code Set}s of {@code Integer}s, 
+//     *                              representing the ID of the taxa which the annotation 
+//     *                              is negated in.
+//     * @param taxOntWrapper         An {@code OWLGraphWrapper} wrapping the taxonomy ontology, 
+//     *                              to be able to retrieve relations between taxa. 
+//     * @return                      A {@code Map} where keys represent IDs of annotations, 
+//     *                              the associated values being {@code Set}s of {@code Integer}s, 
+//     *                              representing the ID of taxa with potentially missing 
+//     *                              negative annotations.
+//     */
+//    private Map<String, Set<Integer>> checkNegativeAnnotsParentTaxa(
+//            Map<String, Set<Integer>> positiveAnnotsToTaxa, 
+//            Map<String, Set<Integer>> negativeAnnotsToTaxa, OWLGraphWrapper taxOntWrapper) {
+//        log.entry(positiveAnnotsToTaxa, negativeAnnotsToTaxa, taxOntWrapper);
+//    
+//        Map<String, Set<Integer>> missingNegativeAnnots = new HashMap<String, Set<Integer>>();
+//        
+//        for (Entry<String, Set<Integer>> negativeAnnot: negativeAnnotsToTaxa.entrySet()) {
+//            //the key should represent the concatenation of HOM ID and Uberon IDs, 
+//            //that were associated to a negative annotation
+//            String key = negativeAnnot.getKey();
+//            //if there are positive annotations for the same structure, in parent taxa 
+//            //of the taxa used, checked that there also exist corresponding NOT annotations. 
+//            //First, we retrieve taxa associated to corresponding positive annotations.
+//            if (positiveAnnotsToTaxa.get(key) == null) {
+//                continue;
+//            }
+//            //store in a new HashSet, as we will modify it
+//            Set<Integer> positiveTaxIds = new HashSet<Integer>(positiveAnnotsToTaxa.get(key));
+//            //identify the taxa used in corresponding positive annotations, that are parents 
+//            //of the taxa used in the negative annotation. 
+//            //First, we store all parents of the taxa associated to negative annotations.
+//            Set<Integer> negativeParentTaxa = new HashSet<Integer>();
+//            for (int negativeTaxonId: negativeAnnot.getValue()) {
+//                OWLClass taxCls = taxOntWrapper.getOWLClassByIdentifier(
+//                        OntologyUtils.getTaxOntologyId(negativeTaxonId), true);
+//                if (taxCls != null) {
+//                    for (OWLClass parentTaxon: taxOntWrapper.getAncestorsThroughIsA(taxCls)) {
+//                        negativeParentTaxa.add(OntologyUtils.getTaxNcbiId(
+//                                taxOntWrapper.getIdentifier(parentTaxon)));
+//                    }
+//                }
+//            }
+//            //now, retain taxa of positive annotations, parent of taxa used in neg. annotations.
+//            positiveTaxIds.retainAll(negativeParentTaxa);
+//            //and check whether there exist corresponding negative annotations
+//            positiveTaxIds.removeAll(negativeAnnot.getValue());
+//            if (!positiveTaxIds.isEmpty()) {
+//                missingNegativeAnnots.put(key, positiveTaxIds);
+//            }
+//        }
+//        
+//        return log.exit(missingNegativeAnnots);
+//    }
+//
 //    public void generateFiles(String rawAnnotFile, Set<GeneratedFileType> fileTypes, 
 //            String taxonConstraintsFile, Map<String, Set<Integer>> idStartsToOverridenTaxonIds, 
 //            String uberonOntFile, String taxOntFile, 
@@ -1429,186 +1480,25 @@ public class SimilarityAnnotation {
 //        log.entry(rawAnnots, fileType, taxonConstraints, taxonIds, taxOntWrapper, 
 //                uberonOntWrapper, ecoOntWrapper, homOntWrapper, confOntWrapper);
 //        
+//        //check the raw annotations provided
+//        this.checkAnnotations(rawAnnots, GeneratedFileType.RAW, taxonConstraints, taxonIds, 
+//                taxOntWrapper, homOntWrapper, ecoOntWrapper, confOntWrapper);
+//        
+//        //first pass, add extra information to the annotations (names corresponding to 
+//        //Uberon IDs, etc). We will generate a new Map, not to modify the raw annotations.
 //        List<Map<String, Object>> generatedAnnots = new ArrayList<Map<String, Object>>();
-//        //We will store taxa associated to positive and negative annotations, 
-//        //to verify NOT annotations (if there is a NOT annotation 
-//        //in a taxon, most likely there should be also a NOT annotation for all parent taxa 
-//        //annotated). We will use the concatenation of HOM ID and UBERON ID as key
-//        Map<String, Set<Integer>> positiveAnnotsToTaxa = new HashMap<String, Set<Integer>>();
-//        Map<String, Set<Integer>> negativeAnnotsToTaxa = new HashMap<String, Set<Integer>>();
-//        //first pass, check each annotation, and add extra information to them 
-//        //(names corresponding to Uberon IDs, etc). We will generate new Maps, 
-//        //not to modify the raw annotations.
+//        
 //        for (Map<String, Object> rawAnnot: rawAnnots) {
-//            
-//            if (!this.checkAnnotation(rawAnnot, taxonConstraints, taxonIds, 
-//                    ecoOntWrapper, homOntWrapper, confOntWrapper)) {
-//                continue;
-//            }
-//            
-//            Map<String, Object> releaseAnnot = new HashMap<String, Object>();
-//            releaseAnnot.put(LINE_TYPE_COL_NAME, RAW_LINE);
-//            
-//            //Uberon ID(s) used to define the entity annotated. Get them ordered 
-//            //by alphabetical order, for easier diff between different release files.
-//            List<String> uberonIds = AnnotationCommon.parseMultipleEntitiesColumn(
-//                    (String) rawAnnot.get(ENTITY_COL_NAME));
-//            //get the corresponding names
-//            List<String> uberonNames = new ArrayList<String>();
-//            //store a String of Uberon IDs to be used to store association to positive/negative annots.
-//            String uberonIdsConcat = "";
-//            for (String uberonId: uberonIds) {
-//                //it is the responsibility of the checkAnnotation method to make sure 
-//                //the Uberon IDs exist, so we accept null values, it's not our job here.
-//                if (uberonOntWrapper.getOWLClassByIdentifier(uberonId, true) != null) {
-//                    String name = uberonOntWrapper.getLabel(
-//                            uberonOntWrapper.getOWLClassByIdentifier(uberonId, true));
-//                    if (name != null) {
-//                        uberonNames.add(name);
-//                    }
-//                }
-//                uberonIdsConcat += uberonId + "-";
-//            }
-//            //store Uberon IDs and names as column values
-//            releaseAnnot.put(ENTITY_COL_NAME, 
-//                    AnnotationCommon.getTermsToColumnValue(uberonIds));
-//            releaseAnnot.put(ENTITY_NAME_COL_NAME, 
-//                    AnnotationCommon.getTermsToColumnValue(uberonNames));
-//            
-//            //taxon
-//            //store taxon to be used to store association to positive/negative annots. 
-//            int taxonId = 0;
-//            if (rawAnnot.get(TAXON_COL_NAME) != null) {
-//                taxonId = (int) rawAnnot.get(TAXON_COL_NAME);
-//                releaseAnnot.put(TAXON_COL_NAME, taxonId);
-//                
-//                String ontologyTaxId = OntologyUtils.getTaxOntologyId(taxonId);
-//                if (taxOntWrapper.getOWLClassByIdentifier(ontologyTaxId, true) != null) {
-//                    releaseAnnot.put(TAXON_NAME_COL_NAME, taxOntWrapper.getLabel(
-//                            taxOntWrapper.getOWLClassByIdentifier(ontologyTaxId, true)));
-//                }
-//            }
-//            
-//            //HOM
-//            //store HOM ID to be used to store association to positive/negative annots. 
-//            String homId = "";
-//            if (rawAnnot.get(HOM_COL_NAME) != null) {
-//                homId = ((String) rawAnnot.get(HOM_COL_NAME)).trim();
-//                releaseAnnot.put(HOM_COL_NAME, homId);
-//                if (homOntWrapper.getOWLClassByIdentifier(homId, true) != null) {
-//                    releaseAnnot.put(HOM_NAME_COL_NAME, homOntWrapper.getLabel(
-//                            homOntWrapper.getOWLClassByIdentifier(homId, true)));
-//                }
-//            }
-//            
-//            //qualifier
-//            //we store positive and negative annotations associated to taxa here. 
-//            Map<String, Set<Integer>> posOrNegAnnotsToTaxa = positiveAnnotsToTaxa;
-//            if (rawAnnot.get(QUALIFIER_COL_NAME) != null) {
-//                releaseAnnot.put(QUALIFIER_COL_NAME, NEGATE_QUALIFIER);
-//                posOrNegAnnotsToTaxa = negativeAnnotsToTaxa;
-//            }
-//            //generate a key from HOM ID and UBERON IDs
-//            String key = homId + "-" + uberonIdsConcat;
-//            Set<Integer> taxIds = posOrNegAnnotsToTaxa.get(key);
-//            if (taxIds == null) {
-//                taxIds = new HashSet<Integer>();
-//                posOrNegAnnotsToTaxa.put(key, taxIds);
-//            }
-//            taxIds.add(taxonId);
-//            
-//            //ECO
-//            if (rawAnnot.get(ECO_COL_NAME) != null) {
-//                String ecoId = ((String) rawAnnot.get(ECO_COL_NAME)).trim();
-//                releaseAnnot.put(ECO_COL_NAME, ecoId);
-//                if (ecoOntWrapper.getOWLClassByIdentifier(ecoId, true) != null) {
-//                    releaseAnnot.put(ECO_NAME_COL_NAME, ecoOntWrapper.getLabel(
-//                            ecoOntWrapper.getOWLClassByIdentifier(ecoId, true)));
-//                }
-//            } else {
-//                //otherwise it means that it is an unreviewed annotations
-//                releaseAnnot.put(ECO_COL_NAME, AUTOMATIC_ECO);
-//                releaseAnnot.put(ECO_NAME_COL_NAME, ecoOntWrapper.getLabel(
-//                        ecoOntWrapper.getOWLClassByIdentifier(AUTOMATIC_ECO, true)));
-//                releaseAnnot.put(CURATOR_COL_NAME, AUTOMATIC_CURATOR);
-//            }
-//            
-//            //CONF
-//            if (rawAnnot.get(CONF_COL_NAME) != null) {
-//                String confId = ((String) rawAnnot.get(CONF_COL_NAME)).trim();
-//                releaseAnnot.put(CONF_COL_NAME, confId);
-//                if (confOntWrapper.getOWLClassByIdentifier(confId, true) != null) {
-//                    releaseAnnot.put(CONF_NAME_COL_NAME, confOntWrapper.getLabel(
-//                            confOntWrapper.getOWLClassByIdentifier(confId, true)));
-//                }
-//            }
-//            
-//            //Reference
-//            if (rawAnnot.get(REF_COL_NAME) != null) {
-//                String refValue = ((String) rawAnnot.get(REF_COL_NAME)).trim();
-//                //the raw annotation file mixes the title of the reference 
-//                //in the same column as the reference ID, so we need to parse refValue
-//                String refId = this.getRefIdFromRefColValue(refValue);
-//                releaseAnnot.put(REF_COL_NAME, refId);
-//                
-//                String refTitle = this.getRefTitleFromRefColValue(refValue);
-//                if (refTitle != null) {
-//                    releaseAnnot.put(REF_TITLE_COL_NAME, refTitle);
-//                }
-//            }
-//            if (rawAnnot.get(REF_TITLE_COL_NAME) != null) {
-//                String refTitle = ((String) rawAnnot.get(REF_TITLE_COL_NAME)).trim();
-//                refTitle = refTitle.startsWith("\"") ? refTitle.substring(1) : refTitle;
-//                refTitle = refTitle.endsWith("\"") ? 
-//                        refTitle.substring(0, refTitle.length()-1) : refTitle;
-//                releaseAnnot.put(REF_TITLE_COL_NAME, refTitle);
-//            }
-//            
-//            //Supporting text
-//            if (rawAnnot.get(SUPPORT_TEXT_COL_NAME) != null) {
-//                releaseAnnot.put(SUPPORT_TEXT_COL_NAME, 
-//                        ((String) rawAnnot.get(SUPPORT_TEXT_COL_NAME)).trim());
-//            }
-//            
-//            //Curator
-//            if (rawAnnot.get(CURATOR_COL_NAME) != null) {
-//                releaseAnnot.put(CURATOR_COL_NAME, 
-//                        ((String) rawAnnot.get(CURATOR_COL_NAME)).trim());
-//            }
-//            
-//            //Assigned by
-//            if (rawAnnot.get(ASSIGN_COL_NAME) != null) {
-//                releaseAnnot.put(ASSIGN_COL_NAME, 
-//                        ((String) rawAnnot.get(ASSIGN_COL_NAME)).trim());
-//            }
-//            
-//            //Annotation date
-//            if (rawAnnot.get(DATE_COL_NAME) != null) {
-//                releaseAnnot.put(DATE_COL_NAME, rawAnnot.get(DATE_COL_NAME));
-//            }
-//            
-//            generatedAnnots.add(releaseAnnot);
+//            //all annotations have already been checked by calling checkAnnotations
+//            generatedAnnots.add(this.addExtraInfo(rawAnnot, fileType, 
+//                    uberonOntWrapper, taxOntWrapper, ecoOntWrapper, homOntWrapper, 
+//                    confOntWrapper));
 //        }
 //        
 //        if (generatedAnnots.isEmpty()) {
 //            throw log.throwing(new IllegalArgumentException("The provided annotations " +
 //            		"did not allow to generate any clean-transformed annotations."));
 //        }
-//        
-//        //now we verify that the data provided are correct (the method checkAnnotation 
-//        //used in this method will have filled attributes of this class storing errors 
-//        //that are not syntax errors).
-//        try {
-//            this.verifyErrors();
-//        } catch (IllegalStateException e) {
-//            //wrap the IllegalStateException into an IllegalArgumentException
-//            throw new IllegalArgumentException(e);
-//        }
-//        
-//        //now we check negative annotations: if there is a NOT annotation 
-//        //in a taxon, most likely there should be also a NOT annotation for all parent taxa 
-//        //annotated. This is not formally an error (maybe a structure can have been lost 
-//        //in a taxon, then reappeared independently later?)
 //        
 //        //now we add the generated lines that summarize several related annotations 
 //        //using a confidence code for multiple evidences assertion.
@@ -1619,6 +1509,189 @@ public class SimilarityAnnotation {
 //        this.sortAnnotations(generatedAnnots);
 //        
 //        return log.exit(generatedAnnots);
+//    }
+//    
+//    /**
+//     * Generate extra information for the annotation row {@code annot}. This method 
+//     * will create a new row of annotation, containing all information in {@code annot}, 
+//     * plus added clean information, for instance, Uberon names 
+//     * ordered by Uberon IDs, ECO names, HOM names. This information is retrieved 
+//     * from the provided ontologies, wrapped in {@code OWLGraphWrapper}s. 
+//     * This method will also add the value associated to the column with name 
+//     * {@link #LINE_TYPE_COL_NAME}.
+//     * <p>
+//     * {@code annot} will not be modified as a result of the call to this method. 
+//     * 
+//     * @param annot             A {@code Map} that represents a line of annotation. 
+//     *                          See {@link #extractAnnotations(String, boolean)} for details 
+//     *                          about the key-value pairs in this {@code Map}.
+//     * @param fileType          A {@code GeneratedFileType} defining for which type of file 
+//     *                          these annotations are produced. 
+//     * @param uberonOntWrapper  An {@code OWLGraphWrapper} wrapping the Uberon ontology.
+//     * @param taxOntWrapper     An {@code OWLGraphWrapper} wrapping the taxonomy ontology.
+//     * @param ecoOntWrapper     An {@code OWLGraphWrapper} wrapping the ECO ontology.
+//     * @param homOntWrapper     An {@code OWLGraphWrapper} wrapping the HOM ontology 
+//     *                          (ontology of homology an related concepts).
+//     * @param confOntWrapper    An {@code OWLGraphWrapper} wrapping the confidence 
+//     *                          code ontology.
+//     * @return                  A {@code Map} representing the same row of annotation as 
+//     *                          {@code annot}, with added extra information.
+//     * @throws IllegalArgumentException If {@code annot} did not allow to obtain any 
+//     *                                  information about annotation.
+//     */
+//    private Map<String, Object> addExtraInfo(Map<String, Object> annot, 
+//            GeneratedFileType fileType, 
+//            OWLGraphWrapper uberonOntWrapper, OWLGraphWrapper taxOntWrapper, 
+//            OWLGraphWrapper ecoOntWrapper, OWLGraphWrapper homOntWrapper, 
+//            OWLGraphWrapper confOntWrapper) throws IllegalArgumentException {
+//        log.entry(annot, fileType, uberonOntWrapper, taxOntWrapper, ecoOntWrapper, 
+//                homOntWrapper, confOntWrapper);
+//        
+//        Map<String, Object> releaseAnnot = new HashMap<String, Object>();
+//        
+//        //Uberon ID(s) used to define the entity annotated. Get them ordered 
+//        //by alphabetical order, for easier diff between different release files.
+//        List<String> uberonIds = AnnotationCommon.parseMultipleEntitiesColumn(
+//                (String) annot.get(ENTITY_COL_NAME));
+//        //get the corresponding names
+//        List<String> uberonNames = new ArrayList<String>();
+//        for (String uberonId: uberonIds) {
+//            //it is the responsibility of the checkAnnotation method to make sure 
+//            //the Uberon IDs exist, so we accept null values, it's not our job here.
+//            if (uberonOntWrapper.getOWLClassByIdentifier(uberonId, true) != null) {
+//                String name = uberonOntWrapper.getLabel(
+//                        uberonOntWrapper.getOWLClassByIdentifier(uberonId, true));
+//                if (name != null) {
+//                    uberonNames.add(name.trim());
+//                }
+//            }
+//        }
+//        //store Uberon IDs and names as column values
+//        releaseAnnot.put(ENTITY_COL_NAME, 
+//                AnnotationCommon.getTermsToColumnValue(uberonIds));
+//        releaseAnnot.put(ENTITY_NAME_COL_NAME, 
+//                AnnotationCommon.getTermsToColumnValue(uberonNames));
+//        
+//        //taxon
+//        //store taxon to be used to store association to positive/negative annots. 
+//        int taxonId = 0;
+//        if (annot.get(TAXON_COL_NAME) != null) {
+//            taxonId = (int) annot.get(TAXON_COL_NAME);
+//            releaseAnnot.put(TAXON_COL_NAME, taxonId);
+//            
+//            String ontologyTaxId = OntologyUtils.getTaxOntologyId(taxonId);
+//            if (taxOntWrapper.getOWLClassByIdentifier(ontologyTaxId, true) != null) {
+//                releaseAnnot.put(TAXON_NAME_COL_NAME, taxOntWrapper.getLabel(
+//                        taxOntWrapper.getOWLClassByIdentifier(ontologyTaxId, true)));
+//            }
+//        }
+//        
+//        //HOM
+//        //store HOM ID to be used to store association to positive/negative annots. 
+//        String homId = "";
+//        if (annot.get(HOM_COL_NAME) != null) {
+//            homId = ((String) annot.get(HOM_COL_NAME)).trim();
+//            releaseAnnot.put(HOM_COL_NAME, homId);
+//            if (homOntWrapper.getOWLClassByIdentifier(homId, true) != null) {
+//                releaseAnnot.put(HOM_NAME_COL_NAME, homOntWrapper.getLabel(
+//                        homOntWrapper.getOWLClassByIdentifier(homId, true)));
+//            }
+//        }
+//        
+//        //qualifier
+//        //we store positive and negative annotations associated to taxa here. 
+//        if (annot.get(QUALIFIER_COL_NAME) != null) {
+//            releaseAnnot.put(QUALIFIER_COL_NAME, NEGATE_QUALIFIER);
+//        }
+//        
+//        //ECO
+//        if (annot.get(ECO_COL_NAME) != null) {
+//            String ecoId = ((String) annot.get(ECO_COL_NAME)).trim();
+//            releaseAnnot.put(ECO_COL_NAME, ecoId);
+//            if (ecoOntWrapper.getOWLClassByIdentifier(ecoId, true) != null) {
+//                releaseAnnot.put(ECO_NAME_COL_NAME, ecoOntWrapper.getLabel(
+//                        ecoOntWrapper.getOWLClassByIdentifier(ecoId, true)));
+//            }
+//        } else {
+//            //otherwise it means that it is an unreviewed annotations
+//            releaseAnnot.put(ECO_COL_NAME, AUTOMATIC_ECO);
+//            releaseAnnot.put(ECO_NAME_COL_NAME, ecoOntWrapper.getLabel(
+//                    ecoOntWrapper.getOWLClassByIdentifier(AUTOMATIC_ECO, true)));
+//            releaseAnnot.put(CURATOR_COL_NAME, AUTOMATIC_CURATOR);
+//            releaseAnnot.put(ASSIGN_COL_NAME, AUTOMATIC_ASSIGNED_BY);
+//        }
+//        
+//        //CONF
+//        if (annot.get(CONF_COL_NAME) != null) {
+//            String confId = ((String) annot.get(CONF_COL_NAME)).trim();
+//            releaseAnnot.put(CONF_COL_NAME, confId);
+//            if (confOntWrapper.getOWLClassByIdentifier(confId, true) != null) {
+//                releaseAnnot.put(CONF_NAME_COL_NAME, confOntWrapper.getLabel(
+//                        confOntWrapper.getOWLClassByIdentifier(confId, true)));
+//            }
+//        }
+//        
+//        //Reference
+//        if (annot.get(REF_COL_NAME) != null) {
+//            String refValue = ((String) annot.get(REF_COL_NAME)).trim();
+//            //the raw annotation file mixes the title of the reference 
+//            //in the same column as the reference ID, so we need to parse refValue
+//            String refId = this.getRefIdFromRefColValue(refValue);
+//            releaseAnnot.put(REF_COL_NAME, refId);
+//            
+//            String refTitle = this.getRefTitleFromRefColValue(refValue);
+//            if (refTitle != null) {
+//                releaseAnnot.put(REF_TITLE_COL_NAME, refTitle);
+//            }
+//        }
+//        if (annot.get(REF_TITLE_COL_NAME) != null) {
+//            String refTitle = ((String) annot.get(REF_TITLE_COL_NAME)).trim();
+//            refTitle = refTitle.startsWith("\"") ? refTitle.substring(1) : refTitle;
+//            refTitle = refTitle.endsWith("\"") ? 
+//                    refTitle.substring(0, refTitle.length()-1) : refTitle;
+//            releaseAnnot.put(REF_TITLE_COL_NAME, refTitle);
+//        }
+//        
+//        //Supporting text
+//        if (annot.get(SUPPORT_TEXT_COL_NAME) != null) {
+//            releaseAnnot.put(SUPPORT_TEXT_COL_NAME, 
+//                    ((String) annot.get(SUPPORT_TEXT_COL_NAME)).trim());
+//        }
+//        
+//        //Curator
+//        if (annot.get(CURATOR_COL_NAME) != null) {
+//            releaseAnnot.put(CURATOR_COL_NAME, 
+//                    ((String) annot.get(CURATOR_COL_NAME)).trim());
+//        }
+//        
+//        //Assigned by
+//        if (annot.get(ASSIGN_COL_NAME) != null) {
+//            releaseAnnot.put(ASSIGN_COL_NAME, 
+//                    ((String) annot.get(ASSIGN_COL_NAME)).trim());
+//        }
+//        
+//        //Annotation date
+//        if (annot.get(DATE_COL_NAME) != null) {
+//            releaseAnnot.put(DATE_COL_NAME, annot.get(DATE_COL_NAME));
+//        }
+//        
+//        //check whether we could get any information
+//        if (releaseAnnot.isEmpty()) {
+//            throw log.throwing(new IllegalArgumentException("The provided annotation: " 
+//                    + annot + " - did not allow to generate a clean-transformed annotation."));
+//        }
+//        
+//        //add information about the type of line
+//        if (fileType.equals(GeneratedFileType.RAW) || 
+//                fileType.equals(GeneratedFileType.RAW_CLEAN)) {
+//            releaseAnnot.put(LINE_TYPE_COL_NAME, RAW_LINE);
+//        } else if (fileType.equals(GeneratedFileType.AGGREGATED_EVIDENCES)) {
+//            releaseAnnot.put(LINE_TYPE_COL_NAME, SUMMARY_LINE);
+//        } else {
+//            throw log.throwing(new AssertionError("File type " + fileType + " not supported."));
+//        }
+//        
+//        return log.exit(releaseAnnot);
 //    }
 //
 //
@@ -1940,51 +2013,6 @@ public class SimilarityAnnotation {
 //        }
 //        
 //        log.exit();
-//    }
-//    
-//    private Map<String, Set<Integer>> checkNegativeAnnotsParentTaxa(
-//            Map<String, Set<Integer>> positiveAnnotsToTaxa, 
-//            Map<String, Set<Integer>> negativeAnnotsToTaxa, OWLGraphWrapper taxOntWrapper) {
-//        log.entry(positiveAnnotsToTaxa, negativeAnnotsToTaxa, taxOntWrapper);
-//
-//        Map<String, Set<Integer>> missingNegativeAnnots = new HashMap<String, Set<Integer>>();
-//        
-//        for (Entry<String, Set<Integer>> negativeAnnot: negativeAnnotsToTaxa.entrySet()) {
-//            //the key should represent the concatenation of HOM ID and Uberon IDs, 
-//            //that were associated to a negative annotation
-//            String key = negativeAnnot.getKey();
-//            //if there are positive annotations for the same structure, in parent taxa 
-//            //of the taxa used, checked that there also exist corresponding NOT annotations. 
-//            //First, we retrieve taxa associated to corresponding positive annotations.
-//            if (positiveAnnotsToTaxa.get(key) == null) {
-//                continue;
-//            }
-//            //store in a new HashSet, as we will modify it
-//            Set<Integer> positiveTaxIds = new HashSet<Integer>(positiveAnnotsToTaxa.get(key));
-//            //identify the taxa used in corresponding positive annotations, that are parents 
-//            //of the taxa used in the negative annotation. 
-//            //First, we store all parents of the taxa associated to negative annotations.
-//            Set<Integer> negativeParentTaxa = new HashSet<Integer>();
-//            for (int negativeTaxonId: negativeAnnot.getValue()) {
-//                OWLClass taxCls = taxOntWrapper.getOWLClassByIdentifier(
-//                        OntologyUtils.getTaxOntologyId(negativeTaxonId), true);
-//                if (taxCls != null) {
-//                    for (OWLClass parentTaxon: taxOntWrapper.getAncestorsThroughIsA(taxCls)) {
-//                        negativeParentTaxa.add(OntologyUtils.getTaxNcbiId(
-//                                taxOntWrapper.getIdentifier(parentTaxon)));
-//                    }
-//                }
-//            }
-//            //now, retain taxa of positive annotations, parent of taxa used in neg. annotations.
-//            positiveTaxIds.retainAll(negativeParentTaxa);
-//            //and check whether there exist corresponding negative annotations
-//            positiveTaxIds.removeAll(negativeAnnot.getValue());
-//            if (!positiveTaxIds.isEmpty()) {
-//                missingNegativeAnnots.put(key, positiveTaxIds);
-//            }
-//        }
-//        
-//        return log.exit(missingNegativeAnnots);
 //    }
 //    
 //    /**

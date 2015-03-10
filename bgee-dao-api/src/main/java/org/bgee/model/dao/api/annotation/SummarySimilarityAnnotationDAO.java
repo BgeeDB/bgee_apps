@@ -69,6 +69,28 @@ public interface SummarySimilarityAnnotationDAO extends
             throws DAOException, IllegalArgumentException;
 
     /**
+     * Inserts the provided correspondence between a summary similarity annotation and 
+     * an anatomical entity into the Bgee database, represented as a {@code Collection}
+     * of {@code SimilarityAnnotationToAnatEntityIdTO}s.
+     * 
+     * @param simAnnotationToAnatEntityIdTO A {@code Collection} of 
+     *                                      {@code SimilarityAnnotationToAnatEntityIdTO}s to be 
+     *                                      inserted into the data source.
+     * @return                              An {@code int} that is the number of inserted 
+     *                                      {@code SimilarityAnnotationToAnatEntityIdTO}s.
+     * @throws IllegalArgumentException     If {@code summarySimilarityAnnotationTOs} is empty or 
+     *                                      {@code null}. 
+     * @throws DAOException                 If a {@code SQLException} occurred while trying to 
+     *                                      insert {@code SimilarityAnnotationToAnatEntityIdTO}s.
+     *                                      The {@code SQLException} will be wrapped into a 
+     *                                      {@code DAOException} ({@code DAO}s do not expose 
+     *                                      these kind of implementation details).
+     */
+    public int insertSimilarityAnnotationsToAnatEntityIds(
+            Collection<SimilarityAnnotationToAnatEntityIdTO> simAnnotationToAnatEntityIdTO) 
+            throws DAOException, IllegalArgumentException;
+
+    /**
      * {@code DAOResultSet} specifics to {@code SummarySimilarityAnnotationTO}s
      * 
      * @author Valentine Rech de Laval
@@ -87,7 +109,7 @@ public interface SummarySimilarityAnnotationDAO extends
      * @version Bgee 13
      * @since Bgee 13
      */
-    public class SummarySimilarityAnnotationTO extends TransferObject {
+    public final class SummarySimilarityAnnotationTO extends TransferObject {
 
         private static final long serialVersionUID = 1007360248706863895L;
 
@@ -168,13 +190,91 @@ public interface SummarySimilarityAnnotationDAO extends
          *          to this summary similarity annotation.
          */
         public String getCIOId() {
-            return this.taxonId;
+            return this.cioId;
         }
 
         @Override
         public String toString() {
             return " ID: " + this.getId() + " - Taxon ID: " + this.getTaxonId() +
             " - Negated: " + this.isNegated() + " - CIO ID: " + cioId;
+        }
+    }
+    
+    /**
+     * {@code DAOResultSet} specifics to {@code SimilarityAnnotationToAnatEntityIdTO}s.
+     * 
+     * @author Valentine Rech de Laval
+     * @version Bgee 13
+     * @since Bgee 13
+     */
+    public interface SimilarityAnnotationToAnatEntityIdTOResultSet 
+                    extends DAOResultSet<SimilarityAnnotationToAnatEntityIdTO> {
+    }
+
+    /**
+     * A {@code TransferObject} representing relation between a summary similarity annotation
+     * and an anatomical entity, as stored in the Bgee database. 
+     * <p>
+     * This class defines a summary similarity annotation ID (see 
+     * {@link #getSummarySimilarityAnnotationId()} and an anatomical entity ID 
+     * (see {@link #getAnatEntityId()}).
+     * <p>
+     * Note that this class is one of the few {@code TransferObject}s that are not 
+     * an {@link org.bgee.model.dao.api.EntityTO}.
+     * 
+     * @author Valentine Rech de Laval
+     * @version Bgee 13
+     * @since Bgee 13
+     */
+    public final class SimilarityAnnotationToAnatEntityIdTO extends TransferObject {
+
+        private static final long serialVersionUID = -1905883316221485577L;
+
+        /**
+         * A {@code String} representing the ID of the summary similarity annotation.
+         */
+        private final String summarySimilarityAnnotationId;
+
+        /**
+         * A {@code String} representing the ID of the anatomical entity.         
+         */
+        private final String anatEntityId;
+
+        /**
+         * Constructor providing the ID of the summary similarity annotation  
+         * (see {@link #getSummarySimilarityAnnotationId()}) and the ID of  
+         * the anatomical entity (see {@link #getAnatEntityId()}).
+         * 
+         * @param summarySimilarityAnnotationId A {@code String} that is the ID of the  
+         *                                      summary similarity annotation.
+         * @param anatEntityId                  A {@code String} that is the ID of the  
+         *                                      anatomical entity.
+         */
+        public SimilarityAnnotationToAnatEntityIdTO(
+                String summarySimilarityAnnotationId, String anatEntityId) {
+            super();
+            this.summarySimilarityAnnotationId = summarySimilarityAnnotationId;
+            this.anatEntityId = anatEntityId;
+        }
+        
+        /**
+         * @return  the {@code String} representing the ID of the summary similarity annotation.
+         */
+        public String getSummarySimilarityAnnotationId() {
+            return summarySimilarityAnnotationId;
+        }
+
+        /**
+         * @return  the {@code String} representing the ID of the anatomical entity.
+         */
+        public String getAnatEntityId() {
+            return anatEntityId;
+        }
+        
+        @Override
+        public String toString() {
+            return "Summary similarity annotation ID: " + summarySimilarityAnnotationId + 
+                    " - Anat. entity ID: " + anatEntityId;
         }
     }
 }

@@ -92,7 +92,7 @@ public interface RawSimilarityAnnotationDAO extends DAO<RawSimilarityAnnotationD
      * @version Bgee 13
      * @since Bgee 13
      */
-    public class RawSimilarityAnnotationTO extends TransferObject {
+    public final class RawSimilarityAnnotationTO extends TransferObject {
 
         private static final long serialVersionUID = -3914547838862781138L;
 

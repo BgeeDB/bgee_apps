@@ -54,13 +54,88 @@ public class MySQLSummarySimilarityAnnotationDAO
 
     @Override
     public int insertSummarySimilarityAnnotations(
-            Collection<SummarySimilarityAnnotationTO> summaryTos)
+            Collection<SummarySimilarityAnnotationTO> summaryTOs)
             throws DAOException, IllegalArgumentException {
-        log.entry(summaryTos);
-        // TODO Auto-generated method stub
-        return log.exit(0);        
+        log.entry(summaryTOs);
+
+        if (summaryTOs == null || summaryTOs.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "No summary similarity annotation is given, then no annotation is inserted"));
+        }
+
+        int annotationInsertedCount = 0;
+        int totalAnnotationNumber = summaryTOs.size();
+        
+        // And we need to build two different queries. 
+        String sqlExpression = "INSERT INTO summarySimilarityAnnotation " +
+                "(summarySimilarityAnnotationId, taxonId, negated, CIOId) " +
+                "values (?, ?, ?, ?)";
+        
+        // XXX: To not overload MySQL with an error com.mysql.jdbc.PacketTooBigException, 
+        // we insert annotations one at a time, but we should insert them several at once,
+        // for instance 100 annotations at a time.
+        try (BgeePreparedStatement stmt = 
+                this.getManager().getConnection().prepareStatement(sqlExpression)) {
+            for (SummarySimilarityAnnotationTO summaryTO: summaryTOs) {
+                stmt.setInt(1, Integer.parseInt(summaryTO.getId()));
+                stmt.setInt(2, Integer.parseInt(summaryTO.getTaxonId()));
+                stmt.setBoolean(3, summaryTO.isNegated());
+                stmt.setString(4, summaryTO.getCIOId());
+                annotationInsertedCount += stmt.executeUpdate();
+                stmt.clearParameters();
+                if (log.isDebugEnabled() && annotationInsertedCount % 1000 == 0) {
+                    log.debug("{}/{} summary similarity annotations inserted", 
+                            annotationInsertedCount, totalAnnotationNumber);
+                }
+            }
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+
+        return log.exit(annotationInsertedCount);        
     }
     
+    @Override
+    public int insertSimilarityAnnotationsToAnatEntityIds(
+            Collection<SimilarityAnnotationToAnatEntityIdTO> simAnnotToAnatEntityTOs) 
+                    throws DAOException, IllegalArgumentException {
+        log.entry(simAnnotToAnatEntityTOs);
+        
+        if (simAnnotToAnatEntityTOs == null || simAnnotToAnatEntityTOs.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "No summary similarity annotation is given, then no annotation is inserted"));
+        }
+
+        int rowInsertedCount = 0;
+        int totalToNumber = simAnnotToAnatEntityTOs.size();
+        
+        // And we need to build two different queries. 
+        String sqlExpression = "INSERT INTO similarityAnnotationToAnatEntityId " +
+                "(summarySimilarityAnnotationId, anatEntityId) values (?, ?)";
+        
+        // XXX: To not overload MySQL with an error com.mysql.jdbc.PacketTooBigException, 
+        // we insert relations one at a time, but we should insert them several at once,
+        // for instance 100 relations at a time.
+        try (BgeePreparedStatement stmt = 
+                this.getManager().getConnection().prepareStatement(sqlExpression)) {
+            for (SimilarityAnnotationToAnatEntityIdTO simAnnotToAnatEntityTO: simAnnotToAnatEntityTOs) {
+                stmt.setInt(1, 
+                        Integer.parseInt(simAnnotToAnatEntityTO.getSummarySimilarityAnnotationId()));
+                stmt.setString(2, simAnnotToAnatEntityTO.getAnatEntityId());
+                rowInsertedCount += stmt.executeUpdate();
+                stmt.clearParameters();
+                if (log.isDebugEnabled() && rowInsertedCount % 1000 == 0) {
+                    log.debug("{}/{} similarity annotation to anat. entity inserted", 
+                            rowInsertedCount, totalToNumber);
+                }
+            }
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+
+        return log.exit(rowInsertedCount);        
+    }
+
     /**
      * A {@code MySQLDAOResultSet} specific to {@code SummarySimilarityAnnotationTO}.
      * 

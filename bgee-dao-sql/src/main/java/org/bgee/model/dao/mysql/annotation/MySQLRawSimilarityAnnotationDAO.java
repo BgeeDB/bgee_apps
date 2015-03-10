@@ -57,8 +57,49 @@ public class MySQLRawSimilarityAnnotationDAO extends MySQLDAO<RawSimilarityAnnot
     public int insertRawSimilarityAnnotations(Collection<RawSimilarityAnnotationTO> rawTOs)
             throws DAOException, IllegalArgumentException {
         log.entry(rawTOs);
-        // TODO Auto-generated method stub
-        return log.exit(0);        
+
+        if (rawTOs == null || rawTOs.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "No raw similarity annotation is given, then no annotation is inserted"));
+        }
+
+        int annotationInsertedCount = 0;
+        int totalAnnotationNumber = rawTOs.size();
+        
+        // And we need to build two different queries. 
+        String sqlExpression = "INSERT INTO rawSimilarityAnnotation " +
+                "(summarySimilarityAnnotationId, negated, ECOId, CIOId, referenceId, " +
+                "referenceTitle, supportingText, assignedBy, curator, annotationDate) " +
+                "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        
+        // XXX: To not overload MySQL with an error com.mysql.jdbc.PacketTooBigException, 
+        // we insert annotations one at a time, but we should insert them several at once,
+        // for instance 100 annotations at a time.
+        try (BgeePreparedStatement stmt = 
+                this.getManager().getConnection().prepareStatement(sqlExpression)) {
+            for (RawSimilarityAnnotationTO rawTO: rawTOs) {
+                stmt.setInt(1, Integer.parseInt(rawTO.getSummarySimilarityAnnotationId()));
+                stmt.setBoolean(2, rawTO.isNegated());
+                stmt.setString(3, rawTO.getECOId());
+                stmt.setString(4, rawTO.getCIOId());
+                stmt.setString(5, rawTO.getReferenceId());
+                stmt.setString(6, rawTO.getReferenceTitle());
+                stmt.setString(7, rawTO.getSupportingText());
+                stmt.setString(8, rawTO.getAssignedBy());
+                stmt.setString(9, rawTO.getCurator());
+                stmt.setDate(10, rawTO.getAnnotationDate());
+                annotationInsertedCount += stmt.executeUpdate();
+                stmt.clearParameters();
+                if (log.isDebugEnabled() && annotationInsertedCount % 1000 == 0) {
+                    log.debug("{}/{} raw similarity annotations inserted", annotationInsertedCount, 
+                            totalAnnotationNumber);
+                }
+            }
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+
+        return log.exit(annotationInsertedCount);        
     }
     
     /**

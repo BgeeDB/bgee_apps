@@ -79,7 +79,7 @@ public interface EvidenceOntologyDAO extends DAO<EvidenceOntologyDAO.Attribute> 
      * @version Bgee 13
      * @since Bgee 13
      */
-    public class ECOTermTO extends EntityTO {
+    public final class ECOTermTO extends EntityTO {
 
         private static final long serialVersionUID = 5801391933268876747L;
 

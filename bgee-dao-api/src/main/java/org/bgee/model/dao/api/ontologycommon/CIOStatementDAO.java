@@ -2,9 +2,12 @@ package org.bgee.model.dao.api.ontologycommon;
 
 import java.util.Collection;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.EntityTO;
+import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 
 
@@ -32,7 +35,8 @@ public interface CIOStatementDAO extends DAO<CIOStatementDAO.Attribute> {
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
-        ID, NAME, DESCRIPTION, TRUSTED;
+        ID, NAME, DESCRIPTION, TRUSTED, CONFIDENCE_LEVEL, 
+        EVIDENCE_CONCORDANCE, EVIDENCE_TYPE_CONCORDANCE;
     }
     
     /**
@@ -81,9 +85,211 @@ public interface CIOStatementDAO extends DAO<CIOStatementDAO.Attribute> {
      * @version Bgee 13
      * @since Bgee 13
      */
-    public class CIOStatementTO extends EntityTO {
+    public final class CIOStatementTO extends EntityTO {
 
         private static final long serialVersionUID = 7509933615802695073L;
+
+        /**
+         * {@code Logger} of the class. 
+         */
+        private final static Logger log = LogManager.getLogger(CIOStatementTO.class.getName());
+
+        /**
+         * An {@code Enum} used to define the level of confidence that can be put in a CIO statement.
+         * These {@code Enum} fields correspond exactly to the labels of the relevant classes, 
+         * leaves of the branch 'confidence level'.
+         * <ul>
+         * <li>{@code LOW_CONFIDENCE}:      the level of confidence is low.
+         * <li>{@code MEDIUM_CONFIDENCE}:   the level of confidence is medium.
+         * <li>{@code HIGH_CONFIDENCE}:     the level of confidence is high.
+         *
+         * @author 	Valentine Rech de Laval
+         * @version Bgee 13
+         * @since 	Bgee 13
+         */
+        public enum ConfidenceLevel implements EnumDAOField {
+            LOW_CONFIDENCE("low confidence level"), MEDIUM_CONFIDENCE("medium confidence level"), 
+            HIGH_CONFIDENCE("high confidence level");
+
+            /**
+             * Convert the {@code String} representation of a confidence level (for instance, 
+             * retrieved from a database) into a {@code ConfidenceLevel}. Operation performed 
+             * by calling {@link TransferObject#convert(Class, String)} with {@code ConfidenceLevel} 
+             * as the {@code Class} argument, and {@code representation} 
+             * as the {@code String} argument.
+             * 
+             * @param representation            A {@code String} representing a confidence level.
+             * @return                          A {@code ConfidenceLevel} corresponding to 
+             *                                  {@code representation}.
+             * @throw IllegalArgumentException  If {@code representation} does not correspond 
+             *                                  to any {@code ConfidenceLevel}.
+             */
+            public static final ConfidenceLevel convertToOriginOfLine(String representation) {
+                log.entry(representation);
+                return log.exit(TransferObject.convert(ConfidenceLevel.class, representation));
+            }
+
+            /**
+             * See {@link #getStringRepresentation()}
+             */
+            private final String stringRepresentation;
+
+            /**
+             * Constructor providing the {@code String} representation 
+             * of this {@code ConfidenceLevel}.
+             * 
+             * @param stringRepresentation  A {@code String} corresponding to 
+             *                              this {@code ConfidenceLevel}.
+             */
+            private ConfidenceLevel(String stringRepresentation) {
+                this.stringRepresentation = stringRepresentation;
+            }
+
+            @Override
+            public String getStringRepresentation() {
+                return this.stringRepresentation;
+            }
+            @Override
+            public String toString() {
+                return this.getStringRepresentation();
+            }
+        }
+        
+        /**
+         * An {@code Enum} used to define, when there are several evidence lines available related 
+         * to a same assertion, whether there are of a same or different experimental or 
+         * computational types. These {@code Enum} fields correspond exactly to the labels of the 
+         * relevant classes, leaves of the branch 'evidence type concordance'.
+         * 
+         * <ul>
+         * <li>{@code SINGLE_EVIDENCE}:         there is a single evidence line available.
+         * <li>{@code CONGRUENT}:               there are several evidence lines available available 
+         *                                      related to a same assertion which are congruent.
+         * <li>{@code WEAKLY_CONFLICTING}:      there are several evidence lines available available 
+         *                                      related to a same assertion which are weakly 
+         *                                      conflicting.
+         * <li>{@code STRONGLY_CONFLICTING}:    there are several evidence lines available available 
+         *                                      related to a same assertion which are strongly 
+         *                                      conflicting.
+         * </ul>
+         * 
+         * @author  Valentine Rech de Laval
+         * @version Bgee 13
+         * @since   Bgee 13
+         */
+        public enum EvidenceConcordance implements EnumDAOField {
+            SINGLE_EVIDENCE("single evidence"), CONGRUENT("congruent"), 
+            WEAKLY_CONFLICTING("weakly conflicting"), STRONGLY_CONFLICTING("strongly conflicting");
+
+            /**
+             * Convert the {@code String} representation of a evidence concordance (for instance, 
+             * retrieved from a database) into an {@code EvidenceConcordance}. Operation performed 
+             * by calling {@link TransferObject#convert(Class, String)} with 
+             * {@code EvidenceConcordance} as the {@code Class} argument, and {@code representation} 
+             * as the {@code String} argument.
+             * 
+             * @param representation            A {@code String} representing a evidence concordance.
+             * @return                          An {@code EvidenceConcordance} corresponding to 
+             *                                  {@code representation}.
+             * @throw IllegalArgumentException  If {@code representation} does not correspond 
+             *                                  to any {@code EvidenceConcordance}.
+             */
+            public static final EvidenceConcordance convertToOriginOfLine(String representation) {
+                log.entry(representation);
+                return log.exit(TransferObject.convert(EvidenceConcordance.class, representation));
+            }
+
+            /**
+             * See {@link #getStringRepresentation()}
+             */
+            private final String stringRepresentation;
+
+            /**
+             * Constructor providing the {@code String} representation 
+             * of this {@code EvidenceConcordance}.
+             * 
+             * @param stringRepresentation  A {@code String} corresponding to 
+             *                              this {@code EvidenceConcordance}.
+             */
+            private EvidenceConcordance(String stringRepresentation) {
+                this.stringRepresentation = stringRepresentation;
+            }
+
+            @Override
+            public String getStringRepresentation() {
+                return this.stringRepresentation;
+            }
+            @Override
+            public String toString() {
+                return this.getStringRepresentation();
+            }
+        }
+
+        /**
+         * An {@code Enum} used to define whether there are multiple evidence lines available 
+         * related to an assertion, and whether they are congruent or conflicting. 
+         * These {@code Enum} fields correspond exactly to the labels of the relevant classes, 
+         * leaves of the branch 'evidence concordance'.
+         * 
+         * <ul>
+         * <li>{@code SAME_TYPE}:       the evidence lines available related to this assertion are 
+         *                              of a same experimental or computational types.
+         * <li>{@code DIFFERENT_TYPE}:  the evidence lines available related to this assertion are 
+         *                              of a different experimental or computational types.
+         * </ul>
+         *
+         * @author  Valentine Rech de Laval
+         * @version Bgee 13
+         * @since   Bgee 13
+         */
+        public enum EvidenceTypeConcordance implements EnumDAOField {
+            SAME_TYPE("same type"), DIFFERENT_TYPE("different type");
+
+            /**
+             * Convert the {@code String} representation of a evidence type concordance 
+             * (for instance, retrieved from a database) into an {@code EvidenceTypeConcordance}. 
+             * Operation performed by calling {@link TransferObject#convert(Class, String)} with 
+             * {@code EvidenceTypeConcordance} as the {@code Class} argument, and 
+             * {@code representation} as the {@code String} argument.
+             * 
+             * @param representation            A {@code String} representing a evidence type 
+             *                                  concordance.
+             * @return                          An {@code EvidenceTypeConcordance} corresponding to 
+             *                                  {@code representation}.
+             * @throw IllegalArgumentException  If {@code representation} does not correspond 
+             *                                  to any {@code EvidenceTypeConcordance}.
+             */
+            public static final EvidenceTypeConcordance convertToOriginOfLine(String representation) {
+                log.entry(representation);
+                return log.exit(TransferObject.convert(EvidenceTypeConcordance.class, representation));
+            }
+
+            /**
+             * See {@link #getStringRepresentation()}
+             */
+            private final String stringRepresentation;
+
+            /**
+             * Constructor providing the {@code String} representation 
+             * of this {@code EvidenceTypeConcordance}.
+             * 
+             * @param stringRepresentation  A {@code String} corresponding to 
+             *                              this {@code EvidenceTypeConcordance}.
+             */
+            private EvidenceTypeConcordance(String stringRepresentation) {
+                this.stringRepresentation = stringRepresentation;
+            }
+
+            @Override
+            public String getStringRepresentation() {
+                return this.stringRepresentation;
+            }
+            
+            @Override
+            public String toString() {
+                return this.getStringRepresentation();
+            }
+        }
 
         /**
          * A {@code Boolean} defining whether this CIO term is used to capture a trusted evidence 
@@ -91,7 +297,30 @@ public interface CIOStatementDAO extends DAO<CIOStatementDAO.Attribute> {
          * ({@code false}).
          */
         private final Boolean trusted;
-
+        
+        /**
+         * A {@code ConfidenceLevel} defining the level of confidence that can be put 
+         * in this CIO statement. 
+         */
+        private final ConfidenceLevel confidenceLevel;
+        
+        /**
+         * An {@code EvidenceConcordance} defining, when there are several evidence lines available 
+         * related to a same assertion, whether there are of a same or different experimental or 
+         * computational types.
+         */
+        private final EvidenceConcordance evidenceConcordance;
+        
+        /**
+         * An {@code EvidenceTypeConcordance} defining whether there are multiple evidence lines 
+         * available related to an assertion, and whether they are congruent or conflicting. 
+         * <p>
+         * It is only applicable when a statement doesn't have an {@code EvidenceConcordance} equals
+         * to {@code SINGLE_EVIDENCE} (so this field is {@code null} for, and only for, 
+         * {@code EvidenceConcordance} from {@code SINGLE_EVIDENCE}).
+         */
+        private final EvidenceTypeConcordance evidenceTypeConcordance;
+        
         /**
          * Constructor providing the ID, the name, the description, and the {@code Boolean} defining
          * whether this CIO term is used to capture a trusted evidence line, or whether it indicates
@@ -99,18 +328,34 @@ public interface CIOStatementDAO extends DAO<CIOStatementDAO.Attribute> {
          * <p>
          * All of these parameters are optional, so they can be {@code null} when not used.
          * 
-         * @param id            A {@code String} that is the ID of this CIO term. 
-         * @param name          A {@code String} that is the name of this CIO term.
-         * @param description   A {@code String} that is the description of this CIO term.
-         * @param trusted       A {@code Boolean} defining whether this CIO term is used to capture 
-         *                      a trusted evidence line ({@code true}), or whether it indicates that 
-         *                      the evidence should not be trusted ({@code false}).
+         * @param id                        A {@code String} that is the ID of this CIO term. 
+         * @param name                      A {@code String} that is the name of this CIO term.
+         * @param description               A {@code String} that is the description of this CIO term.
+         * @param trusted                   A {@code Boolean} defining whether this CIO term is 
+         *                                  used to capture a trusted evidence line ({@code true}), 
+         *                                  or whether it indicates that the evidence should not be 
+         *                                  trusted ({@code false}).
+         * @param confidenceLevel           A {@code ConfidenceLevel} defining the level of 
+         *                                  confidence that can be put in this CIO statement. 
+         * @param evidenceConcordance       An {@code EvidenceConcordance} defining, when there are 
+         *                                  several evidence lines available related to a same 
+         *                                  assertion, whether there are of a same or different 
+         *                                  experimental or computational types.
+         * @param evidenceTypeConcordance   An {@code EvidenceTypeConcordance} defining whether 
+         *                                  there are multiple evidence lines available related to 
+         *                                  an assertion, and whether they are congruent or 
+         *                                  conflicting.
          * @throws IllegalArgumentException If {@code id} is empty.
          */
-        public CIOStatementTO(String id, String name, String description, Boolean trusted) 
+        public CIOStatementTO(String id, String name, String description, Boolean trusted,
+                ConfidenceLevel confidenceLevel, EvidenceConcordance evidenceConcordance,
+                EvidenceTypeConcordance evidenceTypeConcordance) 
                 throws IllegalArgumentException {
             super(id, name, description);
             this.trusted = trusted;
+            this.confidenceLevel = confidenceLevel;
+            this.evidenceConcordance = evidenceConcordance;
+            this.evidenceTypeConcordance = evidenceTypeConcordance;
         }
 
         /**
@@ -122,9 +367,38 @@ public interface CIOStatementDAO extends DAO<CIOStatementDAO.Attribute> {
             return this.trusted;
         }
 
+        /**
+         * @return  the {@code ConfidenceLevel} defining the level of 
+         *          confidence that can be put in this CIO statement. 
+         */
+        public ConfidenceLevel getConfidenceLevel() {
+            return this.confidenceLevel;
+        }
+        
+        /**
+         * @return  the {@code EvidenceConcordance} defining, when there are several evidence lines
+         *          available related to a same assertion, whether there are of a same or different
+         *          experimental or computational types.
+         */
+        public EvidenceConcordance getEvidenceConcordance() {
+            return this.evidenceConcordance;
+        }
+        
+        /**
+         * @return  the {@code EvidenceTypeConcordance} defining whether there are multiple 
+         *          evidence lines available related to an assertion, and whether they are 
+         *          congruent or conflicting. 
+         */
+        public EvidenceTypeConcordance getEvidenceTypeConcordance() {
+            return this.evidenceTypeConcordance;
+        }
+        
         @Override
         public String toString() {
-            return super.toString() + " - Trusted: " + trusted;
+            return super.toString() + " - Trusted: " + trusted + 
+                    " - Confidence level: " + confidenceLevel + 
+                    " - Evidence concordance: " + evidenceConcordance + 
+                    " - Evidence type concordance: " + evidenceTypeConcordance;
         }
     }
 }

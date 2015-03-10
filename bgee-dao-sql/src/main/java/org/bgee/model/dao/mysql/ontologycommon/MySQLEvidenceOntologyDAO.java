@@ -53,8 +53,39 @@ public class MySQLEvidenceOntologyDAO extends MySQLDAO<EvidenceOntologyDAO.Attri
     public int insertECOTerms(Collection<ECOTermTO> ecoTOs) 
             throws DAOException, IllegalArgumentException {
         log.entry(ecoTOs);
-        // TODO Auto-generated method stub
-        return log.exit(0);        
+        
+        if (ecoTOs == null || ecoTOs.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "No ECO term is given, then no term is inserted"));
+        }
+
+        int termInsertedCount = 0;
+        int totalTermNumber = ecoTOs.size();
+        
+        // And we need to build two different queries. 
+        String sqlExpression = "INSERT INTO evidenceOntology " +
+                "(ECOId, ECOName, ECODescription) values (?, ?, ?)";
+        
+        // XXX: To not overload MySQL with an error com.mysql.jdbc.PacketTooBigException, 
+        // we insert terms one at a time, but we should insert them several at once,
+        // for instance 100 terms at a time.
+        try (BgeePreparedStatement stmt = 
+                this.getManager().getConnection().prepareStatement(sqlExpression)) {
+            for (ECOTermTO ecoTO: ecoTOs) {
+                stmt.setInt(1, Integer.parseInt(ecoTO.getId()));
+                stmt.setString(2, ecoTO.getName());
+                stmt.setString(3, ecoTO.getDescription());
+                termInsertedCount += stmt.executeUpdate();
+                stmt.clearParameters();
+                if (log.isDebugEnabled() && termInsertedCount % 1000 == 0) {
+                    log.debug("{}/{} ECO terms inserted", termInsertedCount, totalTermNumber);
+                }
+            }
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+
+        return log.exit(termInsertedCount);        
     }
     
     /**

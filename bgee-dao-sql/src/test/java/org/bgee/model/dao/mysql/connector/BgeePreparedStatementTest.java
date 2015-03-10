@@ -3,13 +3,17 @@ package org.bgee.model.dao.mysql.connector;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
+import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.Arrays;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
+import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTO.ConfidenceLevel;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType;
 import org.bgee.model.dao.mysql.TestAncestor;
 import org.bgee.model.dao.mysql.connector.BgeeConnection;
@@ -177,6 +181,26 @@ public class BgeePreparedStatementTest extends TestAncestor
     }
     
     /**
+     * Test {@link BgeePreparedStatement#setString(int, String)}.
+     */
+    @Test
+    public void shouldSetString() throws SQLException {
+        MockDriver.initialize();
+        BgeeConnection con = mock(BgeeConnection.class);
+        BgeePreparedStatement stmt = new BgeePreparedStatement(con, MockDriver.getMockStatement());
+        stmt.setString(4, "test1");
+        
+        verify(MockDriver.getMockStatement()).setString(4, "test1");
+        
+        MockDriver.initialize();
+        con = mock(BgeeConnection.class);
+        stmt = new BgeePreparedStatement(con, MockDriver.getMockStatement());
+        stmt.setString(5, null);
+        
+        verify(MockDriver.getMockStatement()).setNull(5, Types.VARCHAR);
+    }
+
+    /**
      * Test {@link BgeePreparedStatement#setStrings(int, List)}.
      */
     @Test
@@ -192,11 +216,32 @@ public class BgeePreparedStatementTest extends TestAncestor
         MockDriver.initialize();
         con = mock(BgeeConnection.class);
         stmt = new BgeePreparedStatement(con, MockDriver.getMockStatement());
-        stmt.setStrings(4, Arrays.asList("test1", "test2", "test3"));
+        stmt.setStrings(4, Arrays.asList("test1", "test2", "test3", null));
         
         verify(MockDriver.getMockStatement()).setString(4, "test1");
         verify(MockDriver.getMockStatement()).setString(5, "test2");
         verify(MockDriver.getMockStatement()).setString(6, "test3");
+        verify(MockDriver.getMockStatement()).setNull(7, Types.VARCHAR);
+    }
+    
+    /**
+     * Test {@link BgeePreparedStatement#setInteger(int, Integer)}.
+     */
+    @Test
+    public void shouldSetInteger() throws SQLException {
+        MockDriver.initialize();
+        BgeeConnection con = mock(BgeeConnection.class);
+        BgeePreparedStatement stmt = new BgeePreparedStatement(con, MockDriver.getMockStatement());
+        stmt.setInt(3, 10);
+        
+        verify(MockDriver.getMockStatement()).setInt(3, 10);
+        
+        MockDriver.initialize();
+        con = mock(BgeeConnection.class);
+        stmt = new BgeePreparedStatement(con, MockDriver.getMockStatement());
+        stmt.setInt(2, null);
+        
+        verify(MockDriver.getMockStatement()).setNull(2, Types.INTEGER);
     }
     
     /**
@@ -215,13 +260,34 @@ public class BgeePreparedStatementTest extends TestAncestor
         MockDriver.initialize();
         con = mock(BgeeConnection.class);
         stmt = new BgeePreparedStatement(con, MockDriver.getMockStatement());
-        stmt.setIntegers(2, Arrays.asList(10, 14, 17));
+        stmt.setIntegers(2, Arrays.asList(null, 10, 14, 17));
         
-        verify(MockDriver.getMockStatement()).setInt(2, 10);
-        verify(MockDriver.getMockStatement()).setInt(3, 14);
-        verify(MockDriver.getMockStatement()).setInt(4, 17);
+        verify(MockDriver.getMockStatement()).setNull(2, Types.INTEGER);
+        verify(MockDriver.getMockStatement()).setInt(3, 10);
+        verify(MockDriver.getMockStatement()).setInt(4, 14);
+        verify(MockDriver.getMockStatement()).setInt(5, 17);
     }
     
+    /**
+     * Test {@link BgeePreparedStatement#setBoolean(int, Boolean)}.
+     */
+    @Test
+    public void shouldSetBoolean() throws SQLException {
+        MockDriver.initialize();
+        BgeeConnection con = mock(BgeeConnection.class);
+        BgeePreparedStatement stmt = new BgeePreparedStatement(con, MockDriver.getMockStatement());
+        stmt.setBoolean(2, true);
+        
+        verify(MockDriver.getMockStatement()).setBoolean(2, true);
+        
+        MockDriver.initialize();
+        con = mock(BgeeConnection.class);
+        stmt = new BgeePreparedStatement(con, MockDriver.getMockStatement());
+        stmt.setBoolean(2, null);
+
+        verify(MockDriver.getMockStatement()).setNull(2, Types.BOOLEAN);
+    }
+
     /**
      * Test {@link BgeePreparedStatement#setBooleans(int, List)}.
      */
@@ -238,11 +304,33 @@ public class BgeePreparedStatementTest extends TestAncestor
         MockDriver.initialize();
         con = mock(BgeeConnection.class);
         stmt = new BgeePreparedStatement(con, MockDriver.getMockStatement());
-        stmt.setBooleans(2, Arrays.asList(true, false, false));
+        stmt.setBooleans(2, Arrays.asList(true, false, false, null));
 
         verify(MockDriver.getMockStatement()).setBoolean(2, true);
         verify(MockDriver.getMockStatement()).setBoolean(3, false);
         verify(MockDriver.getMockStatement()).setBoolean(4, false);
+        verify(MockDriver.getMockStatement()).setNull(5, Types.BOOLEAN);
+    }
+    
+    /**
+     * Test {@link BgeePreparedStatement#setEnumDAOField(int, EnumDAOField)}.
+     */
+    @Test
+    public void shouldSetEnumDAOField() throws SQLException {
+        MockDriver.initialize();
+        BgeeConnection con = mock(BgeeConnection.class);
+        BgeePreparedStatement stmt = new BgeePreparedStatement(con, MockDriver.getMockStatement());
+        stmt.setEnumDAOField(1, ConfidenceLevel.HIGH_CONFIDENCE);
+        
+        verify(MockDriver.getMockStatement()).setString(1, 
+                ConfidenceLevel.HIGH_CONFIDENCE.getStringRepresentation());
+        
+        MockDriver.initialize();
+        con = mock(BgeeConnection.class);
+        stmt = new BgeePreparedStatement(con, MockDriver.getMockStatement());
+        stmt.setEnumDAOField(9, null);
+
+        verify(MockDriver.getMockStatement()).setNull(9, Types.VARCHAR);
     }
     
     /**
@@ -262,13 +350,35 @@ public class BgeePreparedStatementTest extends TestAncestor
         MockDriver.initialize();
         con = mock(BgeeConnection.class);
         stmt = new BgeePreparedStatement(con, MockDriver.getMockStatement());
-        stmt.setEnumDAOFields(2, Arrays.asList(RelationType.ISA_PARTOF, 
+        stmt.setEnumDAOFields(2, Arrays.asList(RelationType.ISA_PARTOF, null, 
                 RelationType.DEVELOPSFROM));
 
         verify(MockDriver.getMockStatement()).setString(2, 
                 RelationType.ISA_PARTOF.getStringRepresentation());
-        verify(MockDriver.getMockStatement()).setString(3, 
+        verify(MockDriver.getMockStatement()).setNull(3, Types.VARCHAR);
+        verify(MockDriver.getMockStatement()).setString(4, 
                 RelationType.DEVELOPSFROM.getStringRepresentation());
+
+    }
+    
+    /**
+     * Test {@link BgeePreparedStatement#setFloat(int, Float)}.
+     */
+    @Test
+    public void shouldSetFloat() throws SQLException {
+        MockDriver.initialize();
+        BgeeConnection con = mock(BgeeConnection.class);
+        BgeePreparedStatement stmt = new BgeePreparedStatement(con, MockDriver.getMockStatement());
+        stmt.setFloat(2, 1.08f);
+        
+        verify(MockDriver.getMockStatement()).setFloat(2, 1.08f);
+        
+        MockDriver.initialize();
+        con = mock(BgeeConnection.class);
+        stmt = new BgeePreparedStatement(con, MockDriver.getMockStatement());
+        stmt.setFloat(2, null);
+
+        verify(MockDriver.getMockStatement()).setNull(2, Types.REAL);
     }
     
     /**
@@ -287,10 +397,45 @@ public class BgeePreparedStatementTest extends TestAncestor
         MockDriver.initialize();
         con = mock(BgeeConnection.class);
         stmt = new BgeePreparedStatement(con, MockDriver.getMockStatement());
-        stmt.setFloats(2, Arrays.asList(3.6f, 18.01f, 3.14f));
+        stmt.setFloats(2, Arrays.asList(3.6f, 18.01f, 3.14f, null));
 
         verify(MockDriver.getMockStatement()).setFloat(2, 3.6f);
         verify(MockDriver.getMockStatement()).setFloat(3, 18.01f);
         verify(MockDriver.getMockStatement()).setFloat(4, 3.14f);
+        verify(MockDriver.getMockStatement()).setNull(5, Types.REAL);
+    }
+    
+    /**
+     * Test {@link BgeePreparedStatement#setNull(int, Types)}.
+     */
+    @Test
+    public void shouldSetNull() throws SQLException {
+        MockDriver.initialize();
+        BgeeConnection con = mock(BgeeConnection.class);
+        BgeePreparedStatement stmt = new BgeePreparedStatement(con, MockDriver.getMockStatement());
+        stmt.setNull(2, Types.BOOLEAN);
+        
+        verify(MockDriver.getMockStatement()).setNull(2, Types.BOOLEAN);
+    }
+
+    /**
+     * Test {@link BgeePreparedStatement#setDate(int, Date)}.
+     */
+    @Test
+    public void shouldSetDate() throws SQLException {
+        Date date = new java.sql.Date(12345);
+        MockDriver.initialize();
+        BgeeConnection con = mock(BgeeConnection.class);
+        BgeePreparedStatement stmt = new BgeePreparedStatement(con, MockDriver.getMockStatement());
+        stmt.setDate(2, date);
+        
+        verify(MockDriver.getMockStatement()).setDate(2, date);
+        
+        MockDriver.initialize();
+        con = mock(BgeeConnection.class);
+        stmt = new BgeePreparedStatement(con, MockDriver.getMockStatement());
+        stmt.setDate(2, null);
+
+        verify(MockDriver.getMockStatement()).setNull(2, Types.DATE);
     }
 }

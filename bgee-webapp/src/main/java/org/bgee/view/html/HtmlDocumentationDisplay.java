@@ -64,7 +64,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         this.writeln("</div>"); // end of documentationmenu
 
         this.writeln("<div id='subsection1'>");
-        this.writeln("<h2>" + subsectionName1 + "</h2><a class='backlink' href='#sectionname'>Back</a>");
+        this.writeln("<h2>" + subsectionName1 + "</h2>");
         this.writeln("<div class='documentationsubsection'>");
         this.writeln("<h3>H3 title</h3>");
         this.writeln("<p>The raw data in .sra format are downloaded from " +
@@ -94,26 +94,40 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
                 "the number of reads that match a given feature by its length. </p>");
         this.writeln("</div>");
         this.writeln("</div>"); // end of subsection1
-
+        
+        this.writeln(this.getBackToTheTopLink());
+        
         this.writeln("<div id='subsection2'>");
-        this.writeln("<h2>" + subsectionName2 + "</h2><a class='backlink' href='#sectionname'>Back</a>");
+        this.writeln("<h2>" + subsectionName2 + "</h2>");
         this.writeln("<div class='documentationsubsection'>");
         this.writeln("<p> </p>");
         this.writeln("<p> </p>");
         this.writeln("</div>");
         this.writeln("</div>"); // end of subsection2
-
+        
+        this.writeln(this.getBackToTheTopLink());
+        
         this.writeln("<div id='subsection3'>");
-        this.writeln("<h2>" + subsectionName3 + "</h2><a class='backlink' href='#sectionname'>Back</a>");
+        this.writeln("<h2>" + subsectionName3 + "</h2>");
         this.writeln("<div class='documentationsubsection'>");
         this.writeln("<p> </p>");
         this.writeln("<p> </p>");
         this.writeln("</div>");
         this.writeln("</div>"); // end of subsection3
-
+        
+        this.writeln(this.getBackToTheTopLink());
+        
         this.endDisplay();
 
         log.exit();
+    }
+
+    /**
+     * @return  the {@code String} that is the link of the back to the top.
+     */
+    private String getBackToTheTopLink() {
+        log.entry();
+        return log.exit("<a class='backlink' href='#sectionname'>Back to the top</a>");
     }
 
     @Override

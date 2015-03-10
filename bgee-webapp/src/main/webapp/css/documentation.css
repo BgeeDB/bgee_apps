@@ -5,7 +5,6 @@ div.documentationsubsection, div.documentationmenu {
 
 div.documentationsubsection {
     text-align: left;
-    border-top: 2px #920209 solid;
     padding: 1%;
     margin: 0;
     width: 98%;
@@ -45,6 +44,8 @@ div.documentationmenu li {
     margin: 1em 0 0 0;
     font-size: 1.6em;
     font-weight: bold;
+    border-bottom: 2px #920209 solid;
+    width: 100%; 
 }
 
 #sib_body h3 {
@@ -52,8 +53,6 @@ div.documentationmenu li {
     margin: 1% 0 0 0;
 }
 
-a.backlink {
+a.backlink, a.backlink:visited {
     color: #626262;
-    float: right;
-    margin-top: 2em;
 }

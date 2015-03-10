@@ -71,26 +71,36 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
         this.writeln("<h2>Welcome on the latest release of Bgee, Bgee release 13</h2>");
         
-        RequestParameters urlGenerator = this.getNewRequestParameters();
-        urlGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
+        urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
         
         this.writeln("<div id='feature_list'>");
-        this.writeln("<a href='" + urlGenerator.getRequestURL() + "' title='Bgee download page'>" +
-        		"<figure><div><img src='" + this.prop.getImagesRootDirectory() + 
+        
+        this.writeln("<a href='" + urlDownloadGenerator.getRequestURL() + "' title='Bgee download page'>" +
+        		"<figure><div><img class='pageimg' src='" + this.prop.getImagesRootDirectory() + 
         		"download_screenshot.png' alt='Download page screenshot' /></div>" +
                 "<figcaption>See download page</figcaption>" +
                 "</figure></a>");
+        
+        RequestParameters urlDocGenerator = this.getNewRequestParameters();
+        urlDocGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        //TODO create documentation_screenshot and add url in src
+//        this.writeln("<a href='" + urlDocGenerator.getRequestURL() + "' title='Bgee documentation page'>" +
+//                "<figure><div><img class='pageimg' src='' alt='Documentation page screenshot' /></div>" +
+//                "<figcaption>See documentation page</figcaption>" +
+//                "</figure></a>");
+
         this.writeln("</div>");
         
         this.writeln("<div id='home_info'>");
         this.writeln("<p>Features are being added incrementally: </p>");
         this.writeln("<ul><li>2015-03-03: release of the single-species " +
                 "differential expression data for 11 species, see <a href='" + 
-                urlGenerator.getRequestURL() + "' " + "title='Bgee download page'>" +
+                urlDownloadGenerator.getRequestURL() + "' " + "title='Bgee download page'>" +
                 "download page</a>.</li></ul>");
         this.writeln("<ul><li>2014-12-19: release of the single-species " +
                 "expression data for 17 species, see <a href='" + 
-                urlGenerator.getRequestURL() + "' " + "title='Bgee download page'>" +
+                urlDownloadGenerator.getRequestURL() + "' " + "title='Bgee download page'>" +
                 "download page</a>.</li></ul>");
         this.writeln("<p>The complete website remains available for the previous release of Bgee, " +
         		"see <a href='http://bgee.org/bgee/bgee/'>Bgee release 12</a>. ");

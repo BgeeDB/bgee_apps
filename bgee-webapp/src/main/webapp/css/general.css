@@ -6,3 +6,12 @@
     text-align: center;
     font-weight: bold;
 }
+
+img.pageimg {
+    border-radius: 8px;
+    box-shadow: 3px 3px 4px grey, -2px -2px 2px white;
+}
+
+img.pageimg:hover {
+    box-shadow:0px 0px 5px 2px #920209;
+}

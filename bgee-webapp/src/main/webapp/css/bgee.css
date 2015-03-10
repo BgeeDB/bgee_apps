@@ -78,38 +78,38 @@ header img {
     bottom: 0;
     height: 18px;
     width: 98%;
-    margin: 1em 10px 0px;
+    margin: 1em 1% 0px;
     display: block;
-    border-bottom: 4px solid #920209;
 }
 
 #nav ul {
     background-color: #ABBDC4;
-	margin: -7px 0px 0px;
+    margin: -11px 0px 0px;
     padding: 0;
     height: 25px;
     list-style: outside none none;
     font-weight: 0.9em;
+    border-bottom: 4px solid #920209;
 }
 
 #nav ul li {
 	position: relative;
     float: left;
     width: 160px;
-    height: 20px;
+    height: 19px;
     padding-top: 0.4em;
     text-align: center;
     font-size: 0.9em;
 }
 
 #nav ul li:hover {
-    border-bottom: 4px solid #BC161D;
-    background-color: #416982;
+    background-color: #29516A;
+    z-index: 100;
 }
 
 /* style the links for the top level */
 #nav a, #nav a:visited {
-    color: #416982;
+    color: #29516A;
     text-decoration: none;
     width: 160px;
 }
@@ -125,20 +125,21 @@ header img {
 }
 #nav ul ul a.drop:hover, #nav ul ul :hover>a.drop {
     color: white;
-    background-color: #416982;
+    background-color: #29516A;
     margin-bottom: 0px;
     height: auto;
 }
 
-/* hide the sub levels and give them a positon absolute so that they take up no room */
+/* hide the sub levels and give them a position absolute so that they take up no room */
 #nav ul ul {
     visibility: hidden;
     padding: 5px;
     position: absolute;
-    height: 0;
-    top: 33px;
+    height: auto;
+    top: 29px;
     left: 0;
     width: 150px;
+    border-bottom: none;
 }
 #nav ul ul li{
 	width: 100%;
@@ -146,23 +147,19 @@ header img {
 
 #nav ul ul li:hover {
 	border-bottom: none;
-	background-color: #416982;
+	background-color: #29516A;
 }
 
 /* make the second level visible when hover on first level list OR link */
 #nav ul li:hover ul, #nav ul a:hover ul {
     visibility: visible;
-    height: auto;
     margin-top: -4px;
     background-color: #ABBDC4;
 }
- /* keep the third level hidden when you hover on first level list OR link */
-#nav ul :hover ul ul {
-    visibility: hidden;
-}
-/* make the third level visible when you hover over second level list OR link */
-#nav ul :hover ul :hover ul {
-    visibility: visible;
+
+#nav .deploy {
+    margin: 0 0 0.15em 0.4em;
+    height: 5px;
 }
 
 /****SIB BODY****/

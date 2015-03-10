@@ -182,38 +182,58 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 + "alt='SIB Swiss Institute of Bioinformatics' />"
                 + "</a>");
     
+        RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
+        urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        RequestParameters urlDocGenerator = this.getNewRequestParameters();
+        urlDocGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
+        RequestParameters urlAboutGenerator = this.getNewRequestParameters();
+        urlAboutGenerator.setPage(RequestParameters.PAGE_ABOUT);
+
         // Navigation bar
         this.writeln("<div id='nav'>");
         this.writeln("<ul>");
         this.writeln("<li>");
-        this.writeln("<a title='Data download page' href='" + 
-                this.prop.getBgeeRootDirectory() + "?page=download'>Data download</a>");
+        this.writeln("<a title='Data download page' href='" + urlDownloadGenerator.getRequestURL() + 
+                "'>Data download</a>");
         this.writeln("</li>");
         this.writeln("<li>");
-        this.writeln("<a title='Documentation page' href='" + 
-                this.prop.getBgeeRootDirectory() + "?page=documentation'>Documentation</a>");
+        this.writeln("<a title='Documentation page' href='" + urlDocGenerator.getRequestURL() + 
+                "'>Documentation<img class='deploy' src='" + this.prop.getImagesRootDirectory() + "arrow_down.png'"
+                        + "alt='deploy'/></a>");
         this.writeln("<ul>");
-        this.writeln("<li><a class='drop' title='Section 1' href='" + 
-                this.prop.getBgeeRootDirectory() + "?page=documentation'>Section 1</a></li>");
-        this.writeln("<li><a class='drop' title='Section 2' href='" + 
-                this.prop.getBgeeRootDirectory() + "?page=documentation'>Section 2</a></li>");
-        this.writeln("<li><a class='drop' title='Section 1' href='" + 
-                this.prop.getBgeeRootDirectory() + "?page=documentation'>Section 3</a></li>");
-        this.writeln("<li><a class='drop' title='Section 1' href='" + 
-                this.prop.getBgeeRootDirectory() + "?page=documentation'>Section 4</a></li>");
+        //TODO set section URLs when defined
+        this.writeln("<li><a class='drop' title='Section 1' href='" + urlDocGenerator.getRequestURL() + 
+                "'>Section 1</a></li>");
+        this.writeln("<li><a class='drop' title='Section 2' href='" + urlDocGenerator.getRequestURL() + 
+                "'>Section 2</a></li>");
+        this.writeln("<li><a class='drop' title='Section 1' href='" + urlDocGenerator.getRequestURL() + 
+                "'>Section 3</a></li>");
+        this.writeln("<li><a class='drop' title='Section 1' href='" + urlDocGenerator.getRequestURL() + 
+                "'>Section 4</a></li>");
         this.writeln("</ul>");
         this.writeln("</li>");
         this.writeln("<li>");
-        this.writeln("<a id='about' rel='help' title='About page' href='/webapp/?page=about'>About</a>");
+        this.writeln("<a id='about' rel='help' title='About page' href='" + urlAboutGenerator.getRequestURL() + 
+                "'>About</a>");
         this.writeln("</li>");
         this.writeln("<li>");
-        this.writeln("<a id='contact' title='Contact page' href='mailto:Bgee@isb-sib.ch'>Contact</a>");
+        this.writeln(this.getObfuscateEmail(0));
         this.writeln("</li>");
         this.writeln("</ul>");
         this.writeln("</div>");
         
         this.writeln("</header>");
         log.exit();
+    }
+    
+    /**
+     * @param nbCalled  An {@code int} that is the different number every time 
+     *                  this method is called per page!
+     * @return          the {@code String} that is the HTML code of the Contact link.
+     */
+    //TODO move javascript in common.js
+    private String getObfuscateEmail(int nbCalled) {
+        return "<script type=\"text/javascript\">eval(unescape('%66%75%6E%63%74%69%6F%6E%20%74%72%61%6E%73%70%6F%73%65%32%30%28%68%29%20%7B%76%61%72%20%73%3D%27%61%6D%6C%69%6F%74%42%3A%65%67%40%65%73%69%2D%62%69%73%2E%62%68%63%27%3B%76%61%72%20%72%3D%27%27%3B%66%6F%72%28%76%61%72%20%69%3D%30%3B%69%3C%73%2E%6C%65%6E%67%74%68%3B%69%2B%2B%2C%69%2B%2B%29%7B%72%3D%72%2B%73%2E%73%75%62%73%74%72%69%6E%67%28%69%2B%31%2C%69%2B%32%29%2B%73%2E%73%75%62%73%74%72%69%6E%67%28%69%2C%69%2B%31%29%7D%68%2E%68%72%65%66%3D%72%3B%7D%64%6F%63%75%6D%65%6E%74%2E%77%72%69%74%65%28%27%3C%61%20%68%72%65%66%3D%22%23%22%20%6F%6E%4D%6F%75%73%65%4F%76%65%72%3D%22%6A%61%76%61%73%63%72%69%70%74%3A%74%72%61%6E%73%70%6F%73%65%32%30%28%74%68%69%73%29%22%20%6F%6E%46%6F%63%75%73%3D%22%6A%61%76%61%73%63%72%69%70%74%3A%74%72%61%6E%73%70%6F%73%65%32%30%28%74%68%69%73%29%22%20%74%69%74%6C%65%3D%22%43%6F%6E%74%61%63%74%20%75%73%22%20%63%6C%61%73%73%3D%22%6D%65%6E%75%22%3E%43%6F%6E%74%61%63%74%3C%2F%61%3E%27%29%3B'));</script>";
     }
 
     @Override

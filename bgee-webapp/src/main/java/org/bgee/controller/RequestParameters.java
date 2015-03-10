@@ -106,6 +106,12 @@ public class RequestParameters {
     public static final String PAGE_DOCUMENTATION = "documentation";
     
     /**
+     * A {@code String} that is the value taken by the {@code page} parameter 
+     * (see {@link URLParameters#getParamPage()}) when a download page is requested.
+     */
+    public static final String PAGE_ABOUT = "about";
+    
+    /**
      * A {@code String} that is the value taken by the {@code action} parameter 
      * (see {@link URLParameters#getParamAction()}) when a documentation is requested.
      */

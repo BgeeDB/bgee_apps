@@ -2,6 +2,7 @@ package org.bgee.pipeline.ontologycommon;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -460,7 +461,7 @@ public class CIOWrapper {
      */
     public final static String EVIDENCE_TYPE_CONCORDANCE_ID = "CIO:0000041";
 
-/**
+    /**
      * A {@code String} that is the OBO-like ID from the confidence information ontology 
      * of the term "same type".
      * @see #DIFFERENT_TYPES_EVIDENCE_CONCORDANCE_ID
@@ -472,6 +473,12 @@ public class CIOWrapper {
      * @see #SAME_TYPE_EVIDENCE_CONCORDANCE_ID
      */
     public final static String DIFFERENT_TYPES_EVIDENCE_CONCORDANCE_ID = "CIO:0000038";
+    
+    /**
+     * A {@code String} that is the name of the subset grouping CI statements 
+     * that are trusted by the Bgee team.
+     */
+    public final static String BGEE_NOT_TRUSTED_SUBSET = "bgee_not_trusted";
     
     /**
      * Load {@code pathToOntology} as an {@code OWLOntology}.
@@ -1254,41 +1261,25 @@ public class CIOWrapper {
         return log.exit(element);
     }
     
-//    /**
-//     * Returns the direct superClass of {@code subClass} through the relation {@code rel}. 
-//     * {@code rel} should be a relation allowing a unique superClass (used of 
-//     * {@code ObjectAllValuesFrom}). Returns {@code null} if no direct superClass 
-//     * was retrieved from {@code subClass} through {@code rel}.
-//     * 
-//     * @param subClass  An {@code OWLClass} for which we want to retrieve superClass 
-//     *                  through {@code rel}.
-//     * @param rel       An {@code OWLObjectProperty} representing the relation that should 
-//     *                  relate {@code subClass} and its ancestor.
-//     * @return          An {@code OWLClass} that is the unique direct ancestor of {@code cls} 
-//     *                  through {@code rel}. {@code null} if none could be retrieved. 
-//     * @throws IllegalArgumentException If it exists more than one direct ancestor 
-//     *                                  of {@code cls} through {@code rel}.
-//     */
-//    private OWLClass getUniqueSuperClass(OWLClass subClass, OWLObjectProperty rel) 
-//        throws IllegalArgumentException {
-//        log.entry(subClass, rel);
-//        Set<OWLClass> superClasses = new HashSet<OWLClass>();
-//        for (OWLGraphEdge edge: this.wrapper.getOutgoingEdges(subClass, 
-//                new HashSet<OWLPropertyExpression>(Arrays.asList(rel)))) {
-//            if (edge.getTarget() instanceof OWLClass) {
-//                superClasses.add((OWLClass) edge.getTarget());
-//            }
-//        }
-//        if (superClasses.size() > 1) {
-//            throw log.throwing(new IllegalArgumentException("The provided class " + subClass 
-//                    + " does not have a unique superClass through the relation " + rel));
-//        }
-//        if (superClasses.size() == 1) {
-//            return log.exit(superClasses.iterator().next());
-//        }
-//        return log.exit(null);
-//    }
-
+    /**
+     * Determines whether {@code cls} is a CI statement considered as not-trusted 
+     * by the Bgee team. 
+     * 
+     * @param cls   An {@code OWLClass} for which we want to know whether it is a CI statement 
+     *              not trusted by the Bgee team.
+     * @return      {@code true} if {@code cls} is not trusted, {@code false} otherwise.
+     * @throws IllegalArgumentException If {@code cls} is not a CI statement (see 
+     *                                  {@link #isConfidenceStatement(OWLClass)}).
+     */
+    public boolean isBgeeNotTrustedStatement(OWLClass cls) throws IllegalArgumentException {
+        log.entry(cls);
+        if (!this.isConfidenceStatement(cls)) {
+            throw log.throwing(new IllegalArgumentException("Only CI statements can be trusted."));
+        }
+        return log.exit(this.wrapper.isOWLObjectInSubsets(cls, 
+                Arrays.asList(BGEE_NOT_TRUSTED_SUBSET)));
+    }
+    
     /**
      * Determines the best confidence term with level information among {@code cioTerms}. 
      * The {@code OWLClass}es in {@code cioTerms} must meet the following conditions: 

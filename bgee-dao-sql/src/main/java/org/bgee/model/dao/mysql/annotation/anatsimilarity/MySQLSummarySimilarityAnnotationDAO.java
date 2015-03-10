@@ -1,6 +1,5 @@
-package org.bgee.model.dao.mysql.annotation;
+package org.bgee.model.dao.mysql.annotation.anatsimilarity;
 
-import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
@@ -8,30 +7,30 @@ import java.util.Map.Entry;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.dao.api.annotation.RawSimilarityAnnotationDAO;
+import org.bgee.model.dao.api.annotation.SummarySimilarityAnnotationDAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 
-
 /**
- * A {@code RawSimilarityAnnotationDAO} for MySQL.
+ * A {@code SummarySimilarityAnnotationDAO} for MySQL.
  *
  * @author Valentine Rech de Laval
  * @version Bgee 13
- * @see org.bgee.model.dao.api.annotation.RawSimilarityAnnotationDAO.RawSimilarityAnnotationTO
+ * @see org.bgee.model.dao.api.annotation.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO
  * @since Bgee 13
  */
-public class MySQLRawSimilarityAnnotationDAO extends MySQLDAO<RawSimilarityAnnotationDAO.Attribute> 
-                                             implements RawSimilarityAnnotationDAO {
+public class MySQLSummarySimilarityAnnotationDAO 
+                                extends MySQLDAO<SummarySimilarityAnnotationDAO.Attribute> 
+                                implements SummarySimilarityAnnotationDAO {
 
     /**
      * {@code Logger} of the class. 
      */
     private final static Logger log = 
-            LogManager.getLogger(MySQLRawSimilarityAnnotationDAO.class.getName());
+            LogManager.getLogger(MySQLSummarySimilarityAnnotationDAO.class.getName());
     
     /**
      * Constructor providing the {@code MySQLDAOManager} that this {@code MySQLDAO} 
@@ -40,13 +39,13 @@ public class MySQLRawSimilarityAnnotationDAO extends MySQLDAO<RawSimilarityAnnot
      * @param manager                       The {@code MySQLDAOManager} to use.
      * @throws IllegalArgumentException     If {@code manager} is {@code null}.
      */
-    public MySQLRawSimilarityAnnotationDAO(MySQLDAOManager manager)
+    public MySQLSummarySimilarityAnnotationDAO(MySQLDAOManager manager)
             throws IllegalArgumentException {
         super(manager);
     }
 
     @Override
-    public RawSimilarityAnnotationTOResultSet getAllRawSimilarityAnnotations()
+    public SummarySimilarityAnnotationTOResultSet getAllSummarySimilarityAnnotations()
             throws DAOException {
         log.entry();
         // TODO Auto-generated method stub
@@ -54,45 +53,39 @@ public class MySQLRawSimilarityAnnotationDAO extends MySQLDAO<RawSimilarityAnnot
     }
 
     @Override
-    public int insertRawSimilarityAnnotations(Collection<RawSimilarityAnnotationTO> rawTOs)
+    public int insertSummarySimilarityAnnotations(
+            Collection<SummarySimilarityAnnotationTO> summaryTOs)
             throws DAOException, IllegalArgumentException {
-        log.entry(rawTOs);
+        log.entry(summaryTOs);
 
-        if (rawTOs == null || rawTOs.isEmpty()) {
+        if (summaryTOs == null || summaryTOs.isEmpty()) {
             throw log.throwing(new IllegalArgumentException(
-                    "No raw similarity annotation is given, then no annotation is inserted"));
+                    "No summary similarity annotation is given, then no annotation is inserted"));
         }
 
         int annotationInsertedCount = 0;
-        int totalAnnotationNumber = rawTOs.size();
+        int totalAnnotationNumber = summaryTOs.size();
         
         // And we need to build two different queries. 
-        String sqlExpression = "INSERT INTO rawSimilarityAnnotation " +
-                "(summarySimilarityAnnotationId, negated, ECOId, CIOId, referenceId, " +
-                "referenceTitle, supportingText, assignedBy, curator, annotationDate) " +
-                "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sqlExpression = "INSERT INTO summarySimilarityAnnotation " +
+                "(summarySimilarityAnnotationId, taxonId, negated, CIOId) " +
+                "values (?, ?, ?, ?)";
         
         // XXX: To not overload MySQL with an error com.mysql.jdbc.PacketTooBigException, 
         // we insert annotations one at a time, but we should insert them several at once,
         // for instance 100 annotations at a time.
         try (BgeePreparedStatement stmt = 
                 this.getManager().getConnection().prepareStatement(sqlExpression)) {
-            for (RawSimilarityAnnotationTO rawTO: rawTOs) {
-                stmt.setInt(1, Integer.parseInt(rawTO.getSummarySimilarityAnnotationId()));
-                stmt.setBoolean(2, rawTO.isNegated());
-                stmt.setString(3, rawTO.getECOId());
-                stmt.setString(4, rawTO.getCIOId());
-                stmt.setString(5, rawTO.getReferenceId());
-                stmt.setString(6, rawTO.getReferenceTitle());
-                stmt.setString(7, rawTO.getSupportingText());
-                stmt.setString(8, rawTO.getAssignedBy());
-                stmt.setString(9, rawTO.getCurator());
-                stmt.setDate(10, rawTO.getAnnotationDate());
+            for (SummarySimilarityAnnotationTO summaryTO: summaryTOs) {
+                stmt.setInt(1, Integer.parseInt(summaryTO.getId()));
+                stmt.setInt(2, Integer.parseInt(summaryTO.getTaxonId()));
+                stmt.setBoolean(3, summaryTO.isNegated());
+                stmt.setString(4, summaryTO.getCIOId());
                 annotationInsertedCount += stmt.executeUpdate();
                 stmt.clearParameters();
                 if (log.isDebugEnabled() && annotationInsertedCount % 1000 == 0) {
-                    log.debug("{}/{} raw similarity annotations inserted", annotationInsertedCount, 
-                            totalAnnotationNumber);
+                    log.debug("{}/{} summary similarity annotations inserted", 
+                            annotationInsertedCount, totalAnnotationNumber);
                 }
             }
         } catch (SQLException e) {
@@ -102,16 +95,57 @@ public class MySQLRawSimilarityAnnotationDAO extends MySQLDAO<RawSimilarityAnnot
         return log.exit(annotationInsertedCount);        
     }
     
+    @Override
+    public int insertSimilarityAnnotationsToAnatEntityIds(
+            Collection<SimilarityAnnotationToAnatEntityIdTO> simAnnotToAnatEntityTOs) 
+                    throws DAOException, IllegalArgumentException {
+        log.entry(simAnnotToAnatEntityTOs);
+        
+        if (simAnnotToAnatEntityTOs == null || simAnnotToAnatEntityTOs.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "No summary similarity annotation is given, then no annotation is inserted"));
+        }
+
+        int rowInsertedCount = 0;
+        int totalToNumber = simAnnotToAnatEntityTOs.size();
+        
+        // And we need to build two different queries. 
+        String sqlExpression = "INSERT INTO similarityAnnotationToAnatEntityId " +
+                "(summarySimilarityAnnotationId, anatEntityId) values (?, ?)";
+        
+        // XXX: To not overload MySQL with an error com.mysql.jdbc.PacketTooBigException, 
+        // we insert relations one at a time, but we should insert them several at once,
+        // for instance 100 relations at a time.
+        try (BgeePreparedStatement stmt = 
+                this.getManager().getConnection().prepareStatement(sqlExpression)) {
+            for (SimilarityAnnotationToAnatEntityIdTO simAnnotToAnatEntityTO: simAnnotToAnatEntityTOs) {
+                stmt.setInt(1, 
+                        Integer.parseInt(simAnnotToAnatEntityTO.getSummarySimilarityAnnotationId()));
+                stmt.setString(2, simAnnotToAnatEntityTO.getAnatEntityId());
+                rowInsertedCount += stmt.executeUpdate();
+                stmt.clearParameters();
+                if (log.isDebugEnabled() && rowInsertedCount % 1000 == 0) {
+                    log.debug("{}/{} similarity annotation to anat. entity inserted", 
+                            rowInsertedCount, totalToNumber);
+                }
+            }
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+
+        return log.exit(rowInsertedCount);        
+    }
+
     /**
-     * A {@code MySQLDAOResultSet} specific to {@code RawSimilarityAnnotationTO}.
+     * A {@code MySQLDAOResultSet} specific to {@code SummarySimilarityAnnotationTO}.
      * 
      * @author Valentine Rech de Laval
      * @version Bgee 13
      * @since Bgee 13
      */
-    public class MySQLRawSimilarityAnnotationTOResultSet 
-                extends MySQLDAOResultSet<RawSimilarityAnnotationTO> 
-                implements RawSimilarityAnnotationTOResultSet {
+    public class MySQLSummarySimilarityAnnotationTOResultSet 
+                extends MySQLDAOResultSet<SummarySimilarityAnnotationTO> 
+                implements SummarySimilarityAnnotationTOResultSet {
 
         /**
          * Delegates to {@link MySQLDAOResultSet#MySQLDAOResultSet(BgeePreparedStatement)}
@@ -119,7 +153,7 @@ public class MySQLRawSimilarityAnnotationDAO extends MySQLDAO<RawSimilarityAnnot
          * 
          * @param statement The first {@code BgeePreparedStatement} to execute a query on.
          */
-        private MySQLRawSimilarityAnnotationTOResultSet(BgeePreparedStatement statement) {
+        private MySQLSummarySimilarityAnnotationTOResultSet(BgeePreparedStatement statement) {
             super(statement);
         }
         
@@ -146,63 +180,40 @@ public class MySQLRawSimilarityAnnotationDAO extends MySQLDAO<RawSimilarityAnnot
          *                              returned will be stored, implying potentially 
          *                              great memory usage.
          */
-        private MySQLRawSimilarityAnnotationTOResultSet(BgeePreparedStatement statement, 
+        private MySQLSummarySimilarityAnnotationTOResultSet(BgeePreparedStatement statement, 
                 int offsetParamIndex, int rowCountParamIndex, int rowCount, 
                 boolean filterDuplicates) {
             super(statement, offsetParamIndex, rowCountParamIndex, rowCount, filterDuplicates);
         }
 
         @Override
-        protected RawSimilarityAnnotationTO getNewTO() throws DAOException {
+        protected SummarySimilarityAnnotationTO getNewTO() throws DAOException {
             log.entry();
 
-            String summarySimilarityAnnotationId = null, ecoId = null, cioId = null, 
-                    referenceId = null, referenceTitle = null, supportingText = null, 
-                    assignedBy = null, curator = null; 
+            String id = null, taxonId = null, cioId = null; 
             Boolean negated = null;
-            Date annotationDate = null;
 
             ResultSet currentResultSet = this.getCurrentResultSet();
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
                     if (column.getValue().equals("summarySimilarityAnnotationId")) {
-                        summarySimilarityAnnotationId = currentResultSet.getString(column.getKey());
+                        id = currentResultSet.getString(column.getKey());
                         
+                    } else if (column.getValue().equals("taxonId")) {
+                        taxonId = currentResultSet.getString(column.getKey());
+
                     } else if (column.getValue().equals("negated")) {
                         negated = currentResultSet.getBoolean(column.getKey());
 
-                    } else if (column.getValue().equals("ECOId")) {
-                        ecoId = currentResultSet.getString(column.getKey());
-
                     } else if (column.getValue().equals("CIOId")) {
                         cioId = currentResultSet.getString(column.getKey());
-
-                    } else if (column.getValue().equals("referenceId")) {
-                        referenceId = currentResultSet.getString(column.getKey());
-
-                    } else if (column.getValue().equals("referenceTitle")) {
-                        referenceTitle = currentResultSet.getString(column.getKey());
-
-                    } else if (column.getValue().equals("supportingText")) {
-                        supportingText = currentResultSet.getString(column.getKey());
-
-                    } else if (column.getValue().equals("assignedBy")) {
-                        assignedBy = currentResultSet.getString(column.getKey());
-
-                    } else if (column.getValue().equals("curator")) {
-                        curator = currentResultSet.getString(column.getKey());
-
-                    } else if (column.getValue().equals("annotationDate")) {
-                        annotationDate = currentResultSet.getDate(column.getKey());
                     }
 
                 } catch (SQLException e) {
                     throw log.throwing(new DAOException(e));
                 }
             }
-            return log.exit(new RawSimilarityAnnotationTO(summarySimilarityAnnotationId, negated, 
-                    ecoId, cioId, referenceId, referenceTitle, supportingText, 
-                    assignedBy, curator, annotationDate));
+            return log.exit(new SummarySimilarityAnnotationTO(id, taxonId, negated, cioId));
         }
     }
 }

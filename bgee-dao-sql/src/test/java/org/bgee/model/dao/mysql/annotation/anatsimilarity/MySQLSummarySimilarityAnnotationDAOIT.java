@@ -1,4 +1,4 @@
-package org.bgee.model.dao.mysql.annotation;
+package org.bgee.model.dao.mysql.annotation.anatsimilarity;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -13,6 +13,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.annotation.SummarySimilarityAnnotationDAO.SimilarityAnnotationToAnatEntityIdTO;
 import org.bgee.model.dao.api.annotation.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO;
 import org.bgee.model.dao.mysql.MySQLITAncestor;
+import org.bgee.model.dao.mysql.annotation.anatsimilarity.MySQLSummarySimilarityAnnotationDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.junit.Test;
 

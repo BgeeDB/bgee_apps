@@ -1,4 +1,4 @@
-package org.bgee.model.dao.api.annotation;
+package org.bgee.model.dao.api.annotation.anatsimilarity;
 
 import java.util.Collection;
 

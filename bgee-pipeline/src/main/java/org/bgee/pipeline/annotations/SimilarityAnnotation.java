@@ -1400,6 +1400,84 @@ public class SimilarityAnnotation {
         return log.exit(missingNegativeAnnots);
     }
 
+    /**
+     * Checks that no errors were detected and stored, in {@link #missingUberonIds}, 
+     * and/or {@link #missingTaxonIds}, and/or {@link #missingECOIds}, and/or 
+     * {@link #missingHOMIds}, and/or {@link #missingCONFIds}, and/or 
+     * {@link #idsNotExistingInTaxa}, and/or {@link #duplicates}. If some errors were stored, an 
+     * {@code IllegalStateException} will be thrown with a detailed error message, 
+     * otherwise, nothing happens.
+     * @throws IllegalStateException    if some errors were detected and stored.
+     */
+    private void verifyErrors() throws IllegalStateException {
+        log.entry();
+        
+        String errorMsg = "";
+        if (!this.incorrectFormat.isEmpty()) {
+            errorMsg += Utils.CR + "Problem detected, incorrectly formatted annotation lines: " + 
+                Utils.CR;
+            for (Map<String, Object> annot: this.incorrectFormat) {
+                errorMsg += annot + Utils.CR;
+            }
+        }
+        if (!this.missingUberonIds.isEmpty()) {
+            errorMsg += Utils.CR + "Problem detected, unknown or deprecated Uberon IDs: " + 
+                Utils.CR;
+            for (String uberonId: this.missingUberonIds) {
+                errorMsg += uberonId + Utils.CR;
+            }
+        }
+        if (!this.missingTaxonIds.isEmpty()) {
+            errorMsg += Utils.CR + "Problem detected, unknown or deprecated taxon IDs: " + 
+                Utils.CR;
+            for (int taxonId: this.missingTaxonIds) {
+                errorMsg += taxonId + Utils.CR;
+            }
+        }
+        if (!this.idsNotExistingInTaxa.isEmpty()) {
+            errorMsg += Utils.CR + "Problem detected, Uberon IDs annotated with a taxon " +
+                    "there are not supposed to exist in: " + Utils.CR;
+            for (Entry<String, Set<Integer>> entry: this.idsNotExistingInTaxa.entrySet()) {
+                for (int taxonId: entry.getValue()) {
+                    errorMsg += entry.getKey() + " - " + taxonId + Utils.CR;
+                }
+            }
+        }
+        if (!this.missingECOIds.isEmpty()) {
+            errorMsg += Utils.CR + "Problem detected, unknown or deprecated ECO IDs: " + 
+                Utils.CR;
+            for (String ecoId: this.missingECOIds) {
+                errorMsg += ecoId + Utils.CR;
+            }
+        }
+        if (!this.missingHOMIds.isEmpty()) {
+            errorMsg += Utils.CR + "Problem detected, unknown or deprecated HOM IDs: " + 
+                Utils.CR;
+            for (String homId: this.missingHOMIds) {
+                errorMsg += homId + Utils.CR;
+            }
+        }
+        if (!this.missingCONFIds.isEmpty()) {
+            errorMsg += Utils.CR + "Problem detected, unknown or deprecated CONF IDs: " + 
+                Utils.CR;
+            for (String confId: this.missingCONFIds) {
+                errorMsg += confId + Utils.CR;
+            }
+        }
+        if (!this.duplicates.isEmpty()) {
+            errorMsg += Utils.CR + "Some annotations are duplicated: " + 
+                Utils.CR;
+            for (Map<String, Object> duplicate: this.duplicates) {
+                errorMsg += duplicate + Utils.CR;
+            }
+        }
+        if (!errorMsg.equals("")) {
+            throw log.throwing(new IllegalStateException(errorMsg));
+        }
+        
+        log.exit();
+    }
+
     public void generateFiles(String rawAnnotFile, Set<GeneratedFileType> fileTypes, 
             String taxonConstraintsFile, Map<String, Set<Integer>> idStartsToOverridenTaxonIds, 
             String uberonOntFile, String taxOntFile, 
@@ -1517,7 +1595,7 @@ public class SimilarityAnnotation {
             return log.exit(aggregatedAnnots);
         }
         
-        //otherwise, now we need to generate SINGLE TAXON annotations
+        //otherwise, now we need to generate SINGLE_TAXON annotations
         
         if (fileType.equals(GeneratedFileType.SINGLE_TAXON)) {
             return log.exit(singleTaxonAnnots);
@@ -1532,7 +1610,8 @@ public class SimilarityAnnotation {
     /**
      * Generates annotations for {@link GeneratedFileType} {@code RAW_CLEAN}: 
      * notably, this method adds Uberon names, ECO term names, etc (see method 
-     * {@code getNewAnnotWithExtraInfo}).
+     * {@code getNewAnnotWithExtraInfo}), and add inferred annotations (for instance, 
+     * using transformation_of relations).
      * <p>
      * The {@code Map}s in the returned {@code List} are ordered by calling 
      * {@link #sortAnnotations(List)}. {@code rawAnnots} will not be modified 
@@ -1556,6 +1635,7 @@ public class SimilarityAnnotation {
      * @throws IllegalArgumentException If {@code rawAnnots} does not allow to produce any 
      *                                  raw clean annotations.
      */
+    //TODO: add inferred annotations
     private List<Map<String, Object>> generateRawCleanAnnotations(
             List<Map<String, Object>> rawAnnots, 
             OWLGraphWrapper uberonOntWrapper, OWLGraphWrapper taxOntWrapper, 
@@ -1753,6 +1833,10 @@ public class SimilarityAnnotation {
         
         return log.exit(releaseAnnot);
     }
+    
+    private void inferTransformationOfAnnotations() {
+        
+    }
 
 
     /**
@@ -1884,6 +1968,11 @@ public class SimilarityAnnotation {
             }
         }
         
+        if (aggregatedEvidencesAnnots.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("The annotations provided did not "
+                    + "allow to retrieve any AGGREGATED EVIDENCE annotations."));
+        }
+        
         this.sortAnnotations(aggregatedEvidencesAnnots);
         return log.exit(aggregatedEvidencesAnnots);
     }
@@ -1960,7 +2049,7 @@ public class SimilarityAnnotation {
             //-----------------------------------
             
             consideredAnnotations++;
-            boolean currentNegate = annot.get(QUALIFIER_COL_NAME) != null ? true : false;
+            boolean currentNegate = this.isNegativeAnnotations(annot);
             Set<OWLClass> toUseECOs  = positiveECOs;
             Set<OWLClass> toUseConfs = positiveConfs;
             if (currentNegate) {
@@ -2039,19 +2128,170 @@ public class SimilarityAnnotation {
         return log.exit(summaryConf);
     }
     
-//    /**
-//     * Determine whether the provided annotation is negating or supporting an assertion. 
-//     * 
-//     * @param annot A {@code Map} representing one annotation. See 
-//     *              {@link #extractAnnotations(similarityFile, GeneratedFileType)} for 
-//     *              a definition of the keys used. 
-//     * @return      A {@code boolean} that is {@code true} if {@code annot} is negating 
-//     *              an assertion.
-//     */ 
-//    private boolean isNegativeAnnotations(Map<String, Object> annot) {
-//        log.entry(annot);
-//        return log.exit(annot.get(QUALIFIER_COL_NAME) != null ? true : false);
-//    }
+    /**
+     * Generates annotations for {@link GeneratedFileType} {@code SINGLE_TAXON}: 
+     * some annotations can be related to same entity and HOM IDs, but different taxa 
+     * (alternative homology hypothesis, or confirmatory information of homology 
+     * at the level of sub-taxa); in that case, we want to identify the 'true' common ancestor 
+     * for an anatomical entity/HOM term. If {@code trustedAnnotations} is {@code true}, 
+     * low confidence annotations will be discarded, if annotation of correct confidence 
+     * are available.
+     * <p>
+     * The annotations are returned as a {@code List} of {@code Map}s. It contains at most 
+     * one annotation for same anatomical entity/HOM IDs. {@code Map}s are ordered 
+     * by calling {@link #sortAnnotations(List)}. 
+     * {@code summaryAnnots} will not be modified as a result of the call to this method.
+     * <p>
+     * All annotations in {@code summaryAnnots} must be {@code AGGREGATED_EVIDENCE} annotations. 
+     * This notably means that there should never multiple annotations related to same 
+     * entity/HOM/taxon IDs.
+     * 
+     * @param summaryAnnots         A {@code List} of {@code Map}s, where 
+     *                              each {@code Map} represents a raw annotation line, 
+     *                              as provided by curators.
+     *                              See {@link #extractAnnotations(String, boolean)} for details 
+     *                              about the key-value pairs in this {@code Map}.
+     * @param taxOntWrapper         An {@code OWLGraphWrapper} wrapping the taxonomy ontology.
+     * @param confOntWrapper        An {@code OWLGraphWrapper} wrapping the confidence 
+     *                              code ontology.
+     * @param trustedAnnotations    A {@code boolean} defining whether low confidence annotations 
+     *                              should be discarded if possible to identify common ancestor.  
+     * @return                      An ordered {@code List} of {@code Map}s containing 
+     *                              single taxon annotations.
+     * @throws IllegalArgumentException If {@code summaryAnnots} does not allow to produce any 
+     *                                  single taxon annotations, or contains annotations 
+     *                                  related to same entity/HOM/taxon IDs.
+     */
+    private List<Map<String, Object>> generateSingleTaxonAnnotations(
+            List<Map<String, Object>> summaryAnnots, OWLGraphWrapper taxOntWrapper, 
+            OWLGraphWrapper confOntWrapper, boolean trustedAnnotations) 
+                    throws IllegalArgumentException {
+        log.entry(summaryAnnots, taxOntWrapper, confOntWrapper, trustedAnnotations);
+        
+        OntologyUtils taxOntUtils = new OntologyUtils(taxOntWrapper);
+        CIOWrapper cioWrapper = new CIOWrapper(confOntWrapper);
+        
+        //in order to identify annotations related to a same structure but different taxa, 
+        //we will use a Map where keys are the concatenation of the entity column 
+        //and the HOM column, and associated values are the related annotations.
+        Map<String, Set<Map<String, Object>>> relatedAnnotMapper = 
+                new HashMap<String, Set<Map<String, Object>>>();
+        //for sanity checks
+        Set<String> controlKeys = new HashSet<String>();
+        for (Map<String, Object> annot: summaryAnnots) {
+            //discard rejected and negative annotations to generate summaries 
+            //(we only want positive annotations here)
+            if (this.isNegativeAnnotations(annot) || 
+                cioWrapper.isRejectedStatement(
+                    confOntWrapper.getOWLClassByIdentifier((String) annot.get(CONF_COL_NAME)))) {
+                continue;
+            }
+            //To generate the key to group annotations, we order Uberon IDs
+            List<String> uberonIds = AnnotationCommon.parseMultipleEntitiesColumn(
+                    (String) annot.get(ENTITY_COL_NAME));
+            //key to group annotations related to a same structure but different taxa
+            String key = "";
+            //key used to do a sanity check (see below)
+            String controlKey = "";
+            for (String uberonId: uberonIds) {
+                key        += uberonId + "-";
+                controlKey += uberonId + "-";
+            }
+            key        += annot.get(HOM_COL_NAME);
+            controlKey += annot.get(HOM_COL_NAME) + "-" + annot.get(TAXON_COL_NAME);
+            
+            //check that we never see twice annotations related to a same entity/HOM/taxon 
+            //(because we are supposed to use summary annotations, which merge such annotations 
+            //related to same entity/HOM/taxon)
+            if (!controlKeys.add(controlKey)) {
+                throw log.throwing(new IllegalArgumentException("RAW annotations were provided, "
+                        + "while it should be AGGREGATED_EVIDENCE annotations. Redundant "
+                        + "annotations: " + annot));
+            }
+            
+            //group annotations
+            if (relatedAnnotMapper.get(key) == null) {
+                relatedAnnotMapper.put(key, new HashSet<Map<String, Object>>());
+            }
+            relatedAnnotMapper.get(key).add(annot);
+        }
+        
+        //now, generate summarizing annotations. Remember that we have store only 
+        //summary positive annotations.
+        List<Map<String, Object>> singleTaxonAnnots = new ArrayList<Map<String, Object>>();
+        for (Set<Map<String, Object>> relatedAnnots: relatedAnnotMapper.values()) {
+            assert relatedAnnots.size() > 0;
+
+            //if more than one annotation related to this assertion, find the correct 
+            //ancestral taxon. We need to consider all potential taxa, in case 
+            //trustedAnnotations is false, or, if trustedAnnotations is true, in case 
+            //there are no annotations of sufficiently good confidence. 
+            Set<OWLClass> allTaxa = new HashSet<OWLClass>();
+            Set<OWLClass> trustedTaxa = new HashSet<OWLClass>();
+            for (Map<String, Object> annot: relatedAnnots) {
+                OWLClass taxon = taxOntWrapper.getOWLClassByIdentifier(
+                        OntologyUtils.getTaxOntologyId((int) annot.get(TAXON_COL_NAME)));
+                allTaxa.add(taxon);
+                if (!cioWrapper.isBgeeNotTrustedStatement(cioWrapper.getOWLGraphWrapper().
+                        getOWLClassByIdentifier((String) annot.get(CONF_COL_NAME)))) {
+                    trustedTaxa.add(taxon);
+                }
+            }
+            Set<OWLClass> taxaToUse = allTaxa;
+            if (trustedAnnotations && !trustedTaxa.isEmpty()) {
+                taxaToUse = trustedTaxa;
+            }
+            
+            //retain only parent taxa; we should identify one taxon, but it is possible 
+            //to have independent taxa in case of independent evolution
+            if (taxaToUse.size() > 1) {
+                taxOntUtils.retainParentClasses(taxaToUse, null);
+            }
+            assert taxaToUse.size() > 0;
+            
+            //identify valid annotations to retain
+            for (Map<String, Object> annot: relatedAnnots) {
+                OWLClass taxon = taxOntWrapper.getOWLClassByIdentifier(
+                        OntologyUtils.getTaxOntologyId((int) annot.get(TAXON_COL_NAME)));
+                if (taxaToUse.contains(taxon)) {
+                    Map<String, Object> newAnnot = new HashMap<String, Object>(annot);
+                    newAnnot.put(LINE_TYPE_COL_NAME, GeneratedFileType.SINGLE_TAXON);
+                    //columns that should not be set for a generated single taxon annotation
+                    newAnnot.put(REF_COL_NAME, null);
+                    newAnnot.put(REF_TITLE_COL_NAME, null);
+                    newAnnot.put(ECO_COL_NAME, null);
+                    newAnnot.put(ECO_NAME_COL_NAME, null);
+                    newAnnot.put(SUPPORT_TEXT_COL_NAME, null);
+                    newAnnot.put(CURATOR_COL_NAME, null);
+                    newAnnot.put(DATE_COL_NAME, null);
+                    
+                    singleTaxonAnnots.add(newAnnot);
+                }
+            }
+        }
+        
+        if (singleTaxonAnnots.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("The annotations provided did not "
+                    + "allow to retrieve any SINGLE TAXON annotations."));
+        }
+        
+        this.sortAnnotations(singleTaxonAnnots);
+        return log.exit(singleTaxonAnnots);
+    }
+    
+    /**
+     * Determine whether the provided annotation is negating or supporting an assertion. 
+     * 
+     * @param annot A {@code Map} representing one annotation. See 
+     *              {@link #extractAnnotations(similarityFile, GeneratedFileType)} for 
+     *              a definition of the keys used. 
+     * @return      A {@code boolean} that is {@code true} if {@code annot} is negating 
+     *              an assertion.
+     */ 
+    private boolean isNegativeAnnotations(Map<String, Object> annot) {
+        log.entry(annot);
+        return log.exit(annot.get(QUALIFIER_COL_NAME) != null ? true : false);
+    }
 
 
     /**
@@ -2273,85 +2513,6 @@ public class SimilarityAnnotation {
         });
     }
     
-    /**
-     * Checks that no errors were detected and stored, in {@link #missingUberonIds}, 
-     * and/or {@link #missingTaxonIds}, and/or {@link #missingECOIds}, and/or 
-     * {@link #missingHOMIds}, and/or {@link #missingCONFIds}, and/or 
-     * {@link #idsNotExistingInTaxa}, and/or {@link #duplicates}. If some errors were stored, an 
-     * {@code IllegalStateException} will be thrown with a detailed error message, 
-     * otherwise, nothing happens.
-     * @throws IllegalStateException    if some errors were detected and stored.
-     */
-    private void verifyErrors() throws IllegalStateException {
-        log.entry();
-        
-        String errorMsg = "";
-        if (!this.incorrectFormat.isEmpty()) {
-            errorMsg += Utils.CR + "Problem detected, incorrectly formatted annotation lines: " + 
-                Utils.CR;
-            for (Map<String, Object> annot: this.incorrectFormat) {
-                errorMsg += annot + Utils.CR;
-            }
-        }
-        if (!this.missingUberonIds.isEmpty()) {
-            errorMsg += Utils.CR + "Problem detected, unknown or deprecated Uberon IDs: " + 
-                Utils.CR;
-            for (String uberonId: this.missingUberonIds) {
-                errorMsg += uberonId + Utils.CR;
-            }
-        }
-        if (!this.missingTaxonIds.isEmpty()) {
-            errorMsg += Utils.CR + "Problem detected, unknown or deprecated taxon IDs: " + 
-                Utils.CR;
-            for (int taxonId: this.missingTaxonIds) {
-                errorMsg += taxonId + Utils.CR;
-            }
-        }
-        if (!this.idsNotExistingInTaxa.isEmpty()) {
-            errorMsg += Utils.CR + "Problem detected, Uberon IDs annotated with a taxon " +
-                    "there are not supposed to exist in: " + Utils.CR;
-            for (Entry<String, Set<Integer>> entry: this.idsNotExistingInTaxa.entrySet()) {
-                for (int taxonId: entry.getValue()) {
-                    errorMsg += entry.getKey() + " - " + taxonId + Utils.CR;
-                }
-            }
-        }
-        if (!this.missingECOIds.isEmpty()) {
-            errorMsg += Utils.CR + "Problem detected, unknown or deprecated ECO IDs: " + 
-                Utils.CR;
-            for (String ecoId: this.missingECOIds) {
-                errorMsg += ecoId + Utils.CR;
-            }
-        }
-        if (!this.missingHOMIds.isEmpty()) {
-            errorMsg += Utils.CR + "Problem detected, unknown or deprecated HOM IDs: " + 
-                Utils.CR;
-            for (String homId: this.missingHOMIds) {
-                errorMsg += homId + Utils.CR;
-            }
-        }
-        if (!this.missingCONFIds.isEmpty()) {
-            errorMsg += Utils.CR + "Problem detected, unknown or deprecated CONF IDs: " + 
-                Utils.CR;
-            for (String confId: this.missingCONFIds) {
-                errorMsg += confId + Utils.CR;
-            }
-        }
-        if (!this.duplicates.isEmpty()) {
-            errorMsg += Utils.CR + "Some annotations are duplicated: " + 
-                Utils.CR;
-            for (Map<String, Object> duplicate: this.duplicates) {
-                errorMsg += duplicate + Utils.CR;
-            }
-        }
-        if (!errorMsg.equals("")) {
-            throw log.throwing(new IllegalStateException(errorMsg));
-        }
-        
-        log.exit();
-    }
-
-
     /**
      * Gets a reference ID from a value in the column {@link #REF_COL_NAME}. This is 
      * because in the curator annotation file, reference titles can be mixed in 

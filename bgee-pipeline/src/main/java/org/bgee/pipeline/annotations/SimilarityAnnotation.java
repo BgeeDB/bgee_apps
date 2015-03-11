@@ -9,11 +9,13 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -571,18 +573,14 @@ public class SimilarityAnnotation {
             FileNotFoundException, IOException {
         log.entry(annotFile, uberonOntWrapper);
         
+        OntologyUtils uberonUtils = new OntologyUtils(uberonOntWrapper);
+        
         //get the transformation_of Object Property, and its sub-object properties
-        OWLObjectProperty transfOfRel = 
-                uberonOntWrapper.getOWLObjectPropertyByIdentifier(OntologyUtils.TRANSFORMATION_OF_ID);
-        Set<OWLObjectPropertyExpression> transfOfRels = new HashSet<OWLObjectPropertyExpression>();
-        if (transfOfRel != null) {
-            transfOfRels = uberonOntWrapper.getSubPropertyReflexiveClosureOf(transfOfRel);
-        } 
-        if (transfOfRel == null || transfOfRels.isEmpty()) {
+        Set<OWLObjectPropertyExpression> transfOfRels = uberonUtils.getTransformationOfProps();
+        if (transfOfRels.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("The Uberon ontology provided " +
             		"did not contain any transformation_of relations."));
         }
-        log.debug("Transformation_of relations identified: {}", transfOfRels);
         
         //now, identify all entities used in our annotations, with no transformation_of relation
         Set<String> anatEntityIds = 
@@ -1558,6 +1556,11 @@ public class SimilarityAnnotation {
      *                          represents a verified, completed, or generated 
      *                          annotation line.
      */
+    //XXX: ths method is not optimized: if you want to generate annotations for several 
+    //GeneratedFileTypes, all computations are re-done from scratch each time. Also, 
+    //the different types of annotations are built incrementaly, and all stored in memory, 
+    //so, the memory usage could be largely reduced. However, we do not expect the number 
+    //of annotations to be high enough to require any optimization.
     public List<Map<String, Object>> generateAnnotations(
             List<Map<String, Object>> rawAnnots, GeneratedFileType fileType, 
             Map<String, Set<Integer>> taxonConstraints, Set<Integer> taxonIds, 
@@ -1596,7 +1599,12 @@ public class SimilarityAnnotation {
         }
         
         //otherwise, now we need to generate SINGLE_TAXON annotations
-        
+        List<Map<String, Object>> singleTaxonAnnots = this.generateSingleTaxonAnnotations(
+                aggregatedAnnots, taxOntWrapper, confOntWrapper, true);
+        //check correctness 
+        this.checkAnnotations(singleTaxonAnnots, GeneratedFileType.SINGLE_TAXON, 
+                taxonConstraints, taxonIds, taxOntWrapper, homOntWrapper, ecoOntWrapper, 
+                confOntWrapper);
         if (fileType.equals(GeneratedFileType.SINGLE_TAXON)) {
             return log.exit(singleTaxonAnnots);
         }
@@ -1607,6 +1615,45 @@ public class SimilarityAnnotation {
                 + " not supported."));
     }
     
+    private List<Map<String, Object>> generateInferredAnnotations(
+            List<Map<String, Object>> rawAnnots, OWLGraphWrapper uberonOntWrapper) 
+                    throws IllegalArgumentException {
+        log.entry(rawAnnots, uberonOntWrapper);
+    }
+    
+    private List<Map<String, Object>> generateInferredAnnotationsFromTransformationOf(
+            List<Map<String, Object>> rawAnnots, OWLGraphWrapper uberonOntWrapper) 
+                    throws IllegalArgumentException {
+        log.entry(rawAnnots, uberonOntWrapper);
+        
+        OntologyUtils uberonUtils = new OntologyUtils(uberonOntWrapper);
+        
+        //get the transformation_of Object Property, and its sub-object properties
+        Set<OWLObjectPropertyExpression> transfOfRels = uberonUtils.getTransformationOfProps();
+        if (transfOfRels.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("The Uberon ontology provided " +
+                    "did not contain any transformation_of relations."));
+        }
+        
+        //propagate annotation using an anatomical entity with transformation_of relations.
+        for (Map<String, Object> annot: rawAnnots) {
+            Set<String> relatedUberonIds = new HashSet<String>();
+            List<String> uberonIds = AnnotationCommon.parseMultipleEntitiesColumn(
+                    (String) annot.get(ENTITY_COL_NAME));
+            //we do not propagate annotations with multiple anat entities annotated, 
+            //but we examined them anyway to log warnings.
+            for (String uberonId: uberonIds) {
+                OWLClass anatEntity = uberonOntWrapper.getOWLClassByIdentifier(
+                        uberonId, true);
+                
+                //need to retrieve clever indirect transformation_of relations, as when inserting relations into DB.
+                //or should we use only direct relations?
+            }
+        }
+        
+        
+    }
+
     /**
      * Generates annotations for {@link GeneratedFileType} {@code RAW_CLEAN}: 
      * notably, this method adds Uberon names, ECO term names, etc (see method 
@@ -1834,11 +1881,6 @@ public class SimilarityAnnotation {
         return log.exit(releaseAnnot);
     }
     
-    private void inferTransformationOfAnnotations() {
-        
-    }
-
-
     /**
      * Generates annotations for {@link GeneratedFileType} {@code AGGREGATED_EVIDENCES}: 
      * if some annotations are related to a same entity, taxon, and HOM IDs, then it is needed 

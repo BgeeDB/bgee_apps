@@ -1380,11 +1380,12 @@ public class OntologyUtils {
     
     /**
      * Get "part_of" related {@code OWLObjectPropertyExpression}s, that are lazy loaded 
-     * when needed. See {@link #partOfRels}.
+     * when needed. 
      * 
      * @return  A {@code Set} of {@code OWLObjectPropertyExpression}s containing the "part_of" 
      *          {@code OWLObjectPropertyExpression}, and all its children.
      */
+    //TODO: add unit test
     public Set<OWLObjectPropertyExpression> getPartOfProps() {
         log.entry();
         if (this.partOfRels == null) {
@@ -1402,6 +1403,7 @@ public class OntologyUtils {
      *          {@code OWLObjectPropertyExpression}, and all its children.
      */
     @SuppressWarnings("rawtypes")
+    //TODO: add unit test
     public Set<OWLPropertyExpression> getGenericPartOfProps() {
         log.entry();
         Set<OWLPropertyExpression> props = new HashSet<OWLPropertyExpression>();
@@ -1433,7 +1435,8 @@ public class OntologyUtils {
      * @return  A {@code Set} of {@code OWLObjectPropertyExpression}s containing the "transformation_of" 
      *          {@code OWLObjectPropertyExpression}, and all its children.
      */
-    private Set<OWLObjectPropertyExpression> getTransformationOfProps() {
+    //TODO: add unit test
+    public Set<OWLObjectPropertyExpression> getTransformationOfProps() {
         log.entry();
         if (this.transformationOfRels == null) {
             this.transformationOfRels = this.getWrapper().getSubPropertyReflexiveClosureOf(

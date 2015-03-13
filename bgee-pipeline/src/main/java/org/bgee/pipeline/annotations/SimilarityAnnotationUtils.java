@@ -13,8 +13,6 @@ import java.util.regex.Pattern;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.supercsv.cellprocessor.CellProcessorAdaptor;
-import org.supercsv.cellprocessor.Optional;
-import org.supercsv.cellprocessor.ParseBool;
 import org.supercsv.cellprocessor.ParseDate;
 import org.supercsv.cellprocessor.ParseInt;
 import org.supercsv.cellprocessor.constraint.StrNotNullOrEmpty;
@@ -262,147 +260,14 @@ public class SimilarityAnnotationUtils {
     }
     
     /**
-     * A bean representing a row from the RAW annotation file. Getter and setter names 
-     * must follow standard bean definitions.
+     * Class parent of all bean storing similarity annotations, holding parameters common 
+     * to all of them.
      * 
      * @author Frederic Bastian
      * @version Bgee 13 Mar. 2015
      * @since Bgee 13
      */
-    public static class RawAnnotationBean {
-        /**
-         * Map the columns of a CSV file to the attributes of {@code RawAnnotationBean}. 
-         * This will then be used to populate the bean, using the standard setter name 
-         * convention. 
-         * <p>
-         * Thanks to this method, we can adapt to any change in column names or column order.
-         * 
-         * @param header    An {@code Array} of {@code String}s representing the names 
-         *                  of the columns of a RAW similarity annotation file.
-         * @return          An {@code Array} of {@code String}s that are the names 
-         *                  of the attributes of {@code RawAnnotationBean}, put in 
-         *                  the {@code Array} at the same index as their corresponding column.
-         * @throws IllegalArgumentException If a {@code String} in {@code header} 
-         *                                  is not recognized.
-         */
-        private static String[] mapHeaderToAttributes(String[] header) 
-                throws IllegalArgumentException {
-            log.entry((Object[]) header);
-            String[] mapping = new String[header.length];
-            for (int i = 0; i < header.length; i++) {
-                switch (header[i]) {
-                    case HOM_COL_NAME: 
-                        mapping[i] = "homId";
-                        break;
-                    case HOM_NAME_COL_NAME: 
-                        mapping[i] = "homLabel";
-                        break;
-                    case ENTITY_COL_NAME: 
-                        mapping[i] = "entityIds";
-                        break;
-                    case ENTITY_NAME_COL_NAME: 
-                        mapping[i] = "entityNames";
-                        break;
-                    case QUALIFIER_COL_NAME: 
-                        mapping[i] = "negated";
-                        break;
-                    case REF_COL_NAME: 
-                        mapping[i] = "refId";
-                        break;
-                    case REF_TITLE_COL_NAME: 
-                        mapping[i] = "refTitle";
-                        break;
-                    case ECO_COL_NAME: 
-                        mapping[i] = "ecoId";
-                        break;
-                    case ECO_NAME_COL_NAME: 
-                        mapping[i] = "ecoLabel";
-                        break;
-                    case CONF_COL_NAME: 
-                        mapping[i] = "cioId";
-                        break;
-                    case CONF_NAME_COL_NAME: 
-                        mapping[i] = "cioLabel";
-                        break;
-                    case TAXON_COL_NAME: 
-                        mapping[i] = "ncbiTaxonId";
-                        break;
-                    case TAXON_NAME_COL_NAME: 
-                        mapping[i] = "taxonName";
-                        break;
-                    case SUPPORT_TEXT_COL_NAME: 
-                        mapping[i] = "supportingText";
-                        break;
-                    case ASSIGN_COL_NAME: 
-                        mapping[i] = "assignedBy";
-                        break;
-                    case CURATOR_COL_NAME: 
-                        mapping[i] = "curator";
-                        break;
-                    case DATE_COL_NAME: 
-                        mapping[i] = "curationDate";
-                        break;
-                    default:
-                        throw log.throwing(new IllegalArgumentException("Unrecognized header: " 
-                                + header[i]));
-                }
-            }
-            return log.exit(mapping);
-        }
-        /**
-         * Map the columns of a CSV file to the {@code CellProcessor}s 
-         * used to populate a {@code RawAnnotationBean}. This way, we can adapt to any 
-         * change in column names or column order.
-         * 
-         * @param header    An {@code Array} of {@code String}s representing the names 
-         *                  of the columns of a RAW similarity annotation file.
-         * @return          An {@code Array} of {@code CellProcessor}s, put in 
-         *                  the {@code Array} at the same index as the column they are supposed 
-         *                  to process.
-         * @throws IllegalArgumentException If a {@code String} in {@code header} 
-         *                                  is not recognized.
-         */
-        private static CellProcessor[] mapHeaderToCellProcessors(String[] header) 
-                throws IllegalArgumentException {
-            log.entry((Object[]) header);
-            CellProcessor[] processors = new CellProcessor[header.length];
-            for (int i = 0; i < header.length; i++) {
-                switch (header[i]) {
-                    case ENTITY_COL_NAME: 
-                    case ENTITY_NAME_COL_NAME: 
-                        processors[i] = new ParseMultipleValuesCell();
-                        break;
-                    case QUALIFIER_COL_NAME: 
-                        processors[i] = new ParseQualifierCell();
-                        break;
-                    case TAXON_COL_NAME: 
-                        processors[i] = new ParseInt();
-                        break;
-                    case DATE_COL_NAME: 
-                        processors[i] = new ParseDate(DATE_FORMAT);
-                        break;
-                    case HOM_COL_NAME: 
-                    case HOM_NAME_COL_NAME: 
-                    case REF_COL_NAME: 
-                    case REF_TITLE_COL_NAME: 
-                    case ECO_COL_NAME: 
-                    case ECO_NAME_COL_NAME: 
-                    case CONF_COL_NAME: 
-                    case CONF_NAME_COL_NAME: 
-                    case TAXON_NAME_COL_NAME: 
-                    case SUPPORT_TEXT_COL_NAME: 
-                    case ASSIGN_COL_NAME: 
-                    case CURATOR_COL_NAME: 
-                        processors[i] = new StrNotNullOrEmpty();
-                        break;
-                    default:
-                        throw log.throwing(new IllegalArgumentException("Unrecognized header: " 
-                                + header[i]));
-                }
-            }
-            return log.exit(processors);
-        }
-        
+    protected static abstract class AnnotationBean {
         /**
          * @see #getHomId()
          */
@@ -432,22 +297,6 @@ public class SimilarityAnnotationUtils {
          */
         private boolean negated;
         /**
-         * @see #getRefId()
-         */
-        private String refId;
-        /**
-         * @see #getRefTitle()
-         */
-        private String refTitle;
-        /**
-         * @see getEcoId()
-         */
-        private String ecoId;
-        /**
-         * @see getEcoLabel()
-         */
-        private String ecoLabel;
-        /**
          * @see getCioId()
          */
         private String cioId;
@@ -455,27 +304,11 @@ public class SimilarityAnnotationUtils {
          * @see getCioLabel()
          */
         private String cioLabel;
-        /**
-         * @see #getSupportingText()
-         */
-        private String supportingText;
-        /**
-         * @see getAssignedBy()
-         */
-        private String assignedBy;
-        /**
-         * @see #getCurator()
-         */
-        private String curator;
-        /**
-         * @see #getCurationDate()
-         */
-        private Date curationDate;
         
         /**
          * 0-argument constructor of the bean.
          */
-        public RawAnnotationBean() {
+        public AnnotationBean() {
         }
 
         /**
@@ -487,23 +320,13 @@ public class SimilarityAnnotationUtils {
          * @param ncbiTaxonId       See {@link #getNcbiTaxonId()}.
          * @param taxonName         See {@link #getTaxonName()}.
          * @param negated           See {@link #isNegated()}.
-         * @param refId             See {@link #getRefId()}.
-         * @param refTitle          See {@link #getRefTitle()}.
-         * @param ecoId             See {@link #getEcoId()}.
-         * @param ecoLabel          See {@link #getEcoLabel()}.
          * @param cioId             See {@link #getCioId()}.
          * @param cioLabel          See {@link #getCioLabel()}.
-         * @param supportingText    See {@link #getSupportingText()}.
-         * @param assignedBy        See {@link #getAssignedBy()}.
-         * @param curator           See {@link #getCurator()}.
-         * @param curationDate      See {@link #getCurationDate()}.
          */
-        public RawAnnotationBean(String homId, String homLabel,
+        public AnnotationBean(String homId, String homLabel,
                 List<String> entityIds, List<String> entityNames,
                 int ncbiTaxonId, String taxonName, boolean negated,
-                String refId, String refTitle, String ecoId, String ecoLabel,
-                String cioId, String cioLabel, String supportingText,
-                String assignedBy, String curator, Date curationDate) {
+                String cioId, String cioLabel) {
             
             this.homId = homId;
             this.homLabel = homLabel;
@@ -512,18 +335,10 @@ public class SimilarityAnnotationUtils {
             this.ncbiTaxonId = ncbiTaxonId;
             this.taxonName = taxonName;
             this.negated = negated;
-            this.refId = refId;
-            this.refTitle = refTitle;
-            this.ecoId = ecoId;
-            this.ecoLabel = ecoLabel;
             this.cioId = cioId;
             this.cioLabel = cioLabel;
-            this.supportingText = supportingText;
-            this.assignedBy = assignedBy;
-            this.curator = curator;
-            this.curationDate = curationDate;
         }
-
+        
         /**
          * @return  A {@code String} that is the ID of a term from the HOM ontology, 
          *          providing the evolutionary concept captured by this annotation.
@@ -641,6 +456,383 @@ public class SimilarityAnnotationUtils {
         }
 
         /**
+         * @return  A {@code String} that is the ID of the term from the CIO ontology, 
+         *          used to capture the confidence in the evidence used in this annotation.
+         * @see #getCioLabel()
+         */
+        public String getCioId() {
+            return cioId;
+        }
+        /**
+         * @param cioId A {@code String} that is the ID of the term from the CIO ontology, 
+         *              used to capture the confidence in the evidence used in this annotation.
+         * @see #getCioId()
+         */
+        public void setCioId(String cioId) {
+            this.cioId = cioId;
+        }
+
+        /**
+         * @return  A {@code String} that is the label of the term from the CIO ontology, 
+         *          used to capture the confidence in the evidence used in this annotation.
+         * @see #getCioId()
+         */
+        public String getCioLabel() {
+            return cioLabel;
+        }
+        /**
+         * @param cioLabel  A {@code String} that is the ID of the term from the CIO ontology, 
+         *                  used to capture the confidence in the evidence used 
+         *                  in this annotation.
+         * @see #getCioLabel()
+         */
+        public void setCioLabel(String cioLabel) {
+            this.cioLabel = cioLabel;
+        }
+
+        /* (non-Javadoc)
+         * @see java.lang.Object#hashCode()
+         */
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((cioId == null) ? 0 : cioId.hashCode());
+            result = prime * result
+                    + ((cioLabel == null) ? 0 : cioLabel.hashCode());
+            result = prime * result
+                    + ((entityIds == null) ? 0 : entityIds.hashCode());
+            result = prime * result
+                    + ((entityNames == null) ? 0 : entityNames.hashCode());
+            result = prime * result + ((homId == null) ? 0 : homId.hashCode());
+            result = prime * result
+                    + ((homLabel == null) ? 0 : homLabel.hashCode());
+            result = prime * result + ncbiTaxonId;
+            result = prime * result + (negated ? 1231 : 1237);
+            result = prime * result
+                    + ((taxonName == null) ? 0 : taxonName.hashCode());
+            return result;
+        }
+
+        /* (non-Javadoc)
+         * @see java.lang.Object#equals(java.lang.Object)
+         */
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (!(obj instanceof AnnotationBean)) {
+                return false;
+            }
+            AnnotationBean other = (AnnotationBean) obj;
+            if (cioId == null) {
+                if (other.cioId != null) {
+                    return false;
+                }
+            } else if (!cioId.equals(other.cioId)) {
+                return false;
+            }
+            if (cioLabel == null) {
+                if (other.cioLabel != null) {
+                    return false;
+                }
+            } else if (!cioLabel.equals(other.cioLabel)) {
+                return false;
+            }
+            if (entityIds == null) {
+                if (other.entityIds != null) {
+                    return false;
+                }
+            } else if (!entityIds.equals(other.entityIds)) {
+                return false;
+            }
+            if (entityNames == null) {
+                if (other.entityNames != null) {
+                    return false;
+                }
+            } else if (!entityNames.equals(other.entityNames)) {
+                return false;
+            }
+            if (homId == null) {
+                if (other.homId != null) {
+                    return false;
+                }
+            } else if (!homId.equals(other.homId)) {
+                return false;
+            }
+            if (homLabel == null) {
+                if (other.homLabel != null) {
+                    return false;
+                }
+            } else if (!homLabel.equals(other.homLabel)) {
+                return false;
+            }
+            if (ncbiTaxonId != other.ncbiTaxonId) {
+                return false;
+            }
+            if (negated != other.negated) {
+                return false;
+            }
+            if (taxonName == null) {
+                if (other.taxonName != null) {
+                    return false;
+                }
+            } else if (!taxonName.equals(other.taxonName)) {
+                return false;
+            }
+            return true;
+        }
+
+        /* (non-Javadoc)
+         * @see java.lang.Object#toString()
+         */
+        @Override
+        public String toString() {
+            return "homId=" + homId + ", homLabel=" + homLabel
+                    + ", entityIds=" + entityIds + ", entityNames="
+                    + entityNames + ", ncbiTaxonId=" + ncbiTaxonId
+                    + ", taxonName=" + taxonName + ", negated=" + negated
+                    + ", cioId=" + cioId + ", cioLabel=" + cioLabel;
+        }
+        
+    }
+    
+    /**
+     * A bean representing a row from the RAW annotation file. Getter and setter names 
+     * must follow standard bean definitions.
+     * 
+     * @author Frederic Bastian
+     * @version Bgee 13 Mar. 2015
+     * @since Bgee 13
+     */
+    public static class RawAnnotationBean extends AnnotationBean {
+        /**
+         * Map the columns of a CSV file to the attributes of {@code RawAnnotationBean}. 
+         * This will then be used to populate the bean, using the standard setter name 
+         * convention. 
+         * <p>
+         * Thanks to this method, we can adapt to any change in column names or column order.
+         * 
+         * @param header    An {@code Array} of {@code String}s representing the names 
+         *                  of the columns of a RAW similarity annotation file.
+         * @return          An {@code Array} of {@code String}s that are the names 
+         *                  of the attributes of {@code RawAnnotationBean}, put in 
+         *                  the {@code Array} at the same index as their corresponding column.
+         * @throws IllegalArgumentException If a {@code String} in {@code header} 
+         *                                  is not recognized.
+         */
+        /*
+         * We'll have lots of duplicated code in these beans, because Java does not allow 
+         * overriding a static method from parent class.
+         */
+        private static String[] mapHeaderToAttributes(String[] header) 
+                throws IllegalArgumentException {
+            log.entry((Object[]) header);
+            String[] mapping = new String[header.length];
+            for (int i = 0; i < header.length; i++) {
+                switch (header[i]) {
+                    case HOM_COL_NAME: 
+                        mapping[i] = "homId";
+                        break;
+                    case HOM_NAME_COL_NAME: 
+                        mapping[i] = "homLabel";
+                        break;
+                    case ENTITY_COL_NAME: 
+                        mapping[i] = "entityIds";
+                        break;
+                    case ENTITY_NAME_COL_NAME: 
+                        mapping[i] = "entityNames";
+                        break;
+                    case QUALIFIER_COL_NAME: 
+                        mapping[i] = "negated";
+                        break;
+                    case REF_COL_NAME: 
+                        mapping[i] = "refId";
+                        break;
+                    case REF_TITLE_COL_NAME: 
+                        mapping[i] = "refTitle";
+                        break;
+                    case ECO_COL_NAME: 
+                        mapping[i] = "ecoId";
+                        break;
+                    case ECO_NAME_COL_NAME: 
+                        mapping[i] = "ecoLabel";
+                        break;
+                    case CONF_COL_NAME: 
+                        mapping[i] = "cioId";
+                        break;
+                    case CONF_NAME_COL_NAME: 
+                        mapping[i] = "cioLabel";
+                        break;
+                    case TAXON_COL_NAME: 
+                        mapping[i] = "ncbiTaxonId";
+                        break;
+                    case TAXON_NAME_COL_NAME: 
+                        mapping[i] = "taxonName";
+                        break;
+                    case SUPPORT_TEXT_COL_NAME: 
+                        mapping[i] = "supportingText";
+                        break;
+                    case ASSIGN_COL_NAME: 
+                        mapping[i] = "assignedBy";
+                        break;
+                    case CURATOR_COL_NAME: 
+                        mapping[i] = "curator";
+                        break;
+                    case DATE_COL_NAME: 
+                        mapping[i] = "curationDate";
+                        break;
+                    default:
+                        throw log.throwing(new IllegalArgumentException("Unrecognized header: " 
+                                + header[i]));
+                }
+            }
+            return log.exit(mapping);
+        }
+        /*
+         * We'll have lots of duplicated code in these beans, because Java does not allow 
+         * overriding a static method from parent class.
+         */
+        /**
+         * Map the columns of a CSV file to the {@code CellProcessor}s 
+         * used to populate a {@code RawAnnotationBean}. This way, we can adapt to any 
+         * change in column names or column order.
+         * 
+         * @param header    An {@code Array} of {@code String}s representing the names 
+         *                  of the columns of a RAW similarity annotation file.
+         * @return          An {@code Array} of {@code CellProcessor}s, put in 
+         *                  the {@code Array} at the same index as the column they are supposed 
+         *                  to process.
+         * @throws IllegalArgumentException If a {@code String} in {@code header} 
+         *                                  is not recognized.
+         */
+        private static CellProcessor[] mapHeaderToCellProcessors(String[] header) 
+                throws IllegalArgumentException {
+            log.entry((Object[]) header);
+            CellProcessor[] processors = new CellProcessor[header.length];
+            for (int i = 0; i < header.length; i++) {
+                switch (header[i]) {
+                    case ENTITY_COL_NAME: 
+                    case ENTITY_NAME_COL_NAME: 
+                        processors[i] = new ParseMultipleValuesCell();
+                        break;
+                    case QUALIFIER_COL_NAME: 
+                        processors[i] = new ParseQualifierCell();
+                        break;
+                    case TAXON_COL_NAME: 
+                        processors[i] = new ParseInt();
+                        break;
+                    case DATE_COL_NAME: 
+                        processors[i] = new ParseDate(DATE_FORMAT);
+                        break;
+                    case HOM_COL_NAME: 
+                    case HOM_NAME_COL_NAME: 
+                    case REF_COL_NAME: 
+                    case REF_TITLE_COL_NAME: 
+                    case ECO_COL_NAME: 
+                    case ECO_NAME_COL_NAME: 
+                    case CONF_COL_NAME: 
+                    case CONF_NAME_COL_NAME: 
+                    case TAXON_NAME_COL_NAME: 
+                    case SUPPORT_TEXT_COL_NAME: 
+                    case ASSIGN_COL_NAME: 
+                    case CURATOR_COL_NAME: 
+                        processors[i] = new StrNotNullOrEmpty();
+                        break;
+                    default:
+                        throw log.throwing(new IllegalArgumentException("Unrecognized header: " 
+                                + header[i]));
+                }
+            }
+            return log.exit(processors);
+        }
+        
+        
+        /**
+         * @see #getRefId()
+         */
+        private String refId;
+        /**
+         * @see #getRefTitle()
+         */
+        private String refTitle;
+        /**
+         * @see getEcoId()
+         */
+        private String ecoId;
+        /**
+         * @see getEcoLabel()
+         */
+        private String ecoLabel;
+        /**
+         * @see #getSupportingText()
+         */
+        private String supportingText;
+        /**
+         * @see getAssignedBy()
+         */
+        private String assignedBy;
+        /**
+         * @see #getCurator()
+         */
+        private String curator;
+        /**
+         * @see #getCurationDate()
+         */
+        private Date curationDate;
+        
+        /**
+         * 0-argument constructor of the bean.
+         */
+        public RawAnnotationBean() {
+        }
+
+        /**
+         * Constructor providing all arguments of the class.
+         * @param homId             See {@link #getHomId()}.
+         * @param homLabel          See {@link #getHomLabel()}.
+         * @param entityIds         See {@link #getEntityIds()}.
+         * @param entityNames       See {@link #getEntityNames()}.
+         * @param ncbiTaxonId       See {@link #getNcbiTaxonId()}.
+         * @param taxonName         See {@link #getTaxonName()}.
+         * @param negated           See {@link #isNegated()}.
+         * @param ecoId             See {@link #getEcoId()}.
+         * @param ecoLabel          See {@link #getEcoLabel()}.
+         * @param cioId             See {@link #getCioId()}.
+         * @param cioLabel          See {@link #getCioLabel()}.
+         * @param refId             See {@link #getRefId()}.
+         * @param refTitle          See {@link #getRefTitle()}.
+         * @param supportingText    See {@link #getSupportingText()}.
+         * @param assignedBy        See {@link #getAssignedBy()}.
+         * @param curator           See {@link #getCurator()}.
+         * @param curationDate      See {@link #getCurationDate()}.
+         */
+        public RawAnnotationBean(String homId, String homLabel,
+                List<String> entityIds, List<String> entityNames,
+                int ncbiTaxonId, String taxonName, boolean negated,
+                String ecoId, String ecoLabel, String cioId, String cioLabel, 
+                String refId, String refTitle, String supportingText,
+                String assignedBy, String curator, Date curationDate) {
+            
+            super(homId, homLabel, entityIds, entityNames, ncbiTaxonId, taxonName, 
+                    negated, cioId, cioLabel);
+            this.refId = refId;
+            this.refTitle = refTitle;
+            this.ecoId = ecoId;
+            this.ecoLabel = ecoLabel;
+            this.supportingText = supportingText;
+            this.assignedBy = assignedBy;
+            this.curator = curator;
+            this.curationDate = curationDate;
+        }
+
+        
+
+        /**
          * @return  A {@code String} that is the ID of the reference where the evidence 
          *          annotated comes from.
          * @see #getRefTitle()
@@ -705,41 +897,6 @@ public class SimilarityAnnotationUtils {
          */
         public void setEcoLabel(String ecoLabel) {
             this.ecoLabel = ecoLabel;
-        }
-
-        /**
-         * @return  A {@code String} that is the ID of the term from the CIO ontology, 
-         *          used to capture the confidence in the evidence used in this annotation.
-         * @see #getCioLabel()
-         */
-        public String getCioId() {
-            return cioId;
-        }
-        /**
-         * @param cioId A {@code String} that is the ID of the term from the CIO ontology, 
-         *              used to capture the confidence in the evidence used in this annotation.
-         * @see #getCioId()
-         */
-        public void setCioId(String cioId) {
-            this.cioId = cioId;
-        }
-
-        /**
-         * @return  A {@code String} that is the label of the term from the CIO ontology, 
-         *          used to capture the confidence in the evidence used in this annotation.
-         * @see #getCioId()
-         */
-        public String getCioLabel() {
-            return cioLabel;
-        }
-        /**
-         * @param cioLabel  A {@code String} that is the ID of the term from the CIO ontology, 
-         *                  used to capture the confidence in the evidence used 
-         *                  in this annotation.
-         * @see #getCioLabel()
-         */
-        public void setCioLabel(String cioLabel) {
-            this.cioLabel = cioLabel;
         }
 
         /**
@@ -808,12 +965,9 @@ public class SimilarityAnnotationUtils {
         @Override
         public int hashCode() {
             final int prime = 31;
-            int result = 1;
+            int result = super.hashCode();
             result = prime * result
                     + ((assignedBy == null) ? 0 : assignedBy.hashCode());
-            result = prime * result + ((cioId == null) ? 0 : cioId.hashCode());
-            result = prime * result
-                    + ((cioLabel == null) ? 0 : cioLabel.hashCode());
             result = prime * result
                     + ((curationDate == null) ? 0 : curationDate.hashCode());
             result = prime * result
@@ -821,23 +975,12 @@ public class SimilarityAnnotationUtils {
             result = prime * result + ((ecoId == null) ? 0 : ecoId.hashCode());
             result = prime * result
                     + ((ecoLabel == null) ? 0 : ecoLabel.hashCode());
-            result = prime * result
-                    + ((entityIds == null) ? 0 : entityIds.hashCode());
-            result = prime * result
-                    + ((entityNames == null) ? 0 : entityNames.hashCode());
-            result = prime * result + ((homId == null) ? 0 : homId.hashCode());
-            result = prime * result
-                    + ((homLabel == null) ? 0 : homLabel.hashCode());
-            result = prime * result + ncbiTaxonId;
-            result = prime * result + (negated ? 1231 : 1237);
             result = prime * result + ((refId == null) ? 0 : refId.hashCode());
             result = prime * result
                     + ((refTitle == null) ? 0 : refTitle.hashCode());
             result = prime
                     * result
                     + ((supportingText == null) ? 0 : supportingText.hashCode());
-            result = prime * result
-                    + ((taxonName == null) ? 0 : taxonName.hashCode());
             return result;
         }
         /* (non-Javadoc)
@@ -848,7 +991,7 @@ public class SimilarityAnnotationUtils {
             if (this == obj) {
                 return true;
             }
-            if (obj == null) {
+            if (!super.equals(obj)) {
                 return false;
             }
             if (!(obj instanceof RawAnnotationBean)) {
@@ -860,20 +1003,6 @@ public class SimilarityAnnotationUtils {
                     return false;
                 }
             } else if (!assignedBy.equals(other.assignedBy)) {
-                return false;
-            }
-            if (cioId == null) {
-                if (other.cioId != null) {
-                    return false;
-                }
-            } else if (!cioId.equals(other.cioId)) {
-                return false;
-            }
-            if (cioLabel == null) {
-                if (other.cioLabel != null) {
-                    return false;
-                }
-            } else if (!cioLabel.equals(other.cioLabel)) {
                 return false;
             }
             if (curationDate == null) {
@@ -904,40 +1033,6 @@ public class SimilarityAnnotationUtils {
             } else if (!ecoLabel.equals(other.ecoLabel)) {
                 return false;
             }
-            if (entityIds == null) {
-                if (other.entityIds != null) {
-                    return false;
-                }
-            } else if (!entityIds.equals(other.entityIds)) {
-                return false;
-            }
-            if (entityNames == null) {
-                if (other.entityNames != null) {
-                    return false;
-                }
-            } else if (!entityNames.equals(other.entityNames)) {
-                return false;
-            }
-            if (homId == null) {
-                if (other.homId != null) {
-                    return false;
-                }
-            } else if (!homId.equals(other.homId)) {
-                return false;
-            }
-            if (homLabel == null) {
-                if (other.homLabel != null) {
-                    return false;
-                }
-            } else if (!homLabel.equals(other.homLabel)) {
-                return false;
-            }
-            if (ncbiTaxonId != other.ncbiTaxonId) {
-                return false;
-            }
-            if (negated != other.negated) {
-                return false;
-            }
             if (refId == null) {
                 if (other.refId != null) {
                     return false;
@@ -959,13 +1054,6 @@ public class SimilarityAnnotationUtils {
             } else if (!supportingText.equals(other.supportingText)) {
                 return false;
             }
-            if (taxonName == null) {
-                if (other.taxonName != null) {
-                    return false;
-                }
-            } else if (!taxonName.equals(other.taxonName)) {
-                return false;
-            }
             return true;
         }
         /* (non-Javadoc)
@@ -973,13 +1061,9 @@ public class SimilarityAnnotationUtils {
          */
         @Override
         public String toString() {
-            return "RawAnnotationBean [homId=" + homId + ", homLabel="
-                    + homLabel + ", entityIds=" + entityIds + ", entityNames="
-                    + entityNames + ", ncbiTaxonId=" + ncbiTaxonId
-                    + ", taxonName=" + taxonName + ", negated=" + negated
-                    + ", refId=" + refId + ", refTitle=" + refTitle
-                    + ", ecoId=" + ecoId + ", ecoLabel=" + ecoLabel
-                    + ", cioId=" + cioId + ", cioLabel=" + cioLabel
+            return "RawAnnotationBean [" 
+                    + super.toString() + ", refId=" + refId + ", refTitle="
+                    + refTitle + ", ecoId=" + ecoId + ", ecoLabel=" + ecoLabel
                     + ", supportingText=" + supportingText + ", assignedBy="
                     + assignedBy + ", curator=" + curator + ", curationDate="
                     + curationDate + "]";

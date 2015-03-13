@@ -479,6 +479,52 @@ public class SimilarityAnnotationUtils {
         }
 
         /**
+         * Constructor providing all arguments of the class.
+         * @param homId             See {@link #getHomId()}.
+         * @param homLabel          See {@link #getHomLabel()}.
+         * @param entityIds         See {@link #getEntityIds()}.
+         * @param entityNames       See {@link #getEntityNames()}.
+         * @param ncbiTaxonId       See {@link #getNcbiTaxonId()}.
+         * @param taxonName         See {@link #getTaxonName()}.
+         * @param negated           See {@link #isNegated()}.
+         * @param refId             See {@link #getRefId()}.
+         * @param refTitle          See {@link #getRefTitle()}.
+         * @param ecoId             See {@link #getEcoId()}.
+         * @param ecoLabel          See {@link #getEcoLabel()}.
+         * @param cioId             See {@link #getCioId()}.
+         * @param cioLabel          See {@link #getCioLabel()}.
+         * @param supportingText    See {@link #getSupportingText()}.
+         * @param assignedBy        See {@link #getAssignedBy()}.
+         * @param curator           See {@link #getCurator()}.
+         * @param curationDate      See {@link #getCurationDate()}.
+         */
+        public RawAnnotationBean(String homId, String homLabel,
+                List<String> entityIds, List<String> entityNames,
+                int ncbiTaxonId, String taxonName, boolean negated,
+                String refId, String refTitle, String ecoId, String ecoLabel,
+                String cioId, String cioLabel, String supportingText,
+                String assignedBy, String curator, Date curationDate) {
+            
+            this.homId = homId;
+            this.homLabel = homLabel;
+            this.entityIds = entityIds;
+            this.entityNames = entityNames;
+            this.ncbiTaxonId = ncbiTaxonId;
+            this.taxonName = taxonName;
+            this.negated = negated;
+            this.refId = refId;
+            this.refTitle = refTitle;
+            this.ecoId = ecoId;
+            this.ecoLabel = ecoLabel;
+            this.cioId = cioId;
+            this.cioLabel = cioLabel;
+            this.supportingText = supportingText;
+            this.assignedBy = assignedBy;
+            this.curator = curator;
+            this.curationDate = curationDate;
+        }
+
+        /**
          * @return  A {@code String} that is the ID of a term from the HOM ontology, 
          *          providing the evolutionary concept captured by this annotation.
          * @see #getHOMLabel()

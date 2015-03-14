@@ -13,6 +13,8 @@ import java.util.regex.Pattern;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.supercsv.cellprocessor.CellProcessorAdaptor;
+import org.supercsv.cellprocessor.Optional;
+import org.supercsv.cellprocessor.ParseBool;
 import org.supercsv.cellprocessor.ParseDate;
 import org.supercsv.cellprocessor.ParseInt;
 import org.supercsv.cellprocessor.constraint.StrNotNullOrEmpty;
@@ -86,8 +88,12 @@ public class SimilarityAnnotationUtils {
                 }
                 converted.add(Integer.valueOf((String) element));
             }
-            
-            return log.exit(converted);
+            if (converted.isEmpty()) {
+                throw log.throwing(new SuperCsvCellProcessorException("Cell cannot be empty", 
+                        context, this));
+            }
+            //passes result to next processor in the chain
+            return log.exit(next.execute(converted, context));
         }
     }
     /**
@@ -124,49 +130,18 @@ public class SimilarityAnnotationUtils {
         }
         
         /**
-         * A {@code boolean} defining whether the processed cell can be empty: 
-         * if {@code false}, the cell cannot be empty, and a 
-         * {@code SuperCsvCellProcessorException} is thrown if it is.
-         */
-        private final boolean canBeEmpty;
-        
-        /**
-         * Default constructor, no other {@code CellProcessor} in the chain, 
-         * the processed cell cannot be empty.
+         * Default constructor, no other {@code CellProcessor} in the chain.
          */
         private ParseMultipleValuesCell() {
-                this(false);
-        }
-        /**
-         * Constructor defining whether the processed cell can be empty, 
-         * with no other {@code CellProcessor} in the chain.
-         * @param notEmpty  A {@code boolean} to define whether the processed cell 
-         *                  can be empty: if {@code false}, the cell cannot be empty, 
-         *                  and a {@code SuperCsvCellProcessorException} is thrown if it is.
-         */
-        private ParseMultipleValuesCell(boolean canBeEmpty) {
                 super();
-                this.canBeEmpty = canBeEmpty;
         }
         /**
          * Constructor allowing other processors to be chained 
-         * after {@code ParseMultipleValuesCell}, the processed cell cannot be empty.
+         * after {@code ParseMultipleValuesCell}.
          * @param next  A {@code CellProcessor} that is the next to be called. 
          */
         private ParseMultipleValuesCell(CellProcessor next) {
-                this(false, next);
-        }
-        /**
-         * Constructor defining whether the processed cell can be empty, 
-         * and allowing other processors to be chained after {@code ParseMultipleValuesCell}.
-         * @param notEmpty  A {@code boolean} to define whether the processed cell 
-         *                  can be empty: if {@code false}, the cell cannot be empty, 
-         *                  and a {@code SuperCsvCellProcessorException} is thrown if it is.
-         * @param next  A {@code CellProcessor} that is the next to be called. 
-         */
-        private ParseMultipleValuesCell(boolean canBeEmpty, CellProcessor next) {
-                super(next);
-                this.canBeEmpty = canBeEmpty;
+            super(next);
         }
         
         @Override
@@ -178,11 +153,12 @@ public class SimilarityAnnotationUtils {
             
             List<String> values = new ArrayList<String>(
                     Arrays.asList(((String) value).split(SPLIT_VALUE_PATTERN)));
-            if (!this.canBeEmpty && values.isEmpty()) {
+            if (values.isEmpty()) {
                 throw log.throwing(new SuperCsvCellProcessorException("Cell cannot be empty", 
                         context, this));
             }
-            return log.exit(values);
+            //passes result to next processor in the chain
+            return log.exit(next.execute(values, context));
         }
     }
     /**
@@ -214,10 +190,12 @@ public class SimilarityAnnotationUtils {
         public Object execute(Object value, CsvContext context) {
             log.entry(value, context); 
             //this processor accepts null value
+            boolean negate = false;
             if (NEGATE_QUALIFIER.equals(value)) {
-                return log.exit(true);
+                negate = true;
             }
-            return log.exit(false);
+            //passes result to next processor in the chain
+            return log.exit(next.execute(negate, context));
         }
         
     }
@@ -1100,6 +1078,15 @@ public class SimilarityAnnotationUtils {
                         mapping[i] = "cioLabel";
                         break;
                 // *** Attributes specific to SummaryAnnotationBean ***
+                    case POSITIVE_COUNT_COL_NAME: 
+                        mapping[i] = "positiveEvidenceCount";
+                        break;
+                    case NEGATIVE_COUNT_COL_NAME: 
+                        mapping[i] = "negativeEvidenceCount";
+                        break;
+                    case TRUSTED_COL_NAME: 
+                        mapping[i] = "trusted";
+                        break;
                     case POSITIVE_ECO_COL_NAME: 
                         mapping[i] = "positiveEcoIds";
                         break;
@@ -1161,17 +1148,22 @@ public class SimilarityAnnotationUtils {
                     case NEGATIVE_ECO_COL_NAME: 
                     case NEGATIVE_ECO_NAME_COL_NAME: 
                     case AGGREGATED_TAXA_NAME_COL_NAME:
-                        processors[i] = new ParseMultipleValuesCell(true);
+                        processors[i] = new Optional(new ParseMultipleValuesCell());
                         break;
                     case QUALIFIER_COL_NAME: 
                         processors[i] = new ParseQualifierCell();
                         break;
                     case TAXON_COL_NAME: 
+                    case POSITIVE_COUNT_COL_NAME: 
+                    case NEGATIVE_COUNT_COL_NAME:
                         processors[i] = new ParseInt();
                         break;
+                    case TRUSTED_COL_NAME: 
+                        processors[i] = new ParseBool();
+                        break;
                     case AGGREGATED_TAXA_COL_NAME: 
-                        processors[i] = new ParseMultipleValuesCell(true, 
-                                new ConvertToIntList());
+                        processors[i] = new Optional(new ParseMultipleValuesCell(
+                                new ConvertToIntList()));
                         break;
                     case HOM_COL_NAME: 
                     case HOM_NAME_COL_NAME: 
@@ -1188,6 +1180,18 @@ public class SimilarityAnnotationUtils {
             return log.exit(processors);
         }
         
+        /**
+         * @see #getPositiveEvidenceCount()
+         */
+        private int positiveEvidenceCount;
+        /**
+         * @see #getNegativeEvidenceCount()
+         */
+        private int negativeEvidenceCount;
+        /**
+         * @see #isTrusted()
+         */
+        private boolean trusted;
         /**
          * @see #getPositiveEcoIds()
          */
@@ -1233,6 +1237,9 @@ public class SimilarityAnnotationUtils {
          * @param negated               See {@link #isNegated()}.
          * @param cioId                 See {@link #getCioId()}.
          * @param cioLabel              See {@link #getCioLabel()}.
+         * @param positiveEvidenceCount See {@link #getPositiveEvidenceCount()}.
+         * @param negativeEvidenceCount See {@link #getNegativeEvidenceCount()}.
+         * @param trusted               See {@link #isTrusted()}.
          * @param positiveEcoIds        See {@link #getPositiveEcoIds()}.
          * @param positiveEcoLabels     See {@link #getPositiveEcoLabels()}.
          * @param negativeEcoIds        See {@link #getNegativeEcoIds()}.
@@ -1245,6 +1252,7 @@ public class SimilarityAnnotationUtils {
                 List<String> entityIds, List<String> entityNames,
                 int ncbiTaxonId, String taxonName, boolean negated,
                 String cioId, String cioLabel, 
+                int positiveEvidenceCount, int negativeEvidenceCount, boolean trusted, 
                 List<String> positiveEcoIds, List<String> positiveEcoLabels, 
                 List<String> negativeEcoIds, List<String> negativeEcoLabels, 
                 List<Integer> aggregatedTaxonIds, List<String> aggregatedTaxonNames, 
@@ -1252,6 +1260,9 @@ public class SimilarityAnnotationUtils {
             
             super(homId, homLabel, entityIds, entityNames, ncbiTaxonId, taxonName, 
                     negated, cioId, cioLabel);
+            this.positiveEvidenceCount = positiveEvidenceCount;
+            this.negativeEvidenceCount = negativeEvidenceCount;
+            this.trusted = trusted;
             this.positiveEcoIds = positiveEcoIds;
             this.positiveEcoLabels = positiveEcoLabels;
             this.negativeEcoIds = negativeEcoIds;
@@ -1260,6 +1271,59 @@ public class SimilarityAnnotationUtils {
             this.aggregatedTaxonNames = aggregatedTaxonNames;
             this.assignedBy = assignedBy;
         }
+        
+        /**
+         * @return  An {@code int} that is the number of positive RAW annotations 
+         *          that were aggregated to produce this SUMMARY annotation.
+         * @see #getNegativeEvidenceCount()
+         */
+        public int getPositiveEvidenceCount() {
+            return positiveEvidenceCount;
+        }
+        /**
+         * @param positiveEvidenceCount An {@code int} that is the number of positive 
+         *                              RAW annotations that were aggregated to produce 
+         *                              this SUMMARY annotation.
+         * @see #getPositiveEvidenceCount()
+         */
+        public void setPositiveEvidenceCount(int positiveEvidenceCount) {
+            this.positiveEvidenceCount = positiveEvidenceCount;
+        }
+        
+        /**
+         * @return  An {@code int} that is the number of negative RAW annotations 
+         *          that were aggregated to produce this SUMMARY annotation.
+         * @see #getPositiveEvidenceCount()
+         */
+        public int getNegativeEvidenceCount() {
+            return negativeEvidenceCount;
+        }
+        /**
+         * @param negativeEvidenceCount An {@code int} that is the number of negative 
+         *                              RAW annotations that were aggregated to produce 
+         *                              this SUMMARY annotation.
+         * @see #getNegativeEvidenceCount()
+         */
+        public void setNegativeEvidenceCount(int negativeEvidenceCount) {
+            this.negativeEvidenceCount = negativeEvidenceCount;
+        }
+        
+        /**
+         * @return  A {@code boolean} defining whether the CIO term associated to 
+         *          this annotation is considered of sufficient confidence for Bgee.
+         */
+        public boolean isTrusted() {
+            return trusted;
+        }
+        /**
+         * @param trusted   A {@code boolean} defining whether the CIO term associated to 
+         *                  this annotation is considered of sufficient confidence for Bgee.
+         * @see #isTrusted()
+         */
+        public void setTrusted(boolean trusted) {
+            this.trusted = trusted;
+        }
+        
         /**
          * @return  A {@code List} of {@code String}s that are the IDs of the ECO terms 
          *          supporting the annotation. These terms come from positive annotations 
@@ -1428,6 +1492,14 @@ public class SimilarityAnnotationUtils {
         public int hashCode() {
             final int prime = 31;
             int result = super.hashCode();
+            result = prime
+                    * result
+                    + ((aggregatedTaxonIds == null) ? 0 : aggregatedTaxonIds
+                            .hashCode());
+            result = prime
+                    * result
+                    + ((aggregatedTaxonNames == null) ? 0
+                            : aggregatedTaxonNames.hashCode());
             result = prime * result
                     + ((assignedBy == null) ? 0 : assignedBy.hashCode());
             result = prime
@@ -1437,6 +1509,7 @@ public class SimilarityAnnotationUtils {
                     * result
                     + ((negativeEcoLabels == null) ? 0 : negativeEcoLabels
                             .hashCode());
+            result = prime * result + negativeEvidenceCount;
             result = prime
                     * result
                     + ((positiveEcoIds == null) ? 0 : positiveEcoIds.hashCode());
@@ -1444,14 +1517,8 @@ public class SimilarityAnnotationUtils {
                     * result
                     + ((positiveEcoLabels == null) ? 0 : positiveEcoLabels
                             .hashCode());
-            result = prime
-                    * result
-                    + ((aggregatedTaxonIds == null) ? 0
-                            : aggregatedTaxonIds.hashCode());
-            result = prime
-                    * result
-                    + ((aggregatedTaxonNames == null) ? 0
-                            : aggregatedTaxonNames.hashCode());
+            result = prime * result + positiveEvidenceCount;
+            result = prime * result + (trusted ? 1231 : 1237);
             return result;
         }
         /* (non-Javadoc)
@@ -1469,6 +1536,20 @@ public class SimilarityAnnotationUtils {
                 return false;
             }
             SummaryAnnotationBean other = (SummaryAnnotationBean) obj;
+            if (aggregatedTaxonIds == null) {
+                if (other.aggregatedTaxonIds != null) {
+                    return false;
+                }
+            } else if (!aggregatedTaxonIds.equals(other.aggregatedTaxonIds)) {
+                return false;
+            }
+            if (aggregatedTaxonNames == null) {
+                if (other.aggregatedTaxonNames != null) {
+                    return false;
+                }
+            } else if (!aggregatedTaxonNames.equals(other.aggregatedTaxonNames)) {
+                return false;
+            }
             if (assignedBy == null) {
                 if (other.assignedBy != null) {
                     return false;
@@ -1490,6 +1571,9 @@ public class SimilarityAnnotationUtils {
             } else if (!negativeEcoLabels.equals(other.negativeEcoLabels)) {
                 return false;
             }
+            if (negativeEvidenceCount != other.negativeEvidenceCount) {
+                return false;
+            }
             if (positiveEcoIds == null) {
                 if (other.positiveEcoIds != null) {
                     return false;
@@ -1504,20 +1588,10 @@ public class SimilarityAnnotationUtils {
             } else if (!positiveEcoLabels.equals(other.positiveEcoLabels)) {
                 return false;
             }
-            if (aggregatedTaxonIds == null) {
-                if (other.aggregatedTaxonIds != null) {
-                    return false;
-                }
-            } else if (!aggregatedTaxonIds
-                    .equals(other.aggregatedTaxonIds)) {
+            if (positiveEvidenceCount != other.positiveEvidenceCount) {
                 return false;
             }
-            if (aggregatedTaxonNames == null) {
-                if (other.aggregatedTaxonNames != null) {
-                    return false;
-                }
-            } else if (!aggregatedTaxonNames
-                    .equals(other.aggregatedTaxonNames)) {
+            if (trusted != other.trusted) {
                 return false;
             }
             return true;
@@ -1528,14 +1602,16 @@ public class SimilarityAnnotationUtils {
         @Override
         public String toString() {
             return "SummaryAnnotationBean [" 
-                    + super.toString() + ", positiveEcoIds=" + positiveEcoIds
+                    + super.toString() + ", positiveEvidenceCount="
+                    + positiveEvidenceCount + ", negativeEvidenceCount="
+                    + negativeEvidenceCount + ", trusted=" + trusted
+                    + ", positiveEcoIds=" + positiveEcoIds
                     + ", positiveEcoLabels=" + positiveEcoLabels
                     + ", negativeEcoIds=" + negativeEcoIds
                     + ", negativeEcoLabels=" + negativeEcoLabels
                     + ", aggregatedTaxonIds=" + aggregatedTaxonIds
-                    + ", aggregatedTaxonNames="
-                    + aggregatedTaxonNames + ", assignedBy=" + assignedBy
-                    + "]";
+                    + ", aggregatedTaxonNames=" + aggregatedTaxonNames
+                    + ", assignedBy=" + assignedBy + "]";
         }
     }
 
@@ -1657,6 +1733,22 @@ public class SimilarityAnnotationUtils {
     //****************************************************
     // COLUMNS SPECIFIC TO AGGREGATED EVIDENCE ANNOTATION FILES
     //****************************************************
+    /**
+     * A {@code String} that is the name of the column containing the number of positive 
+     * RAW annotations that were aggregated to produce this SUMMARY annotation.
+     */
+    public final static String POSITIVE_COUNT_COL_NAME = "positive evidence count";
+    /**
+     * A {@code String} that is the name of the column containing the number of negative 
+     * RAW annotations that were aggregated to produce this SUMMARY annotation.
+     */
+    public final static String NEGATIVE_COUNT_COL_NAME = "negative evidence count";
+    /**
+     * A {@code String} that is the name of the column containing the Bool value 
+     * defining whether the CIO term associated to this annotation is considered 
+     * of sufficient confidence.
+     */
+    public final static String TRUSTED_COL_NAME = "trusted";
     /**
      * A {@code String} that is the name of the column containing IDs of the ECO terms 
      * supporting the annotation, in the AGGREGATED EVIDENCE annotation files. These terms 

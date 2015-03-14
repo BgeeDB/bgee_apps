@@ -125,28 +125,28 @@ public class SimilarityAnnotationUtils {
         
         /**
          * A {@code boolean} defining whether the processed cell can be empty: 
-         * if {@code true}, the cell cannot be empty, and a 
+         * if {@code false}, the cell cannot be empty, and a 
          * {@code SuperCsvCellProcessorException} is thrown if it is.
          */
-        private final boolean notEmpty;
+        private final boolean canBeEmpty;
         
         /**
          * Default constructor, no other {@code CellProcessor} in the chain, 
          * the processed cell cannot be empty.
          */
         private ParseMultipleValuesCell() {
-                this(true);
+                this(false);
         }
         /**
          * Constructor defining whether the processed cell can be empty, 
          * with no other {@code CellProcessor} in the chain.
          * @param notEmpty  A {@code boolean} to define whether the processed cell 
-         *                  can be empty: if {@code true}, the cell cannot be empty, 
+         *                  can be empty: if {@code false}, the cell cannot be empty, 
          *                  and a {@code SuperCsvCellProcessorException} is thrown if it is.
          */
-        private ParseMultipleValuesCell(boolean notEmpty) {
+        private ParseMultipleValuesCell(boolean canBeEmpty) {
                 super();
-                this.notEmpty = notEmpty;
+                this.canBeEmpty = canBeEmpty;
         }
         /**
          * Constructor allowing other processors to be chained 
@@ -154,19 +154,19 @@ public class SimilarityAnnotationUtils {
          * @param next  A {@code CellProcessor} that is the next to be called. 
          */
         private ParseMultipleValuesCell(CellProcessor next) {
-                this(true, next);
+                this(false, next);
         }
         /**
          * Constructor defining whether the processed cell can be empty, 
          * and allowing other processors to be chained after {@code ParseMultipleValuesCell}.
          * @param notEmpty  A {@code boolean} to define whether the processed cell 
-         *                  can be empty: if {@code true}, the cell cannot be empty, 
+         *                  can be empty: if {@code false}, the cell cannot be empty, 
          *                  and a {@code SuperCsvCellProcessorException} is thrown if it is.
          * @param next  A {@code CellProcessor} that is the next to be called. 
          */
-        private ParseMultipleValuesCell(boolean notEmpty, CellProcessor next) {
+        private ParseMultipleValuesCell(boolean canBeEmpty, CellProcessor next) {
                 super(next);
-                this.notEmpty = notEmpty;
+                this.canBeEmpty = canBeEmpty;
         }
         
         @Override
@@ -178,7 +178,7 @@ public class SimilarityAnnotationUtils {
             
             List<String> values = new ArrayList<String>(
                     Arrays.asList(((String) value).split(SPLIT_VALUE_PATTERN)));
-            if (this.notEmpty && values.isEmpty()) {
+            if (!this.canBeEmpty && values.isEmpty()) {
                 throw log.throwing(new SuperCsvCellProcessorException("Cell cannot be empty", 
                         context, this));
             }
@@ -1161,7 +1161,7 @@ public class SimilarityAnnotationUtils {
                     case NEGATIVE_ECO_COL_NAME: 
                     case NEGATIVE_ECO_NAME_COL_NAME: 
                     case AGGREGATED_TAXA_NAME_COL_NAME:
-                        processors[i] = new ParseMultipleValuesCell(false);
+                        processors[i] = new ParseMultipleValuesCell(true);
                         break;
                     case QUALIFIER_COL_NAME: 
                         processors[i] = new ParseQualifierCell();
@@ -1170,7 +1170,7 @@ public class SimilarityAnnotationUtils {
                         processors[i] = new ParseInt();
                         break;
                     case AGGREGATED_TAXA_COL_NAME: 
-                        processors[i] = new ParseMultipleValuesCell(false, 
+                        processors[i] = new ParseMultipleValuesCell(true, 
                                 new ConvertToIntList());
                         break;
                     case HOM_COL_NAME: 

@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.apache.logging.log4j.LogManager;
@@ -195,7 +196,7 @@ public class SimilarityAnnotationUtilsTest {
      */
     @Test
     public void shouldExtractSummaryAnnotations() throws FileNotFoundException, 
-        IllegalArgumentException, IOException, ParseException {
+        IllegalArgumentException, IOException {
         log.entry();
         
         assertEquals("Incorrect AGGREGATED EVIDENCE annotations retrieved", 
@@ -204,7 +205,11 @@ public class SimilarityAnnotationUtilsTest {
                                 Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
                                 2759, "Eukaryota", false, 
                                 "CIO:0000003", "high confidence from single evidence", 
-                                "bgee")), 
+                                Arrays.asList("ECO:0000033"), 
+                                Arrays.asList("traceable author statement"), 
+                                new ArrayList<String>(), new ArrayList<String>(), 
+                                new ArrayList<Integer>(), new ArrayList<String>(), 
+                                Arrays.asList("bgee"))), 
                 SimilarityAnnotationUtils.extractSummaryAnnotations(
                         SimilarityAnnotationUtilsTest.class.
                         getResource("/annotations/summary_similarity_annotations.tsv").getFile()));

@@ -1614,6 +1614,156 @@ public class SimilarityAnnotationUtils {
                     + ", assignedBy=" + assignedBy + "]";
         }
     }
+    
+
+    
+    /**
+     * A bean representing a row from the ANCESTRAL TAXA annotation file. 
+     * These annotations are derived from the SUMMARY historical homology annotations, 
+     * and try to identify for each structure the taxa it originates from. 
+     * <p>
+     * The only way to get several of these annotations with same Uberon IDs (so, 
+     * associated to several taxa) is in case of independent evolution. Otherwise, 
+     * as, in the vast majority of case, a structure appears only once during evolution, 
+     * Uberon IDs appear most of the time only in one annotation, associated to 
+     * only one ancestral taxon.
+     * <p>
+     * Such annotations are always positive.
+     * <p>
+     * Getter and setter names must follow standard bean definitions.
+     * 
+     * @author Frederic Bastian
+     * @version Bgee 13 Mar. 2015
+     * @since Bgee 13
+     */
+    public static class AncestralTaxaAnnotationBean extends AnnotationBean {
+        /**
+         * Map the columns of a CSV file to the attributes of {@code SummaryAnnotationBean}. 
+         * This will then be used to populate the bean, using the standard setter name 
+         * convention. 
+         * <p>
+         * Thanks to this method, we can adapt to any change in column names or column order.
+         * 
+         * @param header    An {@code Array} of {@code String}s representing the names 
+         *                  of the columns of a AGGREGATED EVIDENCE similarity annotation file.
+         * @return          An {@code Array} of {@code String}s that are the names 
+         *                  of the attributes of {@code SummaryAnnotationBean}, put in 
+         *                  the {@code Array} at the same index as their corresponding column.
+         * @throws IllegalArgumentException If a {@code String} in {@code header} 
+         *                                  is not recognized.
+         */
+        /* (non-Javadoc)
+         * We'll have lots of duplicated code in these beans, because Java does not allow 
+         * overriding a static method from parent class.
+         */
+        private static String[] mapHeaderToAttributes(String[] header) 
+                throws IllegalArgumentException {
+            log.entry((Object[]) header);
+            String[] mapping = new String[header.length];
+            for (int i = 0; i < header.length; i++) {
+                switch (header[i]) {
+                // *** Attributes common to all AnnotationBean types ***
+                    case HOM_COL_NAME: 
+                        mapping[i] = "homId";
+                        break;
+                    case HOM_NAME_COL_NAME: 
+                        mapping[i] = "homLabel";
+                        break;
+                    case ENTITY_COL_NAME: 
+                        mapping[i] = "entityIds";
+                        break;
+                    case ENTITY_NAME_COL_NAME: 
+                        mapping[i] = "entityNames";
+                        break;
+                    case TAXON_COL_NAME: 
+                        mapping[i] = "ncbiTaxonId";
+                        break;
+                    case TAXON_NAME_COL_NAME: 
+                        mapping[i] = "taxonName";
+                        break;
+                    case CONF_COL_NAME: 
+                        mapping[i] = "cioId";
+                        break;
+                    case CONF_NAME_COL_NAME: 
+                        mapping[i] = "cioLabel";
+                        break;
+                    default:
+                        throw log.throwing(new IllegalArgumentException("Unrecognized header: " 
+                                + header[i]));
+                }
+            }
+            return log.exit(mapping);
+        }
+        /**
+         * Map the columns of a CSV file to the {@code CellProcessor}s 
+         * used to populate a {@code SummaryAnnotationBean}. This way, we can adapt to any 
+         * change in column names or column order.
+         * 
+         * @param header    An {@code Array} of {@code String}s representing the names 
+         *                  of the columns of an AGGREGATED EVIDENCE similarity annotation file.
+         * @return          An {@code Array} of {@code CellProcessor}s, put in 
+         *                  the {@code Array} at the same index as the column they are supposed 
+         *                  to process.
+         * @throws IllegalArgumentException If a {@code String} in {@code header} 
+         *                                  is not recognized.
+         */
+        /* (non-Javadoc)
+         * We'll have lots of duplicated code in these beans, because Java does not allow 
+         * overriding a static method from parent class.
+         */
+        private static CellProcessor[] mapHeaderToCellProcessors(String[] header) 
+                throws IllegalArgumentException {
+            log.entry((Object[]) header);
+            CellProcessor[] processors = new CellProcessor[header.length];
+            for (int i = 0; i < header.length; i++) {
+                switch (header[i]) {
+                    case ENTITY_COL_NAME: 
+                    case ENTITY_NAME_COL_NAME: 
+                        processors[i] = new ParseMultipleValuesCell();
+                        break;
+                    case TAXON_COL_NAME: 
+                        processors[i] = new ParseInt();
+                        break;
+                    case HOM_COL_NAME: 
+                    case HOM_NAME_COL_NAME: 
+                    case CONF_COL_NAME: 
+                    case CONF_NAME_COL_NAME: 
+                    case TAXON_NAME_COL_NAME: 
+                        processors[i] = new StrNotNullOrEmpty();
+                        break;
+                    default:
+                        throw log.throwing(new IllegalArgumentException("Unrecognized header: " 
+                                + header[i]));
+                }
+            }
+            return log.exit(processors);
+        }
+        
+        /**
+         * 0-argument constructor of the bean.
+         */
+        public AncestralTaxaAnnotationBean() {
+        }
+        /**
+         * Constructor providing all arguments of the class.
+         * @param homId                 See {@link #getHomId()}.
+         * @param homLabel              See {@link #getHomLabel()}.
+         * @param entityIds             See {@link #getEntityIds()}.
+         * @param entityNames           See {@link #getEntityNames()}.
+         * @param ncbiTaxonId           See {@link #getNcbiTaxonId()}.
+         * @param taxonName             See {@link #getTaxonName()}.
+         * @param cioId                 See {@link #getCioId()}.
+         * @param cioLabel              See {@link #getCioLabel()}.
+         */
+        public AncestralTaxaAnnotationBean(String homId, String homLabel,
+                List<String> entityIds, List<String> entityNames,
+                int ncbiTaxonId, String taxonName, 
+                String cioId, String cioLabel) {
+            
+            super(homId, homLabel, entityIds, entityNames, ncbiTaxonId, taxonName, 
+                    false, cioId, cioLabel);
+        }
+    }
 
     /**
      * A {@code CsvPreference} used to parse TSV files allowing commented line, 
@@ -1832,6 +1982,12 @@ public class SimilarityAnnotationUtils {
      * @throws IllegalArgumentException If {@code similarityFile} did not allow to retrieve 
      *                                  any annotation or could not be properly parsed.
      */
+    //TODO: DRY when we switch to java 8, all extract methods could delegate to 
+    //a private method using lambda expression on a functional interface. 
+    //It is boring in Java 7, as we cannot have an abstract static method in AnnotationBean, 
+    //to use the methods mapHeaderToAttributes and mapHeaderToCellProcessors 
+    //on the proper AnnotationBean type, after acquiring the reader to get the header 
+    //of the file.
     public static List<RawAnnotationBean> extractRawAnnotations(String similarityFile) 
             throws FileNotFoundException, IOException, IllegalArgumentException {
         log.entry(similarityFile);

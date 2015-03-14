@@ -37,120 +37,59 @@ import org.supercsv.util.CsvContext;
  */
 public class SimilarityAnnotationUtils {
     private final static Logger log = 
-            LogManager.getLogger(SimilarityAnnotationUtils.class.getName());
-    
-    /**
-     * A {@code CsvPreference} used to parse TSV files allowing commented line, 
-     * starting with "//".
-     */
-    private final static CsvPreference TSV_COMMENTED = 
-            new CsvPreference.Builder(CsvPreference.TAB_PREFERENCE).
-            skipComments(new CommentStartsWith("//")).build();
-    
-    /**
-     * A {@code String} that is the name of the column containing the HOM IDs 
-     * of terms from the ontology of homology and related concepts.
-     */
-    public final static String HOM_COL_NAME = "HOM ID";
-    /**
-     * A {@code String} that is the name of the column containing the HOM names 
-     * of terms from the ontology of homology and related concepts.
-     */
-    public final static String HOM_NAME_COL_NAME = "HOM name";
-    /**
-     * A {@code String} that is the name of the column containing the entity IDs 
-     * in the similarity annotation file (for instance, "UBERON:0001905|UBERON:0001787").
-     */
-    public final static String ENTITY_COL_NAME = "entity";
-    /**
-     * A {@code String} that is the name of the column containing the entity names 
-     * in the similarity annotation file (for instance, 
-     * "pineal body|photoreceptor layer of retina").
-     */
-    public final static String ENTITY_NAME_COL_NAME = "entity name";
-    /**
-     * A {@code String} that is the name of the column containing the qualifier 
-     * in the similarity annotation file (to state the an entity is <strong>not</stong> 
-     * homologous in a taxon).
-     */
-    public final static String QUALIFIER_COL_NAME = "qualifier";
-    /**
-     * A {@code String} that is the name of the column containing the reference ID 
-     * in the similarity annotation file (for instance, "PMID:16771606").
-     */
-    public final static String REF_COL_NAME = "reference";
-    /**
-     * A {@code String} that is the name of the column containing the reference name 
-     * in the similarity annotation file (for instance, 
-     * "Liem KF, Bemis WE, Walker WF, Grande L, Functional Anatomy of the Vertebrates: 
-     * An Evolutionary Perspective (2001) p.500").
-     */
-    public final static String REF_TITLE_COL_NAME = "reference title";
-    /**
-     * A {@code String} that is the name of the column containing the ECO IDs 
-     * in the similarity annotation file (for instance, "ECO:0000067").
-     */
-    public final static String ECO_COL_NAME = "ECO ID";
-    /**
-     * A {@code String} that is the name of the column containing the ECO name 
-     * in the similarity annotation file (for instance, "developmental similarity evidence").
-     */
-    public final static String ECO_NAME_COL_NAME = "ECO name";
-    /**
-     * A {@code String} that is the name of the column containing the confidence code IDs 
-     * in the similarity annotation file (for instance, "CIO:0000003").
-     */
-    public final static String CONF_COL_NAME = "CIO ID";
-    /**
-     * A {@code String} that is the name of the column containing the confidence code names 
-     * in the similarity annotation file (for instance, "High confidence assertion").
-     */
-    public final static String CONF_NAME_COL_NAME = "CIO name";
-    /**
-     * A {@code String} that is the name of the column containing the taxon IDs 
-     * in the similarity annotation file (for instance, 9606).
-     */
-    public final static String TAXON_COL_NAME = "taxon ID";
-    /**
-     * A {@code String} that is the name of the column containing the taxon names 
-     * in the similarity annotation file (for instance, "Homo sapiens").
-     */
-    public final static String TAXON_NAME_COL_NAME = "taxon name";
-    /**
-     * A {@code String} that is the name of the column containing a relevant quote from
-     * the reference, in the similarity annotation file.
-     */
-    public final static String SUPPORT_TEXT_COL_NAME = "supporting text";
-    /**
-     * A {@code String} that is the name of the column containing the database which made 
-     * the annotation, in the similarity annotation file (for instance, "Bgee").
-     */
-    public final static String ASSIGN_COL_NAME = "assigned by";
-    /**
-     * A {@code String} that is the name of the column containing the code representing  
-     * the annotator which made the annotation, in the similarity annotation file 
-     * (for instance "ANN").
-     */
-    public final static String CURATOR_COL_NAME = "curator";
-    /**
-     * A {@code String} that is the name of the column containing the date   
-     * when the annotation was made, in the similarity annotation file 
-     * (for instance "2013-07-03").
-     * @see #DATE_FORMAT
-     */
-    public final static String DATE_COL_NAME = "date";
-    
-    /**
-     * A {@code String} that is the value of the {@link #QUALIFIER_COL_NAME} column, 
-     * when the annotation is negated.
-     */
-    public final static String NEGATE_QUALIFIER = "NOT";
-    /**
-     * A {@code String} that is the format of the date in the column named 
-     * {@link #DATE_COL_NAME}.
-     */
-    public final static String DATE_FORMAT = "yyyy-MM-dd";
+    LogManager.getLogger(SimilarityAnnotationUtils.class.getName());
 
+    /**
+     * A {@code CellProcessorAdaptor} used to convert a {@code List} of {@code String}s 
+     * (as returned by the processor {@link ParseMultipleValuesCell}) into a {@code List} 
+     * of {@code Integer}s. 
+     * 
+     * @author Frederic Bastian
+     * @version Bgee 13 Mar. 2015
+     * @since Bgee 13
+     */
+    private static class ConvertToIntList extends CellProcessorAdaptor {
+        /**
+         * Default constructor, no other {@code CellProcessor} in the chain.
+         */
+        private ConvertToIntList() {
+                super();
+        }
+        /**
+         * Constructor allowing other processors to be chained after 
+         * {@code ConvertToIntList}.
+         * @param next  A {@code CellProcessor} that is the next to be called. 
+         */
+        private ConvertToIntList(CellProcessor next) {
+                super(next);
+        }
+        
+        @Override
+        public Object execute(Object value, CsvContext context) {
+            log.entry(value, context);
+            //throws an Exception if the input is null, as all CellProcessors usually do.
+            validateInputNotNull(value, context); 
+            
+            if (!(value instanceof List)) {
+                throw log.throwing(new SuperCsvCellProcessorException("The CellProcessor "
+                        + "ConvertToIntList can only be chained with a CellProcessor "
+                        + "returning a List of Strings", context, this));
+            }
+            
+            List<Integer> converted = new ArrayList<Integer>();
+            
+            for (Object element: (List<?>) value) {
+                if (!(element instanceof String)) {
+                    throw log.throwing(new SuperCsvCellProcessorException("The CellProcessor "
+                            + "ConvertToIntList can only be chained with a CellProcessor "
+                            + "returning a List of Strings", context, this));
+                }
+                converted.add(Integer.valueOf((String) element));
+            }
+            
+            return log.exit(converted);
+        }
+    }
     /**
      * A {@code CellProcessorAdaptor} capable of parsing cells allowing to optionally 
      * contain multiple values, separated by {@link #SEPARATOR}. 
@@ -258,7 +197,6 @@ public class SimilarityAnnotationUtils {
         }
         
     }
-    
     /**
      * Class parent of all bean storing similarity annotations, holding parameters common 
      * to all of them.
@@ -267,7 +205,7 @@ public class SimilarityAnnotationUtils {
      * @version Bgee 13 Mar. 2015
      * @since Bgee 13
      */
-    protected static abstract class AnnotationBean {
+    private static abstract class AnnotationBean {
         /**
          * @see #getHomId()
          */
@@ -308,9 +246,9 @@ public class SimilarityAnnotationUtils {
         /**
          * 0-argument constructor of the bean.
          */
-        public AnnotationBean() {
+        private AnnotationBean() {
         }
-
+    
         /**
          * Constructor providing all arguments of the class.
          * @param homId             See {@link #getHomId()}.
@@ -323,7 +261,7 @@ public class SimilarityAnnotationUtils {
          * @param cioId             See {@link #getCioId()}.
          * @param cioLabel          See {@link #getCioLabel()}.
          */
-        public AnnotationBean(String homId, String homLabel,
+        private AnnotationBean(String homId, String homLabel,
                 List<String> entityIds, List<String> entityNames,
                 int ncbiTaxonId, String taxonName, boolean negated,
                 String cioId, String cioLabel) {
@@ -354,7 +292,7 @@ public class SimilarityAnnotationUtils {
         public void setHomId(String homId) {
             this.homId = homId;
         }
-
+    
         /**
          * @return  A {@code String} that is the name of a term from the HOM ontology, 
          *          providing the evolutionary concept captured by this annotation.
@@ -370,7 +308,7 @@ public class SimilarityAnnotationUtils {
         public void setHomLabel(String homLabel) {
             this.homLabel = homLabel;
         }
-
+    
         /**
          * @return  A {@code List} of {@code String}s that are the IDs of the anatomical entities 
          *          targeted by this annotation. There is most of the time only one entity 
@@ -388,7 +326,7 @@ public class SimilarityAnnotationUtils {
         public void setEntityIds(List<String> entityIds) {
             this.entityIds = entityIds;
         }
-
+    
         /**
          * @return  A {@code List} of {@code String}s that are the names of the anatomical 
          *          entities targeted by this annotation. There is most of the time only 
@@ -408,7 +346,7 @@ public class SimilarityAnnotationUtils {
         public void setEntityNames(List<String> entityNames) {
             this.entityNames = entityNames;
         }
-
+    
         /**
          * @return  An {@code int} that is the NCBI ID of the taxon targeted by this annotation.
          * @see getTaxonName()
@@ -424,7 +362,7 @@ public class SimilarityAnnotationUtils {
         public void setNcbiTaxonId(int ncbiTaxonId) {
             this.ncbiTaxonId = ncbiTaxonId;
         }
-
+    
         /**
          * @return  A {@code String} that is the name of the taxon targeted by this annotation.
          * @see #getNcbiTaxonId()
@@ -439,7 +377,7 @@ public class SimilarityAnnotationUtils {
         public void setTaxonName(String taxonName) {
             this.taxonName = taxonName;
         }
-
+    
         /**
          * @return  A {@code boolean} defining whether this annotation is negated, using 
          *          a NOT qualifier. 
@@ -454,7 +392,7 @@ public class SimilarityAnnotationUtils {
         public void setNegated(boolean negated) {
             this.negated = negated;
         }
-
+    
         /**
          * @return  A {@code String} that is the ID of the term from the CIO ontology, 
          *          used to capture the confidence in the evidence used in this annotation.
@@ -471,7 +409,7 @@ public class SimilarityAnnotationUtils {
         public void setCioId(String cioId) {
             this.cioId = cioId;
         }
-
+    
         /**
          * @return  A {@code String} that is the label of the term from the CIO ontology, 
          *          used to capture the confidence in the evidence used in this annotation.
@@ -489,7 +427,7 @@ public class SimilarityAnnotationUtils {
         public void setCioLabel(String cioLabel) {
             this.cioLabel = cioLabel;
         }
-
+    
         /* (non-Javadoc)
          * @see java.lang.Object#hashCode()
          */
@@ -513,7 +451,7 @@ public class SimilarityAnnotationUtils {
                     + ((taxonName == null) ? 0 : taxonName.hashCode());
             return result;
         }
-
+    
         /* (non-Javadoc)
          * @see java.lang.Object#equals(java.lang.Object)
          */
@@ -586,7 +524,7 @@ public class SimilarityAnnotationUtils {
             }
             return true;
         }
-
+    
         /* (non-Javadoc)
          * @see java.lang.Object#toString()
          */
@@ -600,7 +538,6 @@ public class SimilarityAnnotationUtils {
         }
         
     }
-    
     /**
      * A bean representing a row from the RAW annotation file. Getter and setter names 
      * must follow standard bean definitions.
@@ -635,6 +572,7 @@ public class SimilarityAnnotationUtils {
             String[] mapping = new String[header.length];
             for (int i = 0; i < header.length; i++) {
                 switch (header[i]) {
+                // *** Attributes common to all AnnotationBean types ***
                     case HOM_COL_NAME: 
                         mapping[i] = "homId";
                         break;
@@ -647,9 +585,22 @@ public class SimilarityAnnotationUtils {
                     case ENTITY_NAME_COL_NAME: 
                         mapping[i] = "entityNames";
                         break;
+                    case TAXON_COL_NAME: 
+                        mapping[i] = "ncbiTaxonId";
+                        break;
+                    case TAXON_NAME_COL_NAME: 
+                        mapping[i] = "taxonName";
+                        break;
                     case QUALIFIER_COL_NAME: 
                         mapping[i] = "negated";
                         break;
+                    case CONF_COL_NAME: 
+                        mapping[i] = "cioId";
+                        break;
+                    case CONF_NAME_COL_NAME: 
+                        mapping[i] = "cioLabel";
+                        break;
+                // *** Attributes specific to RawAnnotationBean ***
                     case REF_COL_NAME: 
                         mapping[i] = "refId";
                         break;
@@ -661,18 +612,6 @@ public class SimilarityAnnotationUtils {
                         break;
                     case ECO_NAME_COL_NAME: 
                         mapping[i] = "ecoLabel";
-                        break;
-                    case CONF_COL_NAME: 
-                        mapping[i] = "cioId";
-                        break;
-                    case CONF_NAME_COL_NAME: 
-                        mapping[i] = "cioLabel";
-                        break;
-                    case TAXON_COL_NAME: 
-                        mapping[i] = "ncbiTaxonId";
-                        break;
-                    case TAXON_NAME_COL_NAME: 
-                        mapping[i] = "taxonName";
                         break;
                     case SUPPORT_TEXT_COL_NAME: 
                         mapping[i] = "supportingText";
@@ -790,7 +729,7 @@ public class SimilarityAnnotationUtils {
          */
         public RawAnnotationBean() {
         }
-
+    
         /**
          * Constructor providing all arguments of the class.
          * @param homId             See {@link #getHomId()}.
@@ -829,9 +768,9 @@ public class SimilarityAnnotationUtils {
             this.curator = curator;
             this.curationDate = curationDate;
         }
-
+    
         
-
+    
         /**
          * @return  A {@code String} that is the ID of the reference where the evidence 
          *          annotated comes from.
@@ -848,7 +787,7 @@ public class SimilarityAnnotationUtils {
         public void setRefId(String refId) {
             this.refId = refId;
         }
-
+    
         /**
          * @return  A {@code String} that is the title of the reference where the evidence 
          *          annotated comes from.
@@ -864,7 +803,7 @@ public class SimilarityAnnotationUtils {
         public void setRefTitle(String refTitle) {
             this.refTitle = refTitle;
         }
-
+    
         /**
          * @return  A {@code String} that is the ID of the term from the ECO ontology, 
          *          used to capture the evidence type used in this annotation.
@@ -881,7 +820,7 @@ public class SimilarityAnnotationUtils {
         public void setEcoId(String ecoId) {
             this.ecoId = ecoId;
         }
-
+    
         /**
          * @return  A {@code String} that is the label of the term from the ECO ontology, 
          *          used to capture the evidence type used in this annotation.
@@ -898,7 +837,7 @@ public class SimilarityAnnotationUtils {
         public void setEcoLabel(String ecoLabel) {
             this.ecoLabel = ecoLabel;
         }
-
+    
         /**
          * @return  A {@code String} that is an excerpt from the reference, highlighting 
          *          the annotation captured.
@@ -914,7 +853,7 @@ public class SimilarityAnnotationUtils {
         public void setSupportingText(String supportingText) {
             this.supportingText = supportingText;
         }
-
+    
         /**
          * @return  A {@code String} identifying the database that made the annotation.
          */
@@ -929,7 +868,7 @@ public class SimilarityAnnotationUtils {
         public void setAssignedBy(String assignedBy) {
             this.assignedBy = assignedBy;
         }
-
+    
         /**
          * @return  A {@code String} identifying the curator who made the annotation, 
          *          part of the database returned by {@link #getAssignedBy()}.
@@ -945,7 +884,7 @@ public class SimilarityAnnotationUtils {
         public void setCurator(String curator) {
             this.curator = curator;
         }
-
+    
         /**
          * @return  A {@code Date} when the annotation was created.
          */
@@ -1071,6 +1010,620 @@ public class SimilarityAnnotationUtils {
     }
     
     /**
+     * A bean representing a row from the AGGREGATED EVIDENCE annotation file. These annotations 
+     * aggregate RAW annotations with same HOM ID, Uberon IDs, taxon ID, to compute a global 
+     * confidence score.
+     * <p>
+     * Getter and setter names must follow standard bean definitions.
+     * 
+     * @author Frederic Bastian
+     * @version Bgee 13 Mar. 2015
+     * @since Bgee 13
+     */
+    public static class SummaryAnnotationBean extends AnnotationBean {
+        /**
+         * Map the columns of a CSV file to the attributes of {@code SummaryAnnotationBean}. 
+         * This will then be used to populate the bean, using the standard setter name 
+         * convention. 
+         * <p>
+         * Thanks to this method, we can adapt to any change in column names or column order.
+         * 
+         * @param header    An {@code Array} of {@code String}s representing the names 
+         *                  of the columns of a AGGREGATED EVIDENCE similarity annotation file.
+         * @return          An {@code Array} of {@code String}s that are the names 
+         *                  of the attributes of {@code SummaryAnnotationBean}, put in 
+         *                  the {@code Array} at the same index as their corresponding column.
+         * @throws IllegalArgumentException If a {@code String} in {@code header} 
+         *                                  is not recognized.
+         */
+        /* (non-Javadoc)
+         * We'll have lots of duplicated code in these beans, because Java does not allow 
+         * overriding a static method from parent class.
+         */
+        private static String[] mapHeaderToAttributes(String[] header) 
+                throws IllegalArgumentException {
+            log.entry((Object[]) header);
+            String[] mapping = new String[header.length];
+            for (int i = 0; i < header.length; i++) {
+                switch (header[i]) {
+                // *** Attributes common to all AnnotationBean types ***
+                    case HOM_COL_NAME: 
+                        mapping[i] = "homId";
+                        break;
+                    case HOM_NAME_COL_NAME: 
+                        mapping[i] = "homLabel";
+                        break;
+                    case ENTITY_COL_NAME: 
+                        mapping[i] = "entityIds";
+                        break;
+                    case ENTITY_NAME_COL_NAME: 
+                        mapping[i] = "entityNames";
+                        break;
+                    case TAXON_COL_NAME: 
+                        mapping[i] = "ncbiTaxonId";
+                        break;
+                    case TAXON_NAME_COL_NAME: 
+                        mapping[i] = "taxonName";
+                        break;
+                    case QUALIFIER_COL_NAME: 
+                        mapping[i] = "negated";
+                        break;
+                    case CONF_COL_NAME: 
+                        mapping[i] = "cioId";
+                        break;
+                    case CONF_NAME_COL_NAME: 
+                        mapping[i] = "cioLabel";
+                        break;
+                // *** Attributes specific to SummaryAnnotationBean ***
+                    case POSITIVE_ECO_COL_NAME: 
+                        mapping[i] = "positiveEcoIds";
+                        break;
+                    case POSITIVE_ECO_NAME_COL_NAME: 
+                        mapping[i] = "positiveEcoLabels";
+                        break;
+                    case NEGATIVE_ECO_COL_NAME: 
+                        mapping[i] = "negativeEcoIds";
+                        break;
+                    case NEGATIVE_ECO_NAME_COL_NAME: 
+                        mapping[i] = "negativeEcoLabels";
+                        break;
+                    case AGGREGATED_TAXA_COL_NAME: 
+                        mapping[i] = "taxonIdsAggregatedAnnots";
+                        break;
+                    case AGGREGATED_TAXA_NAME_COL_NAME: 
+                        mapping[i] = "taxonNamesAggregatedAnnots";
+                        break;
+                    case ASSIGN_COL_NAME: 
+                        mapping[i] = "assignedBy";
+                        break;
+                    default:
+                        throw log.throwing(new IllegalArgumentException("Unrecognized header: " 
+                                + header[i]));
+                }
+            }
+            return log.exit(mapping);
+        }
+        /**
+         * Map the columns of a CSV file to the {@code CellProcessor}s 
+         * used to populate a {@code SummaryAnnotationBean}. This way, we can adapt to any 
+         * change in column names or column order.
+         * 
+         * @param header    An {@code Array} of {@code String}s representing the names 
+         *                  of the columns of an AGGREGATED EVIDENCE similarity annotation file.
+         * @return          An {@code Array} of {@code CellProcessor}s, put in 
+         *                  the {@code Array} at the same index as the column they are supposed 
+         *                  to process.
+         * @throws IllegalArgumentException If a {@code String} in {@code header} 
+         *                                  is not recognized.
+         */
+        /* (non-Javadoc)
+         * We'll have lots of duplicated code in these beans, because Java does not allow 
+         * overriding a static method from parent class.
+         */
+        private static CellProcessor[] mapHeaderToCellProcessors(String[] header) 
+                throws IllegalArgumentException {
+            log.entry((Object[]) header);
+            CellProcessor[] processors = new CellProcessor[header.length];
+            for (int i = 0; i < header.length; i++) {
+                switch (header[i]) {
+                    case ENTITY_COL_NAME: 
+                    case ENTITY_NAME_COL_NAME:  
+                    case ASSIGN_COL_NAME: 
+                    case POSITIVE_ECO_COL_NAME: 
+                    case POSITIVE_ECO_NAME_COL_NAME: 
+                    case NEGATIVE_ECO_COL_NAME: 
+                    case NEGATIVE_ECO_NAME_COL_NAME: 
+                    case AGGREGATED_TAXA_NAME_COL_NAME:
+                        processors[i] = new ParseMultipleValuesCell();
+                        break;
+                    case QUALIFIER_COL_NAME: 
+                        processors[i] = new ParseQualifierCell();
+                        break;
+                    case TAXON_COL_NAME: 
+                        processors[i] = new ParseInt();
+                        break;
+                    case AGGREGATED_TAXA_COL_NAME: 
+                        processors[i] = new ParseMultipleValuesCell(new ConvertToIntList());
+                        break;
+                    case HOM_COL_NAME: 
+                    case HOM_NAME_COL_NAME: 
+                    case CONF_COL_NAME: 
+                    case CONF_NAME_COL_NAME: 
+                    case TAXON_NAME_COL_NAME: 
+                        processors[i] = new StrNotNullOrEmpty();
+                        break;
+                    default:
+                        throw log.throwing(new IllegalArgumentException("Unrecognized header: " 
+                                + header[i]));
+                }
+            }
+            return log.exit(processors);
+        }
+        
+        /**
+         * @see #getPositiveEcoIds()
+         */
+        private List<String> positiveEcoIds;
+        /**
+         * @see #getPositiveEcoLabels()
+         */
+        private List<String> positiveEcoLabels;
+        /**
+         * @see #getNegativeEcoIds()
+         */
+        private List<String> negativeEcoIds;
+        /**
+         * @see #getNegativeEcoLabels()
+         */
+        private List<String> negativeEcoLabels;
+        /**
+         * @see #getTaxonIdsAggregatedAnnots()
+         */
+        private List<Integer> taxonIdsAggregatedAnnots;
+        /**
+         * @see #getTaxonNamesAggregatedAnnots()
+         */
+        private List<String> taxonNamesAggregatedAnnots;
+        /**
+         * @see #getAssignedBy()
+         */
+        private List<String> assignedBy;
+        
+        /**
+         * @return  A {@code List} of {@code String}s that are the IDs of the ECO terms 
+         *          supporting the annotation. These terms come from positive annotations 
+         *          to same HOM ID - Uberon IDs, and to same taxon or to any parent taxa, 
+         *          that were aggregated with the current annotation.
+         * @see #getPositiveEcoLabels()
+         * @see #getNegativeEcoIds()
+         */
+        public List<String> getPositiveEcoIds() {
+            return positiveEcoIds;
+        }
+        /**
+         * @param positiveEcoIds    A {@code List} of {@code String}s that are the IDs 
+         *                          of the ECO terms supporting the annotation.
+         * @see #getPositiveEcoIds()
+         */
+        public void setPositiveEcoIds(List<String> positiveEcoIds) {
+            this.positiveEcoIds = positiveEcoIds;
+        }
+        
+        /**
+         * @return  A {@code List} of {@code String}s that are the labels of the ECO terms 
+         *          supporting the annotation. These terms come from positive annotations 
+         *          to same HOM ID - Uberon IDs, and to same taxon or to any parent taxa, 
+         *          that were aggregated with the current annotation.
+         * @see #getPositiveEcoIds()
+         * @see #getNegativeEcoLabels()
+         */
+        public List<String> getPositiveEcoLabels() {
+            return positiveEcoLabels;
+        }
+        /**
+         * @param positiveEcoLabels A {@code List} of {@code String}s that are the labels 
+         *                          of the ECO terms supporting the annotation.
+         * @see #getPositiveEcoLabels()
+         */
+        public void setPositiveEcoLabels(List<String> positiveEcoLabels) {
+            this.positiveEcoLabels = positiveEcoLabels;
+        }
+        
+        /**
+         * @return  A {@code List} of {@code String}s that are the IDs of the ECO terms 
+         *          rejecting the annotation. These terms come from negative annotations 
+         *          to same HOM ID - Uberon IDs, and to same taxon or to any sub-taxon, 
+         *          that were aggregated with the current annotation.
+         * @see #getNegativeEcoLabels()
+         * @see #getPositiveEcoIds()
+         */
+        public List<String> getNegativeEcoIds() {
+            return negativeEcoIds;
+        }
+        /**
+         * @param negativeEcoIds    A {@code List} of {@code String}s that are the IDs 
+         *                          of the ECO terms rejecting the annotation.
+         * @see #getNegativeEcoIds()
+         */
+        public void setNegativeEcoIds(List<String> negativeEcoIds) {
+            this.negativeEcoIds = negativeEcoIds;
+        }
+        
+        /**
+         * @return  A {@code List} of {@code String}s that are the labels of the ECO terms 
+         *          rejecting the annotation. These terms come from negative annotations 
+         *          to same HOM ID - Uberon IDs, and to same taxon or to any sub-taxon, 
+         *          that were aggregated with the current annotation.
+         * @see #getNegativeEcoIds()
+         * @see #getPositiveEcoLabels()
+         */
+        public List<String> getNegativeEcoLabels() {
+            return negativeEcoLabels;
+        }
+        /**
+         * @param positiveEcoLabels A {@code List} of {@code String}s that are the labels 
+         *                          of the ECO terms rejecting the annotation.
+         * @see #getNegativeEcoLabels()
+         */
+        public void setNegativeEcoLabels(List<String> negativeEcoLabels) {
+            this.negativeEcoLabels = negativeEcoLabels;
+        }
+        
+        /**
+         * @return  A {@code List} of {@code Integer}s that are the NCBI taxon IDs of other 
+         *          taxa examined to generate this summary annotation: parent taxa 
+         *          with positive annotations for the same HOM ID and Uberon IDs, 
+         *          or sub-taxa with negative annotations for the same HOM ID and Uberon IDs.
+         */
+        public List<Integer> getTaxonIdsAggregatedAnnots() {
+            return taxonIdsAggregatedAnnots;
+        }
+        /**
+         * @param taxonIdsAggregatedAnnots  A {@code List} of {@code Integer}s that are 
+         *                                  the NCBI taxon IDs of other taxa examined 
+         *                                  to generate this summary annotation.
+         * @see #getTaxonIdsAggregatedAnnots()
+         */
+        public void setTaxonIdsAggregatedAnnots(List<Integer> taxonIdsAggregatedAnnots) {
+            this.taxonIdsAggregatedAnnots = taxonIdsAggregatedAnnots;
+        }
+        
+        /**
+         * @return  A {@code List} of {@code String}s that are the taxon name of other 
+         *          taxa examined to generate this summary annotation: parent taxa 
+         *          with positive annotations for the same HOM ID and Uberon IDs, 
+         *          or sub-taxa with negative annotations for the same HOM ID and Uberon IDs.
+         */
+        public List<String> getTaxonNamesAggregatedAnnots() {
+            return taxonNamesAggregatedAnnots;
+        }
+        /**
+         * @param parentTaxonNamesAggregatedAnnots  A {@code List} of {@code String}s that are 
+         *                                          the taxon names of other taxa examined 
+         *                                          to generate this summary annotation.
+         * @see #getTaxonNamesAggregatedAnnots()
+         */
+        public void setTaxonNamesAggregatedAnnots(List<String> taxonNamesAggregatedAnnots) {
+            this.taxonNamesAggregatedAnnots = taxonNamesAggregatedAnnots;
+        }
+        
+        /**
+         * @return  A {@code List} of {@code String}s that are all the databases that 
+         *          contributed to the raw annotations that were aggregated into 
+         *          this summary annotation.
+         */
+        public List<String> getAssignedBy() {
+            return assignedBy;
+        }
+        /**
+         * @param assignedBy    A {@code List} of {@code String}s that are all the databases 
+         *                      that contributed to the raw annotations that were aggregated 
+         *                      into this summary annotation.
+         * @see #getAssignedBy()
+         */
+        public void setAssignedBy(List<String> assignedBy) {
+            this.assignedBy = assignedBy;
+        }
+        
+        
+        
+        /* (non-Javadoc)
+         * @see java.lang.Object#hashCode()
+         */
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = super.hashCode();
+            result = prime * result
+                    + ((assignedBy == null) ? 0 : assignedBy.hashCode());
+            result = prime
+                    * result
+                    + ((negativeEcoIds == null) ? 0 : negativeEcoIds.hashCode());
+            result = prime
+                    * result
+                    + ((negativeEcoLabels == null) ? 0 : negativeEcoLabels
+                            .hashCode());
+            result = prime
+                    * result
+                    + ((positiveEcoIds == null) ? 0 : positiveEcoIds.hashCode());
+            result = prime
+                    * result
+                    + ((positiveEcoLabels == null) ? 0 : positiveEcoLabels
+                            .hashCode());
+            result = prime
+                    * result
+                    + ((taxonIdsAggregatedAnnots == null) ? 0
+                            : taxonIdsAggregatedAnnots.hashCode());
+            result = prime
+                    * result
+                    + ((taxonNamesAggregatedAnnots == null) ? 0
+                            : taxonNamesAggregatedAnnots.hashCode());
+            return result;
+        }
+        /* (non-Javadoc)
+         * @see java.lang.Object#equals(java.lang.Object)
+         */
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (!super.equals(obj)) {
+                return false;
+            }
+            if (!(obj instanceof SummaryAnnotationBean)) {
+                return false;
+            }
+            SummaryAnnotationBean other = (SummaryAnnotationBean) obj;
+            if (assignedBy == null) {
+                if (other.assignedBy != null) {
+                    return false;
+                }
+            } else if (!assignedBy.equals(other.assignedBy)) {
+                return false;
+            }
+            if (negativeEcoIds == null) {
+                if (other.negativeEcoIds != null) {
+                    return false;
+                }
+            } else if (!negativeEcoIds.equals(other.negativeEcoIds)) {
+                return false;
+            }
+            if (negativeEcoLabels == null) {
+                if (other.negativeEcoLabels != null) {
+                    return false;
+                }
+            } else if (!negativeEcoLabels.equals(other.negativeEcoLabels)) {
+                return false;
+            }
+            if (positiveEcoIds == null) {
+                if (other.positiveEcoIds != null) {
+                    return false;
+                }
+            } else if (!positiveEcoIds.equals(other.positiveEcoIds)) {
+                return false;
+            }
+            if (positiveEcoLabels == null) {
+                if (other.positiveEcoLabels != null) {
+                    return false;
+                }
+            } else if (!positiveEcoLabels.equals(other.positiveEcoLabels)) {
+                return false;
+            }
+            if (taxonIdsAggregatedAnnots == null) {
+                if (other.taxonIdsAggregatedAnnots != null) {
+                    return false;
+                }
+            } else if (!taxonIdsAggregatedAnnots
+                    .equals(other.taxonIdsAggregatedAnnots)) {
+                return false;
+            }
+            if (taxonNamesAggregatedAnnots == null) {
+                if (other.taxonNamesAggregatedAnnots != null) {
+                    return false;
+                }
+            } else if (!taxonNamesAggregatedAnnots
+                    .equals(other.taxonNamesAggregatedAnnots)) {
+                return false;
+            }
+            return true;
+        }
+        /* (non-Javadoc)
+         * @see java.lang.Object#toString()
+         */
+        @Override
+        public String toString() {
+            return "SummaryAnnotationBean [" 
+                    + super.toString() + ", positiveEcoIds=" + positiveEcoIds
+                    + ", positiveEcoLabels=" + positiveEcoLabels
+                    + ", negativeEcoIds=" + negativeEcoIds
+                    + ", negativeEcoLabels=" + negativeEcoLabels
+                    + ", taxonIdsAggregatedAnnots=" + taxonIdsAggregatedAnnots
+                    + ", taxonNamesAggregatedAnnots="
+                    + taxonNamesAggregatedAnnots + ", assignedBy=" + assignedBy
+                    + "]";
+        }
+    }
+
+    /**
+     * A {@code CsvPreference} used to parse TSV files allowing commented line, 
+     * starting with "//".
+     */
+    private final static CsvPreference TSV_COMMENTED = 
+            new CsvPreference.Builder(CsvPreference.TAB_PREFERENCE).
+            skipComments(new CommentStartsWith("//")).build();
+    
+    
+    //****************************************************
+    // COLUMNS COMMON TO ALL SIMILARITY ANNOTATION FILES
+    //****************************************************
+    /**
+     * A {@code String} that is the name of the column containing the HOM IDs 
+     * of terms from the ontology of homology and related concepts.
+     */
+    public final static String HOM_COL_NAME = "HOM ID";
+    /**
+     * A {@code String} that is the name of the column containing the HOM names 
+     * of terms from the ontology of homology and related concepts.
+     */
+    public final static String HOM_NAME_COL_NAME = "HOM name";
+    /**
+     * A {@code String} that is the name of the column containing the entity IDs 
+     * in the similarity annotation file (for instance, "UBERON:0001905|UBERON:0001787").
+     */
+    public final static String ENTITY_COL_NAME = "entity";
+    /**
+     * A {@code String} that is the name of the column containing the entity names 
+     * in the similarity annotation file (for instance, 
+     * "pineal body|photoreceptor layer of retina").
+     */
+    public final static String ENTITY_NAME_COL_NAME = "entity name";
+    /**
+     * A {@code String} that is the name of the column containing the taxon IDs 
+     * in the similarity annotation file (for instance, 9606).
+     */
+    public final static String TAXON_COL_NAME = "taxon ID";
+
+    /**
+     * A {@code String} that is the name of the column containing the taxon names 
+     * in the similarity annotation file (for instance, "Homo sapiens").
+     */
+    public final static String TAXON_NAME_COL_NAME = "taxon name";
+
+    /**
+     * A {@code String} that is the name of the column containing the qualifier 
+     * in the similarity annotation file (to state the an entity is <strong>not</stong> 
+     * homologous in a taxon).
+     */
+    public final static String QUALIFIER_COL_NAME = "qualifier";
+    /**
+     * A {@code String} that is the name of the column containing the confidence code IDs 
+     * in the similarity annotation file (for instance, "CIO:0000003").
+     */
+    public final static String CONF_COL_NAME = "CIO ID";
+
+    /**
+     * A {@code String} that is the name of the column containing the confidence code names 
+     * in the similarity annotation file (for instance, "High confidence assertion").
+     */
+    public final static String CONF_NAME_COL_NAME = "CIO name";
+
+    /**
+     * A {@code String} that is the name of the column containing the database which made 
+     * the annotation, in the similarity annotation file (for instance, "Bgee").
+     */
+    public final static String ASSIGN_COL_NAME = "assigned by";
+
+    //****************************************************
+    // COLUMNS SPECIFIC TO RAW ANNOTATION FILES
+    //****************************************************
+    /**
+     * A {@code String} that is the name of the column containing the reference ID 
+     * in the similarity annotation file (for instance, "PMID:16771606").
+     */
+    public final static String REF_COL_NAME = "reference";
+    /**
+     * A {@code String} that is the name of the column containing the reference name 
+     * in the similarity annotation file (for instance, 
+     * "Liem KF, Bemis WE, Walker WF, Grande L, Functional Anatomy of the Vertebrates: 
+     * An Evolutionary Perspective (2001) p.500").
+     */
+    public final static String REF_TITLE_COL_NAME = "reference title";
+    /**
+     * A {@code String} that is the name of the column containing the ECO IDs 
+     * in the similarity annotation file (for instance, "ECO:0000067").
+     */
+    public final static String ECO_COL_NAME = "ECO ID";
+    /**
+     * A {@code String} that is the name of the column containing the ECO name 
+     * in the similarity annotation file (for instance, "developmental similarity evidence").
+     */
+    public final static String ECO_NAME_COL_NAME = "ECO name";
+    /**
+     * A {@code String} that is the name of the column containing a relevant quote from
+     * the reference, in the similarity annotation file.
+     */
+    public final static String SUPPORT_TEXT_COL_NAME = "supporting text";
+
+    /**
+     * A {@code String} that is the name of the column containing the code representing  
+     * the annotator which made the annotation, in the similarity annotation file 
+     * (for instance "ANN").
+     */
+    public final static String CURATOR_COL_NAME = "curator";
+
+    /**
+     * A {@code String} that is the name of the column containing the date   
+     * when the annotation was made, in the similarity annotation file 
+     * (for instance "2013-07-03").
+     * @see #DATE_FORMAT
+     */
+    public final static String DATE_COL_NAME = "date";
+
+    //****************************************************
+    // COLUMNS SPECIFIC TO AGGREGATED EVIDENCE ANNOTATION FILES
+    //****************************************************
+    /**
+     * A {@code String} that is the name of the column containing IDs of the ECO terms 
+     * supporting the annotation, in the AGGREGATED EVIDENCE annotation files. These terms 
+     * come from positive annotations to same HOM ID - Uberon IDs, and to same taxon or 
+     * to any parent taxa, that were aggregated with the current annotation.
+     */
+    public final static String POSITIVE_ECO_COL_NAME = "positive ECO ID";
+    /**
+     * A {@code String} that is the name of the column containing names of the ECO terms 
+     * supporting the annotation, in the AGGREGATED EVIDENCE annotation files. These terms 
+     * come from positive annotations to same HOM ID - Uberon IDs, and to same taxon or 
+     * to any parent taxa, that were aggregated with the current annotation.
+     */
+    public final static String POSITIVE_ECO_NAME_COL_NAME = "positive ECO name";
+    /**
+     * A {@code String} that is the name of the column containing IDs of the ECO terms 
+     * invalidating the annotation, in the AGGREGATED EVIDENCE annotation files. These terms 
+     * come from negative annotations to same HOM ID - Uberon IDs - taxon ID, 
+     * that were aggregated with the current annotation.
+     */
+    public final static String NEGATIVE_ECO_COL_NAME = "negative ECO ID";
+    /**
+     * A {@code String} that is the name of the column containing names of the ECO terms 
+     * invalidating the annotation, in the AGGREGATED EVIDENCE annotation files. These terms 
+     * come from negative annotations to same HOM ID - Uberon IDs - taxon ID, 
+     * that were aggregated with the current annotation.
+     */
+    public final static String NEGATIVE_ECO_NAME_COL_NAME = "negative ECO name";
+    /**
+     * A {@code String} that is the name of the column containing the related taxon IDs, 
+     * in the AGGREGATED EVIDENCE annotation files, of parent taxa with positive annotations 
+     * for the same HOM ID and Uberon IDs, or sub-taxa with negative annotations 
+     * for the same HOM ID and Uberon IDs, that were aggregated with the current annotation.
+     */
+    public final static String AGGREGATED_TAXA_COL_NAME = "Other examined taxon ID";
+    /**
+     * A {@code String} that is the name of the column containing the related taxon names, 
+     * in the AGGREGATED EVIDENCE annotation files, of parent taxa with positive annotations 
+     * for the same HOM ID and Uberon IDs, or sub-taxa with negative annotations 
+     * for the same HOM ID and Uberon IDs, that were aggregated with the current annotation.
+     */
+    public final static String AGGREGATED_TAXA_NAME_COL_NAME = "Other examined taxon name";
+
+    //****************************************************
+    // SPECIAL VALUES
+    //****************************************************
+    /**
+     * A {@code String} that is the value of the {@link #QUALIFIER_COL_NAME} column, 
+     * when the annotation is negated.
+     */
+    public final static String NEGATE_QUALIFIER = "NOT";
+    /**
+     * A {@code String} that is the format of the date in the column named 
+     * {@link #DATE_COL_NAME}.
+     */
+    public final static String DATE_FORMAT = "yyyy-MM-dd";
+
+    
+    
+    
+    /**
      * Extracts annotations from the provided RAW similarity annotation file. It returns a 
      * {@code List} of {@code RawAnnotationBean}s, where each {@code RawAnnotationBean} 
      * represents a row in the file. The elements in the {@code List} are ordered 
@@ -1096,7 +1649,6 @@ public class SimilarityAnnotationUtils {
             
             List<RawAnnotationBean> annots = new ArrayList<RawAnnotationBean>();
             final String[] header = annotReader.getHeader(true);
-            
             RawAnnotationBean annot;
             while((annot = annotReader.read(RawAnnotationBean.class, 
                     RawAnnotationBean.mapHeaderToAttributes(header), 
@@ -1108,14 +1660,70 @@ public class SimilarityAnnotationUtils {
                 throw log.throwing(new IllegalArgumentException("The provided file " 
                         + similarityFile + " did not allow to retrieve any annotation"));
             }
-            
             return log.exit(annots);
             
         } catch (SuperCsvException e) {
-            //do not expose implementation details
+            //hide implementation details
             throw log.throwing(new IllegalArgumentException("The provided file " 
                     + similarityFile + " could not be properly parsed", e));
         }
     }
+    
+
+//    /**
+//     * Extracts annotations of type {@code clazz} from the provided similarity annotation file. 
+//     * It is necessary to provide name mappings between column index and bean attribute names, 
+//     * and the {@code CellProcessor}s to process the cells.
+//     * It returns a {@code List} of {@code AnnotationBean}s of the provided type, 
+//     * where each {@code AnnotationBean} represents a row in the file. The elements 
+//     * in the {@code List} are ordered as they were read from the file. 
+//     * 
+//     * @param clazz             The type of {@code AnnotationBean} to return.
+//     * @param nameMapping       An {@code Array} of {@code String}s that are the names 
+//     *                          of the attributes of the {@code AnnotationBean}, put in 
+//     *                          the {@code Array} at the same index as their corresponding column.
+//     * @param processors        An {@code Array} of {@code CellProcessor}s, put in 
+//     *                          the {@code Array} at the same index as the column 
+//     *                          they are supposed to process.
+//     * @param similarityFile    A {@code String} that is the path to a similarity 
+//     *                          annotation file, containing the correct information 
+//     *                          to produce {@code AnnotationBean}s of the provided type. 
+//     * @return                  A {@code List} of {@code AnnotationBean}s of the provided type, 
+//     *                          where each element represents a row in the file, ordered as 
+//     *                          they were read from the file.
+//     * @throws FileNotFoundException    If {@code similarityFile} could not be found.
+//     * @throws IOException              If {@code similarityFile} could not be read.
+//     * @throws IllegalArgumentException If {@code similarityFile} did not allow to retrieve 
+//     *                                  any annotation or could not be properly parsed.
+//     */
+//    //XXX: attempt to refactor the annotation extraction, but this is boring, 
+//    //either we need to provide the CsvBeanReader to the refactored method to obtain the header, 
+//    //or we need to use reflection to be able to call mapHeaderToAttributes and 
+//    //mapHeaderToCellProcessors on the appropriate AnnotationBean type.
+//    private static <T extends AnnotationBean> List<T> extractAnnotations(Class<T> clazz, 
+//            String[] nameMapping, CellProcessor[] processors, String similarityFile) 
+//                    throws FileNotFoundException, IOException, IllegalArgumentException {
+//        log.entry(clazz, similarityFile);
+//        
+//        try (ICsvBeanReader annotReader = new CsvBeanReader(new FileReader(similarityFile), 
+//                TSV_COMMENTED)) {
+//            
+//            List<T> annots = new ArrayList<T>();
+//            T annot;
+//            while((annot = annotReader.read(clazz, nameMapping, processors)) != null ) {
+//                annots.add(annot);
+//            }
+//            if (annots.isEmpty()) {
+//                throw log.throwing(new IllegalArgumentException("The provided file " 
+//                        + similarityFile + " did not allow to retrieve any annotation"));
+//            }
+//            return log.exit(annots);
+//            
+//        } catch (SuperCsvException e) {
+//            //hide implementation details
+//            throw log.throwing(new IllegalArgumentException("The provided file " 
+//                    + similarityFile + " could not be properly parsed", e));
+//        }
+//    }
     
 }

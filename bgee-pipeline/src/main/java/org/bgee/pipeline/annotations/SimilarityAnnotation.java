@@ -1945,9 +1945,9 @@ public class SimilarityAnnotation {
         log.entry(annots, ecoUtils, cioWrapper);
         
         //first, we need to know whether there are only evidences supporting 
-        //the assertion, or negating the assertion, or both
-        boolean hasPositiveAnnots = false;
-        boolean hasNegativeAnnots = false;
+        //the assertion, or negating the assertion, or both, and how many
+        int positiveAnnotCount = 0;
+        int negativeAnnotCount = 0;
         //we need to store all evidences related to positive annotations supporting 
         //the assertion, to determine whether evidences are of the same type, 
         //and whether they are of the same type as contradicting evidences. 
@@ -1962,7 +1962,6 @@ public class SimilarityAnnotation {
         final OWLClass singleEvidenceConcordance = 
                 cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
                 CIOWrapper.SINGLE_EVIDENCE_CONCORDANCE_ID);
-        int consideredAnnotations = 0;
         
         for (Map<String, Object> annot: annots) {
             OWLClass confStatement = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
@@ -1989,31 +1988,31 @@ public class SimilarityAnnotation {
             }
             //-----------------------------------
             
-            consideredAnnotations++;
             boolean currentNegate = this.isNegativeAnnotations(annot);
             Set<OWLClass> toUseECOs  = positiveECOs;
             Set<OWLClass> toUseConfs = positiveConfs;
             if (currentNegate) {
-                hasNegativeAnnots = true;
+                negativeAnnotCount++;
                 toUseECOs = negativeECOs;
                 toUseConfs = negativeConfs;
             } else {
-                hasPositiveAnnots = true;
+                positiveAnnotCount++;
             }
             toUseECOs.add(ecoTerm);
             toUseConfs.add(confStatement);
         }
-        if (consideredAnnotations < 2) {
+        if ((negativeAnnotCount + positiveAnnotCount) < 2) {
             throw log.throwing(new IllegalArgumentException("At least two valid annotations "
                     + "must be provided to compute a global confidence score."));
         }
-        assert hasPositiveAnnots || hasNegativeAnnots;
+        assert positiveAnnotCount > 0 || negativeAnnotCount > 0;
         assert !positiveConfs.isEmpty() || !negativeConfs.isEmpty();
         
         //if we have conflicting evidence lines, we want to know whether they are of the same 
         //or of different types (in that case, we do not want to know whether 
         //positive annotations on one hand, or negative annotations on the other hand, 
         //have same or multiple evidence types). Otherwise, we check that over all evidence lines. 
+        //XXX: should we really consider ECOs 'author statement' as a 'different type'?
         OWLClass evidenceTypeConcordance = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
                 CIOWrapper.SAME_TYPE_EVIDENCE_CONCORDANCE_ID);
         if ((hasPositiveAnnots && hasNegativeAnnots && 
@@ -2030,15 +2029,20 @@ public class SimilarityAnnotation {
         OWLClass evidenceConcordance = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
                 CIOWrapper.CONGRUENT_CONCORDANCE_ID);
         OWLClass confidenceLevel = null;
-        if (hasPositiveAnnots && hasNegativeAnnots) {
+        if (positiveAnnotCount > 0 && negativeAnnotCount > 0) {
             OWLClass bestPositiveTerm = cioWrapper.getBestTermWithConfidenceLevel(positiveConfs);
             OWLClass bestNegativeTerm = cioWrapper.getBestTermWithConfidenceLevel(negativeConfs);
-            //if bestNegativeTerm is of equal or higher confidence level than bestPositiveTerm 
+            //if we have as much or less negative annotations than positive annotations, 
+            //and bestNegativeTerm is of equal or higher confidence level than bestPositiveTerm, 
+            //or if we have more negative annotations than positive annotations
             //=> strong conflict
-            if (bestNegativeTerm.equals(bestPositiveTerm) || 
+            if ((negativeAnnotCount <= positiveAnnotCount && 
+                    (bestNegativeTerm.equals(bestPositiveTerm) || 
                     cioWrapper.getBestTermWithConfidenceLevel(
                             Arrays.asList(bestNegativeTerm, bestPositiveTerm)).equals(
-                                    bestNegativeTerm)) {
+                                    bestNegativeTerm))) || 
+                negativeAnnotCount > positiveAnnotCount) {
+                
                 evidenceConcordance = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
                         CIOWrapper.STRONGLY_CONFLICTING_CONCORDANCE_ID);
                 //for strongly conflicting evidence lines, there is no confidence level associated.
@@ -2050,10 +2054,10 @@ public class SimilarityAnnotation {
                 //from the best supporting evidence
                 confidenceLevel = cioWrapper.getConfidenceLevel(bestPositiveTerm);
             }
-        } else if (hasPositiveAnnots) {
+        } else if (positiveAnnotCount > 0) {
             confidenceLevel = cioWrapper.getConfidenceLevel(
                     cioWrapper.getBestTermWithConfidenceLevel(positiveConfs));
-        } else if (hasNegativeAnnots) {
+        } else if (negativeAnnotCount > 0) {
             confidenceLevel = cioWrapper.getConfidenceLevel(
                     cioWrapper.getBestTermWithConfidenceLevel(negativeConfs));
         }

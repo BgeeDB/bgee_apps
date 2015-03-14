@@ -102,13 +102,6 @@ public class SimilarityAnnotationUtils {
      */
     private static class ParseMultipleValuesCell extends CellProcessorAdaptor {
         /**
-         * An unmodifiable {@code List} of {@code String}s that are the allowed separators 
-         * between values in cells potentially containing multiple values, 
-         * in preferred order of use. 
-         */
-        public final static List<String> VALUE_SEPARATORS = 
-                Collections.unmodifiableList(Arrays.asList("|", ","));
-        /**
          * A {@code String} that is the pattern to use to split values in a cell 
          * potentially containing multiple values.
          */
@@ -1010,9 +1003,10 @@ public class SimilarityAnnotationUtils {
     }
     
     /**
-     * A bean representing a row from the AGGREGATED EVIDENCE annotation file. These annotations 
-     * aggregate RAW annotations with same HOM ID, Uberon IDs, taxon ID, to compute a global 
-     * confidence score.
+     * A bean representing a row from the AGGREGATED EVIDENCE annotation file. 
+     * These annotations aggregate RAW annotations with same HOM ID, Uberon IDs, taxon ID, 
+     * and with RAW positive annotations with same HOM ID, Uberon IDs, mapped to an ancestor 
+     * of the taxon of the current annotation, to compute a global confidence score.
      * <p>
      * Getter and setter names must follow standard bean definitions.
      * 
@@ -1088,10 +1082,10 @@ public class SimilarityAnnotationUtils {
                         mapping[i] = "negativeEcoLabels";
                         break;
                     case AGGREGATED_TAXA_COL_NAME: 
-                        mapping[i] = "taxonIdsAggregatedAnnots";
+                        mapping[i] = "aggregatedTaxonIds";
                         break;
                     case AGGREGATED_TAXA_NAME_COL_NAME: 
-                        mapping[i] = "taxonNamesAggregatedAnnots";
+                        mapping[i] = "aggregatedTaxonNames";
                         break;
                     case ASSIGN_COL_NAME: 
                         mapping[i] = "assignedBy";
@@ -1177,18 +1171,61 @@ public class SimilarityAnnotationUtils {
          */
         private List<String> negativeEcoLabels;
         /**
-         * @see #getTaxonIdsAggregatedAnnots()
+         * @see #getAggregatedTaxonIds()
          */
-        private List<Integer> taxonIdsAggregatedAnnots;
+        private List<Integer> aggregatedTaxonIds;
         /**
-         * @see #getTaxonNamesAggregatedAnnots()
+         * @see #getAggregatedTaxonNames()
          */
-        private List<String> taxonNamesAggregatedAnnots;
+        private List<String> aggregatedTaxonNames;
         /**
          * @see #getAssignedBy()
          */
         private List<String> assignedBy;
         
+        /**
+         * 0-argument constructor of the bean.
+         */
+        public SummaryAnnotationBean() {
+        }
+        /**
+         * Constructor providing all arguments of the class.
+         * @param homId                 See {@link #getHomId()}.
+         * @param homLabel              See {@link #getHomLabel()}.
+         * @param entityIds             See {@link #getEntityIds()}.
+         * @param entityNames           See {@link #getEntityNames()}.
+         * @param ncbiTaxonId           See {@link #getNcbiTaxonId()}.
+         * @param taxonName             See {@link #getTaxonName()}.
+         * @param negated               See {@link #isNegated()}.
+         * @param cioId                 See {@link #getCioId()}.
+         * @param cioLabel              See {@link #getCioLabel()}.
+         * @param positiveEcoIds        See {@link #getPositiveEcoIds()}.
+         * @param positiveEcoLabels     See {@link #getPositiveEcoLabels()}.
+         * @param negativeEcoIds        See {@link #getNegativeEcoIds()}.
+         * @param negativeEcoLabels     See {@link #getNegativeEcoLabels()}.
+         * @param aggregatedTaxonIds    See {@link #getAggregatedTaxonIds()}.
+         * @param aggregatedTaxonNames  See {@link #getAggregatedTaxonNames()}.
+         * @param assignedBy            See {@link #getAssignedBy()}.
+         */
+        public SummaryAnnotationBean(String homId, String homLabel,
+                List<String> entityIds, List<String> entityNames,
+                int ncbiTaxonId, String taxonName, boolean negated,
+                String cioId, String cioLabel, 
+                List<String> positiveEcoIds, List<String> positiveEcoLabels, 
+                List<String> negativeEcoIds, List<String> negativeEcoLabels, 
+                List<Integer> aggregatedTaxonIds, List<String> aggregatedTaxonNames, 
+                List<String> assignedBy) {
+            
+            super(homId, homLabel, entityIds, entityNames, ncbiTaxonId, taxonName, 
+                    negated, cioId, cioLabel);
+            this.positiveEcoIds = positiveEcoIds;
+            this.positiveEcoLabels = positiveEcoLabels;
+            this.negativeEcoIds = negativeEcoIds;
+            this.negativeEcoLabels = negativeEcoLabels;
+            this.aggregatedTaxonIds = aggregatedTaxonIds;
+            this.aggregatedTaxonNames = aggregatedTaxonNames;
+            this.assignedBy = assignedBy;
+        }
         /**
          * @return  A {@code List} of {@code String}s that are the IDs of the ECO terms 
          *          supporting the annotation. These terms come from positive annotations 
@@ -1270,41 +1307,64 @@ public class SimilarityAnnotationUtils {
         }
         
         /**
+         * Return the list of NCBI taxon IDs from positive annotations mapped to same 
+         * HOM ID - Uberon IDs as the current summary annotation, but mapped to an ancestor 
+         * of the taxon of the current summary annotation (this is done only 
+         * if the current summary annotation is positive). This is for the sake of being 
+         * able to trace back a summary annotation to its raw annotations it aggregates.
+         * <p>
+         * Indeed, if we have evidence that a structure is homologous in, for instance, 
+         * Tetrapoda, and also evidence that the structure might be homologous at 
+         * the Vertebrata level, then we are even more sure that it is homologous 
+         * at the Tetrapoda level.
+         * <p>
+         * Note that we could have aggregate negative annotations mapped to sub-taxa: 
+         * if we have evidence that a structure is NOT homologous at the Tetrapoda level, 
+         * then it is unlikely to be homologous at the Vertebrata level. But we cannot 
+         * rule out weird cases, where a structure is lost in a lineage, then reappears 
+         * through independent evolution in a sub-taxon?
+         * 
          * @return  A {@code List} of {@code Integer}s that are the NCBI taxon IDs of other 
          *          taxa examined to generate this summary annotation: parent taxa 
-         *          with positive annotations for the same HOM ID and Uberon IDs, 
-         *          or sub-taxa with negative annotations for the same HOM ID and Uberon IDs.
+         *          with positive annotations for the same HOM ID and Uberon IDs.
          */
-        public List<Integer> getTaxonIdsAggregatedAnnots() {
-            return taxonIdsAggregatedAnnots;
+        public List<Integer> getAggregatedTaxonIds() {
+            return aggregatedTaxonIds;
         }
         /**
-         * @param taxonIdsAggregatedAnnots  A {@code List} of {@code Integer}s that are 
+         * See {@link #getAggregatedTaxonIds()} for explanations.
+         * 
+         * @param aggregatedTaxonIds        A {@code List} of {@code Integer}s that are 
          *                                  the NCBI taxon IDs of other taxa examined 
          *                                  to generate this summary annotation.
-         * @see #getTaxonIdsAggregatedAnnots()
+         * @see #getAggregatedTaxonIds()
          */
-        public void setTaxonIdsAggregatedAnnots(List<Integer> taxonIdsAggregatedAnnots) {
-            this.taxonIdsAggregatedAnnots = taxonIdsAggregatedAnnots;
+        public void setAggregatedTaxonIds(List<Integer> aggregatedTaxonIds) {
+            this.aggregatedTaxonIds = aggregatedTaxonIds;
         }
         
         /**
+         * See {@link #getAggregatedTaxonIds()} for explanations.
+         * 
          * @return  A {@code List} of {@code String}s that are the taxon name of other 
          *          taxa examined to generate this summary annotation: parent taxa 
-         *          with positive annotations for the same HOM ID and Uberon IDs, 
-         *          or sub-taxa with negative annotations for the same HOM ID and Uberon IDs.
+         *          with positive annotations for the same HOM ID and Uberon IDs.
+         * @see #getAggregatedTaxonIds()
          */
-        public List<String> getTaxonNamesAggregatedAnnots() {
-            return taxonNamesAggregatedAnnots;
+        public List<String> getAggregatedTaxonNames() {
+            return aggregatedTaxonNames;
         }
         /**
-         * @param parentTaxonNamesAggregatedAnnots  A {@code List} of {@code String}s that are 
+         * See {@link #getAggregatedTaxonIds()} for explanations.
+         * 
+         * @param parentAggregatedTaxonNames        A {@code List} of {@code String}s that are 
          *                                          the taxon names of other taxa examined 
          *                                          to generate this summary annotation.
-         * @see #getTaxonNamesAggregatedAnnots()
+         * @see #getAggregatedTaxonNames()
+         * @see #getAggregatedTaxonIds()
          */
-        public void setTaxonNamesAggregatedAnnots(List<String> taxonNamesAggregatedAnnots) {
-            this.taxonNamesAggregatedAnnots = taxonNamesAggregatedAnnots;
+        public void setAggregatedTaxonNames(List<String> aggregatedTaxonNames) {
+            this.aggregatedTaxonNames = aggregatedTaxonNames;
         }
         
         /**
@@ -1352,12 +1412,12 @@ public class SimilarityAnnotationUtils {
                             .hashCode());
             result = prime
                     * result
-                    + ((taxonIdsAggregatedAnnots == null) ? 0
-                            : taxonIdsAggregatedAnnots.hashCode());
+                    + ((aggregatedTaxonIds == null) ? 0
+                            : aggregatedTaxonIds.hashCode());
             result = prime
                     * result
-                    + ((taxonNamesAggregatedAnnots == null) ? 0
-                            : taxonNamesAggregatedAnnots.hashCode());
+                    + ((aggregatedTaxonNames == null) ? 0
+                            : aggregatedTaxonNames.hashCode());
             return result;
         }
         /* (non-Javadoc)
@@ -1410,20 +1470,20 @@ public class SimilarityAnnotationUtils {
             } else if (!positiveEcoLabels.equals(other.positiveEcoLabels)) {
                 return false;
             }
-            if (taxonIdsAggregatedAnnots == null) {
-                if (other.taxonIdsAggregatedAnnots != null) {
+            if (aggregatedTaxonIds == null) {
+                if (other.aggregatedTaxonIds != null) {
                     return false;
                 }
-            } else if (!taxonIdsAggregatedAnnots
-                    .equals(other.taxonIdsAggregatedAnnots)) {
+            } else if (!aggregatedTaxonIds
+                    .equals(other.aggregatedTaxonIds)) {
                 return false;
             }
-            if (taxonNamesAggregatedAnnots == null) {
-                if (other.taxonNamesAggregatedAnnots != null) {
+            if (aggregatedTaxonNames == null) {
+                if (other.aggregatedTaxonNames != null) {
                     return false;
                 }
-            } else if (!taxonNamesAggregatedAnnots
-                    .equals(other.taxonNamesAggregatedAnnots)) {
+            } else if (!aggregatedTaxonNames
+                    .equals(other.aggregatedTaxonNames)) {
                 return false;
             }
             return true;
@@ -1438,9 +1498,9 @@ public class SimilarityAnnotationUtils {
                     + ", positiveEcoLabels=" + positiveEcoLabels
                     + ", negativeEcoIds=" + negativeEcoIds
                     + ", negativeEcoLabels=" + negativeEcoLabels
-                    + ", taxonIdsAggregatedAnnots=" + taxonIdsAggregatedAnnots
-                    + ", taxonNamesAggregatedAnnots="
-                    + taxonNamesAggregatedAnnots + ", assignedBy=" + assignedBy
+                    + ", aggregatedTaxonIds=" + aggregatedTaxonIds
+                    + ", aggregatedTaxonNames="
+                    + aggregatedTaxonNames + ", assignedBy=" + assignedBy
                     + "]";
         }
     }
@@ -1594,17 +1654,17 @@ public class SimilarityAnnotationUtils {
     /**
      * A {@code String} that is the name of the column containing the related taxon IDs, 
      * in the AGGREGATED EVIDENCE annotation files, of parent taxa with positive annotations 
-     * for the same HOM ID and Uberon IDs, or sub-taxa with negative annotations 
-     * for the same HOM ID and Uberon IDs, that were aggregated with the current annotation.
+     * for the same HOM ID and Uberon IDs, that were aggregated with the current annotation 
+     * (only if the current annotation is positive).
      */
-    public final static String AGGREGATED_TAXA_COL_NAME = "Other examined taxon ID";
+    public final static String AGGREGATED_TAXA_COL_NAME = "Other taxon aggregated ID";
     /**
      * A {@code String} that is the name of the column containing the related taxon names, 
      * in the AGGREGATED EVIDENCE annotation files, of parent taxa with positive annotations 
-     * for the same HOM ID and Uberon IDs, or sub-taxa with negative annotations 
-     * for the same HOM ID and Uberon IDs, that were aggregated with the current annotation.
+     * for the same HOM ID and Uberon IDs, that were aggregated with the current annotation 
+     * (only if the current annotation is positive).
      */
-    public final static String AGGREGATED_TAXA_NAME_COL_NAME = "Other examined taxon name";
+    public final static String AGGREGATED_TAXA_NAME_COL_NAME = "Other taxon aggregated name";
 
     //****************************************************
     // SPECIAL VALUES
@@ -1619,6 +1679,13 @@ public class SimilarityAnnotationUtils {
      * {@link #DATE_COL_NAME}.
      */
     public final static String DATE_FORMAT = "yyyy-MM-dd";
+    /**
+     * An unmodifiable {@code List} of {@code String}s that are the allowed separators 
+     * between values in cells potentially containing multiple values, 
+     * in preferred order of use. 
+     */
+    public final static List<String> VALUE_SEPARATORS = 
+            Collections.unmodifiableList(Arrays.asList("|", ","));
 
     
     
@@ -1628,7 +1695,6 @@ public class SimilarityAnnotationUtils {
      * {@code List} of {@code RawAnnotationBean}s, where each {@code RawAnnotationBean} 
      * represents a row in the file. The elements in the {@code List} are ordered 
      * as they were read from the file. 
-     * </ul>
      * 
      * @param similarityFile    A {@code String} that is the path to a RAW similarity 
      *                          annotation file. 
@@ -1653,6 +1719,51 @@ public class SimilarityAnnotationUtils {
             while((annot = annotReader.read(RawAnnotationBean.class, 
                     RawAnnotationBean.mapHeaderToAttributes(header), 
                     RawAnnotationBean.mapHeaderToCellProcessors(header))) != null ) {
+                
+                annots.add(annot);
+            }
+            if (annots.isEmpty()) {
+                throw log.throwing(new IllegalArgumentException("The provided file " 
+                        + similarityFile + " did not allow to retrieve any annotation"));
+            }
+            return log.exit(annots);
+            
+        } catch (SuperCsvException e) {
+            //hide implementation details
+            throw log.throwing(new IllegalArgumentException("The provided file " 
+                    + similarityFile + " could not be properly parsed", e));
+        }
+    }
+
+    /**
+     * Extracts annotations from the provided AGGREGATED EVIDENCE similarity annotation file. 
+     * It returns a {@code List} of {@code SummaryAnnotationBean}s, where each 
+     * {@code SummaryAnnotationBean} represents a row in the file. The elements 
+     * in the {@code List} are ordered as they were read from the file. 
+     * 
+     * @param similarityFile    A {@code String} that is the path to an AGGREGATED EVIDENCE 
+     *                          similarity annotation file. 
+     * @return                  A {@code List} of {@code SummaryAnnotationBean}s where each 
+     *                          element represents a row in the file, ordered as 
+     *                          they were read from the file.
+     * @throws FileNotFoundException    If {@code similarityFile} could not be found.
+     * @throws IOException              If {@code similarityFile} could not be read.
+     * @throws IllegalArgumentException If {@code similarityFile} did not allow to retrieve 
+     *                                  any annotation or could not be properly parsed.
+     */
+    public static List<SummaryAnnotationBean> extractSummaryAnnotations(String similarityFile) 
+            throws FileNotFoundException, IOException, IllegalArgumentException {
+        log.entry(similarityFile);
+        
+        try (ICsvBeanReader annotReader = new CsvBeanReader(new FileReader(similarityFile), 
+                TSV_COMMENTED)) {
+            
+            List<SummaryAnnotationBean> annots = new ArrayList<SummaryAnnotationBean>();
+            final String[] header = annotReader.getHeader(true);
+            SummaryAnnotationBean annot;
+            while((annot = annotReader.read(SummaryAnnotationBean.class, 
+                    SummaryAnnotationBean.mapHeaderToAttributes(header), 
+                    SummaryAnnotationBean.mapHeaderToCellProcessors(header))) != null ) {
                 
                 annots.add(annot);
             }

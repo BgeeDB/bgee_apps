@@ -1769,7 +1769,7 @@ public class SimilarityAnnotationUtils {
      * A {@code CsvPreference} used to parse TSV files allowing commented line, 
      * starting with "//".
      */
-    private final static CsvPreference TSV_COMMENTED = 
+    protected final static CsvPreference TSV_COMMENTED = 
             new CsvPreference.Builder(CsvPreference.TAB_PREFERENCE).
             skipComments(new CommentStartsWith("//")).build();
     
@@ -1781,58 +1781,58 @@ public class SimilarityAnnotationUtils {
      * A {@code String} that is the name of the column containing the HOM IDs 
      * of terms from the ontology of homology and related concepts.
      */
-    public final static String HOM_COL_NAME = "HOM ID";
+    protected final static String HOM_COL_NAME = "HOM ID";
     /**
      * A {@code String} that is the name of the column containing the HOM names 
      * of terms from the ontology of homology and related concepts.
      */
-    public final static String HOM_NAME_COL_NAME = "HOM name";
+    protected final static String HOM_NAME_COL_NAME = "HOM name";
     /**
      * A {@code String} that is the name of the column containing the entity IDs 
      * in the similarity annotation file (for instance, "UBERON:0001905|UBERON:0001787").
      */
-    public final static String ENTITY_COL_NAME = "entity";
+    protected final static String ENTITY_COL_NAME = "entity";
     /**
      * A {@code String} that is the name of the column containing the entity names 
      * in the similarity annotation file (for instance, 
      * "pineal body|photoreceptor layer of retina").
      */
-    public final static String ENTITY_NAME_COL_NAME = "entity name";
+    protected final static String ENTITY_NAME_COL_NAME = "entity name";
     /**
      * A {@code String} that is the name of the column containing the taxon IDs 
      * in the similarity annotation file (for instance, 9606).
      */
-    public final static String TAXON_COL_NAME = "taxon ID";
+    protected final static String TAXON_COL_NAME = "taxon ID";
 
     /**
      * A {@code String} that is the name of the column containing the taxon names 
      * in the similarity annotation file (for instance, "Homo sapiens").
      */
-    public final static String TAXON_NAME_COL_NAME = "taxon name";
+    protected final static String TAXON_NAME_COL_NAME = "taxon name";
 
     /**
      * A {@code String} that is the name of the column containing the qualifier 
      * in the similarity annotation file (to state the an entity is <strong>not</stong> 
      * homologous in a taxon).
      */
-    public final static String QUALIFIER_COL_NAME = "qualifier";
+    protected final static String QUALIFIER_COL_NAME = "qualifier";
     /**
      * A {@code String} that is the name of the column containing the confidence code IDs 
      * in the similarity annotation file (for instance, "CIO:0000003").
      */
-    public final static String CONF_COL_NAME = "CIO ID";
+    protected final static String CONF_COL_NAME = "CIO ID";
 
     /**
      * A {@code String} that is the name of the column containing the confidence code names 
      * in the similarity annotation file (for instance, "High confidence assertion").
      */
-    public final static String CONF_NAME_COL_NAME = "CIO name";
+    protected final static String CONF_NAME_COL_NAME = "CIO name";
 
     /**
      * A {@code String} that is the name of the column containing the database which made 
      * the annotation, in the similarity annotation file (for instance, "Bgee").
      */
-    public final static String ASSIGN_COL_NAME = "assigned by";
+    protected final static String ASSIGN_COL_NAME = "assigned by";
 
     //****************************************************
     // COLUMNS SPECIFIC TO RAW ANNOTATION FILES
@@ -1841,36 +1841,36 @@ public class SimilarityAnnotationUtils {
      * A {@code String} that is the name of the column containing the reference ID 
      * in the similarity annotation file (for instance, "PMID:16771606").
      */
-    public final static String REF_COL_NAME = "reference";
+    protected final static String REF_COL_NAME = "reference";
     /**
      * A {@code String} that is the name of the column containing the reference name 
      * in the similarity annotation file (for instance, 
      * "Liem KF, Bemis WE, Walker WF, Grande L, Functional Anatomy of the Vertebrates: 
      * An Evolutionary Perspective (2001) p.500").
      */
-    public final static String REF_TITLE_COL_NAME = "reference title";
+    protected final static String REF_TITLE_COL_NAME = "reference title";
     /**
      * A {@code String} that is the name of the column containing the ECO IDs 
      * in the similarity annotation file (for instance, "ECO:0000067").
      */
-    public final static String ECO_COL_NAME = "ECO ID";
+    protected final static String ECO_COL_NAME = "ECO ID";
     /**
      * A {@code String} that is the name of the column containing the ECO name 
      * in the similarity annotation file (for instance, "developmental similarity evidence").
      */
-    public final static String ECO_NAME_COL_NAME = "ECO name";
+    protected final static String ECO_NAME_COL_NAME = "ECO name";
     /**
      * A {@code String} that is the name of the column containing a relevant quote from
      * the reference, in the similarity annotation file.
      */
-    public final static String SUPPORT_TEXT_COL_NAME = "supporting text";
+    protected final static String SUPPORT_TEXT_COL_NAME = "supporting text";
 
     /**
      * A {@code String} that is the name of the column containing the code representing  
      * the annotator which made the annotation, in the similarity annotation file 
      * (for instance "ANN").
      */
-    public final static String CURATOR_COL_NAME = "curator";
+    protected final static String CURATOR_COL_NAME = "curator";
 
     /**
      * A {@code String} that is the name of the column containing the date   
@@ -1878,7 +1878,7 @@ public class SimilarityAnnotationUtils {
      * (for instance "2013-07-03").
      * @see #DATE_FORMAT
      */
-    public final static String DATE_COL_NAME = "date";
+    protected final static String DATE_COL_NAME = "date";
 
     //****************************************************
     // COLUMNS SPECIFIC TO AGGREGATED EVIDENCE ANNOTATION FILES
@@ -1887,60 +1887,60 @@ public class SimilarityAnnotationUtils {
      * A {@code String} that is the name of the column containing the number of positive 
      * RAW annotations that were aggregated to produce this SUMMARY annotation.
      */
-    public final static String POSITIVE_COUNT_COL_NAME = "positive evidence count";
+    protected final static String POSITIVE_COUNT_COL_NAME = "positive evidence count";
     /**
      * A {@code String} that is the name of the column containing the number of negative 
      * RAW annotations that were aggregated to produce this SUMMARY annotation.
      */
-    public final static String NEGATIVE_COUNT_COL_NAME = "negative evidence count";
+    protected final static String NEGATIVE_COUNT_COL_NAME = "negative evidence count";
     /**
      * A {@code String} that is the name of the column containing the Bool value 
      * defining whether the CIO term associated to this annotation is considered 
      * of sufficient confidence.
      */
-    public final static String TRUSTED_COL_NAME = "trusted";
+    protected final static String TRUSTED_COL_NAME = "trusted";
     /**
      * A {@code String} that is the name of the column containing IDs of the ECO terms 
      * supporting the annotation, in the AGGREGATED EVIDENCE annotation files. These terms 
      * come from positive annotations to same HOM ID - Uberon IDs, and to same taxon or 
      * to any parent taxa, that were aggregated with the current annotation.
      */
-    public final static String POSITIVE_ECO_COL_NAME = "positive ECO ID";
+    protected final static String POSITIVE_ECO_COL_NAME = "positive ECO ID";
     /**
      * A {@code String} that is the name of the column containing names of the ECO terms 
      * supporting the annotation, in the AGGREGATED EVIDENCE annotation files. These terms 
      * come from positive annotations to same HOM ID - Uberon IDs, and to same taxon or 
      * to any parent taxa, that were aggregated with the current annotation.
      */
-    public final static String POSITIVE_ECO_NAME_COL_NAME = "positive ECO name";
+    protected final static String POSITIVE_ECO_NAME_COL_NAME = "positive ECO name";
     /**
      * A {@code String} that is the name of the column containing IDs of the ECO terms 
      * invalidating the annotation, in the AGGREGATED EVIDENCE annotation files. These terms 
      * come from negative annotations to same HOM ID - Uberon IDs - taxon ID, 
      * that were aggregated with the current annotation.
      */
-    public final static String NEGATIVE_ECO_COL_NAME = "negative ECO ID";
+    protected final static String NEGATIVE_ECO_COL_NAME = "negative ECO ID";
     /**
      * A {@code String} that is the name of the column containing names of the ECO terms 
      * invalidating the annotation, in the AGGREGATED EVIDENCE annotation files. These terms 
      * come from negative annotations to same HOM ID - Uberon IDs - taxon ID, 
      * that were aggregated with the current annotation.
      */
-    public final static String NEGATIVE_ECO_NAME_COL_NAME = "negative ECO name";
+    protected final static String NEGATIVE_ECO_NAME_COL_NAME = "negative ECO name";
     /**
      * A {@code String} that is the name of the column containing the related taxon IDs, 
      * in the AGGREGATED EVIDENCE annotation files, of parent taxa with positive annotations 
      * for the same HOM ID and Uberon IDs, that were aggregated with the current annotation 
      * (only if the current annotation is positive).
      */
-    public final static String AGGREGATED_TAXA_COL_NAME = "Other taxon aggregated ID";
+    protected final static String AGGREGATED_TAXA_COL_NAME = "Other taxon aggregated ID";
     /**
      * A {@code String} that is the name of the column containing the related taxon names, 
      * in the AGGREGATED EVIDENCE annotation files, of parent taxa with positive annotations 
      * for the same HOM ID and Uberon IDs, that were aggregated with the current annotation 
      * (only if the current annotation is positive).
      */
-    public final static String AGGREGATED_TAXA_NAME_COL_NAME = "Other taxon aggregated name";
+    protected final static String AGGREGATED_TAXA_NAME_COL_NAME = "Other taxon aggregated name";
 
     //****************************************************
     // SPECIAL VALUES
@@ -1949,18 +1949,18 @@ public class SimilarityAnnotationUtils {
      * A {@code String} that is the value of the {@link #QUALIFIER_COL_NAME} column, 
      * when the annotation is negated.
      */
-    public final static String NEGATE_QUALIFIER = "NOT";
+    protected final static String NEGATE_QUALIFIER = "NOT";
     /**
      * A {@code String} that is the format of the date in the column named 
      * {@link #DATE_COL_NAME}.
      */
-    public final static String DATE_FORMAT = "yyyy-MM-dd";
+    protected final static String DATE_FORMAT = "yyyy-MM-dd";
     /**
      * An unmodifiable {@code List} of {@code String}s that are the allowed separators 
      * between values in cells potentially containing multiple values, 
      * in preferred order of use. 
      */
-    public final static List<String> VALUE_SEPARATORS = 
+    protected final static List<String> VALUE_SEPARATORS = 
             Collections.unmodifiableList(Arrays.asList("|", ","));
 
     

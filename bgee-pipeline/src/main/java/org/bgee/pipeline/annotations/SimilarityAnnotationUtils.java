@@ -207,7 +207,7 @@ public class SimilarityAnnotationUtils {
      * @version Bgee 13 Mar. 2015
      * @since Bgee 13
      */
-    private static abstract class AnnotationBean {
+    public static abstract class AnnotationBean {
         /**
          * @see #getHomId()
          */
@@ -550,150 +550,6 @@ public class SimilarityAnnotationUtils {
      */
     public static class RawAnnotationBean extends AnnotationBean {
         /**
-         * Map the columns of a CSV file to the attributes of {@code RawAnnotationBean}. 
-         * This will then be used to populate the bean, using the standard setter name 
-         * convention. 
-         * <p>
-         * Thanks to this method, we can adapt to any change in column names or column order.
-         * 
-         * @param header    An {@code Array} of {@code String}s representing the names 
-         *                  of the columns of a RAW similarity annotation file.
-         * @return          An {@code Array} of {@code String}s that are the names 
-         *                  of the attributes of {@code RawAnnotationBean}, put in 
-         *                  the {@code Array} at the same index as their corresponding column.
-         * @throws IllegalArgumentException If a {@code String} in {@code header} 
-         *                                  is not recognized.
-         */
-        /*
-         * We'll have lots of duplicated code in these beans, because Java does not allow 
-         * overriding a static method from parent class.
-         */
-        private static String[] mapHeaderToAttributes(String[] header) 
-                throws IllegalArgumentException {
-            log.entry((Object[]) header);
-            String[] mapping = new String[header.length];
-            for (int i = 0; i < header.length; i++) {
-                switch (header[i]) {
-                // *** Attributes common to all AnnotationBean types ***
-                    case HOM_COL_NAME: 
-                        mapping[i] = "homId";
-                        break;
-                    case HOM_NAME_COL_NAME: 
-                        mapping[i] = "homLabel";
-                        break;
-                    case ENTITY_COL_NAME: 
-                        mapping[i] = "entityIds";
-                        break;
-                    case ENTITY_NAME_COL_NAME: 
-                        mapping[i] = "entityNames";
-                        break;
-                    case TAXON_COL_NAME: 
-                        mapping[i] = "ncbiTaxonId";
-                        break;
-                    case TAXON_NAME_COL_NAME: 
-                        mapping[i] = "taxonName";
-                        break;
-                    case QUALIFIER_COL_NAME: 
-                        mapping[i] = "negated";
-                        break;
-                    case CONF_COL_NAME: 
-                        mapping[i] = "cioId";
-                        break;
-                    case CONF_NAME_COL_NAME: 
-                        mapping[i] = "cioLabel";
-                        break;
-                // *** Attributes specific to RawAnnotationBean ***
-                    case REF_COL_NAME: 
-                        mapping[i] = "refId";
-                        break;
-                    case REF_TITLE_COL_NAME: 
-                        mapping[i] = "refTitle";
-                        break;
-                    case ECO_COL_NAME: 
-                        mapping[i] = "ecoId";
-                        break;
-                    case ECO_NAME_COL_NAME: 
-                        mapping[i] = "ecoLabel";
-                        break;
-                    case SUPPORT_TEXT_COL_NAME: 
-                        mapping[i] = "supportingText";
-                        break;
-                    case ASSIGN_COL_NAME: 
-                        mapping[i] = "assignedBy";
-                        break;
-                    case CURATOR_COL_NAME: 
-                        mapping[i] = "curator";
-                        break;
-                    case DATE_COL_NAME: 
-                        mapping[i] = "curationDate";
-                        break;
-                    default:
-                        throw log.throwing(new IllegalArgumentException("Unrecognized header: " 
-                                + header[i]));
-                }
-            }
-            return log.exit(mapping);
-        }
-        /*
-         * We'll have lots of duplicated code in these beans, because Java does not allow 
-         * overriding a static method from parent class.
-         */
-        /**
-         * Map the columns of a CSV file to the {@code CellProcessor}s 
-         * used to populate a {@code RawAnnotationBean}. This way, we can adapt to any 
-         * change in column names or column order.
-         * 
-         * @param header    An {@code Array} of {@code String}s representing the names 
-         *                  of the columns of a RAW similarity annotation file.
-         * @return          An {@code Array} of {@code CellProcessor}s, put in 
-         *                  the {@code Array} at the same index as the column they are supposed 
-         *                  to process.
-         * @throws IllegalArgumentException If a {@code String} in {@code header} 
-         *                                  is not recognized.
-         */
-        private static CellProcessor[] mapHeaderToCellProcessors(String[] header) 
-                throws IllegalArgumentException {
-            log.entry((Object[]) header);
-            CellProcessor[] processors = new CellProcessor[header.length];
-            for (int i = 0; i < header.length; i++) {
-                switch (header[i]) {
-                    case ENTITY_COL_NAME: 
-                    case ENTITY_NAME_COL_NAME: 
-                        processors[i] = new ParseMultipleValuesCell();
-                        break;
-                    case QUALIFIER_COL_NAME: 
-                        processors[i] = new ParseQualifierCell();
-                        break;
-                    case TAXON_COL_NAME: 
-                        processors[i] = new ParseInt();
-                        break;
-                    case DATE_COL_NAME: 
-                        processors[i] = new ParseDate(DATE_FORMAT);
-                        break;
-                    case HOM_COL_NAME: 
-                    case HOM_NAME_COL_NAME: 
-                    case REF_COL_NAME: 
-                    case REF_TITLE_COL_NAME: 
-                    case ECO_COL_NAME: 
-                    case ECO_NAME_COL_NAME: 
-                    case CONF_COL_NAME: 
-                    case CONF_NAME_COL_NAME: 
-                    case TAXON_NAME_COL_NAME: 
-                    case SUPPORT_TEXT_COL_NAME: 
-                    case ASSIGN_COL_NAME: 
-                    case CURATOR_COL_NAME: 
-                        processors[i] = new StrNotNullOrEmpty();
-                        break;
-                    default:
-                        throw log.throwing(new IllegalArgumentException("Unrecognized header: " 
-                                + header[i]));
-                }
-            }
-            return log.exit(processors);
-        }
-        
-        
-        /**
          * @see #getRefId()
          */
         private String refId;
@@ -1024,162 +880,6 @@ public class SimilarityAnnotationUtils {
      * @since Bgee 13
      */
     public static class SummaryAnnotationBean extends AnnotationBean {
-        /**
-         * Map the columns of a CSV file to the attributes of {@code SummaryAnnotationBean}. 
-         * This will then be used to populate the bean, using the standard setter name 
-         * convention. 
-         * <p>
-         * Thanks to this method, we can adapt to any change in column names or column order.
-         * 
-         * @param header    An {@code Array} of {@code String}s representing the names 
-         *                  of the columns of a AGGREGATED EVIDENCE similarity annotation file.
-         * @return          An {@code Array} of {@code String}s that are the names 
-         *                  of the attributes of {@code SummaryAnnotationBean}, put in 
-         *                  the {@code Array} at the same index as their corresponding column.
-         * @throws IllegalArgumentException If a {@code String} in {@code header} 
-         *                                  is not recognized.
-         */
-        /* (non-Javadoc)
-         * We'll have lots of duplicated code in these beans, because Java does not allow 
-         * overriding a static method from parent class.
-         */
-        private static String[] mapHeaderToAttributes(String[] header) 
-                throws IllegalArgumentException {
-            log.entry((Object[]) header);
-            String[] mapping = new String[header.length];
-            for (int i = 0; i < header.length; i++) {
-                switch (header[i]) {
-                // *** Attributes common to all AnnotationBean types ***
-                    case HOM_COL_NAME: 
-                        mapping[i] = "homId";
-                        break;
-                    case HOM_NAME_COL_NAME: 
-                        mapping[i] = "homLabel";
-                        break;
-                    case ENTITY_COL_NAME: 
-                        mapping[i] = "entityIds";
-                        break;
-                    case ENTITY_NAME_COL_NAME: 
-                        mapping[i] = "entityNames";
-                        break;
-                    case TAXON_COL_NAME: 
-                        mapping[i] = "ncbiTaxonId";
-                        break;
-                    case TAXON_NAME_COL_NAME: 
-                        mapping[i] = "taxonName";
-                        break;
-                    case QUALIFIER_COL_NAME: 
-                        mapping[i] = "negated";
-                        break;
-                    case CONF_COL_NAME: 
-                        mapping[i] = "cioId";
-                        break;
-                    case CONF_NAME_COL_NAME: 
-                        mapping[i] = "cioLabel";
-                        break;
-                // *** Attributes specific to SummaryAnnotationBean ***
-                    case POSITIVE_COUNT_COL_NAME: 
-                        mapping[i] = "positiveEvidenceCount";
-                        break;
-                    case NEGATIVE_COUNT_COL_NAME: 
-                        mapping[i] = "negativeEvidenceCount";
-                        break;
-                    case TRUSTED_COL_NAME: 
-                        mapping[i] = "trusted";
-                        break;
-                    case POSITIVE_ECO_COL_NAME: 
-                        mapping[i] = "positiveEcoIds";
-                        break;
-                    case POSITIVE_ECO_NAME_COL_NAME: 
-                        mapping[i] = "positiveEcoLabels";
-                        break;
-                    case NEGATIVE_ECO_COL_NAME: 
-                        mapping[i] = "negativeEcoIds";
-                        break;
-                    case NEGATIVE_ECO_NAME_COL_NAME: 
-                        mapping[i] = "negativeEcoLabels";
-                        break;
-                    case AGGREGATED_TAXA_COL_NAME: 
-                        mapping[i] = "aggregatedTaxonIds";
-                        break;
-                    case AGGREGATED_TAXA_NAME_COL_NAME: 
-                        mapping[i] = "aggregatedTaxonNames";
-                        break;
-                    case ASSIGN_COL_NAME: 
-                        mapping[i] = "assignedBy";
-                        break;
-                    default:
-                        throw log.throwing(new IllegalArgumentException("Unrecognized header: " 
-                                + header[i]));
-                }
-            }
-            return log.exit(mapping);
-        }
-        /**
-         * Map the columns of a CSV file to the {@code CellProcessor}s 
-         * used to populate a {@code SummaryAnnotationBean}. This way, we can adapt to any 
-         * change in column names or column order.
-         * 
-         * @param header    An {@code Array} of {@code String}s representing the names 
-         *                  of the columns of an AGGREGATED EVIDENCE similarity annotation file.
-         * @return          An {@code Array} of {@code CellProcessor}s, put in 
-         *                  the {@code Array} at the same index as the column they are supposed 
-         *                  to process.
-         * @throws IllegalArgumentException If a {@code String} in {@code header} 
-         *                                  is not recognized.
-         */
-        /* (non-Javadoc)
-         * We'll have lots of duplicated code in these beans, because Java does not allow 
-         * overriding a static method from parent class.
-         */
-        private static CellProcessor[] mapHeaderToCellProcessors(String[] header) 
-                throws IllegalArgumentException {
-            log.entry((Object[]) header);
-            CellProcessor[] processors = new CellProcessor[header.length];
-            for (int i = 0; i < header.length; i++) {
-                switch (header[i]) {
-                    case ENTITY_COL_NAME: 
-                    case ENTITY_NAME_COL_NAME:  
-                    case ASSIGN_COL_NAME: 
-                        processors[i] = new ParseMultipleValuesCell();
-                        break;
-                    case POSITIVE_ECO_COL_NAME: 
-                    case POSITIVE_ECO_NAME_COL_NAME: 
-                    case NEGATIVE_ECO_COL_NAME: 
-                    case NEGATIVE_ECO_NAME_COL_NAME: 
-                    case AGGREGATED_TAXA_NAME_COL_NAME:
-                        processors[i] = new Optional(new ParseMultipleValuesCell());
-                        break;
-                    case QUALIFIER_COL_NAME: 
-                        processors[i] = new ParseQualifierCell();
-                        break;
-                    case TAXON_COL_NAME: 
-                    case POSITIVE_COUNT_COL_NAME: 
-                    case NEGATIVE_COUNT_COL_NAME:
-                        processors[i] = new ParseInt();
-                        break;
-                    case TRUSTED_COL_NAME: 
-                        processors[i] = new ParseBool();
-                        break;
-                    case AGGREGATED_TAXA_COL_NAME: 
-                        processors[i] = new Optional(new ParseMultipleValuesCell(
-                                new ConvertToIntList()));
-                        break;
-                    case HOM_COL_NAME: 
-                    case HOM_NAME_COL_NAME: 
-                    case CONF_COL_NAME: 
-                    case CONF_NAME_COL_NAME: 
-                    case TAXON_NAME_COL_NAME: 
-                        processors[i] = new StrNotNullOrEmpty();
-                        break;
-                    default:
-                        throw log.throwing(new IllegalArgumentException("Unrecognized header: " 
-                                + header[i]));
-                }
-            }
-            return log.exit(processors);
-        }
-        
         /**
          * @see #getPositiveEvidenceCount()
          */
@@ -1638,108 +1338,6 @@ public class SimilarityAnnotationUtils {
      */
     public static class AncestralTaxaAnnotationBean extends AnnotationBean {
         /**
-         * Map the columns of a CSV file to the attributes of {@code SummaryAnnotationBean}. 
-         * This will then be used to populate the bean, using the standard setter name 
-         * convention. 
-         * <p>
-         * Thanks to this method, we can adapt to any change in column names or column order.
-         * 
-         * @param header    An {@code Array} of {@code String}s representing the names 
-         *                  of the columns of a AGGREGATED EVIDENCE similarity annotation file.
-         * @return          An {@code Array} of {@code String}s that are the names 
-         *                  of the attributes of {@code SummaryAnnotationBean}, put in 
-         *                  the {@code Array} at the same index as their corresponding column.
-         * @throws IllegalArgumentException If a {@code String} in {@code header} 
-         *                                  is not recognized.
-         */
-        /* (non-Javadoc)
-         * We'll have lots of duplicated code in these beans, because Java does not allow 
-         * overriding a static method from parent class.
-         */
-        private static String[] mapHeaderToAttributes(String[] header) 
-                throws IllegalArgumentException {
-            log.entry((Object[]) header);
-            String[] mapping = new String[header.length];
-            for (int i = 0; i < header.length; i++) {
-                switch (header[i]) {
-                // *** Attributes common to all AnnotationBean types ***
-                    case HOM_COL_NAME: 
-                        mapping[i] = "homId";
-                        break;
-                    case HOM_NAME_COL_NAME: 
-                        mapping[i] = "homLabel";
-                        break;
-                    case ENTITY_COL_NAME: 
-                        mapping[i] = "entityIds";
-                        break;
-                    case ENTITY_NAME_COL_NAME: 
-                        mapping[i] = "entityNames";
-                        break;
-                    case TAXON_COL_NAME: 
-                        mapping[i] = "ncbiTaxonId";
-                        break;
-                    case TAXON_NAME_COL_NAME: 
-                        mapping[i] = "taxonName";
-                        break;
-                    case CONF_COL_NAME: 
-                        mapping[i] = "cioId";
-                        break;
-                    case CONF_NAME_COL_NAME: 
-                        mapping[i] = "cioLabel";
-                        break;
-                    default:
-                        throw log.throwing(new IllegalArgumentException("Unrecognized header: " 
-                                + header[i]));
-                }
-            }
-            return log.exit(mapping);
-        }
-        /**
-         * Map the columns of a CSV file to the {@code CellProcessor}s 
-         * used to populate a {@code SummaryAnnotationBean}. This way, we can adapt to any 
-         * change in column names or column order.
-         * 
-         * @param header    An {@code Array} of {@code String}s representing the names 
-         *                  of the columns of an AGGREGATED EVIDENCE similarity annotation file.
-         * @return          An {@code Array} of {@code CellProcessor}s, put in 
-         *                  the {@code Array} at the same index as the column they are supposed 
-         *                  to process.
-         * @throws IllegalArgumentException If a {@code String} in {@code header} 
-         *                                  is not recognized.
-         */
-        /* (non-Javadoc)
-         * We'll have lots of duplicated code in these beans, because Java does not allow 
-         * overriding a static method from parent class.
-         */
-        private static CellProcessor[] mapHeaderToCellProcessors(String[] header) 
-                throws IllegalArgumentException {
-            log.entry((Object[]) header);
-            CellProcessor[] processors = new CellProcessor[header.length];
-            for (int i = 0; i < header.length; i++) {
-                switch (header[i]) {
-                    case ENTITY_COL_NAME: 
-                    case ENTITY_NAME_COL_NAME: 
-                        processors[i] = new ParseMultipleValuesCell();
-                        break;
-                    case TAXON_COL_NAME: 
-                        processors[i] = new ParseInt();
-                        break;
-                    case HOM_COL_NAME: 
-                    case HOM_NAME_COL_NAME: 
-                    case CONF_COL_NAME: 
-                    case CONF_NAME_COL_NAME: 
-                    case TAXON_NAME_COL_NAME: 
-                        processors[i] = new StrNotNullOrEmpty();
-                        break;
-                    default:
-                        throw log.throwing(new IllegalArgumentException("Unrecognized header: " 
-                                + header[i]));
-                }
-            }
-            return log.exit(processors);
-        }
-        
-        /**
          * 0-argument constructor of the bean.
          */
         public AncestralTaxaAnnotationBean() {
@@ -1763,13 +1361,49 @@ public class SimilarityAnnotationUtils {
             super(homId, homLabel, entityIds, entityNames, ncbiTaxonId, taxonName, 
                     false, cioId, cioLabel);
         }
+
+        /* (non-Javadoc)
+         * @see java.lang.Object#hashCode()
+         */
+        @Override
+        public int hashCode() {
+            //final int prime = 31;
+            int result = super.hashCode();
+            
+            return result;
+        }
+        /* (non-Javadoc)
+         * @see java.lang.Object#equals(java.lang.Object)
+         */
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (!super.equals(obj)) {
+                return false;
+            }
+            if (!(obj instanceof AncestralTaxaAnnotationBean)) {
+                return false;
+            }
+            
+            return true;
+        }
+        /* (non-Javadoc)
+         * @see java.lang.Object#toString()
+         */
+        @Override
+        public String toString() {
+            return "AncestralTaxaAnnotationBean [" 
+                    + super.toString() + "]";
+        }
     }
 
     /**
      * A {@code CsvPreference} used to parse TSV files allowing commented line, 
      * starting with "//".
      */
-    protected final static CsvPreference TSV_COMMENTED = 
+    private final static CsvPreference TSV_COMMENTED = 
             new CsvPreference.Builder(CsvPreference.TAB_PREFERENCE).
             skipComments(new CommentStartsWith("//")).build();
     
@@ -1964,8 +1598,6 @@ public class SimilarityAnnotationUtils {
             Collections.unmodifiableList(Arrays.asList("|", ","));
 
     
-    
-    
     /**
      * Extracts annotations from the provided RAW similarity annotation file. It returns a 
      * {@code List} of {@code RawAnnotationBean}s, where each {@code RawAnnotationBean} 
@@ -1982,42 +1614,10 @@ public class SimilarityAnnotationUtils {
      * @throws IllegalArgumentException If {@code similarityFile} did not allow to retrieve 
      *                                  any annotation or could not be properly parsed.
      */
-    //TODO: DRY when we switch to java 8, all extract methods could delegate to 
-    //a private method using lambda expression on a functional interface, 
-    //see lambda expression method reference: 
-    //http://docs.oracle.com/javase/tutorial/java/javaOO/methodreferences.html. 
-    //see also http://stackoverflow.com/a/21681010/1768736
-    //It is boring in Java 7, as we cannot have an abstract static method in AnnotationBean, 
-    //to use the methods mapHeaderToAttributes and mapHeaderToCellProcessors 
-    //on the proper AnnotationBean type, after acquiring the reader to get the header 
-    //of the file.
     public static List<RawAnnotationBean> extractRawAnnotations(String similarityFile) 
             throws FileNotFoundException, IOException, IllegalArgumentException {
         log.entry(similarityFile);
-        
-        try (ICsvBeanReader annotReader = new CsvBeanReader(new FileReader(similarityFile), 
-                TSV_COMMENTED)) {
-            
-            List<RawAnnotationBean> annots = new ArrayList<RawAnnotationBean>();
-            final String[] header = annotReader.getHeader(true);
-            RawAnnotationBean annot;
-            while((annot = annotReader.read(RawAnnotationBean.class, 
-                    RawAnnotationBean.mapHeaderToAttributes(header), 
-                    RawAnnotationBean.mapHeaderToCellProcessors(header))) != null ) {
-                
-                annots.add(annot);
-            }
-            if (annots.isEmpty()) {
-                throw log.throwing(new IllegalArgumentException("The provided file " 
-                        + similarityFile + " did not allow to retrieve any annotation"));
-            }
-            return log.exit(annots);
-            
-        } catch (SuperCsvException e) {
-            //hide implementation details
-            throw log.throwing(new IllegalArgumentException("The provided file " 
-                    + similarityFile + " could not be properly parsed", e));
-        }
+        return log.exit(extractAnnotations(similarityFile, RawAnnotationBean.class));
     }
 
     /**
@@ -2039,17 +1639,68 @@ public class SimilarityAnnotationUtils {
     public static List<SummaryAnnotationBean> extractSummaryAnnotations(String similarityFile) 
             throws FileNotFoundException, IOException, IllegalArgumentException {
         log.entry(similarityFile);
+        return log.exit(extractAnnotations(similarityFile, SummaryAnnotationBean.class));
+    }
+
+    /**
+     * Extracts annotations from the provided ANCESTRAL TAXA annotation file. 
+     * It returns a {@code List} of {@code AncestralTaxaAnnotationBean}s, where each 
+     * {@code AncestralTaxaAnnotationBean} represents a row in the file. The elements 
+     * in the {@code List} are ordered as they were read from the file. 
+     * 
+     * @param similarityFile    A {@code String} that is the path to an ANCESTRAL TAXA 
+     *                          annotation file. 
+     * @return                  A {@code List} of {@code SummaryAnnotationBean}s where each 
+     *                          element represents a row in the file, ordered as 
+     *                          they were read from the file.
+     * @throws FileNotFoundException    If {@code similarityFile} could not be found.
+     * @throws IOException              If {@code similarityFile} could not be read.
+     * @throws IllegalArgumentException If {@code similarityFile} did not allow to retrieve 
+     *                                  any annotation or could not be properly parsed.
+     */
+    public static List<AncestralTaxaAnnotationBean> extractAncestralTaxaAnnotations(
+            String similarityFile) throws FileNotFoundException, IOException, 
+            IllegalArgumentException {
+        log.entry(similarityFile);
+        return log.exit(extractAnnotations(similarityFile, AncestralTaxaAnnotationBean.class));
+    }
+
+    /**
+     * Extracts annotations from the provided annotation file containing information 
+     * capable of populating {@code AnnotationBean} of the requested type. 
+     * It returns a {@code List} of {@code AnnotationBean}s of the requested type, where each 
+     * {@code AnnotationBean} represents a row in the file. The elements 
+     * in the {@code List} are ordered as they were read from the file. 
+     * 
+     * @param similarityFile    A {@code String} that is the path to a annotation file, 
+     *                          containing information capable of populating 
+     *                          {@code AnnotationBean} of type {@code beanType}. 
+     * @param beanType          A {@code Class} defining the type of {@code AnnotationBean} 
+     *                          that will be populated.
+     * @param <T>               The type of {@code beanType}.
+     * @return                  A {@code List} of {@code T}s where each 
+     *                          element represents a row in the file, ordered as 
+     *                          they were read from the file.
+     * @throws FileNotFoundException    If {@code similarityFile} could not be found.
+     * @throws IOException              If {@code similarityFile} could not be read.
+     * @throws IllegalArgumentException If {@code similarityFile} did not allow to retrieve 
+     *                                  any annotation or could not be properly parsed.
+     */
+    private static <T extends AnnotationBean> List<T> extractAnnotations(
+            String similarityFile, Class<T> beanType) throws FileNotFoundException, 
+            IOException, IllegalArgumentException {
+        log.entry(similarityFile, beanType);
         
         try (ICsvBeanReader annotReader = new CsvBeanReader(new FileReader(similarityFile), 
                 TSV_COMMENTED)) {
             
-            List<SummaryAnnotationBean> annots = new ArrayList<SummaryAnnotationBean>();
+            List<T> annots = new ArrayList<T>();
             final String[] header = annotReader.getHeader(true);
-            SummaryAnnotationBean annot;
-            while((annot = annotReader.read(SummaryAnnotationBean.class, 
-                    SummaryAnnotationBean.mapHeaderToAttributes(header), 
-                    SummaryAnnotationBean.mapHeaderToCellProcessors(header))) != null ) {
-                
+            String[] attributeMapping = mapHeaderToAttributes(header, beanType);
+            CellProcessor[] cellProcessorMapping = mapHeaderToCellProcessors(header, beanType);
+            T annot;
+            while((annot = annotReader.read(beanType, attributeMapping, 
+                    cellProcessorMapping)) != null ) {
                 annots.add(annot);
             }
             if (annots.isEmpty()) {
@@ -2066,49 +1717,251 @@ public class SimilarityAnnotationUtils {
     }
 
     /**
-     * Extracts annotations from the provided ANCESTRAL TAXA annotation file. 
-     * It returns a {@code List} of {@code AncestralTaxaAnnotationBean}s, where each 
-     * {@code AncestralTaxaAnnotationBean} represents a row in the file. The elements 
-     * in the {@code List} are ordered as they were read from the file. 
+     * Map the column names of a CSV file to the attributes of an {@code AnnotationBean} 
+     * of the requested type. This mapping will then be used to populate the bean, 
+     * using standard setter name convention. 
+     * <p>
+     * Thanks to this method, we can adapt to any change in column names or column order.
      * 
-     * @param similarityFile    A {@code String} that is the path to an ANCESTRAL TAXA 
-     *                          annotation file. 
-     * @return                  A {@code List} of {@code AncestralTaxaAnnotationBean}s where each 
-     *                          element represents a row in the file, ordered as 
-     *                          they were read from the file.
-     * @throws FileNotFoundException    If {@code similarityFile} could not be found.
-     * @throws IOException              If {@code similarityFile} could not be read.
-     * @throws IllegalArgumentException If {@code similarityFile} did not allow to retrieve 
-     *                                  any annotation or could not be properly parsed.
+     * @param header    An {@code Array} of {@code String}s representing the names 
+     *                  of the columns of a similarity annotation file.
+     * @param beanType  A {@code Class} defining the type of {@code AnnotationBean} 
+     *                  that will be populated.
+     * @return          An {@code Array} of {@code String}s that are the names 
+     *                  of the attributes of the requested {@code AnnotationBean} type, put in 
+     *                  the {@code Array} at the same index as their corresponding column.
+     * @throws IllegalArgumentException If a {@code String} in {@code header} 
+     *                                  is not recognized, or if {@code beanType} is not 
+     *                                  recognized.
      */
-    public static List<AncestralTaxaAnnotationBean> extractAncestralTaxaAnnotations(
-            String similarityFile) throws FileNotFoundException, IOException, 
-            IllegalArgumentException {
-        log.entry(similarityFile);
+    private static String[] mapHeaderToAttributes(String[] header, 
+            Class<? extends AnnotationBean> beanType) throws IllegalArgumentException {
+        log.entry(header, beanType);
         
-        try (ICsvBeanReader annotReader = new CsvBeanReader(new FileReader(similarityFile), 
-                TSV_COMMENTED)) {
-            
-            List<AncestralTaxaAnnotationBean> annots = 
-                    new ArrayList<AncestralTaxaAnnotationBean>();
-            final String[] header = annotReader.getHeader(true);
-            AncestralTaxaAnnotationBean annot;
-            while((annot = annotReader.read(AncestralTaxaAnnotationBean.class, 
-                    AncestralTaxaAnnotationBean.mapHeaderToAttributes(header), 
-                    AncestralTaxaAnnotationBean.mapHeaderToCellProcessors(header))) != null ) {
-                
-                annots.add(annot);
-            }
-            if (annots.isEmpty()) {
-                throw log.throwing(new IllegalArgumentException("The provided file " 
-                        + similarityFile + " did not allow to retrieve any annotation"));
-            }
-            return log.exit(annots);
-            
-        } catch (SuperCsvException e) {
-            //hide implementation details
-            throw log.throwing(new IllegalArgumentException("The provided file " 
-                    + similarityFile + " could not be properly parsed", e));
+        if (!beanType.equals(RawAnnotationBean.class) && 
+                !beanType.equals(SummaryAnnotationBean.class) && 
+                !beanType.equals(AncestralTaxaAnnotationBean.class)) {
+            throw log.throwing(new IllegalArgumentException("Unrecognized "
+                    + "AnnotationBean type: " + beanType));
         }
+        
+        String[] mapping = new String[header.length];
+        for (int i = 0; i < header.length; i++) {
+            // *** Attributes common to all AnnotationBean types ***
+            switch (header[i]) {
+                case HOM_COL_NAME: 
+                    mapping[i] = "homId";
+                    break;
+                case HOM_NAME_COL_NAME: 
+                    mapping[i] = "homLabel";
+                    break;
+                case ENTITY_COL_NAME: 
+                    mapping[i] = "entityIds";
+                    break;
+                case ENTITY_NAME_COL_NAME: 
+                    mapping[i] = "entityNames";
+                    break;
+                case QUALIFIER_COL_NAME: 
+                    mapping[i] = "negated";
+                    break;
+                case TAXON_COL_NAME: 
+                    mapping[i] = "ncbiTaxonId";
+                    break;
+                case TAXON_NAME_COL_NAME: 
+                    mapping[i] = "taxonName";
+                    break;
+                case CONF_COL_NAME: 
+                    mapping[i] = "cioId";
+                    break;
+                case CONF_NAME_COL_NAME: 
+                    mapping[i] = "cioLabel";
+                    break;
+            }
+            //if it was one of the column common to all AnnotationBeans, 
+            //iterate next column name
+            if (mapping[i] != null) {
+                continue;
+            }
+            
+            if (beanType.equals(RawAnnotationBean.class)) {
+                switch (header[i]) {
+                // *** Attributes specific to RawAnnotationBean ***
+                    case REF_COL_NAME: 
+                        mapping[i] = "refId";
+                        break;
+                    case REF_TITLE_COL_NAME: 
+                        mapping[i] = "refTitle";
+                        break;
+                    case ECO_COL_NAME: 
+                        mapping[i] = "ecoId";
+                        break;
+                    case ECO_NAME_COL_NAME: 
+                        mapping[i] = "ecoLabel";
+                        break;
+                    case SUPPORT_TEXT_COL_NAME: 
+                        mapping[i] = "supportingText";
+                        break;
+                    case ASSIGN_COL_NAME: 
+                        mapping[i] = "assignedBy";
+                        break;
+                    case CURATOR_COL_NAME: 
+                        mapping[i] = "curator";
+                        break;
+                    case DATE_COL_NAME: 
+                        mapping[i] = "curationDate";
+                        break;
+                }
+            } else if (beanType.equals(SummaryAnnotationBean.class)) {
+                switch (header[i]) {
+                // *** Attributes specific to SummaryAnnotationBean ***
+                    case POSITIVE_COUNT_COL_NAME: 
+                        mapping[i] = "positiveEvidenceCount";
+                        break;
+                    case NEGATIVE_COUNT_COL_NAME: 
+                        mapping[i] = "negativeEvidenceCount";
+                        break;
+                    case TRUSTED_COL_NAME: 
+                        mapping[i] = "trusted";
+                        break;
+                    case POSITIVE_ECO_COL_NAME: 
+                        mapping[i] = "positiveEcoIds";
+                        break;
+                    case POSITIVE_ECO_NAME_COL_NAME: 
+                        mapping[i] = "positiveEcoLabels";
+                        break;
+                    case NEGATIVE_ECO_COL_NAME: 
+                        mapping[i] = "negativeEcoIds";
+                        break;
+                    case NEGATIVE_ECO_NAME_COL_NAME: 
+                        mapping[i] = "negativeEcoLabels";
+                        break;
+                    case AGGREGATED_TAXA_COL_NAME: 
+                        mapping[i] = "aggregatedTaxonIds";
+                        break;
+                    case AGGREGATED_TAXA_NAME_COL_NAME: 
+                        mapping[i] = "aggregatedTaxonNames";
+                        break;
+                    case ASSIGN_COL_NAME: 
+                        mapping[i] = "assignedBy";
+                        break;
+                }
+            } else if (beanType.equals(AncestralTaxaAnnotationBean.class)) {
+                //no attributes specific to AncestralTaxaAnnotationBean for now
+            } 
+            
+            if (mapping[i] == null) {
+                throw log.throwing(new IllegalArgumentException("Unrecognized header: " 
+                        + header[i] + " for AnnotationBean type: " + beanType.getSimpleName()));
+            }
+        }
+        return log.exit(mapping);
+    }
+
+    /**
+     * Map the column names of a CSV file to the {@code CellProcessor}s 
+     * used to populate an {@code AnnotationBean} of the requested type. This way, 
+     * we can adapt to any change in column names or column order.
+     * 
+     * @param header    An {@code Array} of {@code String}s representing the names 
+     *                  of the columns of a similarity annotation file.
+     * @param beanType  A {@code Class} defining the type of {@code AnnotationBean} 
+     *                  that will be populated.
+     * @return          An {@code Array} of {@code CellProcessor}s, put in 
+     *                  the {@code Array} at the same index as the column they are supposed 
+     *                  to process.
+     * @throws IllegalArgumentException If a {@code String} in {@code header} 
+     *                                  is not recognized, or if {@code beanType} is not 
+     *                                  recognized.
+     */
+    private static CellProcessor[] mapHeaderToCellProcessors(String[] header, 
+            Class<? extends AnnotationBean> beanType) throws IllegalArgumentException {
+        log.entry(header, beanType);
+        
+        if (!beanType.equals(RawAnnotationBean.class) && 
+                !beanType.equals(SummaryAnnotationBean.class) && 
+                !beanType.equals(AncestralTaxaAnnotationBean.class)) {
+            throw log.throwing(new IllegalArgumentException("Unrecognized "
+                    + "AnnotationBean type: " + beanType));
+        }
+        
+        CellProcessor[] processors = new CellProcessor[header.length];
+        for (int i = 0; i < header.length; i++) {
+            switch (header[i]) {
+            // *** CellProcessors common to all AnnotationBean types ***
+                case ENTITY_COL_NAME: 
+                case ENTITY_NAME_COL_NAME: 
+                    processors[i] = new ParseMultipleValuesCell();
+                    break;
+                case TAXON_COL_NAME: 
+                    processors[i] = new ParseInt();
+                    break;
+                case HOM_COL_NAME: 
+                case HOM_NAME_COL_NAME: 
+                case CONF_COL_NAME: 
+                case CONF_NAME_COL_NAME: 
+                case TAXON_NAME_COL_NAME: 
+                    processors[i] = new StrNotNullOrEmpty();
+                    break;
+                case QUALIFIER_COL_NAME: 
+                    processors[i] = new ParseQualifierCell();
+                    break;
+            }
+            //if it was one of the column common to all AnnotationBeans, 
+            //iterate next column name
+            if (processors[i] != null) {
+                continue;
+            }
+            
+            if (beanType.equals(RawAnnotationBean.class)) {
+                switch (header[i]) {
+                // *** Attributes specific to RawAnnotationBean ***
+                    case DATE_COL_NAME: 
+                        processors[i] = new ParseDate(DATE_FORMAT);
+                        break; 
+                    case REF_COL_NAME: 
+                    case REF_TITLE_COL_NAME: 
+                    case ECO_COL_NAME: 
+                    case ECO_NAME_COL_NAME: 
+                    case SUPPORT_TEXT_COL_NAME: 
+                    case ASSIGN_COL_NAME: 
+                    case CURATOR_COL_NAME: 
+                        processors[i] = new StrNotNullOrEmpty();
+                        break;
+                }
+            } else if (beanType.equals(SummaryAnnotationBean.class)) {
+                switch (header[i]) {
+                // *** Attributes specific to SummaryAnnotationBean ***
+                    case ASSIGN_COL_NAME: 
+                        processors[i] = new ParseMultipleValuesCell();
+                        break;
+                    case POSITIVE_ECO_COL_NAME: 
+                    case POSITIVE_ECO_NAME_COL_NAME: 
+                    case NEGATIVE_ECO_COL_NAME: 
+                    case NEGATIVE_ECO_NAME_COL_NAME: 
+                    case AGGREGATED_TAXA_NAME_COL_NAME:
+                        processors[i] = new Optional(new ParseMultipleValuesCell());
+                        break;
+                    case POSITIVE_COUNT_COL_NAME: 
+                    case NEGATIVE_COUNT_COL_NAME:
+                        processors[i] = new ParseInt();
+                        break;
+                    case TRUSTED_COL_NAME: 
+                        processors[i] = new ParseBool();
+                        break;
+                    case AGGREGATED_TAXA_COL_NAME: 
+                        processors[i] = new Optional(new ParseMultipleValuesCell(
+                                new ConvertToIntList()));
+                        break;
+                }
+            } else if (beanType.equals(AncestralTaxaAnnotationBean.class)) {
+                //no columns specific to AncestralTaxaAnnotationBean for now
+            } 
+            
+            if (processors[i] == null) {
+                throw log.throwing(new IllegalArgumentException("Unrecognized header: " 
+                        + header[i] + " for AnnotationBean type: " + beanType));
+            }
+        }
+        return log.exit(processors);
     }
 }

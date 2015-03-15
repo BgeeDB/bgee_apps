@@ -43,6 +43,8 @@ import org.supercsv.io.ICsvMapWriter;
  * @version Bgee 13
  * @since Bgee 13
  */
+//TODO: stop using these awful Maps, use a BeanReader/BeanWriter instead, 
+//see org.bgee.pipeline.annotations.SimilarityAnnotationUtils
 public class GenerateDiffExprFile extends GenerateDownloadFile {
 
     /**

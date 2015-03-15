@@ -1,0 +1,8 @@
+HOM ID	HOM name	entity	entity name	taxon ID	taxon name	CIO ID	CIO name
+HOM:0000007	historical homology	CL:0000000	cell	2759	Eukaryota	CIO:0000003	high confidence from single evidence
+HOM:0000007	historical homology	CL:0000015	male germ cell	33208	Metazoa	CIO:0000019	confidence statement from congruent evidence lines of same type, overall confidence medium
+HOM:0000007	historical homology	CL:0000037|UBERON:0000001|UBERON:0000007	hematopoietic stem cell|whatever name1|whatever name2	7742	Vertebrata	CIO:0000004	medium confidence from single evidence
+HOM:0000007	historical homology	UBERON:0010207	nictitating membrane	7778	Elasmobranchii	CIO:0000003	high confidence from single evidence
+HOM:0000007	historical homology	UBERON:0010207	nictitating membrane	32524	Amniota	CIO:0000003	high confidence from single evidence
+HOM:0000007	historical homology	CL:0000216	Sertoli cell	7742	Vertebrata	CIO:0000013	confidence statement from congruent evidence lines of multiple types, overall confidence medium
+HOM:0000007	historical homology	UBERON:0000926	mesoderm	33213	Bilateria	CIO:0000024	confidence statement from weakly conflicting evidence lines of same type, overall confidence medium

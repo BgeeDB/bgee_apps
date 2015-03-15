@@ -1983,7 +1983,10 @@ public class SimilarityAnnotationUtils {
      *                                  any annotation or could not be properly parsed.
      */
     //TODO: DRY when we switch to java 8, all extract methods could delegate to 
-    //a private method using lambda expression on a functional interface. 
+    //a private method using lambda expression on a functional interface, 
+    //see lambda expression method reference: 
+    //http://docs.oracle.com/javase/tutorial/java/javaOO/methodreferences.html. 
+    //see also http://stackoverflow.com/a/21681010/1768736
     //It is boring in Java 7, as we cannot have an abstract static method in AnnotationBean, 
     //to use the methods mapHeaderToAttributes and mapHeaderToCellProcessors 
     //on the proper AnnotationBean type, after acquiring the reader to get the header 
@@ -2061,62 +2064,51 @@ public class SimilarityAnnotationUtils {
                     + similarityFile + " could not be properly parsed", e));
         }
     }
-    
 
-//    /**
-//     * Extracts annotations of type {@code clazz} from the provided similarity annotation file. 
-//     * It is necessary to provide name mappings between column index and bean attribute names, 
-//     * and the {@code CellProcessor}s to process the cells.
-//     * It returns a {@code List} of {@code AnnotationBean}s of the provided type, 
-//     * where each {@code AnnotationBean} represents a row in the file. The elements 
-//     * in the {@code List} are ordered as they were read from the file. 
-//     * 
-//     * @param clazz             The type of {@code AnnotationBean} to return.
-//     * @param nameMapping       An {@code Array} of {@code String}s that are the names 
-//     *                          of the attributes of the {@code AnnotationBean}, put in 
-//     *                          the {@code Array} at the same index as their corresponding column.
-//     * @param processors        An {@code Array} of {@code CellProcessor}s, put in 
-//     *                          the {@code Array} at the same index as the column 
-//     *                          they are supposed to process.
-//     * @param similarityFile    A {@code String} that is the path to a similarity 
-//     *                          annotation file, containing the correct information 
-//     *                          to produce {@code AnnotationBean}s of the provided type. 
-//     * @return                  A {@code List} of {@code AnnotationBean}s of the provided type, 
-//     *                          where each element represents a row in the file, ordered as 
-//     *                          they were read from the file.
-//     * @throws FileNotFoundException    If {@code similarityFile} could not be found.
-//     * @throws IOException              If {@code similarityFile} could not be read.
-//     * @throws IllegalArgumentException If {@code similarityFile} did not allow to retrieve 
-//     *                                  any annotation or could not be properly parsed.
-//     */
-//    //XXX: attempt to refactor the annotation extraction, but this is boring, 
-//    //either we need to provide the CsvBeanReader to the refactored method to obtain the header, 
-//    //or we need to use reflection to be able to call mapHeaderToAttributes and 
-//    //mapHeaderToCellProcessors on the appropriate AnnotationBean type.
-//    private static <T extends AnnotationBean> List<T> extractAnnotations(Class<T> clazz, 
-//            String[] nameMapping, CellProcessor[] processors, String similarityFile) 
-//                    throws FileNotFoundException, IOException, IllegalArgumentException {
-//        log.entry(clazz, similarityFile);
-//        
-//        try (ICsvBeanReader annotReader = new CsvBeanReader(new FileReader(similarityFile), 
-//                TSV_COMMENTED)) {
-//            
-//            List<T> annots = new ArrayList<T>();
-//            T annot;
-//            while((annot = annotReader.read(clazz, nameMapping, processors)) != null ) {
-//                annots.add(annot);
-//            }
-//            if (annots.isEmpty()) {
-//                throw log.throwing(new IllegalArgumentException("The provided file " 
-//                        + similarityFile + " did not allow to retrieve any annotation"));
-//            }
-//            return log.exit(annots);
-//            
-//        } catch (SuperCsvException e) {
-//            //hide implementation details
-//            throw log.throwing(new IllegalArgumentException("The provided file " 
-//                    + similarityFile + " could not be properly parsed", e));
-//        }
-//    }
-    
+    /**
+     * Extracts annotations from the provided ANCESTRAL TAXA annotation file. 
+     * It returns a {@code List} of {@code AncestralTaxaAnnotationBean}s, where each 
+     * {@code AncestralTaxaAnnotationBean} represents a row in the file. The elements 
+     * in the {@code List} are ordered as they were read from the file. 
+     * 
+     * @param similarityFile    A {@code String} that is the path to an ANCESTRAL TAXA 
+     *                          annotation file. 
+     * @return                  A {@code List} of {@code AncestralTaxaAnnotationBean}s where each 
+     *                          element represents a row in the file, ordered as 
+     *                          they were read from the file.
+     * @throws FileNotFoundException    If {@code similarityFile} could not be found.
+     * @throws IOException              If {@code similarityFile} could not be read.
+     * @throws IllegalArgumentException If {@code similarityFile} did not allow to retrieve 
+     *                                  any annotation or could not be properly parsed.
+     */
+    public static List<AncestralTaxaAnnotationBean> extractAncestralTaxaAnnotations(
+            String similarityFile) throws FileNotFoundException, IOException, 
+            IllegalArgumentException {
+        log.entry(similarityFile);
+        
+        try (ICsvBeanReader annotReader = new CsvBeanReader(new FileReader(similarityFile), 
+                TSV_COMMENTED)) {
+            
+            List<AncestralTaxaAnnotationBean> annots = 
+                    new ArrayList<AncestralTaxaAnnotationBean>();
+            final String[] header = annotReader.getHeader(true);
+            AncestralTaxaAnnotationBean annot;
+            while((annot = annotReader.read(AncestralTaxaAnnotationBean.class, 
+                    AncestralTaxaAnnotationBean.mapHeaderToAttributes(header), 
+                    AncestralTaxaAnnotationBean.mapHeaderToCellProcessors(header))) != null ) {
+                
+                annots.add(annot);
+            }
+            if (annots.isEmpty()) {
+                throw log.throwing(new IllegalArgumentException("The provided file " 
+                        + similarityFile + " did not allow to retrieve any annotation"));
+            }
+            return log.exit(annots);
+            
+        } catch (SuperCsvException e) {
+            //hide implementation details
+            throw log.throwing(new IllegalArgumentException("The provided file " 
+                    + similarityFile + " could not be properly parsed", e));
+        }
+    }
 }

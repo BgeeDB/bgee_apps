@@ -12,6 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.RawAnnotationBean;
 import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.SummaryAnnotationBean;
+import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.AncestralTaxaAnnotationBean;
 import org.junit.Test;
 
 /**
@@ -330,6 +331,56 @@ public class SimilarityAnnotationUtilsTest {
                 SimilarityAnnotationUtils.extractSummaryAnnotations(
                         SimilarityAnnotationUtilsTest.class.
                         getResource("/annotations/summary_similarity_annotations.tsv").getFile()));
+
+        log.exit();
+    }
+
+    /**
+     * Test {@link SimilarityAnnotationUtils#extractAncestralTaxaAnnotations(String)}.
+     */
+    @Test
+    public void shouldExtractAncestralTaxaAnnotations() throws FileNotFoundException, 
+        IllegalArgumentException, IOException {
+        log.entry();
+        
+        assertEquals("Incorrect ANCESTRAL TAXA annotations retrieved", 
+                Arrays.asList(
+                        new AncestralTaxaAnnotationBean("HOM:0000007", "historical homology", 
+                                Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                                2759, "Eukaryota", 
+                                "CIO:0000003", "high confidence from single evidence"), 
+                        new AncestralTaxaAnnotationBean("HOM:0000007", "historical homology", 
+                                Arrays.asList("CL:0000015"), Arrays.asList("male germ cell"), 
+                                33208, "Metazoa", 
+                                "CIO:0000019", "confidence statement from congruent evidence "
+                                        + "lines of same type, overall confidence medium"), 
+                        new AncestralTaxaAnnotationBean("HOM:0000007", "historical homology", 
+                                Arrays.asList("CL:0000037", "UBERON:0000001", "UBERON:0000007"), 
+                                Arrays.asList("hematopoietic stem cell", "whatever name1", 
+                                        "whatever name2"), 
+                                7742, "Vertebrata", 
+                                "CIO:0000004", "medium confidence from single evidence"), 
+                        new AncestralTaxaAnnotationBean("HOM:0000007", "historical homology", 
+                                Arrays.asList("UBERON:0010207"), Arrays.asList("nictitating membrane"), 
+                                7778, "Elasmobranchii", 
+                                "CIO:0000003", "high confidence from single evidence"), 
+                        new AncestralTaxaAnnotationBean("HOM:0000007", "historical homology", 
+                                Arrays.asList("UBERON:0010207"), Arrays.asList("nictitating membrane"), 
+                                32524, "Amniota", 
+                                "CIO:0000003", "high confidence from single evidence"), 
+                        new AncestralTaxaAnnotationBean("HOM:0000007", "historical homology", 
+                                Arrays.asList("CL:0000216"), Arrays.asList("Sertoli cell"), 
+                                7742, "Vertebrata", 
+                                "CIO:0000013", "confidence statement from congruent evidence "
+                                        + "lines of multiple types, overall confidence medium"), 
+                        new AncestralTaxaAnnotationBean("HOM:0000007", "historical homology", 
+                                Arrays.asList("UBERON:0000926"), Arrays.asList("mesoderm"), 
+                                33213, "Bilateria", 
+                                "CIO:0000024", "confidence statement from weakly conflicting "
+                                    + "evidence lines of same type, overall confidence medium")), 
+                SimilarityAnnotationUtils.extractAncestralTaxaAnnotations(
+                        SimilarityAnnotationUtilsTest.class.
+                        getResource("/annotations/historical_homology_ancestral_taxa.tsv").getFile()));
 
         log.exit();
     }

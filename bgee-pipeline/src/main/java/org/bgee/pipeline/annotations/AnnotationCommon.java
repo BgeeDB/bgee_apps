@@ -63,7 +63,7 @@ public class AnnotationCommon {
      * annotation files. These values are ordered by order of preference of use.
      */
     public static final List<String> TAXON_COL_NAMES = Collections.unmodifiableList(
-            Arrays.asList(SimilarityAnnotation.TAXON_COL_NAME, 
+            Arrays.asList(SimilarityAnnotationUtils.TAXON_COL_NAME, 
                     "taxon ID", "species ID", "taxonID", "speciesID"));
     
     /**
@@ -86,7 +86,7 @@ public class AnnotationCommon {
      */
     public static final List<String> MULTIPLE_ANAT_ENTITY_COL_NAMES = 
             Collections.unmodifiableList(
-                    Arrays.asList(SimilarityAnnotation.ENTITY_COL_NAME));
+                    Arrays.asList(SimilarityAnnotationUtils.ENTITY_COL_NAME));
     
     /**
      * A {@code String} that is the default separator between entities, in columns 

@@ -42,6 +42,15 @@ public class MySQLSummarySimilarityAnnotationDAOIT extends MySQLITAncestor {
     }
 
     /**
+     * Test the select method 
+     * {@link MySQLSummarySimilarityAnnotationDAO#getAllSummarySimilarityAnnotations()}.
+     */
+    //TODO integration test
+    @Test
+    public void shouldGetAllSummarySimilarityAnnotations() throws SQLException {
+    }
+    
+    /**
      * Test the insert method 
      * {@link MySQLSummarySimilarityAnnotationDAO#insertSummarySimilarityAnnotations()}.
      */

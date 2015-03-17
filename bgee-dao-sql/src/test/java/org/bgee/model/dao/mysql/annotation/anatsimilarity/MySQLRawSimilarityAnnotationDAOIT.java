@@ -42,6 +42,15 @@ public class MySQLRawSimilarityAnnotationDAOIT  extends MySQLITAncestor {
     }
 
     /**
+     * Test the select method 
+     * {@link MySQLRawSimilarityAnnotationDAO#getAllRawSimilarityAnnotations()}.
+     */
+    //TODO: integration test
+    @Test
+    public void shouldGetRawSimilarityAnnotations() throws SQLException {
+    }
+
+    /**
      * Test the insert method 
      * {@link MySQLRawSimilarityAnnotationDAO#insertRawSimilarityAnnotations()}.
      */

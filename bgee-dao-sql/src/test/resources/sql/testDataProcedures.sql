@@ -363,6 +363,17 @@ BEGIN
                (323, 'ID1', 'Anat_id2', 'Stage_id1', 'anatomy', 'no diff expression', 'poor quality', 0.01, 3, 1, 'over-expression', 'high quality', 0.001, 4, 0),
                (324, 'ID2', 'Anat_id1', 'Stage_id1', 'anatomy', 'no diff expression', 'poor quality', 0.03, 3, 2, 'no diff expression', 'high quality', 0.06, 1, 0);
 
+        INSERT INTO CIOStatement(CIOId, CIOName, CIODescription, trusted, confidenceLevel, evidenceConcordance, evidenceTypeConcordance)
+        VALUES ('1', 'name1', 'desc1', true, 'high confidence level', 'congruent', 'same type'),
+               ('2', 'name2', 'desc2', false, 'low confidence level', 'single evidence', null),
+               ('3', 'name3', null, true, 'medium confidence level', 'strongly conflicting', 'different type'),
+               ('4', 'name4', 'desc4', false, 'medium confidence level', 'weakly conflicting', 'same type'),
+               ('5', 'name5', null, true, 'high confidence level', 'single evidence', null);
+               
+        INSERT INTO evidenceOntology(ECOId, ECOName, ECODescription)
+        VALUES ('1', 'name1', 'desc1'),
+               ('2', 'name2', null),
+               ('3', 'name3', 'desc3');
     END IF; 
 END
 ;

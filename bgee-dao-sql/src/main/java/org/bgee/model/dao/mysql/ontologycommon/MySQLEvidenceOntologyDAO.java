@@ -4,6 +4,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -45,9 +46,85 @@ public class MySQLEvidenceOntologyDAO extends MySQLDAO<EvidenceOntologyDAO.Attri
     @Override
     public ECOTermTOResultSet getAllECOTerms() throws DAOException {
         log.entry();
-        // TODO Auto-generated method stub
-        return log.exit(null);
+        return log.exit(this.getECOTerms());
     }
+    
+    /**
+     * Retrieves Evidence Ontology terms from data source.
+     * 
+     * @return              An {@code ECOTermTOResultSet} containing Evidence Ontology terms
+     *                      from data source.
+     * @throws DAOException If an error occurred when accessing the data source. 
+     */
+    private ECOTermTOResultSet getECOTerms() throws DAOException {
+        log.entry();
+        
+        String tableName = "evidenceOntology";
+        
+        //Construct sql query
+        String sql = this.generateSelectClause(this.getAttributes(), tableName);
+
+        sql += " FROM " + tableName;
+
+        //we don't use a try-with-resource, because we return a pointer to the results, 
+        //not the actual results, so we should not close this BgeePreparedStatement.
+        BgeePreparedStatement stmt = null;
+        try {
+            stmt = this.getManager().getConnection().prepareStatement(sql.toString());
+            return log.exit(new MySQLECOTermTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+    
+    /**
+     * Generates the SELECT clause of a MySQL query used to retrieve {@code EvidenceOntologyDAO}s.
+     * 
+     * @param attributes                A {@code Set} of {@code Attribute}s defining 
+     *                                  the columns/information the query should retrieve.
+     * @param tableName                 A {@code String} defining the name of the evidence 
+     *                                  ontology table used.
+     * @return                          A {@code String} containing the SELECT clause 
+     *                                  for the requested query.
+     * @throws IllegalArgumentException If one {@code Attribute} of {@code attributes} is unknown.
+     */
+    private String generateSelectClause(Set<EvidenceOntologyDAO.Attribute> attributes,
+            String tableName) throws IllegalArgumentException {
+        log.entry(attributes, tableName);
+
+        if (attributes == null || attributes.isEmpty()) {
+            return log.exit("SELECT * ");
+        }
+    
+        String sql = ""; 
+            for (EvidenceOntologyDAO.Attribute attribute: attributes) {
+                if (sql.isEmpty()) {
+                    sql += "SELECT ";
+                    //does the attributes requested ensure that there will be 
+                    //no duplicated results?
+                    if (!attributes.contains(EvidenceOntologyDAO.Attribute.ID)) {
+                        sql += "DISTINCT ";
+                    }
+                } else {
+                    sql += ", ";
+                }
+                sql += tableName + ".";
+                if (attribute.equals(
+                        EvidenceOntologyDAO.Attribute.ID)) {
+                    sql += "ECOId";
+                } else if (attribute.equals(EvidenceOntologyDAO.Attribute.NAME)) {
+                    sql += "ECOName";
+                } else if (attribute.equals(EvidenceOntologyDAO.Attribute.DESCRIPTION)) {
+                    sql += "ECODescription";
+                } else {
+                    throw log.throwing(new IllegalArgumentException("The attribute provided (" +
+                            attribute.toString() + ") is unknown for " + 
+                            EvidenceOntologyDAO.class.getName()));
+                }
+            }
+        return log.exit(sql);
+    }
+
 
     @Override
     public int insertECOTerms(Collection<ECOTermTO> ecoTOs) 

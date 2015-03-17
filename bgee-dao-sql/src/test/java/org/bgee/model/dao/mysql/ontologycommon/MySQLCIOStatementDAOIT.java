@@ -7,9 +7,12 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.TOComparator;
+import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO;
 import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTO;
 import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTO.ConfidenceLevel;
 import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTO.EvidenceConcordance;
@@ -40,6 +43,58 @@ public class MySQLCIOStatementDAOIT extends MySQLITAncestor {
     @Override
     protected Logger getLogger() {
         return log;
+    }
+
+    /**
+     * Test the insert method {@link MySQLCIOStatementDAO#getAllCIOStatements(Collection<CIOStatementTO>)}.
+     */
+    @Test
+    public void shouldGetAllECOTerms() throws SQLException {
+
+        this.useSelectDB();
+        
+        // Generate result with the method
+        MySQLCIOStatementDAO dao = new MySQLCIOStatementDAO(this.getMySQLDAOManager());
+        dao.setAttributes(Arrays.asList(CIOStatementDAO.Attribute.values()));
+        List<CIOStatementTO> methCIOStmt = dao.getAllCIOStatements().getAllTOs();
+
+        // Generate manually expected result
+        List<CIOStatementTO> expectedCIOStmt = Arrays.asList(
+                new CIOStatementTO("1", "name1", "desc1", true, ConfidenceLevel.HIGH_CONFIDENCE, 
+                        EvidenceConcordance.CONGRUENT, EvidenceTypeConcordance.SAME_TYPE),
+                new CIOStatementTO("2", "name2", "desc2", false, ConfidenceLevel.LOW_CONFIDENCE, 
+                        EvidenceConcordance.SINGLE_EVIDENCE, null),
+                new CIOStatementTO("3", "name3", null, true, ConfidenceLevel.MEDIUM_CONFIDENCE, 
+                        EvidenceConcordance.STRONGLY_CONFLICTING, EvidenceTypeConcordance.DIFFERENT_TYPE),
+                new CIOStatementTO("4", "name4", "desc4", false, ConfidenceLevel.MEDIUM_CONFIDENCE, 
+                        EvidenceConcordance.WEAKLY_CONFLICTING, EvidenceTypeConcordance.SAME_TYPE),
+                new CIOStatementTO("5", "name5", null, true, ConfidenceLevel.HIGH_CONFIDENCE, 
+                        EvidenceConcordance.SINGLE_EVIDENCE, null));
+
+        //Compare
+        assertTrue("CIOStatementTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(methCIOStmt, expectedCIOStmt));
+
+        // without declared attribute should return same TOs that with all attributes 
+        dao.clearAttributes();
+        methCIOStmt = dao.getAllCIOStatements().getAllTOs();
+        //Compare
+        assertTrue("CIOStatementTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(methCIOStmt, expectedCIOStmt));
+
+        // Generate manually expected result 
+        // Check distinct
+        dao.setAttributes(Arrays.asList(
+                CIOStatementDAO.Attribute.TRUSTED, CIOStatementDAO.Attribute.CONFIDENCE_LEVEL));
+        methCIOStmt = dao.getAllCIOStatements().getAllTOs();
+        expectedCIOStmt = Arrays.asList(
+                new CIOStatementTO(null, null, null, true, ConfidenceLevel.HIGH_CONFIDENCE, null, null),
+                new CIOStatementTO(null, null, null, false, ConfidenceLevel.LOW_CONFIDENCE, null, null),
+                new CIOStatementTO(null, null, null, true, ConfidenceLevel.MEDIUM_CONFIDENCE, null, null),
+                new CIOStatementTO(null, null, null, false, ConfidenceLevel.MEDIUM_CONFIDENCE, null, null));
+        //Compare
+        assertTrue("CIOStatementTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(methCIOStmt, expectedCIOStmt));
     }
 
     /**

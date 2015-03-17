@@ -4,6 +4,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -48,8 +49,91 @@ public class MySQLCIOStatementDAO extends MySQLDAO<CIOStatementDAO.Attribute>
     @Override
     public CIOStatementTOResultSet getAllCIOStatements() throws DAOException {
         log.entry();
-        // TODO Auto-generated method stub
-        return log.exit(null);
+        return log.exit(this.getCIOStatements());
+    }
+
+    /**
+     * Retrieves CIO statements from data source.
+     * 
+     * @return              An {@code CIOStatementTOResultSet} containing CIO statements
+     *                      from data source.
+     * @throws DAOException If an error occurred when accessing the data source. 
+     */
+    private CIOStatementTOResultSet getCIOStatements() throws DAOException {
+        log.entry();
+        
+        String tableName = "CIOStatement";
+        
+        //Construct sql query
+        String sql = this.generateSelectClause(this.getAttributes(), tableName);
+
+        sql += " FROM " + tableName;
+
+        //we don't use a try-with-resource, because we return a pointer to the results, 
+        //not the actual results, so we should not close this BgeePreparedStatement.
+        BgeePreparedStatement stmt = null;
+        try {
+            stmt = this.getManager().getConnection().prepareStatement(sql.toString());
+            return log.exit(new MySQLCIOStatementTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+
+    /**
+     * Generates the SELECT clause of a MySQL query used to retrieve 
+     * {@code CIOStatement}s.
+     * 
+     * @param attributes                A {@code Set} of {@code Attribute}s defining 
+     *                                  the columns/information the query should retrieve.
+     * @param tableName                 A {@code String} defining the name of the CIO statement 
+     *                                  table used.
+     * @return                          A {@code String} containing the SELECT clause 
+     *                                  for the requested query.
+     * @throws IllegalArgumentException If one {@code Attribute} of {@code attributes} is unknown.
+     */
+    private String generateSelectClause(Set<CIOStatementDAO.Attribute> attributes,
+            String tableName) throws IllegalArgumentException {
+        log.entry(attributes, tableName);
+
+        if (attributes == null || attributes.isEmpty()) {
+            return log.exit("SELECT * ");
+        }
+    
+        String sql = ""; 
+            for (CIOStatementDAO.Attribute attribute: attributes) {
+                if (sql.isEmpty()) {
+                    sql += "SELECT ";
+                    //does the attributes requested ensure that there will be 
+                    //no duplicated results?
+                    if (!attributes.contains(CIOStatementDAO.Attribute.ID)) {
+                        sql += "DISTINCT ";
+                    }
+                } else {
+                    sql += ", ";
+                }
+                sql += tableName + ".";
+                if (attribute.equals(CIOStatementDAO.Attribute.ID)) {
+                    sql += "CIOId";
+                } else if (attribute.equals(CIOStatementDAO.Attribute.NAME)) {
+                    sql += "CIOName";
+                } else if (attribute.equals(CIOStatementDAO.Attribute.DESCRIPTION)) {
+                    sql += "CIODescription";
+                } else if (attribute.equals(CIOStatementDAO.Attribute.TRUSTED)) {
+                    sql += "trusted";
+                } else if (attribute.equals(CIOStatementDAO.Attribute.CONFIDENCE_LEVEL)) {
+                    sql += "confidenceLevel";
+                } else if (attribute.equals(CIOStatementDAO.Attribute.EVIDENCE_CONCORDANCE)) {
+                    sql += "evidenceConcordance";
+                } else if (attribute.equals(CIOStatementDAO.Attribute.EVIDENCE_TYPE_CONCORDANCE)) {
+                    sql += "evidenceTypeConcordance";
+                } else {
+                    throw log.throwing(new IllegalArgumentException("The attribute provided (" +
+                            attribute.toString() + ") is unknown for " + 
+                            CIOStatementDAO.class.getName()));
+                }
+            }
+        return log.exit(sql);
     }
 
     @Override

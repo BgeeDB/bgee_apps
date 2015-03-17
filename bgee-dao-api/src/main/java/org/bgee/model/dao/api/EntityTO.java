@@ -1,6 +1,5 @@
 package org.bgee.model.dao.api;
 
-import org.apache.commons.lang3.StringUtils;
 
 /**
  * Parent class of all {@code TransferObject}s that are "Entities" in Bgee.
@@ -27,37 +26,35 @@ public abstract class EntityTO extends TransferObject {
     }
     /**
      * Constructor providing the ID of this {@code Entity}.
-     * @param id    A {@code String} that is the ID. Cannot be null nor empty, 
-     *              otherwise an {@code IllegalArgumentException} is thrown.
-     * @throws IllegalArgumentException If {@code id} is null or empty.
+     * 
+     * @param id    A {@code String} that is the ID. Can be {@code null}
+     *              or empty.
      */
-    protected EntityTO(String id) throws IllegalArgumentException {
+    protected EntityTO(String id) {
         this(id, null, null);
     }
     /**
      * Constructor providing the ID and name of this {@code Entity}.
-     * @param id            A {@code String} that is the ID.
+     * 
+     * @param id            A {@code String} that is the ID Can be {@code null}
+     *                      or empty.
      * @param name          A {@code String} that is the name. Can be {@code null}
      *                      or empty.
-     * @throws IllegalArgumentException If {@code id} is null or empty.
      */
-    protected EntityTO(String id, String name) throws IllegalArgumentException {
+    protected EntityTO(String id, String name) {
         this(id, name, null);
     }
     /**
      * Constructor providing the ID, name and description of this {@code Entity}.
-     * @param id            A {@code String} that is the ID.
+     * 
+     * @param id            A {@code String} that is the ID. Can be {@code null}
+     *                      or empty.
      * @param name          A {@code String} that is the name. Can be {@code null}
      *                      or empty.
      * @param description   A {@code String} that is the description. Can be {@code null}
      *                      or empty.
-     * @throws IllegalArgumentException If {@code id} is null or empty.
      */
-    protected EntityTO(String id, String name, String description) 
-            throws IllegalArgumentException {
-        if (StringUtils.isWhitespace(id)) {
-            throw new IllegalArgumentException("ID cannot be empty.");
-        }
+    protected EntityTO(String id, String name, String description) {
         this.id          = id;
         this.name        = name;
         this.description = description;

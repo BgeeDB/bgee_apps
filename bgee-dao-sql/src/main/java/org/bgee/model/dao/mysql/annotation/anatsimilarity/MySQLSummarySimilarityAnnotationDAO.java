@@ -4,6 +4,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,7 +20,7 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
  *
  * @author Valentine Rech de Laval
  * @version Bgee 13
- * @see org.bgee.model.dao.api.annotation.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO
+ * @see org.bgee.model.dao.api.annotation.anatsimilarity.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO
  * @since Bgee 13
  */
 public class MySQLSummarySimilarityAnnotationDAO 
@@ -48,8 +49,73 @@ public class MySQLSummarySimilarityAnnotationDAO
     public SummarySimilarityAnnotationTOResultSet getAllSummarySimilarityAnnotations()
             throws DAOException {
         log.entry();
-        // TODO Auto-generated method stub
-        return log.exit(null);
+        
+        String tableName = "summarySimilarityAnnotation";
+        
+        //Construct sql query
+        String sql = this.generateSelectClause(this.getAttributes(), tableName);
+
+        sql += " FROM " + tableName;
+
+        //we don't use a try-with-resource, because we return a pointer to the results, 
+        //not the actual results, so we should not close this BgeePreparedStatement.
+        BgeePreparedStatement stmt = null;
+        try {
+            stmt = this.getManager().getConnection().prepareStatement(sql.toString());
+            return log.exit(new MySQLSummarySimilarityAnnotationTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+
+    /**
+     * Generates the SELECT clause of a MySQL query used to retrieve 
+     * {@code SummarySimilarityAnnotationTO}s.
+     * 
+     * @param attributes                A {@code Set} of {@code Attribute}s defining 
+     *                                  the columns/information the query should retrieve.
+     * @param tableName                 A {@code String} defining the name of the summary similarity 
+     *                                  annotation table used.
+     * @return                          A {@code String} containing the SELECT clause 
+     *                                  for the requested query.
+     * @throws IllegalArgumentException If one {@code Attribute} of {@code attributes} is unknown.
+     */
+    private String generateSelectClause(Set<SummarySimilarityAnnotationDAO.Attribute> attributes,
+            String tableName) throws IllegalArgumentException {
+        log.entry(attributes, tableName);
+
+        if (attributes == null || attributes.isEmpty()) {
+            return log.exit("SELECT * ");
+        }
+    
+        String sql = ""; 
+            for (SummarySimilarityAnnotationDAO.Attribute attribute: attributes) {
+                if (sql.isEmpty()) {
+                    sql += "SELECT ";
+                    //does the attributes requested ensure that there will be 
+                    //no duplicated results?
+                    if (!attributes.contains(SummarySimilarityAnnotationDAO.Attribute.ID)) {
+                        sql += "DISTINCT ";
+                    }
+                } else {
+                    sql += ", ";
+                }
+                sql += tableName + ".";
+                if (attribute.equals(SummarySimilarityAnnotationDAO.Attribute.ID)) {
+                    sql += "summarySimilarityAnnotationId";
+                } else if (attribute.equals(SummarySimilarityAnnotationDAO.Attribute.TAXON_ID)) {
+                    sql += "taxonId";
+                } else if (attribute.equals(SummarySimilarityAnnotationDAO.Attribute.NEGATED)) {
+                    sql += "negated";
+                } else if (attribute.equals(SummarySimilarityAnnotationDAO.Attribute.CIO_ID)) {
+                    sql += "CIOId";
+                } else {
+                    throw log.throwing(new IllegalArgumentException("The attribute provided (" +
+                            attribute.toString() + ") is unknown for " + 
+                            SummarySimilarityAnnotationDAO.class.getName()));
+                }
+            }
+        return log.exit(sql);
     }
 
     @Override

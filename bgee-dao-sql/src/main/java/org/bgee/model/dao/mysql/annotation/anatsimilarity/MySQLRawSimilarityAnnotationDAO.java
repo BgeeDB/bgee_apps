@@ -5,6 +5,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,7 +22,7 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
  *
  * @author Valentine Rech de Laval
  * @version Bgee 13
- * @see org.bgee.model.dao.api.annotation.RawSimilarityAnnotationDAO.RawSimilarityAnnotationTO
+ * @see org.bgee.model.dao.api.annotation.anatsimilarity.RawSimilarityAnnotationDAO.RawSimilarityAnnotationTO
  * @since Bgee 13
  */
 public class MySQLRawSimilarityAnnotationDAO extends MySQLDAO<RawSimilarityAnnotationDAO.Attribute> 
@@ -49,10 +50,104 @@ public class MySQLRawSimilarityAnnotationDAO extends MySQLDAO<RawSimilarityAnnot
     public RawSimilarityAnnotationTOResultSet getAllRawSimilarityAnnotations()
             throws DAOException {
         log.entry();
-        // TODO Auto-generated method stub
-        return log.exit(null);
+        return log.exit(this.getRawSimilarityAnnotations());
     }
 
+    /**
+     * Retrieves raw similarity annotations from data source.
+     * 
+     * @return              An {@code RawSimilarityAnnotationTOResultSet} containing raw 
+     *                      similarity annotations from data source.
+     * @throws DAOException If an error occurred when accessing the data source. 
+     */
+    private RawSimilarityAnnotationTOResultSet getRawSimilarityAnnotations() throws DAOException {
+        log.entry();
+        
+        String tableName = "rawSimilarityAnnotation";
+        
+        //Construct sql query
+        String sql = this.generateSelectClause(this.getAttributes(), tableName);
+
+        sql += " FROM " + tableName;
+
+        //we don't use a try-with-resource, because we return a pointer to the results, 
+        //not the actual results, so we should not close this BgeePreparedStatement.
+        BgeePreparedStatement stmt = null;
+        try {
+            stmt = this.getManager().getConnection().prepareStatement(sql.toString());
+            return log.exit(new MySQLRawSimilarityAnnotationTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+
+    /**
+     * Generates the SELECT clause of a MySQL query used to retrieve 
+     * {@code RawSimilarityAnnotationTO}s.
+     * 
+     * @param attributes                A {@code Set} of {@code Attribute}s defining 
+     *                                  the columns/information the query should retrieve.
+     * @param tableName                 A {@code String} defining the name of the raw similarity 
+     *                                  annotation table used.
+     * @return                          A {@code String} containing the SELECT clause 
+     *                                  for the requested query.
+     * @throws IllegalArgumentException If one {@code Attribute} of {@code attributes} is unknown.
+     */
+    private String generateSelectClause(Set<RawSimilarityAnnotationDAO.Attribute> attributes,
+            String tableName) throws IllegalArgumentException {
+        log.entry(attributes, tableName);
+
+        if (attributes == null || attributes.isEmpty()) {
+            return log.exit("SELECT * ");
+        }
+    
+        String sql = ""; 
+            for (RawSimilarityAnnotationDAO.Attribute attribute: attributes) {
+                if (sql.isEmpty()) {
+                    sql += "SELECT ";
+                    //does the attributes requested ensure that there will be 
+                    //no duplicated results?
+                    if (!attributes.contains(RawSimilarityAnnotationDAO.Attribute.SUMMARY_SIMILARITY_ANNOTATION_ID) ||  
+                        !attributes.contains(RawSimilarityAnnotationDAO.Attribute.REFERENCE_ID) || 
+                        !attributes.contains(RawSimilarityAnnotationDAO.Attribute.ECO_ID) || 
+                        !attributes.contains(RawSimilarityAnnotationDAO.Attribute.CIO_ID) || 
+                        !attributes.contains(RawSimilarityAnnotationDAO.Attribute.NEGATED)) {
+                        sql += "DISTINCT ";
+                    }
+                } else {
+                    sql += ", ";
+                }
+                sql += tableName + ".";
+                if (attribute.equals(
+                        RawSimilarityAnnotationDAO.Attribute.SUMMARY_SIMILARITY_ANNOTATION_ID)) {
+                    sql += "summarySimilarityAnnotationId";
+                } else if (attribute.equals(RawSimilarityAnnotationDAO.Attribute.NEGATED)) {
+                    sql += "negated";
+                } else if (attribute.equals(RawSimilarityAnnotationDAO.Attribute.ECO_ID)) {
+                    sql += "ECOId";
+                } else if (attribute.equals(RawSimilarityAnnotationDAO.Attribute.CIO_ID)) {
+                    sql += "CIOId";
+                } else if (attribute.equals(RawSimilarityAnnotationDAO.Attribute.REFERENCE_ID)) {
+                    sql += "referenceId";
+                } else if (attribute.equals(RawSimilarityAnnotationDAO.Attribute.REFERENCE_TITLE)) {
+                    sql += "referenceTitle";
+                } else if (attribute.equals(RawSimilarityAnnotationDAO.Attribute.SUPPORTING_TEXT)) {
+                    sql += "supportingText";
+                } else if (attribute.equals(RawSimilarityAnnotationDAO.Attribute.ASSIGNED_BY)) {
+                    sql += "assignedBy";
+                } else if (attribute.equals(RawSimilarityAnnotationDAO.Attribute.CURATOR)) {
+                    sql += "curator";
+                } else if (attribute.equals(RawSimilarityAnnotationDAO.Attribute.ANNOTATION_DATE)) {
+                    sql += "annotationDate";
+                } else {
+                    throw log.throwing(new IllegalArgumentException("The attribute provided (" +
+                            attribute.toString() + ") is unknown for " + 
+                            RawSimilarityAnnotationDAO.class.getName()));
+                }
+            }
+        return log.exit(sql);
+    }
+    
     @Override
     public int insertRawSimilarityAnnotations(Collection<RawSimilarityAnnotationTO> rawTOs)
             throws DAOException, IllegalArgumentException {

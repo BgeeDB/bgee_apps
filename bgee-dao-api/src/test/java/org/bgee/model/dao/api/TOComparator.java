@@ -10,6 +10,8 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTO;
 import org.bgee.model.dao.api.anatdev.StageDAO.StageTO;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
+import org.bgee.model.dao.api.annotation.anatsimilarity.RawSimilarityAnnotationDAO.RawSimilarityAnnotationTO;
+import org.bgee.model.dao.api.annotation.anatsimilarity.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
@@ -19,6 +21,8 @@ import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCal
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
+import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTO;
+import org.bgee.model.dao.api.ontologycommon.EvidenceOntologyDAO.ECOTermTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
@@ -125,6 +129,18 @@ public class TOComparator {
         } else if (to1 instanceof DiffExpressionCallTO) {
             return log.exit(areTOsEqual((DiffExpressionCallTO) to1, (DiffExpressionCallTO) to2, 
                     compareId));
+        } else if (to1 instanceof CIOStatementTO) {
+            return log.exit(areTOsEqual((CIOStatementTO) to1, (CIOStatementTO) to2, compareId));
+        } else if (to1 instanceof ECOTermTO) {
+            return log.exit(areTOsEqual((ECOTermTO) to1, (ECOTermTO) to2, compareId));
+        } else if (to1 instanceof RawSimilarityAnnotationTO) {
+            return log.exit(areTOsEqual(
+                    (RawSimilarityAnnotationTO) to1, 
+                    (RawSimilarityAnnotationTO) to2));
+        } else if (to1 instanceof SummarySimilarityAnnotationTO) {
+            return log.exit(areTOsEqual(
+                    (SummarySimilarityAnnotationTO) to1, 
+                    (SummarySimilarityAnnotationTO) to2));
         }
         throw log.throwing(new IllegalArgumentException("There is no comparison method " +
                 "implemented for TransferObject " + to1.getClass() + ", you must implement one"));
@@ -649,6 +665,94 @@ public class TOComparator {
         return log.exit(false);
     }
     
+    /**
+     * Method to compare two {@code CIOStatementTO}s, to check for complete equality of each
+     * attribute. 
+     * <p>
+     * If {@code compareId} is {@code false}, the value returned by the method {@code getId} 
+     * will not be used for comparison.
+     * 
+     * @param to1       A {@code CIOStatementTO} to be compared to {@code to2}.
+     * @param to2       A {@code CIOStatementTO} to be compared to {@code to1}.
+     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be 
+     *                  used for comparisons. 
+     * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
+     */
+    private static boolean areTOsEqual(CIOStatementTO to1, CIOStatementTO to2, boolean compareId) {
+        log.entry(to1, to2);
+        if (TOComparator.areEntityTOsEqual(to1, to2, compareId) && 
+                to1.getConfidenceLevel() == to2.getConfidenceLevel() &&
+                to1.getEvidenceConcordance() == to2.getEvidenceConcordance() &&
+                to1.getEvidenceTypeConcordance() == to2.getEvidenceTypeConcordance()) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
+     * Method to compare two {@code ECOTermTO}s, to check for complete equality of each
+     * attribute. 
+     * <p>
+     * If {@code compareId} is {@code false}, the value returned by the method {@code getId} 
+     * will not be used for comparison.
+     * 
+     * @param to1       A {@code ECOTermTO} to be compared to {@code to2}.
+     * @param to2       A {@code ECOTermTO} to be compared to {@code to1}.
+     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be 
+     *                  used for comparisons. 
+     * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
+     */
+    private static boolean areTOsEqual(ECOTermTO to1, ECOTermTO to2, 
+            boolean compareId) {
+        log.entry(to1, to2);
+        return log.exit(TOComparator.areEntityTOsEqual(to1, to2, compareId));
+    }
+
+    /**
+     * Method to compare two {@code RawSimilarityAnnotationTO}s, to check for complete 
+     * equality of each attribute. 
+     * 
+     * @param to1   A {@code RawSimilarityAnnotationTO} to be compared to {@code to2}.
+     * @param to2   A {@code RawSimilarityAnnotationTO} to be compared to {@code to1}.
+     * @return      {@code true} if {@code to1} and {@code to2} have all attributes equal.
+     */
+    private static boolean areTOsEqual(RawSimilarityAnnotationTO to1, RawSimilarityAnnotationTO to2) {
+        log.entry(to1, to2);
+        if (StringUtils.equals(to1.getSummarySimilarityAnnotationId(), to2.getSummarySimilarityAnnotationId()) &&
+            to1.isNegated() == to2.isNegated() &&
+            StringUtils.equals(to1.getECOId(), to2.getECOId()) &&
+            StringUtils.equals(to1.getCIOId(), to2.getCIOId()) &&
+            StringUtils.equals(to1.getReferenceId(), to2.getReferenceId()) &&
+            StringUtils.equals(to1.getReferenceTitle(), to2.getReferenceTitle()) &&
+            StringUtils.equals(to1.getSupportingText(), to2.getSupportingText()) &&
+            StringUtils.equals(to1.getAssignedBy(), to2.getAssignedBy()) &&
+            StringUtils.equals(to1.getCurator(), to2.getCurator()) &&
+            to1.getAnnotationDate().compareTo(to2.getAnnotationDate()) == 0) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
+     * Method to compare two {@code SummarySimilarityAnnotationTO}s, to check for complete 
+     * equality of each attribute. 
+     * 
+     * @param to1   A {@code SummarySimilarityAnnotationTO} to be compared to {@code to2}.
+     * @param to2   A {@code SummarySimilarityAnnotationTO} to be compared to {@code to1}.
+     * @return      {@code true} if {@code to1} and {@code to2} have all attributes equal.
+     */
+    private static boolean areTOsEqual(SummarySimilarityAnnotationTO to1, 
+            SummarySimilarityAnnotationTO to2) {
+        log.entry(to1, to2);
+        if (StringUtils.equals(to1.getId(), to2.getId()) &&
+            StringUtils.equals(to1.getTaxonId(), to2.getTaxonId()) &&
+            to1.isNegated() == to2.isNegated() &&
+            StringUtils.equals(to1.getCIOId(), to2.getCIOId())) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
     /**
      * Method to compare floating-point values using an epsilon. 
      *

@@ -39,8 +39,8 @@ public interface RawSimilarityAnnotationDAO extends DAO<RawSimilarityAnnotationD
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
-        SUMMARY_SIMILARITY_ANNOTATION_ID, NEGATED, ECOID, CIOID, REFERENCEID, REFERENCETITLE, 
-        SUPPORTINGTEXT, ASSIGNEDBY, CURATOR, ANNOTATIONDATE;
+        SUMMARY_SIMILARITY_ANNOTATION_ID, NEGATED, ECO_ID, CIO_ID, REFERENCE_ID, REFERENCE_TITLE, 
+        SUPPORTING_TEXT, ASSIGNED_BY, CURATOR, ANNOTATION_DATE;
     }
 
     /**

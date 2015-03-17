@@ -126,7 +126,7 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
         //rightBound > max right bound. 
         //we use a temp table to avoid using two subqueries in the WHERE clause.
         sql += "(SELECT MIN(taxonLeftBound) AS minLeftBound, "
-                + "MAX(taxonRightBound) AS maxRightBound) FROM taxon "
+                + "MAX(taxonRightBound) AS maxRightBound FROM taxon "
                 + "INNER JOIN species on taxon.taxonId = species.taxonId ";
         //no species requested: find the LCA of all species in Bgee. Otherwise, parameterize. 
         if (speciesIds != null && !speciesIds.isEmpty()) {

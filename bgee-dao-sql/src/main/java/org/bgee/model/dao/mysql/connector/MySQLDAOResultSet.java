@@ -543,18 +543,25 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
             
             //we try to move to the next statement either because we were not using the LIMIT feature, 
             //or, if we were using the LIMIT feature, because we retrieved all results 
-            //for this statement (either because there were no more results to retrieve, 
-            //or, because we reached stepCount; we do not check only whether number of results 
+            //for this statement (either because we reached stepCount, or because 
+            //stepCount was not defined and there were no more results to retrieve); 
+            //we do not check only whether number of results 
             //retrieved was less than rowCount, because if the LIMIT is used in a sub-query, 
-            //the number of results returned can be different from rowCount).
+            //the number of results returned can be different from rowCount); sometimes, 
+            //there can even be no results returned for an iteration, then results again 
+            //at the next iteration; the only way to deal with such cases is to provide 
+            //a stepCount.
             //Also, at the first call following instantiation, resultSetIterationCount 
             //and currentStep will be equal to 0, so we will get the first statement.
+            log.info("{} - {} - {}", this.currentStep, this.stepCount, resultSetIterationCount);
             if (!this.isUsingLimitFeature() || 
-                    //do not change the currentStep == stepCount into a >=, 
-                    //otherwise you need to check whether stepCount is different from 0 first.
-                    //anyway, a previous sanity check ensure that currentStep is never 
-                    //incorrectly greater than stepCount
-                    this.currentStep == this.stepCount || resultSetIterationCount == 0) {
+                    //if it is the first iteration, acquire the next statement to iterate
+                    this.currentStep == 0 || 
+                    //or if we have iterated the current statement the requested number of times
+                    this.currentStep == this.stepCount || 
+                    //or if we did not configure the number of iterations, and there were 
+                    //no results at the previous one.
+                    (this.stepCount == 0 && resultSetIterationCount == 0)) {
                 log.trace("Try to move to next statement");
                 //currentStep is set to 0 when calling closeCurrentPreparedStatement
                 this.closeCurrentPreparedStatement();

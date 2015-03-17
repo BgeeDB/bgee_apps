@@ -55,7 +55,8 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
             throws DAOException {
         log.entry(params);
         return log.exit(getExpressionCalls(
-                params.getSpeciesIds(), params.isIncludeSubstructures(), params.isIncludeSubStages())); 
+                params.getSpeciesIds(), params.isIncludeSubstructures(), 
+                params.isIncludeSubStages(), null)); 
         
 //        String sql = "{call getAllExpression(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
 //
@@ -100,8 +101,8 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
 
         String sql = "SELECT MAX(" + id + ") AS " + id + " FROM " + tableName;
     
-        try (BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql)) {
-            MySQLExpressionCallTOResultSet resultSet = new MySQLExpressionCallTOResultSet(stmt);
+        try (MySQLExpressionCallTOResultSet resultSet = new MySQLExpressionCallTOResultSet(
+                this.getManager().getConnection().prepareStatement(sql))) {
             
             if (resultSet.next() && StringUtils.isNotBlank(resultSet.getTO().getId())) {
                 return log.exit(Integer.valueOf(resultSet.getTO().getId()));
@@ -121,6 +122,10 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
      * defining whether this expression call was generated using data from the stage with   
      * the ID {@link CallTO#getStageId()} alone, or by also considering all its descendants.
      * <p>
+     * It is possible to obtain the calls ordered based on IDs of homologous gene groups, 
+     * which is useful for multi-species analyzes. In that case, it is necessary to provide 
+     * the ID of a taxon targeted, in order to retrieve the proper homologous groups.
+     * <p>
      * The expression calls are retrieved and returned as a {@code ExpressionCallTOResultSet}. 
      * It is the responsibility of the caller to close this {@code DAOResultSet} once 
      * results are retrieved.
@@ -131,14 +136,31 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
      *                               of the anatomical entity were considered.
      * @param isIncludeSubStages     A {@code boolean} defining whether descendants 
      *                               of the stage were considered.
+     * @param commonAncestralTaxonId A {@code String} that is the ID of the taxon used 
+     *                               to retrieve the OMANodeId of the genes, that will be used 
+     *                               to order the calls. If {@code null} or empty, calls 
+     *                               will not be ordered. 
      * @return                       An {@code ExpressionCallTOResultSet} containing all expression 
      *                               calls from data source.
      * @throws DAOException          If a {@code SQLException} occurred while trying to get 
      *                               expression calls.                      
      */
+    //- how will we aggregate with NoExpressionCalls? Just using the ordering by OMAGroupId 
+    //  will be complicated :/ Should we use an UNION clause between expression and 
+    //  noExpression tables? -> complicated for our DAOs/TOs
+    //- Actually, commonAncestralTaxonId will not be derived from the list of species 
+    //  provided. This is because, sometimes, we might want to group genes in some species 
+    //  based on, e.g., a duplication event preceding the split of their lineages.
+    //- Actually, it seems that it is not necessary to put this commonAncestralTaxonId attribute 
+    //  in CallParams: as this is ill trigger an ordering of the calls, it needs to be 
+    //  a specific method anyway.
+    //- Speaking of duplication event... would it be possible to target a specific 
+    //  duplication event? They don't have any taxonId...
     private ExpressionCallTOResultSet getExpressionCalls(Set<String> speciesIds, 
-            boolean isIncludeSubstructures, boolean isIncludeSubStages) throws DAOException {
-        log.entry(speciesIds, isIncludeSubstructures, isIncludeSubStages);
+            boolean isIncludeSubstructures, boolean isIncludeSubStages, 
+            String commonAncestralTaxonId) throws DAOException {
+        log.entry(speciesIds, isIncludeSubstructures, isIncludeSubStages, 
+                commonAncestralTaxonId);
 
         // Construct sql query
         String exprTableName = "expression";
@@ -193,7 +215,7 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
         //not the actual results, so we should not close this BgeePreparedStatement.
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
-            if (speciesIds != null && speciesIds.size() > 0) {
+            if (speciesIds != null && !speciesIds.isEmpty()) {
                 List<Integer> orderedSpeciesIds = MySQLDAO.convertToIntList(speciesIds);
                 Collections.sort(orderedSpeciesIds);
                 stmt.setIntegers(1, orderedSpeciesIds);
@@ -211,6 +233,9 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
             //a huge memory cost); also, if geneIds were requested, there cannot be 
             //duplicates between queries (duplicates inside a query will be filtered by 
             //the DISTINCT clause), so, no need to filter on the application side.
+            //this method should have an argument 'distinctClause'; it is the responsibility 
+            //of the caller, depending on the parameters of the query, to determine 
+            //whether the clause is needed.
             boolean filterDuplicates = 
                     this.getAttributes() != null && !this.getAttributes().isEmpty() && 
                     !this.getAttributes().contains(ExpressionCallDAO.Attribute.ID) && 
@@ -273,6 +298,8 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
                 sql += "SELECT ";
                 //does the attributes requested ensure that there will be 
                 //no duplicated results?
+                //FIXME: hmm, what did I write? even if we request the primary keys, 
+                //we can still have duplicates, based on the joins made for instance.
                 if (!attributes.contains(ExpressionCallDAO.Attribute.ID) &&  
                         (!attributes.contains(ExpressionCallDAO.Attribute.GENE_ID) || 
                             !attributes.contains(ExpressionCallDAO.Attribute.ANAT_ENTITY_ID) || 

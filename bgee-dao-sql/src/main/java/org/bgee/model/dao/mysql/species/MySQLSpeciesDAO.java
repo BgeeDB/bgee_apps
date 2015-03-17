@@ -54,7 +54,7 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
     public SpeciesTOResultSet getSpeciesByIds(Set<String> speciesIds) throws DAOException {
         log.entry(speciesIds);
         
-        String sql = this.generateSelectClause(this.getAttributes());
+        String sql = this.generateSelectClause(this.getAttributes(), "species");
         sql += "FROM species ";
         
         if (speciesIds != null && speciesIds.size() > 0) {
@@ -87,12 +87,13 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
      * @return                          A {@code String} containing the SELECT clause 
      *                                  for the requested query, ending with a whitespace.
      */
-    private String generateSelectClause(Set<SpeciesDAO.Attribute> attributes) {
-        log.entry(attributes);
+    private String generateSelectClause(Set<SpeciesDAO.Attribute> attributes, 
+            String speciesTableName) {
+        log.entry(attributes, speciesTableName);
         
         String sql = new String(); 
         if (attributes == null || attributes.size() == 0) {
-            sql += "SELECT *";
+            sql += "SELECT " + speciesTableName + ".*";
         } else {
             for (SpeciesDAO.Attribute attribute: attributes) {
                 if (sql.length() == 0) {
@@ -101,22 +102,26 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
                     sql += ", ";
                 }
                 if (attribute.equals(SpeciesDAO.Attribute.ID)) {
-                    sql += "speciesId";
+                    sql += speciesTableName + ".speciesId";
                 } else if (attribute.equals(SpeciesDAO.Attribute.COMMON_NAME)) {
-                    sql += "speciesCommonName";
+                    sql += speciesTableName + ".speciesCommonName";
                 } else if (attribute.equals(SpeciesDAO.Attribute.GENUS)) {
-                    sql += "genus";
+                    sql += speciesTableName + ".genus";
                 } else if (attribute.equals(SpeciesDAO.Attribute.SPECIES_NAME)) {
-                    sql += "species";
+                    sql += speciesTableName + ".species";
                 } else if (attribute.equals(SpeciesDAO.Attribute.PARENT_TAXON_ID)) {
-                    sql += "taxonId";
+                    sql += speciesTableName + ".taxonId";
                 } else if (attribute.equals(SpeciesDAO.Attribute.GENOME_FILE_PATH)) {
-                    sql += "genomeFilePath";
+                    sql += speciesTableName + ".genomeFilePath";
                 } else if (attribute.equals(SpeciesDAO.Attribute.GENOME_SPECIES_ID)) {
-                    sql += "genomeSpeciesId";
+                    sql += speciesTableName + ".genomeSpeciesId";
                 } else if (attribute.equals(SpeciesDAO.Attribute.FAKE_GENE_ID_PREFIX)) {
-                    sql += "fakeGeneIdPrefix";
-                } 
+                    sql += speciesTableName + ".fakeGeneIdPrefix";
+                } else {
+                    throw log.throwing(new IllegalArgumentException(
+                            "The attribute provided (" + attribute.toString() + 
+                            ") is unknown for " + SpeciesDAO.class.getName()));
+                }
             }
         }
         sql += " ";
@@ -249,6 +254,9 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
 
                     } else if (column.getValue().equals("fakeGeneIdPrefix")) {
                         fakeGeneIdPrefix = currentResultSet.getString(column.getKey());
+                    } else {
+                        throw log.throwing(new IllegalStateException("Unrecognized column: " 
+                                + column.getValue()));
                     }
                 } catch (SQLException e) {
                     throw log.throwing(new DAOException(e));

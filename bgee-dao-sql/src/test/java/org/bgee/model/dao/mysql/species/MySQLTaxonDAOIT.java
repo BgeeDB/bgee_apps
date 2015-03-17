@@ -139,10 +139,7 @@ public class MySQLTaxonDAOIT extends MySQLITAncestor {
         // Generate manually expected result
         expectedTaxa = Arrays.asList(
                 new TaxonTO(null, null, null, null, null, null, true), 
-                new TaxonTO(null, null, null, null, null, null, false), 
-                new TaxonTO(null, null, null, null, null, null, false), 
-                new TaxonTO(null, null, null, null, null, null, true), 
-                new TaxonTO(null, null, null, null, null, null, true)); 
+                new TaxonTO(null, null, null, null, null, null, false)); 
         assertTrue("TaxonTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(methResults, expectedTaxa));
     }

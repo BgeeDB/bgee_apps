@@ -138,6 +138,9 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
      * @throws NumberFormatException    if an element of {@code strings} is not parsable 
      *                                  into an {@code int}.
      */
+    //TODO: rename to 'convertToOrderedIntList', and add ordering to this method 
+    //(it seems that we always order the List after retrieval, to increase chances 
+    //of cache hit). Modify all places where this method is called to remove ordering.
     protected static List<Integer> convertToIntList(Collection<String> strings) 
             throws NumberFormatException {
         log.entry(strings);

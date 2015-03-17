@@ -274,9 +274,10 @@ public class ParseOrthoXML extends MySQLDAOUser {
         log.info("Start retrieving gene IDs...");
         GeneDAO dao = this.getGeneDAO();
         dao.setAttributes(GeneDAO.Attribute.ID);
-        GeneTOResultSet rsGenes = dao.getAllGenes();
-        while (rsGenes.next()) {
-            this.geneIdsInBgee.add(rsGenes.getTO().getId());
+        try (GeneTOResultSet rsGenes = dao.getAllGenes()) {
+            while (rsGenes.next()) {
+                this.geneIdsInBgee.add(rsGenes.getTO().getId());
+            }
         }
         if (log.isInfoEnabled()) {
             log.info("Done retrieving gene IDs, {} genes found", this.geneIdsInBgee.size());
@@ -298,11 +299,12 @@ public class ParseOrthoXML extends MySQLDAOUser {
         log.info("Start retrieving taxon IDs...");
         TaxonDAO dao = this.getTaxonDAO();
         dao.setAttributes(TaxonDAO.Attribute.ID);
-        TaxonTOResultSet rsTaxa = dao.getAllTaxa();
-        while (rsTaxa.next()) {
-            TaxonTO taxonTO = rsTaxa.getTO();
-            log.debug("{} - {}", taxonTO.getName(), taxonTO.getId());
-            this.taxonIdsInBgee.add(taxonTO.getId());
+        try (TaxonTOResultSet rsTaxa = dao.getAllTaxa()) {
+            while (rsTaxa.next()) {
+                TaxonTO taxonTO = rsTaxa.getTO();
+                log.debug("{} - {}", taxonTO.getName(), taxonTO.getId());
+                this.taxonIdsInBgee.add(taxonTO.getId());
+            }
         }
         if (log.isInfoEnabled()) {
             log.info("Done retrieving taxon IDs, {} taxa found", this.taxonIdsInBgee.size());
@@ -324,26 +326,28 @@ public class ParseOrthoXML extends MySQLDAOUser {
         
         log.info("Start retrieving fake gene ID prefixes...");
         SpeciesDAO speciesDAO = this.getSpeciesDAO();
-        speciesDAO.setAttributes(SpeciesDAO.Attribute.ID, 
-                SpeciesDAO.Attribute.FAKE_GENE_ID_PREFIX);
-        SpeciesTOResultSet rsSpecies = speciesDAO.getAllSpecies();
-        while (rsSpecies.next()) {
-            SpeciesTO speciesTO = rsSpecies.getTO();
-            log.debug("{} - {} - {}",speciesTO.getName(), speciesTO.getGenomeSpeciesId(), 
-                    speciesTO.getFakeGeneIdPrefix());
-            if (StringUtils.isNotBlank(speciesTO.getGenomeSpeciesId()) && 
-                    !speciesTO.getId().equals(speciesTO.getGenomeSpeciesId())) {
-                int genomeSpeciesId = Integer.parseInt(speciesTO.getGenomeSpeciesId());
-                if (this.speciesPrefixes.get(genomeSpeciesId) == null) {
-                    this.speciesPrefixes.put(
-                            Integer.parseInt(speciesTO.getGenomeSpeciesId()),
-                            new HashSet<String>());
+        speciesDAO.setAttributes(SpeciesDAO.Attribute.ID, SpeciesDAO.Attribute.COMMON_NAME, 
+                SpeciesDAO.Attribute.GENOME_SPECIES_ID, SpeciesDAO.Attribute.FAKE_GENE_ID_PREFIX);
+        
+        try (SpeciesTOResultSet rsSpecies = speciesDAO.getAllSpecies()) {
+            while (rsSpecies.next()) {
+                SpeciesTO speciesTO = rsSpecies.getTO();
+                log.debug("{} - {} - {}",speciesTO.getName(), speciesTO.getGenomeSpeciesId(), 
+                        speciesTO.getFakeGeneIdPrefix());
+                if (StringUtils.isNotBlank(speciesTO.getGenomeSpeciesId()) && 
+                        !speciesTO.getId().equals(speciesTO.getGenomeSpeciesId())) {
+                    int genomeSpeciesId = Integer.parseInt(speciesTO.getGenomeSpeciesId());
+                    if (this.speciesPrefixes.get(genomeSpeciesId) == null) {
+                        this.speciesPrefixes.put(
+                                Integer.parseInt(speciesTO.getGenomeSpeciesId()),
+                                new HashSet<String>());
+                    }
+                    this.speciesPrefixes.get(genomeSpeciesId).add(speciesTO.getFakeGeneIdPrefix());
+
+                    log.debug("Added fake gene ID prefix {} for species {}, using genome " +
+                            "of species {}", speciesTO.getFakeGeneIdPrefix(), 
+                            speciesTO.getId(), speciesTO.getGenomeSpeciesId());
                 }
-                this.speciesPrefixes.get(genomeSpeciesId).add(speciesTO.getFakeGeneIdPrefix());
-                
-                log.debug("Added fake gene ID prefix {} for species {}, using genome " +
-                        "of species {}", speciesTO.getFakeGeneIdPrefix(), 
-                        speciesTO.getId(), speciesTO.getGenomeSpeciesId());
             }
         }
         log.debug("Association betweeen species with fake genomes and their fake " +
@@ -431,7 +435,8 @@ public class ParseOrthoXML extends MySQLDAOUser {
                 for (String geneId : geneIds) {
                     log.debug("Examining OMA geneId {}", geneId);
                     int geneTaxId = groupGene.getSpecies().getNcbiTaxId();
-                    if (this.addGeneTO(new GeneTO(geneId, "", "", 0, 0, this.omaNodeId, true),
+                    if (this.addGeneTO(new GeneTO(geneId, null, null, null, null, 
+                            this.omaNodeId, null, null, null),
                             omaXrefId)) {
                         isInBgee = true;
                     }
@@ -447,8 +452,8 @@ public class ParseOrthoXML extends MySQLDAOUser {
                                 log.debug("Generating fake geneId from {} to {}, " +
                                           "because belonging to species {}", 
                                           geneId, duplicateId, geneTaxId);
-                                if (this.addGeneTO(new GeneTO(duplicateId, "", "", 0, 0,
-                                        this.omaNodeId, true), omaXrefId)) {
+                                if (this.addGeneTO(new GeneTO(duplicateId, null, null, null, null,
+                                        this.omaNodeId, null, null, null), omaXrefId)) {
                                     isInBgee = true;
                                 }
                             }

@@ -1,7 +1,11 @@
 package org.bgee.pipeline.gene;
 
-import static org.mockito.Mockito.*;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.io.FileNotFoundException;
 import java.util.Arrays;
@@ -18,7 +22,9 @@ import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
+import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
+import org.bgee.model.dao.api.species.TaxonDAO;
 import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO.MySQLGeneTOResultSet;
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO.MySQLSpeciesTOResultSet;
@@ -78,22 +84,14 @@ public class ParseOrthoXMLTest extends TestAncestor {
         
         // Some species are presents in the fakeOMA file, and not in this list.
         when(mockSpeciesTORs.getTO()).thenReturn(
-                new SpeciesTO("9606", "human", "Homo", "sapiens", "1", 
-                        "path/file9606", "9606", ""),
-                new SpeciesTO("7955", "zebrafish", "Danio", "rerio", "3", 
-                        "path/file9606", "7955", ""),
-                new SpeciesTO("7227", "fruitfly", "Drosophila", "melanogaster", "5", 
-                        "path/file9606", "7227", ""),
-                new SpeciesTO("9598", "chimpanzee", "Pan", "troglodytes", "11", 
-                        "path/file9606", "9598", ""),
-                new SpeciesTO("9597", "bonobo", "Pan", "paniscus", "12", 
-                        "path/file9606", "9598", "PPAG"),
-                new SpeciesTO("9600", "orangutan", "Pongo", "pygmaeus", "13", 
-                        "path/file9606", "9601", "PPYG"),
-                new SpeciesTO("28377", "anolis", "Anolis", "carolinensis", "16", 
-                        "path/file9606", "9598", "ACAG"),
-                new SpeciesTO("6239", "c.elegans", "Caenorhabditis", "elegans", "19", 
-                        "path/file9606", "6239", ""));
+                new SpeciesTO("9606", "human", null, null, null, null, "9606", ""),
+                new SpeciesTO("7955", "zebrafish", null, null, null, null, "7955", ""),
+                new SpeciesTO("7227", "fruitfly", null, null, null, null, "7227", ""),
+                new SpeciesTO("9598", "chimpanzee", null, null, null, null, "9598", ""),
+                new SpeciesTO("9597", "bonobo", null, null, null, null, "9598", "PPAG"),
+                new SpeciesTO("9600", "orangutan", null, null, null, null, "9601", "PPYG"),
+                new SpeciesTO("28377", "anolis", null, null, null, null, "9598", "ACAG"),
+                new SpeciesTO("6239", "c.elegans", null, null, null, null, "6239", ""));
         // Determine the behavior of consecutive calls to next().
         when(mockSpeciesTORs.next()).thenAnswer(new Answer<Boolean>() {
             int counter = -1;
@@ -110,14 +108,14 @@ public class ParseOrthoXMLTest extends TestAncestor {
         // Determine the behavior of consecutive calls to getTO().
         // The taxon Sauria is present in the fakeOMA file, and not in this list.
         when(mockTaxonTORs.getTO()).thenReturn(
-                new TaxonTO("9604", "Hominidae", "taxCName9604", 1, 10, 1, false),
-                new TaxonTO("33213", "Bilateria", "taxCName33213", 2, 3, 2, true),
-                new TaxonTO("32523", "Tetrapoda", "Tetrapoda", 7, 8, 1, true),
-                new TaxonTO("32524", "Amniota", "taxCName32524", 7, 8, 1, true),
-                new TaxonTO("32525", "Theria", "taxCName32525", 5, 6, 1, false),
-                new TaxonTO("117571", "Euteleostomi", "taxCName117571", 7, 8, 1, true),
-                new TaxonTO("186625", "Clupeocephala", "taxCName186625", 7, 8, 1, true),
-                new TaxonTO("1206794", "Ecdysozoa", "taxCName1206794", 1, 10, 1, false));
+                new TaxonTO("9604", null, null, null, null, null, null),
+                new TaxonTO("33213", null, null, null, null, null, null),
+                new TaxonTO("32523", null, null, null, null, null, null),
+                new TaxonTO("32524", null, null, null, null, null, null),
+                new TaxonTO("32525", null, null, null, null, null, null),
+                new TaxonTO("117571", null, null, null, null, null, null),
+                new TaxonTO("186625", null, null, null, null, null, null),
+                new TaxonTO("1206794", null, null, null, null, null, null));
         // Determine the behavior of consecutive calls to next().
         when(mockTaxonTORs.next()).thenAnswer(new Answer<Boolean>() {
             int counter = -1;
@@ -128,37 +126,36 @@ public class ParseOrthoXMLTest extends TestAncestor {
             }
         });
 
-
         // We need a mock MySQLGeneTOResultSet to mock the return of getAllGenes().
         MySQLGeneTOResultSet mockGeneTORs = mock(MySQLGeneTOResultSet.class);
         when(mockManager.mockGeneDAO.getAllGenes()).thenReturn(mockGeneTORs);
         // Determine the behavior of consecutive calls to getTO(). 
         // Some genes are presents in the fakeOMA file, and not in this list.
         when(mockGeneTORs.getTO()).thenReturn(
-                new GeneTO("ACAG00000010079", "NAME10079", "DESC10079", 28377, 12, 0, true),
-                new GeneTO("ENSBTAG00000019302", "NAME19302", "DESC19302", 9913, 12, 0, true),
-                new GeneTO("ENSGALG00000012885", "NAME12885", "DESC12885", 9031, 12, 0, true),
-                new GeneTO("ENSDARG00000089109", "NAME89109", "DESC89109", 7955, 12, 0, true),
-                new GeneTO("ENSDARG00000025613", "NAME25613", "DESC25613", 7955, 12, 0, true),
-                new GeneTO("ENSDARG00000087888", "NAME87888", "DESC87888", 7955, 12, 0, true),
-                new GeneTO("FBgn0003721", "NAME3721", "DESC3721", 7227, 12, 0, true),
-                new GeneTO("ENSGGOG00000000790", "NAME790", "DESC790", 9595, 12, 0, true),
-                new GeneTO("ENSGGOG00000002173", "NAME2173", "DESC2173", 9595, 12, 0, true),
-                new GeneTO("ENSG00000268179", "NAME268179", "DESC268179", 9606, 12, 0, true),
-                new GeneTO("ENSG00000171791", "NAME171791", "DESC171791", 9606, 12, 0, true),
-                new GeneTO("ENSG00000027681", "NAME27681", "DESC27681", 9606, 12, 0, true),
-                new GeneTO("ENSG00000005242", "NAME05242", "DESC05242", 9606, 12, 0, true),
-                new GeneTO("ENSG00000029527", "NAME29527", "DESC29527", 9606, 12, 0, true),
-                new GeneTO("ENSMMUG00000006577", "NAME06577", "DESC06577", 9544, 12, 0, true),
-                new GeneTO("ENSMUSG00000057329", "NAME57329", "DESC57329", 10090, 12, 0, true),
-                new GeneTO("ENSPTRG00000010079", "NAME10079", "DESC10079", 9598, 12, 0, true),
-                new GeneTO("PPAG00000010079", "NAME10079", "DESC10079", 9598, 12, 0, false),
-                new GeneTO("ENSSSCG00000004895", "NAME04895", "DESC04895", 9823, 12, 0, true),
-                new GeneTO("PPYG00000009212", "NAME09212", "DESC09212", 9601, 12, 0, false),
-                new GeneTO("PPYG00000014510", "NAME14510", "DESC14510", 9601, 12, 0, false),
-                new GeneTO("ENSRNOG00000002791", "NAME02791", "DESC02791", 10116, 12, 0, true),
-                new GeneTO("ENSTNIG00000000982", "NAME00982", "DESC00982", 99883, 12, 0, true),
-                new GeneTO("ENSDARG00000024124", "NAME24124", "DESC24124", 8364, 12, 0, true));
+                new GeneTO("ACAG00000010079", null, null, null, null, null, null, null, null),
+                new GeneTO("ENSBTAG00000019302", null, null, null, null, null, null, null, null),
+                new GeneTO("ENSGALG00000012885", null, null, null, null, null, null, null, null),
+                new GeneTO("ENSDARG00000089109", null, null, null, null, null, null, null, null),
+                new GeneTO("ENSDARG00000025613", null, null, null, null, null, null, null, null),
+                new GeneTO("ENSDARG00000087888", null, null, null, null, null, null, null, null),
+                new GeneTO("FBgn0003721", null, null, null, null, null, null, null, null),
+                new GeneTO("ENSGGOG00000000790", null, null, null, null, null, null, null, null),
+                new GeneTO("ENSGGOG00000002173", null, null, null, null, null, null, null, null),
+                new GeneTO("ENSG00000268179", null, null, null, null, null, null, null, null),
+                new GeneTO("ENSG00000171791", null, null, null, null, null, null, null, null),
+                new GeneTO("ENSG00000027681", null, null, null, null, null, null, null, null),
+                new GeneTO("ENSG00000005242", null, null, null, null, null, null, null, null),
+                new GeneTO("ENSG00000029527", null, null, null, null, null, null, null, null),
+                new GeneTO("ENSMMUG00000006577", null, null, null, null, null, null, null, null),
+                new GeneTO("ENSMUSG00000057329", null, null, null, null, null, null, null, null),
+                new GeneTO("ENSPTRG00000010079", null, null, null, null, null, null, null, null),
+                new GeneTO("PPAG00000010079", null, null, null, null, null, null, null, null),
+                new GeneTO("ENSSSCG00000004895", null, null, null, null, null, null, null, null),
+                new GeneTO("PPYG00000009212", null, null, null, null, null, null, null, null),
+                new GeneTO("PPYG00000014510", null, null, null, null, null, null, null, null),
+                new GeneTO("ENSRNOG00000002791", null, null, null, null, null, null, null, null),
+                new GeneTO("ENSTNIG00000000982", null, null, null, null, null, null, null, null),
+                new GeneTO("ENSDARG00000024124", null, null, null, null, null, null, null, null));
         // Determine the behavior of consecutive calls to next().
         when(mockGeneTORs.next()).thenAnswer(new Answer<Boolean>() {
             int counter = -1;
@@ -198,25 +195,37 @@ public class ParseOrthoXMLTest extends TestAncestor {
         
         // Generate the expected List of GeneTOs to verify the calls made to the DAO.
         List<GeneTO> expectedGeneTOs = Arrays.asList(
-                new GeneTO("ENSDARG00000087888", "", "", 0, 0, 1, true),                
-                new GeneTO("ENSG00000027681", "", "", 0, 0, 2, true),
-                new GeneTO("ENSG00000029527", "", "", 0, 0, 2, true),                
-                new GeneTO("PPYG00000014510", "", "", 0, 0, 3, true),
-                new GeneTO("ENSPTRG00000010079", "", "", 0, 0, 3, true),
-                new GeneTO("PPAG00000010079", "", "", 0, 0, 3, true),
-                new GeneTO("ACAG00000010079", "", "", 0, 0, 3, true),
-                new GeneTO("ENSDARG00000025613", "", "", 0, 0, 5, true),
-                new GeneTO("ENSDARG00000089109", "", "", 0, 0, 6, true),
-                new GeneTO("ENSDARG00000024124", "", "", 0, 0, 7, true),
-                new GeneTO("ENSG00000171791", "", "", 0, 0, 7, true),
-                new GeneTO("PPYG00000009212", "", "", 0, 0, 9, true),
-                new GeneTO("ENSG00000005242", "", "", 0, 0, 9, true),
-                new GeneTO("FBgn0003721", "", "", 0, 0, 11, true));
+                new GeneTO("ENSDARG00000087888", null, null, null, null, 1, null, null, null),
+                new GeneTO("ENSG00000027681", null, null, null, null, 2, null, null, null),
+                new GeneTO("ENSG00000029527", null, null, null, null, 2, null, null, null),
+                new GeneTO("PPYG00000014510", null, null, null, null, 3, null, null, null),
+                new GeneTO("ENSPTRG00000010079", null, null, null, null, 3, null, null, null),
+                new GeneTO("PPAG00000010079", null, null, null, null, 3, null, null, null),
+                new GeneTO("ACAG00000010079", null, null, null, null, 3, null, null, null),
+                new GeneTO("ENSDARG00000025613", null, null, null, null, 5, null, null, null),
+                new GeneTO("ENSDARG00000089109", null, null, null, null, 6, null, null, null),
+                new GeneTO("ENSDARG00000024124", null, null, null, null, 7, null, null, null),
+                new GeneTO("ENSG00000171791", null, null, null, null, 7, null, null, null),
+                new GeneTO("PPYG00000009212", null, null, null, null, 9, null, null, null),
+                new GeneTO("ENSG00000005242", null, null, null, null, 9, null, null, null),
+                new GeneTO("FBgn0003721", null, null, null, null, 11, null, null, null));
 
         ArgumentCaptor<Set> geneTOsArg = ArgumentCaptor.forClass(Set.class);
         verify(mockManager.mockGeneDAO).updateGenes(geneTOsArg.capture(), 
                 eq(Arrays.asList(GeneDAO.Attribute.OMA_PARENT_NODE_ID)));
         assertTrue("Incorrect GeneTOs generated to update genes",
                 TOComparator.areTOCollectionsEqual(expectedGeneTOs, geneTOsArg.getValue()));
+        
+        // Verify that all ResultSet are closed.
+        verify(mockSpeciesTORs).close();
+        verify(mockTaxonTORs).close();
+        verify(mockGeneTORs).close();
+
+        // Verify that setAttributes are correctly called.
+        verify(mockManager.mockSpeciesDAO, times(1)).setAttributes(
+                SpeciesDAO.Attribute.ID, SpeciesDAO.Attribute.COMMON_NAME, 
+                SpeciesDAO.Attribute.GENOME_SPECIES_ID, SpeciesDAO.Attribute.FAKE_GENE_ID_PREFIX);
+        verify(mockManager.mockTaxonDAO, times(1)).setAttributes(TaxonDAO.Attribute.ID);
+        verify(mockManager.mockGeneDAO, times(1)).setAttributes(GeneDAO.Attribute.ID);
     }
 }

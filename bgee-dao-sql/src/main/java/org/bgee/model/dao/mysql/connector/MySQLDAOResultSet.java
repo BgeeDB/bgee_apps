@@ -257,10 +257,19 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
      * <p>
      * {@code stepCount} is the number of times the {@code BgeePreparedStatement} will be executed. 
      * At each step, the offset argument of the LIMIT clause will be defined as: 
-     * ('step number' -1) * {@link #rowCount}. So, at the first step the offset will be 0, 
+     * ('step number' -1) * {@code rowCount}. So, at the first step the offset will be 0, 
      * at the second step the offset will be {@code rowCount}, etc. If this argument is equal 
      * to 0, then the {@code BgeePreparedStatement} will be used for an undefined 
      * number of steps, until there are no more results returned.
+     * <p>
+     * <strong>Important: </strong> if the LIMIT clause is used in a sub-query, 
+     * then there is no guarantee that there will be results from the main query 
+     * at each iteration: there can be no result at a given iteration, and some results 
+     * at the next iteration. For this reason, it is mandatory to provide a {code stepCount} 
+     * value when it is expected that some iterations can return no results, to keep 
+     * iterating until the end. It means that it is the responsibility of the caller 
+     * to determine how many times the query should be iterated (for instance, based on 
+     * a fist query using a 'SELECT COUNT(*) ...').
      * 
      * @param statement             A {@code BgeePreparedStatement} to execute a query on.
      * @param offsetParamIndex      An {@code int} that is the index of the parameter 
@@ -553,7 +562,6 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
             //a stepCount.
             //Also, at the first call following instantiation, resultSetIterationCount 
             //and currentStep will be equal to 0, so we will get the first statement.
-            log.info("{} - {} - {}", this.currentStep, this.stepCount, resultSetIterationCount);
             if (!this.isUsingLimitFeature() || 
                     //if it is the first iteration, acquire the next statement to iterate
                     this.currentStep == 0 || 

@@ -878,7 +878,9 @@ public class MySQLDAOResultSetTest extends TestAncestor
         
         
         //OK, now we test when there are no more results before reaching the maximum number 
-        //of iterations
+        //of iterations. We should still continue iterations (when the LIMIT is in a sub-query, 
+        //there is no guarantee to retrieve results at each iteration; we can have results 
+        //after an iteration with no result; it is then mandatory to provide the stepCount)
         mockStatement = mock(BgeePreparedStatement.class);
         mockRs = mock(ResultSet.class);
         when(mockRs.getMetaData()).thenReturn(metaData);
@@ -892,23 +894,31 @@ public class MySQLDAOResultSetTest extends TestAncestor
         assertTrue("Incorrect value returned by next", myRs.next());
         
         //OK, move to next iteration of the limit clause: no more result for this iteration 
-        //(first thenReturn), an also no results for the next iteration (second thenReturn), 
-        //before reaching the max number of iterations
-        when(mockRs.next()).thenReturn(false).thenReturn(false);
-        assertFalse("Incorrect value returned by next", myRs.next());
-        verify(mockRs, times(3)).next();
+        //(first thenReturn); start the second iteration, no results as well 
+        //(second thenReturn); start the third iteration, there is a result (third thenReturn); 
+        //there is only one result (fourth thenReturn returns false); 
+        //start the last requested iteration (fifth thenReturn), there is no result.
+        when(mockRs.next()).thenReturn(false).thenReturn(false).thenReturn(true).
+            thenReturn(false).thenReturn(false);
+        assertTrue("Incorrect value returned by next", myRs.next());
+        verify(mockRs, times(4)).next();
         verify(mockStatement, times(1)).setInt(2, 0);
         verify(mockStatement, times(1)).setInt(2, 20);
-        verify(mockStatement, times(2)).setInt(3, 20);
-        verify(mockStatement, times(4)).setInt(anyInt(), anyInt());
-        verify(mockStatement, times(2)).executeQuery();
+        verify(mockStatement, times(1)).setInt(2, 40);
+        verify(mockStatement, times(3)).setInt(3, 20);
+        verify(mockStatement, times(6)).setInt(anyInt(), anyInt());
+        verify(mockStatement, times(3)).executeQuery();
         verify(mockRs, times(2)).close();
-        verify(mockStatement, times(1)).close();
         assertFalse("Incorrect value returned by next", myRs.next());
-        verify(mockRs, times(3)).next();
-        verify(mockStatement, times(4)).setInt(anyInt(), anyInt());
-        verify(mockStatement, times(2)).executeQuery();
-        verify(mockRs, times(2)).close();
+        verify(mockRs, times(6)).next();
+        verify(mockStatement, times(1)).setInt(2, 0);
+        verify(mockStatement, times(1)).setInt(2, 20);
+        verify(mockStatement, times(1)).setInt(2, 40);
+        verify(mockStatement, times(1)).setInt(2, 60);
+        verify(mockStatement, times(4)).setInt(3, 20);
+        verify(mockStatement, times(8)).setInt(anyInt(), anyInt());
+        verify(mockStatement, times(4)).executeQuery();
+        verify(mockRs, times(4)).close();
         verify(mockStatement, times(1)).close();
     }
     

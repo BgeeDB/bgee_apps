@@ -34,7 +34,8 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
-        ID, NAME, DESCRIPTION, SPECIES_ID, GENE_BIO_TYPE_ID, OMA_PARENT_NODE_ID, ENSEMBL_GENE;
+        ID, NAME, DESCRIPTION, SPECIES_ID, GENE_BIO_TYPE_ID, OMA_PARENT_NODE_ID, ENSEMBL_GENE,
+        ANCESTRAL_OMA_NODE_ID, ANCESTRAL_OMA_TAXON_ID;
     }
     
     /**
@@ -72,7 +73,9 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      *                              attributes to be updated into the data source.
      * @return                      An {@code int} representing the number of genes updated.
      * @throws DAOException             If an error occurred while updating the data.
-     * @throws IllegalArgumentException If {@code genes} is empty or null. 
+     * @throws IllegalArgumentException If {@code genes} is empty or null or if 
+     *                                  {@code attributesToUpdate} is empty or null or contains 
+     *                                  an ancestral OMA node ID or an ancestral OMA taxon ID.   
      */
     public int updateGenes(Collection<GeneTO> genes, 
             Collection<GeneDAO.Attribute> attributesToUpdate) 
@@ -125,6 +128,20 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
         private final Boolean ensemblGene;
 
         /**
+         * An {@code Integer} that is the ID of the last parent OMA node ID which is not a 
+         * paralogous group of the OMA Hierarchical Orthologous Group that this gene belongs to.
+         * It can be {@code null} if the gene does not belong to a hierarchical group.
+         */
+        private final Integer ancestralOMANodeId;
+
+        /**
+         * An {@code String} that is the ID of the taxon of the last parent OMA node ID which is 
+         * not a paralogous group. It can be {@code null} if the gene does not belong to a 
+         * hierarchical group.
+         */
+        private final String ancestralOMATaxonId;
+
+        /**
          * Constructor providing the ID (for instance, {@code Ensembl:ENSMUSG00000038253}), 
          * the name (for instance, {@code Hoxa5}), the description and the species ID of this gene.
          * <p>
@@ -138,7 +155,7 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
          */
         public GeneTO(String geneId, String geneName, Integer speciesId) 
                 throws IllegalArgumentException {
-            this(geneId, geneName, null, speciesId, null, null, null);
+            this(geneId, geneName, null, speciesId, null, null, null, null, null);
         }
 
         /**
@@ -149,26 +166,33 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
          * <p>
          * All of these parameters are optional, so they can be {@code null} when not used.
          * 
-         * @param geneId            A {@code String} that is the ID of this gene.
-         * @param geneName          A {@code String} that is the name of this gene.
-         * @param geneDescription   A {@code String} that is the description of this gene.
-         * @param speciesId         An {@code Integer} that is the species ID which this 
-         *                          gene belongs to.
-         * @param geneBioTypeId     An {@code Integer} that is the BioType of this gene.
-         * @param OMAParentNodeId   An {@code Integer} that is the ID of the OMA Hierarchical 
-         *                          Orthologous Group.
-         * @param ensemblGene       A {code Boolean} defining whether this gene is present 
-         *                          in Ensembl.
+         * @param geneId                A {@code String} that is the ID of this gene.
+         * @param geneName              A {@code String} that is the name of this gene.
+         * @param geneDescription       A {@code String} that is the description of this gene.
+         * @param speciesId             An {@code Integer} that is the species ID which this 
+         *                              gene belongs to.
+         * @param geneBioTypeId         An {@code Integer} that is the BioType of this gene.
+         * @param OMAParentNodeId       An {@code Integer} that is the ID of the OMA Hierarchical 
+         *                              Orthologous Group.
+         * @param ensemblGene           A {code Boolean} defining whether this gene is present 
+         *                              in Ensembl.
+         * @param ancestralOMANodeId    An {@code Integer} that is the ID of the last parent OMA 
+         *                              node ID which is not a paralogous group.
+         * @param ancestralOMATaxonId   A {@code String} that is the ID of the taxon of the last 
+         *                              parent OMA node ID which is not a paralogous group.
          * @throws IllegalArgumentException If {@code id} is empty.
          */
         public GeneTO(String geneId, String geneName, String geneDescription, Integer speciesId,
-                Integer geneBioTypeId, Integer OMAParentNodeId, Boolean ensemblGene) 
+                Integer geneBioTypeId, Integer OMAParentNodeId, Boolean ensemblGene,
+                Integer ancestralOMANodeId, String ancestralOMATaxonId) 
                         throws IllegalArgumentException {
             super(geneId, geneName, geneDescription);
             this.speciesId = speciesId;
             this.geneBioTypeId = geneBioTypeId;
             this.OMAParentNodeId = OMAParentNodeId;
             this.ensemblGene = ensemblGene;
+            this.ancestralOMANodeId = ancestralOMANodeId;
+            this.ancestralOMATaxonId = ancestralOMATaxonId;
         }
 
         /**
@@ -211,13 +235,31 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
             return this.ensemblGene;
         }
 
+        /**
+         * @return  The ID of the last parent OMA node ID which is not a paralogous group of the 
+         *          OMA Hierarchical Orthologous Group that this gene belongs to.
+         */
+        public Integer getAncestralOMANodeId() {
+            return this.ancestralOMANodeId;
+        }
+
+        /**
+         * @return  The ID of the taxon of the last parent OMA node ID 
+         *          which is not a paralogous group.
+         */
+        public String getAncestralOMATaxonId() {
+            return this.ancestralOMATaxonId;
+        }
+
         @Override
         public String toString() {
             return "ID: " + this.getId() + " - Label: " + this.getName() + 
                    " - Species ID: " + this.getSpeciesId() + 
                    " - Gene bio type ID: " + this.getGeneBioTypeId() + 
                    " - OMA Hierarchical Orthologous Group ID: " + this.getOMAParentNodeId() + 
-                   " - Is Ensembl Gene: " + this.isEnsemblGene();
+                   " - Is Ensembl Gene: " + this.isEnsemblGene() +
+                   " - Ancestral OMA node ID: " + this.getAncestralOMANodeId() +
+                   " - Ancestral OMA taxon ID: " + this.getAncestralOMATaxonId();
         }
     }
 }

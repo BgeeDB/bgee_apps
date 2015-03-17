@@ -377,7 +377,9 @@ public class TOComparator {
                 geneTO1.getSpeciesId() == geneTO2.getSpeciesId() && 
                 geneTO1.getGeneBioTypeId() == geneTO2.getGeneBioTypeId() && 
                 geneTO1.getOMAParentNodeId() == geneTO2.getOMAParentNodeId() && 
-                geneTO1.isEnsemblGene() == geneTO2.isEnsemblGene()) {
+                geneTO1.isEnsemblGene() == geneTO2.isEnsemblGene() &&
+                geneTO1.getAncestralOMANodeId() == geneTO2.getAncestralOMANodeId() && 
+                StringUtils.equals(geneTO1.getAncestralOMATaxonId(), geneTO2.getAncestralOMATaxonId())) {
             return log.exit(true);
         }
         return log.exit(false);

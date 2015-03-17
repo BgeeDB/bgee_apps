@@ -4,6 +4,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -52,22 +54,12 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
     public GeneTOResultSet getAllGenes() throws DAOException {
         log.entry();
         
-        Collection<GeneDAO.Attribute> attributes = this.getAttributes();
         //Construct sql query
-        String sql = new String(); 
-        if (attributes == null || attributes.size() == 0) {
-            sql += "SELECT *";
-        } else {
-            for (GeneDAO.Attribute attribute: attributes) {
-                if (sql.length() == 0) {
-                    sql += "SELECT DISTINCT ";
-                } else {
-                    sql += ", ";
-                }
-                sql += this.attributeToString(attribute);
-            }
-        }
-        sql += " FROM gene";
+        String geneTableName = "gene";
+        
+        String sql = this.generateSelectClause(this.getAttributes(), geneTableName);
+        
+        sql += " FROM " + geneTableName;
         //we don't use a try-with-resource, because we return a pointer to the results, 
         //not the actual results, so we should not close this BgeePreparedStatement.
         BgeePreparedStatement stmt = null;
@@ -83,22 +75,12 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
     public GeneTOResultSet getGenesBySpeciesIds(Set<String> speciesIds) throws DAOException {
         log.entry();      
 
-        Collection<GeneDAO.Attribute> attributes = this.getAttributes();
         //Construct sql query
-        String sql = new String(); 
-        if (attributes == null || attributes.size() == 0) {
-            sql += "SELECT *";
-        } else {
-            for (GeneDAO.Attribute attribute: attributes) {
-                if (sql.length() == 0) {
-                    sql += "SELECT DISTINCT ";
-                } else {
-                    sql += ", ";
-                }
-                sql += this.attributeToString(attribute);
-            }
-        }
-        sql += " FROM gene";
+        String geneTableName = "gene";
+        
+        String sql = this.generateSelectClause(this.getAttributes(), geneTableName);
+        
+        sql += " FROM " + geneTableName;
         
         if (speciesIds != null && speciesIds.size() > 0) {
             sql += " WHERE gene.speciesId IN (" + 
@@ -132,9 +114,14 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
             throw log.throwing(new IllegalArgumentException(
                     "No gene is given, then no gene is updated"));
         }
-        if (attributesToUpdate == null || attributesToUpdate.size() == 0) {
+        if (attributesToUpdate == null || attributesToUpdate.isEmpty()) {
             throw log.throwing(new IllegalArgumentException(
                     "No attribute is given, then no gene is updated"));
+        }
+        if (attributesToUpdate.contains(GeneDAO.Attribute.ANCESTRAL_OMA_NODE_ID) ||
+                attributesToUpdate.contains(GeneDAO.Attribute.ANCESTRAL_OMA_TAXON_ID)) {
+            throw log.throwing(new IllegalArgumentException(
+                    "'Ancestral OMA' attributes are not store in database, then no gene is updated"));
         }
         
         int geneUpdatedCount = 0;
@@ -179,6 +166,52 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
             throw log.throwing(new DAOException(e));
         }
     }
+    
+    /**
+     * Generates the SELECT clause of a MySQL query used to retrieve {@code GeneTO}s.
+     * 
+     * @param attributes            A {@code Set} of {@code Attribute}s defining 
+     *                              the columns/information the query should retrieve.
+     * @param diffExprTableName     A {@code String} defining the name of the gene table used.
+     * @return                      A {@code String} containing the SELECT clause 
+     *                              for the requested query.
+     * @throws IllegalArgumentException If one {@code Attribute} of {@code attributes} is unknown.
+     */
+    private String generateSelectClause(Set<GeneDAO.Attribute> attributes, String geneTableName) 
+                            throws IllegalArgumentException {
+        log.entry(attributes, geneTableName);
+        
+        Set<GeneDAO.Attribute> attributesToUse = new HashSet<GeneDAO.Attribute>(attributes);
+        if (attributes == null || attributes.isEmpty()) {
+            // we exclude ANCESTRAL_OMA_NODE_ID and ANCESTRAL_OMA_TAXON_ID
+            // TODO remove when retrieving 'Ancestral OMA' data will be implemented and tested 
+            attributesToUse = EnumSet.complementOf(EnumSet.of(
+                    GeneDAO.Attribute.ANCESTRAL_OMA_NODE_ID, 
+                    GeneDAO.Attribute.ANCESTRAL_OMA_TAXON_ID));
+            //return log.exit("SELECT * ");
+        }
+
+        String sql = "";
+        for (GeneDAO.Attribute attribute: attributesToUse) {
+            if (attribute.equals(GeneDAO.Attribute.ANCESTRAL_OMA_NODE_ID) ||
+                    attribute.equals(GeneDAO.Attribute.ANCESTRAL_OMA_TAXON_ID)) {
+                // TODO remove when retrieving 'Ancestral OMA' data will be implemented and tested
+                continue;
+            }
+                
+            if (sql.isEmpty()) {
+                sql += "SELECT ";
+                //does the attributes requested ensure that there will be no duplicated results?
+                if (!attributesToUse.contains(GeneDAO.Attribute.ID)) {
+                    sql += "DISTINCT ";
+                }
+            } else {
+                sql += ", ";
+            }
+            sql += geneTableName + "." + this.attributeToString(attribute);
+        }
+        return log.exit(sql);
+    }
 
     /** 
      * Returns a {@code String} that correspond to the given {@code GeneDAO.Attribute}.
@@ -187,8 +220,8 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
      *                    convert into a {@code String}.
      * @return            A {@code String} that corresponds to the given {@code GeneDAO.Attribute}
      * @throws IllegalArgumentException If the {@code attribute} is unknown.
-     */
-    private String attributeToString(GeneDAO.Attribute attribute) throws IllegalArgumentException{
+     * */
+    private String attributeToString(GeneDAO.Attribute attribute) throws IllegalArgumentException {
         log.entry(attribute);
         
         String label = null;
@@ -206,14 +239,17 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
             label = "OMAParentNodeId";
         } else if (attribute.equals(GeneDAO.Attribute.ENSEMBL_GENE)) {
             label = "ensemblGene";
+        } else if (attribute.equals(GeneDAO.Attribute.ANCESTRAL_OMA_NODE_ID)) {
+            label = "ancestralOMANodeId";
+        } else if (attribute.equals(GeneDAO.Attribute.ANCESTRAL_OMA_TAXON_ID)) {
+            label = "ancestralOMATaxonId";
         } else {
             throw log.throwing(new IllegalArgumentException("The attribute provided (" + 
                     attribute.toString() + ") is unknown for " + GeneDAO.class.getName()));
         }
-        
         return log.exit(label);
     }
-    
+
     /**
      * A {@code MySQLDAOResultSet} specific to {@code GeneTO}.
      * 
@@ -238,8 +274,9 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         protected GeneTO getNewTO() {
             log.entry();
             ResultSet currentResultSet = this.getCurrentResultSet();
-            String geneId = null, geneName = null, geneDescription = null;
-            Integer speciesId = null, geneBioTypeId = null, OMAParentNodeId = null;
+            String geneId = null, geneName = null, geneDescription = null, ancestralOMATaxonId = null;
+            Integer speciesId = null, geneBioTypeId = null, OMAParentNodeId = null, 
+                    ancestralOMANodeId= null;
             Boolean ensemblGene = null;
             // Get results
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
@@ -264,14 +301,20 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 
                     } else if (column.getValue().equals("ensemblGene")) {
                         ensemblGene = currentResultSet.getBoolean(column.getKey());
+                        
+                    } else if (column.getValue().equals("ancestralOMANodeId")) {
+                        ancestralOMANodeId = currentResultSet.getInt(column.getKey());
+
+                    } else if (column.getValue().equals("ancestralOMATaxonId")) {
+                        ancestralOMATaxonId = currentResultSet.getString(column.getKey());
                     }
                 } catch (SQLException e) {
                     throw log.throwing(new DAOException(e));
                 }
             }
             //Set GeneTO
-            return log.exit(new GeneTO(geneId, geneName, geneDescription, speciesId,
-                    geneBioTypeId, OMAParentNodeId, ensemblGene));
+            return log.exit(new GeneTO(geneId, geneName, geneDescription, speciesId, geneBioTypeId, 
+                    OMAParentNodeId, ensemblGene, ancestralOMANodeId, ancestralOMATaxonId));
         }
     }
 }

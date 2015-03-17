@@ -65,6 +65,9 @@ public abstract class TransferObject implements Serializable {
             String representation) {
         log.entry(enumField, representation);
         
+        if (representation == null) {
+            return log.exit(null);
+        }
         for (T element: enumField.getEnumConstants()) {
             if (element.getStringRepresentation().equals(representation) || 
                     element.name().equals(representation)) {

@@ -71,6 +71,9 @@ public class MySQLSummarySimilarityAnnotationDAO
                     sql += "SELECT ";
                     //does the attributes requested ensure that there will be 
                     //no duplicated results?
+                    //FIXME: incorrect: depending on the joins, we could have duplicates 
+                    //even if ID is requested; it is the responsibility of the caller 
+                    //to determine whether the DISTINCT clause is necessary.
                     if (!attributes.contains(SummarySimilarityAnnotationDAO.Attribute.ID)) {
                         sql += "DISTINCT ";
                     }

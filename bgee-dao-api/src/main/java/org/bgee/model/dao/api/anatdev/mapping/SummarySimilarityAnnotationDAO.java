@@ -76,6 +76,15 @@ public interface SummarySimilarityAnnotationDAO extends
      * if we were providing only the ancestral taxon ID, this structure would be filtered out; 
      * by providing a list of species, at least we would recover the structure if we were 
      * comparing only human and mouse.
+     * <p>
+     * The point of not inferring the ancestral taxon ID from the list of species 
+     * is to be able to retrieve mappings valid between some species, but that are defined 
+     * at a higher taxonomic level than their LCA (for instance, using only similarities 
+     * arisen at the Bilateria level, while comparing species with an Euarchontoglires 
+     * common ancestor).
+     * <p>
+     * Note that using the {@code setAttributes} methods (see {@link DAO}) has no effect 
+     * on attributes retrieved in {@code SimAnnotToAnatEntityTO}s.
      * 
      * @param ancestralTaxonId  A {@code String} that is the NCBI ID of the taxon 
      *                          for which the similarity annotations should be valid, 
@@ -89,6 +98,10 @@ public interface SummarySimilarityAnnotationDAO extends
      */
     //Note that if someday we use other similarity concepts than 'historical homology' 
     //(HOM:0000007), then this method will need to accept the HOMId as argument.
+    
+    //XXX: "The anatomical entities retrieved will be defined as existing 
+    //in all the provided species." Do we really want this? Maybe we want to recover organs 
+    //'lost' in a taxon?
     public SimAnnotToAnatEntityTOResultSet getSimAnnotToAnatEntity(String ancestralTaxonId, 
             Set<String> speciesIds) throws DAOException;
 

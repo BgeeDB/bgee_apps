@@ -50,6 +50,15 @@ public interface StageGroupingDAO extends DAO {
      * if we were providing only the ancestral taxon ID, this stage would be filtered out; 
      * by providing a list of species, at least we would recover the stage if we were 
      * comparing only human and mouse.
+     * <p>
+     * The point of not inferring the ancestral taxon ID from the list of species 
+     * is to be able to retrieve mappings valid between some species, but that are defined 
+     * at a higher taxonomic level than their LCA (for instance, using only similarities 
+     * arisen at the Bilateria level, while comparing species with an Euarchontoglires 
+     * common ancestor).
+     * <p>
+     * Note that using the {@code setAttributes} methods (see {@link DAO}) has no effect 
+     * on attributes retrieved in {@code GroupToStageTO}s.
      * 
      * @param ancestralTaxonId  A {@code String} that is the NCBI ID of the taxon 
      *                          for which the stages could be used for comparisons.

@@ -51,6 +51,10 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
     }
     
     @Override
+    //A warning is issued because we do not close the BgeePreparedStatement we use, 
+    //but if we closed the PreparedStatement, it would close the ResultSet returned. 
+    //The BgeePreparedStatement will be closed when the ResultSet will be closed. 
+    @SuppressWarnings("resource")
     public SpeciesTOResultSet getSpeciesByIds(Set<String> speciesIds) throws DAOException {
         log.entry(speciesIds);
         

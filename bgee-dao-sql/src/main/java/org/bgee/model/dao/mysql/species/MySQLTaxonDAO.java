@@ -114,6 +114,10 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
     }
 
     @Override
+    //A warning is issued because we do not close the BgeePreparedStatement we use, 
+    //but if we closed the PreparedStatement, it would close the ResultSet returned. 
+    //The BgeePreparedStatement will be closed when the ResultSet will be closed. 
+    @SuppressWarnings("resource")
     //TODO: integration test - test also a case where species are member of a same taxon leaf
     public TaxonTOResultSet getLeastCommonAncestor(Set<String> speciesIds, 
             boolean includeAncestors) throws DAOException, IllegalArgumentException {

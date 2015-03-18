@@ -78,6 +78,10 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
      * @throws DAOException             If a {@code SQLException} occurred while trying to get 
      *                                  no-expression calls.   
      */
+    //A warning is issued because we do not close the BgeePreparedStatement we use, 
+    //but if we closed the PreparedStatement, it would close the ResultSet returned. 
+    //The BgeePreparedStatement will be closed when the ResultSet will be closed. 
+    @SuppressWarnings("resource")
     private NoExpressionCallTOResultSet getNoExpressionCalls(Set<String> speciesIds,
             boolean isIncludeParentStructures) throws DAOException {
         log.entry(speciesIds, isIncludeParentStructures);        
@@ -203,8 +207,8 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         
         String sql = "SELECT MAX(" + id + ") AS " + id + " FROM " + tableName;
         
-        try (BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql)) {
-            MySQLNoExpressionCallTOResultSet resultSet = new MySQLNoExpressionCallTOResultSet(stmt);
+        try (MySQLNoExpressionCallTOResultSet resultSet = new MySQLNoExpressionCallTOResultSet(
+                this.getManager().getConnection().prepareStatement(sql))) {
             
             if (resultSet.next() && StringUtils.isNotBlank(resultSet.getTO().getId())) {
                 return log.exit(Integer.valueOf(resultSet.getTO().getId()));

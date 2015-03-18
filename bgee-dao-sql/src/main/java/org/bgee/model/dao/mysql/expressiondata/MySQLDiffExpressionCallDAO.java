@@ -94,6 +94,10 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
      * @throws DAOException                 If a {@code SQLException} occurred while trying to get 
      *                                      expression calls.                      
      */
+    //A warning is issued because we do not close the BgeePreparedStatement we use, 
+    //but if we closed the PreparedStatement, it would close the ResultSet returned. 
+    //The BgeePreparedStatement will be closed when the ResultSet will be closed. 
+    @SuppressWarnings("resource")
     private DiffExpressionCallTOResultSet getDiffExpressionCalls(Set<String> speciesIds,
             ComparisonFactor factor, Set<DiffExprCallType> diffExprCallTypeAffymetrix,
             boolean includeAffymetrixTypes, Set<DiffExprCallType> diffExprCallTypeRNASeq, 

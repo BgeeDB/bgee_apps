@@ -119,8 +119,8 @@ public class MySQLSummarySimilarityAnnotationDAO
     }
 
     @Override
-    public SimAnnotToAnatEntityTOResultSet getSimAnnotToAnatEntity(String ancestralTaxonId)
-            throws DAOException {
+    public SimAnnotToAnatEntityTOResultSet getSimAnnotToAnatEntity(String ancestralTaxonId, 
+            Set<String> speciesIds) throws DAOException {
         log.entry(ancestralTaxonId);
         // TODO Auto-generated method stub
         return null;

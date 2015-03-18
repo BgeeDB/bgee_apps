@@ -1,6 +1,5 @@
 package org.bgee.model.dao.mysql.expressiondata;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -568,48 +567,48 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
             Boolean includeParentStructures = null;
             OriginOfLine noExpressionOriginOfLine = null;
 
-            ResultSet currentResultSet = this.getCurrentResultSet();
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
                     if (column.getValue().equals("noExpressionId")) {
-                        id = currentResultSet.getString(column.getKey());
+                        id = this.getCurrentResultSet().getString(column.getKey());
                         
                     } else if (column.getValue().equals("globalNoExpressionId")) {
-                        id = currentResultSet.getString(column.getKey());
+                        id = this.getCurrentResultSet().getString(column.getKey());
 
                     } else if (column.getValue().equals("geneId")) {
-                        geneId = currentResultSet.getString(column.getKey());
+                        geneId = this.getCurrentResultSet().getString(column.getKey());
 
                     } else if (column.getValue().equals("anatEntityId")) {
-                        anatEntityId = currentResultSet.getString(column.getKey());
+                        anatEntityId = this.getCurrentResultSet().getString(column.getKey());
 
                     } else if (column.getValue().equals("stageId")) {
-                        stageId = currentResultSet.getString(column.getKey());
+                        stageId = this.getCurrentResultSet().getString(column.getKey());
 
                     } else if (column.getValue().equals("noExpressionAffymetrixData")) {
                         noExprAffymetrixData = DataState.convertToDataState(
-                                currentResultSet.getString(column.getKey()));
+                                this.getCurrentResultSet().getString(column.getKey()));
 
                     } else if (column.getValue().equals("noExpressionInSituData")) {
                         noExprInSituData = DataState.convertToDataState(
-                                currentResultSet.getString(column.getKey()));
+                                this.getCurrentResultSet().getString(column.getKey()));
 
                     } else if (column.getValue().equals("noExpressionRelaxedInSituData")) {
                         noExprRelaxedInSituData = DataState.convertToDataState(
-                                currentResultSet.getString(column.getKey()));
+                                this.getCurrentResultSet().getString(column.getKey()));
 
                     } else if (column.getValue().equals("noExpressionRnaSeqData")) {
                         noExprRnaSeqData = DataState.convertToDataState(
-                                currentResultSet.getString(column.getKey()));
+                                this.getCurrentResultSet().getString(column.getKey()));
 
                     } else if (column.getValue().equals("noExpressionOriginOfLine")) {
                         noExpressionOriginOfLine = OriginOfLine.convertToOriginOfLine(
-                                        currentResultSet.getString(column.getKey()));
+                                this.getCurrentResultSet().getString(column.getKey()));
                         //NOTE: and what if originOfLine was not requested? we will not see 
                         //that it is a global call...
                         //isGlobalExpression = true;
                     } else if (column.getValue().equals("includeParentStructures")) {
-                        includeParentStructures = currentResultSet.getBoolean(column.getKey());
+                        includeParentStructures = 
+                                this.getCurrentResultSet().getBoolean(column.getKey());
                     } 
 
                 } catch (SQLException e) {
@@ -648,14 +647,13 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
             log.entry();
             String globalNoExpressionId = null, noExpressionId = null;
 
-            ResultSet currentResultSet = this.getCurrentResultSet();
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
                     if (column.getValue().equals("globalNoExpressionId")) {
-                        globalNoExpressionId = currentResultSet.getString(column.getKey());
+                        globalNoExpressionId = this.getCurrentResultSet().getString(column.getKey());
 
                     } else if (column.getValue().equals("noExpressionId")) {
-                        noExpressionId = currentResultSet.getString(column.getKey());
+                        noExpressionId = this.getCurrentResultSet().getString(column.getKey());
 
                     } else {
                         throw log.throwing(new UnrecognizedColumnException(column.getValue()));

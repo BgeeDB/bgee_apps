@@ -1,6 +1,5 @@
 package org.bgee.model.dao.mysql.expressiondata;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -693,56 +692,61 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
             Boolean includeSubstructures = null, includeSubStages = null, observedData = null;
             OriginOfLine anatOriginOfLine = null, stageOriginOfLine = null;
 
-            ResultSet currentResultSet = this.getCurrentResultSet();
             //every call to values() returns a newly cloned array, so we cache the array
             DataState[] dataStates = DataState.values();
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
                     if (column.getValue().equals("expressionId")) {
-                        id = currentResultSet.getString(column.getKey());
+                        id = this.getCurrentResultSet().getString(column.getKey());
                         
                     } else if (column.getValue().equals("globalExpressionId")) {
-                            id = currentResultSet.getString(column.getKey());
+                            id = this.getCurrentResultSet().getString(column.getKey());
 
                     } else if (column.getValue().equals("geneId")) {
-                        geneId = currentResultSet.getString(column.getKey());
+                        geneId = this.getCurrentResultSet().getString(column.getKey());
 
                     } else if (column.getValue().equals("anatEntityId")) {
-                        anatEntityId = currentResultSet.getString(column.getKey());
+                        anatEntityId = this.getCurrentResultSet().getString(column.getKey());
 
                     } else if (column.getValue().equals("stageId")) {
-                        stageId = currentResultSet.getString(column.getKey());
+                        stageId = this.getCurrentResultSet().getString(column.getKey());
 
                     } else if (column.getValue().equals("affymetrixData")) {
                         //index of the enum in the mysql database corresponds to the ordinal 
                         //of DataState + 1
-                        affymetrixData = dataStates[currentResultSet.getInt(column.getKey()) - 1];
+                        affymetrixData = 
+                            dataStates[this.getCurrentResultSet().getInt(column.getKey()) - 1];
                     } else if (column.getValue().equals("estData")) {
                        //index of the enum in the mysql database corresponds to the ordinal 
                         //of DataState + 1
-                        estData = dataStates[currentResultSet.getInt(column.getKey()) - 1];
+                        estData = 
+                            dataStates[this.getCurrentResultSet().getInt(column.getKey()) - 1];
                     } else if (column.getValue().equals("inSituData")) {
                         //index of the enum in the mysql database corresponds to the ordinal 
                         //of DataState + 1
-                        inSituData = dataStates[currentResultSet.getInt(column.getKey()) - 1];
+                        inSituData = 
+                            dataStates[this.getCurrentResultSet().getInt(column.getKey()) - 1];
                     } else if (column.getValue().equals("rnaSeqData")) {
                         //index of the enum in the mysql database corresponds to the ordinal 
                         //of DataState + 1
-                        rnaSeqData = dataStates[currentResultSet.getInt(column.getKey()) - 1];
+                        rnaSeqData = 
+                            dataStates[this.getCurrentResultSet().getInt(column.getKey()) - 1];
                         
                     } else if (column.getValue().equals("originOfLine") || 
                             column.getValue().equals("anatOriginOfLine")) {
                         anatOriginOfLine = OriginOfLine.convertToOriginOfLine(
-                                currentResultSet.getString(column.getKey()));
+                                this.getCurrentResultSet().getString(column.getKey()));
                     } else if (column.getValue().equals("stageOriginOfLine")) {
                         stageOriginOfLine = OriginOfLine.convertToOriginOfLine(
-                                currentResultSet.getString(column.getKey()));
+                                this.getCurrentResultSet().getString(column.getKey()));
                     } else if (column.getValue().equals("includeSubstructures")) {
-                        includeSubstructures = currentResultSet.getBoolean(column.getKey());
+                        includeSubstructures = 
+                                this.getCurrentResultSet().getBoolean(column.getKey());
                     } else if (column.getValue().equals("includeSubStages")) {
-                        includeSubStages = currentResultSet.getBoolean(column.getKey());
+                        includeSubStages = 
+                                this.getCurrentResultSet().getBoolean(column.getKey());
                     } else if (column.getValue().equals("observedData")) {
-                        observedData = currentResultSet.getBoolean(column.getKey());
+                        observedData = this.getCurrentResultSet().getBoolean(column.getKey());
                     }
 
                 } catch (SQLException e) {
@@ -781,14 +785,13 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
             log.entry();
             String globalExpressionId = null, expressionId = null;
 
-            ResultSet currentResultSet = this.getCurrentResultSet();
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
                     if (column.getValue().equals("globalExpressionId")) {
-                        globalExpressionId = currentResultSet.getString(column.getKey());
+                        globalExpressionId = this.getCurrentResultSet().getString(column.getKey());
 
                     } else if (column.getValue().equals("expressionId")) {
-                        expressionId = currentResultSet.getString(column.getKey());
+                        expressionId = this.getCurrentResultSet().getString(column.getKey());
 
                     }  else {
                         throw log.throwing(new UnrecognizedColumnException(column.getValue()));

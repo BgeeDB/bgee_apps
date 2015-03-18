@@ -1,7 +1,6 @@
 package org.bgee.model.dao.mysql.anatdev.mapping;
 
 import java.sql.Date;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Map.Entry;
@@ -258,38 +257,38 @@ public class MySQLRawSimilarityAnnotationDAO extends MySQLDAO<RawSimilarityAnnot
             Boolean negated = null;
             Date annotationDate = null;
 
-            ResultSet currentResultSet = this.getCurrentResultSet();
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
                     if (column.getValue().equals("summarySimilarityAnnotationId")) {
-                        summarySimilarityAnnotationId = currentResultSet.getString(column.getKey());
+                        summarySimilarityAnnotationId = this.getCurrentResultSet().getString(
+                                column.getKey());
                         
                     } else if (column.getValue().equals("negated")) {
-                        negated = currentResultSet.getBoolean(column.getKey());
+                        negated = this.getCurrentResultSet().getBoolean(column.getKey());
 
                     } else if (column.getValue().equals("ECOId")) {
-                        ecoId = currentResultSet.getString(column.getKey());
+                        ecoId = this.getCurrentResultSet().getString(column.getKey());
 
                     } else if (column.getValue().equals("CIOId")) {
-                        cioId = currentResultSet.getString(column.getKey());
+                        cioId = this.getCurrentResultSet().getString(column.getKey());
 
                     } else if (column.getValue().equals("referenceId")) {
-                        referenceId = currentResultSet.getString(column.getKey());
+                        referenceId = this.getCurrentResultSet().getString(column.getKey());
 
                     } else if (column.getValue().equals("referenceTitle")) {
-                        referenceTitle = currentResultSet.getString(column.getKey());
+                        referenceTitle = this.getCurrentResultSet().getString(column.getKey());
 
                     } else if (column.getValue().equals("supportingText")) {
-                        supportingText = currentResultSet.getString(column.getKey());
+                        supportingText = this.getCurrentResultSet().getString(column.getKey());
 
                     } else if (column.getValue().equals("assignedBy")) {
-                        assignedBy = currentResultSet.getString(column.getKey());
+                        assignedBy = this.getCurrentResultSet().getString(column.getKey());
 
                     } else if (column.getValue().equals("curator")) {
-                        curator = currentResultSet.getString(column.getKey());
+                        curator = this.getCurrentResultSet().getString(column.getKey());
 
                     } else if (column.getValue().equals("annotationDate")) {
-                        annotationDate = currentResultSet.getDate(column.getKey());
+                        annotationDate = this.getCurrentResultSet().getDate(column.getKey());
                     } else {
                         throw log.throwing(new UnrecognizedColumnException(column.getValue()));
                     }

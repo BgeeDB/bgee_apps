@@ -263,6 +263,8 @@ public class MySQLDAOManager extends DAOManager {
      * @throws SQLException     If an error occurred while trying to obtain the connection, 
      *                          of if this {@code MySQLDAOManager} is already closed.
      */
+    //we return an open Connection on purpose, this is not a resource leak
+    @SuppressWarnings("resource")
     public BgeeConnection getConnection() throws SQLException {
         log.entry();
 

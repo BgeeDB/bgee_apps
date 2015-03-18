@@ -1,6 +1,5 @@
 package org.bgee.model.dao.mysql.gene;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
@@ -274,7 +273,6 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         @Override
         protected GeneTO getNewTO() {
             log.entry();
-            ResultSet currentResultSet = this.getCurrentResultSet();
             String geneId = null, geneName = null, geneDescription = null, ancestralOMATaxonId = null;
             Integer speciesId = null, geneBioTypeId = null, OMAParentNodeId = null, 
                     ancestralOMANodeId= null;
@@ -283,31 +281,32 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
                     if (column.getValue().equals("geneId")) {
-                        geneId = currentResultSet.getString(column.getKey());
+                        geneId = this.getCurrentResultSet().getString(column.getKey());
 
                     } else if (column.getValue().equals("geneName")) {
-                        geneName = currentResultSet.getString(column.getKey());
+                        geneName = this.getCurrentResultSet().getString(column.getKey());
 
                     } else if (column.getValue().equals("geneDescription")) {
-                        geneDescription = currentResultSet.getString(column.getKey());
+                        geneDescription = this.getCurrentResultSet().getString(column.getKey());
 
                     } else if (column.getValue().equals("speciesId")) {
-                        speciesId = currentResultSet.getInt(column.getKey());
+                        speciesId = this.getCurrentResultSet().getInt(column.getKey());
 
                     } else if (column.getValue().equals("geneBioTypeId")) {
-                        geneBioTypeId = currentResultSet.getInt(column.getKey());
+                        geneBioTypeId = this.getCurrentResultSet().getInt(column.getKey());
 
                     } else if (column.getValue().equals("OMAParentNodeId")) {
-                        OMAParentNodeId = currentResultSet.getInt(column.getKey());
+                        OMAParentNodeId = this.getCurrentResultSet().getInt(column.getKey());
 
                     } else if (column.getValue().equals("ensemblGene")) {
-                        ensemblGene = currentResultSet.getBoolean(column.getKey());
+                        ensemblGene = this.getCurrentResultSet().getBoolean(column.getKey());
                         
                     } else if (column.getValue().equals("ancestralOMANodeId")) {
-                        ancestralOMANodeId = currentResultSet.getInt(column.getKey());
+                        ancestralOMANodeId = this.getCurrentResultSet().getInt(column.getKey());
 
                     } else if (column.getValue().equals("ancestralOMATaxonId")) {
-                        ancestralOMATaxonId = currentResultSet.getString(column.getKey());
+                        ancestralOMATaxonId = 
+                                this.getCurrentResultSet().getString(column.getKey());
                     } else {
                         throw log.throwing(new UnrecognizedColumnException(column.getValue()));
                     }

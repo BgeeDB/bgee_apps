@@ -1,6 +1,5 @@
 package org.bgee.model.dao.mysql.ontologycommon;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -407,26 +406,25 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
             RelationType relationType = null;
             RelationStatus relationStatus = null;
             
-            ResultSet currentResultSet = this.getCurrentResultSet();
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
                     if (column.getValue().equals("anatEntityRelationId") || 
                             column.getValue().equals("stageRelationId")) {
-                        relationId = currentResultSet.getString(column.getKey());
+                        relationId = this.getCurrentResultSet().getString(column.getKey());
                     } else if (column.getValue().equals("anatEntitySourceId") || 
                             column.getValue().equals("goAllSourceId") || 
                             column.getValue().equals("stageSourceId")) {
-                        sourceId = currentResultSet.getString(column.getKey());
+                        sourceId = this.getCurrentResultSet().getString(column.getKey());
                     } else if (column.getValue().equals("anatEntityTargetId") || 
                             column.getValue().equals("goAllTargetId") || 
                             column.getValue().equals("stageTargetId") ) {
-                        targetId = currentResultSet.getString(column.getKey());
+                        targetId = this.getCurrentResultSet().getString(column.getKey());
                     } else if (column.getValue().equals("relationStatus")) {
                         relationStatus = RelationStatus.convertToRelationStatus(
-                                currentResultSet.getString(column.getKey()));
+                                this.getCurrentResultSet().getString(column.getKey()));
                     } else if (column.getValue().equals("relationType")) {
                         relationType = RelationType.convertToRelationType(
-                                currentResultSet.getString(column.getKey()));
+                                this.getCurrentResultSet().getString(column.getKey()));
                     } else {
                         throw log.throwing(new UnrecognizedColumnException(column.getValue()));
                     }

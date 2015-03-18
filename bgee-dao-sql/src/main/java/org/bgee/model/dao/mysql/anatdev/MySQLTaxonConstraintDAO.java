@@ -1,6 +1,5 @@
 package org.bgee.model.dao.mysql.anatdev;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Collection;
@@ -195,15 +194,14 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
             
             String entityId = null, speciesId = null;
 
-            ResultSet currentResultSet = this.getCurrentResultSet();
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
                     if (column.getValue().equals("stageId") || 
                                 column.getValue().equals("anatEntityId") || 
                                 column.getValue().equals("anatEntityRelationId")) {
-                        entityId = currentResultSet.getString(column.getKey());
+                        entityId = this.getCurrentResultSet().getString(column.getKey());
                     } else if (column.getValue().equals("speciesId")) {
-                        speciesId = currentResultSet.getString(column.getKey());
+                        speciesId = this.getCurrentResultSet().getString(column.getKey());
 
                     } else {
                         throw log.throwing(new UnrecognizedColumnException(column.getValue()));

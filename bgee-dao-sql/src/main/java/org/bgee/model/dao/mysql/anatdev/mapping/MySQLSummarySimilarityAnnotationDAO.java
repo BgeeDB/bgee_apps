@@ -1,6 +1,5 @@
 package org.bgee.model.dao.mysql.anatdev.mapping;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Map.Entry;
@@ -271,20 +270,19 @@ public class MySQLSummarySimilarityAnnotationDAO
             String id = null, taxonId = null, cioId = null; 
             Boolean negated = null;
 
-            ResultSet currentResultSet = this.getCurrentResultSet();
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
                     if (column.getValue().equals("summarySimilarityAnnotationId")) {
-                        id = currentResultSet.getString(column.getKey());
+                        id = this.getCurrentResultSet().getString(column.getKey());
                         
                     } else if (column.getValue().equals("taxonId")) {
-                        taxonId = currentResultSet.getString(column.getKey());
+                        taxonId = this.getCurrentResultSet().getString(column.getKey());
 
                     } else if (column.getValue().equals("negated")) {
-                        negated = currentResultSet.getBoolean(column.getKey());
+                        negated = this.getCurrentResultSet().getBoolean(column.getKey());
 
                     } else if (column.getValue().equals("CIOId")) {
-                        cioId = currentResultSet.getString(column.getKey());
+                        cioId = this.getCurrentResultSet().getString(column.getKey());
                     } else {
                         throw log.throwing(new UnrecognizedColumnException(column.getValue()));
                     }

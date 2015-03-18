@@ -1,6 +1,5 @@
 package org.bgee.model.dao.mysql.anatdev;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
@@ -68,9 +67,8 @@ public class MySQLStageDAO extends MySQLDAO<StageDAO.Attribute> implements Stage
 
          //we don't use a try-with-resource, because we return a pointer to the results, 
          //not the actual results, so we should not close this BgeePreparedStatement.
-         BgeePreparedStatement stmt = null;
          try {
-             stmt = this.getManager().getConnection().prepareStatement(sql);
+             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
              if (speciesIds != null && speciesIds.size() > 0) {
                  List<Integer> orderedSpeciesIds = MySQLDAO.convertToIntList(speciesIds);
                  Collections.sort(orderedSpeciesIds);
@@ -192,25 +190,24 @@ public class MySQLStageDAO extends MySQLDAO<StageDAO.Attribute> implements Stage
             Integer leftBound = null, rightBound = null, level = null;
             Boolean tooGranular = null, groupingStage = null;
             
-            ResultSet currentResultSet = this.getCurrentResultSet();
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
                     if (column.getValue().equals("stageId")) {
-                        stageId = currentResultSet.getString(column.getKey());
+                        stageId = this.getCurrentResultSet().getString(column.getKey());
                     } else if (column.getValue().equals("stageName")) {
-                        stageName = currentResultSet.getString(column.getKey());
+                        stageName = this.getCurrentResultSet().getString(column.getKey());
                     } else if (column.getValue().equals("stageDescription")) {
-                        stageDescription = currentResultSet.getString(column.getKey());
+                        stageDescription = this.getCurrentResultSet().getString(column.getKey());
                     } else if (column.getValue().equals("stageLeftBound")) {
-                        leftBound = currentResultSet.getInt(column.getKey());
+                        leftBound = this.getCurrentResultSet().getInt(column.getKey());
                     } else if (column.getValue().equals("stageRightBound")) {
-                        rightBound = currentResultSet.getInt(column.getKey());
+                        rightBound = this.getCurrentResultSet().getInt(column.getKey());
                     } else if (column.getValue().equals("stageLevel")) {
-                        level = currentResultSet.getInt(column.getKey());
+                        level = this.getCurrentResultSet().getInt(column.getKey());
                     } else if (column.getValue().equals("tooGranular")) {
-                        tooGranular = currentResultSet.getBoolean(column.getKey());
+                        tooGranular = this.getCurrentResultSet().getBoolean(column.getKey());
                     } else if (column.getValue().equals("groupingStage")) {
-                        groupingStage = currentResultSet.getBoolean(column.getKey());
+                        groupingStage = this.getCurrentResultSet().getBoolean(column.getKey());
                     } else {
                         throw log.throwing(new UnrecognizedColumnException(column.getValue()));
                     }           

@@ -1,6 +1,5 @@
 package org.bgee.model.dao.mysql.species;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
@@ -66,9 +65,8 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
 
         //we don't use a try-with-resource, because we return a pointer to the results, 
         //not the actual results, so we should not close this BgeePreparedStatement.
-        BgeePreparedStatement stmt = null;
         try {
-            stmt = this.getManager().getConnection().prepareStatement(sql);
+            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             if (speciesIds != null && speciesIds.size() > 0) {
                 List<Integer> orderedSpeciesIds = MySQLDAO.convertToIntList(speciesIds);
                 Collections.sort(orderedSpeciesIds);
@@ -225,7 +223,6 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
         @Override
         protected SpeciesTO getNewTO() {
             log.entry();
-            ResultSet currentResultSet = this.getCurrentResultSet();
             String speciesId = null, genus = null, species = null, 
                    speciesCommonName = null, taxonId = null, genomeFilePath = null, 
                    genomeSpeciesId = null, fakeGeneIdPrefix=null;
@@ -233,28 +230,28 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
                     if (column.getValue().equals("speciesId")) {
-                        speciesId = currentResultSet.getString(column.getKey());
+                        speciesId = this.getCurrentResultSet().getString(column.getKey());
                         
                     } else if (column.getValue().equals("genus")) {
-                        genus = currentResultSet.getString(column.getKey());
+                        genus = this.getCurrentResultSet().getString(column.getKey());
                         
                     } else if (column.getValue().equals("species")) {
-                        species = currentResultSet.getString(column.getKey());
+                        species = this.getCurrentResultSet().getString(column.getKey());
                         
                     } else if (column.getValue().equals("speciesCommonName")) {
-                        speciesCommonName = currentResultSet.getString(column.getKey());
+                        speciesCommonName = this.getCurrentResultSet().getString(column.getKey());
                         
                     } else if (column.getValue().equals("taxonId")) {
-                        taxonId = currentResultSet.getString(column.getKey());
+                        taxonId = this.getCurrentResultSet().getString(column.getKey());
                         
                     } else if (column.getValue().equals("genomeFilePath")) {
-                        genomeFilePath = currentResultSet.getString(column.getKey());
+                        genomeFilePath = this.getCurrentResultSet().getString(column.getKey());
 
                     } else if (column.getValue().equals("genomeSpeciesId")) {
-                        genomeSpeciesId = currentResultSet.getString(column.getKey());
+                        genomeSpeciesId = this.getCurrentResultSet().getString(column.getKey());
 
                     } else if (column.getValue().equals("fakeGeneIdPrefix")) {
-                        fakeGeneIdPrefix = currentResultSet.getString(column.getKey());
+                        fakeGeneIdPrefix = this.getCurrentResultSet().getString(column.getKey());
                     } else {
                         throw log.throwing(new UnrecognizedColumnException(column.getValue()));
                     }

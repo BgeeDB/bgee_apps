@@ -1,6 +1,5 @@
 package org.bgee.model.dao.mysql.anatdev;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
@@ -80,9 +79,8 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
 
          //we don't use a try-with-resource, because we return a pointer to the results, 
          //not the actual results, so we should not close this BgeePreparedStatement.
-         BgeePreparedStatement stmt = null;
          try {
-             stmt = this.getManager().getConnection().prepareStatement(sql.toString());
+             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
              if (speciesIds != null && speciesIds.size() != 0) {
                  List<Integer> orderedSpeciesIds = MySQLDAO.convertToIntList(speciesIds);
                  Collections.sort(orderedSpeciesIds);
@@ -145,9 +143,8 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
         
         //we don't use a try-with-resource, because we return a pointer to the results, 
         //not the actual results, so we should not close this BgeePreparedStatement.
-        BgeePreparedStatement stmt = null;
         try {
-            stmt = this.getManager().getConnection().prepareStatement(sql);
+            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             if (isSpeciesFilter) {
                 List<Integer> orderedSpeciesIds = MySQLDAO.convertToIntList(speciesIds);
                 Collections.sort(orderedSpeciesIds);
@@ -257,21 +254,20 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
                     startStageId = null, endStageId = null;
             Boolean nonInformative = null;
             
-            ResultSet currentResultSet = this.getCurrentResultSet();
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
                     if (column.getValue().equals("anatEntityId")) {
-                        anatEntityId = currentResultSet.getString(column.getKey());
+                        anatEntityId = this.getCurrentResultSet().getString(column.getKey());
                     } else if (column.getValue().equals("anatEntityName")) {
-                        anatEntityName = currentResultSet.getString(column.getKey());
+                        anatEntityName = this.getCurrentResultSet().getString(column.getKey());
                     } else if (column.getValue().equals("anatEntityDescription")) {
-                        anatEntityDescription = currentResultSet.getString(column.getKey());
+                        anatEntityDescription = this.getCurrentResultSet().getString(column.getKey());
                     } else if (column.getValue().equals("startStageId")) {
-                        startStageId = currentResultSet.getString(column.getKey());
+                        startStageId = this.getCurrentResultSet().getString(column.getKey());
                     } else if (column.getValue().equals("endStageId")) {
-                        endStageId = currentResultSet.getString(column.getKey());
+                        endStageId = this.getCurrentResultSet().getString(column.getKey());
                     } else if (column.getValue().equals("nonInformative")) {
-                        nonInformative = currentResultSet.getBoolean(column.getKey());
+                        nonInformative = this.getCurrentResultSet().getBoolean(column.getKey());
                     } else {
                         throw log.throwing(new UnrecognizedColumnException(column.getValue()));
                     }           

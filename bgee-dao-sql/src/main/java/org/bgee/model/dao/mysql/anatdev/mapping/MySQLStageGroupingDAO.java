@@ -1,6 +1,5 @@
 package org.bgee.model.dao.mysql.anatdev.mapping;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map.Entry;
 import java.util.Collections;
@@ -169,14 +168,13 @@ public class MySQLStageGroupingDAO extends MySQLDAO implements StageGroupingDAO 
 
             String groupId = null, stageId = null;
 
-            ResultSet currentResultSet = this.getCurrentResultSet();
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
                     if (column.getValue().equals("stageGroupId")) {
-                        groupId = currentResultSet.getString(column.getKey());
+                        groupId = this.getCurrentResultSet().getString(column.getKey());
                         
                     } else if (column.getValue().equals("stageId")) {
-                        stageId = currentResultSet.getString(column.getKey());
+                        stageId = this.getCurrentResultSet().getString(column.getKey());
 
                     } else {
                         throw log.throwing(new UnrecognizedColumnException(column.getValue()));

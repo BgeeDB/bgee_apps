@@ -1,6 +1,5 @@
 package org.bgee.model.dao.mysql.ontologycommon;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Map.Entry;
@@ -94,7 +93,7 @@ public class MySQLEvidenceOntologyDAO extends MySQLDAO<EvidenceOntologyDAO.Attri
         log.entry(attributes, tableName);
 
         if (attributes == null || attributes.isEmpty()) {
-            return log.exit("SELECT * ");
+            return log.exit("SELECT " + tableName + ".* ");
         }
     
         String sql = ""; 
@@ -220,17 +219,16 @@ public class MySQLEvidenceOntologyDAO extends MySQLDAO<EvidenceOntologyDAO.Attri
 
             String id = null, name = null, description = null;
 
-            ResultSet currentResultSet = this.getCurrentResultSet();
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
                     if (column.getValue().equals("ECOId")) {
-                        id = currentResultSet.getString(column.getKey());
+                        id = this.getCurrentResultSet().getString(column.getKey());
                         
                     } else if (column.getValue().equals("ECOName")) {
-                        name = currentResultSet.getString(column.getKey());
+                        name = this.getCurrentResultSet().getString(column.getKey());
 
                     } else if (column.getValue().equals("ECODescription")) {
-                        description = currentResultSet.getString(column.getKey());
+                        description = this.getCurrentResultSet().getString(column.getKey());
                     } else {
                         throw log.throwing(new UnrecognizedColumnException(column.getValue()));
                     }

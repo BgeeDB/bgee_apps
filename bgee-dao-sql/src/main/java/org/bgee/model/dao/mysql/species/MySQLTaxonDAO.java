@@ -1,6 +1,5 @@
 package org.bgee.model.dao.mysql.species;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
@@ -236,7 +235,6 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
         @Override
         protected TaxonTO getNewTO() {
             log.entry();
-            ResultSet currentResultSet = this.getCurrentResultSet();
             String taxonId = null, taxonName = null, taxonScientificName = null;
             Integer taxonLeftBound = null, taxonRightBound = null, taxonLevel = null;
             Boolean bgeeSpeciesLCA = null;
@@ -244,25 +242,26 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
                     if (column.getValue().equals("taxonId")) {
-                        taxonId = currentResultSet.getString(column.getKey());
+                        taxonId = this.getCurrentResultSet().getString(column.getKey());
 
                     } else if (column.getValue().equals("taxonCommonName")) {
-                        taxonName = currentResultSet.getString(column.getKey());
+                        taxonName = this.getCurrentResultSet().getString(column.getKey());
 
                     } else if (column.getValue().equals("taxonScientificName")) {
-                        taxonScientificName = currentResultSet.getString(column.getKey());
+                        taxonScientificName = this.getCurrentResultSet().getString(
+                                column.getKey());
 
                     } else if (column.getValue().equals("taxonLeftBound")) {
-                        taxonLeftBound = currentResultSet.getInt(column.getKey());
+                        taxonLeftBound = this.getCurrentResultSet().getInt(column.getKey());
 
                     } else if (column.getValue().equals("taxonRightBound")) {
-                        taxonRightBound = currentResultSet.getInt(column.getKey());
+                        taxonRightBound = this.getCurrentResultSet().getInt(column.getKey());
 
                     } else if (column.getValue().equals("taxonLevel")) {
-                        taxonLevel = currentResultSet.getInt(column.getKey());
+                        taxonLevel = this.getCurrentResultSet().getInt(column.getKey());
 
                     } else if (column.getValue().equals("bgeeSpeciesLCA")) {
-                        bgeeSpeciesLCA = currentResultSet.getBoolean(column.getKey());
+                        bgeeSpeciesLCA = this.getCurrentResultSet().getBoolean(column.getKey());
                     } else {
                         throw log.throwing(new UnrecognizedColumnException(column.getValue()));
                     }

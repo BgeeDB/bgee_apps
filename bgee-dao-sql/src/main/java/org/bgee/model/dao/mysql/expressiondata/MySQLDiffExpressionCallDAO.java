@@ -1,6 +1,5 @@
 package org.bgee.model.dao.mysql.expressiondata;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -357,61 +356,65 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
             Integer consistentDEACountAffymetrix = null, inconsistentDEACountAffymetrix = null,
                     consistentDEACountRNASeq = null, inconsistentDEACountRNASeq = null;
 
-            ResultSet currentResultSet = this.getCurrentResultSet();
             //every call to values() returns a newly cloned array, so we cache the array
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
                     if (column.getValue().equals("differentialExpressionId")) {
-                        id = currentResultSet.getString(column.getKey());
+                        id = this.getCurrentResultSet().getString(column.getKey());
 
                     } else if (column.getValue().equals("geneId")) {
-                        geneId = currentResultSet.getString(column.getKey());
+                        geneId = this.getCurrentResultSet().getString(column.getKey());
 
                     } else if (column.getValue().equals("anatEntityId")) {
-                        anatEntityId = currentResultSet.getString(column.getKey());
+                        anatEntityId = this.getCurrentResultSet().getString(column.getKey());
 
                     } else if (column.getValue().equals("stageId")) {
-                        stageId = currentResultSet.getString(column.getKey());
+                        stageId = this.getCurrentResultSet().getString(column.getKey());
 
                     } else if (column.getValue().equals("comparisonFactor")) {
                         comparisonFactor = ComparisonFactor.convertToComparisonFactor(
-                                currentResultSet.getString(column.getKey()));
+                                this.getCurrentResultSet().getString(column.getKey()));
                         
                     } else if (column.getValue().equals("diffExprCallAffymetrix")) {
                         diffExprCallTypeAffymetrix = DiffExprCallType.convertToDiffExprCallType(
-                                currentResultSet.getString(column.getKey()));
+                                this.getCurrentResultSet().getString(column.getKey()));
 
                     } else if (column.getValue().equals("diffExprAffymetrixData")) {
                         diffExprAffymetrixData = DataState.convertToDataState(
-                                currentResultSet.getString(column.getKey()));
+                                this.getCurrentResultSet().getString(column.getKey()));
 
                     } else if (column.getValue().equals("bestPValueAffymetrix")) {
-                        bestPValueAffymetrix = currentResultSet.getFloat(column.getKey());
+                        bestPValueAffymetrix = this.getCurrentResultSet().getFloat(
+                                column.getKey());
 
                     } else if (column.getValue().equals("consistentDEACountAffymetrix")) {
-                        consistentDEACountAffymetrix = currentResultSet.getInt(column.getKey());
+                        consistentDEACountAffymetrix = this.getCurrentResultSet().getInt(
+                                column.getKey());
                         
                     } else if (column.getValue().equals("inconsistentDEACountAffymetrix")) {
-                        inconsistentDEACountAffymetrix = currentResultSet.getInt(column.getKey());
+                        inconsistentDEACountAffymetrix = this.getCurrentResultSet().getInt(
+                                column.getKey());
                         
                     } else if (column.getValue().equals("diffExprCallRNASeq")) {
                         diffExprCallTypeRNASeq = DiffExprCallType.convertToDiffExprCallType(
-                                currentResultSet.getString(column.getKey()));
+                                this.getCurrentResultSet().getString(column.getKey()));
                         
                     } else if (column.getValue().equals("diffExprRNASeqData")) {
                         //index of the enum in the mysql database corresponds to the ordinal 
                         //of DataState + 1
                         diffExprRNASeqData = DataState.convertToDataState(
-                                currentResultSet.getString(column.getKey()));
+                                this.getCurrentResultSet().getString(column.getKey()));
                         
                     } else if (column.getValue().equals("bestPValueRNASeq")) {
-                        bestPValueRNASeq = currentResultSet.getFloat(column.getKey());
+                        bestPValueRNASeq = this.getCurrentResultSet().getFloat(column.getKey());
                         
                     } else if (column.getValue().equals("consistentDEACountRNASeq")) {
-                        consistentDEACountRNASeq = currentResultSet.getInt(column.getKey());
+                        consistentDEACountRNASeq = this.getCurrentResultSet().getInt(
+                                column.getKey());
                         
                     } else if (column.getValue().equals("inconsistentDEACountRNASeq")) {
-                        inconsistentDEACountRNASeq = currentResultSet.getInt(column.getKey());
+                        inconsistentDEACountRNASeq = this.getCurrentResultSet().getInt(
+                                column.getKey());
                     } else {
                         throw log.throwing(new UnrecognizedColumnException(column.getValue()));
                     }

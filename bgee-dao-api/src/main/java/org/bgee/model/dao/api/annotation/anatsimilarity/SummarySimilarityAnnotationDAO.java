@@ -1,6 +1,7 @@
 package org.bgee.model.dao.api.annotation.anatsimilarity;
 
 import java.util.Collection;
+import java.util.Set;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
@@ -40,22 +41,63 @@ public interface SummarySimilarityAnnotationDAO extends
      * Retrieves all summary similarity annotations from data source.
      * <p>
      * The summary similarity annotations are retrieved and returned as a 
-     * {@code SummarySimilarityAnnotationTOResultSet}. It is the responsibility of the caller to 
-     * close this {@code DAOResultSet} once results are retrieved.
+     * {@code SummarySimilarityAnnotationTOResultSet}. It is the responsibility of the caller 
+     * to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @return              An {@code SummarySimilarityAnnotationTOResultSet} containing all summary 
-     *                      similarity annotations from data source.
+     * @return              A {@code SummarySimilarityAnnotationTOResultSet} containing 
+     *                      all summary similarity annotations from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
     public SummarySimilarityAnnotationTOResultSet getAllSummarySimilarityAnnotations() 
             throws DAOException;
+    
+    /**
+     * Retrieve similarity annotations and anatomical entities they are associated to.
+     * The annotations will be valid at the level of {@code ancestralTaxonId}, or any of its 
+     * ancestral taxa. The anatomical entities retrieved will be defined as existing 
+     * in all the provided species.
+     * <p>
+     * The point of retrieving these mappings is that an annotation can associate several 
+     * anatomical entities (for instance, an annotation captures the homology between 
+     * 'lung' and 'swimm bladder'); it is not simply a matter of retrieving organs 
+     * similar in different species, but of retrieving mappings between similar organs 
+     * in different species. Anatomical entities with a similarity mapping will have 
+     * the same {@code summarySimilarityAnnotationId} (see 
+     * {@link SimAnnotToAnatEntityTO#getSummarySimilarityAnnotationId()}).
+     * <p>
+     * However, note that in vast majority of cases, similarity annotations target 
+     * only a single anatomical entity (which means that this anatomical entity is similar 
+     * in the requested taxon). 
+     * <p>
+     * The point of providing a list of species IDs to filter the anatomical entities 
+     * is to accommodate for incorrect taxon constraints: for instance, a structure 
+     * is considered as homologous at the Euarchontoglires level (includes human, mouse, rat), 
+     * but an incorrect taxon constraint consider that the structure is absent in rat; 
+     * if we were providing only the ancestral taxon ID, this structure would be filtered out; 
+     * by providing a list of species, at least we would recover the structure if we were 
+     * comparing only human and mouse.
+     * 
+     * @param ancestralTaxonId  A {@code String} that is the NCBI ID of the taxon 
+     *                          for which the similarity annotations should be valid, 
+     *                          including all its ancestral taxa.
+     * @param speciesIds        A {@code Set} of {@code String}s that are the IDs 
+     *                          of the species for which the anatomical entities retrieved 
+     *                          should be valid.
+     * @return                  A {@code SimAnnotToAnatEntityTOResultSet} allowing 
+     *                          to retrieve the requested {@code SimAnnotToAnatEntityTO}s.
+     * @throws DAOException     If an error occurred when accessing the data source. 
+     */
+    //Note that if someday we use other similarity concepts than 'historical homology' 
+    //(HOM:0000007), then this method will need to accept the HOMId as argument.
+    public SimAnnotToAnatEntityTOResultSet getSimAnnotToAnatEntity(String ancestralTaxonId, 
+            Set<String> speciesIds) throws DAOException;
 
     /**
      * Inserts the provided summary similarity annotations into the data source, 
      * represented as a {@code Collection} of {@code SummarySimilarityAnnotationTO}s. 
      * 
-     * @param summaryTOs    A {@code Collection} of {@code SummarySimilarityAnnotationTO}s to be 
-     *                      inserted into the data source.
+     * @param summaryTOs    A {@code Collection} of {@code SummarySimilarityAnnotationTO}s 
+     *                      to be inserted into the data source.
      * @return              An {@code int} that is the number of inserted summary similarity 
      *                      annotations.
      * @throws IllegalArgumentException If {@code summarySimilarityAnnotationTOs} is empty or null. 
@@ -71,23 +113,23 @@ public interface SummarySimilarityAnnotationDAO extends
     /**
      * Inserts the provided correspondence between a summary similarity annotation and 
      * an anatomical entity into the Bgee database, represented as a {@code Collection}
-     * of {@code SimilarityAnnotationToAnatEntityIdTO}s.
+     * of {@code SimAnnotToAnatEntityTO}s.
      * 
      * @param simAnnotationToAnatEntityIdTO A {@code Collection} of 
-     *                                      {@code SimilarityAnnotationToAnatEntityIdTO}s to be 
+     *                                      {@code SimAnnotToAnatEntityTO}s to be 
      *                                      inserted into the data source.
      * @return                              An {@code int} that is the number of inserted 
-     *                                      {@code SimilarityAnnotationToAnatEntityIdTO}s.
+     *                                      {@code SimAnnotToAnatEntityTO}s.
      * @throws IllegalArgumentException     If {@code summarySimilarityAnnotationTOs} is empty or 
      *                                      {@code null}. 
      * @throws DAOException                 If a {@code SQLException} occurred while trying to 
-     *                                      insert {@code SimilarityAnnotationToAnatEntityIdTO}s.
+     *                                      insert {@code SimAnnotToAnatEntityTO}s.
      *                                      The {@code SQLException} will be wrapped into a 
      *                                      {@code DAOException} ({@code DAO}s do not expose 
      *                                      these kind of implementation details).
      */
     public int insertSimilarityAnnotationsToAnatEntityIds(
-            Collection<SimilarityAnnotationToAnatEntityIdTO> simAnnotationToAnatEntityIdTO) 
+            Collection<SimAnnotToAnatEntityTO> simAnnotationToAnatEntityIdTO) 
             throws DAOException, IllegalArgumentException;
 
     /**
@@ -201,19 +243,19 @@ public interface SummarySimilarityAnnotationDAO extends
     }
     
     /**
-     * {@code DAOResultSet} specifics to {@code SimilarityAnnotationToAnatEntityIdTO}s.
+     * {@code DAOResultSet} specifics to {@code SimAnnotToAnatEntityTO}s.
      * 
      * @author Valentine Rech de Laval
      * @version Bgee 13
      * @since Bgee 13
      */
-    public interface SimilarityAnnotationToAnatEntityIdTOResultSet 
-                    extends DAOResultSet<SimilarityAnnotationToAnatEntityIdTO> {
+    public interface SimAnnotToAnatEntityTOResultSet 
+                    extends DAOResultSet<SimAnnotToAnatEntityTO> {
     }
 
     /**
      * A {@code TransferObject} representing relation between a summary similarity annotation
-     * and an anatomical entity, as stored in the Bgee database. 
+     * and an anatomical entity. 
      * <p>
      * This class defines a summary similarity annotation ID (see 
      * {@link #getSummarySimilarityAnnotationId()} and an anatomical entity ID 
@@ -226,7 +268,7 @@ public interface SummarySimilarityAnnotationDAO extends
      * @version Bgee 13
      * @since Bgee 13
      */
-    public final class SimilarityAnnotationToAnatEntityIdTO extends TransferObject {
+    public final class SimAnnotToAnatEntityTO extends TransferObject {
 
         private static final long serialVersionUID = -1905883316221485577L;
 
@@ -250,7 +292,7 @@ public interface SummarySimilarityAnnotationDAO extends
          * @param anatEntityId                  A {@code String} that is the ID of the  
          *                                      anatomical entity.
          */
-        public SimilarityAnnotationToAnatEntityIdTO(
+        public SimAnnotToAnatEntityTO(
                 String summarySimilarityAnnotationId, String anatEntityId) {
             super();
             this.summarySimilarityAnnotationId = summarySimilarityAnnotationId;
@@ -276,5 +318,6 @@ public interface SummarySimilarityAnnotationDAO extends
             return "Summary similarity annotation ID: " + summarySimilarityAnnotationId + 
                     " - Anat. entity ID: " + anatEntityId;
         }
+        //TODO: hashCode - equals
     }
 }

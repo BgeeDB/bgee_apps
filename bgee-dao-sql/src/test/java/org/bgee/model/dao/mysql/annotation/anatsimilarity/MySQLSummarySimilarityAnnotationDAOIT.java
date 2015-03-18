@@ -10,7 +10,7 @@ import java.util.HashSet;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.dao.api.annotation.anatsimilarity.SummarySimilarityAnnotationDAO.SimilarityAnnotationToAnatEntityIdTO;
+import org.bgee.model.dao.api.annotation.anatsimilarity.SummarySimilarityAnnotationDAO.SimAnnotToAnatEntityTO;
 import org.bgee.model.dao.api.annotation.anatsimilarity.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO;
 import org.bgee.model.dao.mysql.MySQLITAncestor;
 import org.bgee.model.dao.mysql.annotation.anatsimilarity.MySQLSummarySimilarityAnnotationDAO;
@@ -125,12 +125,12 @@ public class MySQLSummarySimilarityAnnotationDAOIT extends MySQLITAncestor {
     public void shouldInsertSimilarityAnnotationsToAnatEntityIds() throws SQLException {
         this.useEmptyDB();
 
-        // Create a Collection of SimilarityAnnotationToAnatEntityIdTO to be inserted,
+        // Create a Collection of SimAnnotToAnatEntityTO to be inserted,
         // no attribute could be null according database schema.
-        Collection<SimilarityAnnotationToAnatEntityIdTO> insertedTOs = Arrays.asList(
-                new SimilarityAnnotationToAnatEntityIdTO("1","10"),
-                new SimilarityAnnotationToAnatEntityIdTO("1","14"),
-                new SimilarityAnnotationToAnatEntityIdTO("2","14"));
+        Collection<SimAnnotToAnatEntityTO> insertedTOs = Arrays.asList(
+                new SimAnnotToAnatEntityTO("1","10"),
+                new SimAnnotToAnatEntityTO("1","14"),
+                new SimAnnotToAnatEntityTO("2","14"));
 
         try {
             MySQLSummarySimilarityAnnotationDAO dao = 
@@ -146,25 +146,25 @@ public class MySQLSummarySimilarityAnnotationDAOIT extends MySQLITAncestor {
                 
                 stmt.setInt(1, 1);
                 stmt.setString(2,"10");
-                assertTrue("SimilarityAnnotationToAnatEntityIdTO incorrectly inserted", 
+                assertTrue("SimAnnotToAnatEntityTO incorrectly inserted", 
                         stmt.getRealPreparedStatement().executeQuery().next());
                 
                 stmt.setInt(1, 1);
                 stmt.setString(2, "14");
-                assertTrue("SimilarityAnnotationToAnatEntityIdTO incorrectly inserted", 
+                assertTrue("SimAnnotToAnatEntityTO incorrectly inserted", 
                         stmt.getRealPreparedStatement().executeQuery().next());
 
                 stmt.setInt(1, 2);
                 stmt.setString(2, "14");
-                assertTrue("SimilarityAnnotationToAnatEntityIdTO incorrectly inserted", 
+                assertTrue("SimAnnotToAnatEntityTO incorrectly inserted", 
                         stmt.getRealPreparedStatement().executeQuery().next());
             }
             
             // We should throw an IllegalArgumentException when 
-            // no SimilarityAnnotationToAnatEntityIdTO provided
+            // no SimAnnotToAnatEntityTO provided
             try {
                 dao.insertSimilarityAnnotationsToAnatEntityIds(
-                        new HashSet<SimilarityAnnotationToAnatEntityIdTO>());
+                        new HashSet<SimAnnotToAnatEntityTO>());
                 // Test failed
                 throw new AssertionError("insertSimilarityAnnotationsToAnatEntityIds did not " +
                         "throw an IllegalArgumentException as expected");

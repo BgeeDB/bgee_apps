@@ -45,29 +45,6 @@ public class MySQLSummarySimilarityAnnotationDAO
         super(manager);
     }
 
-    @Override
-    public SummarySimilarityAnnotationTOResultSet getAllSummarySimilarityAnnotations()
-            throws DAOException {
-        log.entry();
-        
-        String tableName = "summarySimilarityAnnotation";
-        
-        //Construct sql query
-        String sql = this.generateSelectClause(this.getAttributes(), tableName);
-
-        sql += " FROM " + tableName;
-
-        //we don't use a try-with-resource, because we return a pointer to the results, 
-        //not the actual results, so we should not close this BgeePreparedStatement.
-        BgeePreparedStatement stmt = null;
-        try {
-            stmt = this.getManager().getConnection().prepareStatement(sql.toString());
-            return log.exit(new MySQLSummarySimilarityAnnotationTOResultSet(stmt));
-        } catch (SQLException e) {
-            throw log.throwing(new DAOException(e));
-        }
-    }
-
     /**
      * Generates the SELECT clause of a MySQL query used to retrieve 
      * {@code SummarySimilarityAnnotationTO}s.
@@ -83,7 +60,7 @@ public class MySQLSummarySimilarityAnnotationDAO
     private String generateSelectClause(Set<SummarySimilarityAnnotationDAO.Attribute> attributes,
             String tableName) throws IllegalArgumentException {
         log.entry(attributes, tableName);
-
+    
         if (attributes == null || attributes.isEmpty()) {
             return log.exit("SELECT * ");
         }
@@ -116,6 +93,37 @@ public class MySQLSummarySimilarityAnnotationDAO
                 }
             }
         return log.exit(sql);
+    }
+
+    @Override
+    public SummarySimilarityAnnotationTOResultSet getAllSummarySimilarityAnnotations()
+            throws DAOException {
+        log.entry();
+        
+        String tableName = "summarySimilarityAnnotation";
+        
+        //Construct sql query
+        String sql = this.generateSelectClause(this.getAttributes(), tableName);
+
+        sql += " FROM " + tableName;
+
+        //we don't use a try-with-resource, because we return a pointer to the results, 
+        //not the actual results, so we should not close this BgeePreparedStatement.
+        BgeePreparedStatement stmt = null;
+        try {
+            stmt = this.getManager().getConnection().prepareStatement(sql.toString());
+            return log.exit(new MySQLSummarySimilarityAnnotationTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+
+    @Override
+    public SimAnnotToAnatEntityTOResultSet getSimAnnotToAnatEntity(String ancestralTaxonId)
+            throws DAOException {
+        log.entry(ancestralTaxonId);
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override
@@ -163,7 +171,7 @@ public class MySQLSummarySimilarityAnnotationDAO
     
     @Override
     public int insertSimilarityAnnotationsToAnatEntityIds(
-            Collection<SimilarityAnnotationToAnatEntityIdTO> simAnnotToAnatEntityTOs) 
+            Collection<SimAnnotToAnatEntityTO> simAnnotToAnatEntityTOs) 
                     throws DAOException, IllegalArgumentException {
         log.entry(simAnnotToAnatEntityTOs);
         
@@ -184,7 +192,7 @@ public class MySQLSummarySimilarityAnnotationDAO
         // for instance 100 relations at a time.
         try (BgeePreparedStatement stmt = 
                 this.getManager().getConnection().prepareStatement(sqlExpression)) {
-            for (SimilarityAnnotationToAnatEntityIdTO simAnnotToAnatEntityTO: simAnnotToAnatEntityTOs) {
+            for (SimAnnotToAnatEntityTO simAnnotToAnatEntityTO: simAnnotToAnatEntityTOs) {
                 stmt.setInt(1, 
                         Integer.parseInt(simAnnotToAnatEntityTO.getSummarySimilarityAnnotationId()));
                 stmt.setString(2, simAnnotToAnatEntityTO.getAnatEntityId());
@@ -273,6 +281,9 @@ public class MySQLSummarySimilarityAnnotationDAO
 
                     } else if (column.getValue().equals("CIOId")) {
                         cioId = currentResultSet.getString(column.getKey());
+                    } else {
+                        throw log.throwing(new IllegalStateException("Unrecognized column: " 
+                                + column.getValue()));
                     }
 
                 } catch (SQLException e) {

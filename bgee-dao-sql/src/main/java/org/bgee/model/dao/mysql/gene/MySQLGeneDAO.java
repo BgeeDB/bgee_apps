@@ -18,6 +18,7 @@ import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
+import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 
 /**
  * A {@code GeneDAO} for MySQL. 
@@ -188,7 +189,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
             attributesToUse = EnumSet.complementOf(EnumSet.of(
                     GeneDAO.Attribute.ANCESTRAL_OMA_NODE_ID, 
                     GeneDAO.Attribute.ANCESTRAL_OMA_TAXON_ID));
-            //return log.exit("SELECT * ");
+            //return log.exit("SELECT " + geneTableName + ".* ");
         }
 
         String sql = "";
@@ -307,6 +308,8 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 
                     } else if (column.getValue().equals("ancestralOMATaxonId")) {
                         ancestralOMATaxonId = currentResultSet.getString(column.getKey());
+                    } else {
+                        throw log.throwing(new UnrecognizedColumnException(column.getValue()));
                     }
                 } catch (SQLException e) {
                     throw log.throwing(new DAOException(e));

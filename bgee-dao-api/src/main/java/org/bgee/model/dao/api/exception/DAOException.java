@@ -27,5 +27,15 @@ public class DAOException extends RuntimeException {
 	public DAOException(Throwable cause) {
 		super(cause);
 	}
+	
+	/**
+     * Constructs {@code DAOException} with the specified detail message.
+     * 
+     * @param message   the detail message (which is saved for later retrieval by the 
+     *                  {@code Throwable.getMessage()} method).
+     */
+    public DAOException(String message) {
+        super(message);
+    }
 
 }

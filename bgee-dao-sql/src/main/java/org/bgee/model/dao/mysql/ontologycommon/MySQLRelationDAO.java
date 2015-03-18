@@ -16,6 +16,7 @@ import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
+import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
@@ -156,7 +157,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         String sql = null;
         Collection<RelationDAO.Attribute> attributes = this.getAttributes();
         if (attributes == null || attributes.isEmpty()) {
-            sql = "SELECT *";
+            sql = "SELECT tempTable.*";
         } else {
             for (RelationDAO.Attribute attribute: attributes) {
                 if (sql == null) {
@@ -426,6 +427,8 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
                     } else if (column.getValue().equals("relationType")) {
                         relationType = RelationType.convertToRelationType(
                                 currentResultSet.getString(column.getKey()));
+                    } else {
+                        throw log.throwing(new UnrecognizedColumnException(column.getValue()));
                     }
                 } catch (SQLException e) {
                     throw log.throwing(new DAOException(e));

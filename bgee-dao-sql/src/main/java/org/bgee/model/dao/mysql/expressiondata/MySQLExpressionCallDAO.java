@@ -17,6 +17,7 @@ import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
+import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO.OriginOfLine;
@@ -789,7 +790,9 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
                     } else if (column.getValue().equals("expressionId")) {
                         expressionId = currentResultSet.getString(column.getKey());
 
-                    } 
+                    }  else {
+                        throw log.throwing(new UnrecognizedColumnException(column.getValue()));
+                    }
                 } catch (SQLException e) {
                     throw log.throwing(new DAOException(e));
                 }

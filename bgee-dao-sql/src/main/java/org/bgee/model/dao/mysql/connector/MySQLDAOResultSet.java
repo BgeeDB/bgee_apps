@@ -412,8 +412,13 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
             
         } catch (SQLException e) {
             this.close();
-            log.catching(e);
             throw log.throwing(new DAOException(e));
+        } catch (DAOException e) {
+            this.close();
+            throw log.throwing(e);
+        } catch (QueryInterruptedException e) {
+            this.close();
+            throw log.throwing(e);
         }
     }
     
@@ -429,7 +434,12 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
                 		"after all results have been iterated"));
             }
             
-            this.lastTOGenerated = this.getNewTO();
+            try {
+                this.lastTOGenerated = this.getNewTO();
+            } catch (DAOException e) {
+                this.close();
+                throw log.throwing(e);
+            }
         }
         return log.exit(this.lastTOGenerated);
     }
@@ -445,9 +455,9 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
      * 
      * @return  The {@code TransferObject} {@code T} corresponding to the result 
      *          at the current cursor position of this {@code DAOResultSet}.
-     * @throws DAOException If an error occurs while retrieving the result.
+     * @throws DAOException             If an error occurs while retrieving the result.
      */
-    protected abstract T getNewTO();
+    protected abstract T getNewTO() throws DAOException;
     
     @Override
     public List<T> getAllTOs() throws DAOException {

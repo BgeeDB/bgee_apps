@@ -15,6 +15,7 @@ import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
+import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 
 
 /**
@@ -98,7 +99,7 @@ public class MySQLRawSimilarityAnnotationDAO extends MySQLDAO<RawSimilarityAnnot
         log.entry(attributes, tableName);
 
         if (attributes == null || attributes.isEmpty()) {
-            return log.exit("SELECT * ");
+            return log.exit("SELECT " + tableName + ".* ");
         }
     
         String sql = ""; 
@@ -289,6 +290,8 @@ public class MySQLRawSimilarityAnnotationDAO extends MySQLDAO<RawSimilarityAnnot
 
                     } else if (column.getValue().equals("annotationDate")) {
                         annotationDate = currentResultSet.getDate(column.getKey());
+                    } else {
+                        throw log.throwing(new UnrecognizedColumnException(column.getValue()));
                     }
 
                 } catch (SQLException e) {

@@ -16,6 +16,7 @@ import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
+import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 
 /**
  * A {@code TaxonDAO} for MySQL. 
@@ -263,8 +264,7 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
                     } else if (column.getValue().equals("bgeeSpeciesLCA")) {
                         bgeeSpeciesLCA = currentResultSet.getBoolean(column.getKey());
                     } else {
-                        throw log.throwing(new IllegalStateException("Unrecognized column: " 
-                                + column.getValue()));
+                        throw log.throwing(new UnrecognizedColumnException(column.getValue()));
                     }
                 } catch (SQLException e) {
                     throw log.throwing(new DAOException(e));

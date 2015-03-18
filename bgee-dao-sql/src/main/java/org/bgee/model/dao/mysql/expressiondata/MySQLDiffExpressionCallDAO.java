@@ -20,6 +20,7 @@ import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
+import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 
 
 /**
@@ -234,7 +235,7 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
         log.entry(attributes, diffExprTableName);
         
         if (attributes == null || attributes.isEmpty()) {
-            return log.exit("SELECT * ");
+            return log.exit("SELECT " + diffExprTableName + ".* ");
         }
         
         String sql = "";
@@ -411,6 +412,8 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
                         
                     } else if (column.getValue().equals("inconsistentDEACountRNASeq")) {
                         inconsistentDEACountRNASeq = currentResultSet.getInt(column.getKey());
+                    } else {
+                        throw log.throwing(new UnrecognizedColumnException(column.getValue()));
                     }
 
                 } catch (SQLException e) {

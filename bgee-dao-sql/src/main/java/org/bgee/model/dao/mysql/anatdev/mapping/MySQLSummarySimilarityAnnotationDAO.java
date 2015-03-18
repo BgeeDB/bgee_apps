@@ -14,6 +14,7 @@ import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
+import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 
 /**
  * A {@code SummarySimilarityAnnotationDAO} for MySQL.
@@ -62,7 +63,7 @@ public class MySQLSummarySimilarityAnnotationDAO
         log.entry(attributes, tableName);
     
         if (attributes == null || attributes.isEmpty()) {
-            return log.exit("SELECT * ");
+            return log.exit("SELECT " + tableName + ".* ");
         }
     
         String sql = ""; 
@@ -285,8 +286,7 @@ public class MySQLSummarySimilarityAnnotationDAO
                     } else if (column.getValue().equals("CIOId")) {
                         cioId = currentResultSet.getString(column.getKey());
                     } else {
-                        throw log.throwing(new IllegalStateException("Unrecognized column: " 
-                                + column.getValue()));
+                        throw log.throwing(new UnrecognizedColumnException(column.getValue()));
                     }
 
                 } catch (SQLException e) {

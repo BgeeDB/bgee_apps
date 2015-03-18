@@ -14,6 +14,7 @@ import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
+import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 
 
 /**
@@ -204,6 +205,8 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
                     } else if (column.getValue().equals("speciesId")) {
                         speciesId = currentResultSet.getString(column.getKey());
 
+                    } else {
+                        throw log.throwing(new UnrecognizedColumnException(column.getValue()));
                     }
                 } catch (SQLException e) {
                     throw log.throwing(new DAOException(e));

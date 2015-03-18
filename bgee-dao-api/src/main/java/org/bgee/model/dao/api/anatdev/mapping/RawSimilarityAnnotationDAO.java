@@ -1,4 +1,4 @@
-package org.bgee.model.dao.api.annotation.anatsimilarity;
+package org.bgee.model.dao.api.anatdev.mapping;
 
 import java.sql.Date;
 import java.util.Collection;

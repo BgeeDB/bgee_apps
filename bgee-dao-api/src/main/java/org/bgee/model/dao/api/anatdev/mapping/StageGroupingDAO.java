@@ -1,4 +1,4 @@
-package org.bgee.model.dao.api.annotation.stagemapping;
+package org.bgee.model.dao.api.anatdev.mapping;
 
 import java.util.Set;
 
@@ -10,7 +10,7 @@ import org.bgee.model.dao.api.exception.DAOException;
 /**
  * A {@code DAO} allowing to retrieve mappings between stages for multi-species comparisons. 
  * This {@code DAO} is created to mirror 
- * {@link org.bgee.model.dao.api.annotation.anatsimilarity.SummarySimilarityAnnotationDAO 
+ * {@link org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO 
  * SummarySimilarityAnnotationDAO}, which allows to retrieve similarity relations 
  * between anatomical entities. 
  * <p>

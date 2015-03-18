@@ -1,4 +1,4 @@
-package org.bgee.model.dao.mysql.annotation.anatsimilarity;
+package org.bgee.model.dao.mysql.anatdev.mapping;
 
 import java.sql.Date;
 import java.sql.ResultSet;
@@ -9,7 +9,7 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.dao.api.annotation.anatsimilarity.RawSimilarityAnnotationDAO;
+import org.bgee.model.dao.api.anatdev.mapping.RawSimilarityAnnotationDAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;

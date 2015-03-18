@@ -1,4 +1,4 @@
-package org.bgee.model.dao.mysql.annotation.anatsimilarity;
+package org.bgee.model.dao.mysql.anatdev.mapping;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -11,9 +11,9 @@ import java.util.HashSet;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.dao.api.annotation.anatsimilarity.RawSimilarityAnnotationDAO.RawSimilarityAnnotationTO;
+import org.bgee.model.dao.api.anatdev.mapping.RawSimilarityAnnotationDAO.RawSimilarityAnnotationTO;
 import org.bgee.model.dao.mysql.MySQLITAncestor;
-import org.bgee.model.dao.mysql.annotation.anatsimilarity.MySQLRawSimilarityAnnotationDAO;
+import org.bgee.model.dao.mysql.anatdev.mapping.MySQLRawSimilarityAnnotationDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.junit.Test;
 

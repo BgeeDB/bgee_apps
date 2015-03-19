@@ -50,14 +50,14 @@
                 <gene id="183042" protId="ENSP00000468859" transcriptId="ENST00000599533" geneId="ENSG00000269831"/>
                 <gene id="202166" protId="ENSP00000040141" transcriptId="ENST00000043243" geneId="ENSG00000027681"/>
                 <gene id="205245" protId="ENSP00000006458" transcriptId="ENST00000006593" geneId="ENSG00000005242"/>
-                <gene id="217129" protId="ENSP00000040257" transcriptId="ENST00000043361" geneId="ENSG00000029527"/>
+                <gene id="217129" protId="ENSP00000040257" transcriptId="ENST00000043361" geneId="29527"/>
             </genes>
         </database>
     </species>
     <species name="PANTR" NCBITaxId="9598">
         <database name="PANTR" version="Ensembl 66; CHIMP2.1.4; 15-FEB-2012">
             <genes>
-                <gene id="269947" protId="ENSPTRP00000017121" transcriptId="ENSPTRT00000018483" geneId="ENSPTRG00000010079"/>
+                <gene id="269947" protId="ENSPTRP00000017121" transcriptId="ENSPTRT00000018483" geneId="10079"/>
             </genes>
         </database>
     </species>

@@ -12,12 +12,12 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.ComparisonFactor;
 import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.pipeline.expression.CallUser;
-import org.bgee.pipeline.expression.downloadfile.GenerateExprFile.ExprFileType;
 
 
 /**
@@ -73,10 +73,30 @@ public abstract class GenerateDownloadFile extends CallUser {
      */
     public final static String AFFYMETRIX_DATA_COLUMN_NAME = "Affymetrix data";
     /**
+     * A {@code String} that is the name of the column containing call quality found 
+     * with Affymetrix experiment, in the download file.
+     */
+    public final static String AFFYMETRIX_CALL_QUALITY_COLUMN_NAME = "Affymetrix call quality";
+    /**
      * A {@code String} that is the name of the column containing expression, no-expression or
      * differential expression found with RNA-Seq experiment, in the download file.
      */
     public final static String RNASEQ_DATA_COLUMN_NAME = "RNA-Seq data";
+    /**
+     * A {@code String} that is the name of the column containing call quality found 
+     * with RNA-Seq experiment, in the download file.
+     */
+    public final static String RNASEQ_CALL_QUALITY_COLUMN_NAME = "RNA-Seq call quality";
+    /**
+     * A {@code String} that is the name of the column containing the merged quality of the call,
+     * in the download file.
+     */
+    public final static String QUALITY_COLUMN_NAME = "Call quality";
+    /**
+     * A {@code String} that is the value of the cell containing not applicable,
+     * in the download file.
+     */
+    public final static String NA_VALUE = "N/A";
     /**
      * A {@code String} that is the extension of download files to be generated.
      */
@@ -100,6 +120,22 @@ public abstract class GenerateDownloadFile extends CallUser {
          */
         public boolean isSimpleFileType();
     }
+    
+    /**
+     * An {@code interface} that must be implemented by {@code Enum}s representing a file type
+     * containing differential expression calls.
+     * 
+     * @author Valentine Rech de Laval
+     * @version Bgee 13
+     * @since Bgee 13
+     */
+    public interface DiffExprFileType extends FileType {
+        /**
+         * @return   A {@code ComparisonFactor} defining what is the experimental factor 
+         *           compared that generated the differential expression calls.
+         */
+        public ComparisonFactor getComparisonFactor();
+    }
 
     /**
      * Convert {@code fileTypeNames} into a {@code Set} of {@code FileType}s of type 
@@ -116,7 +152,7 @@ public abstract class GenerateDownloadFile extends CallUser {
      * @throws IllegalArgumentException If a {@code String} in {@code fileTypeNames} could not 
      *                                  be converted into a valid {@code FileType}.
      */
-    protected static <T extends Enum<T> & FileType> Set<T> convertToFyleTypes(
+    protected static <T extends Enum<T> & FileType> Set<T> convertToFileTypes(
             Collection<String> fileTypeNames, Class<T> fileType) throws IllegalArgumentException {
         log.entry(fileTypeNames, fileType);
         
@@ -172,7 +208,7 @@ public abstract class GenerateDownloadFile extends CallUser {
      * @param directory     A {@code String} that is the directory where to store files.
      * @throws IllegalArgumentException If {@code directory} is {@code null} or blank.
      */
-    public GenerateDownloadFile(List<String> speciesIds, Set<? extends ExprFileType> fileTypes, 
+    public GenerateDownloadFile(List<String> speciesIds, Set<? extends FileType> fileTypes, 
             String directory) throws IllegalArgumentException {
         this(null, speciesIds, fileTypes, directory);
     }
@@ -191,7 +227,7 @@ public abstract class GenerateDownloadFile extends CallUser {
      * @throws IllegalArgumentException If {@code directory} is {@code null} or blank.
      */
     public GenerateDownloadFile(MySQLDAOManager manager, List<String> speciesIds, 
-            Set<? extends FileType> fileTypes, String directory) {
+            Set<? extends FileType> fileTypes, String directory) throws IllegalArgumentException {
         super(manager);
         if (StringUtils.isBlank(directory)) {
             throw log.throwing(new IllegalArgumentException("A directory must be provided"));

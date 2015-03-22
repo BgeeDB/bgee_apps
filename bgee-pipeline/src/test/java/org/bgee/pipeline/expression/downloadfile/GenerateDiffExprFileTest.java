@@ -11,6 +11,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -37,12 +38,11 @@ import org.bgee.model.dao.mysql.expressiondata.MySQLDiffExpressionCallDAO.MySQLD
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO.MySQLSpeciesTOResultSet;
 import org.bgee.pipeline.TestAncestor;
 import org.bgee.pipeline.Utils;
-import org.bgee.pipeline.expression.downloadfile.GenerateDiffExprFile.DiffExprFileType;
 import org.bgee.pipeline.expression.downloadfile.GenerateDiffExprFile.DiffExpressionData;
-import org.bgee.pipeline.expression.downloadfile.GenerateExprFile.ExprFileType;
+import org.bgee.pipeline.expression.downloadfile.GenerateDiffExprFile.SingleSpDiffExprFileType;
+import org.bgee.pipeline.expression.downloadfile.GenerateExprFile.SingleSpExprFileType;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.supercsv.cellprocessor.constraint.DMinMax;
 import org.supercsv.cellprocessor.constraint.IsElementOf;
@@ -79,58 +79,53 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
         return log;
     }
 
-    @Rule
-    //TODO: why not using the thrown attribute of the super class?
-    //- anyway, is the use of ExpectedException still needed?
-    public ExpectedException thrown = ExpectedException.none();
-
-    
     /**
-     * Test method {@link GenerateDownloadFile#convertToFyleTypes(Collection, Class)} 
+     * Test method {@link GenerateDownloadFile#convertToFileTypes(Collection, Class)} 
      * used with a {@code DiffExprFileType}.
      */
     @Test
     public void shouldConvertToFyleTypes() {
         
         //All diff expression file types
-        Set<DiffExprFileType> diffExprExpectedFileTypes = new HashSet<DiffExprFileType>(
-                EnumSet.of(DiffExprFileType.DIFF_EXPR_ANATOMY_COMPLETE, 
-                        DiffExprFileType.DIFF_EXPR_ANATOMY_SIMPLE, 
-                        DiffExprFileType.DIFF_EXPR_DEVELOPMENT_COMPLETE, 
-                        DiffExprFileType.DIFF_EXPR_DEVELOPMENT_SIMPLE));
-        assertEquals("Incorrect DiffExprFileTypes retrieved", diffExprExpectedFileTypes, 
-                GenerateDownloadFile.convertToFyleTypes(Arrays.asList(
-                        DiffExprFileType.DIFF_EXPR_ANATOMY_COMPLETE.getStringRepresentation(), 
-                        DiffExprFileType.DIFF_EXPR_ANATOMY_SIMPLE.getStringRepresentation(), 
-                        DiffExprFileType.DIFF_EXPR_DEVELOPMENT_COMPLETE.getStringRepresentation(), 
-                        DiffExprFileType.DIFF_EXPR_DEVELOPMENT_SIMPLE.getStringRepresentation()), 
-                        DiffExprFileType.class));
-        assertEquals("Incorrect DiffExprFileTypes retrieved", diffExprExpectedFileTypes, 
-                GenerateDownloadFile.convertToFyleTypes(Arrays.asList(
-                        DiffExprFileType.DIFF_EXPR_ANATOMY_COMPLETE.name(), 
-                        DiffExprFileType.DIFF_EXPR_ANATOMY_SIMPLE.name(), 
-                        DiffExprFileType.DIFF_EXPR_DEVELOPMENT_COMPLETE.name(), 
-                        DiffExprFileType.DIFF_EXPR_DEVELOPMENT_SIMPLE.name()), 
-                        DiffExprFileType.class));
+        Set<SingleSpDiffExprFileType> diffExprExpectedFileTypes = 
+            new HashSet<SingleSpDiffExprFileType>(
+                EnumSet.of(SingleSpDiffExprFileType.DIFF_EXPR_ANATOMY_COMPLETE, 
+                    SingleSpDiffExprFileType.DIFF_EXPR_ANATOMY_SIMPLE, 
+                    SingleSpDiffExprFileType.DIFF_EXPR_DEVELOPMENT_COMPLETE, 
+                    SingleSpDiffExprFileType.DIFF_EXPR_DEVELOPMENT_SIMPLE));
+        assertEquals("Incorrect SingleSpeciesDiffExprFileTypes retrieved", diffExprExpectedFileTypes, 
+                GenerateDownloadFile.convertToFileTypes(Arrays.asList(
+                    SingleSpDiffExprFileType.DIFF_EXPR_ANATOMY_COMPLETE.getStringRepresentation(), 
+                    SingleSpDiffExprFileType.DIFF_EXPR_ANATOMY_SIMPLE.getStringRepresentation(), 
+                    SingleSpDiffExprFileType.DIFF_EXPR_DEVELOPMENT_COMPLETE.getStringRepresentation(), 
+                    SingleSpDiffExprFileType.DIFF_EXPR_DEVELOPMENT_SIMPLE.getStringRepresentation()), 
+                    SingleSpDiffExprFileType.class));
+        assertEquals("Incorrect SingleSpeciesDiffExprFileTypes retrieved", diffExprExpectedFileTypes, 
+                GenerateDownloadFile.convertToFileTypes(Arrays.asList(
+                    SingleSpDiffExprFileType.DIFF_EXPR_ANATOMY_COMPLETE.name(), 
+                    SingleSpDiffExprFileType.DIFF_EXPR_ANATOMY_SIMPLE.name(), 
+                    SingleSpDiffExprFileType.DIFF_EXPR_DEVELOPMENT_COMPLETE.name(), 
+                    SingleSpDiffExprFileType.DIFF_EXPR_DEVELOPMENT_SIMPLE.name()), 
+                    SingleSpDiffExprFileType.class));
         
         //one diff expression file type
-        diffExprExpectedFileTypes = new HashSet<DiffExprFileType>(
-                EnumSet.of(DiffExprFileType.DIFF_EXPR_ANATOMY_SIMPLE));
-        assertEquals("Incorrect DiffExprFileTypes retrieved", diffExprExpectedFileTypes, 
-                GenerateDownloadFile.convertToFyleTypes(Arrays.asList(
-                        DiffExprFileType.DIFF_EXPR_ANATOMY_SIMPLE.getStringRepresentation()), 
-                        DiffExprFileType.class));
-        assertEquals("Incorrect DiffExprFileTypes retrieved", diffExprExpectedFileTypes, 
-                GenerateDownloadFile.convertToFyleTypes(Arrays.asList(
-                        DiffExprFileType.DIFF_EXPR_ANATOMY_SIMPLE.name()), 
-                        DiffExprFileType.class));
+        diffExprExpectedFileTypes = new HashSet<SingleSpDiffExprFileType>(
+                EnumSet.of(SingleSpDiffExprFileType.DIFF_EXPR_ANATOMY_SIMPLE));
+        assertEquals("Incorrect SingleSpeciesDiffExprFileTypes retrieved", diffExprExpectedFileTypes, 
+                GenerateDownloadFile.convertToFileTypes(Arrays.asList(
+                    SingleSpDiffExprFileType.DIFF_EXPR_ANATOMY_SIMPLE.getStringRepresentation()), 
+                    SingleSpDiffExprFileType.class));
+        assertEquals("Incorrect SingleSpeciesDiffExprFileTypes retrieved", diffExprExpectedFileTypes, 
+                GenerateDownloadFile.convertToFileTypes(Arrays.asList(
+                    SingleSpDiffExprFileType.DIFF_EXPR_ANATOMY_SIMPLE.name()), 
+                    SingleSpDiffExprFileType.class));
         
         //test exceptions
         try {
             //existing FileType name, but incorrect type provided
-            GenerateDownloadFile.convertToFyleTypes(Arrays.asList(
-                    DiffExprFileType.DIFF_EXPR_ANATOMY_SIMPLE.name()), 
-                    ExprFileType.class);
+            GenerateDownloadFile.convertToFileTypes(Arrays.asList(
+                SingleSpDiffExprFileType.DIFF_EXPR_ANATOMY_SIMPLE.name()), 
+                    SingleSpExprFileType.class);
             //test failed, exception not thrown as expected
             throw log.throwing(new AssertionError("IllegalArgumentException not thrown as expected"));
         } catch (IllegalArgumentException e) {
@@ -138,8 +133,8 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
         }
         try {
             //non-existing FileType name
-            GenerateDownloadFile.convertToFyleTypes(Arrays.asList("whatever"), 
-                    DiffExprFileType.class);
+            GenerateDownloadFile.convertToFileTypes(Arrays.asList("whatever"), 
+                SingleSpDiffExprFileType.class);
             //test failed, exception not thrown as expected
             throw log.throwing(new AssertionError("IllegalArgumentException not thrown as expected"));
         } catch (IllegalArgumentException e) {
@@ -243,7 +238,8 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
 
         ////////////////
         String directory = testFolder.newFolder("tmpFolder").getPath();
-        Set<DiffExprFileType> fileTypes = EnumSet.allOf(DiffExprFileType.class); 
+        Set<SingleSpDiffExprFileType> fileTypes = 
+            EnumSet.allOf(SingleSpDiffExprFileType.class); 
         
         GenerateDiffExprFile generate = new GenerateDiffExprFile(mockManager, 
                 Arrays.asList("11", "22"), fileTypes, directory);
@@ -251,36 +247,36 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
         
         String outputSimpleAnatFile11 = new File(
                 directory, "Genus11_species11_" + 
-                DiffExprFileType.DIFF_EXPR_ANATOMY_SIMPLE.getStringRepresentation() + 
+                    SingleSpDiffExprFileType.DIFF_EXPR_ANATOMY_SIMPLE.getStringRepresentation() + 
                 GenerateDownloadFile.EXTENSION).getAbsolutePath();
         String outputSimpleAnatFile22 = new File(
                 directory, "Genus22_species22_" + 
-                DiffExprFileType.DIFF_EXPR_ANATOMY_SIMPLE.getStringRepresentation() + 
+                    SingleSpDiffExprFileType.DIFF_EXPR_ANATOMY_SIMPLE.getStringRepresentation() + 
                 GenerateDownloadFile.EXTENSION).getAbsolutePath();
         String outputAdvancedAnatFile11 = new File(
                 directory, "Genus11_species11_" + 
-                DiffExprFileType.DIFF_EXPR_ANATOMY_COMPLETE.getStringRepresentation() + 
+                    SingleSpDiffExprFileType.DIFF_EXPR_ANATOMY_COMPLETE.getStringRepresentation() + 
                 GenerateDownloadFile.EXTENSION).getAbsolutePath();
         String outputAdvancedAnatFile22 = new File(
                 directory, "Genus22_species22_" + 
-                DiffExprFileType.DIFF_EXPR_ANATOMY_COMPLETE.getStringRepresentation() + 
+                    SingleSpDiffExprFileType.DIFF_EXPR_ANATOMY_COMPLETE.getStringRepresentation() + 
                 GenerateDownloadFile.EXTENSION).getAbsolutePath();
 
         String outputSimpleStageFile11 = new File(
                 directory, "Genus11_species11_" + 
-                DiffExprFileType.DIFF_EXPR_DEVELOPMENT_SIMPLE.getStringRepresentation() +
+                    SingleSpDiffExprFileType.DIFF_EXPR_DEVELOPMENT_SIMPLE.getStringRepresentation() +
                 GenerateDownloadFile.EXTENSION).getAbsolutePath();
         String outputSimpleStageFile22 = new File(
                 directory, "Genus22_species22_" + 
-                DiffExprFileType.DIFF_EXPR_DEVELOPMENT_SIMPLE.getStringRepresentation() +
+                    SingleSpDiffExprFileType.DIFF_EXPR_DEVELOPMENT_SIMPLE.getStringRepresentation() +
                 GenerateDownloadFile.EXTENSION).getAbsolutePath();
         String outputAdvancedStageFile11 = new File(
                 directory, "Genus11_species11_" + 
-                DiffExprFileType.DIFF_EXPR_DEVELOPMENT_COMPLETE.getStringRepresentation() +
+                    SingleSpDiffExprFileType.DIFF_EXPR_DEVELOPMENT_COMPLETE.getStringRepresentation() +
                 GenerateDownloadFile.EXTENSION).getAbsolutePath();
         String outputAdvancedStageFile22 = new File(
                 directory, "Genus22_species22_" + 
-                DiffExprFileType.DIFF_EXPR_DEVELOPMENT_COMPLETE.getStringRepresentation() + 
+                    SingleSpDiffExprFileType.DIFF_EXPR_DEVELOPMENT_COMPLETE.getStringRepresentation() + 
                 GenerateDownloadFile.EXTENSION).getAbsolutePath();
 
         assertDiffExpressionFile(outputSimpleAnatFile11, "11", true, ComparisonFactor.ANATOMY, 3);
@@ -372,15 +368,15 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
 
         ////////////////
         String directory = testFolder.newFolder("tmpFolder").getPath();
-        Set<DiffExprFileType> fileTypes = new HashSet<DiffExprFileType>
-                (Arrays.asList(DiffExprFileType.DIFF_EXPR_ANATOMY_SIMPLE)); 
+        Set<SingleSpDiffExprFileType> fileTypes = new HashSet<SingleSpDiffExprFileType>
+                (Arrays.asList(SingleSpDiffExprFileType.DIFF_EXPR_ANATOMY_SIMPLE)); 
         GenerateDiffExprFile generate = new GenerateDiffExprFile(mockManager, 
                 Arrays.asList("11"), fileTypes, directory);
         
         generate.generateDiffExprFiles();
         
-        String outputSimpleAnatFile11 = new File(
-                directory, "Genus11_species11_" + DiffExprFileType.DIFF_EXPR_ANATOMY_SIMPLE + 
+        String outputSimpleAnatFile11 = new File(directory, "Genus11_species11_" + 
+                SingleSpDiffExprFileType.DIFF_EXPR_ANATOMY_SIMPLE + 
                 GenerateDownloadFile.EXTENSION).getAbsolutePath();
 
         assertDiffExpressionFile(outputSimpleAnatFile11, "11", true, ComparisonFactor.ANATOMY, 3);
@@ -456,15 +452,15 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
 
         ////////////////
         String directory = testFolder.newFolder("tmpFolder").getPath();
-        Set<DiffExprFileType> fileTypes = new HashSet<DiffExprFileType>(
-                Arrays.asList(DiffExprFileType.DIFF_EXPR_ANATOMY_COMPLETE)); 
+        Set<SingleSpDiffExprFileType> fileTypes = new HashSet<SingleSpDiffExprFileType>(
+                Arrays.asList(SingleSpDiffExprFileType.DIFF_EXPR_ANATOMY_COMPLETE)); 
         GenerateDiffExprFile generate = new GenerateDiffExprFile(mockManager, 
                 null, fileTypes, directory);
         
         generate.generateDiffExprFiles();
         
         String outputAdvancedAnatFile22 = new File(
-                directory, "Genus22_species22_" + DiffExprFileType.DIFF_EXPR_ANATOMY_COMPLETE +
+                directory, "Genus22_species22_" + SingleSpDiffExprFileType.DIFF_EXPR_ANATOMY_COMPLETE +
                 GenerateDownloadFile.EXTENSION).getAbsolutePath();
 
         assertDiffExpressionFile(outputAdvancedAnatFile22, "22", false, ComparisonFactor.ANATOMY, 2);
@@ -545,37 +541,37 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
 
         ////////////////
         
-        thrown.expect(IllegalStateException.class);
-        
-        Set<DiffExprFileType> fileTypes = new HashSet<DiffExprFileType>(
-                Arrays.asList(DiffExprFileType.DIFF_EXPR_ANATOMY_COMPLETE)); 
+        try {
+            Set<SingleSpDiffExprFileType> fileTypes = new HashSet<SingleSpDiffExprFileType>(
+                Arrays.asList(SingleSpDiffExprFileType.DIFF_EXPR_ANATOMY_COMPLETE)); 
 
-        GenerateDiffExprFile generate = new GenerateDiffExprFile(mockManager, 
+            GenerateDiffExprFile generate = new GenerateDiffExprFile(mockManager, 
                 Arrays.asList("11"), fileTypes, testFolder.newFolder("tmpFolder").getPath());
-        generate.generateDiffExprFiles();
-
-        //FIXME: none of these tests are performed: an Exception has been thrown.
-        //thrown.expect will verify that the Exception is thrown, it will not catch it!
+            generate.generateDiffExprFiles();
+            // Test failed
+        } catch (IllegalStateException e) {
+            // Test passed
+        }
         // Verify that all ResultSet are closed.
         verify(mockSpeciesTORs).close();
         verify(mockGeneTORs).close();
         verify(mockAnatEntityTORs).close();
         verify(mockStageTORs).close();
         verify(mockAnatDiffExprRsSp11).close();
-                
+        
         //check that the connection was closed at each species iteration
         verify(mockManager.mockManager, times(1)).releaseResources();
-
+        
         // Verify that setAttributes are correctly called.
         verify(mockManager.mockAnatEntityDAO, times(1)).setAttributes(
-                AnatEntityDAO.Attribute.ID, AnatEntityDAO.Attribute.NAME);
+            AnatEntityDAO.Attribute.ID, AnatEntityDAO.Attribute.NAME);
         verify(mockManager.mockGeneDAO, times(1)).setAttributes(
-                GeneDAO.Attribute.ID, GeneDAO.Attribute.NAME);
+            GeneDAO.Attribute.ID, GeneDAO.Attribute.NAME);
         verify(mockManager.mockStageDAO, times(1)).setAttributes(
-                StageDAO.Attribute.ID, StageDAO.Attribute.NAME);
+            StageDAO.Attribute.ID, StageDAO.Attribute.NAME);
         verify(mockManager.mockDiffExpressionCallDAO, times(1)).setAttributes(
-                EnumSet.complementOf(EnumSet.of(DiffExpressionCallDAO.Attribute.ID)));
-
+            EnumSet.complementOf(EnumSet.of(DiffExpressionCallDAO.Attribute.ID)));
+        
         // Verify that all ResultSet are closed.
         verify(mockSpeciesTORs).close();
         verify(mockGeneTORs).close();
@@ -717,7 +713,7 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                     if (factor.equals(ComparisonFactor.ANATOMY)) {
                         if (geneId.equals("ID1") && stageId.equals("Stage_id1") && 
                                 anatEntityId.equals("Anat_id1")) {
-                            this.assertDiffExprCommonColumnRowEqual(geneId, "genN1", geneName,
+                            this.assertCommonColumnRowEqual(geneId, "genN1", geneName,
                                     "stageN1", stageName, "anatName1", anatEntityName, 
                                     DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), resume,
                                     DataState.HIGHQUALITY.getStringRepresentation(), quality);
@@ -736,7 +732,7 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                             }
                         } else if (geneId.equals("ID1") && stageId.equals("Stage_id2") && 
                                 anatEntityId.equals("Anat_id2")) {
-                            this.assertDiffExprCommonColumnRowEqual(geneId, "genN1", geneName,
+                            this.assertCommonColumnRowEqual(geneId, "genN1", geneName,
                                     "stageN2", stageName, "anatName2", anatEntityName, 
                                     DiffExpressionData.STRONG_AMBIGUITY.getStringRepresentation(), resume,
                                     GenerateDiffExprFile.NA_VALUE, quality);
@@ -755,7 +751,7 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                             }
                         } else if (geneId.equals("ID1") && stageId.equals("Stage_id18") && 
                                 anatEntityId.equals("Anat_id13")) {
-                            this.assertDiffExprCommonColumnRowEqual(geneId, "genN1", geneName,
+                            this.assertCommonColumnRowEqual(geneId, "genN1", geneName,
                                     "stageN18", stageName, "anatName13", anatEntityName, 
                                     DiffExpressionData.WEAK_AMBIGUITY.getStringRepresentation(), resume,
                                     GenerateDiffExprFile.NA_VALUE, quality);
@@ -779,7 +775,7 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                     } else if (factor.equals(ComparisonFactor.DEVELOPMENT)) {
                         if (geneId.equals("ID1") && stageId.equals("Stage_id1") && 
                                 anatEntityId.equals("Anat_id2")) {
-                            this.assertDiffExprCommonColumnRowEqual(geneId, "genN1", geneName,
+                            this.assertCommonColumnRowEqual(geneId, "genN1", geneName,
                                     "stageN1", stageName, "anatName2", anatEntityName, 
                                     DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), resume,
                                     DataState.LOWQUALITY.getStringRepresentation(), quality);
@@ -798,7 +794,7 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                             }
                         } else if (geneId.equals("ID1") && stageId.equals("Stage_id18") && 
                                 anatEntityId.equals("Anat_id13")) {
-                            this.assertDiffExprCommonColumnRowEqual(geneId, "genN1", geneName,
+                            this.assertCommonColumnRowEqual(geneId, "genN1", geneName,
                                     "stageN18", stageName, "anatName13", anatEntityName, 
                                     DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(), resume,
                                     DataState.LOWQUALITY.getStringRepresentation(), quality);
@@ -827,7 +823,7 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                     if (factor.equals(ComparisonFactor.ANATOMY)) {
                         if (geneId.equals("ID2") && stageId.equals("Stage_id1") && 
                                 anatEntityId.equals("Anat_id2")) {
-                            this.assertDiffExprCommonColumnRowEqual(geneId, "genN2", geneName,
+                            this.assertCommonColumnRowEqual(geneId, "genN2", geneName,
                                     "stageN1", stageName, "anatName2", anatEntityName, 
                                     DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(), resume,
                                     DataState.HIGHQUALITY.getStringRepresentation(), quality);
@@ -846,7 +842,7 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                             }
                         } else if (geneId.equals("ID2") && stageId.equals("Stage_id3") && 
                                 anatEntityId.equals("Anat_id13")) {
-                            this.assertDiffExprCommonColumnRowEqual(geneId, "genN2", geneName,
+                            this.assertCommonColumnRowEqual(geneId, "genN2", geneName,
                                     "stageN3", stageName, "anatName13", anatEntityName, 
                                     DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), resume,
                                     DataState.HIGHQUALITY.getStringRepresentation(), quality);
@@ -870,7 +866,7 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                     } else if (factor.equals(ComparisonFactor.DEVELOPMENT)) {
                         if (geneId.equals("ID2") && stageId.equals("Stage_id1") && 
                                 anatEntityId.equals("Anat_id2")) {
-                            this.assertDiffExprCommonColumnRowEqual(geneId, "genN2", geneName,
+                            this.assertCommonColumnRowEqual(geneId, "genN2", geneName,
                                     "stageN1", stageName, "anatName2", anatEntityName, 
                                     DiffExpressionData.WEAK_AMBIGUITY.getStringRepresentation(), resume,
                                     GenerateDiffExprFile.NA_VALUE, quality);
@@ -889,7 +885,7 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                             }
                         } else if (geneId.equals("ID2") && stageId.equals("Stage_id3") && 
                                 anatEntityId.equals("Anat_id13")) {
-                            this.assertDiffExprCommonColumnRowEqual(geneId, "genN2", geneName,
+                            this.assertCommonColumnRowEqual(geneId, "genN2", geneName,
                                     "stageN3", stageName, "anatName13", anatEntityName, 
                                     DiffExpressionData.WEAK_AMBIGUITY.getStringRepresentation(), resume,
                                     GenerateDiffExprFile.NA_VALUE, quality);
@@ -924,20 +920,6 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
         }
     }
     
-    /**
-     * Assert that, for differential expression file, common column rows are equal. 
-     * It checks gene name, stage ID, stage name, anatomical entity ID, and 
-     * anatomical entity name columns and quality.
-     */
-    private void assertDiffExprCommonColumnRowEqual(String geneId, 
-            String expGeneName, String geneName, String expStageName, String stageName, 
-            String expAnatEntityName, String anatEntityName, String expResume, String resume,
-            String expQuality, String quality) {
-        this.assertCommonColumnRowEqual(geneId, expGeneName, geneName, expStageName, stageName, 
-                expAnatEntityName, anatEntityName, expResume, resume);
-        assertEquals("Incorrect Quality for " + geneId, expQuality, quality);
-    }
-
     /**
      * Assert that specific complete differential expression file columns row are equal.
      */

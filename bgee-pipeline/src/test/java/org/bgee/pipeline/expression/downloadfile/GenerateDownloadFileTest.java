@@ -22,7 +22,6 @@ import org.bgee.model.dao.mysql.gene.MySQLGeneDAO.MySQLGeneTOResultSet;
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO.MySQLSpeciesTOResultSet;
 import org.bgee.pipeline.TestAncestor;
 import org.junit.Rule;
-import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 
 /**
@@ -52,9 +51,6 @@ public abstract class GenerateDownloadFileTest extends TestAncestor {
         return log;
     }
 
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
-
     /**
      * Assert that common columns row are equal. It checks gene name, stage ID, stage name, 
      * anatomical entity ID, and anatomical entity name columns.
@@ -73,11 +69,12 @@ public abstract class GenerateDownloadFileTest extends TestAncestor {
      */
     protected void assertCommonColumnRowEqual(String geneId, String expGeneName, String geneName, 
             String expStageName, String stageName, String expAnatEntityName, String anatEntityName,
-            String expResume, String resume) {
+            String expResume, String resume, String expQual, String quality) {
         assertEquals("Incorrect gene name for " + geneId, expGeneName, geneName);
         assertEquals("Incorrect stage name for " + geneId, expStageName, stageName);
         assertEquals("Incorrect anaEntity name for " + geneId, expAnatEntityName, anatEntityName);
         assertEquals("Incorrect resume for " + geneId, expResume, resume);
+        assertEquals("Incorrect quality for " + geneId, expQual, quality);
     }
 
     /**

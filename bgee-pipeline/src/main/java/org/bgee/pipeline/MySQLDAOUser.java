@@ -10,6 +10,8 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLAnatEntityDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLTaxonConstraintDAO;
+import org.bgee.model.dao.mysql.anatdev.mapping.MySQLSummarySimilarityAnnotationDAO;
+import org.bgee.model.dao.mysql.anatdev.mapping.MySQLSummarySimilarityAnnotationDAO.MySQLSummarySimilarityAnnotationTOResultSet;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.expressiondata.MySQLDiffExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO;
@@ -20,6 +22,7 @@ import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqResultD
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneOntologyDAO;
 import org.bgee.model.dao.mysql.gene.MySQLHierarchicalGroupDAO;
+import org.bgee.model.dao.mysql.ontologycommon.MySQLCIOStatementDAO;
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO;
 import org.bgee.model.dao.mysql.species.MySQLTaxonDAO;
 
@@ -199,6 +202,19 @@ public abstract class MySQLDAOUser {
      */
     protected MySQLRNASeqResultDAO getRNASeqResultDAO() {
         return (MySQLRNASeqResultDAO) this.manager.getRNASeqResultDAO();
+    }
+    /**
+     * @return  A {@code MySQLCIOStatementDAO}.
+     */
+    protected MySQLCIOStatementDAO getCIOStatementDAO() {
+        return (MySQLCIOStatementDAO) this.manager.getCIOStatementDAO();
+    }
+    /**
+     * @return  A {@code SummarySimilarityAnnotationDAO}.
+     */
+    protected MySQLSummarySimilarityAnnotationDAO getSummarySimilarityAnnotationDAO() {
+        return (MySQLSummarySimilarityAnnotationDAO) 
+                this.manager.getSummarySimilarityAnnotationDAO();
     }
     
     /**

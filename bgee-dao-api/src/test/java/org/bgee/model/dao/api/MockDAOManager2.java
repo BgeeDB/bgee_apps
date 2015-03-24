@@ -5,6 +5,7 @@ import java.util.Properties;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
 import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO;
+import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
@@ -15,6 +16,7 @@ import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
+import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.source.SourceDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO;
@@ -153,6 +155,14 @@ public class MockDAOManager2 extends DAOManager {
     @Override
     protected RNASeqResultDAO getNewRNASeqResultDAO() {
         return this.instanceMockManager.getNewRNASeqResultDAO();
+    }
+    @Override
+    protected CIOStatementDAO getNewCIOStatementDAO() {
+        return this.instanceMockManager.getNewCIOStatementDAO();
+    }
+    @Override
+    protected SummarySimilarityAnnotationDAO getNewSummarySimilarityAnnotationDAO() {
+        return this.instanceMockManager.getNewSummarySimilarityAnnotationDAO();
     }
 
     @Override

@@ -21,6 +21,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
 import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO;
+import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
@@ -31,6 +32,7 @@ import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
+import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.source.SourceDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO;
@@ -1046,6 +1048,36 @@ public abstract class DAOManager implements AutoCloseable
         return log.exit(this.getNewRNASeqResultDAO());
     }
 
+    /**
+     * Get a new {@link org.bgee.model.dao.api.ontologycommon.CIOStatementDAO CIOStatementDAO}, 
+     * unless this {@code DAOManager} is already closed. 
+     * 
+     * @return  a new {@code CIOStatementDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see org.bgee.model.dao.api.ontologycommon.CIOStatementDAO CIOStatementDAO 
+     */
+    public final CIOStatementDAO getCIOStatementDAO() {
+        log.entry();
+        this.checkClosed();
+        return log.exit(this.getNewCIOStatementDAO());
+    }
+
+    /**
+     * Get a new {@link org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO 
+     * SummarySimilarityAnnotationDAO}, unless this {@code DAOManager} is already closed. 
+     * 
+     * @return  A new {@code SummarySimilarityAnnotationDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO SummarySimilarityAnnotationDAO 
+     */
+    public final SummarySimilarityAnnotationDAO getSummarySimilarityAnnotationDAO() {
+        log.entry();
+        this.checkClosed();
+        return log.exit(this.getNewSummarySimilarityAnnotationDAO());
+    }
+
+    
+    
     //*****************************************
     //  CORE ABSTRACT METHODS TO IMPLEMENT
     //*****************************************	
@@ -1275,4 +1307,20 @@ public abstract class DAOManager implements AutoCloseable
      * @return  A new {@code RNASeqResultDAO}
      */
     protected abstract RNASeqResultDAO getNewRNASeqResultDAO();
+    /**
+     * Service provider must return a new 
+     * {@link org.bgee.model.dao.api.ontologycommon.CIOStatementDAO CIOStatementDAO}
+     * instance when this method is called. 
+     * 
+     * @return  A new {@code CIOStatementDAO}
+     */
+    protected abstract CIOStatementDAO getNewCIOStatementDAO();
+    /**
+     * Service provider must return a new 
+     * {@link org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO 
+     * SummarySimilarityAnnotationDAO} instance when this method is called. 
+     * 
+     * @return  A new {@code SummarySimilarityAnnotationDAO}
+     */
+    protected abstract SummarySimilarityAnnotationDAO getNewSummarySimilarityAnnotationDAO();
 }

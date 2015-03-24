@@ -12,6 +12,7 @@ import java.util.Properties;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.TransferObject;
+import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.CallParams;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallParams;
@@ -20,6 +21,7 @@ import org.bgee.model.dao.api.expressiondata.NoExpressionCallParams;
 import org.bgee.model.dao.mysql.anatdev.MySQLAnatEntityDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLTaxonConstraintDAO;
+import org.bgee.model.dao.mysql.anatdev.mapping.MySQLSummarySimilarityAnnotationDAO;
 import org.bgee.model.dao.mysql.connector.BgeeConnection;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.expressiondata.MySQLDiffExpressionCallDAO;
@@ -31,6 +33,7 @@ import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqResultD
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneOntologyDAO;
 import org.bgee.model.dao.mysql.gene.MySQLHierarchicalGroupDAO;
+import org.bgee.model.dao.mysql.ontologycommon.MySQLCIOStatementDAO;
 import org.bgee.model.dao.mysql.ontologycommon.MySQLRelationDAO;
 import org.bgee.model.dao.mysql.source.MySQLSourceDAO;
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO;
@@ -166,7 +169,9 @@ public abstract class TestAncestor
                 mock(MySQLAffymetrixProbesetDAO.class);
         public final MySQLInSituSpotDAO mockInSituSpotDAO = mock(MySQLInSituSpotDAO.class);
         public final MySQLRNASeqResultDAO mockRNASeqResultDAO = mock(MySQLRNASeqResultDAO.class);
-        
+        public final MySQLCIOStatementDAO mockCIOStatementDAO = mock(MySQLCIOStatementDAO.class);
+        public final MySQLSummarySimilarityAnnotationDAO mockSummarySimilarityAnnotationDAO = 
+                mock(MySQLSummarySimilarityAnnotationDAO.class);
         public MockDAOManager() {
             
         }
@@ -262,6 +267,14 @@ public abstract class TestAncestor
         @Override
         protected MySQLRNASeqResultDAO getNewRNASeqResultDAO() {
             return this.mockRNASeqResultDAO;
+        }
+        @Override
+        protected MySQLCIOStatementDAO getNewCIOStatementDAO() {
+            return this.mockCIOStatementDAO;
+        }
+        @Override
+        protected MySQLSummarySimilarityAnnotationDAO getNewSummarySimilarityAnnotationDAO() {
+            return this.mockSummarySimilarityAnnotationDAO;
         }
 	}
 

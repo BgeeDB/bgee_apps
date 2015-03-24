@@ -124,7 +124,8 @@ public class MySQLSummarySimilarityAnnotationDAO
     @Override
     public SimAnnotToAnatEntityTOResultSet getSimAnnotToAnatEntity(String ancestralTaxonId, 
             Set<String> speciesIds) throws DAOException {
-        log.entry(ancestralTaxonId);
+        log.entry(ancestralTaxonId, speciesIds);
+        
         // TODO Auto-generated method stub
         return null;
     }
@@ -292,6 +293,82 @@ public class MySQLSummarySimilarityAnnotationDAO
                 }
             }
             return log.exit(new SummarySimilarityAnnotationTO(id, taxonId, negated, cioId));
+        }
+    }
+    
+    /**
+     * A {@code MySQLDAOResultSet} specific to {@code SimAnnotToAnatEntityTO}.
+     * 
+     * @author Valentine Rech de Laval
+     * @version Bgee 13
+     * @since Bgee 13
+     */
+    public class MySQLSimAnnotToAnatEntityTOResultSet 
+                extends MySQLDAOResultSet<SimAnnotToAnatEntityTO> 
+                implements SimAnnotToAnatEntityTOResultSet {
+
+        /**
+         * Delegates to {@link MySQLDAOResultSet#MySQLDAOResultSet(BgeePreparedStatement)}
+         * super constructor.
+         * 
+         * @param statement The first {@code BgeePreparedStatement} to execute a query on.
+         */
+        private MySQLSimAnnotToAnatEntityTOResultSet(BgeePreparedStatement statement) {
+            super(statement);
+        }
+        
+        /**
+         * Delegates to {@link MySQLDAOResultSet#MySQLDAOResultSet(BgeePreparedStatement, 
+         * int, int, int)} super constructor.
+         * 
+         * @param statement             The first {@code BgeePreparedStatement} to execute 
+         *                              a query on.
+         * @param offsetParamIndex      An {@code int} that is the index of the parameter 
+         *                              defining the offset argument of a LIMIT clause, 
+         *                              in the SQL query hold by {@code statement}.
+         * @param rowCountParamIndex    An {@code int} that is the index of the parameter 
+         *                              specifying the maximum number of rows to return 
+         *                              in a LIMIT clause, in the SQL query 
+         *                              hold by {@code statement}.
+         * @param rowCount              An {@code int} that is the maximum number of rows to use 
+         *                              in a LIMIT clause, in the SQL query 
+         *                              hold by {@code statement}.
+         * @param filterDuplicates      A {@code boolean} defining whether equal 
+         *                              {@code TransferObject}s returned by different queries should 
+         *                              be filtered: when {@code true}, only one of them will be 
+         *                              returned. This implies that all {@code TransferObject}s 
+         *                              returned will be stored, implying potentially 
+         *                              great memory usage.
+         */
+        private MySQLSimAnnotToAnatEntityTOResultSet(BgeePreparedStatement statement, 
+                int offsetParamIndex, int rowCountParamIndex, int rowCount, 
+                boolean filterDuplicates) {
+            super(statement, offsetParamIndex, rowCountParamIndex, rowCount, filterDuplicates);
+        }
+        
+        @Override
+        protected SimAnnotToAnatEntityTO getNewTO() throws DAOException {
+            log.entry();
+
+            String summarySimilarityAnnotationId = null, anatEntityId = null; 
+
+            for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
+                try {
+                    if (column.getValue().equals("summarySimilarityAnnotationId")) {
+                        summarySimilarityAnnotationId = this.getCurrentResultSet().getString(column.getKey());
+                        
+                    } else if (column.getValue().equals("anatEntityId")) {
+                        anatEntityId = this.getCurrentResultSet().getString(column.getKey());
+
+                    } else {
+                        throw log.throwing(new UnrecognizedColumnException(column.getValue()));
+                    }
+
+                } catch (SQLException e) {
+                    throw log.throwing(new DAOException(e));
+                }
+            }
+            return log.exit(new SimAnnotToAnatEntityTO(summarySimilarityAnnotationId, anatEntityId));
         }
     }
 }

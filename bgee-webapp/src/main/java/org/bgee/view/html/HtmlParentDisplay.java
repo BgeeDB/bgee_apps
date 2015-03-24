@@ -197,9 +197,10 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 "'>Data download</a>");
         this.writeln("</li>");
         this.writeln("<li>");
-        this.writeln("<a title='Documentation page' href='" + urlDocGenerator.getRequestURL() + 
-                "'>Documentation<img class='deploy' src='" + this.prop.getImagesRootDirectory() + "arrow_down.png'"
-                        + "alt='deploy'/></a>");
+        //TODO modify to be used on the tablet/smartphones
+        this.writeln("<a class='toplevel' title='Documentation page' href='" + urlDocGenerator.getRequestURL() + 
+                "'>Documentation<img class='deploy' src='" + this.prop.getImagesRootDirectory() + 
+                "arrow_down_dark.png' alt='deploy'/></a>");
         this.writeln("<ul>");
         //TODO set section URLs when defined
         this.writeln("<li><a class='drop' title='Section 1' href='" + urlDocGenerator.getRequestURL() + 

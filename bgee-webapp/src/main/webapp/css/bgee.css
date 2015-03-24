@@ -88,7 +88,6 @@ header img {
     padding: 0;
     height: 25px;
     list-style: outside none none;
-    font-weight: 0.9em;
     border-bottom: 4px solid #920209;
 }
 
@@ -158,8 +157,8 @@ header img {
 }
 
 #nav .deploy {
-    margin: 0 0 0.15em 0.4em;
-    height: 5px;
+	margin-left: 0.3em;
+    height: 0.5em;
 }
 
 /****SIB BODY****/

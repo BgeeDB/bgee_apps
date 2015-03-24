@@ -1,6 +1,6 @@
 package org.bgee.pipeline;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -24,16 +24,20 @@ import org.bgee.model.dao.api.anatdev.StageDAO.StageTOResultSet;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTOResultSet;
+import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO;
+import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTO;
+import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTOResultSet;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
-import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTOResultSet;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTOResultSet;
 import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
 import org.bgee.model.dao.mysql.anatdev.MySQLAnatEntityDAO.MySQLAnatEntityTOResultSet;
 import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO.MySQLStageTOResultSet;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO.MySQLGeneTOResultSet;
+import org.bgee.model.dao.mysql.ontologycommon.MySQLCIOStatementDAO.MySQLCIOStatementTOResultSet;
 import org.bgee.model.dao.mysql.ontologycommon.MySQLRelationDAO.MySQLRelationTOResultSet;
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO.MySQLSpeciesTOResultSet;
 import org.junit.Test;
@@ -435,6 +439,58 @@ public class BgeeDBUtilsTest extends TestAncestor {
                 BgeeDBUtils.getAnatEntityNamesByIds(
                         new HashSet<String>(Arrays.asList("1", "2")), 
                         mockManager.getAnatEntityDAO());
+                //test failed
+                throw log.throwing(new AssertionError("No IllegalStateException was thrown " +
+                        "with several names mapped to a same ID"));
+            } catch (IllegalStateException e) {
+                //test passed
+            }
+            verify(mockRS).close();
+        }
+    }
+
+    
+    /**
+     * Test {@link BgeeDBUtils#getCIOStatementNamesByIds(CIOStatementDAO)}.
+     */
+    @Test
+    public void shouldGetCIOStatementNamesByIds() {
+        try (MockDAOManager mockManager = new MockDAOManager()) {
+            List<CIOStatementTO> returnedCIOStatementTOs = Arrays.asList(
+                    new CIOStatementTO("1", "CIO A", null, null, null, null, null), 
+                    new CIOStatementTO("2", "CIO B", null, null, null, null, null), 
+                    new CIOStatementTO("3", "CIO C", null, null, null, null, null), 
+                    new CIOStatementTO("3", "CIO C", null, null, null, null, null));
+            
+            CIOStatementTOResultSet mockRS = this.createMockDAOResultSet(
+                    returnedCIOStatementTOs, MySQLCIOStatementTOResultSet.class);
+            when(mockManager.getCIOStatementDAO().getAllCIOStatements()).thenReturn(mockRS);
+            
+            Map<String, String> expectedReturnedVal = new HashMap<String, String>();
+            expectedReturnedVal.put("1", "CIO A");
+            expectedReturnedVal.put("2", "CIO B");
+            expectedReturnedVal.put("3", "CIO C");
+            
+            assertEquals("Incorrect ID-name mapping", expectedReturnedVal, 
+                    BgeeDBUtils.getCIOStatementNamesByIds(mockManager.getCIOStatementDAO()));
+            verify(mockManager.getCIOStatementDAO()).setAttributes(CIOStatementDAO.Attribute.ID, 
+                    CIOStatementDAO.Attribute.NAME);
+            verify(mockRS).close();
+        }
+        
+        try (MockDAOManager mockManager = new MockDAOManager()) {
+            List<CIOStatementTO> returnedCIOStatementTOs = Arrays.asList(
+                    new CIOStatementTO("1", "CIO A", null, null, null, null, null), 
+                    new CIOStatementTO("1", "CIO B", null, null, null, null, null));
+            
+            CIOStatementTOResultSet mockRS = this.createMockDAOResultSet(
+                    returnedCIOStatementTOs, MySQLCIOStatementTOResultSet.class);
+            when(mockManager.getCIOStatementDAO().getAllCIOStatements()).thenReturn(mockRS);
+            
+            try {
+                //an IllegalStateException should be thrown, because several names are mapped 
+                //to a same ID
+                BgeeDBUtils.getCIOStatementNamesByIds(mockManager.getCIOStatementDAO());
                 //test failed
                 throw log.throwing(new AssertionError("No IllegalStateException was thrown " +
                         "with several names mapped to a same ID"));

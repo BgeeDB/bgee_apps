@@ -3,12 +3,14 @@
 }
 
 #feature_list figcaption {
+	margin-top: 10px;
     text-align: center;
     font-weight: bold;
 }
 
 img.pageimg {
-    border-radius: 8px;
+    border-radius: 120px;
+    height: 150px;
     box-shadow: 3px 3px 4px grey, -2px -2px 2px white;
 }
 

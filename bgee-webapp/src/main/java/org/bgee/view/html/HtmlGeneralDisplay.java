@@ -78,17 +78,17 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         
         this.writeln("<a href='" + urlDownloadGenerator.getRequestURL() + "' title='Bgee download page'>" +
         		"<figure><div><img class='pageimg' src='" + this.prop.getImagesRootDirectory() + 
-        		"download_screenshot.png' alt='Download page screenshot' /></div>" +
-                "<figcaption>See download page</figcaption>" +
+        		"download.png' alt='Download page screenshot' /></div>" +
+                "<figcaption>Data download</figcaption>" +
                 "</figure></a>");
         
         RequestParameters urlDocGenerator = this.getNewRequestParameters();
         urlDocGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
-        //TODO create documentation_screenshot and add url in src
-//        this.writeln("<a href='" + urlDocGenerator.getRequestURL() + "' title='Bgee documentation page'>" +
-//                "<figure><div><img class='pageimg' src='' alt='Documentation page screenshot' /></div>" +
-//                "<figcaption>See documentation page</figcaption>" +
-//                "</figure></a>");
+        this.writeln("<a href='" + urlDocGenerator.getRequestURL() + "' title='Bgee documentation page'>" +
+                "<figure><div><img class='pageimg' src='" + this.prop.getImagesRootDirectory() + 
+                "documentation.png' alt='Documentation page screenshot' /></div>" +
+                "<figcaption>Documentation</figcaption>" +
+                "</figure></a>");
 
         this.writeln("</div>");
         

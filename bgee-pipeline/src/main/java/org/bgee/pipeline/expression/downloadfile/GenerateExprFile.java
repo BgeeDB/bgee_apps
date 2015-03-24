@@ -339,6 +339,7 @@ public class GenerateExprFile extends GenerateDownloadFile {
      *                      generated files.
      * @throws IOException  If an error occurred while trying to write generated files.
      */
+    //TODO: add OMA node ID in complete files
     public void generateExprFiles() throws IOException {
         log.entry(this.speciesIds, this.fileTypes, this.directory);
 
@@ -349,8 +350,8 @@ public class GenerateExprFile extends GenerateDownloadFile {
 
         // Check user input, retrieve info for generating file names
         // Retrieve species names and IDs (all species names if speciesIds is null or empty)
-        Map<String, String> speciesNamesForFilesByIds = this
-            .checkAndGetLatinNamesBySpeciesIds(setSpecies);
+        Map<String, String> speciesNamesForFilesByIds = 
+                this.checkAndGetLatinNamesBySpeciesIds(setSpecies);
         assert speciesNamesForFilesByIds.size() >= setSpecies.size();
 
         // If no file types are given by user, we set all file types

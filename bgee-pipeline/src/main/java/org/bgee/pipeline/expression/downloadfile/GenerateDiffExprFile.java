@@ -333,7 +333,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
      * 
      * @throws IOException  If an error occurred while trying to write generated files.
      */
-    //TODO: do not generate files with absolutely no data in it.
+    //TODO: add OMA node ID in complete files
     public void generateDiffExprFiles() throws IOException { 
         log.entry(this.speciesIds, this.fileTypes, this.directory);
     
@@ -474,6 +474,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         log.trace("Done retrieving data for differential expression files for the species {}.", 
                 speciesId);
     
+        //TODO test no generated file with absolutely no data in it.
         if (diffExprTOs.isEmpty()) {
             log.trace("No data retrieved for differential expression files for the species {} and file types {}...", 
                     speciesId, fileTypes);

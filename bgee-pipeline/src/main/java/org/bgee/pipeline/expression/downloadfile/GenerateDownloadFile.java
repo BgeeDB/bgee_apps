@@ -1510,4 +1510,158 @@ public abstract class GenerateDownloadFile extends CallUser {
                     " - Differential expression: " + getDifferentialExpression();
         }
     }
+    
+    /**
+     * A bean representing a row of a simple multi-species file. Getter and setter names 
+     * must follow standard bean definitions.
+     * 
+     * @author Valentine Rech de Laval
+     * @version Bgee 13 Mar. 2015
+     * @since Bgee 13
+     */
+    public static class SimpleMultiSpeciesExprFileBean extends DownloadFileBean {
+        
+        /**
+         * See {@link #getNbExprGenes()}.
+         */
+        private String nbExprGenes;
+        /**
+         * See {@link #getNbNoExprGenes()}.
+         */
+        private String nbNoExprGenes;
+        /**
+         * See {@link #getNbNAGenes()}.
+         */
+        private String nbNAGenes;
+        
+        /**
+         * 0-argument constructor of the bean.
+         */
+        public SimpleMultiSpeciesExprFileBean() {
+        }
+
+        /**
+         * Constructor providing all arguments of the class.
+         *
+         * @param omaId             See {@link #getOmaId()}.
+         * @param omaDescription    See {@link #getOmaDescription()}.
+         * @param geneIds           See {@link #getGeneIds()}.
+         * @param geneNames         See {@link #getGeneNames()}.
+         * @param entityIds         See {@link #getEntityIds()}.
+         * @param entityNames       See {@link #getEntityNames()}.
+         * @param stageId           See {@link #getStageId()}.
+         * @param stageName         See {@link #getStageName()}.
+         * @param speciesId         See {@link #getSpeciesId()}.
+         * @param speciesName       See {@link #getSpeciesName()}.
+         * @param cioId             See {@link #getCioId()}.
+         * @param cioName           See {@link #getCioName()}.
+         * @param nbExprGenes       See {@link #getNbExprGenes()}.
+         * @param nbNoExprGenes     See {@link #getNbNoExprGenes()}.
+         * @param nbNAGenes         See {@link #getNbNAGenes()}.
+         */
+        public SimpleMultiSpeciesExprFileBean(String omaId, String omaDescription, List<String> geneIds,
+                List<String> geneNames, List<String> entityIds, List<String> entityNames,
+                String stageId, String stageName, String speciesId, String speciesName, 
+                String cioId, String cioName, String nbExprGenes, String nbNoExprGenes, String nbNAGenes) {
+            super(omaId, omaDescription, geneIds, geneNames, entityIds, entityNames, 
+                    stageId, stageName, speciesId, speciesName, cioId, cioName, 
+                    null, null, null, null);
+            this.nbExprGenes = nbExprGenes;
+            this.nbNoExprGenes = nbNoExprGenes;
+            this.nbNAGenes = nbNAGenes;
+        }
+
+        /**
+         * @return  the {@code String} that is the number of expressed genes in the family.
+         */
+        public String getNbExprGenes() {
+            return nbExprGenes;
+        }
+        /**
+         * @param nbExprGenes   A {@code String} that is the number of expressed genes in the family.
+         */
+        public void setNbExprGenes(String nbExprGenes) {
+            this.nbExprGenes = nbExprGenes;
+        }
+        
+        /**
+         * @return  the {@code String} that is the number of no-expressed genes in the family.
+         */
+        public String getNbNoExprGenes() {
+            return nbNoExprGenes;
+        }
+        /**
+         * @param nbNoExprGenes A {@code String} that is the number of no-expressed genes 
+         *                      in the family. 
+         */
+        public void setNbNoExprGenes(String nbNoExprGenes) {
+            this.nbNoExprGenes = nbNoExprGenes;
+        }
+        
+        /**
+         * @return  the {@code String} that is the number of genes without data in the family.
+         */
+        public String getNbNAGenes() {
+            return nbNAGenes;
+        }
+        /**
+         * @param nbNAGenes A {@code String} that is the number of genes without data in the family.
+         */
+        public void setNbNAGenes(String nbNAGenes) {
+            this.nbNAGenes = nbNAGenes;
+        }
+
+        /* (non-Javadoc)
+         * @see java.lang.Object#hashCode()
+         */
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = super.hashCode();
+            result = prime * result + ((nbExprGenes == null) ? 0 : nbExprGenes.hashCode());
+            result = prime * result + ((nbNAGenes == null) ? 0 : nbNAGenes.hashCode());
+            result = prime * result + ((nbNoExprGenes == null) ? 0 : nbNoExprGenes.hashCode());
+            return result;
+        }
+
+        /* (non-Javadoc)
+         * @see java.lang.Object#equals(java.lang.Object)
+         */
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (!super.equals(obj))
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            SimpleMultiSpeciesExprFileBean other = (SimpleMultiSpeciesExprFileBean) obj;
+            if (nbExprGenes == null) {
+                if (other.nbExprGenes != null)
+                    return false;
+            } else if (!nbExprGenes.equals(other.nbExprGenes))
+                return false;
+            if (nbNAGenes == null) {
+                if (other.nbNAGenes != null)
+                    return false;
+            } else if (!nbNAGenes.equals(other.nbNAGenes))
+                return false;
+            if (nbNoExprGenes == null) {
+                if (other.nbNoExprGenes != null)
+                    return false;
+            } else if (!nbNoExprGenes.equals(other.nbNoExprGenes))
+                return false;
+            return true;
+        }
+
+        /* (non-Javadoc)
+         * @see java.lang.Object#toString()
+         */
+        @Override
+        public String toString() {
+            return super.toString() + " - Number of expressed genes: " + nbExprGenes
+                    + " - Number of no-expressed genes: " + nbNoExprGenes + 
+                    " - Number of N/A genes: " + nbNAGenes;
+        }
+   }
 }

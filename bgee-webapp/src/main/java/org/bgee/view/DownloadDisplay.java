@@ -13,9 +13,4 @@ public interface DownloadDisplay {
 	 * Display the download page.
 	 */
 	public void displayDownloadPage();
-	
-	/**
-     * Display the documentation page.
-	 */
-	public void displayDocumentation();
 }

@@ -46,11 +46,6 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     }
 
     @Override
-    public void displayDocumentation() {
-        // TODO Auto-generated method stub
-    }
-
-    @Override
     public void displayDownloadPage() {
         log.entry();
         this.startDisplay("download", "Bgee release 13 download page");

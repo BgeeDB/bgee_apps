@@ -7,6 +7,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.PageNotFoundException;
+import org.bgee.view.DocumentationDisplay;
 import org.bgee.view.DownloadDisplay;
 import org.bgee.view.ViewFactory;
 
@@ -49,9 +50,6 @@ public class CommandDownload extends CommandParent {
         DownloadDisplay display = this.viewFactory.getDownloadDisplay();
         if (this.requestParameters.getAction() == null) {
             display.displayDownloadPage();
-        } else if (this.requestParameters.getAction() != null && 
-                this.requestParameters.getAction().equals(RequestParameters.ACTION_DOC)) {
-            display.displayDocumentation();
         } else {
             throw log.throwing(new PageNotFoundException("Incorrect " + 
                 this.requestParameters.getUrlParametersInstance().getParamAction() + 

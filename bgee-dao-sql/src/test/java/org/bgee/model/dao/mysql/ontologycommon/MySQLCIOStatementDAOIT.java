@@ -49,7 +49,7 @@ public class MySQLCIOStatementDAOIT extends MySQLITAncestor {
      * Test the insert method {@link MySQLCIOStatementDAO#getAllCIOStatements(Collection<CIOStatementTO>)}.
      */
     @Test
-    public void shouldGetAllECOTerms() throws SQLException {
+    public void shouldGetAllCIOStatements() throws SQLException {
 
         this.useSelectDB();
         

@@ -13,7 +13,6 @@ import java.util.regex.Pattern;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.supercsv.cellprocessor.CellProcessorAdaptor;
-import org.supercsv.cellprocessor.Optional;
 import org.supercsv.cellprocessor.ParseBool;
 import org.supercsv.cellprocessor.ParseDate;
 import org.supercsv.cellprocessor.ParseInt;
@@ -41,61 +40,61 @@ public class SimilarityAnnotationUtils {
     private final static Logger log = 
     LogManager.getLogger(SimilarityAnnotationUtils.class.getName());
 
-    /**
-     * A {@code CellProcessorAdaptor} used to convert a {@code List} of {@code String}s 
-     * (as returned by the processor {@link ParseMultipleValuesCell}) into a {@code List} 
-     * of {@code Integer}s. 
-     * 
-     * @author Frederic Bastian
-     * @version Bgee 13 Mar. 2015
-     * @since Bgee 13
-     */
-    private static class ConvertToIntList extends CellProcessorAdaptor {
-        /**
-         * Default constructor, no other {@code CellProcessor} in the chain.
-         */
-        private ConvertToIntList() {
-                super();
-        }
-        /**
-         * Constructor allowing other processors to be chained after 
-         * {@code ConvertToIntList}.
-         * @param next  A {@code CellProcessor} that is the next to be called. 
-         */
-        private ConvertToIntList(CellProcessor next) {
-                super(next);
-        }
-        
-        @Override
-        public Object execute(Object value, CsvContext context) {
-            log.entry(value, context);
-            //throws an Exception if the input is null, as all CellProcessors usually do.
-            validateInputNotNull(value, context); 
-            
-            if (!(value instanceof List)) {
-                throw log.throwing(new SuperCsvCellProcessorException("The CellProcessor "
-                        + "ConvertToIntList can only be chained with a CellProcessor "
-                        + "returning a List of Strings", context, this));
-            }
-            
-            List<Integer> converted = new ArrayList<Integer>();
-            
-            for (Object element: (List<?>) value) {
-                if (!(element instanceof String)) {
-                    throw log.throwing(new SuperCsvCellProcessorException("The CellProcessor "
-                            + "ConvertToIntList can only be chained with a CellProcessor "
-                            + "returning a List of Strings", context, this));
-                }
-                converted.add(Integer.valueOf((String) element));
-            }
-            if (converted.isEmpty()) {
-                throw log.throwing(new SuperCsvCellProcessorException("Cell cannot be empty", 
-                        context, this));
-            }
-            //passes result to next processor in the chain
-            return log.exit(next.execute(converted, context));
-        }
-    }
+//    /**
+//     * A {@code CellProcessorAdaptor} used to convert a {@code List} of {@code String}s 
+//     * (as returned by the processor {@link ParseMultipleValuesCell}) into a {@code List} 
+//     * of {@code Integer}s. 
+//     * 
+//     * @author Frederic Bastian
+//     * @version Bgee 13 Mar. 2015
+//     * @since Bgee 13
+//     */
+//    private static class ConvertToIntList extends CellProcessorAdaptor {
+//        /**
+//         * Default constructor, no other {@code CellProcessor} in the chain.
+//         */
+//        private ConvertToIntList() {
+//                super();
+//        }
+//        /**
+//         * Constructor allowing other processors to be chained after 
+//         * {@code ConvertToIntList}.
+//         * @param next  A {@code CellProcessor} that is the next to be called. 
+//         */
+//        private ConvertToIntList(CellProcessor next) {
+//                super(next);
+//        }
+//        
+//        @Override
+//        public Object execute(Object value, CsvContext context) {
+//            log.entry(value, context);
+//            //throws an Exception if the input is null, as all CellProcessors usually do.
+//            validateInputNotNull(value, context); 
+//            
+//            if (!(value instanceof List)) {
+//                throw log.throwing(new SuperCsvCellProcessorException("The CellProcessor "
+//                        + "ConvertToIntList can only be chained with a CellProcessor "
+//                        + "returning a List of Strings", context, this));
+//            }
+//            
+//            List<Integer> converted = new ArrayList<Integer>();
+//            
+//            for (Object element: (List<?>) value) {
+//                if (!(element instanceof String)) {
+//                    throw log.throwing(new SuperCsvCellProcessorException("The CellProcessor "
+//                            + "ConvertToIntList can only be chained with a CellProcessor "
+//                            + "returning a List of Strings", context, this));
+//                }
+//                converted.add(Integer.valueOf((String) element));
+//            }
+//            if (converted.isEmpty()) {
+//                throw log.throwing(new SuperCsvCellProcessorException("Cell cannot be empty", 
+//                        context, this));
+//            }
+//            //passes result to next processor in the chain
+//            return log.exit(next.execute(converted, context));
+//        }
+//    }
     /**
      * A {@code CellProcessorAdaptor} capable of parsing cells allowing to optionally 
      * contain multiple values, separated by {@link #SEPARATOR}. 
@@ -881,45 +880,45 @@ public class SimilarityAnnotationUtils {
      */
     public static class SummaryAnnotationBean extends AnnotationBean {
         /**
-         * @see #getPositiveEvidenceCount()
-         */
-        private int positiveEvidenceCount;
-        /**
-         * @see #getNegativeEvidenceCount()
-         */
-        private int negativeEvidenceCount;
-        /**
          * @see #isTrusted()
          */
         private boolean trusted;
-        /**
-         * @see #getPositiveEcoIds()
-         */
-        private List<String> positiveEcoIds;
-        /**
-         * @see #getPositiveEcoLabels()
-         */
-        private List<String> positiveEcoLabels;
-        /**
-         * @see #getNegativeEcoIds()
-         */
-        private List<String> negativeEcoIds;
-        /**
-         * @see #getNegativeEcoLabels()
-         */
-        private List<String> negativeEcoLabels;
-        /**
-         * @see #getAggregatedTaxonIds()
-         */
-        private List<Integer> aggregatedTaxonIds;
-        /**
-         * @see #getAggregatedTaxonNames()
-         */
-        private List<String> aggregatedTaxonNames;
-        /**
-         * @see #getAssignedBy()
-         */
-        private List<String> assignedBy;
+//        /**
+//         * @see #getPositiveEvidenceCount()
+//         */
+//        private int positiveEvidenceCount;
+//        /**
+//         * @see #getNegativeEvidenceCount()
+//         */
+//        private int negativeEvidenceCount;
+//        /**
+//         * @see #getPositiveEcoIds()
+//         */
+//        private List<String> positiveEcoIds;
+//        /**
+//         * @see #getPositiveEcoLabels()
+//         */
+//        private List<String> positiveEcoLabels;
+//        /**
+//         * @see #getNegativeEcoIds()
+//         */
+//        private List<String> negativeEcoIds;
+//        /**
+//         * @see #getNegativeEcoLabels()
+//         */
+//        private List<String> negativeEcoLabels;
+//        /**
+//         * @see #getAggregatedTaxonIds()
+//         */
+//        private List<Integer> aggregatedTaxonIds;
+//        /**
+//         * @see #getAggregatedTaxonNames()
+//         */
+//        private List<String> aggregatedTaxonNames;
+//        /**
+//         * @see #getAssignedBy()
+//         */
+//        private List<String> assignedBy;
         
         /**
          * 0-argument constructor of the bean.
@@ -937,75 +936,31 @@ public class SimilarityAnnotationUtils {
          * @param negated               See {@link #isNegated()}.
          * @param cioId                 See {@link #getCioId()}.
          * @param cioLabel              See {@link #getCioLabel()}.
-         * @param positiveEvidenceCount See {@link #getPositiveEvidenceCount()}.
-         * @param negativeEvidenceCount See {@link #getNegativeEvidenceCount()}.
          * @param trusted               See {@link #isTrusted()}.
-         * @param positiveEcoIds        See {@link #getPositiveEcoIds()}.
-         * @param positiveEcoLabels     See {@link #getPositiveEcoLabels()}.
-         * @param negativeEcoIds        See {@link #getNegativeEcoIds()}.
-         * @param negativeEcoLabels     See {@link #getNegativeEcoLabels()}.
-         * @param aggregatedTaxonIds    See {@link #getAggregatedTaxonIds()}.
-         * @param aggregatedTaxonNames  See {@link #getAggregatedTaxonNames()}.
-         * @param assignedBy            See {@link #getAssignedBy()}.
          */
         public SummaryAnnotationBean(String homId, String homLabel,
                 List<String> entityIds, List<String> entityNames,
                 int ncbiTaxonId, String taxonName, boolean negated,
-                String cioId, String cioLabel, 
-                int positiveEvidenceCount, int negativeEvidenceCount, boolean trusted, 
-                List<String> positiveEcoIds, List<String> positiveEcoLabels, 
-                List<String> negativeEcoIds, List<String> negativeEcoLabels, 
-                List<Integer> aggregatedTaxonIds, List<String> aggregatedTaxonNames, 
-                List<String> assignedBy) {
+                String cioId, String cioLabel, boolean trusted
+//                , int positiveEvidenceCount, int negativeEvidenceCount,  
+//                List<String> positiveEcoIds, List<String> positiveEcoLabels, 
+//                List<String> negativeEcoIds, List<String> negativeEcoLabels, 
+//                List<Integer> aggregatedTaxonIds, List<String> aggregatedTaxonNames, 
+//                List<String> assignedBy
+                ) {
             
             super(homId, homLabel, entityIds, entityNames, ncbiTaxonId, taxonName, 
                     negated, cioId, cioLabel);
-            this.positiveEvidenceCount = positiveEvidenceCount;
-            this.negativeEvidenceCount = negativeEvidenceCount;
             this.trusted = trusted;
-            this.positiveEcoIds = positiveEcoIds;
-            this.positiveEcoLabels = positiveEcoLabels;
-            this.negativeEcoIds = negativeEcoIds;
-            this.negativeEcoLabels = negativeEcoLabels;
-            this.aggregatedTaxonIds = aggregatedTaxonIds;
-            this.aggregatedTaxonNames = aggregatedTaxonNames;
-            this.assignedBy = assignedBy;
-        }
-        
-        /**
-         * @return  An {@code int} that is the number of positive RAW annotations 
-         *          that were aggregated to produce this SUMMARY annotation.
-         * @see #getNegativeEvidenceCount()
-         */
-        public int getPositiveEvidenceCount() {
-            return positiveEvidenceCount;
-        }
-        /**
-         * @param positiveEvidenceCount An {@code int} that is the number of positive 
-         *                              RAW annotations that were aggregated to produce 
-         *                              this SUMMARY annotation.
-         * @see #getPositiveEvidenceCount()
-         */
-        public void setPositiveEvidenceCount(int positiveEvidenceCount) {
-            this.positiveEvidenceCount = positiveEvidenceCount;
-        }
-        
-        /**
-         * @return  An {@code int} that is the number of negative RAW annotations 
-         *          that were aggregated to produce this SUMMARY annotation.
-         * @see #getPositiveEvidenceCount()
-         */
-        public int getNegativeEvidenceCount() {
-            return negativeEvidenceCount;
-        }
-        /**
-         * @param negativeEvidenceCount An {@code int} that is the number of negative 
-         *                              RAW annotations that were aggregated to produce 
-         *                              this SUMMARY annotation.
-         * @see #getNegativeEvidenceCount()
-         */
-        public void setNegativeEvidenceCount(int negativeEvidenceCount) {
-            this.negativeEvidenceCount = negativeEvidenceCount;
+//            this.positiveEvidenceCount = positiveEvidenceCount;
+//            this.negativeEvidenceCount = negativeEvidenceCount;
+//            this.positiveEcoIds = positiveEcoIds;
+//            this.positiveEcoLabels = positiveEcoLabels;
+//            this.negativeEcoIds = negativeEcoIds;
+//            this.negativeEcoLabels = negativeEcoLabels;
+//            this.aggregatedTaxonIds = aggregatedTaxonIds;
+//            this.aggregatedTaxonNames = aggregatedTaxonNames;
+//            this.assignedBy = assignedBy;
         }
         
         /**
@@ -1023,165 +978,200 @@ public class SimilarityAnnotationUtils {
         public void setTrusted(boolean trusted) {
             this.trusted = trusted;
         }
-        
-        /**
-         * @return  A {@code List} of {@code String}s that are the IDs of the ECO terms 
-         *          supporting the annotation. These terms come from positive annotations 
-         *          to same HOM ID - Uberon IDs, and to same taxon or to any parent taxa, 
-         *          that were aggregated with the current annotation.
-         * @see #getPositiveEcoLabels()
-         * @see #getNegativeEcoIds()
-         */
-        public List<String> getPositiveEcoIds() {
-            return positiveEcoIds;
-        }
-        /**
-         * @param positiveEcoIds    A {@code List} of {@code String}s that are the IDs 
-         *                          of the ECO terms supporting the annotation.
-         * @see #getPositiveEcoIds()
-         */
-        public void setPositiveEcoIds(List<String> positiveEcoIds) {
-            this.positiveEcoIds = positiveEcoIds;
-        }
-        
-        /**
-         * @return  A {@code List} of {@code String}s that are the labels of the ECO terms 
-         *          supporting the annotation. These terms come from positive annotations 
-         *          to same HOM ID - Uberon IDs, and to same taxon or to any parent taxa, 
-         *          that were aggregated with the current annotation.
-         * @see #getPositiveEcoIds()
-         * @see #getNegativeEcoLabels()
-         */
-        public List<String> getPositiveEcoLabels() {
-            return positiveEcoLabels;
-        }
-        /**
-         * @param positiveEcoLabels A {@code List} of {@code String}s that are the labels 
-         *                          of the ECO terms supporting the annotation.
-         * @see #getPositiveEcoLabels()
-         */
-        public void setPositiveEcoLabels(List<String> positiveEcoLabels) {
-            this.positiveEcoLabels = positiveEcoLabels;
-        }
-        
-        /**
-         * @return  A {@code List} of {@code String}s that are the IDs of the ECO terms 
-         *          rejecting the annotation. These terms come from negative annotations 
-         *          to same HOM ID - Uberon IDs, and to same taxon or to any sub-taxon, 
-         *          that were aggregated with the current annotation.
-         * @see #getNegativeEcoLabels()
-         * @see #getPositiveEcoIds()
-         */
-        public List<String> getNegativeEcoIds() {
-            return negativeEcoIds;
-        }
-        /**
-         * @param negativeEcoIds    A {@code List} of {@code String}s that are the IDs 
-         *                          of the ECO terms rejecting the annotation.
-         * @see #getNegativeEcoIds()
-         */
-        public void setNegativeEcoIds(List<String> negativeEcoIds) {
-            this.negativeEcoIds = negativeEcoIds;
-        }
-        
-        /**
-         * @return  A {@code List} of {@code String}s that are the labels of the ECO terms 
-         *          rejecting the annotation. These terms come from negative annotations 
-         *          to same HOM ID - Uberon IDs, and to same taxon or to any sub-taxon, 
-         *          that were aggregated with the current annotation.
-         * @see #getNegativeEcoIds()
-         * @see #getPositiveEcoLabels()
-         */
-        public List<String> getNegativeEcoLabels() {
-            return negativeEcoLabels;
-        }
-        /**
-         * @param positiveEcoLabels A {@code List} of {@code String}s that are the labels 
-         *                          of the ECO terms rejecting the annotation.
-         * @see #getNegativeEcoLabels()
-         */
-        public void setNegativeEcoLabels(List<String> negativeEcoLabels) {
-            this.negativeEcoLabels = negativeEcoLabels;
-        }
-        
-        /**
-         * Return the list of NCBI taxon IDs from positive annotations mapped to same 
-         * HOM ID - Uberon IDs as the current summary annotation, but mapped to an ancestor 
-         * of the taxon of the current summary annotation (this is done only 
-         * if the current summary annotation is positive). This is for the sake of being 
-         * able to trace back a summary annotation to its raw annotations it aggregates.
-         * <p>
-         * Indeed, if we have evidence that a structure is homologous in, for instance, 
-         * Tetrapoda, and also evidence that the structure might be homologous at 
-         * the Vertebrata level, then we are even more sure that it is homologous 
-         * at the Tetrapoda level.
-         * <p>
-         * Note that we could have aggregate negative annotations mapped to sub-taxa: 
-         * if we have evidence that a structure is NOT homologous at the Tetrapoda level, 
-         * then it is unlikely to be homologous at the Vertebrata level. But we cannot 
-         * rule out weird cases, where a structure is lost in a lineage, then reappears 
-         * through independent evolution in a sub-taxon?
-         * 
-         * @return  A {@code List} of {@code Integer}s that are the NCBI taxon IDs of other 
-         *          taxa examined to generate this summary annotation: parent taxa 
-         *          with positive annotations for the same HOM ID and Uberon IDs.
-         */
-        public List<Integer> getAggregatedTaxonIds() {
-            return aggregatedTaxonIds;
-        }
-        /**
-         * See {@link #getAggregatedTaxonIds()} for explanations.
-         * 
-         * @param aggregatedTaxonIds        A {@code List} of {@code Integer}s that are 
-         *                                  the NCBI taxon IDs of other taxa examined 
-         *                                  to generate this summary annotation.
-         * @see #getAggregatedTaxonIds()
-         */
-        public void setAggregatedTaxonIds(List<Integer> aggregatedTaxonIds) {
-            this.aggregatedTaxonIds = aggregatedTaxonIds;
-        }
-        
-        /**
-         * See {@link #getAggregatedTaxonIds()} for explanations.
-         * 
-         * @return  A {@code List} of {@code String}s that are the taxon name of other 
-         *          taxa examined to generate this summary annotation: parent taxa 
-         *          with positive annotations for the same HOM ID and Uberon IDs.
-         * @see #getAggregatedTaxonIds()
-         */
-        public List<String> getAggregatedTaxonNames() {
-            return aggregatedTaxonNames;
-        }
-        /**
-         * See {@link #getAggregatedTaxonIds()} for explanations.
-         * 
-         * @param parentAggregatedTaxonNames        A {@code List} of {@code String}s that are 
-         *                                          the taxon names of other taxa examined 
-         *                                          to generate this summary annotation.
-         * @see #getAggregatedTaxonNames()
-         * @see #getAggregatedTaxonIds()
-         */
-        public void setAggregatedTaxonNames(List<String> aggregatedTaxonNames) {
-            this.aggregatedTaxonNames = aggregatedTaxonNames;
-        }
-        
-        /**
-         * @return  A {@code List} of {@code String}s that are all the databases that 
-         *          contributed to the raw annotations that were aggregated into 
-         *          this summary annotation.
-         */
-        public List<String> getAssignedBy() {
-            return assignedBy;
-        }
-        /**
-         * @param assignedBy    A {@code List} of {@code String}s that are all the databases 
-         *                      that contributed to the raw annotations that were aggregated 
-         *                      into this summary annotation.
-         * @see #getAssignedBy()
-         */
-        public void setAssignedBy(List<String> assignedBy) {
-            this.assignedBy = assignedBy;
-        }
+//        /**
+//         * @return  An {@code int} that is the number of positive RAW annotations 
+//         *          that were aggregated to produce this SUMMARY annotation.
+//         * @see #getNegativeEvidenceCount()
+//         */
+//        public int getPositiveEvidenceCount() {
+//            return positiveEvidenceCount;
+//        }
+//        /**
+//         * @param positiveEvidenceCount An {@code int} that is the number of positive 
+//         *                              RAW annotations that were aggregated to produce 
+//         *                              this SUMMARY annotation.
+//         * @see #getPositiveEvidenceCount()
+//         */
+//        public void setPositiveEvidenceCount(int positiveEvidenceCount) {
+//            this.positiveEvidenceCount = positiveEvidenceCount;
+//        }
+//        
+//        /**
+//         * @return  An {@code int} that is the number of negative RAW annotations 
+//         *          that were aggregated to produce this SUMMARY annotation.
+//         * @see #getPositiveEvidenceCount()
+//         */
+//        public int getNegativeEvidenceCount() {
+//            return negativeEvidenceCount;
+//        }
+//        /**
+//         * @param negativeEvidenceCount An {@code int} that is the number of negative 
+//         *                              RAW annotations that were aggregated to produce 
+//         *                              this SUMMARY annotation.
+//         * @see #getNegativeEvidenceCount()
+//         */
+//        public void setNegativeEvidenceCount(int negativeEvidenceCount) {
+//            this.negativeEvidenceCount = negativeEvidenceCount;
+//        }
+//        
+//        /**
+//         * @return  A {@code List} of {@code String}s that are the IDs of the ECO terms 
+//         *          supporting the annotation. These terms come from positive annotations 
+//         *          to same HOM ID - Uberon IDs, and to same taxon or to any parent taxa, 
+//         *          that were aggregated with the current annotation.
+//         * @see #getPositiveEcoLabels()
+//         * @see #getNegativeEcoIds()
+//         */
+//        public List<String> getPositiveEcoIds() {
+//            return positiveEcoIds;
+//        }
+//        /**
+//         * @param positiveEcoIds    A {@code List} of {@code String}s that are the IDs 
+//         *                          of the ECO terms supporting the annotation.
+//         * @see #getPositiveEcoIds()
+//         */
+//        public void setPositiveEcoIds(List<String> positiveEcoIds) {
+//            this.positiveEcoIds = positiveEcoIds;
+//        }
+//        
+//        /**
+//         * @return  A {@code List} of {@code String}s that are the labels of the ECO terms 
+//         *          supporting the annotation. These terms come from positive annotations 
+//         *          to same HOM ID - Uberon IDs, and to same taxon or to any parent taxa, 
+//         *          that were aggregated with the current annotation.
+//         * @see #getPositiveEcoIds()
+//         * @see #getNegativeEcoLabels()
+//         */
+//        public List<String> getPositiveEcoLabels() {
+//            return positiveEcoLabels;
+//        }
+//        /**
+//         * @param positiveEcoLabels A {@code List} of {@code String}s that are the labels 
+//         *                          of the ECO terms supporting the annotation.
+//         * @see #getPositiveEcoLabels()
+//         */
+//        public void setPositiveEcoLabels(List<String> positiveEcoLabels) {
+//            this.positiveEcoLabels = positiveEcoLabels;
+//        }
+//        
+//        /**
+//         * @return  A {@code List} of {@code String}s that are the IDs of the ECO terms 
+//         *          rejecting the annotation. These terms come from negative annotations 
+//         *          to same HOM ID - Uberon IDs, and to same taxon or to any sub-taxon, 
+//         *          that were aggregated with the current annotation.
+//         * @see #getNegativeEcoLabels()
+//         * @see #getPositiveEcoIds()
+//         */
+//        public List<String> getNegativeEcoIds() {
+//            return negativeEcoIds;
+//        }
+//        /**
+//         * @param negativeEcoIds    A {@code List} of {@code String}s that are the IDs 
+//         *                          of the ECO terms rejecting the annotation.
+//         * @see #getNegativeEcoIds()
+//         */
+//        public void setNegativeEcoIds(List<String> negativeEcoIds) {
+//            this.negativeEcoIds = negativeEcoIds;
+//        }
+//        
+//        /**
+//         * @return  A {@code List} of {@code String}s that are the labels of the ECO terms 
+//         *          rejecting the annotation. These terms come from negative annotations 
+//         *          to same HOM ID - Uberon IDs, and to same taxon or to any sub-taxon, 
+//         *          that were aggregated with the current annotation.
+//         * @see #getNegativeEcoIds()
+//         * @see #getPositiveEcoLabels()
+//         */
+//        public List<String> getNegativeEcoLabels() {
+//            return negativeEcoLabels;
+//        }
+//        /**
+//         * @param positiveEcoLabels A {@code List} of {@code String}s that are the labels 
+//         *                          of the ECO terms rejecting the annotation.
+//         * @see #getNegativeEcoLabels()
+//         */
+//        public void setNegativeEcoLabels(List<String> negativeEcoLabels) {
+//            this.negativeEcoLabels = negativeEcoLabels;
+//        }
+//        
+//        /**
+//         * Return the list of NCBI taxon IDs from positive annotations mapped to same 
+//         * HOM ID - Uberon IDs as the current summary annotation, but mapped to an ancestor 
+//         * of the taxon of the current summary annotation (this is done only 
+//         * if the current summary annotation is positive). This is for the sake of being 
+//         * able to trace back a summary annotation to its raw annotations it aggregates.
+//         * <p>
+//         * Indeed, if we have evidence that a structure is homologous in, for instance, 
+//         * Tetrapoda, and also evidence that the structure might be homologous at 
+//         * the Vertebrata level, then we are even more sure that it is homologous 
+//         * at the Tetrapoda level.
+//         * <p>
+//         * Note that we could have aggregate negative annotations mapped to sub-taxa: 
+//         * if we have evidence that a structure is NOT homologous at the Tetrapoda level, 
+//         * then it is unlikely to be homologous at the Vertebrata level. But we cannot 
+//         * rule out weird cases, where a structure is lost in a lineage, then reappears 
+//         * through independent evolution in a sub-taxon?
+//         * 
+//         * @return  A {@code List} of {@code Integer}s that are the NCBI taxon IDs of other 
+//         *          taxa examined to generate this summary annotation: parent taxa 
+//         *          with positive annotations for the same HOM ID and Uberon IDs.
+//         */
+//        public List<Integer> getAggregatedTaxonIds() {
+//            return aggregatedTaxonIds;
+//        }
+//        /**
+//         * See {@link #getAggregatedTaxonIds()} for explanations.
+//         * 
+//         * @param aggregatedTaxonIds        A {@code List} of {@code Integer}s that are 
+//         *                                  the NCBI taxon IDs of other taxa examined 
+//         *                                  to generate this summary annotation.
+//         * @see #getAggregatedTaxonIds()
+//         */
+//        public void setAggregatedTaxonIds(List<Integer> aggregatedTaxonIds) {
+//            this.aggregatedTaxonIds = aggregatedTaxonIds;
+//        }
+//        
+//        /**
+//         * See {@link #getAggregatedTaxonIds()} for explanations.
+//         * 
+//         * @return  A {@code List} of {@code String}s that are the taxon name of other 
+//         *          taxa examined to generate this summary annotation: parent taxa 
+//         *          with positive annotations for the same HOM ID and Uberon IDs.
+//         * @see #getAggregatedTaxonIds()
+//         */
+//        public List<String> getAggregatedTaxonNames() {
+//            return aggregatedTaxonNames;
+//        }
+//        /**
+//         * See {@link #getAggregatedTaxonIds()} for explanations.
+//         * 
+//         * @param parentAggregatedTaxonNames        A {@code List} of {@code String}s that are 
+//         *                                          the taxon names of other taxa examined 
+//         *                                          to generate this summary annotation.
+//         * @see #getAggregatedTaxonNames()
+//         * @see #getAggregatedTaxonIds()
+//         */
+//        public void setAggregatedTaxonNames(List<String> aggregatedTaxonNames) {
+//            this.aggregatedTaxonNames = aggregatedTaxonNames;
+//        }
+//        
+//        /**
+//         * @return  A {@code List} of {@code String}s that are all the databases that 
+//         *          contributed to the raw annotations that were aggregated into 
+//         *          this summary annotation.
+//         */
+//        public List<String> getAssignedBy() {
+//            return assignedBy;
+//        }
+//        /**
+//         * @param assignedBy    A {@code List} of {@code String}s that are all the databases 
+//         *                      that contributed to the raw annotations that were aggregated 
+//         *                      into this summary annotation.
+//         * @see #getAssignedBy()
+//         */
+//        public void setAssignedBy(List<String> assignedBy) {
+//            this.assignedBy = assignedBy;
+//        }
         
         
         
@@ -1192,32 +1182,32 @@ public class SimilarityAnnotationUtils {
         public int hashCode() {
             final int prime = 31;
             int result = super.hashCode();
-            result = prime
-                    * result
-                    + ((aggregatedTaxonIds == null) ? 0 : aggregatedTaxonIds
-                            .hashCode());
-            result = prime
-                    * result
-                    + ((aggregatedTaxonNames == null) ? 0
-                            : aggregatedTaxonNames.hashCode());
-            result = prime * result
-                    + ((assignedBy == null) ? 0 : assignedBy.hashCode());
-            result = prime
-                    * result
-                    + ((negativeEcoIds == null) ? 0 : negativeEcoIds.hashCode());
-            result = prime
-                    * result
-                    + ((negativeEcoLabels == null) ? 0 : negativeEcoLabels
-                            .hashCode());
-            result = prime * result + negativeEvidenceCount;
-            result = prime
-                    * result
-                    + ((positiveEcoIds == null) ? 0 : positiveEcoIds.hashCode());
-            result = prime
-                    * result
-                    + ((positiveEcoLabels == null) ? 0 : positiveEcoLabels
-                            .hashCode());
-            result = prime * result + positiveEvidenceCount;
+//            result = prime
+//                    * result
+//                    + ((aggregatedTaxonIds == null) ? 0 : aggregatedTaxonIds
+//                            .hashCode());
+//            result = prime
+//                    * result
+//                    + ((aggregatedTaxonNames == null) ? 0
+//                            : aggregatedTaxonNames.hashCode());
+//            result = prime * result
+//                    + ((assignedBy == null) ? 0 : assignedBy.hashCode());
+//            result = prime
+//                    * result
+//                    + ((negativeEcoIds == null) ? 0 : negativeEcoIds.hashCode());
+//            result = prime
+//                    * result
+//                    + ((negativeEcoLabels == null) ? 0 : negativeEcoLabels
+//                            .hashCode());
+//            result = prime * result + negativeEvidenceCount;
+//            result = prime
+//                    * result
+//                    + ((positiveEcoIds == null) ? 0 : positiveEcoIds.hashCode());
+//            result = prime
+//                    * result
+//                    + ((positiveEcoLabels == null) ? 0 : positiveEcoLabels
+//                            .hashCode());
+//            result = prime * result + positiveEvidenceCount;
             result = prime * result + (trusted ? 1231 : 1237);
             return result;
         }
@@ -1236,61 +1226,61 @@ public class SimilarityAnnotationUtils {
                 return false;
             }
             SummaryAnnotationBean other = (SummaryAnnotationBean) obj;
-            if (aggregatedTaxonIds == null) {
-                if (other.aggregatedTaxonIds != null) {
-                    return false;
-                }
-            } else if (!aggregatedTaxonIds.equals(other.aggregatedTaxonIds)) {
-                return false;
-            }
-            if (aggregatedTaxonNames == null) {
-                if (other.aggregatedTaxonNames != null) {
-                    return false;
-                }
-            } else if (!aggregatedTaxonNames.equals(other.aggregatedTaxonNames)) {
-                return false;
-            }
-            if (assignedBy == null) {
-                if (other.assignedBy != null) {
-                    return false;
-                }
-            } else if (!assignedBy.equals(other.assignedBy)) {
-                return false;
-            }
-            if (negativeEcoIds == null) {
-                if (other.negativeEcoIds != null) {
-                    return false;
-                }
-            } else if (!negativeEcoIds.equals(other.negativeEcoIds)) {
-                return false;
-            }
-            if (negativeEcoLabels == null) {
-                if (other.negativeEcoLabels != null) {
-                    return false;
-                }
-            } else if (!negativeEcoLabels.equals(other.negativeEcoLabels)) {
-                return false;
-            }
-            if (negativeEvidenceCount != other.negativeEvidenceCount) {
-                return false;
-            }
-            if (positiveEcoIds == null) {
-                if (other.positiveEcoIds != null) {
-                    return false;
-                }
-            } else if (!positiveEcoIds.equals(other.positiveEcoIds)) {
-                return false;
-            }
-            if (positiveEcoLabels == null) {
-                if (other.positiveEcoLabels != null) {
-                    return false;
-                }
-            } else if (!positiveEcoLabels.equals(other.positiveEcoLabels)) {
-                return false;
-            }
-            if (positiveEvidenceCount != other.positiveEvidenceCount) {
-                return false;
-            }
+//            if (aggregatedTaxonIds == null) {
+//                if (other.aggregatedTaxonIds != null) {
+//                    return false;
+//                }
+//            } else if (!aggregatedTaxonIds.equals(other.aggregatedTaxonIds)) {
+//                return false;
+//            }
+//            if (aggregatedTaxonNames == null) {
+//                if (other.aggregatedTaxonNames != null) {
+//                    return false;
+//                }
+//            } else if (!aggregatedTaxonNames.equals(other.aggregatedTaxonNames)) {
+//                return false;
+//            }
+//            if (assignedBy == null) {
+//                if (other.assignedBy != null) {
+//                    return false;
+//                }
+//            } else if (!assignedBy.equals(other.assignedBy)) {
+//                return false;
+//            }
+//            if (negativeEcoIds == null) {
+//                if (other.negativeEcoIds != null) {
+//                    return false;
+//                }
+//            } else if (!negativeEcoIds.equals(other.negativeEcoIds)) {
+//                return false;
+//            }
+//            if (negativeEcoLabels == null) {
+//                if (other.negativeEcoLabels != null) {
+//                    return false;
+//                }
+//            } else if (!negativeEcoLabels.equals(other.negativeEcoLabels)) {
+//                return false;
+//            }
+//            if (negativeEvidenceCount != other.negativeEvidenceCount) {
+//                return false;
+//            }
+//            if (positiveEcoIds == null) {
+//                if (other.positiveEcoIds != null) {
+//                    return false;
+//                }
+//            } else if (!positiveEcoIds.equals(other.positiveEcoIds)) {
+//                return false;
+//            }
+//            if (positiveEcoLabels == null) {
+//                if (other.positiveEcoLabels != null) {
+//                    return false;
+//                }
+//            } else if (!positiveEcoLabels.equals(other.positiveEcoLabels)) {
+//                return false;
+//            }
+//            if (positiveEvidenceCount != other.positiveEvidenceCount) {
+//                return false;
+//            }
             if (trusted != other.trusted) {
                 return false;
             }
@@ -1302,16 +1292,18 @@ public class SimilarityAnnotationUtils {
         @Override
         public String toString() {
             return "SummaryAnnotationBean [" 
-                    + super.toString() + ", positiveEvidenceCount="
-                    + positiveEvidenceCount + ", negativeEvidenceCount="
-                    + negativeEvidenceCount + ", trusted=" + trusted
-                    + ", positiveEcoIds=" + positiveEcoIds
-                    + ", positiveEcoLabels=" + positiveEcoLabels
-                    + ", negativeEcoIds=" + negativeEcoIds
-                    + ", negativeEcoLabels=" + negativeEcoLabels
-                    + ", aggregatedTaxonIds=" + aggregatedTaxonIds
-                    + ", aggregatedTaxonNames=" + aggregatedTaxonNames
-                    + ", assignedBy=" + assignedBy + "]";
+                    + super.toString() + ", trusted=" + trusted 
+//                    + ", positiveEvidenceCount="
+//                    + positiveEvidenceCount + ", negativeEvidenceCount="
+//                    + negativeEvidenceCount + ", trusted=" + trusted
+//                    + ", positiveEcoIds=" + positiveEcoIds
+//                    + ", positiveEcoLabels=" + positiveEcoLabels
+//                    + ", negativeEcoIds=" + negativeEcoIds
+//                    + ", negativeEcoLabels=" + negativeEcoLabels
+//                    + ", aggregatedTaxonIds=" + aggregatedTaxonIds
+//                    + ", aggregatedTaxonNames=" + aggregatedTaxonNames
+//                    + ", assignedBy=" + assignedBy + "]"
+                    ;
         }
     }
     
@@ -1518,63 +1510,63 @@ public class SimilarityAnnotationUtils {
     // COLUMNS SPECIFIC TO AGGREGATED EVIDENCE ANNOTATION FILES
     //****************************************************
     /**
-     * A {@code String} that is the name of the column containing the number of positive 
-     * RAW annotations that were aggregated to produce this SUMMARY annotation.
-     */
-    protected final static String POSITIVE_COUNT_COL_NAME = "positive evidence count";
-    /**
-     * A {@code String} that is the name of the column containing the number of negative 
-     * RAW annotations that were aggregated to produce this SUMMARY annotation.
-     */
-    protected final static String NEGATIVE_COUNT_COL_NAME = "negative evidence count";
-    /**
      * A {@code String} that is the name of the column containing the Bool value 
      * defining whether the CIO term associated to this annotation is considered 
      * of sufficient confidence.
      */
     protected final static String TRUSTED_COL_NAME = "trusted";
-    /**
-     * A {@code String} that is the name of the column containing IDs of the ECO terms 
-     * supporting the annotation, in the AGGREGATED EVIDENCE annotation files. These terms 
-     * come from positive annotations to same HOM ID - Uberon IDs, and to same taxon or 
-     * to any parent taxa, that were aggregated with the current annotation.
-     */
-    protected final static String POSITIVE_ECO_COL_NAME = "positive ECO ID";
-    /**
-     * A {@code String} that is the name of the column containing names of the ECO terms 
-     * supporting the annotation, in the AGGREGATED EVIDENCE annotation files. These terms 
-     * come from positive annotations to same HOM ID - Uberon IDs, and to same taxon or 
-     * to any parent taxa, that were aggregated with the current annotation.
-     */
-    protected final static String POSITIVE_ECO_NAME_COL_NAME = "positive ECO name";
-    /**
-     * A {@code String} that is the name of the column containing IDs of the ECO terms 
-     * invalidating the annotation, in the AGGREGATED EVIDENCE annotation files. These terms 
-     * come from negative annotations to same HOM ID - Uberon IDs - taxon ID, 
-     * that were aggregated with the current annotation.
-     */
-    protected final static String NEGATIVE_ECO_COL_NAME = "negative ECO ID";
-    /**
-     * A {@code String} that is the name of the column containing names of the ECO terms 
-     * invalidating the annotation, in the AGGREGATED EVIDENCE annotation files. These terms 
-     * come from negative annotations to same HOM ID - Uberon IDs - taxon ID, 
-     * that were aggregated with the current annotation.
-     */
-    protected final static String NEGATIVE_ECO_NAME_COL_NAME = "negative ECO name";
-    /**
-     * A {@code String} that is the name of the column containing the related taxon IDs, 
-     * in the AGGREGATED EVIDENCE annotation files, of parent taxa with positive annotations 
-     * for the same HOM ID and Uberon IDs, that were aggregated with the current annotation 
-     * (only if the current annotation is positive).
-     */
-    protected final static String AGGREGATED_TAXA_COL_NAME = "Other taxon aggregated ID";
-    /**
-     * A {@code String} that is the name of the column containing the related taxon names, 
-     * in the AGGREGATED EVIDENCE annotation files, of parent taxa with positive annotations 
-     * for the same HOM ID and Uberon IDs, that were aggregated with the current annotation 
-     * (only if the current annotation is positive).
-     */
-    protected final static String AGGREGATED_TAXA_NAME_COL_NAME = "Other taxon aggregated name";
+//    /**
+//     * A {@code String} that is the name of the column containing the number of positive 
+//     * RAW annotations that were aggregated to produce this SUMMARY annotation.
+//     */
+//    protected final static String POSITIVE_COUNT_COL_NAME = "positive evidence count";
+//    /**
+//     * A {@code String} that is the name of the column containing the number of negative 
+//     * RAW annotations that were aggregated to produce this SUMMARY annotation.
+//     */
+//    protected final static String NEGATIVE_COUNT_COL_NAME = "negative evidence count";
+//    /**
+//     * A {@code String} that is the name of the column containing IDs of the ECO terms 
+//     * supporting the annotation, in the AGGREGATED EVIDENCE annotation files. These terms 
+//     * come from positive annotations to same HOM ID - Uberon IDs, and to same taxon or 
+//     * to any parent taxa, that were aggregated with the current annotation.
+//     */
+//    protected final static String POSITIVE_ECO_COL_NAME = "positive ECO ID";
+//    /**
+//     * A {@code String} that is the name of the column containing names of the ECO terms 
+//     * supporting the annotation, in the AGGREGATED EVIDENCE annotation files. These terms 
+//     * come from positive annotations to same HOM ID - Uberon IDs, and to same taxon or 
+//     * to any parent taxa, that were aggregated with the current annotation.
+//     */
+//    protected final static String POSITIVE_ECO_NAME_COL_NAME = "positive ECO name";
+//    /**
+//     * A {@code String} that is the name of the column containing IDs of the ECO terms 
+//     * invalidating the annotation, in the AGGREGATED EVIDENCE annotation files. These terms 
+//     * come from negative annotations to same HOM ID - Uberon IDs - taxon ID, 
+//     * that were aggregated with the current annotation.
+//     */
+//    protected final static String NEGATIVE_ECO_COL_NAME = "negative ECO ID";
+//    /**
+//     * A {@code String} that is the name of the column containing names of the ECO terms 
+//     * invalidating the annotation, in the AGGREGATED EVIDENCE annotation files. These terms 
+//     * come from negative annotations to same HOM ID - Uberon IDs - taxon ID, 
+//     * that were aggregated with the current annotation.
+//     */
+//    protected final static String NEGATIVE_ECO_NAME_COL_NAME = "negative ECO name";
+//    /**
+//     * A {@code String} that is the name of the column containing the related taxon IDs, 
+//     * in the AGGREGATED EVIDENCE annotation files, of parent taxa with positive annotations 
+//     * for the same HOM ID and Uberon IDs, that were aggregated with the current annotation 
+//     * (only if the current annotation is positive).
+//     */
+//    protected final static String AGGREGATED_TAXA_COL_NAME = "Other taxon aggregated ID";
+//    /**
+//     * A {@code String} that is the name of the column containing the related taxon names, 
+//     * in the AGGREGATED EVIDENCE annotation files, of parent taxa with positive annotations 
+//     * for the same HOM ID and Uberon IDs, that were aggregated with the current annotation 
+//     * (only if the current annotation is positive).
+//     */
+//    protected final static String AGGREGATED_TAXA_NAME_COL_NAME = "Other taxon aggregated name";
 
     //****************************************************
     // SPECIAL VALUES
@@ -1814,36 +1806,36 @@ public class SimilarityAnnotationUtils {
             } else if (beanType.equals(SummaryAnnotationBean.class)) {
                 switch (header[i]) {
                 // *** Attributes specific to SummaryAnnotationBean ***
-                    case POSITIVE_COUNT_COL_NAME: 
-                        mapping[i] = "positiveEvidenceCount";
-                        break;
-                    case NEGATIVE_COUNT_COL_NAME: 
-                        mapping[i] = "negativeEvidenceCount";
-                        break;
                     case TRUSTED_COL_NAME: 
                         mapping[i] = "trusted";
                         break;
-                    case POSITIVE_ECO_COL_NAME: 
-                        mapping[i] = "positiveEcoIds";
-                        break;
-                    case POSITIVE_ECO_NAME_COL_NAME: 
-                        mapping[i] = "positiveEcoLabels";
-                        break;
-                    case NEGATIVE_ECO_COL_NAME: 
-                        mapping[i] = "negativeEcoIds";
-                        break;
-                    case NEGATIVE_ECO_NAME_COL_NAME: 
-                        mapping[i] = "negativeEcoLabels";
-                        break;
-                    case AGGREGATED_TAXA_COL_NAME: 
-                        mapping[i] = "aggregatedTaxonIds";
-                        break;
-                    case AGGREGATED_TAXA_NAME_COL_NAME: 
-                        mapping[i] = "aggregatedTaxonNames";
-                        break;
-                    case ASSIGN_COL_NAME: 
-                        mapping[i] = "assignedBy";
-                        break;
+//                    case POSITIVE_COUNT_COL_NAME: 
+//                        mapping[i] = "positiveEvidenceCount";
+//                        break;
+//                    case NEGATIVE_COUNT_COL_NAME: 
+//                        mapping[i] = "negativeEvidenceCount";
+//                        break;
+//                    case POSITIVE_ECO_COL_NAME: 
+//                        mapping[i] = "positiveEcoIds";
+//                        break;
+//                    case POSITIVE_ECO_NAME_COL_NAME: 
+//                        mapping[i] = "positiveEcoLabels";
+//                        break;
+//                    case NEGATIVE_ECO_COL_NAME: 
+//                        mapping[i] = "negativeEcoIds";
+//                        break;
+//                    case NEGATIVE_ECO_NAME_COL_NAME: 
+//                        mapping[i] = "negativeEcoLabels";
+//                        break;
+//                    case AGGREGATED_TAXA_COL_NAME: 
+//                        mapping[i] = "aggregatedTaxonIds";
+//                        break;
+//                    case AGGREGATED_TAXA_NAME_COL_NAME: 
+//                        mapping[i] = "aggregatedTaxonNames";
+//                        break;
+//                    case ASSIGN_COL_NAME: 
+//                        mapping[i] = "assignedBy";
+//                        break;
                 }
             } else if (beanType.equals(AncestralTaxaAnnotationBean.class)) {
                 //no attributes specific to AncestralTaxaAnnotationBean for now
@@ -1931,27 +1923,27 @@ public class SimilarityAnnotationUtils {
             } else if (beanType.equals(SummaryAnnotationBean.class)) {
                 switch (header[i]) {
                 // *** Attributes specific to SummaryAnnotationBean ***
-                    case ASSIGN_COL_NAME: 
-                        processors[i] = new ParseMultipleValuesCell();
-                        break;
-                    case POSITIVE_ECO_COL_NAME: 
-                    case POSITIVE_ECO_NAME_COL_NAME: 
-                    case NEGATIVE_ECO_COL_NAME: 
-                    case NEGATIVE_ECO_NAME_COL_NAME: 
-                    case AGGREGATED_TAXA_NAME_COL_NAME:
-                        processors[i] = new Optional(new ParseMultipleValuesCell());
-                        break;
-                    case POSITIVE_COUNT_COL_NAME: 
-                    case NEGATIVE_COUNT_COL_NAME:
-                        processors[i] = new ParseInt();
-                        break;
                     case TRUSTED_COL_NAME: 
                         processors[i] = new ParseBool();
                         break;
-                    case AGGREGATED_TAXA_COL_NAME: 
-                        processors[i] = new Optional(new ParseMultipleValuesCell(
-                                new ConvertToIntList()));
-                        break;
+//                    case ASSIGN_COL_NAME: 
+//                        processors[i] = new ParseMultipleValuesCell();
+//                        break;
+//                    case POSITIVE_ECO_COL_NAME: 
+//                    case POSITIVE_ECO_NAME_COL_NAME: 
+//                    case NEGATIVE_ECO_COL_NAME: 
+//                    case NEGATIVE_ECO_NAME_COL_NAME: 
+//                    case AGGREGATED_TAXA_NAME_COL_NAME:
+//                        processors[i] = new Optional(new ParseMultipleValuesCell());
+//                        break;
+//                    case POSITIVE_COUNT_COL_NAME: 
+//                    case NEGATIVE_COUNT_COL_NAME:
+//                        processors[i] = new ParseInt();
+//                        break;
+//                    case AGGREGATED_TAXA_COL_NAME: 
+//                        processors[i] = new Optional(new ParseMultipleValuesCell(
+//                                new ConvertToIntList()));
+//                        break;
                 }
             } else if (beanType.equals(AncestralTaxaAnnotationBean.class)) {
                 //no columns specific to AncestralTaxaAnnotationBean for now

@@ -31,25 +31,18 @@ public interface StageGroupingDAO extends DAO {
      * Retrieve stage groups and the stages they are associated to, for comparisons 
      * between species. The groups will represent associations valid at the level 
      * of {@code ancestralTaxonId}, or any of its ancestral taxa. The stages retrieved 
-     * will be defined as existing in all the provided species.
+     * will be defined as existing in all the provided species. If {@code speciesIds} 
+     * is {@code null} or empty, then the stages retrieved will be defined as existing 
+     * in any species.
      * <p>
      * This method mirrors the method to retrieve mappings between anatomical entities, 
-     * see {@link SummarySimilarityAnnotationDAO#getSimAnnotToAnatEntity(String)}. 
+     * see {@link SummarySimilarityAnnotationDAO#getSimAnnotToAnatEntity(String, Set)}. 
      * For anatomical entities, there can be relations between several of them, 
      * this is why it is needed to retrieve "groups". So we do the same for stages 
      * (as of Bgee 13, there is no mapping between stages, but we cannot rule out 
      * that it could be the case in the future). Potentially, stages with a mapping 
      * will have the same {@code groupId} (see {@link GroupToStageTO#getGroupId()}). 
-     * As of Bgee 13, groups have only one stage (again, a stage existing in all species 
-     * member of the provided taxon).
-     * <p>
-     * The point of providing a list of species IDs to filter the stages 
-     * is to accommodate for incorrect taxon constraints: for instance, a stage 
-     * is considered valid at the Euarchontoglires level (includes human, mouse, rat), 
-     * but an incorrect taxon constraint consider that the structure is absent in rat; 
-     * if we were providing only the ancestral taxon ID, this stage would be filtered out; 
-     * by providing a list of species, at least we would recover the stage if we were 
-     * comparing only human and mouse.
+     * As of Bgee 13, groups have only one stage.
      * <p>
      * The point of not inferring the ancestral taxon ID from the list of species 
      * is to be able to retrieve mappings valid between some species, but that are defined 

@@ -62,6 +62,13 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
                 params.isSatisfyAllCallTypeConditions()));
     }
 
+    @Override
+    public DiffExpressionCallTOResultSet getOrderedHomologousGenesDiffExpressionCalls(
+            String arg0, DiffExpressionCallParams arg1) throws DAOException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
     /**
      * Retrieve differential expression calls from data source according to a {@code Set} of 
      * {@code String}s that are the IDs of species allowing to filter the calls to use. 

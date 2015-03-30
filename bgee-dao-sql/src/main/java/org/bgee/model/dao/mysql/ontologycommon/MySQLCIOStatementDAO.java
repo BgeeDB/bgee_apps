@@ -52,6 +52,13 @@ public class MySQLCIOStatementDAO extends MySQLDAO<CIOStatementDAO.Attribute>
         return log.exit(this.getCIOStatements());
     }
 
+    @Override
+    public CIOStatementTOResultSet getTrustedCIOStatements()
+            throws DAOException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
     /**
      * Retrieves CIO statements from data source.
      * 

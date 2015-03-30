@@ -19,7 +19,8 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
  * A {@code SummarySimilarityAnnotationDAO} for MySQL.
  *
  * @author Valentine Rech de Laval
- * @version Bgee 13
+ * @author Frederic Bastian
+ * @version Bgee 13 Mar. 2015
  * @see org.bgee.model.dao.api.annotation.anatsimilarity.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO
  * @since Bgee 13
  */
@@ -122,10 +123,25 @@ public class MySQLSummarySimilarityAnnotationDAO
     }
 
     @Override
+    public SummarySimilarityAnnotationTOResultSet getSummarySimilarityAnnotations(
+            String arg0) throws DAOException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
     public SimAnnotToAnatEntityTOResultSet getSimAnnotToAnatEntity(String ancestralTaxonId, 
             Set<String> speciesIds) throws DAOException {
         log.entry(ancestralTaxonId, speciesIds);
         
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public SimAnnotToAnatEntityTOResultSet getSimAnnotToLostAnatEntity(
+            String arg0, Set<String> arg1) throws DAOException,
+            IllegalArgumentException {
         // TODO Auto-generated method stub
         return null;
     }

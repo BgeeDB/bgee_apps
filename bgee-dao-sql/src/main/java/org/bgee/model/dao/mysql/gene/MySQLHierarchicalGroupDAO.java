@@ -45,6 +45,13 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
         super(manager);
     }
     
+    @Override
+    public HierarchicalGroupToGeneTOResultSet getGroupToGene(String arg0)
+            throws DAOException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
     //***************************************************************************
     // METHODS NOT PART OF THE bgee-dao-api, USED BY THE PIPELINE AND NOT MEANT 
     //TO BE EXPOSED TO THE PUBLIC API.

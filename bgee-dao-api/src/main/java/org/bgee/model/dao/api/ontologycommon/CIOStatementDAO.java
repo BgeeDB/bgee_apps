@@ -51,6 +51,19 @@ public interface CIOStatementDAO extends DAO<CIOStatementDAO.Attribute> {
      * @throws DAOException If an error occurred when accessing the data source. 
      */
     public CIOStatementTOResultSet getAllCIOStatements() throws DAOException;
+    
+    /**
+     * Retrieves CIO statements that are considered as trusted by the Bgee team.
+     * <p>
+     * The CIO statements are retrieved and returned as a {@code CIOStatementTOResultSet}. It is 
+     * the responsibility of the caller to close this {@code DAOResultSet} once results are 
+     * retrieved.
+     * 
+     * @return              An {@code CIOStatementTOResultSet} allowing to retrieve 
+     *                      the requested {@code CIOStatementTO}s.
+     * @throws DAOException If an error occurred when accessing the data source. 
+     */
+    public CIOStatementTOResultSet getTrustedCIOStatements() throws DAOException;
 
     /**
      * Inserts the provided CIO statements into the data source, 

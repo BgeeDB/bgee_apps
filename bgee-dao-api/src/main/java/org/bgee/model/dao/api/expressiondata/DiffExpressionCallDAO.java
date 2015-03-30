@@ -78,6 +78,35 @@ public interface DiffExpressionCallDAO extends DAO<DiffExpressionCallDAO.Attribu
             throws DAOException;
 
     /**
+     * Retrieve differential expression calls for genes homologous in the provided taxon, 
+     * order by groups of homologous genes, and filtered according to 
+     * {@code DiffExpressionCallParams}.
+     * <p>
+     * Only genes that are homologous at the level of the provided taxon will be considered. 
+     * If it is not needed to consider all species member of the provided taxon, 
+     * they can be further filtered using the methods {@code addSpeciesId} or 
+     * {@code addAllSpeciesIds} on the provided {@code DiffExpressionCallParams}.
+     * <p>
+     * The {@code DiffExpressionCallTO}s retrieved will be order by groups of genes 
+     * homologous at the level of the provided taxon. To determine the homologous group 
+     * being iterated, it is necessary to retrieve the mapping from gene IDs to 
+     * homologous group IDs, see 
+     * {@link org.bgee.model.dao.api.gene.HierarchicalGroupDAO#getGroupToGene(String)}.
+     * <p>
+     * The differential expression calls are returned through a
+     * {@code DiffExpressionCallTOResultSet}. It is the responsibility of the caller to close 
+     * this {@code DAOResultSet} once results are retrieved.
+     * 
+     * @param params        A {@code DiffExpressionCallParams} that provide the parameters specific 
+     *                      to differential expression calls
+     * @return              A {@code DiffExpressionCallTOResultSet} allowing to retrieve 
+     *                      the requested differential expression calls from the data source.
+     * @throws DAOException If an error occurred when accessing the data source. 
+     */
+    public DiffExpressionCallTOResultSet getOrderedHomologousGenesDiffExpressionCalls(
+            String taxonId, DiffExpressionCallParams params) throws DAOException;
+
+    /**
      * {@code DAOResultSet} specifics to {@code DiffExpressionCallTO}s
      * 
      * @author Valentine Rech de Laval

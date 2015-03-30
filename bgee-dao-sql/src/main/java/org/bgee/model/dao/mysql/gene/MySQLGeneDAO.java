@@ -277,9 +277,8 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         @Override
         protected GeneTO getNewTO() {
             log.entry();
-            String geneId = null, geneName = null, geneDescription = null, ancestralOMATaxonId = null;
-            Integer speciesId = null, geneBioTypeId = null, OMAParentNodeId = null, 
-                    ancestralOMANodeId= null;
+            String geneId = null, geneName = null, geneDescription = null;
+            Integer speciesId = null, geneBioTypeId = null, OMAParentNodeId = null;
             Boolean ensemblGene = null;
             // Get results
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
@@ -305,12 +304,6 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
                     } else if (column.getValue().equals("ensemblGene")) {
                         ensemblGene = this.getCurrentResultSet().getBoolean(column.getKey());
                         
-                    } else if (column.getValue().equals("ancestralOMANodeId")) {
-                        ancestralOMANodeId = this.getCurrentResultSet().getInt(column.getKey());
-
-                    } else if (column.getValue().equals("ancestralOMATaxonId")) {
-                        ancestralOMATaxonId = 
-                                this.getCurrentResultSet().getString(column.getKey());
                     } else {
                         throw log.throwing(new UnrecognizedColumnException(column.getValue()));
                     }
@@ -320,7 +313,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
             }
             //Set GeneTO
             return log.exit(new GeneTO(geneId, geneName, geneDescription, speciesId, geneBioTypeId, 
-                    OMAParentNodeId, ensemblGene, ancestralOMANodeId, ancestralOMATaxonId));
+                    OMAParentNodeId, ensemblGene));
         }
     }
 }

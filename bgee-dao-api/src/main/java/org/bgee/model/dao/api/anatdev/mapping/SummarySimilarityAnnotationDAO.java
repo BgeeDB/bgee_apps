@@ -12,7 +12,8 @@ import org.bgee.model.dao.api.exception.DAOException;
  * DAO defining queries using or retrieving {@link SummarySimilarityAnnotationTO}s. 
  *
  * @author Valentine Rech de Laval
- * @version Bgee 13
+ * @author Frederic Bastian
+ * @version Bgee 13 Mar. 2015
  * @see SummarySimilarityAnnotationTO
  * @since Bgee 13
  */
@@ -52,58 +53,106 @@ public interface SummarySimilarityAnnotationDAO extends
             throws DAOException;
     
     /**
-     * Retrieve similarity annotations and anatomical entities they are associated to.
+     * Retrieve similarity annotations valid at the level of {@code ancestralTaxonId}, 
+     * or any of its ancestral taxa.
+     * <p>
+     * The summary similarity annotations are retrieved and returned as a 
+     * {@code SummarySimilarityAnnotationTOResultSet}. It is the responsibility of the caller 
+     * to close this {@code DAOResultSet} once results are retrieved.
+     * 
+     * @param taxonId           A {@code String} that is the NCBI ID of the taxon 
+     *                          for which the similarity annotations should be valid, 
+     *                          including all its ancestral taxa.
+     * @return                  A {@code SummarySimilarityAnnotationTOResultSet} allowing 
+     *                          to retrieve the requested {@code SummarySimilarityAnnotationTO}s.
+     * @throws DAOException     If an error occurred when accessing the data source.
+     */
+    public SummarySimilarityAnnotationTOResultSet getSummarySimilarityAnnotations(
+            String taxonId) throws DAOException;
+    
+    /**
+     * Retrieve transitive similarity annotations and anatomical entities 
+     * they are associated to.
      * The annotations will be valid at the level of {@code ancestralTaxonId}, or any of its 
      * ancestral taxa. The anatomical entities retrieved will be defined as existing 
-     * in all the provided species.
+     * in all the provided species. If {@code speciesIds} is {@code null} or empty, 
+     * then the anatomical entities retrieved will be defined as existing in any species 
+     * (this allows to retrieve homologous organs lost in a taxon).
      * <p>
      * The point of retrieving these mappings is that an annotation can associate several 
      * anatomical entities (for instance, an annotation captures the homology between 
-     * 'lung' and 'swimm bladder'); it is not simply a matter of retrieving organs 
-     * similar in different species, but of retrieving mappings between similar organs 
-     * in different species. Anatomical entities with a similarity mapping will have 
+     * 'lung' and 'swimm bladder'). Anatomical entities with a similarity mapping will have 
      * the same {@code summarySimilarityAnnotationId} (see 
      * {@link SimAnnotToAnatEntityTO#getSummarySimilarityAnnotationId()}).
+     * Note that if an anatomical entity is used in several similarity annotations 
+     * (for instance, 'lung' would be used in a 'lung - swim bladder' annotation, but also 
+     * in a standalone 'lung' annotation, to know when the structure specialized 
+     * and became a "true" lung), only the annotation with the most recent valid taxon 
+     * will be returned (in the previous example, only the standalone 'lung' annotation).
      * <p>
-     * However, note that in vast majority of cases, similarity annotations target 
-     * only a single anatomical entity (which means that this anatomical entity is similar 
-     * in the requested taxon). 
+     * Note that in vast majority of cases, similarity annotations target 
+     * only a single anatomical entity. 
      * <p>
-     * The point of providing a list of species IDs to filter the anatomical entities 
-     * is to accommodate for incorrect taxon constraints: for instance, a structure 
-     * is considered as homologous at the Euarchontoglires level (includes human, mouse, rat), 
-     * but an incorrect taxon constraint consider that the structure is absent in rat; 
-     * if we were providing only the ancestral taxon ID, this structure would be filtered out; 
-     * by providing a list of species, at least we would recover the structure if we were 
-     * comparing only human and mouse.
-     * <p>
-     * The point of not inferring the ancestral taxon ID from the list of species 
+     * The point of not inferring the ancestral taxon ID from the list of species provided 
      * is to be able to retrieve mappings valid between some species, but that are defined 
      * at a higher taxonomic level than their LCA (for instance, using only similarities 
      * arisen at the Bilateria level, while comparing species with an Euarchontoglires 
      * common ancestor).
      * <p>
      * Note that using the {@code setAttributes} methods (see {@link DAO}) has no effect 
-     * on attributes retrieved in {@code SimAnnotToAnatEntityTO}s.
+     * on attributes retrieved in {@code SimAnnotToAnatEntityTO}s. Also, it is 
+     * the responsibility of the caller to close the returned {@code DAOResultSet} 
+     * once results are retrieved.
      * 
      * @param ancestralTaxonId  A {@code String} that is the NCBI ID of the taxon 
      *                          for which the similarity annotations should be valid, 
      *                          including all its ancestral taxa.
      * @param speciesIds        A {@code Set} of {@code String}s that are the IDs 
      *                          of the species for which the anatomical entities retrieved 
-     *                          should be valid.
+     *                          should be valid. If {@code null} or empty, 
+     *                          the anatomical entities retrieved will be valid in any species.
      * @return                  A {@code SimAnnotToAnatEntityTOResultSet} allowing 
      *                          to retrieve the requested {@code SimAnnotToAnatEntityTO}s.
      * @throws DAOException     If an error occurred when accessing the data source. 
      */
     //Note that if someday we use other similarity concepts than 'historical homology' 
     //(HOM:0000007), then this method will need to accept the HOMId as argument.
-    
-    //XXX: "The anatomical entities retrieved will be defined as existing 
-    //in all the provided species." Do we really want this? Maybe we want to recover organs 
-    //'lost' in a taxon?
     public SimAnnotToAnatEntityTOResultSet getSimAnnotToAnatEntity(String ancestralTaxonId, 
             Set<String> speciesIds) throws DAOException;
+    
+    /**
+     * Retrieve transitive similarity annotations and anatomical entities 
+     * they are associated to, that exist in none of the species provided. 
+     * This is the opposite method to {@link #getSimAnnotToAnatEntity(String, Set)}; 
+     * it allows for instance to retrieve homologous organs lost in a taxon. 
+     * <p>
+     * The annotations will be valid at the level of {@code ancestralTaxonId}, or any of its 
+     * ancestral taxa. If {@code speciesIds} is {@code null} or empty, 
+     * an {@code IllegalArgumentException} is thrown.
+     * <p>
+     * Note that using the {@code setAttributes} methods (see {@link DAO}) has no effect 
+     * on attributes retrieved in {@code SimAnnotToAnatEntityTO}s. Also, it is 
+     * the responsibility of the caller to close the returned {@code DAOResultSet} 
+     * once results are retrieved.
+     * 
+     * @param ancestralTaxonId  A {@code String} that is the NCBI ID of the taxon 
+     *                          for which the similarity annotations should be valid, 
+     *                          including all its ancestral taxa.
+     * @param speciesIds        A {@code Set} of {@code String}s that are the IDs 
+     *                          of the species in which the anatomical entities retrieved 
+     *                          should <strong>not</strong> exist. If {@code null} or empty, 
+     *                          an {@code IllegalArgumentException} is thrown.
+     * @return                  A {@code SimAnnotToAnatEntityTOResultSet} allowing 
+     *                          to retrieve the requested {@code SimAnnotToAnatEntityTO}s.
+     * @throws DAOException     If an error occurred when accessing the data source.
+     * @throws IllegalArgumentException If {@code speciesIds} is {@code null} or empty.
+     * @see #getSimAnnotToAnatEntity(String, Set)
+     */
+    //Note that if someday we use other similarity concepts than 'historical homology' 
+    //(HOM:0000007), then this method will need to accept the HOMId as argument.
+    public SimAnnotToAnatEntityTOResultSet getSimAnnotToLostAnatEntity(
+            String ancestralTaxonId, Set<String> speciesIds) throws DAOException, 
+            IllegalArgumentException;
 
     /**
      * Inserts the provided summary similarity annotations into the data source, 

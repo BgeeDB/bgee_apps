@@ -4,6 +4,7 @@ import java.util.Collection;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
+import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.ontologycommon.NestedSetModelElementTO;
 
@@ -45,60 +46,34 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
      * @param groups        A {@code Collection} of {@code HierarchicalGroupTO}s to be
      *                      inserted into the database.
      * @throws IllegalArgumentException If {@code groups} is empty or null. 
-     * @throws DAOException If a {@code SQLException} occurred while trying to insert
+     * @throws DAOException If an {@code Exception} occurred while trying to insert
      *                      {@code terms}. The {@code SQLException} will be wrapped into a
      *                      {@code DAOException} ({@code DAOs} do not expose these kind of
      *                      implementation details).
      */
     public int insertHierarchicalGroups(Collection<HierarchicalGroupTO> groups)
             throws DAOException, IllegalArgumentException;
-
-//    /**
-//     * Retrieves all the orthologous genes corresponding to the queried gene at the
-//     * taxonomy level specified.
-//     * <p>
-//     * This method takes as parameters a {@code String} representing the gene ID, and a
-//     * {@code String} representing the NCBI taxonomy ID for the taxonomy level queried.
-//     * Then, the IDs of orthologous genes for the submitted gene ID at the particular
-//     * taxonomy level are retrieved and returned as a {@code Collection} of 
-//     * {@code String}s.
-//     * 
-//     * @param queryGene      A {@code String} representing the gene ID queried, whose
-//     *                       orthologous genes are to be retrieved.
-//     * @param taxonId A {@code String} representing the NCBI taxonomy ID of the
-//     *                       hierarchical level queried.
-//     * @return               A {@code Collection} of {@code String}s containing the IDs of
-//     *                       orthologous genes of the query gene corresponding to the 
-//     *                       taxonomy level queried.
-//     * @throws DAOException  If an error occurred when accessing the data source.
-//     */
-//    public Collection<String> getHierarchicalOrthologousGenes(String queryGene,
-//            String taxonId) throws DAOException;
-//
-//    /**
-//     * Retrieves the orthologous genes corresponding to the queried gene at the taxonomy
-//     * level specified, belonging to the species specified.
-//     * <p>
-//     * This method takes as parameters a {@code String} representing the gene ID, a
-//     * {@code String} representing the NCBI taxonomy ID for the taxonomy level queried,
-//     * and a {@code Collection} of {@code String}s representing the species the returned
-//     * genes should belong to. The IDs of orthologous genes are returned as a
-//     * {@code Collection} of {@code String}s.
-//     * 
-//     * @param queryGene      A {@code String} representing the gene ID queried, whose
-//     *                       orthologous genes are to be retrieved.
-//     * 
-//     * @param taxonId A {@code String} representing the NCBI taxonomy ID of the
-//     *                       hierarchical level queried.
-//     * @param speciesIds     A {@code Collection} of {@code String}s containing the IDs of
-//     *                       the species the returned genes should belong to.
-//     * @return               A {@code Collection} of {@code String}s containing the IDs of
-//     *                       orthologous genes of the query gene corresponding to the
-//     *                       taxonomy level queried.
-//     * @throws DAOException  If an error occurred when accessing the data source.
-//     */
-//    public Collection<String> getHierarchicalOrthologousGenesForSpecies(String queryGene,
-//            String taxonId, Collection<String> speciesIds) throws DAOException;    
+    
+    /**
+     * Retrieve the mapping from genes to groups of homologous genes, 
+     * valid for the provided taxon: genes that are homologous at the level 
+     * of the provided taxon will have the same group ID 
+     * (see HierarchicalGroupToGeneTO#getGroupId()). This group ID corresponds to the ID 
+     * of a Hierarchical Group (see {@link HierarchicalGroupTO}). 
+     * <p>
+     * Note that using the {@code setAttributes} methods (see {@link DAO}) has no effect 
+     * on attributes retrieved in {@code HierarchicalGroupToGeneTO}s. Also, it is 
+     * the responsibility of the caller to close the returned {@code DAOResultSet} 
+     * once results are retrieved.
+     * 
+     * @param taxonId   A {@code String} that is the NCBI ID of the taxon for which 
+     *                  homologous genes should be retrieved.
+     * @return          A {@code HierarchicalGroupToGeneTOResultSet} allowing to retrieve 
+     *                  the requested {@code HierarchicalGroupToGeneTO}s.
+     * @throws DAOException If an error occurred when accessing the data source. 
+     */
+    public HierarchicalGroupToGeneTOResultSet getGroupToGene(String taxonId) 
+            throws DAOException;
 
     /**
      * {@code DAOResultSet} specifics to {@code HierarchicalGroupTO}s
@@ -158,6 +133,7 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
          * @throws IllegalArgumentException If {@code id} is empty, or if any of {code leftBound} or
          *                                  {code rightBound} is not {@code null} and less than 0.
          */
+        //TODO: I think we decided that all IDs should be Strings?
         public HierarchicalGroupTO(Integer id, String OMAGroupId, Integer leftBound,
                 Integer rightBound) throws IllegalArgumentException {
             this(id, OMAGroupId, leftBound, rightBound, null);
@@ -228,6 +204,74 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
                    " - Hierarchical left bound: " + this.getLeftBound() + 
                    " - Hierarchical right bound: " + this.getRightBound() + 
                    " - NCBI taxonomy ID: " + this.getTaxonId();
+        }
+    }
+    
+    /**
+     * {@code DAOResultSet} specifics to {@code HierarchicalGroupToGeneTO}s.
+     * 
+     * @author Frederic Bastian
+     * @version Bgee 13 Mar. 2015
+     * @since Bgee 13
+     */
+    public interface HierarchicalGroupToGeneTOResultSet 
+                    extends DAOResultSet<HierarchicalGroupToGeneTO> {
+    }
+    /**
+     * A {@code TransferObject} allowing to map genes to groups of homologous genes. 
+     * <p>
+     * This class provides a group ID (see {@link #getGroupId()} and a gene ID 
+     * (see {@link #getGeneId()}). The group ID corresponds to the ID of a Hierarchical Group 
+     * (see {@link HierarchicalGroupTO}).
+     * <p>
+     * Note that this class is one of the few {@code TransferObject}s that are not 
+     * an {@link org.bgee.model.dao.api.EntityTO}.
+     * 
+     * @author Frederic Bastian
+     * @version Bgee 13 Mar. 2015
+     * @since Bgee 13
+     */
+    public final class HierarchicalGroupToGeneTO extends TransferObject {
+        private static final long serialVersionUID = 3165617503583438525L;
+        
+        /**
+         * A {@code String} representing the ID of a group of homologous genes. 
+         * This corresponds to the ID of Hierarchical Group (see {@link HierarchicalGroupTO}).
+         */
+        //XXX: should it be an int as in the database?
+        private final String groupId;
+        /**
+         * A {@code String} that is the ID of a gene belonging to the group with ID 
+         * {@link #groupId}.
+         */
+        private final String geneId;
+        
+        /**
+         * Constructor providing the ID of the group and the ID of a gene belonging to 
+         * the group.
+         * 
+         * @param groupId   A {@code String} that is the ID of an group of homologous genes.
+         * @param geneId    A {@code String} that is the ID of a gene belonging to the group.
+         */
+        public HierarchicalGroupToGeneTO (String groupId, String geneId) {
+            this.groupId = groupId;
+            this.geneId = geneId;
+        }
+
+        /**
+         * @return  A {@code String} representing the ID of a group of homologous genes. 
+         *          This corresponds to the ID of Hierarchical Group (see 
+         *          {@link HierarchicalGroupTO}).
+         */
+        public String getGroupId() {
+            return groupId;
+        }
+        /**
+         * @return  A {@code String} that is the ID of a gene belonging to the group with ID 
+         *          {@link #getGroupId()}.
+         */
+        public String getGeneId() {
+            return geneId;
         }
     }
 }

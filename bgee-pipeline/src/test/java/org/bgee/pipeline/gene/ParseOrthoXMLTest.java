@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -66,11 +67,13 @@ public class ParseOrthoXMLTest extends TestAncestor {
     /**
      * Test {@link ParseOrthoXML#parseXML(String, String)}, which is the central method of the
      * class doing all the job.
+     * @throws SQLException 
+     * @throws IllegalStateException 
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Test
     public void shouldParseXML() 
-            throws DAOException, XMLStreamException, XMLParseException, IOException {
+            throws DAOException, XMLStreamException, XMLParseException, IOException, IllegalStateException, SQLException {
         log.debug("Testing if the OrthoXML file is parsed correctly..");
 
         // First, we need a mock MySQLDAOManager, for the class to acquire mock
@@ -138,8 +141,11 @@ public class ParseOrthoXMLTest extends TestAncestor {
         verify(mockTaxonTORs).close();
         verify(mockGeneTORs).close();
 
-        //check that the DAO was closed
-        //TODO check call to closeDAO 
+        // Verify that startTransaction() and commit()
+        verify(mockManager.getConnection(), times(1)).startTransaction();
+        verify(mockManager.getConnection(), times(1)).commit();
+
+        //TODO check that the DAO was closed
 
         // Verify that setAttributes are correctly called.
         verify(mockManager.mockSpeciesDAO, times(1)).setAttributes(
@@ -152,11 +158,13 @@ public class ParseOrthoXMLTest extends TestAncestor {
     /**
      * Test {@link ParseOrthoXML#parseXML(String, String)}, which is the central method of the
      * class doing all the job.
+     * @throws SQLException 
+     * @throws IllegalStateException 
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Test
     public void shouldParseXMLWithMappingFile() 
-            throws DAOException, XMLStreamException, XMLParseException, IOException {
+            throws DAOException, XMLStreamException, XMLParseException, IOException, IllegalStateException, SQLException {
         log.debug("Testing if the OrthoXML file is parsed correctly..");
 
         // First, we need a mock MySQLDAOManager, for the class to acquire mock
@@ -229,8 +237,11 @@ public class ParseOrthoXMLTest extends TestAncestor {
         verify(mockTaxonTORs).close();
         verify(mockGeneTORs).close();
 
-        //check that the DAO was closed
-        //TODO check call to closeDAO 
+        // Verify that startTransaction() and commit()
+        verify(mockManager.getConnection(), times(1)).startTransaction();
+        verify(mockManager.getConnection(), times(1)).commit();
+
+        //TODO check that the DAO was closed
         
         // Verify that setAttributes are correctly called.
         verify(mockManager.mockSpeciesDAO, times(1)).setAttributes(
@@ -243,11 +254,13 @@ public class ParseOrthoXMLTest extends TestAncestor {
     /**
      * Test {@link ParseOrthoXML#parseXML(String, String)}, which is the central method of the
      * class doing all the job, throws error
+     * @throws SQLException 
+     * @throws IllegalStateException 
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Test
     public void shouldParseXMLFakePrefixError()
-            throws DAOException, XMLStreamException, XMLParseException, IOException {
+            throws DAOException, XMLStreamException, XMLParseException, IOException, IllegalStateException, SQLException {
         log.debug("Testing if the OrthoXML file is parsed correctly..");
 
         // First, we need a mock MySQLDAOManager, for the class to acquire mock
@@ -292,8 +305,11 @@ public class ParseOrthoXMLTest extends TestAncestor {
         verify(mockTaxonTORs).close();
         verify(mockGeneTORs).close();
         
-        //check that the DAO was closed
-        //TODO check call to closeDAO 
+        // Verify that startTransaction() and commit() never called
+        verify(mockManager.getConnection(), times(0)).startTransaction();
+        verify(mockManager.getConnection(), times(0)).commit();
+
+        //TODO check that the DAO was closed
         
         // Verify that setAttributes are correctly called.
         verify(mockManager.mockSpeciesDAO, times(1)).setAttributes(

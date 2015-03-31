@@ -53,8 +53,8 @@ public interface SummarySimilarityAnnotationDAO extends
             throws DAOException;
     
     /**
-     * Retrieve similarity annotations valid at the level of {@code ancestralTaxonId}, 
-     * or any of its ancestral taxa.
+     * Retrieve similarity annotations valid at the level of {@code taxonId}, 
+     * or any of its ancestral taxa. The annotations can be positive or negative.
      * <p>
      * The summary similarity annotations are retrieved and returned as a 
      * {@code SummarySimilarityAnnotationTOResultSet}. It is the responsibility of the caller 
@@ -71,8 +71,8 @@ public interface SummarySimilarityAnnotationDAO extends
             String taxonId) throws DAOException;
     
     /**
-     * Retrieve transitive similarity annotations and anatomical entities 
-     * they are associated to.
+     * Retrieve <strong>positive</strong> transitive similarity annotations and 
+     * anatomical entities they are associated to.
      * The annotations will be valid at the level of {@code ancestralTaxonId}, or any of its 
      * ancestral taxa. The anatomical entities retrieved will be defined as existing 
      * in all the provided species. If {@code speciesIds} is {@code null} or empty, 
@@ -121,8 +121,8 @@ public interface SummarySimilarityAnnotationDAO extends
             Set<String> speciesIds) throws DAOException;
     
     /**
-     * Retrieve transitive similarity annotations and anatomical entities 
-     * they are associated to, that exist in none of the species provided. 
+     * Retrieve <strong>positive</strong> transitive similarity annotations and 
+     * anatomical entities they are associated to, that exist in none of the species provided. 
      * This is the opposite method to {@link #getSimAnnotToAnatEntity(String, Set)}; 
      * it allows for instance to retrieve homologous organs lost in a taxon. 
      * <p>

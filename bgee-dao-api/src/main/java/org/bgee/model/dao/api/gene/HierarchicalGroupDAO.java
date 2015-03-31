@@ -1,6 +1,7 @@
 package org.bgee.model.dao.api.gene;
 
 import java.util.Collection;
+import java.util.Set;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
@@ -61,19 +62,25 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
      * (see HierarchicalGroupToGeneTO#getGroupId()). This group ID corresponds to the ID 
      * of a Hierarchical Group (see {@link HierarchicalGroupTO}). 
      * <p>
+     * Genes can be filtered further by providing a list of species: only genes belonging 
+     * to these species will be retrieved.
+     * <p>
      * Note that using the {@code setAttributes} methods (see {@link DAO}) has no effect 
      * on attributes retrieved in {@code HierarchicalGroupToGeneTO}s. Also, it is 
      * the responsibility of the caller to close the returned {@code DAOResultSet} 
      * once results are retrieved.
      * 
-     * @param taxonId   A {@code String} that is the NCBI ID of the taxon for which 
-     *                  homologous genes should be retrieved.
+     * @param taxonId       A {@code String} that is the NCBI ID of the taxon for which 
+     *                      homologous genes should be retrieved.
+     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
+     *                      for which we want to retrieve genes. Can be {@code null} or empty, 
+     *                      in order to retrieve all homologous genes for the provided taxon.
      * @return          A {@code HierarchicalGroupToGeneTOResultSet} allowing to retrieve 
      *                  the requested {@code HierarchicalGroupToGeneTO}s.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public HierarchicalGroupToGeneTOResultSet getGroupToGene(String taxonId) 
-            throws DAOException;
+    public HierarchicalGroupToGeneTOResultSet getGroupToGene(String taxonId, 
+            Set<String> speciesIds) throws DAOException;
 
     /**
      * {@code DAOResultSet} specifics to {@code HierarchicalGroupTO}s

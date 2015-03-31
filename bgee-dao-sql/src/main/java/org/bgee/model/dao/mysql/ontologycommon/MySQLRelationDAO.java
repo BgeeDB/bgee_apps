@@ -115,9 +115,8 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
 
          //we don't use a try-with-resource, because we return a pointer to the results, 
          //not the actual results, so we should not close this BgeePreparedStatement.
-         BgeePreparedStatement stmt = null;
          try {
-             stmt = this.getManager().getConnection().prepareStatement(sql);
+             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
              int startIndex = 1;
              if (isSpeciesFilter) {
                  List<Integer> orderedSpeciesIds = MySQLDAO.convertToIntList(speciesIds);
@@ -223,9 +222,8 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
 
          //we don't use a try-with-resource, because we return a pointer to the results, 
          //not the actual results, so we should not close this BgeePreparedStatement.
-         BgeePreparedStatement stmt = null;
          try {
-             stmt = this.getManager().getConnection().prepareStatement(sql);
+             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
              int startIndex = 1;
              if (isSpeciesFilter) {
                  List<Integer> orderedSpeciesIds = MySQLDAO.convertToIntList(speciesIds);

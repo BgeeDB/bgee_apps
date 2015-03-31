@@ -2,6 +2,8 @@ package org.bgee.model.dao.mysql.anatdev.mapping;
 
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -46,6 +48,138 @@ public class MySQLSummarySimilarityAnnotationDAO
         super(manager);
     }
 
+    @Override
+    //TODO: integration test
+    public SummarySimilarityAnnotationTOResultSet getAllSummarySimilarityAnnotations()
+            throws DAOException {
+        log.entry();
+        
+        String tableName = "summarySimilarityAnnotation";
+        
+        //Construct sql query
+        String sql = this.generateSelectClause(this.getAttributes(), tableName, 
+                !this.getAttributes().contains(SummarySimilarityAnnotationDAO.Attribute.ID));
+
+        sql += " FROM " + tableName;
+
+        //we don't use a try-with-resource, because we return a pointer to the results, 
+        //not the actual results, so we should not close this BgeePreparedStatement.
+        try {
+            return log.exit(new MySQLSummarySimilarityAnnotationTOResultSet(
+                    this.getManager().getConnection().prepareStatement(sql)));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+
+    @Override
+    //A warning is issued because we do not close the BgeePreparedStatement we use, 
+    //but if we closed the PreparedStatement, it would close the ResultSet returned. 
+    //The BgeePreparedStatement will be closed when the ResultSet will be closed. 
+    @SuppressWarnings("resource")
+    //TODO: integration test
+    public SummarySimilarityAnnotationTOResultSet getSummarySimilarityAnnotations(
+            String taxonId) throws DAOException {
+        log.entry(taxonId);
+        
+        String sql = this.generateSelectClause(this.getAttributes(), "t3", true);
+        sql += " FROM taxon AS t1 INNER JOIN taxon AS t2 "
+                + "ON t2.taxonLeftBound <= t1.taxonLeftBound AND "
+                + "t2.taxonRightBound >= t1.taxonRightBound "
+                + "INNER JOIN summarySimilarityAnnotation AS t3 "
+                + "ON t3.taxonId = t2.taxonId "
+                + "WHERE t1.taxonId = ?";
+        
+        //we don't use a try-with-resource, because we return a pointer to the results, 
+        //not the actual results, so we should not close this BgeePreparedStatement.
+        try {
+            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
+            stmt.setString(1, taxonId);
+            return log.exit(new MySQLSummarySimilarityAnnotationTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+
+    @Override
+    //A warning is issued because we do not close the BgeePreparedStatement we use, 
+    //but if we closed the PreparedStatement, it would close the ResultSet returned. 
+    //The BgeePreparedStatement will be closed when the ResultSet will be closed. 
+    @SuppressWarnings("resource")
+    //TODO: integration test
+    public SimAnnotToAnatEntityTOResultSet getSimAnnotToAnatEntity(String taxonId, 
+            Set<String> speciesIds) throws DAOException {
+        log.entry(taxonId, speciesIds);
+        
+        String sql = this.getAnnotToAnatEntityQueryStart();
+        
+        if (speciesIds != null && !speciesIds.isEmpty()) {
+            //retrieve structures existing in ALL requested species
+            sql += "AND (EXISTS (SELECT 1 FROM anatEntityTaxonConstraint AS t5 "
+                    + "WHERE t5.anatEntityId = t4.anatEntityId AND t5.speciesId IS NULL) OR (";
+            for (int i = 0; i < speciesIds.size(); i++) {
+                if (i > 0) {
+                    sql += "AND ";
+                }
+                sql += "EXISTS (SELECT 1 FROM anatEntityTaxonConstraint AS t5 "
+                    + "WHERE t5.anatEntityId = t4.anatEntityId AND t5.speciesId = ?) ";
+            }
+            sql += ")) ";
+        }
+        
+        //we don't use a try-with-resource, because we return a pointer to the results, 
+        //not the actual results, so we should not close this BgeePreparedStatement.
+        try {
+            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
+            stmt.setString(1, taxonId);
+            if (speciesIds != null && !speciesIds.isEmpty()) {
+                List<Integer> orderedSpeciesIds = MySQLDAO.convertToIntList(speciesIds);
+                Collections.sort(orderedSpeciesIds);
+                stmt.setIntegers(2, orderedSpeciesIds);
+            }
+            return log.exit(new MySQLSimAnnotToAnatEntityTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+
+    @Override
+    //A warning is issued because we do not close the BgeePreparedStatement we use, 
+    //but if we closed the PreparedStatement, it would close the ResultSet returned. 
+    //The BgeePreparedStatement will be closed when the ResultSet will be closed. 
+    @SuppressWarnings("resource")
+    //TODO: integration test
+    public SimAnnotToAnatEntityTOResultSet getSimAnnotToLostAnatEntity(String taxonId, 
+            Set<String> speciesIds) throws DAOException, IllegalArgumentException {
+        log.entry(taxonId, speciesIds);
+        if (speciesIds == null || speciesIds.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("Some species must be provided."));
+        }
+        
+        String sql = this.getAnnotToAnatEntityQueryStart();
+        
+        //retrieve structures existing in ALL requested species
+        sql += "AND NOT EXISTS (SELECT 1 FROM anatEntityTaxonConstraint AS t5 "
+                + "WHERE t5.anatEntityId = t4.anatEntityId AND t5.speciesId IS NULL) ";
+        for (int i = 0; i < speciesIds.size(); i++) {
+            sql += "AND NOT EXISTS (SELECT 1 FROM anatEntityTaxonConstraint AS t5 "
+                    + "WHERE t5.anatEntityId = t4.anatEntityId AND t5.speciesId = ?) ";
+        }
+        
+        //we don't use a try-with-resource, because we return a pointer to the results, 
+        //not the actual results, so we should not close this BgeePreparedStatement.
+        try {
+            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
+            stmt.setString(1, taxonId);
+            List<Integer> orderedSpeciesIds = MySQLDAO.convertToIntList(speciesIds);
+            Collections.sort(orderedSpeciesIds);
+            stmt.setIntegers(2, orderedSpeciesIds);
+            return log.exit(new MySQLSimAnnotToAnatEntityTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+    
     /**
      * Generates the SELECT clause of a MySQL query used to retrieve 
      * {@code SummarySimilarityAnnotationTO}s.
@@ -54,96 +188,82 @@ public class MySQLSummarySimilarityAnnotationDAO
      *                                  the columns/information the query should retrieve.
      * @param tableName                 A {@code String} defining the name of the summary similarity 
      *                                  annotation table used.
+     * @param distinct                  A {@code boolean} defining whether the 'DISTINCT' option 
+     *                                  should be used in the 'SELECT' clause.
      * @return                          A {@code String} containing the SELECT clause 
      *                                  for the requested query.
      * @throws IllegalArgumentException If one {@code Attribute} of {@code attributes} is unknown.
      */
     private String generateSelectClause(Set<SummarySimilarityAnnotationDAO.Attribute> attributes,
-            String tableName) throws IllegalArgumentException {
-        log.entry(attributes, tableName);
+            String tableName, boolean distinct) throws IllegalArgumentException {
+        log.entry(attributes, tableName, distinct);
     
+        String sql = "SELECT "; 
+        if (distinct) {
+            sql += "DISTINCT ";
+        }
         if (attributes == null || attributes.isEmpty()) {
-            return log.exit("SELECT " + tableName + ".* ");
+            return log.exit(sql + tableName + ".* ");
         }
     
-        String sql = ""; 
-            for (SummarySimilarityAnnotationDAO.Attribute attribute: attributes) {
-                if (sql.isEmpty()) {
-                    sql += "SELECT ";
-                    //does the attributes requested ensure that there will be 
-                    //no duplicated results?
-                    //FIXME: incorrect: depending on the joins, we could have duplicates 
-                    //even if ID is requested; it is the responsibility of the caller 
-                    //to determine whether the DISTINCT clause is necessary.
-                    if (!attributes.contains(SummarySimilarityAnnotationDAO.Attribute.ID)) {
-                        sql += "DISTINCT ";
-                    }
-                } else {
-                    sql += ", ";
-                }
-                sql += tableName + ".";
-                if (attribute.equals(SummarySimilarityAnnotationDAO.Attribute.ID)) {
-                    sql += "summarySimilarityAnnotationId";
-                } else if (attribute.equals(SummarySimilarityAnnotationDAO.Attribute.TAXON_ID)) {
-                    sql += "taxonId";
-                } else if (attribute.equals(SummarySimilarityAnnotationDAO.Attribute.NEGATED)) {
-                    sql += "negated";
-                } else if (attribute.equals(SummarySimilarityAnnotationDAO.Attribute.CIO_ID)) {
-                    sql += "CIOId";
-                } else {
-                    throw log.throwing(new IllegalArgumentException("The attribute provided (" +
-                            attribute.toString() + ") is unknown for " + 
-                            SummarySimilarityAnnotationDAO.class.getName()));
-                }
+        boolean firstIteration = true;
+        for (SummarySimilarityAnnotationDAO.Attribute attribute: attributes) {
+            if (!firstIteration) {
+                sql += ", ";
             }
+            sql += tableName + ".";
+            if (attribute.equals(SummarySimilarityAnnotationDAO.Attribute.ID)) {
+                sql += "summarySimilarityAnnotationId";
+            } else if (attribute.equals(SummarySimilarityAnnotationDAO.Attribute.TAXON_ID)) {
+                sql += "taxonId";
+            } else if (attribute.equals(SummarySimilarityAnnotationDAO.Attribute.NEGATED)) {
+                sql += "negated";
+            } else if (attribute.equals(SummarySimilarityAnnotationDAO.Attribute.CIO_ID)) {
+                sql += "CIOId";
+            } else {
+                throw log.throwing(new IllegalArgumentException("The attribute provided (" +
+                        attribute.toString() + ") is unknown for " + 
+                        SummarySimilarityAnnotationDAO.class.getName()));
+            }
+            firstIteration = false;
+        }
         return log.exit(sql);
     }
 
-    @Override
-    public SummarySimilarityAnnotationTOResultSet getAllSummarySimilarityAnnotations()
-            throws DAOException {
+    /**
+     * @return  A {@code String} that is the beginning of a SQL query allowing to retrieve 
+     *          mappings from similarity annotations to anatomical entities, 
+     *          valid in a provided taxon.
+     */
+    private String getAnnotToAnatEntityQueryStart() {
         log.entry();
         
-        String tableName = "summarySimilarityAnnotation";
+        String sql = "SELECT DISTINCT t4.* "
+                + "FROM taxon AS t1 INNER JOIN taxon AS t2 "
+                + "ON t2.taxonLeftBound <= t1.taxonLeftBound AND "
+                + "t2.taxonRightBound >= t1.taxonRightBound "
+                + "INNER JOIN summarySimilarityAnnotation AS t3 ON t3.taxonId = t2.taxonId "
+                + "INNER JOIN similarityAnnotationToAnatEntityId AS t4 "
+                + "ON t4.summarySimilarityAnnotationId = t3.summarySimilarityAnnotationId "
+                + "WHERE t4.negated = 0 AND t1.taxonId = ? "
+                //check that this is the similarity annotated to the most recent valid taxon 
+                //for this anatomical structure.
+                + "AND NOT EXISTS "
+                    + "(SELECT 1 FROM summarySimilarityAnnotation AS t30 "
+                    + "INNER JOIN taxon AS t10 ON t30.taxonId = t10.taxonId "
+                    + "INNER JOIN similarityAnnotationToAnatEntityId AS t40 "
+                    + "ON t40.summarySimilarityAnnotationId = t30.summarySimilarityAnnotationId "
+                    //search for different annotations including the same organ
+                    + "WHERE t40.anatEntityId = t4.anatEntityId AND "
+                    + "t30.summarySimilarityAnnotationId != t3.summarySimilarityAnnotationId "
+                    //that are annotated to more recent taxa
+                    + "AND t10.taxonLeftBound > t2.taxonLeftBound AND "
+                    + "t10.taxonRightBound < t2.taxonRightBound AND "
+                    //but that are still annotated to a a valid requested taxon
+                    + "t10.taxonLeftBound <= t1.taxonLeftBound AND "
+                    + "t10.taxonRightBound >= t1.taxonRightBound) ";
         
-        //Construct sql query
-        String sql = this.generateSelectClause(this.getAttributes(), tableName);
-
-        sql += " FROM " + tableName;
-
-        //we don't use a try-with-resource, because we return a pointer to the results, 
-        //not the actual results, so we should not close this BgeePreparedStatement.
-        BgeePreparedStatement stmt = null;
-        try {
-            stmt = this.getManager().getConnection().prepareStatement(sql.toString());
-            return log.exit(new MySQLSummarySimilarityAnnotationTOResultSet(stmt));
-        } catch (SQLException e) {
-            throw log.throwing(new DAOException(e));
-        }
-    }
-
-    @Override
-    public SummarySimilarityAnnotationTOResultSet getSummarySimilarityAnnotations(
-            String arg0) throws DAOException {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public SimAnnotToAnatEntityTOResultSet getSimAnnotToAnatEntity(String ancestralTaxonId, 
-            Set<String> speciesIds) throws DAOException {
-        log.entry(ancestralTaxonId, speciesIds);
-        
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public SimAnnotToAnatEntityTOResultSet getSimAnnotToLostAnatEntity(
-            String arg0, Set<String> arg1) throws DAOException,
-            IllegalArgumentException {
-        // TODO Auto-generated method stub
-        return null;
+        return log.exit(sql);
     }
 
     @Override

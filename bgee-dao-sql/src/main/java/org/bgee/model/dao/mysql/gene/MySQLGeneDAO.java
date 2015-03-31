@@ -62,10 +62,9 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         sql += " FROM " + geneTableName;
         //we don't use a try-with-resource, because we return a pointer to the results, 
         //not the actual results, so we should not close this BgeePreparedStatement.
-        BgeePreparedStatement stmt = null;
         try {
-            stmt = this.getManager().getConnection().prepareStatement(sql.toString());
-            return log.exit(new MySQLGeneTOResultSet(stmt));
+            return log.exit(new MySQLGeneTOResultSet(
+                    this.getManager().getConnection().prepareStatement(sql)));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -94,9 +93,8 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 
         //we don't use a try-with-resource, because we return a pointer to the results, 
         //not the actual results, so we should not close this BgeePreparedStatement.
-        BgeePreparedStatement stmt = null;
         try {
-            stmt = this.getManager().getConnection().prepareStatement(sql.toString());
+            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             if (speciesIds != null && speciesIds.size() > 0) {
                 List<Integer> orderedSpeciesIds = MySQLDAO.convertToIntList(speciesIds);
                 Collections.sort(orderedSpeciesIds);

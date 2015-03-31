@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
@@ -56,7 +57,8 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
     public DiffExpressionCallTOResultSet getDiffExpressionCalls(DiffExpressionCallParams params) 
             throws DAOException {
         log.entry(params);
-        return log.exit(getDiffExpressionCalls(params.getSpeciesIds(), params.getComparisonFactor(), 
+        return log.exit(getDiffExpressionCalls(null, params.getSpeciesIds(), 
+                params.getComparisonFactor(), 
                 params.getAffymetrixDiffExprCallTypes(), params.isIncludeAffymetrixTypes(),
                 params.getRNASeqDiffExprCallTypes(), params.isIncludeRNASeqTypes(), 
                 params.isSatisfyAllCallTypeConditions()));
@@ -105,19 +107,34 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
     //but if we closed the PreparedStatement, it would close the ResultSet returned. 
     //The BgeePreparedStatement will be closed when the ResultSet will be closed. 
     @SuppressWarnings("resource")
-    private DiffExpressionCallTOResultSet getDiffExpressionCalls(Set<String> speciesIds,
+    private DiffExpressionCallTOResultSet getDiffExpressionCalls(
+            String OMATaxonId, Set<String> speciesIds,
             ComparisonFactor factor, Set<DiffExprCallType> diffExprCallTypeAffymetrix,
             boolean includeAffymetrixTypes, Set<DiffExprCallType> diffExprCallTypeRNASeq, 
             boolean includeRnaSeqTypes, boolean isSatisfyAllCallTypeCondition) {
-        log.entry(speciesIds, factor, diffExprCallTypeAffymetrix, includeAffymetrixTypes, 
+        log.entry(OMATaxonId, speciesIds, factor, diffExprCallTypeAffymetrix, includeAffymetrixTypes, 
                 diffExprCallTypeRNASeq, includeRnaSeqTypes, isSatisfyAllCallTypeCondition);
 
         // Construct sql query
         String diffExprTableName = "differentialExpression";
+        boolean distinct = false;
+        if (!this.getAttributes().contains(DiffExpressionCallDAO.Attribute.ID) &&  
+                (!this.getAttributes().contains(DiffExpressionCallDAO.Attribute.GENE_ID) || 
+                 !this.getAttributes().contains(DiffExpressionCallDAO.Attribute.ANAT_ENTITY_ID) || 
+                 !this.getAttributes().contains(DiffExpressionCallDAO.Attribute.STAGE_ID))) {
+            distinct = true;
+        }
+        String sql = this.generateSelectClause(this.getAttributes(), diffExprTableName, distinct);
+        sql += "FROM ";
 
-        String sql = this.generateSelectClause(this.getAttributes(), diffExprTableName);
-
-        if (speciesIds != null && speciesIds.size() > 0) {
+        boolean hasSpecies  = speciesIds != null && !speciesIds.isEmpty();
+        boolean hasOMATaxon = StringUtils.isNotBlank(OMATaxonId);
+        String geneInfoTable = "gene";
+        if (hasOMATaxon) {
+            geneInfoTable = "tempGene";
+            sql += "(continue here)";
+        }
+        if (hasSpecies) {
             //the MySQL optimizer sucks and do the join in the wrong order, 
             //when species are requested. So we use the STRAIGHT_JOIN clause, and order 
             //the tables appropriately (gene table first).
@@ -138,7 +155,7 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
         boolean filterRNASeqTypes = 
                 (diffExprCallTypeRNASeq != null && diffExprCallTypeRNASeq.size() != 0 );
         if (factor != null || filterAffymetrixTypes || filterRNASeqTypes) {
-            if (speciesIds != null && speciesIds.size() > 0) {
+            if (hasSpecies) {
                 sql += " AND ";                
             } else {
                 sql += " WHERE ";
@@ -194,7 +211,7 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
         try {
             stmt = this.getManager().getConnection().prepareStatement(sql);
             int stmtIndex = 1;
-            if (speciesIds != null && speciesIds.size() > 0) {
+            if (hasSpecies) {
                 List<Integer> orderedSpeciesIds = MySQLDAO.convertToIntList(speciesIds);
                 Collections.sort(orderedSpeciesIds);
                 stmt.setIntegers(stmtIndex, orderedSpeciesIds);
@@ -235,14 +252,16 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
      *                              the columns/information the query should retrieve.
      * @param diffExprTableName     A {@code String} defining the name of the differential
      *                              expression table used.
+     * @param distinct              A {@code boolean} defining whether the 'DISTINCT' option 
+     *                              should be used in the 'SELECT' clause.
      * @return                      A {@code String} containing the SELECT clause 
      *                              for the requested query.
      * @throws IllegalArgumentException If one {@code Attribute} of {@code attributes} is unknown.
      */
     private String generateSelectClause(
-                    Set<DiffExpressionCallDAO.Attribute> attributes, String diffExprTableName) 
-                            throws IllegalArgumentException {
-        log.entry(attributes, diffExprTableName);
+                    Set<DiffExpressionCallDAO.Attribute> attributes, String diffExprTableName, 
+                    boolean distinct) throws IllegalArgumentException {
+        log.entry(attributes, diffExprTableName, distinct);
         
         if (attributes == null || attributes.isEmpty()) {
             return log.exit("SELECT " + diffExprTableName + ".* ");
@@ -252,12 +271,7 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
         for (DiffExpressionCallDAO.Attribute attribute: attributes) {
             if (sql.isEmpty()) {
                 sql += "SELECT ";
-                //does the attributes requested ensure that there will be 
-                //no duplicated results?
-                if (!attributes.contains(DiffExpressionCallDAO.Attribute.ID) &&  
-                        (!attributes.contains(DiffExpressionCallDAO.Attribute.GENE_ID) || 
-                            !attributes.contains(DiffExpressionCallDAO.Attribute.ANAT_ENTITY_ID) || 
-                            !attributes.contains(DiffExpressionCallDAO.Attribute.STAGE_ID))) {
+                if (distinct) {
                     sql += "DISTINCT ";
                 }
             } else {
@@ -304,6 +318,7 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
                         DiffExpressionCallDAO.class.getName()));
             }
         }
+        sql += " ";
         return log.exit(sql);
     }
     

@@ -176,11 +176,11 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 );
     
         // SIB logo
-        this.writeln("<a href='http://www.isb-sib.ch/' target='_blank' title='Link to the SIB Swiss Institute of Bioinformatics'>"
-                + "<img id='sib_logo' src='"+this.prop.getImagesRootDirectory()+"sib_logo_141x75.png' "
-                + "title='Bgee is part of the SIB Swiss Institute of Bioinformatics' "
-                + "alt='SIB Swiss Institute of Bioinformatics' />"
-                + "</a>");
+        this.writeln("<a href='http://www.isb-sib.ch/' target='_blank' " +
+                "title='Link to the SIB Swiss Institute of Bioinformatics'>" + 
+                "<img id='sib_logo' src='"+this.prop.getImagesRootDirectory()+"sib_logo_141x75.png' " + 
+                "title='Bgee is part of the SIB Swiss Institute of Bioinformatics' " + 
+                "alt='SIB Swiss Institute of Bioinformatics' /></a>");
     
         RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
         urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
@@ -197,10 +197,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 "'>Data download</a>");
         this.writeln("</li>");
         this.writeln("<li>");
-        //TODO modify to be used on the tablet/smartphones
-        this.writeln("<a class='toplevel' title='Documentation page' href='" + urlDocGenerator.getRequestURL() + 
-                "'>Documentation<img class='deploy' src='" + this.prop.getImagesRootDirectory() + 
-                "arrow_down_dark.png' alt='deploy'/></a>");
+        this.writeln("<a title='Documentation page' href='" + 
+                urlDocGenerator.getRequestURL() + "'>Documentation</a><img class='deploy' src='" + 
+                this.prop.getImagesRootDirectory() + "arrow_down_dark.png' alt='deploy'/>");
         this.writeln("<ul>");
         //TODO set section URLs when defined
         this.writeln("<li><a class='drop' title='Section 1' href='" + urlDocGenerator.getRequestURL() + 
@@ -209,15 +208,13 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 "'>Section 2</a></li>");
         this.writeln("<li><a class='drop' title='Section 1' href='" + urlDocGenerator.getRequestURL() + 
                 "'>Section 3</a></li>");
-        this.writeln("<li><a class='drop' title='Section 1' href='" + urlDocGenerator.getRequestURL() + 
-                "'>Section 4</a></li>");
         this.writeln("</ul>");
         this.writeln("</li>");
         this.writeln("<li>");
-        this.writeln("<a id='about' rel='help' title='About page' href='" + urlAboutGenerator.getRequestURL() + 
-                "'>About</a>");
+        this.writeln("<a id='about' rel='help' title='About page' href='" + 
+                urlAboutGenerator.getRequestURL() + "'>About</a>");
         this.writeln("</li>");
-        this.writeln("<li>");
+        this.writeln("<li id='contact'>");
         this.writeln(this.getObfuscateEmail(0));
         this.writeln("</li>");
         this.writeln("</ul>");

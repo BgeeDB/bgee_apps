@@ -116,16 +116,16 @@ public class ParseOrthoXMLTest extends TestAncestor {
         
         // Generate the expected List of GeneTOs to verify the calls made to the DAO.
         List<GeneTO> expectedGeneTOs = Arrays.asList(
-                new GeneTO("ENSDARG00000087888", null, null, null, null, 1, null, null, null),
-                new GeneTO("ENSG00000027681", null, null, null, null, 2, null, null, null),
-                new GeneTO("PPYG00000014510", null, null, null, null, 3, null, null, null),
-                new GeneTO("ENSDARG00000025613", null, null, null, null, 5, null, null, null),
-                new GeneTO("ENSDARG00000089109", null, null, null, null, 6, null, null, null),
-                new GeneTO("ENSDARG00000024124", null, null, null, null, 7, null, null, null),
-                new GeneTO("ENSG00000171791", null, null, null, null, 7, null, null, null),
-                new GeneTO("PPYG00000009212", null, null, null, null, 9, null, null, null),
-                new GeneTO("ENSG00000005242", null, null, null, null, 9, null, null, null),
-                new GeneTO("FBgn0003721", null, null, null, null, 11, null, null, null));
+                new GeneTO("ENSDARG00000087888", null, null, null, null, 1, null),
+                new GeneTO("ENSG00000027681", null, null, null, null, 2, null),
+                new GeneTO("PPYG00000014510", null, null, null, null, 3, null),
+                new GeneTO("ENSDARG00000025613", null, null, null, null, 5, null),
+                new GeneTO("ENSDARG00000089109", null, null, null, null, 6, null),
+                new GeneTO("ENSDARG00000024124", null, null, null, null, 7, null),
+                new GeneTO("ENSG00000171791", null, null, null, null, 7, null),
+                new GeneTO("PPYG00000009212", null, null, null, null, 9, null),
+                new GeneTO("ENSG00000005242", null, null, null, null, 9, null),
+                new GeneTO("FBgn0003721", null, null, null, null, 11, null));
 
         ArgumentCaptor<Set> geneTOsArg = ArgumentCaptor.forClass(Set.class);
         verify(mockManager.mockGeneDAO).updateGenes(geneTOsArg.capture(), 
@@ -203,20 +203,20 @@ public class ParseOrthoXMLTest extends TestAncestor {
         
         // Generate the expected List of GeneTOs to verify the calls made to the DAO.
         List<GeneTO> expectedGeneTOs = Arrays.asList(
-                new GeneTO("ENSDARG00000087888", null, null, null, null, 1, null, null, null),
-                new GeneTO("ENSG00000027681", null, null, null, null, 2, null, null, null),
-                new GeneTO("ENSG00000029527", null, null, null, null, 2, null, null, null),
-                new GeneTO("PPYG00000014510", null, null, null, null, 3, null, null, null),
-                new GeneTO("ENSPTRG00000010079", null, null, null, null, 3, null, null, null),
-                new GeneTO("PPAG00000010079", null, null, null, null, 3, null, null, null),
-                new GeneTO("ACAG00000010079", null, null, null, null, 3, null, null, null),
-                new GeneTO("ENSDARG00000025613", null, null, null, null, 5, null, null, null),
-                new GeneTO("ENSDARG00000089109", null, null, null, null, 6, null, null, null),
-                new GeneTO("ENSDARG00000024124", null, null, null, null, 7, null, null, null),
-                new GeneTO("ENSG00000171791", null, null, null, null, 7, null, null, null),
-                new GeneTO("PPYG00000009212", null, null, null, null, 9, null, null, null),
-                new GeneTO("ENSG00000005242", null, null, null, null, 9, null, null, null),
-                new GeneTO("FBgn0003721", null, null, null, null, 11, null, null, null));
+                new GeneTO("ENSDARG00000087888", null, null, null, null, 1, null),
+                new GeneTO("ENSG00000027681", null, null, null, null, 2, null),
+                new GeneTO("ENSG00000029527", null, null, null, null, 2, null),
+                new GeneTO("PPYG00000014510", null, null, null, null, 3, null),
+                new GeneTO("ENSPTRG00000010079", null, null, null, null, 3, null),
+                new GeneTO("PPAG00000010079", null, null, null, null, 3, null),
+                new GeneTO("ACAG00000010079", null, null, null, null, 3, null),
+                new GeneTO("ENSDARG00000025613", null, null, null, null, 5, null),
+                new GeneTO("ENSDARG00000089109", null, null, null, null, 6, null),
+                new GeneTO("ENSDARG00000024124", null, null, null, null, 7, null),
+                new GeneTO("ENSG00000171791", null, null, null, null, 7, null),
+                new GeneTO("PPYG00000009212", null, null, null, null, 9, null),
+                new GeneTO("ENSG00000005242", null, null, null, null, 9, null),
+                new GeneTO("FBgn0003721", null, null, null, null, 11, null));
 
         ArgumentCaptor<Set> geneTOsArg = ArgumentCaptor.forClass(Set.class);
         verify(mockManager.mockGeneDAO).updateGenes(geneTOsArg.capture(), 
@@ -386,30 +386,30 @@ public class ParseOrthoXMLTest extends TestAncestor {
         // Determine the behavior of consecutive calls to getTO(). 
         // Some genes are presents in the fakeOMA file, and not in this list.
         when(mockGeneTORs.getTO()).thenReturn(
-                new GeneTO("ACAG00000010079", null, null, null, null, null, null, null, null),
-                new GeneTO("ENSBTAG00000019302", null, null, null, null, null, null, null, null),
-                new GeneTO("ENSGALG00000012885", null, null, null, null, null, null, null, null),
-                new GeneTO("ENSDARG00000089109", null, null, null, null, null, null, null, null),
-                new GeneTO("ENSDARG00000025613", null, null, null, null, null, null, null, null),
-                new GeneTO("ENSDARG00000087888", null, null, null, null, null, null, null, null),
-                new GeneTO("FBgn0003721", null, null, null, null, null, null, null, null),
-                new GeneTO("ENSGGOG00000000790", null, null, null, null, null, null, null, null),
-                new GeneTO("ENSGGOG00000002173", null, null, null, null, null, null, null, null),
-                new GeneTO("ENSG00000268179", null, null, null, null, null, null, null, null),
-                new GeneTO("ENSG00000171791", null, null, null, null, null, null, null, null),
-                new GeneTO("ENSG00000027681", null, null, null, null, null, null, null, null),
-                new GeneTO("ENSG00000005242", null, null, null, null, null, null, null, null),
-                new GeneTO("ENSG00000029527", null, null, null, null, null, null, null, null),
-                new GeneTO("ENSMMUG00000006577", null, null, null, null, null, null, null, null),
-                new GeneTO("ENSMUSG00000057329", null, null, null, null, null, null, null, null),
-                new GeneTO("ENSPTRG00000010079", null, null, null, null, null, null, null, null),
-                new GeneTO("PPAG00000010079", null, null, null, null, null, null, null, null),
-                new GeneTO("ENSSSCG00000004895", null, null, null, null, null, null, null, null),
-                new GeneTO("PPYG00000009212", null, null, null, null, null, null, null, null),
-                new GeneTO("PPYG00000014510", null, null, null, null, null, null, null, null),
-                new GeneTO("ENSRNOG00000002791", null, null, null, null, null, null, null, null),
-                new GeneTO("ENSTNIG00000000982", null, null, null, null, null, null, null, null),
-                new GeneTO("ENSDARG00000024124", null, null, null, null, null, null, null, null));
+                new GeneTO("ACAG00000010079", null, null, null, null, null, null),
+                new GeneTO("ENSBTAG00000019302", null, null, null, null, null, null),
+                new GeneTO("ENSGALG00000012885", null, null, null, null, null, null),
+                new GeneTO("ENSDARG00000089109", null, null, null, null, null, null),
+                new GeneTO("ENSDARG00000025613", null, null, null, null, null, null),
+                new GeneTO("ENSDARG00000087888", null, null, null, null, null, null),
+                new GeneTO("FBgn0003721", null, null, null, null, null, null),
+                new GeneTO("ENSGGOG00000000790", null, null, null, null, null, null),
+                new GeneTO("ENSGGOG00000002173", null, null, null, null, null, null),
+                new GeneTO("ENSG00000268179", null, null, null, null, null, null),
+                new GeneTO("ENSG00000171791", null, null, null, null, null, null),
+                new GeneTO("ENSG00000027681", null, null, null, null, null, null),
+                new GeneTO("ENSG00000005242", null, null, null, null, null, null),
+                new GeneTO("ENSG00000029527", null, null, null, null, null, null),
+                new GeneTO("ENSMMUG00000006577", null, null, null, null, null, null),
+                new GeneTO("ENSMUSG00000057329", null, null, null, null, null, null),
+                new GeneTO("ENSPTRG00000010079", null, null, null, null, null, null),
+                new GeneTO("PPAG00000010079", null, null, null, null, null, null),
+                new GeneTO("ENSSSCG00000004895", null, null, null, null, null, null),
+                new GeneTO("PPYG00000009212", null, null, null, null, null, null),
+                new GeneTO("PPYG00000014510", null, null, null, null, null, null),
+                new GeneTO("ENSRNOG00000002791", null, null, null, null, null, null),
+                new GeneTO("ENSTNIG00000000982", null, null, null, null, null, null),
+                new GeneTO("ENSDARG00000024124", null, null, null, null, null, null));
         // Determine the behavior of consecutive calls to next().
         when(mockGeneTORs.next()).thenAnswer(new Answer<Boolean>() {
             int counter = -1;

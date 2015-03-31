@@ -8,6 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
+import org.bgee.view.AboutDisplay;
 import org.bgee.view.DocumentationDisplay;
 import org.bgee.view.DownloadDisplay;
 import org.bgee.view.GeneralDisplay;
@@ -60,6 +61,13 @@ public class HtmlFactory extends ViewFactory {
     public DocumentationDisplay getDocumentationDisplay() throws IOException {
         log.entry();
         return log.exit(new HtmlDocumentationDisplay(
+                this.response, this.requestParameters, this.prop));
+    }
+
+    @Override
+    public AboutDisplay getAboutDisplay() throws IOException {
+        log.entry();
+        return log.exit(new HtmlAboutDisplay(
                 this.response, this.requestParameters, this.prop));
     }
 }

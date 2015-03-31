@@ -8,6 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
+import org.bgee.view.AboutDisplay;
 import org.bgee.view.DocumentationDisplay;
 import org.bgee.view.DownloadDisplay;
 import org.bgee.view.GeneralDisplay;
@@ -36,6 +37,12 @@ public class XmlFactory extends ViewFactory {
 
     @Override
     public DocumentationDisplay getDocumentationDisplay() throws IOException {
+        log.entry();
+        throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
+    }
+
+    @Override
+    public AboutDisplay getAboutDisplay() throws IOException {
         log.entry();
         throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
     }

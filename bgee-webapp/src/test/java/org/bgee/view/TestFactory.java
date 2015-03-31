@@ -59,5 +59,15 @@ public class TestFactory extends ViewFactory {
         }
         return null;
     }
+
+    @Override
+    public AboutDisplay getAboutDisplay() throws IOException {
+        if(prop.getUrlMaxLength() == 9999 && this.requestParameters.getFirstValue(
+                ((TestURLParameters)this.requestParameters.getUrlParametersInstance())
+                .getParamTestString()).equals("test")){
+            return new TestAboutDisplay(this.response, this.requestParameters, prop);
+        }
+        return null;
+    }
     
 }

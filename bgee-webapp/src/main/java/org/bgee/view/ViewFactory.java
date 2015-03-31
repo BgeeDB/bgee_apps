@@ -15,6 +15,7 @@ import org.bgee.controller.RequestParameters;
  * 
  * @author Mathieu Seppey
  * @author Frederic Bastian
+ * @author Valentine Rech de Laval
  * @version Bgee 13 Aug 2014
  * @since   Bgee 1
  * 
@@ -92,5 +93,14 @@ public abstract class ViewFactory
      *                      response output.
      */
     public abstract DocumentationDisplay getDocumentationDisplay() throws IOException;
+
+    /**
+     *                              
+     * @return A {@code AboutDisplay} instance that is the view to be used
+     * 
+     * @throws IOException  If an error occurs with the {@code PrintWriter} when writing the
+     *                      response output.
+     */
+    public abstract AboutDisplay getAboutDisplay() throws IOException;
 
 }

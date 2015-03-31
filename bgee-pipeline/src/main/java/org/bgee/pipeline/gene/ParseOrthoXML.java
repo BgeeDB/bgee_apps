@@ -531,7 +531,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
                     String currentGeneId = geneId;
                     int geneTaxId = groupGene.getSpecies().getNcbiTaxId();
                     if (this.addGeneTO(new GeneTO(geneId, null, null, null, null, 
-                            this.omaNodeId, null, null, null),
+                            this.omaNodeId, null),
                             omaXrefId)) {
                         isInBgee = true;
                     } else if (!geneMapping.isEmpty()) {
@@ -540,7 +540,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
                             currentGeneId = geneMapping.get(geneId);
                             log.debug("Mapping found for geneId {}: {}", geneId, currentGeneId);
                             if (this.addGeneTO(new GeneTO(currentGeneId, null, null, null, null, 
-                                    this.omaNodeId, null, null, null), omaXrefId)) {
+                                    this.omaNodeId, null), omaXrefId)) {
                                 isInBgee = true;
                             }
                         }
@@ -559,7 +559,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
                                           "because belonging to species {}", 
                                           currentGeneId, duplicateId, geneTaxId);
                                 if (this.addGeneTO(new GeneTO(duplicateId, null, null, null, null,
-                                        this.omaNodeId, null, null, null), omaXrefId)) {
+                                        this.omaNodeId, null), omaXrefId)) {
                                     isInBgee = true;
                                 }
                             }

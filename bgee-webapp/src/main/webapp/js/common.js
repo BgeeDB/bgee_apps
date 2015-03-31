@@ -25,27 +25,26 @@
  * first piece of javascript code executed.
  * 
  */
-$( document ).ready(function() {
+$(document).ready(function() {
     // Init object urlParameters, which provides the list of all parameters allowed in an URL.
     urlParameters.init();
     // Create a requestParameters for the current URL
     var currentRequest = new requestParameters(null,true, "&");
     
-    // Add a listener on deploy link in navbar to show/hide submenus
-    var $deployLink =  $( "#nav a.toplevel" );
-    var $submenus =  $( "#navbar ul ul" );
-    $deployLink.click( function() {
-    	// Show/hide submenus
-    	$submenus.toggle();
+    // Add a listener in navbar to change caret image when mouse over 'li'
+    var $deployLi =  $( "#nav li" );
+    $deployLi.mouseover( function() {
     	// Change img
-    	var lightImgUrl = '/img/arrow_down_light.png';
-    	var darkImgUrl = '/img/arrow_down_dark.png';
-    	if ($( this ).attr('src') == lightImgUrl) {
-    		$( this ).attr('src', darkImgUrl);
-    	} else {
-    		$( this ).attr('src', lightImgUrl);
-    	}
+    	$("img", this).attr('src', '/img/arrow_down_light.png');
     });
+    $deployLi.mouseout( function() {
+    	// Change img
+    	$("img", this).attr('src', '/img/arrow_down_dark.png');
+    });
+    
+//    var contactLi =  document.getElementById('contact');
+//    $contactLi.innerHTML += getBgeeContact();
+
 });
 
 function getBgeeContact() {

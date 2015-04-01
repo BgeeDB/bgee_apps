@@ -193,8 +193,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("<div id='nav'>");
         this.writeln("<ul>");
         this.writeln("<li>");
-        this.writeln("<a title='Data download page' href='" + urlDownloadGenerator.getRequestURL() + 
-                "'>Data download</a>");
+        this.writeln("<a title='Expression data page' href='" + urlDownloadGenerator.getRequestURL() + 
+                "'>Expression data</a>");
         this.writeln("</li>");
         this.writeln("<li>");
         this.writeln("<a title='Documentation page' href='" + 

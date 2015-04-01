@@ -9,10 +9,10 @@
 }
 
 img.pageimg {
-    border-radius: 120px;
-    height: 100px;
-    width: 100px;
-    box-shadow: 3px 3px 4px grey, -2px -2px 2px white;
+    border-radius: 8px;
+    height: 120px;
+    width: 120px;
+    box-shadow: 4px 4px 6px 0px #555;
 }
 
 img.pageimg:hover {

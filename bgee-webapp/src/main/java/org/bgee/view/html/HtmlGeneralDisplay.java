@@ -77,31 +77,18 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         urlDocGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
 
         this.writeln("<div id='feature_list'>");
-        //TODO choose between icons or images
-        this.writeln("<a href='" + urlDownloadGenerator.getRequestURL() + "' title='Bgee download page'>" +
+        this.writeln("<a href='" + urlDownloadGenerator.getRequestURL() +
+                "' title='Bgee expression data page'>" +
                 "<figure><div><img class='pageimg' src='" + this.prop.getImagesRootDirectory() + 
-                "patchwork.png' alt='Download page screenshot' /></div>" +
-                "<figcaption>Data download</figcaption>" +
+                "patchwork.png' alt='Expression data screenshot' /></div>" +
+                "<figcaption>Expression data</figcaption>" +
                 "</figure></a>");
-        this.writeln("<a href='" + urlDocGenerator.getRequestURL() + "' title='Bgee documentation page'>" +
+        this.writeln("<a href='" + urlDocGenerator.getRequestURL() + 
+                "' title='Bgee documentation page'>" +
                 "<figure><div><img class='pageimg' src='" + this.prop.getImagesRootDirectory() + 
                 "books.png' alt='Documentation page screenshot' /></div>" +
                 "<figcaption>Documentation</figcaption>" +
                 "</figure></a>");
-        this.writeln("</div>");
-
-        this.writeln("<div id='feature_list'>");
-        this.writeln("<a href='" + urlDownloadGenerator.getRequestURL() + "' title='Bgee download page'>" +
-                "<figure><div><img class='pageimg' src='" + this.prop.getImagesRootDirectory() + 
-                "download.png' alt='Download page screenshot' /></div>" +
-                "<figcaption>Data download</figcaption>" +
-                "</figure></a>");
-        this.writeln("<a href='" + urlDocGenerator.getRequestURL() + "' title='Bgee documentation page'>" +
-                "<figure><div><img class='pageimg' src='" + this.prop.getImagesRootDirectory() + 
-                "documentation.png' alt='Documentation page screenshot' /></div>" +
-                "<figcaption>Documentation</figcaption>" +
-                "</figure></a>");
-
         this.writeln("</div>");
         
         this.writeln("<div id='home_info'>");

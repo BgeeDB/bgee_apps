@@ -65,10 +65,15 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
     }
 
     @Override
+    //TODO: integration test
     public DiffExpressionCallTOResultSet getOrderedHomologousGenesDiffExpressionCalls(
-            String arg0, DiffExpressionCallParams arg1) throws DAOException {
-        // TODO Auto-generated method stub
-        return null;
+            String taxonId, DiffExpressionCallParams params) throws DAOException {
+        log.entry(taxonId, params);
+        return log.exit(getDiffExpressionCalls(taxonId, params.getSpeciesIds(), 
+                params.getComparisonFactor(), 
+                params.getAffymetrixDiffExprCallTypes(), params.isIncludeAffymetrixTypes(),
+                params.getRNASeqDiffExprCallTypes(), params.isIncludeRNASeqTypes(), 
+                params.isSatisfyAllCallTypeConditions()));
     }
 
     /**
@@ -125,29 +130,59 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
             distinct = true;
         }
         String sql = this.generateSelectClause(this.getAttributes(), diffExprTableName, distinct);
-        sql += "FROM ";
 
         boolean hasSpecies  = speciesIds != null && !speciesIds.isEmpty();
         boolean hasOMATaxon = StringUtils.isNotBlank(OMATaxonId);
-        String geneInfoTable = "gene";
-        if (hasOMATaxon) {
-            geneInfoTable = "tempGene";
-            sql += "(continue here)";
-        }
-        if (hasSpecies) {
+        String geneInfoTable = null;
+        
+        //either because we want to limit the results retrieved to some species, 
+        //or because we want to order results by groups of homologous genes, 
+        //we need to join additional tables. 
+        sql += "FROM ";
+        if (hasSpecies || hasOMATaxon) {
+            if (hasOMATaxon) {
+                //we want to order results by groups of homologous genes, so we recover 
+                //the correct OMA node IDs for the requested taxon
+                geneInfoTable = "tempGene";
+                sql += "(SELECT DISTINCT t10.OMANodeId, t30.geneId "
+                    + "FROM OMAHierarchicalGroup AS t10 "
+                    + "INNER JOIN OMAHierarchicalGroup AS t20 "
+                    + "ON t20.OMANodeLeftBound >= t10.OMANodeLeftBound AND "
+                    + "t20.OMANodeRightBound <= t10.OMANodeRightBound "
+                    + "INNER JOIN gene AS t30 ON t20.OMANodeId = t30.OMAParentNodeId "
+                    + "WHERE t10.taxonId = ? ";
+                if (hasSpecies) {
+                    sql += "AND t30.speciesId IN (" +
+                            BgeePreparedStatement.generateParameterizedQueryString(
+                                    speciesIds.size()) + ")";
+                }
+                sql += ") AS " + geneInfoTable;
+            } else {
+                //filter species considered by using info in the gene table
+                geneInfoTable = "gene";
+                sql += geneInfoTable;
+            }
+            
             //the MySQL optimizer sucks and do the join in the wrong order, 
             //when species are requested. So we use the STRAIGHT_JOIN clause, and order 
             //the tables appropriately (gene table first).
             //TODO: this order might not be optimal if other filtering options are added 
             //in the future (not based only on speciesIds)
-            sql += " FROM gene STRAIGHT_JOIN " + diffExprTableName + 
-                    " ON (gene.geneId = " + diffExprTableName + ".geneId) " +
-                    
-                    " WHERE gene.speciesId IN (" +
-                    BgeePreparedStatement.generateParameterizedQueryString(
-                            speciesIds.size()) + ")";
+            sql += " STRAIGHT_JOIN " + diffExprTableName + 
+                    " ON " + geneInfoTable + ".geneId = " + diffExprTableName + ".geneId ";
+            
+            //if we want to order results by groups of homologous genes, we have already 
+            //filtered the species considered in the sub-query.
+            if (!hasOMATaxon) {
+                sql += " WHERE " + geneInfoTable + ".speciesId IN (" +
+                        BgeePreparedStatement.generateParameterizedQueryString(
+                                speciesIds.size()) + ")";
+            }
+            
         } else {
-            sql += " FROM " + diffExprTableName;
+            //if no conditions on the species considered, and no ordering 
+            //by groups of homologous genes, we only use the diff expression table.
+            sql += diffExprTableName;
         }
         
         boolean filterAffymetrixTypes = 
@@ -155,7 +190,7 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
         boolean filterRNASeqTypes = 
                 (diffExprCallTypeRNASeq != null && diffExprCallTypeRNASeq.size() != 0 );
         if (factor != null || filterAffymetrixTypes || filterRNASeqTypes) {
-            if (hasSpecies) {
+            if (hasSpecies && !hasOMATaxon) {
                 sql += " AND ";                
             } else {
                 sql += " WHERE ";
@@ -205,12 +240,20 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
             sql += ")";
         }
         
+        if (hasOMATaxon) {
+            sql += " ORDER BY " + geneInfoTable + ".OMANodeId";
+        }
+        
         //we don't use a try-with-resource, because we return a pointer to the results, 
         //not the actual results, so we should not close this BgeePreparedStatement.
         BgeePreparedStatement stmt = null;
         try {
             stmt = this.getManager().getConnection().prepareStatement(sql);
             int stmtIndex = 1;
+            if (hasOMATaxon) {
+                stmt.setString(1, OMATaxonId);
+                stmtIndex = 2;
+            }
             if (hasSpecies) {
                 List<Integer> orderedSpeciesIds = MySQLDAO.convertToIntList(speciesIds);
                 Collections.sort(orderedSpeciesIds);

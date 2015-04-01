@@ -47,7 +47,8 @@ public class MySQLDiffExpressionCallDAOIT extends MySQLITAncestor {
     }
 
     /**
-     * Test the select method {@link MySQLDiffExpressionCallDAO#getDiffExpressionCalls()}.
+     * Test the select method {@link 
+     * MySQLDiffExpressionCallDAO#getDiffExpressionCalls(DiffExpressionCallParams)}.
      * @throws SQLException 
      */
     @Test
@@ -239,5 +240,27 @@ public class MySQLDiffExpressionCallDAOIT extends MySQLITAncestor {
         assertTrue("DiffExpressionCallTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(expectedDiffExprCalls, 
                         dao.getDiffExpressionCalls(params).getAllTOs()));
+    }
+    
+    /**
+     * Test the select method {@link 
+     * MySQLDiffExpressionCallDAO#getOrderedHomologousGenesDiffExpressionCalls(
+     * String, DiffExpressionCallParams)}.
+     * @throws SQLException 
+     */
+    @Test
+    public void shouldGetOrderedHomologousGenesDiffExpressionCalls() throws SQLException {
+        this.useSelectDB();
+        
+        // On differentialExpression table 
+        MySQLDiffExpressionCallDAO dao = new MySQLDiffExpressionCallDAO(this.getMySQLDAOManager());
+
+        DiffExpressionCallParams params = new DiffExpressionCallParams();
+        params.addAllSpeciesIds(Arrays.asList("21", "41"));
+        dao.getOrderedHomologousGenesDiffExpressionCalls("311", params);
+        
+        params.clearSpeciesIds();
+        dao.getOrderedHomologousGenesDiffExpressionCalls("311", params);
+
     }
 }

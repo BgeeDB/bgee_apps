@@ -61,9 +61,8 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
             Set<String> speciesIds) throws DAOException {
         
         boolean hasSpecies  = speciesIds != null && !speciesIds.isEmpty();
-        //XXX: the MySQL optimizer fails at properly ordering tables to use, 
-        //so we force the order by using straight_join; this should be reevaluated in the future.
-        String sql = "SELECT STRAIGHT_JOIN DISTINCT t1.OMANodeId, t3.geneId "
+        
+        String sql = "SELECT DISTINCT t1.OMANodeId, t3.geneId "
                 + "FROM OMAHierarchicalGroup AS t1 "
                 + "INNER JOIN OMAHierarchicalGroup AS t2 "
                 + "ON t2.OMANodeLeftBound >= t1.OMANodeLeftBound AND "

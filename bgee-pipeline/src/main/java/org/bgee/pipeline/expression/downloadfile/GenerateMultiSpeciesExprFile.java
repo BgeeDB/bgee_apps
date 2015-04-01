@@ -388,8 +388,8 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
                 BgeeDBUtils.getStageNamesByIds(setSpecies, this.getStageDAO());
         Map<String, String> anatEntityNamesByIds = 
                 BgeeDBUtils.getAnatEntityNamesByIds(setSpecies, this.getAnatEntityDAO());
-        Map<String, String> cioNamesByIds = 
-                BgeeDBUtils.getCIOStatementNamesByIds(this.getCIOStatementDAO());
+        Map<String, String> cioNamesByIds = null;
+//                BgeeDBUtils.getCIOStatementNamesByIds(this.getCIOStatementDAO(), true); //TODO
 
         // Generate multi-species expression files
         log.info("Start generating of multi-species expression files for the group {} with " +
@@ -434,13 +434,13 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
         log.trace("Start retrieving data...");
         
         // We load homologous genes 
-        List<GeneTO> homologousGenes = BgeeDBUtils.getHomologousGenes(speciesFilter,
-                this.getManager().getGeneDAO());
+//        List<GeneTO> homologousGenes = BgeeDBUtils.getHomologousGenes(speciesFilter,
+//                this.getManager().getGeneDAO(), taxonId);
         
         // We load homologous organs 
-        List<SimAnnotToAnatEntityTO> homologousAnatEntities = 
-                BgeeDBUtils.getHomologousAnatEntities(speciesFilter, this.taxonId, 
-                        this.getManager().getSummarySimilarityAnnotationDAO());
+//        List<SimAnnotToAnatEntityTO> homologousAnatEntities = 
+//                BgeeDBUtils.getHomologousAnatEntities(speciesFilter, this.taxonId, 
+//                        this.getManager().getSummarySimilarityAnnotationDAO());
         
         // Load expression and no-expression calls order by OMA node ID
         // TODO to be implemented
@@ -503,7 +503,8 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
                 }
 
                 // create writer and write header
-                ICsvMapWriter mapWriter = new CsvMapWriter(new FileWriter(file), Utils.TSVCOMMENTED);
+                ICsvMapWriter mapWriter = 
+                        new CsvMapWriter(new FileWriter(file), Utils.TSVCOMMENTED);
                 mapWriter.writeHeader(fileTypeHeaders);
                 writersUsed.put(fileType, mapWriter);
             }
@@ -671,38 +672,39 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
         throws IllegalArgumentException {
         log.entry(fileType);
 
-        if (fileType.isSimpleFileType()) {
-            int nbColumns = 7 + 3 * speciesNames.size();
-            String[] headers = new String[nbColumns];
-            headers[0] = OMA_ID_COLUMN_NAME;
-            headers[1] = GENE_ID_LIST_ID_COLUMN_NAME;
-            headers[2] = GENE_NAME_LIST_ID_COLUMN_NAME;
-            headers[3] = ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME;
-            headers[4] = ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME;
-            headers[5] = STAGE_ID_COLUMN_NAME;
-            headers[6] = STAGE_NAME_COLUMN_NAME;
-            // the number of columns depends on the number of species
-            for (int i = 0; i < speciesNames.size(); i++) {
-                int columnIndex = 7 + 3 * i;
-                String endHeader = " for " + speciesNames.get(i);
-                headers[columnIndex] = NB_EXPR_GENE_COLUMN_NAME + endHeader;
-                headers[columnIndex+1] = NB_NO_EXPR_GENES_COLUMN_NAME + endHeader;
-                headers[columnIndex+2] = NB_NA_GENES_COLUMN_NAME + endHeader;
-            }
-            return log.exit(headers);
-        }
-
-        return log.exit(new String[] { 
-                OMA_ID_COLUMN_NAME, GENE_ID_COLUMN_NAME, GENE_NAME_COLUMN_NAME,
-                ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME, ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME,
-                STAGE_ID_COLUMN_NAME, STAGE_NAME_COLUMN_NAME, SPECIES_LATIN_NAME_COLUMN_NAME,
-                CIO_ID_ID_COLUMN_NAME, CIO_NAME_ID_COLUMN_NAME, EXPRESSION_COLUMN_NAME,
-                QUALITY_COLUMN_NAME, INCLUDING_OBSERVED_DATA_COLUMN_NAME,
-                AFFYMETRIX_DATA_COLUMN_NAME, AFFYMETRIX_CALL_QUALITY_COLUMN_NAME,
-                EST_DATA_COLUMN_NAME, EST_CALL_QUALITY_COLUMN_NAME,
-                INSITU_DATA_COLUMN_NAME, INSITU_CALL_QUALITY_COLUMN_NAME,
-                // TODO: when relaxed in situ will be in the database, uncomment following line
-                // RELAXED_INSITU_DATA_COLUMN_NAME, RELAXED_INSITU_DATA_COLUMN_NAME,
-                RNASEQ_DATA_COLUMN_NAME, RNASEQ_CALL_QUALITY_COLUMN_NAME});
+        return null;
+//        if (fileType.isSimpleFileType()) {
+//            int nbColumns = 7 + 3 * speciesNames.size();
+//            String[] headers = new String[nbColumns];
+//            headers[0] = OMA_ID_COLUMN_NAME;
+//            headers[1] = GENE_ID_LIST_ID_COLUMN_NAME;
+//            headers[2] = GENE_NAME_LIST_ID_COLUMN_NAME;
+//            headers[3] = ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME;
+//            headers[4] = ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME;
+//            headers[5] = STAGE_ID_COLUMN_NAME;
+//            headers[6] = STAGE_NAME_COLUMN_NAME;
+//            // the number of columns depends on the number of species
+//            for (int i = 0; i < speciesNames.size(); i++) {
+//                int columnIndex = 7 + 3 * i;
+//                String endHeader = " for " + speciesNames.get(i);
+//                headers[columnIndex] = NB_EXPR_GENE_COLUMN_NAME + endHeader;
+//                headers[columnIndex+1] = NB_NO_EXPR_GENES_COLUMN_NAME + endHeader;
+//                headers[columnIndex+2] = NB_NA_GENES_COLUMN_NAME + endHeader;
+//            }
+//            return log.exit(headers);
+//        }
+//
+//        return log.exit(new String[] { 
+//                OMA_ID_COLUMN_NAME, GENE_ID_COLUMN_NAME, GENE_NAME_COLUMN_NAME,
+//                ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME, ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME,
+//                STAGE_ID_COLUMN_NAME, STAGE_NAME_COLUMN_NAME, SPECIES_LATIN_NAME_COLUMN_NAME,
+//                CIO_ID_ID_COLUMN_NAME, CIO_NAME_ID_COLUMN_NAME, EXPRESSION_COLUMN_NAME,
+//                QUALITY_COLUMN_NAME, INCLUDING_OBSERVED_DATA_COLUMN_NAME,
+//                AFFYMETRIX_DATA_COLUMN_NAME, AFFYMETRIX_CALL_QUALITY_COLUMN_NAME,
+//                EST_DATA_COLUMN_NAME, EST_CALL_QUALITY_COLUMN_NAME,
+//                INSITU_DATA_COLUMN_NAME, INSITU_CALL_QUALITY_COLUMN_NAME,
+//                // TODO: when relaxed in situ will be in the database, uncomment following line
+//                // RELAXED_INSITU_DATA_COLUMN_NAME, RELAXED_INSITU_DATA_COLUMN_NAME,
+//                RNASEQ_DATA_COLUMN_NAME, RNASEQ_CALL_QUALITY_COLUMN_NAME});
     }
 }

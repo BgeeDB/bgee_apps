@@ -4,35 +4,66 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.TransferObject;
+import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO;
+import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO.GroupToStageTO;
+import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO.GroupToStageTOResultSet;
+import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SimAnnotToAnatEntityTO;
+import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SimAnnotToAnatEntityTOResultSet;
+import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO;
+import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTOResultSet;
+import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO;
+import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.ComparisonFactor;
+import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.DiffExprCallType;
+import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTOResultSet;
+import org.bgee.model.dao.api.expressiondata.DiffExpressionCallParams;
+import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
+import org.bgee.model.dao.api.gene.GeneDAO.GeneTOResultSet;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTO;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTOResultSet;
+import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO;
+import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTO;
+import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTOResultSet;
+import org.bgee.model.dao.api.species.TaxonDAO;
+import org.bgee.model.dao.api.species.TaxonDAO.TaxonTOResultSet;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.pipeline.BgeeDBUtils;
 import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.Utils;
+import org.supercsv.cellprocessor.Collector;
 import org.supercsv.cellprocessor.constraint.DMinMax;
 import org.supercsv.cellprocessor.constraint.IsElementOf;
 import org.supercsv.cellprocessor.constraint.LMinMax;
 import org.supercsv.cellprocessor.constraint.NotNull;
 import org.supercsv.cellprocessor.constraint.StrNotNullOrEmpty;
 import org.supercsv.cellprocessor.ift.CellProcessor;
-import org.supercsv.io.CsvMapWriter;
-import org.supercsv.io.ICsvMapWriter;
+import org.supercsv.io.dozer.CsvDozerBeanWriter;
+import org.supercsv.io.dozer.ICsvDozerBeanWriter;
 
 
 /**
- * TODO Javadoc
+ * Class used to generate multi-species differential expression TSV download files 
+ * (simple and advanced files) from the Bgee database. 
  *
  * @author 	Valentine Rech de Laval
  * @version Bgee 13
@@ -91,16 +122,10 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     public final static String DIFFEXPRESSION_COLUMN_NAME = "Differential expression";
 
     /**
-     * A {@code String} that is the ID of the common ancestor taxon we want to into account. 
-     * If {@code null} or empty, TODO  to be decided.
+     * A {@code Map} where keys are {@code String}s that are taxon IDs, the associated values 
+     * being {@code Set} of {@code String}s corresponding to species IDs of the given taxon ID.
      */
-    private String taxonId;
-
-    /**
-     * A {@code String} that is the prefix that will be used to generate multi-species file names.
-     * If {@code null} or empty, TODO  to be decided.
-     */
-    private String groupPrefix;
+    private Map<String,Set<String>> providedGroups;
     
     /**
      * An {@code Enum} used to define, for each data type (Affymetrix and RNA-Seq), 
@@ -135,6 +160,38 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         WEAK_AMBIGUITY("weak ambiguity"), STRONG_AMBIGUITY("strong ambiguity");
 
         private final String stringRepresentation;
+
+        /**
+         * Convert the {@code String} representation of a differential expression data 
+         * into a {@code DiffExpressionData}. Operation performed by calling 
+         * {@link TransferObject#convert(Class, String)} with {@code DiffExpressionData} as the 
+         * {@code Class} argument, and {@code representation} as the {@code String} argument.
+         * 
+         * @param representation    A {@code String} representing a differential expression data.
+         * @return                  A {@code DiffExpressionData} corresponding to 
+         *                          {@code representation}.
+         * @throw IllegalArgumentException  If {@code representation} does not correspond 
+         *                                  to any {@code DiffExprCallType}.
+         * @see #convert(Class, String)
+         */
+        //DRY from TransfertObject
+        public static final DiffExpressionData convertToDiffExpressionData(String representation) {
+            log.entry(representation);
+            
+            if (representation == null) {
+                return log.exit(null);
+            }
+            for (DiffExpressionData element: DiffExpressionData.class.getEnumConstants()) {
+                if (element.getStringRepresentation().equals(representation) || 
+                        element.name().equals(representation)) {
+                    return log.exit(element);
+                }
+            }
+            throw log.throwing(new IllegalArgumentException("\"" + representation + 
+                    "\" does not correspond to any element of " + 
+                    DiffExpressionData.class.getName()));
+        }
+        
 
         /**
          * Constructor providing the {@code String} representation 
@@ -249,78 +306,69 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     //suppress warning as this default constructor should not be used.
     @SuppressWarnings("unused")
     private GenerateMultiSpeciesDiffExprFile() {
-        this(null, null, null, null, null);
+        this(null, null, null);
     }
 
     /**
      * Constructor providing parameters to generate files, using the default {@code DAOManager}.
      * 
-     * @param speciesIds    A {@code List} of {@code String}s that are the IDs of species 
-     *                      we want to generate data for. If {@code null} or empty, all species 
-     *                      are used.
-     * @param taxonId       A {@code String} that is the ID of the common ancestor taxon
-     *                      we want to into account. If {@code null} or empty, TODO to be decided.
-     * @param fileTypes     A {@code Set} of {@code MultiSpDiffExprFileType}s that are the types
-     *                      of files we want to generate. If {@code null} or empty, 
-     *                      all {@code MultiSpDiffExprFileType}s are generated.
-     * @param directory     A {@code String} that is the directory where to store files.
-     * @param groupPrefix   A {@code String} that is the prefix of the group we want to use 
-     *                      for files names. If {@code null} or empty, TODO  to be decided.
+     * @param providedGroups    A {@code Map} where keys are {@code String}s that are prefixes 
+     *                          concatenated to taxon ID by {@link CommandRunner#VALUE_SEPARATOR}, 
+     *                          the associated values being {@code Set} of {@code String}s 
+     *                          corresponding to species IDs of the given taxon ID.
+     * @param fileTypes         A {@code Set} of {@code MultiSpDiffExprFileType}s that are the types
+     *                          of files we want to generate. If {@code null} or empty, 
+     *                          all {@code MultiSpDiffExprFileType}s are generated.
+     * @param directory         A {@code String} that is the directory where to store files.
      * @throws IllegalArgumentException If {@code directory} is {@code null} or blank.
      */
-    public GenerateMultiSpeciesDiffExprFile(List<String> speciesIds, String taxonId, 
-            Set<MultiSpDiffExprFileType> fileTypes, String directory, String groupPrefix) 
+    public GenerateMultiSpeciesDiffExprFile(Map<String,Set<String>> providedGroups, 
+            Set<MultiSpDiffExprFileType> fileTypes, String directory) 
                     throws IllegalArgumentException {
-        this(null, speciesIds, taxonId, fileTypes, directory, groupPrefix);
+        this(null, providedGroups, fileTypes, directory);
     }
 
     /**
      * Constructor providing parameters to generate files, and the {@code MySQLDAOManager} that will  
      * be used by this object to perform queries to the database. This is useful for unit testing.
      * 
-     * @param manager       the {@code MySQLDAOManager} to use.
-     * @param speciesIds    A {@code List} of {@code String}s that are the IDs of species 
-     *                      we want to generate data for. If {@code null} or empty, all species 
-     *                      are used.
-     * @param taxonId       A {@code String} that is the ID of the common ancestor taxon
-     *                      we want to into account. If {@code null} or empty, TODO to be decided.
-     * @param fileTypes     A {@code Set} of {@code MultiSpDiffExprFileType}s that are the types
-     *                      of files we want to generate. If {@code null} or empty, 
-     *                      all {@code MultiSpDiffExprFileType}s are generated.
-     * @param directory     A {@code String} that is the directory where to store files.
+     * @param manager           The {@code MySQLDAOManager} to use.
+     * @param providedGroups    A {@code Map} where keys are {@code String}s that are prefixes 
+     *                          concatenated to taxon ID by {@link CommandRunner#VALUE_SEPARATOR}, 
+     *                          the associated values being {@code Set} of {@code String}s 
+     *                          corresponding to species IDs of the given taxon ID.
+     * @param fileTypes         A {@code Set} of {@code MultiSpDiffExprFileType}s that are the types
+     *                          of files we want to generate. If {@code null} or empty, 
+     *                          all {@code MultiSpDiffExprFileType}s are generated.
+     * @param directory         A {@code String} that is the directory where to store files.
      * @throws IllegalArgumentException If {@code directory} is {@code null} or blank.
      */
-    public GenerateMultiSpeciesDiffExprFile(MySQLDAOManager manager, List<String> speciesIds, 
-            String taxonId, Set<MultiSpDiffExprFileType> fileTypes, String directory, 
-            String groupPrefix) throws IllegalArgumentException {
-        super(manager, speciesIds, fileTypes, directory);
-        this.taxonId = taxonId;
-        this.groupPrefix = groupPrefix;
+    public GenerateMultiSpeciesDiffExprFile(MySQLDAOManager manager, 
+            Map<String,Set<String>> providedGroups, Set<MultiSpDiffExprFileType> fileTypes, 
+            String directory) throws IllegalArgumentException {
+        super(manager, null, fileTypes, directory);
+        this.providedGroups = providedGroups;
     }
+    
     /**
      * Main method to trigger the generate multi-species differential expression TSV download files 
      * (simple and advanced) from Bgee database. Parameters that must be provided in order in 
      * {@code args} are: 
      * <ol>
-     * <li> a list of NCBI species IDs (for instance, {@code 9606} for human) that will be used to 
-     * generate download files, separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}.
-     * If an empty list is provided (see {@link CommandRunner#EMPTY_LIST}), TODO to be decided.
-     * <li>a taxon ID (for instance, {@code 40674} for Mammalia) that will be used to 
-     * generate download files. If an empty list is provided (see {@link CommandRunner#EMPTY_LIST}),
-     * TODO To be decided.
-     * <li> a list of files types that will be generated ('multi-diffexpr-anatomy-simple' for 
-     * {@link MultiSpDiffExprFileType MULTI_DIFF_EXPR_ANATOMY_SIMPLE}, 
-     * 'multi-diffexpr-anatomy-complete' for 
-     * {@link MultiSpDiffExprFileType MULTI_DIFF_EXPR_ANATOMY_COMPLETE}, 
-     * 'multi-diffexpr-development-simple' for 
-     * {@link MultiSpDiffExprFileType MULTI_DIFF_EXPR_DEVELOPMENT_SIMPLE}, and 
-     * 'multi-diffexpr-development-complete' for 
-     * {@link MultiSpDiffExprFileType MULTI_DIFF_EXPR_DEVELOPMENT_COMPLETE}), separated by the 
-     * {@code String} {@link CommandRunner#LIST_SEPARATOR}. If an empty list is provided 
-     * (see {@link CommandRunner#EMPTY_LIST}), all possible file types will be generated.
+     * <li>a {@code Map} where keys are {@code String}s that are prefixes, the associated values 
+     *     being {@code Set} of {@code String}s corresponding to species IDs that will be used to 
+     *     generate files.
+     * <li>a list of files types that will be generated ('multi-diffexpr-anatomy-simple' for 
+     *     {@link MultiSpDiffExprFileType MULTI_DIFF_EXPR_ANATOMY_SIMPLE}, 
+     *     'multi-diffexpr-anatomy-complete' for 
+     *     {@link MultiSpDiffExprFileType MULTI_DIFF_EXPR_ANATOMY_COMPLETE}, 
+     *     'multi-diffexpr-development-simple' for 
+     *     {@link MultiSpDiffExprFileType MULTI_DIFF_EXPR_DEVELOPMENT_SIMPLE}, and 
+     *     'multi-diffexpr-development-complete' for 
+     *     {@link MultiSpDiffExprFileType MULTI_DIFF_EXPR_DEVELOPMENT_COMPLETE}), separated by the 
+     *     {@code String} {@link CommandRunner#LIST_SEPARATOR}. If an empty list is provided 
+     *     (see {@link CommandRunner#EMPTY_LIST}), all possible file types will be generated.
      * <li>the directory path that will be used to generate download files. 
-     * <li>the prefix that will be used to generate multi-species file names. If {@code null} or 
-     * empty, TODO to be decided.
      * </ol>
      * 
      * @param args  An {@code Array} of {@code String}s containing the requested parameters.
@@ -330,20 +378,17 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     public static void main(String[] args) throws IllegalArgumentException, IOException {
         log.entry((Object[]) args);
     
-        int expectedArgLength = 5;
+        int expectedArgLength = 3;
         if (args.length != expectedArgLength) {
             throw log.throwing(new IllegalArgumentException(
                     "Incorrect number of arguments provided, expected " + 
                     expectedArgLength + " arguments, " + args.length + " provided."));
         }
-        
         GenerateMultiSpeciesDiffExprFile generator = new GenerateMultiSpeciesDiffExprFile(
-                CommandRunner.parseListArgument(args[0]),
-                args[0],
+                CommandRunner.parseMapArgument(args[0]),
                 GenerateDownloadFile.convertToFileTypes(
                     CommandRunner.parseListArgument(args[1]), MultiSpDiffExprFileType.class),
-                args[2],
-                args[3]);
+                args[2]);
         generator.generateMultiSpeciesDiffExprFiles();
         log.exit();
     }
@@ -358,93 +403,119 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * 
      */
     public void generateMultiSpeciesDiffExprFiles() throws IOException {
-        log.entry(this.speciesIds, this.taxonId, this.fileTypes, this.directory, this.groupPrefix);
+        log.entry(this.providedGroups, this.fileTypes, this.directory);
 
-        Set<String> setSpecies = new HashSet<String>();
-        if (this.speciesIds != null && !this.speciesIds.isEmpty()) {
-            setSpecies = new HashSet<String>(this.speciesIds);
-        } else {
-            throw log.throwing(new IllegalArgumentException("No species ID is provided"));
+        if (this.providedGroups == null || this.providedGroups.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("No group is provided"));
         }
-        
-        if (this.taxonId == null) {
-            throw log.throwing(new IllegalArgumentException("No taxon ID is provided"));
+
+        if (this.directory == null || this.directory.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("No directory is provided"));
         }
 
         // If no file types are given by user, we set all file types
         if (this.fileTypes == null || this.fileTypes.isEmpty()) {
             this.fileTypes = EnumSet.allOf(MultiSpDiffExprFileType.class);
         }
-
-        // Retrieve species names, gene names, stage names, anat. entity names, for all species
-        // XXX: retrieve only for speciesIds? 
-        Map<String, String> speciesNamesByIds = this.checkAndGetLatinNamesBySpeciesIds(setSpecies);
-        Map<String, String> geneNamesByIds = 
-                BgeeDBUtils.getGeneNamesByIds(setSpecies, this.getGeneDAO());
-        Map<String, String> stageNamesByIds = 
-                BgeeDBUtils.getStageNamesByIds(setSpecies, this.getStageDAO());
-        Map<String, String> anatEntityNamesByIds = 
-                BgeeDBUtils.getAnatEntityNamesByIds(setSpecies, this.getAnatEntityDAO());
-        Map<String, String> cioNamesByIds = 
-                BgeeDBUtils.getCIOStatementNamesByIds(this.getCIOStatementDAO());
-
-        // Generate multi-species differential expression files
-        log.info("Start generating of multi-species diff. expression files for the group {} with " +
-                "the species {} and the ancestral taxon ID {}...", 
-                this.groupPrefix, speciesNamesByIds.values(), this.taxonId);
-
-        try {
-            this.generateMultiSpeciesDiffExprFiles(speciesNamesByIds, 
-                    geneNamesByIds, stageNamesByIds, anatEntityNamesByIds, cioNamesByIds);
-        } finally {
-            // close connection to database
-            this.getManager().releaseResources();
-        }
         
-        log.info("Done generating of multi-species diff. expression files for the group {}.", 
-                this.groupPrefix);
+        // We retrieve all CIO so it's common to all groups
+        Map<String,CIOStatementTO> cioNamesByIds = this.getCIOStatementsByIds();
+        
+        for (Entry<String,Set<String>> currentGroup : this.providedGroups.entrySet()) {
+            Set<String> setSpecies = currentGroup.getValue();
+            if (setSpecies == null || setSpecies.isEmpty()) {
+                throw log.throwing(new IllegalArgumentException("No species ID is provided"));
+            }
+            
+            String currentPrefix = currentGroup.getKey();
 
+            String taxonId = this.getLeastCommonAncestor(setSpecies);
+            
+            // Retrieve species names, gene names, stage names, anat. entity names, and cio names 
+            // for all species
+            Map<String,String> speciesNamesByIds =
+                    this.checkAndGetLatinNamesBySpeciesIds(setSpecies);
+            Map<String,String> geneNamesByIds = 
+                    BgeeDBUtils.getGeneNamesByIds(setSpecies, this.getGeneDAO());
+            Map<String,String> stageNamesByIds = 
+                    BgeeDBUtils.getStageNamesByIds(setSpecies, this.getStageDAO());
+            Map<String,String> anatEntityNamesByIds = 
+                    BgeeDBUtils.getAnatEntityNamesByIds(setSpecies, this.getAnatEntityDAO());
+
+            // Generate multi-species differential expression files
+            log.info("Start generating of multi-species diff. expression files for the group {} " +
+                    "with the species {} and the ancestral taxon ID {}...", 
+                    currentPrefix, speciesNamesByIds.values(), taxonId);
+
+            try {
+                this.generateMultiSpeciesDiffExprFilesForOneGroup(currentPrefix, taxonId, 
+                        speciesNamesByIds, geneNamesByIds, stageNamesByIds, anatEntityNamesByIds, 
+                        cioNamesByIds);
+            } finally {
+                // Release resources after each group. 
+                this.getManager().releaseResources();
+            }
+            
+            log.info("Done generating of multi-species diff. expression files for the group {}.", 
+                    currentGroup);
+        }
         log.exit();
     }
 
-    /**
-     * TODO Javadoc
-     *
-     * @param speciesNamesForFilesByIds
-     * @param geneNamesByIds
-     * @param stageNamesByIds
-     * @param anatEntityNamesByIds
-     * @param cioNamesByIds
-     * @throws IOException 
-     */
-    private void generateMultiSpeciesDiffExprFiles(Map<String, String> speciesNamesByIds,
-            Map<String, String> geneNamesByIds, Map<String, String> stageNamesByIds,
-            Map<String, String> anatEntityNamesByIds, Map<String, String> cioNamesByIds) throws IOException {
-        log.entry(this.directory, this.groupPrefix, this.fileTypes, this.taxonId, speciesNamesByIds,
-                geneNamesByIds, stageNamesByIds, anatEntityNamesByIds, cioNamesByIds);
+    private void generateMultiSpeciesDiffExprFilesForOneGroup(String prefix, String taxonId, 
+            Map<String,String> speciesNamesByIds, Map<String,String> geneNamesByIds, 
+            Map<String,String> stageNamesByIds, Map<String,String> anatEntityNamesByIds, 
+            Map<String,CIOStatementTO> cioStatementsByIds) throws IOException {
+        log.entry(this.directory, prefix, this.fileTypes, taxonId, speciesNamesByIds,
+                geneNamesByIds, stageNamesByIds, anatEntityNamesByIds, cioStatementsByIds);
 
-        log.debug("Start generating multi-species differential expression files for the group {} with the taxon {} and file types {}...", 
-                this.groupPrefix, this.taxonId, this.fileTypes);
+        Set<String> speciesFilter = speciesNamesByIds.keySet();
+
+        log.debug("Start generating multi-species differential expression files for:" + 
+                " prefix={}, taxon ID={}, species IDs={} and file types {}...", 
+                prefix, taxonId, speciesFilter, this.fileTypes);
+
+        // We check that all file types have the same comparison factor and we retrieve it 
+        ComparisonFactor factor = null;
+        for (FileType fileType: this.fileTypes) {
+            if (factor == null) {
+                factor = ((MultiSpDiffExprFileType)fileType).getComparisonFactor(); 
+            } else if (!((MultiSpDiffExprFileType)fileType).getComparisonFactor().equals(factor)) {
+                throw log.throwing(new IllegalArgumentException(
+                        "All file types do not have the same comparison factor: " + this.fileTypes));
+            }
+        }
+        assert factor != null;
 
         //********************************
         // RETRIEVE DATA FROM DATA SOURCE
         //********************************
-        Set<String> speciesFilter = new HashSet<String>();
-        speciesFilter.addAll(this.speciesIds);
-
         log.trace("Start retrieving data...");
         
-        // We load homologous genes 
-        List<GeneTO> homologousGenes = BgeeDBUtils.getHomologousGenes(speciesFilter,
-                this.getManager().getGeneDAO());
+        // Get homologous genes 
+        Map<String,String> mapGeneOMANode = this.getMappingGeneIdOMANodeId(taxonId, speciesFilter);
         
-        // We load homologous organs 
-        List<SimAnnotToAnatEntityTO> homologousAnatEntities = 
-                BgeeDBUtils.getHomologousAnatEntities(speciesFilter, this.taxonId, 
-                        this.getManager().getSummarySimilarityAnnotationDAO());
-        
+        // Get comparable stages
+        List<Map<String,List<String>>> mapStageGroup = 
+                this.getComparableStages(taxonId, speciesFilter);
+        Map<String, List<String>> mapStageIdToStageGroup = mapStageGroup.get(0);
+        Map<String, List<String>> mapStageGroupToStageId = mapStageGroup.get(1);
+
+        // Get summary similarity annotations with CIO Ids
+        Map<String,String> mapSumSimCIO = this.getSummarySimilarityAnnotations(taxonId);
+
+        // Get 
+        List<Map<String, List<String>>> simAnnotToAnatEntity = 
+                this.getSimAnnotToAnatEntities(taxonId, speciesFilter);
+        Map<String, List<String>> mapSimAnnotToAnatEntities = simAnnotToAnatEntity.get(0);
+        Map<String, List<String>> mapAnatEntityToSimAnnot = simAnnotToAnatEntity.get(1);
+                
+        // Get species ID according to gene ID
+        Map<String,String> mapGeneSpecies = this.getMappingGeneSpecies(speciesFilter);
+
         // Load differential expression calls order by OMA node ID
-        // TODO to be implemented
+        DiffExpressionCallTOResultSet diffExprRs = 
+                this.getDiffExpressionCallsOrderByOMANodeId(taxonId, speciesFilter, factor);
         
         log.trace("Done retrieving data.");
         
@@ -467,34 +538,40 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         // In order to close all writers in a finally clause.
         // We use ICsvMapWriter because the number of columns depends on the number of species for 
         // the simple file (3 columns by species)
-        Map<FileType, ICsvMapWriter> writersUsed = new HashMap<FileType, ICsvMapWriter>();
+        Map<MultiSpDiffExprFileType, ICsvDozerBeanWriter> writersUsed = 
+                new HashMap<MultiSpDiffExprFileType, ICsvDozerBeanWriter>();
         try {
             //**************************
             // OPEN FILES, CREATE WRITERS, WRITE HEADERS
             //**************************
-            Map<FileType, CellProcessor[]> processors = new HashMap<FileType, CellProcessor[]>();
-            Map<FileType, String[]> headers = new HashMap<FileType, String[]>();
+            Map<MultiSpDiffExprFileType, CellProcessor[]> processors = 
+                    new HashMap<MultiSpDiffExprFileType, CellProcessor[]>();
+            Map<MultiSpDiffExprFileType, String[]> headers = 
+                    new HashMap<MultiSpDiffExprFileType, String[]>();
 
             // Get ordered species names
-            List<String> orderedSpeciesNames = this.getSpeciesNameAsList(
-                    this.speciesIds, speciesNamesByIds);
+            List<String> orderedSpeciesNames = this.getOrderedSpeciesName(
+                    speciesFilter, speciesNamesByIds);
             
             for (FileType fileType : this.fileTypes) {
+                MultiSpDiffExprFileType currentFileType = (MultiSpDiffExprFileType) fileType;
+                if (currentFileType.getComparisonFactor().equals(ComparisonFactor.DEVELOPMENT)) {
+                    continue;
+                }
                 CellProcessor[] fileTypeProcessors = null;
                 String[] fileTypeHeaders = null;
 
                 fileTypeProcessors = this.generateCellProcessors(
-                        (MultiSpDiffExprFileType) fileType, this.speciesIds.size());
-                processors.put(fileType, fileTypeProcessors);
+                        currentFileType, speciesFilter.size());
+                processors.put(currentFileType, fileTypeProcessors);
                 
-                fileTypeHeaders = this.generateHeader(
-                        (MultiSpDiffExprFileType) fileType, orderedSpeciesNames);
-                headers.put(fileType, fileTypeHeaders);
+                fileTypeHeaders = this.generateHeader(currentFileType, orderedSpeciesNames);
+                headers.put(currentFileType, fileTypeHeaders);
 
                 // Create file name
-                String fileName = this.groupPrefix + "_" +
-                        fileType.getStringRepresentation() + EXTENSION;
-                generatedFileNames.put(fileType, fileName);
+                String fileName = prefix + "_" +
+                        currentFileType.getStringRepresentation() + EXTENSION;
+                generatedFileNames.put(currentFileType, fileName);
 
                 // write in temp file
                 File file = new File(this.directory, fileName + tmpExtension);
@@ -504,46 +581,54 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 }
 
                 // create writer and write header
-                ICsvMapWriter mapWriter = new CsvMapWriter(new FileWriter(file), Utils.TSVCOMMENTED);
-                mapWriter.writeHeader(fileTypeHeaders);
-                writersUsed.put(fileType, mapWriter);
+                ICsvDozerBeanWriter beanWriter = new CsvDozerBeanWriter(new FileWriter(file),
+                        Utils.TSVCOMMENTED);
+                // configure the mapping from the fields to the CSV columns
+                beanWriter.configureBeanMapping(SpeciesCounts.class, 
+                        this.generateFieldMapping(currentFileType, speciesNamesByIds.size()));
+                beanWriter.writeHeader(fileTypeHeaders);
+                writersUsed.put(currentFileType, beanWriter);
             }
 
             // ****************************
             // WRITE ROWS
             // ****************************
-            // TODO to be implemented
-            
-//            CallTOResultSet rs = null;
-//            Set<CallTO> groupedCallTOs = new HashSet<CallTO>();
-//            
-//            CallTO previousTO = null;
-//            while (rs.next()) {
-//                CallTO currentTO = rs.getTO();
-//                if (previousTO != null && currentTO.getOMANodeId() != previousTO.getOMANodeId()) {
-//                    // We propagate differential expression calls and order them
-//                          - when there is no data in a condition, but the no-expression in  
-//                            a sub-stage => no expression low quality 
-//                          - propagation on high-level stages
-//                          - propagation to children only for anatomy comparison
-//                    // We compute and write the rows in all files
-//                          - we filter families with only no-expression low quality            
-//                          - we filter families with only no diff expression
-//                          - do system to keep only the 'Observed' in single file
-//                            but for the first generation we do not active.
-//                          - filter poor quality homology annotations in simple file
-//                    // We clear the set containing TO of an unique OMA Node ID
-//                    groupedCallTOs.clear();
-//                }
-//                groupedCallTOs.add(to);
-//                previousTO = to;
-//            }
+            Set<DiffExpressionCallTO> omaGroupCalls = new HashSet<DiffExpressionCallTO>();
+            String previousOMANodeId = null;
+            while (diffExprRs.next()) {
+                DiffExpressionCallTO currentTO = diffExprRs.getTO();
+                String currentOMANodeId = mapGeneOMANode.get(currentTO.getGeneId());
+                if (previousOMANodeId != null && !currentOMANodeId.equals(previousOMANodeId)) {
+                    // currentTO belongs to another OMA node ID then the previousTO
+                    assert currentOMANodeId.compareTo(
+                            previousOMANodeId) < 0;
+                    
+                    // We group calls (without propagation) by condition
+                    Map<MultiSpeciesCondition, Collection<DiffExpressionCallTO>> 
+                        callsGroupByCondition = this.groupByMultiSpeciesCondition(
+                                omaGroupCalls, mapAnatEntityToSimAnnot, mapStageIdToStageGroup);
+                    for (Entry<MultiSpeciesCondition, Collection<DiffExpressionCallTO>> entry : 
+                        callsGroupByCondition.entrySet()) {
+                        this.filterAndWriteConditionGroup(geneNamesByIds, mapGeneSpecies, 
+                                stageNamesByIds, anatEntityNamesByIds, cioStatementsByIds,
+                                speciesNamesByIds, writersUsed, processors, currentOMANodeId, entry, 
+                                mapSumSimCIO, mapSimAnnotToAnatEntities, mapStageGroupToStageId);
+                        
+                    }
+                    // We clear the set containing TOs with the previous OMA Node ID
+                    omaGroupCalls.clear();
+                }
+                // We add the current TOs to the group
+                omaGroupCalls.add(currentTO);
+                // We store the current OMA Node ID to be compare with the next one
+                previousOMANodeId = currentOMANodeId;
+            }
 
         } catch (Exception e) {
             this.deleteTempFiles(generatedFileNames, tmpExtension);
             throw e;
         } finally {
-            for (ICsvMapWriter writer : writersUsed.values()) {
+            for (ICsvDozerBeanWriter writer : writersUsed.values()) {
                 writer.close();
             }
         }
@@ -555,15 +640,339 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     }
 
     /**
-     * TODO Javadoc
-     *
-     * @param speciesIds
-     * @param speciesNamesByIds
-     * @return
+     * Retrieve from the data source a mapping from CIO IDs to names. 
+     * 
+     * @return                  A {@code Map} where keys are {@code String}s corresponding to 
+     *                          CIO IDs, the associated values being {@code String}s 
+     *                          corresponding to CIO names. 
+     * @throws DAOException   If an error occurred while getting the data from the Bgee data source.
      */
-    //TODO: DRY
-    private List<String> getSpeciesNameAsList(
-            List<String> speciesIds, Map<String, String> speciesNamesByIds) {
+    private Map<String, CIOStatementTO> getCIOStatementsByIds() throws DAOException {
+        log.entry();
+        
+        log.debug("Start retrieving all CIO names");
+        
+        CIOStatementDAO dao = this.getCIOStatementDAO();
+        dao.setAttributes(CIOStatementDAO.Attribute.ID, CIOStatementDAO.Attribute.NAME, 
+                CIOStatementDAO.Attribute.TRUSTED);
+        
+        Map<String, CIOStatementTO> cioByIds = new HashMap<String, CIOStatementTO>();
+        try (CIOStatementTOResultSet rs = dao.getAllCIOStatements()) {
+            while (rs.next()) {
+                CIOStatementTO cioTO = rs.getTO();
+                cioByIds.put(cioTO.getId(), cioTO);
+            }
+        }
+        
+        log.debug("Done retrieving CIO names, {} names retrieved", cioByIds.size());
+        
+        return log.exit(cioByIds);
+    }
+
+    /**
+     * Retrieve from the data source the last common ancestor of providen species. 
+     *
+     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species
+     *                      allowing to retrieve the LCA.
+     * @return              the {@code String} that is the last common ancestor of providen species.
+     * @throws DAOException If an error occurred while getting the data from the Bgee data source.
+     */
+    private String getLeastCommonAncestor(Set<String> speciesIds) throws DAOException {
+        log.entry(speciesIds);
+        
+        log.debug("Start retrieving least common ancestor for the species IDs {}...", speciesIds);
+    
+        TaxonDAO dao = this.getTaxonDAO();
+        dao.setAttributes(TaxonDAO.Attribute.ID);
+    
+        String lca = null;
+        try (TaxonTOResultSet rs = dao.getLeastCommonAncestor(speciesIds, false)) {
+            boolean isFirst = true;
+            while (rs.next()) {
+                if (isFirst) {
+                    lca = rs.getTO().getId();
+                    isFirst = false;
+                } else {
+                    throw log.throwing(new IllegalStateException("Severals LCA returns"));
+                }
+            }
+        }
+    
+        log.debug("Done retrieving least common ancestor, the taxon found is {}", lca);
+    
+        return log.exit(lca);
+    }
+
+    /**
+     * Retrieves mapping between OMA node IDs and gene IDs for the requested species,
+     * present into the Bgee database.
+     * 
+     * @param taxonId       A {@code String} that is the ID of the common ancestor taxon
+     *                      we want to into account.
+     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species
+     *                      allowing to retrieve the mapping.
+     * @return              A {@code Map} where keys are {@code String}s that are gene IDs, the  
+     *                      associated values being {@code String}s corresponding to OMA group ID 
+     *                      of the given taxon ID.
+     * @throws DAOException If an error occurred while getting the data from the Bgee data source.
+     * @throws IllegalStateException If we retrieve several LCA.
+     */
+    private Map<String,String> getMappingGeneIdOMANodeId(String taxonId, Set<String> speciesIds)
+            throws DAOException, IllegalArgumentException {
+        log.entry(taxonId, speciesIds);
+    
+        log.debug("Start retrieving homologous genes for the taxon ID {}...", taxonId);
+    
+        HierarchicalGroupDAO dao = this.getHierarchicalGroupDAO();
+        
+        Map<String,String> mapping = new HashMap<String,String>();
+        try (HierarchicalGroupToGeneTOResultSet rs = dao.getGroupToGene(taxonId, speciesIds)) {
+            boolean hasResult = false;
+            while (rs.next()) {
+                HierarchicalGroupToGeneTO to = rs.getTO();
+                mapping.put(to.getGeneId(), to.getGroupId());
+                hasResult = true;
+            }
+            if (!hasResult) {
+                throw log.throwing(new IllegalStateException("No retrieved homologous genes"));
+            }
+        }
+    
+        log.debug("Done retrieving homologous genes, {} genes found", mapping.size());
+    
+        return log.exit(mapping);
+    }
+
+    /**
+     * Retrieves comparable stages for the requested species in the requested taxon,
+     * present into the Bgee database.
+     *
+     * @param taxonId       A {@code String} that is the ID of the common ancestor taxon 
+     *                      we want to into account. 
+     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species
+     *                      allowing to filter the comparable stages to use.
+     * @return              the {@code List} of {@code Map}s. The first {@code Map} is the 
+     *                      {@code Map} where keys are {@code String}s that are stage IDs, the 
+     *                      associated values being {@code Set} of {@code String}s corresponding to 
+     *                      stage group IDs. And the second {@code Map} is the {@code Map} where 
+     *                      keys are {@code String}s that are stage group IDs, the associated values
+     *                      being {@code Set} of {@code String}s corresponding to stage IDs.
+     * @throws DAOException If an error occurred while getting the data from the Bgee data source.
+     * @throws IllegalStateException IF an error is detected in data source.
+     */
+    private List<Map<String,List<String>>> getComparableStages(
+            String taxonId, Set<String> speciesIds) throws DAOException, IllegalStateException {
+        log.entry(taxonId, speciesIds);
+        
+        log.debug("Start retrieving comparable stages for the taxon ID {} and the species IDs {}...", 
+                taxonId, speciesIds);
+        
+       StageGroupingDAO dao = this.getStageGroupingDAO();
+        //not attribute to set
+        
+       Map<String,List<String>> mappingStageIdToStageGroup = new HashMap<String,List<String>>();
+       Map<String,List<String>> mappingStageGroupToStageId = new HashMap<String,List<String>>();
+        try (GroupToStageTOResultSet rs = dao.getGroupToStage(taxonId, speciesIds)) {
+            while (rs.next()) {
+                GroupToStageTO to = rs.getTO();
+    
+                List<String> groupIds = mappingStageIdToStageGroup.get(to.getStageId());
+                if (groupIds == null) {
+                    groupIds = new ArrayList<String>();
+                    groupIds.add(to.getGroupId());
+                    mappingStageIdToStageGroup.put(to.getStageId(), groupIds);
+                } else {
+                    throw log.throwing(new IllegalStateException(
+                            "One stage ID souldn't be reported to severals stage groups"));
+                }
+    
+                List<String> anatEntityIds = mappingStageGroupToStageId.get(to.getGroupId());
+                if (anatEntityIds == null) {
+                    anatEntityIds = new ArrayList<String>();
+                    mappingStageGroupToStageId.put(to.getGroupId(), anatEntityIds);
+                }
+                anatEntityIds.add(to.getStageId());
+            }
+        }
+    
+        log.debug("Done retrieving relation from stage ID to " + 
+                "stage group, {} found", mappingStageIdToStageGroup.size());
+        log.debug("Done retrieving relation from stage group to " + 
+                "stage IDs, {} found", mappingStageGroupToStageId.size());
+    
+        return log.exit(Arrays.asList(mappingStageIdToStageGroup, mappingStageGroupToStageId));
+    }
+
+    /**
+     * Retrieves summary similarity annotations with the CIO ID for the requested taxon,
+     * present into the Bgee database.
+     *
+     * @param taxonId       A {@code String} that is the ID of the common ancestor taxon 
+     *                      we want to into account. 
+     * @return              A {@code Map} where keys are {@code String}s corresponding to summary 
+     *                      similarity annotation IDs, the associated values being {@code String}s 
+     *                      corresponding to CIO IDs.
+     * @throws DAOException If an error occurred while getting the data from the Bgee data source.
+     */
+    private Map<String,String> getSummarySimilarityAnnotations(String taxonId) throws DAOException {
+        log.entry(taxonId);
+        
+        log.debug("Start retrieving summary similarity annotations for the taxon ID {}...", taxonId);
+    
+        SummarySimilarityAnnotationDAO dao = this.getSummarySimilarityAnnotationDAO();
+    
+        Map<String,String> mapping = new HashMap<String,String>();
+        try (SummarySimilarityAnnotationTOResultSet rs = dao.getSummarySimilarityAnnotations(taxonId)) {
+            while (rs.next()) {
+                SummarySimilarityAnnotationTO to = rs.getTO();
+                mapping.put(to.getId(), to.getCIOId());
+            }
+        }
+    
+        log.debug("Done retrieving summary similarity annotations, {} found", mapping.size());
+    
+        return log.exit(mapping);
+    }
+
+    /**
+     * Retrieves relation between summary similarity annotation and anatomical entity 
+     * for the provided taxon ID and species IDs. 
+     *
+     * @param taxonId       A {@code String} that is the ID of the common ancestor taxon 
+     *                      we want to into account. 
+     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species
+     *                      allowing to filter the comparable stages to use.
+     * @return              the {@code List} of {@code Map}s. The first {@code Map} is the 
+     *                      {@code Map} where keys are {@code String}s that are summary similarity 
+     *                      annotation IDs, the associated values being {@code Set} of 
+     *                      {@code String}s corresponding to anat. entity IDs. And the second 
+     *                      {@code Map} is the {@code Map} where keys are {@code String}s that are 
+     *                      anat. entity IDs, the associated values being {@code Set} of 
+     *                      {@code String}s corresponding to summary similarity annotation IDs.  
+     * @throws DAOException If an error occurred while getting the data from the Bgee data source.
+     */
+    private List<Map<String, List<String>>> getSimAnnotToAnatEntities(
+            String taxonId, Set<String> speciesIds) throws DAOException {
+        log.entry(taxonId, speciesIds);
+    
+        log.debug("Start retrieving relation between summary similarity annotation and " + 
+                "anatomical entity for the taxon ID {} and species IDs {}...", 
+                taxonId, speciesIds);
+    
+        SummarySimilarityAnnotationDAO dao = this.getSummarySimilarityAnnotationDAO();
+        // setAttributes methods has no effect on attributes retrieved  
+    
+        Map<String,List<String>> mappingSimAnnotToAnatEntity = new HashMap<String,List<String>>();
+        Map<String,List<String>> mappingAnatEntityToSimAnnot = new HashMap<String,List<String>>();
+        try (SimAnnotToAnatEntityTOResultSet rs = dao.getSimAnnotToAnatEntity(taxonId, speciesIds)) {
+            while (rs.next()) {
+                SimAnnotToAnatEntityTO to = rs.getTO();
+                List<String> sumAnatEntIds = mappingSimAnnotToAnatEntity.get(to.getSummarySimilarityAnnotationId());
+                if (sumAnatEntIds == null) {
+                    sumAnatEntIds = new ArrayList<String>();
+                    mappingSimAnnotToAnatEntity.put(to.getSummarySimilarityAnnotationId(), sumAnatEntIds);
+                }
+                sumAnatEntIds.add(to.getAnatEntityId());
+                
+                List<String> simAnnotIds = mappingAnatEntityToSimAnnot.get(to.getAnatEntityId());
+                if (simAnnotIds == null) {
+                    simAnnotIds = new ArrayList<String>();
+                    mappingAnatEntityToSimAnnot.put(to.getAnatEntityId(), simAnnotIds);
+                }
+                simAnnotIds.add(to.getSummarySimilarityAnnotationId());
+    
+            }
+        }
+    
+        log.debug("Done retrieving relation from summary similarity annotation to " + 
+                "anatomical entities, {} found", mappingSimAnnotToAnatEntity.size());
+        log.debug("Done retrieving relation from anatomical entity to " + 
+                "summary similarity annotations, {} found", mappingAnatEntityToSimAnnot.size());
+    
+        return log.exit(Arrays.asList(mappingSimAnnotToAnatEntity, mappingAnatEntityToSimAnnot));
+    }
+
+    /**
+     * Retrieves mapping between gene IDs and species IDs for the requested species,
+     * present into the Bgee database.
+     *
+     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species
+     *                      allowing the mapping.
+     * @return              the {@code Map} where keys are {@code String}s that are gene IDs, the  
+     *                      associated values being {@code String}s corresponding to species ID.
+     * @throws DAOException If an error occurred while getting the data from the Bgee data source.
+     */
+    private Map<String,String> getMappingGeneSpecies(Set<String> speciesIds) throws DAOException {
+        log.entry(speciesIds);
+        
+        log.debug("Start retrieving gene-species mapping for the species IDs {}...", speciesIds);
+        
+        GeneDAO dao = this.getGeneDAO();
+        dao.setAttributes(GeneDAO.Attribute.ID, GeneDAO.Attribute.SPECIES_ID);
+        
+        Map<String,String> mapping = new HashMap<String,String>();
+        try (GeneTOResultSet rs = dao.getGenesBySpeciesIds(speciesIds)) {
+            while (rs.next()) {
+                GeneTO to = rs.getTO();
+                mapping.put(to.getId(), String.valueOf(to.getSpeciesId()));
+            }
+        }
+    
+        log.debug("Done retrieving gene-species mapping, {} genes found", mapping.size());
+    
+        return log.exit(mapping);
+    }
+
+    /**
+     * Retrieve differential expression calls for genes homologous in the provided taxon ID, 
+     * order by groups of homologous genes.
+     * 
+     * @param taxonId       A {@code String} that is the ID of the common ancestor taxon
+     *                      allowing to filter the calls to retrieve.
+     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
+     *                      allowing to filter the calls to retrieve.
+     * @param factor        A {@code ComparisonFactor}s that is the comparison factor 
+     *                      allowing to filter the calls to retrieve.
+     * @return              A {@code List} of {@code DiffExpressionCallTO}s that are 
+     *                      all differential expression calls for the requested species, in
+     *                      in requested taxon. 
+     * @throws DAOException If an error occurred while getting the data from the Bgee data source.
+     */
+    private DiffExpressionCallTOResultSet getDiffExpressionCallsOrderByOMANodeId(
+            String taxonId, Set<String> speciesIds, ComparisonFactor factor) throws DAOException {
+        log.entry(taxonId, speciesIds, factor);
+    
+        log.debug("Start retrieving differential expression calls (factor {}) for the taxon ID {} and species IDs {}...", 
+                factor, taxonId, speciesIds);
+        
+        DiffExpressionCallDAO dao = this.getDiffExpressionCallDAO();
+        // do not retrieve the internal diff. expression IDs
+        dao.setAttributes(EnumSet.complementOf(EnumSet.of(DiffExpressionCallDAO.Attribute.ID)));
+    
+        DiffExpressionCallParams params = new DiffExpressionCallParams();
+        params.addAllSpeciesIds(speciesIds);
+        params.setComparisonFactor(factor);
+    
+        DiffExpressionCallTOResultSet rs = 
+                dao.getOrderedHomologousGenesDiffExpressionCalls(taxonId, params);
+    
+        log.debug("Done retrieving differential expression calls");
+    
+        return log.exit(rs);
+    }
+
+    /**
+     * Return species names in the alphabetical order from the provided species IDs. 
+     *
+     * @param speciesIds        A {@code Set} of {@code String}s that are the IDs of species.
+     * @param speciesNamesByIds A {@code Map} where keys are {@code String}s corresponding to 
+     *                          species IDs, the associated values being {@code String}s 
+     *                          corresponding to species names. 
+     * @return                  the {@code List} of {@code String}s that are species names in the 
+     *                          alphabetical order from the provided species IDs.
+     */
+    private List<String> getOrderedSpeciesName(
+            Set<String> speciesIds, Map<String,String> speciesNamesByIds) {
         log.entry();
         
         List<String> names = new ArrayList<String>();
@@ -571,10 +980,461 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             names.add(speciesNamesByIds.get(id));
         }
         assert names.size() == speciesIds.size();
-
+    
+        Collections.sort(names);
+        
         return log.exit(names);
     }
 
+    /**
+     * Groups provided differential expression calls by condition (summary similarity annotation 
+     * and stage group).
+     *
+     * @param callTOs                   A {@code Set} of {@code DiffExpressionCallTO}s that are 
+     *                                  the calls to be grouped.
+     * @param mapAnatEntityToSimAnnot   A {@code Map} where keys are {@code String}s that are 
+     *                                  anat. entity IDs, the associated values being {@code Set} of 
+     *                                  {@code String}s corresponding to summary similarity 
+     *                                  annotation IDs. 
+     * @param mapStageIdToStageGroup    A {@code Map} where keys are {@code String}s that are stage 
+     *                                  IDs, the associated values being {@code Set} of 
+     *                                  {@code String}s corresponding to stage group IDs. 
+     * @return                          the Map of where keys are {@code MultiSpeciesCondition}s 
+     *                                  that are condition, the associated values being 
+     *                                  {@code Collection} of {@code DiffExpressionCallTO}s 
+     *                                  corresponding to grouped differential expression calls.
+     */
+    private Map<MultiSpeciesCondition, Collection<DiffExpressionCallTO>>
+            groupByMultiSpeciesCondition(Set<DiffExpressionCallTO> groupedCallTOs, 
+                    Map<String,List<String>> mapAnatEntityToSimAnnot, 
+                    Map<String,List<String>> mapStageIdToStageGroup) {
+        log.entry(groupedCallTOs, mapAnatEntityToSimAnnot, mapStageIdToStageGroup);
+        
+        Map<MultiSpeciesCondition, Collection<DiffExpressionCallTO>> groupedCalls = 
+                new HashMap<MultiSpeciesCondition, Collection<DiffExpressionCallTO>>();
+        
+        for (DiffExpressionCallTO diffExpressionCallTO : groupedCallTOs) {
+            for (String sumSimAnnot: mapAnatEntityToSimAnnot.get(diffExpressionCallTO.getAnatEntityId())) {
+                MultiSpeciesCondition condition = new MultiSpeciesCondition(
+                        sumSimAnnot, 
+                        mapStageIdToStageGroup.get(diffExpressionCallTO.getStageId()).get(0)); // it should have only one group
+                
+                Collection<DiffExpressionCallTO> calls = groupedCalls.get(condition);
+                if (calls == null) {
+                    log.trace("Create new map key: {}", condition);
+                    calls = new HashSet<DiffExpressionCallTO>();
+                    groupedCalls.put(condition, calls);
+                }
+                calls.add(diffExpressionCallTO);
+            }
+        }
+        return log.exit(groupedCalls);
+    }
+
+    //NOTE: we should filter and write in the same time because filter could be according to file type
+    /**
+     * Filter provided call group to be written and write them in a file. 
+     *
+     * @param geneNamesByIds            A {@code Map} where keys are {@code String}s corresponding  
+     *                                  to gene IDs, the associated values being {@code String}s 
+     *                                  corresponding to gene names. 
+     * @param mapGeneSpecies            A {@code Map} where keys are {@code String}s that are gene   
+     *                                  IDs, the associated values being {@code String}s 
+     *                                  corresponding to species ID.
+     * @param stageNamesByIds           A {@code Map} where keys are {@code String}s corresponding  
+     *                                  to stage IDs, the associated values being {@code String}s 
+     *                                  corresponding to stage names. 
+     * @param anatEntityNamesByIds      A {@code Map} where keys are {@code String}s corresponding  
+     *                                  to anatomical entity IDs, the associated values being 
+     *                                  {@code String}s corresponding to anatomical entity names.
+     * @param cioStatementByIds         A {@code Map} where keys are {@code String}s corresponding  
+     *                                  to CIO IDs, the associated values being {@code String}s 
+     *                                  corresponding to CIO names.
+     * @param speciesNamesByIds         A {@code Map} where keys are {@code String}s corresponding 
+     *                                  to species IDs, the associated values being {@code String}s 
+     *                                  corresponding to species names. 
+     * @param writersUsed               A {@code Map} where keys are {@code MultiSpDiffExprFileType}s 
+     *                                  corresponding to which type of file should be generated, the 
+     *                                  associated values being {@code ICsvDozerBeanWriter}s 
+     *                                  corresponding to the writers.
+     * @param processors                A {@code Map} where keys are {@code MultiSpDiffExprFileType}s 
+     *                                  corresponding to which type of file should be generated, the 
+     *                                  associated values being an {@code Array} of 
+     *                                  {@code CellProcessor}s used to process a file.
+     * @param omaNodeId                 A {@code String} that is the OMA node ID.
+     * @param entry                     An {@code Entry} where keys are {@code MultiSpeciesCondition},
+     *                                  corresponding to the condition, the associated values being
+     *                                  a {@code Collection} of {@code DiffExpressionCallTO}s that 
+     *                                  are the differential expression calls to be filtered and 
+     *                                  written.
+     * @param mapSumSimCIO              A {@code Map} where keys are {@code String}s corresponding 
+     *                                  to summary similarity annotation IDs, the associated values 
+     *                                  being {@code String}s corresponding to CIO IDs.
+     * @param mapSimAnnotToAnatEntities A {@code Map} is the {@code Map} where keys are 
+     *                                  {@code String}s that are summary similarity annotation IDs, 
+     *                                  the associated values being {@code Set} of {@code String}s 
+     *                                  corresponding to anat. entity IDs.
+     * @param mapStageGroupToStageId    A {@code Map} is the {@code Map} where keys are 
+     *                                  {@code String}s that are stage group IDs, the associated 
+     *                                  values being {@code Set} of {@code String}s corresponding 
+     *                                  to stage IDs.
+     * @throws IllegalArgumentException If call data are inconsistent (for instance, without any data).
+     * @throws IOException              If an error occurred while trying to write generated files.
+     */
+    private void filterAndWriteConditionGroup(Map<String,String> geneNamesByIds,
+            Map<String,String> mapGeneSpecies, Map<String,String> stageNamesByIds,
+            Map<String,String> anatEntityNamesByIds, Map<String,CIOStatementTO> cioStatementByIds,
+            Map<String,String> speciesNamesByIds,
+            Map<MultiSpDiffExprFileType, ICsvDozerBeanWriter> writersUsed,
+            Map<MultiSpDiffExprFileType, CellProcessor[]> processors,
+            String omaNodeId, Entry<MultiSpeciesCondition, Collection<DiffExpressionCallTO>> entry,
+            Map<String,String> mapSumSimCIO, Map<String, List<String>> mapSimAnnotToAnatEntities,
+            Map<String, List<String>> mapStageGroupToStageId)
+                    throws IllegalArgumentException, IOException {
+        log.entry(geneNamesByIds, mapGeneSpecies, stageNamesByIds, anatEntityNamesByIds, 
+                cioStatementByIds, speciesNamesByIds, writersUsed, processors, omaNodeId, entry, 
+                mapSumSimCIO, mapSimAnnotToAnatEntities, mapStageGroupToStageId);
+        
+        // First, we get some data to be able to build beans 
+        MultiSpeciesCondition condition = entry.getKey();
+
+        String cioId = mapSumSimCIO.get(condition.getSummarySimilarityAnnotationId());
+        
+        List<String> stageIds = mapStageGroupToStageId.get(condition.getStageGroupId());
+        List<String> stageNames = new ArrayList<String>();
+        for (String stageId: mapStageGroupToStageId.get(condition.getSummarySimilarityAnnotationId())) {
+            stageNames.add(stageNamesByIds.get(stageId));
+        }
+        
+        List<String> organIds = 
+                mapSimAnnotToAnatEntities.get(condition.getSummarySimilarityAnnotationId());
+        List<String> organNames = new ArrayList<String>();
+        for (String entityId: mapSimAnnotToAnatEntities.get(condition.getSummarySimilarityAnnotationId())) {
+            organNames.add(anatEntityNamesByIds.get(entityId));
+        }
+
+        List<String> geneIds = new ArrayList<String>(), geneNames = new ArrayList<String>();
+        
+        // Then, we compute data for simple file for each species
+        // and we create in same time complete multi-species diff. expression file beans 
+        List<CompleteMultiSpeciesDiffExprFileBean> completeBeans = 
+                new ArrayList<CompleteMultiSpeciesDiffExprFileBean>();
+        int nbSpWithData = 0, totalOver = 0, totalUnder = 0, totalNotDiffExpr = 0, totalNotExpr = 0;
+        Map<String,SpeciesCounts> allSpeciesCounts = new HashMap<String,SpeciesCounts>();
+        
+        for (DiffExpressionCallTO to : entry.getValue()) {
+            // We create a complete bean with null differential expression and call quality
+            CompleteMultiSpeciesDiffExprFileBean currentBean = 
+                    new CompleteMultiSpeciesDiffExprFileBean(
+                            omaNodeId, this.getOmaNodeDescription(omaNodeId),
+                            Arrays.asList(to.getGeneId()), 
+                            Arrays.asList(geneNamesByIds.get(to.getGeneId())), 
+                            organIds, organNames,
+                            Arrays.asList(to.getStageId()), 
+                            Arrays.asList(stageNamesByIds.get(to.getStageId())), 
+                            mapGeneSpecies.get(to.getGeneId()), 
+                            speciesNamesByIds.get(mapGeneSpecies.get(to.getGeneId())), 
+                            cioId, cioStatementByIds.get(cioId).getName(), 
+                            to.getDiffExprCallTypeAffymetrix().getStringRepresentation(),
+                            to.getAffymetrixData().getStringRepresentation(), 
+                            to.getBestPValueAffymetrix(), 
+                            Double.valueOf(to.getConsistentDEACountAffymetrix()), 
+                            Double.valueOf(to.getInconsistentDEACountAffymetrix()), 
+                            to.getDiffExprCallTypeRNASeq().getStringRepresentation(), 
+                            to.getRNASeqData().getStringRepresentation(), to.getBestPValueRNASeq(), 
+                            Double.valueOf(to.getConsistentDEACountRNASeq()), 
+                            Double.valueOf(to.getInconsistentDEACountRNASeq()),
+                            null, null); // Differential expression and call quality
+
+            // We add differential expression and call quality to the complete bean
+            this.addDiffExprCallMergedDataToRow(currentBean);
+            // And add it to the set of bean to be written
+            completeBeans.add(currentBean);
+            
+            // We store gene data to be able to create simple bean later
+            geneIds.add(to.getGeneId());
+            geneNames.add(geneNamesByIds.get(to.getGeneId()));
+            
+            // We finish by count gene types
+            SpeciesCounts currentCounts = allSpeciesCounts.get(currentBean.getSpeciesId());
+            if (currentCounts == null) {
+                currentCounts = new SpeciesCounts(currentBean.getSpeciesId(), 0, 0, 0, 0, 0);
+                allSpeciesCounts.put(currentBean.getSpeciesId(), currentCounts);                
+            }
+
+            switch (DiffExpressionData.convertToDiffExpressionData(
+                    currentBean.getDifferentialExpression())) {
+                case NO_DATA:
+                    currentCounts.setNbNAGenes(currentCounts.getNbNAGenes() + 1);
+                    break;
+                case NOT_EXPRESSED:
+                    currentCounts.setNbNotExprGenes(currentCounts.getNbNotExprGenes() + 1);
+                    totalNotExpr++;
+                    break;
+                case OVER_EXPRESSION:
+                    currentCounts.setNbOverExprGenes(currentCounts.getNbOverExprGenes() + 1);
+                    totalOver++;
+                    break;
+                case UNDER_EXPRESSION:
+                    currentCounts.setNbUnderExprGenes(currentCounts.getNbUnderExprGenes() + 1);
+                    totalUnder++;
+                    break;
+                case NOT_DIFF_EXPRESSION:
+                case WEAK_AMBIGUITY:
+                case STRONG_AMBIGUITY:
+                    currentCounts.setNbNotDiffExprGenes(currentCounts.getNbNotDiffExprGenes() + 1);
+                    totalNotDiffExpr++;
+                    break;
+                default:
+                    throw log.throwing(new AssertionError(
+                            "All logical conditions should have been checked."));
+            } 
+        }
+        
+        // We filter when there is no data in at least 2 species 
+        if (nbSpWithData < 2) {
+            log.trace("This OMA group doesn't have data in at east 2 species");
+            return;
+        }
+
+        // We filter groups with only no diff. expression 
+        if (totalOver == 0 && totalUnder == 0) {
+            log.trace("This OMA group doesn't have differential expression");
+            assert (totalNotDiffExpr + totalNotExpr) > 0;
+            return;
+        }
+        
+        // We filter poor quality homologous annotations in simple file (CIO)
+        SimpleMultiSpeciesDiffExprFileBean simpleBean = null; 
+        if (cioStatementByIds.get(cioId).isTrusted()) {
+            simpleBean = new SimpleMultiSpeciesDiffExprFileBean(omaNodeId, 
+                            this.getOmaNodeDescription(omaNodeId), geneIds, geneNames, 
+                            organIds, organNames, stageIds, stageNames, cioId, 
+                            cioStatementByIds.get(cioId).getName(), null);
+
+            // We order species IDs to keep the same order when we regenerate files.
+            List<String> speciesIds = new ArrayList<String>(allSpeciesCounts.keySet());
+            Collections.sort(speciesIds);
+            for (String speciesId: speciesIds) {                
+                SpeciesCounts speciesCounts = allSpeciesCounts.get(speciesId);
+                simpleBean.getSpeciesCounts().add(speciesCounts);
+            }
+        }
+
+        assert completeBeans != null && !completeBeans.isEmpty();
+        
+        // Then we write beans
+        for (Entry<MultiSpDiffExprFileType, ICsvDozerBeanWriter> writerFileType: writersUsed.entrySet()) {
+
+            if (writerFileType.getKey().isSimpleFileType() && simpleBean != null) {
+                writerFileType.getValue().write(simpleBean, processors.get(writerFileType.getKey()));
+            } else {
+                // We order calls according to OMA ID, entity IDs, stage IDs, species ID, gene IDs
+                Collections.sort(completeBeans, new Comparator<CompleteMultiSpeciesDiffExprFileBean>(){
+                    @Override
+                    public int compare(CompleteMultiSpeciesDiffExprFileBean bean1,
+                            CompleteMultiSpeciesDiffExprFileBean bean2) {
+                        log.entry();
+                        
+                        int omaIdComp = bean1.getOmaId().compareToIgnoreCase(bean2.getOmaId());
+                        if (omaIdComp != 0)
+                            return omaIdComp;
+
+                        int uberonIdComp = compareTwoLists(bean1.getEntityIds(), bean2.getEntityIds());
+                        if (uberonIdComp != 0)
+                            return uberonIdComp;
+
+                        int stageIdComp = compareTwoLists(bean1.getStageIds(), bean2.getStageIds());
+                        if (stageIdComp != 0)
+                            return stageIdComp;
+                        
+                        int speciesIdComp = bean1.getSpeciesId().compareToIgnoreCase(bean2.getSpeciesId());
+                        if (speciesIdComp != 0)
+                            return speciesIdComp;
+
+                        int geneIdComp = compareTwoLists(bean1.getGeneIds(), bean2.getGeneIds());
+                        if (geneIdComp != 0)
+                            return geneIdComp;
+
+                        return log.exit(0);
+                    }
+                });
+                
+                // We write gene IDs and names of the OMA group in a comment
+                writerFileType.getValue().writeComment("//OMA node ID " + omaNodeId + 
+                        " contains gene IDs " + geneIds +" with gene names " + geneNames);
+
+                // We write rows
+                for (CompleteMultiSpeciesDiffExprFileBean completeBean: completeBeans) {
+                    writerFileType.getValue().write(completeBean, processors.get(writerFileType.getKey()));
+                }
+                
+                // We finish by a comment to separate groups
+                writerFileType.getValue().writeComment("//");
+            }
+        }
+
+        log.debug("Done writing calls of OMA node ID", omaNodeId);
+
+        log.exit();
+    }
+    
+    /**
+     * Add to the provided {@code CompleteMultiSpeciesDiffExprFileBean} merged 
+     * {@code DataState}s and qualities.
+     * <p>
+     * The provided {@code CompleteMultiSpeciesDiffExprFileBean} will be modified.
+     *
+     * @param bean  A {@code CompleteMultiSpeciesDiffExprFileBean} that is the bean to be modified.
+     * @throws IllegalArgumentException If call data are inconsistent (for instance, without any data).
+     */
+    private void addDiffExprCallMergedDataToRow(CompleteMultiSpeciesDiffExprFileBean bean) 
+                    throws IllegalArgumentException {
+        log.entry(bean);
+        
+        DiffExpressionData summary = DiffExpressionData.NO_DATA;
+        String quality = GenerateDiffExprFile.NA_VALUE;
+    
+        DiffExprCallType affymetrixType = 
+                DiffExprCallType.convertToDiffExprCallType(bean.getAffymetrixData()); 
+        DiffExprCallType rnaSeqType = 
+                DiffExprCallType.convertToDiffExprCallType(bean.getRNASeqData()); 
+        
+        Set<DiffExprCallType> allType = EnumSet.of(affymetrixType, rnaSeqType);
+    
+        // Sanity check on data: one call should't be only no data and/or not_expressed data.
+        if ((affymetrixType.equals(DiffExprCallType.NOT_EXPRESSED) ||
+                affymetrixType.equals(DiffExprCallType.NO_DATA)) &&
+            (rnaSeqType.equals(DiffExprCallType.NOT_EXPRESSED) ||
+                    rnaSeqType.equals(DiffExprCallType.NO_DATA))) {
+            throw log.throwing(new IllegalArgumentException("One call should not be only "+
+                    DiffExprCallType.NOT_EXPRESSED.getStringRepresentation() + " and/or " + 
+                    DiffExprCallType.NO_DATA.getStringRepresentation()));
+        }
+    
+        // One call containing over- AND under- expression returns STRONG_AMBIGUITY.
+        if ((allType.contains(DiffExprCallType.UNDER_EXPRESSED) &&
+                allType.contains(DiffExprCallType.OVER_EXPRESSED))) {
+            summary = DiffExpressionData.STRONG_AMBIGUITY;
+            quality = GenerateDiffExprFile.NA_VALUE;
+    
+        // Both data types are equals or only one is set to 'no data': 
+        // we choose the data which is not 'no data'.
+        } else if (affymetrixType.equals(rnaSeqType) || allType.contains(DiffExprCallType.NO_DATA)) {
+            DiffExprCallType type = affymetrixType;
+            if (affymetrixType.equals(DiffExprCallType.NO_DATA)) {
+                type = rnaSeqType;
+            }
+            assert !type.equals(DiffExprCallType.NO_DATA);
+            
+            //store only quality of data different from NO_DATA
+            Set<DataState> allDataQuality = EnumSet.noneOf(DataState.class);
+            if (!affymetrixType.equals(DiffExprCallType.NO_DATA)) {
+                allDataQuality.add(DataState.convertToDataState(bean.getAffymetrixQuality()));
+            }
+            if (!rnaSeqType.equals(DiffExprCallType.NO_DATA)) {
+                allDataQuality.add(DataState.convertToDataState(bean.getRNASeqQuality()));
+            }
+            assert allDataQuality.size() >=1 && allDataQuality.size() <= 2;
+            
+            switch (type) {
+                case OVER_EXPRESSED: 
+                    summary = DiffExpressionData.OVER_EXPRESSION;
+                    break;
+                case UNDER_EXPRESSED: 
+                    summary = DiffExpressionData.UNDER_EXPRESSION;
+                    break;
+                case NOT_DIFF_EXPRESSED: 
+                    summary = DiffExpressionData.NOT_DIFF_EXPRESSION;
+                    break;
+                default:
+                    throw log.throwing(new AssertionError(
+                            "Both DiffExprCallType are set to 'no data' or 'not expressed'"));
+            }
+            if (allDataQuality.contains(DataState.HIGHQUALITY)) {
+                quality = DataState.HIGHQUALITY.getStringRepresentation();
+            } else {
+                quality = DataState.LOWQUALITY.getStringRepresentation();
+            }
+    
+        // All possible cases where the summary is WEAK_AMBIGUITY:
+        // - NOT_DIFF_EXPRESSED and (OVER_EXPRESSED or UNDER_EXPRESSED)
+        // - NOT_EXPRESSED and OVER_EXPRESSED
+        // - NOT_EXPRESSED and NOT_DIFF_EXPRESSED
+        //XXX: actually, I think that there are no NOT_EXPRESSED case inserted, 
+        //but it doesn't hurt to keep this code
+        } else if ((allType.contains(DiffExprCallType.NOT_DIFF_EXPRESSED) && 
+                        (allType.contains(DiffExprCallType.OVER_EXPRESSED) ||
+                        allType.contains(DiffExprCallType.UNDER_EXPRESSED))) || 
+                   (allType.contains(DiffExprCallType.NOT_EXPRESSED) && 
+                        (allType.contains(DiffExprCallType.OVER_EXPRESSED)) || 
+                        allType.contains(DiffExprCallType.NOT_DIFF_EXPRESSED))) {
+            summary = DiffExpressionData.WEAK_AMBIGUITY;
+            quality = GenerateDiffExprFile.NA_VALUE;
+    
+        // One call containing NOT_EXPRESSED and UNDER_EXPRESSED returns 
+        // UNDER_EXPRESSION with LOWQUALITY 
+        //XXX: actually, I think that there are no NOT_EXPRESSED case inserted, 
+        //but it doesn't hurt to keep this code
+        } else if (allType.contains(DiffExprCallType.NOT_EXPRESSED) && 
+                allType.contains(DiffExprCallType.UNDER_EXPRESSED)) {
+            summary = DiffExpressionData.UNDER_EXPRESSION;
+            quality = DataState.LOWQUALITY.getStringRepresentation();
+            
+        } else {
+            throw log.throwing(new AssertionError("All logical conditions should have been checked."));
+        }
+        assert !summary.equals(DiffExpressionData.NO_DATA);
+    
+        // Add diff. expression and quality to the bean
+        bean.setDifferentialExpression(summary.getStringRepresentation());
+        bean.setCallQuality(quality);
+    
+        log.exit();
+    }
+
+    /**
+     * Compare two {@code List}s of {@code String}s, elements by elements. When two elements (with 
+     * the same index), are different, the comparison returns an integer whose sign is that of 
+     * calling {@link java.lang.String.compareToIgnoreCase(String)}.
+     *
+     * @param list1 A {@code List} to be compared to {@code list2}.
+     * @param list2 A {@code List} to be compared to {@code list1}.
+     * @return      A negative integer, zero, or a positive integer as {@code list1} is greater than, 
+     *              equal to, or less than this {@code list2}, ignoring case considerations.
+     */
+    //TODO find a better place ?
+    private int compareTwoLists(List<String> list1, List<String> list2) {
+        log.entry(list1, list2);
+        int minLength = Math.min(list1.size(), list2.size());
+
+        for (int i = 0; i < minLength; i++) {
+            final int compareValue = list1.get(i).compareToIgnoreCase(list2.get(i));
+            if (compareValue != 0) {
+                return compareValue; // They are already not equal
+            }
+        }
+        if (list1.size() == list2.size()) {
+            return 0; // They are equal
+        } else if (list1.size() < list2.size()) {
+            return -1; // list 1 is smaller
+        } else {
+            return 1;
+        }
+    }
+    
+    /**
+     * Retrieve the OMA description according to the provided OMA node ID.
+     *
+     *@param omaNodeId  A {@code String} that is the ID of the OMA node to be used to retrieve 
+     *                  its description.
+     * @return          the {@code String} that is the description of the provided OMA node. 
+     */
+    private String getOmaNodeDescription(String omaNodeId) {
+        log.entry(omaNodeId);
+        // TODO Auto-generated method stub
+        return log.exit(null);
+    }
 
     /**
      * Generates an {@code Array} of {@code CellProcessor}s used to process a multi-species 
@@ -588,7 +1448,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      */
     private CellProcessor[] generateCellProcessors(MultiSpDiffExprFileType fileType, int nbSpecies) 
             throws IllegalArgumentException {
-        log.entry(fileType);
+        log.entry(fileType, nbSpecies);
 
         //First, we define all set of possible values
         List<Object> data = new ArrayList<Object>();
@@ -610,11 +1470,11 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         if (fileType.isSimpleFileType()) {
             int nbColumns = 7 + 3 * nbSpecies;
             CellProcessor[] processors = new CellProcessor[nbColumns];
-            processors[0] = new StrNotNullOrEmpty(); // oma id
-            processors[1] = new StrNotNullOrEmpty(); // gene ID list
-            processors[2] = new NotNull();              // gene name list
-            processors[3] = new StrNotNullOrEmpty();    // anatomical entity ID list
-            processors[4] = new StrNotNullOrEmpty();    // anatomical entity name list
+            processors[0] = new StrNotNullOrEmpty();    // OMA id
+            processors[1] = new StrNotNullOrEmpty(new Collector(new ArrayList<Object>())); // gene ID list
+            processors[2] = new NotNull(new Collector(new ArrayList<Object>()));           // gene name list
+            processors[3] = new StrNotNullOrEmpty(new Collector(new ArrayList<Object>())); // anatomical entity ID list
+            processors[4] = new StrNotNullOrEmpty(new Collector(new ArrayList<Object>())); // anatomical entity name list
             processors[5] = new StrNotNullOrEmpty();    // developmental stage ID
             processors[6] = new StrNotNullOrEmpty();    // developmental stage name
             // the number of columns depends on the number of species
@@ -630,14 +1490,14 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             return log.exit(processors);
         }
         return log.exit(new CellProcessor[] {
-                new StrNotNullOrEmpty(),            // oma id
-                new StrNotNullOrEmpty(),            // gene ID list
-                new NotNull(),                      // gene name list
-                new StrNotNullOrEmpty(),            // anatomical entity ID list
-                new StrNotNullOrEmpty(),            // anatomical entity name list
+                new StrNotNullOrEmpty(),            // OMA id
+                new StrNotNullOrEmpty(new Collector(new ArrayList<Object>())), // anatomical entity ID list
+                new StrNotNullOrEmpty(new Collector(new ArrayList<Object>())), // anatomical entity name list
                 new StrNotNullOrEmpty(),            // developmental stage ID
                 new StrNotNullOrEmpty(),            // developmental stage name
                 new StrNotNullOrEmpty(),            // species latin name
+                new StrNotNullOrEmpty(),            // gene ID
+                new NotNull(),                      // gene name
                 new StrNotNullOrEmpty(),            // cio id
                 new StrNotNullOrEmpty(),            // cio name
                 new IsElementOf(data),              // Differential expression
@@ -658,18 +1518,18 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * Generates an {@code Array} of {@code String}s used to generate the header of a multi-species
      * differential expression TSV file of type {@code fileType}.
      * 
-     * @param fileType  The {@code MultiSpDiffExprFileType} of the file to be generated.
-     * @param nbSpecies A {@code List} of {@code String}s that are the names of species 
-     *                  we want to generate data for.
-     * @return          An {@code Array} of {@code String}s used to produce the header.
+     * @param fileType      The {@code MultiSpDiffExprFileType} of the file to be generated.
+     * @param speciesNames  A {@code List} of {@code String}s that are the names of species 
+     *                      we want to generate data for.
+     * @return              An {@code Array} of {@code String}s used to produce the header.
      * @throw IllegalArgumentException If {@code fileType} is not managed by this method.
      */
     private String[] generateHeader(MultiSpDiffExprFileType fileType, List<String> speciesNames)
         throws IllegalArgumentException {
-        log.entry(fileType);
+        log.entry(fileType, speciesNames);
 
         if (fileType.isSimpleFileType()) {
-            int nbColumns = 7 + 4 * speciesNames.size();
+            int nbColumns = 7 + 5 * speciesNames.size();
             String[] headers = new String[nbColumns];
             headers[0] = OMA_ID_COLUMN_NAME;
             headers[1] = GENE_ID_LIST_ID_COLUMN_NAME;
@@ -680,20 +1540,64 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             headers[6] = STAGE_NAME_COLUMN_NAME;
             // the number of columns depends on the number of species
             for (int i = 0; i < speciesNames.size(); i++) {
-                int columnIndex = 7 + 4 * i;
+                int columnIndex = 7 + 5 * i;
                 String endHeader = " for " + speciesNames.get(i);
                 headers[columnIndex] = NB_OVER_EXPR_GENES_COLUMN_NAME + endHeader;
                 headers[columnIndex+1] = NB_UNDER_EXPR_GENES_COLUMN_NAME + endHeader;
                 headers[columnIndex+2] = NB_NO_DIFF_EXPR_GENES_COLUMN_NAME + endHeader;
+                headers[columnIndex+2] = NB_NOT_EXPR_GENES_COLUMN_NAME + endHeader;
                 headers[columnIndex+3] = NB_NA_GENES_COLUMN_NAME + endHeader;
             }
             return log.exit(headers);
         }
 
         return log.exit(new String[] { 
-                OMA_ID_COLUMN_NAME, GENE_ID_COLUMN_NAME, GENE_NAME_COLUMN_NAME,
+                OMA_ID_COLUMN_NAME, 
                 ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME, ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME,
-                STAGE_ID_COLUMN_NAME, STAGE_NAME_COLUMN_NAME, SPECIES_LATIN_NAME_COLUMN_NAME,
+                STAGE_ID_COLUMN_NAME, STAGE_NAME_COLUMN_NAME, 
+                SPECIES_LATIN_NAME_COLUMN_NAME,                
+                GENE_ID_COLUMN_NAME, GENE_NAME_COLUMN_NAME,
+                CIO_ID_ID_COLUMN_NAME, CIO_NAME_ID_COLUMN_NAME, 
+                DIFFEXPRESSION_COLUMN_NAME, QUALITY_COLUMN_NAME,
+                AFFYMETRIX_DATA_COLUMN_NAME, AFFYMETRIX_CALL_QUALITY_COLUMN_NAME,
+                AFFYMETRIX_P_VALUE_COLUMN_NAME, AFFYMETRIX_CONSISTENT_DEA_COUNT_COLUMN_NAME, 
+                AFFYMETRIX_INCONSISTENT_DEA_COUNT_COLUMN_NAME,
+                RNASEQ_DATA_COLUMN_NAME, RNASEQ_CALL_QUALITY_COLUMN_NAME,
+                RNASEQ_P_VALUE_COLUMN_NAME, RNASEQ_CONSISTENT_DEA_COUNT_COLUMN_NAME, 
+                RNASEQ_INCONSISTENT_DEA_COUNT_COLUMN_NAME});
+    }
+    
+    private String[] generateFieldMapping(MultiSpDiffExprFileType fileType, int nbSpecies) {
+        log.entry(fileType, nbSpecies);
+
+        if (fileType.isSimpleFileType()) {
+            int nbColumns = 7 + 5 * nbSpecies;
+            String[] fieldMapping = new String[nbColumns];
+            fieldMapping[0] = OMA_ID_COLUMN_NAME;
+            fieldMapping[1] = GENE_ID_LIST_ID_COLUMN_NAME;
+            fieldMapping[2] = GENE_NAME_LIST_ID_COLUMN_NAME;
+            fieldMapping[3] = ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME;
+            fieldMapping[4] = ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME;
+            fieldMapping[5] = STAGE_ID_COLUMN_NAME;
+            fieldMapping[6] = STAGE_NAME_COLUMN_NAME;
+            // the number of columns depends on the number of species
+            for (int i = 0; i < nbSpecies; i++) {
+                int columnIndex = 7 + 5 * i;
+                fieldMapping[columnIndex] = "speciesCounts[i].nbOverExprGenes";
+                fieldMapping[columnIndex+1] = "speciesCounts[i].nbUnderExprGenes";
+                fieldMapping[columnIndex+2] = "speciesCounts[i].nbNotDiffExprGenes";
+                fieldMapping[columnIndex+2] = "speciesCounts[i].nbNotExprGenes";
+                fieldMapping[columnIndex+3] = "speciesCounts[i].nbNAGenes";
+            }
+            return log.exit(fieldMapping);
+        }
+
+        return log.exit(new String[] { 
+                OMA_ID_COLUMN_NAME, 
+                ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME, ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME,
+                STAGE_ID_COLUMN_NAME, STAGE_NAME_COLUMN_NAME, 
+                SPECIES_LATIN_NAME_COLUMN_NAME,
+                GENE_ID_COLUMN_NAME, GENE_NAME_COLUMN_NAME,
                 CIO_ID_ID_COLUMN_NAME, CIO_NAME_ID_COLUMN_NAME, 
                 DIFFEXPRESSION_COLUMN_NAME, QUALITY_COLUMN_NAME,
                 AFFYMETRIX_DATA_COLUMN_NAME, AFFYMETRIX_CALL_QUALITY_COLUMN_NAME,

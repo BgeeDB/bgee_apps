@@ -83,6 +83,11 @@ public interface GenerateMultiSpeciesDownloadFile {
      */
     public final static String NB_NO_DIFF_EXPR_GENES_COLUMN_NAME = "Nb not diff. expressed genes";
     /**
+     * A {@code String} that is the name of the column containing number of not diff. expressed 
+     * genes, in the download file.
+     */
+    public final static String NB_NOT_EXPR_GENES_COLUMN_NAME = "Nb not expressed genes";
+    /**
      * A {@code String} that is the name of the column containing latin species names, 
      * in the download file.
      */

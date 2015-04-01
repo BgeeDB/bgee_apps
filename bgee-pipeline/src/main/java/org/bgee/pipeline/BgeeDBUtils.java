@@ -16,12 +16,8 @@ import org.bgee.model.dao.api.EntityTO;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
 import org.bgee.model.dao.api.anatdev.StageDAO;
-import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO;
-import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SimAnnotToAnatEntityTO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.gene.GeneDAO;
-import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
-import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType;
@@ -314,66 +310,6 @@ public class BgeeDBUtils {
     }
     
     /**
-     * Retrieves homologous genes for the requested species,
-     * present into the Bgee database.
-     * 
-     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species
-     *                      allowing to filter the homologous genes to use.
-     * @param geneDAO       A {@code GeneDAO} to use to retrieve information about genes 
-     *                      from the data source.
-     * @return              A {@code List} of {@code GeneTO}s containing all homologous genes
-     *                      of the given species.
-     * @throws DAOException If an error occurred while getting the data from the Bgee data source.
-     */
-    // TODO : integration tests
-    public static List<GeneTO> getHomologousGenes(Set<String> speciesIds, GeneDAO dao) 
-            throws DAOException {
-        log.entry(speciesIds);
-    
-        log.debug("Start retrieving homologous genes for the species IDs {}...", speciesIds);
-    
-        dao.setAttributes(GeneDAO.Attribute.ID, GeneDAO.Attribute.ANCESTRAL_OMA_NODE_ID,
-                GeneDAO.Attribute.ANCESTRAL_OMA_TAXON_ID);
-        List<GeneTO> genes = dao.getGenesBySpeciesIds(speciesIds).getAllTOs();
-    
-        log.debug("Done retrieving homologous genes, {} genes found", genes.size());
-    
-        return log.exit(genes);
-    }
-
-    /**
-     * Retrieves homologous anatomical entities for the requested species,
-     * present into the Bgee database.
-     *
-     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species
-     *                      allowing to filter the anatomical entities to use.
-     * @param taxonId       A {@code String} that is the ID of the common ancestor taxon 
-     *                      we want to into account. 
-     * @param dao           A {@code SummarySimilarityAnnotationDAO} to use to retrieve information 
-     *                      about summary similarity annotations from the Bgee data source.
-     * @return              A {@code List} of {@code SimAnnotToAnatEntityTO}s containing all 
-     *                      homologous anatomical entities for the given species.
-     * @throws DAOException If an error occurred while getting the data from the Bgee data source.
-     */
-    // TODO : integration tests
-    public static List<SimAnnotToAnatEntityTO> getHomologousAnatEntities(Set<String> speciesIds, 
-            String taxonId, SummarySimilarityAnnotationDAO dao) throws DAOException {
-        log.entry(speciesIds);
-        
-        log.debug("Start retrieving homologous anat. entities for the species IDs {}...", speciesIds);
-    
-        dao.setAttributes(SummarySimilarityAnnotationDAO.Attribute.ID, 
-                SummarySimilarityAnnotationDAO.Attribute.CIO_ID);
-        List<SimAnnotToAnatEntityTO> simAnnotToAnatEntityTOs = 
-                dao.getSimAnnotToAnatEntity(taxonId, speciesIds).getAllTOs();
-    
-        log.debug("Done retrieving homologous anat. entities, {} entities found",
-                simAnnotToAnatEntityTOs.size());
-    
-        return log.exit(simAnnotToAnatEntityTOs);
-    }
-    
-    /**
      * Retrieve from the data source a mapping from gene IDs to gene names for genes 
      * belonging to the requested species. 
      * 
@@ -466,35 +402,6 @@ public class BgeeDBUtils {
         return log.exit(anatEntityNamesByIds);
     }
     
-    /**
-     * Retrieve from the data source a mapping from CIO IDs to names. 
-     * 
-     * @param cioStatementDAO   A {@code CIOStatementDAO} to use to retrieve information about 
-     *                          CIO statements from the data source.
-     * @return                  A {@code Map} where keys are {@code String}s corresponding to 
-     *                          CIO IDs, the associated values being {@code String}s 
-     *                          corresponding to CIO names. 
-     */
-    public static Map<String, String> getCIOStatementNamesByIds(CIOStatementDAO cioStatementDAO) {
-        log.entry(cioStatementDAO);
-        
-        log.debug("Start retrieving all CIO names");
-        
-        //store original attributes to restore cioStatementDAO in proper state afterwards.
-        Collection<CIOStatementDAO.Attribute> attributes = cioStatementDAO.getAttributes();
-        cioStatementDAO.setAttributes(CIOStatementDAO.Attribute.ID, CIOStatementDAO.Attribute.NAME);
-        
-        Map<String, String> cioNamesByIds = 
-                generateNamesByIdsMap(cioStatementDAO.getAllCIOStatements());
-        
-        //restore cioStatementDAO in proper state
-        cioStatementDAO.setAttributes(attributes);
-        
-        log.debug("Done retrieving CIO names, {} names retrieved", cioNamesByIds.size());
-        
-        return log.exit(cioNamesByIds);
-    }
-
     /**
      * Retrieve a mapping from IDs to names using the {@code DAOResultSet} {@code rs}, 
      * supposed to return an {@code EntityTO} when calling the method 

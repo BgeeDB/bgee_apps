@@ -399,14 +399,6 @@ public abstract class GenerateDownloadFile extends CallUser {
     public static abstract class DownloadFileBean {
 
         /**
-         * @see #getOmaId()
-         */
-        private String omaId;
-        /**
-         * @see #getOmaDescription()
-         */
-        private String omaDescription;
-        /**
          * @see #getGeneIds()
          */
         private List<String> geneIds;
@@ -423,13 +415,13 @@ public abstract class GenerateDownloadFile extends CallUser {
          */
         private List<String> entityNames;
         /**
-         * @see #getStageId()
+         * @see #getStageIds()
          */
-        private String stageId;
+        private List<String> stageIds;
         /**
-         * @see #getStageName()
+         * @see #getStageNames()
          */
-        private String stageName;
+        private List<String> stageNames;
         /**
          * @see #getSpeciesId()
          */
@@ -438,14 +430,6 @@ public abstract class GenerateDownloadFile extends CallUser {
          * @see #getSpeciesName()
          */
         private String speciesName;
-        /**
-         * @see getCioId()
-         */
-        private String cioId;
-        /**
-         * @see getCioName()
-         */
-        private String cioName;
         /**
          * @see getAffymetrixData()
          */
@@ -472,8 +456,6 @@ public abstract class GenerateDownloadFile extends CallUser {
         /**
          * Constructor providing all arguments of the class.
          *
-         * @param omaId             See {@link #getOmaId()}.
-         * @param omaDescription    See {@link #getOmaDescription()}.
          * @param geneIds           See {@link #getGeneIds()}.
          * @param geneNames         See {@link #getGeneNames()}.
          * @param entityIds         See {@link #getEntityIds()}.
@@ -482,66 +464,29 @@ public abstract class GenerateDownloadFile extends CallUser {
          * @param stageName         See {@link #getStageName()}.
          * @param speciesId         See {@link #getSpeciesId()}.
          * @param speciesName       See {@link #getSpeciesName()}.
-         * @param cioId             See {@link #getCioId()}.
-         * @param cioName           See {@link #getCioName()}.
          * @param affymetrixData    See {@link #getAffymetrixData()}.
          * @param affymetrixQuality See {@link #getAffymetrixQuality()}.
          * @param rnaSeqData        See {@link #getRNASeqData()}.
          * @param rnaSeqQuality     See {@link #getRNASeqQuality()}.
          */
-        private DownloadFileBean(String omaId, String omaDescription, List<String> geneIds,
-                List<String> geneNames, List<String> entityIds, List<String> entityNames,
-                String stageId, String stageName, String speciesId,
-                String speciesName, String cioId, String cioName, String affymetrixData,
+        private DownloadFileBean(List<String> geneIds, List<String> geneNames, 
+                List<String> entityIds, List<String> entityNames, List<String> stageIds, 
+                List<String> stageNames, String speciesId, String speciesName, String affymetrixData, 
                 String affymetrixQuality, String rnaSeqData, String rnaSeqQuality) {
-            this.omaId = omaId;
-            this.omaDescription = omaDescription;
             this.geneIds = geneIds;
             this.geneNames = geneNames;
             this.entityIds = entityIds;
             this.entityNames = entityNames;
-            this.stageId = stageId;
-            this.stageName = stageName;
+            this.stageIds = stageIds;
+            this.stageNames = stageNames;
             this.speciesId = speciesId;
             this.speciesName = speciesName;
-            this.cioId = cioId;
-            this.cioName = cioName;
             this.affymetrixData = affymetrixData;
             this.affymetrixQuality = affymetrixQuality;
             this.rnaSeqData = rnaSeqData;
             this.rnaSeqQuality = rnaSeqQuality;
         }
-        
-        /** 
-         * @return  the {@code String} that is the ID of ancestral OMA node of the gene.
-         */
-        public String getOmaId() {
-            return omaId;
-        }
-        
-        /**
-         * @param omaId A {@code String} that is the ID of ancestral OMA node of the gene.
-         * @see #getOmaId()
-         */
-        public void setOmaId(String omaId) {
-            this.omaId = omaId;
-        }
-        
-        /** 
-         * @return  the {@code String} that is the description of ancestral OMA node.
-         */
-        public String getOmaDescription() {
-            return omaDescription;
-        }
-        
-        /** 
-         * @param omaDescription A {@code String} that is the description of ancestral OMA node.
-         * @see #getOmaDescription()
-         */
-        public void setOmaDescription(String omaDescription) {
-            this.omaDescription = omaDescription;
-        }
-        
+                
         /** 
          * @return  the {@code List} of {@code String}s that are the IDs of the genes.
          *          There is more than one gene only in multi-species simple files.
@@ -615,33 +560,33 @@ public abstract class GenerateDownloadFile extends CallUser {
         }
         
         /** 
-         * @return  the {@code String} that is the ID of stage.
+         * @return  the {@code List} of {@code String}s that are the IDs of stages.
          */
-        public String getStageId() {
-            return stageId;
+        public List<String> getStageIds() {
+            return stageIds;
         }
         
         /**
-         * @param stageId   A {@code String} that is the ID of stage.
-         * @see #getStageId()
+         * @param stageIds   A {@code List} of {@code String}s that are the IDs of stages.
+         * @see #getStageIds()
          */
-        public void setStageId(String stageId) {
-            this.stageId = stageId;
+        public void setStageIds(List<String> stageIds) {
+            this.stageIds = stageIds;
         }
         
         /** 
-         * @return  the {@code String} that is the name of stage.
+         * @return  the {@code List} of {@code String}s that are the names of stages.
          */
-        public String getStageName() {
-            return stageName;
+        public List<String> getStageNames() {
+            return stageNames;
         }
 
         /**
-         * @param stageName A {@code String} that is the name of stage.
-         * @see #getStageName()
+         * @param stageNames A {@code List} of {@code String}s that are the names of stages.
+         * @see #getStageNames()
          */
-        public void setStageName(String stageName) {
-            this.stageName = stageName;
+        public void setStageNames(List<String> stageNames) {
+            this.stageNames = stageNames;
         }
 
         /** 
@@ -672,36 +617,6 @@ public abstract class GenerateDownloadFile extends CallUser {
          */
         public void setSpeciesName(String speciesName) {
             this.speciesName = speciesName;
-        }
-
-        /**
-         * @return  the {@code String} that is the ID of the CIO statement.
-         */
-        public String getCioId() {
-            return cioId;
-        }
-        
-        /**
-         * @param cioId A {@code String} that is the ID of the CIO statement.
-         * @see #getCioId()
-         */
-        public void setCioId(String cioId) {
-            this.cioId = cioId;
-        }
-        
-        /** 
-         * @return  the {@code String} that is the name of the CIO statement.
-         */
-        public String getCioName() {
-            return cioName;
-        }
-
-        /**
-         * @param cioName   A {@code String} that is the name of the CIO statement.
-         * @see #getCioName()
-         */
-        public void setCioName(String cioName) {
-            this.cioName = cioName;
         }
 
         /**
@@ -770,35 +685,25 @@ public abstract class GenerateDownloadFile extends CallUser {
             this.rnaSeqQuality = rnaSeqQuality;
         }
 
-        /* (non-Javadoc)
-         * @see java.lang.Object#hashCode()
-         */
         @Override
         public int hashCode() {
             final int prime = 31;
             int result = 1;
             result = prime * result + ((affymetrixData == null) ? 0 : affymetrixData.hashCode());
             result = prime * result + ((affymetrixQuality == null) ? 0 : affymetrixQuality.hashCode());
-            result = prime * result + ((cioId == null) ? 0 : cioId.hashCode());
-            result = prime * result + ((cioName == null) ? 0 : cioName.hashCode());
             result = prime * result + ((entityIds == null) ? 0 : entityIds.hashCode());
             result = prime * result + ((entityNames == null) ? 0 : entityNames.hashCode());
             result = prime * result + ((geneIds == null) ? 0 : geneIds.hashCode());
             result = prime * result + ((geneNames == null) ? 0 : geneNames.hashCode());
             result = prime * result + ((rnaSeqData == null) ? 0 : rnaSeqData.hashCode());
             result = prime * result + ((rnaSeqQuality == null) ? 0 : rnaSeqQuality.hashCode());
-            result = prime * result + ((omaDescription == null) ? 0 : omaDescription.hashCode());
-            result = prime * result + ((omaId == null) ? 0 : omaId.hashCode());
             result = prime * result + ((speciesId == null) ? 0 : speciesId.hashCode());
             result = prime * result + ((speciesName == null) ? 0 : speciesName.hashCode());
-            result = prime * result + ((stageId == null) ? 0 : stageId.hashCode());
-            result = prime * result + ((stageName == null) ? 0 : stageName.hashCode());
+            result = prime * result + ((stageIds == null) ? 0 : stageIds.hashCode());
+            result = prime * result + ((stageNames == null) ? 0 : stageNames.hashCode());
             return result;
         }
 
-        /* (non-Javadoc)
-         * @see java.lang.Object#equals(java.lang.Object)
-         */
         @Override
         public boolean equals(Object obj) {
             if (this == obj)
@@ -817,16 +722,6 @@ public abstract class GenerateDownloadFile extends CallUser {
                 if (other.affymetrixQuality != null)
                     return false;
             } else if (!affymetrixQuality.equals(other.affymetrixQuality))
-                return false;
-            if (cioId == null) {
-                if (other.cioId != null)
-                    return false;
-            } else if (!cioId.equals(other.cioId))
-                return false;
-            if (cioName == null) {
-                if (other.cioName != null)
-                    return false;
-            } else if (!cioName.equals(other.cioName))
                 return false;
             if (entityIds == null) {
                 if (other.entityIds != null)
@@ -858,47 +753,35 @@ public abstract class GenerateDownloadFile extends CallUser {
                     return false;
             } else if (!rnaSeqQuality.equals(other.rnaSeqQuality))
                 return false;
-            if (omaDescription == null) {
-                if (other.omaDescription != null)
+            if (speciesId == null) {
+                if (other.speciesId != null)
                     return false;
-            } else if (!omaDescription.equals(other.omaDescription))
-                return false;
-            if (omaId == null) {
-                if (other.omaId != null)
-                    return false;
-            } else if (!omaId.equals(other.omaId))
-                return false;
-            if (speciesId != other.speciesId)
+            } else if (!speciesId.equals(other.speciesId))
                 return false;
             if (speciesName == null) {
                 if (other.speciesName != null)
                     return false;
             } else if (!speciesName.equals(other.speciesName))
                 return false;
-            if (stageId == null) {
-                if (other.stageId != null)
+            if (stageIds == null) {
+                if (other.stageIds != null)
                     return false;
-            } else if (!stageId.equals(other.stageId))
+            } else if (!stageIds.equals(other.stageIds))
                 return false;
-            if (stageName == null) {
-                if (other.stageName != null)
+            if (stageNames == null) {
+                if (other.stageNames != null)
                     return false;
-            } else if (!stageName.equals(other.stageName))
+            } else if (!stageNames.equals(other.stageNames))
                 return false;
             return true;
         }
 
-        /* (non-Javadoc)
-         * @see java.lang.Object#toString()
-         */
         @Override
         public String toString() {
-            return "OMA ID: " + getOmaId() + " - OMA description: " + getOmaDescription() + 
-                    " - Gene IDs: " + getGeneIds() + " - Gene names: " + getGeneNames() +
+            return " Gene IDs: " + getGeneIds() + " - Gene names: " + getGeneNames() +
                     " - Entity IDs: " + getEntityIds() + " - Entity names: " + getEntityNames() + 
-                    " - Stage ID: " + getStageId() + " - Stage name: " + getStageName() + 
+                    " - Stage IDs: " + getStageIds() + " - Stage names: " + getStageNames() + 
                     " - Species ID: " + getSpeciesId() + " - Species name: " + getSpeciesName() + 
-                    " - CIO ID: " + getCioId() + " - CIO name: " + getCioName() + 
                     " - Affymetrix data: " + getAffymetrixData() + 
                     " - Affymetrix quality: " + getAffymetrixQuality() +
                     " - RNA-Seq data: " + getRNASeqData() + 
@@ -961,8 +844,6 @@ public abstract class GenerateDownloadFile extends CallUser {
         /**
          * Constructor providing all arguments of the class.
          *
-         * @param omaId                 See {@link #getOmaId()}.
-         * @param omaDescription        See {@link #getOmaDescription()}.
          * @param geneIds               See {@link #getGeneIds()}.
          * @param geneNames             See {@link #getGeneNames()}.
          * @param entityIds             See {@link #getEntityIds()}.
@@ -971,8 +852,6 @@ public abstract class GenerateDownloadFile extends CallUser {
          * @param stageName             See {@link #getStageName()}.
          * @param speciesId             See {@link #getSpeciesId()}.
          * @param speciesName           See {@link #getSpeciesName()}.
-         * @param cioId                 See {@link #getCioId()}.
-         * @param cioName               See {@link #getCioName()}.
          * @param affymetrixData        See {@link #getAffymetrixData()}.
          * @param affymetrixQuality     See {@link #getAffymetrixQuality()}.
          * @param rnaSeqData            See {@link #getRNASeqData()}.
@@ -987,16 +866,17 @@ public abstract class GenerateDownloadFile extends CallUser {
          * @param callQuality           See {@link #getCallQuality()}.
          * @param includeObservedData   See {@link #isIncludeObservedData()}.
          */
-        public ExprFileBean(String omaId, String omaDescription, List<String> geneIds,
-                List<String> geneNames, List<String> entityIds, List<String> entityNames,
-                String stageId, String stageName, String speciesId, String speciesName, 
-                String cioId, String cioName, String affymetrixData, String affymetrixQuality,
+        public ExprFileBean(List<String> geneIds, List<String> geneNames, 
+                List<String> entityIds, List<String> entityNames, 
+                List<String> stageIds, List<String> stageNames, 
+                String speciesId, String speciesName, 
+                String affymetrixData, String affymetrixQuality,
                 String rnaSeqData, String rnaSeqQuality, String estData, String estQuality, 
                 String inSituData, String inSituQuality, String relaxedInSituData,
                 String relaxedInSituQuality, String expression, String callQuality,
                 boolean includeObservedData) {
-            super(omaId, omaDescription, geneIds, geneNames, entityIds, entityNames, 
-                    stageId, stageName, speciesId, speciesName, cioId, cioName, 
+            super(geneIds, geneNames, entityIds, entityNames, 
+                    stageIds, stageNames, speciesId, speciesName, 
                     affymetrixData, affymetrixQuality, rnaSeqData, rnaSeqQuality);
             this.estData = estData;
             this.estQuality = estQuality;
@@ -1139,9 +1019,6 @@ public abstract class GenerateDownloadFile extends CallUser {
             this.includeObservedData = includeObservedData;
         }
         
-        /* (non-Javadoc)
-         * @see java.lang.Object#hashCode()
-         */
         @Override
         public int hashCode() {
             final int prime = 31;
@@ -1159,9 +1036,6 @@ public abstract class GenerateDownloadFile extends CallUser {
             return result;
         }
         
-        /* (non-Javadoc)
-         * @see java.lang.Object#equals(java.lang.Object)
-         */
         @Override
         public boolean equals(Object obj) {
             if (this == obj)
@@ -1216,9 +1090,6 @@ public abstract class GenerateDownloadFile extends CallUser {
             return true;
         }
         
-        /* (non-Javadoc)
-         * @see java.lang.Object#toString()
-         */
         @Override
         public String toString() {
             return super.toString() +  " - EST data: " + getESTData() + 
@@ -1244,43 +1115,45 @@ public abstract class GenerateDownloadFile extends CallUser {
         /**
          * See {@link #getAffymetrixPValue()}.
          */
-        private String affymetrixPValue;
+        private Float affymetrixPValue;
         /**
          * See {@link #getAffymetrixConsistentDEA()}.
          */
-        private String affymetrixConsistentDEA;
+        private Double affymetrixConsistentDEA;
         /**
          * See {@link #getAffymetrixInconsistentDEA()}.
          */
-        private String affymetrixInconsistentDEA;
+        private Double affymetrixInconsistentDEA;
         /**
          * See {@link #getRnaSeqPValue()}.
          */
-        private String rnaSeqPValue;
+        private Float rnaSeqPValue;
         /**
-         * See {@link #getRNASeqConsistentDEA()}.
+         * See {@link #getRnaSeqConsistentDEA()}.
          */
-        private String rnaSeqConsistentDEA;        
+        private Double rnaSeqConsistentDEA;        
         /**
-         * See {@link #getRNASeqInconsistentDEA()}.
+         * See {@link #getRnaSeqInconsistentDEA()}.
          */
-        private String rnaSeqInconsistentDEA;
+        private Double rnaSeqInconsistentDEA;
         /**
          * See {@link #getDifferentialExpression()}.
          */
         private String differentialExpression;
+        /**
+         * See {@link #getCallQuality()}.
+         */
+        private String callQuality;
         
         /**
          * 0-argument constructor of the bean.
          */
         public DiffExprFileBean() {
         }
-
+        
         /**
          * Constructor providing all arguments of the class.
          *
-         * @param omaId                     See {@link #getOmaId()}.
-         * @param omaDescription            See {@link #getOmaDescription()}.
          * @param geneIds                   See {@link #getGeneIds()}.
          * @param geneNames                 See {@link #getGeneNames()}.
          * @param entityIds                 See {@link #getEntityIds()}.
@@ -1289,30 +1162,29 @@ public abstract class GenerateDownloadFile extends CallUser {
          * @param stageName                 See {@link #getStageName()}.
          * @param speciesId                 See {@link #getSpeciesId()}.
          * @param speciesName               See {@link #getSpeciesName()}.
-         * @param cioId                     See {@link #getCioId()}.
-         * @param cioName                   See {@link #getCioName()}.
          * @param affymetrixData            See {@link #getAffymetrixData()}.
          * @param affymetrixQuality         See {@link #getAffymetrixQuality()}.
-         * @param rnaSeqData                See {@link #getRNASeqData()}.
-         * @param rnaSeqQuality             See {@link #getRNASeqQuality()}.
          * @param affymetrixPValue          See {@link #getAffymetrixPValue()}.
          * @param affymetrixConsistentDEA   See {@link #getAffymetrixConsistentDEA()}.
          * @param affymetrixInconsistentDEA See {@link #getAffymetrixInconsistentDEA()}.
+         * @param rnaSeqData                See {@link #getRNASeqData()}.
+         * @param rnaSeqQuality             See {@link #getRNASeqQuality()}.
          * @param rnaSeqPValue              See {@link #getAffymetrixPValue()}.
-         * @param rnaSeqConsistentDEA       See {@link #getRNASeqConsistentDEA()}.
-         * @param rnaSeqInconsistentDEA     See {@link #getRNASeqInconsistentDEA()}.
+         * @param rnaSeqConsistentDEA       See {@link #getRnaSeqConsistentDEA()}.
+         * @param rnaSeqInconsistentDEA     See {@link #getRnaSeqInconsistentDEA()}.
          * @param differentialExpression    See {@link #getDifferentialExpression()}.
+         * @param callQuality               See {@link #getCallQuality()}.
          */
-        public DiffExprFileBean(String omaId, String omaDescription, List<String> geneIds,
+        public DiffExprFileBean(List<String> geneIds,
                 List<String> geneNames, List<String> entityIds, List<String> entityNames,
-                String stageId, String stageName, String speciesId, String speciesName, 
-                String cioId, String cioName, String affymetrixData, String affymetrixQuality,
-                String rnaSeqData, String rnaSeqQuality, String affymetrixPValue, 
-                String affymetrixConsistentDEA, String affymetrixInconsistentDEA, 
-                String rnaSeqPValue, String rnaSeqConsistentDEA, String rnaSeqInconsistentDEA,
-                String differentialExpression) {
-            super(omaId, omaDescription, geneIds, geneNames, entityIds, entityNames, 
-                    stageId, stageName, speciesId, speciesName, cioId, cioName, 
+                List<String> stageIds, List<String> stageNames, String speciesId, String speciesName, 
+                String affymetrixData, String affymetrixQuality, Float affymetrixPValue, 
+                Double affymetrixConsistentDEA, Double affymetrixInconsistentDEA,
+                String rnaSeqData, String rnaSeqQuality, Float rnaSeqPValue, 
+                Double rnaSeqConsistentDEA, Double rnaSeqInconsistentDEA,
+                String differentialExpression, String callQuality) {
+            super(geneIds, geneNames, entityIds, entityNames, 
+                    stageIds, stageNames, speciesId, speciesName, 
                     affymetrixData, affymetrixQuality, rnaSeqData, rnaSeqQuality);
             this.affymetrixPValue = affymetrixPValue;
             this.affymetrixConsistentDEA = affymetrixConsistentDEA;
@@ -1321,91 +1193,92 @@ public abstract class GenerateDownloadFile extends CallUser {
             this.rnaSeqConsistentDEA = rnaSeqConsistentDEA;
             this.rnaSeqInconsistentDEA = rnaSeqInconsistentDEA;
             this.differentialExpression = differentialExpression;
+            this.callQuality = callQuality;
         }
 
         /**
-         * @return  the {@code String} that is the best p-value using Affymetrix.
+         * @return  the {@code Float} that is the best p-value using Affymetrix.
          */
-        public String getAffymetrixPValue() {
+        public Float getAffymetrixPValue() {
             return affymetrixPValue;
         }
         /**
-         * @param affymetrixPValue  A {@code String} that is the best p-value using Affymetrix.
+         * @param affymetrixPValue  A {@code Float} that is the best p-value using Affymetrix.
          */
-        public void setAffymetrixPValue(String affymetrixPValue) {
+        public void setAffymetrixPValue(Float affymetrixPValue) {
             this.affymetrixPValue = affymetrixPValue;
         }
         
         /**
-         * @return  the {@code String} that is the number of analysis using 
+         * @return  the {@code Double} that is the number of analysis using 
          *          Affymetrix data where the same call is found.
          */
-        public String getAffymetrixConsistentDEA() {
+        public Double getAffymetrixConsistentDEA() {
             return affymetrixConsistentDEA;
         }
         /**
-         * @param affymetrixConsistentDEA   A {@code String} that is the number of analysis using 
+         * @param affymetrixConsistentDEA   A {@code Double} that is the number of analysis using 
          *                                  Affymetrix data where the same call is found.
          */
-        public void setAffymetrixConsistentDEA(String affymetrixConsistentDEA) {
+        public void setAffymetrixConsistentDEA(Double affymetrixConsistentDEA) {
             this.affymetrixConsistentDEA = affymetrixConsistentDEA;
         }
         
         /**
-         * @return  the {@code String} that is the number of analysis using 
+         * @return  the {@code Double} that is the number of analysis using 
          *          Affymetrix data where a different call is found.
          */
-        public String getAffymetrixInconsistentDEA() {
+        public Double getAffymetrixInconsistentDEA() {
             return affymetrixInconsistentDEA;
         }
         /**
-         * @param affymetrixInconsistentDEA A {@code String} that is the number of analysis using 
+         * @param affymetrixInconsistentDEA A {@code Double} that is the number of analysis using 
          *                                  Affymetrix data where a different call is found.
          */
-        public void setAffymetrixInconsistentDEA(String affymetrixInconsistentDEA) {
+        public void setAffymetrixInconsistentDEA(Double affymetrixInconsistentDEA) {
             this.affymetrixInconsistentDEA = affymetrixInconsistentDEA;
         }
 
         /**
-         * @return  the {@code String} that is the best p-value using RNA-Seq.
+         * @return  the {@code Float} that is the best p-value using RNA-Seq.
          */
-        public String getRnaSeqPValue() {
+        public Float getRnaSeqPValue() {
             return rnaSeqPValue;
         }
         /**
-         * @param rnaSeqPValue  A {@code String} that is the best p-value using RNA-Seq.
+         * @param rnaSeqPValue  A {@code Float} that is the best p-value using RNA-Seq.
          */
-        public void setRnaSeqPValue(String rnaSeqPValue) {
+        public void setRnaSeqPValue(Float rnaSeqPValue) {
             this.rnaSeqPValue = rnaSeqPValue;
         }
 
         /**
-         * @return  the {@code String} that is the number of analysis using 
+         * @return  the {@code Double} that is the number of analysis using 
          *          RNA-Seq data where the same call is found.
          */
-        public String getRNASeqConsistentDEA() {
+        public Double getRnaSeqConsistentDEA() {
             return rnaSeqConsistentDEA;
         }
         /**
-         * @param rnaSeqConsistentDEA   A {@code String} that is the number of analysis using 
+         * @param rnaSeqConsistentDEA   A {@code Double} that is the number of analysis using 
          *                              RNA-Seq data where the same call is found.
          */
-        public void setRnaSeqConsistentDEA(String rnaSeqConsistentDEA) {
+        public void setRnaSeqConsistentDEA(Double rnaSeqConsistentDEA) {
             this.rnaSeqConsistentDEA = rnaSeqConsistentDEA;
         }
 
         /**
-         * @return  the {@code String} that is the number of analysis using 
+         * @return  the {@code Double} that is the number of analysis using 
          *          RNA-Seq data where a different call is found.
          */
-        public String getRNASeqInconsistentDEA() {
+        public Double getRnaSeqInconsistentDEA() {
             return rnaSeqInconsistentDEA;
         }
         /**
-         * @param rnaSeqInconsistentDEA A {@code String} that is the number of analysis using 
+         * @param rnaSeqInconsistentDEA A {@code Double} that is the number of analysis using 
          *                              RNA-Seq data where a different call is found.
          */
-        public void setRnaSeqInconsistentDEA(String rnaSeqInconsistentDEA) {
+        public void setRnaSeqInconsistentDEA(Double rnaSeqInconsistentDEA) {
             this.rnaSeqInconsistentDEA = rnaSeqInconsistentDEA;
         }
 
@@ -1424,18 +1297,29 @@ public abstract class GenerateDownloadFile extends CallUser {
             this.differentialExpression = differentialExpression;
         }
 
-        /* (non-Javadoc)
-         * @see java.lang.Object#hashCode()
+        /** 
+         * @return  the {@code String} that is call quality.
          */
+        public String getCallQuality() {
+            return callQuality;
+        }
+        /**
+         * @param callQuality   A {@code String} that is call quality.
+         */
+        public void setCallQuality(String callQuality) {
+            this.callQuality = callQuality;
+        }
+
         @Override
         public int hashCode() {
             final int prime = 31;
             int result = super.hashCode();
-            result = prime * result + 
-                    ((affymetrixConsistentDEA == null) ? 0 : affymetrixConsistentDEA.hashCode());
-            result = prime * result + 
-                    ((affymetrixInconsistentDEA == null) ? 0 : affymetrixInconsistentDEA.hashCode());
+            result = prime * result
+                    + ((affymetrixConsistentDEA == null) ? 0 : affymetrixConsistentDEA.hashCode());
+            result = prime * result
+                    + ((affymetrixInconsistentDEA == null) ? 0 : affymetrixInconsistentDEA.hashCode());
             result = prime * result + ((affymetrixPValue == null) ? 0 : affymetrixPValue.hashCode());
+            result = prime * result + ((callQuality == null) ? 0 : callQuality.hashCode());
             result = prime * result +
                     ((differentialExpression == null) ? 0 : differentialExpression.hashCode());
             result = prime * result + 
@@ -1446,9 +1330,6 @@ public abstract class GenerateDownloadFile extends CallUser {
             return result;
         }
 
-        /* (non-Javadoc)
-         * @see java.lang.Object#equals(java.lang.Object)
-         */
         @Override
         public boolean equals(Object obj) {
             if (this == obj)
@@ -1473,6 +1354,11 @@ public abstract class GenerateDownloadFile extends CallUser {
                     return false;
             } else if (!affymetrixPValue.equals(other.affymetrixPValue))
                 return false;
+            if (callQuality == null) {
+                if (other.callQuality != null)
+                    return false;
+            } else if (!callQuality.equals(other.callQuality))
+                return false;
             if (differentialExpression == null) {
                 if (other.differentialExpression != null)
                     return false;
@@ -1496,18 +1382,16 @@ public abstract class GenerateDownloadFile extends CallUser {
             return true;
         }
 
-        /* (non-Javadoc)
-         * @see java.lang.Object#toString()
-         */
         @Override
         public String toString() {
             return super.toString() + " - Affymetrix p-value: " + getAffymetrixPValue() +
                     " - Affymetrix consistent DEA: " + getAffymetrixConsistentDEA() +
                     " - Affymetrix inconsistent DEA: " + getAffymetrixInconsistentDEA() + 
                     " - RNA-Seq p-value: " + getRnaSeqPValue() + 
-                    " - RNA-Seq consistent DEA: " + getRNASeqConsistentDEA() + 
-                    " - RNA-Seq inconsistent DEA: " + getRNASeqInconsistentDEA() + 
-                    " - Differential expression: " + getDifferentialExpression();
+                    " - RNA-Seq consistent DEA: " + getRnaSeqConsistentDEA() + 
+                    " - RNA-Seq inconsistent DEA: " + getRnaSeqInconsistentDEA() + 
+                    " - Differential expression: " + getDifferentialExpression() + 
+                    " - Call quality: " + getCallQuality();
         }
     }
     
@@ -1521,6 +1405,22 @@ public abstract class GenerateDownloadFile extends CallUser {
      */
     public static class SimpleMultiSpeciesExprFileBean extends DownloadFileBean {
         
+        /**
+         * @see #getOmaId()
+         */
+        private String omaId;
+        /**
+         * @see #getOmaDescription()
+         */
+        private String omaDescription;
+        /**
+         * @see getCioId()
+         */
+        private String cioId;
+        /**
+         * @see getCioName()
+         */
+        private String cioName;
         /**
          * See {@link #getNbExprGenes()}.
          */
@@ -1561,15 +1461,73 @@ public abstract class GenerateDownloadFile extends CallUser {
          */
         public SimpleMultiSpeciesExprFileBean(String omaId, String omaDescription, List<String> geneIds,
                 List<String> geneNames, List<String> entityIds, List<String> entityNames,
-                String stageId, String stageName, String speciesId, String speciesName, 
+                List<String> stageIds, List<String> stageNames, String speciesId, String speciesName, 
                 String cioId, String cioName, String nbExprGenes, String nbNoExprGenes, String nbNAGenes) {
-            super(omaId, omaDescription, geneIds, geneNames, entityIds, entityNames, 
-                    stageId, stageName, speciesId, speciesName, cioId, cioName, 
-                    null, null, null, null);
+            super(geneIds, geneNames, entityIds, entityNames, stageIds, stageNames, 
+                    speciesId, speciesName, null, null, null, null);
+            this.omaId = omaId;
+            this.omaDescription = omaDescription;
             this.nbExprGenes = nbExprGenes;
             this.nbNoExprGenes = nbNoExprGenes;
             this.nbNAGenes = nbNAGenes;
         }
+        
+        /** 
+         * @return  the {@code String} that is the ID of ancestral OMA node of the gene.
+         */
+        public String getOmaId() {
+            return omaId;
+        }
+        /**
+         * @param omaId A {@code String} that is the ID of ancestral OMA node of the gene.
+         * @see #getOmaId()
+         */
+        public void setOmaId(String omaId) {
+            this.omaId = omaId;
+        }
+        
+        /** 
+         * @return  the {@code String} that is the description of ancestral OMA node.
+         */
+        public String getOmaDescription() {
+            return omaDescription;
+        }
+        /** 
+         * @param omaDescription A {@code String} that is the description of ancestral OMA node.
+         * @see #getOmaDescription()
+         */
+        public void setOmaDescription(String omaDescription) {
+            this.omaDescription = omaDescription;
+        }
+
+        /**
+         * @return  the {@code String} that is the ID of the CIO statement.
+         */
+        public String getCioId() {
+            return cioId;
+        }
+        /**
+         * @param cioId A {@code String} that is the ID of the CIO statement.
+         * @see #getCioId()
+         */
+        public void setCioId(String cioId) {
+            this.cioId = cioId;
+        }
+        
+        /** 
+         * @return  the {@code String} that is the name of the CIO statement.
+         */
+        public String getCioName() {
+            return cioName;
+        }
+        /**
+         * @param cioName   A {@code String} that is the name of the CIO statement.
+         * @see #getCioName()
+         */
+        public void setCioName(String cioName) {
+            this.cioName = cioName;
+        }
+
 
         /**
          * @return  the {@code String} that is the number of expressed genes in the family.
@@ -1611,9 +1569,6 @@ public abstract class GenerateDownloadFile extends CallUser {
             this.nbNAGenes = nbNAGenes;
         }
 
-        /* (non-Javadoc)
-         * @see java.lang.Object#hashCode()
-         */
         @Override
         public int hashCode() {
             final int prime = 31;
@@ -1621,12 +1576,11 @@ public abstract class GenerateDownloadFile extends CallUser {
             result = prime * result + ((nbExprGenes == null) ? 0 : nbExprGenes.hashCode());
             result = prime * result + ((nbNAGenes == null) ? 0 : nbNAGenes.hashCode());
             result = prime * result + ((nbNoExprGenes == null) ? 0 : nbNoExprGenes.hashCode());
+            result = prime * result + ((omaDescription == null) ? 0 : omaDescription.hashCode());
+            result = prime * result + ((omaId == null) ? 0 : omaId.hashCode());
             return result;
         }
 
-        /* (non-Javadoc)
-         * @see java.lang.Object#equals(java.lang.Object)
-         */
         @Override
         public boolean equals(Object obj) {
             if (this == obj)
@@ -1651,17 +1605,599 @@ public abstract class GenerateDownloadFile extends CallUser {
                     return false;
             } else if (!nbNoExprGenes.equals(other.nbNoExprGenes))
                 return false;
+            if (omaDescription == null) {
+                if (other.omaDescription != null)
+                    return false;
+            } else if (!omaDescription.equals(other.omaDescription))
+                return false;
+            if (omaId == null) {
+                if (other.omaId != null)
+                    return false;
+            } else if (!omaId.equals(other.omaId))
+                return false;
             return true;
         }
 
-        /* (non-Javadoc)
-         * @see java.lang.Object#toString()
-         */
         @Override
         public String toString() {
-            return super.toString() + " - Number of expressed genes: " + nbExprGenes
+            return super.toString() + 
+                    " - OMA ID: " + getOmaId() + " - OMA description: " + getOmaDescription() + 
+                    " - Number of expressed genes: " + nbExprGenes
                     + " - Number of no-expressed genes: " + nbNoExprGenes + 
                     " - Number of N/A genes: " + nbNAGenes;
+        }
+    }
+    
+    /**
+     * TODO Javadoc
+     *
+     * @author 	Valentine Rech de Laval
+     * @version Bgee 13
+     * @since 	Bgee 13
+     */
+    public static class SpeciesCounts {
+        
+        /**
+         * See {@link #getSpeciesId()}.
+         */
+        private String speciesId;
+        /**
+         * See {@link #getNbOverExprGenes()}.
+         */
+        private int nbOverExprGenes;
+        /**
+         * See {@link #getNbUnderExprGenes()}.
+         */
+        private int nbUnderExprGenes;
+        /**
+         * See {@link #getNbNotDiffExprGenes()}.
+         */
+        private int nbNotDiffExprGenes;
+        /**
+         * See {@link #getNbNotExprGenes()}.
+         */
+        private int nbNotExprGenes;
+        /**
+         * See {@link #getNbNAGenes()}.
+         */
+        private int nbNAGenes;
+
+        /**
+         * Constructor providing all arguments of the class.
+         *
+         * @param speciesId             See {@link #getSpeciesId()}.
+         * @param nbOverExprGenes       See {@link #getNbOverExprGenes()}.
+         * @param nbUnderExprGenes      See {@link #getNbUnderExprGenes()}.
+         * @param nbNotDiffExprGenes    See {@link #getNbNotDiffExprGenes()}.
+         * @param nbNotExprGenes        See {@link #getNbNotExprGenes()}.
+         * @param nbNAGenes             See {@link #getNbNAGenes()}.
+         */
+        public SpeciesCounts(String speciesId, int nbOverExprGenes, int nbUnderExprGenes, 
+                int nbNotDiffExprGenes, int nbNotExprGenes, int nbNAGenes) {
+            this.speciesId = speciesId;
+            this.nbOverExprGenes = nbOverExprGenes;
+            this.nbUnderExprGenes = nbUnderExprGenes;
+            this.nbNotDiffExprGenes = nbNotDiffExprGenes;
+            this.nbNotExprGenes = nbNotExprGenes;
+            this.nbNAGenes = nbNAGenes;
+        }
+
+        /**
+         * @return  the {@code String} that is the ID of the species.
+         */
+        public String getSpeciesId() {
+            return speciesId;
+        }
+        /**
+         * @param speciesId A {@code String} that is the ID of the species.
+         */
+        public void setSpeciesId(String speciesId) {
+            this.speciesId = speciesId;
+        }
+
+        /**
+         * @return  the {@code int} that is the number of over-expressed genes in the family.
+         */
+        public int getNbOverExprGenes() {
+            return nbOverExprGenes;
+        }
+        /**
+         * @param nbOverExprGenes   An {@code int} that is the number of over-expressed 
+         *                          genes in the family.
+         */
+        public void setNbOverExprGenes(int nbOverExprGenes) {
+            this.nbOverExprGenes = nbOverExprGenes;
+        }
+        
+        /**
+         * @return  the {@code int} that is the number of under-expressed genes in the family.
+         */
+        public int getNbUnderExprGenes() {
+            return nbUnderExprGenes;
+        }
+        /**
+         * @param nbUnderExprGenes  An {@code int} that is the number of under-expressed 
+         *                          genes in the family.
+         */
+        public void setNbUnderExprGenes(int nbUnderExprGenes) {
+            this.nbUnderExprGenes = nbUnderExprGenes;
+        }
+
+        /**
+         * @return  the {@code int} that is the number of not diff. expressed genes in the family.
+         */
+        public int getNbNotDiffExprGenes() {
+            return nbNotDiffExprGenes;
+        }
+        /**
+         * @param nbNotDiffExprGenes An {@code int} that is the number of not diff. expressed 
+         *                           genes in the family.
+         */
+        public void setNbNotDiffExprGenes(int nbNotDiffExprGenes) {
+            this.nbNotDiffExprGenes = nbNotDiffExprGenes;
+        }
+
+        /**
+         * @return  the {@code int} that is the number of not expressed genes in the family.
+         */
+        public int getNbNotExprGenes() {
+            return nbNotExprGenes;
+        }
+        /**
+         * @param nbNoExprGenes An {@code int} that is the number of not expressed genes 
+         *                      in the family. 
+         */
+        public void setNbNotExprGenes(int nbNoExprGenes) {
+            this.nbNotExprGenes = nbNoExprGenes;
+        }
+        
+        /**
+         * @return  the {@code int} that is the number of genes without data in the family.
+         */
+        public int getNbNAGenes() {
+            return nbNAGenes;
+        }
+        /**
+         * @param nbNAGenes An {@code int} that is the number of genes without data in the family.
+         */
+        public void setNbNAGenes(int nbNAGenes) {
+            this.nbNAGenes = nbNAGenes;
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + nbNAGenes;
+            result = prime * result + nbNotDiffExprGenes;
+            result = prime * result + nbNotExprGenes;
+            result = prime * result + nbOverExprGenes;
+            result = prime * result + nbUnderExprGenes;
+            result = prime * result + ((speciesId == null) ? 0 : speciesId.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            SpeciesCounts other = (SpeciesCounts) obj;
+            if (nbNAGenes != other.nbNAGenes)
+                return false;
+            if (nbNotDiffExprGenes != other.nbNotDiffExprGenes)
+                return false;
+            if (nbNotExprGenes != other.nbNotExprGenes)
+                return false;
+            if (nbOverExprGenes != other.nbOverExprGenes)
+                return false;
+            if (nbUnderExprGenes != other.nbUnderExprGenes)
+                return false;
+            if (speciesId == null) {
+                if (other.speciesId != null)
+                    return false;
+            } else if (!speciesId.equals(other.speciesId))
+                return false;
+            return true;
+        }
+
+        @Override
+        public String toString() {
+            return super.toString() + " - Species ID: " + getSpeciesId() +
+                    " - Number of over-expressed genes: " + getNbOverExprGenes() +
+                    " - Number of under-expressed genes: " + getNbUnderExprGenes() +
+                    " - Number of not diff. expressed genes: " + getNbNotDiffExprGenes() +
+                    " - Number of no-expressed genes: " + getNbNotExprGenes() + 
+                    " - Number of N/A genes: " + getNbNAGenes();
+        }
+    }
+    
+    /**
+         * A bean representing a row of a simple differential expression multi-species file. 
+         * Getter and setter names must follow standard bean definitions.
+         * 
+         * @author Valentine Rech de Laval
+         * @version Bgee 13 Mar. 2015
+         * @since Bgee 13
+         */
+        public static class SimpleMultiSpeciesDiffExprFileBean extends DownloadFileBean {
+    
+            /**
+             * @see #getOmaId()
+             */
+            private String omaId;
+            /**
+             * @see #getOmaDescription()
+             */
+            private String omaDescription;
+            /**
+             * @see getCioId()
+             */
+            private String cioId;
+            /**
+             * @see getCioName()
+             */
+            private String cioName;
+    
+            /**
+             * See {@link #getSpeciesCounts()}.
+             */
+            private List<SpeciesCounts> speciesCounts;
+            
+            /**
+             * 0-argument constructor of the bean.
+             */
+            public SimpleMultiSpeciesDiffExprFileBean() {
+            }
+    
+            /**
+             * Constructor providing all arguments of the class.
+             *
+             * @param omaId             See {@link #getOmaId()}.
+             * @param omaDescription    See {@link #getOmaDescription()}.
+             * @param geneIds           See {@link #getGeneIds()}.
+             * @param geneNames         See {@link #getGeneNames()}.
+             * @param entityIds         See {@link #getEntityIds()}.
+             * @param entityNames       See {@link #getEntityNames()}.
+             * @param stageId           See {@link #getStageId()}.
+             * @param stageName         See {@link #getStageName()}.
+             * @param speciesId         See {@link #getSpeciesId()}.
+             * @param speciesName       See {@link #getSpeciesName()}.
+             * @param cioId             See {@link #getCioId()}.
+             * @param cioName           See {@link #getCioName()}.
+             * @param speciesCounts     See {@link #getSpeciesCounts()}.
+             */
+            public SimpleMultiSpeciesDiffExprFileBean(String omaId, String omaDescription, List<String> geneIds,
+                    List<String> geneNames, List<String> entityIds, List<String> entityNames,
+                    List<String> stageIds, List<String> stageNames, String cioId, String cioName, 
+                    List<SpeciesCounts> speciesCounts) {
+                super(geneIds, geneNames, entityIds, entityNames, stageIds, stageNames,
+                        null, null, null, null, null, null);
+                this.omaId = omaId;
+                this.omaDescription = omaDescription;
+                this.cioId = cioId;
+                this.cioName = cioName;
+                this.speciesCounts = speciesCounts;
+            }
+    
+            /** 
+             * @return  the {@code String} that is the ID of ancestral OMA node of the gene.
+             */
+            public String getOmaId() {
+                return omaId;
+            }
+            /**
+             * @param omaId A {@code String} that is the ID of ancestral OMA node of the gene.
+             * @see #getOmaId()
+             */
+            public void setOmaId(String omaId) {
+                this.omaId = omaId;
+            }
+            
+            /** 
+             * @return  the {@code String} that is the description of ancestral OMA node.
+             */
+            public String getOmaDescription() {
+                return omaDescription;
+            }
+            /** 
+             * @param omaDescription A {@code String} that is the description of ancestral OMA node.
+             * @see #getOmaDescription()
+             */
+            public void setOmaDescription(String omaDescription) {
+                this.omaDescription = omaDescription;
+            }
+    
+            /**
+             * @return  the {@code String} that is the ID of the CIO statement.
+             */
+            public String getCioId() {
+                return cioId;
+            }
+            /**
+             * @param cioId A {@code String} that is the ID of the CIO statement.
+             * @see #getCioId()
+             */
+            public void setCioId(String cioId) {
+                this.cioId = cioId;
+            }
+            
+            /** 
+             * @return  the {@code String} that is the name of the CIO statement.
+             */
+            public String getCioName() {
+                return cioName;
+            }
+            /**
+             * @param cioName   A {@code String} that is the name of the CIO statement.
+             * @see #getCioName()
+             */
+            public void setCioName(String cioName) {
+                this.cioName = cioName;
+            }
+    
+    
+            /** TODO Javadoc
+             * @return the speciesCounts
+             */
+            public List<SpeciesCounts> getSpeciesCounts() {
+                return speciesCounts;
+            }
+    
+            /** TODO Javadoc
+             * @param speciesCounts the speciesCounts to set
+             */
+            public void setSpeciesCounts(List<SpeciesCounts> speciesCounts) {
+                this.speciesCounts = speciesCounts;
+            }
+    
+            @Override
+            public int hashCode() {
+                final int prime = 31;
+                int result = super.hashCode();
+                result = prime * result + ((cioId == null) ? 0 : cioId.hashCode());
+                result = prime * result + ((cioName == null) ? 0 : cioName.hashCode());
+                result = prime * result + ((omaDescription == null) ? 0 : omaDescription.hashCode());
+                result = prime * result + ((omaId == null) ? 0 : omaId.hashCode());
+                result = prime * result + ((speciesCounts == null) ? 0 : speciesCounts.hashCode());
+                return result;
+            }
+    
+            @Override
+            public boolean equals(Object obj) {
+                if (this == obj)
+                    return true;
+                if (!super.equals(obj))
+                    return false;
+                if (getClass() != obj.getClass())
+                    return false;
+                SimpleMultiSpeciesDiffExprFileBean other = (SimpleMultiSpeciesDiffExprFileBean) obj;
+                if (cioId == null) {
+                    if (other.cioId != null)
+                        return false;
+                } else if (!cioId.equals(other.cioId))
+                    return false;
+                if (cioName == null) {
+                    if (other.cioName != null)
+                        return false;
+                } else if (!cioName.equals(other.cioName))
+                    return false;
+                if (omaDescription == null) {
+                    if (other.omaDescription != null)
+                        return false;
+                } else if (!omaDescription.equals(other.omaDescription))
+                    return false;
+                if (omaId == null) {
+                    if (other.omaId != null)
+                        return false;
+                } else if (!omaId.equals(other.omaId))
+                    return false;
+                if (speciesCounts == null) {
+                    if (other.speciesCounts != null)
+                        return false;
+                } else if (!speciesCounts.equals(other.speciesCounts))
+                    return false;
+                return true;
+            }
+    
+            @Override
+            public String toString() {
+                return super.toString() + 
+                        " - OMA ID: " + getOmaId() + " - OMA description: " + getOmaDescription() + 
+                        " - CIO ID: " + getCioId() + " - CIO name: " + getCioName() +
+                        " - Species counts=" + getSpeciesCounts().toString();
+            }
+       }
+
+    /**
+     * A bean representing a row of a complete differential expression multi-species file. 
+     * Getter and setter names must follow standard bean definitions.
+     * 
+     * @author Valentine Rech de Laval
+     * @version Bgee 13 Mar. 2015
+     * @since Bgee 13
+     */
+    public static class CompleteMultiSpeciesDiffExprFileBean extends DiffExprFileBean {
+
+        /**
+         * @see #getOmaId()
+         */
+        private String omaId;
+        /**
+         * @see #getOmaDescription()
+         */
+        private String omaDescription;
+        /**
+         * @see getCioId()
+         */
+        private String cioId;
+        /**
+         * @see getCioName()
+         */
+        private String cioName;
+
+        /**
+         * 0-argument constructor of the bean.
+         */
+        public CompleteMultiSpeciesDiffExprFileBean() {
+        }
+
+        /**
+         * Constructor providing all arguments of the class.
+         *
+         * @param omaId                     See {@link #getOmaId()}.
+         * @param omaDescription            See {@link #getOmaDescription()}.         
+         * @param geneIds                   See {@link #getGeneIds()}.
+         * @param geneNames                 See {@link #getGeneNames()}.
+         * @param entityIds                 See {@link #getEntityIds()}.
+         * @param entityNames               See {@link #getEntityNames()}.
+         * @param stageId                   See {@link #getStageId()}.
+         * @param stageName                 See {@link #getStageName()}.
+         * @param speciesId                 See {@link #getSpeciesId()}.
+         * @param speciesName               See {@link #getSpeciesName()}.
+         * @param cioId                     See {@link #getCioId()}.
+         * @param cioName                   See {@link #getCioName()}.
+         * @param affymetrixData            See {@link #getAffymetrixData()}.
+         * @param affymetrixQuality         See {@link #getAffymetrixQuality()}.
+         * @param affymetrixPValue          See {@link #getAffymetrixPValue()}.
+         * @param affymetrixConsistentDEA   See {@link #getAffymetrixConsistentDEA()}.
+         * @param affymetrixInconsistentDEA See {@link #getAffymetrixInconsistentDEA()}.
+         * @param rnaSeqData                See {@link #getRNASeqData()}.
+         * @param rnaSeqQuality             See {@link #getRNASeqQuality()}.
+         * @param rnaSeqPValue              See {@link #getAffymetrixPValue()}.
+         * @param rnaSeqConsistentDEA       See {@link #getRnaSeqConsistentDEA()}.
+         * @param rnaSeqInconsistentDEA     See {@link #getRnaSeqInconsistentDEA()}.
+         * @param differentialExpression    See {@link #getDifferentialExpression()}.
+         * @param callQuality               See {@link #getCallQuality()}.
+         */
+        
+        public CompleteMultiSpeciesDiffExprFileBean(String omaId, String omaDescription,
+                List<String> geneIds, List<String> geneNames, List<String> entityIds, 
+                List<String> entityNames, List<String> stageIds, List<String> stageNames,
+                String speciesId, String speciesName, String cioId, String cioName, 
+                String affymetrixData, String affymetrixQuality, Float affymetrixPValue, 
+                Double affymetrixConsistentDEA, Double affymetrixInconsistentDEA, 
+                String rnaSeqData, String rnaSeqQuality, Float rnaSeqPValue, 
+                Double rnaSeqConsistentDEA, Double rnaSeqInconsistentDEA,
+                String differentialExpression, String callQuality) {
+            super(geneIds, geneNames, entityIds, entityNames, stageIds, stageNames, 
+                    speciesId, speciesName, affymetrixData, affymetrixQuality, affymetrixPValue, 
+                    affymetrixConsistentDEA, affymetrixInconsistentDEA, rnaSeqData, 
+                    rnaSeqQuality, rnaSeqPValue, rnaSeqConsistentDEA, rnaSeqInconsistentDEA, 
+                    differentialExpression, callQuality);
+            this.omaId = omaId;
+            this.omaDescription = omaDescription;
+            this.cioId = cioId;
+            this.cioName = cioName;
+        }
+
+        /** 
+         * @return  the {@code String} that is the ID of ancestral OMA node of the gene.
+         */
+        public String getOmaId() {
+            return omaId;
+        }
+        /**
+         * @param omaId A {@code String} that is the ID of ancestral OMA node of the gene.
+         * @see #getOmaId()
+         */
+        public void setOmaId(String omaId) {
+            this.omaId = omaId;
+        }
+        
+        /** 
+         * @return  the {@code String} that is the description of ancestral OMA node.
+         */
+        public String getOmaDescription() {
+            return omaDescription;
+        }
+        /** 
+         * @param omaDescription A {@code String} that is the description of ancestral OMA node.
+         * @see #getOmaDescription()
+         */
+        public void setOmaDescription(String omaDescription) {
+            this.omaDescription = omaDescription;
+        }
+
+        /**
+         * @return  the {@code String} that is the ID of the CIO statement.
+         */
+        public String getCioId() {
+            return cioId;
+        }
+        /**
+         * @param cioId A {@code String} that is the ID of the CIO statement.
+         * @see #getCioId()
+         */
+        public void setCioId(String cioId) {
+            this.cioId = cioId;
+        }
+        
+        /** 
+         * @return  the {@code String} that is the name of the CIO statement.
+         */
+        public String getCioName() {
+            return cioName;
+        }
+        /**
+         * @param cioName   A {@code String} that is the name of the CIO statement.
+         * @see #getCioName()
+         */
+        public void setCioName(String cioName) {
+            this.cioName = cioName;
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = super.hashCode();
+            result = prime * result + ((cioId == null) ? 0 : cioId.hashCode());
+            result = prime * result + ((cioName == null) ? 0 : cioName.hashCode());
+            result = prime * result + ((omaDescription == null) ? 0 : omaDescription.hashCode());
+            result = prime * result + ((omaId == null) ? 0 : omaId.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (!super.equals(obj))
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            CompleteMultiSpeciesDiffExprFileBean other = (CompleteMultiSpeciesDiffExprFileBean) obj;
+            if (cioId == null) {
+                if (other.cioId != null)
+                    return false;
+            } else if (!cioId.equals(other.cioId))
+                return false;
+            if (cioName == null) {
+                if (other.cioName != null)
+                    return false;
+            } else if (!cioName.equals(other.cioName))
+                return false;
+            if (omaDescription == null) {
+                if (other.omaDescription != null)
+                    return false;
+            } else if (!omaDescription.equals(other.omaDescription))
+                return false;
+            if (omaId == null) {
+                if (other.omaId != null)
+                    return false;
+            } else if (!omaId.equals(other.omaId))
+                return false;
+            return true;
+        }
+
+        @Override
+        public String toString() {
+            return super.toString() + 
+                    " - OMA ID: " + getOmaId() + " - OMA description: " + getOmaDescription() + 
+                    " - CIO ID: " + getCioId() + " - CIO name: " + getCioName();
         }
    }
 }

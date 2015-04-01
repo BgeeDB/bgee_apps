@@ -10,6 +10,7 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLAnatEntityDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLTaxonConstraintDAO;
+import org.bgee.model.dao.mysql.anatdev.mapping.MySQLStageGroupingDAO;
 import org.bgee.model.dao.mysql.anatdev.mapping.MySQLSummarySimilarityAnnotationDAO;
 import org.bgee.model.dao.mysql.anatdev.mapping.MySQLSummarySimilarityAnnotationDAO.MySQLSummarySimilarityAnnotationTOResultSet;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
@@ -216,7 +217,13 @@ public abstract class MySQLDAOUser {
         return (MySQLSummarySimilarityAnnotationDAO) 
                 this.manager.getSummarySimilarityAnnotationDAO();
     }
-    
+    /**
+     * @return  A {@code SummarySimilarityAnnotationDAO}.
+     */
+    protected MySQLStageGroupingDAO getStageGroupingDAO() {
+        return (MySQLStageGroupingDAO) 
+                this.manager.getStageGroupingDAO();
+    }
     /**
      * Start a transaction with the MySQL database. We wrap the potential 
      * {@code SQLException} into a {@code DAOException}, because we do not want 

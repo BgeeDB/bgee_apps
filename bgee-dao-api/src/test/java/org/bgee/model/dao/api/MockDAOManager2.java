@@ -5,6 +5,7 @@ import java.util.Properties;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
 import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO;
+import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO;
@@ -163,6 +164,10 @@ public class MockDAOManager2 extends DAOManager {
     @Override
     protected SummarySimilarityAnnotationDAO getNewSummarySimilarityAnnotationDAO() {
         return this.instanceMockManager.getNewSummarySimilarityAnnotationDAO();
+    }
+    @Override
+    protected StageGroupingDAO getNewStageGroupingDAO() {
+        return this.instanceMockManager.getNewStageGroupingDAO();
     }
 
     @Override

@@ -21,6 +21,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
 import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO;
+import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO;
@@ -1076,7 +1077,20 @@ public abstract class DAOManager implements AutoCloseable
         return log.exit(this.getNewSummarySimilarityAnnotationDAO());
     }
 
-    
+    /**
+     * Get a new {@link org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO StageGroupingDAO}, 
+     * unless this {@code DAOManager} is already closed. 
+     * 
+     * @return  A new {@code StageGroupingDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO StageGroupingDAO 
+     */
+    public final StageGroupingDAO getStageGroupingDAO() {
+        log.entry();
+        this.checkClosed();
+        return log.exit(this.getNewStageGroupingDAO());
+    }
+
     
     //*****************************************
     //  CORE ABSTRACT METHODS TO IMPLEMENT
@@ -1323,4 +1337,12 @@ public abstract class DAOManager implements AutoCloseable
      * @return  A new {@code SummarySimilarityAnnotationDAO}
      */
     protected abstract SummarySimilarityAnnotationDAO getNewSummarySimilarityAnnotationDAO();
+    /**
+     * Service provider must return a new 
+     * {@link org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO StageGroupingDAO} instance 
+     * when this method is called. 
+     * 
+     * @return  A new {@code StageGroupingDAO}
+     */
+    protected abstract StageGroupingDAO getNewStageGroupingDAO();
 }

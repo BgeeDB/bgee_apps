@@ -12,7 +12,6 @@ import java.util.Properties;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.TransferObject;
-import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.CallParams;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallParams;
@@ -21,6 +20,7 @@ import org.bgee.model.dao.api.expressiondata.NoExpressionCallParams;
 import org.bgee.model.dao.mysql.anatdev.MySQLAnatEntityDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLTaxonConstraintDAO;
+import org.bgee.model.dao.mysql.anatdev.mapping.MySQLStageGroupingDAO;
 import org.bgee.model.dao.mysql.anatdev.mapping.MySQLSummarySimilarityAnnotationDAO;
 import org.bgee.model.dao.mysql.connector.BgeeConnection;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
@@ -172,6 +172,7 @@ public abstract class TestAncestor
         public final MySQLCIOStatementDAO mockCIOStatementDAO = mock(MySQLCIOStatementDAO.class);
         public final MySQLSummarySimilarityAnnotationDAO mockSummarySimilarityAnnotationDAO = 
                 mock(MySQLSummarySimilarityAnnotationDAO.class);
+        public final MySQLStageGroupingDAO mockStageGroupingDAO = mock(MySQLStageGroupingDAO.class);
         public MockDAOManager() {
             
         }
@@ -275,6 +276,10 @@ public abstract class TestAncestor
         @Override
         protected MySQLSummarySimilarityAnnotationDAO getNewSummarySimilarityAnnotationDAO() {
             return this.mockSummarySimilarityAnnotationDAO;
+        }
+        @Override
+        protected MySQLStageGroupingDAO getNewStageGroupingDAO() {
+            return this.mockStageGroupingDAO;
         }
 	}
 

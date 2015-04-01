@@ -53,7 +53,7 @@ public class ParseOrthoXMLTest extends TestAncestor {
             LogManager.getLogger(ParseOrthoXMLTest.class.getName());
 
     private static final String OMAFILE = "/orthoxml/fakeOMA.orthoxml";
-    private static final String MAPPING_FILE = "/gene/fakeGeneMapping.csv";
+    private static final String MAPPING_FILE = "/orthoxml/fakeGeneMapping.csv";
 
     public ParseOrthoXMLTest(){
         super();

@@ -32,11 +32,11 @@ import org.bgee.model.dao.api.species.TaxonDAO;
 import org.bgee.model.dao.api.species.TaxonDAO.TaxonTOResultSet;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.pipeline.MySQLDAOUser;
+import org.bgee.pipeline.Utils;
 import org.supercsv.cellprocessor.constraint.StrNotNullOrEmpty;
 import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.io.CsvMapReader;
 import org.supercsv.io.ICsvMapReader;
-import org.supercsv.prefs.CsvPreference;
 
 import sbc.orthoxml.Group;
 import sbc.orthoxml.Species;
@@ -202,7 +202,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
         
         int expectedArgLengthWithoutMapping = 1;
         int expectedArgLengthWithMapping = 2;
-        if (args.length != expectedArgLengthWithoutMapping || 
+        if (args.length != expectedArgLengthWithoutMapping && 
             args.length != expectedArgLengthWithMapping) {
             throw log.throwing(new IllegalArgumentException("Incorrect number of " +
                     "arguments provided, expected " + expectedArgLengthWithoutMapping + 
@@ -211,7 +211,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
         }
     
         ParseOrthoXML parser = new ParseOrthoXML();
-        if (args.length != expectedArgLengthWithoutMapping) {
+        if (args.length == expectedArgLengthWithoutMapping) {
             parser.parseXML(args[0], null);
         } else {
             parser.parseXML(args[0], args[1]);
@@ -247,7 +247,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
      */
     public void parseXML(String orthoXMLFile, String geneMappingFile) 
         throws DAOException, XMLStreamException, XMLParseException, IOException {  
-        log.entry();
+        log.entry(orthoXMLFile, geneMappingFile);
         log.info("Start parsing of OrthoXML file...");
 
         // First, if provided, we read mapping file save data in a map
@@ -322,7 +322,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
         
         Map<String, String> geneMapping = new HashMap<String, String>();
         try (ICsvMapReader reader = new CsvMapReader(new FileReader(geneMappingFile), 
-                                                           CsvPreference.STANDARD_PREFERENCE)) {
+                Utils.TSVCOMMENTED)) {
             String unexpectedFormat = "The provided TSV species file is not " +
                 "in the expected format";
 
@@ -479,7 +479,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
     private void generateTOsFromFile(String orthoXMLFile, Map<String,String> geneMapping)
         throws FileNotFoundException,
             XMLStreamException, XMLParseException {
-        log.entry(orthoXMLFile);
+        log.entry(orthoXMLFile, geneMapping);
         OrthoXMLReader reader = new OrthoXMLReader(new File(orthoXMLFile));
         List<Species> speciesInFile = reader.getSpecies();
         List<String> speciesIdsInFile = new ArrayList<String>();  
@@ -538,7 +538,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
      */
     private boolean generateTOsFromGroup(Group group, String omaXrefId, 
                     Map<String,String> geneMapping) {
-        log.entry(group, omaXrefId);
+        log.entry(group, omaXrefId, geneMapping);
 
         // First, we check if the group represents a taxon presents Bgee or if it's a 
         // paralog group. If wrong, we don't insert a hierarchical groupTO.

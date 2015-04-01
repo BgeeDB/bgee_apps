@@ -49,39 +49,20 @@ public class MySQLCIOStatementDAO extends MySQLDAO<CIOStatementDAO.Attribute>
     @Override
     public CIOStatementTOResultSet getAllCIOStatements() throws DAOException {
         log.entry();
-        return log.exit(this.getCIOStatements());
-    }
-
-    @Override
-    public CIOStatementTOResultSet getTrustedCIOStatements()
-            throws DAOException {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    /**
-     * Retrieves CIO statements from data source.
-     * 
-     * @return              An {@code CIOStatementTOResultSet} containing CIO statements
-     *                      from data source.
-     * @throws DAOException If an error occurred when accessing the data source. 
-     */
-    private CIOStatementTOResultSet getCIOStatements() throws DAOException {
-        log.entry();
         
         String tableName = "CIOStatement";
         
         //Construct sql query
-        String sql = this.generateSelectClause(this.getAttributes(), tableName);
+        String sql = this.generateSelectClause(this.getAttributes(), tableName, 
+                !this.getAttributes().contains(CIOStatementDAO.Attribute.ID));
 
         sql += " FROM " + tableName;
 
         //we don't use a try-with-resource, because we return a pointer to the results, 
         //not the actual results, so we should not close this BgeePreparedStatement.
-        BgeePreparedStatement stmt = null;
         try {
-            stmt = this.getManager().getConnection().prepareStatement(sql.toString());
-            return log.exit(new MySQLCIOStatementTOResultSet(stmt));
+            return log.exit(new MySQLCIOStatementTOResultSet(
+                    this.getManager().getConnection().prepareStatement(sql)));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -95,13 +76,15 @@ public class MySQLCIOStatementDAO extends MySQLDAO<CIOStatementDAO.Attribute>
      *                                  the columns/information the query should retrieve.
      * @param tableName                 A {@code String} defining the name of the CIO statement 
      *                                  table used.
+     * @param distinct                  A {@code boolean} defining whether the 'DISTINCT' option 
+     *                                  should be used in the 'SELECT' clause.
      * @return                          A {@code String} containing the SELECT clause 
      *                                  for the requested query.
      * @throws IllegalArgumentException If one {@code Attribute} of {@code attributes} is unknown.
      */
     private String generateSelectClause(Set<CIOStatementDAO.Attribute> attributes,
-            String tableName) throws IllegalArgumentException {
-        log.entry(attributes, tableName);
+            String tableName, boolean distinct) throws IllegalArgumentException {
+        log.entry(attributes, tableName, distinct);
 
         if (attributes == null || attributes.isEmpty()) {
             return log.exit("SELECT " + tableName + ".* ");
@@ -111,9 +94,7 @@ public class MySQLCIOStatementDAO extends MySQLDAO<CIOStatementDAO.Attribute>
             for (CIOStatementDAO.Attribute attribute: attributes) {
                 if (sql.isEmpty()) {
                     sql += "SELECT ";
-                    //does the attributes requested ensure that there will be 
-                    //no duplicated results?
-                    if (!attributes.contains(CIOStatementDAO.Attribute.ID)) {
+                    if (distinct) {
                         sql += "DISTINCT ";
                     }
                 } else {

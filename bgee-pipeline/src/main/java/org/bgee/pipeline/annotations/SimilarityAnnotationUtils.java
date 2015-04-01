@@ -105,7 +105,7 @@ public class SimilarityAnnotationUtils {
      * @version Bgee 13 Mar. 2015
      * @since Bgee 13
      */
-    private static class ParseMultipleValuesCell extends CellProcessorAdaptor {
+    protected static class ParseMultipleValuesCell extends CellProcessorAdaptor {
         /**
          * A {@code String} that is the pattern to use to split values in a cell 
          * potentially containing multiple values.
@@ -131,7 +131,7 @@ public class SimilarityAnnotationUtils {
         /**
          * Default constructor, no other {@code CellProcessor} in the chain.
          */
-        private ParseMultipleValuesCell() {
+        protected ParseMultipleValuesCell() {
                 super();
         }
         /**
@@ -139,7 +139,7 @@ public class SimilarityAnnotationUtils {
          * after {@code ParseMultipleValuesCell}.
          * @param next  A {@code CellProcessor} that is the next to be called. 
          */
-        private ParseMultipleValuesCell(CellProcessor next) {
+        protected ParseMultipleValuesCell(CellProcessor next) {
             super(next);
         }
         
@@ -170,11 +170,11 @@ public class SimilarityAnnotationUtils {
      * @version Bgee 13 Mar. 2015
      * @since Bgee 13
      */
-    private static class ParseQualifierCell extends CellProcessorAdaptor {
+    protected static class ParseQualifierCell extends CellProcessorAdaptor {
         /**
          * Default constructor, no other {@code CellProcessor} in the chain.
          */
-        private ParseQualifierCell() {
+        protected ParseQualifierCell() {
                 super();
         }
         /**
@@ -182,7 +182,7 @@ public class SimilarityAnnotationUtils {
          * {@code ParseQualifierCell}.
          * @param next  A {@code CellProcessor} that is the next to be called. 
          */
-        private ParseQualifierCell(CellProcessor next) {
+        protected ParseQualifierCell(CellProcessor next) {
                 super(next);
         }
         @Override
@@ -1395,7 +1395,7 @@ public class SimilarityAnnotationUtils {
      * A {@code CsvPreference} used to parse TSV files allowing commented line, 
      * starting with "//".
      */
-    private final static CsvPreference TSV_COMMENTED = 
+    public final static CsvPreference TSV_COMMENTED = 
             new CsvPreference.Builder(CsvPreference.TAB_PREFERENCE).
             skipComments(new CommentStartsWith("//")).build();
     
@@ -1726,7 +1726,7 @@ public class SimilarityAnnotationUtils {
      *                                  is not recognized, or if {@code beanType} is not 
      *                                  recognized.
      */
-    private static String[] mapHeaderToAttributes(String[] header, 
+    protected static String[] mapHeaderToAttributes(String[] header, 
             Class<? extends AnnotationBean> beanType) throws IllegalArgumentException {
         log.entry(header, beanType);
         

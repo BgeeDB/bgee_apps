@@ -29,6 +29,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.Utils;
+import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.AncestralTaxaAnnotationBean;
+import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.AnnotationBean;
+import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.ParseMultipleValuesCell;
+import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.ParseQualifierCell;
+import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.RawAnnotationBean;
+import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.SummaryAnnotationBean;
 import org.bgee.pipeline.ontologycommon.CIOWrapper;
 import org.bgee.pipeline.ontologycommon.OntologyUtils;
 import org.bgee.pipeline.uberon.TaxonConstraints;
@@ -41,13 +47,18 @@ import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
 import org.supercsv.cellprocessor.FmtDate;
 import org.supercsv.cellprocessor.Optional;
+import org.supercsv.cellprocessor.ParseBool;
 import org.supercsv.cellprocessor.ParseDate;
 import org.supercsv.cellprocessor.ParseInt;
 import org.supercsv.cellprocessor.constraint.NotNull;
+import org.supercsv.cellprocessor.constraint.StrNotNullOrEmpty;
 import org.supercsv.cellprocessor.ift.CellProcessor;
+import org.supercsv.exception.SuperCsvException;
+import org.supercsv.io.CsvBeanReader;
 import org.supercsv.io.CsvListReader;
 import org.supercsv.io.CsvMapReader;
 import org.supercsv.io.CsvMapWriter;
+import org.supercsv.io.ICsvBeanReader;
 import org.supercsv.io.ICsvListReader;
 import org.supercsv.io.ICsvMapReader;
 import org.supercsv.io.ICsvMapWriter;
@@ -266,6 +277,126 @@ public class SimilarityAnnotation {
 //        }
         
         log.exit();
+    }
+    
+    /**
+     * Extracts annotations from the provided curator annotation file containing information 
+     * capable of populating {@code RawAnnotationBean}s. 
+     * It returns a {@code List} of {@code RawAnnotationBean}s, where each 
+     * {@code AnnotationBean} represents a row in the file. The elements 
+     * in the {@code List} are ordered as they were read from the file. 
+     * <p>
+     * We do not use the method provided by {@link SimilarityAnnotationUtils}, 
+     * because not the same fields are mandatory 
+     * in the released files and in the file used by curator.
+     * 
+     * @param similarityFile    A {@code String} that is the path to an annotation file
+     *                          from curators. 
+     * @return                  A {@code List} of {@code RawAnnotationBean}s where each 
+     *                          element represents a row in the file, ordered as 
+     *                          they were read from the file.
+     * @throws FileNotFoundException    If {@code similarityFile} could not be found.
+     * @throws IOException              If {@code similarityFile} could not be read.
+     * @throws IllegalArgumentException If {@code similarityFile} did not allow to retrieve 
+     *                                  any annotation or could not be properly parsed.
+     */
+    //TODO: in java 8 we could use a functional interface to provide the method 
+    //generating the mapping from header to CellProcessors (this is the only difference 
+    //between the code for curator file or processed files).
+    //Otherwise, we could create a new AnnotationBean type, specific to curator annotations, 
+    //that would allow the extractAnnotations method to chose the proper header mapping, 
+    //but that would be boring
+    private static List<RawAnnotationBean> extractCuratorAnnotations(String similarityFile) 
+            throws FileNotFoundException, IOException, IllegalArgumentException {
+        log.entry(similarityFile);
+        
+        try (ICsvBeanReader annotReader = new CsvBeanReader(new FileReader(similarityFile), 
+                SimilarityAnnotationUtils.TSV_COMMENTED)) {
+            
+            List<RawAnnotationBean> annots = new ArrayList<RawAnnotationBean>();
+            final String[] header = annotReader.getHeader(true);
+            String[] attributeMapping = SimilarityAnnotationUtils.mapHeaderToAttributes(
+                    header, RawAnnotationBean.class);
+            CellProcessor[] cellProcessorMapping = mapHeaderToCellProcessors(header);
+            RawAnnotationBean annot;
+            while((annot = annotReader.read(RawAnnotationBean.class, attributeMapping, 
+                    cellProcessorMapping)) != null ) {
+                annots.add(annot);
+            }
+            if (annots.isEmpty()) {
+                throw log.throwing(new IllegalArgumentException("The provided file " 
+                        + similarityFile + " did not allow to retrieve any annotation"));
+            }
+            return log.exit(annots);
+            
+        } catch (SuperCsvException e) {
+            //hide implementation details
+            throw log.throwing(new IllegalArgumentException("The provided file " 
+                    + similarityFile + " could not be properly parsed", e));
+        }
+    }
+
+    /**
+     * Map the column names of a curator annotation file to the {@code CellProcessor}s 
+     * used to populate {@code RawAnnotationBean}. We do not use the method provided 
+     * by {@link SimilarityAnnotationUtils}, because not the same fields are mandatory 
+     * in the released files and in the file used by curator.
+     * 
+     * @param header    An {@code Array} of {@code String}s representing the names 
+     *                  of the columns of a curator similarity annotation file.
+     * @return          An {@code Array} of {@code CellProcessor}s, put in 
+     *                  the {@code Array} at the same index as the column they are supposed 
+     *                  to process.
+     * @throws IllegalArgumentException If a {@code String} in {@code header} 
+     *                                  is not recognized.
+     */
+    private static CellProcessor[] mapHeaderToCellProcessors(String[] header) 
+            throws IllegalArgumentException {
+        log.entry((Object[]) header);
+        
+        CellProcessor[] processors = new CellProcessor[header.length];
+        for (int i = 0; i < header.length; i++) {
+            switch (header[i]) {
+            // *** CellProcessors common to all AnnotationBean types ***
+                case SimilarityAnnotationUtils.ENTITY_COL_NAME: 
+                    processors[i] = new ParseMultipleValuesCell();
+                    break;
+                case SimilarityAnnotationUtils.TAXON_COL_NAME: 
+                    processors[i] = new ParseInt();
+                    break;
+                case SimilarityAnnotationUtils.QUALIFIER_COL_NAME: 
+                    processors[i] = new ParseQualifierCell();
+                    break;
+                case SimilarityAnnotationUtils.DATE_COL_NAME: 
+                    processors[i] = new ParseDate(SimilarityAnnotationUtils.DATE_FORMAT);
+                    break; 
+                case SimilarityAnnotationUtils.HOM_COL_NAME: 
+                case SimilarityAnnotationUtils.CONF_COL_NAME: 
+                case SimilarityAnnotationUtils.REF_COL_NAME: 
+                case SimilarityAnnotationUtils.ECO_COL_NAME: 
+                case SimilarityAnnotationUtils.SUPPORT_TEXT_COL_NAME: 
+                case SimilarityAnnotationUtils.ASSIGN_COL_NAME: 
+                case SimilarityAnnotationUtils.CURATOR_COL_NAME: 
+                    processors[i] = new StrNotNullOrEmpty();
+                    break;
+                //we don't care about any column providing names corresponding to IDs: 
+                //we will retrieve the proper names from related ontologies directly
+                case SimilarityAnnotationUtils.ENTITY_NAME_COL_NAME: 
+                case SimilarityAnnotationUtils.HOM_NAME_COL_NAME: 
+                case SimilarityAnnotationUtils.CONF_NAME_COL_NAME: 
+                case SimilarityAnnotationUtils.TAXON_NAME_COL_NAME: 
+                case SimilarityAnnotationUtils.ECO_NAME_COL_NAME: 
+                //REF title is stored in the same column as REF ID in curator annotation file.
+                //Only in generated files the title is stored in its own column
+                case SimilarityAnnotationUtils.REF_TITLE_COL_NAME: 
+                    processors[i] = new Optional();
+                    break;
+                default: 
+                    throw log.throwing(new IllegalArgumentException("Unrecognized header: " 
+                            + header[i]));
+            }
+        }
+        return log.exit(processors);
     }
 //
 //    /**

@@ -68,12 +68,12 @@ import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
 
 /**
- * Class related to the use, verification, and insertion into the database 
+ * Class related to the use, verification, and generation 
  * of the annotations of similarity between Uberon terms (similarity in the sense 
  * of the term in the HOM ontology HOM:0000000).
  * 
  * @author Frederic Bastian
- * @version Bgee 13
+ * @version Bgee 13 Apr. 2015
  * @since Bgee 13
  */
 //TODO: do not forget to generate annotations based on transformation_of relations.
@@ -222,9 +222,11 @@ public class SimilarityAnnotation {
 
     
     /**
-     * A {@code Pattern} describing the possible values of the column {@link #REF_COL_NAME}. 
+     * A {@code Pattern} describing the possible values of the column storing reference IDs. 
      * This is because in the curator annotation file, the title of the reference 
      * is mixed in the column containing the reference ID, so we need to parse it.
+     * @see #REF_ID_PATTERN_GROUP
+     * @see #REF_TITLE_PATTERN_GROUP
      */
     private final static Pattern REF_COL_PATTERN = Pattern.compile("(.+?)( .+?)?");
     /**
@@ -393,9 +395,6 @@ public class SimilarityAnnotation {
     //TODO: in java 8 we could use a functional interface to provide the method 
     //generating the mapping from header to CellProcessors (this is the only difference 
     //between the code for curator file or processed files).
-    //Otherwise, we could create a new AnnotationBean type, specific to curator annotations, 
-    //that would allow the extractAnnotations method to chose the proper header mapping, 
-    //but that would be boring
     private static List<CuratorAnnotationBean> extractCuratorAnnotations(String similarityFile) 
             throws FileNotFoundException, IOException, IllegalArgumentException {
         log.entry(similarityFile);
@@ -1183,6 +1182,20 @@ public class SimilarityAnnotation {
                 this.incorrectFormat.add(annot);
                 allGood = false;
             }
+            
+            if (((RawAnnotationBean) annot).getCurationDate() == null) {
+                log.error("Missing curation date at line {}", lineNumber);
+                this.incorrectFormat.add(annot);
+                allGood = false;
+            }
+        }
+        
+        //if it is an annotation from curator, the date is not mandatory for 
+        //unreviewed imported information, but we log a warning nevertheless.
+        if (annot.getClass().equals(CuratorAnnotationBean.class) && 
+                ((CuratorAnnotationBean) annot).getCurationDate() == null) {
+            log.warn("Missing date in curator annotation at line {}, it's OK if it is an unreviewed annotation: {}", 
+                    lineNumber, annot);
         }
         
         
@@ -1433,6 +1446,169 @@ public class SimilarityAnnotation {
         
         log.exit();
     }
+    
+    public List<RawAnnotationBean> generateRawAnnotations(List<CuratorAnnotationBean> annots) {
+        log.entry(annots);
+        
+        //check the curator annotations provided
+        this.checkAnnotations(annots);
+        
+        //Generate RAW annotations
+        List<RawAnnotationBean> rawAnnots = new ArrayList<RawAnnotationBean>();
+        for (CuratorAnnotationBean curatorAnnot: annots) {
+            rawAnnots.add(this.generateRawAnnotWithExtraInfo(curatorAnnot));
+        }
+        if (rawAnnots.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("The provided annotations " +
+                    "did not allow to generate any clean-transformed annotations."));
+        }
+        //infer new annotations
+        
+        
+
+        //check and sort annotations generated 
+        this.checkAnnotations(rawAnnots);
+        this.sortAnnotations(rawAnnots);
+    }
+
+    /**
+     * Generate a new {@code RawAnnotationBean} with extra information from 
+     * the curator annotation {@code annot}. This method will add labels associated to 
+     * ontology term IDs, will order the Uberon IDs, etc. This information is retrieved 
+     * from the ontologies provided at instantiation.
+     * <p>
+     * {@code annot} will not be modified as a result of the call to this method. 
+     * 
+     * @param annot             A {@code CuratorAnnotationBean} that represents 
+     *                          an annotation from curators. 
+     * @return                  A {@code RawAnnotationBean} representing the same annotation as 
+     *                          {@code annot}, with added extra information.
+     * @throws IllegalArgumentException If {@code annot} did not allow to obtain any 
+     *                                  information about annotation.
+     */
+    private RawAnnotationBean generateRawAnnotWithExtraInfo(CuratorAnnotationBean annot) 
+            throws IllegalArgumentException {
+        log.entry(annot);
+        
+        RawAnnotationBean rawAnnot = new RawAnnotationBean();
+        
+        //*** attributes simply copied
+        rawAnnot.setNcbiTaxonId(annot.getNcbiTaxonId());
+        rawAnnot.setNegated(annot.isNegated());
+        
+        //*** Date ***
+        if (annot.getCurationDate() != null) {
+            rawAnnot.setCurationDate(annot.getCurationDate());
+        } else {
+            //unreviewed annotation imported? Add current date.
+            rawAnnot.setCurationDate(new Date());
+        }
+        
+        //*** Trim text fields ***
+        if (annot.getCioId() != null) {
+            rawAnnot.setCioId(annot.getCioId().trim());
+        }
+        if (annot.getEcoId() != null) {
+            rawAnnot.setEcoId(annot.getEcoId().trim());
+        }
+        if (annot.getHomId() != null) {
+            rawAnnot.setHomId(annot.getHomId().trim());
+        }
+        if (annot.getRefId() != null) {
+            rawAnnot.setRefId(annot.getRefId().trim());
+        }
+        if (annot.getRefTitle() != null) {
+            rawAnnot.setRefTitle(annot.getRefTitle().trim());
+        }
+        if (annot.getSupportingText() != null) {
+            rawAnnot.setSupportingText(annot.getSupportingText().trim());
+        }
+        if (annot.getCurator() != null) {
+            rawAnnot.setCurator(annot.getCurator().trim());
+        }
+        if (annot.getAssignedBy() != null) {
+            rawAnnot.setAssignedBy(annot.getAssignedBy());
+        }
+        
+        //*** Add labels ***
+        
+        //Uberon ID(s) used to define the entity annotated. Get them ordered 
+        //by alphabetical order, for easier diff between releases.
+        List<String> uberonIds = annot.getEntityIds();
+        Collections.sort(uberonIds);
+        //get the corresponding names
+        List<String> uberonNames = new ArrayList<String>();
+        List<String> trimUberonIds = new ArrayList<String>();
+        for (String uberonId: uberonIds) {
+            //it is the responsibility of the checkAnnotation method to make sure 
+            //the Uberon IDs exist, so we accept null values, it's not our job here.
+            if (uberonId == null) {
+                continue;
+            }
+            trimUberonIds.add(uberonId.trim());
+            OWLClass cls = uberonOntWrapper.getOWLClassByIdentifier(uberonId.trim(), true);
+            if (cls != null) {
+                String name = uberonOntWrapper.getLabel(cls);
+                if (name != null) {
+                    uberonNames.add(name.trim());
+                } else {
+                    //it is important to have as many names as Uberon IDs
+                    uberonNames.add("");
+                }
+            }
+        }
+        //store Uberon IDs and names
+        rawAnnot.setEntityIds(trimUberonIds);
+        rawAnnot.setEntityNames(uberonNames);
+        
+        //taxon
+        if (annot.getNcbiTaxonId() != 0) {
+            String ontologyTaxId = OntologyUtils.getTaxOntologyId(annot.getNcbiTaxonId());
+            OWLClass cls = taxOntWrapper.getOWLClassByIdentifier(ontologyTaxId, true);
+            if (cls != null) {
+                rawAnnot.setTaxonName(taxOntWrapper.getLabel(cls));
+            }
+        }
+        //HOM
+        if (annot.getHomId() != null) {
+            OWLClass cls = homOntWrapper.getOWLClassByIdentifier(annot.getHomId().trim(), true);
+            if (cls != null) {
+                rawAnnot.setHomLabel(homOntWrapper.getLabel(cls));
+            }
+        }
+        //ECO
+        if (annot.getEcoId() != null) {
+            OWLClass cls = ecoOntWrapper.getOWLClassByIdentifier(annot.getEcoId().trim(), true);
+            if (cls != null) {
+                rawAnnot.setEcoLabel(ecoOntWrapper.getLabel(cls));
+            }
+        } else {
+            //otherwise it means that it is an unreviewed annotations imported from vHOG
+            rawAnnot.setEcoId(AUTOMATIC_ECO);
+            rawAnnot.setEcoLabel(ecoOntWrapper.getLabel(
+                    ecoOntWrapper.getOWLClassByIdentifier(AUTOMATIC_ECO, true)));
+            rawAnnot.setCurator(AUTOMATIC_CURATOR);
+            rawAnnot.setAssignedBy(AUTOMATIC_ASSIGNED_BY);
+        }
+        //CONF
+        if (annot.getCioId() != null) {
+            OWLClass cls = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
+                    annot.getCioId().trim(), true);
+            if (cls != null) {
+                rawAnnot.setCioLabel(cioWrapper.getOWLGraphWrapper().getLabel(cls));
+            }
+        }
+        
+        
+        //check whether we could get any information
+        if (rawAnnot.getHomId() == null || rawAnnot.getNcbiTaxonId() == 0 || 
+                rawAnnot.getEntityIds() == null || rawAnnot.getEntityIds().isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("The provided annotation: " 
+                    + annot + " - did not allow to generate a clean-transformed annotation."));
+        }
+        
+        return log.exit(rawAnnot);
+    }
 
     public void generateFiles(String rawAnnotFile, Set<GeneratedFileType> fileTypes, 
             String taxonConstraintsFile, Map<String, Set<Integer>> idStartsToOverridenTaxonIds, 
@@ -1664,179 +1840,6 @@ public class SimilarityAnnotation {
         this.sortAnnotations(rawCleanAnnots);
         
         return log.exit(rawCleanAnnots);
-    }
-    
-    /**
-     * Generate extra information for the annotation row {@code annot}. This method 
-     * will create a new row of annotation, containing all information in {@code annot}, 
-     * plus added clean information, for instance, Uberon names 
-     * ordered by Uberon IDs, ECO names, HOM names. This information is retrieved 
-     * from the provided ontologies, wrapped in {@code OWLGraphWrapper}s. 
-     * This method will also add the value associated to the column with name 
-     * {@link #LINE_TYPE_COL_NAME}.
-     * <p>
-     * {@code annot} will not be modified as a result of the call to this method. 
-     * 
-     * @param annot             A {@code Map} that represents a line of annotation. 
-     *                          See {@link #extractAnnotations(String, boolean)} for details 
-     *                          about the key-value pairs in this {@code Map}.
-     * @param fileType          A {@code GeneratedFileType} defining for which type of file 
-     *                          these annotations are produced. 
-     * @param uberonOntWrapper  An {@code OWLGraphWrapper} wrapping the Uberon ontology.
-     * @param taxOntWrapper     An {@code OWLGraphWrapper} wrapping the taxonomy ontology.
-     * @param ecoOntWrapper     An {@code OWLGraphWrapper} wrapping the ECO ontology.
-     * @param homOntWrapper     An {@code OWLGraphWrapper} wrapping the HOM ontology 
-     *                          (ontology of homology an related concepts).
-     * @param confOntWrapper    An {@code OWLGraphWrapper} wrapping the confidence 
-     *                          code ontology.
-     * @return                  A {@code Map} representing the same row of annotation as 
-     *                          {@code annot}, with added extra information.
-     * @throws IllegalArgumentException If {@code annot} did not allow to obtain any 
-     *                                  information about annotation.
-     */
-    private Map<String, Object> getNewAnnotWithExtraInfo(Map<String, Object> annot, 
-            OWLGraphWrapper uberonOntWrapper, OWLGraphWrapper taxOntWrapper, 
-            OWLGraphWrapper ecoOntWrapper, OWLGraphWrapper homOntWrapper, 
-            OWLGraphWrapper confOntWrapper) throws IllegalArgumentException {
-        log.entry(annot, uberonOntWrapper, taxOntWrapper, ecoOntWrapper, 
-                homOntWrapper, confOntWrapper);
-        
-        //clone the original annotation
-        Map<String, Object> releaseAnnot = new HashMap<String, Object>(annot);
-        
-        //Uberon ID(s) used to define the entity annotated. Get them ordered 
-        //by alphabetical order, for easier diff between different release files.
-        List<String> uberonIds = AnnotationCommon.parseMultipleEntitiesColumn(
-                (String) annot.get(ENTITY_COL_NAME));
-        //get the corresponding names
-        List<String> uberonNames = new ArrayList<String>();
-        for (String uberonId: uberonIds) {
-            //it is the responsibility of the checkAnnotation method to make sure 
-            //the Uberon IDs exist, so we accept null values, it's not our job here.
-            if (uberonOntWrapper.getOWLClassByIdentifier(uberonId, true) != null) {
-                String name = uberonOntWrapper.getLabel(
-                        uberonOntWrapper.getOWLClassByIdentifier(uberonId, true));
-                if (name != null) {
-                    uberonNames.add(name.trim());
-                }
-            }
-        }
-        //store Uberon IDs and names as column values
-        releaseAnnot.put(ENTITY_COL_NAME, 
-                AnnotationCommon.getTermsToColumnValue(uberonIds));
-        releaseAnnot.put(ENTITY_NAME_COL_NAME, 
-                AnnotationCommon.getTermsToColumnValue(uberonNames));
-        
-        //taxon
-        //store taxon to be used to store association to positive/negative annots. 
-        int taxonId = 0;
-        if (annot.get(TAXON_COL_NAME) != null) {
-            taxonId = (int) annot.get(TAXON_COL_NAME);
-            releaseAnnot.put(TAXON_COL_NAME, taxonId);
-            
-            String ontologyTaxId = OntologyUtils.getTaxOntologyId(taxonId);
-            if (taxOntWrapper.getOWLClassByIdentifier(ontologyTaxId, true) != null) {
-                releaseAnnot.put(TAXON_NAME_COL_NAME, taxOntWrapper.getLabel(
-                        taxOntWrapper.getOWLClassByIdentifier(ontologyTaxId, true)));
-            }
-        }
-        
-        //HOM
-        //store HOM ID to be used to store association to positive/negative annots. 
-        String homId = "";
-        if (annot.get(HOM_COL_NAME) != null) {
-            homId = ((String) annot.get(HOM_COL_NAME)).trim();
-            releaseAnnot.put(HOM_COL_NAME, homId);
-            if (homOntWrapper.getOWLClassByIdentifier(homId, true) != null) {
-                releaseAnnot.put(HOM_NAME_COL_NAME, homOntWrapper.getLabel(
-                        homOntWrapper.getOWLClassByIdentifier(homId, true)));
-            }
-        }
-        
-        //qualifier
-        //we store positive and negative annotations associated to taxa here. 
-        if (annot.get(QUALIFIER_COL_NAME) != null) {
-            releaseAnnot.put(QUALIFIER_COL_NAME, NEGATE_QUALIFIER);
-        }
-        
-        //ECO
-        if (annot.get(ECO_COL_NAME) != null) {
-            String ecoId = ((String) annot.get(ECO_COL_NAME)).trim();
-            releaseAnnot.put(ECO_COL_NAME, ecoId);
-            if (ecoOntWrapper.getOWLClassByIdentifier(ecoId, true) != null) {
-                releaseAnnot.put(ECO_NAME_COL_NAME, ecoOntWrapper.getLabel(
-                        ecoOntWrapper.getOWLClassByIdentifier(ecoId, true)));
-            }
-        } else {
-            //otherwise it means that it is an unreviewed annotations
-            releaseAnnot.put(ECO_COL_NAME, AUTOMATIC_ECO);
-            releaseAnnot.put(ECO_NAME_COL_NAME, ecoOntWrapper.getLabel(
-                    ecoOntWrapper.getOWLClassByIdentifier(AUTOMATIC_ECO, true)));
-            releaseAnnot.put(CURATOR_COL_NAME, AUTOMATIC_CURATOR);
-            releaseAnnot.put(ASSIGN_COL_NAME, AUTOMATIC_ASSIGNED_BY);
-        }
-        
-        //CONF
-        if (annot.get(CONF_COL_NAME) != null) {
-            String confId = ((String) annot.get(CONF_COL_NAME)).trim();
-            releaseAnnot.put(CONF_COL_NAME, confId);
-            if (confOntWrapper.getOWLClassByIdentifier(confId, true) != null) {
-                releaseAnnot.put(CONF_NAME_COL_NAME, confOntWrapper.getLabel(
-                        confOntWrapper.getOWLClassByIdentifier(confId, true)));
-            }
-        }
-        
-        //Reference
-        if (annot.get(REF_COL_NAME) != null) {
-            String refValue = ((String) annot.get(REF_COL_NAME)).trim();
-            //the raw annotation file mixes the title of the reference 
-            //in the same column as the reference ID, so we need to parse refValue
-            String refId = this.getRefIdFromRefColValue(refValue);
-            releaseAnnot.put(REF_COL_NAME, refId);
-            
-            String refTitle = this.getRefTitleFromRefColValue(refValue);
-            if (refTitle != null) {
-                releaseAnnot.put(REF_TITLE_COL_NAME, refTitle);
-            }
-        }
-        if (annot.get(REF_TITLE_COL_NAME) != null) {
-            String refTitle = ((String) annot.get(REF_TITLE_COL_NAME)).trim();
-            refTitle = refTitle.startsWith("\"") ? refTitle.substring(1) : refTitle;
-            refTitle = refTitle.endsWith("\"") ? 
-                    refTitle.substring(0, refTitle.length()-1) : refTitle;
-            releaseAnnot.put(REF_TITLE_COL_NAME, refTitle);
-        }
-        
-        //Supporting text
-        if (annot.get(SUPPORT_TEXT_COL_NAME) != null) {
-            releaseAnnot.put(SUPPORT_TEXT_COL_NAME, 
-                    ((String) annot.get(SUPPORT_TEXT_COL_NAME)).trim());
-        }
-        
-        //Curator
-        if (annot.get(CURATOR_COL_NAME) != null) {
-            releaseAnnot.put(CURATOR_COL_NAME, 
-                    ((String) annot.get(CURATOR_COL_NAME)).trim());
-        }
-        
-        //Assigned by
-        if (annot.get(ASSIGN_COL_NAME) != null) {
-            releaseAnnot.put(ASSIGN_COL_NAME, 
-                    ((String) annot.get(ASSIGN_COL_NAME)).trim());
-        }
-        
-        //Annotation date
-        if (annot.get(DATE_COL_NAME) != null) {
-            releaseAnnot.put(DATE_COL_NAME, annot.get(DATE_COL_NAME));
-        }
-        
-        //check whether we could get any information
-        if (releaseAnnot.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException("The provided annotation: " 
-                    + annot + " - did not allow to generate a clean-transformed annotation."));
-        }
-        
-        return log.exit(releaseAnnot);
     }
     
     /**
@@ -2395,22 +2398,23 @@ public class SimilarityAnnotation {
     }
     
     /**
-     * Order {@code annotations} by alphabetical order of some values in the {@code Map}, 
-     * for easier diff between different releases of the annotation file.
+     * Order {@code annotations} by alphabetical order of some fields, 
+     * for easier diff between different releases of the annotation file. 
+     * {@code annotations} will be modified as a result of the call to this method.
      * 
-     * @param annotations   A {@code List} of {@code Map}s to be ordered, where 
-     *                      each {@code Map} represents an annotation line.
+     * @param annotations   A {@code List} of {@code AnnotationBean}s to be ordered.
+     * @param <T>           The type of {@code AnnotationBean} in {@code annotations}.
      */
-    private void sortAnnotations(List<Map<String, Object>> annotations) {
-        Collections.sort(annotations, new Comparator<Map<String, Object>>() {
+    private <T extends AnnotationBean> void sortAnnotations(List<T> annotations) {
+        Collections.sort(annotations, new Comparator<T>() {
             @Override
-            public int compare(Map<String, Object> o1, Map<String, Object> o2) {
+            public int compare(AnnotationBean o1, AnnotationBean o2) {
 
-                String homId1 = (String) o1.get(HOM_COL_NAME);
+                String homId1 = o1.getHomId();
                 if (homId1 == null) {
                     homId1 = "";
                 }
-                String homId2 = (String) o2.get(HOM_COL_NAME);
+                String homId2 = o2.getHomId();
                 if (homId2 == null) {
                     homId2 = "";
                 }
@@ -2419,64 +2423,32 @@ public class SimilarityAnnotation {
                     return comp;
                 }
                 
-                String elementId1 = (String) o1.get(ENTITY_COL_NAME);
-                String elementId2 = (String) o2.get(ENTITY_COL_NAME);
+                String elementId1 = o1.getEntityIds().toString();
+                String elementId2 = o2.getEntityIds().toString();
                 comp = elementId1.compareTo(elementId2);
                 if (comp != 0) {
                     return comp;
                 }
-                int taxonId1 = (int) o1.get(TAXON_COL_NAME);
-                int taxonId2 = (int) o2.get(TAXON_COL_NAME);
+                
+                int taxonId1 = o1.getNcbiTaxonId();
+                int taxonId2 = o2.getNcbiTaxonId();
                 if (taxonId1 < taxonId2) {
                     return -1;
                 } else if (taxonId1 > taxonId2) {
                     return 1;
                 }
                 
-                String lineType1 = (String) o1.get(LINE_TYPE_COL_NAME);
-                if (lineType1 == null) {
-                    lineType1 = "";
-                }
-                String lineType2 = (String) o2.get(LINE_TYPE_COL_NAME);
-                if (lineType2 == null) {
-                    lineType2 = "";
-                }
-                comp = lineType1.compareTo(lineType2);
-                if (comp != 0) {
-                    return comp;
+                if (!o1.isNegated() && o2.isNegated()) {
+                    return -1;
+                } else if (o1.isNegated() && !o2.isNegated()) {
+                    return 1;
                 }
                 
-                String qualifier1 = (String) o1.get(QUALIFIER_COL_NAME);
-                if (qualifier1 == null) {
-                    qualifier1 = "";
-                }
-                String qualifier2 = (String) o2.get(QUALIFIER_COL_NAME);
-                if (qualifier2 == null) {
-                    qualifier2 = "";
-                }
-                comp = qualifier1.compareTo(qualifier2);
-                if (comp != 0) {
-                    return comp;
-                }
-                
-                String ecoId1 = (String) o1.get(ECO_COL_NAME);
-                if (ecoId1 == null) {
-                    ecoId1 = "";
-                }
-                String ecoId2 = (String) o2.get(ECO_COL_NAME);
-                if (ecoId2 == null) {
-                    ecoId2 = "";
-                }
-                comp = ecoId1.compareTo(ecoId2);
-                if (comp != 0) {
-                    return comp;
-                }
-                
-                String confId1 = (String) o1.get(CONF_COL_NAME);
+                String confId1 = o1.getCioId();
                 if (confId1 == null) {
                     confId1 = "";
                 }
-                String confId2 = (String) o2.get(CONF_COL_NAME);
+                String confId2 = o2.getCioId();
                 if (confId2 == null) {
                     confId2 = "";
                 }
@@ -2485,18 +2457,48 @@ public class SimilarityAnnotation {
                     return comp;
                 }
                 
-                String refId1 = (String) o1.get(REF_COL_NAME);
-                if (refId1 == null) {
-                    refId1 = "";
+                
+                if (o1 instanceof RawAnnotationBean && o2 instanceof RawAnnotationBean) {
+                    String ecoId1 = ((RawAnnotationBean) o1).getEcoId();
+                    if (ecoId1 == null) {
+                        ecoId1 = "";
+                    }
+                    String ecoId2 = ((RawAnnotationBean) o2).getEcoId();
+                    if (ecoId2 == null) {
+                        ecoId2 = "";
+                    }
+                    comp = ecoId1.compareTo(ecoId2);
+                    if (comp != 0) {
+                        return comp;
+                    }
+                    
+                    String refId1 = ((RawAnnotationBean) o1).getRefId();
+                    if (refId1 == null) {
+                        refId1 = "";
+                    }
+                    String refId2 = ((RawAnnotationBean) o2).getRefId();
+                    if (refId2 == null) {
+                        refId2 = "";
+                    }
+                    comp = refId1.compareTo(refId2);
+                    if (comp != 0) {
+                        return comp;
+                    }
                 }
-                String refId2 = (String) o2.get(REF_COL_NAME);
-                if (refId2 == null) {
-                    refId2 = "";
+                
+                String supportText1 = o1.getSupportingText();
+                if (supportText1 == null) {
+                    supportText1 = "";
                 }
-                comp = refId1.compareTo(refId2);
+                String supportText2 = o2.getSupportingText();
+                if (supportText2 == null) {
+                    supportText2 = "";
+                }
+                comp = supportText1.compareTo(supportText2);
                 if (comp != 0) {
                     return comp;
                 }
+                
                 
                 return 0;
             }

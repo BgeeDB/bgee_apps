@@ -13,6 +13,7 @@ import java.util.regex.Pattern;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.supercsv.cellprocessor.CellProcessorAdaptor;
+import org.supercsv.cellprocessor.Optional;
 import org.supercsv.cellprocessor.ParseBool;
 import org.supercsv.cellprocessor.ParseDate;
 import org.supercsv.cellprocessor.ParseInt;
@@ -243,11 +244,16 @@ public class SimilarityAnnotationUtils {
          * @see getCioLabel()
          */
         private String cioLabel;
+        /**
+         * @see #getSupportingText()
+         */
+        private String supportingText;
         
         /**
          * 0-argument constructor of the bean.
          */
         private AnnotationBean() {
+            this(null, null, null, null, 0, null, false, null, null, null);
         }
     
         /**
@@ -261,11 +267,12 @@ public class SimilarityAnnotationUtils {
          * @param negated           See {@link #isNegated()}.
          * @param cioId             See {@link #getCioId()}.
          * @param cioLabel          See {@link #getCioLabel()}.
+         * @param supportingText    See {@link #getSupportingText()}.
          */
         private AnnotationBean(String homId, String homLabel,
                 List<String> entityIds, List<String> entityNames,
                 int ncbiTaxonId, String taxonName, boolean negated,
-                String cioId, String cioLabel) {
+                String cioId, String cioLabel, String supportingText) {
             
             this.homId = homId;
             this.homLabel = homLabel;
@@ -276,6 +283,7 @@ public class SimilarityAnnotationUtils {
             this.negated = negated;
             this.cioId = cioId;
             this.cioLabel = cioLabel;
+            this.supportingText = supportingText;
         }
         
         /**
@@ -429,6 +437,23 @@ public class SimilarityAnnotationUtils {
             this.cioLabel = cioLabel;
         }
     
+        /**
+         * @return  A {@code String} that can be an excerpt from the reference, highlighting 
+         *          the annotation captured, or an explanation about reasons for inference 
+         *          in case of an automated annotation, or underlying single-evidence 
+         *          annotations in case of aggregated summary annotations.
+         */
+        public String getSupportingText() {
+            return supportingText;
+        }
+        /**
+         * @param supportingText    A {@code String} that is a text supporting the annotation.
+         * @see #getSupportingText()
+         */
+        public void setSupportingText(String supportingText) {
+            this.supportingText = supportingText;
+        }
+    
         /* (non-Javadoc)
          * @see java.lang.Object#hashCode()
          */
@@ -450,6 +475,9 @@ public class SimilarityAnnotationUtils {
             result = prime * result + (negated ? 1231 : 1237);
             result = prime * result
                     + ((taxonName == null) ? 0 : taxonName.hashCode());
+            result = prime
+                    * result
+                    + ((supportingText == null) ? 0 : supportingText.hashCode());
             return result;
         }
     
@@ -523,6 +551,13 @@ public class SimilarityAnnotationUtils {
             } else if (!taxonName.equals(other.taxonName)) {
                 return false;
             }
+            if (supportingText == null) {
+                if (other.supportingText != null) {
+                    return false;
+                }
+            } else if (!supportingText.equals(other.supportingText)) {
+                return false;
+            }
             return true;
         }
     
@@ -535,7 +570,8 @@ public class SimilarityAnnotationUtils {
                     + ", entityIds=" + entityIds + ", entityNames="
                     + entityNames + ", ncbiTaxonId=" + ncbiTaxonId
                     + ", taxonName=" + taxonName + ", negated=" + negated
-                    + ", cioId=" + cioId + ", cioLabel=" + cioLabel;
+                    + ", cioId=" + cioId + ", cioLabel=" + cioLabel 
+                    + ", supportingText=" + supportingText;
         }
         
     }
@@ -565,10 +601,6 @@ public class SimilarityAnnotationUtils {
          */
         private String ecoLabel;
         /**
-         * @see #getSupportingText()
-         */
-        private String supportingText;
-        /**
          * @see getAssignedBy()
          */
         private String assignedBy;
@@ -585,6 +617,7 @@ public class SimilarityAnnotationUtils {
          * 0-argument constructor of the bean.
          */
         public RawAnnotationBean() {
+            super();
         }
     
         /**
@@ -615,15 +648,28 @@ public class SimilarityAnnotationUtils {
                 String assignedBy, String curator, Date curationDate) {
             
             super(homId, homLabel, entityIds, entityNames, ncbiTaxonId, taxonName, 
-                    negated, cioId, cioLabel);
+                    negated, cioId, cioLabel, supportingText);
             this.refId = refId;
             this.refTitle = refTitle;
             this.ecoId = ecoId;
             this.ecoLabel = ecoLabel;
-            this.supportingText = supportingText;
             this.assignedBy = assignedBy;
             this.curator = curator;
             this.curationDate = curationDate;
+        }
+        
+        /**
+         * Copy constructor.
+         * @param toCopy    A {@code RawAnnotationBean} to clone into this 
+         *                  {@code RawAnnotationBean}.
+         */
+        public RawAnnotationBean(RawAnnotationBean toCopy) {
+            this(toCopy.getHomId(), toCopy.getHomLabel(), toCopy.getEntityIds(), 
+                    toCopy.getEntityNames(), toCopy.getNcbiTaxonId(), toCopy.getTaxonName(), 
+                    toCopy.isNegated(), toCopy.getEcoId(), toCopy.getEcoLabel(), 
+                    toCopy.getCioId(), toCopy.getCioLabel(), toCopy.getRefId(), 
+                    toCopy.getRefTitle(), toCopy.getSupportingText(), toCopy.getAssignedBy(), 
+                    toCopy.getCurator(), toCopy.getCurationDate());
         }
     
         
@@ -696,22 +742,6 @@ public class SimilarityAnnotationUtils {
         }
     
         /**
-         * @return  A {@code String} that is an excerpt from the reference, highlighting 
-         *          the annotation captured.
-         */
-        public String getSupportingText() {
-            return supportingText;
-        }
-        /**
-         * @param supportingText    A {@code String} that is an excerpt from the reference, 
-         *                          highlighting the annotation captured.
-         * @see #getSupportingText()
-         */
-        public void setSupportingText(String supportingText) {
-            this.supportingText = supportingText;
-        }
-    
-        /**
          * @return  A {@code String} identifying the database that made the annotation.
          */
         public String getAssignedBy() {
@@ -774,9 +804,6 @@ public class SimilarityAnnotationUtils {
             result = prime * result + ((refId == null) ? 0 : refId.hashCode());
             result = prime * result
                     + ((refTitle == null) ? 0 : refTitle.hashCode());
-            result = prime
-                    * result
-                    + ((supportingText == null) ? 0 : supportingText.hashCode());
             return result;
         }
         /* (non-Javadoc)
@@ -790,7 +817,7 @@ public class SimilarityAnnotationUtils {
             if (!super.equals(obj)) {
                 return false;
             }
-            if (!(obj instanceof RawAnnotationBean)) {
+            if (getClass() != obj.getClass()) {
                 return false;
             }
             RawAnnotationBean other = (RawAnnotationBean) obj;
@@ -843,13 +870,6 @@ public class SimilarityAnnotationUtils {
             } else if (!refTitle.equals(other.refTitle)) {
                 return false;
             }
-            if (supportingText == null) {
-                if (other.supportingText != null) {
-                    return false;
-                }
-            } else if (!supportingText.equals(other.supportingText)) {
-                return false;
-            }
             return true;
         }
         /* (non-Javadoc)
@@ -860,9 +880,8 @@ public class SimilarityAnnotationUtils {
             return "RawAnnotationBean [" 
                     + super.toString() + ", refId=" + refId + ", refTitle="
                     + refTitle + ", ecoId=" + ecoId + ", ecoLabel=" + ecoLabel
-                    + ", supportingText=" + supportingText + ", assignedBy="
-                    + assignedBy + ", curator=" + curator + ", curationDate="
-                    + curationDate + "]";
+                    + ", assignedBy=" + assignedBy + ", curator=" + curator 
+                    + ", curationDate=" + curationDate + "]";
         }
     }
     
@@ -937,11 +956,12 @@ public class SimilarityAnnotationUtils {
          * @param cioId                 See {@link #getCioId()}.
          * @param cioLabel              See {@link #getCioLabel()}.
          * @param trusted               See {@link #isTrusted()}.
+         * @param supportingText        See {@link #getSupportingText()}.
          */
         public SummaryAnnotationBean(String homId, String homLabel,
                 List<String> entityIds, List<String> entityNames,
                 int ncbiTaxonId, String taxonName, boolean negated,
-                String cioId, String cioLabel, boolean trusted
+                String cioId, String cioLabel, boolean trusted, String supportingText
 //                , int positiveEvidenceCount, int negativeEvidenceCount,  
 //                List<String> positiveEcoIds, List<String> positiveEcoLabels, 
 //                List<String> negativeEcoIds, List<String> negativeEcoLabels, 
@@ -950,7 +970,7 @@ public class SimilarityAnnotationUtils {
                 ) {
             
             super(homId, homLabel, entityIds, entityNames, ncbiTaxonId, taxonName, 
-                    negated, cioId, cioLabel);
+                    negated, cioId, cioLabel, supportingText);
             this.trusted = trusted;
 //            this.positiveEvidenceCount = positiveEvidenceCount;
 //            this.negativeEvidenceCount = negativeEvidenceCount;
@@ -1344,14 +1364,15 @@ public class SimilarityAnnotationUtils {
          * @param taxonName             See {@link #getTaxonName()}.
          * @param cioId                 See {@link #getCioId()}.
          * @param cioLabel              See {@link #getCioLabel()}.
+         * @param supportingText        See {@link #getSupportingText()}.
          */
         public AncestralTaxaAnnotationBean(String homId, String homLabel,
                 List<String> entityIds, List<String> entityNames,
                 int ncbiTaxonId, String taxonName, 
-                String cioId, String cioLabel) {
+                String cioId, String cioLabel, String supportingText) {
             
             super(homId, homLabel, entityIds, entityNames, ncbiTaxonId, taxonName, 
-                    false, cioId, cioLabel);
+                    false, cioId, cioLabel, supportingText);
         }
 
         /* (non-Javadoc)
@@ -1768,6 +1789,9 @@ public class SimilarityAnnotationUtils {
                 case CONF_NAME_COL_NAME: 
                     mapping[i] = "cioLabel";
                     break;
+                case SUPPORT_TEXT_COL_NAME: 
+                    mapping[i] = "supportingText";
+                    break;
             }
             //if it was one of the column common to all AnnotationBeans, 
             //iterate next column name
@@ -1789,9 +1813,6 @@ public class SimilarityAnnotationUtils {
                         break;
                     case ECO_NAME_COL_NAME: 
                         mapping[i] = "ecoLabel";
-                        break;
-                    case SUPPORT_TEXT_COL_NAME: 
-                        mapping[i] = "supportingText";
                         break;
                     case ASSIGN_COL_NAME: 
                         mapping[i] = "assignedBy";
@@ -1897,6 +1918,9 @@ public class SimilarityAnnotationUtils {
                 case QUALIFIER_COL_NAME: 
                     processors[i] = new ParseQualifierCell();
                     break;
+                case SUPPORT_TEXT_COL_NAME: 
+                    processors[i] = new Optional();
+                    break;
             }
             //if it was one of the column common to all AnnotationBeans, 
             //iterate next column name
@@ -1914,7 +1938,6 @@ public class SimilarityAnnotationUtils {
                     case REF_TITLE_COL_NAME: 
                     case ECO_COL_NAME: 
                     case ECO_NAME_COL_NAME: 
-                    case SUPPORT_TEXT_COL_NAME: 
                     case ASSIGN_COL_NAME: 
                     case CURATOR_COL_NAME: 
                         processors[i] = new StrNotNullOrEmpty();

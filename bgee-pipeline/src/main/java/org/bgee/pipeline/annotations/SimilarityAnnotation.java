@@ -41,6 +41,7 @@ import org.bgee.pipeline.ontologycommon.OntologyUtils;
 import org.bgee.pipeline.uberon.TaxonConstraints;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -114,7 +115,8 @@ public class SimilarityAnnotation {
          * @param negated           See {@link #isNegated()}.
          * @param ecoId             See {@link #getEcoId()}.
          * @param cioId             See {@link #getCioId()}.
-         * @param refIdAndTitle     See {@link #getRefId()}.
+         * @param refId             See {@link #getRefId()}.
+         * @param refTitle          See {@link #getRefTitle()}.
          * @param supportingText    See {@link #getSupportingText()}.
          * @param assignedBy        See {@link #getAssignedBy()}.
          * @param curator           See {@link #getCurator()}.
@@ -122,12 +124,20 @@ public class SimilarityAnnotation {
          */
         public CuratorAnnotationBean(String homId, List<String> entityIds, 
                 int ncbiTaxonId, boolean negated,String ecoId, String cioId, 
-                String refIdAndTitle, String supportingText,
+                String refId, String refTitle, String supportingText,
                 String assignedBy, String curator, Date curationDate) {
             
             super(homId, null, entityIds, null, ncbiTaxonId, null, 
                     negated, ecoId, null, cioId, null, 
-                    refIdAndTitle, null, supportingText, assignedBy, curator, curationDate);
+                    refId, refTitle, supportingText, assignedBy, curator, curationDate);
+        }
+        /**
+         * Copy constructor.
+         * @param toCopy    A {@code CuratorAnnotationBean} to clone into this 
+         *                  {@code CuratorAnnotationBean}.
+         */
+        public CuratorAnnotationBean(CuratorAnnotationBean toCopy) {
+            super(toCopy);
         }
 
         /**
@@ -247,14 +257,14 @@ public class SimilarityAnnotation {
     public final static String BGEE_ASSIGNMENT = "Bgee";
     /**
      * A {@code String} that is the OBO-like ID if the evidence code to use for 
-     * a non-reviewed annotation.
+     * a non-reviewed annotation from vHOG.
      */
-    public final static String AUTOMATIC_ECO = "ECO:0000313";
+    public final static String AUTOMATIC_IMPORT_ECO = "ECO:0000313";
     /**
-     * A {@code String} that is the value to use in the column {@link #CURATOR_COL_NAME} 
-     * for non-reviewed annotations.
+     * A {@code String} that is the OBO-like ID if the evidence code to use for 
+     * automatically inferred annotations.
      */
-    public final static String AUTOMATIC_CURATOR = "vHOG";
+    public final static String AUTOMATIC_ASSERTION_ECO = "ECO:0000501";
     /**
      * A {@code String} that is the value to use in the column {@link #ASSIGN_COL_NAME} 
      * for non-reviewed annotations.
@@ -1140,25 +1150,8 @@ public class SimilarityAnnotation {
                 this.incorrectFormat.add(annot);
                 allGood = false;
             }
-            String refId = ((RawAnnotationBean) annot).getRefId();
-            if (StringUtils.isBlank(refId) || !refId.matches("\\S+?:\\S+")) {
-                log.error("Incorrect reference ID {} at line {}", refId, lineNumber);
-                this.incorrectFormat.add(annot);
-                allGood = false;
-            }
-            String refTitle = ((RawAnnotationBean) annot).getRefTitle();
-            if (StringUtils.isBlank(refTitle)) {
-                log.error("Missing reference title at line {}", lineNumber);
-                this.incorrectFormat.add(annot);
-                allGood = false;
-            }
             if (StringUtils.isBlank(((RawAnnotationBean) annot).getSupportingText())) {
                 log.error("Missing support text at line {}", lineNumber);
-                this.incorrectFormat.add(annot);
-                allGood = false;
-            }
-            if (StringUtils.isBlank(((RawAnnotationBean) annot).getCurator())) {
-                log.error("Missing curator info at line {}", lineNumber);
                 this.incorrectFormat.add(annot);
                 allGood = false;
             }
@@ -1171,6 +1164,29 @@ public class SimilarityAnnotation {
                 log.error("Missing assigned by info at line {}", lineNumber);
                 this.incorrectFormat.add(annot);
                 allGood = false;
+            }
+
+            //these fields are not mandatory in case of automatic annotations
+            if (!AUTOMATIC_IMPORT_ECO.equals(((RawAnnotationBean) annot).getEcoId()) && 
+                !AUTOMATIC_ASSERTION_ECO.equals(((RawAnnotationBean) annot).getEcoId())) {
+                
+                if (StringUtils.isBlank(((RawAnnotationBean) annot).getCurator())) {
+                    log.error("Missing curator info at line {}", lineNumber);
+                    this.incorrectFormat.add(annot);
+                    allGood = false;
+                }
+                String refId = ((RawAnnotationBean) annot).getRefId();
+                if (StringUtils.isBlank(refId) || !refId.matches("\\S+?:\\S+")) {
+                    log.error("Incorrect reference ID {} at line {}", refId, lineNumber);
+                    this.incorrectFormat.add(annot);
+                    allGood = false;
+                }
+                String refTitle = ((RawAnnotationBean) annot).getRefTitle();
+                if (StringUtils.isBlank(refTitle)) {
+                    log.error("Missing reference title at line {}", lineNumber);
+                    this.incorrectFormat.add(annot);
+                    allGood = false;
+                }
             }
         }
         
@@ -1456,14 +1472,14 @@ public class SimilarityAnnotation {
         //Generate RAW annotations
         List<RawAnnotationBean> rawAnnots = new ArrayList<RawAnnotationBean>();
         for (CuratorAnnotationBean curatorAnnot: annots) {
-            rawAnnots.add(this.generateRawAnnotWithExtraInfo(curatorAnnot));
+            rawAnnots.add(this.createRawAnnotWithExtraInfo(curatorAnnot));
         }
         if (rawAnnots.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("The provided annotations " +
                     "did not allow to generate any clean-transformed annotations."));
         }
         //infer new annotations
-        
+        infer new annotations here
         
 
         //check and sort annotations generated 
@@ -1472,7 +1488,7 @@ public class SimilarityAnnotation {
     }
 
     /**
-     * Generate a new {@code RawAnnotationBean} with extra information from 
+     * Create a new {@code RawAnnotationBean} with extra information from 
      * the curator annotation {@code annot}. This method will add labels associated to 
      * ontology term IDs, will order the Uberon IDs, etc. This information is retrieved 
      * from the ontologies provided at instantiation.
@@ -1486,7 +1502,7 @@ public class SimilarityAnnotation {
      * @throws IllegalArgumentException If {@code annot} did not allow to obtain any 
      *                                  information about annotation.
      */
-    private RawAnnotationBean generateRawAnnotWithExtraInfo(CuratorAnnotationBean annot) 
+    private RawAnnotationBean createRawAnnotWithExtraInfo(CuratorAnnotationBean annot) 
             throws IllegalArgumentException {
         log.entry(annot);
         
@@ -1584,10 +1600,10 @@ public class SimilarityAnnotation {
             }
         } else {
             //otherwise it means that it is an unreviewed annotations imported from vHOG
-            rawAnnot.setEcoId(AUTOMATIC_ECO);
+            rawAnnot.setEcoId(AUTOMATIC_IMPORT_ECO);
             rawAnnot.setEcoLabel(ecoOntWrapper.getLabel(
-                    ecoOntWrapper.getOWLClassByIdentifier(AUTOMATIC_ECO, true)));
-            rawAnnot.setCurator(AUTOMATIC_CURATOR);
+                    ecoOntWrapper.getOWLClassByIdentifier(AUTOMATIC_IMPORT_ECO, true)));
+            rawAnnot.setCurator(AUTOMATIC_IMPORT_CURATOR);
             rawAnnot.setAssignedBy(AUTOMATIC_ASSIGNED_BY);
         }
         //CONF
@@ -1755,13 +1771,25 @@ public class SimilarityAnnotation {
         log.entry(rawAnnots, uberonOntWrapper);
     }
     
-    private List<Map<String, Object>> generateInferredAnnotationsFromTransformationOf(
-            List<Map<String, Object>> rawAnnots, OWLGraphWrapper uberonOntWrapper) 
-                    throws IllegalArgumentException {
-        log.entry(rawAnnots, uberonOntWrapper);
+    private Set<CuratorAnnotationBean> inferAnnotationsFromTransformationOf(
+            Collection<CuratorAnnotationBean> annots) throws IllegalArgumentException {
+        log.entry(annots);
+        
+        //first, we store HOM ID - Uberon IDs to be able to determine when an annotation 
+        //already exists for some structures, independently of the taxon
+        Set<CuratorAnnotationBean> existingAnnots = new HashSet<CuratorAnnotationBean>();
+        for (CuratorAnnotationBean annot: annots) {
+            
+            CuratorAnnotationBean existingAnnot = new CuratorAnnotationBean();
+            existingAnnot.setHomId(annot.getHomId());
+            List<String> entityIds = new ArrayList<String>(annot.getEntityIds());
+            Collections.sort(entityIds);
+            existingAnnot.setEntityIds(entityIds);
+            
+            existingAnnots.add(existingAnnot);
+        }
         
         OntologyUtils uberonUtils = new OntologyUtils(uberonOntWrapper);
-        
         //get the transformation_of Object Property, and its sub-object properties
         Set<OWLObjectPropertyExpression> transfOfRels = uberonUtils.getTransformationOfProps();
         if (transfOfRels.isEmpty()) {
@@ -1769,23 +1797,127 @@ public class SimilarityAnnotation {
                     "did not contain any transformation_of relations."));
         }
         
-        //propagate annotation using an anatomical entity with transformation_of relations.
-        for (Map<String, Object> annot: rawAnnots) {
-            Set<String> relatedUberonIds = new HashSet<String>();
-            List<String> uberonIds = AnnotationCommon.parseMultipleEntitiesColumn(
-                    (String) annot.get(ENTITY_COL_NAME));
-            //we do not propagate annotations with multiple anat entities annotated, 
-            //but we examined them anyway to log warnings.
-            for (String uberonId: uberonIds) {
+        //propagate annotations using transformation_of relations.
+        //we will associate inferred annotations to the original annotations they were
+        //inferred from, to generate supporting texts and confidence levels 
+        //(because a same inferred annotation can be based on different evidence lines 
+        //with different confidence levels).
+        //TODO: use Map.merge or streams library when we move to Java 8, 
+        //see http://stackoverflow.com/a/25954862/1768736
+        Map<CuratorAnnotationBean, Set<CuratorAnnotationBean>> inferredAnnots = 
+                new HashMap<CuratorAnnotationBean, Set<CuratorAnnotationBean>>();
+        for (CuratorAnnotationBean annot: annots) {
+            continue here
+        }
+    }
+    
+    private Set<CuratorAnnotationBean> createInferredAnnotationsFromTransformationOf(
+            CuratorAnnotationBean annot, boolean outgoingEdges, 
+            Set<CuratorAnnotationBean> existingAnnots, 
+            Set<OWLObjectPropertyExpression> transfOfRels) {
+        log.entry(annot, outgoingEdges, existingAnnots, transfOfRels);
+        
+        Set<CuratorAnnotationBean> inferredAnnots = new HashSet<CuratorAnnotationBean>();
+        
+        //we will walk direct transformation_of relations
+        CuratorAnnotationBean annotToInfer = annot;
+        while (annotToInfer != null) {
+            log.trace("Trying to propagate annotation through transformation_of relations: {} (using outgoing relations? {})", 
+                    annotToInfer, outgoingEdges);
+            
+            //we retrieve the transformation_of targets/sources of each Uberon ID 
+            //of the annotation.
+            //uberon ID -> target/source IDs
+            Map<String, Set<String>> transfOfEntities = new HashMap<String, Set<String>>();
+            for (String uberonId: annotToInfer.getEntityIds()) {
+                
+                Set<String> targetOrSourceIds = new HashSet<String>();
+                transfOfEntities.put(uberonId, targetOrSourceIds);
+                
                 OWLClass anatEntity = uberonOntWrapper.getOWLClassByIdentifier(
                         uberonId, true);
+                if (anatEntity == null) {
+                    continue;
+                }
                 
-                //need to retrieve clever indirect transformation_of relations, as when inserting relations into DB.
-                //or should we use only direct relations?
+                Set<OWLGraphEdge> edges = null;
+                if (outgoingEdges) {
+                    edges = uberonOntWrapper.getOutgoingEdges(anatEntity);
+                } else {
+                    edges = uberonOntWrapper.getIncomingEdges(anatEntity);
+                }
+                for (OWLGraphEdge edge: edges) {
+                    if (!transfOfRels.contains(
+                            edge.getSingleQuantifiedProperty().getProperty())) {
+                        continue;
+                    }
+                    OWLObject cls = null;
+                    if (outgoingEdges) {
+                        cls = edge.getTarget();
+                    } else {
+                        cls = edge.getSource();
+                    }
+                    if (cls instanceof OWLClass) {
+                        log.trace("Transformation_of relation identified for potential propagation: {}", 
+                                edge);
+                        targetOrSourceIds.add(uberonOntWrapper.getIdentifier(cls));
+                    }
+                }
             }
+            
+            //try to perform the propagation
+            boolean toPropagate = true;
+            List<String> transfOfEntityIds = new ArrayList<String>();
+            for (Entry<String, Set<String>> entry: transfOfEntities.entrySet()) {
+                //we check that we have one and only one transformation_of target 
+                //for each Uberon term used in the annotation (for simplicity)
+                if (entry.getValue().size() != 1) {
+                    toPropagate = false;
+                    break;
+                }
+                transfOfEntityIds.add(entry.getValue().iterator().next());
+            }
+            if (!toPropagate) {
+                log.trace("No propagation to perform.");
+                return log.exit(inferredAnnots);
+            }
+            
+            //important to order Uberon IDs for comparison to existing annotations
+            Collections.sort(transfOfEntityIds);
+            log.trace("Propagating annotation to entities: {}", transfOfEntityIds);
+            
+            //now, we check whether this corresponds to an already existing annotation
+            CuratorAnnotationBean toCompare = new CuratorAnnotationBean();
+            toCompare.setHomId(annotToInfer.getHomId());
+            toCompare.setEntityIds(transfOfEntityIds);
+            if (existingAnnots.contains(toCompare)) {
+                log.trace("Propagated annotation already exists, not added.");
+                return log.exit(inferredAnnots);
+            }
+            
+            //OK, create the inferred annotation
+            CuratorAnnotationBean inferredAnnot = new CuratorAnnotationBean();
+            inferredAnnot.setHomId(annotToInfer.getHomId());
+            inferredAnnot.setEntityIds(transfOfEntityIds);
+            inferredAnnot.setNcbiTaxonId(annotToInfer.getNcbiTaxonId());
+            inferredAnnot.setNegated(annotToInfer.isNegated());
+            inferredAnnot.setEcoId(AUTOMATIC_ASSERTION_ECO);
+            inferredAnnot.setAssignedBy(AUTOMATIC_ASSIGNED_BY);
+            inferredAnnot.setCurationDate(new Date());
+            
+            inferredAnnots.add(inferredAnnot);
+            
+            //now, we continue propagation by creating an annotation identical to 
+            //the original annotation, but with entity IDs updated
+            CuratorAnnotationBean nextAnnot = new CuratorAnnotationBean(annotToInfer);
+            nextAnnot.setEntityIds(transfOfEntityIds);
+            nextAnnot.setEntityNames(null);
+            annotToInfer = nextAnnot;
         }
         
-        
+        //the inferred annotations are returned when there are no more relation to walk 
+        //in the previous loop
+        throw log.throwing(new AssertionError("Unreachable code"));
     }
 
     /**

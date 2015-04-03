@@ -1934,13 +1934,16 @@ public class SimilarityAnnotationUtils {
                     case DATE_COL_NAME: 
                         processors[i] = new ParseDate(DATE_FORMAT);
                         break; 
-                    case REF_COL_NAME: 
-                    case REF_TITLE_COL_NAME: 
                     case ECO_COL_NAME: 
                     case ECO_NAME_COL_NAME: 
                     case ASSIGN_COL_NAME: 
-                    case CURATOR_COL_NAME: 
                         processors[i] = new StrNotNullOrEmpty();
+                        break;
+                    //these fields are not mandatory in case of inferred annotations
+                    case CURATOR_COL_NAME: 
+                    case REF_COL_NAME: 
+                    case REF_TITLE_COL_NAME:
+                        processors[i] = new Optional();
                         break;
                 }
             } else if (beanType.equals(SummaryAnnotationBean.class)) {

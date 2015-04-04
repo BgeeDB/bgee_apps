@@ -40,8 +40,12 @@ import org.bgee.pipeline.ontologycommon.CIOWrapper;
 import org.bgee.pipeline.ontologycommon.OntologyUtils;
 import org.bgee.pipeline.uberon.TaxonConstraints;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
+import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLClassExpression;
+import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
 import org.semanticweb.owlapi.model.OWLObject;
+import org.semanticweb.owlapi.model.OWLObjectIntersectionOf;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -1775,22 +1779,13 @@ public class SimilarityAnnotation {
             Collection<CuratorAnnotationBean> annots) throws IllegalArgumentException {
         log.entry(annots);
         
+        log.info("Inferring annotations based on transformation_of relations...");
         //first, we store HOM ID - Uberon IDs to be able to determine when an annotation 
         //already exists for some structures, independently of the taxon
-        Set<CuratorAnnotationBean> existingAnnots = new HashSet<CuratorAnnotationBean>();
-        for (CuratorAnnotationBean annot: annots) {
-            
-            CuratorAnnotationBean existingAnnot = new CuratorAnnotationBean();
-            existingAnnot.setHomId(annot.getHomId());
-            List<String> entityIds = new ArrayList<String>(annot.getEntityIds());
-            Collections.sort(entityIds);
-            existingAnnot.setEntityIds(entityIds);
-            
-            existingAnnots.add(existingAnnot);
-        }
-        
-        OntologyUtils uberonUtils = new OntologyUtils(uberonOntWrapper);
+        Set<CuratorAnnotationBean> existingAnnots = this.getExistingAnnots(annots);
+
         //get the transformation_of Object Property, and its sub-object properties
+        OntologyUtils uberonUtils = new OntologyUtils(uberonOntWrapper);
         Set<OWLObjectPropertyExpression> transfOfRels = uberonUtils.getTransformationOfProps();
         if (transfOfRels.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("The Uberon ontology provided " +
@@ -1807,10 +1802,93 @@ public class SimilarityAnnotation {
         Map<CuratorAnnotationBean, Set<CuratorAnnotationBean>> inferredAnnots = 
                 new HashMap<CuratorAnnotationBean, Set<CuratorAnnotationBean>>();
         for (CuratorAnnotationBean annot: annots) {
-            continue here
+            //infer from transformation_of outgoing edges
+            Set<CuratorAnnotationBean> newAnnots = 
+                    this.createInferredAnnotationsFromTransformationOf(
+                            annot, true, existingAnnots, transfOfRels);
+            //infer from transformation_of incoming edges
+            newAnnots.addAll(this.createInferredAnnotationsFromTransformationOf(
+                    annot, false, existingAnnots, transfOfRels));
+            //store association to original annot
+            for (CuratorAnnotationBean newAnnot: newAnnots) {
+                Set<CuratorAnnotationBean> sourceAnnots = inferredAnnots.get(newAnnot);
+                if (sourceAnnots == null) {
+                    sourceAnnots = new HashSet<CuratorAnnotationBean>();
+                    inferredAnnots.put(newAnnot, sourceAnnots);
+                }
+                sourceAnnots.add(annot);
+            }
         }
+        
+        //Determine confidence level and supporting text of new annotations
+        for (Entry<CuratorAnnotationBean, Set<CuratorAnnotationBean>> inferredAnnot: 
+            inferredAnnots.entrySet()) {
+            
+            //retrieve from source annotations CIO statements and information about Entity IDs.
+            Set<OWLClass> cioStatements = new HashSet<OWLClass>();
+            Set<String> supportingTextElements = new HashSet<String>();
+            for (CuratorAnnotationBean sourceAnnot: inferredAnnot.getValue()) {
+                
+                cioStatements.add(cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
+                        sourceAnnot.getCioId(), true));
+                
+                List<String> entityIds = sourceAnnot.getEntityIds();
+                Collections.sort(entityIds);
+                supportingTextElements.add(
+                        SimilarityAnnotationUtils.multipleValuesToString(entityIds));
+            }
+            
+            //retrieve best CIO statement, to set the confidence in inferred annotation.
+            inferredAnnot.getKey().setCioId(cioWrapper.getOWLGraphWrapper().getIdentifier(
+                    cioWrapper.getBestTermWithConfidenceLevel(cioStatements)));
+            
+            //generate supporting text providing information about the source annotations.
+            String supportingText = "Annotation inferred from transformation_of relations "
+                    + "using annotations to same HOM ID, "
+                    + "same NCBI taxon ID, and Entity IDs equal to: ";
+            boolean firstIteration = true;
+            for (String supportingTextElement: supportingTextElements) {
+                if (firstIteration) {
+                    supportingText += " - ";
+                }
+                supportingText += supportingTextElement;
+                firstIteration = false;
+            }
+            inferredAnnot.getKey().setSupportingText(supportingText);
+        }
+        
+        log.info("Done inferring annotations based on transformation_of relations, {} annotations inferred.", 
+                inferredAnnots.size());
+        return log.exit(inferredAnnots.keySet());
     }
     
+    /**
+     * Create new {@code CuratorAnnotationBean}s using transformation_of relations 
+     * outgoing from or incoming to the entities used in {@code annot} (see method 
+     * {@code getEntityIds}). New annotations will be created only if there is 
+     * no corresponding annotation in {@code existingAnnots}, with same HOM ID (see method 
+     * {@code getHomId}) and same entity IDs (for any taxon).
+     * <p>
+     * The newly created {@code CuratorAnnotationBean}s will have no confidence information 
+     * (see method {@code getCioId}) nor supporting text (see method {@code getSupportingText}), 
+     * it is up to the caller to define them based on the annotations used for inference. 
+     * 
+     * @param annot             A {@code CuratorAnnotationBean} used as the source of inference 
+     *                          based on transformation_of relations.
+     * @param outgoingEdges     A {@code boolean} defining whether outgoing or incoming edges 
+     *                          should be examined. If {@code true}, outgoing edges 
+     *                          are examined.
+     * @param existingAnnots    A {@code Set} of {@code CuratorAnnotationBean}s with only 
+     *                          HOM ID and entity IDs set, used to retrieve already existing 
+     *                          annotations for any taxon.
+     * @param transfOfRels      A {@code Set} of {@code OWLObjectPropertyExpression} representing 
+     *                          the transformation_of properties in the Uberon ontology 
+     *                          provided at instantiation.
+     * @return                  A {@code Set} of {@code CuratorAnnotationBean}s that are 
+     *                          the newly created annotations from inference based on 
+     *                          {@code annot}, with no confidence information 
+     *                          nor supporting text defined.
+     */
     private Set<CuratorAnnotationBean> createInferredAnnotationsFromTransformationOf(
             CuratorAnnotationBean annot, boolean outgoingEdges, 
             Set<CuratorAnnotationBean> existingAnnots, 
@@ -1828,11 +1906,11 @@ public class SimilarityAnnotation {
             //we retrieve the transformation_of targets/sources of each Uberon ID 
             //of the annotation.
             //uberon ID -> target/source IDs
-            Map<String, Set<String>> transfOfEntities = new HashMap<String, Set<String>>();
+            Map<String, Set<String>> mapTransfOfEntities = new HashMap<String, Set<String>>();
             for (String uberonId: annotToInfer.getEntityIds()) {
                 
                 Set<String> targetOrSourceIds = new HashSet<String>();
-                transfOfEntities.put(uberonId, targetOrSourceIds);
+                mapTransfOfEntities.put(uberonId, targetOrSourceIds);
                 
                 OWLClass anatEntity = uberonOntWrapper.getOWLClassByIdentifier(
                         uberonId, true);
@@ -1847,8 +1925,9 @@ public class SimilarityAnnotation {
                     edges = uberonOntWrapper.getIncomingEdges(anatEntity);
                 }
                 for (OWLGraphEdge edge: edges) {
-                    if (!transfOfRels.contains(
-                            edge.getSingleQuantifiedProperty().getProperty())) {
+                    if (edge.getQuantifiedPropertyList().size() != 1 || 
+                            !transfOfRels.contains(
+                                edge.getSingleQuantifiedProperty().getProperty())) {
                         continue;
                     }
                     OWLObject cls = null;
@@ -1868,8 +1947,8 @@ public class SimilarityAnnotation {
             //try to perform the propagation
             boolean toPropagate = true;
             List<String> transfOfEntityIds = new ArrayList<String>();
-            for (Entry<String, Set<String>> entry: transfOfEntities.entrySet()) {
-                //we check that we have one and only one transformation_of target 
+            for (Entry<String, Set<String>> entry: mapTransfOfEntities.entrySet()) {
+                //we check that we have one and only one transformation_of target/source 
                 //for each Uberon term used in the annotation (for simplicity)
                 if (entry.getValue().size() != 1) {
                     toPropagate = false;
@@ -1918,6 +1997,106 @@ public class SimilarityAnnotation {
         //the inferred annotations are returned when there are no more relation to walk 
         //in the previous loop
         throw log.throwing(new AssertionError("Unreachable code"));
+    }
+    
+    private Set<CuratorAnnotationBean> inferAnnotationsFromLogicalConstraints(
+            Collection<CuratorAnnotationBean> annots) throws IllegalArgumentException {
+        log.entry(annots);
+
+        log.info("Inferring annotations based on logical constraints...");
+        //first, we store HOM ID - Uberon IDs to be able to determine when an annotation 
+        //already exists for some structures, independently of the taxon
+        //Set<CuratorAnnotationBean> existingAnnots = this.getExistingAnnots(annots);
+        
+        //now, we create a Map where keys are Uberon IDs used in annotations, 
+        //the associated values being the annotations using these Uberon IDs; 
+        //this will allow faster inferences.
+        Map<String, Set<CuratorAnnotationBean>> entityIdToAnnots = 
+                new HashMap<String, Set<CuratorAnnotationBean>>();
+        for (CuratorAnnotationBean annot: annots) {
+            for (String entityId: annot.getEntityIds()) {
+                Set<CuratorAnnotationBean> mappedAnnots = entityIdToAnnots.get(entityId);
+                if (mappedAnnots == null) {
+                    mappedAnnots = new HashSet<CuratorAnnotationBean>();
+                    entityIdToAnnots.put(entityId, mappedAnnots);
+                }
+                mappedAnnots.add(annot);
+            }
+        }
+        
+        //Now, we search for OWL classes defined as the intersection of annotated entities, 
+        //and that are not themselves already annotated.
+        //we will store in a Map the IDs of such OWL classes as keys, the associated value 
+        //being the IDs of the entities composing the class.
+        log.debug("Searching for IntersectionOf expressions composed of annotated classes...");
+        Map<String, Set<String>> intersectMapping = new HashMap<String, Set<String>>();
+        for (OWLClass cls: uberonOntWrapper.getAllOWLClasses()) {
+            log.trace("Examining {}", cls);
+            String clsId = uberonOntWrapper.getIdentifier(cls);
+            if (entityIdToAnnots.containsKey(clsId)) {
+                log.trace("Already annotated, skip");
+                continue;
+            }
+            for (OWLClassExpression clsExpr: 
+                cls.getEquivalentClasses(uberonOntWrapper.getAllOntologies())) {
+                if (clsExpr instanceof OWLObjectIntersectionOf) {
+                    log.trace("Examining IntersectionOf expression: {}", clsExpr);
+                    boolean allClassesAnnotated = true;
+                    Set<String> intersectClsIds = new HashSet<String>();
+                    for (OWLClass intersectCls: clsExpr.getClassesInSignature()) {
+                        String intersectClsId = uberonOntWrapper.getIdentifier(intersectCls);
+                        if (!entityIdToAnnots.containsKey(intersectClsId)) {
+                            allClassesAnnotated = false;
+                            break;
+                        }
+                        intersectClsIds.add(intersectClsId);
+                    }
+                    if (allClassesAnnotated) {
+                        log.trace("Valid IntersectionOf expression, intersect class IDs: {}", 
+                                intersectClsIds);
+                        intersectMapping.put(clsId, intersectClsIds);
+                    }
+                }
+            }
+        }
+        log.debug("Done searching for IntersectionOf expressions, {} classes will be considered.", 
+                intersectMapping.size());
+        
+
+        log.info("Done inferring annotations based on logical constraints, {} annotations inferred.", 
+                );
+    }
+    
+    /**
+     * Generate a {@code Set} of {@code CuratorAnnotationBean}s derived from {@code annots} 
+     * and allowing to determine which entities are already annotated. The returned 
+     * {@code CuratorAnnotationBean}s have only their HOM ID (see method {@code getHomId}) 
+     * and entity IDs (see method {@code getEntityIds}) defined. The entity IDs will be sorted 
+     * by natural order.
+     * 
+     * @param annots    A {@code Set} of {@code CuratorAnnotationBean}s used to generate 
+     *                  the returned {@code CuratorAnnotationBean}s.
+     * @return          A {@code Set} of {@code CuratorAnnotationBean}s generated from 
+     *                  {@code annots}, with only their HOM ID and entity IDs defined, 
+     *                  with entity IDs sorted by natural order.
+     */
+    private Set<CuratorAnnotationBean> getExistingAnnots(
+            Collection<CuratorAnnotationBean> annots) {
+        log.entry(annots);
+        
+        Set<CuratorAnnotationBean> existingAnnots = new HashSet<CuratorAnnotationBean>();
+        for (CuratorAnnotationBean annot: annots) {
+            
+            CuratorAnnotationBean existingAnnot = new CuratorAnnotationBean();
+            existingAnnot.setHomId(annot.getHomId());
+            List<String> entityIds = new ArrayList<String>(annot.getEntityIds());
+            Collections.sort(entityIds);
+            existingAnnot.setEntityIds(entityIds);
+            
+            existingAnnots.add(existingAnnot);
+        }
+        
+        return log.exit(existingAnnots);
     }
 
     /**

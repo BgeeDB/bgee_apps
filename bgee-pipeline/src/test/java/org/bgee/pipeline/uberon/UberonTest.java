@@ -19,6 +19,11 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
+import org.semanticweb.owlapi.model.AxiomType;
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLClassExpression;
+import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
+import org.semanticweb.owlapi.model.OWLObjectIntersectionOf;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.supercsv.cellprocessor.Optional;
@@ -229,26 +234,35 @@ public class UberonTest extends TestAncestor {
     }
 
     
-    //@Test
+    @Test
     public void test() throws OBOFormatParserException, OWLOntologyCreationException, IOException {
         OWLOntology ont = OntologyUtils.loadOntology("/Users/admin/Desktop/composite-metazoan.owl");
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
-        OWLGraphManipulator manip = new OWLGraphManipulator(wrapper);
         
-        manip.removeUnrelatedRelations(Arrays.asList("BFO:0000050", "RO:0002202", "RO:0002494"));
+        log.info(wrapper.getOWLClassByIdentifier("UBERON:5112262").getEquivalentClasses(wrapper.getAllOntologies()));
         
-        //need to understand where the indirect transformation_of relation between 
-        //UBERON:0000010 and UBERON:0016880 comes from
-        for (OWLGraphEdge edge: wrapper.getOutgoingEdgesNamedClosureOverSupPropsWithGCI(
-                wrapper.getOWLClassByIdentifier("UBERON:0000010"))) {
-            if (edge.getTarget().equals(wrapper.getOWLClassByIdentifier("UBERON:0016880"))) {
-                log.info(edge);
-            }
-        }
-        for (OWLGraphEdge edge: wrapper.getOutgoingEdgesWithGCI(
-                wrapper.getOWLClassByIdentifier("UBERON:0000010"))) {
-            if (edge.getTarget().equals(wrapper.getOWLClassByIdentifier("UBERON:0016880"))) {
-                log.info(edge);
+        for (OWLEquivalentClassesAxiom ax: 
+            wrapper.getSourceOntology().getAxioms(AxiomType.EQUIVALENT_CLASSES)) {
+            if (ax.containsNamedEquivalentClass() && ax.getClassExpressions().contains(
+                    wrapper.getOWLClassByIdentifier("UBERON:5112262"))) {
+                if (ax.getClassExpressions().size() != 2) {
+                    continue;
+                }
+                boolean hasClass = false;
+                boolean hasIntersectionOf = false;
+                for (OWLClassExpression exp: ax.getClassExpressions()) {
+                    if (exp instanceof OWLClass) {
+                        hasClass = true;
+                    }
+                    if (exp instanceof OWLObjectIntersectionOf) {
+                        hasIntersectionOf = true;
+                        log.info(((OWLObjectIntersectionOf) exp).getClassesInSignature());
+                    }
+                }
+                if (!hasClass || !hasIntersectionOf) {
+                    continue;
+                }
+                log.info(ax);
             }
         }
     }

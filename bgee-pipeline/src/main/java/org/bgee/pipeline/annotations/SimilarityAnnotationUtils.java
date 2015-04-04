@@ -1606,11 +1606,41 @@ public class SimilarityAnnotationUtils {
      * An unmodifiable {@code List} of {@code String}s that are the allowed separators 
      * between values in cells potentially containing multiple values, 
      * in preferred order of use. 
+     * @see ParseMultipleValuesCell
+     * @see #multipleValuesToString(List)
      */
     protected final static List<String> VALUE_SEPARATORS = 
             Collections.unmodifiableList(Arrays.asList("|", ","));
 
-    
+    /**
+     * Transform a {@code List} of {@code String}s into a {@code String} where each element 
+     * is separated by the first separator in {@link #VALUE_SEPARATORS}.
+     * 
+     * @param values    A {@code List} of {@code String}s to be transformed into 
+     *                  a single {@code String}.
+     * @return          A {@code String} where each element in {code values} is separated 
+     *                  by the first separator in {@link #VALUE_SEPARATORS}.
+     * @throws IllegalArgumentException If {@code values} is {@code null} or empty.
+     */
+    protected static String multipleValuesToString(List<String> values) 
+            throws IllegalArgumentException {
+        log.entry(values);
+        if (values == null || values.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("The provided values cannot be "
+                    + "null or empty"));
+        }
+        
+        String valuesToString = "";
+        boolean firstIteration = true;
+        for (String value: values) {
+            if (!firstIteration) {
+                valuesToString += VALUE_SEPARATORS.get(0);
+            }
+            valuesToString += value;
+            firstIteration = false;
+        }
+        return log.exit(valuesToString);
+    }
     /**
      * Extracts annotations from the provided RAW similarity annotation file. It returns a 
      * {@code List} of {@code RawAnnotationBean}s, where each {@code RawAnnotationBean} 

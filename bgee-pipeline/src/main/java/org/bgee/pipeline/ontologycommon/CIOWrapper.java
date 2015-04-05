@@ -1307,10 +1307,70 @@ public class CIOWrapper {
      *                                  if the {@code OWLClass}es in {@code cioTerms} do not 
      *                                  all belong to a same branch, or do not all provide 
      *                                  confidence level information.
+     * @see #getLowestTermWithConfidenceLevel(Collection)
      */
-    public OWLClass getBestTermWithConfidenceLevel(Collection<OWLClass> cioTerms) 
-            throws IllegalArgumentException {
+    public OWLClass getBestTermWithConfidenceLevel(Collection<OWLClass> cioTerms) {
         log.entry(cioTerms);
+        return log.exit(this.getBestOrLowestTermWithConfidenceLevel(cioTerms, true));
+    }
+    
+    /**
+     * Determines the lowest confidence term with level information among {@code cioTerms}. 
+     * The {@code OWLClass}es in {@code cioTerms} must meet the following conditions: 
+     * <ul>
+     * <li>They must be confidence information statements ({@link #isConfidenceStatement(OWLClass)} 
+     * returns {@code true}).
+     * <li>They must all be part of the same branch (meaning, they must have equal 
+     * evidence concordance and evidence type concordance, see {@link 
+     * #getEvidenceConcordance(OWLClass)} and {@link #getEvidenceTypeConcordance(OWLClass)}).
+     * <li>They must all represent a confidence level (meaning, {@link 
+     * #getConfidenceLevel(OWLClass)} must return a value not {@code null}, contained in 
+     * the collection returned by {@link #getConfidenceLevels()}).
+     * </ul>
+     * Otherwise, an {@code IllegalArgumentException} is thrown. 
+     * <p>
+     * This means in practice that {@code OWLClass}es in {@code cioTerms} must be one 
+     * of the pre-composed terms usable for annotations, leaves of the ontology,  
+     * associated to a confidence level term.
+     * 
+     * @param cioTerms  A {@code Collection} of {@code OWLClass}es providing confidence level 
+     *                  information, from a same branch, for which we want to determine 
+     *                  the lowest one. 
+     * @return          An {@code OWLClass} that is the lowest confidence among {@code cioTerms}.
+     * @throws IllegalArgumentException If {@code cioTerms} is empty, or 
+     *                                  if the {@code OWLClass}es in {@code cioTerms} do not 
+     *                                  all belong to a same branch, or do not all provide 
+     *                                  confidence level information.
+     * @see #getBestTermWithConfidenceLevel(Collection)
+     */
+    public OWLClass getLowestTermWithConfidenceLevel(Collection<OWLClass> cioTerms) {
+        log.entry(cioTerms);
+        return log.exit(this.getBestOrLowestTermWithConfidenceLevel(cioTerms, false));
+    }
+    
+    /**
+     * Determines either the best or the lowest confidence term with level information 
+     * among {@code cioTerms}. This method is called by 
+     * {@link #getBestTermWithConfidenceLevel(Collection)} and 
+     * {@link #getLowestTermWithConfidenceLevel(Collection)}, see these methods 
+     * for more details.
+     * 
+     * @param cioTerms  A {@code Collection} of {@code OWLClass}es providing confidence level 
+     *                  information, from a same branch, for which we want to determine 
+     *                  the best one. 
+     * @param bestTerm  A {@code boolean} determining whether the best or the loewst term 
+     *                  should be retrieved. If {@code true}, the best term is retrieved, 
+     *                  otherwise, the lowest is retrieved.
+     * @return          An {@code OWLClass} that is the best or the lowest confidence 
+     *                  among {@code cioTerms}, depending on {@code bestTerm}.
+     * @throws IllegalArgumentException If {@code cioTerms} is empty, or 
+     *                                  if the {@code OWLClass}es in {@code cioTerms} do not 
+     *                                  all belong to a same branch, or do not all provide 
+     *                                  confidence level information.
+     */
+    private OWLClass getBestOrLowestTermWithConfidenceLevel(Collection<OWLClass> cioTerms, 
+            boolean bestTerm) throws IllegalArgumentException {
+        log.entry(cioTerms, bestTerm);
     
         //check pre-conditions
         Set<OWLClass> validConfLevels = this.getConfidenceLevels();
@@ -1355,7 +1415,10 @@ public class CIOWrapper {
             }
         });
         
-        return log.exit(orderedCIOTerms.get(orderedCIOTerms.size() - 1));
+        if (bestTerm) {
+            return log.exit(orderedCIOTerms.get(orderedCIOTerms.size() - 1));
+        } 
+        return log.exit(orderedCIOTerms.get(0));
     }
     
     /**

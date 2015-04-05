@@ -19,6 +19,7 @@ import java.util.Date;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -2004,96 +2005,78 @@ public class SimilarityAnnotation {
         throw log.throwing(new AssertionError("Unreachable code"));
     }
 
-    //XXX: this method currently uses only annotations of historical homology, 
-    //this should be reconsidered if we used other HOM concepts.
+    /**
+     * Generate a {@code Set} of {@code CuratorAnnotationBean}s derived from {@code annots} 
+     * and allowing to determine which entities are already annotated. The returned 
+     * {@code CuratorAnnotationBean}s have only their HOM ID (see method {@code getHomId}) 
+     * and entity IDs (see method {@code getEntityIds}) defined. The entity IDs will be sorted 
+     * by natural order.
+     * 
+     * @param annots    A {@code Set} of {@code CuratorAnnotationBean}s used to generate 
+     *                  the returned {@code CuratorAnnotationBean}s.
+     * @return          A {@code Set} of {@code CuratorAnnotationBean}s generated from 
+     *                  {@code annots}, with only their HOM ID and entity IDs defined, 
+     *                  with entity IDs sorted by natural order.
+     */
+    private Set<CuratorAnnotationBean> getExistingAnnots(
+            Collection<CuratorAnnotationBean> annots) {
+        log.entry(annots);
+        
+        Set<CuratorAnnotationBean> existingAnnots = new HashSet<CuratorAnnotationBean>();
+        for (CuratorAnnotationBean annot: annots) {
+            
+            CuratorAnnotationBean existingAnnot = new CuratorAnnotationBean();
+            existingAnnot.setHomId(annot.getHomId());
+            List<String> entityIds = new ArrayList<String>(annot.getEntityIds());
+            Collections.sort(entityIds);
+            existingAnnot.setEntityIds(entityIds);
+            
+            existingAnnots.add(existingAnnot);
+        }
+        
+        return log.exit(existingAnnots);
+    }
+
     private Set<CuratorAnnotationBean> inferAnnotationsFromLogicalConstraints(
             Collection<CuratorAnnotationBean> annots) throws IllegalArgumentException {
         log.entry(annots);
 
         log.info("Inferring annotations based on logical constraints...");
-        //first, we store HOM ID - Uberon IDs to be able to determine when an annotation 
-        //already exists for some structures, independently of the taxon
-        //Set<CuratorAnnotationBean> existingAnnots = this.getExistingAnnots(annots);
-        
-        //now, we create a Map where keys are Uberon IDs used in annotations, 
-        //the associated values being the annotations using these Uberon IDs; 
-        //this will allow faster inferences.
-        //We also need a mapping of the taxon ID to to the IDs of their ancestors 
-        //(and to their own ID for reflexivity)
-        Map<String, Set<CuratorAnnotationBean>> entityIdToAnnots = 
-                new HashMap<String, Set<CuratorAnnotationBean>>();
-        Map<Integer, Set<Integer>> taxToSelfAndAncestors = new HashMap<Integer, Set<Integer>>();
+
+        //XXX: this method currently uses only annotations of historical homology, 
+        //this should be reconsidered if we used other HOM concepts.
+        Set<CuratorAnnotationBean> filteredAnnots = new HashSet<CuratorAnnotationBean>();
         for (CuratorAnnotationBean annot: annots) {
-            if (!HISTORICAL_HOMOLOGY_ID.equals(annot.getHomId())) {
-                continue;
-            }
-            
-            //taxon mapping
-            if (!taxToSelfAndAncestors.containsKey(annot.getNcbiTaxonId())) {
-                Set<Integer> selfAndAncestorsIds = new HashSet<Integer>();
-                selfAndAncestorsIds.add(annot.getNcbiTaxonId());
-                for (OWLClass ancestor: taxOntWrapper.getAncestorsThroughIsA(
-                        taxOntWrapper.getOWLClassByIdentifier(
-                                OntologyUtils.getTaxOntologyId(annot.getNcbiTaxonId())))) {
-                    selfAndAncestorsIds.add(OntologyUtils.getTaxNcbiId(
-                            taxOntWrapper.getIdentifier(ancestor)));
-                }
-                taxToSelfAndAncestors.put(annot.getNcbiTaxonId(), selfAndAncestorsIds);
-            }
-            
-            //Uberon mapping
-            for (String entityId: annot.getEntityIds()) {
-                Set<CuratorAnnotationBean> mappedAnnots = entityIdToAnnots.get(entityId);
-                if (mappedAnnots == null) {
-                    mappedAnnots = new HashSet<CuratorAnnotationBean>();
-                    entityIdToAnnots.put(entityId, mappedAnnots);
-                }
-                mappedAnnots.add(annot);
+            if (HISTORICAL_HOMOLOGY_ID.equals(annot.getHomId())) {
+                filteredAnnots.add(annot);
             }
         }
+        
+        //we create a Map where keys are Uberon IDs used in annotations, 
+        //the associated values being the annotations using these Uberon IDs; 
+        //this will allow faster inferences.
+        Map<String, Set<CuratorAnnotationBean>> entityIdToAnnots = 
+                this.getEntityToAnnotsMapping(filteredAnnots);
+        //We also need a mapping of the taxon ID to to the IDs of their ancestors 
+        //(and to their own ID for reflexivity)
+        Map<Integer, Set<Integer>> taxToSelfAndAncestors = 
+                this.getTaxonToSelfAndAncestorMapping(filteredAnnots);
         
         //Now, we search for OWL classes defined as the intersection of annotated entities, 
         //and that are not themselves already annotated.
         //we will store in a Map the IDs of such OWL classes as keys, the associated value 
-        //being the IDs of the entities composing the class.
-        log.debug("Searching for IntersectionOf expressions composed of annotated classes...");
-        Map<String, Set<String>> intersectMapping = new HashMap<String, Set<String>>();
-        for (OWLClass cls: uberonOntWrapper.getAllOWLClasses()) {
-            log.trace("Examining {}", cls);
-            String clsId = uberonOntWrapper.getIdentifier(cls);
-            if (entityIdToAnnots.containsKey(clsId)) {
-                log.trace("Already annotated, skip");
-                continue;
-            }
-            for (OWLClassExpression clsExpr: 
-                cls.getEquivalentClasses(uberonOntWrapper.getAllOntologies())) {
-                if (clsExpr instanceof OWLObjectIntersectionOf) {
-                    log.trace("Examining IntersectionOf expression: {}", clsExpr);
-                    boolean allClassesAnnotated = true;
-                    Set<String> intersectClsIds = new HashSet<String>();
-                    for (OWLClass intersectCls: clsExpr.getClassesInSignature()) {
-                        String intersectClsId = uberonOntWrapper.getIdentifier(intersectCls);
-                        if (!entityIdToAnnots.containsKey(intersectClsId)) {
-                            allClassesAnnotated = false;
-                            break;
-                        }
-                        intersectClsIds.add(intersectClsId);
-                    }
-                    if (allClassesAnnotated) {
-                        log.trace("Valid IntersectionOf expression, intersect class IDs: {}", 
-                                intersectClsIds);
-                        intersectMapping.put(clsId, intersectClsIds);
-                    }
-                }
-            }
-        }
-        log.debug("Done searching for IntersectionOf expressions, {} classes will be considered.", 
-                intersectMapping.size());
+        //being the IDs of the entities composing the class. Only classes composed 
+        //of entities that are all annotated will be considered.
+        Map<String, Set<String>> intersectMapping = this.getIntersectionOfMapping(
+                entityIdToAnnots);
+        
+        
         
         //OK, infer annotations. We store the inferred annotations associated 
         //to their source annotations, to be able to infer confidence levels and 
         //supporting texts.
         OntologyUtils taxOntUtils = new OntologyUtils(taxOntWrapper);
+        Set<CuratorAnnotationBean> inferredAnnots = new HashSet<CuratorAnnotationBean>();
         
         for (Entry<String, Set<String>> intersectEntry: intersectMapping.entrySet()) {
             log.trace("Try to infer annotation for class {} based on intersecting classes {}", 
@@ -2238,84 +2221,352 @@ public class SimilarityAnnotation {
                     List<String> entityIds = new ArrayList<String>(mapping.getKey());
                     Collections.sort(entityIds);
                     
-                    CuratorAnnotationBean positiveAnnot = 
-                            this.getConfAndSupportTextFromLogicalConstraints(
-                                    mapping.getValue(), true);
-                    CuratorAnnotationBean negativeAnnot = 
-                            this.getConfAndSupportTextFromLogicalConstraints(
-                                    mapping.getValue(), false);
-                    assert positiveAnnot != null || negativeAnnot != null;
-                    if (positiveAnnot != null) {
-                        CuratorAnnotationBean newAnnot = new CuratorAnnotationBean(baseInferredAnnot);
+                    for (CuratorAnnotationBean inferredInfo: 
+                        this.getConfAndSupportTextFromLogicalConstraints(
+                                mapping.getValue())) {
+                        CuratorAnnotationBean newAnnot = 
+                                new CuratorAnnotationBean(baseInferredAnnot);
                         newAnnot.setEntityIds(entityIds);
-                        newAnnot.setCioId(positiveAnnot.getCioId());
-                        newAnnot.setSupportingText(positiveAnnot.getSupportingText());
-                    }
-                    if (negativeAnnot != null) {
-                        CuratorAnnotationBean newAnnot = new CuratorAnnotationBean(baseInferredAnnot);
-                        negativeAnnot.setNegated(true);
-                        newAnnot.setEntityIds(entityIds);
-                        newAnnot.setCioId(negativeAnnot.getCioId());
-                        newAnnot.setSupportingText(negativeAnnot.getSupportingText());
+                        newAnnot.setNegated(inferredInfo.isNegated());
+                        newAnnot.setCioId(inferredInfo.getCioId());
+                        newAnnot.setSupportingText(inferredInfo.getSupportingText());
+                        
+                        inferredAnnots.add(newAnnot);
                     }
                 }
-                
             }
-            
         }
+        
+        //now, we filter annotations for which a same annotation with more entities exist
+        Set<CuratorAnnotationBean> toRemove = new HashSet<CuratorAnnotationBean>();
+        for (CuratorAnnotationBean annot: inferredAnnots) {
+            for (CuratorAnnotationBean annot2: inferredAnnots) {
+                if (annot.equals(annot2)) {
+                    continue;
+                }
+                if (annot.getHomId().equals(annot2.getHomId()) && 
+                        annot.isNegated() == annot2.isNegated() && 
+                        annot.getNcbiTaxonId() == annot2.getNcbiTaxonId() && 
+                        annot.getCioId().equals(annot2.getCioId()) && 
+                        annot.getSupportingText().equals(annot2.getSupportingText()) && 
+                        annot2.getEntityIds().containsAll(annot.getEntityIds()) && 
+                        annot2.getEntityIds().size() >= annot.getEntityIds().size()) {
+                    toRemove.add(annot);
+                }     
+            }
+        }
+        inferredAnnots.removeAll(toRemove);
         
 
         log.info("Done inferring annotations based on logical constraints, {} annotations inferred.", 
-                );
-    }
-    
-    private CuratorAnnotationBean getConfAndSupportTextFromLogicalConstraints(
-            Set<Set<CuratorAnnotationBean>> annotsPerIntersectClass, boolean inferPositive) {
-        log.entry(annotsPerIntersectClass, inferPositive);
-        
-        boolean negated = false;
-        if (intersectClsToNegAnnots != null && !intersectClsToNegAnnots.isEmpty()) {
-            negated = true;
-        }
-        
-        //determine the confidence level and supporting text: for each intersect class, 
-        //we determine the best confidence level (either from positive, or from negative annots); 
-        //then we take the lowest confidence level over all intersect classes.
-        
+                inferredAnnots.size());
+        return log.exit(inferredAnnots);
     }
     
     /**
-     * Generate a {@code Set} of {@code CuratorAnnotationBean}s derived from {@code annots} 
-     * and allowing to determine which entities are already annotated. The returned 
-     * {@code CuratorAnnotationBean}s have only their HOM ID (see method {@code getHomId}) 
-     * and entity IDs (see method {@code getEntityIds}) defined. The entity IDs will be sorted 
-     * by natural order.
+     * Create a {@code Map} where keys are entity IDs used in annotations, 
+     * the associated values being the annotations using these entity IDs; 
+     * this will allow faster inferences.
      * 
-     * @param annots    A {@code Set} of {@code CuratorAnnotationBean}s used to generate 
-     *                  the returned {@code CuratorAnnotationBean}s.
-     * @return          A {@code Set} of {@code CuratorAnnotationBean}s generated from 
-     *                  {@code annots}, with only their HOM ID and entity IDs defined, 
-     *                  with entity IDs sorted by natural order.
+     * @param annots    A {@code Collection} of {@code CuratorAnnotationBean}s 
+     *                  used to generate the mapping from entity IDs to annotations.
+     * @return          A {@code Map} where keys are {@code String}s that are the entity IDs 
+     *                  used in annotations, the associated value being a {@code Set} 
+     *                  containing the {@code CuratorAnnotationBean}s using these entity IDs.
      */
-    private Set<CuratorAnnotationBean> getExistingAnnots(
+    private Map<String, Set<CuratorAnnotationBean>> getEntityToAnnotsMapping(
             Collection<CuratorAnnotationBean> annots) {
         log.entry(annots);
-        
-        Set<CuratorAnnotationBean> existingAnnots = new HashSet<CuratorAnnotationBean>();
+        Map<String, Set<CuratorAnnotationBean>> entityIdToAnnots = 
+                new HashMap<String, Set<CuratorAnnotationBean>>();
+        for (CuratorAnnotationBean annot: annots) {
+            //Uberon mapping
+            for (String entityId: annot.getEntityIds()) {
+                Set<CuratorAnnotationBean> mappedAnnots = entityIdToAnnots.get(entityId);
+                if (mappedAnnots == null) {
+                    mappedAnnots = new HashSet<CuratorAnnotationBean>();
+                    entityIdToAnnots.put(entityId, mappedAnnots);
+                }
+                mappedAnnots.add(annot);
+            }
+        }
+        return log.exit(entityIdToAnnots);
+    }
+    
+    /**
+     * Create a {@code Map} where keys are IDs of taxon used in annotations, 
+     * the associated values containing the IDs of their ancestors (and their own IDs, 
+     * for reflexivity).
+     * 
+     * @param annots    A {@code Collection} of {@code CuratorAnnotationBean}s 
+     *                  used to generate the mapping from taxon IDs to ancestor and self IDs.
+     * @return          A {@code Map} where keys are {@code Integer}s that are the IDs of taxa 
+     *                  used in annotations, the associated value being a {@code Set} 
+     *                  of {Integer}s containing the IDs of their ancestors, and their own IDs, 
+     *                  for reflexivity.
+     */
+    private Map<Integer, Set<Integer>> getTaxonToSelfAndAncestorMapping(
+            Collection<CuratorAnnotationBean> annots) {
+        log.entry(annots);
+        Map<Integer, Set<Integer>> taxToSelfAndAncestors = new HashMap<Integer, Set<Integer>>();
         for (CuratorAnnotationBean annot: annots) {
             
-            CuratorAnnotationBean existingAnnot = new CuratorAnnotationBean();
-            existingAnnot.setHomId(annot.getHomId());
-            List<String> entityIds = new ArrayList<String>(annot.getEntityIds());
-            Collections.sort(entityIds);
-            existingAnnot.setEntityIds(entityIds);
-            
-            existingAnnots.add(existingAnnot);
+            //taxon mapping
+            if (!taxToSelfAndAncestors.containsKey(annot.getNcbiTaxonId())) {
+                Set<Integer> selfAndAncestorsIds = new HashSet<Integer>();
+                selfAndAncestorsIds.add(annot.getNcbiTaxonId());
+                for (OWLClass ancestor: taxOntWrapper.getAncestorsThroughIsA(
+                        taxOntWrapper.getOWLClassByIdentifier(
+                                OntologyUtils.getTaxOntologyId(annot.getNcbiTaxonId())))) {
+                    selfAndAncestorsIds.add(OntologyUtils.getTaxNcbiId(
+                            taxOntWrapper.getIdentifier(ancestor)));
+                }
+                log.trace("Generating mapping for taxon {}: {}", annot.getNcbiTaxonId(), 
+                        selfAndAncestorsIds);
+                taxToSelfAndAncestors.put(annot.getNcbiTaxonId(), selfAndAncestorsIds);
+            }
+        }
+        return log.exit(taxToSelfAndAncestors);
+    }
+    
+    /**
+     * Search for OWL classes defined as the intersection of annotated entities and returns 
+     * a {@code Map} with the IDs of such OWL classes as keys and the IDs of the entities 
+     * composing the class as the associated value. The classes are searched 
+     * in the Uberon ontology provided at instantiation. Only OWL classes 
+     * not already annotated, and composed of classes all annotated, will be considered.
+     * 
+     * @param entityIdToAnnots  A {@code Map} where keys are IDs of annotated entities, 
+     *                          the associated value being a {@code Set} storing 
+     *                          the {@code CuratorAnnotationBean}s using this entity.
+     * @return                  A {@code Map} where keys are IDs of entities defined 
+     *                          as the intersection of annotated classes, the associated value 
+     *                          being a {@code Set} storing the IDs of the classes 
+     *                          used in the IntersectionOf class expression.
+     */
+    private Map<String, Set<String>> getIntersectionOfMapping(
+            Map<String, Set<CuratorAnnotationBean>> entityIdToAnnots) {
+        log.entry(entityIdToAnnots);
+        log.debug("Searching for IntersectionOf expressions composed of annotated classes...");
+        
+        Map<String, Set<String>> intersectMapping = new HashMap<String, Set<String>>();
+        for (OWLClass cls: uberonOntWrapper.getAllOWLClasses()) {
+            log.trace("Examining {}", cls);
+            String clsId = uberonOntWrapper.getIdentifier(cls);
+            if (entityIdToAnnots.containsKey(clsId)) {
+                log.trace("Already annotated, skip");
+                continue;
+            }
+            for (OWLClassExpression clsExpr: 
+                cls.getEquivalentClasses(uberonOntWrapper.getAllOntologies())) {
+                if (clsExpr instanceof OWLObjectIntersectionOf) {
+                    log.trace("Examining IntersectionOf expression: {}", clsExpr);
+                    boolean allClassesAnnotated = true;
+                    Set<String> intersectClsIds = new HashSet<String>();
+                    for (OWLClass intersectCls: clsExpr.getClassesInSignature()) {
+                        String intersectClsId = uberonOntWrapper.getIdentifier(intersectCls);
+                        if (!entityIdToAnnots.containsKey(intersectClsId)) {
+                            allClassesAnnotated = false;
+                            break;
+                        }
+                        intersectClsIds.add(intersectClsId);
+                    }
+                    if (allClassesAnnotated) {
+                        log.trace("Valid IntersectionOf expression, intersect class IDs: {}", 
+                                intersectClsIds);
+                        Set<String> previousMapping;
+                        if ((previousMapping = intersectMapping.put(clsId, intersectClsIds)) 
+                                != null && !previousMapping.equals(intersectClsIds)) {
+                            log.warn("Class {} defined with several valid IntersectionOf expressions, previous intersection: {} - current intersection: {}", 
+                                    clsId, previousMapping, intersectClsIds);
+                        }
+                    }
+                }
+            }
         }
         
-        return log.exit(existingAnnots);
+        log.debug("Done searching for IntersectionOf expressions, {} classes will be considered.", 
+                intersectMapping.size());
+        return log.exit(intersectMapping);
     }
-
+    
+    /**
+     * Generate the confidence level and the supporting text of positive and/or negative 
+     * annotation inferred from the provided annotations. This method is used when 
+     * inferring annotations from logical constraints. {@code annotsPerIntersectClass} 
+     * provides annotations grouped per intersect classes used in logical constraints. 
+     * <p>
+     * The returned {@code Set} will contain at most 2 annotations (in that case, 
+     * one positive and one negative), and at least one annotation (in that case, 
+     * either a positive or a negative annotation). The returned {@code CuratorAnnotationBean}s 
+     * have only their negation status (see method {@code isNegated}), confidence 
+     * (see method {@code getCioId}), and supporting text (see method {@code getSupportingText}) 
+     * set. If no annotation could be inferred from the provided grouped annotations, 
+     * an {@code IllegalArgumentException} is thrown.
+     * 
+     * @param annotsPerIntersectClass   A {@code Set} of {@code Set}s grouping the 
+     *                                  {@code CuratorAnnotationBean}s related to  
+     *                                  intersect classes used in logical constraints 
+     *                                  of a class. 
+     * @return                          A {@code Set} of {@code CuratorAnnotationBean}s, 
+     *                                  with a size between 1 and 2, providing inferred 
+     *                                  negation status, confidences, and supporting texts.
+     * @throws IllegalArgumentException If {@code annotsPerIntersectClass} did not allow 
+     *                                  to infer any annotation.
+     */
+    private Set<CuratorAnnotationBean> getConfAndSupportTextFromLogicalConstraints(
+            Set<Set<CuratorAnnotationBean>> annotsPerIntersectClass) 
+                    throws IllegalArgumentException {
+        log.entry(annotsPerIntersectClass);
+        
+        Set<CuratorAnnotationBean> posAndNegAnnot = new HashSet<CuratorAnnotationBean>();
+        //determine the confidence level and supporting text: for each intersect class, 
+        //we determine the best confidence level (either from positive, or from negative annots); 
+        //then we take the lowest confidence level over all intersect classes.
+        boolean positiveTested = false;
+        boolean negativeTested = false;
+        posNegTest: while (!positiveTested || !negativeTested) {
+            //to determine confidence term
+            Set<OWLClass> bestConfPerIntersectClass = new HashSet<OWLClass>();
+            //to determine supporting text
+            Set<CuratorAnnotationBean> annotationsUsed = new HashSet<CuratorAnnotationBean>();
+            //to determine negation status
+            boolean ispositiveTested = false;
+            
+            if (!positiveTested) {
+                log.trace("Trying to create inferred positive annotation");
+                positiveTested = true;
+                ispositiveTested = true;
+                
+                for (Set<CuratorAnnotationBean> relatedAnnots: annotsPerIntersectClass) {
+                    Set<OWLClass> confs = new HashSet<OWLClass>();
+                    for (CuratorAnnotationBean annot: relatedAnnots) {
+                        if (!annot.isNegated()) {
+                            confs.add(cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
+                                    annot.getCioId()));
+                            annotationsUsed.add(annot);
+                        }
+                    }
+                    if (confs.isEmpty()) {
+                        log.trace("No positive annotations for each intersect class.");
+                        continue posNegTest;
+                    }
+                    bestConfPerIntersectClass.add(
+                            cioWrapper.getBestTermWithConfidenceLevel(confs));
+                }
+                log.trace("Positive annotation will be created");
+            } else if (!negativeTested) {
+                log.trace("Trying to create inferred negative annotation");
+                negativeTested = true;
+                for (Set<CuratorAnnotationBean> relatedAnnots: annotsPerIntersectClass) {
+                    Set<OWLClass> confs = new HashSet<OWLClass>();
+                    //we will used positive annotations for supporting text only 
+                    //if there is no negative annotation for this intersect class
+                    Set<CuratorAnnotationBean> posAnnots = new HashSet<CuratorAnnotationBean>();
+                    Set<CuratorAnnotationBean> negAnnots = new HashSet<CuratorAnnotationBean>();
+                    for (CuratorAnnotationBean annot: relatedAnnots) {
+                        if (annot.isNegated()) {
+                            //and we consider only confidence of negative annotations 
+                            //to compute the confidence level of the inferred annotation
+                            confs.add(cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
+                                    annot.getCioId()));
+                            negAnnots.add(annot);
+                        } else {
+                            posAnnots.add(annot);
+                        }
+                    }
+                    assert !posAnnots.isEmpty() || !negAnnots.isEmpty();
+                    if (!confs.isEmpty()) {
+                        bestConfPerIntersectClass.add(
+                            cioWrapper.getBestTermWithConfidenceLevel(confs));
+                    }
+                    if (!negAnnots.isEmpty()) {
+                        annotationsUsed.addAll(negAnnots);
+                    } else {
+                        annotationsUsed.addAll(posAnnots);
+                    }
+                }
+                if (bestConfPerIntersectClass.isEmpty()) {
+                    log.trace("No related negative annotations.");
+                    continue posNegTest;
+                }
+                log.trace("Negative annotation will be created");
+            }
+            
+            //create the annotation to store the confidence level, negation status, 
+            //and supporting text. 
+            //it is important to test 'bestConfPerIntersectClass' and not 'annotationsUsed', 
+            //as 'annotationsUsed' can store some annotations even if no annotation 
+            //can be inferred.
+            if (!bestConfPerIntersectClass.isEmpty()) {
+                assert !annotationsUsed.isEmpty();
+                log.trace("Creating info for new annotation from confidences: {} - annotations: {}", 
+                        bestConfPerIntersectClass, annotationsUsed);
+                
+                CuratorAnnotationBean newAnnot = new CuratorAnnotationBean();
+                newAnnot.setNegated(ispositiveTested);
+                
+                //for positive annotation, we determine the lowest confidence level 
+                //among the best confidences of the intersect classes; for negative annotation, 
+                //we take the best confidence level from supporting negative annotations
+                if (ispositiveTested) {
+                    newAnnot.setCioId(cioWrapper.getOWLGraphWrapper().getIdentifier(
+                        cioWrapper.getLowestTermWithConfidenceLevel(bestConfPerIntersectClass)));
+                } else {
+                    newAnnot.setCioId(cioWrapper.getOWLGraphWrapper().getIdentifier(
+                            cioWrapper.getBestTermWithConfidenceLevel(bestConfPerIntersectClass)));
+                }
+                
+                //generate supporting text from supporting annotations
+                List<CuratorAnnotationBean> sortedAnnots = 
+                        new ArrayList<CuratorAnnotationBean>(annotationsUsed);
+                this.sortAnnotations(sortedAnnots);
+                //just to be sure to eliminate any redundancy, and to get consistent 
+                //supporting text, we store elements used to generate it in a LinkedHashSet
+                LinkedHashSet<String> textElements = new LinkedHashSet<String>();
+                for (CuratorAnnotationBean annot: sortedAnnots) {
+                    List<String> entityIds = new ArrayList<String>(annot.getEntityIds());
+                    Collections.sort(entityIds);
+                    String textElement = SimilarityAnnotationUtils.ENTITY_COL_NAME + ": ";
+                    boolean firstIteration = true;
+                    for (String entityId: entityIds) {
+                        if (!firstIteration) {
+                            textElement += SimilarityAnnotationUtils.VALUE_SEPARATORS.get(0);
+                        }
+                        textElement += entityId;
+                        firstIteration = false;
+                    }
+                    textElement += ", negated: " + annot.isNegated();
+                    textElement += ", taxon ID: " + annot.getNcbiTaxonId();
+                    
+                    textElements.add(textElement);
+                }
+                String supportingText = "Annotation inferred from logical constraints "
+                        + "using annotations to same HOM ID and: ";
+                boolean firstIteration = true;
+                for (String textElement: textElements) {
+                    if (firstIteration) {
+                        supportingText += " - ";
+                    }
+                    supportingText += textElement;
+                    firstIteration = false;
+                }
+                newAnnot.setSupportingText(supportingText);
+                
+                log.trace("Creating info for new annotation: {}", newAnnot);
+                posAndNegAnnot.add(newAnnot);
+            }
+        }
+        assert posAndNegAnnot.size() <= 2;
+        
+        if (posAndNegAnnot.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("The annotations provided "
+                    + "did not allow to generate neither a positive nor a negative annotation"));
+        }
+        
+        return log.exit(posAndNegAnnot);
+    }
+    
     /**
      * Generates annotations for {@link GeneratedFileType} {@code RAW_CLEAN}: 
      * notably, this method adds Uberon names, ECO term names, etc (see method 
@@ -2951,8 +3202,18 @@ public class SimilarityAnnotation {
                     return comp;
                 }
                 
-                String elementId1 = o1.getEntityIds().toString();
-                String elementId2 = o2.getEntityIds().toString();
+                String elementId1 = "";
+                if (o1.getEntityIds() != null) {
+                    List<String> elementIds = new ArrayList<String>(o1.getEntityIds());
+                    Collections.sort(elementIds);
+                    elementId1 = elementIds.toString();
+                }
+                String elementId2 = "";
+                if (o2.getEntityIds() != null) {
+                    List<String> elementIds = new ArrayList<String>(o2.getEntityIds());
+                    Collections.sort(elementIds);
+                    elementId2 = elementIds.toString();
+                }
                 comp = elementId1.compareTo(elementId2);
                 if (comp != 0) {
                     return comp;

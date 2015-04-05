@@ -274,6 +274,11 @@ public class SimilarityAnnotation {
      * for non-reviewed annotations.
      */
     public final static String AUTOMATIC_ASSIGNED_BY = "bgee";
+    /**
+     * A {@code String} that is the OBO-like ID of the 'historical homology' concept 
+     * in the HOM ontology.
+     */
+    public final static String HISTORICAL_HOMOLOGY_ID = "HOM:0000007";
     
     /**
      * Several actions can be launched from this main method, depending on the first 
@@ -1998,7 +2003,9 @@ public class SimilarityAnnotation {
         //in the previous loop
         throw log.throwing(new AssertionError("Unreachable code"));
     }
-    
+
+    //XXX: this method currently uses only annotations of historical homology, 
+    //this should be reconsidered if we used other HOM concepts.
     private Set<CuratorAnnotationBean> inferAnnotationsFromLogicalConstraints(
             Collection<CuratorAnnotationBean> annots) throws IllegalArgumentException {
         log.entry(annots);
@@ -2014,6 +2021,9 @@ public class SimilarityAnnotation {
         Map<String, Set<CuratorAnnotationBean>> entityIdToAnnots = 
                 new HashMap<String, Set<CuratorAnnotationBean>>();
         for (CuratorAnnotationBean annot: annots) {
+            if (!HISTORICAL_HOMOLOGY_ID.equals(annot.getHomId())) {
+                continue;
+            }
             for (String entityId: annot.getEntityIds()) {
                 Set<CuratorAnnotationBean> mappedAnnots = entityIdToAnnots.get(entityId);
                 if (mappedAnnots == null) {
@@ -2061,6 +2071,53 @@ public class SimilarityAnnotation {
         }
         log.debug("Done searching for IntersectionOf expressions, {} classes will be considered.", 
                 intersectMapping.size());
+        
+        //OK, infer annotations. We store the inferred annotations associated 
+        //to their source annotations, to be able to infer confidence levels and 
+        //supporting texts.
+        
+        for (Entry<String, Set<String>> intersectEntry: intersectMapping.entrySet()) {
+            //first we retrieve the taxa used in the related annotations, and associate them 
+            //to the IDs of their ancestors
+            Map<Integer, Set<Integer>> taxToAncestors = new HashMap<Integer, Set<Integer>>();
+            for (String intersectClsId: intersectEntry.getValue()) {
+                for (CuratorAnnotationBean relatedAnnot: entityIdToAnnots.get(intersectClsId)) {
+                    if (taxToAncestors.containsKey(relatedAnnot.getNcbiTaxonId())) {
+                        continue;
+                    }
+                    Set<Integer> selfAndAncestorsIds = new HashSet<Integer>();
+                    for (OWLClass ancestor: taxOntWrapper.getAncestorsThroughIsA(
+                            taxOntWrapper.getOWLClassByIdentifier(
+                                    OntologyUtils.getTaxOntologyId(
+                                            relatedAnnot.getNcbiTaxonId())))) {
+                        selfAndAncestorsIds.add(OntologyUtils.getTaxNcbiId(
+                                taxOntWrapper.getIdentifier(ancestor)));
+                    }
+                    taxToAncestors.put(relatedAnnot.getNcbiTaxonId(), selfAndAncestorsIds);
+                }
+            }
+            
+            //now, for each taxon used in annotations, we check whether we have, 
+            //for each intersect class, some annotations valid in the taxon 
+            //or any of its ancestors.
+            for (Entry<Integer, Set<Integer>> taxIds: taxToAncestors.entrySet()) {
+                //to properly infer the confidence level, we need to store 
+                //the source annotations used independently for each intersect classes.
+                //We can generate both a positive and negative annotation for a same taxon, 
+                //so we need two maps.
+                Map<String, Set<CuratorAnnotationBean>> posIntersectClsToAnnots = 
+                        new HashMap<String, Set<CuratorAnnotationBean>>();
+                Map<String, Set<CuratorAnnotationBean>> negIntersectClsToAnnots = 
+                        new HashMap<String, Set<CuratorAnnotationBean>>();
+                
+                //now, we check the annotations of each intersect class, in the context 
+                //of the iterated taxon
+                for (String intersectClsId: intersectEntry.getValue()) {
+                    
+                }
+            }
+            
+        }
         
 
         log.info("Done inferring annotations based on logical constraints, {} annotations inferred.", 

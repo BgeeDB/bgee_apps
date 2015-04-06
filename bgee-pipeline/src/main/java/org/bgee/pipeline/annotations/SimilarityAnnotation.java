@@ -1017,13 +1017,13 @@ public class SimilarityAnnotation {
      * for issues that might be present on purpose, so that it does not raise an exception, 
      * but might be potential errors.
      * 
-     * @param annots            A {@code List} of {@code T}s, where each {@code Map} 
+     * @param annots            A {@code Collection} of {@code T}s, where each {@code Map} 
      *                          represents a line of annotation. See {@link 
      *                          #extractAnnotations(String, GeneratedFileType)} for more details.
      * @param <T>               The type of {@code AnnotationBean} to check.
      * @throws IllegalArgumentException     If some errors were detected.
      */
-    public <T extends AnnotationBean> void checkAnnotations(List<T> annots) 
+    public <T extends AnnotationBean> void checkAnnotations(Collection<T> annots) 
                     throws IllegalArgumentException {
         log.entry(annots);
         
@@ -1426,22 +1426,33 @@ public class SimilarityAnnotation {
                 log.trace("Unrecognized CONF ID {} at line {}", confId, lineNumber);
                 this.missingCONFIds.add(confId);
                 allGood = false;
-            }
-            if (annot instanceof SummaryAnnotationBean) {
-                if (cioWrapper.isBgeeNotTrustedStatement(cls) && 
-                        ((SummaryAnnotationBean) annot).isTrusted()) {
-                    log.error("Inconsistent trust state for CIO statement {} at line {}", 
-                            confId, lineNumber);
+            } else {
+                if (annot instanceof CuratorAnnotationBean || annot instanceof RawAnnotationBean) {
+                    if (!cioWrapper.getEvidenceConcordance(cls).equals(
+                            cioGraphWrapper.getOWLClassByIdentifier(
+                                    CIOWrapper.SINGLE_EVIDENCE_CONCORDANCE_ID))) {
+                        log.error("A RAW annotation uses a confidence statement not from the single evidence branch {} at line {}", 
+                                confId, lineNumber);
+                        this.incorrectFormat.add(annot);
+                        allGood = false;
+                    }
+                }
+                if (annot instanceof SummaryAnnotationBean) {
+                    if (cioWrapper.isBgeeNotTrustedStatement(cls) && 
+                            ((SummaryAnnotationBean) annot).isTrusted()) {
+                        log.error("Inconsistent trust state for CIO statement {} at line {}", 
+                                confId, lineNumber);
+                        this.incorrectFormat.add(annot);
+                        allGood = false;
+                    }
+                }
+                if (annot instanceof AncestralTaxaAnnotationBean && 
+                        cioWrapper.isBgeeNotTrustedStatement(cls)) {
+                    log.error("Only trusted annotations should be used for ancestral taxon file at line {}", 
+                            lineNumber);
                     this.incorrectFormat.add(annot);
                     allGood = false;
                 }
-            }
-            if (annot instanceof AncestralTaxaAnnotationBean && 
-                    cioWrapper.isBgeeNotTrustedStatement(cls)) {
-                log.error("Only trusted annotations should be used for ancestral taxon file at line {}", 
-                        lineNumber);
-                this.incorrectFormat.add(annot);
-                allGood = false;
             }
         }
         if (annot instanceof RawAnnotationBean){
@@ -1615,28 +1626,54 @@ public class SimilarityAnnotation {
         log.exit();
     }
     
-    public List<RawAnnotationBean> generateRawAnnotations(List<CuratorAnnotationBean> annots) {
+    /**
+     * Generate {@code RawAnnotationBean}s from the provided {@code CuratorAnnotationBean}s. 
+     * This method takes annotations from curators, and transform them into clean RAW 
+     * annotations. Notably, this method will: i) verify the validity of the provided 
+     * annotations (see {@link #checkAnnotations(Collection)}); ii) infer new annotations 
+     * (see {@link #generateInferredAnnotations(Collection)}); iii) create 
+     * {@code RawAnnotationBean}s with correct label information and ordered entity IDs; 
+     * iv) check the validity of the {@code RawAnnotationBean}s generated; v) sort these 
+     * {@code RawAnnotationBean}s (see {@link #sortAnnotations(List)}).
+     * 
+     * @param annots    A {@code Collection} of {@code CuratorAnnotationBean}s, representing 
+     *                  annotations from curators, to use to generate derived 
+     *                  {@code RawAnnotationBean}s.
+     * @return          A {@code List} of {@code RawAnnotationBean}s derived from {@code annots}, 
+     *                  sorted.
+     * @throws IllegalArgumentException If some errors were detected in the provided, 
+     *                                  or in the generated annotations.
+     * @throws IllegalStateException    If the ontologies provided at instantiation 
+     *                                  did not allow to retrieve some required information.
+     */
+    public List<RawAnnotationBean> generateRawAnnotations(
+            Collection<CuratorAnnotationBean> annots) throws IllegalArgumentException, 
+            IllegalStateException {
         log.entry(annots);
         
-        //check the curator annotations provided
-        this.checkAnnotations(annots);
+        //make sure there are no duplicates
+        Set<CuratorAnnotationBean> filteredAnnots = new HashSet<CuratorAnnotationBean>(annots);
+        //infer new annotations
+        filteredAnnots.addAll(this.generateInferredAnnotations(filteredAnnots));
+        //check the curator annotations provided and the inferred annotations
+        this.checkAnnotations(filteredAnnots);
         
         //Generate RAW annotations
-        List<RawAnnotationBean> rawAnnots = new ArrayList<RawAnnotationBean>();
-        for (CuratorAnnotationBean curatorAnnot: annots) {
+        Set<RawAnnotationBean> rawAnnots = new HashSet<RawAnnotationBean>();
+        for (CuratorAnnotationBean curatorAnnot: filteredAnnots) {
             rawAnnots.add(this.createRawAnnotWithExtraInfo(curatorAnnot));
         }
         if (rawAnnots.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("The provided annotations " +
-                    "did not allow to generate any clean-transformed annotations."));
+                    "did not allow to generate any RAW annotations."));
         }
-        //infer new annotations
-        infer new annotations here
         
-
         //check and sort annotations generated 
         this.checkAnnotations(rawAnnots);
-        this.sortAnnotations(rawAnnots);
+        List<RawAnnotationBean> sortedRawAnnots = new ArrayList<RawAnnotationBean>(rawAnnots);
+        this.sortAnnotations(sortedRawAnnots);
+        
+        return log.exit(sortedRawAnnots);
     }
 
     /**
@@ -1778,149 +1815,30 @@ public class SimilarityAnnotation {
         return log.exit(rawAnnot);
     }
 
-    public void generateFiles(String rawAnnotFile, Set<GeneratedFileType> fileTypes, 
-            String taxonConstraintsFile, Map<String, Set<Integer>> idStartsToOverridenTaxonIds, 
-            String uberonOntFile, String taxOntFile, 
-            String homOntFile, String ecoOntFile, String confOntFile, String outputDirectory) 
-            throws FileNotFoundException, IOException, UnknownOWLOntologyException, 
-            OWLOntologyCreationException, OBOFormatParserException {
-        
-        log.entry(rawAnnotFile, fileTypes, taxonConstraintsFile, idStartsToOverridenTaxonIds, 
-                uberonOntFile, taxOntFile, homOntFile, ecoOntFile, confOntFile, 
-                outputDirectory);
-        
-        OWLGraphWrapper uberonOntWrapper = new OWLGraphWrapper(
-                OntologyUtils.loadOntology(uberonOntFile));
-        OWLGraphWrapper taxOntWrapper = new OWLGraphWrapper(
-                OntologyUtils.loadOntology(taxOntFile));
-        OWLGraphWrapper ecoOntWrapper = new OWLGraphWrapper(
-                OntologyUtils.loadOntology(ecoOntFile));
-        OWLGraphWrapper homOntWrapper = new OWLGraphWrapper(
-                OntologyUtils.loadOntology(homOntFile));
-        OWLGraphWrapper confOntWrapper = new OWLGraphWrapper(
-                OntologyUtils.loadOntology(confOntFile));
-        
-        this.generateFiles(this.extractAnnotations(rawAnnotFile, GeneratedFileType.RAW), 
-                fileTypes, 
-                TaxonConstraints.extractTaxonConstraints(taxonConstraintsFile, 
-                        idStartsToOverridenTaxonIds), 
-                TaxonConstraints.extractTaxonIds(taxonConstraintsFile), 
-                uberonOntWrapper, taxOntWrapper, homOntWrapper, ecoOntWrapper, 
-                confOntWrapper, outputDirectory);
-        
-        log.exit();
-    }
-    
-    public void generateFiles(List<Map<String, Object>> rawAnnots, 
-            Set<GeneratedFileType> fileTypes, 
-            Map<String, Set<Integer>> taxonConstraints, Set<Integer> taxonIds, 
-            OWLGraphWrapper uberonOntWrapper, OWLGraphWrapper taxOntWrapper, 
-            OWLGraphWrapper homOntWrapper, OWLGraphWrapper ecoOntWrapper, 
-            OWLGraphWrapper confOntWrapper, String outputDirectory)  {
-        log.entry(rawAnnots, fileTypes, taxonConstraints, taxonIds, uberonOntWrapper, 
-                taxOntWrapper, homOntWrapper, ecoOntWrapper, confOntWrapper, outputDirectory);
-        
-        
-        log.exit();
-    }
-    
     /**
-     * Generates the proper annotations to be used for the file of type {@code fileType}, 
-     * from the raw annotations provided by curators. This method will check validity 
-     * of provided annotations, will obtain the names corresponding to the IDs used, 
-     * will generate summary annotation lines using the "multiple evidences" confidence codes 
-     * for related annotations, will order the generated annotations for easier diff 
-     * between releases, will identify the most likely taxon when multiple taxa 
-     * are associated to a same structure.
-     *  
-     * @param rawAnnots         A {@code List} of {@code Map}s, where 
-     *                          each {@code Map} represents a raw annotation line, 
-     *                          as provided by curators.
-     *                          See {@link #extractAnnotations(String, boolean)} for details 
-     *                          about the key-value pairs in this {@code Map}.
-     * @param fileType          A {@code GeneratedFileType} defining for which type of file 
-     *                          these annotations are produced. 
-     * @param taxonConstraints  A {@code Map} where keys are IDs of Uberon terms, 
-     *                          and values are {@code Set}s of {@code Integer}s 
-     *                          containing the IDs of taxa in which the Uberon term 
-     *                          exists.
-     * @param taxonIds          A {@code Set} of {@code Integer}s that are the taxon IDs 
-     *                          of all taxa that were used to define taxon constraints 
-     *                          on Uberon terms.
-     * @param uberonOntWrapper  An {@code OWLGraphWrapper} wrapping the Uberon ontology.
-     * @param taxOntWrapper     An {@code OWLGraphWrapper} wrapping the taxonomy ontology.
-     * @param ecoOntWrapper     An {@code OWLGraphWrapper} wrapping the ECO ontology.
-     * @param homOntWrapper     An {@code OWLGraphWrapper} wrapping the HOM ontology 
-     *                          (ontology of homology an related concepts).
-     * @param confOntWrapper    An {@code OWLGraphWrapper} wrapping the confidence 
-     *                          code ontology.
-     * @return                  A {@code List} of {@code Map}s, where each {@code Map} 
-     *                          represents a verified, completed, or generated 
-     *                          annotation line.
+     * Generate inferred annotations. These annotations are inferred notably using information 
+     * from the Uberon ontology provided at instantiation. This method delegates to 
+     * {@link #inferAnnotationsFromTransformationOf(Collection)} and 
+     * {@link #inferAnnotationsFromLogicalConstraints(Collection)}.
+     * 
+     * @param annots    A {@code Collection} of {@code CuratorAnnotationBean}s 
+     *                  that are the annotations to used to infer new annotations.
+     * @return          A {@code Set} of {@code CuratorAnnotationBean}s that are 
+     *                  the new annotations inferred.
+     * @throws IllegalStateException    If the ontologies provided at instantiation 
+     *                                  did not allow to retrieve some required information.
+     * @see #inferAnnotationsFromTransformationOf(Collection)
+     * @see #inferAnnotationsFromLogicalConstraints(Collection)
      */
-    //XXX: ths method is not optimized: if you want to generate annotations for several 
-    //GeneratedFileTypes, all computations are re-done from scratch each time. Also, 
-    //the different types of annotations are built incrementaly, and all stored in memory, 
-    //so, the memory usage could be largely reduced. However, we do not expect the number 
-    //of annotations to be high enough to require any optimization.
-    public List<Map<String, Object>> generateAnnotations(
-            List<Map<String, Object>> rawAnnots, GeneratedFileType fileType, 
-            Map<String, Set<Integer>> taxonConstraints, Set<Integer> taxonIds, 
-            OWLGraphWrapper uberonOntWrapper, OWLGraphWrapper taxOntWrapper, 
-            OWLGraphWrapper ecoOntWrapper, OWLGraphWrapper homOntWrapper, 
-            OWLGraphWrapper confOntWrapper) {
-        log.entry(rawAnnots, fileType, taxonConstraints, taxonIds, taxOntWrapper, 
-                uberonOntWrapper, ecoOntWrapper, homOntWrapper, confOntWrapper);
+    public Set<CuratorAnnotationBean> generateInferredAnnotations(
+            Collection<CuratorAnnotationBean> annots) throws IllegalStateException {
+        log.entry(annots);
         
-        //check the raw annotations provided
-        this.checkAnnotations(rawAnnots, GeneratedFileType.RAW, taxonConstraints, taxonIds, 
-                taxOntWrapper, homOntWrapper, ecoOntWrapper, confOntWrapper);
+        Set<CuratorAnnotationBean> inferredAnnots = 
+                this.inferAnnotationsFromTransformationOf(annots);
+        inferredAnnots.addAll(this.inferAnnotationsFromLogicalConstraints(annots));
         
-        //Generate RAW CLEAN annotations
-        List<Map<String, Object>> rawCleanAnnots = this.generateRawCleanAnnotations(rawAnnots, 
-                uberonOntWrapper, taxOntWrapper, ecoOntWrapper, homOntWrapper, confOntWrapper);
-        //check correctness 
-        this.checkAnnotations(rawCleanAnnots, GeneratedFileType.RAW_CLEAN, taxonConstraints, 
-                taxonIds, taxOntWrapper, homOntWrapper, ecoOntWrapper, confOntWrapper);
-        //if only RAW CLEAN annotations were requested, we stop here
-        if (fileType.equals(GeneratedFileType.RAW_CLEAN)) {
-            return log.exit(rawCleanAnnots);
-        }
-        
-        //Otherwise, now we need in any case to generate annotations that summarize 
-        //several related annotations using a confidence code for multiple evidence lines.
-        List<Map<String, Object>> aggregatedAnnots = this.generateAggregatedEvidencesAnnotations(
-                rawCleanAnnots, ecoOntWrapper, confOntWrapper);
-        //check correctness 
-        this.checkAnnotations(aggregatedAnnots, GeneratedFileType.AGGREGATED_EVIDENCES, 
-                taxonConstraints, taxonIds, taxOntWrapper, homOntWrapper, ecoOntWrapper, 
-                confOntWrapper);
-        //if only AGGREGATED_EVIDENCES annotations were requested, we stop here
-        if (fileType.equals(GeneratedFileType.AGGREGATED_EVIDENCES)) {
-            return log.exit(aggregatedAnnots);
-        }
-        
-        //otherwise, now we need to generate SINGLE_TAXON annotations
-        List<Map<String, Object>> singleTaxonAnnots = this.generateSingleTaxonAnnotations(
-                aggregatedAnnots, taxOntWrapper, confOntWrapper, true);
-        //check correctness 
-        this.checkAnnotations(singleTaxonAnnots, GeneratedFileType.SINGLE_TAXON, 
-                taxonConstraints, taxonIds, taxOntWrapper, homOntWrapper, ecoOntWrapper, 
-                confOntWrapper);
-        if (fileType.equals(GeneratedFileType.SINGLE_TAXON)) {
-            return log.exit(singleTaxonAnnots);
-        }
-        
-        
-        //we should not reach that point
-        throw log.throwing(new IllegalArgumentException("GeneratedFileType " + fileType 
-                + " not supported."));
-    }
-    
-    private List<Map<String, Object>> generateInferredAnnotations(
-            List<Map<String, Object>> rawAnnots, OWLGraphWrapper uberonOntWrapper) 
-                    throws IllegalArgumentException {
-        log.entry(rawAnnots, uberonOntWrapper);
+        return log.exit(inferredAnnots);
     }
     
     /**
@@ -1933,18 +1851,22 @@ public class SimilarityAnnotation {
      * @param annots    A {@code Collection} of {@code CuratorAnnotationBean}s 
      *                  that are the annotations to used to infer new annotations.
      * @return          A {@code Set} of {@code CuratorAnnotationBean}s that are 
-     *                  the new annotations inferred from logical constraints.
+     *                  the new annotations inferred from transformation_of relations.
      * @throws IllegalStateException    If the Uberon ontology provided at instantiation 
      *                                  does not contain a transformation_of relation type.
      */
-    private Set<CuratorAnnotationBean> inferAnnotationsFromTransformationOf(
+    public Set<CuratorAnnotationBean> inferAnnotationsFromTransformationOf(
             Collection<CuratorAnnotationBean> annots) throws IllegalStateException {
         log.entry(annots);
+        
+        //first, we filter the annotations.
+        //we discard annotations with a REJECTED confidence statement
+        Set<CuratorAnnotationBean> filteredAnnots = this.filterAnnotations(annots);
         
         log.info("Inferring annotations based on transformation_of relations...");
         //first, we store HOM ID - Uberon IDs to be able to determine when an annotation 
         //already exists for some structures, independently of the taxon
-        Set<CuratorAnnotationBean> existingAnnots = this.getExistingAnnots(annots);
+        Set<CuratorAnnotationBean> existingAnnots = this.getExistingAnnots(filteredAnnots);
 
         //get the transformation_of Object Property, and its sub-object properties
         OntologyUtils uberonUtils = new OntologyUtils(uberonOntWrapper);
@@ -1963,7 +1885,7 @@ public class SimilarityAnnotation {
         //see http://stackoverflow.com/a/25954862/1768736
         Map<CuratorAnnotationBean, Set<CuratorAnnotationBean>> inferredAnnots = 
                 new HashMap<CuratorAnnotationBean, Set<CuratorAnnotationBean>>();
-        for (CuratorAnnotationBean annot: annots) {
+        for (CuratorAnnotationBean annot: filteredAnnots) {
             //infer from transformation_of outgoing edges
             Set<CuratorAnnotationBean> newAnnots = 
                     this.createInferredAnnotationsFromTransformationOf(
@@ -2022,6 +1944,44 @@ public class SimilarityAnnotation {
         log.info("Done inferring annotations based on transformation_of relations, {} annotations inferred.", 
                 inferredAnnots.size());
         return log.exit(inferredAnnots.keySet());
+    }
+    
+    /**
+     * Filter the provided {@code Collection} of elements of type {@code AnnotationBean}. 
+     * Duplicates will be removed as the returned value is a {@code Set}, and annotations 
+     * using a REJECTED confidence statement will be discarded. 
+     *  
+     * @param annots    A {@code Collection} of elements of type {@code AnnotationBean} 
+     *                  to be filtered.
+     * @return          A {@code Set} containing the elements in {@code annots}, minus 
+     *                  the annotations using a REJECTED confidence statement.
+     * @throws IllegalArgumentException     If the CIO ID of one of the provided annotation 
+     *                                      (see method {@code getCioId}) is {@code null}, 
+     *                                      or not found in the CIO ontology provided 
+     *                                      at instantiation.
+     */
+    private <T extends AnnotationBean> Set<T> filterAnnotations(Collection<T> annots) 
+        throws IllegalArgumentException{
+        log.entry(annots);
+        
+        Set<T> filteredAnnots = new HashSet<T>();
+        for (T annot: annots) {
+            if (annot.getCioId() == null) {
+                throw log.throwing(new IllegalArgumentException("All provided annotations "
+                        + "must have a CIO ID defined. Offending annotation: " + annot));
+            }
+            OWLClass cls = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
+                    annot.getCioId().trim());
+            if (cls == null) {
+                throw log.throwing(new IllegalArgumentException("Unrecognized CIO ID "
+                        + "in annotation: " + annot));
+            }
+            if (!cioWrapper.isRejectedStatement(cls)) {
+                filteredAnnots.add(annot);
+            }
+        }
+        
+        return log.exit(filteredAnnots);
     }
     
     /**
@@ -2207,11 +2167,13 @@ public class SimilarityAnnotation {
      * @return          A {@code Set} of {@code CuratorAnnotationBean}s that are 
      *                  the new annotations inferred from logical constraints.
      */
-    private Set<CuratorAnnotationBean> inferAnnotationsFromLogicalConstraints(
+    public Set<CuratorAnnotationBean> inferAnnotationsFromLogicalConstraints(
             Collection<CuratorAnnotationBean> annots) {
         log.entry(annots);
         log.info("Inferring annotations based on logical constraints...");
+        
 
+        //first, we filter the annotations.
         //XXX: this method currently uses only annotations of historical homology, 
         //this should be reconsidered if we used other HOM concepts.
         Set<CuratorAnnotationBean> filteredAnnots = new HashSet<CuratorAnnotationBean>();
@@ -2220,6 +2182,8 @@ public class SimilarityAnnotation {
                 filteredAnnots.add(annot);
             }
         }
+        //we discard annotations with a REJECTED confidence statement
+        filteredAnnots = this.filterAnnotations(filteredAnnots);
         
         //we create a Map where keys are Uberon IDs used in annotations, 
         //the associated values being the annotations using these Uberon IDs; 
@@ -2892,60 +2856,6 @@ public class SimilarityAnnotation {
     }
     
     /**
-     * Generates annotations for {@link GeneratedFileType} {@code RAW_CLEAN}: 
-     * notably, this method adds Uberon names, ECO term names, etc (see method 
-     * {@code getNewAnnotWithExtraInfo}), and add inferred annotations (for instance, 
-     * using transformation_of relations).
-     * <p>
-     * The {@code Map}s in the returned {@code List} are ordered by calling 
-     * {@link #sortAnnotations(List)}. {@code rawAnnots} will not be modified 
-     * as a result of the call to this method.
-     * 
-     * @param rawAnnots         A {@code List} of {@code Map}s, where 
-     *                          each {@code Map} represents a raw annotation line, 
-     *                          as provided by curators.
-     *                          See {@link #extractAnnotations(String, boolean)} for details 
-     *                          about the key-value pairs in this {@code Map}.
-     * @param uberonOntWrapper  An {@code OWLGraphWrapper} wrapping the Uberon ontology.
-     * @param taxOntWrapper     An {@code OWLGraphWrapper} wrapping the taxonomy ontology.
-     * @param ecoOntWrapper     An {@code OWLGraphWrapper} wrapping the ECO ontology.
-     * @param homOntWrapper     An {@code OWLGraphWrapper} wrapping the HOM ontology 
-     *                          (ontology of homology an related concepts).
-     * @param confOntWrapper    An {@code OWLGraphWrapper} wrapping the confidence 
-     *                          code ontology.
-     * @return                  An ordered {@code List} of {@code Map}s containing newly 
-     *                          created summary annotations, as well as original single 
-     *                          evidence annotations.
-     * @throws IllegalArgumentException If {@code rawAnnots} does not allow to produce any 
-     *                                  raw clean annotations.
-     */
-    //TODO: add inferred annotations
-    private List<Map<String, Object>> generateRawCleanAnnotations(
-            List<Map<String, Object>> rawAnnots, 
-            OWLGraphWrapper uberonOntWrapper, OWLGraphWrapper taxOntWrapper, 
-            OWLGraphWrapper ecoOntWrapper, OWLGraphWrapper homOntWrapper, 
-            OWLGraphWrapper confOntWrapper) throws IllegalArgumentException {
-        
-        List<Map<String, Object>> rawCleanAnnots = new ArrayList<Map<String, Object>>();
-        for (Map<String, Object> rawAnnot: rawAnnots) {
-            //clone the raw annotation to not modify it.
-            Map<String, Object> rawCleanAnnot = this.getNewAnnotWithExtraInfo(rawAnnot, 
-                    uberonOntWrapper, taxOntWrapper, ecoOntWrapper, homOntWrapper, 
-                    confOntWrapper);
-            rawCleanAnnot.put(LINE_TYPE_COL_NAME, GeneratedFileType.RAW_CLEAN);
-            rawCleanAnnots.add(rawCleanAnnot);
-        }
-        if (rawCleanAnnots.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException("The provided annotations " +
-                    "did not allow to generate any clean-transformed annotations."));
-        }
-        
-        this.sortAnnotations(rawCleanAnnots);
-        
-        return log.exit(rawCleanAnnots);
-    }
-    
-    /**
      * Generates annotations for {@link GeneratedFileType} {@code AGGREGATED_EVIDENCES}: 
      * if some annotations are related to a same entity, taxon, and HOM IDs, then it is needed 
      * to generate automatic annotations summarizing these related annotations, and 
@@ -2977,138 +2887,127 @@ public class SimilarityAnnotation {
      *                                  to an ECO term and to a confidence statement 
      *                                  from single evidence with a confidence level.
      */
-    private List<Map<String, Object>> generateAggregatedEvidencesAnnotations(
-            Collection<Map<String, Object>> rawCleanAnnotations, 
-            OWLGraphWrapper ecoOntWrapper, OWLGraphWrapper confOntWrapper) 
-                    throws IllegalArgumentException {
-        log.entry(rawCleanAnnotations, ecoOntWrapper, confOntWrapper);
+    public List<SummaryAnnotationBean> generateSummaryAnnotations(
+            Collection<RawAnnotationBean> annots) {
+        log.entry(annots);
+
+        //check the annotations provided
+        this.checkAnnotations(annots);
+        //make sure there are no duplicates and filter annotations with a REJECTED 
+        //confidence statement.
+        Set<RawAnnotationBean> filteredAnnots = this.filterAnnotations(annots);
         
-        OntologyUtils ecoUtils = new OntologyUtils(ecoOntWrapper);
-        CIOWrapper cioWrapper = new CIOWrapper(confOntWrapper);
         
         //in order to identify related annotations, we will use a Map where keys 
-        //are the concatenation of the entity column, the taxon column, the HOM column, and 
-        //associated values are the related annotations.
-        Map<String, Set<Map<String, Object>>> relatedAnnotMapper = 
-                new HashMap<String, Set<Map<String, Object>>>();
-        //OWLClass used for sanity checks
-        OWLClass singleEvidenceConcordance = 
-                cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
-                CIOWrapper.SINGLE_EVIDENCE_CONCORDANCE_ID);
-        
-        //first pass, group related annotations and do sanity checks
-        for (Map<String, Object> annot: rawCleanAnnotations) {
-            //discard rejected annotations to generate summaries
-            if (cioWrapper.isRejectedStatement(
-                    confOntWrapper.getOWLClassByIdentifier((String) annot.get(CONF_COL_NAME)))) {
-                continue;
-            }
-            //check that the confidence statement is a confidence from single evidence 
-            //associated to a confidence level.
-            OWLClass confStatement = confOntWrapper.getOWLClassByIdentifier(
-                    (String) annot.get(CONF_COL_NAME), true);
-            if (!cioWrapper.getEvidenceConcordance(confStatement).equals(
-                    singleEvidenceConcordance) || 
-                 cioWrapper.getConfidenceLevel(confStatement) == null) {
-                throw log.throwing(new IllegalArgumentException("All confidence statements used "
-                        + "must be from single evidence with associated confidence level."));
-            }
-            
+        //are SummaryAnnotationBeans with only the entity IDs, taxon ID, and HOM ID set, 
+        //and where associated values are the related RAW annotations.
+        Map<SummaryAnnotationBean, Set<RawAnnotationBean>> relatedAnnotMapper = 
+                new HashMap<SummaryAnnotationBean, Set<RawAnnotationBean>>();
+        //first pass, group related annotations
+        for (RawAnnotationBean annot: filteredAnnots) {
+            SummaryAnnotationBean keyAnnot = new SummaryAnnotationBean();
+            keyAnnot.setHomId(annot.getHomId());
+            keyAnnot.setNcbiTaxonId(annot.getNcbiTaxonId());
             //To generate the key to group annotations, we order Uberon IDs
-            List<String> uberonIds = AnnotationCommon.parseMultipleEntitiesColumn(
-                    (String) annot.get(ENTITY_COL_NAME));
-            String key = "";
-            for (String uberonId: uberonIds) {
-                key += uberonId + "-";
-            }
-            key += annot.get(HOM_COL_NAME) + "-" + annot.get(TAXON_COL_NAME);
+            List<String> uberonIds = new ArrayList<String>(annot.getEntityIds());
+            Collections.sort(uberonIds);
+            keyAnnot.setEntityIds(uberonIds);
             
-            if (relatedAnnotMapper.get(key) == null) {
-                relatedAnnotMapper.put(key, new HashSet<Map<String, Object>>());
+            Set<RawAnnotationBean> relatedAnnots = relatedAnnotMapper.get(keyAnnot);
+            if (relatedAnnots == null) {
+                relatedAnnots = new HashSet<RawAnnotationBean>();
+                relatedAnnotMapper.put(keyAnnot, relatedAnnots);
             }
-            relatedAnnotMapper.get(key).add(annot);
+            relatedAnnots.add(annot);
         }
-        
-        //now, generate summarizing annotations
-        final OWLClass congruent = confOntWrapper.getOWLClassByIdentifier(
-                CIOWrapper.CONGRUENT_CONCORDANCE_ID);
-        List<Map<String, Object>> aggregatedEvidencesAnnots = 
-                new ArrayList<Map<String, Object>>();
-        for (Set<Map<String, Object>> relatedAnnots: relatedAnnotMapper.values()) {
-            assert relatedAnnots.size() > 0;
-            
-            //clone a reference annotation from the group
-            Map<String, Object> newAnnot = new HashMap<String, Object>(
-                    relatedAnnots.iterator().next());
-            newAnnot.put(LINE_TYPE_COL_NAME, GeneratedFileType.AGGREGATED_EVIDENCES);
-            aggregatedEvidencesAnnots.add(newAnnot);
 
-            //columns that should not be set for a generated summary annotation
-            newAnnot.put(REF_COL_NAME, null);
-            newAnnot.put(REF_TITLE_COL_NAME, null);
-            newAnnot.put(ECO_COL_NAME, null);
-            newAnnot.put(ECO_NAME_COL_NAME, null);
-            newAnnot.put(SUPPORT_TEXT_COL_NAME, null);
-            newAnnot.put(CURATOR_COL_NAME, null);
-            newAnnot.put(DATE_COL_NAME, null);
+        
+        //Generate SUMMARY annotations
+        Set<SummaryAnnotationBean> summaryAnnots = new HashSet<SummaryAnnotationBean>();
+        OntologyUtils ecoUtils = new OntologyUtils(ecoOntWrapper);
+        
+        final OWLClass congruent = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
+                CIOWrapper.CONGRUENT_CONCORDANCE_ID);
+        for (Entry<SummaryAnnotationBean, Set<RawAnnotationBean>> relatedAnnotsEntry: 
+            relatedAnnotMapper.entrySet()) {
+            assert relatedAnnotsEntry.getValue().size() > 0;
+            
+            //create a new SummaryAnnotationBean (to not modify objects used as keys 
+            //in relatedAnnotMapper), using the iterated key (because we have already 
+            //ordered Uberon IDs in them)
+            SummaryAnnotationBean newAnnot = new SummaryAnnotationBean();
+            newAnnot.setHomId(relatedAnnotsEntry.getKey().getHomId());
+            newAnnot.setNcbiTaxonId(relatedAnnotsEntry.getKey().getNcbiTaxonId());
+            newAnnot.setEntityIds(relatedAnnotsEntry.getKey().getEntityIds());
+            
+            //determine whether there are only negative annotations, to know that 
+            //the summary should also be negative (in case of conflicts we always favor 
+            //positive annotations, this is what these annotations are about).
+            boolean allNegative = true;
+            for (RawAnnotationBean relatedAnnot: relatedAnnotsEntry.getValue()) {
+                if (!relatedAnnot.isNegated()) {
+                    allNegative = false;
+                    break;
+                }
+            }
+            newAnnot.setNegated(allNegative);
             
             //if more than one annotation related to this assertion, 
             //compute a global confidence score
-            if (relatedAnnots.size() > 1) {
-
+            if (relatedAnnotsEntry.getValue().size() > 1) {
+    
                 //retrieve the global confidence score from all related evidence lines
-                OWLClass summaryConf = this.getSummaryConfidenceStatement(relatedAnnots, 
-                        ecoUtils, cioWrapper);
-
-                //fill other columns of the annotation.
-                //columns with values changed as compared to the reference annotation
-                newAnnot.put(CONF_COL_NAME, confOntWrapper.getIdentifier(summaryConf));
-                newAnnot.put(CONF_NAME_COL_NAME, confOntWrapper.getLabel(summaryConf));
-                newAnnot.put(ASSIGN_COL_NAME, BGEE_ASSIGNMENT);
+                OWLClass summaryConf = this.getSummaryConfidenceStatement(
+                        relatedAnnotsEntry.getValue());
+                newAnnot.setCioId(cioWrapper.getOWLGraphWrapper().getIdentifier(summaryConf));
+                newAnnot.setCioLabel(cioWrapper.getOWLGraphWrapper().getLabel(summaryConf));
                 
-                if (!cioWrapper.getEvidenceConcordance(summaryConf).equals(congruent)) {
-                    //in case of conflicts, we always favor the positive annotation, 
-                    //this is what the annotation file is about.
-                    newAnnot.put(QUALIFIER_COL_NAME, null);
-                }
+                newAnnot.put(ASSIGN_COL_NAME, BGEE_ASSIGNMENT);
+            } else {
+                //otherwise, if only one evidence, we use the original confidence statement
+                newAnnot.setCioId(relatedAnnotsEntry.getValue().iterator().next().getCioId());
+                newAnnot.setCioLabel(relatedAnnotsEntry.getValue().iterator().next().getCioLabel());
             }
         }
         
-        if (aggregatedEvidencesAnnots.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException("The annotations provided did not "
-                    + "allow to retrieve any AGGREGATED EVIDENCE annotations."));
+
+        if (summaryAnnots.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("The provided annotations " +
+                    "did not allow to generate any SUMMARY annotations."));
         }
         
-        this.sortAnnotations(aggregatedEvidencesAnnots);
-        return log.exit(aggregatedEvidencesAnnots);
+        //check and sort annotations generated 
+        this.checkAnnotations(summaryAnnots);
+        List<SummaryAnnotationBean> sortedSummaryAnnots = 
+                new ArrayList<SummaryAnnotationBean>(summaryAnnots);
+        this.sortAnnotations(sortedSummaryAnnots);
+        
+        return log.exit(sortedSummaryAnnots);
     }
-    
+
     /**
      * Retrieve the proper confidence statement from multiple evidence lines from the provided 
      * {@code Collection} of annotations. The annotations provided should all be related to 
      * a same assertion, so that we can infer a global confidence level. The definition 
      * of whether annotations are related to a same assertion is left to the caller 
-     * of this method, this is not verified by this method. The only check is that 
-     * all annotations should be associated to a confidence statement from single evidence, 
-     * with a confidence level, and should be associated to an ECO term.
+     * of this method, this is not verified by this method. Here we assume that 
+     * all annotations are associated to a confidence statement from single evidence, 
+     * with a confidence level, and are associated to an ECO term, and that none 
+     * are associated to the REJECTED confidence statement; this should have been 
+     * previously checked, as this is will not be checked here.
      * 
-     * @param annots        A {@code Collection} of {@code Map}s where each {@code Map} 
-     *                      represents an annotation, each related to a same assertion. 
-     *                      See {@link #extractAnnotations(String, boolean)} for details 
-     *                      about the key-value pairs in this {@code Map}.
-     * @param ecoUtils      An {@code OntologyUtils} wrapping the ECO.
-     * @param cioWrapper    A {@code CIOWrapper} wrapping... the CIO.
+     * @param annots        A {@code Set} of {@code RawAnnotationBean}s 
+     *                      related to a same assertion. 
      * @return              An {@code OWLClass} representing a confidence statement 
      *                      from multiple evidence lines, associated to a confidence level.
-     * @throws IllegalArgumentException If some annotations are not associated to 
-     *                                  a confidence statement from single evidence 
-     *                                  with a confidence level, or if the annotations provided 
+     * @throws IllegalArgumentException If the annotations provided 
      *                                  do not allow to compute a global confidence score.
      */
-    private OWLClass getSummaryConfidenceStatement(Collection<Map<String, Object>> annots, 
-            OntologyUtils ecoUtils, CIOWrapper cioWrapper) throws IllegalArgumentException {
-        log.entry(annots, ecoUtils, cioWrapper);
+    private OWLClass getSummaryConfidenceStatement(Set<RawAnnotationBean> annots) 
+            throws IllegalArgumentException {
+        log.entry(annots);
         
+        OntologyUtils ecoUtils = new OntologyUtils(ecoOntWrapper);
         //first, we need to know whether there are only evidences supporting 
         //the assertion, or negating the assertion, or both, and how many
         int positiveAnnotCount = 0;
@@ -3124,39 +3023,14 @@ public class SimilarityAnnotation {
         //same for negative annots
         Set<OWLClass> negativeConfs = new HashSet<OWLClass>();
         
-        final OWLClass singleEvidenceConcordance = 
-                cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
-                CIOWrapper.SINGLE_EVIDENCE_CONCORDANCE_ID);
-        
-        for (Map<String, Object> annot: annots) {
+        for (RawAnnotationBean annot: annots) {
             OWLClass confStatement = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
-                    (String) annot.get(CONF_COL_NAME), true);
-            OWLClass ecoTerm = ecoUtils.getWrapper().getOWLClassByIdentifier(
-                    (String) annot.get(ECO_COL_NAME), true);
+                    annot.getCioId(), true);
+            OWLClass ecoTerm = ecoOntWrapper.getOWLClassByIdentifier(annot.getEcoId(), true);
             
-            //------ SANITY CHECKS---------------
-            //discard rejected annotations to generate summaries
-            if (cioWrapper.isRejectedStatement(confStatement)) {
-                continue;
-            }
-            //check that this confidence statement is from the single evidence branch 
-            //and is associated to a confidence level.
-            if (!cioWrapper.getEvidenceConcordance(confStatement).equals(
-                    singleEvidenceConcordance) || 
-                 cioWrapper.getConfidenceLevel(confStatement) == null) {
-                throw log.throwing(new IllegalArgumentException("All confidence statements used "
-                        + "must be from single evidence with associated confidence level."));
-            }
-            if (ecoTerm == null) {
-                throw log.throwing(new IllegalArgumentException("All annotations "
-                        + "must be associated to an ECO term."));
-            }
-            //-----------------------------------
-            
-            boolean currentNegate = this.isNegativeAnnotations(annot);
             Set<OWLClass> toUseECOs  = positiveECOs;
             Set<OWLClass> toUseConfs = positiveConfs;
-            if (currentNegate) {
+            if (annot.isNegated()) {
                 negativeAnnotCount++;
                 toUseECOs = negativeECOs;
                 toUseConfs = negativeConfs;
@@ -3180,11 +3054,11 @@ public class SimilarityAnnotation {
         //XXX: should we really consider ECOs 'author statement' as a 'different type'?
         OWLClass evidenceTypeConcordance = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
                 CIOWrapper.SAME_TYPE_EVIDENCE_CONCORDANCE_ID);
-        if ((hasPositiveAnnots && hasNegativeAnnots && 
+        if ((positiveAnnotCount > 0 && negativeAnnotCount > 0 && 
                 ecoUtils.containsUnrelatedClassesByIsAPartOf(positiveConfs, negativeConfs)) || 
-                (hasPositiveAnnots && 
+                (positiveAnnotCount > 0 && 
                         ecoUtils.containsUnrelatedClassesByIsAPartOf(positiveConfs)) || 
-                (hasNegativeAnnots && 
+                (negativeAnnotCount > 0 && 
                         ecoUtils.containsUnrelatedClassesByIsAPartOf(negativeConfs))) {
                 evidenceTypeConcordance = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
                         CIOWrapper.DIFFERENT_TYPES_EVIDENCE_CONCORDANCE_ID);
@@ -3236,6 +3110,145 @@ public class SimilarityAnnotation {
         }
         
         return log.exit(summaryConf);
+    }
+
+    public void generateFiles(String rawAnnotFile, Set<GeneratedFileType> fileTypes, 
+            String taxonConstraintsFile, Map<String, Set<Integer>> idStartsToOverridenTaxonIds, 
+            String uberonOntFile, String taxOntFile, 
+            String homOntFile, String ecoOntFile, String confOntFile, String outputDirectory) 
+            throws FileNotFoundException, IOException, UnknownOWLOntologyException, 
+            OWLOntologyCreationException, OBOFormatParserException {
+        
+        log.entry(rawAnnotFile, fileTypes, taxonConstraintsFile, idStartsToOverridenTaxonIds, 
+                uberonOntFile, taxOntFile, homOntFile, ecoOntFile, confOntFile, 
+                outputDirectory);
+        
+        OWLGraphWrapper uberonOntWrapper = new OWLGraphWrapper(
+                OntologyUtils.loadOntology(uberonOntFile));
+        OWLGraphWrapper taxOntWrapper = new OWLGraphWrapper(
+                OntologyUtils.loadOntology(taxOntFile));
+        OWLGraphWrapper ecoOntWrapper = new OWLGraphWrapper(
+                OntologyUtils.loadOntology(ecoOntFile));
+        OWLGraphWrapper homOntWrapper = new OWLGraphWrapper(
+                OntologyUtils.loadOntology(homOntFile));
+        OWLGraphWrapper confOntWrapper = new OWLGraphWrapper(
+                OntologyUtils.loadOntology(confOntFile));
+        
+        this.generateFiles(this.extractAnnotations(rawAnnotFile, GeneratedFileType.RAW), 
+                fileTypes, 
+                TaxonConstraints.extractTaxonConstraints(taxonConstraintsFile, 
+                        idStartsToOverridenTaxonIds), 
+                TaxonConstraints.extractTaxonIds(taxonConstraintsFile), 
+                uberonOntWrapper, taxOntWrapper, homOntWrapper, ecoOntWrapper, 
+                confOntWrapper, outputDirectory);
+        
+        log.exit();
+    }
+
+    public void generateFiles(List<Map<String, Object>> rawAnnots, 
+            Set<GeneratedFileType> fileTypes, 
+            Map<String, Set<Integer>> taxonConstraints, Set<Integer> taxonIds, 
+            OWLGraphWrapper uberonOntWrapper, OWLGraphWrapper taxOntWrapper, 
+            OWLGraphWrapper homOntWrapper, OWLGraphWrapper ecoOntWrapper, 
+            OWLGraphWrapper confOntWrapper, String outputDirectory)  {
+        log.entry(rawAnnots, fileTypes, taxonConstraints, taxonIds, uberonOntWrapper, 
+                taxOntWrapper, homOntWrapper, ecoOntWrapper, confOntWrapper, outputDirectory);
+        
+        
+        log.exit();
+    }
+
+    /**
+     * Generates the proper annotations to be used for the file of type {@code fileType}, 
+     * from the raw annotations provided by curators. This method will check validity 
+     * of provided annotations, will obtain the names corresponding to the IDs used, 
+     * will generate summary annotation lines using the "multiple evidences" confidence codes 
+     * for related annotations, will order the generated annotations for easier diff 
+     * between releases, will identify the most likely taxon when multiple taxa 
+     * are associated to a same structure.
+     *  
+     * @param rawAnnots         A {@code List} of {@code Map}s, where 
+     *                          each {@code Map} represents a raw annotation line, 
+     *                          as provided by curators.
+     *                          See {@link #extractAnnotations(String, boolean)} for details 
+     *                          about the key-value pairs in this {@code Map}.
+     * @param fileType          A {@code GeneratedFileType} defining for which type of file 
+     *                          these annotations are produced. 
+     * @param taxonConstraints  A {@code Map} where keys are IDs of Uberon terms, 
+     *                          and values are {@code Set}s of {@code Integer}s 
+     *                          containing the IDs of taxa in which the Uberon term 
+     *                          exists.
+     * @param taxonIds          A {@code Set} of {@code Integer}s that are the taxon IDs 
+     *                          of all taxa that were used to define taxon constraints 
+     *                          on Uberon terms.
+     * @param uberonOntWrapper  An {@code OWLGraphWrapper} wrapping the Uberon ontology.
+     * @param taxOntWrapper     An {@code OWLGraphWrapper} wrapping the taxonomy ontology.
+     * @param ecoOntWrapper     An {@code OWLGraphWrapper} wrapping the ECO ontology.
+     * @param homOntWrapper     An {@code OWLGraphWrapper} wrapping the HOM ontology 
+     *                          (ontology of homology an related concepts).
+     * @param confOntWrapper    An {@code OWLGraphWrapper} wrapping the confidence 
+     *                          code ontology.
+     * @return                  A {@code List} of {@code Map}s, where each {@code Map} 
+     *                          represents a verified, completed, or generated 
+     *                          annotation line.
+     */
+    //XXX: ths method is not optimized: if you want to generate annotations for several 
+    //GeneratedFileTypes, all computations are re-done from scratch each time. Also, 
+    //the different types of annotations are built incrementaly, and all stored in memory, 
+    //so, the memory usage could be largely reduced. However, we do not expect the number 
+    //of annotations to be high enough to require any optimization.
+    public List<Map<String, Object>> generateAnnotations(
+            List<Map<String, Object>> rawAnnots, GeneratedFileType fileType, 
+            Map<String, Set<Integer>> taxonConstraints, Set<Integer> taxonIds, 
+            OWLGraphWrapper uberonOntWrapper, OWLGraphWrapper taxOntWrapper, 
+            OWLGraphWrapper ecoOntWrapper, OWLGraphWrapper homOntWrapper, 
+            OWLGraphWrapper confOntWrapper) {
+        log.entry(rawAnnots, fileType, taxonConstraints, taxonIds, taxOntWrapper, 
+                uberonOntWrapper, ecoOntWrapper, homOntWrapper, confOntWrapper);
+        
+        //check the raw annotations provided
+        this.checkAnnotations(rawAnnots, GeneratedFileType.RAW, taxonConstraints, taxonIds, 
+                taxOntWrapper, homOntWrapper, ecoOntWrapper, confOntWrapper);
+        
+        //Generate RAW CLEAN annotations
+        List<Map<String, Object>> rawCleanAnnots = this.generateRawCleanAnnotations(rawAnnots, 
+                uberonOntWrapper, taxOntWrapper, ecoOntWrapper, homOntWrapper, confOntWrapper);
+        //check correctness 
+        this.checkAnnotations(rawCleanAnnots, GeneratedFileType.RAW_CLEAN, taxonConstraints, 
+                taxonIds, taxOntWrapper, homOntWrapper, ecoOntWrapper, confOntWrapper);
+        //if only RAW CLEAN annotations were requested, we stop here
+        if (fileType.equals(GeneratedFileType.RAW_CLEAN)) {
+            return log.exit(rawCleanAnnots);
+        }
+        
+        //Otherwise, now we need in any case to generate annotations that summarize 
+        //several related annotations using a confidence code for multiple evidence lines.
+        List<Map<String, Object>> aggregatedAnnots = this.generateAggregatedEvidencesAnnotations(
+                rawCleanAnnots, ecoOntWrapper, confOntWrapper);
+        //check correctness 
+        this.checkAnnotations(aggregatedAnnots, GeneratedFileType.AGGREGATED_EVIDENCES, 
+                taxonConstraints, taxonIds, taxOntWrapper, homOntWrapper, ecoOntWrapper, 
+                confOntWrapper);
+        //if only AGGREGATED_EVIDENCES annotations were requested, we stop here
+        if (fileType.equals(GeneratedFileType.AGGREGATED_EVIDENCES)) {
+            return log.exit(aggregatedAnnots);
+        }
+        
+        //otherwise, now we need to generate SINGLE_TAXON annotations
+        List<Map<String, Object>> singleTaxonAnnots = this.generateSingleTaxonAnnotations(
+                aggregatedAnnots, taxOntWrapper, confOntWrapper, true);
+        //check correctness 
+        this.checkAnnotations(singleTaxonAnnots, GeneratedFileType.SINGLE_TAXON, 
+                taxonConstraints, taxonIds, taxOntWrapper, homOntWrapper, ecoOntWrapper, 
+                confOntWrapper);
+        if (fileType.equals(GeneratedFileType.SINGLE_TAXON)) {
+            return log.exit(singleTaxonAnnots);
+        }
+        
+        
+        //we should not reach that point
+        throw log.throwing(new IllegalArgumentException("GeneratedFileType " + fileType 
+                + " not supported."));
     }
     
     /**
@@ -3508,7 +3521,7 @@ public class SimilarityAnnotation {
      * @param annotations   A {@code List} of {@code AnnotationBean}s to be ordered.
      * @param <T>           The type of {@code AnnotationBean} in {@code annotations}.
      */
-    private <T extends AnnotationBean> void sortAnnotations(List<T> annotations) {
+    public <T extends AnnotationBean> void sortAnnotations(List<T> annotations) {
         Collections.sort(annotations, new Comparator<T>() {
             @Override
             public int compare(AnnotationBean o1, AnnotationBean o2) {

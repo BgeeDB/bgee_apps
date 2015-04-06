@@ -2040,7 +2040,6 @@ public class SimilarityAnnotation {
     private Set<CuratorAnnotationBean> inferAnnotationsFromLogicalConstraints(
             Collection<CuratorAnnotationBean> annots) throws IllegalArgumentException {
         log.entry(annots);
-
         log.info("Inferring annotations based on logical constraints...");
 
         //XXX: this method currently uses only annotations of historical homology, 
@@ -2071,11 +2070,7 @@ public class SimilarityAnnotation {
                 entityIdToAnnots);
         
         
-        
-        //OK, infer annotations. We store the inferred annotations associated 
-        //to their source annotations, to be able to infer confidence levels and 
-        //supporting texts.
-        OntologyUtils taxOntUtils = new OntologyUtils(taxOntWrapper);
+        //OK, infer annotations.
         Set<CuratorAnnotationBean> inferredAnnots = new HashSet<CuratorAnnotationBean>();
         
         for (Entry<String, Set<String>> intersectEntry: intersectMapping.entrySet()) {
@@ -2092,119 +2087,44 @@ public class SimilarityAnnotation {
             log.trace("Taxon IDs used in annotations of intersect classes: {}", taxIds);
             
             //now, for each taxon used in annotations, we check whether we have, 
-            //for each intersect class, some annotations valid in the taxon 
-            //or any of its ancestors.
+            //for each intersect class, some annotations valid in the taxon, 
+            //or any of its ancestors. This will allow to generate all possible annotations 
+            //for all possible taxa, positive or negative.
             taxId: for (int taxId: taxIds) {
-                log.trace("Checking potential inferrence for taxon {}", taxId);
-                //to properly infer the confidence level, we need to store 
-                //the source annotations used independently for each intersect classes.
-                Set<Set<CuratorAnnotationBean>> annotsPerIntersectClass = 
-                        new HashSet<Set<CuratorAnnotationBean>>();
+                log.trace("Checking potential inferrences for taxon {}", taxId);
                 
-                //now, we search for annotations of each intersect class, valid 
-                //in the iterated taxon or its ancestors
-                for (String intersectClsId: intersectEntry.getValue()) {
-                    log.trace("Checking annotations available from intersect class {} in taxon {}", 
-                            intersectClsId, taxId);
-                    
-                    Set<OWLClass> intersectTaxCls = new HashSet<OWLClass>();
-                    for (CuratorAnnotationBean relatedAnnot: 
-                        entityIdToAnnots.get(intersectClsId)) {
-                        if (!taxToSelfAndAncestors.get(taxId).contains(
-                                relatedAnnot.getNcbiTaxonId())) {
-                            log.trace("Annotation discarded because not in related taxon: {}", 
-                                    relatedAnnot);
-                            continue;
-                        }
-                        intersectTaxCls.add(taxOntWrapper.getOWLClassByIdentifier(
-                                OntologyUtils.getTaxOntologyId(relatedAnnot.getNcbiTaxonId())));
-                    }
-                    //we will only consider annotations to the leaf taxa
-                    taxOntUtils.retainLeafClasses(intersectTaxCls, null);
-                    assert intersectTaxCls.size() <= 1;
-                    //if no annotations related to the iterated taxon, no annotation will be 
-                    //inferred for this taxon.
-                    if (intersectTaxCls.size() == 0) {
-                        log.trace("No annotation for intersect class {} in related taxa of {}.", 
-                                intersectClsId, taxId);
-                        continue taxId;
-                    }
-                    
-                    int leafTaxId = OntologyUtils.getTaxNcbiId(taxOntWrapper.getIdentifier(
-                            intersectTaxCls.iterator().next()));
-                    log.trace("Annotations to intersect class {} and taxon ID {} will be considered", 
-                            intersectClsId, leafTaxId);
-                    
-                    //OK, now we retrieve annotations for the current intersect class, 
-                    //annotated to the leaf taxon retained; 
-                    Set<CuratorAnnotationBean> relatedAnnots = 
-                            new HashSet<CuratorAnnotationBean>();
-                    annotsPerIntersectClass.add(relatedAnnots);
-                    for (CuratorAnnotationBean relatedAnnot: 
-                        entityIdToAnnots.get(intersectClsId)) {
-                        if (relatedAnnot.getNcbiTaxonId() != leafTaxId) {
-                            continue;
-                        }
-                        log.trace("Annotation considered: {}", relatedAnnot);
-                        relatedAnnots.add(relatedAnnot);
-                    }
-                    assert !relatedAnnots.isEmpty();
+                //to properly infer the confidence level, we need to store 
+                //the source annotations used, grouped independently for each intersect class.
+                //This is why we use a Set of Sets.
+                //We search for annotations to each intersect class, valid 
+                //in the iterated taxon or its ancestors; and for each intersect class, 
+                //we only retain annotations to its leaf valid taxon.
+                Set<Set<CuratorAnnotationBean>> annotsPerIntersectClass = 
+                        this.getAnnotsToIntersectClasses(entityIdToAnnots, 
+                                intersectEntry.getValue(), 
+                                taxId, taxToSelfAndAncestors.get(taxId));
+                if (annotsPerIntersectClass == null) {
+                    //no annotation can possibly be inferred for the current taxon iterated, 
+                    //try next taxon.
+                    continue taxId;
                 }
-                log.trace("Annotations per intersect classes: {}", annotsPerIntersectClass);
-                assert annotsPerIntersectClass.size() == intersectEntry.getValue().size();
                 
                 
                 //now we try to find classes with same intersect annotations, to be able 
                 //to recover, e.g.,  if skin is homologous, and limb is homologous to fin, 
-                //then skin of limb is homologous to skin of fin. This will also generate 
-                //annotations to self (e.g., skin of limb on the one hand, skin of fin 
-                //on the other hand); single-entity annotations will be filtered afterwards 
-                //if there exist multiple-entities for same entity, taxon, and confidence.
-                //We store the IDs of related entities, associated to their common annotations, 
-                //group per intersecting class.
+                //then skin of limb is homologous to skin of fin. 
+                //We store the IDs of related entities (key Set<String>), associated to 
+                //their common annotations, grouped per intersecting class (value Set of Sets).
                 Map<Set<String>, Set<Set<CuratorAnnotationBean>>> entityIdsToAnnotsPerIntersectClass = 
                         new HashMap<Set<String>, Set<Set<CuratorAnnotationBean>>>();
                 //and first, we store the currently iterated entity
                 entityIdsToAnnotsPerIntersectClass.put(
                         new HashSet<String>(Arrays.asList(intersectEntry.getKey())), 
                         annotsPerIntersectClass);
-                for (Entry<String, Set<String>> intersectEntry2: intersectMapping.entrySet()) {
-                    if (intersectEntry2.getKey().equals(intersectEntry.getKey())) {
-                        continue;
-                    }
-                    //try to find a mapping to any already defined inferred annotation
-                    Map<Set<String>, Set<Set<CuratorAnnotationBean>>> newMappings = 
-                            new HashMap<Set<String>, Set<Set<CuratorAnnotationBean>>>();
-                    for (Entry<Set<String>, Set<Set<CuratorAnnotationBean>>> entry: 
-                        entityIdsToAnnotsPerIntersectClass.entrySet()) {
-                        
-                        Set<Set<CuratorAnnotationBean>> commonAnnotsPerIntersectClass = 
-                                new HashSet<Set<CuratorAnnotationBean>>();
-                        
-                        intersectClassId: for (String intersectClassId: intersectEntry2.getValue()) {
-                            Set<CuratorAnnotationBean> commonAnnots = 
-                                    new HashSet<CuratorAnnotationBean>();
-                            for (Set<CuratorAnnotationBean> existingAnnotsGroup: entry.getValue()) {
-                                commonAnnots.addAll(existingAnnotsGroup);
-                                commonAnnots.retainAll(entityIdToAnnots.get(intersectClassId));
-                                if (!commonAnnots.isEmpty()) {
-                                    commonAnnotsPerIntersectClass.add(commonAnnots);
-                                    continue intersectClassId;
-                                }
-                            }
-                        }
-                        //OK, we found some common annotations for each intersecting class, 
-                        //we have a mapping
-                        if (commonAnnotsPerIntersectClass.size() == entry.getValue().size()) {
-                            Set<String> entityIds = new HashSet<String>(entry.getKey());
-                            entityIds.add(intersectEntry2.getKey());
-                            newMappings.put(entityIds, commonAnnotsPerIntersectClass);
-                        }
-                    }
-                    assert newMappings.size() == 0 || Collections.disjoint(newMappings.keySet(), 
-                            entityIdsToAnnotsPerIntersectClass.keySet());
-                    entityIdsToAnnotsPerIntersectClass.putAll(newMappings);
-                }
+                //try to infer new annotations
+                this.loadEntityIdsToAnnotsPerIntersectClass(entityIdsToAnnotsPerIntersectClass, 
+                        entityIdToAnnots, intersectMapping);
+                
                 
                 //OK, create actual inferred annotations.
                 //We'll try to create a positive and a negative annotation for each mapping 
@@ -2230,6 +2150,7 @@ public class SimilarityAnnotation {
                         newAnnot.setNegated(inferredInfo.isNegated());
                         newAnnot.setCioId(inferredInfo.getCioId());
                         newAnnot.setSupportingText(inferredInfo.getSupportingText());
+                        log.trace("New annotation inferred: {}", newAnnot);
                         
                         inferredAnnots.add(newAnnot);
                     }
@@ -2239,9 +2160,9 @@ public class SimilarityAnnotation {
         
         //now, we filter annotations for which a same annotation with more entities exist
         Set<CuratorAnnotationBean> toRemove = new HashSet<CuratorAnnotationBean>();
-        for (CuratorAnnotationBean annot: inferredAnnots) {
+        annot: for (CuratorAnnotationBean annot: inferredAnnots) {
             for (CuratorAnnotationBean annot2: inferredAnnots) {
-                if (annot.equals(annot2)) {
+                if (annot.equals(annot2) || toRemove.contains(annot2)) {
                     continue;
                 }
                 if (annot.getHomId().equals(annot2.getHomId()) && 
@@ -2251,7 +2172,10 @@ public class SimilarityAnnotation {
                         annot.getSupportingText().equals(annot2.getSupportingText()) && 
                         annot2.getEntityIds().containsAll(annot.getEntityIds()) && 
                         annot2.getEntityIds().size() >= annot.getEntityIds().size()) {
+                    log.trace("Remove annotation {} because redundant as compared to annotation {}", 
+                            annot, annot2);
                     toRemove.add(annot);
+                    continue annot;
                 }     
             }
         }
@@ -2261,6 +2185,208 @@ public class SimilarityAnnotation {
         log.info("Done inferring annotations based on logical constraints, {} annotations inferred.", 
                 inferredAnnots.size());
         return log.exit(inferredAnnots);
+    }
+    
+    /**
+     * Try to find new mappings based on already inferred annotations to classes 
+     * defined using logical constraints. This method uses the provided already 
+     * inferred annotations, and try to find classes with common annotations 
+     * for each of their intersect classes, and we the same number of intersecting classes.
+     * <p>
+     * The aim is to recover, for instance,  if skin is homologous, 
+     * and limb is homologous to fin, then skin of limb is homologous to skin of fin. 
+     * <p>
+     * The provided mapping from entity IDs to annotations, grouped per intersecting class 
+     * ({@code entityIdsToAnnotsPerIntersectClass}), will be modified as a result 
+     * of the call to this method (optional operation). It stores the IDs of related entities 
+     * (key {@code Set<String>}), associated to the supporting annotations, grouped per 
+     * intersecting class (value {@code Set of Sets}). It must have been already seeded 
+     * with at least one inferred annotation.
+     * 
+     * @param entityIdsToAnnotsPerIntersectClass    A {@code Map} where keys are {@code Set}s 
+     *                                              of {@code String}s storing the IDs of 
+     *                                              homologous entities, the associated value 
+     *                                              being a {@code Set} of {@code Set}s, 
+     *                                              where each {@code Set} contains 
+     *                                              {@code CuratorAnnotationBean}s supporting 
+     *                                              the annotation, grouped per intersecting class.
+     *                                              This {@code Map} can be modified 
+     *                                              as a result of the call to this method.
+     * @param entityIdToAnnots                      A {@code Map} where keys are IDs of 
+     *                                              annotated entities, the associated value 
+     *                                              being a {@code Set} storing the 
+     *                                              {@code CuratorAnnotationBean}s using 
+     *                                              this entity (see 
+     *                                              {@link #getEntityToAnnotsMapping(Collection)}).
+     * @param intersectMapping                      A {@code Map} where keys are IDs of 
+     *                                              entities defined as the intersection 
+     *                                              of annotated classes, the associated value 
+     *                                              being a {@code Set} storing the IDs 
+     *                                              of the classes used in the IntersectionOf 
+     *                                              class expression (see 
+     *                                              {@link #getIntersectionOfMapping(Map)}).
+     */
+    private void loadEntityIdsToAnnotsPerIntersectClass(
+        Map<Set<String>, Set<Set<CuratorAnnotationBean>>> entityIdsToAnnotsPerIntersectClass,
+        Map<String, Set<CuratorAnnotationBean>> entityIdToAnnots, 
+        Map<String, Set<String>> intersectMapping) {
+        log.entry(entityIdsToAnnotsPerIntersectClass, entityIdToAnnots, intersectMapping);
+        
+        //try to find a mapping to already inferred annotation for each class 
+        //defined using logical constraints.
+        for (Entry<String, Set<String>> intersectEntry: intersectMapping.entrySet()) {
+            log.trace("Trying to find mapping to already inferred annotation for class {}", 
+                    intersectEntry.getKey());
+            
+            //if class already examined before calling this method, skip.
+            if (entityIdsToAnnotsPerIntersectClass.containsKey(
+                    new HashSet<String>(Arrays.asList(intersectEntry.getKey())))) {
+                log.trace("Already examined, skip.");
+                continue;
+            }
+            
+            //try to find a mapping to any already defined inferred annotation
+            Map<Set<String>, Set<Set<CuratorAnnotationBean>>> newMappings = 
+                    new HashMap<Set<String>, Set<Set<CuratorAnnotationBean>>>();
+            for (Entry<Set<String>, Set<Set<CuratorAnnotationBean>>> existingMapping: 
+                entityIdsToAnnotsPerIntersectClass.entrySet()) {
+                log.trace("Test existing inferred annotation: {}", existingMapping);
+                
+                Set<Set<CuratorAnnotationBean>> commonAnnotsPerIntersectClass = 
+                        new HashSet<Set<CuratorAnnotationBean>>();
+                Set<CuratorAnnotationBean> annotsAlreadyUsed = 
+                        new HashSet<CuratorAnnotationBean>();
+                
+                intersectClassId: for (String intersectClassId: intersectEntry.getValue()) {
+                    log.trace("Test intersect class {}", intersectClassId);
+                    for (Set<CuratorAnnotationBean> existingAnnotsGroup: 
+                        existingMapping.getValue()) {
+                        Set<CuratorAnnotationBean> commonAnnots = 
+                                new HashSet<CuratorAnnotationBean>();
+                        commonAnnots.addAll(existingAnnotsGroup);
+                        commonAnnots.removeAll(annotsAlreadyUsed);
+                        commonAnnots.retainAll(entityIdToAnnots.get(intersectClassId));
+                        if (!commonAnnots.isEmpty()) {
+                            log.trace("Common valid annotations found: {}", commonAnnots);
+                            annotsAlreadyUsed.addAll(commonAnnots);
+                            commonAnnotsPerIntersectClass.add(commonAnnots);
+                            //find valid common annotations for this intersect class, 
+                            //try directly next intersect class.
+                            continue intersectClassId;
+                        }
+                    }
+                }
+                //If we found some common annotations for each intersecting class, 
+                //we have a mapping
+                if (commonAnnotsPerIntersectClass.size() == existingMapping.getValue().size()) {
+                    log.trace("New mapping found from {} to existing mapping {}", 
+                            intersectEntry.getKey(), existingMapping.getKey());
+                    Set<String> entityIds = new HashSet<String>(existingMapping.getKey());
+                    entityIds.add(intersectEntry.getKey());
+                    newMappings.put(entityIds, commonAnnotsPerIntersectClass);
+                }
+            }
+            assert newMappings.size() == 0 || Collections.disjoint(newMappings.keySet(), 
+                    entityIdsToAnnotsPerIntersectClass.keySet());
+            entityIdsToAnnotsPerIntersectClass.putAll(newMappings);
+        }
+        
+        log.exit();
+    }
+    
+    /**
+     * Search for annotations to each provided intersect class valid in the provided taxon 
+     * or its ancestors. For each intersect class, we will only retain annotations 
+     * to the taxon that is the leaf of the valid taxa (taxa corresponding to
+     * the provided taxon or its ancestors). Retained annotations will be grouped 
+     * per intersecting class. If it is not possible to retrieve annotations valid 
+     * for the provided taxon for each intersecting class, this method returns {@code null}.
+     * 
+     * @param entityIdToAnnots      A {@code Map} where keys are IDs of annotated entities, 
+     *                              the associated value being a {@code Set} storing 
+     *                              the {@code CuratorAnnotationBean}s using this entity 
+     *                              (see {@link #getEntityToAnnotsMapping(Collection)}).
+     * @param intersectClassIds     A {@code Set} of {@code String}s that are the IDs of entities 
+     *                              with annotations, that are used to define logical constraints 
+     *                              of a class through IntersectionOf class expression 
+     *                              (see {@link #getIntersectionOfMapping(Map)}).
+     * @param taxId                 An {@code int} that is the ID of a taxon currently 
+     *                              considered to infer new annotations for a class, 
+     *                              using its logical constraints.
+     * @param taxAndAncestorsIds    A {@code Set} of {@code Integer}s containing the IDs 
+     *                              of the ancestors of the taxon with ID {@code taxId}, 
+     *                              as well as {@code taxId} itself (see 
+     *                              {@link #getTaxonToSelfAndAncestorMapping(Collection)}).
+     * @return                      A {@code Set} of {@code Set}s, where each {@code Set} 
+     *                              groups the valid annotations related to one 
+     *                              of the intersect classes. So there will be as many 
+     *                              {@code Set}s as intersect classes. If it is not possible 
+     *                              to retrieve annotations valid for {@code taxId} 
+     *                              for each class in {@code intersectClassIds}, 
+     *                              this returned value is {@code null}.
+     */
+    private Set<Set<CuratorAnnotationBean>> getAnnotsToIntersectClasses(
+            Map<String, Set<CuratorAnnotationBean>> entityIdToAnnots, 
+            Set<String> intersectClassIds, int taxId, Set<Integer> taxAndAncestorsIds) {
+        log.entry(entityIdToAnnots, intersectClassIds, taxId, taxAndAncestorsIds);
+        
+        Set<Set<CuratorAnnotationBean>> annotsPerIntersectClass = 
+                new HashSet<Set<CuratorAnnotationBean>>();
+        OntologyUtils taxOntUtils = new OntologyUtils(taxOntWrapper);
+        
+        for (String intersectClsId: intersectClassIds) {
+            log.trace("Checking annotations available from intersect class {} in taxon {}", 
+                    intersectClsId, taxId);
+            
+            //first, retrieve the taxa of annotations to the iterated taxon, 
+            //or its ancestors
+            Set<OWLClass> intersectTaxCls = new HashSet<OWLClass>();
+            for (CuratorAnnotationBean relatedAnnot: 
+                entityIdToAnnots.get(intersectClsId)) {
+                log.trace("Trying to use taxon of annotation {}", relatedAnnot);
+                if (!taxAndAncestorsIds.contains(relatedAnnot.getNcbiTaxonId())) {
+                    log.trace("Annotation discarded because not in related taxon: {}", 
+                            relatedAnnot);
+                    continue;
+                }
+                intersectTaxCls.add(taxOntWrapper.getOWLClassByIdentifier(
+                        OntologyUtils.getTaxOntologyId(relatedAnnot.getNcbiTaxonId())));
+            }
+            
+            //now, we will only consider annotations to the leaf valid taxon
+            taxOntUtils.retainLeafClasses(intersectTaxCls, null);
+            assert intersectTaxCls.size() <= 1;
+            //if no annotations related to the iterated taxon for this intersect class, 
+            //no annotation will be inferred for this taxon.
+            if (intersectTaxCls.size() == 0) {
+                log.trace("No annotation for intersect class {} in related taxa of {}.", 
+                        intersectClsId, taxId);
+                return log.exit(null);
+            }
+            
+            int leafTaxId = OntologyUtils.getTaxNcbiId(taxOntWrapper.getIdentifier(
+                    intersectTaxCls.iterator().next()));
+            log.trace("Annotations to intersect class {} and taxon ID {} will be considered", 
+                    intersectClsId, leafTaxId);
+            
+            //OK, now we retrieve annotations for the current intersect class, 
+            //annotated to the leaf taxon retained; 
+            Set<CuratorAnnotationBean> relatedAnnots = new HashSet<CuratorAnnotationBean>();
+            for (CuratorAnnotationBean relatedAnnot: entityIdToAnnots.get(intersectClsId)) {
+                if (relatedAnnot.getNcbiTaxonId() != leafTaxId) {
+                    continue;
+                }
+                log.trace("Annotation considered: {}", relatedAnnot);
+                relatedAnnots.add(relatedAnnot);
+            }
+            assert !relatedAnnots.isEmpty();
+            annotsPerIntersectClass.add(relatedAnnots);
+        }
+
+        log.trace("Annotations per intersect classes: {}", annotsPerIntersectClass);
+        assert annotsPerIntersectClass.size() == intersectClassIds.size();
+        
+        return log.exit(annotsPerIntersectClass);
     }
     
     /**

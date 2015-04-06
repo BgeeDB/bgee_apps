@@ -99,7 +99,8 @@ public class SimilarityAnnotation {
      * the labels associated to IDs, as we will retrieve them directly from ontologies anyway; 
      * also, the title and the ID of references are mixed in the same column in curator file
      * (we only override {@link #setRefId(String)} and {@link #setRefTitle(String)} 
-     * for this reason).
+     * for this reason). Also, {@code equals}, {@code hashCode}, and {@code toString} 
+     * methods are overridden to discard unused attributes.
      * 
      * @author Frederic Bastian
      * @version Bgee 13 Mar. 2015
@@ -185,6 +186,147 @@ public class SimilarityAnnotation {
         @Override
         public void setRefTitle(String refTitle) {
             //nothing here, the title is set when calling setRefId
+        }
+        
+        /* (non-Javadoc)
+         * @see java.lang.Object#hashCode()
+         */
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((this.getCioId() == null) ? 0 : this.getCioId().hashCode());
+            result = prime * result
+                    + ((this.getEntityIds() == null) ? 0 : this.getEntityIds() .hashCode());
+            result = prime * result + ((this.getHomId() == null) ? 0 : this.getHomId().hashCode());
+            result = prime * result + this.getNcbiTaxonId();
+            result = prime * result + (this.isNegated() ? 1231 : 1237);
+            result = prime
+                    * result
+                    + ((this.getSupportingText() == null) ? 0 : this.getSupportingText().hashCode());
+            result = prime * result
+                    + ((this.getAssignedBy() == null) ? 0 : this.getAssignedBy().hashCode());
+            result = prime * result
+                    + ((this.getCurationDate() == null) ? 0 : this.getCurationDate().hashCode());
+            result = prime * result
+                    + ((this.getCurator() == null) ? 0 : this.getCurator().hashCode());
+            result = prime * result + ((getEcoId() == null) ? 0 : getEcoId().hashCode());
+            result = prime * result + ((getRefId() == null) ? 0 : getRefId().hashCode());
+            result = prime * result
+                    + ((getRefTitle() == null) ? 0 : getRefTitle().hashCode());
+            return result;
+        }
+        /* (non-Javadoc)
+         * @see java.lang.Object#equals(java.lang.Object)
+         */
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (!super.equals(obj)) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            CuratorAnnotationBean other = (CuratorAnnotationBean) obj;
+            if (getCioId() == null) {
+                if (other.getCioId() != null) {
+                    return false;
+                }
+            } else if (!getCioId().equals(other.getCioId())) {
+                return false;
+            }
+            if (getEntityIds() == null) {
+                if (other.getEntityIds() != null) {
+                    return false;
+                }
+            } else if (!getEntityIds().equals(other.getEntityIds())) {
+                return false;
+            }
+            if (getHomId() == null) {
+                if (other.getHomId() != null) {
+                    return false;
+                }
+            } else if (!getHomId().equals(other.getHomId())) {
+                return false;
+            }
+            if (getNcbiTaxonId() != other.getNcbiTaxonId()) {
+                return false;
+            }
+            if (isNegated() != other.isNegated()) {
+                return false;
+            }
+            if (getSupportingText() == null) {
+                if (other.getSupportingText() != null) {
+                    return false;
+                }
+            } else if (!getSupportingText().equals(other.getSupportingText())) {
+                return false;
+            }
+            if (getAssignedBy() == null) {
+                if (other.getAssignedBy() != null) {
+                    return false;
+                }
+            } else if (!getAssignedBy().equals(other.getAssignedBy())) {
+                return false;
+            }
+            if (getCurationDate() == null) {
+                if (other.getCurationDate() != null) {
+                    return false;
+                }
+            } else if (!getCurationDate().equals(other.getCurationDate())) {
+                return false;
+            }
+            if (getCurator() == null) {
+                if (other.getCurator() != null) {
+                    return false;
+                }
+            } else if (!getCurator().equals(other.getCurator())) {
+                return false;
+            }
+            if (getEcoId() == null) {
+                if (other.getEcoId() != null) {
+                    return false;
+                }
+            } else if (!getEcoId().equals(other.getEcoId())) {
+                return false;
+            }
+            if (getRefId() == null) {
+                if (other.getRefId() != null) {
+                    return false;
+                }
+            } else if (!getRefId().equals(other.getRefId())) {
+                return false;
+            }
+            if (getRefTitle() == null) {
+                if (other.getRefTitle() != null) {
+                    return false;
+                }
+            } else if (!getRefTitle().equals(other.getRefTitle())) {
+                return false;
+            }
+            return true;
+        }
+        /* (non-Javadoc)
+         * @see java.lang.Object#toString()
+         */
+        @Override
+        public String toString() {
+            return "CuratorAnnotationBean [" 
+                    + "homId=" + getHomId() 
+                    + ", entityIds=" + getEntityIds()
+                    + ", ncbiTaxonId=" + getNcbiTaxonId()
+                    + ", negated=" + isNegated()
+                    + ", cioId=" + getCioId()  
+                    + ", supportingText=" + getSupportingText()
+                    + ", refId=" + getRefId() 
+                    + ", refTitle=" + getRefTitle() 
+                    + ", ecoId=" + getEcoId() 
+                    + ", assignedBy=" + getAssignedBy() 
+                    + ", curator=" + getCurator() 
+                    + ", curationDate=" + getCurationDate() + "]";
         }
     }
 
@@ -1781,8 +1923,22 @@ public class SimilarityAnnotation {
         log.entry(rawAnnots, uberonOntWrapper);
     }
     
+    /**
+     * Infer new annotations from transformation_of relations. This method will examined 
+     * transformation_of relations, in the Uberon ontology provided at instantiation, 
+     * outgoing from or incoming to annotated classes, to generate new annotations 
+     * for precursor or degeneration of entities annotated. This will also try 
+     * to make the inference for multiple entities annotations.
+     * 
+     * @param annots    A {@code Collection} of {@code CuratorAnnotationBean}s 
+     *                  that are the annotations to used to infer new annotations.
+     * @return          A {@code Set} of {@code CuratorAnnotationBean}s that are 
+     *                  the new annotations inferred from logical constraints.
+     * @throws IllegalStateException    If the Uberon ontology provided at instantiation 
+     *                                  does not contain a transformation_of relation type.
+     */
     private Set<CuratorAnnotationBean> inferAnnotationsFromTransformationOf(
-            Collection<CuratorAnnotationBean> annots) throws IllegalArgumentException {
+            Collection<CuratorAnnotationBean> annots) throws IllegalStateException {
         log.entry(annots);
         
         log.info("Inferring annotations based on transformation_of relations...");
@@ -1794,7 +1950,7 @@ public class SimilarityAnnotation {
         OntologyUtils uberonUtils = new OntologyUtils(uberonOntWrapper);
         Set<OWLObjectPropertyExpression> transfOfRels = uberonUtils.getTransformationOfProps();
         if (transfOfRels.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException("The Uberon ontology provided " +
+            throw log.throwing(new IllegalStateException("The Uberon ontology provided " +
                     "did not contain any transformation_of relations."));
         }
         
@@ -2037,8 +2193,22 @@ public class SimilarityAnnotation {
         return log.exit(existingAnnots);
     }
 
+    /**
+     * Infer new annotations fron OWL class logical constraints. This methods 
+     * will examine OWL class in the Uberon ontology provided at instantiation, 
+     * to identify classes defined as the intersection of annotated classes. 
+     * This methods will generate all possible annotations, positive and negative, 
+     * for all possible taxa, based on the annotations to intersect classes. It will also 
+     * infer multiple entities annotations, to infer, for instance, that if skin is homologous, 
+     * and limb is homologous to fin, then skin of limb is homologous to skin of fin.
+     * 
+     * @param annots    A {@code Collection} of {@code CuratorAnnotationBean}s 
+     *                  that are the annotations to used to infer new annotations.
+     * @return          A {@code Set} of {@code CuratorAnnotationBean}s that are 
+     *                  the new annotations inferred from logical constraints.
+     */
     private Set<CuratorAnnotationBean> inferAnnotationsFromLogicalConstraints(
-            Collection<CuratorAnnotationBean> annots) throws IllegalArgumentException {
+            Collection<CuratorAnnotationBean> annots) {
         log.entry(annots);
         log.info("Inferring annotations based on logical constraints...");
 
@@ -2056,7 +2226,7 @@ public class SimilarityAnnotation {
         //this will allow faster inferences.
         Map<String, Set<CuratorAnnotationBean>> entityIdToAnnots = 
                 this.getEntityToAnnotsMapping(filteredAnnots);
-        //We also need a mapping of the taxon ID to to the IDs of their ancestors 
+        //We also need a mapping of the taxon IDs used to the IDs of their ancestors 
         //(and to their own ID for reflexivity)
         Map<Integer, Set<Integer>> taxToSelfAndAncestors = 
                 this.getTaxonToSelfAndAncestorMapping(filteredAnnots);
@@ -2074,7 +2244,7 @@ public class SimilarityAnnotation {
         Set<CuratorAnnotationBean> inferredAnnots = new HashSet<CuratorAnnotationBean>();
         
         for (Entry<String, Set<String>> intersectEntry: intersectMapping.entrySet()) {
-            log.trace("Try to infer annotation for class {} based on intersecting classes {}", 
+            log.trace("Try to infer annotations for class {} based on intersecting classes {}", 
                     intersectEntry.getKey(), intersectEntry.getValue());
             
             //first we retrieve the taxa used in the related annotations.
@@ -2098,7 +2268,7 @@ public class SimilarityAnnotation {
                 //This is why we use a Set of Sets.
                 //We search for annotations to each intersect class, valid 
                 //in the iterated taxon or its ancestors; and for each intersect class, 
-                //we only retain annotations to its leaf valid taxon.
+                //we only retain annotations to the leaf valid taxon.
                 Set<Set<CuratorAnnotationBean>> annotsPerIntersectClass = 
                         this.getAnnotsToIntersectClasses(entityIdToAnnots, 
                                 intersectEntry.getValue(), 
@@ -2113,7 +2283,7 @@ public class SimilarityAnnotation {
                 //now we try to find classes with same intersect annotations, to be able 
                 //to recover, e.g.,  if skin is homologous, and limb is homologous to fin, 
                 //then skin of limb is homologous to skin of fin. 
-                //We store the IDs of related entities (key Set<String>), associated to 
+                //We store the IDs of homologous entities (key Set<String>), associated to 
                 //their common annotations, grouped per intersecting class (value Set of Sets).
                 Map<Set<String>, Set<Set<CuratorAnnotationBean>>> entityIdsToAnnotsPerIntersectClass = 
                         new HashMap<Set<String>, Set<Set<CuratorAnnotationBean>>>();
@@ -2121,7 +2291,7 @@ public class SimilarityAnnotation {
                 entityIdsToAnnotsPerIntersectClass.put(
                         new HashSet<String>(Arrays.asList(intersectEntry.getKey())), 
                         annotsPerIntersectClass);
-                //try to infer new annotations
+                //try to infer new mappings
                 this.loadEntityIdsToAnnotsPerIntersectClass(entityIdsToAnnotsPerIntersectClass, 
                         entityIdToAnnots, intersectMapping);
                 
@@ -2141,6 +2311,9 @@ public class SimilarityAnnotation {
                     List<String> entityIds = new ArrayList<String>(mapping.getKey());
                     Collections.sort(entityIds);
                     
+                    //here, we retrieve a positive and/or a negative annotation 
+                    //(so, between 1 and 2 new annotations inferred for this mapping 
+                    //in this taxon)
                     for (CuratorAnnotationBean inferredInfo: 
                         this.getConfAndSupportTextFromLogicalConstraints(
                                 mapping.getValue())) {
@@ -2158,10 +2331,33 @@ public class SimilarityAnnotation {
             }
         }
         
-        //now, we filter annotations for which a same annotation with more entities exist
+        //now, we filter annotations for which a same annotation with more entities exists
+        this.filterRedundantAnnotations(inferredAnnots);
+        
+
+        log.info("Done inferring annotations based on logical constraints, {} annotations inferred.", 
+                inferredAnnots.size());
+        return log.exit(inferredAnnots);
+    }
+    
+    /**
+     * Remove redundant annotations from {@code annots}. This method removes 
+     * annotations for which it exist an annotation with same HOM ID, taxon ID, 
+     * negation status, CIO ID, supporting text, that includes all its entity IDs and more.
+     * {@code annots} will be modified as a result of the call to this method 
+     * (optional operation).
+     * 
+     * @param annots    A {@code Set} of {@code CuratorAnnotationBean}s to be filtered 
+     *                  for redundant annotations. This {@code Set} can be modified 
+     *                  as a result of the call to this method.
+     */
+    private void filterRedundantAnnotations(Set<CuratorAnnotationBean> annots) {
+        log.entry(annots);
+        log.trace("Removing redundant annotations...");
+        
         Set<CuratorAnnotationBean> toRemove = new HashSet<CuratorAnnotationBean>();
-        annot: for (CuratorAnnotationBean annot: inferredAnnots) {
-            for (CuratorAnnotationBean annot2: inferredAnnots) {
+        annot: for (CuratorAnnotationBean annot: annots) {
+            for (CuratorAnnotationBean annot2: annots) {
                 if (annot.equals(annot2) || toRemove.contains(annot2)) {
                     continue;
                 }
@@ -2179,12 +2375,11 @@ public class SimilarityAnnotation {
                 }     
             }
         }
-        inferredAnnots.removeAll(toRemove);
+        annots.removeAll(toRemove);
         
-
-        log.info("Done inferring annotations based on logical constraints, {} annotations inferred.", 
-                inferredAnnots.size());
-        return log.exit(inferredAnnots);
+        log.trace("Done removing redundant annotations, {} annotations removed", 
+                toRemove.size());
+        log.exit();
     }
     
     /**
@@ -2254,25 +2449,27 @@ public class SimilarityAnnotation {
                 
                 Set<Set<CuratorAnnotationBean>> commonAnnotsPerIntersectClass = 
                         new HashSet<Set<CuratorAnnotationBean>>();
-                Set<CuratorAnnotationBean> annotsAlreadyUsed = 
-                        new HashSet<CuratorAnnotationBean>();
                 
-                intersectClassId: for (String intersectClassId: intersectEntry.getValue()) {
-                    log.trace("Test intersect class {}", intersectClassId);
-                    for (Set<CuratorAnnotationBean> existingAnnotsGroup: 
-                        existingMapping.getValue()) {
+                annotGroup: for (Set<CuratorAnnotationBean> existingAnnotsGroup: 
+                    existingMapping.getValue()) {
+                    Set<String> clsIdsUsed = new HashSet<String>();
+                    for (String intersectClassId: intersectEntry.getValue()) {
+                        if (clsIdsUsed.contains(intersectClassId)) {
+                            continue;
+                        }
+                        log.trace("Test intersect class {}", intersectClassId);
+                        
                         Set<CuratorAnnotationBean> commonAnnots = 
                                 new HashSet<CuratorAnnotationBean>();
                         commonAnnots.addAll(existingAnnotsGroup);
-                        commonAnnots.removeAll(annotsAlreadyUsed);
                         commonAnnots.retainAll(entityIdToAnnots.get(intersectClassId));
                         if (!commonAnnots.isEmpty()) {
                             log.trace("Common valid annotations found: {}", commonAnnots);
-                            annotsAlreadyUsed.addAll(commonAnnots);
                             commonAnnotsPerIntersectClass.add(commonAnnots);
+                            clsIdsUsed.add(intersectClassId);
                             //find valid common annotations for this intersect class, 
-                            //try directly next intersect class.
-                            continue intersectClassId;
+                            //try directly next group of annotation.
+                            continue annotGroup;
                         }
                     }
                 }
@@ -2297,7 +2494,7 @@ public class SimilarityAnnotation {
     /**
      * Search for annotations to each provided intersect class valid in the provided taxon 
      * or its ancestors. For each intersect class, we will only retain annotations 
-     * to the taxon that is the leaf of the valid taxa (taxa corresponding to
+     * to the taxon that is the leaf of the valid taxa considered (taxa corresponding to
      * the provided taxon or its ancestors). Retained annotations will be grouped 
      * per intersecting class. If it is not possible to retrieve annotations valid 
      * for the provided taxon for each intersecting class, this method returns {@code null}.
@@ -2352,10 +2549,7 @@ public class SimilarityAnnotation {
                 intersectTaxCls.add(taxOntWrapper.getOWLClassByIdentifier(
                         OntologyUtils.getTaxOntologyId(relatedAnnot.getNcbiTaxonId())));
             }
-            
-            //now, we will only consider annotations to the leaf valid taxon
-            taxOntUtils.retainLeafClasses(intersectTaxCls, null);
-            assert intersectTaxCls.size() <= 1;
+
             //if no annotations related to the iterated taxon for this intersect class, 
             //no annotation will be inferred for this taxon.
             if (intersectTaxCls.size() == 0) {
@@ -2364,6 +2558,9 @@ public class SimilarityAnnotation {
                 return log.exit(null);
             }
             
+            //now, we will only consider annotations to the leaf valid taxon
+            taxOntUtils.retainLeafClasses(intersectTaxCls, null);
+            assert intersectTaxCls.size() == 1;
             int leafTaxId = OntologyUtils.getTaxNcbiId(taxOntWrapper.getIdentifier(
                     intersectTaxCls.iterator().next()));
             log.trace("Annotations to intersect class {} and taxon ID {} will be considered", 
@@ -2373,17 +2570,18 @@ public class SimilarityAnnotation {
             //annotated to the leaf taxon retained; 
             Set<CuratorAnnotationBean> relatedAnnots = new HashSet<CuratorAnnotationBean>();
             for (CuratorAnnotationBean relatedAnnot: entityIdToAnnots.get(intersectClsId)) {
-                if (relatedAnnot.getNcbiTaxonId() != leafTaxId) {
-                    continue;
+                if (relatedAnnot.getNcbiTaxonId() == leafTaxId) {
+                    log.trace("Annotation considered: {}", relatedAnnot);
+                    relatedAnnots.add(relatedAnnot);
                 }
-                log.trace("Annotation considered: {}", relatedAnnot);
-                relatedAnnots.add(relatedAnnot);
             }
             assert !relatedAnnots.isEmpty();
             annotsPerIntersectClass.add(relatedAnnots);
         }
 
         log.trace("Annotations per intersect classes: {}", annotsPerIntersectClass);
+        //if we couldn't find valid annotations for each intersect class, we should 
+        //already have returned null in the previous loop.
         assert annotsPerIntersectClass.size() == intersectClassIds.size();
         
         return log.exit(annotsPerIntersectClass);
@@ -2546,14 +2744,13 @@ public class SimilarityAnnotation {
         log.entry(annotsPerIntersectClass);
         
         Set<CuratorAnnotationBean> posAndNegAnnot = new HashSet<CuratorAnnotationBean>();
-        //determine the confidence level and supporting text: for each intersect class, 
+        //To determine the confidence level: for each intersect class, 
         //we determine the best confidence level (either from positive, or from negative annots); 
-        //then we take the lowest confidence level over all intersect classes.
         boolean positiveTested = false;
         boolean negativeTested = false;
         posNegTest: while (!positiveTested || !negativeTested) {
             //to determine confidence term
-            Set<OWLClass> bestConfPerIntersectClass = new HashSet<OWLClass>();
+            Set<OWLClass> bestConfsPerIntersectClass = new HashSet<OWLClass>();
             //to determine supporting text
             Set<CuratorAnnotationBean> annotationsUsed = new HashSet<CuratorAnnotationBean>();
             //to determine negation status
@@ -2575,9 +2772,10 @@ public class SimilarityAnnotation {
                     }
                     if (confs.isEmpty()) {
                         log.trace("No positive annotations for each intersect class.");
+                        bestConfsPerIntersectClass.clear();
                         continue posNegTest;
                     }
-                    bestConfPerIntersectClass.add(
+                    bestConfsPerIntersectClass.add(
                             cioWrapper.getBestTermWithConfidenceLevel(confs));
                 }
                 log.trace("Positive annotation will be created");
@@ -2603,7 +2801,7 @@ public class SimilarityAnnotation {
                     }
                     assert !posAnnots.isEmpty() || !negAnnots.isEmpty();
                     if (!confs.isEmpty()) {
-                        bestConfPerIntersectClass.add(
+                        bestConfsPerIntersectClass.add(
                             cioWrapper.getBestTermWithConfidenceLevel(confs));
                     }
                     if (!negAnnots.isEmpty()) {
@@ -2612,7 +2810,7 @@ public class SimilarityAnnotation {
                         annotationsUsed.addAll(posAnnots);
                     }
                 }
-                if (bestConfPerIntersectClass.isEmpty()) {
+                if (bestConfsPerIntersectClass.isEmpty()) {
                     log.trace("No related negative annotations.");
                     continue posNegTest;
                 }
@@ -2624,10 +2822,10 @@ public class SimilarityAnnotation {
             //it is important to test 'bestConfPerIntersectClass' and not 'annotationsUsed', 
             //as 'annotationsUsed' can store some annotations even if no annotation 
             //can be inferred.
-            if (!bestConfPerIntersectClass.isEmpty()) {
+            if (!bestConfsPerIntersectClass.isEmpty()) {
                 assert !annotationsUsed.isEmpty();
                 log.trace("Creating info for new annotation from confidences: {} - annotations: {}", 
-                        bestConfPerIntersectClass, annotationsUsed);
+                        bestConfsPerIntersectClass, annotationsUsed);
                 
                 CuratorAnnotationBean newAnnot = new CuratorAnnotationBean();
                 newAnnot.setNegated(ispositiveTested);
@@ -2637,10 +2835,10 @@ public class SimilarityAnnotation {
                 //we take the best confidence level from supporting negative annotations
                 if (ispositiveTested) {
                     newAnnot.setCioId(cioWrapper.getOWLGraphWrapper().getIdentifier(
-                        cioWrapper.getLowestTermWithConfidenceLevel(bestConfPerIntersectClass)));
+                        cioWrapper.getLowestTermWithConfidenceLevel(bestConfsPerIntersectClass)));
                 } else {
                     newAnnot.setCioId(cioWrapper.getOWLGraphWrapper().getIdentifier(
-                            cioWrapper.getBestTermWithConfidenceLevel(bestConfPerIntersectClass)));
+                            cioWrapper.getBestTermWithConfidenceLevel(bestConfsPerIntersectClass)));
                 }
                 
                 //generate supporting text from supporting annotations
@@ -2671,7 +2869,7 @@ public class SimilarityAnnotation {
                         + "using annotations to same HOM ID and: ";
                 boolean firstIteration = true;
                 for (String textElement: textElements) {
-                    if (firstIteration) {
+                    if (!firstIteration) {
                         supportingText += " - ";
                     }
                     supportingText += textElement;
@@ -2683,12 +2881,12 @@ public class SimilarityAnnotation {
                 posAndNegAnnot.add(newAnnot);
             }
         }
-        assert posAndNegAnnot.size() <= 2;
         
         if (posAndNegAnnot.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("The annotations provided "
                     + "did not allow to generate neither a positive nor a negative annotation"));
         }
+        assert posAndNegAnnot.size() == 1 || posAndNegAnnot.size() == 2;
         
         return log.exit(posAndNegAnnot);
     }

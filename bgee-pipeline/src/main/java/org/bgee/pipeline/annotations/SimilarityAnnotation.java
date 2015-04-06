@@ -82,7 +82,6 @@ import owltools.graph.OWLGraphWrapper;
  * @version Bgee 13 Apr. 2015
  * @since Bgee 13
  */
-//TODO: do not forget to generate annotations based on transformation_of relations.
 public class SimilarityAnnotation {
     /**
      * {@code Logger} of the class.
@@ -3320,161 +3319,161 @@ public class SimilarityAnnotation {
         return log.exit(sortedAnnots);
     }
 
-    public void generateFiles(String rawAnnotFile, Set<GeneratedFileType> fileTypes, 
-            String taxonConstraintsFile, Map<String, Set<Integer>> idStartsToOverridenTaxonIds, 
-            String uberonOntFile, String taxOntFile, 
-            String homOntFile, String ecoOntFile, String confOntFile, String outputDirectory) 
-            throws FileNotFoundException, IOException, UnknownOWLOntologyException, 
-            OWLOntologyCreationException, OBOFormatParserException {
-        
-        log.entry(rawAnnotFile, fileTypes, taxonConstraintsFile, idStartsToOverridenTaxonIds, 
-                uberonOntFile, taxOntFile, homOntFile, ecoOntFile, confOntFile, 
-                outputDirectory);
-        
-        OWLGraphWrapper uberonOntWrapper = new OWLGraphWrapper(
-                OntologyUtils.loadOntology(uberonOntFile));
-        OWLGraphWrapper taxOntWrapper = new OWLGraphWrapper(
-                OntologyUtils.loadOntology(taxOntFile));
-        OWLGraphWrapper ecoOntWrapper = new OWLGraphWrapper(
-                OntologyUtils.loadOntology(ecoOntFile));
-        OWLGraphWrapper homOntWrapper = new OWLGraphWrapper(
-                OntologyUtils.loadOntology(homOntFile));
-        OWLGraphWrapper confOntWrapper = new OWLGraphWrapper(
-                OntologyUtils.loadOntology(confOntFile));
-        
-        this.generateFiles(this.extractAnnotations(rawAnnotFile, GeneratedFileType.RAW), 
-                fileTypes, 
-                TaxonConstraints.extractTaxonConstraints(taxonConstraintsFile, 
-                        idStartsToOverridenTaxonIds), 
-                TaxonConstraints.extractTaxonIds(taxonConstraintsFile), 
-                uberonOntWrapper, taxOntWrapper, homOntWrapper, ecoOntWrapper, 
-                confOntWrapper, outputDirectory);
-        
-        log.exit();
-    }
-
-    public void generateFiles(List<Map<String, Object>> rawAnnots, 
-            Set<GeneratedFileType> fileTypes, 
-            Map<String, Set<Integer>> taxonConstraints, Set<Integer> taxonIds, 
-            OWLGraphWrapper uberonOntWrapper, OWLGraphWrapper taxOntWrapper, 
-            OWLGraphWrapper homOntWrapper, OWLGraphWrapper ecoOntWrapper, 
-            OWLGraphWrapper confOntWrapper, String outputDirectory)  {
-        log.entry(rawAnnots, fileTypes, taxonConstraints, taxonIds, uberonOntWrapper, 
-                taxOntWrapper, homOntWrapper, ecoOntWrapper, confOntWrapper, outputDirectory);
-        
-        
-        log.exit();
-    }
-    
-    /**
-     * Generates the proper annotations to be released, from the raw annotations 
-     * from curators, and write them into {@code outputFile}. This method will 
-     * perform all necessary checks, will obtain names corresponding to the IDs used, 
-     * will generate summary annotation lines using the "multiple evidences" 
-     * confidence codes for related annotations, will order the generated annotations 
-     * for easier diff between releases. And will write the annotations 
-     * in {@code outputFile}.
-     * 
-     * @param annotFile             A {@code String} that is the path to the raw 
-     *                              annotation file.
-     * @param taxonConstraintsFile  A {@code String} that is the path to the file 
-     *                              containing taxon constraints. 
-     *                              See {@link org.bgee.pipeline.uberon.TaxonConstraints}
-     * @param uberonOntFile         A {@code String} that is the path to the Uberon 
-     *                              ontology.
-     * @param taxOntFile            A {@code String} that is the path to the taxonomy 
-     *                              ontology.
-     * @param homOntFile            A {@code String} that is the path to the homology  
-     *                              and related concepts (HOM) ontology.
-     * @param ecoOntFile            A {@code String} that is the path to the ECO 
-     *                              ontology.
-     * @param confOntFile           A {@code String} that is the path to the confidence 
-     *                              information ontology.
-     * @param outputFile            A {@code String} that is the path to the output file.
-     * @throws FileNotFoundException
-     * @throws IllegalArgumentException
-     * @throws IOException
-     * @throws UnknownOWLOntologyException
-     * @throws OWLOntologyCreationException
-     */
-    //TODO: remove method after taking javadoc
-    public void generateReleaseFile(String annotFile, String taxonConstraintsFile, 
-            String uberonOntFile, String taxOntFile, String homOntFile, 
-            String ecoOntFile, String confOntFile, String outputFile) 
-            throws FileNotFoundException, IOException, UnknownOWLOntologyException, 
-            OWLOntologyCreationException, OBOFormatParserException {
-        log.entry(annotFile, taxonConstraintsFile, uberonOntFile, taxOntFile, 
-                homOntFile, ecoOntFile, confOntFile, outputFile);
-        
-        //get the annotations
-        List<Map<String, Object>> annotations = this.extractAnnotations(annotFile, true);
-        
-        //now, get all the information required to perform correctness checks 
-        //on the annotations, and to add additional information (names corresponding 
-        //to uberon IDs, etc).
-        Set<Integer> taxonIds = TaxonConstraints.extractTaxonIds(taxonConstraintsFile);
-        Map<String, Set<Integer>> taxonConstraints = 
-                TaxonConstraints.extractTaxonConstraints(taxonConstraintsFile);
-        OWLGraphWrapper uberonOntWrapper = new OWLGraphWrapper(
-                OntologyUtils.loadOntology(uberonOntFile));
-        OWLGraphWrapper taxOntWrapper = new OWLGraphWrapper(
-                OntologyUtils.loadOntology(taxOntFile));
-        OWLGraphWrapper ecoOntWrapper = new OWLGraphWrapper(
-                OntologyUtils.loadOntology(ecoOntFile));
-        OWLGraphWrapper homOntWrapper = new OWLGraphWrapper(
-                OntologyUtils.loadOntology(homOntFile));
-        OWLGraphWrapper confOntWrapper = new OWLGraphWrapper(
-                OntologyUtils.loadOntology(confOntFile));
-        
-        List<Map<String, Object>> properAnnots = this.generateReleaseData(annotations, 
-                taxonConstraints, taxonIds, uberonOntWrapper, taxOntWrapper, 
-                ecoOntWrapper, homOntWrapper, confOntWrapper);
-        //write to file
-        this.writeAnnotationsToFile(outputFile, properAnnots);
-        
-        log.exit();
-    }
-    
-    /**
-     * Write the annotations contained in {@code annotations} to the file {@code outputFile}, 
-     * that is of type {@code GeneratedFileType}, in a TSV file format.
-     * 
-     * @param outputFile    A {@code String} that is the path to the output file to be written.
-     * @param fileType      A {@code GeneratedFileType} defining what type of file is going 
-     *                      to be written. This allows to define headers, etc. 
-     * @param annotations   A {@code List} of {@code Map}s, where each {@code Map} 
-     *                      represents an annotation line.
-     * @throws IOException  If an error occurs while trying to write in the file.
-     */
-    private void writeAnnotationsToFile(String outputFile, GeneratedFileType fileType, 
-            List<Map<String, Object>> annotations) 
-                    throws IOException {
-        log.entry(outputFile, fileType, annotations);
-        
-        //write the file
-        String[] header = new String[] {HOM_COL_NAME, HOM_NAME_COL_NAME, 
-                ENTITY_COL_NAME, ENTITY_NAME_COL_NAME, QUALIFIER_COL_NAME, 
-                TAXON_COL_NAME, TAXON_NAME_COL_NAME, LINE_TYPE_COL_NAME, 
-                ECO_COL_NAME, ECO_NAME_COL_NAME, CONF_COL_NAME, CONF_NAME_COL_NAME, 
-                REF_COL_NAME, REF_TITLE_COL_NAME, SUPPORT_TEXT_COL_NAME, 
-                ASSIGN_COL_NAME, CURATOR_COL_NAME, DATE_COL_NAME};
-        CellProcessor[] processors = new CellProcessor[] {new NotNull(), new NotNull(), 
-                new NotNull(), new Optional(), new Optional(), 
-                new NotNull(), new NotNull(), new NotNull(), 
-                new Optional(), new Optional(), new NotNull(), new NotNull(), 
-                new Optional(), new Optional(), new Optional(), 
-                new NotNull(), new Optional(), new Optional(new FmtDate("yyyy-MM-dd"))};
-        try (ICsvMapWriter mapWriter = new CsvMapWriter(new FileWriter(outputFile),
-                Utils.TSVCOMMENTED)) {
-            
-            mapWriter.writeHeader(header);
-            for (Map<String, Object> annot: annotations) {
-                mapWriter.write(annot, header, processors);
-            }
-        }
-        
-        log.exit();
-    }
+//    public void generateFiles(String rawAnnotFile, Set<GeneratedFileType> fileTypes, 
+//            String taxonConstraintsFile, Map<String, Set<Integer>> idStartsToOverridenTaxonIds, 
+//            String uberonOntFile, String taxOntFile, 
+//            String homOntFile, String ecoOntFile, String confOntFile, String outputDirectory) 
+//            throws FileNotFoundException, IOException, UnknownOWLOntologyException, 
+//            OWLOntologyCreationException, OBOFormatParserException {
+//        
+//        log.entry(rawAnnotFile, fileTypes, taxonConstraintsFile, idStartsToOverridenTaxonIds, 
+//                uberonOntFile, taxOntFile, homOntFile, ecoOntFile, confOntFile, 
+//                outputDirectory);
+//        
+//        OWLGraphWrapper uberonOntWrapper = new OWLGraphWrapper(
+//                OntologyUtils.loadOntology(uberonOntFile));
+//        OWLGraphWrapper taxOntWrapper = new OWLGraphWrapper(
+//                OntologyUtils.loadOntology(taxOntFile));
+//        OWLGraphWrapper ecoOntWrapper = new OWLGraphWrapper(
+//                OntologyUtils.loadOntology(ecoOntFile));
+//        OWLGraphWrapper homOntWrapper = new OWLGraphWrapper(
+//                OntologyUtils.loadOntology(homOntFile));
+//        OWLGraphWrapper confOntWrapper = new OWLGraphWrapper(
+//                OntologyUtils.loadOntology(confOntFile));
+//        
+//        this.generateFiles(this.extractAnnotations(rawAnnotFile, GeneratedFileType.RAW), 
+//                fileTypes, 
+//                TaxonConstraints.extractTaxonConstraints(taxonConstraintsFile, 
+//                        idStartsToOverridenTaxonIds), 
+//                TaxonConstraints.extractTaxonIds(taxonConstraintsFile), 
+//                uberonOntWrapper, taxOntWrapper, homOntWrapper, ecoOntWrapper, 
+//                confOntWrapper, outputDirectory);
+//        
+//        log.exit();
+//    }
+//
+//    public void generateFiles(List<Map<String, Object>> rawAnnots, 
+//            Set<GeneratedFileType> fileTypes, 
+//            Map<String, Set<Integer>> taxonConstraints, Set<Integer> taxonIds, 
+//            OWLGraphWrapper uberonOntWrapper, OWLGraphWrapper taxOntWrapper, 
+//            OWLGraphWrapper homOntWrapper, OWLGraphWrapper ecoOntWrapper, 
+//            OWLGraphWrapper confOntWrapper, String outputDirectory)  {
+//        log.entry(rawAnnots, fileTypes, taxonConstraints, taxonIds, uberonOntWrapper, 
+//                taxOntWrapper, homOntWrapper, ecoOntWrapper, confOntWrapper, outputDirectory);
+//        
+//        
+//        log.exit();
+//    }
+//    
+//    /**
+//     * Generates the proper annotations to be released, from the raw annotations 
+//     * from curators, and write them into {@code outputFile}. This method will 
+//     * perform all necessary checks, will obtain names corresponding to the IDs used, 
+//     * will generate summary annotation lines using the "multiple evidences" 
+//     * confidence codes for related annotations, will order the generated annotations 
+//     * for easier diff between releases. And will write the annotations 
+//     * in {@code outputFile}.
+//     * 
+//     * @param annotFile             A {@code String} that is the path to the raw 
+//     *                              annotation file.
+//     * @param taxonConstraintsFile  A {@code String} that is the path to the file 
+//     *                              containing taxon constraints. 
+//     *                              See {@link org.bgee.pipeline.uberon.TaxonConstraints}
+//     * @param uberonOntFile         A {@code String} that is the path to the Uberon 
+//     *                              ontology.
+//     * @param taxOntFile            A {@code String} that is the path to the taxonomy 
+//     *                              ontology.
+//     * @param homOntFile            A {@code String} that is the path to the homology  
+//     *                              and related concepts (HOM) ontology.
+//     * @param ecoOntFile            A {@code String} that is the path to the ECO 
+//     *                              ontology.
+//     * @param confOntFile           A {@code String} that is the path to the confidence 
+//     *                              information ontology.
+//     * @param outputFile            A {@code String} that is the path to the output file.
+//     * @throws FileNotFoundException
+//     * @throws IllegalArgumentException
+//     * @throws IOException
+//     * @throws UnknownOWLOntologyException
+//     * @throws OWLOntologyCreationException
+//     */
+//    //TODO: remove method after taking javadoc
+//    public void generateReleaseFile(String annotFile, String taxonConstraintsFile, 
+//            String uberonOntFile, String taxOntFile, String homOntFile, 
+//            String ecoOntFile, String confOntFile, String outputFile) 
+//            throws FileNotFoundException, IOException, UnknownOWLOntologyException, 
+//            OWLOntologyCreationException, OBOFormatParserException {
+//        log.entry(annotFile, taxonConstraintsFile, uberonOntFile, taxOntFile, 
+//                homOntFile, ecoOntFile, confOntFile, outputFile);
+//        
+//        //get the annotations
+//        List<Map<String, Object>> annotations = this.extractAnnotations(annotFile, true);
+//        
+//        //now, get all the information required to perform correctness checks 
+//        //on the annotations, and to add additional information (names corresponding 
+//        //to uberon IDs, etc).
+//        Set<Integer> taxonIds = TaxonConstraints.extractTaxonIds(taxonConstraintsFile);
+//        Map<String, Set<Integer>> taxonConstraints = 
+//                TaxonConstraints.extractTaxonConstraints(taxonConstraintsFile);
+//        OWLGraphWrapper uberonOntWrapper = new OWLGraphWrapper(
+//                OntologyUtils.loadOntology(uberonOntFile));
+//        OWLGraphWrapper taxOntWrapper = new OWLGraphWrapper(
+//                OntologyUtils.loadOntology(taxOntFile));
+//        OWLGraphWrapper ecoOntWrapper = new OWLGraphWrapper(
+//                OntologyUtils.loadOntology(ecoOntFile));
+//        OWLGraphWrapper homOntWrapper = new OWLGraphWrapper(
+//                OntologyUtils.loadOntology(homOntFile));
+//        OWLGraphWrapper confOntWrapper = new OWLGraphWrapper(
+//                OntologyUtils.loadOntology(confOntFile));
+//        
+//        List<Map<String, Object>> properAnnots = this.generateReleaseData(annotations, 
+//                taxonConstraints, taxonIds, uberonOntWrapper, taxOntWrapper, 
+//                ecoOntWrapper, homOntWrapper, confOntWrapper);
+//        //write to file
+//        this.writeAnnotationsToFile(outputFile, properAnnots);
+//        
+//        log.exit();
+//    }
+//    
+//    /**
+//     * Write the annotations contained in {@code annotations} to the file {@code outputFile}, 
+//     * that is of type {@code GeneratedFileType}, in a TSV file format.
+//     * 
+//     * @param outputFile    A {@code String} that is the path to the output file to be written.
+//     * @param fileType      A {@code GeneratedFileType} defining what type of file is going 
+//     *                      to be written. This allows to define headers, etc. 
+//     * @param annotations   A {@code List} of {@code Map}s, where each {@code Map} 
+//     *                      represents an annotation line.
+//     * @throws IOException  If an error occurs while trying to write in the file.
+//     */
+//    private void writeAnnotationsToFile(String outputFile, GeneratedFileType fileType, 
+//            List<Map<String, Object>> annotations) 
+//                    throws IOException {
+//        log.entry(outputFile, fileType, annotations);
+//        
+//        //write the file
+//        String[] header = new String[] {HOM_COL_NAME, HOM_NAME_COL_NAME, 
+//                ENTITY_COL_NAME, ENTITY_NAME_COL_NAME, QUALIFIER_COL_NAME, 
+//                TAXON_COL_NAME, TAXON_NAME_COL_NAME, LINE_TYPE_COL_NAME, 
+//                ECO_COL_NAME, ECO_NAME_COL_NAME, CONF_COL_NAME, CONF_NAME_COL_NAME, 
+//                REF_COL_NAME, REF_TITLE_COL_NAME, SUPPORT_TEXT_COL_NAME, 
+//                ASSIGN_COL_NAME, CURATOR_COL_NAME, DATE_COL_NAME};
+//        CellProcessor[] processors = new CellProcessor[] {new NotNull(), new NotNull(), 
+//                new NotNull(), new Optional(), new Optional(), 
+//                new NotNull(), new NotNull(), new NotNull(), 
+//                new Optional(), new Optional(), new NotNull(), new NotNull(), 
+//                new Optional(), new Optional(), new Optional(), 
+//                new NotNull(), new Optional(), new Optional(new FmtDate("yyyy-MM-dd"))};
+//        try (ICsvMapWriter mapWriter = new CsvMapWriter(new FileWriter(outputFile),
+//                Utils.TSVCOMMENTED)) {
+//            
+//            mapWriter.writeHeader(header);
+//            for (Map<String, Object> annot: annotations) {
+//                mapWriter.write(annot, header, processors);
+//            }
+//        }
+//        
+//        log.exit();
+//    }
     
     /**
      * Order {@code annotations} by alphabetical order of some fields, 
@@ -3627,124 +3626,124 @@ public class SimilarityAnnotation {
         log.exit();
     }
     
-    /**
-     * Retrieve annotations for a specific taxon from a similarity annotation file 
-     * and write them into an output file.
-     * 
-     * @param similarityFile    A {@code String} that is the path to the annotation file.
-     * @param fileType          A {@code GeneratedFileType} defining what type of file is 
-     *                          {@code similarityFile}. This allows to define headers, etc.
-     * @param taxOntFile        An {@code String} that is the path to the taxonomy ontology, 
-     *                          to retrieve ancestors of the taxon with ID {@code taxonId}.
-     * @param taxonId           An {@code int} that is the NCBI ID of the taxon 
-     *                          for which we want to retrieve annotations, including 
-     *                          for its ancestral taxa.  
-     * @param outputFile        A {@code String} that is the path to the output file 
-     *                          to be written.
-     * @throws FileNotFoundException
-     * @throws IOException
-     * @throws OWLOntologyCreationException
-     * @throws OBOFormatParserException
-     * @see #extractSummaryAnnotationsForTaxon(String, String, int)
-     */
-    public void writeToFileAnnotationsForTaxon(String similarityFile, 
-            GeneratedFileType fileType, String taxOntFile, 
-            int taxonId, String outputFile) throws FileNotFoundException, IOException, 
-            OWLOntologyCreationException, OBOFormatParserException {
-        log.entry(similarityFile, fileType, taxOntFile, taxonId, outputFile);
-        
-        //TODO: generalized for any type of annotation
-        List<Map<String, Object>> summarizedAnnotations = 
-                this.extractSummaryAnnotationsForTaxon(similarityFile, taxOntFile, taxonId);
-        this.writeAnnotationsToFile(outputFile, fileType, summarizedAnnotations);
-        
-        log.exit();
-    }
-    
-    /**
-     * Retrieve summarized annotations for a specific taxon from a <strong>clean</strong> 
-     * similarity annotation file. Only <strong>positive</strong> annotations are retrieved 
-     * (annotations with soleley a "NOT" qualifier are not returned).
-     * <p>
-     * This method will retrieve all annotations that are applicable to the taxon 
-     * with the NCBI ID {@code taxonId} (for instance, {@code 9606}), and to 
-     * all its ancestral taxa. For a given entity ID and taxon ID, only one annotation 
-     * will be retrieved: either the {@code SUMMARY} annotation if available, 
-     * or the {@code RAW} annotation when only a single evidence is available 
-     * for this assertion. 
-     * <p>
-     * The assertions are returned as a {@code List} of {@code Map}s, where 
-     * each {@code Map} represents a summarized annotation. 
-     * See {@link #extractAnnotations(String, boolean)} for details about the keys used 
-     * in the {@code Map}s. 
-     *  
-     * @param similarityFile    A {@code String} that is the path to the annotation file.
-     * @param taxOntFile        An {@code String} that is the path to the taxonomy ontology, 
-     *                          to retrieve ancestors of the taxon with ID {@code taxonId}.
-     * @param taxonId           An {@code int} that is the NCBI ID of the taxon 
-     *                          for which we want to retrieve annotations, including 
-     *                          for its ancestral taxa.  
-     * @return                  A {@code List} of {@code Map}s, where each {@code Map} 
-     *                          represents a summarized annotation.
-     * @throws IOException 
-     * @throws FileNotFoundException 
-     * @throws OBOFormatParserException 
-     * @throws OWLOntologyCreationException 
-     */
-    public List<Map<String, Object>> extractSummaryAnnotationsForTaxon(String similarityFile, String taxOntFile, 
-            int taxonId) throws FileNotFoundException, IOException, 
-            OWLOntologyCreationException, OBOFormatParserException {
-        log.entry(similarityFile, taxOntFile, taxonId);
-        
-        //first, we retrieve from the taxonomy ontology the IDs of all the ancestor 
-        //of the taxon with ID taxonId
-        OWLOntology ont = OntologyUtils.loadOntology(taxOntFile);
-        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
-        OWLClass taxClass = wrapper.getOWLClassByIdentifier(OntologyUtils.getTaxOntologyId(taxonId), true);
-        if (taxClass == null) {
-            throw log.throwing(new IllegalArgumentException("The taxon with ID " + taxonId + 
-                    " was not retrieved from the ontology file " + taxOntFile));
-        }
-        Set<Integer> allTaxIds = new HashSet<Integer>();
-        for (OWLClass ancestor: wrapper.getOWLClassAncestors(taxClass)) {
-            allTaxIds.add(OntologyUtils.getTaxNcbiId(wrapper.getIdentifier(ancestor)));
-        }
-        log.debug("Allowed tax IDs: {}", allTaxIds);
-        
-        List<Map<String, Object>> allAnnotations = this.extractAnnotations(similarityFile, false);
-        //associate annotations to a key to be able to identify SUMMARY annotations
-        Map<String, Map<String, Object>> summarizedAnnotations = new HashMap<String, Map<String, Object>>();
-        //iterate all annotations
-        for (Map<String, Object> annotation: allAnnotations) {
-            String key = annotation.get(ENTITY_COL_NAME) + " - " + 
-                annotation.get(HOM_COL_NAME) + " - " + annotation.get(TAXON_COL_NAME);
-            //check it is a requested taxon
-            if (!allTaxIds.contains(annotation.get(TAXON_COL_NAME))) {
-                continue;
-            }
-            
-            //if an annotation for this HOM ID/Entity ID/Taxon ID was already seen, 
-            //then we wait for the SUMMARY line. If it is the first time we see it, 
-            //we use it directly.
-            if (!summarizedAnnotations.containsKey(key) || 
-                    (summarizedAnnotations.containsKey(key) && 
-                    annotation.get(LINE_TYPE_COL_NAME).equals( ))) {
-                summarizedAnnotations.put(key, new HashMap<String, Object>(annotation));
-            }
-        }
-        
-        //now we filter to remove negative assertions.
-        //we do it afterwards, to be sure all information was taken into account 
-        //for the SUMMARY lines
-        List<Map<String, Object>> filteredAnnotations = new ArrayList<Map<String, Object>>();
-        for (Map<String, Object> annotation: summarizedAnnotations.values()) {
-            //check it is not a negative assertion
-            if (annotation.get(QUALIFIER_COL_NAME) == null || 
-                    !annotation.get(QUALIFIER_COL_NAME).equals(NEGATE_QUALIFIER)) {
-                filteredAnnotations.add(annotation);
-            }
-        }
-        
-        return log.exit(filteredAnnotations);
-    }
+//    /**
+//     * Retrieve annotations for a specific taxon from a similarity annotation file 
+//     * and write them into an output file.
+//     * 
+//     * @param similarityFile    A {@code String} that is the path to the annotation file.
+//     * @param fileType          A {@code GeneratedFileType} defining what type of file is 
+//     *                          {@code similarityFile}. This allows to define headers, etc.
+//     * @param taxOntFile        An {@code String} that is the path to the taxonomy ontology, 
+//     *                          to retrieve ancestors of the taxon with ID {@code taxonId}.
+//     * @param taxonId           An {@code int} that is the NCBI ID of the taxon 
+//     *                          for which we want to retrieve annotations, including 
+//     *                          for its ancestral taxa.  
+//     * @param outputFile        A {@code String} that is the path to the output file 
+//     *                          to be written.
+//     * @throws FileNotFoundException
+//     * @throws IOException
+//     * @throws OWLOntologyCreationException
+//     * @throws OBOFormatParserException
+//     * @see #extractSummaryAnnotationsForTaxon(String, String, int)
+//     */
+//    public void writeToFileAnnotationsForTaxon(String similarityFile, 
+//            GeneratedFileType fileType, String taxOntFile, 
+//            int taxonId, String outputFile) throws FileNotFoundException, IOException, 
+//            OWLOntologyCreationException, OBOFormatParserException {
+//        log.entry(similarityFile, fileType, taxOntFile, taxonId, outputFile);
+//        
+//        //TODO: generalized for any type of annotation
+//        List<Map<String, Object>> summarizedAnnotations = 
+//                this.extractSummaryAnnotationsForTaxon(similarityFile, taxOntFile, taxonId);
+//        this.writeAnnotationsToFile(outputFile, fileType, summarizedAnnotations);
+//        
+//        log.exit();
+//    }
+//    
+//    /**
+//     * Retrieve summarized annotations for a specific taxon from a <strong>clean</strong> 
+//     * similarity annotation file. Only <strong>positive</strong> annotations are retrieved 
+//     * (annotations with soleley a "NOT" qualifier are not returned).
+//     * <p>
+//     * This method will retrieve all annotations that are applicable to the taxon 
+//     * with the NCBI ID {@code taxonId} (for instance, {@code 9606}), and to 
+//     * all its ancestral taxa. For a given entity ID and taxon ID, only one annotation 
+//     * will be retrieved: either the {@code SUMMARY} annotation if available, 
+//     * or the {@code RAW} annotation when only a single evidence is available 
+//     * for this assertion. 
+//     * <p>
+//     * The assertions are returned as a {@code List} of {@code Map}s, where 
+//     * each {@code Map} represents a summarized annotation. 
+//     * See {@link #extractAnnotations(String, boolean)} for details about the keys used 
+//     * in the {@code Map}s. 
+//     *  
+//     * @param similarityFile    A {@code String} that is the path to the annotation file.
+//     * @param taxOntFile        An {@code String} that is the path to the taxonomy ontology, 
+//     *                          to retrieve ancestors of the taxon with ID {@code taxonId}.
+//     * @param taxonId           An {@code int} that is the NCBI ID of the taxon 
+//     *                          for which we want to retrieve annotations, including 
+//     *                          for its ancestral taxa.  
+//     * @return                  A {@code List} of {@code Map}s, where each {@code Map} 
+//     *                          represents a summarized annotation.
+//     * @throws IOException 
+//     * @throws FileNotFoundException 
+//     * @throws OBOFormatParserException 
+//     * @throws OWLOntologyCreationException 
+//     */
+//    public List<Map<String, Object>> extractSummaryAnnotationsForTaxon(String similarityFile, String taxOntFile, 
+//            int taxonId) throws FileNotFoundException, IOException, 
+//            OWLOntologyCreationException, OBOFormatParserException {
+//        log.entry(similarityFile, taxOntFile, taxonId);
+//        
+//        //first, we retrieve from the taxonomy ontology the IDs of all the ancestor 
+//        //of the taxon with ID taxonId
+//        OWLOntology ont = OntologyUtils.loadOntology(taxOntFile);
+//        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+//        OWLClass taxClass = wrapper.getOWLClassByIdentifier(OntologyUtils.getTaxOntologyId(taxonId), true);
+//        if (taxClass == null) {
+//            throw log.throwing(new IllegalArgumentException("The taxon with ID " + taxonId + 
+//                    " was not retrieved from the ontology file " + taxOntFile));
+//        }
+//        Set<Integer> allTaxIds = new HashSet<Integer>();
+//        for (OWLClass ancestor: wrapper.getOWLClassAncestors(taxClass)) {
+//            allTaxIds.add(OntologyUtils.getTaxNcbiId(wrapper.getIdentifier(ancestor)));
+//        }
+//        log.debug("Allowed tax IDs: {}", allTaxIds);
+//        
+//        List<Map<String, Object>> allAnnotations = this.extractAnnotations(similarityFile, false);
+//        //associate annotations to a key to be able to identify SUMMARY annotations
+//        Map<String, Map<String, Object>> summarizedAnnotations = new HashMap<String, Map<String, Object>>();
+//        //iterate all annotations
+//        for (Map<String, Object> annotation: allAnnotations) {
+//            String key = annotation.get(ENTITY_COL_NAME) + " - " + 
+//                annotation.get(HOM_COL_NAME) + " - " + annotation.get(TAXON_COL_NAME);
+//            //check it is a requested taxon
+//            if (!allTaxIds.contains(annotation.get(TAXON_COL_NAME))) {
+//                continue;
+//            }
+//            
+//            //if an annotation for this HOM ID/Entity ID/Taxon ID was already seen, 
+//            //then we wait for the SUMMARY line. If it is the first time we see it, 
+//            //we use it directly.
+//            if (!summarizedAnnotations.containsKey(key) || 
+//                    (summarizedAnnotations.containsKey(key) && 
+//                    annotation.get(LINE_TYPE_COL_NAME).equals( ))) {
+//                summarizedAnnotations.put(key, new HashMap<String, Object>(annotation));
+//            }
+//        }
+//        
+//        //now we filter to remove negative assertions.
+//        //we do it afterwards, to be sure all information was taken into account 
+//        //for the SUMMARY lines
+//        List<Map<String, Object>> filteredAnnotations = new ArrayList<Map<String, Object>>();
+//        for (Map<String, Object> annotation: summarizedAnnotations.values()) {
+//            //check it is not a negative assertion
+//            if (annotation.get(QUALIFIER_COL_NAME) == null || 
+//                    !annotation.get(QUALIFIER_COL_NAME).equals(NEGATE_QUALIFIER)) {
+//                filteredAnnotations.add(annotation);
+//            }
+//        }
+//        
+//        return log.exit(filteredAnnotations);
+//    }
 }

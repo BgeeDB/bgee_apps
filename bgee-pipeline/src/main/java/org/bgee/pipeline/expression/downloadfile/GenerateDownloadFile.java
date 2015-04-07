@@ -181,6 +181,10 @@ public abstract class GenerateDownloadFile extends CallUser {
     /**
      * A {@code List} of {@code String}s that are the file types to be generated.
      */
+    //XXX: actually this could be a T extends FileType, with T provided by the extending class.
+    //See for instance the need for a line such as : 
+    //MultiSpDiffExprFileType currentFileType = (MultiSpDiffExprFileType) fileType;
+    //in GenerateMultiSpeciesDiffExprFile.generateMultiSpeciesDiffExprFilesForOneGroup
     protected Set<? extends FileType> fileTypes;
     
     /**
@@ -226,6 +230,7 @@ public abstract class GenerateDownloadFile extends CallUser {
      * @param directory     A {@code String} that is the directory where to store files.
      * @throws IllegalArgumentException If {@code directory} is {@code null} or blank.
      */
+    //XXX: how is this associated back to the name given to the group of species?
     public GenerateDownloadFile(MySQLDAOManager manager, List<String> speciesIds, 
             Set<? extends FileType> fileTypes, String directory) throws IllegalArgumentException {
         super(manager);

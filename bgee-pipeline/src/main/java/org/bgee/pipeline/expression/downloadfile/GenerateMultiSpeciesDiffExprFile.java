@@ -154,6 +154,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * @version Bgee 13
      * @since Bgee 13
      */
+    //XXX: why doesn't it reuse code from single species download files?
     public enum DiffExpressionData {
         NO_DATA("no data"), NOT_EXPRESSED("not expressed"), OVER_EXPRESSION("over-expression"), 
         UNDER_EXPRESSION("under-expression"), NOT_DIFF_EXPRESSION("no diff expression"), 
@@ -236,6 +237,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * @version Bgee 13
      * @since Bgee 13
      */
+    //XXX: alternatively, if you use the Bean principle, you could simply use different bean types, 
+    //so that you don't need this Enum
     public enum MultiSpDiffExprFileType implements DiffExprFileType {
         MULTI_DIFF_EXPR_ANATOMY_SIMPLE(
                 "multi-expr-anatomy-simple", true, ComparisonFactor.ANATOMY), 
@@ -312,10 +315,10 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     /**
      * Constructor providing parameters to generate files, using the default {@code DAOManager}.
      * 
-     * @param providedGroups    A {@code Map} where keys are {@code String}s that are prefixes 
-     *                          concatenated to taxon ID by {@link CommandRunner#VALUE_SEPARATOR}, 
-     *                          the associated values being {@code Set} of {@code String}s 
-     *                          corresponding to species IDs of the given taxon ID.
+     * @param providedGroups    A {@code Map} where keys are {@code String}s that are names 
+     *                          given to groups of species, the associated value being 
+     *                          a {@code Set} of {@code String}s that are the IDs 
+     *                          of the species composing the group.
      * @param fileTypes         A {@code Set} of {@code MultiSpDiffExprFileType}s that are the types
      *                          of files we want to generate. If {@code null} or empty, 
      *                          all {@code MultiSpDiffExprFileType}s are generated.
@@ -333,10 +336,10 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * be used by this object to perform queries to the database. This is useful for unit testing.
      * 
      * @param manager           The {@code MySQLDAOManager} to use.
-     * @param providedGroups    A {@code Map} where keys are {@code String}s that are prefixes 
-     *                          concatenated to taxon ID by {@link CommandRunner#VALUE_SEPARATOR}, 
-     *                          the associated values being {@code Set} of {@code String}s 
-     *                          corresponding to species IDs of the given taxon ID.
+     * @param providedGroups    A {@code Map} where keys are {@code String}s that are names 
+     *                          given to groups of species, the associated value being 
+     *                          a {@code Set} of {@code String}s that are the IDs 
+     *                          of the species composing the group.
      * @param fileTypes         A {@code Set} of {@code MultiSpDiffExprFileType}s that are the types
      *                          of files we want to generate. If {@code null} or empty, 
      *                          all {@code MultiSpDiffExprFileType}s are generated.
@@ -355,9 +358,12 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * (simple and advanced) from Bgee database. Parameters that must be provided in order in 
      * {@code args} are: 
      * <ol>
-     * <li>a {@code Map} where keys are {@code String}s that are prefixes, the associated values 
-     *     being {@code Set} of {@code String}s corresponding to species IDs that will be used to 
-     *     generate files.
+     * <li>a {@code Map} where keys are {@code String}s that are names given 
+     *     to groups of species, the associated value being a {@code Set} of {@code String}s 
+     *     that are the IDs of the species composing the group. Entries of the {@code Map} 
+     *     must be separated by {@link CommandRunner#LIST_SEPARATOR}, keys must be  
+     *     separated from their associated value by {@link CommandRunner#KEY_VALUE_SEPARATOR}, 
+     *     values must be separated using {@link CommandRunner#VALUE_SEPARATOR}.
      * <li>a list of files types that will be generated ('multi-diffexpr-anatomy-simple' for 
      *     {@link MultiSpDiffExprFileType MULTI_DIFF_EXPR_ANATOMY_SIMPLE}, 
      *     'multi-diffexpr-anatomy-complete' for 
@@ -402,13 +408,20 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * @throws IOException              If an error occurred while trying to write generated files.
      * 
      */
+    //TODO: re-write javadoc, either by specifying that thee parameters are provided at instantiation, 
+    //or by pointing to public getters
     public void generateMultiSpeciesDiffExprFiles() throws IOException {
+        //TODO: actually, use another log, these are not method arguments, e.g.: 
+        //log.entry();
+        //log.info("Start generating blabla with parameters blabla {}", ...)
         log.entry(this.providedGroups, this.fileTypes, this.directory);
 
+        //XXX: should these checks perform at instantiation?
         if (this.providedGroups == null || this.providedGroups.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("No group is provided"));
         }
 
+        //XXX: check already performed at instantiation
         if (this.directory == null || this.directory.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("No directory is provided"));
         }
@@ -419,22 +432,22 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         }
         
         // We retrieve all CIO so it's common to all groups
-        Map<String,CIOStatementTO> cioNamesByIds = this.getCIOStatementsByIds();
+        Map<String, CIOStatementTO> cioNamesByIds = this.getCIOStatementsByIds();
         
-        for (Entry<String,Set<String>> currentGroup : this.providedGroups.entrySet()) {
+        for (Entry<String, Set<String>> currentGroup : this.providedGroups.entrySet()) {
             Set<String> setSpecies = currentGroup.getValue();
             if (setSpecies == null || setSpecies.isEmpty()) {
                 throw log.throwing(new IllegalArgumentException("No species ID is provided"));
             }
+            //Validate provided species, and retrieve species names
+            Map<String,String> speciesNamesByIds = 
+                    this.checkAndGetLatinNamesBySpeciesIds(setSpecies);
             
             String currentPrefix = currentGroup.getKey();
-
             String taxonId = this.getLeastCommonAncestor(setSpecies);
             
-            // Retrieve species names, gene names, stage names, anat. entity names, and cio names 
+            // Retrieve gene names, stage names, anat. entity names, and cio names 
             // for all species
-            Map<String,String> speciesNamesByIds =
-                    this.checkAndGetLatinNamesBySpeciesIds(setSpecies);
             Map<String,String> geneNamesByIds = 
                     BgeeDBUtils.getGeneNamesByIds(setSpecies, this.getGeneDAO());
             Map<String,String> stageNamesByIds = 
@@ -448,6 +461,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                     currentPrefix, speciesNamesByIds.values(), taxonId);
 
             try {
+                //XXX: maybe all the xxxByIds could be stored in class attributes, 
+                //to simplify this method signature
                 this.generateMultiSpeciesDiffExprFilesForOneGroup(currentPrefix, taxonId, 
                         speciesNamesByIds, geneNamesByIds, stageNamesByIds, anatEntityNamesByIds, 
                         cioNamesByIds);
@@ -462,10 +477,12 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         log.exit();
     }
 
+    //TODO: javadoc
     private void generateMultiSpeciesDiffExprFilesForOneGroup(String prefix, String taxonId, 
             Map<String,String> speciesNamesByIds, Map<String,String> geneNamesByIds, 
             Map<String,String> stageNamesByIds, Map<String,String> anatEntityNamesByIds, 
             Map<String,CIOStatementTO> cioStatementsByIds) throws IOException {
+        //TODO: use actual attributes in logging
         log.entry(this.directory, prefix, this.fileTypes, taxonId, speciesNamesByIds,
                 geneNamesByIds, stageNamesByIds, anatEntityNamesByIds, cioStatementsByIds);
 
@@ -476,6 +493,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 prefix, taxonId, speciesFilter, this.fileTypes);
 
         // We check that all file types have the same comparison factor and we retrieve it 
+        //XXX: why should they all have a same comparison factor?
         ComparisonFactor factor = null;
         for (FileType fileType: this.fileTypes) {
             if (factor == null) {
@@ -493,16 +511,17 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         log.trace("Start retrieving data...");
         
         // Get homologous genes 
-        Map<String,String> mapGeneOMANode = this.getMappingGeneIdOMANodeId(taxonId, speciesFilter);
+        Map<String, String> mapGeneOMANode = this.getMappingGeneIdOMANodeId(taxonId, 
+                speciesFilter);
         
         // Get comparable stages
-        List<Map<String,List<String>>> mapStageGroup = 
+        List<Map<String, List<String>>> mapStageGroup = 
                 this.getComparableStages(taxonId, speciesFilter);
         Map<String, List<String>> mapStageIdToStageGroup = mapStageGroup.get(0);
         Map<String, List<String>> mapStageGroupToStageId = mapStageGroup.get(1);
 
         // Get summary similarity annotations with CIO Ids
-        Map<String,String> mapSumSimCIO = this.getSummarySimilarityAnnotations(taxonId);
+        Map<String, String> mapSumSimCIO = this.getSummarySimilarityAnnotations(taxonId);
 
         // Get 
         List<Map<String, List<String>>> simAnnotToAnatEntity = 
@@ -511,9 +530,10 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         Map<String, List<String>> mapAnatEntityToSimAnnot = simAnnotToAnatEntity.get(1);
                 
         // Get species ID according to gene ID
-        Map<String,String> mapGeneSpecies = this.getMappingGeneSpecies(speciesFilter);
+        Map<String, String> mapGeneSpecies = this.getMappingGeneSpecies(speciesFilter);
 
         // Load differential expression calls order by OMA node ID
+        //XXX: shouldn't there be a try-with-resources or a try/finally here?
         DiffExpressionCallTOResultSet diffExprRs = 
                 this.getDiffExpressionCallsOrderByOMANodeId(taxonId, speciesFilter, factor);
         
@@ -536,8 +556,6 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         String tmpExtension = ".tmp";
 
         // In order to close all writers in a finally clause.
-        // We use ICsvMapWriter because the number of columns depends on the number of species for 
-        // the simple file (3 columns by species)
         Map<MultiSpDiffExprFileType, ICsvDozerBeanWriter> writersUsed = 
                 new HashMap<MultiSpDiffExprFileType, ICsvDozerBeanWriter>();
         try {
@@ -558,14 +576,12 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 if (currentFileType.getComparisonFactor().equals(ComparisonFactor.DEVELOPMENT)) {
                     continue;
                 }
-                CellProcessor[] fileTypeProcessors = null;
-                String[] fileTypeHeaders = null;
 
-                fileTypeProcessors = this.generateCellProcessors(
+                CellProcessor[] fileTypeProcessors = this.generateCellProcessors(
                         currentFileType, speciesFilter.size());
                 processors.put(currentFileType, fileTypeProcessors);
                 
-                fileTypeHeaders = this.generateHeader(currentFileType, orderedSpeciesNames);
+                String[] fileTypeHeaders = this.generateHeader(currentFileType, orderedSpeciesNames);
                 headers.put(currentFileType, fileTypeHeaders);
 
                 // Create file name
@@ -647,6 +663,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      *                          corresponding to CIO names. 
      * @throws DAOException   If an error occurred while getting the data from the Bgee data source.
      */
+    //XXX: to move to BgeeDBUtils? 
+    //XXX: Implement something more generic for any EntityTOs?
     private Map<String, CIOStatementTO> getCIOStatementsByIds() throws DAOException {
         log.entry();
         
@@ -760,6 +778,9 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * @throws DAOException If an error occurred while getting the data from the Bgee data source.
      * @throws IllegalStateException IF an error is detected in data source.
      */
+    //TODO: this is really an ugly design :p 
+    //Implements a first method retrieving information from database, then two other methods 
+    //to generate the proper mappings you need. 
     private List<Map<String,List<String>>> getComparableStages(
             String taxonId, Set<String> speciesIds) throws DAOException, IllegalStateException {
         log.entry(taxonId, speciesIds);
@@ -770,28 +791,24 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
        StageGroupingDAO dao = this.getStageGroupingDAO();
         //not attribute to set
         
-       Map<String,List<String>> mappingStageIdToStageGroup = new HashMap<String,List<String>>();
-       Map<String,List<String>> mappingStageGroupToStageId = new HashMap<String,List<String>>();
+       Map<String, List<String>> mappingStageIdToStageGroup = new HashMap<String, List<String>>();
+       Map<String, List<String>> mappingStageGroupToStageId = new HashMap<String, List<String>>();
         try (GroupToStageTOResultSet rs = dao.getGroupToStage(taxonId, speciesIds)) {
             while (rs.next()) {
                 GroupToStageTO to = rs.getTO();
     
-                List<String> groupIds = mappingStageIdToStageGroup.get(to.getStageId());
-                if (groupIds == null) {
-                    groupIds = new ArrayList<String>();
-                    groupIds.add(to.getGroupId());
-                    mappingStageIdToStageGroup.put(to.getStageId(), groupIds);
-                } else {
+                if (mappingStageIdToStageGroup.containsKey(to.getStageId())) {
                     throw log.throwing(new IllegalStateException(
                             "One stage ID souldn't be reported to severals stage groups"));
                 }
+                mappingStageIdToStageGroup.put(to.getStageId(), Arrays.asList(to.getGroupId()));
     
-                List<String> anatEntityIds = mappingStageGroupToStageId.get(to.getGroupId());
-                if (anatEntityIds == null) {
-                    anatEntityIds = new ArrayList<String>();
-                    mappingStageGroupToStageId.put(to.getGroupId(), anatEntityIds);
+                List<String> stageIds = mappingStageGroupToStageId.get(to.getGroupId());
+                if (stageIds == null) {
+                    stageIds = new ArrayList<String>();
+                    mappingStageGroupToStageId.put(to.getGroupId(), stageIds);
                 }
-                anatEntityIds.add(to.getStageId());
+                stageIds.add(to.getStageId());
             }
         }
     
@@ -808,7 +825,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * present into the Bgee database.
      *
      * @param taxonId       A {@code String} that is the ID of the common ancestor taxon 
-     *                      we want to into account. 
+     *                      we want to take into account. 
      * @return              A {@code Map} where keys are {@code String}s corresponding to summary 
      *                      similarity annotation IDs, the associated values being {@code String}s 
      *                      corresponding to CIO IDs.
@@ -851,6 +868,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      *                      {@code String}s corresponding to summary similarity annotation IDs.  
      * @throws DAOException If an error occurred while getting the data from the Bgee data source.
      */
+    //TODO: same ugliness than for getComparableStages, to fix.
     private List<Map<String, List<String>>> getSimAnnotToAnatEntities(
             String taxonId, Set<String> speciesIds) throws DAOException {
         log.entry(taxonId, speciesIds);
@@ -864,22 +882,26 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     
         Map<String,List<String>> mappingSimAnnotToAnatEntity = new HashMap<String,List<String>>();
         Map<String,List<String>> mappingAnatEntityToSimAnnot = new HashMap<String,List<String>>();
-        try (SimAnnotToAnatEntityTOResultSet rs = dao.getSimAnnotToAnatEntity(taxonId, speciesIds)) {
+        //note that we retrieve all organs, even those not existing in all species
+        try (SimAnnotToAnatEntityTOResultSet rs = dao.getSimAnnotToAnatEntity(taxonId, null)) {
             while (rs.next()) {
                 SimAnnotToAnatEntityTO to = rs.getTO();
-                List<String> sumAnatEntIds = mappingSimAnnotToAnatEntity.get(to.getSummarySimilarityAnnotationId());
+                
+                List<String> sumAnatEntIds = mappingSimAnnotToAnatEntity.get(
+                        to.getSummarySimilarityAnnotationId());
                 if (sumAnatEntIds == null) {
                     sumAnatEntIds = new ArrayList<String>();
-                    mappingSimAnnotToAnatEntity.put(to.getSummarySimilarityAnnotationId(), sumAnatEntIds);
+                    mappingSimAnnotToAnatEntity.put(to.getSummarySimilarityAnnotationId(), 
+                            sumAnatEntIds);
                 }
                 sumAnatEntIds.add(to.getAnatEntityId());
                 
-                List<String> simAnnotIds = mappingAnatEntityToSimAnnot.get(to.getAnatEntityId());
-                if (simAnnotIds == null) {
-                    simAnnotIds = new ArrayList<String>();
-                    mappingAnatEntityToSimAnnot.put(to.getAnatEntityId(), simAnnotIds);
+                if (mappingAnatEntityToSimAnnot.containsKey(to.getAnatEntityId())) {
+                    throw log.throwing(new IllegalStateException(
+                    "An anatomical entity sould not be reported to severals similarity groups"));
                 }
-                simAnnotIds.add(to.getSummarySimilarityAnnotationId());
+                mappingAnatEntityToSimAnnot.put(to.getAnatEntityId(), 
+                        Arrays.asList(to.getSummarySimilarityAnnotationId()));
     
             }
         }
@@ -902,7 +924,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      *                      associated values being {@code String}s corresponding to species ID.
      * @throws DAOException If an error occurred while getting the data from the Bgee data source.
      */
-    private Map<String,String> getMappingGeneSpecies(Set<String> speciesIds) throws DAOException {
+    private Map<String, String> getMappingGeneSpecies(Set<String> speciesIds) throws DAOException {
         log.entry(speciesIds);
         
         log.debug("Start retrieving gene-species mapping for the species IDs {}...", speciesIds);
@@ -972,7 +994,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      *                          alphabetical order from the provided species IDs.
      */
     private List<String> getOrderedSpeciesName(
-            Set<String> speciesIds, Map<String,String> speciesNamesByIds) {
+            Set<String> speciesIds, Map<String, String> speciesNamesByIds) {
         log.entry();
         
         List<String> names = new ArrayList<String>();

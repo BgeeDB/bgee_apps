@@ -63,8 +63,12 @@ var download = {
             this.$diffExprAnatomyCompleteCsv = $( "#diffexpr_anatomy_complete_csv" );   
             this.$diffExprDevelopmentSimpleCsv = $( "#diffexpr_development_simple_csv" );
             this.$diffExprDevelopmentCompleteCsv = $( "#diffexpr_development_complete_csv" );
+            this.$exprNoData = $( "#expr_no_data" );
             this.$diffExprAnatomyNoData = $( "#diffexpr_anatomy_no_data" );
             this.$diffExprDevelopmentNoData = $( "#diffexpr_development_no_data" );
+            this.$exprComingSoon = $( "#expr_coming_soon" );
+            this.$diffExprAnatomyComingSoon = $( "#diffexpr_anatomy_coming_soon" );
+            this.$diffExprDevelopmentComingSoon = $( "#diffexpr_development_coming_soon" );
             this.$bgeeSearchForm = $( "#bgee_search_box form" );
             this.$bgeeSearchBox = $( "#bgee_search_box input" );
             this.$bgeeSearchResults = $( "#results_nb" );
@@ -264,24 +268,42 @@ var download = {
                 this.$bgeeDataSelectionTextCommon.text( "("+ bgeeSpeciesCommonNames +")" );
                 this.$bgeeGroupDescription.text( "" );
             }
-            // Update the values of the download links and size files
-            this.$exprSimpleCsv.attr( "href", bgeeExprSimpleFileUrl );
-            this.$exprSimpleCsv.text( "Download simple file (" + bgeeExprSimpleFileSize + ")" );
-            this.$exprCompleteCsv.attr( "href", bgeeExprCompleteFileUrl );
-            this.$exprCompleteCsv.text( "Download complete file (" + bgeeExprCompleteFileSize + ")" );
             
-            this.$diffExprAnatomyCompleteNoData = $( "#diffexpr_anatomy_complete_no_data" );   
-            this.$diffExprDevelopmentSimpleNoData = $( "#diffexpr_development_simple_no_data" );
-            this.$diffExprDevelopmentCompleteNoData = $( "#diffexpr_development_complete_no_data" );
+            // Update the values of the download links and size files
+            // Expression files
+            if (bgeeExprSimpleFileUrl === undefined) {
+            	this.$exprSimpleCsv.hide();
+            	this.$exprCompleteCsv.hide();
+            	//TODO remove when multi-species expression files are computed
+            	if( bgeeGroupName ){
+            		this.$exprNoData.hide();
+            		this.$exprComingSoon.show();
+            	} else {
+            		this.$exprNoData.show();
+            		this.$exprComingSoon.hide();
+            	}
+            } else {
+            	this.$exprSimpleCsv.show();
+            	this.$exprCompleteCsv.show();
+            	this.$exprSimpleCsv.attr( "href", bgeeExprSimpleFileUrl );
+            	this.$exprSimpleCsv.text( "Download simple file (" + bgeeExprSimpleFileSize + ")" );
+            	this.$exprCompleteCsv.attr( "href", bgeeExprCompleteFileUrl );
+            	this.$exprCompleteCsv.text( "Download complete file (" + bgeeExprCompleteFileSize + ")" );
+            	this.$exprNoData.hide();
+            	this.$exprComingSoon.hide();
+            }
 
+            // Differential expression - anatomy comparison
             if (bgeeDiffExprAnatomySimpleFileUrl === undefined) {
             	this.$diffExprAnatomySimpleCsv.hide();
             	this.$diffExprAnatomyCompleteCsv.hide();
             	this.$diffExprAnatomyNoData.show();
+            	this.$diffExprAnatomyComingSoon.hide();
             } else {
             	this.$diffExprAnatomySimpleCsv.show();
             	this.$diffExprAnatomyCompleteCsv.show();
             	this.$diffExprAnatomyNoData.hide();
+            	this.$diffExprAnatomyComingSoon.hide();
             	this.$diffExprAnatomySimpleCsv.attr( "href", bgeeDiffExprAnatomySimpleFileUrl );
             	this.$diffExprAnatomyCompleteCsv.attr( "href", bgeeDiffExprAnatomyCompleteFileUrl );
             	this.$diffExprAnatomySimpleCsv.text( 
@@ -289,14 +311,24 @@ var download = {
             	this.$diffExprAnatomyCompleteCsv.text( 
             			"Download complete file (" + bgeeDiffExprAnatomyCompleteFileSize + ")" );
             }
+
+            // Differential expression - development comparison
             if( bgeeDiffExprDevelopmentSimpleFileUrl === undefined ) {
             	this.$diffExprDevelopmentSimpleCsv.hide();
             	this.$diffExprDevelopmentCompleteCsv.hide();
-            	this.$diffExprDevelopmentNoData.show();
+            	//TODO remove when multi-species developmental diff. expression files are computed
+                if( bgeeGroupName ){
+                	this.$diffExprDevelopmentNoData.hide();
+                	this.$diffExprDevelopmentComingSoon.show();
+                } else {
+                	this.$diffExprDevelopmentNoData.show();
+                	this.$diffExprDevelopmentComingSoon.hide();
+                }
             } else {
             	this.$diffExprDevelopmentSimpleCsv.show();
             	this.$diffExprDevelopmentCompleteCsv.show();
             	this.$diffExprDevelopmentNoData.hide();
+            	this.$diffExprDevelopmentComingSoon.hide();
             	this.$diffExprDevelopmentSimpleCsv.attr( "href", bgeeDiffExprDevelopmentSimpleFileUrl );
             	this.$diffExprDevelopmentCompleteCsv.attr( "href", bgeeDiffExprDevelopmentCompleteFileUrl );
             	this.$diffExprDevelopmentSimpleCsv.text( 

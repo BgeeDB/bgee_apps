@@ -28,6 +28,71 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     private final static Logger log = LogManager.getLogger(HtmlDownloadDisplay.class.getName());
 
     /**
+     * A {@code String} that is the group name of the pairwise Human/Mouse.
+     */
+    private final static String GROUP_NAME_HUMAN_MOUSE= "Human/Mouse";
+    /**
+     * A {@code String} that is the group name of the pairwise Human/Zebrafish.
+     */
+    private final static String GROUP_NAME_HUMAN_ZEBRAFISH = "Human/Zebrafish";
+    /**
+     * A {@code String} that is the group name of the pairwise Human/Fruit fly.
+     */
+    private final static String GROUP_NAME_HUMAN_FRUITFLY = "Human/Fruit fly";
+    /**
+     * A {@code String} that is the group name of the pairwise Human/Nematode.
+     */
+    private final static String GROUP_NAME_HUMAN_NEMATODE = "Human/Nematode";
+    /**
+     * A {@code String} that is the group name of the pairwise Mouse/Zebrafish.
+     */
+    private final static String GROUP_NAME_MOUSE_ZEBRAFISH= "Mouse/Zebrafish";
+    /**
+     * A {@code String} that is the group name of the pairwise Mouse/Fruit fly.
+     */
+    private final static String GROUP_NAME_MOUSE_FRUITFLY = "Mouse/Fruit fly";
+    /**
+     * A {@code String} that is the group name of the pairwise Mouse/Nematode.
+     */
+    private final static String GROUP_NAME_MOUSE_NEMATODE = "Mouse/Nematode";
+    /**
+     * A {@code String} that is the group name of the pairwise Zebrafish/Fruit fly.
+     */
+    private final static String GROUP_NAME_ZEBRAFISH_FRUITFLY = "Zebrafish/Fruit fly";
+    /**
+     * A {@code String} that is the group name of the pairwise Zebrafish/Nematode.
+     */
+    private final static String GROUP_NAME_ZEBRAFISH_NEMATODE = "Zebrafish/Nematode";
+    /**
+     * A {@code String} that is the group name of the pairwise Fruit fly/Nematode.
+     */
+    private final static String GROUP_NAME_FRUITFLY_NEMATODE = "Fruit fly/Nematode";
+    /**
+     * A {@code String} that is the group name of Primates.
+     */
+    private final static String GROUP_NAME_PRIMATES = "Primates";
+    /**
+     * A {@code String} that is the group name of Rodentia.
+     */
+    private final static String GROUP_NAME_RODENTIA = "Rodentia";
+    /**
+     * A {@code String} that is the group name of Theria.
+     */
+   private final static String GROUP_NAME_THERIA = "Theria";
+   /**
+    * A {@code String} that is the group name of Mammalia.
+    */
+    private final static String GROUP_NAME_MAMMALIA = "Mammalia";
+    /**
+     * A {@code String} that is the group name of Amniota.
+     */
+    private final static String GROUP_NAME_AMNIOTA = "Amniota";
+    /**
+     * A {@code String} that is the group name of Bilateria.
+     */
+    private final static String GROUP_NAME_BILATERIA = "Bilateria";
+        
+    /**
      * Constructor
      * 
      * @param response          A {@code HttpServletResponse} that will be used to display the 
@@ -126,6 +191,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         // Presence/absence expression files
         this.writeln("<div class='bgee_download_file_buttons'>");
         this.writeln("<h2>Presence/absence of expression</h2>");    
+        this.writeln("<p id='expr_no_data' class='no_data'>Not enough data</p>");
+        this.writeln("<p id='expr_coming_soon' class='no_data'>Coming soon</p>");
         this.writeln("<a id='expr_simple_csv' class='download_link' href='' download></a>");
         this.writeln("&nbsp;&nbsp;");
         this.writeln("<a id='expr_complete_csv' class='download_link' href='' download></a>");
@@ -133,14 +200,16 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         // Differential expression files
         this.writeln("<div class='bgee_download_file_buttons'>");
         this.writeln("<h2>Over-/Under-expression across anatomy</h2>");
-        this.writeln("<p id='diffexpr_anatomy_no_data' class='not_enough_data'>Not enough data</p>");
+        this.writeln("<p id='diffexpr_anatomy_no_data' class='no_data'>Not enough data</p>");
+        this.writeln("<p id='diffexpr_anatomy_coming_soon' class='no_data'>Coming soon</p>");
         this.writeln("<a id='diffexpr_anatomy_simple_csv' class='download_link' href='' download></a>");
         this.writeln("&nbsp;&nbsp;");
         this.writeln("<a id='diffexpr_anatomy_complete_csv' class='download_link' href='' download></a>");
         this.writeln("</div>");
         this.writeln("<div class='bgee_download_file_buttons'>");
         this.writeln("<h2>Over-/Under-expression across life stages</h2>");
-        this.writeln("<p id='diffexpr_development_no_data' class='not_enough_data'>Not enough data</p>");
+        this.writeln("<p id='diffexpr_development_no_data' class='no_data'>Not enough data</p>");
+        this.writeln("<p id='diffexpr_development_coming_soon' class='no_data'>Coming soon</p>");
         this.writeln("<a id='diffexpr_development_simple_csv' class='download_link' href='' download></a>");
         this.writeln("&nbsp;&nbsp;");
         this.writeln("<a id='diffexpr_development_complete_csv' class='download_link' href='' download></a>");
@@ -151,17 +220,29 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("</div>");
 
         // Multi-species part
-        // TODO: modify according to the groups that will be defined and uncomment when multi-species files will be generated
-//        this.writeln("<div id='bgee_multi_species'>");
-//        this.writeln("<h1>Multi-species</h1> <span>(data of only orthologous genes)</span>");
-//        this.writeln("<div class='downloadsection'>");
-//        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 10090), "Group 1", true));
-//        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9823, 10116), "Group 2", true));
-//        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 10090, 7955, 7227, 6239, 9597, 9598, 9593, 9600, 9544, 10116, 9913, 9258, 9031, 28377, 99883,9606, 10090, 7955, 7227, 6239, 9597, 9598, 9593, 9600, 9544, 10116, 9913, 9258, 9031, 28377, 99883),
-//                "Group 3",true));
-//        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9823, 10116, 28377, 10116), "Group 4", true));
-//        this.writeln("</div>");
-//        this.writeln("</div>");
+        this.writeln("<div id='bgee_multi_species'>");
+        this.writeln("<h1>Multi-species</h1> <span>(data of only orthologous genes)</span>");
+        this.writeln("<div class='downloadsection'>");
+        // Pairwises
+        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 10090), GROUP_NAME_HUMAN_MOUSE, true));
+        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 7955), GROUP_NAME_HUMAN_ZEBRAFISH, true));
+        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 7227), GROUP_NAME_HUMAN_FRUITFLY, true));
+        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 6239), GROUP_NAME_HUMAN_NEMATODE, true));
+        this.writeln(generateSpeciesFigure(Arrays.asList(10090, 7955), GROUP_NAME_MOUSE_ZEBRAFISH, true));
+        this.writeln(generateSpeciesFigure(Arrays.asList(10090, 7227), GROUP_NAME_MOUSE_FRUITFLY, true));
+        this.writeln(generateSpeciesFigure(Arrays.asList(10090, 6239), GROUP_NAME_MOUSE_NEMATODE, true));
+        this.writeln(generateSpeciesFigure(Arrays.asList(7955, 7227), GROUP_NAME_ZEBRAFISH_FRUITFLY, true));
+        this.writeln(generateSpeciesFigure(Arrays.asList(7955, 6239), GROUP_NAME_ZEBRAFISH_NEMATODE, true));
+        this.writeln(generateSpeciesFigure(Arrays.asList(7227, 6239), GROUP_NAME_FRUITFLY_NEMATODE, true));
+        // Groups
+        this.writeln(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544), GROUP_NAME_PRIMATES, true));
+        this.writeln(generateSpeciesFigure(Arrays.asList(10090, 10116), GROUP_NAME_RODENTIA, true));
+        this.writeln(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544, 10116, 10090, 9913, 9823, 13616), GROUP_NAME_THERIA, true));
+        this.writeln(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544, 10116, 10090, 9913, 9823, 13616, 9258), GROUP_NAME_MAMMALIA, true));
+        this.writeln(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544, 10116, 10090, 9913, 9823, 13616, 9258, 28377, 9031), GROUP_NAME_AMNIOTA, true));
+        this.writeln(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544, 10116, 10090, 9913, 9823, 13616, 9258, 28377, 9031, 8364, 7955, 7227, 6239), GROUP_NAME_BILATERIA, true));
+        this.writeln("</div>");
+        this.writeln("</div>");
 
         // Images source
         this.writeln("<p id='creativecommons_title'>Images from Wikimedia Commons. In most cases, pictures corresponds to the sequenced strains. <a>Show information about original images.</a></p>");
@@ -391,50 +472,199 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         log.entry(groupName);
         
         String exprSimpleFileSize = null, exprCompleteFileSize = null, 
-                diffExprSimpleFileSize = null, diffExprCompleteFileSize = null;
+                diffExprAnatSimpleFileSize = null, diffExprAnatCompleteFileSize = null, 
+                diffExprDevSimpleFileSize = null, diffExprDevCompleteFileSize = null, 
+                filePrefix = null;
 
         switch (groupName) {
-            //TODO: set file sizes
-            case "Group 1": 
-                exprSimpleFileSize = "aa MB";
-                exprCompleteFileSize = "bb GB"; 
-                diffExprSimpleFileSize = "cc MB";
-                diffExprCompleteFileSize  = "dd GB";
+            //TODO: set file sizes            
+            case GROUP_NAME_HUMAN_MOUSE:
+//                exprSimpleFileSize = "xx MB";
+//                exprCompleteFileSize = "xx MB"; 
+                diffExprAnatSimpleFileSize = "xx MB";
+                diffExprAnatCompleteFileSize  = "xx MB";
+//                diffExprDevSimpleFileSize = "xx MB";
+//                diffExprDevCompleteFileSize = "xx MB"; 
+                filePrefix= "human_mouse";
                 break;
-            case "Group 2": 
-                    exprSimpleFileSize = "ee MB";
-                exprCompleteFileSize = "ff GB"; 
-                diffExprSimpleFileSize = "gg MB";
-                diffExprCompleteFileSize  = "hh GB";
+            case GROUP_NAME_HUMAN_ZEBRAFISH:
+//                exprSimpleFileSize = "xx MB";
+//                exprCompleteFileSize = "xx MB"; 
+//                diffExprAnatSimpleFileSize = "xx MB";
+//                diffExprAnatCompleteFileSize  = "xx MB";
+//                diffExprDevSimpleFileSize = "xx MB";
+//                diffExprDevCompleteFileSize = "xx MB"; 
+                filePrefix= "human_zebrafish";
                 break;
-            case "Group 3": 
-                exprSimpleFileSize = "ii MB";
-                exprCompleteFileSize = "jj GB"; 
-                diffExprSimpleFileSize = "kk";
-                diffExprCompleteFileSize  = "ll GB";
+            case GROUP_NAME_HUMAN_FRUITFLY:
+//                exprSimpleFileSize = "xx MB";
+//                exprCompleteFileSize = "xx MB"; 
+                diffExprAnatSimpleFileSize = "xx MB";
+                diffExprAnatCompleteFileSize  = "xx MB";
+//                diffExprDevSimpleFileSize = "xx MB";
+//                diffExprDevCompleteFileSize = "xx MB"; 
+                filePrefix= "human_fruitfly";
                 break;
-            case "Group 4": 
-                exprSimpleFileSize = "mm MB";
-                exprCompleteFileSize = "nn GB"; 
-                diffExprSimpleFileSize = "nn MB";
-                diffExprCompleteFileSize  = "oo GB";
+            case GROUP_NAME_HUMAN_NEMATODE:
+//                exprSimpleFileSize = "xx MB";
+//                exprCompleteFileSize = "xx MB"; 
+//                diffExprAnatSimpleFileSize = "xx MB";
+//                diffExprAnatCompleteFileSize  = "xx MB";
+//                diffExprDevSimpleFileSize = "xx MB";
+//                diffExprDevCompleteFileSize = "xx MB"; 
+                filePrefix= "human_nematode";
+                break;
+            case GROUP_NAME_MOUSE_ZEBRAFISH:
+//                exprSimpleFileSize = "xx MB";
+//                exprCompleteFileSize = "xx MB"; 
+//                diffExprAnatSimpleFileSize = "xx MB";
+//                diffExprAnatCompleteFileSize  = "xx MB";
+//                diffExprDevSimpleFileSize = "xx MB";
+//                diffExprDevCompleteFileSize = "xx MB"; 
+                filePrefix= "mouse_zebrafish";
+                break;
+            case GROUP_NAME_MOUSE_FRUITFLY:
+//                exprSimpleFileSize = "xx MB";
+//                exprCompleteFileSize = "xx MB"; 
+                diffExprAnatSimpleFileSize = "xx MB";
+                diffExprAnatCompleteFileSize  = "xx MB";
+//                diffExprDevSimpleFileSize = "xx MB";
+//                diffExprDevCompleteFileSize = "xx MB"; 
+                filePrefix= "mouse_fruitfly";
+                break;
+            case GROUP_NAME_MOUSE_NEMATODE:
+//                exprSimpleFileSize = "xx MB";
+//                exprCompleteFileSize = "xx MB"; 
+//                diffExprAnatSimpleFileSize = "xx MB";
+//                diffExprAnatCompleteFileSize  = "xx MB";
+//                diffExprDevSimpleFileSize = "xx MB";
+//                diffExprDevCompleteFileSize = "xx MB"; 
+                filePrefix= "mouse_nematode";
+                break;
+            case GROUP_NAME_ZEBRAFISH_FRUITFLY:
+//                exprSimpleFileSize = "xx MB";
+//                exprCompleteFileSize = "xx MB"; 
+                diffExprAnatSimpleFileSize = "xx MB";
+                diffExprAnatCompleteFileSize  = "xx MB";
+//                diffExprDevSimpleFileSize = "xx MB";
+//                diffExprDevCompleteFileSize = "xx MB"; 
+                filePrefix= "zebrafish_fruitfly";
+                break;
+            case GROUP_NAME_ZEBRAFISH_NEMATODE:
+//                exprSimpleFileSize = "xx MB";
+//                exprCompleteFileSize = "xx MB"; 
+//                diffExprAnatSimpleFileSize = "xx MB";
+//                diffExprAnatCompleteFileSize  = "xx MB";
+//                diffExprDevSimpleFileSize = "xx MB";
+//                diffExprDevCompleteFileSize = "xx MB"; 
+                filePrefix= "zebrafish_nematode";
+                break;
+            case GROUP_NAME_FRUITFLY_NEMATODE:
+//                exprSimpleFileSize = "xx MB";
+//                exprCompleteFileSize = "xx MB"; 
+//                diffExprAnatSimpleFileSize = "xx MB";
+//                diffExprAnatCompleteFileSize  = "xx MB";
+//                diffExprDevSimpleFileSize = "xx MB";
+//                diffExprDevCompleteFileSize = "xx MB"; 
+                filePrefix= "fruitfly_nematode";
+                break;
+            case GROUP_NAME_PRIMATES:
+//                exprSimpleFileSize = "xx MB";
+//                exprCompleteFileSize = "xx MB"; 
+                diffExprAnatSimpleFileSize = "xx MB";
+                diffExprAnatCompleteFileSize  = "xx MB";
+//                diffExprDevSimpleFileSize = "xx MB";
+//                diffExprDevCompleteFileSize = "xx MB"; 
+                filePrefix= "primates";
+                break;
+            case GROUP_NAME_RODENTIA:
+//                exprSimpleFileSize = "xx MB";
+//                exprCompleteFileSize = "xx MB"; 
+                diffExprAnatSimpleFileSize = "xx MB";
+                diffExprAnatCompleteFileSize  = "xx MB";
+//                diffExprDevSimpleFileSize = "xx MB";
+//                diffExprDevCompleteFileSize = "xx MB"; 
+                filePrefix= "rodentia";
+                break;
+            case GROUP_NAME_THERIA:
+//                exprSimpleFileSize = "xx MB";
+//                exprCompleteFileSize = "xx MB"; 
+                diffExprAnatSimpleFileSize = "xx MB";
+                diffExprAnatCompleteFileSize  = "xx MB";
+//                diffExprDevSimpleFileSize = "xx MB";
+//                diffExprDevCompleteFileSize = "xx MB"; 
+                filePrefix= "theria";
+                break;
+            case GROUP_NAME_MAMMALIA:
+//                exprSimpleFileSize = "xx MB";
+//                exprCompleteFileSize = "xx MB"; 
+                diffExprAnatSimpleFileSize = "xx MB";
+                diffExprAnatCompleteFileSize  = "xx MB";
+//                diffExprDevSimpleFileSize = "xx MB";
+//                diffExprDevCompleteFileSize = "xx MB"; 
+                filePrefix= "mammalia";
+                break;
+            case GROUP_NAME_AMNIOTA:
+//                exprSimpleFileSize = "xx MB";
+//                exprCompleteFileSize = "xx MB"; 
+                diffExprAnatSimpleFileSize = "xx MB";
+                diffExprAnatCompleteFileSize  = "xx MB";
+//                diffExprDevSimpleFileSize = "xx MB";
+//                diffExprDevCompleteFileSize = "xx MB"; 
+                filePrefix= "amniota";
+                break;
+            case GROUP_NAME_BILATERIA:
+//                exprSimpleFileSize = "xx MB";
+//                exprCompleteFileSize = "xx MB"; 
+                diffExprAnatSimpleFileSize = "xx MB";
+                diffExprAnatCompleteFileSize  = "xx MB";
+                diffExprDevSimpleFileSize = "xx MB";
+                diffExprDevCompleteFileSize = "xx MB"; 
+                filePrefix= "bilateria";
                 break;
             default:
                 return ("");
         }
         
-        //TODO modify directory to use multi-species one when created in BgeeProperties
-        String beginFilePath = 
-                this.prop.getDownloadRootDirectory() + StringUtils.deleteWhitespace(groupName) + "_";
-        String extension = ".tsv";
-        return log.exit(" data-bgeeexprsimplefileurl='" + beginFilePath + "expr-simple" + extension + 
-                "' data-bgeeexprsimplefilesize='" + exprSimpleFileSize + 
-                "' data-bgeeexprcompletefileurl='" + beginFilePath + "expr-complete" + extension + 
-                "' data-bgeeexprcompletefilesize='" + exprCompleteFileSize + 
-                "' data-bgeediffexprsimplefileurl='" + beginFilePath + "diffexpr-simple" + extension + 
-                "' data-bgeediffexprsimplefilesize='" + diffExprSimpleFileSize + 
-                "' data-bgeediffexprcompletefileurl='" + beginFilePath + "diffexpr-complete" + extension + 
-                "' data-bgeediffexprcompletefilesize='" + diffExprCompleteFileSize + "'");
+        //TODO modify directories to use multi-species one when created in BgeeProperties
+        String beginExprFilePath = this.prop.getDownloadExprFilesRootDirectory() + filePrefix + "_";
+        String beginDiffExprFilePath = this.prop.getDownloadDiffExprFilesRootDirectory() + filePrefix + "_";
+        String extension = ".tsv.zip";
+        
+        String data = "";
+        
+        if (exprSimpleFileSize != null) {
+            data += " data-bgeeexprsimplefileurl='" + beginExprFilePath + 
+                    "expr-simple" + extension +
+                    "' data-bgeeexprsimplefilesize='" + diffExprAnatSimpleFileSize + "'"; 
+        }
+        if (exprCompleteFileSize != null) {
+            data += " data-bgeeexprcompletefileurl='" + beginExprFilePath + 
+                    "expr-complete" + extension +
+                    "' data-bgeeexprcompletefilesize='" + diffExprAnatSimpleFileSize + "'"; 
+        }
+        
+        if (diffExprAnatSimpleFileSize != null) {
+            data += " data-bgeediffexpranatomysimplefileurl='" + beginDiffExprFilePath + 
+                    "diffexpr-anatomy-simple" + extension +
+                    "' data-bgeediffexpranatomysimplefilesize='" + diffExprAnatSimpleFileSize + "'"; 
+        }
+        if (diffExprAnatCompleteFileSize != null) {
+            data += " data-bgeediffexpranatomycompletefileurl='" + beginDiffExprFilePath + 
+                    "diffexpr-anatomy-complete" + extension +
+                    "' data-bgeediffexpranatomycompletefilesize='" + diffExprAnatCompleteFileSize + "'"; 
+        }
+        if (diffExprDevSimpleFileSize != null) {
+            data += " data-bgeediffexprdevelopmentsimplefileurl='" + beginDiffExprFilePath + 
+                    "diffexpr-development-simple" + extension +
+                    "' data-bgeediffexprdevelopmentsimplefilesize='" + diffExprDevSimpleFileSize + "'"; 
+        }
+        if (diffExprDevCompleteFileSize != null) {
+            data += " data-bgeediffexprdevelopmentcompletefileurl='" + beginDiffExprFilePath + 
+                    "diffexpr-development-complete" + extension +
+                    "' data-bgeediffexprdevelopmentcompletefilesize='" + diffExprDevCompleteFileSize + "'"; 
+        }
+        return log.exit(data);
     }
     
     /**

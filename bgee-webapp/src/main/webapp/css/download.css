@@ -262,7 +262,7 @@ p {
     height: 55px;
 }
 
-.download_link, #bgee_data_selection p.not_enough_data {
+.download_link, #bgee_data_selection p.no_data {
 	padding: 5px;
 	font-size: 0.9em;
 }
@@ -282,7 +282,7 @@ p {
     background-color:#717171;
 }
 
-#bgee_data_selection p.not_enough_data {
+#bgee_data_selection p.no_data {
     color: #717171;
     margin: 0;
 }

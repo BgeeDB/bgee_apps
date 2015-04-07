@@ -630,6 +630,16 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                            (!doIteration && currentOMANodeId == null && currentTO == null);
                     assert currentOMANodeId == null || 
                             currentOMANodeId.compareTo(previousOMANodeId) > 0;
+                            
+                    if (previousOMANodeId == null) {
+                        //if we reach this code block, it means there were no results at all 
+                        //retrieved from the ResultSet. This is not formally an error, 
+                        //maybe there is no homologous genes with expression 
+                        //for the selected species...
+                        log.warn("No Expression data retrieved for group {}, taxon LCA {}, composed of species {}", 
+                                prefix, taxonId, speciesFilter);
+                        break;
+                    }
                     
                     // We group calls (without propagation) by condition
                     Map<MultiSpeciesCondition, Collection<DiffExpressionCallTO>> 

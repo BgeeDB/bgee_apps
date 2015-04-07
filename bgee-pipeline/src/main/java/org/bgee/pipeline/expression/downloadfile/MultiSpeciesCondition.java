@@ -7,17 +7,19 @@ package org.bgee.pipeline.expression.downloadfile;
  * @version Bgee 13
  * @since 	Bgee 13
  */
+//XXX: maybe this class should also store the OMA node ID? See for instance method 
+//GenerateMultiSpeciesDiffExprFile.filterAndWriteConditionGroup, which always uses both.
 public class MultiSpeciesCondition {
 
     /**
      * A {@code String} representing the ID of the summary similarity annotation.
      */
-    private String summarySimilarityAnnotationId;
+    private final String summarySimilarityAnnotationId;
     
     /**
      * A {@code String} representing the ID of the stage group.
      */
-    private String stageGroupId;
+    private final String stageGroupId;
     
     /**
      * Constructor providing the ID of the summary similarity annotation

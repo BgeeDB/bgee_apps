@@ -1107,6 +1107,9 @@ public abstract class GenerateDownloadFile extends CallUser {
         }
     }
     
+    //TODO: why aren't all these classes specific to diff expression data 
+    //into GenerateMultiSpeciesDiffExprFile?
+    
     /**
      * A bean representing a row of a differential expression file. Getter and setter names 
      * must follow standard bean definitions.
@@ -1640,6 +1643,7 @@ public abstract class GenerateDownloadFile extends CallUser {
      * @version Bgee 13
      * @since 	Bgee 13
      */
+    //TODO: rename all xxxNbxxx methods into xxxCount (number doesn't have the exact same meaning in English)
     public static class SpeciesCounts {
         
         /**

@@ -611,13 +611,25 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             // ****************************
             Set<DiffExpressionCallTO> omaGroupCalls = new HashSet<DiffExpressionCallTO>();
             String previousOMANodeId = null;
-            while (diffExprRs.next()) {
-                DiffExpressionCallTO currentTO = diffExprRs.getTO();
-                String currentOMANodeId = mapGeneOMANode.get(currentTO.getGeneId());
-                if (previousOMANodeId != null && !currentOMANodeId.equals(previousOMANodeId)) {
+            //we iterate the ResultSet, then we do a last iteration after the last TO is retrieved, 
+            //to properly group all the calls.
+            boolean doIteration = true;
+            while (doIteration) {
+                doIteration = diffExprRs.next();
+                DiffExpressionCallTO currentTO = null;
+                String currentOMANodeId = null;
+                if (doIteration) {
+                    currentTO = diffExprRs.getTO();
+                    currentOMANodeId = mapGeneOMANode.get(currentTO.getGeneId());
+                }
+                if (!doIteration || //doIteration is false for the latest iteration, AFTER retrieving the last TO
+                                    //(ResultSet.isAfterLast would return true)
+                    (previousOMANodeId != null && !previousOMANodeId.equals(currentOMANodeId))) {
                     // currentTO belongs to another OMA node ID then the previousTO
-                    assert currentOMANodeId.compareTo(
-                            previousOMANodeId) < 0;
+                    assert (doIteration && currentOMANodeId != null && currentTO != null) || 
+                           (!doIteration && currentOMANodeId == null && currentTO == null);
+                    assert currentOMANodeId == null || 
+                            currentOMANodeId.compareTo(previousOMANodeId) > 0;
                     
                     // We group calls (without propagation) by condition
                     Map<MultiSpeciesCondition, Collection<DiffExpressionCallTO>> 
@@ -634,10 +646,12 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                     // We clear the set containing TOs with the previous OMA Node ID
                     omaGroupCalls.clear();
                 }
-                // We add the current TOs to the group
-                omaGroupCalls.add(currentTO);
-                // We store the current OMA Node ID to be compare with the next one
-                previousOMANodeId = currentOMANodeId;
+                if (doIteration) {
+                    // We add the current TOs to the group
+                    omaGroupCalls.add(currentTO);
+                    // We store the current OMA Node ID to be compare with the next one
+                    previousOMANodeId = currentOMANodeId;
+                }
             }
 
         } catch (Exception e) {

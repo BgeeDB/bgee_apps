@@ -493,7 +493,9 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 prefix, taxonId, speciesFilter, this.fileTypes);
 
         // We check that all file types have the same comparison factor and we retrieve it 
-        //XXX: why should they all have a same comparison factor?
+        //TODO: accept more than one comparison factor over all possible file types, 
+        //if we generate multi-species diff expression files over DEVELOPMENT.
+        //the expression query should be performed once per comparison factor
         ComparisonFactor factor = null;
         for (FileType fileType: this.fileTypes) {
             if (factor == null) {
@@ -503,7 +505,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                         "All file types do not have the same comparison factor: " + this.fileTypes));
             }
         }
-        assert factor != null;
+        assert factor != null && factor.equals(ComparisonFactor.ANATOMY);
 
         //********************************
         // RETRIEVE DATA FROM DATA SOURCE
@@ -533,7 +535,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         Map<String, String> mapGeneSpecies = this.getMappingGeneSpecies(speciesFilter);
 
         // Load differential expression calls order by OMA node ID
-        //XXX: shouldn't there be a try-with-resources or a try/finally here?
+        //FIXME: shouldn't there be a try-with-resources or a try/finally here?
         DiffExpressionCallTOResultSet diffExprRs = 
                 this.getDiffExpressionCallsOrderByOMANodeId(taxonId, speciesFilter, factor);
         
@@ -1179,7 +1181,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     //should be stored in class attributes. A good design would be to have *another* class 
     //to hold these params...
     //XXX: not a big fan of the Entry argument, this might be splitted into two distinct arguments
-    //XXX: do we really need the mapSumSimCIO mapping? It is easy to retrieve it from cioStatementByIds...
+    //TODO: do we really need the mapSumSimCIO mapping? It is easy to retrieve it from cioStatementByIds...
     private void filterAndWriteConditionGroup(Map<String,String> geneNamesByIds,
             Map<String,String> mapGeneSpecies, Map<String,String> stageNamesByIds,
             Map<String,String> anatEntityNamesByIds, Map<String,CIOStatementTO> cioStatementByIds,
@@ -1530,13 +1532,10 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * @return      A negative integer, zero, or a positive integer as {@code list1} is greater than, 
      *              equal to, or less than this {@code list2}, ignoring case considerations.
      */
-    //TODO find a better place ?
     //TODO: transform this method into a Comparator
     private int compareTwoLists(List<String> list1, List<String> list2) {
         log.entry(list1, list2);
         int minLength = Math.min(list1.size(), list2.size());
-        Collections.sort(list1);
-        Collections.sort(list2);
 
         for (int i = 0; i < minLength; i++) {
             final int compareValue = list1.get(i).compareToIgnoreCase(list2.get(i));

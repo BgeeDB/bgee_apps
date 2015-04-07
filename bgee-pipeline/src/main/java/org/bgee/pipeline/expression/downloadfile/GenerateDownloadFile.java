@@ -230,7 +230,7 @@ public abstract class GenerateDownloadFile extends CallUser {
      * @param directory     A {@code String} that is the directory where to store files.
      * @throws IllegalArgumentException If {@code directory} is {@code null} or blank.
      */
-    //XXX: how is this associated back to the name given to the group of species?
+    //FIXME: how is this associated back to the name given to the group of species?
     public GenerateDownloadFile(MySQLDAOManager manager, List<String> speciesIds, 
             Set<? extends FileType> fileTypes, String directory) throws IllegalArgumentException {
         super(manager);

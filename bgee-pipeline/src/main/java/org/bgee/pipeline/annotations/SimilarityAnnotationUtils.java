@@ -17,6 +17,7 @@ import org.supercsv.cellprocessor.Optional;
 import org.supercsv.cellprocessor.ParseBool;
 import org.supercsv.cellprocessor.ParseDate;
 import org.supercsv.cellprocessor.ParseInt;
+import org.supercsv.cellprocessor.Trim;
 import org.supercsv.cellprocessor.constraint.StrNotNullOrEmpty;
 import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.comment.CommentStartsWith;
@@ -43,7 +44,7 @@ public class SimilarityAnnotationUtils {
 
 //    /**
 //     * A {@code CellProcessorAdaptor} used to convert a {@code List} of {@code String}s 
-//     * (as returned by the processor {@link ParseMultipleValuesCell}) into a {@code List} 
+//     * (as returned by the processor {@link ParseMultipleStringValues}) into a {@code List} 
 //     * of {@code Integer}s. 
 //     * 
 //     * @author Frederic Bastian
@@ -98,15 +99,15 @@ public class SimilarityAnnotationUtils {
 //    }
     /**
      * A {@code CellProcessorAdaptor} capable of parsing cells allowing to optionally 
-     * contain multiple values, separated by {@link #SEPARATOR}. 
-     * This {@code CellProcessorAdaptor} will return the values as a {@code List}, 
-     * in the same order as in the cell read.
+     * contain multiple values, separated by {@link #VALUE_SEPARATOR}. 
+     * This {@code CellProcessorAdaptor} will return the values as a {@code List} 
+     * of {@code String}s, in the same order as in the cell read.
      * 
      * @author Frederic Bastian
      * @version Bgee 13 Mar. 2015
      * @since Bgee 13
      */
-    protected static class ParseMultipleValuesCell extends CellProcessorAdaptor {
+    protected static class ParseMultipleStringValues extends CellProcessorAdaptor {
         /**
          * A {@code String} that is the pattern to use to split values in a cell 
          * potentially containing multiple values.
@@ -132,15 +133,15 @@ public class SimilarityAnnotationUtils {
         /**
          * Default constructor, no other {@code CellProcessor} in the chain.
          */
-        protected ParseMultipleValuesCell() {
+        protected ParseMultipleStringValues() {
                 super();
         }
         /**
          * Constructor allowing other processors to be chained 
-         * after {@code ParseMultipleValuesCell}.
+         * after {@code ParseMultipleStringValues}.
          * @param next  A {@code CellProcessor} that is the next to be called. 
          */
-        protected ParseMultipleValuesCell(CellProcessor next) {
+        protected ParseMultipleStringValues(CellProcessor next) {
             super(next);
         }
         
@@ -171,27 +172,33 @@ public class SimilarityAnnotationUtils {
      * @version Bgee 13 Mar. 2015
      * @since Bgee 13
      */
-    protected static class ParseQualifierCell extends CellProcessorAdaptor {
+    protected static class ParseQualifier extends CellProcessorAdaptor {
         /**
          * Default constructor, no other {@code CellProcessor} in the chain.
          */
-        protected ParseQualifierCell() {
+        protected ParseQualifier() {
                 super();
         }
         /**
          * Constructor allowing other processors to be chained after 
-         * {@code ParseQualifierCell}.
+         * {@code ParseQualifier}.
          * @param next  A {@code CellProcessor} that is the next to be called. 
          */
-        protected ParseQualifierCell(CellProcessor next) {
+        protected ParseQualifier(CellProcessor next) {
                 super(next);
         }
         @Override
         public Object execute(Object value, CsvContext context) {
             log.entry(value, context); 
             //this processor accepts null value
+            if (!(value instanceof String)) {
+                throw log.throwing(new SuperCsvCellProcessorException(
+                        "A String must be provided, incorrect value: " 
+                        + value + " of type " + value.getClass().getSimpleName(), 
+                        context, this));
+            }
             boolean negate = false;
-            if (NEGATE_QUALIFIER.equals(value)) {
+            if (value != null && NEGATE_QUALIFIER.equals(((String) value).trim())) {
                 negate = true;
             }
             //passes result to next processor in the chain
@@ -235,6 +242,9 @@ public class SimilarityAnnotationUtils {
         /**
          * @see #isNegated()
          */
+        //XXX: actually, this was a bad design; this corresponds to the QUALIFIER column, 
+        //which currently only accept a NOT value. But it is meant to potentially 
+        //accept other values, so this should not be a boolean, rather an Enum or something...
         private boolean negated;
         /**
          * @see getCioId()
@@ -1606,7 +1616,7 @@ public class SimilarityAnnotationUtils {
      * An unmodifiable {@code List} of {@code String}s that are the allowed separators 
      * between values in cells potentially containing multiple values, 
      * in preferred order of use. 
-     * @see ParseMultipleValuesCell
+     * @see ParseMultipleStringValues
      * @see #multipleValuesToString(List)
      */
     protected final static List<String> VALUE_SEPARATORS = 
@@ -1933,7 +1943,7 @@ public class SimilarityAnnotationUtils {
             // *** CellProcessors common to all AnnotationBean types ***
                 case ENTITY_COL_NAME: 
                 case ENTITY_NAME_COL_NAME: 
-                    processors[i] = new ParseMultipleValuesCell();
+                    processors[i] = new ParseMultipleStringValues();
                     break;
                 case TAXON_COL_NAME: 
                     processors[i] = new ParseInt();
@@ -1943,13 +1953,13 @@ public class SimilarityAnnotationUtils {
                 case CONF_COL_NAME: 
                 case CONF_NAME_COL_NAME: 
                 case TAXON_NAME_COL_NAME: 
-                    processors[i] = new StrNotNullOrEmpty();
+                    processors[i] = new StrNotNullOrEmpty(new Trim());
                     break;
                 case QUALIFIER_COL_NAME: 
-                    processors[i] = new ParseQualifierCell();
+                    processors[i] = new ParseQualifier();
                     break;
                 case SUPPORT_TEXT_COL_NAME: 
-                    processors[i] = new Optional();
+                    processors[i] = new Optional(new Trim());
                     break;
             }
             //if it was one of the column common to all AnnotationBeans, 
@@ -1967,13 +1977,13 @@ public class SimilarityAnnotationUtils {
                     case ECO_COL_NAME: 
                     case ECO_NAME_COL_NAME: 
                     case ASSIGN_COL_NAME: 
-                        processors[i] = new StrNotNullOrEmpty();
+                        processors[i] = new StrNotNullOrEmpty(new Trim());
                         break;
                     //these fields are not mandatory in case of inferred annotations
                     case CURATOR_COL_NAME: 
                     case REF_COL_NAME: 
                     case REF_TITLE_COL_NAME:
-                        processors[i] = new Optional();
+                        processors[i] = new Optional(new Trim());
                         break;
                 }
             } else if (beanType.equals(SummaryAnnotationBean.class)) {
@@ -1983,21 +1993,21 @@ public class SimilarityAnnotationUtils {
                         processors[i] = new ParseBool();
                         break;
 //                    case ASSIGN_COL_NAME: 
-//                        processors[i] = new ParseMultipleValuesCell();
+//                        processors[i] = new ParseMultipleStringValues();
 //                        break;
 //                    case POSITIVE_ECO_COL_NAME: 
 //                    case POSITIVE_ECO_NAME_COL_NAME: 
 //                    case NEGATIVE_ECO_COL_NAME: 
 //                    case NEGATIVE_ECO_NAME_COL_NAME: 
 //                    case AGGREGATED_TAXA_NAME_COL_NAME:
-//                        processors[i] = new Optional(new ParseMultipleValuesCell());
+//                        processors[i] = new Optional(new ParseMultipleStringValues());
 //                        break;
 //                    case POSITIVE_COUNT_COL_NAME: 
 //                    case NEGATIVE_COUNT_COL_NAME:
 //                        processors[i] = new ParseInt();
 //                        break;
 //                    case AGGREGATED_TAXA_COL_NAME: 
-//                        processors[i] = new Optional(new ParseMultipleValuesCell(
+//                        processors[i] = new Optional(new ParseMultipleStringValues(
 //                                new ConvertToIntList()));
 //                        break;
                 }

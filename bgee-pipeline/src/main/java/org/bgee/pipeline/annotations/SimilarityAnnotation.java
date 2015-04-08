@@ -33,8 +33,8 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.Utils;
 import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.AncestralTaxaAnnotationBean;
 import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.AnnotationBean;
-import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.ParseMultipleValuesCell;
-import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.ParseQualifierCell;
+import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.ParseMultipleStringValues;
+import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.ParseQualifier;
 import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.RawAnnotationBean;
 import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.SummaryAnnotationBean;
 import org.bgee.pipeline.ontologycommon.CIOWrapper;
@@ -52,23 +52,30 @@ import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
+import org.supercsv.cellprocessor.CellProcessorAdaptor;
+import org.supercsv.cellprocessor.FmtBool;
 import org.supercsv.cellprocessor.FmtDate;
 import org.supercsv.cellprocessor.Optional;
 import org.supercsv.cellprocessor.ParseBool;
 import org.supercsv.cellprocessor.ParseDate;
 import org.supercsv.cellprocessor.ParseInt;
+import org.supercsv.cellprocessor.Trim;
 import org.supercsv.cellprocessor.constraint.NotNull;
 import org.supercsv.cellprocessor.constraint.StrNotNullOrEmpty;
 import org.supercsv.cellprocessor.ift.CellProcessor;
+import org.supercsv.exception.SuperCsvCellProcessorException;
 import org.supercsv.exception.SuperCsvException;
 import org.supercsv.io.CsvBeanReader;
+import org.supercsv.io.CsvBeanWriter;
 import org.supercsv.io.CsvListReader;
 import org.supercsv.io.CsvMapReader;
 import org.supercsv.io.CsvMapWriter;
 import org.supercsv.io.ICsvBeanReader;
+import org.supercsv.io.ICsvBeanWriter;
 import org.supercsv.io.ICsvListReader;
 import org.supercsv.io.ICsvMapReader;
 import org.supercsv.io.ICsvMapWriter;
+import org.supercsv.util.CsvContext;
 
 import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
@@ -90,6 +97,82 @@ public class SimilarityAnnotation {
             LogManager.getLogger(SimilarityAnnotation.class.getName());
     
     /**
+     * A {@code CellProcessorAdaptor} converting a {@code List} of {@code String}s 
+     * into a {@code String} where elements in the {@code List} are separated 
+     * by a separator. The separator used is the first element in 
+     * {@link SimilarityAnnotationUtils#VALUE_SEPARATOR}. If you want to convert 
+     * a separated-values {@code String} into a {@code List} of {@code String}s, 
+     * see {@link SimilarityAnnotationUtils.ParseMultipleStringValues}.
+     * 
+     * @author Frederic Bastian
+     * @version Bgee 13 Apr. 2015
+     * @since Bgee 13
+     */
+    protected static class FmtMultipleStringValues extends CellProcessorAdaptor {
+        
+        /**
+         * Default constructor, no other {@code CellProcessor} in the chain.
+         */
+        protected FmtMultipleStringValues() {
+                super();
+        }
+        /**
+         * Constructor allowing other processors to be chained 
+         * after {@code FmtMultipleValuesCell}.
+         * @param next  A {@code CellProcessor} that is the next to be called. 
+         */
+        protected FmtMultipleStringValues(CellProcessor next) {
+            super(next);
+        }
+        
+        @Override
+        public Object execute(Object value, CsvContext context) 
+                throws SuperCsvCellProcessorException {
+            log.entry(value, context); 
+            
+            //throws an Exception if the input is null, as all CellProcessors usually do.
+            validateInputNotNull(value, context); 
+            
+            if (!(value instanceof List)) {
+                throw log.throwing(new SuperCsvCellProcessorException(
+                        "A List of Strings must be provided, incorrect value: " 
+                        + value + " of type " + value.getClass().getSimpleName(), 
+                        context, this));
+            }
+            List<?> valueList = (List<?>) value;
+            if (valueList.isEmpty()) {
+                throw log.throwing(new SuperCsvCellProcessorException(
+                        "The provided List cannot be empty", 
+                        context, this));
+            }
+            
+            String multipleValuesString = "";
+            for (Object valueElement: valueList) {
+                if (!(valueElement instanceof String)) {
+                    throw log.throwing(new SuperCsvCellProcessorException(
+                            "A List of Strings must be provided, incorrect value element: " 
+                            + valueElement + " of type " + valueElement.getClass().getSimpleName(), 
+                            context, this));
+                }
+                if (StringUtils.isBlank((String) valueElement)) {
+                    throw log.throwing(new SuperCsvCellProcessorException(
+                            "The provided List cannot contain blank values", 
+                            context, this));
+                }
+                
+                if (!multipleValuesString.isEmpty()) {
+                    multipleValuesString += SimilarityAnnotationUtils.VALUE_SEPARATORS.get(0);
+                }
+                multipleValuesString += valueElement;
+            }
+            
+            //passes result to next processor in the chain
+            return log.exit(next.execute(multipleValuesString, context));
+        }
+    }
+    
+    
+    /**
      * A bean representing a row from a curator annotation file. Getter and setter names 
      * must follow standard bean definitions. This bean simply extends 
      * {@code RawAnnotationBean} without adding any methods, it is only used to type 
@@ -105,11 +188,11 @@ public class SimilarityAnnotation {
      * @version Bgee 13 Mar. 2015
      * @since Bgee 13
      */
-    private static class CuratorAnnotationBean extends RawAnnotationBean {
+    public static class CuratorAnnotationBean extends RawAnnotationBean {
         /**
          * 0-argument constructor of the bean.
          */
-        public CuratorAnnotationBean() {
+        private CuratorAnnotationBean() {
             super();
         }
         /**
@@ -127,7 +210,7 @@ public class SimilarityAnnotation {
          * @param curator           See {@link #getCurator()}.
          * @param curationDate      See {@link #getCurationDate()}.
          */
-        public CuratorAnnotationBean(String homId, List<String> entityIds, 
+        private CuratorAnnotationBean(String homId, List<String> entityIds, 
                 int ncbiTaxonId, boolean negated,String ecoId, String cioId, 
                 String refId, String refTitle, String supportingText,
                 String assignedBy, String curator, Date curationDate) {
@@ -556,7 +639,7 @@ public class SimilarityAnnotation {
     //TODO: in java 8 we could use a functional interface to provide the method 
     //generating the mapping from header to CellProcessors (this is the only difference 
     //between the code for curator file or processed files).
-    private static List<CuratorAnnotationBean> extractCuratorAnnotations(String similarityFile) 
+    public static List<CuratorAnnotationBean> extractCuratorAnnotations(String similarityFile) 
             throws FileNotFoundException, IOException, IllegalArgumentException {
         log.entry(similarityFile);
         
@@ -567,7 +650,7 @@ public class SimilarityAnnotation {
             final String[] header = annotReader.getHeader(true);
             String[] attributeMapping = SimilarityAnnotationUtils.mapHeaderToAttributes(
                     header, RawAnnotationBean.class);
-            CellProcessor[] cellProcessorMapping = mapHeaderToCellProcessors(header);
+            CellProcessor[] cellProcessorMapping = mapCuratorHeaderToCellProcessors(header);
             CuratorAnnotationBean annot;
             while((annot = annotReader.read(CuratorAnnotationBean.class, attributeMapping, 
                     cellProcessorMapping)) != null ) {
@@ -588,7 +671,7 @@ public class SimilarityAnnotation {
 
     /**
      * Map the column names of a curator annotation file to the {@code CellProcessor}s 
-     * used to populate {@code RawAnnotationBean}. We do not use the method provided 
+     * used to populate {@code CuratorAnnotationBean}. We do not use the method provided 
      * by {@link SimilarityAnnotationUtils}, because not the same fields are mandatory 
      * in the released files and in the file used by curator.
      * 
@@ -600,7 +683,7 @@ public class SimilarityAnnotation {
      * @throws IllegalArgumentException If a {@code String} in {@code header} 
      *                                  is not recognized.
      */
-    private static CellProcessor[] mapHeaderToCellProcessors(String[] header) 
+    private static CellProcessor[] mapCuratorHeaderToCellProcessors(String[] header) 
             throws IllegalArgumentException {
         log.entry((Object[]) header);
         
@@ -609,13 +692,13 @@ public class SimilarityAnnotation {
             switch (header[i]) {
             // *** CellProcessors common to all AnnotationBean types ***
                 case SimilarityAnnotationUtils.ENTITY_COL_NAME: 
-                    processors[i] = new ParseMultipleValuesCell();
+                    processors[i] = new ParseMultipleStringValues();
                     break;
                 case SimilarityAnnotationUtils.TAXON_COL_NAME: 
                     processors[i] = new ParseInt();
                     break;
                 case SimilarityAnnotationUtils.QUALIFIER_COL_NAME: 
-                    processors[i] = new ParseQualifierCell();
+                    processors[i] = new ParseQualifier();
                     break;
                 case SimilarityAnnotationUtils.DATE_COL_NAME: 
                     processors[i] = new ParseDate(SimilarityAnnotationUtils.DATE_FORMAT);
@@ -647,6 +730,253 @@ public class SimilarityAnnotation {
             }
         }
         return log.exit(processors);
+    }
+
+    /**
+     * Write the provided annotations into the CSV file {@code outputFile}. 
+     * The columns of the file will be defined depending on the provided bean type. 
+     * Note that the type {@code CuratorAnnotationBean} is not accepted, 
+     * as such annotations are not meant to be written in release files.
+     * The parameters to write the CSV file are provided by 
+     * {@link org.bgee.pipeline.Utils#TSVCOMMENTED}.
+     * 
+     * @param annots        A {@code List} of {@code AnnotationBean}s to be written 
+     *                      in a CSV file.
+     * @param outputFile    A {@code String} that is the path to the CSV output file.
+     * @param beanType      A {@code Class} that is the type of {@code AnnotationBean} 
+     *                      to be written.
+     * @param <T>           The type of {@code AnnotationBean}.
+     * @throws IllegalArgumentException If {@code beanType} is not supported by this method.
+     * @throws IOException              If an error occurred while writing the CSV file.
+     */
+    public static <T extends AnnotationBean> void writeAnnotations(List<T> annots, 
+            String outputFile, Class<T> beanType) throws IllegalArgumentException, IOException {
+        log.entry(annots, outputFile, beanType);
+        
+        //here we don't accept CuratorAnnotationBean, they're not meant to be written 
+        //in release files.
+        if (!beanType.equals(RawAnnotationBean.class) && 
+                !beanType.equals(SummaryAnnotationBean.class) && 
+                !beanType.equals(AncestralTaxaAnnotationBean.class)) {
+            throw log.throwing(new IllegalArgumentException("Unsupported "
+                    + "AnnotationBean type: " + beanType));
+        }
+        
+        try (ICsvBeanWriter beanWriter = new CsvBeanWriter(new FileWriter(outputFile), 
+                Utils.TSVCOMMENTED)) {
+            
+            final String[] header = getHeader(beanType);
+            String[] attributeMapping = 
+                    SimilarityAnnotationUtils.mapHeaderToAttributes(header, beanType);
+            final CellProcessor[] processors = mapHeaderToWriteCellProcessors(header, beanType);
+            
+            // write the header
+            beanWriter.writeHeader(header);
+            
+            // write the beans
+            for (final T annot : annots) {
+                    beanWriter.write(annot, attributeMapping, processors);
+            }
+        }
+        
+        log.exit();
+    }
+    
+    /**
+     * Generate the header used to write {@code AnnotationBean}s of the provided type 
+     * in a CSV file. Note that the type {@code CuratorAnnotationBean} is not accepted, 
+     * as such annotations are not meant to be written in release files.
+     * 
+     * @param beanType  A {@code Class} that is the type of {@code AnnotationBean} that 
+     *                  will be written in a CSV file.
+     * @return          An {@code Array} of {@code String}s that are the names of the columns, 
+     *                  in the order to be displayed, of the CSV file to be written.
+     * @throws IllegalArgumentException If {@code beanType} is not supported by this method.
+     */
+    private static String[] getHeader(Class<? extends AnnotationBean> beanType) 
+            throws IllegalArgumentException {
+        log.entry(beanType);
+        
+        //here we don't accept CuratorAnnotationBean, they're not meant to be written 
+        //in release files.
+        if (!beanType.equals(RawAnnotationBean.class) && 
+                !beanType.equals(SummaryAnnotationBean.class) && 
+                !beanType.equals(AncestralTaxaAnnotationBean.class)) {
+            throw log.throwing(new IllegalArgumentException("Unsupported "
+                    + "AnnotationBean type: " + beanType));
+        }
+        
+        int columnCount = 0;
+        if (beanType.equals(RawAnnotationBean.class)) {
+            columnCount = 17;
+        } else if (beanType.equals(SummaryAnnotationBean.class)) {
+            columnCount = 11;
+        } else if (beanType.equals(AncestralTaxaAnnotationBean.class)) {
+            columnCount = 9;
+        }
+        assert columnCount > 0;
+        
+        String[] header = new String[columnCount];
+        
+        int i = 0;
+        header[i] = SimilarityAnnotationUtils.HOM_COL_NAME;
+        i++;
+        header[i] = SimilarityAnnotationUtils.HOM_NAME_COL_NAME;
+        i++;
+        header[i] = SimilarityAnnotationUtils.ENTITY_COL_NAME;
+        i++;
+        header[i] = SimilarityAnnotationUtils.ENTITY_NAME_COL_NAME;
+        i++;
+        
+        //no need for the qualifier column in Ancestral taxa files, annotations used 
+        //are all positive.
+        if (!beanType.equals(AncestralTaxaAnnotationBean.class)) {
+            header[i] = SimilarityAnnotationUtils.QUALIFIER_COL_NAME;
+            i++;
+        }
+        
+        header[i] = SimilarityAnnotationUtils.TAXON_COL_NAME;
+        i++;
+        header[i] = SimilarityAnnotationUtils.TAXON_NAME_COL_NAME;
+        i++;
+        header[i] = SimilarityAnnotationUtils.CONF_COL_NAME;
+        i++;
+        header[i] = SimilarityAnnotationUtils.CONF_NAME_COL_NAME;
+        i++;
+        
+        //columns specific to SummaryAnnotationBeans to interleave here.
+        if (beanType.equals(SummaryAnnotationBean.class)) {
+            header[i] = SimilarityAnnotationUtils.TRUSTED_COL_NAME;
+            i++;
+        }
+        
+        //columns specific to RawAnnotationBeans to interleave here.
+        if (beanType.equals(RawAnnotationBean.class)) {
+            header[i] = SimilarityAnnotationUtils.ECO_COL_NAME;
+            i++;
+            header[i] = SimilarityAnnotationUtils.ECO_NAME_COL_NAME;
+            i++;
+            header[i] = SimilarityAnnotationUtils.REF_COL_NAME;
+            i++;
+            header[i] = SimilarityAnnotationUtils.REF_TITLE_COL_NAME;
+            i++;
+        }
+        
+        header[i] = SimilarityAnnotationUtils.SUPPORT_TEXT_COL_NAME;
+        i++;
+        
+        //columns specific to RawAnnotationBeans to interleave here.
+        if (beanType.equals(RawAnnotationBean.class)) {
+            header[i] = SimilarityAnnotationUtils.ASSIGN_COL_NAME;
+            i++;
+            header[i] = SimilarityAnnotationUtils.CURATOR_COL_NAME;
+            i++;
+            header[i] = SimilarityAnnotationUtils.DATE_COL_NAME;
+            i++;
+        }
+        
+        assert header.length > 0;
+        return log.exit(header);
+    }
+
+    /**
+     * Map the column names of a CSV file to the {@code CellProcessor}s 
+     * used to write {@code AnnotationBean}s of the requested type in the file. 
+     * Note that the type {@code CuratorAnnotationBean} is not accepted, 
+     * as such annotations are not meant to be written in release files.
+     * 
+     * @param header    An {@code Array} of {@code String}s representing the names 
+     *                  of the columns of a similarity annotation file, in which to write 
+     *                  {@code AnnotationBean}s of type {@code beanType}.
+     * @param beanType  A {@code Class} defining the type of {@code AnnotationBean} 
+     *                  that will be written in CSV file.
+     * @return          An {@code Array} of {@code CellProcessor}s, put in 
+     *                  the {@code Array} at the same index as the column they are supposed 
+     *                  to process for write.
+     * @throws IllegalArgumentException If a {@code String} in {@code header} 
+     *                                  is not recognized, or if {@code beanType} is not 
+     *                                  supported by this method.
+     */
+    private static CellProcessor[] mapHeaderToWriteCellProcessors(String[] header, 
+            Class<? extends AnnotationBean> beanType) throws IllegalArgumentException {
+        log.entry(header, beanType);
+        
+        //here we don't accept CuratorAnnotationBean, they're not meant to be written 
+        //in released files.
+        if (!beanType.equals(RawAnnotationBean.class) && 
+                !beanType.equals(SummaryAnnotationBean.class) && 
+                !beanType.equals(AncestralTaxaAnnotationBean.class)) {
+            throw log.throwing(new IllegalArgumentException("Unsupported "
+                    + "AnnotationBean type: " + beanType));
+        }
+        
+        CellProcessor[] processors = new CellProcessor[header.length];
+        for (int i = 0; i < header.length; i++) {
+            switch (header[i]) {
+            // *** CellProcessors common to all AnnotationBean types ***
+                case SimilarityAnnotationUtils.ENTITY_COL_NAME: 
+                case SimilarityAnnotationUtils.ENTITY_NAME_COL_NAME: 
+                    processors[i] = new FmtMultipleStringValues(new Trim());
+                    break;
+                case SimilarityAnnotationUtils.TAXON_COL_NAME: 
+                    processors[i] = new NotNull();
+                    break;
+                case SimilarityAnnotationUtils.HOM_COL_NAME: 
+                case SimilarityAnnotationUtils.HOM_NAME_COL_NAME: 
+                case SimilarityAnnotationUtils.CONF_COL_NAME: 
+                case SimilarityAnnotationUtils.CONF_NAME_COL_NAME: 
+                case SimilarityAnnotationUtils.TAXON_NAME_COL_NAME: 
+                    processors[i] = new StrNotNullOrEmpty(new Trim());
+                    break;
+                case SimilarityAnnotationUtils.QUALIFIER_COL_NAME: 
+                    processors[i] = new FmtBool("NOT", "");
+                    break;
+                case SimilarityAnnotationUtils.SUPPORT_TEXT_COL_NAME: 
+                    processors[i] = new Optional(new Trim());
+                    break;
+            }
+            //if it was one of the column common to all AnnotationBeans, 
+            //iterate next column name
+            if (processors[i] != null) {
+                continue;
+            }
+            
+            if (beanType.equals(RawAnnotationBean.class)) {
+                switch (header[i]) {
+                // *** Attributes specific to RawAnnotationBean ***
+                    case SimilarityAnnotationUtils.DATE_COL_NAME: 
+                        processors[i] = new FmtDate(SimilarityAnnotationUtils.DATE_FORMAT);
+                        break; 
+                    case SimilarityAnnotationUtils.ECO_COL_NAME: 
+                    case SimilarityAnnotationUtils.ECO_NAME_COL_NAME: 
+                    case SimilarityAnnotationUtils.ASSIGN_COL_NAME: 
+                        processors[i] = new StrNotNullOrEmpty(new Trim());
+                        break;
+                    //these fields are not mandatory in case of inferred annotations
+                    case SimilarityAnnotationUtils.CURATOR_COL_NAME: 
+                    case SimilarityAnnotationUtils.REF_COL_NAME: 
+                    case SimilarityAnnotationUtils.REF_TITLE_COL_NAME:
+                        processors[i] = new Optional(new Trim());
+                        break;
+                }
+            } else if (beanType.equals(SummaryAnnotationBean.class)) {
+                switch (header[i]) {
+                // *** Attributes specific to SummaryAnnotationBean ***
+                    case SimilarityAnnotationUtils.TRUSTED_COL_NAME: 
+                        processors[i] = new FmtBool("T", "F");
+                        break;
+                }
+            } else if (beanType.equals(AncestralTaxaAnnotationBean.class)) {
+                //no columns specific to AncestralTaxaAnnotationBean for now
+            } 
+            
+            if (processors[i] == null) {
+                throw log.throwing(new IllegalArgumentException("Unrecognized header: " 
+                        + header[i] + " for AnnotationBean type: " + beanType));
+            }
+        }
+        return log.exit(processors);
+        
     }
 
     /**
@@ -1008,6 +1338,73 @@ public class SimilarityAnnotation {
         this.idsNotExistingInTaxa = new HashMap<String, Set<Integer>>();
     }
     
+    /**
+     * Generate the similarity annotation release files from the annotations 
+     * provided by curators. This method will: 
+     * <ol>
+     * <li>extract the curator annotations from {@code curatorAnnotsFilePath} by calling 
+     * {@link #extractCuratorAnnotations(String)}.
+     * <li>produce the RAW and inferred annotations based on the curator annotations by calling 
+     * {@link #generateRawAnnotations(Collection)}, and write them into {@code rawAnnotsFilePath} 
+     * by calling {@link #writeAnnotations(List, String, Class)}.
+     * <li>produce the SUMMARY annotations from the generated RAW annotations by calling 
+     * {@link #generateSummaryAnnotations(Collection)}, and write them into 
+     * {@code summaryAnnotsFilePath} by calling {@link #writeAnnotations(List, String, Class)}.
+     * <li>produce the ANCESTRAL TAXA annotations from the generated SUMMARY annotations 
+     * by calling {@link #generateAncestralTaxaAnnotations(Collection)}, and write them into 
+     * {@code ancestralTaxaAnnotsFilePath} by calling {@link #writeAnnotations(List, String, Class)}.
+     * </ol>
+     * 
+     * @param curatorAnnotsFilePath         A {@code String} that is the path to the curator 
+     *                                      annotation file to be read.
+     * @param rawAnnotsFilePath             A {@code String} that is the path to the RAW 
+     *                                      annotation file to be written.
+     * @param summaryAnnotsFilePath         A {@code String} that is the path to the SUMMARY 
+     *                                      annotation file to be written.
+     * @param ancestralTaxaAnnotsFilePath   A {@code String} that is the path to the 
+     *                                      ANCESTRAL TAXA annotation file to be written.
+     * @throws FileNotFoundException        If {@code curatorAnnotsFilePath} could not be found.
+     * @throws IllegalArgumentException     If some errors were detected in the provided 
+     *                                      curator annotations.
+     * @throws IllegalStateException        If the information provided at instantiation 
+     *                                      did not allow to perform the requested operations.
+     * @throws IOException                  If a file could not be read or written.
+     */
+    public void generateReleaseFiles(String curatorAnnotsFilePath, String rawAnnotsFilePath, 
+            String summaryAnnotsFilePath, String ancestralTaxaAnnotsFilePath) 
+                    throws FileNotFoundException, IllegalArgumentException, IOException {
+        log.entry(curatorAnnotsFilePath, rawAnnotsFilePath, summaryAnnotsFilePath, 
+                ancestralTaxaAnnotsFilePath);
+        
+        //extract curator annotations
+        List<CuratorAnnotationBean> curatorAnnots = 
+                extractCuratorAnnotations(curatorAnnotsFilePath);
+        
+        //generate RAW annotations. This will verify correctness of curator annotations, 
+        //will generate automatically inferred annotations and RAW annotations, 
+        //and will verify correctness of these generated annotations.
+        List<RawAnnotationBean> rawAnnots = this.generateRawAnnotations(curatorAnnots);
+        //write in file
+        writeAnnotations(rawAnnots, rawAnnotsFilePath, RawAnnotationBean.class);
+        
+        //generate SUMMARY annotations. This will verify corretness of the RAW annotations 
+        //(yes, this will be redundant), will generate SUMMARY annotations, and will verify 
+        //validity of these generated annotations.
+        List<SummaryAnnotationBean> summaryAnnots = this.generateSummaryAnnotations(rawAnnots);
+        //write in file
+        writeAnnotations(summaryAnnots, summaryAnnotsFilePath, SummaryAnnotationBean.class);
+        //release RAW annots, not needed anymore and might take lots of memory
+        rawAnnots = null;
+        
+        //generate ANCESTRAL TAXA annotations. This will verify correctness of the SUMMARY 
+        //annotations (yes, again), will filter the annotations to retrieve ancestral taxa, 
+        //and will check correctness of the new annotations retrieved.
+        List<AncestralTaxaAnnotationBean> ancestralTaxaAnnots = 
+                this.generateAncestralTaxaAnnotations(summaryAnnots);
+        //write in file
+        writeAnnotations(ancestralTaxaAnnots, ancestralTaxaAnnotsFilePath, 
+                AncestralTaxaAnnotationBean.class);
+    }
     
     /**
      * Check the correctness of the annotations provided. This methods perform many checks, 
@@ -3365,74 +3762,6 @@ public class SimilarityAnnotation {
 //        log.exit();
 //    }
 //    
-//    /**
-//     * Generates the proper annotations to be released, from the raw annotations 
-//     * from curators, and write them into {@code outputFile}. This method will 
-//     * perform all necessary checks, will obtain names corresponding to the IDs used, 
-//     * will generate summary annotation lines using the "multiple evidences" 
-//     * confidence codes for related annotations, will order the generated annotations 
-//     * for easier diff between releases. And will write the annotations 
-//     * in {@code outputFile}.
-//     * 
-//     * @param annotFile             A {@code String} that is the path to the raw 
-//     *                              annotation file.
-//     * @param taxonConstraintsFile  A {@code String} that is the path to the file 
-//     *                              containing taxon constraints. 
-//     *                              See {@link org.bgee.pipeline.uberon.TaxonConstraints}
-//     * @param uberonOntFile         A {@code String} that is the path to the Uberon 
-//     *                              ontology.
-//     * @param taxOntFile            A {@code String} that is the path to the taxonomy 
-//     *                              ontology.
-//     * @param homOntFile            A {@code String} that is the path to the homology  
-//     *                              and related concepts (HOM) ontology.
-//     * @param ecoOntFile            A {@code String} that is the path to the ECO 
-//     *                              ontology.
-//     * @param confOntFile           A {@code String} that is the path to the confidence 
-//     *                              information ontology.
-//     * @param outputFile            A {@code String} that is the path to the output file.
-//     * @throws FileNotFoundException
-//     * @throws IllegalArgumentException
-//     * @throws IOException
-//     * @throws UnknownOWLOntologyException
-//     * @throws OWLOntologyCreationException
-//     */
-//    //TODO: remove method after taking javadoc
-//    public void generateReleaseFile(String annotFile, String taxonConstraintsFile, 
-//            String uberonOntFile, String taxOntFile, String homOntFile, 
-//            String ecoOntFile, String confOntFile, String outputFile) 
-//            throws FileNotFoundException, IOException, UnknownOWLOntologyException, 
-//            OWLOntologyCreationException, OBOFormatParserException {
-//        log.entry(annotFile, taxonConstraintsFile, uberonOntFile, taxOntFile, 
-//                homOntFile, ecoOntFile, confOntFile, outputFile);
-//        
-//        //get the annotations
-//        List<Map<String, Object>> annotations = this.extractAnnotations(annotFile, true);
-//        
-//        //now, get all the information required to perform correctness checks 
-//        //on the annotations, and to add additional information (names corresponding 
-//        //to uberon IDs, etc).
-//        Set<Integer> taxonIds = TaxonConstraints.extractTaxonIds(taxonConstraintsFile);
-//        Map<String, Set<Integer>> taxonConstraints = 
-//                TaxonConstraints.extractTaxonConstraints(taxonConstraintsFile);
-//        OWLGraphWrapper uberonOntWrapper = new OWLGraphWrapper(
-//                OntologyUtils.loadOntology(uberonOntFile));
-//        OWLGraphWrapper taxOntWrapper = new OWLGraphWrapper(
-//                OntologyUtils.loadOntology(taxOntFile));
-//        OWLGraphWrapper ecoOntWrapper = new OWLGraphWrapper(
-//                OntologyUtils.loadOntology(ecoOntFile));
-//        OWLGraphWrapper homOntWrapper = new OWLGraphWrapper(
-//                OntologyUtils.loadOntology(homOntFile));
-//        OWLGraphWrapper confOntWrapper = new OWLGraphWrapper(
-//                OntologyUtils.loadOntology(confOntFile));
-//        
-//        List<Map<String, Object>> properAnnots = this.generateReleaseData(annotations, 
-//                taxonConstraints, taxonIds, uberonOntWrapper, taxOntWrapper, 
-//                ecoOntWrapper, homOntWrapper, confOntWrapper);
-//        //write to file
-//        this.writeAnnotationsToFile(outputFile, properAnnots);
-//        
-//        log.exit();
-//    }
 //    
 //    /**
 //     * Write the annotations contained in {@code annotations} to the file {@code outputFile}, 
@@ -3483,7 +3812,7 @@ public class SimilarityAnnotation {
      * @param annotations   A {@code List} of {@code AnnotationBean}s to be ordered.
      * @param <T>           The type of {@code AnnotationBean} in {@code annotations}.
      */
-    public <T extends AnnotationBean> void sortAnnotations(List<T> annotations) {
+    private <T extends AnnotationBean> void sortAnnotations(List<T> annotations) {
         Collections.sort(annotations, new Comparator<T>() {
             @Override
             public int compare(AnnotationBean o1, AnnotationBean o2) {

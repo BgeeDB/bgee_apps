@@ -18,7 +18,6 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO;
 import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO.GroupToStageTO;
 import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO.GroupToStageTOResultSet;
@@ -77,6 +76,869 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             GenerateMultiSpeciesDiffExprFile.class.getName());
     
     /**
+     * Class used to store multi-species differential expression counts: the number of 
+     * over-expressed genes, under-expressed genes, not diff. expressed genes, not expressed genes,
+     * and genes without data in the family.
+     *
+     * @author  Valentine Rech de Laval
+     * @version Bgee 13
+     * @since   Bgee 13
+     */
+    public static class SpeciesDiffExprCounts {
+        
+        /**
+         * See {@link #getSpeciesId()}.
+         */
+        private String speciesId;
+        /**
+         * See {@link #getOverExprGeneCount()}.
+         */
+        private int overExprGeneCount;
+        /**
+         * See {@link #getUnderExprGeneCount()}.
+         */
+        private int underExprGeneCount;
+        /**
+         * See {@link #getNotDiffExprGeneCount()}.
+         */
+        private int notDiffExprGeneCount;
+        /**
+         * See {@link #getNotExprGeneCount()}.
+         */
+        private int notExprGeneCount;
+        /**
+         * See {@link #getNAGeneCount()}.
+         */
+        private int naGeneCount;
+    
+        /**
+         * Constructor providing all arguments of the class.
+         *
+         * @param speciesId             See {@link #getSpeciesId()}.
+         * @param overExprGeneCount     See {@link #getOverExprGeneCount()}.
+         * @param underExprGeneCount    See {@link #getUnderExprGeneCount()}.
+         * @param notDiffExprGeneCount  See {@link #getNotDiffExprGeneCount()}.
+         * @param notExprGeneCount      See {@link #getNotExprGeneCount()}.
+         * @param naGeneCount           See {@link #getNAGeneCount()}.
+         */
+        public SpeciesDiffExprCounts(String speciesId, int overExprGeneCount, int underExprGeneCount, 
+                int notDiffExprGeneCount, int notExprGeneCount, int naGeneCount) {
+            this.speciesId = speciesId;
+            this.overExprGeneCount = overExprGeneCount;
+            this.underExprGeneCount = underExprGeneCount;
+            this.notDiffExprGeneCount = notDiffExprGeneCount;
+            this.notExprGeneCount = notExprGeneCount;
+            this.naGeneCount = naGeneCount;
+        }
+    
+        /**
+         * @return  the {@code String} that is the ID of the species.
+         */
+        public String getSpeciesId() {
+            return speciesId;
+        }
+        /**
+         * @param speciesId A {@code String} that is the ID of the species.
+         */
+        public void setSpeciesId(String speciesId) {
+            this.speciesId = speciesId;
+        }
+    
+        /**
+         * @return  the {@code int} that is the number of over-expressed genes in the family.
+         */
+        public int getOverExprGeneCount() {
+            return overExprGeneCount;
+        }
+        /**
+         * @param overExprGeneCount   An {@code int} that is the number of over-expressed 
+         *                          genes in the family.
+         */
+        public void setOverExprGeneCount(int overExprGeneCount) {
+            this.overExprGeneCount = overExprGeneCount;
+        }
+        
+        /**
+         * @return  the {@code int} that is the number of under-expressed genes in the family.
+         */
+        public int getUnderExprGeneCount() {
+            return underExprGeneCount;
+        }
+        /**
+         * @param underExprGeneCount  An {@code int} that is the number of under-expressed 
+         *                          genes in the family.
+         */
+        public void setUnderExprGeneCount(int underExprGeneCount) {
+            this.underExprGeneCount = underExprGeneCount;
+        }
+    
+        /**
+         * @return  the {@code int} that is the number of not diff. expressed genes in the family.
+         */
+        public int getNotDiffExprGeneCount() {
+            return notDiffExprGeneCount;
+        }
+        /**
+         * @param notDiffExprGeneCount An {@code int} that is the number of not diff. expressed 
+         *                           genes in the family.
+         */
+        public void setNotDiffExprGeneCount(int notDiffExprGeneCount) {
+            this.notDiffExprGeneCount = notDiffExprGeneCount;
+        }
+    
+        /**
+         * @return  the {@code int} that is the number of not expressed genes in the family.
+         */
+        public int getNotExprGeneCount() {
+            return notExprGeneCount;
+        }
+        /**
+         * @param notExprGeneCount An {@code int} that is the number of not expressed genes 
+         *                      in the family. 
+         */
+        public void setNotExprGeneCount(int notExprGeneCount) {
+            this.notExprGeneCount = notExprGeneCount;
+        }
+        
+        /**
+         * @return  the {@code int} that is the number of genes without data in the family.
+         */
+        public int getNAGeneCount() {
+            return naGeneCount;
+        }
+        /**
+         * @param naGeneCount An {@code int} that is the number of genes without data in the family.
+         */
+        public void setNAGeneCount(int naGeneCount) {
+            this.naGeneCount = naGeneCount;
+        }
+    
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + naGeneCount;
+            result = prime * result + notDiffExprGeneCount;
+            result = prime * result + notExprGeneCount;
+            result = prime * result + overExprGeneCount;
+            result = prime * result + underExprGeneCount;
+            result = prime * result + ((speciesId == null) ? 0 : speciesId.hashCode());
+            return result;
+        }
+    
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            SpeciesDiffExprCounts other = (SpeciesDiffExprCounts) obj;
+            if (naGeneCount != other.naGeneCount)
+                return false;
+            if (notDiffExprGeneCount != other.notDiffExprGeneCount)
+                return false;
+            if (notExprGeneCount != other.notExprGeneCount)
+                return false;
+            if (overExprGeneCount != other.overExprGeneCount)
+                return false;
+            if (underExprGeneCount != other.underExprGeneCount)
+                return false;
+            if (speciesId == null) {
+                if (other.speciesId != null)
+                    return false;
+            } else if (!speciesId.equals(other.speciesId))
+                return false;
+            return true;
+        }
+    
+        @Override
+        public String toString() {
+            return super.toString() + " - Species ID: " + getSpeciesId() +
+                    " - Over-expressed gene count: " + getOverExprGeneCount() +
+                    " - under-expressed gene count: " + getUnderExprGeneCount() +
+                    " - not diff. expressed gene count: " + getNotDiffExprGeneCount() +
+                    " - no-expressed gene count: " + getNotExprGeneCount() + 
+                    " - N/A gene count: " + getNAGeneCount();
+        }
+    }
+
+    /**
+     * A bean representing a row of a multi-species simple differential expression file. 
+     * Getter and setter names must follow standard bean definitions.
+     * 
+     * @author Valentine Rech de Laval
+     * @version Bgee 13 Apr. 2015
+     * @since Bgee 13
+     */
+    public static class MultiSpeciesSimpleDiffExprFileBean extends MultiSpeciesSimpleFileBean {
+    
+        /**
+         * See {@link #getSpeciesDiffExprCounts()}.
+         */
+        private List<SpeciesDiffExprCounts> speciesDiffExprCounts;
+    
+        /**
+         * 0-argument constructor of the bean.
+         */
+        public MultiSpeciesSimpleDiffExprFileBean() {
+        }
+    
+        /**
+         * Constructor providing all arguments of the class.
+         *
+         * @param omaId             See {@link #getOmaId()}.
+         * @param omaDescription    See {@link #getOmaDescription()}.
+         * @param entityIds         See {@link #getEntityIds()}.
+         * @param entityNames       See {@link #getEntityNames()}.
+         * @param stageIds          See {@link #getStageIds()}.
+         * @param stageNames        See {@link #getStageNames()}.
+         * @param geneIds           See {@link #getGeneIds()}.
+         * @param geneNames         See {@link #getGeneNames()}.
+         * @param speciesCounts     See {@link #getSpeciesDiffExprCounts()}.
+         */
+        public MultiSpeciesSimpleDiffExprFileBean(String omaId, String omaDescription, 
+                List<String> entityIds, List<String> entityNames, List<String> stageIds, 
+                List<String> stageNames, List<String> geneIds, List<String> geneNames, 
+                List<SpeciesDiffExprCounts> speciesDiffExprCounts) {
+            super(omaId, omaDescription, entityIds, entityNames, stageIds, stageNames, 
+                    geneIds, geneNames);
+            this.speciesDiffExprCounts = speciesDiffExprCounts;
+        }
+    
+        /**
+         * @return  the {@code List} of {@code SpeciesDiffExprCounts}s that are the counts of the 
+         *          genes for one species for a multi-species differential expression file.
+         */
+        public List<SpeciesDiffExprCounts> getSpeciesDiffExprCounts() {
+            return speciesDiffExprCounts;
+        }
+        /**
+         * @param speciesDiffExprCounts A {@code List} of {@code SpeciesDiffExprCounts}s that are 
+         *                              the counts of the genes for one species for a multi-species 
+         *                              differential expression file. speciesCounts to set
+         */
+        public void setSpeciesDiffExprCounts(List<SpeciesDiffExprCounts> speciesDiffExprCounts) {
+            this.speciesDiffExprCounts = speciesDiffExprCounts;
+        }
+    
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = super.hashCode();
+            result = prime * result + 
+                    ((speciesDiffExprCounts == null) ? 0 : speciesDiffExprCounts.hashCode());
+            return result;
+        }
+    
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (!super.equals(obj))
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            MultiSpeciesSimpleDiffExprFileBean other = (MultiSpeciesSimpleDiffExprFileBean) obj;
+            if (speciesDiffExprCounts == null) {
+                if (other.speciesDiffExprCounts != null)
+                    return false;
+            } else if (!speciesDiffExprCounts.equals(other.speciesDiffExprCounts))
+                return false;
+            return true;
+        }
+        
+        @Override
+        public String toString() {
+            return super.toString() + " - Species counts=" + getSpeciesDiffExprCounts().toString();
+        }
+    }
+
+    /**
+     * A bean representing a row of a complete differential expression multi-species file. 
+     * Getter and setter names must follow standard bean definitions.
+     * 
+     * @author Valentine Rech de Laval
+     * @version Bgee 13 Apr. 2015
+     * @since Bgee 13
+     */
+    public static class MultiSpeciesCompleteDiffExprFileBean extends MultiSpeciesCompleteFileBean {
+    
+        /** 
+         * @see getAffymetrixData()
+         */
+        private String affymetrixData;
+        /**
+         * @see getAffymetrixQuality()
+         */
+        private String affymetrixQuality;
+        /**
+         * See {@link #getAffymetrixPValue()}.
+         */
+        private Float affymetrixPValue;
+        /**
+         * See {@link #getAffymetrixConsistentDEA()}.
+         */
+        private Double affymetrixConsistentDEA;
+        /**
+         * See {@link #getAffymetrixInconsistentDEA()}.
+         */
+        private Double affymetrixInconsistentDEA;
+        /**
+         * @see getRNASeqData()
+         */
+        private String rnaSeqData;
+        /**
+         * @see getRNASeqQuality()
+         */
+        private String rnaSeqQuality;
+        /**
+         * See {@link #getRnaSeqPValue()}.
+         */
+        private Float rnaSeqPValue;
+        /**
+         * See {@link #getRnaSeqConsistentDEA()}.
+         */
+        private Double rnaSeqConsistentDEA;        
+        /**
+         * See {@link #getRnaSeqInconsistentDEA()}.
+         */
+        private Double rnaSeqInconsistentDEA;
+        /**
+         * See {@link #getDifferentialExpression()}.
+         */
+        private String differentialExpression;
+        /**
+         * See {@link #getCallQuality()}.
+         */
+        private String callQuality;
+    
+        /**
+         * 0-argument constructor of the bean.
+         */
+        public MultiSpeciesCompleteDiffExprFileBean() {
+        }
+    
+        /**
+         * Constructor providing all arguments of the class.
+         * 
+         * @param omaId                     See {@link #getOmaId()}.
+         * @param omaDescription            See {@link #getOmaDescription()}.
+         * @param entityIds                 See {@link #getEntityIds()}.
+         * @param entityNames               See {@link #getEntityNames()}.
+         * @param stageIds                  See {@link #getStageIds()}.
+         * @param stageNames                See {@link #getStageNames()}.
+         * @param geneId                    See {@link #getGeneId()}.
+         * @param geneName                  See {@link #getGeneName()}.
+         * @param cioId                     See {@link #getCioId()}.
+         * @param cioName                   See {@link #getCioName()}.
+         * @param speciesId                 See {@link #getSpeciesId()}.
+         * @param speciesName               See {@link #getSpeciesName()}.
+         * @param affymetrixData            See {@link #getAffymetrixData()}.
+         * @param affymetrixQuality         See {@link #getAffymetrixQuality()}.
+         * @param affymetrixPValue          See {@link #getAffymetrixPValue()}.
+         * @param affymetrixConsistentDEA   See {@link #getAffymetrixConsistentDEA()}.
+         * @param affymetrixInconsistentDEA See {@link #getAffymetrixInconsistentDEA()}.
+         * @param rnaSeqData                See {@link #getRNASeqData()}.
+         * @param rnaSeqQuality             See {@link #getRNASeqQuality()}.
+         * @param rnaSeqPValue              See {@link #getAffymetrixPValue()}.
+         * @param rnaSeqConsistentDEA       See {@link #getRnaSeqConsistentDEA()}.
+         * @param rnaSeqInconsistentDEA     See {@link #getRnaSeqInconsistentDEA()}.
+         * @param differentialExpression    See {@link #getDifferentialExpression()}.
+         * @param callQuality               See {@link #getCallQuality()}.
+         */
+        public MultiSpeciesCompleteDiffExprFileBean(String omaId, String omaDescription, 
+                List<String> entityIds, List<String> entityNames, List<String> stageIds, 
+                List<String> stageNames, String geneId, String geneName, 
+                String cioId, String cioName, String speciesId, String speciesName,
+                String affymetrixData, String affymetrixQuality, Float affymetrixPValue, 
+                Double affymetrixConsistentDEA, Double affymetrixInconsistentDEA, 
+                String rnaSeqData, String rnaSeqQuality, Float rnaSeqPValue, 
+                Double rnaSeqConsistentDEA, Double rnaSeqInconsistentDEA,
+                String differentialExpression, String callQuality) {
+            super(omaId, omaDescription, entityIds, entityNames, stageIds, stageNames, 
+                    geneId, geneName, cioId, cioName, speciesId, speciesName);
+            this.affymetrixData = affymetrixData;
+            this.affymetrixQuality = affymetrixQuality;
+            this.affymetrixPValue = affymetrixPValue; 
+            this.affymetrixConsistentDEA = affymetrixConsistentDEA;
+            this.affymetrixInconsistentDEA = affymetrixInconsistentDEA; 
+            this.rnaSeqData = rnaSeqData ;
+            this.rnaSeqQuality = rnaSeqQuality;
+            this.rnaSeqPValue = rnaSeqPValue; 
+            this.rnaSeqConsistentDEA = rnaSeqConsistentDEA;
+            this.rnaSeqInconsistentDEA = rnaSeqInconsistentDEA; 
+            this.differentialExpression = differentialExpression;
+            this.callQuality = callQuality;
+        }
+    
+        /**
+         * @return  the {@code String} defining the contribution of Affymetrix data 
+         *          to the generation of this call.
+         */
+        public String getAffymetrixData() {
+            return affymetrixData;
+        }
+        /**
+         * @param affymetrixData    A {@code String} defining the contribution 
+         *                          of Affymetrix data to the generation of this call.
+         * @see #getAffymetrixData()
+         */
+        public void setAffymetrixData(String affymetrixData) {
+            this.affymetrixData = affymetrixData;
+        }
+    
+        /**
+         * @return  the {@code String} defining the call quality found with Affymetrix experiment.
+         */
+        public String getAffymetrixQuality() {
+            return affymetrixQuality;
+        }
+        /** 
+         * @param affymetrixQuality A {@code String} defining the call quality found with 
+         *                          Affymetrix experiment.
+         * @see #getAffymetrixQuality()
+         */
+        public void setAffymetrixQuality(String affymetrixQuality) {
+            this.affymetrixQuality = affymetrixQuality;
+        }
+    
+        /**
+         * @return  the {@code Float} that is the best p-value using Affymetrix.
+         */
+        public Float getAffymetrixPValue() {
+            return affymetrixPValue;
+        }
+        /**
+         * @param affymetrixPValue  A {@code Float} that is the best p-value using Affymetrix.
+         */
+        public void setAffymetrixPValue(Float affymetrixPValue) {
+            this.affymetrixPValue = affymetrixPValue;
+        }
+    
+        /**
+         * @return  the {@code Double} that is the number of analysis using 
+         *          Affymetrix data where the same call is found.
+         */
+        public Double getAffymetrixConsistentDEA() {
+            return affymetrixConsistentDEA;
+        }
+        /**
+         * @param affymetrixConsistentDEA   A {@code Double} that is the number of analysis using 
+         *                                  Affymetrix data where the same call is found.
+         */
+        public void setAffymetrixConsistentDEA(Double affymetrixConsistentDEA) {
+            this.affymetrixConsistentDEA = affymetrixConsistentDEA;
+        }
+    
+        /**
+         * @return  the {@code Double} that is the number of analysis using 
+         *          Affymetrix data where a different call is found.
+         */
+        public Double getAffymetrixInconsistentDEA() {
+            return affymetrixInconsistentDEA;
+        }
+        /**
+         * @param affymetrixInconsistentDEA A {@code Double} that is the number of analysis using 
+         *                                  Affymetrix data where a different call is found.
+         */
+        public void setAffymetrixInconsistentDEA(Double affymetrixInconsistentDEA) {
+            this.affymetrixInconsistentDEA = affymetrixInconsistentDEA;
+        }
+    
+        /**
+         * @return  the {@code String} defining the contribution of RNA-Seq data 
+         *          to the generation of this call.
+         */
+        public String getRNASeqData() {
+            return rnaSeqData;
+        }
+        /**
+         * @param rnaSeqData    A {@code String} defining the contribution 
+         *                      of RNA-Seq data to the generation of this call.
+         * @see #getRNASeqData()
+         */
+        public void setRNASeqData(String rnaSeqData) {
+            this.rnaSeqData = rnaSeqData;
+        }
+    
+        /**
+         * @return  the {@code String} defining the call quality found with RNA-Seq experiment.
+         */
+        public String getRNASeqQuality() {
+            return rnaSeqQuality;
+        }
+        /** 
+         * @param rnaSeqQuality A {@code String} defining the call quality found with 
+         *                      RNA-Seq experiment.
+         * @see #getRNASeqQuality()
+         */
+        public void setRNASeqQuality(String rnaSeqQuality) {
+            this.rnaSeqQuality = rnaSeqQuality;
+        }
+    
+        /**
+         * @return  the {@code Float} that is the best p-value using RNA-Seq.
+         */
+        public Float getRnaSeqPValue() {
+            return rnaSeqPValue;
+        }
+        /**
+         * @param rnaSeqPValue  A {@code Float} that is the best p-value using RNA-Seq.
+         */
+        public void setRnaSeqPValue(Float rnaSeqPValue) {
+            this.rnaSeqPValue = rnaSeqPValue;
+        }
+    
+        /**
+         * @return  the {@code Double} that is the number of analysis using 
+         *          RNA-Seq data where the same call is found.
+         */
+        public Double getRnaSeqConsistentDEA() {
+            return rnaSeqConsistentDEA;
+        }
+        /**
+         * @param rnaSeqConsistentDEA   A {@code Double} that is the number of analysis using 
+         *                              RNA-Seq data where the same call is found.
+         */
+        public void setRnaSeqConsistentDEA(Double rnaSeqConsistentDEA) {
+            this.rnaSeqConsistentDEA = rnaSeqConsistentDEA;
+        }
+    
+        /**
+         * @return  the {@code Double} that is the number of analysis using 
+         *          RNA-Seq data where a different call is found.
+         */
+        public Double getRnaSeqInconsistentDEA() {
+            return rnaSeqInconsistentDEA;
+        }
+        /**
+         * @param rnaSeqInconsistentDEA A {@code Double} that is the number of analysis using 
+         *                              RNA-Seq data where a different call is found.
+         */
+        public void setRnaSeqInconsistentDEA(Double rnaSeqInconsistentDEA) {
+            this.rnaSeqInconsistentDEA = rnaSeqInconsistentDEA;
+        }
+    
+        /**
+         * @return  the {@code String} that is merged differential expressions 
+         *          from different data types.
+         */
+        public String getDifferentialExpression() {
+            return differentialExpression;
+        }
+        /**
+         * @param differentialExpression    A {@code String} that is merged differential expressions 
+         *                                  from different data types.
+         */
+        public void setDifferentialExpression(String differentialExpression) {
+            this.differentialExpression = differentialExpression;
+        }
+    
+        /** 
+         * @return  the {@code String} that is call quality.
+         */
+        public String getCallQuality() {
+            return callQuality;
+        }
+        /**
+         * @param callQuality   A {@code String} that is call quality.
+         */
+        public void setCallQuality(String callQuality) {
+            this.callQuality = callQuality;
+        }
+    
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = super.hashCode();
+            result = prime * result + ((affymetrixData == null) ? 0 : affymetrixData.hashCode());
+            result = prime * result + ((affymetrixQuality == null) ? 0 : affymetrixQuality.hashCode());
+            result = prime * result + ((affymetrixPValue == null) ? 0 : affymetrixPValue.hashCode());
+            result = prime * result +
+                    ((affymetrixConsistentDEA == null) ? 0 : affymetrixConsistentDEA.hashCode());
+            result = prime * result +
+                    ((affymetrixInconsistentDEA == null) ? 0 : affymetrixInconsistentDEA.hashCode());
+            result = prime * result + ((rnaSeqData == null) ? 0 : rnaSeqData.hashCode());
+            result = prime * result + ((rnaSeqQuality == null) ? 0 : rnaSeqQuality.hashCode());
+            result = prime * result + ((rnaSeqPValue == null) ? 0 : rnaSeqPValue.hashCode());
+            result = prime * result + 
+                    ((rnaSeqConsistentDEA == null) ? 0 : rnaSeqConsistentDEA.hashCode());
+            result = prime * result + 
+                    ((rnaSeqInconsistentDEA == null) ? 0 : rnaSeqInconsistentDEA.hashCode());
+            result = prime * result +
+                    ((differentialExpression == null) ? 0 : differentialExpression.hashCode());
+            result = prime * result + ((callQuality == null) ? 0 : callQuality.hashCode());
+            return result;
+        }
+    
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (!super.equals(obj))
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            MultiSpeciesCompleteDiffExprFileBean other = (MultiSpeciesCompleteDiffExprFileBean) obj;
+            if (affymetrixConsistentDEA == null) {
+                if (other.affymetrixConsistentDEA != null)
+                    return false;
+            } else if (!affymetrixConsistentDEA.equals(other.affymetrixConsistentDEA))
+                return false;
+            if (affymetrixData == null) {
+                if (other.affymetrixData != null)
+                    return false;
+            } else if (!affymetrixData.equals(other.affymetrixData))
+                return false;
+            if (affymetrixInconsistentDEA == null) {
+                if (other.affymetrixInconsistentDEA != null)
+                    return false;
+            } else if (!affymetrixInconsistentDEA.equals(other.affymetrixInconsistentDEA))
+                return false;
+            if (affymetrixPValue == null) {
+                if (other.affymetrixPValue != null)
+                    return false;
+            } else if (!affymetrixPValue.equals(other.affymetrixPValue))
+                return false;
+            if (affymetrixQuality == null) {
+                if (other.affymetrixQuality != null)
+                    return false;
+            } else if (!affymetrixQuality.equals(other.affymetrixQuality))
+                return false;
+            if (callQuality == null) {
+                if (other.callQuality != null)
+                    return false;
+            } else if (!callQuality.equals(other.callQuality))
+                return false;
+            if (differentialExpression == null) {
+                if (other.differentialExpression != null)
+                    return false;
+            } else if (!differentialExpression.equals(other.differentialExpression))
+                return false;
+            if (rnaSeqConsistentDEA == null) {
+                if (other.rnaSeqConsistentDEA != null)
+                    return false;
+            } else if (!rnaSeqConsistentDEA.equals(other.rnaSeqConsistentDEA))
+                return false;
+            if (rnaSeqData == null) {
+                if (other.rnaSeqData != null)
+                    return false;
+            } else if (!rnaSeqData.equals(other.rnaSeqData))
+                return false;
+            if (rnaSeqInconsistentDEA == null) {
+                if (other.rnaSeqInconsistentDEA != null)
+                    return false;
+            } else if (!rnaSeqInconsistentDEA.equals(other.rnaSeqInconsistentDEA))
+                return false;
+            if (rnaSeqPValue == null) {
+                if (other.rnaSeqPValue != null)
+                    return false;
+            } else if (!rnaSeqPValue.equals(other.rnaSeqPValue))
+                return false;
+            if (rnaSeqQuality == null) {
+                if (other.rnaSeqQuality != null)
+                    return false;
+            } else if (!rnaSeqQuality.equals(other.rnaSeqQuality))
+                return false;
+            return true;
+        }
+    
+        @Override
+        public String toString() {
+            return super.toString() + " - Affymetrix data()=" + getAffymetrixData() + 
+                    " - Affymetrix quality: " + getAffymetrixQuality() + 
+                    " - Affymetrix p-value: " + getAffymetrixPValue() + 
+                    " - Affymetrix consistent DEA: " + getAffymetrixConsistentDEA() + 
+                    " - Affymetrix inconsistent DEA: " + getAffymetrixInconsistentDEA() + 
+                    " - RNA-Seq data: " + getRNASeqData() + 
+                    " - RNA-Seq quality: " + getRNASeqQuality() + 
+                    " - RNA-Seq p-value: " + getRnaSeqPValue() + 
+                    " - RNA-Seq consistent DEA: " + getRnaSeqConsistentDEA() + 
+                    " - RNA-Seq inconsistent DEA: " + getRnaSeqInconsistentDEA() + 
+                    " - Differential expression: " + getDifferentialExpression() + 
+                    " - Call quality: " + getCallQuality();
+        }
+    }
+
+    /**
+     * An {@code Enum} used to define, for each data type (Affymetrix and RNA-Seq), 
+     * as well as for the summary column, the data state of the call.
+     * <ul>
+     * <li>{@code NO_DATA}:              means that the call has never been observed 
+     *                                   for the related data type.
+     * <li>{@code NOT_EXPRESSED}:        means that the related gene was never seen 
+     *                                   as 'expressed' in any of the samples used 
+     *                                   in the analysis for the related data type, 
+     *                                   it was then not tested for differential expression.
+     * <li>{@code OVER_EXPRESSION}:      over-expressed calls.
+     * <li>{@code UNDER_EXPRESSION}:     under-expressed calls.
+     * <li>{@code NOT_DIFF_EXPRESSION}:  means that the gene was tested for differential 
+     *                                   expression, but no significant fold change observed.
+     * <li>{@code WEAK_AMBIGUITY}:       different data types are not completely coherent: a data 
+     *                                   type says over or under-expressed, while the other says 
+     *                                   'not differentially expressed'; or a data type says 
+     *                                   over-expressed, while the other data type says 'not 
+     *                                   expressed'.
+     * <li>{@code STRONG_AMBIGUITY}:     different data types are not coherent: a data type says over 
+     *                                   or under-expressed, while the other data says the opposite.
+     * </ul>
+     * 
+     * @author Valentine Rech de Laval
+     * @version Bgee 13
+     * @since Bgee 13
+     */
+    //XXX: why doesn't it reuse code from single species download files?
+    public enum DiffExpressionData {
+        NO_DATA("no data"), NOT_EXPRESSED("not expressed"), OVER_EXPRESSION("over-expression"), 
+        UNDER_EXPRESSION("under-expression"), NOT_DIFF_EXPRESSION("no diff expression"), 
+        WEAK_AMBIGUITY("weak ambiguity"), STRONG_AMBIGUITY("strong ambiguity");
+    
+        private final String stringRepresentation;
+    
+        /**
+         * Convert the {@code String} representation of a differential expression data 
+         * into a {@code DiffExpressionData}. Operation performed by calling 
+         * {@link TransferObject#convert(Class, String)} with {@code DiffExpressionData} as the 
+         * {@code Class} argument, and {@code representation} as the {@code String} argument.
+         * 
+         * @param representation    A {@code String} representing a differential expression data.
+         * @return                  A {@code DiffExpressionData} corresponding to 
+         *                          {@code representation}.
+         * @throw IllegalArgumentException  If {@code representation} does not correspond 
+         *                                  to any {@code DiffExprCallType}.
+         * @see #convert(Class, String)
+         */
+        //TODO: DRY from TransfertObject
+        public static final DiffExpressionData convertToDiffExpressionData(String representation) {
+            log.entry(representation);
+            
+            if (representation == null) {
+                return log.exit(null);
+            }
+            for (DiffExpressionData element: DiffExpressionData.class.getEnumConstants()) {
+                if (element.getStringRepresentation().equals(representation) || 
+                        element.name().equals(representation)) {
+                    return log.exit(element);
+                }
+            }
+            throw log.throwing(new IllegalArgumentException("\"" + representation + 
+                    "\" does not correspond to any element of " + 
+                    DiffExpressionData.class.getName()));
+        }
+        
+    
+        /**
+         * Constructor providing the {@code String} representation 
+         * of this {@code DiffExpressionData}.
+         * 
+         * @param stringRepresentation   A {@code String} corresponding to this 
+         *                               {@code DiffExpressionData}.
+         */
+        private DiffExpressionData(String stringRepresentation) {
+            this.stringRepresentation = stringRepresentation;
+        }
+    
+        public String getStringRepresentation() {
+            return this.stringRepresentation;
+        }
+    
+        @Override
+        public String toString() {
+            return this.getStringRepresentation();
+        }
+    }
+
+    /**
+     * An {@code Enum} used to define the possible differential expression in multi-species file
+     * types to be generated.
+     * <ul>
+     * <li>{@code MULTI_DIFF_EXPR_ANATOMY_SIMPLE}:
+     *          differential expression in multi-species based on comparison of several anatomical 
+     *          entities at a same (broad) developmental stage, in a simple download file.
+     * <li>{@code MULTI_DIFF_EXPR_ANATOMY_COMPLETE}:
+     *          differential expression in multi-species based on comparison of several anatomical 
+     *          entities at a same (broad) developmental stage, in a complete download file.
+     * <li>{@code MULTI_DIFF_EXPR_DEVELOPMENT_SIMPLE}:
+     *          differential expression in multi-species based on comparison of a same anatomical 
+     *          entity at different developmental stages, in a simple download file.
+     * <li>{@code MULTI_DIFF_EXPR_DEVELOPMENT_COMPLETE}:    
+     *          differential expression in multi-species based on comparison of a same anatomical  
+     *          entity at different developmental stages, in a complete download file
+     * </ul>
+     * 
+     * @author Valentine Rech de Laval
+     * @version Bgee 13
+     * @since Bgee 13
+     */
+    //XXX: alternatively, if you use the Bean principle, you could simply use different bean types, 
+    //so that you don't need this Enum
+    public enum MultiSpDiffExprFileType implements DiffExprFileType {
+        MULTI_DIFF_EXPR_ANATOMY_SIMPLE(
+                "multi-expr-anatomy-simple", true, ComparisonFactor.ANATOMY), 
+        MULTI_DIFF_EXPR_ANATOMY_COMPLETE(
+                "multi-expr-anatomy-complete", false, ComparisonFactor.ANATOMY),
+        MULTI_DIFF_EXPR_DEVELOPMENT_SIMPLE(
+                "multi-expr-development-simple", true, ComparisonFactor.DEVELOPMENT), 
+        MULTI_DIFF_EXPR_DEVELOPMENT_COMPLETE(
+                "multi-expr-development-complete", false, ComparisonFactor.DEVELOPMENT);
+    
+        /**
+         * A {@code String} that can be used to generate names of files of this type.
+         */
+        private final String stringRepresentation;
+        
+        /**
+         * A {@code boolean} defining whether this {@code MultiSpDiffExprFileType} is a simple 
+         * file type
+         */
+        private final boolean simpleFileType;
+    
+        /**
+         * A {@code ComparisonFactor} defining what is the compared experimental factor that 
+         * generated the differential expression calls.
+         */
+        //XXX: I find it a bit weird to use the ComparisonFactor of DiffExpressionCallTO at this point, 
+        //because it is not a class related to a DAO...
+        private final ComparisonFactor comparisonFactor;
+    
+        /**
+         * Constructor providing the {@code String} representation of this 
+         * {@code MultiSpDiffExprFileType}, a {@code boolean} defining whether this 
+         * {@code MultiSpDiffExprFileType} is a simple file type, and a 
+         * {@code ComparisonFactor} defining what is the experimental factor compared 
+         * that generated the differential expression calls.
+         */
+        private MultiSpDiffExprFileType(String stringRepresentation, boolean simpleFileType,
+                ComparisonFactor comparisonFactor) {
+            this.stringRepresentation = stringRepresentation;
+            this.simpleFileType = simpleFileType;
+            this.comparisonFactor = comparisonFactor;
+        }
+    
+        @Override
+        public String getStringRepresentation() {
+            return this.stringRepresentation;
+        }
+    
+        @Override
+        public boolean isSimpleFileType() {
+            return this.simpleFileType;
+        }
+        
+        @Override
+        public ComparisonFactor getComparisonFactor() {
+            return this.comparisonFactor;
+        }
+    
+        @Override
+        public String toString() {
+            return this.getStringRepresentation();
+        }
+    }
+
+    /**
      * A {@code String} that is the name of the column containing best p-value using Affymetrix, 
      * in the download file.
      */
@@ -120,186 +982,60 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     public final static String DIFFEXPRESSION_COLUMN_NAME = "Differential expression";
 
     /**
-     * A {@code Map} where keys are {@code String}s that are taxon IDs, the associated values 
-     * being {@code Set} of {@code String}s corresponding to species IDs of the given taxon ID.
+     * Main method to trigger the generate multi-species differential expression TSV download files 
+     * (simple and advanced) from Bgee database. Parameters that must be provided in order in 
+     * {@code args} are: 
+     * <ol>
+     * <li>a {@code Map} where keys are {@code String}s that are names given 
+     *     to groups of species, the associated value being a {@code Set} of {@code String}s 
+     *     that are the IDs of the species composing the group. Entries of the {@code Map} 
+     *     must be separated by {@link CommandRunner#LIST_SEPARATOR}, keys must be  
+     *     separated from their associated value by {@link CommandRunner#KEY_VALUE_SEPARATOR}, 
+     *     values must be separated using {@link CommandRunner#VALUE_SEPARATOR}, see 
+     *     {@link org.bgee.pipeline.CommandRunner#parseMapArgument(String)}
+     * <li>a list of files types that will be generated ('multi-diffexpr-anatomy-simple' for 
+     *     {@link MultiSpDiffExprFileType MULTI_DIFF_EXPR_ANATOMY_SIMPLE}, 
+     *     'multi-diffexpr-anatomy-complete' for 
+     *     {@link MultiSpDiffExprFileType MULTI_DIFF_EXPR_ANATOMY_COMPLETE}, 
+     *     'multi-diffexpr-development-simple' for 
+     *     {@link MultiSpDiffExprFileType MULTI_DIFF_EXPR_DEVELOPMENT_SIMPLE}, and 
+     *     'multi-diffexpr-development-complete' for 
+     *     {@link MultiSpDiffExprFileType MULTI_DIFF_EXPR_DEVELOPMENT_COMPLETE}), separated by the 
+     *     {@code String} {@link CommandRunner#LIST_SEPARATOR}. If an empty list is provided 
+     *     (see {@link CommandRunner#EMPTY_LIST}), all possible file types will be generated.
+     * <li>the directory path that will be used to generate download files. 
+     * </ol>
+     * 
+     * @param args  An {@code Array} of {@code String}s containing the requested parameters.
+     * @throws IllegalArgumentException If incorrect parameters were provided.
+     * @throws IOException              If an error occurred while trying to write generated files.
+     */
+    //TODO: in all other classes, the first argument is a command to trigger the proper action, 
+    //we should keep the same pattern
+    public static void main(String[] args) throws IllegalArgumentException, IOException {
+        log.entry((Object[]) args);
+    
+        int expectedArgLength = 3;
+        if (args.length != expectedArgLength) {
+            throw log.throwing(new IllegalArgumentException(
+                    "Incorrect number of arguments provided, expected " + 
+                    expectedArgLength + " arguments, " + args.length + " provided."));
+        }
+        GenerateMultiSpeciesDiffExprFile generator = new GenerateMultiSpeciesDiffExprFile(
+                CommandRunner.parseMapArgument(args[0]),
+                GenerateDownloadFile.convertToFileTypes(
+                    CommandRunner.parseListArgument(args[1]), MultiSpDiffExprFileType.class),
+                args[2]);
+        generator.generateMultiSpeciesDiffExprFiles();
+        log.exit();
+    }
+
+    /**
+     * A {@code Map} where keys are {@code String}s that are names given to a group of species, 
+     * the associated values being {@code Set}s of {@code String}s corresponding to 
+     * species IDs belonging to the group.
      */
     private Map<String,Set<String>> providedGroups;
-    
-    /**
-     * An {@code Enum} used to define, for each data type (Affymetrix and RNA-Seq), 
-     * as well as for the summary column, the data state of the call.
-     * <ul>
-     * <li>{@code NO_DATA}:              means that the call has never been observed 
-     *                                   for the related data type.
-     * <li>{@code NOT_EXPRESSED}:        means that the related gene was never seen 
-     *                                   as 'expressed' in any of the samples used 
-     *                                   in the analysis for the related data type, 
-     *                                   it was then not tested for differential expression.
-     * <li>{@code OVER_EXPRESSION}:      over-expressed calls.
-     * <li>{@code UNDER_EXPRESSION}:     under-expressed calls.
-     * <li>{@code NOT_DIFF_EXPRESSION}:  means that the gene was tested for differential 
-     *                                   expression, but no significant fold change observed.
-     * <li>{@code WEAK_AMBIGUITY}:       different data types are not completely coherent: a data 
-     *                                   type says over or under-expressed, while the other says 
-     *                                   'not differentially expressed'; or a data type says 
-     *                                   over-expressed, while the other data type says 'not 
-     *                                   expressed'.
-     * <li>{@code STRONG_AMBIGUITY}:     different data types are not coherent: a data type says over 
-     *                                   or under-expressed, while the other data says the opposite.
-     * </ul>
-     * 
-     * @author Valentine Rech de Laval
-     * @version Bgee 13
-     * @since Bgee 13
-     */
-    //XXX: why doesn't it reuse code from single species download files?
-    public enum DiffExpressionData {
-        NO_DATA("no data"), NOT_EXPRESSED("not expressed"), OVER_EXPRESSION("over-expression"), 
-        UNDER_EXPRESSION("under-expression"), NOT_DIFF_EXPRESSION("no diff expression"), 
-        WEAK_AMBIGUITY("weak ambiguity"), STRONG_AMBIGUITY("strong ambiguity");
-
-        private final String stringRepresentation;
-
-        /**
-         * Convert the {@code String} representation of a differential expression data 
-         * into a {@code DiffExpressionData}. Operation performed by calling 
-         * {@link TransferObject#convert(Class, String)} with {@code DiffExpressionData} as the 
-         * {@code Class} argument, and {@code representation} as the {@code String} argument.
-         * 
-         * @param representation    A {@code String} representing a differential expression data.
-         * @return                  A {@code DiffExpressionData} corresponding to 
-         *                          {@code representation}.
-         * @throw IllegalArgumentException  If {@code representation} does not correspond 
-         *                                  to any {@code DiffExprCallType}.
-         * @see #convert(Class, String)
-         */
-        //DRY from TransfertObject
-        public static final DiffExpressionData convertToDiffExpressionData(String representation) {
-            log.entry(representation);
-            
-            if (representation == null) {
-                return log.exit(null);
-            }
-            for (DiffExpressionData element: DiffExpressionData.class.getEnumConstants()) {
-                if (element.getStringRepresentation().equals(representation) || 
-                        element.name().equals(representation)) {
-                    return log.exit(element);
-                }
-            }
-            throw log.throwing(new IllegalArgumentException("\"" + representation + 
-                    "\" does not correspond to any element of " + 
-                    DiffExpressionData.class.getName()));
-        }
-        
-
-        /**
-         * Constructor providing the {@code String} representation 
-         * of this {@code DiffExpressionData}.
-         * 
-         * @param stringRepresentation   A {@code String} corresponding to this 
-         *                               {@code DiffExpressionData}.
-         */
-        private DiffExpressionData(String stringRepresentation) {
-            this.stringRepresentation = stringRepresentation;
-        }
-
-        public String getStringRepresentation() {
-            return this.stringRepresentation;
-        }
-
-        @Override
-        public String toString() {
-            return this.getStringRepresentation();
-        }
-    }
-
-    /**
-     * An {@code Enum} used to define the possible differential expression in multi-species file
-     * types to be generated.
-     * <ul>
-     * <li>{@code MULTI_DIFF_EXPR_ANATOMY_SIMPLE}:
-     *          differential expression in multi-species based on comparison of several anatomical 
-     *          entities at a same (broad) developmental stage, in a simple download file.
-     * <li>{@code MULTI_DIFF_EXPR_ANATOMY_COMPLETE}:
-     *          differential expression in multi-species based on comparison of several anatomical 
-     *          entities at a same (broad) developmental stage, in a complete download file.
-     * <li>{@code MULTI_DIFF_EXPR_DEVELOPMENT_SIMPLE}:
-     *          differential expression in multi-species based on comparison of a same anatomical 
-     *          entity at different developmental stages, in a simple download file.
-     * <li>{@code MULTI_DIFF_EXPR_DEVELOPMENT_COMPLETE}:    
-     *          differential expression in multi-species based on comparison of a same anatomical  
-     *          entity at different developmental stages, in a complete download file
-     * </ul>
-     * 
-     * @author Valentine Rech de Laval
-     * @version Bgee 13
-     * @since Bgee 13
-     */
-    //XXX: alternatively, if you use the Bean principle, you could simply use different bean types, 
-    //so that you don't need this Enum
-    public enum MultiSpDiffExprFileType implements DiffExprFileType {
-        MULTI_DIFF_EXPR_ANATOMY_SIMPLE(
-                "multi-expr-anatomy-simple", true, ComparisonFactor.ANATOMY), 
-        MULTI_DIFF_EXPR_ANATOMY_COMPLETE(
-                "multi-expr-anatomy-complete", false, ComparisonFactor.ANATOMY),
-        MULTI_DIFF_EXPR_DEVELOPMENT_SIMPLE(
-                "multi-expr-anatomy-simple", true, ComparisonFactor.DEVELOPMENT), 
-        MULTI_DIFF_EXPR_DEVELOPMENT_COMPLETE(
-                "multi-expr-anatomy-complete", false, ComparisonFactor.DEVELOPMENT);
-
-        /**
-         * A {@code String} that can be used to generate names of files of this type.
-         */
-        private final String stringRepresentation;
-        
-        /**
-         * A {@code boolean} defining whether this {@code MultiSpDiffExprFileType} is a simple 
-         * file type
-         */
-        private final boolean simpleFileType;
-
-        /**
-         * A {@code ComparisonFactor} defining what is the compared experimental factor that 
-         * generated the differential expression calls.
-         */
-        //XXX: I find it a bit weird to use the ComparisonFactor of DiffExpressionCallTO at this point, 
-        //because it is not a class related to a DAO...
-        private final ComparisonFactor comparisonFactor;
-
-        /**
-         * Constructor providing the {@code String} representation of this 
-         * {@code MultiSpDiffExprFileType}, a {@code boolean} defining whether this 
-         * {@code MultiSpDiffExprFileType} is a simple file type, and a 
-         * {@code ComparisonFactor} defining what is the experimental factor compared 
-         * that generated the differential expression calls.
-         */
-        private MultiSpDiffExprFileType(String stringRepresentation, boolean simpleFileType,
-                ComparisonFactor comparisonFactor) {
-            this.stringRepresentation = stringRepresentation;
-            this.simpleFileType = simpleFileType;
-            this.comparisonFactor = comparisonFactor;
-        }
-
-        @Override
-        public String getStringRepresentation() {
-            return this.stringRepresentation;
-        }
-
-        @Override
-        public boolean isSimpleFileType() {
-            return this.simpleFileType;
-        }
-        
-        @Override
-        public ComparisonFactor getComparisonFactor() {
-            return this.comparisonFactor;
-        }
-
-        @Override
-        public String toString() {
-            return this.getStringRepresentation();
-        }
-    }
     
     /**
      * Default constructor. 
@@ -309,7 +1045,6 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     private GenerateMultiSpeciesDiffExprFile() {
         this(null, null, null);
     }
-
     /**
      * Constructor providing parameters to generate files, using the default {@code DAOManager}.
      * 
@@ -356,52 +1091,6 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     }
     
     /**
-     * Main method to trigger the generate multi-species differential expression TSV download files 
-     * (simple and advanced) from Bgee database. Parameters that must be provided in order in 
-     * {@code args} are: 
-     * <ol>
-     * <li>a {@code Map} where keys are {@code String}s that are names given 
-     *     to groups of species, the associated value being a {@code Set} of {@code String}s 
-     *     that are the IDs of the species composing the group. Entries of the {@code Map} 
-     *     must be separated by {@link CommandRunner#LIST_SEPARATOR}, keys must be  
-     *     separated from their associated value by {@link CommandRunner#KEY_VALUE_SEPARATOR}, 
-     *     values must be separated using {@link CommandRunner#VALUE_SEPARATOR}.
-     * <li>a list of files types that will be generated ('multi-diffexpr-anatomy-simple' for 
-     *     {@link MultiSpDiffExprFileType MULTI_DIFF_EXPR_ANATOMY_SIMPLE}, 
-     *     'multi-diffexpr-anatomy-complete' for 
-     *     {@link MultiSpDiffExprFileType MULTI_DIFF_EXPR_ANATOMY_COMPLETE}, 
-     *     'multi-diffexpr-development-simple' for 
-     *     {@link MultiSpDiffExprFileType MULTI_DIFF_EXPR_DEVELOPMENT_SIMPLE}, and 
-     *     'multi-diffexpr-development-complete' for 
-     *     {@link MultiSpDiffExprFileType MULTI_DIFF_EXPR_DEVELOPMENT_COMPLETE}), separated by the 
-     *     {@code String} {@link CommandRunner#LIST_SEPARATOR}. If an empty list is provided 
-     *     (see {@link CommandRunner#EMPTY_LIST}), all possible file types will be generated.
-     * <li>the directory path that will be used to generate download files. 
-     * </ol>
-     * 
-     * @param args  An {@code Array} of {@code String}s containing the requested parameters.
-     * @throws IllegalArgumentException If incorrect parameters were provided.
-     * @throws IOException              If an error occurred while trying to write generated files.
-     */
-    public static void main(String[] args) throws IllegalArgumentException, IOException {
-        log.entry((Object[]) args);
-    
-        int expectedArgLength = 3;
-        if (args.length != expectedArgLength) {
-            throw log.throwing(new IllegalArgumentException(
-                    "Incorrect number of arguments provided, expected " + 
-                    expectedArgLength + " arguments, " + args.length + " provided."));
-        }
-        GenerateMultiSpeciesDiffExprFile generator = new GenerateMultiSpeciesDiffExprFile(
-                CommandRunner.parseMapArgument(args[0]),
-                GenerateDownloadFile.convertToFileTypes(
-                    CommandRunner.parseListArgument(args[1]), MultiSpDiffExprFileType.class),
-                args[2]);
-        generator.generateMultiSpeciesDiffExprFiles();
-        log.exit();
-    }
-
-    /**
      * Generate multi-species differential expression files, for the types defined by 
      * {@code fileTypes}, for species defined by {@code speciesIds} with ancestral taxon defined by 
      * {@code taxonId}, in the directory {@code directory}.
@@ -432,7 +1121,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 throw log.throwing(new IllegalArgumentException("No species ID is provided"));
             }
             //Validate provided species, and retrieve species names
-            Map<String,String> speciesNamesByIds = 
+            Map<String, String> speciesNamesByIds = 
                     this.checkAndGetLatinNamesBySpeciesIds(setSpecies);
             
             String currentPrefix = currentGroup.getKey();
@@ -508,7 +1197,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         // and we will not have to store them in memory.
         
         // First we allow to store file names, writers, etc, associated to a FileType, 
-        // for the catch and finally clauses. 
+        // for the catch and finally clauses.
+        //XXX: why doesn't it use a MultiSpDiffExprFileType?
         Map<FileType, String> generatedFileNames = new HashMap<FileType, String>();
 
         // We will write results in temporary files that we will rename at the end
@@ -528,13 +1218,15 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                     new HashMap<MultiSpDiffExprFileType, String[]>();
 
             // Get ordered species names
+                    //XXX how do we retrieve the IDs in the same order of the names afterwards?
             List<String> orderedSpeciesNames = this.getOrderedSpeciesName(
                     speciesFilter, speciesNamesByIds);
             
             for (FileType fileType : this.fileTypes) {
                 MultiSpDiffExprFileType currentFileType = (MultiSpDiffExprFileType) fileType;
                 if (currentFileType.getComparisonFactor().equals(ComparisonFactor.DEVELOPMENT)) {
-                    continue;
+                    throw log.throwing(new IllegalStateException(
+                            "Development comparison factor is currently not supported."));
                 }
 
                 String[] fileTypeHeaders = this.generateHeader(currentFileType, orderedSpeciesNames);
@@ -686,11 +1378,12 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     }
 
     /**
-     * Retrieve from the data source the last common ancestor of providen species. 
+     * Retrieve from the data source the last common ancestor of the provided species. 
      *
      * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species
      *                      allowing to retrieve the LCA.
-     * @return              the {@code String} that is the last common ancestor of providen species.
+     * @return              A {@code String} that is the ID of last common ancestor of 
+     *                      the provided species.
      * @throws DAOException If an error occurred while getting the data from the Bgee data source.
      */
     private String getLeastCommonAncestor(Set<String> speciesIds) throws DAOException {
@@ -1671,6 +2364,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             switch (header[i]) {
             // *** CellProcessors common to all file types ***
                 case OMA_ID_COLUMN_NAME: 
+                    //TODO: shouldn't we plan to accept multiple values for stage IDs as well?
                 case STAGE_ID_COLUMN_NAME: 
                 case STAGE_NAME_COLUMN_NAME: 
                     processors[i] = new StrNotNullOrEmpty();
@@ -1698,21 +2392,6 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                         header[i].startsWith(NB_NOT_EXPR_GENES_COLUMN_NAME) ||
                         header[i].startsWith(NB_NA_GENES_COLUMN_NAME)) {
                     processors[i] = new StrNotNullOrEmpty(); 
-                }
-
-                if (processors[i] != null) {
-                    continue;
-                }
-                
-                switch (header[i]) {
-                    case GENE_ID_LIST_ID_COLUMN_NAME: 
-                        processors[i] = new StrNotNullOrEmpty(
-                                new Utils.FmtMultipleStringValues(new Trim())); 
-                        break;
-                    case GENE_NAME_LIST_ID_COLUMN_NAME: 
-                        processors[i] = new NotNull(
-                                new Utils.FmtMultipleStringValues(new Trim()));
-                        break;
                 }
             } else {
                 // *** Attributes specific to complete file ***
@@ -1773,19 +2452,18 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         throws IllegalArgumentException {
         log.entry(fileType, speciesNames);
 
+        //TODO: refactor code for comon column between simple and complete file
         if (fileType.isSimpleFileType()) {
-            int nbColumns = 7 + 5 * speciesNames.size();
+            int nbColumns = 5 + 5 * speciesNames.size();
             String[] headers = new String[nbColumns];
             headers[0] = OMA_ID_COLUMN_NAME;
-            headers[1] = GENE_ID_LIST_ID_COLUMN_NAME;
-            headers[2] = GENE_NAME_LIST_ID_COLUMN_NAME;
-            headers[3] = ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME;
-            headers[4] = ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME;
-            headers[5] = STAGE_ID_COLUMN_NAME;
-            headers[6] = STAGE_NAME_COLUMN_NAME;
+            headers[1] = ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME;
+            headers[2] = ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME;
+            headers[3] = STAGE_ID_COLUMN_NAME;
+            headers[4] = STAGE_NAME_COLUMN_NAME;
             // the number of columns depends on the number of species
             for (int i = 0; i < speciesNames.size(); i++) {
-                int columnIndex = 7 + 5 * i;
+                int columnIndex = 5 + 5 * i;
                 String endHeader = " for " + speciesNames.get(i);
                 headers[columnIndex] = NB_OVER_EXPR_GENES_COLUMN_NAME + endHeader;
                 headers[columnIndex+1] = NB_UNDER_EXPR_GENES_COLUMN_NAME + endHeader;
@@ -1801,15 +2479,15 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME, ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME,
                 STAGE_ID_COLUMN_NAME, STAGE_NAME_COLUMN_NAME, 
                 SPECIES_LATIN_NAME_COLUMN_NAME,                
-                GENE_ID_COLUMN_NAME, GENE_NAME_COLUMN_NAME,
-                CIO_ID_ID_COLUMN_NAME, CIO_NAME_ID_COLUMN_NAME, 
+                GENE_ID_COLUMN_NAME, GENE_NAME_COLUMN_NAME, 
                 DIFFEXPRESSION_COLUMN_NAME, QUALITY_COLUMN_NAME,
                 AFFYMETRIX_DATA_COLUMN_NAME, AFFYMETRIX_CALL_QUALITY_COLUMN_NAME,
                 AFFYMETRIX_P_VALUE_COLUMN_NAME, AFFYMETRIX_CONSISTENT_DEA_COUNT_COLUMN_NAME, 
                 AFFYMETRIX_INCONSISTENT_DEA_COUNT_COLUMN_NAME,
                 RNASEQ_DATA_COLUMN_NAME, RNASEQ_CALL_QUALITY_COLUMN_NAME,
                 RNASEQ_P_VALUE_COLUMN_NAME, RNASEQ_CONSISTENT_DEA_COUNT_COLUMN_NAME, 
-                RNASEQ_INCONSISTENT_DEA_COUNT_COLUMN_NAME});
+                RNASEQ_INCONSISTENT_DEA_COUNT_COLUMN_NAME,
+                CIO_ID_ID_COLUMN_NAME, CIO_NAME_ID_COLUMN_NAME});
     }
     
     /**
@@ -1829,9 +2507,10 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 
         String[] fieldMapping = new String[header.length];
 
+        int speciesIndex = -1;
         for (int i = 0; i < header.length; i++) {
             switch (header[i]) {
-            // *** CellProcessors common to all file types ***
+            // *** attributes common to all file types ***
                 case OMA_ID_COLUMN_NAME: 
                 case STAGE_ID_COLUMN_NAME: 
                 case STAGE_NAME_COLUMN_NAME: 
@@ -1849,7 +2528,19 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 
             if (fileType.isSimpleFileType()) {
                 // *** Attributes specific to simple file ***
-                int speciesIndex = 0;
+                
+                //FIXME: this correction assumes that NB_OVER_EXPR_GENES_COLUMN_NAME is always 
+                //the first column in the group of columns of a given species. A real correction 
+                //would be to extract the species name from the column names, store the species names 
+                //in a Set, and detect when we change species.
+                //See for instance org.bgee.pipeline.annotations.SimilarityAnnotation.REF_COL_PATTERN
+                //to see a way of coding this. The generation of the names of the columns 
+                //should be modified to ensure that they are in sync with the Pattern used to retrieve 
+                //species names.
+                if (header[i].startsWith(NB_OVER_EXPR_GENES_COLUMN_NAME)) {
+                    speciesIndex++;
+                }
+                
                 if (header[i].startsWith(NB_OVER_EXPR_GENES_COLUMN_NAME)) {
                     fieldMapping[i] = "speciesCounts[" + speciesIndex + "].nbOverExprGenes";
                     
@@ -1865,21 +2556,12 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 } else if (header[i].startsWith(NB_NA_GENES_COLUMN_NAME)) {
                     fieldMapping[i] = "speciesCounts[" + speciesIndex + "].nbNAGenes";
                 } 
-
-                if (fieldMapping[i] != null) {
-                    speciesIndex++;
-                    continue;
-                }
-                
-                switch (header[i]) {
-                    case GENE_ID_LIST_ID_COLUMN_NAME: 
-                    case GENE_NAME_LIST_ID_COLUMN_NAME: 
-                        fieldMapping[i] = ""; 
-                        break;
-                }
                 
             } else {
                 // *** Attributes specific to complete file ***
+                //TODO: I think we should not assume that column names and attributes 
+                //are equal. If we were to change a column name, then we would need 
+                //to make sure to change the attribute name, this is boring.
                 switch (header[i]) {
                     case SPECIES_LATIN_NAME_COLUMN_NAME: 
                     case GENE_ID_COLUMN_NAME:
@@ -1910,692 +2592,5 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         }
         
         return log.exit(fieldMapping);
-    }
-
-    /**
-     * Class used to store multi-species differential expression counts: the number of 
-     * over-expressed genes, under-expressed genes, not diff. expressed genes, not expressed genes,
-     * and genes without data in the family.
-     *
-     * @author  Valentine Rech de Laval
-     * @version Bgee 13
-     * @since   Bgee 13
-     */
-    public static class SpeciesDiffExprCounts {
-        
-        /**
-         * See {@link #getSpeciesId()}.
-         */
-        private String speciesId;
-        /**
-         * See {@link #getOverExprGeneCount()}.
-         */
-        private int overExprGeneCount;
-        /**
-         * See {@link #getUnderExprGeneCount()}.
-         */
-        private int underExprGeneCount;
-        /**
-         * See {@link #getNotDiffExprGeneCount()}.
-         */
-        private int notDiffExprGeneCount;
-        /**
-         * See {@link #getNotExprGeneCount()}.
-         */
-        private int notExprGeneCount;
-        /**
-         * See {@link #getNAGeneCount()}.
-         */
-        private int naGeneCount;
-    
-        /**
-         * Constructor providing all arguments of the class.
-         *
-         * @param speciesId             See {@link #getSpeciesId()}.
-         * @param overExprGeneCount     See {@link #getOverExprGeneCount()}.
-         * @param underExprGeneCount    See {@link #getUnderExprGeneCount()}.
-         * @param notDiffExprGeneCount  See {@link #getNotDiffExprGeneCount()}.
-         * @param notExprGeneCount      See {@link #getNotExprGeneCount()}.
-         * @param naGeneCount           See {@link #getNAGeneCount()}.
-         */
-        public SpeciesDiffExprCounts(String speciesId, int overExprGeneCount, int underExprGeneCount, 
-                int notDiffExprGeneCount, int notExprGeneCount, int naGeneCount) {
-            this.speciesId = speciesId;
-            this.overExprGeneCount = overExprGeneCount;
-            this.underExprGeneCount = underExprGeneCount;
-            this.notDiffExprGeneCount = notDiffExprGeneCount;
-            this.notExprGeneCount = notExprGeneCount;
-            this.naGeneCount = naGeneCount;
-        }
-    
-        /**
-         * @return  the {@code String} that is the ID of the species.
-         */
-        public String getSpeciesId() {
-            return speciesId;
-        }
-        /**
-         * @param speciesId A {@code String} that is the ID of the species.
-         */
-        public void setSpeciesId(String speciesId) {
-            this.speciesId = speciesId;
-        }
-    
-        /**
-         * @return  the {@code int} that is the number of over-expressed genes in the family.
-         */
-        public int getOverExprGeneCount() {
-            return overExprGeneCount;
-        }
-        /**
-         * @param overExprGeneCount   An {@code int} that is the number of over-expressed 
-         *                          genes in the family.
-         */
-        public void setOverExprGeneCount(int overExprGeneCount) {
-            this.overExprGeneCount = overExprGeneCount;
-        }
-        
-        /**
-         * @return  the {@code int} that is the number of under-expressed genes in the family.
-         */
-        public int getUnderExprGeneCount() {
-            return underExprGeneCount;
-        }
-        /**
-         * @param underExprGeneCount  An {@code int} that is the number of under-expressed 
-         *                          genes in the family.
-         */
-        public void setUnderExprGeneCount(int underExprGeneCount) {
-            this.underExprGeneCount = underExprGeneCount;
-        }
-    
-        /**
-         * @return  the {@code int} that is the number of not diff. expressed genes in the family.
-         */
-        public int getNotDiffExprGeneCount() {
-            return notDiffExprGeneCount;
-        }
-        /**
-         * @param notDiffExprGeneCount An {@code int} that is the number of not diff. expressed 
-         *                           genes in the family.
-         */
-        public void setNotDiffExprGeneCount(int notDiffExprGeneCount) {
-            this.notDiffExprGeneCount = notDiffExprGeneCount;
-        }
-    
-        /**
-         * @return  the {@code int} that is the number of not expressed genes in the family.
-         */
-        public int getNotExprGeneCount() {
-            return notExprGeneCount;
-        }
-        /**
-         * @param notExprGeneCount An {@code int} that is the number of not expressed genes 
-         *                      in the family. 
-         */
-        public void setNotExprGeneCount(int notExprGeneCount) {
-            this.notExprGeneCount = notExprGeneCount;
-        }
-        
-        /**
-         * @return  the {@code int} that is the number of genes without data in the family.
-         */
-        public int getNAGeneCount() {
-            return naGeneCount;
-        }
-        /**
-         * @param naGeneCount An {@code int} that is the number of genes without data in the family.
-         */
-        public void setNAGeneCount(int naGeneCount) {
-            this.naGeneCount = naGeneCount;
-        }
-    
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + naGeneCount;
-            result = prime * result + notDiffExprGeneCount;
-            result = prime * result + notExprGeneCount;
-            result = prime * result + overExprGeneCount;
-            result = prime * result + underExprGeneCount;
-            result = prime * result + ((speciesId == null) ? 0 : speciesId.hashCode());
-            return result;
-        }
-    
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            SpeciesDiffExprCounts other = (SpeciesDiffExprCounts) obj;
-            if (naGeneCount != other.naGeneCount)
-                return false;
-            if (notDiffExprGeneCount != other.notDiffExprGeneCount)
-                return false;
-            if (notExprGeneCount != other.notExprGeneCount)
-                return false;
-            if (overExprGeneCount != other.overExprGeneCount)
-                return false;
-            if (underExprGeneCount != other.underExprGeneCount)
-                return false;
-            if (speciesId == null) {
-                if (other.speciesId != null)
-                    return false;
-            } else if (!speciesId.equals(other.speciesId))
-                return false;
-            return true;
-        }
-    
-        @Override
-        public String toString() {
-            return super.toString() + " - Species ID: " + getSpeciesId() +
-                    " - Over-expressed gene count: " + getOverExprGeneCount() +
-                    " - under-expressed gene count: " + getUnderExprGeneCount() +
-                    " - not diff. expressed gene count: " + getNotDiffExprGeneCount() +
-                    " - no-expressed gene count: " + getNotExprGeneCount() + 
-                    " - N/A gene count: " + getNAGeneCount();
-        }
-    }
-
-    /**
-     * A bean representing a row of a multi-species simple differential expression file. 
-     * Getter and setter names must follow standard bean definitions.
-     * 
-     * @author Valentine Rech de Laval
-     * @version Bgee 13 Apr. 2015
-     * @since Bgee 13
-     */
-    public static class MultiSpeciesSimpleDiffExprFileBean extends MultiSpeciesSimpleFileBean {
-
-        /**
-         * See {@link #getSpeciesDiffExprCounts()}.
-         */
-        private List<SpeciesDiffExprCounts> speciesDiffExprCounts;
-
-        /**
-         * 0-argument constructor of the bean.
-         */
-        public MultiSpeciesSimpleDiffExprFileBean() {
-        }
-
-        /**
-         * Constructor providing all arguments of the class.
-         *
-         * @param omaId             See {@link #getOmaId()}.
-         * @param omaDescription    See {@link #getOmaDescription()}.
-         * @param entityIds         See {@link #getEntityIds()}.
-         * @param entityNames       See {@link #getEntityNames()}.
-         * @param stageIds          See {@link #getStageIds()}.
-         * @param stageNames        See {@link #getStageNames()}.
-         * @param geneIds           See {@link #getGeneIds()}.
-         * @param geneNames         See {@link #getGeneNames()}.
-         * @param speciesCounts     See {@link #getSpeciesDiffExprCounts()}.
-         */
-        public MultiSpeciesSimpleDiffExprFileBean(String omaId, String omaDescription, 
-                List<String> entityIds, List<String> entityNames, List<String> stageIds, 
-                List<String> stageNames, List<String> geneIds, List<String> geneNames, 
-                List<SpeciesDiffExprCounts> speciesDiffExprCounts) {
-            super(omaId, omaDescription, entityIds, entityNames, stageIds, stageNames, 
-                    geneIds, geneNames);
-            this.speciesDiffExprCounts = speciesDiffExprCounts;
-        }
-
-        /**
-         * @return  the {@code List} of {@code SpeciesDiffExprCounts}s that are the counts of the 
-         *          genes for one species for a multi-species differential expression file.
-         */
-        public List<SpeciesDiffExprCounts> getSpeciesDiffExprCounts() {
-            return speciesDiffExprCounts;
-        }
-        /**
-         * @param speciesDiffExprCounts A {@code List} of {@code SpeciesDiffExprCounts}s that are 
-         *                              the counts of the genes for one species for a multi-species 
-         *                              differential expression file. speciesCounts to set
-         */
-        public void setSpeciesDiffExprCounts(List<SpeciesDiffExprCounts> speciesDiffExprCounts) {
-            this.speciesDiffExprCounts = speciesDiffExprCounts;
-        }
-
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = super.hashCode();
-            result = prime * result + 
-                    ((speciesDiffExprCounts == null) ? 0 : speciesDiffExprCounts.hashCode());
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (!super.equals(obj))
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            MultiSpeciesSimpleDiffExprFileBean other = (MultiSpeciesSimpleDiffExprFileBean) obj;
-            if (speciesDiffExprCounts == null) {
-                if (other.speciesDiffExprCounts != null)
-                    return false;
-            } else if (!speciesDiffExprCounts.equals(other.speciesDiffExprCounts))
-                return false;
-            return true;
-        }
-        
-        @Override
-        public String toString() {
-            return super.toString() + " - Species counts=" + getSpeciesDiffExprCounts().toString();
-        }
-    }
-    
-    /**
-     * A bean representing a row of a complete differential expression multi-species file. 
-     * Getter and setter names must follow standard bean definitions.
-     * 
-     * @author Valentine Rech de Laval
-     * @version Bgee 13 Apr. 2015
-     * @since Bgee 13
-     */
-    public static class MultiSpeciesCompleteDiffExprFileBean extends MultiSpeciesCompleteFileBean {
-
-        /** 
-         * @see getAffymetrixData()
-         */
-        private String affymetrixData;
-        /**
-         * @see getAffymetrixQuality()
-         */
-        private String affymetrixQuality;
-        /**
-         * See {@link #getAffymetrixPValue()}.
-         */
-        private Float affymetrixPValue;
-        /**
-         * See {@link #getAffymetrixConsistentDEA()}.
-         */
-        private Double affymetrixConsistentDEA;
-        /**
-         * See {@link #getAffymetrixInconsistentDEA()}.
-         */
-        private Double affymetrixInconsistentDEA;
-        /**
-         * @see getRNASeqData()
-         */
-        private String rnaSeqData;
-        /**
-         * @see getRNASeqQuality()
-         */
-        private String rnaSeqQuality;
-        /**
-         * See {@link #getRnaSeqPValue()}.
-         */
-        private Float rnaSeqPValue;
-        /**
-         * See {@link #getRnaSeqConsistentDEA()}.
-         */
-        private Double rnaSeqConsistentDEA;        
-        /**
-         * See {@link #getRnaSeqInconsistentDEA()}.
-         */
-        private Double rnaSeqInconsistentDEA;
-        /**
-         * See {@link #getDifferentialExpression()}.
-         */
-        private String differentialExpression;
-        /**
-         * See {@link #getCallQuality()}.
-         */
-        private String callQuality;
-
-        /**
-         * 0-argument constructor of the bean.
-         */
-        public MultiSpeciesCompleteDiffExprFileBean() {
-        }
-
-        /**
-         * Constructor providing all arguments of the class.
-         * 
-         * @param omaId                     See {@link #getOmaId()}.
-         * @param omaDescription            See {@link #getOmaDescription()}.
-         * @param entityIds                 See {@link #getEntityIds()}.
-         * @param entityNames               See {@link #getEntityNames()}.
-         * @param stageIds                  See {@link #getStageIds()}.
-         * @param stageNames                See {@link #getStageNames()}.
-         * @param geneId                    See {@link #getGeneId()}.
-         * @param geneName                  See {@link #getGeneName()}.
-         * @param cioId                     See {@link #getCioId()}.
-         * @param cioName                   See {@link #getCioName()}.
-         * @param speciesId                 See {@link #getSpeciesId()}.
-         * @param speciesName               See {@link #getSpeciesName()}.
-         * @param affymetrixData            See {@link #getAffymetrixData()}.
-         * @param affymetrixQuality         See {@link #getAffymetrixQuality()}.
-         * @param affymetrixPValue          See {@link #getAffymetrixPValue()}.
-         * @param affymetrixConsistentDEA   See {@link #getAffymetrixConsistentDEA()}.
-         * @param affymetrixInconsistentDEA See {@link #getAffymetrixInconsistentDEA()}.
-         * @param rnaSeqData                See {@link #getRNASeqData()}.
-         * @param rnaSeqQuality             See {@link #getRNASeqQuality()}.
-         * @param rnaSeqPValue              See {@link #getAffymetrixPValue()}.
-         * @param rnaSeqConsistentDEA       See {@link #getRnaSeqConsistentDEA()}.
-         * @param rnaSeqInconsistentDEA     See {@link #getRnaSeqInconsistentDEA()}.
-         * @param differentialExpression    See {@link #getDifferentialExpression()}.
-         * @param callQuality               See {@link #getCallQuality()}.
-         */
-        public MultiSpeciesCompleteDiffExprFileBean(String omaId, String omaDescription, 
-                List<String> entityIds, List<String> entityNames, List<String> stageIds, 
-                List<String> stageNames, String geneId, String geneName, 
-                String cioId, String cioName, String speciesId, String speciesName,
-                String affymetrixData, String affymetrixQuality, Float affymetrixPValue, 
-                Double affymetrixConsistentDEA, Double affymetrixInconsistentDEA, 
-                String rnaSeqData, String rnaSeqQuality, Float rnaSeqPValue, 
-                Double rnaSeqConsistentDEA, Double rnaSeqInconsistentDEA,
-                String differentialExpression, String callQuality) {
-            super(omaId, omaDescription, entityIds, entityNames, stageIds, stageNames, 
-                    geneId, geneName, cioId, cioName, speciesId, speciesName);
-            this.affymetrixData = affymetrixData;
-            this.affymetrixQuality = affymetrixQuality;
-            this.affymetrixPValue = affymetrixPValue; 
-            this.affymetrixConsistentDEA = affymetrixConsistentDEA;
-            this.affymetrixInconsistentDEA = affymetrixInconsistentDEA; 
-            this.rnaSeqData = rnaSeqData ;
-            this.rnaSeqQuality = rnaSeqQuality;
-            this.rnaSeqPValue = rnaSeqPValue; 
-            this.rnaSeqConsistentDEA = rnaSeqConsistentDEA;
-            this.rnaSeqInconsistentDEA = rnaSeqInconsistentDEA; 
-            this.differentialExpression = differentialExpression;
-            this.callQuality = callQuality;
-        }
-
-        /**
-         * @return  the {@code String} defining the contribution of Affymetrix data 
-         *          to the generation of this call.
-         */
-        public String getAffymetrixData() {
-            return affymetrixData;
-        }
-        /**
-         * @param affymetrixData    A {@code String} defining the contribution 
-         *                          of Affymetrix data to the generation of this call.
-         * @see #getAffymetrixData()
-         */
-        public void setAffymetrixData(String affymetrixData) {
-            this.affymetrixData = affymetrixData;
-        }
-
-        /**
-         * @return  the {@code String} defining the call quality found with Affymetrix experiment.
-         */
-        public String getAffymetrixQuality() {
-            return affymetrixQuality;
-        }
-        /** 
-         * @param affymetrixQuality A {@code String} defining the call quality found with 
-         *                          Affymetrix experiment.
-         * @see #getAffymetrixQuality()
-         */
-        public void setAffymetrixQuality(String affymetrixQuality) {
-            this.affymetrixQuality = affymetrixQuality;
-        }
-
-        /**
-         * @return  the {@code Float} that is the best p-value using Affymetrix.
-         */
-        public Float getAffymetrixPValue() {
-            return affymetrixPValue;
-        }
-        /**
-         * @param affymetrixPValue  A {@code Float} that is the best p-value using Affymetrix.
-         */
-        public void setAffymetrixPValue(Float affymetrixPValue) {
-            this.affymetrixPValue = affymetrixPValue;
-        }
-
-        /**
-         * @return  the {@code Double} that is the number of analysis using 
-         *          Affymetrix data where the same call is found.
-         */
-        public Double getAffymetrixConsistentDEA() {
-            return affymetrixConsistentDEA;
-        }
-        /**
-         * @param affymetrixConsistentDEA   A {@code Double} that is the number of analysis using 
-         *                                  Affymetrix data where the same call is found.
-         */
-        public void setAffymetrixConsistentDEA(Double affymetrixConsistentDEA) {
-            this.affymetrixConsistentDEA = affymetrixConsistentDEA;
-        }
-
-        /**
-         * @return  the {@code Double} that is the number of analysis using 
-         *          Affymetrix data where a different call is found.
-         */
-        public Double getAffymetrixInconsistentDEA() {
-            return affymetrixInconsistentDEA;
-        }
-        /**
-         * @param affymetrixInconsistentDEA A {@code Double} that is the number of analysis using 
-         *                                  Affymetrix data where a different call is found.
-         */
-        public void setAffymetrixInconsistentDEA(Double affymetrixInconsistentDEA) {
-            this.affymetrixInconsistentDEA = affymetrixInconsistentDEA;
-        }
-
-        /**
-         * @return  the {@code String} defining the contribution of RNA-Seq data 
-         *          to the generation of this call.
-         */
-        public String getRNASeqData() {
-            return rnaSeqData;
-        }
-        /**
-         * @param rnaSeqData    A {@code String} defining the contribution 
-         *                      of RNA-Seq data to the generation of this call.
-         * @see #getRNASeqData()
-         */
-        public void setRNASeqData(String rnaSeqData) {
-            this.rnaSeqData = rnaSeqData;
-        }
-
-        /**
-         * @return  the {@code String} defining the call quality found with RNA-Seq experiment.
-         */
-        public String getRNASeqQuality() {
-            return rnaSeqQuality;
-        }
-        /** 
-         * @param rnaSeqQuality A {@code String} defining the call quality found with 
-         *                      RNA-Seq experiment.
-         * @see #getRNASeqQuality()
-         */
-        public void setRNASeqQuality(String rnaSeqQuality) {
-            this.rnaSeqQuality = rnaSeqQuality;
-        }
-
-        /**
-         * @return  the {@code Float} that is the best p-value using RNA-Seq.
-         */
-        public Float getRnaSeqPValue() {
-            return rnaSeqPValue;
-        }
-        /**
-         * @param rnaSeqPValue  A {@code Float} that is the best p-value using RNA-Seq.
-         */
-        public void setRnaSeqPValue(Float rnaSeqPValue) {
-            this.rnaSeqPValue = rnaSeqPValue;
-        }
-
-        /**
-         * @return  the {@code Double} that is the number of analysis using 
-         *          RNA-Seq data where the same call is found.
-         */
-        public Double getRnaSeqConsistentDEA() {
-            return rnaSeqConsistentDEA;
-        }
-        /**
-         * @param rnaSeqConsistentDEA   A {@code Double} that is the number of analysis using 
-         *                              RNA-Seq data where the same call is found.
-         */
-        public void setRnaSeqConsistentDEA(Double rnaSeqConsistentDEA) {
-            this.rnaSeqConsistentDEA = rnaSeqConsistentDEA;
-        }
-
-        /**
-         * @return  the {@code Double} that is the number of analysis using 
-         *          RNA-Seq data where a different call is found.
-         */
-        public Double getRnaSeqInconsistentDEA() {
-            return rnaSeqInconsistentDEA;
-        }
-        /**
-         * @param rnaSeqInconsistentDEA A {@code Double} that is the number of analysis using 
-         *                              RNA-Seq data where a different call is found.
-         */
-        public void setRnaSeqInconsistentDEA(Double rnaSeqInconsistentDEA) {
-            this.rnaSeqInconsistentDEA = rnaSeqInconsistentDEA;
-        }
-
-        /**
-         * @return  the {@code String} that is merged differential expressions 
-         *          from different data types.
-         */
-        public String getDifferentialExpression() {
-            return differentialExpression;
-        }
-        /**
-         * @param differentialExpression    A {@code String} that is merged differential expressions 
-         *                                  from different data types.
-         */
-        public void setDifferentialExpression(String differentialExpression) {
-            this.differentialExpression = differentialExpression;
-        }
-
-        /** 
-         * @return  the {@code String} that is call quality.
-         */
-        public String getCallQuality() {
-            return callQuality;
-        }
-        /**
-         * @param callQuality   A {@code String} that is call quality.
-         */
-        public void setCallQuality(String callQuality) {
-            this.callQuality = callQuality;
-        }
-
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = super.hashCode();
-            result = prime * result + ((affymetrixData == null) ? 0 : affymetrixData.hashCode());
-            result = prime * result + ((affymetrixQuality == null) ? 0 : affymetrixQuality.hashCode());
-            result = prime * result + ((affymetrixPValue == null) ? 0 : affymetrixPValue.hashCode());
-            result = prime * result +
-                    ((affymetrixConsistentDEA == null) ? 0 : affymetrixConsistentDEA.hashCode());
-            result = prime * result +
-                    ((affymetrixInconsistentDEA == null) ? 0 : affymetrixInconsistentDEA.hashCode());
-            result = prime * result + ((rnaSeqData == null) ? 0 : rnaSeqData.hashCode());
-            result = prime * result + ((rnaSeqQuality == null) ? 0 : rnaSeqQuality.hashCode());
-            result = prime * result + ((rnaSeqPValue == null) ? 0 : rnaSeqPValue.hashCode());
-            result = prime * result + 
-                    ((rnaSeqConsistentDEA == null) ? 0 : rnaSeqConsistentDEA.hashCode());
-            result = prime * result + 
-                    ((rnaSeqInconsistentDEA == null) ? 0 : rnaSeqInconsistentDEA.hashCode());
-            result = prime * result +
-                    ((differentialExpression == null) ? 0 : differentialExpression.hashCode());
-            result = prime * result + ((callQuality == null) ? 0 : callQuality.hashCode());
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (!super.equals(obj))
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            MultiSpeciesCompleteDiffExprFileBean other = (MultiSpeciesCompleteDiffExprFileBean) obj;
-            if (affymetrixConsistentDEA == null) {
-                if (other.affymetrixConsistentDEA != null)
-                    return false;
-            } else if (!affymetrixConsistentDEA.equals(other.affymetrixConsistentDEA))
-                return false;
-            if (affymetrixData == null) {
-                if (other.affymetrixData != null)
-                    return false;
-            } else if (!affymetrixData.equals(other.affymetrixData))
-                return false;
-            if (affymetrixInconsistentDEA == null) {
-                if (other.affymetrixInconsistentDEA != null)
-                    return false;
-            } else if (!affymetrixInconsistentDEA.equals(other.affymetrixInconsistentDEA))
-                return false;
-            if (affymetrixPValue == null) {
-                if (other.affymetrixPValue != null)
-                    return false;
-            } else if (!affymetrixPValue.equals(other.affymetrixPValue))
-                return false;
-            if (affymetrixQuality == null) {
-                if (other.affymetrixQuality != null)
-                    return false;
-            } else if (!affymetrixQuality.equals(other.affymetrixQuality))
-                return false;
-            if (callQuality == null) {
-                if (other.callQuality != null)
-                    return false;
-            } else if (!callQuality.equals(other.callQuality))
-                return false;
-            if (differentialExpression == null) {
-                if (other.differentialExpression != null)
-                    return false;
-            } else if (!differentialExpression.equals(other.differentialExpression))
-                return false;
-            if (rnaSeqConsistentDEA == null) {
-                if (other.rnaSeqConsistentDEA != null)
-                    return false;
-            } else if (!rnaSeqConsistentDEA.equals(other.rnaSeqConsistentDEA))
-                return false;
-            if (rnaSeqData == null) {
-                if (other.rnaSeqData != null)
-                    return false;
-            } else if (!rnaSeqData.equals(other.rnaSeqData))
-                return false;
-            if (rnaSeqInconsistentDEA == null) {
-                if (other.rnaSeqInconsistentDEA != null)
-                    return false;
-            } else if (!rnaSeqInconsistentDEA.equals(other.rnaSeqInconsistentDEA))
-                return false;
-            if (rnaSeqPValue == null) {
-                if (other.rnaSeqPValue != null)
-                    return false;
-            } else if (!rnaSeqPValue.equals(other.rnaSeqPValue))
-                return false;
-            if (rnaSeqQuality == null) {
-                if (other.rnaSeqQuality != null)
-                    return false;
-            } else if (!rnaSeqQuality.equals(other.rnaSeqQuality))
-                return false;
-            return true;
-        }
-
-        @Override
-        public String toString() {
-            return super.toString() + " - Affymetrix data()=" + getAffymetrixData() + 
-                    " - Affymetrix quality: " + getAffymetrixQuality() + 
-                    " - Affymetrix p-value: " + getAffymetrixPValue() + 
-                    " - Affymetrix consistent DEA: " + getAffymetrixConsistentDEA() + 
-                    " - Affymetrix inconsistent DEA: " + getAffymetrixInconsistentDEA() + 
-                    " - RNA-Seq data: " + getRNASeqData() + 
-                    " - RNA-Seq quality: " + getRNASeqQuality() + 
-                    " - RNA-Seq p-value: " + getRnaSeqPValue() + 
-                    " - RNA-Seq consistent DEA: " + getRnaSeqConsistentDEA() + 
-                    " - RNA-Seq inconsistent DEA: " + getRnaSeqInconsistentDEA() + 
-                    " - Differential expression: " + getDifferentialExpression() + 
-                    " - Call quality: " + getCallQuality();
-        }
     }
 }

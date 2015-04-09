@@ -1372,6 +1372,7 @@ public class SimilarityAnnotation {
      * @param <T>               The type of {@code AnnotationBean} to check.
      * @throws IllegalArgumentException     If some errors were detected.
      */
+    //TODO: check that SUMMARY and ANCESTRAL TAXA annotations are unique (over HOM Uberon taxon)
     public <T extends AnnotationBean> void checkAnnotations(Collection<T> annots) 
                     throws IllegalArgumentException {
         log.entry(annots);

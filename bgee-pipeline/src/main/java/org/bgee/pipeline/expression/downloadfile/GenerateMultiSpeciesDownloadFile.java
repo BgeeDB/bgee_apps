@@ -24,16 +24,6 @@ public interface GenerateMultiSpeciesDownloadFile {
 //    public final static String OMA_DESC_COLUMN_NAME = "OMA ID";
 
     /**
-     * A {@code String} that is the name of the column containing lists of gene IDs,
-     * in the download file.
-     */
-    public final static String GENE_ID_LIST_ID_COLUMN_NAME = "Gene IDs";
-    /**
-     * A {@code String} that is the name of the column containing lists of gene names,
-     * in the download file.
-     */
-    public final static String GENE_NAME_LIST_ID_COLUMN_NAME = "Gene names";
-    /**
      * A {@code String} that is the name of the column containing lists of anatomical entity IDs, 
      * in the download file.
      */

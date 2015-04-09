@@ -230,7 +230,8 @@ public abstract class GenerateDownloadFile extends CallUser {
      * @param directory     A {@code String} that is the directory where to store files.
      * @throws IllegalArgumentException If {@code directory} is {@code null} or blank.
      */
-    //FIXME: how is this associated back to the name given to the group of species?
+    //TODO: speciesIds shoudn't be defined for multi-species classes that use map. 
+    // We need to reorganize generation download file classes.
     public GenerateDownloadFile(MySQLDAOManager manager, List<String> speciesIds, 
             Set<? extends FileType> fileTypes, String directory) throws IllegalArgumentException {
         super(manager);
@@ -239,6 +240,10 @@ public abstract class GenerateDownloadFile extends CallUser {
         }
         this.speciesIds = speciesIds;
         this.fileTypes = fileTypes;
+        
+        if (directory == null || directory.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("No directory is provided"));
+        }
         this.directory = directory;
     }
     

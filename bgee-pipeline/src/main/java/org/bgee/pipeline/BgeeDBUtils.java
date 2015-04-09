@@ -18,7 +18,10 @@ import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
 import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.gene.GeneDAO;
+import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
+import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTO;
+import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTOResultSet;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTOResultSet;
@@ -440,5 +443,38 @@ public class BgeeDBUtils {
             rs.close();
         }
         return log.exit(namesByIds);
+    }
+    
+    /**
+     * Retrieve from the data source a mapping from CIO IDs to CIO names. 
+     * 
+     * @param cioStatementDAO   A {@code CIOStatementDAO} to use to retrieve information about 
+     *                          CIO statements from the data source.
+     * @return                  A {@code Map} where keys are {@code String}s corresponding to 
+     *                          CIO IDs, the associated values being {@code String}s 
+     *                          corresponding to CIO names. 
+     * @throws DAOException   If an error occurred while getting the data from the Bgee data source.
+     */
+    //XXX: Implement something more generic for any EntityTOs?
+    public static Map<String, CIOStatementTO> getCIOStatementsByIds(CIOStatementDAO cioStatementDAO) 
+            throws DAOException {
+        log.entry();
+        
+        log.debug("Start retrieving all CIO names");
+        
+        cioStatementDAO.setAttributes(CIOStatementDAO.Attribute.ID, CIOStatementDAO.Attribute.NAME, 
+                CIOStatementDAO.Attribute.TRUSTED);
+        
+        Map<String, CIOStatementTO> cioByIds = new HashMap<String, CIOStatementTO>();
+        try (CIOStatementTOResultSet rs = cioStatementDAO.getAllCIOStatements()) {
+            while (rs.next()) {
+                CIOStatementTO cioTO = rs.getTO();
+                cioByIds.put(cioTO.getId(), cioTO);
+            }
+        }
+        
+        log.debug("Done retrieving CIO names, {} names retrieved", cioByIds.size());
+        
+        return log.exit(cioByIds);
     }
 }

@@ -5,16 +5,21 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.supercsv.cellprocessor.CellProcessorAdaptor;
 import org.supercsv.cellprocessor.Optional;
 import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.comment.CommentStartsWith;
+import org.supercsv.exception.SuperCsvCellProcessorException;
 import org.supercsv.io.CsvListReader;
 import org.supercsv.io.ICsvListReader;
 import org.supercsv.prefs.CsvPreference;
+import org.supercsv.util.CsvContext;
 
 /**
  * This class allows to perform operations that are widely used during execution 
@@ -39,12 +44,98 @@ public class Utils {
     public final static CsvPreference TSVCOMMENTED = 
             new CsvPreference.Builder(CsvPreference.TAB_PREFERENCE).
             skipComments(new CommentStartsWith("//")).build();
+
     /**
      * A {@code String} corresponding to {@code System.getProperty("line.separator")}.
      * CR stands for Carriage Return.
      */
     public final static String CR = System.getProperty("line.separator");
     
+    /**
+     * An unmodifiable {@code List} of {@code String}s that are the allowed separators 
+     * between values in cells potentially containing multiple values, 
+     * in preferred order of use. 
+     * @see ParseMultipleStringValues
+     * @see #multipleValuesToString(List)
+     */
+    public final static List<String> VALUE_SEPARATORS = 
+            Collections.unmodifiableList(Arrays.asList("|", ","));
+
+    /**
+     * A {@code CellProcessorAdaptor} converting a {@code List} of {@code String}s 
+     * into a {@code String} where elements in the {@code List} are separated 
+     * by a separator. The separator used is the first element in 
+     * {@link SimilarityAnnotationUtils#VALUE_SEPARATOR}. If you want to convert 
+     * a separated-values {@code String} into a {@code List} of {@code String}s, 
+     * see {@link SimilarityAnnotationUtils.ParseMultipleStringValues}.
+     * 
+     * @author Frederic Bastian
+     * @version Bgee 13 Apr. 2015
+     * @since Bgee 13
+     */
+    public static class FmtMultipleStringValues extends CellProcessorAdaptor {
+        
+        /**
+         * Default constructor, no other {@code CellProcessor} in the chain.
+         */
+        public FmtMultipleStringValues() {
+            super();
+        }
+        /**
+         * Constructor allowing other processors to be chained 
+         * after {@code FmtMultipleValuesCell}.
+         * @param next  A {@code CellProcessor} that is the next to be called. 
+         */
+        public FmtMultipleStringValues(CellProcessor next) {
+            super(next);
+        }
+        
+        @Override
+        public Object execute(Object value, CsvContext context) 
+                throws SuperCsvCellProcessorException {
+            log.entry(value, context); 
+            
+            //throws an Exception if the input is null, as all CellProcessors usually do.
+            validateInputNotNull(value, context); 
+            
+            if (!(value instanceof List)) {
+                throw log.throwing(new SuperCsvCellProcessorException(
+                        "A List of Strings must be provided, incorrect value: " 
+                        + value + " of type " + value.getClass().getSimpleName(), 
+                        context, this));
+            }
+            List<?> valueList = (List<?>) value;
+            if (valueList.isEmpty()) {
+                throw log.throwing(new SuperCsvCellProcessorException(
+                        "The provided List cannot be empty", 
+                        context, this));
+            }
+            
+            String multipleValuesString = "";
+            for (Object valueElement: valueList) {
+                if (!(valueElement instanceof String)) {
+                    throw log.throwing(new SuperCsvCellProcessorException(
+                            "A List of Strings must be provided, incorrect value element: " 
+                            + valueElement + " of type " + valueElement.getClass().getSimpleName(), 
+                            context, this));
+                }
+                if (StringUtils.isBlank((String) valueElement)) {
+                    throw log.throwing(new SuperCsvCellProcessorException(
+                            "The provided List cannot contain blank values", 
+                            context, this));
+                }
+                
+                if (!multipleValuesString.isEmpty()) {
+                    multipleValuesString += VALUE_SEPARATORS.get(0);
+                }
+                multipleValuesString += valueElement;
+            }
+            
+            //passes result to next processor in the chain
+            return log.exit(next.execute(multipleValuesString, context));
+        }
+    }
+
     /**
      * Parse {@code tsvFile} and retrieve the values in the column named  
      * {@code columnName} (case-insensitive), as {@code String}s. Comment lines 

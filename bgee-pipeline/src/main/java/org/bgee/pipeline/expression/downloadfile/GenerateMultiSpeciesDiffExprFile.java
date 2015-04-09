@@ -48,17 +48,15 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.pipeline.BgeeDBUtils;
 import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.Utils;
-import org.supercsv.cellprocessor.Collector;
+import org.supercsv.cellprocessor.Trim;
 import org.supercsv.cellprocessor.constraint.DMinMax;
 import org.supercsv.cellprocessor.constraint.IsElementOf;
 import org.supercsv.cellprocessor.constraint.LMinMax;
 import org.supercsv.cellprocessor.constraint.NotNull;
 import org.supercsv.cellprocessor.constraint.StrNotNullOrEmpty;
 import org.supercsv.cellprocessor.ift.CellProcessor;
-import org.supercsv.cellprocessor.ift.StringCellProcessor;
 import org.supercsv.io.dozer.CsvDozerBeanWriter;
 import org.supercsv.io.dozer.ICsvDozerBeanWriter;
-import org.supercsv.util.CsvContext;
 
 
 /**
@@ -1591,7 +1589,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                     break;
                 case ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME: 
                 case ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME: 
-                    processors[i] = new StrNotNullOrEmpty(new MultipleValuesCell(new ArrayList<Object>())); 
+                    processors[i] = new StrNotNullOrEmpty(
+                            new Utils.FmtMultipleStringValues(new Trim())); 
                     break;
             }
             
@@ -1619,10 +1618,12 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 
                 switch (header[i]) {
                     case GENE_ID_LIST_ID_COLUMN_NAME: 
-                        processors[i] = new StrNotNullOrEmpty(new MultipleValuesCell(new ArrayList<Object>())); 
+                        processors[i] = new StrNotNullOrEmpty(
+                                new Utils.FmtMultipleStringValues(new Trim())); 
                         break;
                     case GENE_NAME_LIST_ID_COLUMN_NAME: 
-                        processors[i] = new NotNull(new MultipleValuesCell(new ArrayList<Object>()));
+                        processors[i] = new NotNull(
+                                new Utils.FmtMultipleStringValues(new Trim()));
                         break;
                 }
             } else {
@@ -1670,29 +1671,6 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         return log.exit(processors);
     }
     
-    /**
-     * A {@code CellProcessorAdaptor} capable of writing cells allowing to optionally 
-     * contain multiple values, separated by {@link #SEPARATOR}. 
-     * This {@code CellProcessorAdaptor} will write the values,
-     * in the same order as in {@code List} to write.
-     * 
-     * @author  Valentine Rech de Laval
-     * @version Bgee 13 Apr. 2015
-     * @since   Bgee 13
-     */
-    protected static class MultipleValuesCell extends Collector implements StringCellProcessor {
-
-        public MultipleValuesCell(Collection<Object> collection) {
-            super(collection);
-            throw new UnsupportedOperationException("To be implemented");
-        }
-
-        @Override
-        public Object execute(Object value, CsvContext context) {
-            throw new UnsupportedOperationException("To be implemented");
-        }
-    }
-
     /**
      * Generates an {@code Array} of {@code String}s used to generate the header of a multi-species
      * differential expression TSV file of type {@code fileType}.

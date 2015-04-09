@@ -5,13 +5,13 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.pipeline.Utils;
 import org.supercsv.cellprocessor.CellProcessorAdaptor;
 import org.supercsv.cellprocessor.Optional;
 import org.supercsv.cellprocessor.ParseBool;
@@ -114,14 +114,14 @@ public class SimilarityAnnotationUtils {
          */
         private final static String SPLIT_VALUE_PATTERN = generateSplitValuePattern();
         /**
-         * Generate the pattern to split multiple values, based on {@link #VALUE_SEPARATORS}.
+         * Generate the pattern to split multiple values, based on {@link Utils#VALUE_SEPARATORS}.
          * @return  A {@code String} that is the pattern to use to split values in a cell 
          *          potentially containing multiple values.
          */
         private final static String generateSplitValuePattern() {
             log.entry();
             String splitPattern = "";
-            for (String separator: VALUE_SEPARATORS) {
+            for (String separator: Utils.VALUE_SEPARATORS) {
                 if (!splitPattern.equals("")) {
                     splitPattern += "|";
                 }
@@ -1612,24 +1612,15 @@ public class SimilarityAnnotationUtils {
      * {@link #DATE_COL_NAME}.
      */
     protected final static String DATE_FORMAT = "yyyy-MM-dd";
-    /**
-     * An unmodifiable {@code List} of {@code String}s that are the allowed separators 
-     * between values in cells potentially containing multiple values, 
-     * in preferred order of use. 
-     * @see ParseMultipleStringValues
-     * @see #multipleValuesToString(List)
-     */
-    protected final static List<String> VALUE_SEPARATORS = 
-            Collections.unmodifiableList(Arrays.asList("|", ","));
 
     /**
      * Transform a {@code List} of {@code String}s into a {@code String} where each element 
-     * is separated by the first separator in {@link #VALUE_SEPARATORS}.
+     * is separated by the first separator in {@link Utils#VALUE_SEPARATORS}.
      * 
      * @param values    A {@code List} of {@code String}s to be transformed into 
      *                  a single {@code String}.
      * @return          A {@code String} where each element in {code values} is separated 
-     *                  by the first separator in {@link #VALUE_SEPARATORS}.
+     *                  by the first separator in {@link Utils#VALUE_SEPARATORS}.
      * @throws IllegalArgumentException If {@code values} is {@code null} or empty.
      */
     protected static String multipleValuesToString(List<String> values) 
@@ -1644,7 +1635,7 @@ public class SimilarityAnnotationUtils {
         boolean firstIteration = true;
         for (String value: values) {
             if (!firstIteration) {
-                valuesToString += VALUE_SEPARATORS.get(0);
+                valuesToString += Utils.VALUE_SEPARATORS.get(0);
             }
             valuesToString += value;
             firstIteration = false;

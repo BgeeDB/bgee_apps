@@ -95,83 +95,7 @@ public class SimilarityAnnotation {
      */
     private final static Logger log = 
             LogManager.getLogger(SimilarityAnnotation.class.getName());
-    
-    /**
-     * A {@code CellProcessorAdaptor} converting a {@code List} of {@code String}s 
-     * into a {@code String} where elements in the {@code List} are separated 
-     * by a separator. The separator used is the first element in 
-     * {@link SimilarityAnnotationUtils#VALUE_SEPARATOR}. If you want to convert 
-     * a separated-values {@code String} into a {@code List} of {@code String}s, 
-     * see {@link SimilarityAnnotationUtils.ParseMultipleStringValues}.
-     * 
-     * @author Frederic Bastian
-     * @version Bgee 13 Apr. 2015
-     * @since Bgee 13
-     */
-    protected static class FmtMultipleStringValues extends CellProcessorAdaptor {
         
-        /**
-         * Default constructor, no other {@code CellProcessor} in the chain.
-         */
-        protected FmtMultipleStringValues() {
-                super();
-        }
-        /**
-         * Constructor allowing other processors to be chained 
-         * after {@code FmtMultipleValuesCell}.
-         * @param next  A {@code CellProcessor} that is the next to be called. 
-         */
-        protected FmtMultipleStringValues(CellProcessor next) {
-            super(next);
-        }
-        
-        @Override
-        public Object execute(Object value, CsvContext context) 
-                throws SuperCsvCellProcessorException {
-            log.entry(value, context); 
-            
-            //throws an Exception if the input is null, as all CellProcessors usually do.
-            validateInputNotNull(value, context); 
-            
-            if (!(value instanceof List)) {
-                throw log.throwing(new SuperCsvCellProcessorException(
-                        "A List of Strings must be provided, incorrect value: " 
-                        + value + " of type " + value.getClass().getSimpleName(), 
-                        context, this));
-            }
-            List<?> valueList = (List<?>) value;
-            if (valueList.isEmpty()) {
-                throw log.throwing(new SuperCsvCellProcessorException(
-                        "The provided List cannot be empty", 
-                        context, this));
-            }
-            
-            String multipleValuesString = "";
-            for (Object valueElement: valueList) {
-                if (!(valueElement instanceof String)) {
-                    throw log.throwing(new SuperCsvCellProcessorException(
-                            "A List of Strings must be provided, incorrect value element: " 
-                            + valueElement + " of type " + valueElement.getClass().getSimpleName(), 
-                            context, this));
-                }
-                if (StringUtils.isBlank((String) valueElement)) {
-                    throw log.throwing(new SuperCsvCellProcessorException(
-                            "The provided List cannot contain blank values", 
-                            context, this));
-                }
-                
-                if (!multipleValuesString.isEmpty()) {
-                    multipleValuesString += SimilarityAnnotationUtils.VALUE_SEPARATORS.get(0);
-                }
-                multipleValuesString += valueElement;
-            }
-            
-            //passes result to next processor in the chain
-            return log.exit(next.execute(multipleValuesString, context));
-        }
-    }
-    
-    
     /**
      * A bean representing a row from a curator annotation file. Getter and setter names 
      * must follow standard bean definitions. This bean simply extends 
@@ -916,7 +840,7 @@ public class SimilarityAnnotation {
             // *** CellProcessors common to all AnnotationBean types ***
                 case SimilarityAnnotationUtils.ENTITY_COL_NAME: 
                 case SimilarityAnnotationUtils.ENTITY_NAME_COL_NAME: 
-                    processors[i] = new FmtMultipleStringValues(new Trim());
+                    processors[i] = new Utils.FmtMultipleStringValues(new Trim());
                     break;
                 case SimilarityAnnotationUtils.TAXON_COL_NAME: 
                     processors[i] = new NotNull();
@@ -3238,7 +3162,7 @@ public class SimilarityAnnotation {
                     boolean firstIteration = true;
                     for (String entityId: entityIds) {
                         if (!firstIteration) {
-                            textElement += SimilarityAnnotationUtils.VALUE_SEPARATORS.get(0);
+                            textElement += Utils.VALUE_SEPARATORS.get(0);
                         }
                         textElement += entityId;
                         firstIteration = false;

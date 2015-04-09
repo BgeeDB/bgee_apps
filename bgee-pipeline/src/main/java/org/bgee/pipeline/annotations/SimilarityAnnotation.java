@@ -9,14 +9,12 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -30,6 +28,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.Utils;
 import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.AncestralTaxaAnnotationBean;
 import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.AnnotationBean;
@@ -41,41 +40,30 @@ import org.bgee.pipeline.ontologycommon.CIOWrapper;
 import org.bgee.pipeline.ontologycommon.OntologyUtils;
 import org.bgee.pipeline.uberon.TaxonConstraints;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
-import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
-import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
 import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLObjectIntersectionOf;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
-import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
-import org.supercsv.cellprocessor.CellProcessorAdaptor;
 import org.supercsv.cellprocessor.FmtBool;
 import org.supercsv.cellprocessor.FmtDate;
 import org.supercsv.cellprocessor.Optional;
-import org.supercsv.cellprocessor.ParseBool;
 import org.supercsv.cellprocessor.ParseDate;
 import org.supercsv.cellprocessor.ParseInt;
 import org.supercsv.cellprocessor.Trim;
 import org.supercsv.cellprocessor.constraint.NotNull;
 import org.supercsv.cellprocessor.constraint.StrNotNullOrEmpty;
 import org.supercsv.cellprocessor.ift.CellProcessor;
-import org.supercsv.exception.SuperCsvCellProcessorException;
 import org.supercsv.exception.SuperCsvException;
 import org.supercsv.io.CsvBeanReader;
 import org.supercsv.io.CsvBeanWriter;
-import org.supercsv.io.CsvListReader;
-import org.supercsv.io.CsvMapReader;
 import org.supercsv.io.CsvMapWriter;
 import org.supercsv.io.ICsvBeanReader;
 import org.supercsv.io.ICsvBeanWriter;
-import org.supercsv.io.ICsvListReader;
-import org.supercsv.io.ICsvMapReader;
 import org.supercsv.io.ICsvMapWriter;
-import org.supercsv.util.CsvContext;
 
 import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
@@ -116,7 +104,7 @@ public class SimilarityAnnotation {
         /**
          * 0-argument constructor of the bean.
          */
-        private CuratorAnnotationBean() {
+        public CuratorAnnotationBean() {
             super();
         }
         /**
@@ -134,7 +122,7 @@ public class SimilarityAnnotation {
          * @param curator           See {@link #getCurator()}.
          * @param curationDate      See {@link #getCurationDate()}.
          */
-        private CuratorAnnotationBean(String homId, List<String> entityIds, 
+        public CuratorAnnotationBean(String homId, List<String> entityIds, 
                 int ncbiTaxonId, boolean negated,String ecoId, String cioId, 
                 String refId, String refTitle, String supportingText,
                 String assignedBy, String curator, Date curationDate) {
@@ -441,35 +429,6 @@ public class SimilarityAnnotation {
      *   <li>path to the similarity annotation file to extract taxon IDs from.
      *   <li>path to the output file where write taxon IDs into, one per line.
      *   </ol>
-     * <li>If the first element in {@code args} is "generateReleaseFile", the action 
-     * will be to generate proper annotations from the raw annotation file, and 
-     * to write them in a file, see {@link #generateReleaseFile(String, String, String, 
-     * String, String, String, String, String)}.
-     * Following elements in {@code args} must then be: 
-     *   <ol>
-     *   <li>the path to the raw annotation file.
-     *   <li>the path to the file containing taxon constraints. See {@link 
-     *   org.bgee.pipeline.uberon.TaxonConstraints}
-     *   <li>the path to the Uberon ontology.
-     *   <li>the path to the taxonomy ontology.
-     *   <li>the path to the homology and related concepts (HOM) ontology.
-     *   <li>the path to the ECO ontology.
-     *   <li>the path to the confidence information ontology.
-     *   <li>the path to the output file.
-     *   </ol>
-     * <li>If the first element in {@code args} is "generateSummaryFileForTaxon", the action will be 
-     * to extract, from a clean annotation file, the annotations related to a taxon (and 
-     * all its ancestors), to summarize them (for instance, if a {@code SUMMARY} annotation 
-     * exists for a given HOM ID/Entity ID/Taxon ID, only this summary will be used), 
-     * and to write them to an output file. See {@link 
-     * #writeToFileSummaryAnnotationsForTaxon(String, String, int, String)}.
-     * Following elements in {@code args} must then be: 
-     *   <ol>
-     *   <li>the path to the clean annotation file.
-     *   <li>the path to the taxonomy ontology.
-     *   <li>the NCBI ID of the taxon to consider (for instance, 9606).
-     *   <li>the path to the output file.
-     *   </ol>
      * <li>If the first element in {@code args} is "getAnatEntitiesWithNoTransformationOf", 
      * the action will be to write, into an output file, the anatomical entities 
      * used in our annotations of similarity, but that do not have any {@code transformation_of}
@@ -481,40 +440,59 @@ public class SimilarityAnnotation {
      *   <li>The path to the Uberon ontology
      *   <li>The path to the output file.
      *   </ol>
+     * <li>If the first element in {@code args} is "generateReleaseFile", the action 
+     * will be to generate proper annotations from the curator annotation file, and 
+     * to write them into different release files, see 
+     * {@link #generateReleaseFile(String, String, String, String)}.
+     * Following elements in {@code args} must then be: 
+     *   <ol>
+     *   <li>the path to the file containing taxon constraints. See {@link 
+     *   org.bgee.pipeline.uberon.TaxonConstraints}. Can be empty (see 
+     *   {@link org.bgee.pipeline.CommandRunner#parseArgument(String)}).
+     *   <li>A {@code Map<String, Set<Integer>>} to potentially override taxon constraints, 
+     *   see {@link org.bgee.pipeline.CommandRunner#parseMapArgumentAsInteger(String)} to see 
+     *   how to provide it in command line. See constructor {@link SimilarityAnnotation#
+     *   SimilarityAnnotation(String, Map, String, String, String, String, String)} 
+     *   for more details about overriding taxon constraints. Can be empty (see 
+     *   {@link org.bgee.pipeline.CommandRunner#EMPTY_LIST}).
+     *   <li>the path to the Uberon ontology.
+     *   <li>the path to the taxonomy ontology.
+     *   <li>the path to the homology and related concepts (HOM) ontology.
+     *   <li>the path to the ECO ontology.
+     *   <li>the path to the confidence information ontology (CIO).
+     *   <li>the path to the curator annotation file.
+     *   <li>the path to the file in which to write RAW CLEAN annotations.
+     *   <li>the path to the file in which to write SUMMARY annotations.
+     *   <li>the path to the file in which to write ANCESTRAL TAXA annotations.
+     *   </ol>
      * </ul>
      * @param args  An {@code Array} of {@code String}s containing the requested parameters.
+     * @throws FileNotFoundException    If some files could not be found.
      * @throws IllegalArgumentException If {@code args} does not contain the proper 
      *                                  parameters or does not allow to obtain 
      *                                  correct information.
-     * @throws UnsupportedEncodingException If incorrect encoding was used to write 
-     *                                      in output file.
-     * @throws FileNotFoundException    If the annotation file provided could not be found.
-     * @throws IOException              If the annotation file provided could not be read.
-     * @throws IOException
-     * @throws UnknownOWLOntologyException
-     * @throws OWLOntologyCreationException
+     * @throws IllegalStateException    If some ontologies provided at instantiation do not 
+     *                                  allow to retrieve required information to process 
+     *                                  the annotations.
+     * @throws IOException              If the annotation files provided could not be read 
+     *                                  or write.
+     * @throws OBOFormatParserException     If an error occurred while parsing an ontology file.
+     * @throws OWLOntologyCreationException If an error occurred while loading an Ontology.
+     * @throws UnknownOWLOntologyException  If an error occurred while loading an Ontology.
      */
-    public static void main(String[] args) throws UnsupportedEncodingException,
-        FileNotFoundException, IOException, UnknownOWLOntologyException, 
-        OWLOntologyCreationException, OBOFormatParserException {
+    public static void main(String[] args) throws FileNotFoundException, 
+        IllegalArgumentException, IllegalStateException, IOException, 
+        UnknownOWLOntologyException, OWLOntologyCreationException, OBOFormatParserException {
         
         log.entry((Object[]) args);
         
-//        if (args[0].equalsIgnoreCase("extractTaxonIds")) {
-//            if (args.length != 3) {
-//                throw log.throwing(new IllegalArgumentException(
-//                        "Incorrect number of arguments provided, expected " + 
-//                        "3 arguments, " + args.length + " provided."));
-//            }
-//            new SimilarityAnnotation().extractTaxonIdsToFile(args[1], args[2]);
-//        } else if (args[0].equalsIgnoreCase("generateReleaseFile")) {
-//            if (args.length != 9) {
-//                throw log.throwing(new IllegalArgumentException(
-//                        "Incorrect number of arguments provided, expected " + 
-//                        "9 arguments, " + args.length + " provided."));
-//            }
-//            new SimilarityAnnotation().generateReleaseFile(args[1], args[2], args[3], 
-//                    args[4], args[5], args[6], args[7], args[8]);
+        if (args[0].equalsIgnoreCase("extractTaxonIds")) {
+            if (args.length != 3) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Incorrect number of arguments provided, expected " + 
+                        "3 arguments, " + args.length + " provided."));
+            }
+            extractTaxonIdsToFile(args[1], args[2]);
 //        } else if (args[0].equalsIgnoreCase("generateSummaryFileForTaxon")) {
 //            if (args.length != 5) {
 //                throw log.throwing(new IllegalArgumentException(
@@ -523,18 +501,27 @@ public class SimilarityAnnotation {
 //            }
 //            new SimilarityAnnotation().writeToFileSummaryAnnotationsForTaxon(
 //                    args[1], args[2], Integer.parseInt(args[3]), args[4]);
-//        } else if (args[0].equalsIgnoreCase("getAnatEntitiesWithNoTransformationOf")) {
-//            if (args.length != 4) {
-//                throw log.throwing(new IllegalArgumentException(
-//                        "Incorrect number of arguments provided, expected " + 
-//                        "4 arguments, " + args.length + " provided."));
-//            }
-//            new SimilarityAnnotation().writeAnatEntitiesWithNoTransformationOfToFile(
-//                    args[1], args[2], args[3]);
-//        } else {
-//            throw log.throwing(new UnsupportedOperationException("The following action " +
-//                    "is not recognized: " + args[0]));
-//        }
+        } else if (args[0].equalsIgnoreCase("getAnatEntitiesWithNoTransformationOf")) {
+            if (args.length != 4) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Incorrect number of arguments provided, expected " + 
+                        "4 arguments, " + args.length + " provided."));
+            }
+            writeAnatEntitiesWithNoTransformationOfToFile(args[1], args[2], args[3]);
+        } else if (args[0].equalsIgnoreCase("generateReleaseFile")) {
+            if (args.length != 12) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Incorrect number of arguments provided, expected " + 
+                        "12 arguments, " + args.length + " provided."));
+            }
+            new SimilarityAnnotation(CommandRunner.parseArgument(args[1]), 
+                    CommandRunner.parseMapArgumentAsInteger(args[2]), 
+                    args[3], args[4], args[5], args[6], args[7]).generateReleaseFiles(
+                            args[8], args[9], args[10], args[11]);
+        } else {
+            throw log.throwing(new UnsupportedOperationException("The following action " +
+                    "is not recognized: " + args[0]));
+        }
         
         log.exit();
     }
@@ -904,6 +891,39 @@ public class SimilarityAnnotation {
     }
 
     /**
+     * Extracts from the similarity annotation file {@code annotFile} the list 
+     * of all taxon IDs used, and write them in {@code outputFile}, one ID per line. 
+     * The first line of the annotation file should be a header line, defining 
+     * a column to get IDs from, named exactly "taxon ID". The output file will 
+     * have no headers. The IDs are supposed to be {@code Integer}s corresponding to 
+     * the NCBI ID, for instance, "9606" for human.
+     * 
+     * @param annotFile     A {@code String} that is the path to the similarity 
+     *                      annotation file.
+     * @param outputFile    A {@code String} that is the path to the file where 
+     *                      to write IDs into.
+     * @throws UnsupportedEncodingException If incorrect encoding was used to write 
+     *                                      in output file.
+     * @throws FileNotFoundException        If {@code annotFile} could not be found.
+     * @throws IOException                  If an error occurred while reading from 
+     *                                      or writing into files.
+     */
+    public static void extractTaxonIdsToFile(String annotFile, String outputFile) 
+            throws UnsupportedEncodingException, FileNotFoundException, IOException {
+        log.entry(annotFile, outputFile);
+        
+        Set<Integer> taxonIds = AnnotationCommon.getTaxonIds(annotFile);
+        try(PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(
+                new FileOutputStream(outputFile), "utf-8")))) {
+            for (int taxonId: taxonIds) {
+                writer.println(taxonId);
+            }
+        }
+        
+        log.exit();
+    }
+
+    /**
      * This methods is a helper method for 
      * {@link #getAnatEntitiesWithNoTransformationOf(String, OWLGraphWrapper)}, 
      * allowing to provide the path to the Uberon ontology as {@code String}. 
@@ -1190,13 +1210,19 @@ public class SimilarityAnnotation {
      * Constructor using pathes to the required files. 
      * 
      * @param taxonConstraintsFile          A {@code String} that is the path to the file 
-     *                                      containing taxon constraints. 
+     *                                      containing taxon constraints. Can be {@code null}, 
+     *                                      in which case the taxon constraint verifications 
+     *                                      will not be performed.
      *                                      See {@link org.bgee.pipeline.uberon.TaxonConstraints}
      * @param idStartsToOverridenTaxonIds   A {@code Map} where keys are {@code String}s 
      *                                      representing prefixes of uberon terms to match, 
      *                                      the associated value being a {@code Set} 
      *                                      of {@code Integer}s to replace taxon constraints 
-     *                                      of matching terms. Can be {@code null}.
+     *                                      of matching terms, if {@code taxonConstraintsFile} 
+     *                                      is not {@code null}. See 
+     *                                      {@link org.bgee.pipeline.uberon.TaxonConstraints#
+     *                                      extractTaxonConstraints(String, Map)} for example 
+     *                                      of use. Can be {@code null}.
      * @param uberonOntFile                 A {@code String} that is the path to the Uberon 
      *                                      ontology.
      * @param taxOntFile                    A {@code String} that is the path to the taxonomy 
@@ -1217,8 +1243,10 @@ public class SimilarityAnnotation {
             String taxOntFile, String homOntFile, String ecoOntFile, String confOntFile) 
                     throws OBOFormatParserException, FileNotFoundException, 
                     OWLOntologyCreationException, IOException {
-        this(TaxonConstraints.extractTaxonConstraints(taxonConstraintsFile, 
-                        idStartsToOverridenTaxonIds), 
+        this((taxonConstraintsFile == null? 
+                null: 
+                TaxonConstraints.extractTaxonConstraints(taxonConstraintsFile, 
+                        idStartsToOverridenTaxonIds)), 
                 new OWLGraphWrapper(OntologyUtils.loadOntology(uberonOntFile)), 
                 new OWLGraphWrapper(OntologyUtils.loadOntology(taxOntFile)), 
                 new OWLGraphWrapper(OntologyUtils.loadOntology(homOntFile)), 
@@ -1231,7 +1259,8 @@ public class SimilarityAnnotation {
      * @param taxonConstraints  A {@code Map} where keys are IDs of Uberon terms, 
      *                          and values are {@code Set}s of {@code Integer}s 
      *                          containing the IDs of taxa in which the Uberon term 
-     *                          exists.
+     *                          exists. Can be {@code null}, in which case, the 
+     *                          taxon constraint verifications will not be performed.
      * @param uberonOntWrapper  An {@code OWLGraphWrapper} wrapping the Uberon ontology.
      * @param taxOntWrapper     An {@code OWLGraphWrapper} wrapping the taxonomy ontology.
      * @param ecoOntWrapper     An {@code OWLGraphWrapper} wrapping the ECO ontology.
@@ -1366,7 +1395,10 @@ public class SimilarityAnnotation {
         Set<RawAnnotationBean> checkPotentialDuplicates = new HashSet<RawAnnotationBean>();
         //first pass, check each annotation
         int i = 0;
-        Set<Integer> taxonIds = TaxonConstraints.extractTaxonIds(taxonConstraints);
+        Set<Integer> taxonIds = null;
+        if (taxonConstraints != null) {
+            taxonIds = TaxonConstraints.extractTaxonIds(taxonConstraints);
+        }
         for (T annot: annots) {
             i++;
             if (!this.checkAnnotation(annot, taxonIds, i)) {
@@ -1519,7 +1551,9 @@ public class SimilarityAnnotation {
      * @param taxonIds          A {@code Set} of {@code Integer}s that are the taxon IDs 
      *                          of all taxa that were used to define taxon constraints 
      *                          on Uberon terms. Provided to avoid extracting them 
-     *                          for each annotation.
+     *                          for each annotation. Can be {@code null} if no taxon constraints 
+     *                          were provided at instantiation (in order to skip taxon constraint 
+     *                          verfications)
      * @param lineNumber        An {@code int} providing the line number where {@code annotation} 
      *                          was retrieved at. Should be equal to 0 if {@code annotation} 
      *                          was not retrieved from a file. Useful for logging purpose.
@@ -1706,10 +1740,16 @@ public class SimilarityAnnotation {
         
         //check for existence of taxon and Uberon IDs, and correct use of Uberon labels
         int taxonId = annot.getNcbiTaxonId();
-        if (taxonId > 0 && !taxonIds.contains(taxonId)) {
-            log.error("Unrecognized taxon ID {} at line {}", taxonId, lineNumber);
-            this.missingTaxonIds.add(taxonId);
-            allGood = false;
+        if (taxonId > 0) {
+            OWLClass cls = taxOntWrapper.getOWLClassByIdentifier(
+                    OntologyUtils.getTaxOntologyId(taxonId), true);
+            if ((taxonIds != null && !taxonIds.contains(taxonId)) || 
+                    (cls == null || 
+                            taxOntWrapper.isObsolete(cls) || taxOntWrapper.getIsObsolete(cls))) {
+                log.error("Unrecognized taxon ID {} at line {}", taxonId, lineNumber);
+                this.missingTaxonIds.add(taxonId);
+                allGood = false;
+            }
         }
         for (int i = 0; i < annot.getEntityIds().size(); i++) {
             String uberonId = annot.getEntityIds().get(i);
@@ -1731,18 +1771,20 @@ public class SimilarityAnnotation {
                     allGood = false;
                 }
             }
-            Set<Integer> existsIntaxa = taxonConstraints.get(uberonId);
-            if (existsIntaxa == null) {
-                log.error("Unrecognized Uberon ID {} at line {}", uberonId, lineNumber);
-                this.missingUberonIds.add(uberonId);
-                allGood = false;
-            } else if (!existsIntaxa.contains(taxonId)) {
-                log.error("Uberon ID {} does not exist in taxa {}", uberonId, taxonId);
-                if (this.idsNotExistingInTaxa.get(uberonId) == null) {
-                    this.idsNotExistingInTaxa.put(uberonId, new HashSet<Integer>());
+            if (taxonConstraints != null) {
+                Set<Integer> existsIntaxa = taxonConstraints.get(uberonId);
+                if (existsIntaxa == null) {
+                    log.error("Unrecognized Uberon ID {} at line {}", uberonId, lineNumber);
+                    this.missingUberonIds.add(uberonId);
+                    allGood = false;
+                } else if (!existsIntaxa.contains(taxonId)) {
+                    log.error("Uberon ID {} does not exist in taxa {}", uberonId, taxonId);
+                    if (this.idsNotExistingInTaxa.get(uberonId) == null) {
+                        this.idsNotExistingInTaxa.put(uberonId, new HashSet<Integer>());
+                    }
+                    this.idsNotExistingInTaxa.get(uberonId).add(taxonId);
+                    allGood = false;
                 }
-                this.idsNotExistingInTaxa.get(uberonId).add(taxonId);
-                allGood = false;
             }
         }
         
@@ -3756,39 +3798,6 @@ public class SimilarityAnnotation {
                 return 0;
             }
         });
-    }
-    
-    /**
-     * Extracts from the similarity annotation file {@code annotFile} the list 
-     * of all taxon IDs used, and write them in {@code outputFile}, one ID per line. 
-     * The first line of the annotation file should be a header line, defining 
-     * a column to get IDs from, named exactly "taxon ID". The output file will 
-     * have no headers. The IDs are supposed to be {@code Integer}s corresponding to 
-     * the NCBI ID, for instance, "9606" for human.
-     * 
-     * @param annotFile     A {@code String} that is the path to the similarity 
-     *                      annotation file.
-     * @param outputFile    A {@code String} that is the path to the file where 
-     *                      to write IDs into.
-     * @throws UnsupportedEncodingException If incorrect encoding was used to write 
-     *                                      in output file.
-     * @throws FileNotFoundException        If {@code annotFile} could not be found.
-     * @throws IOException                  If an error occurred while reading from 
-     *                                      or writing into files.
-     */
-    public void extractTaxonIdsToFile(String annotFile, String outputFile) 
-            throws UnsupportedEncodingException, FileNotFoundException, IOException {
-        log.entry(annotFile, outputFile);
-        
-        Set<Integer> taxonIds = AnnotationCommon.getTaxonIds(annotFile);
-        try(PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(
-                new FileOutputStream(outputFile), "utf-8")))) {
-            for (int taxonId: taxonIds) {
-                writer.println(taxonId);
-            }
-        }
-        
-        log.exit();
     }
     
 //    /**

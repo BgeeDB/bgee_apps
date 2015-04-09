@@ -92,6 +92,13 @@ public class CommandRunner {
      * @see #parseListArgument(String)
      */
     public static final String EMPTY_LIST = "-";
+    /**
+     * A {@code String} that represents the character to provide a {@code null} value, 
+     * as argument of command line usage.
+     * 
+     * @see #parseListArgument(String)
+     */
+    public static final String EMPTY_ARG = "-";
 
 
     /**
@@ -206,6 +213,21 @@ public class CommandRunner {
         }
 
         log.exit();
+    }
+    
+    /**
+     * Return either {@code arg}, or {@code null} if {@code arg} is equal to {@link #EMPTY_ARG}.
+     * 
+     * @param arg   A {@code String} that is an argument from a command line usage.
+     * @return      A {@code String} that is either {@code arg}, or {@code null} 
+     *              if {@code arg} is equal to {@link #EMPTY_ARG}.
+     */
+    public static String parseArgument(String arg) {
+        log.entry(arg);
+        if (arg == null || arg.trim().equals(EMPTY_ARG)) {
+            return log.exit(null);
+        }
+        return log.exit(arg);
     }
 
     /**

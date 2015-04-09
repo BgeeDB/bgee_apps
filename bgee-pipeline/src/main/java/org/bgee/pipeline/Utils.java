@@ -153,7 +153,7 @@ public class Utils {
      * 
      * @param values    A {@code List} of {@code String}s to be transformed into 
      *                  a single {@code String}.
-     * @return          A {@code String} where each element in {code values} is separated 
+     * @return          A {@code String} where each element in {@code values} is separated 
      *                  by the first separator in {@link #VALUE_SEPARATORS}.
      * @throws IllegalArgumentException If {@code values} is {@code null} or empty, 
      *                                  or contains a {@code null} element.

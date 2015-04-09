@@ -2014,11 +2014,14 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 }
             }
             
-            // We filter poor quality homologous annotations in simple file (CIO), 
+            // We filter, in simple file, poor quality homologous annotations (CIO), 
+            // and conditions with 'no diff expressed' only,
             // and we do not have the same criteria for counting species with data 
             // as for the complete file.
             MultiSpeciesSimpleDiffExprFileBean simpleBean = null; 
-            if (cioStatementByIds.get(cioId).isTrusted() && speciesIdsWithDataForSimple.size() >= 2) {
+            if (cioStatementByIds.get(cioId).isTrusted() &&
+                    totalOver + totalUnder >= 1 && 
+                    speciesIdsWithDataForSimple.size() >= 2) {
                 simpleBean = new MultiSpeciesSimpleDiffExprFileBean(
                         omaNodeId, this.getOmaNodeDescription(omaNodeId), 
                         organIds, organNames, stageIds, stageNames, geneIds, geneNames, 

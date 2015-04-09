@@ -18,10 +18,12 @@ import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
 import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.gene.GeneDAO;
+import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
+import org.bgee.model.dao.api.gene.GeneDAO.GeneTOResultSet;
 import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO;
-import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTO;
 import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTOResultSet;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTOResultSet;
@@ -342,6 +344,40 @@ public class BgeeDBUtils {
         return log.exit(geneNamesByIds);
     }
     
+    /**
+     * Retrieve from the data source a mapping from gene IDs to gene TOs for genes 
+     * belonging to the requested species. 
+     * 
+     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
+     *                      for which we want to retrieve gene IDs-names mapping.
+     * @param geneDAO       A {@code GeneDAO} to use to retrieve information about genes 
+     *                      from the data source.
+     * @return              A {@code Map} where keys are {@code String}s corresponding to 
+     *                      gene IDs, the associated values being {@code GeneTO}s 
+     *                      corresponding to gene TOs. 
+     */
+    //XXX: implement generic method
+    //TODO implement test
+    public static Map<String, GeneTO> getGeneTOsByIds(Set<String> speciesIds, GeneDAO geneDAO) {
+        log.entry(speciesIds, geneDAO);
+        
+        log.debug("Start retrieving gene TOs for species: {}", speciesIds);
+        
+        Map<String, GeneTO> geneTOsByIds = new HashMap<String, GeneTO>();
+
+        try (GeneTOResultSet rs = geneDAO.getGenesBySpeciesIds(speciesIds)) {
+            while (rs.next()) {
+                GeneTO geneTO = rs.getTO();
+                geneTOsByIds.put(geneTO.getId(), geneTO);
+            }
+        }
+
+        log.debug("Done retrieving gene TOs for species: {}, {} TOs retrieved", 
+                speciesIds, geneTOsByIds.size());
+        
+        return log.exit(geneTOsByIds);
+    }
+
     /**
      * Retrieve from the data source a mapping from stage IDs to stage names for stages 
      * belonging to the requested species. 

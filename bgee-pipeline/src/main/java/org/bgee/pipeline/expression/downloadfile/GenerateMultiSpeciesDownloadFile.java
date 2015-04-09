@@ -24,6 +24,17 @@ public interface GenerateMultiSpeciesDownloadFile {
 //    public final static String OMA_DESC_COLUMN_NAME = "OMA ID";
 
     /**
+     * A {@code String} that is the name of the column containing list of gene IDs, 
+     * in the download file.
+     */
+    public final static String GENE_ID_LIST_COLUMN_NAME = "Gene IDs";
+    /**
+     * A {@code String} that is the name of the column containing list of gene names, 
+     * in the download file.
+     */
+    public final static String GENE_NAME_LIST_COLUMN_NAME = "Gene names";
+
+    /**
      * A {@code String} that is the name of the column containing lists of anatomical entity IDs, 
      * in the download file.
      */
@@ -37,7 +48,7 @@ public interface GenerateMultiSpeciesDownloadFile {
      * A {@code String} that is the name of the column containing CIO statement IDs, 
      * in the download file.
      */
-    public final static String CIO_ID_ID_COLUMN_NAME = "CIO ID";
+    public final static String CIO_ID_COLUMN_NAME = "CIO ID";
     /**
      * A {@code String} that is the name of the column containing CIO statement names, 
      * in the download file.
@@ -47,37 +58,37 @@ public interface GenerateMultiSpeciesDownloadFile {
      * A {@code String} that is the name of the column containing number of expressed genes, 
      * in the download file.
      */
-    public final static String NB_EXPR_GENE_COLUMN_NAME = "Nb expressed genes";
+    public final static String NB_EXPR_GENE_COLUMN_NAME = "Expressed gene count";
     /**
      * A {@code String} that is the name of the column containing number of not expressed genes, 
      * in the download file.
      */
-    public final static String NB_NO_EXPR_GENES_COLUMN_NAME = "Nb not expressed genes";
+    public final static String NB_NO_EXPR_GENES_COLUMN_NAME = "Not expressed gene count";
     /**
      * A {@code String} that is the name of the column containing number of genes without data, 
      * in the download file.
      */
-    public final static String NB_NA_GENES_COLUMN_NAME = "Nb N/A genes"; // TODO  to be decided
+    public final static String NB_NA_GENES_COLUMN_NAME = "N/A gene count";
     /**
      * A {@code String} that is the name of the column containing number of over-expressed genes, 
      * in the download file.
      */
-    public final static String NB_OVER_EXPR_GENES_COLUMN_NAME = "Nb over-expressed genes";
+    public final static String NB_OVER_EXPR_GENES_COLUMN_NAME = "Over-expressed gene count";
     /**
      * A {@code String} that is the name of the column containing number of under-expressed genes, 
      * in the download file.
      */
-    public final static String NB_UNDER_EXPR_GENES_COLUMN_NAME = "Nb under-expressed genes";
+    public final static String NB_UNDER_EXPR_GENES_COLUMN_NAME = "Under-expressed gene count";
     /**
      * A {@code String} that is the name of the column containing number of not diff. expressed 
      * genes, in the download file.
      */
-    public final static String NB_NO_DIFF_EXPR_GENES_COLUMN_NAME = "Nb not diff. expressed genes";
+    public final static String NB_NO_DIFF_EXPR_GENES_COLUMN_NAME = "Not diff. expressed gene count";
     /**
      * A {@code String} that is the name of the column containing number of not diff. expressed 
      * genes, in the download file.
      */
-    public final static String NB_NOT_EXPR_GENES_COLUMN_NAME = "Nb not expressed genes";
+    public final static String NB_NOT_EXPR_GENES_COLUMN_NAME = "Not expressed gene count";
     /**
      * A {@code String} that is the name of the column containing latin species names, 
      * in the download file.
@@ -293,8 +304,8 @@ public interface GenerateMultiSpeciesDownloadFile {
 
         @Override
         public String toString() {
-            return  " - OMA ID: " + getOmaId() + " - OMA description: " + getOmaDescription() +
-                    " - Entity IDs: : " + getEntityIds() + " - Entity names: " + getEntityNames() + 
+            return  "OMA ID: " + getOmaId() + " - OMA description: " + getOmaDescription() +
+                    " - Entity IDs: " + getEntityIds() + " - Entity names: " + getEntityNames() + 
                     " - Stage IDs: " + getStageIds() + " - Stage names: " + getStageNames();
         }
     }

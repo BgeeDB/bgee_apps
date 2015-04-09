@@ -2257,8 +2257,7 @@ public class SimilarityAnnotation {
                 
                 List<String> entityIds = sourceAnnot.getEntityIds();
                 Collections.sort(entityIds);
-                supportingTextElements.add(
-                        SimilarityAnnotationUtils.multipleValuesToString(entityIds));
+                supportingTextElements.add(Utils.multipleValuesToString(entityIds));
             }
             
             //retrieve best CIO statement, to set the confidence in inferred annotation.
@@ -3640,93 +3639,6 @@ public class SimilarityAnnotation {
         return log.exit(sortedAnnots);
     }
 
-//    public void generateFiles(String rawAnnotFile, Set<GeneratedFileType> fileTypes, 
-//            String taxonConstraintsFile, Map<String, Set<Integer>> idStartsToOverridenTaxonIds, 
-//            String uberonOntFile, String taxOntFile, 
-//            String homOntFile, String ecoOntFile, String confOntFile, String outputDirectory) 
-//            throws FileNotFoundException, IOException, UnknownOWLOntologyException, 
-//            OWLOntologyCreationException, OBOFormatParserException {
-//        
-//        log.entry(rawAnnotFile, fileTypes, taxonConstraintsFile, idStartsToOverridenTaxonIds, 
-//                uberonOntFile, taxOntFile, homOntFile, ecoOntFile, confOntFile, 
-//                outputDirectory);
-//        
-//        OWLGraphWrapper uberonOntWrapper = new OWLGraphWrapper(
-//                OntologyUtils.loadOntology(uberonOntFile));
-//        OWLGraphWrapper taxOntWrapper = new OWLGraphWrapper(
-//                OntologyUtils.loadOntology(taxOntFile));
-//        OWLGraphWrapper ecoOntWrapper = new OWLGraphWrapper(
-//                OntologyUtils.loadOntology(ecoOntFile));
-//        OWLGraphWrapper homOntWrapper = new OWLGraphWrapper(
-//                OntologyUtils.loadOntology(homOntFile));
-//        OWLGraphWrapper confOntWrapper = new OWLGraphWrapper(
-//                OntologyUtils.loadOntology(confOntFile));
-//        
-//        this.generateFiles(this.extractAnnotations(rawAnnotFile, GeneratedFileType.RAW), 
-//                fileTypes, 
-//                TaxonConstraints.extractTaxonConstraints(taxonConstraintsFile, 
-//                        idStartsToOverridenTaxonIds), 
-//                TaxonConstraints.extractTaxonIds(taxonConstraintsFile), 
-//                uberonOntWrapper, taxOntWrapper, homOntWrapper, ecoOntWrapper, 
-//                confOntWrapper, outputDirectory);
-//        
-//        log.exit();
-//    }
-//
-//    public void generateFiles(List<Map<String, Object>> rawAnnots, 
-//            Set<GeneratedFileType> fileTypes, 
-//            Map<String, Set<Integer>> taxonConstraints, Set<Integer> taxonIds, 
-//            OWLGraphWrapper uberonOntWrapper, OWLGraphWrapper taxOntWrapper, 
-//            OWLGraphWrapper homOntWrapper, OWLGraphWrapper ecoOntWrapper, 
-//            OWLGraphWrapper confOntWrapper, String outputDirectory)  {
-//        log.entry(rawAnnots, fileTypes, taxonConstraints, taxonIds, uberonOntWrapper, 
-//                taxOntWrapper, homOntWrapper, ecoOntWrapper, confOntWrapper, outputDirectory);
-//        
-//        
-//        log.exit();
-//    }
-//    
-//    
-//    /**
-//     * Write the annotations contained in {@code annotations} to the file {@code outputFile}, 
-//     * that is of type {@code GeneratedFileType}, in a TSV file format.
-//     * 
-//     * @param outputFile    A {@code String} that is the path to the output file to be written.
-//     * @param fileType      A {@code GeneratedFileType} defining what type of file is going 
-//     *                      to be written. This allows to define headers, etc. 
-//     * @param annotations   A {@code List} of {@code Map}s, where each {@code Map} 
-//     *                      represents an annotation line.
-//     * @throws IOException  If an error occurs while trying to write in the file.
-//     */
-//    private void writeAnnotationsToFile(String outputFile, GeneratedFileType fileType, 
-//            List<Map<String, Object>> annotations) 
-//                    throws IOException {
-//        log.entry(outputFile, fileType, annotations);
-//        
-//        //write the file
-//        String[] header = new String[] {HOM_COL_NAME, HOM_NAME_COL_NAME, 
-//                ENTITY_COL_NAME, ENTITY_NAME_COL_NAME, QUALIFIER_COL_NAME, 
-//                TAXON_COL_NAME, TAXON_NAME_COL_NAME, LINE_TYPE_COL_NAME, 
-//                ECO_COL_NAME, ECO_NAME_COL_NAME, CONF_COL_NAME, CONF_NAME_COL_NAME, 
-//                REF_COL_NAME, REF_TITLE_COL_NAME, SUPPORT_TEXT_COL_NAME, 
-//                ASSIGN_COL_NAME, CURATOR_COL_NAME, DATE_COL_NAME};
-//        CellProcessor[] processors = new CellProcessor[] {new NotNull(), new NotNull(), 
-//                new NotNull(), new Optional(), new Optional(), 
-//                new NotNull(), new NotNull(), new NotNull(), 
-//                new Optional(), new Optional(), new NotNull(), new NotNull(), 
-//                new Optional(), new Optional(), new Optional(), 
-//                new NotNull(), new Optional(), new Optional(new FmtDate("yyyy-MM-dd"))};
-//        try (ICsvMapWriter mapWriter = new CsvMapWriter(new FileWriter(outputFile),
-//                Utils.TSVCOMMENTED)) {
-//            
-//            mapWriter.writeHeader(header);
-//            for (Map<String, Object> annot: annotations) {
-//                mapWriter.write(annot, header, processors);
-//            }
-//        }
-//        
-//        log.exit();
-//    }
     
     /**
      * Order {@code annotations} by alphabetical order of some fields, 

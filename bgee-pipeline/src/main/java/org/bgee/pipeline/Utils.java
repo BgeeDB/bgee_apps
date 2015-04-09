@@ -38,41 +38,19 @@ public class Utils {
             LogManager.getLogger(Utils.class.getName());
     
     /**
-     * A {@code CsvPreference} used to parse TSV files allowing commented line, 
-     * starting with "//".
-     */
-    public final static CsvPreference TSVCOMMENTED = 
-            new CsvPreference.Builder(CsvPreference.TAB_PREFERENCE).
-            skipComments(new CommentStartsWith("//")).build();
-
-    /**
-     * A {@code String} corresponding to {@code System.getProperty("line.separator")}.
-     * CR stands for Carriage Return.
-     */
-    public final static String CR = System.getProperty("line.separator");
-    
-    /**
-     * An unmodifiable {@code List} of {@code String}s that are the allowed separators 
-     * between values in cells potentially containing multiple values, 
-     * in preferred order of use. 
-     * @see ParseMultipleStringValues
-     * @see #multipleValuesToString(List)
-     */
-    public final static List<String> VALUE_SEPARATORS = 
-            Collections.unmodifiableList(Arrays.asList("|", ","));
-
-    /**
      * A {@code CellProcessorAdaptor} converting a {@code List} of {@code String}s 
      * into a {@code String} where elements in the {@code List} are separated 
      * by a separator. The separator used is the first element in 
-     * {@link SimilarityAnnotationUtils#VALUE_SEPARATOR}. If you want to convert 
+     * {@link #VALUE_SEPARATOR}. If you want to convert 
      * a separated-values {@code String} into a {@code List} of {@code String}s, 
-     * see {@link SimilarityAnnotationUtils.ParseMultipleStringValues}.
+     * see {@link org.bgee.pipeline.annotations.SimilarityAnnotationUtils.ParseMultipleStringValues 
+     * ParseMultipleStringValues}.
      * 
      * @author Frederic Bastian
      * @version Bgee 13 Apr. 2015
      * @since Bgee 13
      */
+    //TODO: unit test
     public static class FmtMultipleStringValues extends CellProcessorAdaptor {
         
         /**
@@ -104,14 +82,13 @@ public class Utils {
                         + value + " of type " + value.getClass().getSimpleName(), 
                         context, this));
             }
-            List<?> valueList = (List<?>) value;
-            if (valueList.isEmpty()) {
-                throw log.throwing(new SuperCsvCellProcessorException(
-                        "The provided List cannot be empty", 
-                        context, this));
-            }
             
-            String multipleValuesString = "";
+            //to avoid code duplication, we first convert value into a List of Strings, 
+            //and we then delegate to the method multipleValuesToString. 
+            //This means that the List will be iterated twice, but it's not really 
+            //a big deal...
+            List<?> valueList = (List<?>) value;
+            List<String> stringList = new ArrayList<String>();
             for (Object valueElement: valueList) {
                 if (!(valueElement instanceof String)) {
                     throw log.throwing(new SuperCsvCellProcessorException(
@@ -121,21 +98,89 @@ public class Utils {
                 }
                 if (StringUtils.isBlank((String) valueElement)) {
                     throw log.throwing(new SuperCsvCellProcessorException(
-                            "The provided List cannot contain blank values", 
-                            context, this));
+                            "The provided List cannot contain blank values. List provided: "
+                            + value, context, this));
                 }
-                
-                if (!multipleValuesString.isEmpty()) {
-                    multipleValuesString += VALUE_SEPARATORS.get(0);
-                }
-                multipleValuesString += valueElement;
+                stringList.add((String) valueElement);
             }
             
-            //passes result to next processor in the chain
-            return log.exit(next.execute(multipleValuesString, context));
+            try {
+                //passes result to next processor in the chain
+                return log.exit(next.execute(multipleValuesToString(stringList), context));
+            } catch (IllegalArgumentException e) {
+                //we have already checked that elements in the List were non-null Strings, 
+                //so the only reason why multipleValuesToString would throw an Exception here 
+                //is if the List is empty.
+                throw log.throwing(new SuperCsvCellProcessorException(
+                        "The provided List cannot be empty", 
+                        context, this));
+            }
         }
     }
 
+
+
+    /**
+     * A {@code CsvPreference} used to parse TSV files allowing commented line, 
+     * starting with "//".
+     */
+    public final static CsvPreference TSVCOMMENTED = 
+            new CsvPreference.Builder(CsvPreference.TAB_PREFERENCE).
+            skipComments(new CommentStartsWith("//")).build();
+
+    /**
+     * A {@code String} corresponding to {@code System.getProperty("line.separator")}.
+     * CR stands for Carriage Return.
+     */
+    public final static String CR = System.getProperty("line.separator");
+    
+    /**
+     * An unmodifiable {@code List} of {@code String}s that are the allowed separators 
+     * between values in cells potentially containing multiple values, 
+     * in preferred order of use. 
+     * @see FmtMultipleStringValues
+     * @see org.bgee.pipeline.annotations.SimilarityAnnotationUtils.ParseMultipleStringValues 
+     * ParseMultipleStringValues
+     */
+    public final static List<String> VALUE_SEPARATORS = 
+            Collections.unmodifiableList(Arrays.asList("|", ","));
+
+
+
+    /**
+     * Transform a {@code List} of {@code String}s into a {@code String} where each element 
+     * is separated by the first separator in {@link #VALUE_SEPARATORS}.
+     * 
+     * @param values    A {@code List} of {@code String}s to be transformed into 
+     *                  a single {@code String}.
+     * @return          A {@code String} where each element in {code values} is separated 
+     *                  by the first separator in {@link #VALUE_SEPARATORS}.
+     * @throws IllegalArgumentException If {@code values} is {@code null} or empty, 
+     *                                  or contains a {@code null} element.
+     */
+    //TODO: unit test
+    public static String multipleValuesToString(List<String> values) 
+            throws IllegalArgumentException {
+        log.entry(values);
+        if (values == null || values.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("The provided values cannot be "
+                    + "null or empty"));
+        }
+        
+        String valuesToString = "";
+        for (String value: values) {
+            if (value == null) {
+                throw log.throwing(new IllegalArgumentException("The provided List cannot "
+                        + "contains null elements"));
+            }
+            if (!valuesToString.isEmpty()) {
+                valuesToString += VALUE_SEPARATORS.get(0);
+            }
+            valuesToString += value;
+        }
+        return log.exit(valuesToString);
+    }
+    
     /**
      * Parse {@code tsvFile} and retrieve the values in the column named  
      * {@code columnName} (case-insensitive), as {@code String}s. Comment lines 

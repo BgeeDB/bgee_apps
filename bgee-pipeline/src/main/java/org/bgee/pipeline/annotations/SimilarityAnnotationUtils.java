@@ -99,7 +99,8 @@ public class SimilarityAnnotationUtils {
 //    }
     /**
      * A {@code CellProcessorAdaptor} capable of parsing cells allowing to optionally 
-     * contain multiple values, separated by {@link #VALUE_SEPARATOR}. 
+     * contain multiple values, separated by one of the separator in 
+     * {@link org.bgee.pipeline.Utils#VALUE_SEPARATORS VALUE_SEPARATORS}. 
      * This {@code CellProcessorAdaptor} will return the values as a {@code List} 
      * of {@code String}s, in the same order as in the cell read.
      * 
@@ -1612,36 +1613,6 @@ public class SimilarityAnnotationUtils {
      * {@link #DATE_COL_NAME}.
      */
     protected final static String DATE_FORMAT = "yyyy-MM-dd";
-
-    /**
-     * Transform a {@code List} of {@code String}s into a {@code String} where each element 
-     * is separated by the first separator in {@link Utils#VALUE_SEPARATORS}.
-     * 
-     * @param values    A {@code List} of {@code String}s to be transformed into 
-     *                  a single {@code String}.
-     * @return          A {@code String} where each element in {code values} is separated 
-     *                  by the first separator in {@link Utils#VALUE_SEPARATORS}.
-     * @throws IllegalArgumentException If {@code values} is {@code null} or empty.
-     */
-    protected static String multipleValuesToString(List<String> values) 
-            throws IllegalArgumentException {
-        log.entry(values);
-        if (values == null || values.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException("The provided values cannot be "
-                    + "null or empty"));
-        }
-        
-        String valuesToString = "";
-        boolean firstIteration = true;
-        for (String value: values) {
-            if (!firstIteration) {
-                valuesToString += Utils.VALUE_SEPARATORS.get(0);
-            }
-            valuesToString += value;
-            firstIteration = false;
-        }
-        return log.exit(valuesToString);
-    }
     /**
      * Extracts annotations from the provided RAW similarity annotation file. It returns a 
      * {@code List} of {@code RawAnnotationBean}s, where each {@code RawAnnotationBean} 

@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -2055,7 +2054,7 @@ public class SimilarityAnnotation {
         //check and sort annotations generated 
         this.checkAnnotations(rawAnnots);
         List<RawAnnotationBean> sortedRawAnnots = new ArrayList<RawAnnotationBean>(rawAnnots);
-        this.sortAnnotations(sortedRawAnnots);
+        Collections.sort(sortedRawAnnots, SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR);
         
         return log.exit(sortedRawAnnots);
     }
@@ -3195,7 +3194,8 @@ public class SimilarityAnnotation {
                 //generate supporting text from supporting annotations
                 List<CuratorAnnotationBean> sortedAnnots = 
                         new ArrayList<CuratorAnnotationBean>(annotationsUsed);
-                this.sortAnnotations(sortedAnnots);
+                Collections.sort(sortedAnnots, 
+                        SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR);
                 //just to be sure to eliminate any redundancy, and to get consistent 
                 //supporting text, we store elements used to generate it in a LinkedHashSet
                 LinkedHashSet<String> textElements = new LinkedHashSet<String>();
@@ -3365,7 +3365,8 @@ public class SimilarityAnnotation {
         this.checkAnnotations(summaryAnnots);
         List<SummaryAnnotationBean> sortedSummaryAnnots = 
                 new ArrayList<SummaryAnnotationBean>(summaryAnnots);
-        this.sortAnnotations(sortedSummaryAnnots);
+        Collections.sort(sortedSummaryAnnots, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR);
         
         return log.exit(sortedSummaryAnnots);
     }
@@ -3679,130 +3680,140 @@ public class SimilarityAnnotation {
         this.checkAnnotations(newAnnots);
         List<AncestralTaxaAnnotationBean> sortedAnnots = 
                 new ArrayList<AncestralTaxaAnnotationBean>(newAnnots);
-        this.sortAnnotations(sortedAnnots);
+        Collections.sort(sortedAnnots, SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR);
         
         return log.exit(sortedAnnots);
     }
 
     
-    /**
-     * Order {@code annotations} by alphabetical order of some fields, 
-     * for easier diff between different releases of the annotation file. 
-     * {@code annotations} will be modified as a result of the call to this method.
-     * 
-     * @param annotations   A {@code List} of {@code AnnotationBean}s to be ordered.
-     * @param <T>           The type of {@code AnnotationBean} in {@code annotations}.
-     */
-    private <T extends AnnotationBean> void sortAnnotations(List<T> annotations) {
-        Collections.sort(annotations, new Comparator<T>() {
-            @Override
-            public int compare(AnnotationBean o1, AnnotationBean o2) {
-
-                String homId1 = o1.getHomId();
-                if (homId1 == null) {
-                    homId1 = "";
-                }
-                String homId2 = o2.getHomId();
-                if (homId2 == null) {
-                    homId2 = "";
-                }
-                int comp = homId1.compareTo(homId2);
-                if (comp != 0) {
-                    return comp;
-                }
-                
-                String elementId1 = "";
-                if (o1.getEntityIds() != null) {
-                    List<String> elementIds = new ArrayList<String>(o1.getEntityIds());
-                    Collections.sort(elementIds);
-                    elementId1 = elementIds.toString();
-                }
-                String elementId2 = "";
-                if (o2.getEntityIds() != null) {
-                    List<String> elementIds = new ArrayList<String>(o2.getEntityIds());
-                    Collections.sort(elementIds);
-                    elementId2 = elementIds.toString();
-                }
-                comp = elementId1.compareTo(elementId2);
-                if (comp != 0) {
-                    return comp;
-                }
-                
-                int taxonId1 = o1.getNcbiTaxonId();
-                int taxonId2 = o2.getNcbiTaxonId();
-                if (taxonId1 < taxonId2) {
-                    return -1;
-                } else if (taxonId1 > taxonId2) {
-                    return 1;
-                }
-                
-                if (!o1.isNegated() && o2.isNegated()) {
-                    return -1;
-                } else if (o1.isNegated() && !o2.isNegated()) {
-                    return 1;
-                }
-                
-                String confId1 = o1.getCioId();
-                if (confId1 == null) {
-                    confId1 = "";
-                }
-                String confId2 = o2.getCioId();
-                if (confId2 == null) {
-                    confId2 = "";
-                }
-                comp = confId1.compareTo(confId2);
-                if (comp != 0) {
-                    return comp;
-                }
-                
-                
-                if (o1 instanceof RawAnnotationBean && o2 instanceof RawAnnotationBean) {
-                    String ecoId1 = ((RawAnnotationBean) o1).getEcoId();
-                    if (ecoId1 == null) {
-                        ecoId1 = "";
-                    }
-                    String ecoId2 = ((RawAnnotationBean) o2).getEcoId();
-                    if (ecoId2 == null) {
-                        ecoId2 = "";
-                    }
-                    comp = ecoId1.compareTo(ecoId2);
-                    if (comp != 0) {
-                        return comp;
-                    }
-                    
-                    String refId1 = ((RawAnnotationBean) o1).getRefId();
-                    if (refId1 == null) {
-                        refId1 = "";
-                    }
-                    String refId2 = ((RawAnnotationBean) o2).getRefId();
-                    if (refId2 == null) {
-                        refId2 = "";
-                    }
-                    comp = refId1.compareTo(refId2);
-                    if (comp != 0) {
-                        return comp;
-                    }
-                }
-                
-                String supportText1 = o1.getSupportingText();
-                if (supportText1 == null) {
-                    supportText1 = "";
-                }
-                String supportText2 = o2.getSupportingText();
-                if (supportText2 == null) {
-                    supportText2 = "";
-                }
-                comp = supportText1.compareTo(supportText2);
-                if (comp != 0) {
-                    return comp;
-                }
-                
-                
-                return 0;
-            }
-        });
-    }
-    
+//    /**
+//     * Order {@code annotations} by alphabetical order of some fields, 
+//     * for easier diff between different releases of the annotation file. 
+//     * {@code annotations} will be modified as a result of the call to this method.
+//     * 
+//     * @param annotations   A {@code List} of {@code AnnotationBean}s to be ordered.
+//     * @param <T>           The type of {@code AnnotationBean} in {@code annotations}.
+//     */
+//    private static <T extends AnnotationBean> void sortAnnotations(List<T> annotations) {
+//        Collections.sort(annotations, new Comparator<T>() {
+//            @Override
+//            public int compare(AnnotationBean o1, AnnotationBean o2) {
+//
+//                String homId1 = o1.getHomId();
+//                if (homId1 == null) {
+//                    homId1 = "";
+//                }
+//                String homId2 = o2.getHomId();
+//                if (homId2 == null) {
+//                    homId2 = "";
+//                }
+//                int comp = homId1.compareTo(homId2);
+//                if (comp != 0) {
+//                    return comp;
+//                }
+//                
+//                String elementId1 = "";
+//                if (o1.getEntityIds() != null) {
+//                    List<String> elementIds = new ArrayList<String>(o1.getEntityIds());
+//                    Collections.sort(elementIds);
+//                    elementId1 = elementIds.toString();
+//                }
+//                String elementId2 = "";
+//                if (o2.getEntityIds() != null) {
+//                    List<String> elementIds = new ArrayList<String>(o2.getEntityIds());
+//                    Collections.sort(elementIds);
+//                    elementId2 = elementIds.toString();
+//                }
+//                comp = elementId1.compareTo(elementId2);
+//                if (comp != 0) {
+//                    return comp;
+//                }
+//                
+//                int taxonId1 = o1.getNcbiTaxonId();
+//                int taxonId2 = o2.getNcbiTaxonId();
+//                if (taxonId1 < taxonId2) {
+//                    return -1;
+//                } else if (taxonId1 > taxonId2) {
+//                    return 1;
+//                }
+//                
+//                if (!o1.isNegated() && o2.isNegated()) {
+//                    return -1;
+//                } else if (o1.isNegated() && !o2.isNegated()) {
+//                    return 1;
+//                }
+//                
+//                if (o1 instanceof SummaryAnnotationBean && o2 instanceof SummaryAnnotationBean) {
+//                    if (((SummaryAnnotationBean) o1).isTrusted() && 
+//                            !((SummaryAnnotationBean) o2).isTrusted()) {
+//                        return -1;
+//                    } else if (!((SummaryAnnotationBean) o1).isTrusted() && 
+//                            ((SummaryAnnotationBean) o2).isTrusted()) {
+//                        return 1;
+//                    }
+//                }
+//                
+//                String confId1 = o1.getCioId();
+//                if (confId1 == null) {
+//                    confId1 = "";
+//                }
+//                String confId2 = o2.getCioId();
+//                if (confId2 == null) {
+//                    confId2 = "";
+//                }
+//                comp = confId1.compareTo(confId2);
+//                if (comp != 0) {
+//                    return comp;
+//                }
+//                
+//                
+//                if (o1 instanceof RawAnnotationBean && o2 instanceof RawAnnotationBean) {
+//                    String ecoId1 = ((RawAnnotationBean) o1).getEcoId();
+//                    if (ecoId1 == null) {
+//                        ecoId1 = "";
+//                    }
+//                    String ecoId2 = ((RawAnnotationBean) o2).getEcoId();
+//                    if (ecoId2 == null) {
+//                        ecoId2 = "";
+//                    }
+//                    comp = ecoId1.compareTo(ecoId2);
+//                    if (comp != 0) {
+//                        return comp;
+//                    }
+//                    
+//                    String refId1 = ((RawAnnotationBean) o1).getRefId();
+//                    if (refId1 == null) {
+//                        refId1 = "";
+//                    }
+//                    String refId2 = ((RawAnnotationBean) o2).getRefId();
+//                    if (refId2 == null) {
+//                        refId2 = "";
+//                    }
+//                    comp = refId1.compareTo(refId2);
+//                    if (comp != 0) {
+//                        return comp;
+//                    }
+//                }
+//                
+//                String supportText1 = o1.getSupportingText();
+//                if (supportText1 == null) {
+//                    supportText1 = "";
+//                }
+//                String supportText2 = o2.getSupportingText();
+//                if (supportText2 == null) {
+//                    supportText2 = "";
+//                }
+//                comp = supportText1.compareTo(supportText2);
+//                if (comp != 0) {
+//                    return comp;
+//                }
+//                
+//                
+//                return 0;
+//            }
+//        });
+//    }
+//    
 //    /**
 //     * Retrieve annotations for a specific taxon from a similarity annotation file 
 //     * and write them into an output file.

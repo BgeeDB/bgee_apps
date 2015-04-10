@@ -6,17 +6,8 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -24,7 +15,6 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.TestAncestor;
 import org.bgee.pipeline.annotations.SimilarityAnnotation;
 import org.bgee.pipeline.annotations.SimilarityAnnotation.CuratorAnnotationBean;
-import org.bgee.pipeline.ontologycommon.OntologyUtils;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -240,50 +230,6 @@ public class SimilarityAnnotationTest extends TestAncestor {
 //                taxOntWrapper, ecoOntWrapper, homOntWrapper, confOntWrapper));
 //    }
 //    
-//    /**
-//     * Test {@link SimilarityAnnotation#sortAnnotations(List)}
-//     */
-//    @Test
-//    public void shouldSortAnnotations() throws NoSuchMethodException, 
-//        SecurityException, IllegalAccessException, IllegalArgumentException, 
-//        InvocationTargetException {
-//        SimilarityAnnotation sim = new SimilarityAnnotation();
-//        Method method = sim.getClass().getDeclaredMethod("sortAnnotations", 
-//                List.class);
-//        method.setAccessible(true);
-//        
-//        List<Map<String, Object>> annotations = new ArrayList<Map<String, Object>>();
-//        Map<String, Object> annot1 = new HashMap<String, Object>();
-//        annot1.put(SimilarityAnnotation.ENTITY_COL_NAME, "UBERON:5");
-//        annot1.put(SimilarityAnnotation.TAXON_COL_NAME, 4);
-//        annot1.put(SimilarityAnnotation.ECO_COL_NAME, "ECO:1");
-//        annot1.put(SimilarityAnnotation.HOM_COL_NAME, "HOM:0000007");
-//        annot1.put(SimilarityAnnotation.CONF_COL_NAME, "CONF:0000004");
-//        annot1.put(SimilarityAnnotation.REF_COL_NAME, "1");
-//        annotations.add(annot1);
-//        Map<String, Object> annot2 = new HashMap<String, Object>();
-//        annot2.put(SimilarityAnnotation.ENTITY_COL_NAME, "UBERON:5");
-//        annot2.put(SimilarityAnnotation.TAXON_COL_NAME, 4);
-//        annot2.put(SimilarityAnnotation.ECO_COL_NAME, "ECO:1");
-//        annot2.put(SimilarityAnnotation.HOM_COL_NAME, "HOM:0000007");
-//        annot2.put(SimilarityAnnotation.CONF_COL_NAME, "CONF:0000004");
-//        annotations.add(annot2);
-//        Map<String, Object> annot3 = new HashMap<String, Object>();
-//        annot3.put(SimilarityAnnotation.ENTITY_COL_NAME, "UBERON:5");
-//        annot3.put(SimilarityAnnotation.TAXON_COL_NAME, 4);
-//        annot3.put(SimilarityAnnotation.ECO_COL_NAME, "ECO:1");
-//        annot3.put(SimilarityAnnotation.HOM_COL_NAME, "HOM:0000005");
-//        annot3.put(SimilarityAnnotation.CONF_COL_NAME, "CONF:0000004");
-//        annotations.add(annot3);
-//        
-//        List<Map<String, Object>> expectedOrder = new ArrayList<Map<String, Object>>();
-//        expectedOrder.add(annot3);
-//        expectedOrder.add(annot2);
-//        expectedOrder.add(annot1);
-//        
-//        method.invoke(sim, annotations);
-//        assertEquals(expectedOrder, annotations);
-//    }
 //    
 //    /**
 //     * Test {@link SimilarityAnnotation#addGeneratedAnnotations(Collection, 
@@ -549,6 +495,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
 //        methodVerify.invoke(sim);
 //    }
 //    
+    
     /**
      * Test {@link SimilarityAnnotation.CuratorAnnotationBean#setRefId(String)}, 
      * which extract ref IDs and titles from Strings mixing both.
@@ -619,16 +566,18 @@ public class SimilarityAnnotationTest extends TestAncestor {
         
         ParserWrapper parserWrapper = new ParserWrapper();
         parserWrapper.setCheckOboDoc(false);
-        OWLGraphWrapper fakeOntology = new OWLGraphWrapper(parserWrapper.parse(
-                this.getClass().getResource("/similarity_annotations/fake_uberon.obo").getFile()));
+        try (OWLGraphWrapper fakeOntology = new OWLGraphWrapper(parserWrapper.parse(
+            this.getClass().getResource("/similarity_annotations/fake_uberon.obo").getFile()))) {
         
-        Set<OWLClass> expectedClasses = new HashSet<OWLClass>(
-                Arrays.asList(fakeOntology.getOWLClassByIdentifier("UBERON:0000001")));
-        
-        assertEquals("Incorrect anatomical entities with no transformation_of relations identified", 
+            Set<OWLClass> expectedClasses = new HashSet<OWLClass>(
+                    Arrays.asList(fakeOntology.getOWLClassByIdentifier("UBERON:0000001")));
+            
+            assertEquals(
+                "Incorrect anatomical entities with no transformation_of relations identified", 
                 expectedClasses, SimilarityAnnotation.getAnatEntitiesWithNoTransformationOf(
-                        this.getClass().getResource("/similarity_annotations/similarity.tsv").getFile(), 
-                        this.getClass().getResource("/similarity_annotations/fake_uberon.obo").getFile()));
+                this.getClass().getResource("/similarity_annotations/similarity.tsv").getFile(), 
+                this.getClass().getResource("/similarity_annotations/fake_uberon.obo").getFile()));
+        }
     }
     
     /**

@@ -5,6 +5,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -207,6 +209,7 @@ public class SimilarityAnnotationUtils {
         }
         
     }
+    
     /**
      * Class parent of all bean storing similarity annotations, holding parameters common 
      * to all of them.
@@ -1430,6 +1433,187 @@ public class SimilarityAnnotationUtils {
     public final static CsvPreference TSV_COMMENTED = 
             new CsvPreference.Builder(CsvPreference.TAB_PREFERENCE).
             skipComments(new CommentStartsWith("//")).build();
+    
+    /**
+     * A {@code Comparator} allowing to sort {@code AnnotationBean}s.
+     */
+    public final static Comparator<AnnotationBean> ANNOTATION_BEAN_COMPARATOR = 
+            new Comparator<AnnotationBean>() {
+        
+        @Override
+        public int compare(AnnotationBean o1, AnnotationBean o2) {
+            log.entry(o1, o2);
+            
+            if (o1.equals(o2)) {
+                return log.exit(0);
+            }
+            
+            if (o1 instanceof RawAnnotationBean && !(o2 instanceof RawAnnotationBean)) {
+                return log.exit(-1);
+            } else if (!(o1 instanceof RawAnnotationBean) && o2 instanceof RawAnnotationBean) {
+                return log.exit(1);
+            }
+            if (o1 instanceof SummaryAnnotationBean && !(o2 instanceof SummaryAnnotationBean)) {
+                return log.exit(-1);
+            } else if (!(o1 instanceof SummaryAnnotationBean) && o2 instanceof SummaryAnnotationBean) {
+                return log.exit(1);
+            }
+            
+            String homId1 = o1.getHomId();
+            if (homId1 == null) {
+                homId1 = "";
+            }
+            String homId2 = o2.getHomId();
+            if (homId2 == null) {
+                homId2 = "";
+            }
+            int comp = homId1.compareTo(homId2);
+            if (comp != 0) {
+                return log.exit(comp);
+            }
+            
+            String elementId1 = "";
+            if (o1.getEntityIds() != null) {
+                List<String> elementIds = new ArrayList<String>(o1.getEntityIds());
+                Collections.sort(elementIds);
+                elementId1 = elementIds.toString();
+            }
+            String elementId2 = "";
+            if (o2.getEntityIds() != null) {
+                List<String> elementIds = new ArrayList<String>(o2.getEntityIds());
+                Collections.sort(elementIds);
+                elementId2 = elementIds.toString();
+            }
+            comp = elementId1.compareTo(elementId2);
+            if (comp != 0) {
+                return log.exit(comp);
+            }
+            
+            int taxonId1 = o1.getNcbiTaxonId();
+            int taxonId2 = o2.getNcbiTaxonId();
+            if (taxonId1 < taxonId2) {
+                return log.exit(-1);
+            } else if (taxonId1 > taxonId2) {
+                return log.exit(1);
+            }
+            
+            if (!o1.isNegated() && o2.isNegated()) {
+                return log.exit(-1);
+            } else if (o1.isNegated() && !o2.isNegated()) {
+                return log.exit(1);
+            }
+            
+            if (o1 instanceof SummaryAnnotationBean && o2 instanceof SummaryAnnotationBean) {
+                if (((SummaryAnnotationBean) o1).isTrusted() && 
+                        !((SummaryAnnotationBean) o2).isTrusted()) {
+                    return log.exit(-1);
+                } else if (!((SummaryAnnotationBean) o1).isTrusted() && 
+                        ((SummaryAnnotationBean) o2).isTrusted()) {
+                    return log.exit(1);
+                }
+            }
+            
+            String confId1 = o1.getCioId();
+            if (confId1 == null) {
+                confId1 = "";
+            }
+            String confId2 = o2.getCioId();
+            if (confId2 == null) {
+                confId2 = "";
+            }
+            comp = confId1.compareTo(confId2);
+            if (comp != 0) {
+                return log.exit(comp);
+            }
+            
+            
+            if (o1 instanceof RawAnnotationBean && o2 instanceof RawAnnotationBean) {
+                String ecoId1 = ((RawAnnotationBean) o1).getEcoId();
+                if (ecoId1 == null) {
+                    ecoId1 = "";
+                }
+                String ecoId2 = ((RawAnnotationBean) o2).getEcoId();
+                if (ecoId2 == null) {
+                    ecoId2 = "";
+                }
+                comp = ecoId1.compareTo(ecoId2);
+                if (comp != 0) {
+                    return log.exit(comp);
+                }
+                
+                String refId1 = ((RawAnnotationBean) o1).getRefId();
+                if (refId1 == null) {
+                    refId1 = "";
+                }
+                String refId2 = ((RawAnnotationBean) o2).getRefId();
+                if (refId2 == null) {
+                    refId2 = "";
+                }
+                comp = refId1.compareTo(refId2);
+                if (comp != 0) {
+                    return log.exit(comp);
+                }
+                
+                String assignedBy1 = ((RawAnnotationBean) o1).getAssignedBy();
+                if (assignedBy1 == null) {
+                    assignedBy1 = "";
+                }
+                String assignedBy2 = ((RawAnnotationBean) o2).getAssignedBy();
+                if (assignedBy2 == null) {
+                    assignedBy2 = "";
+                }
+                comp = assignedBy1.compareTo(assignedBy2);
+                if (comp != 0) {
+                    return log.exit(comp);
+                }
+                
+                String curator1 = ((RawAnnotationBean) o1).getCurator();
+                if (curator1 == null) {
+                    curator1 = "";
+                }
+                String curator2 = ((RawAnnotationBean) o2).getCurator();
+                if (curator2 == null) {
+                    curator2 = "";
+                }
+                comp = curator1.compareTo(curator2);
+                if (comp != 0) {
+                    return log.exit(comp);
+                }
+                
+                if (((RawAnnotationBean) o1).getCurationDate() != null && 
+                        ((RawAnnotationBean) o2).getCurationDate() == null) {
+                    return log.exit(-1);
+                } else if (((RawAnnotationBean) o1).getCurationDate() == null && 
+                        ((RawAnnotationBean) o2).getCurationDate() != null) {
+                    return log.exit(1);
+                } else if (((RawAnnotationBean) o1).getCurationDate() != null && 
+                        ((RawAnnotationBean) o2).getCurationDate() != null) {
+                    comp = ((RawAnnotationBean) o1).getCurationDate().compareTo(
+                            ((RawAnnotationBean) o2).getCurationDate());
+                    if (comp != 0) {
+                        return log.exit(comp);
+                    }
+                }
+            }
+            
+            String supportText1 = o1.getSupportingText();
+            if (supportText1 == null) {
+                supportText1 = "";
+            }
+            String supportText2 = o2.getSupportingText();
+            if (supportText2 == null) {
+                supportText2 = "";
+            }
+            comp = supportText1.compareTo(supportText2);
+            if (comp != 0) {
+                return log.exit(comp);
+            }
+            
+            
+            return log.exit(0);
+        }
+        
+    };
     
     
     //****************************************************

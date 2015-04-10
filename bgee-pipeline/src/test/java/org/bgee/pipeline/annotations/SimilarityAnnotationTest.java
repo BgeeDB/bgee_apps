@@ -6,15 +6,25 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.TestAncestor;
+import org.bgee.pipeline.Utils;
 import org.bgee.pipeline.annotations.SimilarityAnnotation;
 import org.bgee.pipeline.annotations.SimilarityAnnotation.CuratorAnnotationBean;
+import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.RawAnnotationBean;
+import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.SummaryAnnotationBean;
+import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.AncestralTaxaAnnotationBean;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -22,6 +32,8 @@ import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
+import org.supercsv.io.CsvMapReader;
+import org.supercsv.io.ICsvMapReader;
 
 import owltools.graph.OWLGraphWrapper;
 import owltools.io.ParserWrapper;
@@ -53,59 +65,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
         return log;
     }
     
-//    /**
-//     * Test {@link SimilarityAnnotation#extractAnnotations()}.
-//     */
-//    @Test
-//    public void shouldExtractAnnotations() throws ParseException, 
-//        FileNotFoundException, IOException {
-//        
-//        List<Map<String, Object>> expectedAnnots = new ArrayList<Map<String, Object>>();
-//        
-//        Map<String, Object> row1 = new HashMap<String, Object>();
-//        row1.put(SimilarityAnnotation.ENTITY_COL_NAME, "entity1");
-//        row1.put(SimilarityAnnotation.ENTITY_NAME_COL_NAME, "entityName1");
-//        row1.put(SimilarityAnnotation.QUALIFIER_COL_NAME, null);
-//        row1.put(SimilarityAnnotation.HOM_COL_NAME, "HOM:1");
-//        row1.put(SimilarityAnnotation.HOM_NAME_COL_NAME, "HOMName1");
-//        row1.put(SimilarityAnnotation.REF_COL_NAME, "myRef:1");
-//        row1.put(SimilarityAnnotation.REF_TITLE_COL_NAME, "myRefTitle1");
-//        row1.put(SimilarityAnnotation.ECO_COL_NAME, "ECO:1");
-//        row1.put(SimilarityAnnotation.ECO_NAME_COL_NAME, "ECOName1");
-//        row1.put(SimilarityAnnotation.CONF_COL_NAME, "CONF:1");
-//        row1.put(SimilarityAnnotation.CONF_NAME_COL_NAME, "CONFName1");
-//        row1.put(SimilarityAnnotation.TAXON_COL_NAME, 1);
-//        row1.put(SimilarityAnnotation.TAXON_NAME_COL_NAME, "taxon:1");
-//        row1.put(SimilarityAnnotation.SUPPORT_TEXT_COL_NAME, "blabla1");
-//        row1.put(SimilarityAnnotation.ASSIGN_COL_NAME, "bgee1");
-//        row1.put(SimilarityAnnotation.CURATOR_COL_NAME, "me1");
-//        row1.put(SimilarityAnnotation.DATE_COL_NAME, 
-//                new SimpleDateFormat("yyyy-MM-dd").parse("1984-01-01"));
-//        expectedAnnots.add(row1);
-//        
-//        Map<String, Object> row2 = new HashMap<String, Object>();
-//        row2.put(SimilarityAnnotation.ENTITY_COL_NAME, "entity2");
-//        row2.put(SimilarityAnnotation.ENTITY_NAME_COL_NAME, null);
-//        row2.put(SimilarityAnnotation.QUALIFIER_COL_NAME, "NOT");
-//        row2.put(SimilarityAnnotation.HOM_COL_NAME, "HOM:2");
-//        row2.put(SimilarityAnnotation.HOM_NAME_COL_NAME, null);
-//        row2.put(SimilarityAnnotation.REF_COL_NAME, "myRef:2");
-//        row2.put(SimilarityAnnotation.REF_TITLE_COL_NAME, null);
-//        row2.put(SimilarityAnnotation.ECO_COL_NAME, null);
-//        row2.put(SimilarityAnnotation.ECO_NAME_COL_NAME, null);
-//        row2.put(SimilarityAnnotation.CONF_COL_NAME, "CONF:2");
-//        row2.put(SimilarityAnnotation.CONF_NAME_COL_NAME, null);
-//        row2.put(SimilarityAnnotation.TAXON_COL_NAME, 2);
-//        row2.put(SimilarityAnnotation.TAXON_NAME_COL_NAME, null);
-//        row2.put(SimilarityAnnotation.SUPPORT_TEXT_COL_NAME, null);
-//        row2.put(SimilarityAnnotation.ASSIGN_COL_NAME, "bgee2");
-//        row2.put(SimilarityAnnotation.CURATOR_COL_NAME, null);
-//        row2.put(SimilarityAnnotation.DATE_COL_NAME, null);
-//        expectedAnnots.add(row2);
-//        
-//        assertEquals(expectedAnnots, new SimilarityAnnotation().extractAnnotations(
-//                this.getClass().getResource("/similarity_annotations/similarity2.tsv").getFile(), true));
-//    }
+
 //    
 //    /**
 //     * Test {@link SimilarityAnnotation#generateReleaseData(List, Map, Set, OWLGraphWrapper, 
@@ -495,13 +455,468 @@ public class SimilarityAnnotationTest extends TestAncestor {
 //        methodVerify.invoke(sim);
 //    }
 //    
+    /**
+     * Test {@link SimilarityAnnotation#extractCuratorAnnotations(String)}.
+     */
+    @Test
+    public void shouldExtractCuratorAnnotations() throws FileNotFoundException, 
+        IllegalArgumentException, IOException, ParseException {
+        log.entry();
+        
+        SimpleDateFormat sdf = new SimpleDateFormat(SimilarityAnnotationUtils.DATE_FORMAT);
+        assertEquals("Incorrect CURATOR annotations retrieved", 
+                Arrays.asList(
+                        //single evidence
+                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("CL:0000000"), 
+                                2759, false, "ECO:0000033", "CIO:0000003", 
+                                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                                "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")), 
+                        //congruent evidence lines
+                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("CL:0000015"), 
+                                33208, false, "ECO:0000205", "CIO:0000004", 
+                                "DOI:10.1002/bies.950161213", "ref title 2", 
+                                "supporting text 2", "bgee", "ANN", sdf.parse("2013-08-29")), 
+                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("CL:0000015"),  
+                                33208, false, "ECO:0000205", "CIO:0000005", 
+                                "ISBN:978-0198566694", "ref title 3", 
+                                "supporting text 3", "bgee", "ANN", sdf.parse("2013-08-29")), 
+                        //single evidence
+                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("CL:0000037"), 
+                                7742, true, "ECO:0000067", "CIO:0000004", 
+                                "DOI:10.1146/annurev.cellbio.22.010605.093317", "ref title 4", 
+                                "supporting text 4", "bgee", "ANN", sdf.parse("2013-07-01")), 
+                        //multiple Uberon IDs
+                        new CuratorAnnotationBean("HOM:0000007", 
+                                Arrays.asList("CL:0000037", "UBERON:0000001", "UBERON:0000007"), 
+                                7742, true, "ECO:0000067", "CIO:0000004", 
+                                "DOI:10.1146/annurev.cellbio.22.010605.093317", "ref title 7", 
+                                "supporting text 7", "bgee", "ANN", sdf.parse("2013-07-01")), 
+                        //case of independent evolution
+                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("UBERON:0010207"), 
+                                7776, true, "ECO:0000034", "CIO:0000003", 
+                                "ISBN:978-0030223693", "ref title 8", 
+                                "supporting text 8", "bgee", "ANN", sdf.parse("2013-09-05")), 
+                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("UBERON:0010207"), 
+                                7778, false, "ECO:0000034", "CIO:0000003", 
+                                "ISBN:978-0030223693", "ref title 8", 
+                                "supporting text 8", "bgee", "ANN", sdf.parse("2013-09-05")), 
+                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("UBERON:0010207"), 
+                                32524, false, "ECO:0000034", "CIO:0000003", 
+                                "ISBN:978-0030223693", "ref title 8", 
+                                "supporting text 8", "bgee", "ANN", sdf.parse("2013-09-05")),
+                        //heritance of positive annotations, conflicting annotation 
+                        //with positive parent annotations
+                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("CL:0000216"), 
+                                7711, false, "ECO:0000067", "CIO:0000005", 
+                                "http://f50006a.eos-intl.net/ELIBSQL12_F50006A_Documents/93grier.pdf", 
+                                "ref title 9", 
+                                "supporting text 9", "bgee", "ANN", sdf.parse("2015-02-03")), 
+                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("CL:0000216"), 
+                                7742, false, "ECO:0000355", "CIO:0000004", 
+                                "ISBN:978-0125449045", "ref title 10", 
+                                "supporting text 10", "bgee", "ANN", sdf.parse("2015-02-03")), 
+                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("CL:0000216"), 
+                                32524, false, "ECO:0000067", "CIO:0000004", 
+                                "DOI:10.1002/jemt.1070320602", "ref title 11", 
+                                "supporting text 11", "bgee", "ANN", sdf.parse("2015-02-03")), 
+                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("CL:0000216"), 
+                                32524, true, "ECO:0000067", "CIO:0000004", 
+                                "PMID:17026980", "ref title 12", 
+                                "supporting text 12", "bgee", "ANN", sdf.parse("2013-08-30")), 
+                        //one low confidence annotation against 2 medium confidence 
+                        //annotations => weakly conflicting
+                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("UBERON:0000926"),  
+                                33213, false, "ECO:0000067", "CIO:0000004", 
+                                "PMID:24281726", "ref title 13", 
+                                "supporting text 13", "bgee", "ANN", sdf.parse("2014-01-13")), 
+                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("UBERON:0000926"), 
+                                33213, false, "ECO:0000067", "CIO:0000004", 
+                                "PMID:22431747", "ref title 14", 
+                                "supporting text 14", "bgee", "ANN", sdf.parse("2013-07-10")), 
+                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("UBERON:0000926"), 
+                                33213, true, "ECO:0000067", "CIO:0000005", 
+                                "PMID:12459924", "ref title 15", 
+                                "supporting text 15", "bgee", "ANN", sdf.parse("2013-07-10")), 
+                        //simply strongly conflicting
+                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("UBERON:0001245"), 
+                                33213, false, "ECO:0000355", "CIO:0000004", 
+                                "http://dpc.uba.uva.nl/ctz/vol73/nr01/art01", "ref title 16", 
+                                "supporting text 16", "bgee", "ANN", sdf.parse("2013-10-08")), 
+                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("UBERON:0001245"), 
+                                33213, true, "ECO:0000033", "CIO:0000004", 
+                                "http://dpc.uba.uva.nl/ctz/vol73/nr01/art01", "ref title 16", 
+                                "supporting text 16", "bgee", "ANN", sdf.parse("2013-10-08"))), 
+                SimilarityAnnotation.extractCuratorAnnotations(
+                        SimilarityAnnotationTest.class.
+                        getResource("/similarity_annotations/curator_similarity_annotations.tsv").
+                        getFile()));
+        
+        log.exit();
+    }
+    
+    /**
+     * Test {@link SimilarityAnnotation#writeAnnotations(List, String, Class)} 
+     * for {@code RawAnnotationBean} type.
+     */
+    @Test
+    public void shouldWriteRawAnnotations() throws IOException, IllegalArgumentException, 
+        ParseException {
+        String tempFile = testFolder.newFile("rawAnnotsTest.tsv").getPath();
+        SimpleDateFormat sdf = new SimpleDateFormat(SimilarityAnnotationUtils.DATE_FORMAT);
+        SimilarityAnnotation.writeAnnotations(Arrays.asList(
+                        //single evidence
+                        new RawAnnotationBean("HOM:0000007", "historical homology", 
+                                Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                                2759, "Eukaryota", false, "ECO:0000033", 
+                                "traceable author statement", 
+                                "CIO:0000003", "high confidence from single evidence", 
+                                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                                "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")), 
+                        //congruent evidence lines
+                        new RawAnnotationBean("HOM:0000007", "historical homology", 
+                                Arrays.asList("CL:0000015"), Arrays.asList("male germ cell"), 
+                                33208, "Metazoa", false, "ECO:0000205", 
+                                "curator inference", 
+                                "CIO:0000004", "medium confidence from single evidence", 
+                                "DOI:10.1002/bies.950161213", "ref title 2", 
+                                "supporting text 2", "bgee", "ANN", sdf.parse("2013-08-29")), 
+                        new RawAnnotationBean("HOM:0000007", "historical homology", 
+                                Arrays.asList("CL:0000037", "UBERON:0000001", "UBERON:0000007"), 
+                                Arrays.asList("hematopoietic stem cell", "whatever name1", 
+                                        "whatever name2"), 
+                                7742, "Vertebrata", true, "ECO:0000067", 
+                                "developmental similarity evidence", 
+                                "CIO:0000004", "medium confidence from single evidence", 
+                                "DOI:10.1146/annurev.cellbio.22.010605.093317", "ref title 7", 
+                                "supporting text 7", "bgee", "ANN", sdf.parse("2013-07-01"))), 
+                                tempFile, RawAnnotationBean.class);
+        
+        //we retrieve the annotations without using the extraction methods, to maintain 
+        //the unit of the test.
+        List<Map<String, String>> expectedAnnots = new ArrayList<Map<String, String>>();
+        
+        Map<String, String> expectedAnnot1 = new HashMap<String, String>();
+        expectedAnnot1.put(SimilarityAnnotationUtils.HOM_COL_NAME, "HOM:0000007");
+        expectedAnnot1.put(SimilarityAnnotationUtils.HOM_NAME_COL_NAME, "historical homology");
+        expectedAnnot1.put(SimilarityAnnotationUtils.ENTITY_COL_NAME, "CL:0000000");
+        expectedAnnot1.put(SimilarityAnnotationUtils.ENTITY_NAME_COL_NAME, "cell");
+        expectedAnnot1.put(SimilarityAnnotationUtils.TAXON_COL_NAME, "2759");
+        expectedAnnot1.put(SimilarityAnnotationUtils.TAXON_NAME_COL_NAME, "Eukaryota");
+        expectedAnnot1.put(SimilarityAnnotationUtils.QUALIFIER_COL_NAME, null);
+        expectedAnnot1.put(SimilarityAnnotationUtils.ECO_COL_NAME, "ECO:0000033");
+        expectedAnnot1.put(SimilarityAnnotationUtils.ECO_NAME_COL_NAME, "traceable author statement");
+        expectedAnnot1.put(SimilarityAnnotationUtils.CONF_COL_NAME, "CIO:0000003");
+        expectedAnnot1.put(SimilarityAnnotationUtils.CONF_NAME_COL_NAME, 
+                "high confidence from single evidence");
+        expectedAnnot1.put(SimilarityAnnotationUtils.REF_COL_NAME, "DOI:10.1073/pnas.032658599");
+        expectedAnnot1.put(SimilarityAnnotationUtils.REF_TITLE_COL_NAME, "ref title 1");
+        expectedAnnot1.put(SimilarityAnnotationUtils.SUPPORT_TEXT_COL_NAME, "supporting text 1");
+        expectedAnnot1.put(SimilarityAnnotationUtils.ASSIGN_COL_NAME, "bgee");
+        expectedAnnot1.put(SimilarityAnnotationUtils.CURATOR_COL_NAME, "ANN");
+        expectedAnnot1.put(SimilarityAnnotationUtils.DATE_COL_NAME, "2013-06-21");
+        
+        Map<String, String> expectedAnnot2 = new HashMap<String, String>();
+        expectedAnnot2.put(SimilarityAnnotationUtils.HOM_COL_NAME, "HOM:0000007");
+        expectedAnnot2.put(SimilarityAnnotationUtils.HOM_NAME_COL_NAME, "historical homology");
+        expectedAnnot2.put(SimilarityAnnotationUtils.ENTITY_COL_NAME, "CL:0000015");
+        expectedAnnot2.put(SimilarityAnnotationUtils.ENTITY_NAME_COL_NAME, "male germ cell");
+        expectedAnnot2.put(SimilarityAnnotationUtils.TAXON_COL_NAME, "33208");
+        expectedAnnot2.put(SimilarityAnnotationUtils.TAXON_NAME_COL_NAME, "Metazoa");
+        expectedAnnot2.put(SimilarityAnnotationUtils.QUALIFIER_COL_NAME, null);
+        expectedAnnot2.put(SimilarityAnnotationUtils.ECO_COL_NAME, "ECO:0000205");
+        expectedAnnot2.put(SimilarityAnnotationUtils.ECO_NAME_COL_NAME, "curator inference");
+        expectedAnnot2.put(SimilarityAnnotationUtils.CONF_COL_NAME, "CIO:0000004");
+        expectedAnnot2.put(SimilarityAnnotationUtils.CONF_NAME_COL_NAME, 
+                "medium confidence from single evidence");
+        expectedAnnot2.put(SimilarityAnnotationUtils.REF_COL_NAME, "DOI:10.1002/bies.950161213");
+        expectedAnnot2.put(SimilarityAnnotationUtils.REF_TITLE_COL_NAME, "ref title 2");
+        expectedAnnot2.put(SimilarityAnnotationUtils.SUPPORT_TEXT_COL_NAME, "supporting text 2");
+        expectedAnnot2.put(SimilarityAnnotationUtils.ASSIGN_COL_NAME, "bgee");
+        expectedAnnot2.put(SimilarityAnnotationUtils.CURATOR_COL_NAME, "ANN");
+        expectedAnnot2.put(SimilarityAnnotationUtils.DATE_COL_NAME, "2013-08-29");
+        
+        Map<String, String> expectedAnnot3 = new HashMap<String, String>();
+        expectedAnnot3.put(SimilarityAnnotationUtils.HOM_COL_NAME, "HOM:0000007");
+        expectedAnnot3.put(SimilarityAnnotationUtils.HOM_NAME_COL_NAME, "historical homology");
+        expectedAnnot3.put(SimilarityAnnotationUtils.ENTITY_COL_NAME, 
+                "CL:0000037" + Utils.VALUE_SEPARATORS.get(0) 
+                + "UBERON:0000001" + Utils.VALUE_SEPARATORS.get(0) + "UBERON:0000007");
+        expectedAnnot3.put(SimilarityAnnotationUtils.ENTITY_NAME_COL_NAME, 
+                "hematopoietic stem cell" + Utils.VALUE_SEPARATORS.get(0) 
+                + "whatever name1" + Utils.VALUE_SEPARATORS.get(0) + "whatever name2");
+        expectedAnnot3.put(SimilarityAnnotationUtils.TAXON_COL_NAME, "7742");
+        expectedAnnot3.put(SimilarityAnnotationUtils.TAXON_NAME_COL_NAME, "Vertebrata");
+        expectedAnnot3.put(SimilarityAnnotationUtils.QUALIFIER_COL_NAME, 
+                SimilarityAnnotationUtils.NEGATE_QUALIFIER);
+        expectedAnnot3.put(SimilarityAnnotationUtils.ECO_COL_NAME, "ECO:0000067");
+        expectedAnnot3.put(SimilarityAnnotationUtils.ECO_NAME_COL_NAME, 
+                "developmental similarity evidence");
+        expectedAnnot3.put(SimilarityAnnotationUtils.CONF_COL_NAME, "CIO:0000004");
+        expectedAnnot3.put(SimilarityAnnotationUtils.CONF_NAME_COL_NAME, 
+                "medium confidence from single evidence");
+        expectedAnnot3.put(SimilarityAnnotationUtils.REF_COL_NAME, 
+                "DOI:10.1146/annurev.cellbio.22.010605.093317");
+        expectedAnnot3.put(SimilarityAnnotationUtils.REF_TITLE_COL_NAME, "ref title 7");
+        expectedAnnot3.put(SimilarityAnnotationUtils.SUPPORT_TEXT_COL_NAME, "supporting text 7");
+        expectedAnnot3.put(SimilarityAnnotationUtils.ASSIGN_COL_NAME, "bgee");
+        expectedAnnot3.put(SimilarityAnnotationUtils.CURATOR_COL_NAME, "ANN");
+        expectedAnnot3.put(SimilarityAnnotationUtils.DATE_COL_NAME, "2013-07-01");
+        
+        expectedAnnots.add(expectedAnnot1);
+        expectedAnnots.add(expectedAnnot2);
+        expectedAnnots.add(expectedAnnot3);
+        
+        List<Map<String, String>> actualAnnots = new ArrayList<Map<String, String>>();
+        try (ICsvMapReader mapReader = 
+                new CsvMapReader(new FileReader(tempFile), Utils.TSVCOMMENTED)) {
+            String[] header = mapReader.getHeader(true);
+            Map<String, String> row;
+            while( (row = mapReader.read(header)) != null ) {
+                actualAnnots.add(row);
+            }
+        }
+        
+        assertEquals("Incorrect RAW annotations written", expectedAnnots, actualAnnots);
+    }
+    
+    /**
+     * Test {@link SimilarityAnnotation#writeAnnotations(List, String, Class)} 
+     * for {@code SummaryAnnotationBean} type.
+     */
+    @Test
+    public void shouldWriteSummaryAnnotations() throws IOException, IllegalArgumentException {
+        String tempFile = testFolder.newFile("summaryAnnotsTest.tsv").getPath();
+        SimilarityAnnotation.writeAnnotations(Arrays.asList(
+                        new SummaryAnnotationBean("HOM:0000007", "historical homology", 
+                                Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                                2759, "Eukaryota", false, 
+                                "CIO:0000003", "high confidence from single evidence", true, 
+                                "Summary annotation created from 1 single-evidence annotation"
+//                                , 1, 0, 
+//                                Arrays.asList("ECO:0000033"), 
+//                                Arrays.asList("traceable author statement"), 
+//                                null, null, null, null, 
+//                                Arrays.asList("bgee")
+                                ), 
+                        new SummaryAnnotationBean("HOM:0000007", "historical homology", 
+                                Arrays.asList("CL:0000015"), Arrays.asList("male germ cell"), 
+                                33208, "Metazoa", false, 
+                                "CIO:0000019", "confidence statement from congruent evidence "
+                                        + "lines of same type, overall confidence medium", 
+                                true, 
+                                "Summary annotation created from 2 single-evidence annotations"
+//                                , 2, 0, 
+//                                Arrays.asList("ECO:0000205"), 
+//                                Arrays.asList("curator inference"), 
+//                                null, null, null, null, 
+//                                Arrays.asList("bgee", "test db")
+                                ),
+                        new SummaryAnnotationBean("HOM:0000007", "historical homology", 
+                                Arrays.asList("CL:0000037", "UBERON:0000001", "UBERON:0000007"), 
+                                Arrays.asList("hematopoietic stem cell", "whatever name1", 
+                                        "whatever name2"), 
+                                7742, "Vertebrata", true, 
+                                "CIO:0000004", "medium confidence from single evidence", true, 
+                                "Summary annotation created from 1 single-evidence annotation"
+//                                        , 0, 1,  
+//                                        null, null, 
+//                                        Arrays.asList("ECO:0000067"), 
+//                                        Arrays.asList("developmental similarity evidence"), 
+//                                        null, null, 
+//                                        Arrays.asList("bgee")
+                                )), 
+                                tempFile, SummaryAnnotationBean.class);
+        
+        //we retrieve the annotations without using the extraction methods, to maintain 
+        //the unit of the test.
+        List<Map<String, String>> expectedAnnots = new ArrayList<Map<String, String>>();
+        
+        Map<String, String> expectedAnnot1 = new HashMap<String, String>();
+        expectedAnnot1.put(SimilarityAnnotationUtils.HOM_COL_NAME, "HOM:0000007");
+        expectedAnnot1.put(SimilarityAnnotationUtils.HOM_NAME_COL_NAME, "historical homology");
+        expectedAnnot1.put(SimilarityAnnotationUtils.ENTITY_COL_NAME, "CL:0000000");
+        expectedAnnot1.put(SimilarityAnnotationUtils.ENTITY_NAME_COL_NAME, "cell");
+        expectedAnnot1.put(SimilarityAnnotationUtils.TAXON_COL_NAME, "2759");
+        expectedAnnot1.put(SimilarityAnnotationUtils.TAXON_NAME_COL_NAME, "Eukaryota");
+        expectedAnnot1.put(SimilarityAnnotationUtils.QUALIFIER_COL_NAME, null);
+        expectedAnnot1.put(SimilarityAnnotationUtils.CONF_COL_NAME, "CIO:0000003");
+        expectedAnnot1.put(SimilarityAnnotationUtils.CONF_NAME_COL_NAME, 
+                "high confidence from single evidence");
+        expectedAnnot1.put(SimilarityAnnotationUtils.TRUSTED_COL_NAME, "T");
+        expectedAnnot1.put(SimilarityAnnotationUtils.SUPPORT_TEXT_COL_NAME, 
+                "Summary annotation created from 1 single-evidence annotation");
+        
+        Map<String, String> expectedAnnot2 = new HashMap<String, String>();
+        expectedAnnot2.put(SimilarityAnnotationUtils.HOM_COL_NAME, "HOM:0000007");
+        expectedAnnot2.put(SimilarityAnnotationUtils.HOM_NAME_COL_NAME, "historical homology");
+        expectedAnnot2.put(SimilarityAnnotationUtils.ENTITY_COL_NAME, "CL:0000015");
+        expectedAnnot2.put(SimilarityAnnotationUtils.ENTITY_NAME_COL_NAME, "male germ cell");
+        expectedAnnot2.put(SimilarityAnnotationUtils.TAXON_COL_NAME, "33208");
+        expectedAnnot2.put(SimilarityAnnotationUtils.TAXON_NAME_COL_NAME, "Metazoa");
+        expectedAnnot2.put(SimilarityAnnotationUtils.QUALIFIER_COL_NAME, null);
+        expectedAnnot2.put(SimilarityAnnotationUtils.CONF_COL_NAME, "CIO:0000019");
+        expectedAnnot2.put(SimilarityAnnotationUtils.CONF_NAME_COL_NAME, 
+                "confidence statement from congruent evidence "
+                + "lines of same type, overall confidence medium");
+        expectedAnnot2.put(SimilarityAnnotationUtils.TRUSTED_COL_NAME, "T");
+        expectedAnnot2.put(SimilarityAnnotationUtils.SUPPORT_TEXT_COL_NAME, 
+                "Summary annotation created from 2 single-evidence annotations");
+        
+        Map<String, String> expectedAnnot3 = new HashMap<String, String>();
+        expectedAnnot3.put(SimilarityAnnotationUtils.HOM_COL_NAME, "HOM:0000007");
+        expectedAnnot3.put(SimilarityAnnotationUtils.HOM_NAME_COL_NAME, "historical homology");
+        expectedAnnot3.put(SimilarityAnnotationUtils.ENTITY_COL_NAME, 
+                "CL:0000037" + Utils.VALUE_SEPARATORS.get(0) 
+                + "UBERON:0000001" + Utils.VALUE_SEPARATORS.get(0) + "UBERON:0000007");
+        expectedAnnot3.put(SimilarityAnnotationUtils.ENTITY_NAME_COL_NAME, 
+                "hematopoietic stem cell" + Utils.VALUE_SEPARATORS.get(0) 
+                + "whatever name1" + Utils.VALUE_SEPARATORS.get(0) + "whatever name2");
+        expectedAnnot3.put(SimilarityAnnotationUtils.TAXON_COL_NAME, "7742");
+        expectedAnnot3.put(SimilarityAnnotationUtils.TAXON_NAME_COL_NAME, "Vertebrata");
+        expectedAnnot3.put(SimilarityAnnotationUtils.QUALIFIER_COL_NAME, 
+                SimilarityAnnotationUtils.NEGATE_QUALIFIER);
+        expectedAnnot3.put(SimilarityAnnotationUtils.CONF_COL_NAME, "CIO:0000004");
+        expectedAnnot3.put(SimilarityAnnotationUtils.CONF_NAME_COL_NAME, 
+                "medium confidence from single evidence");
+        expectedAnnot3.put(SimilarityAnnotationUtils.TRUSTED_COL_NAME, "T");
+        expectedAnnot3.put(SimilarityAnnotationUtils.SUPPORT_TEXT_COL_NAME, 
+                "Summary annotation created from 1 single-evidence annotation");
+        
+        expectedAnnots.add(expectedAnnot1);
+        expectedAnnots.add(expectedAnnot2);
+        expectedAnnots.add(expectedAnnot3);
+        
+        List<Map<String, String>> actualAnnots = new ArrayList<Map<String, String>>();
+        try (ICsvMapReader mapReader = 
+                new CsvMapReader(new FileReader(tempFile), Utils.TSVCOMMENTED)) {
+            String[] header = mapReader.getHeader(true);
+            Map<String, String> row;
+            while( (row = mapReader.read(header)) != null ) {
+                actualAnnots.add(row);
+            }
+        }
+        
+        assertEquals("Incorrect SUMMARY annotations written", expectedAnnots, actualAnnots);
+    }
+    
+    /**
+     * Test {@link SimilarityAnnotation#writeAnnotations(List, String, Class)} 
+     * for {@code AncestralTaxaAnnotationBean} type.
+     */
+    @Test
+    public void shouldWriteAncestralTaxaAnnotations() throws IOException, IllegalArgumentException {
+        String tempFile = testFolder.newFile("ancestralTaxaAnnotsTest.tsv").getPath();
+        SimilarityAnnotation.writeAnnotations(Arrays.asList(
+                        new AncestralTaxaAnnotationBean("HOM:0000007", "historical homology", 
+                                Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                                2759, "Eukaryota", 
+                                "CIO:0000003", "high confidence from single evidence", 
+                                "Summary annotation created from 1 single-evidence annotation"
+//                                , 1, 0, 
+//                                Arrays.asList("ECO:0000033"), 
+//                                Arrays.asList("traceable author statement"), 
+//                                null, null, null, null, 
+//                                Arrays.asList("bgee")
+                                ), 
+                        new AncestralTaxaAnnotationBean("HOM:0000007", "historical homology", 
+                                Arrays.asList("CL:0000015"), Arrays.asList("male germ cell"), 
+                                33208, "Metazoa", 
+                                "CIO:0000019", "confidence statement from congruent evidence "
+                                        + "lines of same type, overall confidence medium", 
+                                "Summary annotation created from 2 single-evidence annotations"
+//                                , 2, 0, 
+//                                Arrays.asList("ECO:0000205"), 
+//                                Arrays.asList("curator inference"), 
+//                                null, null, null, null, 
+//                                Arrays.asList("bgee", "test db")
+                                ),
+                        new AncestralTaxaAnnotationBean("HOM:0000007", "historical homology", 
+                                Arrays.asList("CL:0000037", "UBERON:0000001", "UBERON:0000007"), 
+                                Arrays.asList("hematopoietic stem cell", "whatever name1", 
+                                        "whatever name2"), 
+                                7742, "Vertebrata", 
+                                "CIO:0000004", "medium confidence from single evidence", 
+                                "Summary annotation created from 1 single-evidence annotation"
+//                                        , 0, 1,  
+//                                        null, null, 
+//                                        Arrays.asList("ECO:0000067"), 
+//                                        Arrays.asList("developmental similarity evidence"), 
+//                                        null, null, 
+//                                        Arrays.asList("bgee")
+                                )), 
+                                tempFile, AncestralTaxaAnnotationBean.class);
+        
+        //we retrieve the annotations without using the extraction methods, to maintain 
+        //the unit of the test.
+        List<Map<String, String>> expectedAnnots = new ArrayList<Map<String, String>>();
+        
+        Map<String, String> expectedAnnot1 = new HashMap<String, String>();
+        expectedAnnot1.put(SimilarityAnnotationUtils.HOM_COL_NAME, "HOM:0000007");
+        expectedAnnot1.put(SimilarityAnnotationUtils.HOM_NAME_COL_NAME, "historical homology");
+        expectedAnnot1.put(SimilarityAnnotationUtils.ENTITY_COL_NAME, "CL:0000000");
+        expectedAnnot1.put(SimilarityAnnotationUtils.ENTITY_NAME_COL_NAME, "cell");
+        expectedAnnot1.put(SimilarityAnnotationUtils.TAXON_COL_NAME, "2759");
+        expectedAnnot1.put(SimilarityAnnotationUtils.TAXON_NAME_COL_NAME, "Eukaryota");
+        expectedAnnot1.put(SimilarityAnnotationUtils.CONF_COL_NAME, "CIO:0000003");
+        expectedAnnot1.put(SimilarityAnnotationUtils.CONF_NAME_COL_NAME, 
+                "high confidence from single evidence");
+        expectedAnnot1.put(SimilarityAnnotationUtils.SUPPORT_TEXT_COL_NAME, 
+                "Summary annotation created from 1 single-evidence annotation");
+        
+        Map<String, String> expectedAnnot2 = new HashMap<String, String>();
+        expectedAnnot2.put(SimilarityAnnotationUtils.HOM_COL_NAME, "HOM:0000007");
+        expectedAnnot2.put(SimilarityAnnotationUtils.HOM_NAME_COL_NAME, "historical homology");
+        expectedAnnot2.put(SimilarityAnnotationUtils.ENTITY_COL_NAME, "CL:0000015");
+        expectedAnnot2.put(SimilarityAnnotationUtils.ENTITY_NAME_COL_NAME, "male germ cell");
+        expectedAnnot2.put(SimilarityAnnotationUtils.TAXON_COL_NAME, "33208");
+        expectedAnnot2.put(SimilarityAnnotationUtils.TAXON_NAME_COL_NAME, "Metazoa");
+        expectedAnnot2.put(SimilarityAnnotationUtils.CONF_COL_NAME, "CIO:0000019");
+        expectedAnnot2.put(SimilarityAnnotationUtils.CONF_NAME_COL_NAME, 
+                "confidence statement from congruent evidence "
+                + "lines of same type, overall confidence medium");
+        expectedAnnot2.put(SimilarityAnnotationUtils.SUPPORT_TEXT_COL_NAME, 
+                "Summary annotation created from 2 single-evidence annotations");
+        
+        Map<String, String> expectedAnnot3 = new HashMap<String, String>();
+        expectedAnnot3.put(SimilarityAnnotationUtils.HOM_COL_NAME, "HOM:0000007");
+        expectedAnnot3.put(SimilarityAnnotationUtils.HOM_NAME_COL_NAME, "historical homology");
+        expectedAnnot3.put(SimilarityAnnotationUtils.ENTITY_COL_NAME, 
+                "CL:0000037" + Utils.VALUE_SEPARATORS.get(0) 
+                + "UBERON:0000001" + Utils.VALUE_SEPARATORS.get(0) + "UBERON:0000007");
+        expectedAnnot3.put(SimilarityAnnotationUtils.ENTITY_NAME_COL_NAME, 
+                "hematopoietic stem cell" + Utils.VALUE_SEPARATORS.get(0) 
+                + "whatever name1" + Utils.VALUE_SEPARATORS.get(0) + "whatever name2");
+        expectedAnnot3.put(SimilarityAnnotationUtils.TAXON_COL_NAME, "7742");
+        expectedAnnot3.put(SimilarityAnnotationUtils.TAXON_NAME_COL_NAME, "Vertebrata");
+        expectedAnnot3.put(SimilarityAnnotationUtils.CONF_COL_NAME, "CIO:0000004");
+        expectedAnnot3.put(SimilarityAnnotationUtils.CONF_NAME_COL_NAME, 
+                "medium confidence from single evidence");
+        expectedAnnot3.put(SimilarityAnnotationUtils.SUPPORT_TEXT_COL_NAME, 
+                "Summary annotation created from 1 single-evidence annotation");
+        
+        expectedAnnots.add(expectedAnnot1);
+        expectedAnnots.add(expectedAnnot2);
+        expectedAnnots.add(expectedAnnot3);
+        
+        List<Map<String, String>> actualAnnots = new ArrayList<Map<String, String>>();
+        try (ICsvMapReader mapReader = 
+                new CsvMapReader(new FileReader(tempFile), Utils.TSVCOMMENTED)) {
+            String[] header = mapReader.getHeader(true);
+            Map<String, String> row;
+            while( (row = mapReader.read(header)) != null ) {
+                actualAnnots.add(row);
+            }
+        }
+        
+        assertEquals("Incorrect SUMMARY annotations written", expectedAnnots, actualAnnots);
+    }
     
     /**
      * Test {@link SimilarityAnnotation.CuratorAnnotationBean#setRefId(String)}, 
      * which extract ref IDs and titles from Strings mixing both.
      */
     @Test
-    public void shouldGetRefIdFromRefColValue() {
+    public void shouldExtractRefIdAndTitle() {
         CuratorAnnotationBean bean = new CuratorAnnotationBean();
         
         String expectedId = "ID:1";

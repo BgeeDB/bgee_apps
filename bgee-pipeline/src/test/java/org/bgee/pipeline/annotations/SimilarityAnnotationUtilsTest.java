@@ -48,165 +48,6 @@ public class SimilarityAnnotationUtilsTest {
     }
     
     /**
-     * Test the {@code Comparator} of {@code AnnotationBean} provided by 
-     * {@link SimilarityAnnotationUtils#ANNOTATION_BEAN_COMPARATOR}.
-     */
-    @Test
-    public void testAnnotationBeanComparator() {
-        AnnotationBean bean1 = new RawAnnotationBean();
-        AnnotationBean bean2 = new SummaryAnnotationBean();
-        assertEquals("Incorrect comparison for same bean", 0, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean1));
-        
-        assertEquals("Incorrect comparison for two different bean types", -1, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
-        assertEquals("Incorrect comparison for two different bean types", 1, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean2, bean1));
-        
-        bean1 = new SummaryAnnotationBean();
-        bean2 = new AncestralTaxaAnnotationBean();
-        assertEquals("Incorrect comparison for two different bean types", -1, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
-        assertEquals("Incorrect comparison for two different bean types", 1, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean2, bean1));
-        
-        bean1 = new RawAnnotationBean();
-        bean2 = new RawAnnotationBean();
-        bean1.setHomId("ABC");
-        bean2.setHomId("BCD");
-        assertEquals("Incorrect comparison for different HOM IDs", -1, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
-        assertEquals("Incorrect comparison for different HOM IDs", 1, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean2, bean1));
-        
-
-        bean2.setHomId("ABC");
-        assertEquals("Incorrect comparison for same HOM IDs", 0, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
-        
-        bean1.setEntityIds(Arrays.asList("abc", "bcd"));
-        bean2.setEntityIds(Arrays.asList("bcd"));
-        assertEquals("Incorrect comparison for different Entity IDs", -1, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
-        assertEquals("Incorrect comparison for different Entity IDs", 1, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean2, bean1));
-        
-        bean2.setEntityIds(Arrays.asList("abc", "bcd"));
-        assertEquals("Incorrect comparison for same Entity IDs", 0, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
-        
-        bean1.setNcbiTaxonId(1);
-        bean2.setNcbiTaxonId(2);
-        assertEquals("Incorrect comparison for different taxon IDs", -1, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
-        assertEquals("Incorrect comparison for different taxon IDs", 1, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean2, bean1));
-        
-        bean2.setNcbiTaxonId(1);
-        assertEquals("Incorrect comparison for same taxon IDs", 0, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
-        
-        bean2.setNegated(true);
-        assertEquals("Incorrect comparison for different negated status", -1, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
-        assertEquals("Incorrect comparison for different negated status", 1, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean2, bean1));
-        
-        bean1.setNegated(true);
-        assertEquals("Incorrect comparison for same negated status", 0, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
-        
-        bean1.setCioId("abc");
-        bean2.setCioId("bcd");
-        assertEquals("Incorrect comparison for different CIO IDs", -1, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
-        assertEquals("Incorrect comparison for different CIO IDs", 1, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean2, bean1));
-
-        bean2.setCioId("abc");
-        assertEquals("Incorrect comparison for same CIO IDs", 0, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
-        
-        bean1.setSupportingText("abc");
-        bean2.setSupportingText("bcd");
-        assertEquals("Incorrect comparison for different CIO IDs", -1, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
-        assertEquals("Incorrect comparison for different CIO IDs", 1, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean2, bean1));
-
-        bean2.setSupportingText("abc");
-        assertEquals("Incorrect comparison for same CIO IDs", 0, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
-        
-        
-        
-        ((RawAnnotationBean) bean1).setEcoId("abc");
-        ((RawAnnotationBean) bean2).setEcoId("bcd");
-        assertEquals("Incorrect comparison for different ECO IDs", -1, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
-        assertEquals("Incorrect comparison for different ECO IDs", 1, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean2, bean1));
-
-        ((RawAnnotationBean) bean2).setEcoId("abc");
-        assertEquals("Incorrect comparison for same ECO IDs", 0, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
-        
-        ((RawAnnotationBean) bean1).setRefId("abc");
-        ((RawAnnotationBean) bean2).setRefId("bcd");
-        assertEquals("Incorrect comparison for different Ref IDs", -1, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
-        assertEquals("Incorrect comparison for different Ref IDs", 1, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean2, bean1));
-
-        ((RawAnnotationBean) bean2).setRefId("abc");
-        assertEquals("Incorrect comparison for same Ref IDs", 0, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
-        
-        ((RawAnnotationBean) bean1).setAssignedBy("abc");
-        ((RawAnnotationBean) bean2).setAssignedBy("bcd");
-        assertEquals("Incorrect comparison for different Ref IDs", -1, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
-        assertEquals("Incorrect comparison for different Ref IDs", 1, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean2, bean1));
-
-        ((RawAnnotationBean) bean2).setAssignedBy("abc");
-        assertEquals("Incorrect comparison for same Ref IDs", 0, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
-        
-        ((RawAnnotationBean) bean1).setCurationDate(new Date());
-        assertEquals("Incorrect comparison for different Ref IDs", -1, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
-        assertEquals("Incorrect comparison for different Ref IDs", 1, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean2, bean1));
-        
-        ((RawAnnotationBean) bean2).setCurationDate(new Date(0));
-        assertEquals("Incorrect comparison for different Ref IDs", -1, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean2, bean1));
-        assertEquals("Incorrect comparison for different Ref IDs", 1, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
-
-        ((RawAnnotationBean) bean1).setCurationDate(new Date(0));
-        assertEquals("Incorrect comparison for same Ref IDs", 0, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
-        
-        
-        
-        bean1 = new SummaryAnnotationBean();
-        bean2 = new SummaryAnnotationBean();
-        
-        ((SummaryAnnotationBean) bean1).setTrusted(true);
-        assertEquals("Incorrect comparison for different Ref IDs", -1, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
-        assertEquals("Incorrect comparison for different Ref IDs", 1, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean2, bean1));
-
-        ((SummaryAnnotationBean) bean2).setTrusted(true);
-        assertEquals("Incorrect comparison for same Ref IDs", 0, 
-                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
-        
-    }
-    
-    /**
      * Test {@link SimilarityAnnotationUtils.ParseMultipleStringValues#execute(Object, CsvContext)}
      */
     @Test
@@ -713,5 +554,164 @@ public class SimilarityAnnotationUtilsTest {
                         getResource("/similarity_annotations/historical_homology_ancestral_taxa.tsv").getFile()));
 
         log.exit();
+    }
+
+    /**
+     * Test the {@code Comparator} of {@code AnnotationBean} provided by 
+     * {@link SimilarityAnnotationUtils#ANNOTATION_BEAN_COMPARATOR}.
+     */
+    @Test
+    public void testAnnotationBeanComparator() {
+        AnnotationBean bean1 = new RawAnnotationBean();
+        AnnotationBean bean2 = new SummaryAnnotationBean();
+        assertEquals("Incorrect comparison for same bean", 0, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean1));
+        
+        assertEquals("Incorrect comparison for two different bean types", -1, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
+        assertEquals("Incorrect comparison for two different bean types", 1, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean2, bean1));
+        
+        bean1 = new SummaryAnnotationBean();
+        bean2 = new AncestralTaxaAnnotationBean();
+        assertEquals("Incorrect comparison for two different bean types", -1, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
+        assertEquals("Incorrect comparison for two different bean types", 1, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean2, bean1));
+        
+        bean1 = new RawAnnotationBean();
+        bean2 = new RawAnnotationBean();
+        bean1.setHomId("ABC");
+        bean2.setHomId("BCD");
+        assertEquals("Incorrect comparison for different HOM IDs", -1, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
+        assertEquals("Incorrect comparison for different HOM IDs", 1, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean2, bean1));
+        
+    
+        bean2.setHomId("ABC");
+        assertEquals("Incorrect comparison for same HOM IDs", 0, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
+        
+        bean1.setEntityIds(Arrays.asList("abc", "bcd"));
+        bean2.setEntityIds(Arrays.asList("bcd"));
+        assertEquals("Incorrect comparison for different Entity IDs", -1, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
+        assertEquals("Incorrect comparison for different Entity IDs", 1, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean2, bean1));
+        
+        bean2.setEntityIds(Arrays.asList("abc", "bcd"));
+        assertEquals("Incorrect comparison for same Entity IDs", 0, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
+        
+        bean1.setNcbiTaxonId(1);
+        bean2.setNcbiTaxonId(2);
+        assertEquals("Incorrect comparison for different taxon IDs", -1, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
+        assertEquals("Incorrect comparison for different taxon IDs", 1, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean2, bean1));
+        
+        bean2.setNcbiTaxonId(1);
+        assertEquals("Incorrect comparison for same taxon IDs", 0, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
+        
+        bean2.setNegated(true);
+        assertEquals("Incorrect comparison for different negated status", -1, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
+        assertEquals("Incorrect comparison for different negated status", 1, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean2, bean1));
+        
+        bean1.setNegated(true);
+        assertEquals("Incorrect comparison for same negated status", 0, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
+        
+        bean1.setCioId("abc");
+        bean2.setCioId("bcd");
+        assertEquals("Incorrect comparison for different CIO IDs", -1, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
+        assertEquals("Incorrect comparison for different CIO IDs", 1, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean2, bean1));
+    
+        bean2.setCioId("abc");
+        assertEquals("Incorrect comparison for same CIO IDs", 0, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
+        
+        bean1.setSupportingText("abc");
+        bean2.setSupportingText("bcd");
+        assertEquals("Incorrect comparison for different CIO IDs", -1, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
+        assertEquals("Incorrect comparison for different CIO IDs", 1, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean2, bean1));
+    
+        bean2.setSupportingText("abc");
+        assertEquals("Incorrect comparison for same CIO IDs", 0, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
+        
+        
+        
+        ((RawAnnotationBean) bean1).setEcoId("abc");
+        ((RawAnnotationBean) bean2).setEcoId("bcd");
+        assertEquals("Incorrect comparison for different ECO IDs", -1, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
+        assertEquals("Incorrect comparison for different ECO IDs", 1, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean2, bean1));
+    
+        ((RawAnnotationBean) bean2).setEcoId("abc");
+        assertEquals("Incorrect comparison for same ECO IDs", 0, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
+        
+        ((RawAnnotationBean) bean1).setRefId("abc");
+        ((RawAnnotationBean) bean2).setRefId("bcd");
+        assertEquals("Incorrect comparison for different Ref IDs", -1, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
+        assertEquals("Incorrect comparison for different Ref IDs", 1, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean2, bean1));
+    
+        ((RawAnnotationBean) bean2).setRefId("abc");
+        assertEquals("Incorrect comparison for same Ref IDs", 0, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
+        
+        ((RawAnnotationBean) bean1).setAssignedBy("abc");
+        ((RawAnnotationBean) bean2).setAssignedBy("bcd");
+        assertEquals("Incorrect comparison for different Ref IDs", -1, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
+        assertEquals("Incorrect comparison for different Ref IDs", 1, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean2, bean1));
+    
+        ((RawAnnotationBean) bean2).setAssignedBy("abc");
+        assertEquals("Incorrect comparison for same Ref IDs", 0, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
+        
+        ((RawAnnotationBean) bean1).setCurationDate(new Date());
+        assertEquals("Incorrect comparison for different Ref IDs", -1, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
+        assertEquals("Incorrect comparison for different Ref IDs", 1, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean2, bean1));
+        
+        ((RawAnnotationBean) bean2).setCurationDate(new Date(0));
+        assertEquals("Incorrect comparison for different Ref IDs", -1, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean2, bean1));
+        assertEquals("Incorrect comparison for different Ref IDs", 1, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
+    
+        ((RawAnnotationBean) bean1).setCurationDate(new Date(0));
+        assertEquals("Incorrect comparison for same Ref IDs", 0, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
+        
+        
+        
+        bean1 = new SummaryAnnotationBean();
+        bean2 = new SummaryAnnotationBean();
+        
+        ((SummaryAnnotationBean) bean1).setTrusted(true);
+        assertEquals("Incorrect comparison for different Ref IDs", -1, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
+        assertEquals("Incorrect comparison for different Ref IDs", 1, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean2, bean1));
+    
+        ((SummaryAnnotationBean) bean2).setTrusted(true);
+        assertEquals("Incorrect comparison for same Ref IDs", 0, 
+                SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
+        
     }
 }

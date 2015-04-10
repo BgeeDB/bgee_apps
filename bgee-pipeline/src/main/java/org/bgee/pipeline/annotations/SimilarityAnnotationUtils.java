@@ -32,12 +32,10 @@ import org.supercsv.util.CsvContext;
 
 /**
  * Class providing convenient methods to use the anatomical similarity annotations (see 
- * <a href='https://github.com/BgeeDB/anatomical-similarity-annotations'>the tracker</a>). 
- * This class does not use the usual Bgee utils, to be provided as a standalone class. 
- * The dependencies required are: Super CSV, OWLTools, OWLAPI, Log4j2. 
+ * <a href='https://github.com/BgeeDB/anatomical-similarity-annotations'>the tracker</a>).  
  * 
  * @author Frederic Bastian
- * @version Bgee 13 Mar. 2015
+ * @version Bgee 13 Apr. 2015
  * @since Bgee 13
  */
 public class SimilarityAnnotationUtils {
@@ -1567,19 +1565,6 @@ public class SimilarityAnnotationUtils {
                     return log.exit(comp);
                 }
                 
-                String curator1 = ((RawAnnotationBean) o1).getCurator();
-                if (curator1 == null) {
-                    curator1 = "";
-                }
-                String curator2 = ((RawAnnotationBean) o2).getCurator();
-                if (curator2 == null) {
-                    curator2 = "";
-                }
-                comp = curator1.compareTo(curator2);
-                if (comp != 0) {
-                    return log.exit(comp);
-                }
-                
                 if (((RawAnnotationBean) o1).getCurationDate() != null && 
                         ((RawAnnotationBean) o2).getCurationDate() == null) {
                     return log.exit(-1);
@@ -1593,6 +1578,19 @@ public class SimilarityAnnotationUtils {
                     if (comp != 0) {
                         return log.exit(comp);
                     }
+                }
+                
+                String curator1 = ((RawAnnotationBean) o1).getCurator();
+                if (curator1 == null) {
+                    curator1 = "";
+                }
+                String curator2 = ((RawAnnotationBean) o2).getCurator();
+                if (curator2 == null) {
+                    curator2 = "";
+                }
+                comp = curator1.compareTo(curator2);
+                if (comp != 0) {
+                    return log.exit(comp);
                 }
             }
             
@@ -1917,8 +1915,8 @@ public class SimilarityAnnotationUtils {
 
     /**
      * Map the column names of a CSV file to the attributes of an {@code AnnotationBean} 
-     * of the requested type. This mapping will then be used to populate the bean, 
-     * using standard setter name convention. 
+     * of the requested type. This mapping will then be used to populate or read the bean, 
+     * using standard getter/setter name convention. 
      * <p>
      * Thanks to this method, we can adapt to any change in column names or column order.
      * 

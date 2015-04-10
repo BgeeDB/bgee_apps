@@ -560,8 +560,7 @@ public class SimilarityAnnotation {
             
             List<CuratorAnnotationBean> annots = new ArrayList<CuratorAnnotationBean>();
             final String[] header = annotReader.getHeader(true);
-            String[] attributeMapping = SimilarityAnnotationUtils.mapHeaderToAttributes(
-                    header, RawAnnotationBean.class);
+            String[] attributeMapping = mapCuratorHeaderToAttributes(header);
             CellProcessor[] cellProcessorMapping = mapCuratorHeaderToCellProcessors(header);
             CuratorAnnotationBean annot;
             while((annot = annotReader.read(CuratorAnnotationBean.class, attributeMapping, 
@@ -642,6 +641,46 @@ public class SimilarityAnnotation {
             }
         }
         return log.exit(processors);
+    }
+
+
+    /**
+     * Map the column names of a CSV file to the attributes of {@code CuratorAnnotationBean}. 
+     * This mapping will then be used to populate or read the bean, using standard 
+     * getter/setter name convention. 
+     * <p>
+     * Thanks to this method, we can adapt to any change in column names or column order.
+     * 
+     * @param header    An {@code Array} of {@code String}s representing the names 
+     *                  of the columns of a similarity annotation file.
+     * @return          An {@code Array} of {@code String}s that are the names 
+     *                  of the attributes of {@code CuratorAnnotationBean}, put in 
+     *                  the {@code Array} at the same index as their corresponding column.
+     * @throws IllegalArgumentException If a {@code String} in {@code header} 
+     *                                  is not recognized.
+     */
+    private static String[] mapCuratorHeaderToAttributes(String[] header) 
+            throws IllegalArgumentException {
+        log.entry((Object[]) header);
+        
+        //we call the method to generate attribute mapping for RawAnnotationBean, 
+        //and we override the fields not used for CuratorAnnotationBean, 
+        //to avoid code duplication.
+        String[] mapping = SimilarityAnnotationUtils.mapHeaderToAttributes(header, 
+                RawAnnotationBean.class);
+        for (int i = 0; i < header.length; i++) {
+            switch (header[i]) {
+                case SimilarityAnnotationUtils.HOM_NAME_COL_NAME: 
+                case SimilarityAnnotationUtils.ENTITY_NAME_COL_NAME: 
+                case SimilarityAnnotationUtils.TAXON_NAME_COL_NAME: 
+                case SimilarityAnnotationUtils.CONF_NAME_COL_NAME: 
+                case SimilarityAnnotationUtils.REF_TITLE_COL_NAME: 
+                case SimilarityAnnotationUtils.ECO_NAME_COL_NAME: 
+                    mapping[i] = null;
+                    break;
+            } 
+        }
+        return log.exit(mapping);
     }
 
     /**

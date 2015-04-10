@@ -23,6 +23,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.TestAncestor;
 import org.bgee.pipeline.annotations.SimilarityAnnotation;
+import org.bgee.pipeline.annotations.SimilarityAnnotation.CuratorAnnotationBean;
 import org.bgee.pipeline.ontologycommon.OntologyUtils;
 import org.junit.Rule;
 import org.junit.Test;
@@ -548,152 +549,124 @@ public class SimilarityAnnotationTest extends TestAncestor {
 //        methodVerify.invoke(sim);
 //    }
 //    
-//    /**
-//     * Test {@link SimilarityAnnotation#getRefIdFromRefColValue(String)}
-//     */
-//    @Test
-//    public void shouldGetRefIdFromRefColValue() throws NoSuchMethodException, 
-//        SecurityException, IllegalAccessException, IllegalArgumentException, 
-//        InvocationTargetException {
-//        SimilarityAnnotation sim = new SimilarityAnnotation();
-//        Method method = sim.getClass().getDeclaredMethod("getRefIdFromRefColValue", 
-//                String.class);
-//        method.setAccessible(true);
-//        
-//        String expectedId = "ID:1";
-//        assertEquals(expectedId, method.invoke(sim, "ID:1 my great title"));
-//        assertEquals(expectedId, method.invoke(sim, "ID:1 \"my great title\""));
-//        assertEquals(expectedId, method.invoke(sim, " ID:1 "));
-//        assertEquals(expectedId, method.invoke(sim, " ID:1 regression\"test\""));
-//        
-//        try {
-//            method.invoke(sim, "");
-//            //test failed, should have thrown an IllegalArgumenException
-//            throw new AssertionError("An exception should have been thrown");
-//        } catch (InvocationTargetException e) {
-//            //test passed
-//            assertEquals(IllegalArgumentException.class, e.getCause().getClass());
-//        }
-//        try {
-//            method.invoke(sim, " ");
-//            //test failed, should have thrown an IllegalArgumenException
-//            throw new AssertionError("An exception should have been thrown");
-//        } catch (InvocationTargetException e) {
-//            //test passed
-//            assertEquals(IllegalArgumentException.class, e.getCause().getClass());
-//        }
-//    }
-//    
-//    /**
-//     * Test {@link SimilarityAnnotation#getRefTitleFromRefColValue(String)}
-//     */
-//    @Test
-//    public void shouldGetRefTitleFromRefColValue() throws NoSuchMethodException, 
-//        SecurityException, IllegalAccessException, IllegalArgumentException, 
-//        InvocationTargetException {
-//        SimilarityAnnotation sim = new SimilarityAnnotation();
-//        Method method = sim.getClass().getDeclaredMethod("getRefTitleFromRefColValue", 
-//                String.class);
-//        method.setAccessible(true);
-//        
-//        String expectedTitle = "my great title";
-//        assertEquals(expectedTitle, method.invoke(sim, "ID my great title"));
-//        assertEquals(expectedTitle, method.invoke(sim, "ID \"my great title\""));
-//        assertNull(method.invoke(sim, " ID "));
-//        
-//        try {
-//            method.invoke(sim, "");
-//            //test failed, should have thrown an IllegalArgumenException
-//            throw new AssertionError("An exception should have been thrown");
-//        } catch (InvocationTargetException e) {
-//            //test passed
-//            assertEquals(IllegalArgumentException.class, e.getCause().getClass());
-//        }
-//    }
-//    
-//    /**
-//     * Test the method {@link SimilarityAnnotation#extractTaxonIdsToFile(String, String)}
-//     */
-//    @Test
-//    public void shouldExtractTaxonIdsToFile() throws FileNotFoundException, IOException {
-//        String tempFile = testFolder.newFile("taxonIdsOutput.txt").getPath();
-//        new SimilarityAnnotation().extractTaxonIdsToFile(
-//                this.getClass().getResource("/similarity_annotations/similarity.tsv").getFile(), 
-//                tempFile);
-//        Set<Integer> retrievedIds = new HashSet<Integer>();
-//        int lineCount = 0;
-//        try (BufferedReader br = new BufferedReader(new FileReader(tempFile))) {
-//            String line;
-//            while ((line = br.readLine()) != null) {
-//                lineCount++;
-//                retrievedIds.add(Integer.parseInt(line));
-//            }
-//        }
-//        assertEquals("Incorrect number of lines in file", 3, lineCount);
-//        Set<Integer> expectedIds = new HashSet<Integer>(Arrays.asList(7742, 40674, 1294634));
-//        assertEquals("Incorrect taxon IDs retrieved from generated file", 
-//                expectedIds, retrievedIds);
-//    }
-//    
-//    /**
-//     * Test the method {@link SimilarityAnnotation#getAnatEntitiesWithNoTransformationOf(String, String)}
-//     */
-//    @Test
-//    public void shouldGetAnatEntitiesWithNoTransformationOf() 
-//            throws UnknownOWLOntologyException, IllegalArgumentException, 
-//            FileNotFoundException, OWLOntologyCreationException, 
-//            OBOFormatParserException, IOException {
-//        
-//        ParserWrapper parserWrapper = new ParserWrapper();
-//        parserWrapper.setCheckOboDoc(false);
-//        OWLGraphWrapper fakeOntology = new OWLGraphWrapper(parserWrapper.parse(
-//                this.getClass().getResource("/similarity_annotations/fake_uberon.obo").getFile()));
-//        
-//        Set<OWLClass> expectedClasses = new HashSet<OWLClass>(
-//                Arrays.asList(fakeOntology.getOWLClassByIdentifier("UBERON:0000001")));
-//        
-//        assertEquals("Incorrect anatomical entities with no transformation_of relations identified", 
-//                expectedClasses, new SimilarityAnnotation().getAnatEntitiesWithNoTransformationOf(
-//                        this.getClass().getResource("/similarity_annotations/similarity.tsv").getFile(), 
-//                        this.getClass().getResource("/similarity_annotations/fake_uberon.obo").getFile()));
-//    }
-//    
-//    /**
-//     * Test the method {@link 
-//     * SimilarityAnnotation#writeAnatEntitiesWithNoTransformationOfToFile(String, String, String)}
-//     * @throws OBOFormatParserException 
-//     * @throws OWLOntologyCreationException 
-//     * @throws IllegalArgumentException 
-//     * @throws UnknownOWLOntologyException 
-//     */
-//    @Test
-//    public void shouldExtractAnatEntitiesWithNoTransformationOfToFile() 
-//            throws FileNotFoundException, IOException, UnknownOWLOntologyException, 
-//            IllegalArgumentException, OWLOntologyCreationException, OBOFormatParserException {
-//        String tempFile = testFolder.newFile("anatEntitiesNoTransfOfOutput.txt").getPath();
-//        new SimilarityAnnotation().writeAnatEntitiesWithNoTransformationOfToFile(
-//                this.getClass().getResource("/similarity_annotations/similarity.tsv").getFile(), 
-//                this.getClass().getResource("/similarity_annotations/fake_uberon.obo").getFile(), 
-//                tempFile);
-//        Set<String> retrievedEntities = new HashSet<String>();
-//        int lineCount = 0;
-//        try (BufferedReader br = new BufferedReader(new FileReader(tempFile))) {
-//            String line;
-//            while ((line = br.readLine()) != null) {
-//                //skip the first line that is supposed to be a header line
-//                lineCount++;
-//                if (lineCount == 1) {
-//                    continue;
-//                }
-//                retrievedEntities.add(line);
-//            }
-//        }
-//        //we should have 2 lines: one header line, and one line with data
-//        assertEquals("Incorrect number of lines in file", 2, lineCount);
-//        Set<String> expectedEntities = new HashSet<String>(Arrays.asList("UBERON:0000001\tuberon 1\t" +
-//        		"develops from: UBERON:0000003 uberon 3"));
-//        assertEquals("Incorrect anatomical entities IDs retrieved from generated file", 
-//                expectedEntities, retrievedEntities);
-//    }
+    /**
+     * Test {@link SimilarityAnnotation.CuratorAnnotationBean#setRefId(String)}, 
+     * which extract ref IDs and titles from Strings mixing both.
+     */
+    @Test
+    public void shouldGetRefIdFromRefColValue() {
+        CuratorAnnotationBean bean = new CuratorAnnotationBean();
+        
+        String expectedId = "ID:1";
+        String expectedTitle = "my great title";
+        bean.setRefId("ID:1 my great title");
+        assertEquals(expectedId, bean.getRefId());
+        assertEquals(expectedTitle, bean.getRefTitle());
+
+        bean.setRefId("ID:1 \"my great title\"");
+        assertEquals(expectedId, bean.getRefId());
+        assertEquals(expectedTitle, bean.getRefTitle());
+
+        bean.setRefId(" ID:1 ");
+        assertEquals(expectedId, bean.getRefId());
+        assertNull(bean.getRefTitle());
+
+        bean.setRefId(" ID:1 regression\"test\"");
+        assertEquals(expectedId, bean.getRefId());
+        assertEquals("regression\"test", bean.getRefTitle());
+        
+        bean.setRefId("");
+        assertNull(bean.getRefId());
+        assertNull(bean.getRefTitle());
+        
+        bean.setRefId(null);
+        assertNull(bean.getRefId());
+        assertNull(bean.getRefTitle());
+    }
+    
+    /**
+     * Test the method {@link SimilarityAnnotation#extractTaxonIdsToFile(String, String)}
+     */
+    @Test
+    public void shouldExtractTaxonIdsToFile() throws FileNotFoundException, IOException {
+        String tempFile = testFolder.newFile("taxonIdsOutput.txt").getPath();
+        SimilarityAnnotation.extractTaxonIdsToFile(
+                this.getClass().getResource("/similarity_annotations/similarity.tsv").getFile(), 
+                tempFile);
+        Set<Integer> retrievedIds = new HashSet<Integer>();
+        int lineCount = 0;
+        try (BufferedReader br = new BufferedReader(new FileReader(tempFile))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                lineCount++;
+                retrievedIds.add(Integer.parseInt(line));
+            }
+        }
+        assertEquals("Incorrect number of lines in file", 3, lineCount);
+        Set<Integer> expectedIds = new HashSet<Integer>(Arrays.asList(7742, 40674, 1294634));
+        assertEquals("Incorrect taxon IDs retrieved from generated file", 
+                expectedIds, retrievedIds);
+    }
+    
+    /**
+     * Test the method {@link SimilarityAnnotation#getAnatEntitiesWithNoTransformationOf(String, String)}
+     */
+    @Test
+    public void shouldGetAnatEntitiesWithNoTransformationOf() 
+            throws UnknownOWLOntologyException, IllegalArgumentException, 
+            FileNotFoundException, OWLOntologyCreationException, 
+            OBOFormatParserException, IOException {
+        
+        ParserWrapper parserWrapper = new ParserWrapper();
+        parserWrapper.setCheckOboDoc(false);
+        OWLGraphWrapper fakeOntology = new OWLGraphWrapper(parserWrapper.parse(
+                this.getClass().getResource("/similarity_annotations/fake_uberon.obo").getFile()));
+        
+        Set<OWLClass> expectedClasses = new HashSet<OWLClass>(
+                Arrays.asList(fakeOntology.getOWLClassByIdentifier("UBERON:0000001")));
+        
+        assertEquals("Incorrect anatomical entities with no transformation_of relations identified", 
+                expectedClasses, SimilarityAnnotation.getAnatEntitiesWithNoTransformationOf(
+                        this.getClass().getResource("/similarity_annotations/similarity.tsv").getFile(), 
+                        this.getClass().getResource("/similarity_annotations/fake_uberon.obo").getFile()));
+    }
+    
+    /**
+     * Test the method {@link 
+     * SimilarityAnnotation#writeAnatEntitiesWithNoTransformationOfToFile(String, String, String)}
+     * @throws OBOFormatParserException 
+     * @throws OWLOntologyCreationException 
+     * @throws IllegalArgumentException 
+     * @throws UnknownOWLOntologyException 
+     */
+    @Test
+    public void shouldExtractAnatEntitiesWithNoTransformationOfToFile() 
+            throws FileNotFoundException, IOException, UnknownOWLOntologyException, 
+            IllegalArgumentException, OWLOntologyCreationException, OBOFormatParserException {
+        String tempFile = testFolder.newFile("anatEntitiesNoTransfOfOutput.txt").getPath();
+        SimilarityAnnotation.writeAnatEntitiesWithNoTransformationOfToFile(
+                this.getClass().getResource("/similarity_annotations/similarity.tsv").getFile(), 
+                this.getClass().getResource("/similarity_annotations/fake_uberon.obo").getFile(), 
+                tempFile);
+        Set<String> retrievedEntities = new HashSet<String>();
+        int lineCount = 0;
+        try (BufferedReader br = new BufferedReader(new FileReader(tempFile))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                //skip the first line that is supposed to be a header line
+                lineCount++;
+                if (lineCount == 1) {
+                    continue;
+                }
+                retrievedEntities.add(line);
+            }
+        }
+        //we should have 2 lines: one header line, and one line with data
+        assertEquals("Incorrect number of lines in file", 2, lineCount);
+        Set<String> expectedEntities = new HashSet<String>(Arrays.asList("UBERON:0000001\tuberon 1\t" +
+        		"develops from: UBERON:0000003 uberon 3"));
+        assertEquals("Incorrect anatomical entities IDs retrieved from generated file", 
+                expectedEntities, retrievedEntities);
+    }
     
 }

@@ -160,6 +160,7 @@ public class SimilarityAnnotation {
                 String refId = m.group(REF_ID_PATTERN_GROUP);
                 String refTitle = m.group(REF_TITLE_PATTERN_GROUP);
                 if (StringUtils.isNotBlank(refId)) {
+                    log.trace("Ref ID extracted: {}", refId);
                     super.setRefId(refId.trim());
                 }
                 if (StringUtils.isNotBlank(refTitle)) {
@@ -167,6 +168,7 @@ public class SimilarityAnnotation {
                     refTitle = refTitle.startsWith("\"") ? refTitle.substring(1) : refTitle;
                     refTitle = refTitle.endsWith("\"") ? 
                             refTitle.substring(0, refTitle.length()-1) : refTitle;
+                    log.trace("Ref title extracted: {}", refTitle);
                     super.setRefTitle(refTitle);
                 }
             }

@@ -113,7 +113,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
 //        expectedAnnots.add(row2);
 //        
 //        assertEquals(expectedAnnots, new SimilarityAnnotation().extractAnnotations(
-//                this.getClass().getResource("/annotations/similarity2.tsv").getFile(), true));
+//                this.getClass().getResource("/similarity_annotations/similarity2.tsv").getFile(), true));
 //    }
 //    
 //    /**
@@ -139,15 +139,15 @@ public class SimilarityAnnotationTest extends TestAncestor {
 //        Set<Integer> taxonIds = new HashSet<Integer>(Arrays.asList(1, 2, 3));
 //
 //        OWLGraphWrapper uberonOntWrapper = new OWLGraphWrapper(OntologyUtils.loadOntology(
-//                this.getClass().getResource("/annotations/fake_uberon.obo").getPath()));
+//                this.getClass().getResource("/similarity_annotations/fake_uberon.obo").getPath()));
 //        OWLGraphWrapper taxOntWrapper = new OWLGraphWrapper(OntologyUtils.loadOntology(
-//                this.getClass().getResource("/annotations/fake_taxonomy.obo").getPath()));
+//                this.getClass().getResource("/similarity_annotations/fake_taxonomy.obo").getPath()));
 //        OWLGraphWrapper ecoOntWrapper = new OWLGraphWrapper(OntologyUtils.loadOntology(
-//                this.getClass().getResource("/annotations/eco.obo").getPath()));
+//                this.getClass().getResource("/similarity_annotations/eco.obo").getPath()));
 //        OWLGraphWrapper homOntWrapper = new OWLGraphWrapper(OntologyUtils.loadOntology(
-//                this.getClass().getResource("/annotations/homology_ontology.obo").getPath()));
+//                this.getClass().getResource("/similarity_annotations/homology_ontology.obo").getPath()));
 //        OWLGraphWrapper confOntWrapper = new OWLGraphWrapper(OntologyUtils.loadOntology(
-//                this.getClass().getResource("/annotations/conf_information.obo").getPath()));
+//                this.getClass().getResource("/similarity_annotations/conf_information.obo").getPath()));
 //        
 //        
 //        List<Map<String, Object>> annotations = new ArrayList<Map<String, Object>>();
@@ -299,9 +299,9 @@ public class SimilarityAnnotationTest extends TestAncestor {
 //        method.setAccessible(true);
 //        
 //        OWLGraphWrapper ecoOntWrapper = new OWLGraphWrapper(OntologyUtils.loadOntology(
-//                this.getClass().getResource("/annotations/eco.obo").getPath()));
+//                this.getClass().getResource("/similarity_annotations/eco.obo").getPath()));
 //        OWLGraphWrapper confOntWrapper = new OWLGraphWrapper(OntologyUtils.loadOntology(
-//                this.getClass().getResource("/annotations/conf_information.obo").getPath()));
+//                this.getClass().getResource("/similarity_annotations/conf_information.obo").getPath()));
 //        
 //        
 //        Collection<Map<String, Object>> annotations = new HashSet<Map<String, Object>>();
@@ -438,11 +438,11 @@ public class SimilarityAnnotationTest extends TestAncestor {
 //        methodVerify.setAccessible(true);
 //        
 //        OWLGraphWrapper ecoOntWrapper = new OWLGraphWrapper(OntologyUtils.loadOntology(
-//                this.getClass().getResource("/annotations/eco.obo").getPath()));
+//                this.getClass().getResource("/similarity_annotations/eco.obo").getPath()));
 //        OWLGraphWrapper homOntWrapper = new OWLGraphWrapper(OntologyUtils.loadOntology(
-//                this.getClass().getResource("/annotations/homology_ontology.obo").getPath()));
+//                this.getClass().getResource("/similarity_annotations/homology_ontology.obo").getPath()));
 //        OWLGraphWrapper confOntWrapper = new OWLGraphWrapper(OntologyUtils.loadOntology(
-//                this.getClass().getResource("/annotations/conf_information.obo").getPath()));
+//                this.getClass().getResource("/similarity_annotations/conf_information.obo").getPath()));
 //        
 //        Map<String, Set<Integer>> taxonConstraints = new HashMap<String, Set<Integer>>();
 //        taxonConstraints.put("UBERON:1", new HashSet<Integer>(Arrays.asList(1, 2, 3)));
@@ -618,7 +618,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
 //    public void shouldExtractTaxonIdsToFile() throws FileNotFoundException, IOException {
 //        String tempFile = testFolder.newFile("taxonIdsOutput.txt").getPath();
 //        new SimilarityAnnotation().extractTaxonIdsToFile(
-//                this.getClass().getResource("/annotations/similarity.tsv").getFile(), 
+//                this.getClass().getResource("/similarity_annotations/similarity.tsv").getFile(), 
 //                tempFile);
 //        Set<Integer> retrievedIds = new HashSet<Integer>();
 //        int lineCount = 0;
@@ -647,15 +647,15 @@ public class SimilarityAnnotationTest extends TestAncestor {
 //        ParserWrapper parserWrapper = new ParserWrapper();
 //        parserWrapper.setCheckOboDoc(false);
 //        OWLGraphWrapper fakeOntology = new OWLGraphWrapper(parserWrapper.parse(
-//                this.getClass().getResource("/annotations/fake_uberon.obo").getFile()));
+//                this.getClass().getResource("/similarity_annotations/fake_uberon.obo").getFile()));
 //        
 //        Set<OWLClass> expectedClasses = new HashSet<OWLClass>(
 //                Arrays.asList(fakeOntology.getOWLClassByIdentifier("UBERON:0000001")));
 //        
 //        assertEquals("Incorrect anatomical entities with no transformation_of relations identified", 
 //                expectedClasses, new SimilarityAnnotation().getAnatEntitiesWithNoTransformationOf(
-//                        this.getClass().getResource("/annotations/similarity.tsv").getFile(), 
-//                        this.getClass().getResource("/annotations/fake_uberon.obo").getFile()));
+//                        this.getClass().getResource("/similarity_annotations/similarity.tsv").getFile(), 
+//                        this.getClass().getResource("/similarity_annotations/fake_uberon.obo").getFile()));
 //    }
 //    
 //    /**
@@ -672,8 +672,8 @@ public class SimilarityAnnotationTest extends TestAncestor {
 //            IllegalArgumentException, OWLOntologyCreationException, OBOFormatParserException {
 //        String tempFile = testFolder.newFile("anatEntitiesNoTransfOfOutput.txt").getPath();
 //        new SimilarityAnnotation().writeAnatEntitiesWithNoTransformationOfToFile(
-//                this.getClass().getResource("/annotations/similarity.tsv").getFile(), 
-//                this.getClass().getResource("/annotations/fake_uberon.obo").getFile(), 
+//                this.getClass().getResource("/similarity_annotations/similarity.tsv").getFile(), 
+//                this.getClass().getResource("/similarity_annotations/fake_uberon.obo").getFile(), 
 //                tempFile);
 //        Set<String> retrievedEntities = new HashSet<String>();
 //        int lineCount = 0;

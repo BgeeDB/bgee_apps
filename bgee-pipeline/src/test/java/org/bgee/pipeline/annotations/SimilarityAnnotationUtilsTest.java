@@ -323,7 +323,7 @@ public class SimilarityAnnotationUtilsTest {
                                 "supporting text 16", "bgee", "ANN", sdf.parse("2013-10-08"))), 
                 SimilarityAnnotationUtils.extractRawAnnotations(
                         SimilarityAnnotationUtilsTest.class.
-                        getResource("/annotations/raw_similarity_annotations.tsv").getFile()));
+                        getResource("/similarity_annotations/raw_similarity_annotations.tsv").getFile()));
         
         log.exit();
     }
@@ -497,7 +497,7 @@ public class SimilarityAnnotationUtilsTest {
                                 )), 
                 SimilarityAnnotationUtils.extractSummaryAnnotations(
                         SimilarityAnnotationUtilsTest.class.
-                        getResource("/annotations/summary_similarity_annotations.tsv").getFile()));
+                        getResource("/similarity_annotations/summary_similarity_annotations.tsv").getFile()));
 
         log.exit();
     }
@@ -549,7 +549,7 @@ public class SimilarityAnnotationUtilsTest {
                                     + "evidence lines of same type, overall confidence medium", "-")), 
                 SimilarityAnnotationUtils.extractAncestralTaxaAnnotations(
                         SimilarityAnnotationUtilsTest.class.
-                        getResource("/annotations/historical_homology_ancestral_taxa.tsv").getFile()));
+                        getResource("/similarity_annotations/historical_homology_ancestral_taxa.tsv").getFile()));
 
         log.exit();
     }

@@ -1,3 +1,0 @@
-entity	entity name	qualifier	HOM ID	HOM name	reference	reference title	ECO ID	ECO name	confidence code ID	confidence code name	taxon ID	taxon name	supporting text	assigned by	curator	date
-entity1	entityName1		HOM:1	HOMName1	myRef:1	myRefTitle1	ECO:1	ECOName1	CONF:1	CONFName1	1	taxon:1	blabla1	bgee1	me1	1984-01-01
-entity2		NOT	HOM:2		myRef:2				CONF:2		2			bgee2

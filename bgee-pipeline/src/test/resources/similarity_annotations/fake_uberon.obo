@@ -2,19 +2,55 @@ format-version: 1.4
 ontology: uberon
 
 [Term]
-id: UBERON:0000001
+id: ID:1
 name: uberon 1
-relationship: RO:0002202 UBERON:0000003 ! uberon 3
+relationship: RO:0002202 ID:3 ! uberon 3
 
 [Term]
-id: UBERON:0000002
+id: ID:2
 name: uberon 2
-relationship: immediate_transformation_of UBERON:0000001 ! uberon 1
+relationship: immediate_transformation_of ID:1 ! uberon 1
 
 [Term]
-id: UBERON:0000003
+id: ID:3
 name: uberon 3
-relationship: transformation_of UBERON:0000002 ! uberon 2
+relationship: transformation_of ID:2 ! uberon 2
+
+[Term]
+id: CL:0000000
+name: cell
+
+[Term]
+id: CL:0000015
+name: male germ cell
+
+[Term]
+id: CL:0000037
+name: hematopoietic stem cell
+
+[Term]
+id: UBERON:0000001
+name: whatever name1
+
+[Term]
+id: UBERON:0000007
+name: whatever name2
+
+[Term]
+id: UBERON:0010207
+name: nictitating membrane
+
+[Term]
+id: CL:0000216
+name: Sertoli cell
+
+[Term]
+id: UBERON:0000926
+name: mesoderm
+
+[Term]
+id: UBERON:0001245
+name: anus
 
 [Typedef]
 id: RO:0002324

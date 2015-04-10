@@ -84,9 +84,9 @@ public class SimilarityAnnotationTest extends TestAncestor {
 //        method.setAccessible(true);
 //        
 //        Map<String, Set<Integer>> taxonConstraints = new HashMap<String, Set<Integer>>();
-//        taxonConstraints.put("UBERON:0000001", new HashSet<Integer>(Arrays.asList(1, 2, 3)));
-//        taxonConstraints.put("UBERON:0000002", new HashSet<Integer>(Arrays.asList(1, 2, 3)));
-//        taxonConstraints.put("UBERON:0000003", new HashSet<Integer>(Arrays.asList(1, 2, 3)));
+//        taxonConstraints.put("ID:1", new HashSet<Integer>(Arrays.asList(1, 2, 3)));
+//        taxonConstraints.put("ID:2", new HashSet<Integer>(Arrays.asList(1, 2, 3)));
+//        taxonConstraints.put("ID:3", new HashSet<Integer>(Arrays.asList(1, 2, 3)));
 //        Set<Integer> taxonIds = new HashSet<Integer>(Arrays.asList(1, 2, 3));
 //
 //        OWLGraphWrapper uberonOntWrapper = new OWLGraphWrapper(OntologyUtils.loadOntology(
@@ -104,7 +104,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
 //        List<Map<String, Object>> annotations = new ArrayList<Map<String, Object>>();
 //        List<Map<String, Object>> expectedAnnots = new ArrayList<Map<String, Object>>();
 //        Map<String, Object> annotSingle = new HashMap<String, Object>();
-//        annotSingle.put(SimilarityAnnotation.ENTITY_COL_NAME, "UBERON:0000002");
+//        annotSingle.put(SimilarityAnnotation.ENTITY_COL_NAME, "ID:2");
 //        annotSingle.put(SimilarityAnnotation.TAXON_COL_NAME, 2);
 //        annotSingle.put(SimilarityAnnotation.ECO_COL_NAME, "ECO:3");
 //        annotSingle.put(SimilarityAnnotation.HOM_COL_NAME, "HOM:0000005");
@@ -123,7 +123,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
 //                SimilarityAnnotation.RAW_LINE);
 //        
 //        Map<String, Object> annot1 = new HashMap<String, Object>();
-//        annot1.put(SimilarityAnnotation.ENTITY_COL_NAME, "UBERON:0000001");
+//        annot1.put(SimilarityAnnotation.ENTITY_COL_NAME, "ID:1");
 //        annot1.put(SimilarityAnnotation.TAXON_COL_NAME, 1);
 //        annot1.put(SimilarityAnnotation.ECO_COL_NAME, "ECO:1");
 //        annot1.put(SimilarityAnnotation.HOM_COL_NAME, "HOM:0000007");
@@ -142,7 +142,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
 //                SimilarityAnnotation.RAW_LINE);
 //        
 //        Map<String, Object> annot2 = new HashMap<String, Object>();
-//        annot2.put(SimilarityAnnotation.ENTITY_COL_NAME, "UBERON:0000001");
+//        annot2.put(SimilarityAnnotation.ENTITY_COL_NAME, "ID:1");
 //        annot2.put(SimilarityAnnotation.TAXON_COL_NAME, 1);
 //        annot2.put(SimilarityAnnotation.ECO_COL_NAME, "ECO:1");
 //        annot2.put(SimilarityAnnotation.HOM_COL_NAME, "HOM:0000007");
@@ -912,6 +912,36 @@ public class SimilarityAnnotationTest extends TestAncestor {
     }
     
     /**
+     * Test {@link SimilarityAnnotation.checkAnnotations(Collection)} for 
+     * {@code CuratorAnnotationBean}s.
+     */
+    @Test
+    public void shouldCheckAnnotations() throws ParseException {
+        SimpleDateFormat sdf = new SimpleDateFormat(SimilarityAnnotationUtils.DATE_FORMAT);
+        List<CuratorAnnotationBean> annots = new ArrayList<CuratorAnnotationBean>(Arrays.asList(
+                new CuratorAnnotationBean("HOM:0000007", Arrays.asList("CL:0000000"), 
+                        2759, false, "ECO:0000033", "CIO:0000003", 
+                        "DOI:10.1073/pnas.032658599", "ref title 1", 
+                        "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")), 
+                //congruent evidence lines
+                new CuratorAnnotationBean("HOM:0000007", Arrays.asList("CL:0000015"), 
+                        33208, false, "ECO:0000205", "CIO:0000004", 
+                        "DOI:10.1002/bies.950161213", "ref title 2", 
+                        "supporting text 2", "bgee", "ANN", sdf.parse("2013-08-29")), 
+                new CuratorAnnotationBean("HOM:0000007", Arrays.asList("CL:0000015"),  
+                        33208, false, "ECO:0000205", "CIO:0000005", 
+                        "ISBN:978-0198566694", "ref title 3", 
+                        "supporting text 3", "bgee", "ANN", sdf.parse("2013-08-29")), 
+                //multiple Uberon IDs
+                new CuratorAnnotationBean("HOM:0000007", 
+                        Arrays.asList("CL:0000037", "UBERON:0000001", "UBERON:0000007"), 
+                        7742, true, "ECO:0000067", "CIO:0000004", 
+                        "DOI:10.1146/annurev.cellbio.22.010605.093317", "ref title 7", 
+                        "supporting text 7", "bgee", "ANN", sdf.parse("2013-07-01"))));
+        
+    }
+    
+    /**
      * Test {@link SimilarityAnnotation.CuratorAnnotationBean#setRefId(String)}, 
      * which extract ref IDs and titles from Strings mixing both.
      */
@@ -985,7 +1015,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
             this.getClass().getResource("/similarity_annotations/fake_uberon.obo").getFile()))) {
         
             Set<OWLClass> expectedClasses = new HashSet<OWLClass>(
-                    Arrays.asList(fakeOntology.getOWLClassByIdentifier("UBERON:0000001")));
+                    Arrays.asList(fakeOntology.getOWLClassByIdentifier("ID:1")));
             
             assertEquals(
                 "Incorrect anatomical entities with no transformation_of relations identified", 
@@ -1027,8 +1057,8 @@ public class SimilarityAnnotationTest extends TestAncestor {
         }
         //we should have 2 lines: one header line, and one line with data
         assertEquals("Incorrect number of lines in file", 2, lineCount);
-        Set<String> expectedEntities = new HashSet<String>(Arrays.asList("UBERON:0000001\tuberon 1\t" +
-        		"develops from: UBERON:0000003 uberon 3"));
+        Set<String> expectedEntities = new HashSet<String>(Arrays.asList("ID:1\tuberon 1\t" +
+        		"develops from: ID:3 uberon 3"));
         assertEquals("Incorrect anatomical entities IDs retrieved from generated file", 
                 expectedEntities, retrievedEntities);
     }

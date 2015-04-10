@@ -12,3 +12,42 @@ name: taxon 2
 [Term]
 id: NCBITaxon:3
 name: taxon 3
+
+[Term]
+id: NCBITaxon:2759
+name: Eukaryota
+
+[Term]
+id: NCBITaxon:33208
+name: Metazoa
+is_a: NCBITaxon:2759 ! Eukaryota
+
+[Term]
+id: NCBITaxon:7742
+name: Vertebrata
+is_a: NCBITaxon:7711 ! Chordata
+
+[Term]
+id: NCBITaxon:7776
+name: Gnathostomata
+is_a: NCBITaxon:7742 ! Vertebrata
+
+[Term]
+id: NCBITaxon:7778
+name: Elasmobranchii
+is_a: NCBITaxon:7776 ! Gnathostomata
+
+[Term]
+id: NCBITaxon:32524
+name: Amniota
+is_a: NCBITaxon:7776 ! Gnathostomata
+
+[Term]
+id: NCBITaxon:7711
+name: Chordata
+is_a: NCBITaxon:33213 ! Bilateria
+
+[Term]
+id: NCBITaxon:33213
+name: Bilateria
+is_a: NCBITaxon:33208 ! Metazoa

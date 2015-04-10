@@ -3312,7 +3312,7 @@ public class SimilarityAnnotation {
             newAnnot.setTaxonName(relatedAnnotsEntry.getKey().getTaxonName());
             newAnnot.setEntityIds(relatedAnnotsEntry.getKey().getEntityIds());
             newAnnot.setEntityNames(relatedAnnotsEntry.getKey().getEntityNames());
-            String supportingText = "Annotation aggregating " 
+            String supportingText = "Summary annotation created from " 
                     + relatedAnnotsEntry.getValue().size() + " single-evidence annotation";
             if (relatedAnnotsEntry.getValue().size() > 1) {
                 supportingText += "s";
@@ -3653,7 +3653,7 @@ public class SimilarityAnnotation {
                     boolean firstIteration = true;
                     for (String taxName: orderedTaxNames) {
                         if (firstIteration) {
-                            supportingText += " - ";
+                            supportingText += ", ";
                         }
                         supportingText += taxName;
                         firstIteration = false;

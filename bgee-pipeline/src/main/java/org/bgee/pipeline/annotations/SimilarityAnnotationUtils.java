@@ -192,7 +192,7 @@ public class SimilarityAnnotationUtils {
         public Object execute(Object value, CsvContext context) {
             log.entry(value, context); 
             //this processor accepts null value
-            if (!(value instanceof String)) {
+            if (value!= null && !(value instanceof String)) {
                 throw log.throwing(new SuperCsvCellProcessorException(
                         "A String must be provided, incorrect value: " 
                         + value + " of type " + value.getClass().getSimpleName(), 

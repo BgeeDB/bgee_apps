@@ -185,7 +185,7 @@ public class UtilsTest extends TestAncestor {
         verify(next).execute(expectedValue, mockContext);
         
         try {
-            new Utils.FmtMultipleStringValues().execute(Arrays.asList(), 
+            new Utils.FmtMultipleStringValues().execute(new ArrayList<String>(), 
                     mockContext);
             throw log.throwing(new AssertionError("An exception should have been thrown "
                     + "when using an empty List"));

@@ -2300,7 +2300,7 @@ public class SimilarityAnnotation {
                 
                 List<String> entityIds = sourceAnnot.getEntityIds();
                 Collections.sort(entityIds);
-                supportingTextElements.add(Utils.multipleValuesToString(entityIds));
+                supportingTextElements.add(Utils.formatMultipleValuesToString(entityIds));
             }
             
             //retrieve best CIO statement, to set the confidence in inferred annotation.

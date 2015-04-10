@@ -5,6 +5,7 @@ import static org.mockito.Mockito.*;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -144,5 +145,107 @@ public class UtilsTest extends TestAncestor {
                 Utils.localizeColumn(header, Arrays.asList("noMatch1", "col2")));
         assertEquals("Incorrect column index returned", -1, 
                 Utils.localizeColumn(header, Arrays.asList("noMatch1", "noMatch2")));
+    }
+    
+    /**
+     * Test {@link Utils.FmtMultipleStringValues#execute(Object, CsvContext)}
+     */
+    @Test
+    public void shouldExecuteFmtMultipleStringValues() {
+        CsvContext mockContext = mock(CsvContext.class);  
+        //to test that next processor in the chain is called
+        CellProcessor next = mock(CellProcessor.class);
+        
+        String expectedValue = " abcd  123  " + Utils.VALUE_SEPARATORS.get(0) + " dfgd2" 
+                + Utils.VALUE_SEPARATORS.get(0) + "qwe rty";
+        //The next processor will simply pass the value it received.
+        //Note that if the test fails, the assertEquals will not be able to display 
+        //the "actual" result, because the next CellProcessor would have returned null.
+        when(next.execute(expectedValue, mockContext)).thenReturn(expectedValue);
+        assertEquals("Incorrect separated-value string generated.", 
+                expectedValue, 
+               new Utils.FmtMultipleStringValues(next).execute(
+                       Arrays.asList(" abcd  123  ", " dfgd2", "qwe rty"), mockContext));
+        //verification a bit useless, if the test succeeded this processor has 
+        //to have returned a value
+        verify(next).execute(expectedValue, mockContext);
+        
+        next = mock(CellProcessor.class);
+        expectedValue = " abcd  123  ";
+        //The next processor will simply pass the value it received.
+        //Note that if the test fails, the assertEquals will not be able to display 
+        //the "actual" result, because the next CellProcessor would have returned null.
+        when(next.execute(expectedValue, mockContext)).thenReturn(expectedValue);
+        assertEquals("Incorrect separated-value string generated.", 
+                expectedValue, 
+               new Utils.FmtMultipleStringValues(next).execute(Arrays.asList(" abcd  123  "), 
+                       mockContext));
+        //verification a bit useless, if the test succeeded this processor has 
+        //to have returned a value
+        verify(next).execute(expectedValue, mockContext);
+        
+        try {
+            new Utils.FmtMultipleStringValues().execute(Arrays.asList(), 
+                    mockContext);
+            throw log.throwing(new AssertionError("An exception should have been thrown "
+                    + "when using an empty List"));
+        } catch (Exception e) {
+            //test successful
+        }
+        try {
+            new Utils.FmtMultipleStringValues().execute(Arrays.asList("fsdfdfs", "", "fdfds"), 
+                    mockContext);
+            throw log.throwing(new AssertionError("An exception should have been thrown "
+                    + "when using Blank elements"));
+        } catch (Exception e) {
+            //test successful
+        }
+        try {
+            new Utils.FmtMultipleStringValues().execute(Arrays.asList("fsdfdfs", null, "fdfds"), 
+                    mockContext);
+            throw log.throwing(new AssertionError("An exception should have been thrown "
+                    + "when using Blank elements"));
+        } catch (Exception e) {
+            //test successful
+        }
+
+        try {
+            new Utils.FmtMultipleStringValues().execute(Arrays.asList(1, 2, 3), 
+                    mockContext);
+            throw log.throwing(new AssertionError("An exception should have been thrown "
+                    + "when using non-String elements"));
+        } catch (Exception e) {
+            //test successful
+        }
+    }
+    
+    /**
+     * Test {@link Utils#formatMultipleValuesToString(List)}.
+     */
+    @Test
+    public void shouldFormatMultipleValuesToString() {
+        assertEquals("Incorrect separated-value string generated.", 
+               " abcd  123  " + Utils.VALUE_SEPARATORS.get(0) + " dfgd2" 
+                        + Utils.VALUE_SEPARATORS.get(0) + "qwe rty", 
+               Utils.formatMultipleValuesToString(
+                       Arrays.asList(" abcd  123  ", " dfgd2", "qwe rty")));
+        assertEquals("Incorrect separated-value string generated.", 
+                " abcd  123  ", 
+                Utils.formatMultipleValuesToString(Arrays.asList(" abcd  123  ")));
+        
+        try {
+            Utils.formatMultipleValuesToString(new ArrayList<String>());
+            throw log.throwing(new AssertionError("An exception should have been thrown "
+                    + "when using an empty List"));
+        } catch (Exception e) {
+            //test successful
+        }
+        try {
+            Utils.formatMultipleValuesToString(Arrays.asList("fsdfdfs", null, "fdfds"));
+            throw log.throwing(new AssertionError("An exception should have been thrown "
+                    + "when using Blank elements"));
+        } catch (Exception e) {
+            //test successful
+        }
     }
 }

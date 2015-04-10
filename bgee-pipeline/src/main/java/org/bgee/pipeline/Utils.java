@@ -106,7 +106,7 @@ public class Utils {
             
             try {
                 //passes result to next processor in the chain
-                return log.exit(next.execute(multipleValuesToString(stringList), context));
+                return log.exit(next.execute(formatMultipleValuesToString(stringList), context));
             } catch (IllegalArgumentException e) {
                 //we have already checked that elements in the List were non-null Strings, 
                 //so the only reason why multipleValuesToString would throw an Exception here 
@@ -158,8 +158,7 @@ public class Utils {
      * @throws IllegalArgumentException If {@code values} is {@code null} or empty, 
      *                                  or contains a {@code null} element.
      */
-    //TODO: unit test
-    public static String multipleValuesToString(List<String> values) 
+    public static String formatMultipleValuesToString(List<String> values) 
             throws IllegalArgumentException {
         log.entry(values);
         if (values == null || values.isEmpty()) {

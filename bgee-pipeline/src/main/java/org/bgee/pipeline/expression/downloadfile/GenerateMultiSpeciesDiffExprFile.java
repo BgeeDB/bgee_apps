@@ -1864,6 +1864,18 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         
         // To avoid to store severals times same gene IDs, 
         // we need to know if it's the first iteration
+        //FIXME: actually, all genes of a OMA group might not be retrieved when iterating 
+        //the calls of a multispecies condition: maybe a gene has no data in this condition.
+        //As a consequence, the geneIds and geneNames provided to create 
+        //MultiSpeciesSimpleDiffExprFileBeans can be incomplete, they might not contain 
+        //all genes of the OMA group. It is necessary to handle geneIds and geneNames 
+        //as for complete files.
+        //FIXME: actually, we have no guarantee to retrieve all genes of a OMA group 
+        //simply by iterating expression calls, some genes can have no data... 
+        //genes member of the relevant OMA group must be provided as argument of this method.
+        //FIXME: this method is supposed to use calls from a single OMA group? 
+        //then this method should use the mapping geneId -> OMA group ID, to ensure 
+        //that only one OMA group ID is seen over all the calls iterated.
         boolean firstCondition = true;
         for (Entry<MultiSpeciesCondition, Collection<DiffExpressionCallTO>> entry : 
             callsGroupByCondition.entrySet()) {
@@ -2020,7 +2032,6 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             // as for the complete file.
             MultiSpeciesSimpleDiffExprFileBean simpleBean = null; 
             if (cioStatementByIds.get(cioId).isTrusted() &&
-                    totalOver + totalUnder >= 1 && 
                     speciesIdsWithDataForSimple.size() >= 2) {
                 simpleBean = new MultiSpeciesSimpleDiffExprFileBean(
                         omaNodeId, this.getOmaNodeDescription(omaNodeId), 

@@ -318,6 +318,9 @@ public interface GenerateMultiSpeciesDownloadFile {
      * @version Bgee 13 Apr. 2015
      * @since   Bgee 13
      */
+    //FIXME: actually, geneIds and geneNames are not used anymore, the geneIds and geneNames 
+    //should be provided in simple files are they are in complete files, see fixme 
+    //in GenerateMultiSpeciesDiffExprFile.filterAndWriteOMANodeRows 
     public static abstract class MultiSpeciesSimpleFileBean extends MultiSpeciesFileBean {
 
         /**

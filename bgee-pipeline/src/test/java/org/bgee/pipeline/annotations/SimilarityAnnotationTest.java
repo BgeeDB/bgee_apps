@@ -1201,6 +1201,37 @@ public class SimilarityAnnotationTest extends TestAncestor {
         }
         annots.remove(incorrectAnnot);
     
+        //missing date for non-automatic assertion
+        incorrectAnnot = new RawAnnotationBean("HOM:0000007", "historical homology", 
+                Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                2759, "Eukaryota", false, "ECO:0000033", 
+                "traceable author statement", 
+                "CIO:0000003", "high confidence from single evidence", 
+                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1 change for no duplicate", "bgee", "ANN", null);
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for a missing Date for non-automatic assertion"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
+        //but if it was for an automatic annotation, it is fine
+        incorrectAnnot = new RawAnnotationBean("HOM:0000007", "historical homology", 
+                Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                2759, "Eukaryota", false, "ECO:0000501", 
+                "evidence used in automatic assertion", 
+                "CIO:0000003", "high confidence from single evidence", 
+                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1 change for no duplicate", "bgee", "ANN", null);
+        annots.add(incorrectAnnot);
+        //everything should be fine
+        simAnnot.checkAnnotations(annots);
+        annots.remove(incorrectAnnot);
+    
         //entity IDs incorrectly ordered
         incorrectAnnot = new RawAnnotationBean("HOM:0000007", "historical homology", 
                 Arrays.asList("UBERON:0000001", "CL:0000037", "UBERON:0000007"), 
@@ -1600,6 +1631,309 @@ public class SimilarityAnnotationTest extends TestAncestor {
         //last verification, to check that the SimilarityAnnotation object is still 
         //in a correct state.
         simAnnot.checkAnnotations(annots);
+    }
+    
+    /**
+     * Test {@link SimilarityAnnotation#generateInferredAnnotations(Collection)}.
+     */
+    @Test
+    public void shouldGenerateInferredAnnotations() throws ParseException, 
+        OBOFormatParserException, FileNotFoundException, OWLOntologyCreationException, 
+        IOException {
+        SimilarityAnnotation simAnnot = new SimilarityAnnotation(null, null, 
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/fake_uberon.obo").getFile(), 
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/fake_taxonomy.obo").getFile(), 
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/homology_ontology.obo").getFile(), 
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/fake_eco.obo").getFile(), 
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/cio-simple.obo").getFile());
+        
+        //annotations that will be propagated through transformation_of relations
+        SimpleDateFormat sdf = new SimpleDateFormat(SimilarityAnnotationUtils.DATE_FORMAT);
+        List<CuratorAnnotationBean> annots = new ArrayList<CuratorAnnotationBean>(Arrays.asList(
+                new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:6"), 
+                        2759, false, "ECO:0000033", "CIO:0000003", 
+                        "DOI:10.1073/pnas.032658599", "ref title 1", 
+                        "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")), 
+                new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:6"), 
+                        7742, false, "ECO:0000205", "CIO:0000004", 
+                        "DOI:10.1073/pnas.032658599", "ref title 1", 
+                        "supporting text 2", "bgee", "ANN", sdf.parse("2013-06-22")), 
+                new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:6"), 
+                        7742, true, "ECO:0000067", "CIO:0000005", 
+                        "DOI:10.1073/pnas.032658599", "ref title 1", 
+                        "supporting text 3", "bgee", "ANN", sdf.parse("2013-06-23")), 
+                new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:4"), 
+                        7742, false, "ECO:0000067", "CIO:0000003", 
+                        "DOI:10.1073/pnas.032658599", "ref title 1", 
+                        "supporting text 3", "bgee", "ANN", sdf.parse("2013-06-23"))));
+        
+        //annotations that will be propagated through logical constraints.
+        
+        //here, annotations that will be used over parent-child taxa, and same taxon
+        //vertebrata
+        annots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:9"), 
+                7742, false, "ECO:0000033", "CIO:0000003", 
+                        "DOI:10.1073/pnas.032658599", "ref title 1", 
+                        "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")));
+        //only the highest level of confidence should be kept
+        annots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:9"), 
+                7742, false, "ECO:0000033", "CIO:0000004", 
+                        "DOI:10.1073/pnas.0326585990", "ref title 10", 
+                        "supporting text 1 whatever", "bgee", "ANN", sdf.parse("2013-06-21")));
+        //metazoa
+        annots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:9"), 
+                33208, false, "ECO:0000033", "CIO:0000003", 
+                        "DOI:10.1073/pnas.032658599", "ref title 1", 
+                        "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")));
+        annots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:10"), 
+                33208, false, "ECO:0000033", "CIO:0000005", 
+                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")));
+        
+        //here, annotations to unrelated taxa, annotations will not be propagated
+        annots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:18"), 
+                7778, false, "ECO:0000033", "CIO:0000003", 
+                        "DOI:10.1073/pnas.032658599", "ref title 1", 
+                        "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")));
+        annots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:19"), 
+                32524, false, "ECO:0000033", "CIO:0000003", 
+                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")));
+        
+        //here, annotation positive AND negative for a given taxon level (32524, amniota), 
+        //negative at higher taxon level (7742, vertebrata and 7776, Gnathostomata). 
+        //For each intersecting class, 
+        //the best confidence should be kept; but for positive annotations, the lowest 
+        //confidence over the best confidences of intersecting classes will be kept; 
+        //for negative annots, it is simply the best over all negative annots.
+        
+        //amniota
+        annots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:21"), 
+                32524, false, "ECO:0000033", "CIO:0000003", 
+                        "DOI:10.1073/pnas.032658599", "ref title 1", 
+                        "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")));
+        //lower confidence, will not be taken into account
+        annots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:21"), 
+                32524, false, "ECO:0000033", "CIO:0000005", 
+                        "DOI:10.1073/pnas.032658599111", "ref title 1111", 
+                        "supporting text 1 whatever10", "bgee", "ANN", sdf.parse("2013-06-21")));
+        annots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:21"), 
+                32524, true, "ECO:0000033", "CIO:0000004", 
+                        "DOI:10.1073/pnas.032658599", "ref title 1", 
+                        "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")));
+        //lower confidence, will not be taken into account
+        annots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:21"), 
+                32524, true, "ECO:0000033", "CIO:0000005", 
+                        "DOI:10.1073/pnas.03265859942342", "ref title 143432", 
+                        "supporting text 1 whatever432432", "bgee", "ANN", sdf.parse("2013-06-21")));
+        //chordata
+        annots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:21"), 
+                7711, true, "ECO:0000033", "CIO:0000004", 
+                        "DOI:10.1073/pnas.032658599", "ref title 1", 
+                        "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")));
+        //Gnathostomata
+        annots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:22"), 
+                7776, false, "ECO:0000033", "CIO:0000004", 
+                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")));
+        //lower confidence, will not be taken into account
+        annots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:22"), 
+                7776, false, "ECO:0000033", "CIO:0000005", 
+                "DOI:10.1073/pnas.032658599654565", "ref title 1656546546", 
+                "supporting text 1 whatever9890", "bgee", "ANN", sdf.parse("2013-06-21")));
+        //Vertebrata
+        annots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:22"), 
+                7742, true, "ECO:0000033", "CIO:0000003", 
+                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")));
+        
+        //negative annotations to related taxa
+        //Gnathostomata
+        annots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:24"), 
+                7776, true, "ECO:0000033", "CIO:0000003", 
+                        "DOI:10.1073/pnas.032658599", "ref title 1", 
+                        "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")));
+        //Vertebrata
+        annots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:25"), 
+                7742, true, "ECO:0000033", "CIO:0000004", 
+                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")));
+        
+        //annotations that will allow to link more than 1 anatomical entity 
+        //(e.g., if skin is homologous, and limb is homologous to fin, 
+        //then skin of limb is homologous to skin of fin
+        //Vertebrata
+        annots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:11", "ID:12"), 
+                7742, false, "ECO:0000033", "CIO:0000004", 
+                        "DOI:10.1073/pnas.032658599", "ref title 1", 
+                        "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")));
+        annots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:13"), 
+                7742, false, "ECO:0000033", "CIO:0000003", 
+                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")));
+        annots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:14", "ID:15"), 
+                7742, false, "ECO:0000033", "CIO:0000003", 
+                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")));
+        //also, this annotation to more recent taxon does not link multiple entities, 
+        //it will be valid for only one of them.
+        //Gnathostomata
+        annots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:11"), 
+                7776, false, "ECO:0000033", "CIO:0000003", 
+                        "DOI:10.1073/pnas.032658599", "ref title 1", 
+                        "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")));
+        
+        
+        Set<CuratorAnnotationBean> expectedAnnots = new HashSet<CuratorAnnotationBean>();
+        
+        //annots inferred from tranformation_of
+        String tranfOfSupportTextStart = "Annotation inferred from transformation_of relations "
+                + "using annotations to same HOM ID, same NCBI taxon ID, "
+                + "same qualifier, and Entity IDs equal to: ";
+        
+        expectedAnnots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:5"), 
+                2759, false, SimilarityAnnotation.AUTOMATIC_ASSERTION_ECO, "CIO:0000003", 
+                null, null, tranfOfSupportTextStart + "ID:6", 
+                SimilarityAnnotation.AUTOMATIC_ASSIGNED_BY, null, null));
+        expectedAnnots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:7"), 
+                2759, false, SimilarityAnnotation.AUTOMATIC_ASSERTION_ECO, "CIO:0000003", 
+                null, null, tranfOfSupportTextStart + "ID:6", 
+                SimilarityAnnotation.AUTOMATIC_ASSIGNED_BY, null, null));
+        expectedAnnots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:8"), 
+                2759, false, SimilarityAnnotation.AUTOMATIC_ASSERTION_ECO, "CIO:0000003", 
+                null, null, tranfOfSupportTextStart + "ID:6", 
+                SimilarityAnnotation.AUTOMATIC_ASSIGNED_BY, null, null));
+        
+        expectedAnnots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:5"), 
+                7742, true, SimilarityAnnotation.AUTOMATIC_ASSERTION_ECO, "CIO:0000005", 
+                null, null, tranfOfSupportTextStart + "ID:6", 
+                SimilarityAnnotation.AUTOMATIC_ASSIGNED_BY, null, null));
+        expectedAnnots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:7"), 
+                7742, true, SimilarityAnnotation.AUTOMATIC_ASSERTION_ECO, "CIO:0000005", 
+                null, null, tranfOfSupportTextStart + "ID:6", 
+                SimilarityAnnotation.AUTOMATIC_ASSIGNED_BY, null, null));
+        expectedAnnots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:8"), 
+                7742, true, SimilarityAnnotation.AUTOMATIC_ASSERTION_ECO, "CIO:0000005", 
+                null, null, tranfOfSupportTextStart + "ID:6", 
+                SimilarityAnnotation.AUTOMATIC_ASSIGNED_BY, null, null));
+        
+        expectedAnnots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:5"), 
+                7742, false, SimilarityAnnotation.AUTOMATIC_ASSERTION_ECO, "CIO:0000003", 
+                null, null, tranfOfSupportTextStart + "ID:4 - ID:6", 
+                SimilarityAnnotation.AUTOMATIC_ASSIGNED_BY, null, null));
+        expectedAnnots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:7"), 
+                7742, false, SimilarityAnnotation.AUTOMATIC_ASSERTION_ECO, "CIO:0000004", 
+                null, null, tranfOfSupportTextStart + "ID:6", 
+                SimilarityAnnotation.AUTOMATIC_ASSIGNED_BY, null, null));
+        expectedAnnots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:8"), 
+                7742, false, SimilarityAnnotation.AUTOMATIC_ASSERTION_ECO, "CIO:0000004", 
+                null, null, tranfOfSupportTextStart + "ID:6", 
+                SimilarityAnnotation.AUTOMATIC_ASSIGNED_BY, null, null));
+        
+        //annotations inferred from logical constraints
+        String constraintsSupportTextStart = "Annotation inferred from logical constraints "
+                + "using annotations to same HOM ID and: ";
+        
+        expectedAnnots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:8"), 
+                7742, false, SimilarityAnnotation.AUTOMATIC_ASSERTION_ECO, "CIO:0000005", 
+                null, null, 
+                constraintsSupportTextStart 
+                + SimilarityAnnotationUtils.ENTITY_COL_NAME 
+                + ": ID:10, negated: false, taxon ID: 33208"
+                + " - " + SimilarityAnnotationUtils.ENTITY_COL_NAME 
+                + ": ID:9, negated: false, taxon ID: 7742", 
+                SimilarityAnnotation.AUTOMATIC_ASSIGNED_BY, null, null));
+        expectedAnnots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:8"), 
+                33208, false, SimilarityAnnotation.AUTOMATIC_ASSERTION_ECO, "CIO:0000005", 
+                null, null, 
+                constraintsSupportTextStart 
+                + SimilarityAnnotationUtils.ENTITY_COL_NAME 
+                + ": ID:10, negated: false, taxon ID: 33208"
+                + " - " + SimilarityAnnotationUtils.ENTITY_COL_NAME 
+                + ": ID:9, negated: false, taxon ID: 33208", 
+                SimilarityAnnotation.AUTOMATIC_ASSIGNED_BY, null, null));
+
+        expectedAnnots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:23"), 
+                32524, false, SimilarityAnnotation.AUTOMATIC_ASSERTION_ECO, "CIO:0000004", 
+                null, null, 
+                constraintsSupportTextStart 
+                + SimilarityAnnotationUtils.ENTITY_COL_NAME 
+                    + ": ID:21, negated: false, taxon ID: 32524"
+                + " - " + SimilarityAnnotationUtils.ENTITY_COL_NAME 
+                    + ": ID:22, negated: false, taxon ID: 7776", 
+                SimilarityAnnotation.AUTOMATIC_ASSIGNED_BY, null, null));
+        expectedAnnots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:23"), 
+                32524, true, SimilarityAnnotation.AUTOMATIC_ASSERTION_ECO, "CIO:0000004", 
+                null, null, 
+                constraintsSupportTextStart 
+                + SimilarityAnnotationUtils.ENTITY_COL_NAME 
+                    + ": ID:21, negated: true, taxon ID: 32524"
+                + " - " + SimilarityAnnotationUtils.ENTITY_COL_NAME 
+                    + ": ID:22, negated: false, taxon ID: 7776", 
+                SimilarityAnnotation.AUTOMATIC_ASSIGNED_BY, null, null));
+        expectedAnnots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:23"), 
+                7742, true, SimilarityAnnotation.AUTOMATIC_ASSERTION_ECO, "CIO:0000003", 
+                null, null, 
+                constraintsSupportTextStart 
+                + SimilarityAnnotationUtils.ENTITY_COL_NAME 
+                    + ": ID:21, negated: true, taxon ID: 7711"
+                + " - " + SimilarityAnnotationUtils.ENTITY_COL_NAME 
+                    + ": ID:22, negated: true, taxon ID: 7742", 
+                SimilarityAnnotation.AUTOMATIC_ASSIGNED_BY, null, null));
+        expectedAnnots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:23"), 
+                7776, true, SimilarityAnnotation.AUTOMATIC_ASSERTION_ECO, "CIO:0000004", 
+                null, null, 
+                constraintsSupportTextStart 
+                + SimilarityAnnotationUtils.ENTITY_COL_NAME 
+                    + ": ID:21, negated: true, taxon ID: 7711"
+                + " - " + SimilarityAnnotationUtils.ENTITY_COL_NAME 
+                    + ": ID:22, negated: false, taxon ID: 7776", 
+                SimilarityAnnotation.AUTOMATIC_ASSIGNED_BY, null, null));
+
+        expectedAnnots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:26"), 
+                7776, true, SimilarityAnnotation.AUTOMATIC_ASSERTION_ECO, "CIO:0000003", 
+                null, null, 
+                constraintsSupportTextStart 
+                + SimilarityAnnotationUtils.ENTITY_COL_NAME 
+                    + ": ID:24, negated: true, taxon ID: 7776"
+                + " - " + SimilarityAnnotationUtils.ENTITY_COL_NAME 
+                    + ": ID:25, negated: true, taxon ID: 7742", 
+                SimilarityAnnotation.AUTOMATIC_ASSIGNED_BY, null, null));
+
+
+        expectedAnnots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:16", "ID:17"), 
+                7742, false, SimilarityAnnotation.AUTOMATIC_ASSERTION_ECO, "CIO:0000004", 
+                null, null, 
+                constraintsSupportTextStart 
+                + SimilarityAnnotationUtils.ENTITY_COL_NAME 
+                    + ": ID:11" + Utils.VALUE_SEPARATORS.get(0) + "ID:12, "
+                            + "negated: false, taxon ID: 7742"
+                + " - " + SimilarityAnnotationUtils.ENTITY_COL_NAME 
+                    + ": ID:13, negated: false, taxon ID: 7742"
+                + " - " + SimilarityAnnotationUtils.ENTITY_COL_NAME 
+                    + ": ID:14" + Utils.VALUE_SEPARATORS.get(0) + "ID:15, "
+                            + "negated: false, taxon ID: 7742", 
+                SimilarityAnnotation.AUTOMATIC_ASSIGNED_BY, null, null));
+        expectedAnnots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:16"), 
+                7776, false, SimilarityAnnotation.AUTOMATIC_ASSERTION_ECO, "CIO:0000003", 
+                null, null, 
+                constraintsSupportTextStart 
+                + SimilarityAnnotationUtils.ENTITY_COL_NAME 
+                    + ": ID:11, negated: false, taxon ID: 7776"
+                + " - " + SimilarityAnnotationUtils.ENTITY_COL_NAME 
+                    + ": ID:13, negated: false, taxon ID: 7742"
+                + " - " + SimilarityAnnotationUtils.ENTITY_COL_NAME 
+                    + ": ID:14" + Utils.VALUE_SEPARATORS.get(0) + "ID:15, "
+                            + "negated: false, taxon ID: 7742", 
+                SimilarityAnnotation.AUTOMATIC_ASSIGNED_BY, null, null));
+        
+        assertEquals("Incorrect annotations inferred", expectedAnnots, 
+                simAnnot.generateInferredAnnotations(annots));
     }
     
     /**

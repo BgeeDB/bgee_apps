@@ -52,6 +52,116 @@ name: mesoderm
 id: UBERON:0001245
 name: anus
 
+[Term]
+id: ID:4
+name: uberon 4
+
+[Term]
+id: ID:5
+name: uberon 5
+relationship: immediate_transformation_of ID:4 ! uberon 4
+
+[Term]
+id: ID:6
+name: uberon 6
+relationship: transformation_of ID:5 ! uberon 5
+
+[Term]
+id: ID:7
+name: uberon 7
+relationship: immediate_transformation_of ID:6 ! uberon 6
+
+[Term]
+id: ID:9
+name: uberon 9
+
+[Term]
+id: ID:10
+name: uberon 10
+
+[Term]
+id: ID:8
+name: uberon 8
+intersection_of: ID:9
+intersection_of: RO:0002202 ID:10
+relationship: transformation_of ID:7 ! uberon 7
+
+[Term]
+id: ID:11
+name: uberon 11
+
+[Term]
+id: ID:12
+name: uberon 12
+
+[Term]
+id: ID:13
+name: uberon 13
+
+[Term]
+id: ID:14
+name: uberon 14
+
+[Term]
+id: ID:15
+name: uberon 15
+
+[Term]
+id: ID:16
+name: uberon 16
+intersection_of: RO:0002324 ID:11
+intersection_of: RO:0002202 ID:13
+intersection_of: ID:14
+
+[Term]
+id: ID:17
+name: uberon 17
+intersection_of: ID:12
+intersection_of: ID:13
+intersection_of: RO:0002202 ID:15
+
+[Term]
+id: ID:18
+name: uberon 18
+
+[Term]
+id: ID:19
+name: uberon 19
+
+[Term]
+id: ID:20
+name: uberon 20
+intersection_of: ID:18
+intersection_of: ID:19
+
+[Term]
+id: ID:21
+name: uberon 21
+
+[Term]
+id: ID:22
+name: uberon 22
+
+[Term]
+id: ID:23
+name: uberon 23
+intersection_of: ID:21
+intersection_of: ID:22
+
+[Term]
+id: ID:24
+name: uberon 24
+
+[Term]
+id: ID:25
+name: uberon 25
+
+[Term]
+id: ID:26
+name: uberon 26
+intersection_of: ID:24
+intersection_of: ID:25
+
 [Typedef]
 id: RO:0002324
 name: developmentally related to

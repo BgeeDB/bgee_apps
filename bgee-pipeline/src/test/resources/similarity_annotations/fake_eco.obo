@@ -128,3 +128,32 @@ def: "An evidence type that is based on comparing likeness of distinct biologica
 synonym: "inferred from similarity" RELATED []
 synonym: "IS" EXACT []
 is_a: ECO:0000000 ! evidence
+
+[Term]
+id: ECO:0000501
+name: evidence used in automatic assertion
+def: "A type of evidence that is used in an automatic assertion." [ECO:cjm]
+synonym: "IEA" EXACT [GOECO:IEA]
+synonym: "inferred from electronic annotation" EXACT [GOECO:IEA]
+xref: GO_REF:0000004 "Gene Ontology annotation based on Swiss-Prot keyword mapping."
+xref: GO_REF:0000023 "Gene Ontology annotation based on Swiss-Prot Subcellular Location vocabulary mapping."
+xref: GOECO:IEA "inferred from electronic annotation"
+is_a: ECO:0000000 ! evidence
+created_by: cjm
+
+[Term]
+id: ECO:0000313
+name: imported information used in automatic assertion
+def: "A type of imported information that is used in an automatic assertion." [ECO:MCC]
+is_a: ECO:0000311 ! imported information
+is_a: ECO:0000501 {is_inferred="true"} ! evidence used in automatic assertion
+created_by: mchibucos
+creation_date: 2011-03-02T05:33:43Z
+
+[Term]
+id: ECO:0000311
+name: imported information
+def: "An evidence type that is based on work performed by a person or group prior to a use by different person or group." [ECO:MCC]
+is_a: ECO:0000000 ! evidence
+created_by: mchibucos
+creation_date: 2011-03-02T05:24:13Z

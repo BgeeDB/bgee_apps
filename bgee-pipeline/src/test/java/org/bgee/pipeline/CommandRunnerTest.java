@@ -36,6 +36,18 @@ public class CommandRunnerTest extends TestAncestor {
     protected Logger getLogger() {
         return log;
     }
+    
+    /**
+     * Test {@link CommandRunner#parseArgument(String)}
+     */
+    @Test
+    public void shouldParseArgument() {
+        assertEquals("Incorrect argument parsing", "abc", CommandRunner.parseArgument("abc"));
+        assertEquals("Incorrect argument parsing", "", CommandRunner.parseArgument(""));
+        assertEquals("Incorrect argument parsing", null, CommandRunner.parseArgument(null));
+        assertEquals("Incorrect argument parsing", null, CommandRunner.parseArgument(
+                CommandRunner.EMPTY_ARG));
+    }
 
     /**
      * Test method {@link CommandRunner#parseListArgument(String)}.

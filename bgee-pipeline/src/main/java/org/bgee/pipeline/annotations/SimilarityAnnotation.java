@@ -1776,11 +1776,6 @@ public class SimilarityAnnotation {
                 this.incorrectFormat.add(annot);
                 allGood = false;
             }
-            if (((RawAnnotationBean) annot).getCurationDate() == null) {
-                log.error("Missing date at line {}", lineNumber);
-                this.incorrectFormat.add(annot);
-                allGood = false;
-            }
             if (StringUtils.isBlank(((RawAnnotationBean) annot).getAssignedBy())) {
                 log.error("Missing assigned by info at line {}", lineNumber);
                 this.incorrectFormat.add(annot);
@@ -1790,7 +1785,12 @@ public class SimilarityAnnotation {
             //these fields are not mandatory in case of automatic annotations
             if (!AUTOMATIC_IMPORT_ECO.equals(((RawAnnotationBean) annot).getEcoId()) && 
                 !AUTOMATIC_ASSERTION_ECO.equals(((RawAnnotationBean) annot).getEcoId())) {
-                
+
+                if (((RawAnnotationBean) annot).getCurationDate() == null) {
+                    log.error("Missing date at line {}", lineNumber);
+                    this.incorrectFormat.add(annot);
+                    allGood = false;
+                }
                 if (StringUtils.isBlank(((RawAnnotationBean) annot).getCurator())) {
                     log.error("Missing curator info at line {}", lineNumber);
                     this.incorrectFormat.add(annot);
@@ -1819,20 +1819,6 @@ public class SimilarityAnnotation {
                 this.incorrectFormat.add(annot);
                 allGood = false;
             }
-            
-            if (((RawAnnotationBean) annot).getCurationDate() == null) {
-                log.error("Missing curation date at line {}", lineNumber);
-                this.incorrectFormat.add(annot);
-                allGood = false;
-            }
-        }
-        
-        //if it is an annotation from curator, the date is not mandatory for 
-        //unreviewed imported information, but we log a warning nevertheless.
-        if (annot.getClass().equals(CuratorAnnotationBean.class) && 
-                ((CuratorAnnotationBean) annot).getCurationDate() == null) {
-            log.warn("Missing date in curator annotation at line {}, it's OK if it is an unreviewed annotation: {}", 
-                    lineNumber, annot);
         }
         
         
@@ -2410,13 +2396,21 @@ public class SimilarityAnnotation {
         Map<CuratorAnnotationBean, Set<CuratorAnnotationBean>> inferredAnnots = 
                 new HashMap<CuratorAnnotationBean, Set<CuratorAnnotationBean>>();
         for (CuratorAnnotationBean annot: filteredAnnots) {
+            log.trace("Inferring annotations from transformation_of relations from annotation: {}", 
+                    annot);
             //infer from transformation_of outgoing edges
             Set<CuratorAnnotationBean> newAnnots = 
                     this.createInferredAnnotationsFromTransformationOf(
                             annot, true, existingAnnots, transfOfRels);
+            log.trace("Annotations inferred from outgoing transformation_of relations: {}", 
+                    newAnnots);
+            Set<CuratorAnnotationBean> incomingEdgeAnnots = 
+                    this.createInferredAnnotationsFromTransformationOf(
+                    annot, false, existingAnnots, transfOfRels);
+            log.trace("Annotations inferred from incoming transformation_of relations: {}", 
+                    incomingEdgeAnnots);
             //infer from transformation_of incoming edges
-            newAnnots.addAll(this.createInferredAnnotationsFromTransformationOf(
-                    annot, false, existingAnnots, transfOfRels));
+            newAnnots.addAll(incomingEdgeAnnots);
             //store association to original annot
             for (CuratorAnnotationBean newAnnot: newAnnots) {
                 Set<CuratorAnnotationBean> sourceAnnots = inferredAnnots.get(newAnnot);
@@ -2431,6 +2425,7 @@ public class SimilarityAnnotation {
         //Determine confidence level and supporting text of new annotations
         for (Entry<CuratorAnnotationBean, Set<CuratorAnnotationBean>> inferredAnnot: 
             inferredAnnots.entrySet()) {
+            log.trace("Inferred annot and source annots: {}", inferredAnnot);
             
             //retrieve from source annotations CIO statements and information about Entity IDs.
             Set<OWLClass> cioStatements = new HashSet<OWLClass>();
@@ -2442,7 +2437,9 @@ public class SimilarityAnnotation {
                 
                 List<String> entityIds = sourceAnnot.getEntityIds();
                 Collections.sort(entityIds);
-                supportingTextElements.add(Utils.formatMultipleValuesToString(entityIds));
+                String supportingTextElement = Utils.formatMultipleValuesToString(entityIds);
+                log.trace("Adding supporting text element: {}", supportingTextElement);
+                supportingTextElements.add(supportingTextElement);
             }
             
             //retrieve best CIO statement, to set the confidence in inferred annotation.
@@ -2452,10 +2449,10 @@ public class SimilarityAnnotation {
             //generate supporting text providing information about the source annotations.
             String supportingText = "Annotation inferred from transformation_of relations "
                     + "using annotations to same HOM ID, "
-                    + "same NCBI taxon ID, and Entity IDs equal to: ";
+                    + "same NCBI taxon ID, same qualifier, and Entity IDs equal to: ";
             boolean firstIteration = true;
             for (String supportingTextElement: supportingTextElements) {
-                if (firstIteration) {
+                if (!firstIteration) {
                     supportingText += " - ";
                 }
                 supportingText += supportingTextElement;
@@ -2466,7 +2463,8 @@ public class SimilarityAnnotation {
         
         log.info("Done inferring annotations based on transformation_of relations, {} annotations inferred.", 
                 inferredAnnots.size());
-        return log.exit(inferredAnnots.keySet());
+        //the keyset is unmodifiable, wrap it into a new HashSet
+        return log.exit(new HashSet<CuratorAnnotationBean>(inferredAnnots.keySet()));
     }
     
     /**
@@ -2627,7 +2625,7 @@ public class SimilarityAnnotation {
             inferredAnnot.setNegated(annotToInfer.isNegated());
             inferredAnnot.setEcoId(AUTOMATIC_ASSERTION_ECO);
             inferredAnnot.setAssignedBy(AUTOMATIC_ASSIGNED_BY);
-            inferredAnnot.setCurationDate(new Date());
+            inferredAnnot.setCurationDate(null);
             
             inferredAnnots.add(inferredAnnot);
             
@@ -2794,7 +2792,7 @@ public class SimilarityAnnotation {
                 baseInferredAnnot.setNcbiTaxonId(taxId);
                 baseInferredAnnot.setEcoId(AUTOMATIC_ASSERTION_ECO);
                 baseInferredAnnot.setAssignedBy(AUTOMATIC_ASSIGNED_BY);
-                baseInferredAnnot.setCurationDate(new Date());
+                baseInferredAnnot.setCurationDate(null);
                 
                 for (Entry<Set<String>, Set<Set<CuratorAnnotationBean>>> mapping: 
                     entityIdsToAnnotsPerIntersectClass.entrySet()) {
@@ -3245,12 +3243,12 @@ public class SimilarityAnnotation {
             //to determine supporting text
             Set<CuratorAnnotationBean> annotationsUsed = new HashSet<CuratorAnnotationBean>();
             //to determine negation status
-            boolean ispositiveTested = false;
+            boolean isPositiveTested = false;
             
             if (!positiveTested) {
                 log.trace("Trying to create inferred positive annotation");
                 positiveTested = true;
-                ispositiveTested = true;
+                isPositiveTested = true;
                 
                 for (Set<CuratorAnnotationBean> relatedAnnots: annotsPerIntersectClass) {
                     Set<OWLClass> confs = new HashSet<OWLClass>();
@@ -3319,12 +3317,12 @@ public class SimilarityAnnotation {
                         bestConfsPerIntersectClass, annotationsUsed);
                 
                 CuratorAnnotationBean newAnnot = new CuratorAnnotationBean();
-                newAnnot.setNegated(ispositiveTested);
+                newAnnot.setNegated(!isPositiveTested);
                 
                 //for positive annotation, we determine the lowest confidence level 
                 //among the best confidences of the intersect classes; for negative annotation, 
                 //we take the best confidence level from supporting negative annotations
-                if (ispositiveTested) {
+                if (isPositiveTested) {
                     newAnnot.setCioId(cioWrapper.getOWLGraphWrapper().getIdentifier(
                         cioWrapper.getLowestTermWithConfidenceLevel(bestConfsPerIntersectClass)));
                 } else {
@@ -3343,15 +3341,8 @@ public class SimilarityAnnotation {
                 for (CuratorAnnotationBean annot: sortedAnnots) {
                     List<String> entityIds = new ArrayList<String>(annot.getEntityIds());
                     Collections.sort(entityIds);
-                    String textElement = SimilarityAnnotationUtils.ENTITY_COL_NAME + ": ";
-                    boolean firstIteration = true;
-                    for (String entityId: entityIds) {
-                        if (!firstIteration) {
-                            textElement += Utils.VALUE_SEPARATORS.get(0);
-                        }
-                        textElement += entityId;
-                        firstIteration = false;
-                    }
+                    String textElement = SimilarityAnnotationUtils.ENTITY_COL_NAME + ": " 
+                            + Utils.formatMultipleValuesToString(entityIds);
                     textElement += ", negated: " + annot.isNegated();
                     textElement += ", taxon ID: " + annot.getNcbiTaxonId();
                     

@@ -1474,13 +1474,13 @@ public class SimilarityAnnotationUtils {
             if (o1.getEntityIds() != null) {
                 List<String> elementIds = new ArrayList<String>(o1.getEntityIds());
                 Collections.sort(elementIds);
-                elementId1 = elementIds.toString();
+                elementId1 = Utils.formatMultipleValuesToString(elementIds);
             }
             String elementId2 = "";
             if (o2.getEntityIds() != null) {
                 List<String> elementIds = new ArrayList<String>(o2.getEntityIds());
                 Collections.sort(elementIds);
-                elementId2 = elementIds.toString();
+                elementId2 = Utils.formatMultipleValuesToString(elementIds);
             }
             comp = elementId1.compareTo(elementId2);
             if (comp != 0) {

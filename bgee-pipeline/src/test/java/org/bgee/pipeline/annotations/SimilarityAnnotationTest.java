@@ -327,134 +327,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
 //        assertEquals(expectedAnnots, annotations);
 //    }
 //    
-//    /**
-//     * Test {@link SimilarityAnnotation#checkAnnotation(Map, Map, Set, OWLGraphWrapper, 
-//     * OWLGraphWrapper, OWLGraphWrapper} and {@link SimilarityAnnotation#verifyErrors()}.
-//     */
-//    @Test
-//    public void shouldCheckAnnotation() throws NoSuchMethodException, 
-//        SecurityException, IllegalAccessException, IllegalArgumentException, 
-//        InvocationTargetException, OWLOntologyCreationException, 
-//        UnknownOWLOntologyException, OBOFormatParserException, IOException {
-//        SimilarityAnnotation sim = new SimilarityAnnotation();
-//        Method methodCheck = sim.getClass().getDeclaredMethod("checkAnnotation", 
-//                Map.class, Map.class, Set.class, OWLGraphWrapper.class, 
-//                OWLGraphWrapper.class, OWLGraphWrapper.class);
-//        methodCheck.setAccessible(true);
-//        Method methodVerify = sim.getClass().getDeclaredMethod("verifyErrors");
-//        methodVerify.setAccessible(true);
-//        
-//        OWLGraphWrapper ecoOntWrapper = new OWLGraphWrapper(OntologyUtils.loadOntology(
-//                this.getClass().getResource("/similarity_annotations/eco.obo").getPath()));
-//        OWLGraphWrapper homOntWrapper = new OWLGraphWrapper(OntologyUtils.loadOntology(
-//                this.getClass().getResource("/similarity_annotations/homology_ontology.obo").getPath()));
-//        OWLGraphWrapper confOntWrapper = new OWLGraphWrapper(OntologyUtils.loadOntology(
-//                this.getClass().getResource("/similarity_annotations/conf_information.obo").getPath()));
-//        
-//        Map<String, Set<Integer>> taxonConstraints = new HashMap<String, Set<Integer>>();
-//        taxonConstraints.put("UBERON:1", new HashSet<Integer>(Arrays.asList(1, 2, 3)));
-//        taxonConstraints.put("UBERON:2", new HashSet<Integer>(Arrays.asList(1, 3)));
-//        Set<Integer> taxonIds = new HashSet<Integer>(Arrays.asList(1, 2, 3));
-//        
-//        //first, check that when everything is fine, nothing happens
-//        Map<String, Object> annot = new HashMap<String, Object>();
-//        annot.put(SimilarityAnnotation.ENTITY_COL_NAME, "UBERON:1");
-//        annot.put(SimilarityAnnotation.TAXON_COL_NAME, 1);
-//        annot.put(SimilarityAnnotation.REF_COL_NAME, "PMID:1");
-//        //annot.put(SimilarityAnnotation.ECO_COL_NAME, "ECO:0000067");
-//        annot.put(SimilarityAnnotation.HOM_COL_NAME, "HOM:0000007");
-//        annot.put(SimilarityAnnotation.CONF_COL_NAME, "CONF:0000003");
-//        methodCheck.invoke(sim, annot, taxonConstraints, taxonIds, ecoOntWrapper, 
-//                homOntWrapper, confOntWrapper);
-//        methodVerify.invoke(sim);
-//        
-//        //now, check that the verifyErrors method will spot potential problem
-//        sim = new SimilarityAnnotation();
-//        annot.put(SimilarityAnnotation.ENTITY_COL_NAME, "UBERON:3");
-//        methodCheck.invoke(sim, annot, taxonConstraints, taxonIds, ecoOntWrapper, 
-//                homOntWrapper, confOntWrapper);
-//        try {
-//            methodVerify.invoke(sim);
-//            //test failed, should have thrown an IllegalArgumenException
-//            throw new AssertionError("An exception should have been thrown");
-//        } catch (InvocationTargetException e) {
-//            //test passed
-//            assertEquals(IllegalStateException.class, e.getCause().getClass());
-//        }
-//        sim = new SimilarityAnnotation();
-//        annot.put(SimilarityAnnotation.ENTITY_COL_NAME, "UBERON:1");
-//        annot.put(SimilarityAnnotation.TAXON_COL_NAME, 4);
-//        methodCheck.invoke(sim, annot, taxonConstraints, taxonIds, ecoOntWrapper, 
-//                homOntWrapper, confOntWrapper);
-//        try {
-//            methodVerify.invoke(sim);
-//            //test failed, should have thrown an IllegalArgumenException
-//            throw new AssertionError("An exception should have been thrown");
-//        } catch (InvocationTargetException e) {
-//            //test passed
-//            assertEquals(IllegalStateException.class, e.getCause().getClass());
-//        }
-//        sim = new SimilarityAnnotation();
-//        annot.put(SimilarityAnnotation.ENTITY_COL_NAME, "UBERON:2");
-//        annot.put(SimilarityAnnotation.TAXON_COL_NAME, 2);
-//        methodCheck.invoke(sim, annot, taxonConstraints, taxonIds, ecoOntWrapper, 
-//                homOntWrapper, confOntWrapper);
-//        try {
-//            methodVerify.invoke(sim);
-//            //test failed, should have thrown an IllegalArgumenException
-//            throw new AssertionError("An exception should have been thrown");
-//        } catch (InvocationTargetException e) {
-//            //test passed
-//            assertEquals(IllegalStateException.class, e.getCause().getClass());
-//        }
-//        sim = new SimilarityAnnotation();
-//        annot.put(SimilarityAnnotation.TAXON_COL_NAME, 1);
-//        annot.put(SimilarityAnnotation.ECO_COL_NAME, "ECO:100");
-//        methodCheck.invoke(sim, annot, taxonConstraints, taxonIds, ecoOntWrapper, 
-//                homOntWrapper, confOntWrapper);
-//        try {
-//            methodVerify.invoke(sim);
-//            //test failed, should have thrown an IllegalArgumenException
-//            throw new AssertionError("An exception should have been thrown");
-//        } catch (InvocationTargetException e) {
-//            //test passed
-//            assertEquals(IllegalStateException.class, e.getCause().getClass());
-//        }
-//        sim = new SimilarityAnnotation();
-//        annot.put(SimilarityAnnotation.ECO_COL_NAME, null);
-//        annot.put(SimilarityAnnotation.CONF_COL_NAME, "CONF:100");
-//        methodCheck.invoke(sim, annot, taxonConstraints, taxonIds, ecoOntWrapper, 
-//                homOntWrapper, confOntWrapper);
-//        try {
-//            methodVerify.invoke(sim);
-//            //test failed, should have thrown an IllegalArgumenException
-//            throw new AssertionError("An exception should have been thrown");
-//        } catch (InvocationTargetException e) {
-//            //test passed
-//            assertEquals(IllegalStateException.class, e.getCause().getClass());
-//        }
-//        sim = new SimilarityAnnotation();
-//        annot.put(SimilarityAnnotation.CONF_COL_NAME, "CONF:0000003");
-//        annot.put(SimilarityAnnotation.HOM_COL_NAME, "HOM:100");
-//        methodCheck.invoke(sim, annot, taxonConstraints, taxonIds, ecoOntWrapper, 
-//                homOntWrapper, confOntWrapper);
-//        try {
-//            methodVerify.invoke(sim);
-//            //test failed, should have thrown an IllegalArgumenException
-//            throw new AssertionError("An exception should have been thrown");
-//        } catch (InvocationTargetException e) {
-//            //test passed
-//            assertEquals(IllegalStateException.class, e.getCause().getClass());
-//        }
-//        
-//        //final check, verify that everything is fine
-//        sim = new SimilarityAnnotation();
-//        annot.put(SimilarityAnnotation.HOM_COL_NAME, "HOM:0000007");
-//        methodCheck.invoke(sim, annot, taxonConstraints, taxonIds, ecoOntWrapper, 
-//                homOntWrapper, confOntWrapper);
-//        methodVerify.invoke(sim);
-//    }
-//    
+
     /**
      * Test {@link SimilarityAnnotation#extractCuratorAnnotations(String)}.
      */
@@ -1670,6 +1543,11 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:4"), 
                         7742, false, "ECO:0000067", "CIO:0000003", 
                         "DOI:10.1073/pnas.032658599", "ref title 1", 
+                        "supporting text 3", "bgee", "ANN", sdf.parse("2013-06-23")), 
+                //to check that rejected annotations are discarded
+                new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:5"), 
+                        7742, false, "ECO:0000067", "CIO:0000039", 
+                        "DOI:10.1073/pnas.032658599", "ref title 1", 
                         "supporting text 3", "bgee", "ANN", sdf.parse("2013-06-23"))));
         
         //annotations that will be propagated through logical constraints.
@@ -1937,6 +1815,782 @@ public class SimilarityAnnotationTest extends TestAncestor {
     }
     
     /**
+     * Test {@link SimilarityAnnotation#generateRawAnnotations(Collection)}
+     */
+    @Test
+    public void shouldGenerateRawAnnotations() throws OBOFormatParserException, 
+    FileNotFoundException, OWLOntologyCreationException, IOException, ParseException {
+        SimilarityAnnotation simAnnot = new SimilarityAnnotation(null, null, 
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/fake_uberon.obo").getFile(), 
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/fake_taxonomy.obo").getFile(), 
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/homology_ontology.obo").getFile(), 
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/fake_eco.obo").getFile(), 
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/cio-simple.obo").getFile());
+        
+
+        SimpleDateFormat sdf = new SimpleDateFormat(SimilarityAnnotationUtils.DATE_FORMAT);
+        List<RawAnnotationBean> expectedAnnots = Arrays.asList(
+                //single evidence
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                        2759, "Eukaryota", false, "ECO:0000033", 
+                        "traceable author statement", 
+                        "CIO:0000003", "high confidence from single evidence", 
+                        "DOI:10.1073/pnas.032658599", "ref title 1", 
+                        "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")), 
+                //congruent evidence lines
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000015"), Arrays.asList("male germ cell"), 
+                        33208, "Metazoa", false, "ECO:0000205", 
+                        "curator inference", 
+                        "CIO:0000004", "medium confidence from single evidence", 
+                        "DOI:10.1002/bies.950161213", "ref title 2", 
+                        "supporting text 2", "bgee", "ANN", sdf.parse("2013-08-29")), 
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000015"), Arrays.asList("male germ cell"), 
+                        33208, "Metazoa", false, "ECO:0000205", 
+                        "curator inference", 
+                        "CIO:0000005", "low confidence from single evidence", 
+                        "ISBN:978-0198566694", "ref title 3", 
+                        "supporting text 3", "bgee", "ANN", sdf.parse("2013-08-29")), 
+                //single evidence
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000037"), Arrays.asList("hematopoietic stem cell"), 
+                        7742, "Vertebrata", true, "ECO:0000067", 
+                        "developmental similarity evidence", 
+                        "CIO:0000004", "medium confidence from single evidence", 
+                        "DOI:10.1146/annurev.cellbio.22.010605.093317", "ref title 4", 
+                        "supporting text 4", "bgee", "ANN", sdf.parse("2013-07-01")), 
+                //multiple Uberon IDs
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000037", "UBERON:0000001", "UBERON:0000007"), 
+                        Arrays.asList("hematopoietic stem cell", "whatever name1", 
+                                "whatever name2"), 
+                        7742, "Vertebrata", true, "ECO:0000067", 
+                        "developmental similarity evidence", 
+                        "CIO:0000004", "medium confidence from single evidence", 
+                        "DOI:10.1146/annurev.cellbio.22.010605.093317", "ref title 7", 
+                        "supporting text 7", "bgee", "ANN", sdf.parse("2013-07-01")), 
+                //heritance of positive annotations, conflicting annotation 
+                //with positive parent annotations
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000216"), Arrays.asList("Sertoli cell"), 
+                        7711, "Chordata", false, "ECO:0000067", 
+                        "developmental similarity evidence", 
+                        "CIO:0000005", "low confidence from single evidence", 
+                        "http://f50006a.eos-intl.net/ELIBSQL12_F50006A_Documents/93grier.pdf", 
+                        "ref title 9", 
+                        "supporting text 9", "bgee", "ANN", sdf.parse("2015-02-03")), 
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000216"), Arrays.asList("Sertoli cell"), 
+                        7742, "Vertebrata", false, "ECO:0000355", 
+                        "phylogenetic distribution evidence", 
+                        "CIO:0000004", "medium confidence from single evidence", 
+                        "ISBN:978-0125449045", "ref title 10", 
+                        "supporting text 10", "bgee", "ANN", sdf.parse("2015-02-03")), 
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000216"), Arrays.asList("Sertoli cell"), 
+                        32524, "Amniota", false, "ECO:0000067", 
+                        "developmental similarity evidence", 
+                        "CIO:0000004", "medium confidence from single evidence", 
+                        "DOI:10.1002/jemt.1070320602", "ref title 11", 
+                        "supporting text 11", "bgee", "ANN", sdf.parse("2015-02-03")), 
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000216"), Arrays.asList("Sertoli cell"), 
+                        32524, "Amniota", true, "ECO:0000067", 
+                        "developmental similarity evidence", 
+                        "CIO:0000004", "medium confidence from single evidence", 
+                        "PMID:17026980", "ref title 12", 
+                        "supporting text 12", "bgee", "ANN", sdf.parse("2013-08-30")), 
+                //one low confidence annotation against 2 medium confidence 
+                //annotations => weakly conflicting
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("UBERON:0000926"), Arrays.asList("mesoderm"), 
+                        33213, "Bilateria", false, "ECO:0000067", 
+                        "developmental similarity evidence", 
+                        "CIO:0000004", "medium confidence from single evidence", 
+                        "PMID:22431747", "ref title 14", 
+                        "supporting text 14", "bgee", "ANN", sdf.parse("2013-07-10")), 
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("UBERON:0000926"), Arrays.asList("mesoderm"), 
+                        33213, "Bilateria", false, "ECO:0000067", 
+                        "developmental similarity evidence", 
+                        "CIO:0000004", "medium confidence from single evidence", 
+                        "PMID:24281726", "ref title 13", 
+                        "supporting text 13", "bgee", "ANN", sdf.parse("2014-01-13")), 
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("UBERON:0000926"), Arrays.asList("mesoderm"), 
+                        33213, "Bilateria", true, "ECO:0000067", 
+                        "developmental similarity evidence", 
+                        "CIO:0000005", "low confidence from single evidence", 
+                        "PMID:12459924", "ref title 15", 
+                        "supporting text 15", "bgee", "ANN", sdf.parse("2013-07-10")),
+                //simply strongly conflicting
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("UBERON:0001245"), Arrays.asList("anus"), 
+                        33213, "Bilateria", false, "ECO:0000355", 
+                        "phylogenetic distribution evidence", 
+                        "CIO:0000004", "medium confidence from single evidence", 
+                        "http://dpc.uba.uva.nl/ctz/vol73/nr01/art01", "ref title 16", 
+                        "supporting text 16", "bgee", "ANN", sdf.parse("2013-10-08")), 
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("UBERON:0001245"), Arrays.asList("anus"), 
+                        33213, "Bilateria", true, "ECO:0000033", 
+                        "traceable author statement", 
+                        "CIO:0000004", "medium confidence from single evidence", 
+                        "http://dpc.uba.uva.nl/ctz/vol73/nr01/art01", "ref title 16", 
+                        "supporting text 16", "bgee", "ANN", sdf.parse("2013-10-08")), 
+                //case of independent evolution
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("UBERON:0010207"), 
+                        Arrays.asList("nictitating membrane"), 
+                        7776, "Gnathostomata", true, "ECO:0000034", 
+                        "non-traceable author statement", 
+                        "CIO:0000003", "high confidence from single evidence", 
+                        "ISBN:978-0030223693", "ref title 8", 
+                        "supporting text 8", "bgee", "ANN", sdf.parse("2013-09-05")), 
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("UBERON:0010207"), 
+                        Arrays.asList("nictitating membrane"), 
+                        7778, "Elasmobranchii", false, "ECO:0000034", 
+                        "non-traceable author statement", 
+                        "CIO:0000003", "high confidence from single evidence", 
+                        "ISBN:978-0030223693", "ref title 8", 
+                        "supporting text 8", "bgee", "ANN", sdf.parse("2013-09-05")), 
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("UBERON:0010207"), 
+                        Arrays.asList("nictitating membrane"), 
+                        32524, "Amniota", false, "ECO:0000034", 
+                        "non-traceable author statement", 
+                        "CIO:0000003", "high confidence from single evidence", 
+                        "ISBN:978-0030223693", "ref title 8", 
+                        "supporting text 8", "bgee", "ANN", sdf.parse("2013-09-05")));
+        
+        assertEquals("Incorrect RAW annotations generated", expectedAnnots, 
+                simAnnot.generateRawAnnotations(Arrays.asList(
+                        //single evidence
+                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("CL:0000000"), 
+                                2759, false, "ECO:0000033", "CIO:0000003", 
+                                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                                "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")), 
+                        //congruent evidence lines
+                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("CL:0000015"), 
+                                33208, false, "ECO:0000205", "CIO:0000004", 
+                                "DOI:10.1002/bies.950161213", "ref title 2", 
+                                "supporting text 2", "bgee", "ANN", sdf.parse("2013-08-29")), 
+                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("CL:0000015"),  
+                                33208, false, "ECO:0000205", "CIO:0000005", 
+                                "ISBN:978-0198566694", "ref title 3", 
+                                "supporting text 3", "bgee", "ANN", sdf.parse("2013-08-29")), 
+                        //single evidence
+                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("CL:0000037"), 
+                                7742, true, "ECO:0000067", "CIO:0000004", 
+                                "DOI:10.1146/annurev.cellbio.22.010605.093317", "ref title 4", 
+                                "supporting text 4", "bgee", "ANN", sdf.parse("2013-07-01")), 
+                        //multiple Uberon IDs
+                        new CuratorAnnotationBean("HOM:0000007", 
+                                Arrays.asList("CL:0000037", "UBERON:0000001", "UBERON:0000007"), 
+                                7742, true, "ECO:0000067", "CIO:0000004", 
+                                "DOI:10.1146/annurev.cellbio.22.010605.093317", "ref title 7", 
+                                "supporting text 7", "bgee", "ANN", sdf.parse("2013-07-01")), 
+                        //case of independent evolution
+                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("UBERON:0010207"), 
+                                7776, true, "ECO:0000034", "CIO:0000003", 
+                                "ISBN:978-0030223693", "ref title 8", 
+                                "supporting text 8", "bgee", "ANN", sdf.parse("2013-09-05")), 
+                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("UBERON:0010207"), 
+                                7778, false, "ECO:0000034", "CIO:0000003", 
+                                "ISBN:978-0030223693", "ref title 8", 
+                                "supporting text 8", "bgee", "ANN", sdf.parse("2013-09-05")), 
+                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("UBERON:0010207"), 
+                                32524, false, "ECO:0000034", "CIO:0000003", 
+                                "ISBN:978-0030223693", "ref title 8", 
+                                "supporting text 8", "bgee", "ANN", sdf.parse("2013-09-05")),
+                        //heritance of positive annotations, conflicting annotation 
+                        //with positive parent annotations
+                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("CL:0000216"), 
+                                7711, false, "ECO:0000067", "CIO:0000005", 
+                                "http://f50006a.eos-intl.net/ELIBSQL12_F50006A_Documents/93grier.pdf", 
+                                "ref title 9", 
+                                "supporting text 9", "bgee", "ANN", sdf.parse("2015-02-03")), 
+                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("CL:0000216"), 
+                                7742, false, "ECO:0000355", "CIO:0000004", 
+                                "ISBN:978-0125449045", "ref title 10", 
+                                "supporting text 10", "bgee", "ANN", sdf.parse("2015-02-03")), 
+                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("CL:0000216"), 
+                                32524, false, "ECO:0000067", "CIO:0000004", 
+                                "DOI:10.1002/jemt.1070320602", "ref title 11", 
+                                "supporting text 11", "bgee", "ANN", sdf.parse("2015-02-03")), 
+                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("CL:0000216"), 
+                                32524, true, "ECO:0000067", "CIO:0000004", 
+                                "PMID:17026980", "ref title 12", 
+                                "supporting text 12", "bgee", "ANN", sdf.parse("2013-08-30")), 
+                        //one low confidence annotation against 2 medium confidence 
+                        //annotations => weakly conflicting
+                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("UBERON:0000926"),  
+                                33213, false, "ECO:0000067", "CIO:0000004", 
+                                "PMID:24281726", "ref title 13", 
+                                "supporting text 13", "bgee", "ANN", sdf.parse("2014-01-13")), 
+                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("UBERON:0000926"), 
+                                33213, false, "ECO:0000067", "CIO:0000004", 
+                                "PMID:22431747", "ref title 14", 
+                                "supporting text 14", "bgee", "ANN", sdf.parse("2013-07-10")), 
+                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("UBERON:0000926"), 
+                                33213, true, "ECO:0000067", "CIO:0000005", 
+                                "PMID:12459924", "ref title 15", 
+                                "supporting text 15", "bgee", "ANN", sdf.parse("2013-07-10")), 
+                        //simply strongly conflicting
+                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("UBERON:0001245"), 
+                                33213, false, "ECO:0000355", "CIO:0000004", 
+                                "http://dpc.uba.uva.nl/ctz/vol73/nr01/art01", "ref title 16", 
+                                "supporting text 16", "bgee", "ANN", sdf.parse("2013-10-08")), 
+                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("UBERON:0001245"), 
+                                33213, true, "ECO:0000033", "CIO:0000004", 
+                                "http://dpc.uba.uva.nl/ctz/vol73/nr01/art01", "ref title 16", 
+                                "supporting text 16", "bgee", "ANN", sdf.parse("2013-10-08")))));
+    }
+    
+    /**
+     * Test {@link SimilarityAnnotation#generateSummaryAnnotations(Collection)}
+     */
+    @Test
+    public void shouldGenerateSummaryAnnotations() throws OBOFormatParserException, 
+    FileNotFoundException, OWLOntologyCreationException, IOException, 
+    IllegalArgumentException, IllegalStateException, ParseException {
+        SimilarityAnnotation simAnnot = new SimilarityAnnotation(null, null, 
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/fake_uberon.obo").getFile(), 
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/fake_taxonomy.obo").getFile(), 
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/homology_ontology.obo").getFile(), 
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/fake_eco.obo").getFile(), 
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/cio-simple.obo").getFile());
+        
+        List<SummaryAnnotationBean> expectedAnnots = Arrays.asList(
+                new SummaryAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                        2759, "Eukaryota", false, 
+                        "CIO:0000003", "high confidence from single evidence", true, 
+                        "Summary annotation created from 1 single-evidence annotation"
+//                        , 1, 0, 
+//                        Arrays.asList("ECO:0000033"), 
+//                        Arrays.asList("traceable author statement"), 
+//                        null, null, null, null, 
+//                        Arrays.asList("bgee")
+                        ), 
+                new SummaryAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000015"), Arrays.asList("male germ cell"), 
+                        33208, "Metazoa", false, 
+                        "CIO:0000019", "confidence statement from congruent evidence "
+                                + "lines of same type, overall confidence medium", 
+                        true, 
+                        "Summary annotation created from 2 single-evidence annotations"
+//                        , 2, 0, 
+//                        Arrays.asList("ECO:0000205"), 
+//                        Arrays.asList("curator inference"), 
+//                        null, null, null, null, 
+//                        Arrays.asList("bgee", "test db")
+                        ), 
+                new SummaryAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000037"), Arrays.asList("hematopoietic stem cell"), 
+                        7742, "Vertebrata", true, 
+                        "CIO:0000004", "medium confidence from single evidence", true, 
+                        "Summary annotation created from 1 single-evidence annotation"
+//                        , 0, 1, 
+//                        null, null, 
+//                        Arrays.asList("ECO:0000067"), 
+//                        Arrays.asList("developmental similarity evidence"), 
+//                        null, null, 
+//                        Arrays.asList("bgee")
+                        ), 
+                new SummaryAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000037", "UBERON:0000001", "UBERON:0000007"), 
+                        Arrays.asList("hematopoietic stem cell", "whatever name1", 
+                                "whatever name2"), 
+                        7742, "Vertebrata", true, 
+                        "CIO:0000004", "medium confidence from single evidence", true, 
+                        "Summary annotation created from 1 single-evidence annotation"
+//                        , 0, 1,  
+//                        null, null, 
+//                        Arrays.asList("ECO:0000067"), 
+//                        Arrays.asList("developmental similarity evidence"), 
+//                        null, null, 
+//                        Arrays.asList("bgee")
+                        ), 
+                new SummaryAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000216"), Arrays.asList("Sertoli cell"), 
+                        7711, "Chordata", false, 
+                        "CIO:0000005", "low confidence from single evidence", false, 
+                        "Summary annotation created from 1 single-evidence annotation"
+//                                , 1, 0, 
+//                                Arrays.asList("ECO:0000067"), 
+//                                Arrays.asList("developmental similarity evidence"), 
+//                                null, null, null, null, 
+//                                Arrays.asList("bgee")
+                        ), 
+                new SummaryAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000216"), Arrays.asList("Sertoli cell"), 
+                        7742, "Vertebrata", false, 
+                        "CIO:0000004", "medium confidence from single evidence", 
+                        true, 
+                        "Summary annotation created from 1 single-evidence annotation"
+//                                , 2, 0, 
+//                                Arrays.asList("ECO:0000067", "ECO:0000355"), 
+//                                Arrays.asList("developmental similarity evidence", 
+//                                        "phylogenetic distribution evidence"), 
+//                                null, null, 
+//                                Arrays.asList(7711), Arrays.asList("Chordata"), 
+//                                Arrays.asList("bgee")
+                        ), 
+                new SummaryAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000216"), Arrays.asList("Sertoli cell"), 
+                        32524, "Amniota", false, 
+                        "CIO:0000020", "confidence statement from strongly conflicting "
+                                + "evidence lines of same type", 
+                        false, 
+                        "Summary annotation created from 2 single-evidence annotations"
+//                                , 3, 1, 
+//                                Arrays.asList("ECO:0000067", "ECO:0000355"), 
+//                                Arrays.asList("developmental similarity evidence", 
+//                                        "phylogenetic distribution evidence"), 
+//                                Arrays.asList("ECO:0000067"), 
+//                                Arrays.asList("developmental similarity evidence"), 
+//                                Arrays.asList(7711, 7742), Arrays.asList("Chordata", "Vertebrata"), 
+//                                Arrays.asList("bgee")
+                        ), 
+                new SummaryAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("UBERON:0000926"), Arrays.asList("mesoderm"), 
+                        33213, "Bilateria", false, 
+                        "CIO:0000024", "confidence statement from weakly conflicting "
+                            + "evidence lines of same type, overall confidence medium", 
+                        true, 
+                        "Summary annotation created from 3 single-evidence annotations"
+//                                , 2, 1, 
+//                                Arrays.asList("ECO:0000067"), 
+//                                Arrays.asList("developmental similarity evidence"), 
+//                                Arrays.asList("ECO:0000067"), 
+//                                Arrays.asList("developmental similarity evidence"), 
+//                                null, null, 
+//                                Arrays.asList("bgee")
+                        ), 
+                new SummaryAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("UBERON:0001245"), Arrays.asList("anus"), 
+                        33213, "Bilateria", false, 
+                        "CIO:0000010", "confidence statement from strongly conflicting "
+                                + "evidence lines of multiple types", 
+                        false, 
+                        "Summary annotation created from 2 single-evidence annotations"
+//                                , 1, 1,
+//                                Arrays.asList("ECO:0000355"), 
+//                                Arrays.asList("phylogenetic distribution evidence"), 
+//                                Arrays.asList("ECO:0000033"), 
+//                                Arrays.asList("traceable author statement"), 
+//                                null, null, 
+//                                Arrays.asList("bgee")
+                        ), 
+                new SummaryAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("UBERON:0010207"), Arrays.asList("nictitating membrane"), 
+                        7776, "Gnathostomata", true, 
+                        "CIO:0000003", "high confidence from single evidence", true, 
+                        "Summary annotation created from 1 single-evidence annotation"
+//                        , 0, 1, 
+//                        null, null, 
+//                        Arrays.asList("ECO:0000034"), 
+//                        Arrays.asList("non-traceable author statement"), 
+//                        null, null, 
+//                        Arrays.asList("bgee")
+                        ), 
+                new SummaryAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("UBERON:0010207"), Arrays.asList("nictitating membrane"), 
+                        7778, "Elasmobranchii", false, 
+                        "CIO:0000003", "high confidence from single evidence", true, 
+                        "Summary annotation created from 1 single-evidence annotation"
+//                        , 1, 0,  
+//                        Arrays.asList("ECO:0000034"), 
+//                        Arrays.asList("non-traceable author statement"), 
+//                        null, null, null, null, 
+//                        Arrays.asList("bgee")
+                        ), 
+                new SummaryAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("UBERON:0010207"), Arrays.asList("nictitating membrane"), 
+                        32524, "Amniota", false, 
+                        "CIO:0000003", "high confidence from single evidence", true, 
+                        "Summary annotation created from 1 single-evidence annotation"
+//                        , 1, 0, 
+//                        Arrays.asList("ECO:0000034"), 
+//                        Arrays.asList("non-traceable author statement"), 
+//                        null, null, null, null, 
+//                        Arrays.asList("bgee")
+                        ));
+
+        SimpleDateFormat sdf = new SimpleDateFormat(SimilarityAnnotationUtils.DATE_FORMAT);
+        assertEquals("Incorrect SUMMARY annotations generated", expectedAnnots, 
+                simAnnot.generateSummaryAnnotations(Arrays.asList(
+                //single evidence
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                        2759, "Eukaryota", false, "ECO:0000033", 
+                        "traceable author statement", 
+                        "CIO:0000003", "high confidence from single evidence", 
+                        "DOI:10.1073/pnas.032658599", "ref title 1", 
+                        "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")), 
+                //congruent evidence lines
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000015"), Arrays.asList("male germ cell"), 
+                        33208, "Metazoa", false, "ECO:0000205", 
+                        "curator inference", 
+                        "CIO:0000004", "medium confidence from single evidence", 
+                        "DOI:10.1002/bies.950161213", "ref title 2", 
+                        "supporting text 2", "bgee", "ANN", sdf.parse("2013-08-29")), 
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000015"), Arrays.asList("male germ cell"), 
+                        33208, "Metazoa", false, "ECO:0000205", 
+                        "curator inference", 
+                        "CIO:0000005", "low confidence from single evidence", 
+                        "ISBN:978-0198566694", "ref title 3", 
+                        "supporting text 3", "bgee", "ANN", sdf.parse("2013-08-29")), 
+                //single evidence
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000037"), Arrays.asList("hematopoietic stem cell"), 
+                        7742, "Vertebrata", true, "ECO:0000067", 
+                        "developmental similarity evidence", 
+                        "CIO:0000004", "medium confidence from single evidence", 
+                        "DOI:10.1146/annurev.cellbio.22.010605.093317", "ref title 4", 
+                        "supporting text 4", "bgee", "ANN", sdf.parse("2013-07-01")), 
+                //multiple Uberon IDs
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000037", "UBERON:0000001", "UBERON:0000007"), 
+                        Arrays.asList("hematopoietic stem cell", "whatever name1", 
+                                "whatever name2"), 
+                        7742, "Vertebrata", true, "ECO:0000067", 
+                        "developmental similarity evidence", 
+                        "CIO:0000004", "medium confidence from single evidence", 
+                        "DOI:10.1146/annurev.cellbio.22.010605.093317", "ref title 7", 
+                        "supporting text 7", "bgee", "ANN", sdf.parse("2013-07-01")), 
+                //case of independent evolution
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("UBERON:0010207"), 
+                        Arrays.asList("nictitating membrane"), 
+                        7776, "Gnathostomata", true, "ECO:0000034", 
+                        "non-traceable author statement", 
+                        "CIO:0000003", "high confidence from single evidence", 
+                        "ISBN:978-0030223693", "ref title 8", 
+                        "supporting text 8", "bgee", "ANN", sdf.parse("2013-09-05")), 
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("UBERON:0010207"), 
+                        Arrays.asList("nictitating membrane"), 
+                        7778, "Elasmobranchii", false, "ECO:0000034", 
+                        "non-traceable author statement", 
+                        "CIO:0000003", "high confidence from single evidence", 
+                        "ISBN:978-0030223693", "ref title 8", 
+                        "supporting text 8", "bgee", "ANN", sdf.parse("2013-09-05")), 
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("UBERON:0010207"), 
+                        Arrays.asList("nictitating membrane"), 
+                        32524, "Amniota", false, "ECO:0000034", 
+                        "non-traceable author statement", 
+                        "CIO:0000003", "high confidence from single evidence", 
+                        "ISBN:978-0030223693", "ref title 8", 
+                        "supporting text 8", "bgee", "ANN", sdf.parse("2013-09-05")),
+                //heritance of positive annotations, conflicting annotation 
+                //with positive parent annotations
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000216"), Arrays.asList("Sertoli cell"), 
+                        7711, "Chordata", false, "ECO:0000067", 
+                        "developmental similarity evidence", 
+                        "CIO:0000005", "low confidence from single evidence", 
+                        "http://f50006a.eos-intl.net/ELIBSQL12_F50006A_Documents/93grier.pdf", 
+                        "ref title 9", 
+                        "supporting text 9", "bgee", "ANN", sdf.parse("2015-02-03")), 
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000216"), Arrays.asList("Sertoli cell"), 
+                        7742, "Vertebrata", false, "ECO:0000355", 
+                        "phylogenetic distribution evidence", 
+                        "CIO:0000004", "medium confidence from single evidence", 
+                        "ISBN:978-0125449045", "ref title 10", 
+                        "supporting text 10", "bgee", "ANN", sdf.parse("2015-02-03")), 
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000216"), Arrays.asList("Sertoli cell"), 
+                        32524, "Amniota", false, "ECO:0000067", 
+                        "developmental similarity evidence", 
+                        "CIO:0000004", "medium confidence from single evidence", 
+                        "DOI:10.1002/jemt.1070320602", "ref title 11", 
+                        "supporting text 11", "bgee", "ANN", sdf.parse("2015-02-03")), 
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000216"), Arrays.asList("Sertoli cell"), 
+                        32524, "Amniota", true, "ECO:0000067", 
+                        "developmental similarity evidence", 
+                        "CIO:0000004", "medium confidence from single evidence", 
+                        "PMID:17026980", "ref title 12", 
+                        "supporting text 12", "bgee", "ANN", sdf.parse("2013-08-30")), 
+                //one low confidence annotation against 2 medium confidence 
+                //annotations => weakly conflicting
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("UBERON:0000926"), Arrays.asList("mesoderm"), 
+                        33213, "Bilateria", false, "ECO:0000067", 
+                        "developmental similarity evidence", 
+                        "CIO:0000004", "medium confidence from single evidence", 
+                        "PMID:24281726", "ref title 13", 
+                        "supporting text 13", "bgee", "ANN", sdf.parse("2014-01-13")), 
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("UBERON:0000926"), Arrays.asList("mesoderm"), 
+                        33213, "Bilateria", false, "ECO:0000067", 
+                        "developmental similarity evidence", 
+                        "CIO:0000004", "medium confidence from single evidence", 
+                        "PMID:22431747", "ref title 14", 
+                        "supporting text 14", "bgee", "ANN", sdf.parse("2013-07-10")), 
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("UBERON:0000926"), Arrays.asList("mesoderm"), 
+                        33213, "Bilateria", true, "ECO:0000067", 
+                        "developmental similarity evidence", 
+                        "CIO:0000005", "low confidence from single evidence", 
+                        "PMID:12459924", "ref title 15", 
+                        "supporting text 15", "bgee", "ANN", sdf.parse("2013-07-10")), 
+                //simply strongly conflicting
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("UBERON:0001245"), Arrays.asList("anus"), 
+                        33213, "Bilateria", false, "ECO:0000355", 
+                        "phylogenetic distribution evidence", 
+                        "CIO:0000004", "medium confidence from single evidence", 
+                        "http://dpc.uba.uva.nl/ctz/vol73/nr01/art01", "ref title 16", 
+                        "supporting text 16", "bgee", "ANN", sdf.parse("2013-10-08")), 
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("UBERON:0001245"), Arrays.asList("anus"), 
+                        33213, "Bilateria", true, "ECO:0000033", 
+                        "traceable author statement", 
+                        "CIO:0000004", "medium confidence from single evidence", 
+                        "http://dpc.uba.uva.nl/ctz/vol73/nr01/art01", "ref title 16", 
+                        "supporting text 16", "bgee", "ANN", sdf.parse("2013-10-08")))));
+    }
+    
+    /**
+     * Test {@link SimilarityAnnotation#generateAncestralTaxaAnnotations(Collection)}
+     */
+    @Test
+    public void shouldGenerateAncestralTaxaAnnotations() throws OBOFormatParserException, 
+    FileNotFoundException, OWLOntologyCreationException, IOException, 
+    IllegalArgumentException, IllegalStateException {
+        SimilarityAnnotation simAnnot = new SimilarityAnnotation(null, null, 
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/fake_uberon.obo").getFile(), 
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/fake_taxonomy.obo").getFile(), 
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/homology_ontology.obo").getFile(), 
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/fake_eco.obo").getFile(), 
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/cio-simple.obo").getFile());
+        
+        List<AncestralTaxaAnnotationBean> expectedAnnots = Arrays.asList(
+                new AncestralTaxaAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                        2759, "Eukaryota", 
+                        "CIO:0000003", "high confidence from single evidence", "-"), 
+                new AncestralTaxaAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000015"), Arrays.asList("male germ cell"), 
+                        33208, "Metazoa", 
+                        "CIO:0000019", "confidence statement from congruent evidence "
+                                + "lines of same type, overall confidence medium", "-"), 
+                new AncestralTaxaAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000037"), 
+                        Arrays.asList("hematopoietic stem cell"), 
+                        7742, "Vertebrata", 
+                        "CIO:0000004", "medium confidence from single evidence", "-"), 
+                new AncestralTaxaAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000037", "UBERON:0000001", "UBERON:0000007"), 
+                        Arrays.asList("hematopoietic stem cell", "whatever name1", 
+                                "whatever name2"), 
+                        7742, "Vertebrata", 
+                        "CIO:0000004", "medium confidence from single evidence", "-"), 
+                new AncestralTaxaAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000216"), Arrays.asList("Sertoli cell"), 
+                        7742, "Vertebrata", 
+                        "CIO:0000004", "medium confidence from single evidence", 
+                        "Alternative homology hypotheses of low confidence exist "
+                        + "for taxa: Bilateria, Chordata"), 
+                new AncestralTaxaAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("UBERON:0000926"), Arrays.asList("mesoderm"), 
+                        33213, "Bilateria", 
+                        "CIO:0000024", "confidence statement from weakly conflicting "
+                            + "evidence lines of same type, overall confidence medium", "-"), 
+                new AncestralTaxaAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("UBERON:0010207"), Arrays.asList("nictitating membrane"), 
+                        7778, "Elasmobranchii", 
+                        "CIO:0000003", "high confidence from single evidence", "-"), 
+                new AncestralTaxaAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("UBERON:0010207"), Arrays.asList("nictitating membrane"), 
+                        32524, "Amniota", 
+                        "CIO:0000003", "high confidence from single evidence", "-"));
+        
+        assertEquals("Incorrect ANCESTRAL TAXA annotations generated", expectedAnnots, 
+                simAnnot.generateAncestralTaxaAnnotations(Arrays.asList(
+                new SummaryAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                        2759, "Eukaryota", false, 
+                        "CIO:0000003", "high confidence from single evidence", true, 
+                        "Summary annotation created from 1 single-evidence annotation"
+//                                , 1, 0, 
+//                                Arrays.asList("ECO:0000033"), 
+//                                Arrays.asList("traceable author statement"), 
+//                                null, null, null, null, 
+//                                Arrays.asList("bgee")
+                        ), 
+                new SummaryAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000015"), Arrays.asList("male germ cell"), 
+                        33208, "Metazoa", false, 
+                        "CIO:0000019", "confidence statement from congruent evidence "
+                                + "lines of same type, overall confidence medium", 
+                        true, 
+                        "Summary annotation created from 2 single-evidence annotations"
+//                                , 2, 0, 
+//                                Arrays.asList("ECO:0000205"), 
+//                                Arrays.asList("curator inference"), 
+//                                null, null, null, null, 
+//                                Arrays.asList("bgee", "test db")
+                        ), 
+                new SummaryAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000037"), Arrays.asList("hematopoietic stem cell"), 
+                        7742, "Vertebrata", false, 
+                        "CIO:0000004", "medium confidence from single evidence", true, 
+                        "Summary annotation created from 1 single-evidence annotation"
+//                                , 0, 1, 
+//                                null, null, 
+//                                Arrays.asList("ECO:0000067"), 
+//                                Arrays.asList("developmental similarity evidence"), 
+//                                null, null, 
+//                                Arrays.asList("bgee")
+                        ), 
+                new SummaryAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000037", "UBERON:0000001", "UBERON:0000007"), 
+                        Arrays.asList("hematopoietic stem cell", "whatever name1", 
+                                "whatever name2"), 
+                        7742, "Vertebrata", false, 
+                        "CIO:0000004", "medium confidence from single evidence", true, 
+                        "Summary annotation created from 1 single-evidence annotation"
+//                                , 0, 1,  
+//                                null, null, 
+//                                Arrays.asList("ECO:0000067"), 
+//                                Arrays.asList("developmental similarity evidence"), 
+//                                null, null, 
+//                                Arrays.asList("bgee")
+                        ), 
+                new SummaryAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000216"), Arrays.asList("Sertoli cell"), 
+                        7711, "Chordata", false, 
+                        "CIO:0000005", "low confidence from single evidence", false, 
+                        "Summary annotation created from 1 single-evidence annotation"
+//                                        , 1, 0, 
+//                                        Arrays.asList("ECO:0000067"), 
+//                                        Arrays.asList("developmental similarity evidence"), 
+//                                        null, null, null, null, 
+//                                        Arrays.asList("bgee")
+                        ), 
+                new SummaryAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000216"), Arrays.asList("Sertoli cell"), 
+                        7742, "Vertebrata", false, 
+                        "CIO:0000004", "medium confidence from single evidence", 
+                        true, 
+                        "Summary annotation created from 1 single-evidence annotation"
+//                                        , 2, 0, 
+//                                        Arrays.asList("ECO:0000067", "ECO:0000355"), 
+//                                        Arrays.asList("developmental similarity evidence", 
+//                                                "phylogenetic distribution evidence"), 
+//                                        null, null, 
+//                                        Arrays.asList(7711), Arrays.asList("Chordata"), 
+//                                        Arrays.asList("bgee")
+                        ), 
+                new SummaryAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000216"), Arrays.asList("Sertoli cell"), 
+                        33213, "Bilateria", false, 
+                        "CIO:0000020", "confidence statement from strongly conflicting "
+                                + "evidence lines of same type", 
+                        false, 
+                        "Summary annotation created from 2 single-evidence annotations"
+//                                        , 3, 1, 
+//                                        Arrays.asList("ECO:0000067", "ECO:0000355"), 
+//                                        Arrays.asList("developmental similarity evidence", 
+//                                                "phylogenetic distribution evidence"), 
+//                                        Arrays.asList("ECO:0000067"), 
+//                                        Arrays.asList("developmental similarity evidence"), 
+//                                        Arrays.asList(7711, 7742), Arrays.asList("Chordata", "Vertebrata"), 
+//                                        Arrays.asList("bgee")
+                        ), 
+                new SummaryAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("UBERON:0000926"), Arrays.asList("mesoderm"), 
+                        33213, "Bilateria", false, 
+                        "CIO:0000024", "confidence statement from weakly conflicting "
+                            + "evidence lines of same type, overall confidence medium", 
+                        true, 
+                        "Summary annotation created from 3 single-evidence annotations"
+//                                        , 2, 1, 
+//                                        Arrays.asList("ECO:0000067"), 
+//                                        Arrays.asList("developmental similarity evidence"), 
+//                                        Arrays.asList("ECO:0000067"), 
+//                                        Arrays.asList("developmental similarity evidence"), 
+//                                        null, null, 
+//                                        Arrays.asList("bgee")
+                        ), 
+                new SummaryAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("UBERON:0001245"), Arrays.asList("anus"), 
+                        33213, "Bilateria", false, 
+                        "CIO:0000010", "confidence statement from strongly conflicting "
+                                + "evidence lines of multiple types", 
+                        false, 
+                        "Summary annotation created from 2 single-evidence annotations"
+//                                        , 1, 1,
+//                                        Arrays.asList("ECO:0000355"), 
+//                                        Arrays.asList("phylogenetic distribution evidence"), 
+//                                        Arrays.asList("ECO:0000033"), 
+//                                        Arrays.asList("traceable author statement"), 
+//                                        null, null, 
+//                                        Arrays.asList("bgee")
+                        ), 
+                new SummaryAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("UBERON:0010207"), Arrays.asList("nictitating membrane"), 
+                        7776, "Gnathostomata", true, 
+                        "CIO:0000003", "high confidence from single evidence", true, 
+                        "Summary annotation created from 1 single-evidence annotation"
+//                                , 0, 1, 
+//                                null, null, 
+//                                Arrays.asList("ECO:0000034"), 
+//                                Arrays.asList("non-traceable author statement"), 
+//                                null, null, 
+//                                Arrays.asList("bgee")
+                        ), 
+                new SummaryAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("UBERON:0010207"), Arrays.asList("nictitating membrane"), 
+                        7778, "Elasmobranchii", false, 
+                        "CIO:0000003", "high confidence from single evidence", true, 
+                        "Summary annotation created from 1 single-evidence annotation"
+//                                , 1, 0,  
+//                                Arrays.asList("ECO:0000034"), 
+//                                Arrays.asList("non-traceable author statement"), 
+//                                null, null, null, null, 
+//                                Arrays.asList("bgee")
+                        ), 
+                new SummaryAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("UBERON:0010207"), Arrays.asList("nictitating membrane"), 
+                        32524, "Amniota", false, 
+                        "CIO:0000003", "high confidence from single evidence", true, 
+                        "Summary annotation created from 1 single-evidence annotation"
+//                                , 1, 0, 
+//                                Arrays.asList("ECO:0000034"), 
+//                                Arrays.asList("non-traceable author statement"), 
+//                                null, null, null, null, 
+//                                Arrays.asList("bgee")
+                        ))));
+    }
+    
+    /**
      * Test {@link SimilarityAnnotation.CuratorAnnotationBean#setRefId(String)}, 
      * which extract ref IDs and titles from Strings mixing both.
      */
@@ -2010,7 +2664,8 @@ public class SimilarityAnnotationTest extends TestAncestor {
             this.getClass().getResource("/similarity_annotations/fake_uberon.obo").getFile()))) {
         
             Set<OWLClass> expectedClasses = new HashSet<OWLClass>(
-                    Arrays.asList(fakeOntology.getOWLClassByIdentifier("ID:1")));
+                    Arrays.asList(fakeOntology.getOWLClassByIdentifier("ID:1"), 
+                            fakeOntology.getOWLClassByIdentifier("ID:4")));
             
             assertEquals(
                 "Incorrect anatomical entities with no transformation_of relations identified", 
@@ -2050,10 +2705,11 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 retrievedEntities.add(line);
             }
         }
-        //we should have 2 lines: one header line, and one line with data
-        assertEquals("Incorrect number of lines in file", 2, lineCount);
+        //we should have 3 lines: one header line, and 2 lines with data
+        assertEquals("Incorrect number of lines in file", 3, lineCount);
         Set<String> expectedEntities = new HashSet<String>(Arrays.asList("ID:1\tuberon 1\t" +
-        		"develops from: ID:3 uberon 3"));
+        		"develops from: ID:3 uberon 3", 
+        		"ID:4\tuberon 4\t"));
         assertEquals("Incorrect anatomical entities IDs retrieved from generated file", 
                 expectedEntities, retrievedEntities);
     }

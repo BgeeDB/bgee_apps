@@ -94,6 +94,14 @@ public class SimilarityAnnotation {
      * (we only override {@link #setRefId(String)} and {@link #setRefTitle(String)} 
      * for this reason). Also, {@code equals}, {@code hashCode}, and {@code toString} 
      * methods are overridden to discard unused attributes.
+     * <p>
+     * This bean should have been the parent class of {@code RawAnnotationBean}, 
+     * not the other way around, as it use only a subset of the attributes of 
+     * {@code RawAnnotationBean}, and has none of its own. This is for two reasons: 
+     * first, curators do provide labels associated to term IDs in their annotations, 
+     * so originally they were considered, but they are not anymore; second, 
+     * {@code RawAnnotationBean} was originally provided completely independently, 
+     * outside of the Bgee pipeline, so it was not possible to extend {@code CuratorAnnotationBean}.
      * 
      * @author Frederic Bastian
      * @version Bgee 13 Mar. 2015
@@ -2327,9 +2335,23 @@ public class SimilarityAnnotation {
 
     /**
      * Generate inferred annotations. These annotations are inferred notably using information 
-     * from the Uberon ontology provided at instantiation. This method delegates to 
-     * {@link #inferAnnotationsFromTransformationOf(Collection)} and 
-     * {@link #inferAnnotationsFromLogicalConstraints(Collection)}.
+     * from the Uberon ontology provided at instantiation: 
+     * <ul>
+     * <li>Inferring new annotations from transformation_of relations: this method will examined 
+     * transformation_of relations, in the Uberon ontology provided at instantiation, 
+     * outgoing from or incoming to annotated classes, to generate new annotations 
+     * for precursor or degeneration of entities annotated. This will also try 
+     * to make inferences for multiple entities annotations.
+     * <li>Inferring new annotations fron OWL class logical constraints: this method 
+     * will examine OWL class in the Uberon ontology provided at instantiation, 
+     * to identify classes defined as the intersection of annotated classes. 
+     * This methods will generate all possible annotations, positive and negative, 
+     * for all possible taxa, based on the annotations to intersect classes. It will also 
+     * infer multiple entities annotations, to infer, for instance, that if skin is homologous, 
+     * and limb is homologous to fin, then skin of limb is homologous to skin of fin.
+     * (For now, this method only uses annotations to the concept of historical homology, 
+     * see {@link #HISTORICAL_HOMOLOGY_ID}).
+     * </ul>
      * 
      * @param annots    A {@code Collection} of {@code CuratorAnnotationBean}s 
      *                  that are the annotations to used to infer new annotations.
@@ -2337,8 +2359,6 @@ public class SimilarityAnnotation {
      *                  the new annotations inferred.
      * @throws IllegalStateException    If the ontologies provided at instantiation 
      *                                  did not allow to retrieve some required information.
-     * @see #inferAnnotationsFromTransformationOf(Collection)
-     * @see #inferAnnotationsFromLogicalConstraints(Collection)
      */
     public Set<CuratorAnnotationBean> generateInferredAnnotations(
             Collection<CuratorAnnotationBean> annots) throws IllegalStateException {
@@ -2365,7 +2385,7 @@ public class SimilarityAnnotation {
      * @throws IllegalStateException    If the Uberon ontology provided at instantiation 
      *                                  does not contain a transformation_of relation type.
      */
-    public Set<CuratorAnnotationBean> inferAnnotationsFromTransformationOf(
+    private Set<CuratorAnnotationBean> inferAnnotationsFromTransformationOf(
             Collection<CuratorAnnotationBean> annots) throws IllegalStateException {
         log.entry(annots);
         
@@ -2644,7 +2664,8 @@ public class SimilarityAnnotation {
 
     /**
      * Generate a {@code Set} of {@code CuratorAnnotationBean}s derived from {@code annots} 
-     * and allowing to determine which entities are already annotated. The returned 
+     * and allowing to determine which entities are already annotated, discarding 
+     * annotations using the REJECTED CIO statement. The returned 
      * {@code CuratorAnnotationBean}s have only their HOM ID (see method {@code getHomId}) 
      * and entity IDs (see method {@code getEntityIds}) defined. The entity IDs will be sorted 
      * by natural order.
@@ -2661,7 +2682,14 @@ public class SimilarityAnnotation {
         
         Set<CuratorAnnotationBean> existingAnnots = new HashSet<CuratorAnnotationBean>();
         for (CuratorAnnotationBean annot: annots) {
-            
+            //discard annotations with rejected CIO statement
+            if (annot.getCioId() != null) {
+                OWLClass cls = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
+                        annot.getCioId().trim(), true);
+                if (cls != null && cioWrapper.isRejectedStatement(cls)) {
+                    continue;
+                }
+            }
             CuratorAnnotationBean existingAnnot = new CuratorAnnotationBean();
             existingAnnot.setHomId(annot.getHomId());
             List<String> entityIds = new ArrayList<String>(annot.getEntityIds());
@@ -2675,7 +2703,7 @@ public class SimilarityAnnotation {
     }
 
     /**
-     * Infer new annotations fron OWL class logical constraints. This methods 
+     * Infer new annotations fron OWL class logical constraints. This method 
      * will examine OWL class in the Uberon ontology provided at instantiation, 
      * to identify classes defined as the intersection of annotated classes. 
      * This methods will generate all possible annotations, positive and negative, 
@@ -2691,7 +2719,7 @@ public class SimilarityAnnotation {
      * @return          A {@code Set} of {@code CuratorAnnotationBean}s that are 
      *                  the new annotations inferred from logical constraints.
      */
-    public Set<CuratorAnnotationBean> inferAnnotationsFromLogicalConstraints(
+    private Set<CuratorAnnotationBean> inferAnnotationsFromLogicalConstraints(
             Collection<CuratorAnnotationBean> annots) {
         log.entry(annots);
         log.info("Inferring annotations based on logical constraints...");
@@ -3485,6 +3513,7 @@ public class SimilarityAnnotation {
                 newAnnot.setCioLabel(annot.getCioLabel());
             }
             newAnnot.setTrusted(!cioWrapper.isBgeeNotTrustedStatement(summaryConf));
+            summaryAnnots.add(newAnnot);
         }
         
 
@@ -3573,11 +3602,11 @@ public class SimilarityAnnotation {
         OWLClass evidenceTypeConcordance = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
                 CIOWrapper.SAME_TYPE_EVIDENCE_CONCORDANCE_ID);
         if ((positiveAnnotCount > 0 && negativeAnnotCount > 0 && 
-                ecoUtils.containsUnrelatedClassesByIsAPartOf(positiveConfs, negativeConfs)) || 
+                ecoUtils.containsUnrelatedClassesByIsAPartOf(positiveECOs, negativeECOs)) || 
                 (positiveAnnotCount > 0 && 
-                        ecoUtils.containsUnrelatedClassesByIsAPartOf(positiveConfs)) || 
+                        ecoUtils.containsUnrelatedClassesByIsAPartOf(positiveECOs)) || 
                 (negativeAnnotCount > 0 && 
-                        ecoUtils.containsUnrelatedClassesByIsAPartOf(negativeConfs))) {
+                        ecoUtils.containsUnrelatedClassesByIsAPartOf(negativeECOs))) {
                 evidenceTypeConcordance = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
                         CIOWrapper.DIFFERENT_TYPES_EVIDENCE_CONCORDANCE_ID);
         } 
@@ -3763,12 +3792,17 @@ public class SimilarityAnnotation {
                 
                 //to generate the supporting text, we check whether there are 
                 //alternative not-trusted homology hypothesis for higher taxa
+                log.trace("Trying to find non-trusted alternative ancestral taxon hypotheses for new annot: {} - taxToAncestors: {}", 
+                        newAnnot, taxToSelfAndAncestors.get(relatedAnnot.getNcbiTaxonId()));
                 Set<String> higherTaxonNames = new HashSet<String>();
                 for (SummaryAnnotationBean relatedAnnot2: relatedAnnotsEntry.getValue()) {
+                    log.trace("Testing annotation: {}", relatedAnnot2);
                     if (relatedAnnot2.getNcbiTaxonId() != relatedAnnot.getNcbiTaxonId() && 
                             taxToSelfAndAncestors.get(relatedAnnot.getNcbiTaxonId()).contains(
                                     relatedAnnot2.getNcbiTaxonId())) {
                         assert !relatedAnnot2.isTrusted();
+                        log.trace("Non-trusted alternative ancestral taxon found: {}", 
+                                relatedAnnot2.getTaxonName());
                         higherTaxonNames.add(relatedAnnot2.getTaxonName());
                     }
                 }
@@ -3787,7 +3821,7 @@ public class SimilarityAnnotation {
                     }      
                     boolean firstIteration = true;
                     for (String taxName: orderedTaxNames) {
-                        if (firstIteration) {
+                        if (!firstIteration) {
                             supportingText += ", ";
                         }
                         supportingText += taxName;

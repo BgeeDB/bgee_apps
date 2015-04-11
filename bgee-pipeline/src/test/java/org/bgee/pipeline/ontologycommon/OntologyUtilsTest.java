@@ -995,6 +995,20 @@ public class OntologyUtilsTest extends TestAncestor {
         classes1 = Arrays.asList(cls2);
         assertFalse("Collection should not contain unrelated OWLClasses", 
                 utils.containsUnrelatedClassesByIsAPartOf(classes1));
+        
+        //regression test: use a class not from the provided ontology, 
+        //this should now throw an exception
+        OWLClass fakeCls = ont.getOWLOntologyManager().getOWLDataFactory().getOWLClass(
+                IRI.create("fakeIRI"));
+        classes1 = Arrays.asList(cls1, cls2, cls5, fakeCls);
+        try {
+            utils.containsUnrelatedClassesByIsAPartOf(classes1);
+            //test failed
+            throw log.throwing(new AssertionError("An exception should have been thrown "
+                    + "when using a class not in the ontology used."));
+        } catch (Exception e) {
+            //test passed
+        }
     }
     
     /**
@@ -1028,6 +1042,41 @@ public class OntologyUtilsTest extends TestAncestor {
         classes2 = Arrays.asList(cls1, cls2, cls3, cls4);
         assertFalse("Collections should not contain unrelated OWLClasses", 
                 utils.containsUnrelatedClassesByIsAPartOf(classes1, classes2));
+        
+        //regression test: use a class not from the provided ontology, 
+        //this should now throw an exception
+        OWLClass fakeCls = ont.getOWLOntologyManager().getOWLDataFactory().getOWLClass(
+                IRI.create("fakeIRI"));
+        classes1 = Arrays.asList(cls1, cls2, fakeCls);
+        classes2 = Arrays.asList(cls1, cls2, cls3, cls4);
+        try {
+            utils.containsUnrelatedClassesByIsAPartOf(classes1, classes2);
+            //test failed
+            throw log.throwing(new AssertionError("An exception should have been thrown "
+                    + "when using a class not in the ontology used."));
+        } catch (Exception e) {
+            //test passed
+        }
+        classes1 = Arrays.asList(cls1, cls2);
+        classes2 = Arrays.asList(cls1, cls2, cls3, cls4, fakeCls);
+        try {
+            utils.containsUnrelatedClassesByIsAPartOf(classes1, classes2);
+            //test failed
+            throw log.throwing(new AssertionError("An exception should have been thrown "
+                    + "when using a class not in the ontology used."));
+        } catch (Exception e) {
+            //test passed
+        }
+        classes1 = Arrays.asList(cls1, cls2, fakeCls);
+        classes2 = Arrays.asList(cls1, cls2, cls3, cls4, fakeCls);
+        try {
+            utils.containsUnrelatedClassesByIsAPartOf(classes1, classes2);
+            //test failed
+            throw log.throwing(new AssertionError("An exception should have been thrown "
+                    + "when using a class not in the ontology used."));
+        } catch (Exception e) {
+            //test passed
+        }
     }
     
     /**

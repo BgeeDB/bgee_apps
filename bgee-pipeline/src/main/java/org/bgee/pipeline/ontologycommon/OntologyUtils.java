@@ -1891,6 +1891,18 @@ public class OntologyUtils {
             Collection<OWLClass> classes2) {
         log.entry(classes1, classes2);
         
+        //sanity check: check that all provided classes are part of the ontology
+        Set<OWLClass> allClasses = this.getWrapper().getAllOWLClasses();
+        Set<OWLClass> unrecognizedClasses = new HashSet<OWLClass>(classes1);
+        unrecognizedClasses.addAll(classes2);
+        if (!allClasses.containsAll(unrecognizedClasses)) {
+            unrecognizedClasses.removeAll(allClasses);
+            throw log.throwing(new IllegalArgumentException("Some provided classes "  
+                    + "do not belong to the ontology used: " + unrecognizedClasses));
+        }
+        allClasses = null;
+        unrecognizedClasses = null;
+        
         for (OWLClass cls1: classes1) {
             log.trace("Examining : {}", cls1);
             //retrieve ancestors and descendants of cls1, and add itself to the Collection

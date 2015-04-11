@@ -14,10 +14,8 @@ disjoint_from: CIO:0000040 ! confidence information element
 relationship: has_confidence_element CIO:0000040 {maxCardinality="3"} ! confidence information element
 relationship: has_confidence_element CIO:0000040 {minCardinality="1"} ! confidence information element
 relationship: has_confidence_level CIO:0000028 {maxCardinality="1"} ! confidence level
-relationship: has_confidence_level CIO:0000028 {minCardinality="0"} ! confidence level
 relationship: has_evidence_concordance CIO:0000032 {cardinality="1"} ! evidence concordance
 relationship: has_evidence_type_concordance CIO:0000041 {maxCardinality="1"} ! evidence type concordance
-relationship: has_evidence_type_concordance CIO:0000041 {minCardinality="0"} ! evidence type concordance
 
 [Term]
 id: CIO:0000001

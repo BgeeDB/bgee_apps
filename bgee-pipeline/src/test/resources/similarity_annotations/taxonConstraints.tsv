@@ -1,0 +1,10 @@
+Uberon ID	Uberon name	2759	33208	7742	7776	7778	32524	7711	33213	3
+CL:0000000	cell	T	T	T	T	T	T	T	T	F
+CL:0000015	male germ cell	T	T	T	T	T	T	T	T	F
+CL:0000037	hematopoietic stem cell	T	T	T	T	T	T	T	T	F
+UBERON:0000001	whatever name1	T	T	T	T	T	T	T	T	F
+UBERON:0000007	whatever name2	T	T	T	T	T	T	T	T	F
+UBERON:0010207	nictitating membrane	T	T	T	T	T	T	T	T	F
+CL:0000216	Sertoli cell	T	T	T	T	T	T	T	T	F
+UBERON:0000926	mesoderm	T	T	T	T	T	T	T	T	F
+UBERON:0001245	anus	T	T	T	T	T	T	T	T	T

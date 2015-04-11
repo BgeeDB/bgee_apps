@@ -361,7 +361,6 @@ is_a: HOM:0000047 ! chromosomal homology
 id: HOM:0000047
 name: chromosomal homology
 def: "Historical homology that involves the chromosomes able to pair (synapse) during meiosis." [ISBN:0195307615 "King RC and Stansfield WD (1997). A Dictionary of Genetics (5th Edition ed.). Oxford University Press"]
-xref: MeSH:Chromosome Pairing
 is_a: HOM:0000007 ! historical homology
 
 [Term]

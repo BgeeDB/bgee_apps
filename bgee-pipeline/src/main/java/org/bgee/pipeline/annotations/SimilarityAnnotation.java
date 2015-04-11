@@ -1311,7 +1311,7 @@ public class SimilarityAnnotation {
      */
     public SimilarityAnnotation(Map<String, Set<Integer>> taxonConstraints, 
             OWLGraphWrapper uberonOntWrapper, OWLGraphWrapper taxOntWrapper, 
-            OWLGraphWrapper ecoOntWrapper, OWLGraphWrapper homOntWrapper, 
+            OWLGraphWrapper homOntWrapper, OWLGraphWrapper ecoOntWrapper, 
             OWLGraphWrapper confOntWrapper) {
         this.missingUberonIds = new HashSet<String>();
         this.missingTaxonIds = new HashSet<Integer>();
@@ -1320,6 +1320,7 @@ public class SimilarityAnnotation {
         this.missingCONFIds = new HashSet<String>();
         this.duplicates = new HashSet<AnnotationBean>();
         this.incorrectFormat = new HashSet<AnnotationBean>();
+        this.idsNotExistingInTaxa = new HashMap<String, Set<Integer>>();
         
         this.taxonConstraints = taxonConstraints;
         this.uberonOntWrapper = uberonOntWrapper;
@@ -1327,8 +1328,6 @@ public class SimilarityAnnotation {
         this.ecoOntWrapper = ecoOntWrapper;
         this.homOntWrapper = homOntWrapper;
         this.cioWrapper = new CIOWrapper(confOntWrapper);
-        
-        this.idsNotExistingInTaxa = new HashMap<String, Set<Integer>>();
     }
     
     /**
@@ -1412,7 +1411,6 @@ public class SimilarityAnnotation {
      * @param <T>               The type of {@code AnnotationBean} to check.
      * @throws IllegalArgumentException     If some errors were detected.
      */
-    //TODO: check that SUMMARY and ANCESTRAL TAXA annotations are unique (over HOM Uberon taxon)
     public <T extends AnnotationBean> void checkAnnotations(Collection<T> annots) 
                     throws IllegalArgumentException {
         log.entry(annots);
@@ -1434,6 +1432,10 @@ public class SimilarityAnnotation {
         //exact duplicates, and potential duplicates (see below).
         Set<RawAnnotationBean> checkExactDuplicates = new HashSet<RawAnnotationBean>();
         Set<RawAnnotationBean> checkPotentialDuplicates = new HashSet<RawAnnotationBean>();
+        //Also, SUMMARY and ANCESTRAL TAXA annotations should be unique over same 
+        //HOM ID - Uberon IDs - taxon ID
+        Set<RawAnnotationBean> homEntityTaxDuplicates = new HashSet<RawAnnotationBean>();
+        
         //first pass, check each annotation
         int i = 0;
         Set<Integer> taxonIds = null;
@@ -1454,11 +1456,16 @@ public class SimilarityAnnotation {
             Collections.sort(uberonIds);
             
             //to check for duplicates, we will use only some columns
-            RawAnnotationBean checkPotentialDuplicate = new RawAnnotationBean();
-            checkPotentialDuplicate.setHomId(annot.getHomId());
-            checkPotentialDuplicate.setEntityIds(uberonIds);
+            //First, for SUMMARY and ANCESTRAL TAXA annotations, we should see only once 
+            //a same HOM ID - entity IDs - taxon ID
+            RawAnnotationBean homEntityTaxDuplicate = new RawAnnotationBean();
+            homEntityTaxDuplicate.setHomId(annot.getHomId());
+            homEntityTaxDuplicate.setEntityIds(uberonIds);
+            homEntityTaxDuplicate.setNcbiTaxonId(annot.getNcbiTaxonId());
+            //Then, for any annotation we check for potential duplicates, 
+            //over all fields but supporting text
+            RawAnnotationBean checkPotentialDuplicate = new RawAnnotationBean(homEntityTaxDuplicate);
             checkPotentialDuplicate.setNegated(annot.isNegated());
-            checkPotentialDuplicate.setNcbiTaxonId(annot.getNcbiTaxonId());
             if (annot instanceof RawAnnotationBean) {
                 //use only the ID of the reference
                 checkPotentialDuplicate.setRefId(((RawAnnotationBean)annot).getRefId());
@@ -1483,6 +1490,12 @@ public class SimilarityAnnotation {
                 //but we log a warn message, it's still most likely a duplicate
                 log.warn("Some annotations seem duplicated (different supporting textes, "
                         + "but all other fields equal): " + checkPotentialDuplicate);
+            }
+            if ((annot instanceof SummaryAnnotationBean || 
+                    annot instanceof AncestralTaxaAnnotationBean) && 
+                    !homEntityTaxDuplicates.add(homEntityTaxDuplicate)) {
+               //an exception will be thrown afterwards (see method verifyErrors)
+                this.duplicates.add(homEntityTaxDuplicate);
             }
             
             //we store positive and negative annotations associated to taxa here.
@@ -1790,6 +1803,11 @@ public class SimilarityAnnotation {
                 log.error("Unrecognized taxon ID {} at line {}", taxonId, lineNumber);
                 this.missingTaxonIds.add(taxonId);
                 allGood = false;
+            } else if (StringUtils.isNotBlank(annot.getTaxonName()) && 
+                    !taxOntWrapper.getLabel(cls).equals(annot.getTaxonName())) {
+                log.error("Incorrect taxon name at line {}", lineNumber);
+                this.incorrectFormat.add(annot);
+                allGood = false;
             }
         }
         for (int i = 0; i < annot.getEntityIds().size(); i++) {
@@ -1837,6 +1855,11 @@ public class SimilarityAnnotation {
                 log.trace("Unrecognized HOM ID {} at line {}", homId, lineNumber);
                 this.missingHOMIds.add(homId);
                 allGood = false;
+            } else if (StringUtils.isNotBlank(annot.getHomLabel()) && 
+                    !homOntWrapper.getLabel(cls).equals(annot.getHomLabel())) {
+                log.error("Incorrect HOM label at line {}", lineNumber);
+                this.incorrectFormat.add(annot);
+                allGood = false;
             }
         }
         String confId = annot.getCioId();
@@ -1849,6 +1872,12 @@ public class SimilarityAnnotation {
                 this.missingCONFIds.add(confId);
                 allGood = false;
             } else {
+                if (StringUtils.isNotBlank(annot.getCioLabel()) && 
+                        !cioGraphWrapper.getLabel(cls).equals(annot.getCioLabel())) {
+                    log.error("Incorrect CIO label at line {}", lineNumber);
+                    this.incorrectFormat.add(annot);
+                    allGood = false;
+                }
                 if (annot instanceof CuratorAnnotationBean || annot instanceof RawAnnotationBean) {
                     if (!cioWrapper.getEvidenceConcordance(cls).equals(
                             cioGraphWrapper.getOWLClassByIdentifier(
@@ -1886,14 +1915,13 @@ public class SimilarityAnnotation {
                     log.error("Unrecognized ECO ID {} at line {}", ecoId, lineNumber);
                     this.missingECOIds.add(ecoId);
                     allGood = false;
+                } else if (StringUtils.isNotBlank(((RawAnnotationBean) annot).getEcoLabel()) && 
+                        !ecoOntWrapper.getLabel(cls).equals(
+                                ((RawAnnotationBean) annot).getEcoLabel())) {
+                    log.error("Incorrect ECO label at line {}", lineNumber);
+                    this.incorrectFormat.add(annot);
+                    allGood = false;
                 }
-            }
-            
-            String refId = ((RawAnnotationBean) annot).getRefId();
-            if (StringUtils.isBlank(refId) || !refId.matches("\\S+?:\\S+")) {
-                log.error("Incorrect reference ID {} at line {}", refId, lineNumber);
-                this.incorrectFormat.add(annot);
-                allGood = false;
             }
         }
         
@@ -1977,77 +2005,100 @@ public class SimilarityAnnotation {
      * {@link #idsNotExistingInTaxa}, and/or {@link #duplicates}. If some errors were stored, an 
      * {@code IllegalStateException} will be thrown with a detailed error message, 
      * otherwise, nothing happens.
+     * <p>
+     * Errors are always reinit after a call to this method in any case.
+     * 
      * @throws IllegalStateException    if some errors were detected and stored.
      */
     private void verifyErrors() throws IllegalStateException {
         log.entry();
         
-        String errorMsg = "";
-        if (!this.incorrectFormat.isEmpty()) {
-            errorMsg += Utils.CR + "Problem detected, incorrectly formatted annotation lines: " + 
-                Utils.CR;
-            for (AnnotationBean annot: this.incorrectFormat) {
-                errorMsg += annot + Utils.CR;
-            }
-        }
-        if (!this.missingUberonIds.isEmpty()) {
-            errorMsg += Utils.CR + "Problem detected, unknown or deprecated Uberon IDs: " + 
-                Utils.CR;
-            for (String uberonId: this.missingUberonIds) {
-                errorMsg += uberonId + Utils.CR;
-            }
-        }
-        if (!this.missingTaxonIds.isEmpty()) {
-            errorMsg += Utils.CR + "Problem detected, unknown or deprecated taxon IDs: " + 
-                Utils.CR;
-            for (int taxonId: this.missingTaxonIds) {
-                errorMsg += taxonId + Utils.CR;
-            }
-        }
-        if (!this.idsNotExistingInTaxa.isEmpty()) {
-            errorMsg += Utils.CR + "Problem detected, Uberon IDs annotated with a taxon " +
-                    "there are not supposed to exist in: " + Utils.CR;
-            for (Entry<String, Set<Integer>> entry: this.idsNotExistingInTaxa.entrySet()) {
-                for (int taxonId: entry.getValue()) {
-                    errorMsg += entry.getKey() + " - " + taxonId + Utils.CR;
+        try {
+            String errorMsg = "";
+            if (!this.incorrectFormat.isEmpty()) {
+                errorMsg += Utils.CR + "Problem detected, incorrectly formatted annotation lines: " + 
+                        Utils.CR;
+                for (AnnotationBean annot: this.incorrectFormat) {
+                    errorMsg += annot + Utils.CR;
                 }
             }
-        }
-        if (!this.missingECOIds.isEmpty()) {
-            errorMsg += Utils.CR + "Problem detected, unknown or deprecated ECO IDs: " + 
-                Utils.CR;
-            for (String ecoId: this.missingECOIds) {
-                errorMsg += ecoId + Utils.CR;
+            if (!this.missingUberonIds.isEmpty()) {
+                errorMsg += Utils.CR + "Problem detected, unknown or deprecated Uberon IDs: " + 
+                        Utils.CR;
+                for (String uberonId: this.missingUberonIds) {
+                    errorMsg += uberonId + Utils.CR;
+                }
             }
-        }
-        if (!this.missingHOMIds.isEmpty()) {
-            errorMsg += Utils.CR + "Problem detected, unknown or deprecated HOM IDs: " + 
-                Utils.CR;
-            for (String homId: this.missingHOMIds) {
-                errorMsg += homId + Utils.CR;
+            if (!this.missingTaxonIds.isEmpty()) {
+                errorMsg += Utils.CR + "Problem detected, unknown or deprecated taxon IDs: " + 
+                        Utils.CR;
+                for (int taxonId: this.missingTaxonIds) {
+                    errorMsg += taxonId + Utils.CR;
+                }
             }
-        }
-        if (!this.missingCONFIds.isEmpty()) {
-            errorMsg += Utils.CR + "Problem detected, unknown or deprecated CONF IDs: " + 
-                Utils.CR;
-            for (String confId: this.missingCONFIds) {
-                errorMsg += confId + Utils.CR;
+            if (!this.idsNotExistingInTaxa.isEmpty()) {
+                errorMsg += Utils.CR + "Problem detected, Uberon IDs annotated with a taxon " +
+                        "there are not supposed to exist in: " + Utils.CR;
+                for (Entry<String, Set<Integer>> entry: this.idsNotExistingInTaxa.entrySet()) {
+                    for (int taxonId: entry.getValue()) {
+                        errorMsg += entry.getKey() + " - " + taxonId + Utils.CR;
+                    }
+                }
             }
-        }
-        if (!this.duplicates.isEmpty()) {
-            errorMsg += Utils.CR + "Some annotations are duplicated: " + 
-                Utils.CR;
-            for (AnnotationBean duplicate: this.duplicates) {
-                errorMsg += duplicate + Utils.CR;
+            if (!this.missingECOIds.isEmpty()) {
+                errorMsg += Utils.CR + "Problem detected, unknown or deprecated ECO IDs: " + 
+                        Utils.CR;
+                for (String ecoId: this.missingECOIds) {
+                    errorMsg += ecoId + Utils.CR;
+                }
             }
-        }
-        if (!errorMsg.equals("")) {
-            throw log.throwing(new IllegalStateException(errorMsg));
+            if (!this.missingHOMIds.isEmpty()) {
+                errorMsg += Utils.CR + "Problem detected, unknown or deprecated HOM IDs: " + 
+                        Utils.CR;
+                for (String homId: this.missingHOMIds) {
+                    errorMsg += homId + Utils.CR;
+                }
+            }
+            if (!this.missingCONFIds.isEmpty()) {
+                errorMsg += Utils.CR + "Problem detected, unknown or deprecated CONF IDs: " + 
+                        Utils.CR;
+                for (String confId: this.missingCONFIds) {
+                    errorMsg += confId + Utils.CR;
+                }
+            }
+            if (!this.duplicates.isEmpty()) {
+                errorMsg += Utils.CR + "Some annotations are duplicated: " + 
+                        Utils.CR;
+                for (AnnotationBean duplicate: this.duplicates) {
+                    errorMsg += duplicate + Utils.CR;
+                }
+            }
+            if (!errorMsg.equals("")) {
+                throw log.throwing(new IllegalStateException(errorMsg));
+            }
+        } finally {
+            this.reinitErrors();
         }
         
         log.exit();
     }
     
+    /**
+     * Reinit the errors stored following a call to {@link verifyErrors()}.
+     */
+    private void reinitErrors() {
+        log.entry();
+        this.missingUberonIds.clear();
+        this.missingTaxonIds.clear();
+        this.missingECOIds.clear();
+        this.missingHOMIds.clear();
+        this.missingCONFIds.clear();
+        this.duplicates.clear();
+        this.incorrectFormat.clear();
+        this.idsNotExistingInTaxa.clear();
+        log.exit();
+    }
+
     /**
      * Generate {@code RawAnnotationBean}s from the provided {@code CuratorAnnotationBean}s. 
      * This method takes annotations from curators, and transform them into clean RAW 

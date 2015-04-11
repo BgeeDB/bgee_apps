@@ -913,32 +913,473 @@ public class SimilarityAnnotationTest extends TestAncestor {
     
     /**
      * Test {@link SimilarityAnnotation.checkAnnotations(Collection)} for 
-     * {@code CuratorAnnotationBean}s.
+     * {@code RawAnnotationBean}s.
      */
     @Test
-    public void shouldCheckAnnotations() throws ParseException {
+    public void shouldCheckAnnotations() throws ParseException, OBOFormatParserException, 
+    FileNotFoundException, OWLOntologyCreationException, IOException {
         SimpleDateFormat sdf = new SimpleDateFormat(SimilarityAnnotationUtils.DATE_FORMAT);
-        List<CuratorAnnotationBean> annots = new ArrayList<CuratorAnnotationBean>(Arrays.asList(
-                new CuratorAnnotationBean("HOM:0000007", Arrays.asList("CL:0000000"), 
-                        2759, false, "ECO:0000033", "CIO:0000003", 
+        
+        SimilarityAnnotation simAnnot = new SimilarityAnnotation(
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/taxonConstraints.tsv").getFile(), null, 
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/fake_uberon.obo").getFile(), 
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/fake_taxonomy.obo").getFile(), 
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/homology_ontology.obo").getFile(), 
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/fake_eco.obo").getFile(), 
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/cio-simple.obo").getFile());
+        
+        List<RawAnnotationBean> annots = new ArrayList<RawAnnotationBean>(Arrays.asList(
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                        2759, "Eukaryota", false, "ECO:0000033", 
+                        "traceable author statement", 
+                        "CIO:0000003", "high confidence from single evidence", 
                         "DOI:10.1073/pnas.032658599", "ref title 1", 
                         "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")), 
                 //congruent evidence lines
-                new CuratorAnnotationBean("HOM:0000007", Arrays.asList("CL:0000015"), 
-                        33208, false, "ECO:0000205", "CIO:0000004", 
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000015"), Arrays.asList("male germ cell"), 
+                        33208, "Metazoa", false, "ECO:0000205", 
+                        "curator inference", 
+                        "CIO:0000004", "medium confidence from single evidence", 
                         "DOI:10.1002/bies.950161213", "ref title 2", 
                         "supporting text 2", "bgee", "ANN", sdf.parse("2013-08-29")), 
-                new CuratorAnnotationBean("HOM:0000007", Arrays.asList("CL:0000015"),  
-                        33208, false, "ECO:0000205", "CIO:0000005", 
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000015"), Arrays.asList("male germ cell"), 
+                        33208, "Metazoa", false, "ECO:0000205", 
+                        "curator inference", 
+                        "CIO:0000005", "low confidence from single evidence", 
                         "ISBN:978-0198566694", "ref title 3", 
                         "supporting text 3", "bgee", "ANN", sdf.parse("2013-08-29")), 
+                //single evidence
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000037"), Arrays.asList("hematopoietic stem cell"), 
+                        7742, "Vertebrata", true, "ECO:0000067", 
+                        "developmental similarity evidence", 
+                        "CIO:0000004", "medium confidence from single evidence", 
+                        "DOI:10.1146/annurev.cellbio.22.010605.093317", "ref title 4", 
+                        "supporting text 4", "bgee", "ANN", sdf.parse("2013-07-01")), 
                 //multiple Uberon IDs
-                new CuratorAnnotationBean("HOM:0000007", 
+                new RawAnnotationBean("HOM:0000007", "historical homology", 
                         Arrays.asList("CL:0000037", "UBERON:0000001", "UBERON:0000007"), 
-                        7742, true, "ECO:0000067", "CIO:0000004", 
+                        Arrays.asList("hematopoietic stem cell", "whatever name1", 
+                                "whatever name2"), 
+                        7742, "Vertebrata", true, "ECO:0000067", 
+                        "developmental similarity evidence", 
+                        "CIO:0000004", "medium confidence from single evidence", 
                         "DOI:10.1146/annurev.cellbio.22.010605.093317", "ref title 7", 
                         "supporting text 7", "bgee", "ANN", sdf.parse("2013-07-01"))));
         
+        //everything should work with these annotations
+        simAnnot.checkAnnotations(annots);
+        
+        //incorrect HOM name
+        RawAnnotationBean incorrectAnnot = new RawAnnotationBean(
+                "HOM:0000007", "fake historical homology", 
+                Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                2759, "Eukaryota", false, "ECO:0000033", 
+                "traceable author statement", 
+                "CIO:0000003", "high confidence from single evidence", 
+                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1 change to avoid duplicate", "bgee", "ANN", 
+                sdf.parse("2013-06-21"));
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for an incorrect HOM name"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
+        
+        //incorrect entity name
+        incorrectAnnot = new RawAnnotationBean("HOM:0000007", "historical homology", 
+                Arrays.asList("CL:0000037", "UBERON:0000001", "UBERON:0000007"), 
+                Arrays.asList("hematopoietic stem cell", "WRONG whatever name1", 
+                        "whatever name2"), 
+                7742, "Vertebrata", true, "ECO:0000067", 
+                "developmental similarity evidence", 
+                "CIO:0000004", "medium confidence from single evidence", 
+                "DOI:10.1146/annurev.cellbio.22.010605.093317", "ref title 7", 
+                "supporting text 7 change to avoid duplicate", "bgee", "ANN", 
+                sdf.parse("2013-07-01"));
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for an incorrect entity name"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
+        
+        //incorrect taxon name
+        incorrectAnnot = new RawAnnotationBean(
+                "HOM:0000007", "historical homology", 
+                Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                2759, "fake Eukaryota", false, "ECO:0000033", 
+                "traceable author statement", 
+                "CIO:0000003", "high confidence from single evidence", 
+                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1 change to avoid duplicate", "bgee", "ANN", 
+                sdf.parse("2013-06-21"));
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for an incorrect taxon name"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
+        
+        //incorrect ECO name
+        incorrectAnnot = new RawAnnotationBean(
+                "HOM:0000007", "historical homology", 
+                Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                2759, "Eukaryota", false, "ECO:0000033", 
+                "fake traceable author statement", 
+                "CIO:0000003", "high confidence from single evidence", 
+                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1 change to avoid duplicate", "bgee", "ANN", 
+                sdf.parse("2013-06-21"));
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for an incorrect ECO name"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
+        
+        //incorrect CIO name
+        incorrectAnnot = new RawAnnotationBean(
+                "HOM:0000007", "historical homology", 
+                Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                2759, "Eukaryota", false, "ECO:0000033", 
+                "traceable author statement", 
+                "CIO:0000003", "fake high confidence from single evidence", 
+                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1 change to avoid duplicate", "bgee", "ANN", 
+                sdf.parse("2013-06-21"));
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for an incorrect CIO name"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
+        
+        //duplicated annotation
+        incorrectAnnot = new RawAnnotationBean("HOM:0000007", "historical homology", 
+                Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                2759, "Eukaryota", false, "ECO:0000033", 
+                "traceable author statement", 
+                "CIO:0000003", "high confidence from single evidence", 
+                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21"));
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for a duplicated annotation"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
+        
+        //incorrect taxon constraints
+        incorrectAnnot = new RawAnnotationBean(
+                "HOM:0000007", "historical homology", 
+                Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                3, "taxon 3", false, "ECO:0000033", 
+                "traceable author statement", 
+                "CIO:0000003", "high confidence from single evidence", 
+                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1 change to avoid duplicate", "bgee", "ANN", 
+                sdf.parse("2013-06-21"));
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for an incorrect taxon constraints"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
+
+        //missing HOM ID
+        incorrectAnnot = new RawAnnotationBean("", "historical homology", 
+                Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                2759, "Eukaryota", false, "ECO:0000033", 
+                "traceable author statement", 
+                "CIO:0000003", "high confidence from single evidence", 
+                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21"));
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for a missing HOM ID"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
+
+        //missing entity ID
+        incorrectAnnot = new RawAnnotationBean("HOM:0000007", "historical homology", 
+                Arrays.asList(""), Arrays.asList("cell"), 
+                2759, "Eukaryota", false, "ECO:0000033", 
+                "traceable author statement", 
+                "CIO:0000003", "high confidence from single evidence", 
+                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21"));
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for a missing entity ID"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
+
+        //missing taxon ID
+        incorrectAnnot = new RawAnnotationBean("HOM:0000007", "historical homology", 
+                Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                0, "Eukaryota", false, "ECO:0000033", 
+                "traceable author statement", 
+                "CIO:0000003", "high confidence from single evidence", 
+                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21"));
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for a missing taxon ID"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
+
+        //missing CIO ID
+        incorrectAnnot = new RawAnnotationBean("HOM:0000007", "historical homology", 
+                Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                2759, "Eukaryota", false, "ECO:0000033", 
+                "traceable author statement", 
+                "", "high confidence from single evidence", 
+                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1 change for no duplicate", "bgee", "ANN", sdf.parse("2013-06-21"));
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for a missing CIO ID"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
+
+        //entity IDs incorrectly ordered
+        incorrectAnnot = new RawAnnotationBean("HOM:0000007", "historical homology", 
+                Arrays.asList("UBERON:0000001", "CL:0000037", "UBERON:0000007"), 
+                Arrays.asList("whatever name1", "hematopoietic stem cell", 
+                        "whatever name2"), 
+                7742, "Vertebrata", true, "ECO:0000067", 
+                "developmental similarity evidence", 
+                "CIO:0000004", "medium confidence from single evidence", 
+                "DOI:10.1146/annurev.cellbio.22.010605.093317", "ref title 7", 
+                "supporting text 7", "bgee", "ANN", sdf.parse("2013-07-01"));
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for entity IDs incorrectly ordered"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
+
+        //entity IDs and labels not ordered the same
+        incorrectAnnot = new RawAnnotationBean("HOM:0000007", "historical homology", 
+                Arrays.asList("CL:0000037", "UBERON:0000001", "UBERON:0000007"), 
+                Arrays.asList("whatever name1", "hematopoietic stem cell", 
+                        "whatever name2"), 
+                7742, "Vertebrata", true, "ECO:0000067", 
+                "developmental similarity evidence", 
+                "CIO:0000004", "medium confidence from single evidence", 
+                "DOI:10.1146/annurev.cellbio.22.010605.093317", "ref title 7", 
+                "supporting text 7", "bgee", "ANN", sdf.parse("2013-07-01"));
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for inconsistent order of entity IDs and names"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
+
+        //missing HOM label
+        incorrectAnnot = new RawAnnotationBean("HOM:0000007", "", 
+                Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                2759, "Eukaryota", false, "ECO:0000033", 
+                "traceable author statement", 
+                "CIO:0000003", "high confidence from single evidence", 
+                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21"));
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for a missing HOM label"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
+
+        //missing taxon name
+        incorrectAnnot = new RawAnnotationBean("HOM:0000007", "historical homology", 
+                Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                2759, "", false, "ECO:0000033", 
+                "traceable author statement", 
+                "CIO:0000003", "high confidence from single evidence", 
+                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21"));
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for a missig taxon name"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
+
+        //missing ECO label
+        incorrectAnnot = new RawAnnotationBean("HOM:0000007", "historical homology", 
+                Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                2759, "Eukaryota", false, "ECO:0000033", 
+                "", 
+                "CIO:0000003", "high confidence from single evidence", 
+                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21"));
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for a missing ECO label"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
+
+        //missing CIO label
+        incorrectAnnot = new RawAnnotationBean("HOM:0000007", "historical homology", 
+                Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                2759, "Eukaryota", false, "ECO:0000033", 
+                "traceable author statement", 
+                "CIO:0000003", "", 
+                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21"));
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for a missing CIO label"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
+
+        //missing ref ID
+        incorrectAnnot = new RawAnnotationBean("HOM:0000007", "historical homology", 
+                Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                2759, "Eukaryota", false, "ECO:0000033", 
+                "traceable author statement", 
+                "CIO:0000003", "high confidence from single evidence", 
+                "", "ref title 1", 
+                "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21"));
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for a missing ref ID"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
+
+        //missing ref title
+        incorrectAnnot = new RawAnnotationBean("HOM:0000007", "historical homology", 
+                Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                2759, "Eukaryota", false, "ECO:0000033", 
+                "traceable author statement", 
+                "CIO:0000003", "high confidence from single evidence", 
+                "DOI:10.1073/pnas.032658599", "", 
+                "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21"));
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for a missing ref title"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
+
+        //RAW annotation not using a CIO statement from the single-evidence branch
+        incorrectAnnot = new RawAnnotationBean("HOM:0000007", "historical homology", 
+                Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                2759, "Eukaryota", false, "ECO:0000033", 
+                "traceable author statement", 
+                "CIO:0000012", "confidence statement from congruent evidence lines of "
+                        + "multiple types, overall confidence high", 
+                "DOI:10.1073/pnas.032658599", "", 
+                "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21"));
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for a missing ref title"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
+        
+        //last verification, to check that the SimilarityAnnotation object is still 
+        //in a correct state.
+        simAnnot.checkAnnotations(annots);
     }
     
     /**

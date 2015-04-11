@@ -2449,7 +2449,7 @@ public class SimilarityAnnotation {
             
             //retrieve from source annotations CIO statements and information about Entity IDs.
             Set<OWLClass> cioStatements = new HashSet<OWLClass>();
-            Set<String> supportingTextElements = new HashSet<String>();
+            List<String> supportingTextElements = new ArrayList<String>();
             for (CuratorAnnotationBean sourceAnnot: inferredAnnot.getValue()) {
                 
                 cioStatements.add(cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
@@ -2461,6 +2461,7 @@ public class SimilarityAnnotation {
                 log.trace("Adding supporting text element: {}", supportingTextElement);
                 supportingTextElements.add(supportingTextElement);
             }
+            Collections.sort(supportingTextElements);
             
             //retrieve best CIO statement, to set the confidence in inferred annotation.
             inferredAnnot.getKey().setCioId(cioWrapper.getOWLGraphWrapper().getIdentifier(

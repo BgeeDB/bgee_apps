@@ -234,7 +234,7 @@ public class UberonTest extends TestAncestor {
     }
 
     
-    @Test
+    //@Test
     public void test() throws OBOFormatParserException, OWLOntologyCreationException, IOException {
         OWLOntology ont = OntologyUtils.loadOntology("/Users/admin/Desktop/composite-metazoan.owl");
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);

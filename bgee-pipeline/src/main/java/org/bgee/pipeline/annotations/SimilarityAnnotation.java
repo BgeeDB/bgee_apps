@@ -1436,6 +1436,15 @@ public class SimilarityAnnotation {
         //HOM ID - Uberon IDs - taxon ID
         Set<RawAnnotationBean> homEntityTaxDuplicates = new HashSet<RawAnnotationBean>();
         
+        //for ANCESTRAL TAXA annotations, we can have annotations with same HOM ID - entity IDs 
+        //and different taxa, in case of independent evolution, but we should never have 
+        //annotations with same HOM ID - entity IDs to parent-child taxa. 
+        //We will use a Map where keys are RawAnnotationBean 
+        //storing HOM ID - entity IDs, the associated value being Set of Integers 
+        //that are the taxon IDs associated.
+        Map<RawAnnotationBean, Set<Integer>> annotsToAncestralTaxa = 
+                new HashMap<RawAnnotationBean, Set<Integer>>();
+        
         //first pass, check each annotation
         int i = 0;
         Set<Integer> taxonIds = null;
@@ -1456,11 +1465,14 @@ public class SimilarityAnnotation {
             Collections.sort(uberonIds);
             
             //to check for duplicates, we will use only some columns
-            //First, for SUMMARY and ANCESTRAL TAXA annotations, we should see only once 
+            //First, for ANCESTRAL TAXA annotations, we need to collect all taxa 
+            //associated to a same HOM ID - entity IDs
+            RawAnnotationBean annotToAncestralTaxa = new RawAnnotationBean();
+            annotToAncestralTaxa.setHomId(annot.getHomId());
+            annotToAncestralTaxa.setEntityIds(uberonIds);
+            //Now, for SUMMARY and ANCESTRAL TAXA annotations, we should see only once 
             //a same HOM ID - entity IDs - taxon ID
-            RawAnnotationBean homEntityTaxDuplicate = new RawAnnotationBean();
-            homEntityTaxDuplicate.setHomId(annot.getHomId());
-            homEntityTaxDuplicate.setEntityIds(uberonIds);
+            RawAnnotationBean homEntityTaxDuplicate = new RawAnnotationBean(annotToAncestralTaxa);
             homEntityTaxDuplicate.setNcbiTaxonId(annot.getNcbiTaxonId());
             //Then, for any annotation we check for potential duplicates, 
             //over all fields but supporting text
@@ -1497,6 +1509,14 @@ public class SimilarityAnnotation {
                //an exception will be thrown afterwards (see method verifyErrors)
                 this.duplicates.add(homEntityTaxDuplicate);
             }
+            if (annot instanceof AncestralTaxaAnnotationBean) {
+                Set<Integer> ancestralTaxa = annotsToAncestralTaxa.get(annotToAncestralTaxa);
+                if (ancestralTaxa == null) {
+                    ancestralTaxa = new HashSet<Integer>();
+                    annotsToAncestralTaxa.put(annotToAncestralTaxa, ancestralTaxa);
+                }
+                ancestralTaxa.add(annot.getNcbiTaxonId());
+            }
             
             //we store positive and negative annotations associated to taxa here.
             RawAnnotationBean keyBean = new RawAnnotationBean();
@@ -1513,6 +1533,37 @@ public class SimilarityAnnotation {
                 posOrNegAnnotsToTaxa.put(keyBean, taxIds);
             }
             taxIds.add(annot.getNcbiTaxonId());
+        }
+        
+        //check incorrect redundant higher taxa in ANCESTRAL TAXA annotations
+        OntologyUtils taxOntUtils = new OntologyUtils(taxOntWrapper);
+        for (Entry<RawAnnotationBean, Set<Integer>> annotToAncestralTaxa: 
+            annotsToAncestralTaxa.entrySet()) {
+            //retrieve the taxa as OWLClasses
+            Set<OWLClass> ancestralTaxClasses = new HashSet<OWLClass>();
+            for (int taxId: annotToAncestralTaxa.getValue()) {
+                ancestralTaxClasses.add(taxOntWrapper.getOWLClassByIdentifier(
+                        OntologyUtils.getTaxOntologyId(taxId), true));
+            }
+            //now, we retain only parent classes from the Set; if it is modified, 
+            //then it means that parent-child taxa were annotated to same HOM ID - entity IDs
+            int taxCount = ancestralTaxClasses.size();
+            assert taxCount > 0;
+            taxOntUtils.retainParentClasses(ancestralTaxClasses, null);
+            if (ancestralTaxClasses.size() != taxCount) {
+                //generate fake annotations to be stored for error verification
+                log.error("Some Ancestral taxa annotations with same HOM ID - entity IDs "
+                        + "are annotated to parent-child taxa, this should never happen. "
+                        + "Parent taxa: {} - annotation: {}", ancestralTaxClasses, 
+                        annotToAncestralTaxa.getKey());
+                for (OWLClass ancestralTaxCls: ancestralTaxClasses) {
+                    RawAnnotationBean fakeAnnot = new RawAnnotationBean(
+                            annotToAncestralTaxa.getKey());
+                    fakeAnnot.setNcbiTaxonId(OntologyUtils.getTaxNcbiId(
+                            taxOntWrapper.getIdentifier(ancestralTaxCls)));
+                    this.incorrectFormat.add(fakeAnnot);
+                }
+            }
         }
         
         //now we verify that the data provided are correct (the method checkAnnotation 

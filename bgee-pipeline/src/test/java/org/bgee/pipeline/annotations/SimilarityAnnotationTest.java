@@ -916,7 +916,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
      * {@code RawAnnotationBean}s.
      */
     @Test
-    public void shouldCheckAnnotations() throws ParseException, OBOFormatParserException, 
+    public void shouldCheckRawAnnotations() throws ParseException, OBOFormatParserException, 
     FileNotFoundException, OWLOntologyCreationException, IOException {
         SimpleDateFormat sdf = new SimpleDateFormat(SimilarityAnnotationUtils.DATE_FORMAT);
         
@@ -1124,7 +1124,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
             //test passed
         }
         annots.remove(incorrectAnnot);
-
+    
         //missing HOM ID
         incorrectAnnot = new RawAnnotationBean("", "historical homology", 
                 Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
@@ -1143,7 +1143,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
             //test passed
         }
         annots.remove(incorrectAnnot);
-
+    
         //missing entity ID
         incorrectAnnot = new RawAnnotationBean("HOM:0000007", "historical homology", 
                 Arrays.asList(""), Arrays.asList("cell"), 
@@ -1162,7 +1162,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
             //test passed
         }
         annots.remove(incorrectAnnot);
-
+    
         //missing taxon ID
         incorrectAnnot = new RawAnnotationBean("HOM:0000007", "historical homology", 
                 Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
@@ -1181,7 +1181,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
             //test passed
         }
         annots.remove(incorrectAnnot);
-
+    
         //missing CIO ID
         incorrectAnnot = new RawAnnotationBean("HOM:0000007", "historical homology", 
                 Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
@@ -1200,7 +1200,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
             //test passed
         }
         annots.remove(incorrectAnnot);
-
+    
         //entity IDs incorrectly ordered
         incorrectAnnot = new RawAnnotationBean("HOM:0000007", "historical homology", 
                 Arrays.asList("UBERON:0000001", "CL:0000037", "UBERON:0000007"), 
@@ -1221,7 +1221,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
             //test passed
         }
         annots.remove(incorrectAnnot);
-
+    
         //entity IDs and labels not ordered the same
         incorrectAnnot = new RawAnnotationBean("HOM:0000007", "historical homology", 
                 Arrays.asList("CL:0000037", "UBERON:0000001", "UBERON:0000007"), 
@@ -1242,7 +1242,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
             //test passed
         }
         annots.remove(incorrectAnnot);
-
+    
         //missing HOM label
         incorrectAnnot = new RawAnnotationBean("HOM:0000007", "", 
                 Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
@@ -1261,7 +1261,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
             //test passed
         }
         annots.remove(incorrectAnnot);
-
+    
         //missing taxon name
         incorrectAnnot = new RawAnnotationBean("HOM:0000007", "historical homology", 
                 Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
@@ -1280,7 +1280,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
             //test passed
         }
         annots.remove(incorrectAnnot);
-
+    
         //missing ECO label
         incorrectAnnot = new RawAnnotationBean("HOM:0000007", "historical homology", 
                 Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
@@ -1299,7 +1299,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
             //test passed
         }
         annots.remove(incorrectAnnot);
-
+    
         //missing CIO label
         incorrectAnnot = new RawAnnotationBean("HOM:0000007", "historical homology", 
                 Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
@@ -1318,7 +1318,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
             //test passed
         }
         annots.remove(incorrectAnnot);
-
+    
         //missing ref ID
         incorrectAnnot = new RawAnnotationBean("HOM:0000007", "historical homology", 
                 Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
@@ -1337,7 +1337,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
             //test passed
         }
         annots.remove(incorrectAnnot);
-
+    
         //missing ref title
         incorrectAnnot = new RawAnnotationBean("HOM:0000007", "historical homology", 
                 Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
@@ -1356,7 +1356,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
             //test passed
         }
         annots.remove(incorrectAnnot);
-
+    
         //RAW annotation not using a CIO statement from the single-evidence branch
         incorrectAnnot = new RawAnnotationBean("HOM:0000007", "historical homology", 
                 Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
@@ -1377,6 +1377,226 @@ public class SimilarityAnnotationTest extends TestAncestor {
         }
         annots.remove(incorrectAnnot);
         
+        //last verification, to check that the SimilarityAnnotation object is still 
+        //in a correct state.
+        simAnnot.checkAnnotations(annots);
+    }
+    
+    /**
+     * Test {@link SimilarityAnnotation.checkAnnotations(Collection)} for 
+     * {@code SummaryAnnotationBean}s.
+     */
+    @Test
+    public void shouldCheckSummaryAnnotations() throws OBOFormatParserException, 
+    FileNotFoundException, OWLOntologyCreationException, IOException {
+        
+        SimilarityAnnotation simAnnot = new SimilarityAnnotation(
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/taxonConstraints.tsv").getFile(), null, 
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/fake_uberon.obo").getFile(), 
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/fake_taxonomy.obo").getFile(), 
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/homology_ontology.obo").getFile(), 
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/fake_eco.obo").getFile(), 
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/cio-simple.obo").getFile());
+        
+        List<SummaryAnnotationBean> annots = new ArrayList<SummaryAnnotationBean>(Arrays.asList(
+                new SummaryAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                        2759, "Eukaryota", false, 
+                        "CIO:0000003", "high confidence from single evidence", true, 
+                        "Summary annotation created from 1 single-evidence annotation"
+//                        , 1, 0, 
+//                        Arrays.asList("ECO:0000033"), 
+//                        Arrays.asList("traceable author statement"), 
+//                        null, null, null, null, 
+//                        Arrays.asList("bgee")
+                        ), 
+                new SummaryAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000037", "UBERON:0000001", "UBERON:0000007"), 
+                        Arrays.asList("hematopoietic stem cell", "whatever name1", 
+                                "whatever name2"), 
+                        7742, "Vertebrata", true, 
+                        "CIO:0000004", "medium confidence from single evidence", true, 
+                        "Summary annotation created from 1 single-evidence annotation"
+//                                , 0, 1,  
+//                                null, null, 
+//                                Arrays.asList("ECO:0000067"), 
+//                                Arrays.asList("developmental similarity evidence"), 
+//                                null, null, 
+//                                Arrays.asList("bgee")
+                        )));
+
+        //everything should work with these annotations
+        simAnnot.checkAnnotations(annots);
+        
+        //duplicated annotation over HOM ID - entity IDs - taxon ID
+        SummaryAnnotationBean incorrectAnnot = new SummaryAnnotationBean(
+                "HOM:0000007", "historical homology", 
+                Arrays.asList("CL:0000037", "UBERON:0000001", "UBERON:0000007"), 
+                Arrays.asList("hematopoietic stem cell", "whatever name1", 
+                        "whatever name2"), 
+                7742, "Vertebrata", false, 
+                "CIO:0000003", "high confidence from single evidence", true, 
+                "whatever"
+//                        , 0, 1,  
+//                        null, null, 
+//                        Arrays.asList("ECO:0000067"), 
+//                        Arrays.asList("developmental similarity evidence"), 
+//                        null, null, 
+//                        Arrays.asList("bgee")
+                );
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for a duplicated annotation"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
+        
+        //incorrect trust state
+        incorrectAnnot = new SummaryAnnotationBean(
+                "HOM:0000007", "historical homology", 
+                Arrays.asList("CL:0000037", "UBERON:0000001", "UBERON:0000007"), 
+                Arrays.asList("hematopoietic stem cell", "whatever name1", 
+                        "whatever name2"), 
+                7742, "Vertebrata", false, 
+                "CIO:0000005", "low confidence from single evidence", true, 
+                "whatever"
+//                        , 0, 1,  
+//                        null, null, 
+//                        Arrays.asList("ECO:0000067"), 
+//                        Arrays.asList("developmental similarity evidence"), 
+//                        null, null, 
+//                        Arrays.asList("bgee")
+                );
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for an incorrect trust state"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
+
+        //last verification, to check that the SimilarityAnnotation object is still 
+        //in a correct state.
+        simAnnot.checkAnnotations(annots);
+    }
+    
+    /**
+     * Test {@link SimilarityAnnotation.checkAnnotations(Collection)} for 
+     * {@code AncestralTaxaAnnotationBean}s.
+     */
+    @Test
+    public void shouldCheckAncestralTaxaAnnotations() throws OBOFormatParserException, 
+    FileNotFoundException, OWLOntologyCreationException, IOException {
+        
+        SimilarityAnnotation simAnnot = new SimilarityAnnotation(
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/taxonConstraints.tsv").getFile(), null, 
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/fake_uberon.obo").getFile(), 
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/fake_taxonomy.obo").getFile(), 
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/homology_ontology.obo").getFile(), 
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/fake_eco.obo").getFile(), 
+                SimilarityAnnotationTest.class.getResource(
+                        "/similarity_annotations/cio-simple.obo").getFile());
+        
+        List<AncestralTaxaAnnotationBean> annots = new ArrayList<AncestralTaxaAnnotationBean>(
+                Arrays.asList(
+                new AncestralTaxaAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000037", "UBERON:0000001", "UBERON:0000007"), 
+                        Arrays.asList("hematopoietic stem cell", "whatever name1", 
+                                "whatever name2"), 
+                                7778, "Elasmobranchii", 
+                        "CIO:0000004", "medium confidence from single evidence", "-")));
+
+        //everything should work with these annotations
+        simAnnot.checkAnnotations(annots);
+        
+        //duplicated annotation over HOM ID - entity IDs - taxon ID
+        AncestralTaxaAnnotationBean incorrectAnnot = 
+                new AncestralTaxaAnnotationBean("HOM:0000007", "historical homology", 
+                Arrays.asList("CL:0000037", "UBERON:0000001", "UBERON:0000007"), 
+                Arrays.asList("hematopoietic stem cell", "whatever name1", 
+                        "whatever name2"), 
+                        7778, "Elasmobranchii", 
+                "CIO:0000003", "high confidence from single evidence", "fsfsdf");
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for a duplicated annotation"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
+        
+        //annotation with a non-trusted CIO statement: this should never happen 
+        //for AncestralTaxaAnnotationBeans
+        incorrectAnnot = 
+                new AncestralTaxaAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                        2759, "Eukaryota", 
+                        "CIO:0000005", "low confidence from single evidence", "-");
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for a non-trusted CIO statement"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
+        
+        //it is possible to have annotations to same HOM ID - entity IDs, but different taxa, 
+        //in case of independent evolution
+        AncestralTaxaAnnotationBean correctAnnot = 
+                new AncestralTaxaAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000037", "UBERON:0000001", "UBERON:0000007"), 
+                        Arrays.asList("hematopoietic stem cell", "whatever name1", 
+                                "whatever name2"), 
+                                32524, "Amniota", 
+                        "CIO:0000004", "medium confidence from single evidence", "-");
+        annots.add(correctAnnot);
+        //everything should work
+        simAnnot.checkAnnotations(annots);
+        annots.remove(correctAnnot);
+        
+        //but it is not possible if the taxa are related (parent-child relation)
+        incorrectAnnot = 
+                new AncestralTaxaAnnotationBean("HOM:0000007", "historical homology", 
+                        Arrays.asList("CL:0000037", "UBERON:0000001", "UBERON:0000007"), 
+                        Arrays.asList("hematopoietic stem cell", "whatever name1", 
+                                "whatever name2"), 
+                                7711, "Chordata", 
+                        "CIO:0000004", "medium confidence from single evidence", "-");
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for a parent-child taxon annotation"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
+
         //last verification, to check that the SimilarityAnnotation object is still 
         //in a correct state.
         simAnnot.checkAnnotations(annots);

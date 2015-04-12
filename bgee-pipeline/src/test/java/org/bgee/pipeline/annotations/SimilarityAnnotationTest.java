@@ -610,6 +610,26 @@ public class SimilarityAnnotationTest extends TestAncestor {
             //test passed
         }
         annots.remove(incorrectAnnot);
+        //untrimmed HOM name
+        incorrectAnnot = new RawAnnotationBean(
+                "HOM:0000007", "  historical homology ", 
+                Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                2759, "Eukaryota", false, "ECO:0000033", 
+                "traceable author statement", 
+                "CIO:0000003", "high confidence from single evidence", 
+                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1 change to avoid duplicate", "bgee", "ANN", 
+                sdf.parse("2013-06-21"));
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for an untrimmed HOM name"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
         
         //incorrect entity name
         incorrectAnnot = new RawAnnotationBean("HOM:0000007", "historical homology", 
@@ -628,6 +648,26 @@ public class SimilarityAnnotationTest extends TestAncestor {
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for an incorrect entity name"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
+        //untrimmed entity name
+        incorrectAnnot = new RawAnnotationBean(
+                "HOM:0000007", "historical homology", 
+                Arrays.asList("CL:0000000"), Arrays.asList(" cell "), 
+                2759, "Eukaryota", false, "ECO:0000033", 
+                "traceable author statement", 
+                "CIO:0000003", "high confidence from single evidence", 
+                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1 change to avoid duplicate", "bgee", "ANN", 
+                sdf.parse("2013-06-21"));
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for an untrimmed entity name"));
         } catch (Exception e) {
             //test passed
         }
@@ -653,6 +693,26 @@ public class SimilarityAnnotationTest extends TestAncestor {
             //test passed
         }
         annots.remove(incorrectAnnot);
+        //untrimmed taxon name
+        incorrectAnnot = new RawAnnotationBean(
+                "HOM:0000007", "historical homology", 
+                Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                2759, "Eukaryota ", false, "ECO:0000033", 
+                "traceable author statement", 
+                "CIO:0000003", "high confidence from single evidence", 
+                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1 change to avoid duplicate", "bgee", "ANN", 
+                sdf.parse("2013-06-21"));
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for an untrimmed taxon name"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
         
         //incorrect ECO name
         incorrectAnnot = new RawAnnotationBean(
@@ -674,6 +734,26 @@ public class SimilarityAnnotationTest extends TestAncestor {
             //test passed
         }
         annots.remove(incorrectAnnot);
+        //untrimmed ECO name
+        incorrectAnnot = new RawAnnotationBean(
+                "HOM:0000007", "historical homology", 
+                Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                2759, "Eukaryota", false, "ECO:0000033", 
+                "  traceable author statement  ", 
+                "CIO:0000003", "high confidence from single evidence", 
+                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1 change to avoid duplicate", "bgee", "ANN", 
+                sdf.parse("2013-06-21"));
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for an untrimmed ECO name"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
         
         //incorrect CIO name
         incorrectAnnot = new RawAnnotationBean(
@@ -691,6 +771,26 @@ public class SimilarityAnnotationTest extends TestAncestor {
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for an incorrect CIO name"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
+        //untrimmed CIO name
+        incorrectAnnot = new RawAnnotationBean(
+                "HOM:0000007", "historical homology", 
+                Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                2759, "Eukaryota", false, "ECO:0000033", 
+                "traceable author statement", 
+                "CIO:0000003", "high confidence from single evidence  ", 
+                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1 change to avoid duplicate", "bgee", "ANN", 
+                sdf.parse("2013-06-21"));
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for an untrimmed CIO name"));
         } catch (Exception e) {
             //test passed
         }
@@ -754,6 +854,26 @@ public class SimilarityAnnotationTest extends TestAncestor {
             //test passed
         }
         annots.remove(incorrectAnnot);
+        //untrimmed HOM ID
+        incorrectAnnot = new RawAnnotationBean(
+                "HOM:0000007  ", "historical homology", 
+                Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                2759, "Eukaryota", false, "ECO:0000033", 
+                "traceable author statement", 
+                "CIO:0000003", "high confidence from single evidence", 
+                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1 change to avoid duplicate", "bgee", "ANN", 
+                sdf.parse("2013-06-21"));
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for an untrimmed HOM ID"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
     
         //missing entity ID
         incorrectAnnot = new RawAnnotationBean("HOM:0000007", "historical homology", 
@@ -769,6 +889,26 @@ public class SimilarityAnnotationTest extends TestAncestor {
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for a missing entity ID"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
+        //untrimmed entity ID
+        incorrectAnnot = new RawAnnotationBean(
+                "HOM:0000007", "historical homology", 
+                Arrays.asList("CL:0000000  "), Arrays.asList("cell"), 
+                2759, "Eukaryota", false, "ECO:0000033", 
+                "traceable author statement", 
+                "CIO:0000003", "high confidence from single evidence", 
+                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1 change to avoid duplicate", "bgee", "ANN", 
+                sdf.parse("2013-06-21"));
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for an untrimmed entity ID"));
         } catch (Exception e) {
             //test passed
         }
@@ -793,6 +933,45 @@ public class SimilarityAnnotationTest extends TestAncestor {
         }
         annots.remove(incorrectAnnot);
     
+        //missing ECO ID
+        incorrectAnnot = new RawAnnotationBean("HOM:0000007", "historical homology", 
+                Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                2759, "Eukaryota", false, "", 
+                "traceable author statement", 
+                "CIO:0000003", "high confidence from single evidence", 
+                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1 change for no duplicate", "bgee", "ANN", sdf.parse("2013-06-21"));
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for a missing ECO ID"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
+        //untrimmed ECO ID
+        incorrectAnnot = new RawAnnotationBean(
+                "HOM:0000007", "historical homology", 
+                Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                2759, "Eukaryota", false, " ECO:0000033", 
+                "traceable author statement", 
+                "CIO:0000003", "high confidence from single evidence", 
+                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1 change to avoid duplicate", "bgee", "ANN", 
+                sdf.parse("2013-06-21"));
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for an untrimmed ECO ID"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
+    
         //missing CIO ID
         incorrectAnnot = new RawAnnotationBean("HOM:0000007", "historical homology", 
                 Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
@@ -807,6 +986,67 @@ public class SimilarityAnnotationTest extends TestAncestor {
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for a missing CIO ID"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
+        //untrimmed CIO ID
+        incorrectAnnot = new RawAnnotationBean(
+                "HOM:0000007", "historical homology", 
+                Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                2759, "Eukaryota", false, "ECO:0000033", 
+                "traceable author statement", 
+                "CIO:0000003  ", "high confidence from single evidence", 
+                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1 change to avoid duplicate", "bgee", "ANN", 
+                sdf.parse("2013-06-21"));
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for an untrimmed CIO ID"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
+
+        //untrimmed ref ID
+        incorrectAnnot = new RawAnnotationBean(
+                "HOM:0000007", "historical homology", 
+                Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                2759, "Eukaryota", false, "ECO:0000033", 
+                "traceable author statement", 
+                "CIO:0000003", "high confidence from single evidence", 
+                "  DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1 change to avoid duplicate", "bgee", "ANN", 
+                sdf.parse("2013-06-21"));
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for an untrimmed Ref ID"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
+        //untrimmed ref title
+        incorrectAnnot = new RawAnnotationBean(
+                "HOM:0000007", "historical homology", 
+                Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                2759, "Eukaryota", false, "ECO:0000033", 
+                "traceable author statement", 
+                "CIO:0000003", "high confidence from single evidence", 
+                "DOI:10.1073/pnas.032658599", "  ref title 1", 
+                "supporting text 1 change to avoid duplicate", "bgee", "ANN", 
+                sdf.parse("2013-06-21"));
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for an untrimmed Ref title"));
         } catch (Exception e) {
             //test passed
         }

@@ -1540,7 +1540,7 @@ public class SimilarityAnnotation {
             //we store positive and negative annotations associated to taxa here.
             RawAnnotationBean keyBean = new RawAnnotationBean();
             keyBean.setEntityIds(uberonIds);
-            keyBean.setHomId(annot.getHomId());
+            keyBean.setHomId(annot.getHomId().trim());
             
             Map<RawAnnotationBean, Set<Integer>> posOrNegAnnotsToTaxa = positiveAnnotsToTaxa;
             if (annot.isNegated()) {
@@ -1626,7 +1626,7 @@ public class SimilarityAnnotation {
                 for (String uberonId: posAnnot.getEntityIds()) {
                     //check there is a positive annotation for individual Uberon IDs
                     RawAnnotationBean check = new RawAnnotationBean();
-                    check.setHomId(posAnnot.getHomId());
+                    check.setHomId(posAnnot.getHomId().trim());
                     check.setEntityIds(Arrays.asList(uberonId.trim()));
                     if (!positiveAnnotsToTaxa.containsKey(check)) {
                         log.warn("An annotation uses multiple entity IDs, but there is no annotation for the individual entity: {} - annotation: {}", 
@@ -1717,7 +1717,15 @@ public class SimilarityAnnotation {
             for (String uberonId: annot.getEntityIds()) {
                 if (StringUtils.isBlank(uberonId)) {
                     missingUberon = true;
-                    break;
+                    continue;
+                }
+                if (!(annot instanceof CuratorAnnotationBean) && 
+                        !uberonId.trim().equals(uberonId)) {
+                    //fields in all annotations but curator annotations should have 
+                    //been trimmed
+                    log.error("Entity ID not trimmed in annotation {}", annot);
+                    this.incorrectFormat.add(annot);
+                    allGood = false;
                 }
             }
         }
@@ -1730,9 +1738,23 @@ public class SimilarityAnnotation {
             log.error("Missing HOM ID in annotation {}", annot);
             this.incorrectFormat.add(annot);
             allGood = false;
+        } else if (!(annot instanceof CuratorAnnotationBean) && 
+                !annot.getHomId().trim().equals(annot.getHomId())) {
+            //fields in all annotations but curator annotations should have 
+            //been trimmed
+            log.error("HOM ID not trimmed in annotation {}", annot);
+            this.incorrectFormat.add(annot);
+            allGood = false;
         }
         if (StringUtils.isBlank(annot.getCioId())) {
             log.error("Missing CIO ID in annotation {}", annot);
+            this.incorrectFormat.add(annot);
+            allGood = false;
+        } else if (!(annot instanceof CuratorAnnotationBean) && 
+                !annot.getCioId().trim().equals(annot.getCioId())) {
+            //fields in all annotations but curator annotations should have 
+            //been trimmed
+            log.error("CIO ID not trimmed in annotation {}", annot);
             this.incorrectFormat.add(annot);
             allGood = false;
         }
@@ -1753,6 +1775,12 @@ public class SimilarityAnnotation {
                 log.error("Missing taxon name in annotation {}", annot);
                 this.incorrectFormat.add(annot);
                 allGood = false;
+            } else if (!annot.getTaxonName().trim().equals(annot.getTaxonName())) {
+                //fields in all annotations but curator annotations should have 
+                //been trimmed
+                log.error("Taxon name not trimmed in annotation {}", annot);
+                this.incorrectFormat.add(annot);
+                allGood = false;
             }
             boolean missingUberonName = false;
             if (annot.getEntityNames() == null || annot.getEntityNames().isEmpty()) {
@@ -1761,7 +1789,14 @@ public class SimilarityAnnotation {
                 for (String uberonName: annot.getEntityNames()) {
                     if (StringUtils.isBlank(uberonName)) {
                         missingUberonName = true;
-                        break;
+                        continue;
+                    }
+                    if (!uberonName.trim().equals(uberonName)) {
+                        //fields in all annotations but curator annotations should have 
+                        //been trimmed
+                        log.error("Uberon name not trimmed in annotation {}", annot);
+                        this.incorrectFormat.add(annot);
+                        allGood = false;
                     }
                 }
             }
@@ -1774,9 +1809,21 @@ public class SimilarityAnnotation {
                 log.error("Missing HOM name in annotation {}", annot);
                 this.incorrectFormat.add(annot);
                 allGood = false;
+            } else if (!annot.getHomLabel().trim().equals(annot.getHomLabel())) {
+                //fields in all annotations but curator annotations should have 
+                //been trimmed
+                log.error("HOM label not trimmed in annotation {}", annot);
+                this.incorrectFormat.add(annot);
+                allGood = false;
             }
             if (StringUtils.isBlank(annot.getCioLabel())) {
                 log.error("Missing CIO name in annotation {}", annot);
+                this.incorrectFormat.add(annot);
+                allGood = false;
+            } else if (!annot.getCioLabel().trim().equals(annot.getCioLabel())) {
+                //fields in all annotations but curator annotations should have 
+                //been trimmed
+                log.error("CIO label not trimmed in annotation {}", annot);
                 this.incorrectFormat.add(annot);
                 allGood = false;
             }
@@ -1789,9 +1836,25 @@ public class SimilarityAnnotation {
                 log.error("Missing ECO ID in annotation {}", annot);
                 this.incorrectFormat.add(annot);
                 allGood = false;
+            } else if (!(annot instanceof CuratorAnnotationBean) && 
+                    !((RawAnnotationBean) annot).getEcoId().trim().equals(
+                            ((RawAnnotationBean) annot).getEcoId())) {
+                //fields in all annotations but curator annotations should have 
+                //been trimmed
+                log.error("ECO ID not trimmed in annotation {}", annot);
+                this.incorrectFormat.add(annot);
+                allGood = false;
             }
             if (StringUtils.isBlank(((RawAnnotationBean) annot).getAssignedBy())) {
                 log.error("Missing assigned by info in annotation {}", annot);
+                this.incorrectFormat.add(annot);
+                allGood = false;
+            } else if (!(annot instanceof CuratorAnnotationBean) && 
+                    !((RawAnnotationBean) annot).getAssignedBy().trim().equals(
+                            ((RawAnnotationBean) annot).getAssignedBy())) {
+                //fields in all annotations but curator annotations should have 
+                //been trimmed
+                log.error("Assigned by not trimmed in annotation {}", annot);
                 this.incorrectFormat.add(annot);
                 allGood = false;
             }
@@ -1809,16 +1872,38 @@ public class SimilarityAnnotation {
                     log.error("Missing curator info in annotation {}", annot);
                     this.incorrectFormat.add(annot);
                     allGood = false;
+                } else if (!(annot instanceof CuratorAnnotationBean) && 
+                        !((RawAnnotationBean) annot).getCurator().trim().equals(
+                                ((RawAnnotationBean) annot).getCurator())) {
+                    //fields in all annotations but curator annotations should have 
+                    //been trimmed
+                    log.error("Curator not trimmed in annotation {}", annot);
+                    this.incorrectFormat.add(annot);
+                    allGood = false;
                 }
                 String refId = ((RawAnnotationBean) annot).getRefId();
                 if (StringUtils.isBlank(refId) || !refId.matches("\\S+?:\\S+")) {
                     log.error("Incorrect reference ID {} in annotation {}", refId, annot);
                     this.incorrectFormat.add(annot);
                     allGood = false;
+                } else if (!(annot instanceof CuratorAnnotationBean) && 
+                        !(refId.trim().equals(refId))) {
+                    //fields in all annotations but curator annotations should have 
+                    //been trimmed
+                    log.error("Ref ID not trimmed in annotation {}", annot);
+                    this.incorrectFormat.add(annot);
+                    allGood = false;
                 }
                 String refTitle = ((RawAnnotationBean) annot).getRefTitle();
                 if (StringUtils.isBlank(refTitle)) {
                     log.error("Missing reference title in annotation {}", annot);
+                    this.incorrectFormat.add(annot);
+                    allGood = false;
+                } else if (!(annot instanceof CuratorAnnotationBean) && 
+                        !(refTitle.trim().equals(refTitle))) {
+                    //fields in all annotations but curator annotations should have 
+                    //been trimmed
+                    log.error("Ref title not trimmed in annotation {}", annot);
                     this.incorrectFormat.add(annot);
                     allGood = false;
                 }
@@ -1830,6 +1915,14 @@ public class SimilarityAnnotation {
             String ecoName = ((RawAnnotationBean) annot).getEcoLabel();
             if (StringUtils.isBlank(ecoName)) {
                 log.error("Missing ECO name in annotation {}", annot);
+                this.incorrectFormat.add(annot);
+                allGood = false;
+            } else if (!(annot instanceof CuratorAnnotationBean) && 
+                    !((RawAnnotationBean) annot).getEcoLabel().trim().equals(
+                            ((RawAnnotationBean) annot).getEcoLabel())) {
+                //fields in all annotations but curator annotations should have 
+                //been trimmed
+                log.error("ECO label not trimmed in annotation {}", annot);
                 this.incorrectFormat.add(annot);
                 allGood = false;
             }

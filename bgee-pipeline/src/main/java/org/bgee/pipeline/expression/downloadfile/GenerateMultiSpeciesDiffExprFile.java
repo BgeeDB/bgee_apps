@@ -1290,7 +1290,9 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             // Get homologous genes 
             Map<String, String> mapGeneOMANode = this.getMappingGeneIdOMANodeId(taxonId, 
                     speciesFilter);
-            
+            Map<String, Set<String>> mapOMANodeGene = 
+                    this.getMappingOMANodeIdGeneIDs(mapGeneOMANode);
+
             // Get comparable stages
             List<Map<String, List<String>>> mapStageGroup = 
                     this.getComparableStages(taxonId, speciesFilter);
@@ -1357,12 +1359,15 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                             break;
                         }
 
+
                         //We filter and write rows for one OMA node ID.
                         this.filterAndWriteOMANodeRows(geneTOsByIds, stageNamesByIds, 
                                 anatEntityNamesByIds, cioStatementsByIds, speciesNamesByIds, 
-                                writersUsed, processors, previousOMANodeId, omaGroupCalls, 
-                                mapSumSimCIO, mapSimAnnotToAnatEntities, mapStageGroupToStageId,
-                                mapAnatEntityToSimAnnot, mapStageIdToStageGroup);
+                                writersUsed, processors, previousOMANodeId, 
+                                mapOMANodeGene.get(previousOMANodeId), mapGeneOMANode, 
+                                omaGroupCalls, mapSumSimCIO, mapSimAnnotToAnatEntities, 
+                                mapStageGroupToStageId, mapAnatEntityToSimAnnot, 
+                                mapStageIdToStageGroup);
 
                         // We clear the set containing TOs with the previous OMA Node ID
                         omaGroupCalls.clear();
@@ -1428,7 +1433,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     }
 
     /**
-     * Retrieves mapping between OMA node IDs and gene IDs for the requested species,
+     * Retrieves mapping from gene IDs to OMA node IDs for the requested species,
      * present into the Bgee database.
      * 
      * @param taxonId       A {@code String} that is the ID of the common ancestor taxon
@@ -1467,6 +1472,32 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         return log.exit(mapping);
     }
 
+    /**
+     * Retrieves mapping from OMA node IDs to gene IDs for the provided {@code mapGeneOMANode}.
+     * 
+     * @param mapGeneOMANode    A {@code Map} where keys are {@code String}s that are gene IDs, the  
+     *                          associated values being {@code String}s corresponding to OMA node
+     *                          ID.
+     * @return                  A {@code Map} where keys are {@code String}s that are OMA node IDs, 
+     *                          the  associated values being {@code List} of {@code String}s 
+     *                          corresponding to gene IDs.
+     */
+    private Map<String, Set<String>> getMappingOMANodeIdGeneIDs(Map<String, String> mapGeneOMANode) {
+        log.entry(mapGeneOMANode);
+        
+        Map<String, Set<String>> mapOMANodeGene = new HashMap<String, Set<String>>(); 
+        for (Entry<String, String> entry : mapGeneOMANode.entrySet()) {
+            String OMANodeId = entry.getValue();
+            Set<String> geneIds = mapOMANodeGene.get(OMANodeId);
+            if (geneIds == null) {
+                geneIds = new HashSet<String>();
+                mapOMANodeGene.put(OMANodeId, geneIds);
+            }
+            geneIds.add(entry.getKey());
+        }
+        
+        return log.exit(mapOMANodeGene);
+    }
     /**
      * Retrieves comparable stages for the requested species in the requested taxon,
      * present into the Bgee database.
@@ -1798,8 +1829,11 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      *                                  associated values being an {@code Array} of 
      *                                  {@code CellProcessor}s used to process a file.
      * @param omaNodeId                 A {@code String} that is the OMA node ID.
-     * @param condition                 A {@code MultiSpeciesCondition} that is the condition 
-     *                                  grouping calls.
+     * @param omaGeneIds                A {@code Set} of {@code String}s that are the gene IDs
+     *                                  contains in the provided {@code omaNodeId}.
+     * @param mapGeneOMANode            A {@code Map} where keys are {@code String}s corresponding 
+     *                                  to gene IDs, the associated values being {@code String}s 
+     *                                  corresponding to OMA node IDs.
      * @param calls                     A {@code Collection} of {@code DiffExpressionCallTO}s that 
      *                                  are the differential expression calls to be filtered and 
      *                                  written.
@@ -1833,16 +1867,17 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             Map<String,CIOStatementTO> cioStatementByIds,Map<String,String> speciesNamesByIds,
             Map<MultiSpDiffExprFileType, ICsvDozerBeanWriter> writersUsed,
             Map<MultiSpDiffExprFileType, CellProcessor[]> processors,
-            String omaNodeId, Collection<DiffExpressionCallTO> calls,
-            Map<String,String> mapSumSimCIO, Map<String, List<String>> mapSimAnnotToAnatEntities,
+            String omaNodeId, Set<String> omaGeneIds, Map<String, String> mapGeneOMANode,
+            Collection<DiffExpressionCallTO> calls,
+            Map<String, String> mapSumSimCIO, Map<String, List<String>> mapSimAnnotToAnatEntities,
             Map<String, List<String>> mapStageGroupToStageId,
             Map<String, List<String>> mapAnatEntityToSimAnnot, 
             Map<String, List<String>> mapStageIdToStageGroup)
                     throws IllegalArgumentException, IOException {
         log.entry(geneTOsByIds, stageNamesByIds, anatEntityNamesByIds, cioStatementByIds, 
-                speciesNamesByIds, writersUsed, processors, omaNodeId, calls, mapSumSimCIO, 
-                mapSimAnnotToAnatEntities, mapStageGroupToStageId, mapAnatEntityToSimAnnot, 
-                mapStageIdToStageGroup);
+                speciesNamesByIds, writersUsed, processors, omaNodeId, calls, omaGeneIds, 
+                mapGeneOMANode, mapSumSimCIO, mapSimAnnotToAnatEntities, mapStageGroupToStageId, 
+                mapAnatEntityToSimAnnot, mapStageIdToStageGroup);
         
         // We group calls (without propagation) by condition 
         // (summary similarity annotation/stage group) 
@@ -1850,10 +1885,13 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             callsGroupByCondition = this.groupByMultiSpeciesCondition(
                 calls, mapAnatEntityToSimAnnot, mapStageIdToStageGroup);
         
-        //TODO: here, it should be possible to have several calls for a same gene
-        //in a same multi-species condition; in that case, calls for a same gene 
-        //should be "merged".
-        List<String> geneIds = new ArrayList<String>(), geneNames = new ArrayList<String>();
+        List<String> geneIds = new ArrayList<String>(omaGeneIds),
+                     geneNames = new ArrayList<String>();
+        Collections.sort(geneIds);
+        // Then, we build gene name list according to ordered gene ID list.
+        for (String geneId : geneIds) {
+            geneNames.add(geneTOsByIds.get(geneId).getName());
+        }
 
         // We store complete and simple multi-species diff. expression file beans to be able to  
         // write them after the comment line containing gene IDs and names. 
@@ -1862,21 +1900,9 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         List<MultiSpeciesSimpleDiffExprFileBean> allSimpleBeans = 
                 new ArrayList<MultiSpeciesSimpleDiffExprFileBean>();
         
-        // To avoid to store severals times same gene IDs, 
-        // we need to know if it's the first iteration
-        //FIXME: actually, all genes of a OMA group might not be retrieved when iterating 
-        //the calls of a multispecies condition: maybe a gene has no data in this condition.
-        //As a consequence, the geneIds and geneNames provided to create 
-        //MultiSpeciesSimpleDiffExprFileBeans can be incomplete, they might not contain 
-        //all genes of the OMA group. It is necessary to handle geneIds and geneNames 
-        //as for complete files.
-        //FIXME: actually, we have no guarantee to retrieve all genes of a OMA group 
-        //simply by iterating expression calls, some genes can have no data... 
-        //genes member of the relevant OMA group must be provided as argument of this method.
-        //FIXME: this method is supposed to use calls from a single OMA group? 
-        //then this method should use the mapping geneId -> OMA group ID, to ensure 
-        //that only one OMA group ID is seen over all the calls iterated.
-        boolean firstCondition = true;
+        //TODO: here, it should be possible to have several calls for a same gene
+        //in a same multi-species condition; in that case, calls for a same gene 
+        //should be "merged".
         for (Entry<MultiSpeciesCondition, Collection<DiffExpressionCallTO>> entry : 
             callsGroupByCondition.entrySet()) {
             
@@ -1925,6 +1951,9 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             
             for (DiffExpressionCallTO to : entry.getValue()) {
                 
+                //We ensure that only one OMA group ID is seen over all the calls iterated.
+                assert omaNodeId.equals(mapGeneOMANode.get(to.getGeneId()));
+                
                 String speciesId = String.valueOf(geneTOsByIds.get(to.getGeneId()).getSpeciesId());
                 
                 // We create a complete bean with null differential expression and call quality
@@ -1952,11 +1981,6 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 this.addDiffExprCallMergedDataToRow(currentBean);
                 // And add it to the set of bean to be written
                 currentCompleteBeans.add(currentBean);
-                
-                // We store gene IDs data to be able to create simple bean and comment lines later
-                if (firstCondition) {
-                    geneIds.add(to.getGeneId());
-                }
                 
                 // We finish by count gene types
                 SpeciesDiffExprCounts currentCounts = allSpeciesCounts.get(currentBean.getSpeciesId());
@@ -2017,15 +2041,6 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             assert totalOver + totalUnder + totalNotDiffExpr >= 2;
             assert currentCompleteBeans != null && !currentCompleteBeans.isEmpty();
 
-            if (firstCondition) {
-                // We sort gene IDs for consistent diff between releases.
-                Collections.sort(geneIds);
-                // Then, we build gene name list according to ordered gene ID list.
-                for (String geneId : geneIds) {
-                    geneNames.add(geneTOsByIds.get(geneId).getName());
-                }
-            }
-            
             // We filter, in simple file, poor quality homologous annotations (CIO), 
             // and conditions with 'no diff expressed' only,
             // and we do not have the same criteria for counting species with data 
@@ -2050,8 +2065,6 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             }
             // We store complete beans.
             allCompleteBeans.addAll(currentCompleteBeans);
-            
-            firstCondition = false;
         }
         
         // Then we write all beans for one OMA node ID.

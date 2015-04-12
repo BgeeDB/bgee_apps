@@ -35,8 +35,8 @@ import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressio
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.DiffExprCallType;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTOResultSet;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallParams;
-import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneDAO;
+import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTOResultSet;
@@ -289,7 +289,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * @version Bgee 13 Apr. 2015
      * @since Bgee 13
      */
-    public static class MultiSpeciesSimpleDiffExprFileBean extends MultiSpeciesSimpleFileBean {
+    public static class MultiSpeciesSimpleDiffExprFileBean extends MultiSpeciesFileBean {
     
         /**
          * See {@link #getSpeciesDiffExprCounts()}.
@@ -306,21 +306,16 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
          * Constructor providing all arguments of the class.
          *
          * @param omaId             See {@link #getOmaId()}.
-         * @param omaDescription    See {@link #getOmaDescription()}.
          * @param entityIds         See {@link #getEntityIds()}.
          * @param entityNames       See {@link #getEntityNames()}.
          * @param stageIds          See {@link #getStageIds()}.
          * @param stageNames        See {@link #getStageNames()}.
-         * @param geneIds           See {@link #getGeneIds()}.
-         * @param geneNames         See {@link #getGeneNames()}.
          * @param speciesCounts     See {@link #getSpeciesDiffExprCounts()}.
          */
-        public MultiSpeciesSimpleDiffExprFileBean(String omaId, String omaDescription, 
+        public MultiSpeciesSimpleDiffExprFileBean(String omaId,
                 List<String> entityIds, List<String> entityNames, List<String> stageIds, 
-                List<String> stageNames, List<String> geneIds, List<String> geneNames, 
-                List<SpeciesDiffExprCounts> speciesDiffExprCounts) {
-            super(omaId, omaDescription, entityIds, entityNames, stageIds, stageNames, 
-                    geneIds, geneNames);
+                List<String> stageNames, List<SpeciesDiffExprCounts> speciesDiffExprCounts) {
+            super(omaId, entityIds, entityNames, stageIds, stageNames);
             this.speciesDiffExprCounts = speciesDiffExprCounts;
         }
     
@@ -441,7 +436,6 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
          * Constructor providing all arguments of the class.
          * 
          * @param omaId                     See {@link #getOmaId()}.
-         * @param omaDescription            See {@link #getOmaDescription()}.
          * @param entityIds                 See {@link #getEntityIds()}.
          * @param entityNames               See {@link #getEntityNames()}.
          * @param stageIds                  See {@link #getStageIds()}.
@@ -465,7 +459,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
          * @param differentialExpression    See {@link #getDifferentialExpression()}.
          * @param callQuality               See {@link #getCallQuality()}.
          */
-        public MultiSpeciesCompleteDiffExprFileBean(String omaId, String omaDescription, 
+        public MultiSpeciesCompleteDiffExprFileBean(String omaId, 
                 List<String> entityIds, List<String> entityNames, List<String> stageIds, 
                 List<String> stageNames, String geneId, String geneName, 
                 String cioId, String cioName, String speciesId, String speciesName,
@@ -474,7 +468,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 String rnaSeqData, String rnaSeqQuality, Double rnaSeqPValue, 
                 Long rnaSeqConsistentDEA, Long rnaSeqInconsistentDEA,
                 String differentialExpression, String callQuality) {
-            super(omaId, omaDescription, entityIds, entityNames, stageIds, stageNames, 
+            super(omaId, entityIds, entityNames, stageIds, stageNames, 
                     geneId, geneName, cioId, cioName, speciesId, speciesName);
             this.affymetrixData = affymetrixData;
             this.affymetrixQuality = affymetrixQuality;
@@ -1959,8 +1953,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 // We create a complete bean with null differential expression and call quality
                 MultiSpeciesCompleteDiffExprFileBean currentBean = 
                         new MultiSpeciesCompleteDiffExprFileBean(
-                                omaNodeId, this.getOmaNodeDescription(omaNodeId), 
-                                organIds, organNames, Arrays.asList(to.getStageId()), 
+                                omaNodeId, organIds, organNames, Arrays.asList(to.getStageId()), 
                                 Arrays.asList(stageNamesByIds.get(to.getStageId())), 
                                 to.getGeneId(), geneTOsByIds.get(to.getGeneId()).getName(), 
                                 cioId, cioStatementByIds.get(cioId).getName(),
@@ -2049,9 +2042,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             if (cioStatementByIds.get(cioId).isTrusted() &&
                     speciesIdsWithDataForSimple.size() >= 2) {
                 simpleBean = new MultiSpeciesSimpleDiffExprFileBean(
-                        omaNodeId, this.getOmaNodeDescription(omaNodeId), 
-                        organIds, organNames, stageIds, stageNames, geneIds, geneNames, 
-                        null);
+                        omaNodeId, organIds, organNames, stageIds, stageNames, null);
                         
                 // We order species IDs to keep the same order when we regenerate files.
                 List<String> speciesIds = new ArrayList<String>(allSpeciesCounts.keySet());
@@ -2276,13 +2267,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 if (stageIdComp != 0)
                     return stageIdComp;
                 
-                if (bean1 instanceof MultiSpeciesSimpleDiffExprFileBean) {
-                    int geneIdsComp = compareTwoLists(
-                            ((MultiSpeciesSimpleDiffExprFileBean)bean1).getGeneIds(),
-                            ((MultiSpeciesSimpleDiffExprFileBean)bean2).getGeneIds());
-                    if (geneIdsComp != 0)
-                        return geneIdsComp;
-                } else if (bean1 instanceof MultiSpeciesCompleteDiffExprFileBean) {
+                if (bean1 instanceof MultiSpeciesCompleteDiffExprFileBean) {
                     int speciesIdComp = ((MultiSpeciesCompleteDiffExprFileBean)bean1).getSpeciesId().
                             compareToIgnoreCase(
                                     ((MultiSpeciesCompleteDiffExprFileBean)bean2).getSpeciesId());
@@ -2330,20 +2315,6 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         } else {
             return 1;
         }
-    }
-    
-    /**
-     * Retrieve the OMA description according to the provided OMA node ID.
-     *
-     *@param omaNodeId  A {@code String} that is the ID of the OMA node to be used to retrieve 
-     *                  its description.
-     * @return          the {@code String} that is the description of the provided OMA node. 
-     */
-    //TODO: when we will have generated descriptions for OMA nodes, we will need to change this logic.
-    private String getOmaNodeDescription(String omaNodeId) {
-        log.entry(omaNodeId);
-        // TODO Auto-generated method stub
-        return log.exit(null);
     }
 
     /**

@@ -345,7 +345,7 @@ public class SimilarityAnnotationUtilsTest {
                                 Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
                                 2759, "Eukaryota", false, 
                                 "CIO:0000003", "high confidence from single evidence", true, 
-                                "Summary annotation created from 1 single-evidence annotation"
+                                null, 1
 //                                , 1, 0, 
 //                                Arrays.asList("ECO:0000033"), 
 //                                Arrays.asList("traceable author statement"), 
@@ -358,7 +358,7 @@ public class SimilarityAnnotationUtilsTest {
                                 "CIO:0000019", "confidence statement from congruent evidence "
                                         + "lines of same type, overall confidence medium", 
                                 true, 
-                                "Summary annotation created from 2 single-evidence annotations"
+                                null, 2
 //                                , 2, 0, 
 //                                Arrays.asList("ECO:0000205"), 
 //                                Arrays.asList("curator inference"), 
@@ -369,7 +369,7 @@ public class SimilarityAnnotationUtilsTest {
                                 Arrays.asList("CL:0000037"), Arrays.asList("hematopoietic stem cell"), 
                                 7742, "Vertebrata", true, 
                                 "CIO:0000004", "medium confidence from single evidence", true, 
-                                "Summary annotation created from 1 single-evidence annotation"
+                                null, 1
 //                                , 0, 1, 
 //                                null, null, 
 //                                Arrays.asList("ECO:0000067"), 
@@ -383,7 +383,7 @@ public class SimilarityAnnotationUtilsTest {
                                         "whatever name2"), 
                                 7742, "Vertebrata", true, 
                                 "CIO:0000004", "medium confidence from single evidence", true, 
-                                "Summary annotation created from 1 single-evidence annotation"
+                                null, 1
 //                                , 0, 1,  
 //                                null, null, 
 //                                Arrays.asList("ECO:0000067"), 
@@ -395,7 +395,7 @@ public class SimilarityAnnotationUtilsTest {
                                 Arrays.asList("UBERON:0010207"), Arrays.asList("nictitating membrane"), 
                                 7776, "Gnathostomata", true, 
                                 "CIO:0000003", "high confidence from single evidence", true, 
-                                "Summary annotation created from 1 single-evidence annotation"
+                                null, 1
 //                                , 0, 1, 
 //                                null, null, 
 //                                Arrays.asList("ECO:0000034"), 
@@ -407,7 +407,7 @@ public class SimilarityAnnotationUtilsTest {
                                 Arrays.asList("UBERON:0010207"), Arrays.asList("nictitating membrane"), 
                                 7778, "Elasmobranchii", false, 
                                 "CIO:0000003", "high confidence from single evidence", true, 
-                                "Summary annotation created from 1 single-evidence annotation"
+                                null, 1
 //                                , 1, 0,  
 //                                Arrays.asList("ECO:0000034"), 
 //                                Arrays.asList("non-traceable author statement"), 
@@ -418,7 +418,7 @@ public class SimilarityAnnotationUtilsTest {
                                 Arrays.asList("UBERON:0010207"), Arrays.asList("nictitating membrane"), 
                                 32524, "Amniota", false, 
                                 "CIO:0000003", "high confidence from single evidence", true, 
-                                "Summary annotation created from 1 single-evidence annotation"
+                                null, 1
 //                                , 1, 0, 
 //                                Arrays.asList("ECO:0000034"), 
 //                                Arrays.asList("non-traceable author statement"), 
@@ -429,7 +429,7 @@ public class SimilarityAnnotationUtilsTest {
                                 Arrays.asList("CL:0000216"), Arrays.asList("Sertoli cell"), 
                                 7711, "Chordata", false, 
                                 "CIO:0000005", "low confidence from single evidence", false, 
-                                "Summary annotation created from 1 single-evidence annotation"
+                                null, 1
 //                                , 1, 0, 
 //                                Arrays.asList("ECO:0000067"), 
 //                                Arrays.asList("developmental similarity evidence"), 
@@ -442,7 +442,7 @@ public class SimilarityAnnotationUtilsTest {
                                 "CIO:0000013", "confidence statement from congruent evidence "
                                         + "lines of multiple types, overall confidence medium", 
                                 true, 
-                                "Summary annotation created from 1 single-evidence annotation"
+                                null, 1
 //                                , 2, 0, 
 //                                Arrays.asList("ECO:0000067", "ECO:0000355"), 
 //                                Arrays.asList("developmental similarity evidence", 
@@ -457,7 +457,7 @@ public class SimilarityAnnotationUtilsTest {
                                 "CIO:0000027", "confidence statement from weakly conflicting "
                                 + "evidence lines of multiple types, overall confidence medium", 
                                 true, 
-                                "Summary annotation created from 2 single-evidence annotations"
+                                null, 2
 //                                , 3, 1, 
 //                                Arrays.asList("ECO:0000067", "ECO:0000355"), 
 //                                Arrays.asList("developmental similarity evidence", 
@@ -473,7 +473,7 @@ public class SimilarityAnnotationUtilsTest {
                                 "CIO:0000024", "confidence statement from weakly conflicting "
                                     + "evidence lines of same type, overall confidence medium", 
                                 true, 
-                                "Summary annotation created from 3 single-evidence annotations"
+                                null, 3
 //                                , 2, 1, 
 //                                Arrays.asList("ECO:0000067"), 
 //                                Arrays.asList("developmental similarity evidence"), 
@@ -488,7 +488,7 @@ public class SimilarityAnnotationUtilsTest {
                                 "CIO:0000010", "confidence statement from strongly conflicting "
                                         + "evidence lines of multiple types", 
                                 false, 
-                                "Summary annotation created from 2 single-evidence annotations"
+                                null, 2
 //                                , 1, 1,
 //                                Arrays.asList("ECO:0000355"), 
 //                                Arrays.asList("phylogenetic distribution evidence"), 

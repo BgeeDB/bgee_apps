@@ -915,6 +915,10 @@ public class SimilarityAnnotationUtils {
          * @see #isTrusted()
          */
         private boolean trusted;
+        /**
+         * @see #getUnderlyingAnnotCount()
+         */
+        private int underlyingAnnotCount;
 //        /**
 //         * @see #getPositiveEvidenceCount()
 //         */
@@ -974,7 +978,8 @@ public class SimilarityAnnotationUtils {
         public SummaryAnnotationBean(String homId, String homLabel,
                 List<String> entityIds, List<String> entityNames,
                 int ncbiTaxonId, String taxonName, boolean negated,
-                String cioId, String cioLabel, boolean trusted, String supportingText
+                String cioId, String cioLabel, boolean trusted, String supportingText, 
+                int underlyingAnnotCount
 //                , int positiveEvidenceCount, int negativeEvidenceCount,  
 //                List<String> positiveEcoIds, List<String> positiveEcoLabels, 
 //                List<String> negativeEcoIds, List<String> negativeEcoLabels, 
@@ -985,6 +990,7 @@ public class SimilarityAnnotationUtils {
             super(homId, homLabel, entityIds, entityNames, ncbiTaxonId, taxonName, 
                     negated, cioId, cioLabel, supportingText);
             this.trusted = trusted;
+            this.underlyingAnnotCount = underlyingAnnotCount;
 //            this.positiveEvidenceCount = positiveEvidenceCount;
 //            this.negativeEvidenceCount = negativeEvidenceCount;
 //            this.positiveEcoIds = positiveEcoIds;
@@ -1011,6 +1017,23 @@ public class SimilarityAnnotationUtils {
         public void setTrusted(boolean trusted) {
             this.trusted = trusted;
         }
+        
+        /**
+         * @return  An {@code int} that is the number of single-evidence annotations 
+         *          that were aggregated to produce this summary annotation.
+         */
+        public int getUnderlyingAnnotCount() {
+            return underlyingAnnotCount;
+        }
+        /**
+         * @param underlyingAnnotCount  An {@code int} that is the number of single-evidence 
+         *                              annotations that were aggregated to produce 
+         *                              this summary annotation.
+         */
+        public void setUnderlyingAnnotCount(int underlyingAnnotCount) {
+            this.underlyingAnnotCount = underlyingAnnotCount;
+        }
+        
 //        /**
 //         * @return  An {@code int} that is the number of positive RAW annotations 
 //         *          that were aggregated to produce this SUMMARY annotation.
@@ -1206,8 +1229,6 @@ public class SimilarityAnnotationUtils {
 //            this.assignedBy = assignedBy;
 //        }
         
-        
-        
         /* (non-Javadoc)
          * @see java.lang.Object#hashCode()
          */
@@ -1242,6 +1263,7 @@ public class SimilarityAnnotationUtils {
 //                            .hashCode());
 //            result = prime * result + positiveEvidenceCount;
             result = prime * result + (trusted ? 1231 : 1237);
+            result = prime * result + underlyingAnnotCount;
             return result;
         }
         /* (non-Javadoc)
@@ -1317,6 +1339,9 @@ public class SimilarityAnnotationUtils {
             if (trusted != other.trusted) {
                 return false;
             }
+            if (underlyingAnnotCount != other.underlyingAnnotCount) {
+                return false;
+            }
             return true;
         }
         /* (non-Javadoc)
@@ -1326,6 +1351,7 @@ public class SimilarityAnnotationUtils {
         public String toString() {
             return "SummaryAnnotationBean [" 
                     + super.toString() + ", trusted=" + trusted 
+                    + ", underlying annotation count=" + underlyingAnnotCount
 //                    + ", positiveEvidenceCount="
 //                    + positiveEvidenceCount + ", negativeEvidenceCount="
 //                    + negativeEvidenceCount + ", trusted=" + trusted
@@ -1702,6 +1728,11 @@ public class SimilarityAnnotationUtils {
      * of sufficient confidence.
      */
     protected final static String TRUSTED_COL_NAME = "trusted";
+    /**
+     * A {@code String} that is the name of the column containing the number of 
+     * underlying single-evidence annotations used to compose a summary annotation.
+     */
+    protected final static String ANNOT_COUNT_COL_NAME = "underlying annotation count";
 //    /**
 //     * A {@code String} that is the name of the column containing the number of positive 
 //     * RAW annotations that were aggregated to produce this SUMMARY annotation.
@@ -1992,6 +2023,9 @@ public class SimilarityAnnotationUtils {
                     case TRUSTED_COL_NAME: 
                         mapping[i] = "trusted";
                         break;
+                    case ANNOT_COUNT_COL_NAME: 
+                        mapping[i] = "underlyingAnnotCount";
+                        break;
 //                    case POSITIVE_COUNT_COL_NAME: 
 //                        mapping[i] = "positiveEvidenceCount";
 //                        break;
@@ -2115,6 +2149,9 @@ public class SimilarityAnnotationUtils {
                 // *** Attributes specific to SummaryAnnotationBean ***
                     case TRUSTED_COL_NAME: 
                         processors[i] = new ParseBool();
+                        break;
+                    case ANNOT_COUNT_COL_NAME: 
+                        processors[i] = new ParseInt();
                         break;
 //                    case ASSIGN_COL_NAME: 
 //                        processors[i] = new ParseMultipleStringValues();

@@ -820,6 +820,8 @@ public class SimilarityAnnotation {
         if (beanType.equals(SummaryAnnotationBean.class)) {
             header[i] = SimilarityAnnotationUtils.TRUSTED_COL_NAME;
             i++;
+            header[i] = SimilarityAnnotationUtils.ANNOT_COUNT_COL_NAME;
+            i++;
         }
         
         //columns specific to RawAnnotationBeans to interleave here.
@@ -834,8 +836,11 @@ public class SimilarityAnnotation {
             i++;
         }
         
-        header[i] = SimilarityAnnotationUtils.SUPPORT_TEXT_COL_NAME;
-        i++;
+        //we write a supporting text only for non-summary annotations
+        if (!beanType.equals(SummaryAnnotationBean.class)) {
+            header[i] = SimilarityAnnotationUtils.SUPPORT_TEXT_COL_NAME;
+            i++;
+        }
         
         //columns specific to RawAnnotationBeans to interleave here.
         if (beanType.equals(RawAnnotationBean.class)) {
@@ -936,6 +941,9 @@ public class SimilarityAnnotation {
                 // *** Attributes specific to SummaryAnnotationBean ***
                     case SimilarityAnnotationUtils.TRUSTED_COL_NAME: 
                         processors[i] = new FmtBool("T", "F");
+                        break;
+                    case SimilarityAnnotationUtils.ANNOT_COUNT_COL_NAME: 
+                        processors[i] = new NotNull();
                         break;
                 }
             } else if (beanType.equals(AncestralTaxaAnnotationBean.class)) {
@@ -1917,7 +1925,8 @@ public class SimilarityAnnotation {
             }
         }
         
-        //*** information mandatory only in RAW annotations ***
+        //*** information mandatory only in RAW annotations 
+        //    (not for curator annotations, this is why we use a Class.equals) ***
         if (annot.getClass().equals(RawAnnotationBean.class)) {
             String ecoName = ((RawAnnotationBean) annot).getEcoLabel();
             if (StringUtils.isBlank(ecoName)) {
@@ -1930,6 +1939,15 @@ public class SimilarityAnnotation {
                 //fields in all annotations but curator annotations should have 
                 //been trimmed
                 log.error("ECO label not trimmed in annotation {}", annot);
+                this.incorrectFormat.add(annot);
+                allGood = false;
+            }
+        }
+        
+        //*** information mandatory only in SUMMARY annotations ***
+        if (annot instanceof SummaryAnnotationBean) {
+            if (((SummaryAnnotationBean) annot).getUnderlyingAnnotCount() <= 0) {
+                log.error("Missing underlying annotation count in annotation {}", annot);
                 this.incorrectFormat.add(annot);
                 allGood = false;
             }
@@ -3584,12 +3602,7 @@ public class SimilarityAnnotation {
             newAnnot.setTaxonName(relatedAnnotsEntry.getKey().getTaxonName());
             newAnnot.setEntityIds(SimilarityAnnotationUtils.trimAndSort(relatedAnnotsEntry.getKey().getEntityIds()));
             newAnnot.setEntityNames(relatedAnnotsEntry.getKey().getEntityNames());
-            String supportingText = "Summary annotation created from " 
-                    + relatedAnnotsEntry.getValue().size() + " single-evidence annotation";
-            if (relatedAnnotsEntry.getValue().size() > 1) {
-                supportingText += "s";
-            }
-            newAnnot.setSupportingText(supportingText);
+            newAnnot.setUnderlyingAnnotCount(relatedAnnotsEntry.getValue().size());
             
             //determine whether there are only negative annotations, to know that 
             //the summary should also be negative (in case of conflicts we always favor 
@@ -3941,7 +3954,7 @@ public class SimilarityAnnotation {
                     }
                     newAnnot.setSupportingText(supportingText);
                 } else {
-                    newAnnot.setSupportingText("-");
+                    newAnnot.setSupportingText(null);
                 }
                 
                 newAnnots.add(newAnnot);

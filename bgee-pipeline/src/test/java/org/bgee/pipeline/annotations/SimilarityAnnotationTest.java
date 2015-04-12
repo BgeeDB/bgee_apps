@@ -302,7 +302,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                                 Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
                                 2759, "Eukaryota", false, 
                                 "CIO:0000003", "high confidence from single evidence", true, 
-                                "Summary annotation created from 1 single-evidence annotation"
+                                null, 1
 //                                , 1, 0, 
 //                                Arrays.asList("ECO:0000033"), 
 //                                Arrays.asList("traceable author statement"), 
@@ -315,7 +315,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                                 "CIO:0000019", "confidence statement from congruent evidence "
                                         + "lines of same type, overall confidence medium", 
                                 true, 
-                                "Summary annotation created from 2 single-evidence annotations"
+                                null, 2
 //                                , 2, 0, 
 //                                Arrays.asList("ECO:0000205"), 
 //                                Arrays.asList("curator inference"), 
@@ -328,7 +328,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                                         "whatever name2"), 
                                 7742, "Vertebrata", true, 
                                 "CIO:0000004", "medium confidence from single evidence", true, 
-                                "Summary annotation created from 1 single-evidence annotation"
+                                null, 1
 //                                        , 0, 1,  
 //                                        null, null, 
 //                                        Arrays.asList("ECO:0000067"), 
@@ -354,8 +354,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
         expectedAnnot1.put(SimilarityAnnotationUtils.CONF_NAME_COL_NAME, 
                 "high confidence from single evidence");
         expectedAnnot1.put(SimilarityAnnotationUtils.TRUSTED_COL_NAME, "T");
-        expectedAnnot1.put(SimilarityAnnotationUtils.SUPPORT_TEXT_COL_NAME, 
-                "Summary annotation created from 1 single-evidence annotation");
+        expectedAnnot1.put(SimilarityAnnotationUtils.ANNOT_COUNT_COL_NAME, "1");
         
         Map<String, String> expectedAnnot2 = new HashMap<String, String>();
         expectedAnnot2.put(SimilarityAnnotationUtils.HOM_COL_NAME, "HOM:0000007");
@@ -370,8 +369,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 "confidence statement from congruent evidence "
                 + "lines of same type, overall confidence medium");
         expectedAnnot2.put(SimilarityAnnotationUtils.TRUSTED_COL_NAME, "T");
-        expectedAnnot2.put(SimilarityAnnotationUtils.SUPPORT_TEXT_COL_NAME, 
-                "Summary annotation created from 2 single-evidence annotations");
+        expectedAnnot2.put(SimilarityAnnotationUtils.ANNOT_COUNT_COL_NAME, "2");
         
         Map<String, String> expectedAnnot3 = new HashMap<String, String>();
         expectedAnnot3.put(SimilarityAnnotationUtils.HOM_COL_NAME, "HOM:0000007");
@@ -390,8 +388,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
         expectedAnnot3.put(SimilarityAnnotationUtils.CONF_NAME_COL_NAME, 
                 "medium confidence from single evidence");
         expectedAnnot3.put(SimilarityAnnotationUtils.TRUSTED_COL_NAME, "T");
-        expectedAnnot3.put(SimilarityAnnotationUtils.SUPPORT_TEXT_COL_NAME, 
-                "Summary annotation created from 1 single-evidence annotation");
+        expectedAnnot3.put(SimilarityAnnotationUtils.ANNOT_COUNT_COL_NAME, "1");
         
         expectedAnnots.add(expectedAnnot1);
         expectedAnnots.add(expectedAnnot2);
@@ -1291,7 +1288,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
                         2759, "Eukaryota", false, 
                         "CIO:0000003", "high confidence from single evidence", true, 
-                        "Summary annotation created from 1 single-evidence annotation"
+                        null, 1
 //                        , 1, 0, 
 //                        Arrays.asList("ECO:0000033"), 
 //                        Arrays.asList("traceable author statement"), 
@@ -1304,7 +1301,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                                 "whatever name2"), 
                         7742, "Vertebrata", true, 
                         "CIO:0000004", "medium confidence from single evidence", true, 
-                        "Summary annotation created from 1 single-evidence annotation"
+                        null, 1
 //                                , 0, 1,  
 //                                null, null, 
 //                                Arrays.asList("ECO:0000067"), 
@@ -1324,7 +1321,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         "whatever name2"), 
                 7742, "Vertebrata", false, 
                 "CIO:0000003", "high confidence from single evidence", true, 
-                "whatever"
+                "whatever", 4
 //                        , 0, 1,  
 //                        null, null, 
 //                        Arrays.asList("ECO:0000067"), 
@@ -1351,7 +1348,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         "whatever name2"), 
                 7742, "Vertebrata", false, 
                 "CIO:0000005", "low confidence from single evidence", true, 
-                "whatever"
+                "whatever", 4
 //                        , 0, 1,  
 //                        null, null, 
 //                        Arrays.asList("ECO:0000067"), 
@@ -1365,6 +1362,33 @@ public class SimilarityAnnotationTest extends TestAncestor {
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for an incorrect trust state"));
+        } catch (Exception e) {
+            //test passed
+        }
+        annots.remove(incorrectAnnot);
+        
+        //missing underling annotation count
+        incorrectAnnot = new SummaryAnnotationBean(
+                "HOM:0000007", "historical homology", 
+                Arrays.asList("CL:0000037", "UBERON:0000001", "UBERON:0000007"), 
+                Arrays.asList("hematopoietic stem cell", "whatever name1", 
+                        "whatever name2"), 
+                7742, "Vertebrata", false, 
+                "CIO:0000005", "low confidence from single evidence", true, 
+                "whatever", 0
+//                        , 0, 1,  
+//                        null, null, 
+//                        Arrays.asList("ECO:0000067"), 
+//                        Arrays.asList("developmental similarity evidence"), 
+//                        null, null, 
+//                        Arrays.asList("bgee")
+                );
+        annots.add(incorrectAnnot);
+        try {
+            simAnnot.checkAnnotations(annots, false);
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError(
+                    "No exception was thrown for a missing underlying annotation count"));
         } catch (Exception e) {
             //test passed
         }
@@ -1404,7 +1428,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         Arrays.asList("hematopoietic stem cell", "whatever name1", 
                                 "whatever name2"), 
                                 7778, "Elasmobranchii", 
-                        "CIO:0000004", "medium confidence from single evidence", "-")));
+                        "CIO:0000004", "medium confidence from single evidence", null)));
 
         //everything should work with these annotations
         simAnnot.checkAnnotations(annots, false);
@@ -1434,7 +1458,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 new AncestralTaxaAnnotationBean("HOM:0000007", "historical homology", 
                         Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
                         2759, "Eukaryota", 
-                        "CIO:0000005", "low confidence from single evidence", "-");
+                        "CIO:0000005", "low confidence from single evidence", null);
         annots.add(incorrectAnnot);
         try {
             simAnnot.checkAnnotations(annots, false);
@@ -1454,7 +1478,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         Arrays.asList("hematopoietic stem cell", "whatever name1", 
                                 "whatever name2"), 
                                 32524, "Amniota", 
-                        "CIO:0000004", "medium confidence from single evidence", "-");
+                        "CIO:0000004", "medium confidence from single evidence", null);
         annots.add(correctAnnot);
         //everything should work
         simAnnot.checkAnnotations(annots, false);
@@ -1467,7 +1491,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         Arrays.asList("hematopoietic stem cell", "whatever name1", 
                                 "whatever name2"), 
                                 7711, "Chordata", 
-                        "CIO:0000004", "medium confidence from single evidence", "-");
+                        "CIO:0000004", "medium confidence from single evidence", null);
         annots.add(incorrectAnnot);
         try {
             simAnnot.checkAnnotations(annots, false);
@@ -2057,7 +2081,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
                         2759, "Eukaryota", false, 
                         "CIO:0000003", "high confidence from single evidence", true, 
-                        "Summary annotation created from 1 single-evidence annotation"
+                        null, 1
 //                        , 1, 0, 
 //                        Arrays.asList("ECO:0000033"), 
 //                        Arrays.asList("traceable author statement"), 
@@ -2070,7 +2094,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         "CIO:0000019", "confidence statement from congruent evidence "
                                 + "lines of same type, overall confidence medium", 
                         true, 
-                        "Summary annotation created from 2 single-evidence annotations"
+                        null, 2
 //                        , 2, 0, 
 //                        Arrays.asList("ECO:0000205"), 
 //                        Arrays.asList("curator inference"), 
@@ -2081,7 +2105,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         Arrays.asList("CL:0000037"), Arrays.asList("hematopoietic stem cell"), 
                         7742, "Vertebrata", true, 
                         "CIO:0000004", "medium confidence from single evidence", true, 
-                        "Summary annotation created from 1 single-evidence annotation"
+                        null, 1
 //                        , 0, 1, 
 //                        null, null, 
 //                        Arrays.asList("ECO:0000067"), 
@@ -2095,7 +2119,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                                 "whatever name2"), 
                         7742, "Vertebrata", true, 
                         "CIO:0000004", "medium confidence from single evidence", true, 
-                        "Summary annotation created from 1 single-evidence annotation"
+                        null, 1
 //                        , 0, 1,  
 //                        null, null, 
 //                        Arrays.asList("ECO:0000067"), 
@@ -2107,7 +2131,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         Arrays.asList("CL:0000216"), Arrays.asList("Sertoli cell"), 
                         7711, "Chordata", false, 
                         "CIO:0000005", "low confidence from single evidence", false, 
-                        "Summary annotation created from 1 single-evidence annotation"
+                        null, 1
 //                                , 1, 0, 
 //                                Arrays.asList("ECO:0000067"), 
 //                                Arrays.asList("developmental similarity evidence"), 
@@ -2119,7 +2143,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         7742, "Vertebrata", false, 
                         "CIO:0000004", "medium confidence from single evidence", 
                         true, 
-                        "Summary annotation created from 1 single-evidence annotation"
+                        null, 1
 //                                , 2, 0, 
 //                                Arrays.asList("ECO:0000067", "ECO:0000355"), 
 //                                Arrays.asList("developmental similarity evidence", 
@@ -2134,7 +2158,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         "CIO:0000020", "confidence statement from strongly conflicting "
                                 + "evidence lines of same type", 
                         false, 
-                        "Summary annotation created from 2 single-evidence annotations"
+                        null, 2
 //                                , 3, 1, 
 //                                Arrays.asList("ECO:0000067", "ECO:0000355"), 
 //                                Arrays.asList("developmental similarity evidence", 
@@ -2150,7 +2174,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         "CIO:0000024", "confidence statement from weakly conflicting "
                             + "evidence lines of same type, overall confidence medium", 
                         true, 
-                        "Summary annotation created from 3 single-evidence annotations"
+                        null, 3
 //                                , 2, 1, 
 //                                Arrays.asList("ECO:0000067"), 
 //                                Arrays.asList("developmental similarity evidence"), 
@@ -2165,7 +2189,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         "CIO:0000010", "confidence statement from strongly conflicting "
                                 + "evidence lines of multiple types", 
                         false, 
-                        "Summary annotation created from 2 single-evidence annotations"
+                        null, 2
 //                                , 1, 1,
 //                                Arrays.asList("ECO:0000355"), 
 //                                Arrays.asList("phylogenetic distribution evidence"), 
@@ -2178,7 +2202,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         Arrays.asList("UBERON:0010207"), Arrays.asList("nictitating membrane"), 
                         7776, "Gnathostomata", true, 
                         "CIO:0000003", "high confidence from single evidence", true, 
-                        "Summary annotation created from 1 single-evidence annotation"
+                        null, 1
 //                        , 0, 1, 
 //                        null, null, 
 //                        Arrays.asList("ECO:0000034"), 
@@ -2190,7 +2214,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         Arrays.asList("UBERON:0010207"), Arrays.asList("nictitating membrane"), 
                         7778, "Elasmobranchii", false, 
                         "CIO:0000003", "high confidence from single evidence", true, 
-                        "Summary annotation created from 1 single-evidence annotation"
+                        null, 1
 //                        , 1, 0,  
 //                        Arrays.asList("ECO:0000034"), 
 //                        Arrays.asList("non-traceable author statement"), 
@@ -2201,7 +2225,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         Arrays.asList("UBERON:0010207"), Arrays.asList("nictitating membrane"), 
                         32524, "Amniota", false, 
                         "CIO:0000003", "high confidence from single evidence", true, 
-                        "Summary annotation created from 1 single-evidence annotation"
+                        null, 1
 //                        , 1, 0, 
 //                        Arrays.asList("ECO:0000034"), 
 //                        Arrays.asList("non-traceable author statement"), 
@@ -2372,23 +2396,23 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 new AncestralTaxaAnnotationBean("HOM:0000007", "historical homology", 
                         Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
                         2759, "Eukaryota", 
-                        "CIO:0000003", "high confidence from single evidence", "-"), 
+                        "CIO:0000003", "high confidence from single evidence", null), 
                 new AncestralTaxaAnnotationBean("HOM:0000007", "historical homology", 
                         Arrays.asList("CL:0000015"), Arrays.asList("male germ cell"), 
                         33208, "Metazoa", 
                         "CIO:0000019", "confidence statement from congruent evidence "
-                                + "lines of same type, overall confidence medium", "-"), 
+                                + "lines of same type, overall confidence medium", null), 
                 new AncestralTaxaAnnotationBean("HOM:0000007", "historical homology", 
                         Arrays.asList("CL:0000037"), 
                         Arrays.asList("hematopoietic stem cell"), 
                         7742, "Vertebrata", 
-                        "CIO:0000004", "medium confidence from single evidence", "-"), 
+                        "CIO:0000004", "medium confidence from single evidence", null), 
                 new AncestralTaxaAnnotationBean("HOM:0000007", "historical homology", 
                         Arrays.asList("CL:0000037", "UBERON:0000001", "UBERON:0000007"), 
                         Arrays.asList("hematopoietic stem cell", "whatever name1", 
                                 "whatever name2"), 
                         7742, "Vertebrata", 
-                        "CIO:0000004", "medium confidence from single evidence", "-"), 
+                        "CIO:0000004", "medium confidence from single evidence", null), 
                 new AncestralTaxaAnnotationBean("HOM:0000007", "historical homology", 
                         Arrays.asList("CL:0000216"), Arrays.asList("Sertoli cell"), 
                         7742, "Vertebrata", 
@@ -2399,15 +2423,15 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         Arrays.asList("UBERON:0000926"), Arrays.asList("mesoderm"), 
                         33213, "Bilateria", 
                         "CIO:0000024", "confidence statement from weakly conflicting "
-                            + "evidence lines of same type, overall confidence medium", "-"), 
+                            + "evidence lines of same type, overall confidence medium", null), 
                 new AncestralTaxaAnnotationBean("HOM:0000007", "historical homology", 
                         Arrays.asList("UBERON:0010207"), Arrays.asList("nictitating membrane"), 
                         7778, "Elasmobranchii", 
-                        "CIO:0000003", "high confidence from single evidence", "-"), 
+                        "CIO:0000003", "high confidence from single evidence", null), 
                 new AncestralTaxaAnnotationBean("HOM:0000007", "historical homology", 
                         Arrays.asList("UBERON:0010207"), Arrays.asList("nictitating membrane"), 
                         32524, "Amniota", 
-                        "CIO:0000003", "high confidence from single evidence", "-"));
+                        "CIO:0000003", "high confidence from single evidence", null));
         
         assertEquals("Incorrect ANCESTRAL TAXA annotations generated", expectedAnnots, 
                 simAnnot.generateAncestralTaxaAnnotations(Arrays.asList(
@@ -2415,7 +2439,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
                         2759, "Eukaryota", false, 
                         "CIO:0000003", "high confidence from single evidence", true, 
-                        "Summary annotation created from 1 single-evidence annotation"
+                        null, 1
 //                                , 1, 0, 
 //                                Arrays.asList("ECO:0000033"), 
 //                                Arrays.asList("traceable author statement"), 
@@ -2428,7 +2452,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         "CIO:0000019", "confidence statement from congruent evidence "
                                 + "lines of same type, overall confidence medium", 
                         true, 
-                        "Summary annotation created from 2 single-evidence annotations"
+                        null, 2
 //                                , 2, 0, 
 //                                Arrays.asList("ECO:0000205"), 
 //                                Arrays.asList("curator inference"), 
@@ -2439,7 +2463,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         Arrays.asList("CL:0000037"), Arrays.asList("hematopoietic stem cell"), 
                         7742, "Vertebrata", false, 
                         "CIO:0000004", "medium confidence from single evidence", true, 
-                        "Summary annotation created from 1 single-evidence annotation"
+                        null, 1
 //                                , 0, 1, 
 //                                null, null, 
 //                                Arrays.asList("ECO:0000067"), 
@@ -2453,7 +2477,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                                 "whatever name2"), 
                         7742, "Vertebrata", false, 
                         "CIO:0000004", "medium confidence from single evidence", true, 
-                        "Summary annotation created from 1 single-evidence annotation"
+                        null, 1
 //                                , 0, 1,  
 //                                null, null, 
 //                                Arrays.asList("ECO:0000067"), 
@@ -2465,7 +2489,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         Arrays.asList("CL:0000216"), Arrays.asList("Sertoli cell"), 
                         7711, "Chordata", false, 
                         "CIO:0000005", "low confidence from single evidence", false, 
-                        "Summary annotation created from 1 single-evidence annotation"
+                        null, 1
 //                                        , 1, 0, 
 //                                        Arrays.asList("ECO:0000067"), 
 //                                        Arrays.asList("developmental similarity evidence"), 
@@ -2477,7 +2501,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         7742, "Vertebrata", false, 
                         "CIO:0000004", "medium confidence from single evidence", 
                         true, 
-                        "Summary annotation created from 1 single-evidence annotation"
+                        null, 1
 //                                        , 2, 0, 
 //                                        Arrays.asList("ECO:0000067", "ECO:0000355"), 
 //                                        Arrays.asList("developmental similarity evidence", 
@@ -2492,7 +2516,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         "CIO:0000020", "confidence statement from strongly conflicting "
                                 + "evidence lines of same type", 
                         false, 
-                        "Summary annotation created from 2 single-evidence annotations"
+                        null, 2
 //                                        , 3, 1, 
 //                                        Arrays.asList("ECO:0000067", "ECO:0000355"), 
 //                                        Arrays.asList("developmental similarity evidence", 
@@ -2508,7 +2532,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         "CIO:0000024", "confidence statement from weakly conflicting "
                             + "evidence lines of same type, overall confidence medium", 
                         true, 
-                        "Summary annotation created from 3 single-evidence annotations"
+                        null, 3
 //                                        , 2, 1, 
 //                                        Arrays.asList("ECO:0000067"), 
 //                                        Arrays.asList("developmental similarity evidence"), 
@@ -2523,7 +2547,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         "CIO:0000010", "confidence statement from strongly conflicting "
                                 + "evidence lines of multiple types", 
                         false, 
-                        "Summary annotation created from 2 single-evidence annotations"
+                        null, 2
 //                                        , 1, 1,
 //                                        Arrays.asList("ECO:0000355"), 
 //                                        Arrays.asList("phylogenetic distribution evidence"), 
@@ -2536,7 +2560,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         Arrays.asList("UBERON:0010207"), Arrays.asList("nictitating membrane"), 
                         7776, "Gnathostomata", true, 
                         "CIO:0000003", "high confidence from single evidence", true, 
-                        "Summary annotation created from 1 single-evidence annotation"
+                        null, 1
 //                                , 0, 1, 
 //                                null, null, 
 //                                Arrays.asList("ECO:0000034"), 
@@ -2548,7 +2572,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         Arrays.asList("UBERON:0010207"), Arrays.asList("nictitating membrane"), 
                         7778, "Elasmobranchii", false, 
                         "CIO:0000003", "high confidence from single evidence", true, 
-                        "Summary annotation created from 1 single-evidence annotation"
+                        null, 1
 //                                , 1, 0,  
 //                                Arrays.asList("ECO:0000034"), 
 //                                Arrays.asList("non-traceable author statement"), 
@@ -2559,7 +2583,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         Arrays.asList("UBERON:0010207"), Arrays.asList("nictitating membrane"), 
                         32524, "Amniota", false, 
                         "CIO:0000003", "high confidence from single evidence", true, 
-                        "Summary annotation created from 1 single-evidence annotation"
+                        null, 1
 //                                , 1, 0, 
 //                                Arrays.asList("ECO:0000034"), 
 //                                Arrays.asList("non-traceable author statement"), 

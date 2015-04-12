@@ -608,6 +608,11 @@ public class SimilarityAnnotation {
         
         CellProcessor[] processors = new CellProcessor[header.length];
         for (int i = 0; i < header.length; i++) {
+            //curators often use additional non-standard columns in their annotation file, 
+            //so we don't throw an exception in case of unrecognized column
+            if (header[i] == null) {
+                continue;
+            }
             switch (header[i]) {
             // *** CellProcessors common to all AnnotationBean types ***
                 case SimilarityAnnotationUtils.ENTITY_COL_NAME: 
@@ -626,7 +631,6 @@ public class SimilarityAnnotation {
                 case SimilarityAnnotationUtils.CONF_COL_NAME: 
                 case SimilarityAnnotationUtils.REF_COL_NAME: 
                 case SimilarityAnnotationUtils.ECO_COL_NAME: 
-                case SimilarityAnnotationUtils.SUPPORT_TEXT_COL_NAME: 
                 case SimilarityAnnotationUtils.ASSIGN_COL_NAME: 
                 case SimilarityAnnotationUtils.CURATOR_COL_NAME: 
                     processors[i] = new StrNotNullOrEmpty();
@@ -638,14 +642,17 @@ public class SimilarityAnnotation {
                 case SimilarityAnnotationUtils.CONF_NAME_COL_NAME: 
                 case SimilarityAnnotationUtils.TAXON_NAME_COL_NAME: 
                 case SimilarityAnnotationUtils.ECO_NAME_COL_NAME: 
+                case SimilarityAnnotationUtils.SUPPORT_TEXT_COL_NAME: 
                 //REF title is stored in the same column as REF ID in curator annotation file.
                 //Only in generated files the title is stored in its own column
                 case SimilarityAnnotationUtils.REF_TITLE_COL_NAME: 
                     processors[i] = new Optional();
                     break;
                 default: 
-                    throw log.throwing(new IllegalArgumentException("Unrecognized header: " 
-                            + header[i]));
+                    //curators often use additional non-standard columns in their annotation file, 
+                    //so we don't throw an exception in case of unrecognized column
+                    processors[i] = new Optional();
+                    break;
             }
         }
         return log.exit(processors);
@@ -677,16 +684,22 @@ public class SimilarityAnnotation {
         String[] mapping = SimilarityAnnotationUtils.mapHeaderToAttributes(header, 
                 RawAnnotationBean.class);
         for (int i = 0; i < header.length; i++) {
-            switch (header[i]) {
-                case SimilarityAnnotationUtils.HOM_NAME_COL_NAME: 
-                case SimilarityAnnotationUtils.ENTITY_NAME_COL_NAME: 
-                case SimilarityAnnotationUtils.TAXON_NAME_COL_NAME: 
-                case SimilarityAnnotationUtils.CONF_NAME_COL_NAME: 
-                case SimilarityAnnotationUtils.REF_TITLE_COL_NAME: 
-                case SimilarityAnnotationUtils.ECO_NAME_COL_NAME: 
-                    mapping[i] = null;
-                    break;
-            } 
+            //curators often use additional non-standard columns in their annotation file,
+            //so we consider only necessary columns
+            if (header[i] != null && 
+                    !SimilarityAnnotationUtils.HOM_COL_NAME.equals(header[i]) && 
+                    !SimilarityAnnotationUtils.ENTITY_COL_NAME.equals(header[i]) && 
+                    !SimilarityAnnotationUtils.TAXON_COL_NAME.equals(header[i]) && 
+                    !SimilarityAnnotationUtils.QUALIFIER_COL_NAME.equals(header[i]) && 
+                    !SimilarityAnnotationUtils.CONF_COL_NAME.equals(header[i]) && 
+                    !SimilarityAnnotationUtils.ASSIGN_COL_NAME.equals(header[i]) && 
+                    !SimilarityAnnotationUtils.REF_COL_NAME.equals(header[i]) && 
+                    !SimilarityAnnotationUtils.ECO_COL_NAME.equals(header[i]) && 
+                    !SimilarityAnnotationUtils.SUPPORT_TEXT_COL_NAME.equals(header[i]) && 
+                    !SimilarityAnnotationUtils.CURATOR_COL_NAME.equals(header[i]) && 
+                    !SimilarityAnnotationUtils.DATE_COL_NAME.equals(header[i])) {
+                mapping[i] = null;
+            }
         }
         return log.exit(mapping);
     }
@@ -1038,7 +1051,8 @@ public class SimilarityAnnotation {
                 AnnotationCommon.extractAnatEntityIdsFromFile(annotFile, false);
         Set<OWLClass> withNoTransfOf = new HashSet<OWLClass>();
         anatEntities: for (String anatEntityId: anatEntityIds) {
-            OWLClass anatEntity = uberonOntWrapper.getOWLClassByIdentifier(anatEntityId, true);
+            OWLClass anatEntity = uberonOntWrapper.getOWLClassByIdentifier(
+                    anatEntityId.trim(), true);
             log.trace("Testing OWLClass for ID {}: {}", anatEntityId, anatEntity);
             if (anatEntity == null) {
                 log.trace("Entity {} not found in the ontology.", anatEntityId);
@@ -1454,14 +1468,12 @@ public class SimilarityAnnotation {
                 new HashMap<RawAnnotationBean, Set<Integer>>();
         
         //first pass, check each annotation
-        int i = 0;
         Set<Integer> taxonIds = null;
         if (taxonConstraints != null) {
             taxonIds = TaxonConstraints.extractTaxonIds(taxonConstraints);
         }
         for (T annot: annots) {
-            i++;
-            if (!this.checkAnnotation(annot, taxonIds, i)) {
+            if (!this.checkAnnotation(annot, taxonIds)) {
                 continue;
             }
             if (annot instanceof RawAnnotationBean) {
@@ -1469,8 +1481,7 @@ public class SimilarityAnnotation {
             }
 
             //need to order potential multiple values in ENTITY_COL_NAME to identify duplicates
-            List<String> uberonIds = annot.getEntityIds();
-            Collections.sort(uberonIds);
+            List<String> uberonIds = SimilarityAnnotationUtils.trimAndSort(annot.getEntityIds());
             
             //to check for duplicates, we will use only some columns
             //First, for ANCESTRAL TAXA annotations, we need to collect all taxa 
@@ -1616,7 +1627,7 @@ public class SimilarityAnnotation {
                     //check there is a positive annotation for individual Uberon IDs
                     RawAnnotationBean check = new RawAnnotationBean();
                     check.setHomId(posAnnot.getHomId());
-                    check.setEntityIds(Arrays.asList(uberonId));
+                    check.setEntityIds(Arrays.asList(uberonId.trim()));
                     if (!positiveAnnotsToTaxa.containsKey(check)) {
                         log.warn("An annotation uses multiple entity IDs, but there is no annotation for the individual entity: {} - annotation: {}", 
                                 uberonId, posAnnot);
@@ -1676,8 +1687,8 @@ public class SimilarityAnnotation {
      *                                  formatted information.
      */
     private <T extends AnnotationBean> boolean checkAnnotation(T annot, 
-            Set<Integer> taxonIds, int lineNumber) throws IllegalArgumentException {
-        log.entry(annot, taxonIds, lineNumber);
+            Set<Integer> taxonIds) throws IllegalArgumentException {
+        log.entry(annot, taxonIds);
         
         if (!annot.getClass().equals(RawAnnotationBean.class) && 
                 !annot.getClass().equals(SummaryAnnotationBean.class) && 
@@ -1695,7 +1706,7 @@ public class SimilarityAnnotation {
         
         //*** information mandatory for all annotation types ***
         if (annot.getNcbiTaxonId() <= 0) {
-            log.error("Missing taxon ID at line {}", lineNumber);
+            log.error("Missing taxon ID in annotation {}", annot);
             this.incorrectFormat.add(annot);
             allGood = false;
         }
@@ -1711,17 +1722,17 @@ public class SimilarityAnnotation {
             }
         }
         if (missingUberon) {
-            log.error("Missing Uberon ID at line {}", lineNumber);
+            log.error("Missing Uberon ID in annotation {}", annot);
             this.incorrectFormat.add(annot);
             allGood = false;
         }
         if (StringUtils.isBlank(annot.getHomId())) {
-            log.error("Missing HOM ID at line {}", lineNumber);
+            log.error("Missing HOM ID in annotation {}", annot);
             this.incorrectFormat.add(annot);
             allGood = false;
         }
         if (StringUtils.isBlank(annot.getCioId())) {
-            log.error("Missing CIO ID at line {}", lineNumber);
+            log.error("Missing CIO ID in annotation {}", annot);
             this.incorrectFormat.add(annot);
             allGood = false;
         }
@@ -1730,16 +1741,16 @@ public class SimilarityAnnotation {
         if (!(annot instanceof CuratorAnnotationBean)) {
             //Uberon IDs should be ordered alphabetically
             if (annot.getEntityIds() != null) {
-                List<String> orderedEntityIds = new ArrayList<String>(annot.getEntityIds());
-                Collections.sort(orderedEntityIds);
+                List<String> orderedEntityIds = SimilarityAnnotationUtils.trimAndSort(annot.getEntityIds());
                 if (!orderedEntityIds.equals(annot.getEntityIds())) {
-                    log.error("Entity IDs are not ordered at line {}", lineNumber);
+                    log.error("Entity IDs are not ordered or not trimmed in annotation {}", 
+                            annot);
                     this.incorrectFormat.add(annot);
                     allGood = false;
                 }
             }
             if (StringUtils.isBlank(annot.getTaxonName())) {
-                log.error("Missing taxon name at line {}", lineNumber);
+                log.error("Missing taxon name in annotation {}", annot);
                 this.incorrectFormat.add(annot);
                 allGood = false;
             }
@@ -1755,17 +1766,17 @@ public class SimilarityAnnotation {
                 }
             }
             if (missingUberonName) {
-                log.error("Missing Uberon name at line {}", lineNumber);
+                log.error("Missing Uberon name in annotation {}", annot);
                 this.incorrectFormat.add(annot);
                 allGood = false;
             }
             if (StringUtils.isBlank(annot.getHomLabel())) {
-                log.error("Missing HOM name at line {}", lineNumber);
+                log.error("Missing HOM name in annotation {}", annot);
                 this.incorrectFormat.add(annot);
                 allGood = false;
             }
             if (StringUtils.isBlank(annot.getCioLabel())) {
-                log.error("Missing CIO name at line {}", lineNumber);
+                log.error("Missing CIO name in annotation {}", annot);
                 this.incorrectFormat.add(annot);
                 allGood = false;
             }
@@ -1775,17 +1786,12 @@ public class SimilarityAnnotation {
         if (annot instanceof RawAnnotationBean) {
     
             if (StringUtils.isBlank(((RawAnnotationBean) annot).getEcoId())) {
-                log.error("Missing ECO ID at line {}", lineNumber);
-                this.incorrectFormat.add(annot);
-                allGood = false;
-            }
-            if (StringUtils.isBlank(((RawAnnotationBean) annot).getSupportingText())) {
-                log.error("Missing support text at line {}", lineNumber);
+                log.error("Missing ECO ID in annotation {}", annot);
                 this.incorrectFormat.add(annot);
                 allGood = false;
             }
             if (StringUtils.isBlank(((RawAnnotationBean) annot).getAssignedBy())) {
-                log.error("Missing assigned by info at line {}", lineNumber);
+                log.error("Missing assigned by info in annotation {}", annot);
                 this.incorrectFormat.add(annot);
                 allGood = false;
             }
@@ -1795,24 +1801,24 @@ public class SimilarityAnnotation {
                 !AUTOMATIC_ASSERTION_ECO.equals(((RawAnnotationBean) annot).getEcoId())) {
 
                 if (((RawAnnotationBean) annot).getCurationDate() == null) {
-                    log.error("Missing date at line {}", lineNumber);
+                    log.error("Missing date in annotation {}", annot);
                     this.incorrectFormat.add(annot);
                     allGood = false;
                 }
                 if (StringUtils.isBlank(((RawAnnotationBean) annot).getCurator())) {
-                    log.error("Missing curator info at line {}", lineNumber);
+                    log.error("Missing curator info in annotation {}", annot);
                     this.incorrectFormat.add(annot);
                     allGood = false;
                 }
                 String refId = ((RawAnnotationBean) annot).getRefId();
                 if (StringUtils.isBlank(refId) || !refId.matches("\\S+?:\\S+")) {
-                    log.error("Incorrect reference ID {} at line {}", refId, lineNumber);
+                    log.error("Incorrect reference ID {} in annotation {}", refId, annot);
                     this.incorrectFormat.add(annot);
                     allGood = false;
                 }
                 String refTitle = ((RawAnnotationBean) annot).getRefTitle();
                 if (StringUtils.isBlank(refTitle)) {
-                    log.error("Missing reference title at line {}", lineNumber);
+                    log.error("Missing reference title in annotation {}", annot);
                     this.incorrectFormat.add(annot);
                     allGood = false;
                 }
@@ -1823,7 +1829,7 @@ public class SimilarityAnnotation {
         if (annot.getClass().equals(RawAnnotationBean.class)) {
             String ecoName = ((RawAnnotationBean) annot).getEcoLabel();
             if (StringUtils.isBlank(ecoName)) {
-                log.error("Missing ECO name at line {}", lineNumber);
+                log.error("Missing ECO name in annotation {}", annot);
                 this.incorrectFormat.add(annot);
                 allGood = false;
             }
@@ -1845,12 +1851,12 @@ public class SimilarityAnnotation {
             if ((taxonIds != null && !taxonIds.contains(taxonId)) || 
                     (cls == null || 
                             taxOntWrapper.isObsolete(cls) || taxOntWrapper.getIsObsolete(cls))) {
-                log.error("Unrecognized taxon ID {} at line {}", taxonId, lineNumber);
+                log.error("Unrecognized taxon ID {} in annotation {}", taxonId, annot);
                 this.missingTaxonIds.add(taxonId);
                 allGood = false;
             } else if (StringUtils.isNotBlank(annot.getTaxonName()) && 
                     !taxOntWrapper.getLabel(cls).equals(annot.getTaxonName())) {
-                log.error("Incorrect taxon name at line {}", lineNumber);
+                log.error("Incorrect taxon name in annotation {}", annot);
                 this.incorrectFormat.add(annot);
                 allGood = false;
             }
@@ -1861,16 +1867,17 @@ public class SimilarityAnnotation {
             if (StringUtils.isBlank(uberonId)) {
                 continue;
             }
-            OWLClass cls = uberonOntWrapper.getOWLClassByIdentifier(uberonId.trim(), true);
+            uberonId = uberonId.trim();
+            OWLClass cls = uberonOntWrapper.getOWLClassByIdentifier(uberonId, true);
             if (cls == null || 
                     uberonOntWrapper.isObsolete(cls) || uberonOntWrapper.getIsObsolete(cls)) {
-                log.trace("Unrecognized Uberon ID {} at line {}", uberonId, lineNumber);
+                log.trace("Unrecognized Uberon ID {} in annotation {}", uberonId, annot);
                 this.missingUberonIds.add(uberonId);
                 allGood = false;
             } else if (annot.getEntityNames() != null) {
                 //check that we have the proper Uberon name in the correct order
                 if (!uberonOntWrapper.getLabel(cls).equals(annot.getEntityNames().get(i))) {
-                    log.error("Incorrect entity label or label order at line {}", lineNumber);
+                    log.error("Incorrect entity label or label order in annotation {}", annot);
                     this.incorrectFormat.add(annot);
                     allGood = false;
                 }
@@ -1878,7 +1885,7 @@ public class SimilarityAnnotation {
             if (taxonConstraints != null) {
                 Set<Integer> existsIntaxa = taxonConstraints.get(uberonId);
                 if (existsIntaxa == null) {
-                    log.error("Unrecognized Uberon ID {} at line {}", uberonId, lineNumber);
+                    log.error("Unrecognized Uberon ID {} in annotation {}", uberonId, annot);
                     this.missingUberonIds.add(uberonId);
                     allGood = false;
                 } else if (!existsIntaxa.contains(taxonId)) {
@@ -1897,12 +1904,12 @@ public class SimilarityAnnotation {
             OWLClass cls = homOntWrapper.getOWLClassByIdentifier(homId.trim(), true);
             if (cls == null || 
                     homOntWrapper.isObsolete(cls) || homOntWrapper.getIsObsolete(cls)) {
-                log.trace("Unrecognized HOM ID {} at line {}", homId, lineNumber);
+                log.trace("Unrecognized HOM ID {} in annotation {}", homId, annot);
                 this.missingHOMIds.add(homId);
                 allGood = false;
             } else if (StringUtils.isNotBlank(annot.getHomLabel()) && 
                     !homOntWrapper.getLabel(cls).equals(annot.getHomLabel())) {
-                log.error("Incorrect HOM label at line {}", lineNumber);
+                log.error("Incorrect HOM label in annotation {}", annot);
                 this.incorrectFormat.add(annot);
                 allGood = false;
             }
@@ -1913,13 +1920,13 @@ public class SimilarityAnnotation {
             OWLClass cls = cioGraphWrapper.getOWLClassByIdentifier(confId.trim(), true);
             if (cls == null || 
                     cioGraphWrapper.isObsolete(cls) || cioGraphWrapper.getIsObsolete(cls)) {
-                log.trace("Unrecognized CONF ID {} at line {}", confId, lineNumber);
+                log.trace("Unrecognized CONF ID {} in annotation {}", confId, annot);
                 this.missingCONFIds.add(confId);
                 allGood = false;
             } else {
                 if (StringUtils.isNotBlank(annot.getCioLabel()) && 
                         !cioGraphWrapper.getLabel(cls).equals(annot.getCioLabel())) {
-                    log.error("Incorrect CIO label at line {}", lineNumber);
+                    log.error("Incorrect CIO label in annotation {}", annot);
                     this.incorrectFormat.add(annot);
                     allGood = false;
                 }
@@ -1927,8 +1934,8 @@ public class SimilarityAnnotation {
                     if (!cioWrapper.getEvidenceConcordance(cls).equals(
                             cioGraphWrapper.getOWLClassByIdentifier(
                                     CIOWrapper.SINGLE_EVIDENCE_CONCORDANCE_ID))) {
-                        log.error("A RAW annotation uses a confidence statement not from the single evidence branch {} at line {}", 
-                                confId, lineNumber);
+                        log.error("A RAW annotation uses a confidence statement not from the single evidence branch {} in annotation {}", 
+                                confId, annot);
                         this.incorrectFormat.add(annot);
                         allGood = false;
                     }
@@ -1936,16 +1943,16 @@ public class SimilarityAnnotation {
                 if (annot instanceof SummaryAnnotationBean) {
                     if (cioWrapper.isBgeeNotTrustedStatement(cls) && 
                             ((SummaryAnnotationBean) annot).isTrusted()) {
-                        log.error("Inconsistent trust state for CIO statement {} at line {}", 
-                                confId, lineNumber);
+                        log.error("Inconsistent trust state for CIO statement {} in annotation {}", 
+                                confId, annot);
                         this.incorrectFormat.add(annot);
                         allGood = false;
                     }
                 }
                 if (annot instanceof AncestralTaxaAnnotationBean && 
                         cioWrapper.isBgeeNotTrustedStatement(cls)) {
-                    log.error("Only trusted annotations should be used for ancestral taxon file at line {}", 
-                            lineNumber);
+                    log.error("Only trusted annotations should be used for ancestral taxon file in annotation {}", 
+                            annot);
                     this.incorrectFormat.add(annot);
                     allGood = false;
                 }
@@ -1957,13 +1964,13 @@ public class SimilarityAnnotation {
                 OWLClass cls = ecoOntWrapper.getOWLClassByIdentifier(ecoId.trim(), true);
                 if (cls == null || 
                         ecoOntWrapper.isObsolete(cls) || ecoOntWrapper.getIsObsolete(cls)) {
-                    log.error("Unrecognized ECO ID {} at line {}", ecoId, lineNumber);
+                    log.error("Unrecognized ECO ID {} in annotation {}", ecoId, annot);
                     this.missingECOIds.add(ecoId);
                     allGood = false;
                 } else if (StringUtils.isNotBlank(((RawAnnotationBean) annot).getEcoLabel()) && 
                         !ecoOntWrapper.getLabel(cls).equals(
                                 ((RawAnnotationBean) annot).getEcoLabel())) {
-                    log.error("Incorrect ECO label at line {}", lineNumber);
+                    log.error("Incorrect ECO label in annotation {}", annot);
                     this.incorrectFormat.add(annot);
                     allGood = false;
                 }
@@ -2171,10 +2178,14 @@ public class SimilarityAnnotation {
         
         //make sure there are no duplicates
         Set<CuratorAnnotationBean> filteredAnnots = new HashSet<CuratorAnnotationBean>(annots);
-        //infer new annotations
-        filteredAnnots.addAll(this.generateInferredAnnotations(filteredAnnots));
-        //check the curator annotations provided and the inferred annotations
         this.checkAnnotations(filteredAnnots);
+        //infer new annotations
+        Set<CuratorAnnotationBean> inferredAnnots = 
+                this.generateInferredAnnotations(filteredAnnots);
+        //check the inferred annotations
+        this.checkAnnotations(inferredAnnots);
+        //add to curator annotations
+        filteredAnnots.addAll(inferredAnnots);
         
         //Generate RAW annotations
         Set<RawAnnotationBean> rawAnnots = new HashSet<RawAnnotationBean>();
@@ -2253,23 +2264,21 @@ public class SimilarityAnnotation {
             rawAnnot.setAssignedBy(annot.getAssignedBy());
         }
         
+        List<String> entityIds = SimilarityAnnotationUtils.trimAndSort(annot.getEntityIds());
+        //store Uberon IDs 
+        rawAnnot.setEntityIds(entityIds);
+        
         //*** Add labels ***
         
-        //Uberon ID(s) used to define the entity annotated. Get them ordered 
-        //by alphabetical order, for easier diff between releases.
-        List<String> uberonIds = annot.getEntityIds();
-        Collections.sort(uberonIds);
         //get the corresponding names
         List<String> uberonNames = new ArrayList<String>();
-        List<String> trimUberonIds = new ArrayList<String>();
-        for (String uberonId: uberonIds) {
+        for (String uberonId: entityIds) {
             //it is the responsibility of the checkAnnotation method to make sure 
             //the Uberon IDs exist, so we accept null values, it's not our job here.
             if (uberonId == null) {
                 continue;
             }
-            trimUberonIds.add(uberonId.trim());
-            OWLClass cls = uberonOntWrapper.getOWLClassByIdentifier(uberonId.trim(), true);
+            OWLClass cls = uberonOntWrapper.getOWLClassByIdentifier(uberonId, true);
             if (cls != null) {
                 String name = uberonOntWrapper.getLabel(cls);
                 if (name != null) {
@@ -2280,8 +2289,7 @@ public class SimilarityAnnotation {
                 }
             }
         }
-        //store Uberon IDs and names
-        rawAnnot.setEntityIds(trimUberonIds);
+        //store Uberon names
         rawAnnot.setEntityNames(uberonNames);
         
         //taxon
@@ -2453,10 +2461,9 @@ public class SimilarityAnnotation {
             for (CuratorAnnotationBean sourceAnnot: inferredAnnot.getValue()) {
                 
                 cioStatements.add(cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
-                        sourceAnnot.getCioId(), true));
+                        sourceAnnot.getCioId().trim(), true));
                 
-                List<String> entityIds = sourceAnnot.getEntityIds();
-                Collections.sort(entityIds);
+                List<String> entityIds = SimilarityAnnotationUtils.trimAndSort(sourceAnnot.getEntityIds());
                 String supportingTextElement = Utils.formatMultipleValuesToString(entityIds);
                 log.trace("Adding supporting text element: {}", supportingTextElement);
                 supportingTextElements.add(supportingTextElement);
@@ -2572,7 +2579,7 @@ public class SimilarityAnnotation {
             //uberon ID -> target/source IDs
             Map<String, Set<String>> mapTransfOfEntities = new HashMap<String, Set<String>>();
             for (String uberonId: annotToInfer.getEntityIds()) {
-                
+                uberonId = uberonId.trim();
                 Set<String> targetOrSourceIds = new HashSet<String>();
                 mapTransfOfEntities.put(uberonId, targetOrSourceIds);
                 
@@ -2618,7 +2625,7 @@ public class SimilarityAnnotation {
                     toPropagate = false;
                     break;
                 }
-                transfOfEntityIds.add(entry.getValue().iterator().next());
+                transfOfEntityIds.add(entry.getValue().iterator().next().trim());
             }
             if (!toPropagate) {
                 log.trace("No propagation to perform.");
@@ -2631,7 +2638,7 @@ public class SimilarityAnnotation {
             
             //now, we check whether this corresponds to an already existing annotation
             CuratorAnnotationBean toCompare = new CuratorAnnotationBean();
-            toCompare.setHomId(annotToInfer.getHomId());
+            toCompare.setHomId(annotToInfer.getHomId().trim());
             toCompare.setEntityIds(transfOfEntityIds);
             if (existingAnnots.contains(toCompare)) {
                 log.trace("Propagated annotation already exists, not added.");
@@ -2640,7 +2647,7 @@ public class SimilarityAnnotation {
             
             //OK, create the inferred annotation
             CuratorAnnotationBean inferredAnnot = new CuratorAnnotationBean();
-            inferredAnnot.setHomId(annotToInfer.getHomId());
+            inferredAnnot.setHomId(annotToInfer.getHomId().trim());
             inferredAnnot.setEntityIds(transfOfEntityIds);
             inferredAnnot.setNcbiTaxonId(annotToInfer.getNcbiTaxonId());
             inferredAnnot.setNegated(annotToInfer.isNegated());
@@ -2692,9 +2699,8 @@ public class SimilarityAnnotation {
                 }
             }
             CuratorAnnotationBean existingAnnot = new CuratorAnnotationBean();
-            existingAnnot.setHomId(annot.getHomId());
-            List<String> entityIds = new ArrayList<String>(annot.getEntityIds());
-            Collections.sort(entityIds);
+            existingAnnot.setHomId(annot.getHomId().trim());
+            List<String> entityIds = SimilarityAnnotationUtils.trimAndSort(annot.getEntityIds());
             existingAnnot.setEntityIds(entityIds);
             
             existingAnnots.add(existingAnnot);
@@ -2731,7 +2737,7 @@ public class SimilarityAnnotation {
         //this should be reconsidered if we used other HOM concepts.
         Set<CuratorAnnotationBean> filteredAnnots = new HashSet<CuratorAnnotationBean>();
         for (CuratorAnnotationBean annot: annots) {
-            if (HISTORICAL_HOMOLOGY_ID.equals(annot.getHomId())) {
+            if (HISTORICAL_HOMOLOGY_ID.equals(annot.getHomId().trim())) {
                 filteredAnnots.add(annot);
             }
         }
@@ -2767,7 +2773,7 @@ public class SimilarityAnnotation {
             //first we retrieve the taxa used in the related annotations.
             Set<Integer> taxIds = new HashSet<Integer>();
             for (String intersectClsId: intersectEntry.getValue()) {
-                for (CuratorAnnotationBean relatedAnnot: entityIdToAnnots.get(intersectClsId)) {
+                for (CuratorAnnotationBean relatedAnnot: entityIdToAnnots.get(intersectClsId.trim())) {
                     taxIds.add(relatedAnnot.getNcbiTaxonId());
                 }
             }
@@ -2825,8 +2831,7 @@ public class SimilarityAnnotation {
                 
                 for (Entry<Set<String>, Set<Set<CuratorAnnotationBean>>> mapping: 
                     entityIdsToAnnotsPerIntersectClass.entrySet()) {
-                    List<String> entityIds = new ArrayList<String>(mapping.getKey());
-                    Collections.sort(entityIds);
+                    List<String> entityIds = SimilarityAnnotationUtils.trimAndSort(mapping.getKey());
                     
                     //here, we retrieve a positive and/or a negative annotation 
                     //(so, between 1 and 2 new annotations inferred for this mapping 
@@ -2878,11 +2883,11 @@ public class SimilarityAnnotation {
                 if (annot.equals(annot2) || toRemove.contains(annot2)) {
                     continue;
                 }
-                if (annot.getHomId().equals(annot2.getHomId()) && 
+                if (annot.getHomId().trim().equals(annot2.getHomId().trim()) && 
                         annot.isNegated() == annot2.isNegated() && 
                         annot.getNcbiTaxonId() == annot2.getNcbiTaxonId() && 
-                        annot.getCioId().equals(annot2.getCioId()) && 
-                        annot.getSupportingText().equals(annot2.getSupportingText()) && 
+                        annot.getCioId().trim().equals(annot2.getCioId().trim()) && 
+                        annot.getSupportingText().trim().equals(annot2.getSupportingText().trim()) && 
                         annot2.getEntityIds().containsAll(annot.getEntityIds()) && 
                         annot2.getEntityIds().size() >= annot.getEntityIds().size()) {
                     log.trace("Remove annotation {} because redundant as compared to annotation {}", 
@@ -3049,6 +3054,7 @@ public class SimilarityAnnotation {
         OntologyUtils taxOntUtils = new OntologyUtils(taxOntWrapper);
         
         for (String intersectClsId: intersectClassIds) {
+            intersectClsId = intersectClsId.trim();
             log.trace("Checking annotations available from intersect class {} in taxon {}", 
                     intersectClsId, taxId);
             
@@ -3123,6 +3129,7 @@ public class SimilarityAnnotation {
         for (CuratorAnnotationBean annot: annots) {
             //Uberon mapping
             for (String entityId: annot.getEntityIds()) {
+                entityId = entityId.trim();
                 Set<CuratorAnnotationBean> mappedAnnots = entityIdToAnnots.get(entityId);
                 if (mappedAnnots == null) {
                     mappedAnnots = new HashSet<CuratorAnnotationBean>();
@@ -3152,9 +3159,11 @@ public class SimilarityAnnotation {
         log.entry(annots);
         Map<Integer, Set<Integer>> taxToSelfAndAncestors = new HashMap<Integer, Set<Integer>>();
         for (T annot: annots) {
-            
+            log.trace("Retrieving taxon and ancestors from annotation: {}", annot);
             //taxon mapping
             if (!taxToSelfAndAncestors.containsKey(annot.getNcbiTaxonId())) {
+                log.trace("Retrieving taxon and ancestors for taxon: {}", 
+                        annot.getNcbiTaxonId());
                 Set<Integer> selfAndAncestorsIds = new HashSet<Integer>();
                 selfAndAncestorsIds.add(annot.getNcbiTaxonId());
                 for (OWLClass ancestor: taxOntWrapper.getAncestorsThroughIsA(
@@ -3284,7 +3293,7 @@ public class SimilarityAnnotation {
                     for (CuratorAnnotationBean annot: relatedAnnots) {
                         if (!annot.isNegated()) {
                             confs.add(cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
-                                    annot.getCioId()));
+                                    annot.getCioId().trim()));
                             annotationsUsed.add(annot);
                         }
                     }
@@ -3311,7 +3320,7 @@ public class SimilarityAnnotation {
                             //and we consider only confidence of negative annotations 
                             //to compute the confidence level of the inferred annotation
                             confs.add(cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
-                                    annot.getCioId()));
+                                    annot.getCioId().trim()));
                             negAnnots.add(annot);
                         } else {
                             posAnnots.add(annot);
@@ -3368,8 +3377,7 @@ public class SimilarityAnnotation {
                 //supporting text, we store elements used to generate it in a LinkedHashSet
                 LinkedHashSet<String> textElements = new LinkedHashSet<String>();
                 for (CuratorAnnotationBean annot: sortedAnnots) {
-                    List<String> entityIds = new ArrayList<String>(annot.getEntityIds());
-                    Collections.sort(entityIds);
+                    List<String> entityIds = SimilarityAnnotationUtils.trimAndSort(annot.getEntityIds());
                     String textElement = SimilarityAnnotationUtils.ENTITY_COL_NAME + ": " 
                             + Utils.formatMultipleValuesToString(entityIds);
                     textElement += ", negated: " + annot.isNegated();
@@ -3442,8 +3450,9 @@ public class SimilarityAnnotation {
             SummaryAnnotationBean keyAnnot = new SummaryAnnotationBean();
             keyAnnot.setHomId(annot.getHomId());
             keyAnnot.setNcbiTaxonId(annot.getNcbiTaxonId());
-            //entity IDs in RawAnnotationBean should already be ordered
-            keyAnnot.setEntityIds(annot.getEntityIds());
+            //entity IDs in RawAnnotationBean should already be ordered, 
+            //but we're never too sure
+            keyAnnot.setEntityIds(SimilarityAnnotationUtils.trimAndSort(annot.getEntityIds()));
             //and to have names to generate new annotation, we also store them
             keyAnnot.setEntityNames(annot.getEntityNames());
             keyAnnot.setHomLabel(annot.getHomLabel());
@@ -3473,7 +3482,7 @@ public class SimilarityAnnotation {
             newAnnot.setHomLabel(relatedAnnotsEntry.getKey().getHomLabel());
             newAnnot.setNcbiTaxonId(relatedAnnotsEntry.getKey().getNcbiTaxonId());
             newAnnot.setTaxonName(relatedAnnotsEntry.getKey().getTaxonName());
-            newAnnot.setEntityIds(relatedAnnotsEntry.getKey().getEntityIds());
+            newAnnot.setEntityIds(SimilarityAnnotationUtils.trimAndSort(relatedAnnotsEntry.getKey().getEntityIds()));
             newAnnot.setEntityNames(relatedAnnotsEntry.getKey().getEntityNames());
             String supportingText = "Summary annotation created from " 
                     + relatedAnnotsEntry.getValue().size() + " single-evidence annotation";
@@ -3715,8 +3724,9 @@ public class SimilarityAnnotation {
         for (SummaryAnnotationBean annot: filteredAnnots) {
             AncestralTaxaAnnotationBean keyAnnot = new AncestralTaxaAnnotationBean();
             keyAnnot.setHomId(annot.getHomId());
-            //entity IDs in SummaryAnnotationBean should already be ordered
-            keyAnnot.setEntityIds(annot.getEntityIds());
+            //entity IDs in SummaryAnnotationBean should already be ordered, 
+            //but we're never too sure
+            keyAnnot.setEntityIds(SimilarityAnnotationUtils.trimAndSort(annot.getEntityIds()));
             //and to have names to generate new annotation, we also store them
             keyAnnot.setEntityNames(annot.getEntityNames());
             keyAnnot.setHomLabel(annot.getHomLabel());
@@ -3783,7 +3793,8 @@ public class SimilarityAnnotation {
                 AncestralTaxaAnnotationBean newAnnot = new AncestralTaxaAnnotationBean();
                 newAnnot.setHomId(relatedAnnotsEntry.getKey().getHomId());
                 newAnnot.setHomLabel(relatedAnnotsEntry.getKey().getHomLabel());
-                newAnnot.setEntityIds(relatedAnnotsEntry.getKey().getEntityIds());
+                newAnnot.setEntityIds(SimilarityAnnotationUtils.trimAndSort(
+                        relatedAnnotsEntry.getKey().getEntityIds()));
                 newAnnot.setEntityNames(relatedAnnotsEntry.getKey().getEntityNames());
                 newAnnot.setNegated(false);
                 newAnnot.setNcbiTaxonId(relatedAnnot.getNcbiTaxonId());

@@ -5,6 +5,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -1457,11 +1458,8 @@ public class SimilarityAnnotationUtils {
                 return log.exit(1);
             }
             
-            String homId1 = o1.getHomId();
-            if (homId1 == null) {
-                homId1 = "";
-            }
-            String homId2 = o2.getHomId();
+            String homId1 = (o1.getHomId() == null)? "": o1.getHomId().trim();
+            String homId2 = (o2.getHomId() == null)? "": o2.getHomId().trim();
             if (homId2 == null) {
                 homId2 = "";
             }
@@ -1472,14 +1470,12 @@ public class SimilarityAnnotationUtils {
             
             String elementId1 = "";
             if (o1.getEntityIds() != null) {
-                List<String> elementIds = new ArrayList<String>(o1.getEntityIds());
-                Collections.sort(elementIds);
+                List<String> elementIds = trimAndSort(o1.getEntityIds());
                 elementId1 = Utils.formatMultipleValuesToString(elementIds);
             }
             String elementId2 = "";
             if (o2.getEntityIds() != null) {
-                List<String> elementIds = new ArrayList<String>(o2.getEntityIds());
-                Collections.sort(elementIds);
+                List<String> elementIds = trimAndSort(o2.getEntityIds());
                 elementId2 = Utils.formatMultipleValuesToString(elementIds);
             }
             comp = elementId1.compareTo(elementId2);
@@ -1511,11 +1507,8 @@ public class SimilarityAnnotationUtils {
                 }
             }
             
-            String confId1 = o1.getCioId();
-            if (confId1 == null) {
-                confId1 = "";
-            }
-            String confId2 = o2.getCioId();
+            String confId1 = (o1.getCioId() == null)? "": o1.getCioId().trim();
+            String confId2 = (o2.getCioId() == null)? "": o2.getCioId().trim();
             if (confId2 == null) {
                 confId2 = "";
             }
@@ -1526,40 +1519,28 @@ public class SimilarityAnnotationUtils {
             
             
             if (o1 instanceof RawAnnotationBean && o2 instanceof RawAnnotationBean) {
-                String ecoId1 = ((RawAnnotationBean) o1).getEcoId();
-                if (ecoId1 == null) {
-                    ecoId1 = "";
-                }
-                String ecoId2 = ((RawAnnotationBean) o2).getEcoId();
-                if (ecoId2 == null) {
-                    ecoId2 = "";
-                }
+                String ecoId1 = (((RawAnnotationBean) o1).getEcoId() == null)? "": 
+                    ((RawAnnotationBean) o1).getEcoId().trim();
+                String ecoId2 = (((RawAnnotationBean) o2).getEcoId() == null)? "": 
+                    ((RawAnnotationBean) o2).getEcoId().trim();
                 comp = ecoId1.compareTo(ecoId2);
                 if (comp != 0) {
                     return log.exit(comp);
                 }
                 
-                String refId1 = ((RawAnnotationBean) o1).getRefId();
-                if (refId1 == null) {
-                    refId1 = "";
-                }
-                String refId2 = ((RawAnnotationBean) o2).getRefId();
-                if (refId2 == null) {
-                    refId2 = "";
-                }
+                String refId1 = (((RawAnnotationBean) o1).getRefId() == null)? "": 
+                    ((RawAnnotationBean) o1).getRefId().trim();
+                String refId2 = (((RawAnnotationBean) o2).getRefId() == null)? "": 
+                    ((RawAnnotationBean) o2).getRefId().trim();
                 comp = refId1.compareTo(refId2);
                 if (comp != 0) {
                     return log.exit(comp);
                 }
                 
-                String assignedBy1 = ((RawAnnotationBean) o1).getAssignedBy();
-                if (assignedBy1 == null) {
-                    assignedBy1 = "";
-                }
-                String assignedBy2 = ((RawAnnotationBean) o2).getAssignedBy();
-                if (assignedBy2 == null) {
-                    assignedBy2 = "";
-                }
+                String assignedBy1 = (((RawAnnotationBean) o1).getAssignedBy() == null)? "": 
+                    ((RawAnnotationBean) o1).getAssignedBy().trim();
+                String assignedBy2 = (((RawAnnotationBean) o2).getAssignedBy() == null)? "": 
+                    ((RawAnnotationBean) o2).getAssignedBy().trim();
                 comp = assignedBy1.compareTo(assignedBy2);
                 if (comp != 0) {
                     return log.exit(comp);
@@ -1580,28 +1561,20 @@ public class SimilarityAnnotationUtils {
                     }
                 }
                 
-                String curator1 = ((RawAnnotationBean) o1).getCurator();
-                if (curator1 == null) {
-                    curator1 = "";
-                }
-                String curator2 = ((RawAnnotationBean) o2).getCurator();
-                if (curator2 == null) {
-                    curator2 = "";
-                }
+                String curator1 = (((RawAnnotationBean) o1).getCurator() == null)? "": 
+                    ((RawAnnotationBean) o1).getCurator().trim();
+                String curator2 = (((RawAnnotationBean) o2).getCurator() == null)? "": 
+                    ((RawAnnotationBean) o2).getCurator().trim();
                 comp = curator1.compareTo(curator2);
                 if (comp != 0) {
                     return log.exit(comp);
                 }
             }
             
-            String supportText1 = o1.getSupportingText();
-            if (supportText1 == null) {
-                supportText1 = "";
-            }
-            String supportText2 = o2.getSupportingText();
-            if (supportText2 == null) {
-                supportText2 = "";
-            }
+            String supportText1 = (((RawAnnotationBean) o1).getSupportingText() == null)? "": 
+                ((RawAnnotationBean) o1).getSupportingText().trim();
+            String supportText2 = (((RawAnnotationBean) o2).getSupportingText() == null)? "": 
+                ((RawAnnotationBean) o2).getSupportingText().trim();
             comp = supportText1.compareTo(supportText2);
             if (comp != 0) {
                 return log.exit(comp);
@@ -1944,6 +1917,11 @@ public class SimilarityAnnotationUtils {
         
         String[] mapping = new String[header.length];
         for (int i = 0; i < header.length; i++) {
+            //curators often use additional non-standard columns in their annotation file, 
+            //so we don't throw an exception in case of unrecognized column
+            if (header[i] == null) {
+                continue;
+            }
             // *** Attributes common to all AnnotationBean types ***
             switch (header[i]) {
                 case HOM_COL_NAME: 
@@ -2046,10 +2024,12 @@ public class SimilarityAnnotationUtils {
                 //no attributes specific to AncestralTaxaAnnotationBean for now
             } 
             
-            if (mapping[i] == null) {
-                throw log.throwing(new IllegalArgumentException("Unrecognized header: " 
-                        + header[i] + " for AnnotationBean type: " + beanType.getSimpleName()));
-            }
+            //curators often use additional non-standard columns in their annotation file, 
+            //so we don't throw an exception in case of unrecognized column
+//            if (mapping[i] == null) {
+//                throw log.throwing(new IllegalArgumentException("Unrecognized header: " 
+//                        + header[i] + " for AnnotationBean type: " + beanType.getSimpleName()));
+//            }
         }
         return log.exit(mapping);
     }
@@ -2165,5 +2145,27 @@ public class SimilarityAnnotationUtils {
             }
         }
         return log.exit(processors);
+    }
+    
+
+    
+    /**
+     * Trim the provided {@code String}s and sort them by alphabetical order. {@code null} 
+     * elements will be ignored and not added to the returned {@code List}. 
+     * 
+     * @param strings   A {@code Collection} of {@code String}s to be trimmed and sorted.
+     * @return          A {@code List} containing the {@code String}s in {@code strings}, 
+     *                  trimmed and sorted.
+     */
+    protected static List<String> trimAndSort(Collection<String> strings) {
+        log.entry(strings);
+        List<String> trimOrdered = new ArrayList<String>();
+        for (String iterateString: strings) {
+            if (iterateString != null) {
+                trimOrdered.add(iterateString.trim());
+            }
+        }
+        Collections.sort(trimOrdered);
+        return log.exit(trimOrdered);
     }
 }

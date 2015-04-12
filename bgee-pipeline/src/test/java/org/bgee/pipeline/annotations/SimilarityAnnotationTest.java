@@ -66,268 +66,6 @@ public class SimilarityAnnotationTest extends TestAncestor {
     }
     
 
-//    
-//    /**
-//     * Test {@link SimilarityAnnotation#generateReleaseData(List, Map, Set, OWLGraphWrapper, 
-//            OWLGraphWrapper, OWLGraphWrapper, OWLGraphWrapper, OWLGraphWrapper)}
-//     */
-//    @Test
-//    public void shouldGenerateReleaseData() throws NoSuchMethodException, 
-//        SecurityException, IllegalAccessException, IllegalArgumentException, 
-//        InvocationTargetException, UnknownOWLOntologyException, OWLOntologyCreationException, 
-//        OBOFormatParserException, IOException {
-//        SimilarityAnnotation sim = new SimilarityAnnotation();
-//        Method method = sim.getClass().getDeclaredMethod("generateReleaseData", 
-//                List.class, Map.class, Set.class, OWLGraphWrapper.class, 
-//                OWLGraphWrapper.class, OWLGraphWrapper.class, OWLGraphWrapper.class, 
-//                OWLGraphWrapper.class);
-//        method.setAccessible(true);
-//        
-//        Map<String, Set<Integer>> taxonConstraints = new HashMap<String, Set<Integer>>();
-//        taxonConstraints.put("ID:1", new HashSet<Integer>(Arrays.asList(1, 2, 3)));
-//        taxonConstraints.put("ID:2", new HashSet<Integer>(Arrays.asList(1, 2, 3)));
-//        taxonConstraints.put("ID:3", new HashSet<Integer>(Arrays.asList(1, 2, 3)));
-//        Set<Integer> taxonIds = new HashSet<Integer>(Arrays.asList(1, 2, 3));
-//
-//        OWLGraphWrapper uberonOntWrapper = new OWLGraphWrapper(OntologyUtils.loadOntology(
-//                this.getClass().getResource("/similarity_annotations/fake_uberon.obo").getPath()));
-//        OWLGraphWrapper taxOntWrapper = new OWLGraphWrapper(OntologyUtils.loadOntology(
-//                this.getClass().getResource("/similarity_annotations/fake_taxonomy.obo").getPath()));
-//        OWLGraphWrapper ecoOntWrapper = new OWLGraphWrapper(OntologyUtils.loadOntology(
-//                this.getClass().getResource("/similarity_annotations/eco.obo").getPath()));
-//        OWLGraphWrapper homOntWrapper = new OWLGraphWrapper(OntologyUtils.loadOntology(
-//                this.getClass().getResource("/similarity_annotations/homology_ontology.obo").getPath()));
-//        OWLGraphWrapper confOntWrapper = new OWLGraphWrapper(OntologyUtils.loadOntology(
-//                this.getClass().getResource("/similarity_annotations/conf_information.obo").getPath()));
-//        
-//        
-//        List<Map<String, Object>> annotations = new ArrayList<Map<String, Object>>();
-//        List<Map<String, Object>> expectedAnnots = new ArrayList<Map<String, Object>>();
-//        Map<String, Object> annotSingle = new HashMap<String, Object>();
-//        annotSingle.put(SimilarityAnnotation.ENTITY_COL_NAME, "ID:2");
-//        annotSingle.put(SimilarityAnnotation.TAXON_COL_NAME, 2);
-//        annotSingle.put(SimilarityAnnotation.ECO_COL_NAME, "ECO:3");
-//        annotSingle.put(SimilarityAnnotation.HOM_COL_NAME, "HOM:0000005");
-//        annotSingle.put(SimilarityAnnotation.CONF_COL_NAME, "CONF:0000005");
-//        annotSingle.put(SimilarityAnnotation.REF_COL_NAME, "REF:1 title1");
-//        Map<String, Object> expectedAnnotSingle = new HashMap<String, Object>(annotSingle);
-//        expectedAnnotSingle.put(SimilarityAnnotation.ENTITY_NAME_COL_NAME, "uberon 2");
-//        expectedAnnotSingle.put(SimilarityAnnotation.TAXON_NAME_COL_NAME, "taxon 2");
-//        expectedAnnotSingle.put(SimilarityAnnotation.ECO_NAME_COL_NAME, "eco 3");
-//        expectedAnnotSingle.put(SimilarityAnnotation.REF_COL_NAME, "REF:1");
-//        expectedAnnotSingle.put(SimilarityAnnotation.REF_TITLE_COL_NAME, "title1");
-//        expectedAnnotSingle.put(SimilarityAnnotation.HOM_NAME_COL_NAME, "parallelism");
-//        expectedAnnotSingle.put(SimilarityAnnotation.CONF_NAME_COL_NAME, 
-//                "low confidence assertion from single evidence");
-//        expectedAnnotSingle.put(SimilarityAnnotation.LINE_TYPE_COL_NAME, 
-//                SimilarityAnnotation.RAW_LINE);
-//        
-//        Map<String, Object> annot1 = new HashMap<String, Object>();
-//        annot1.put(SimilarityAnnotation.ENTITY_COL_NAME, "ID:1");
-//        annot1.put(SimilarityAnnotation.TAXON_COL_NAME, 1);
-//        annot1.put(SimilarityAnnotation.ECO_COL_NAME, "ECO:1");
-//        annot1.put(SimilarityAnnotation.HOM_COL_NAME, "HOM:0000007");
-//        annot1.put(SimilarityAnnotation.CONF_COL_NAME, "CONF:0000003");
-//        annot1.put(SimilarityAnnotation.REF_COL_NAME, "REF:2 title2");
-//        Map<String, Object> expectedAnnot1 = new HashMap<String, Object>(annot1);
-//        expectedAnnot1.put(SimilarityAnnotation.ENTITY_NAME_COL_NAME, "uberon 1");
-//        expectedAnnot1.put(SimilarityAnnotation.TAXON_NAME_COL_NAME, "taxon 1");
-//        expectedAnnot1.put(SimilarityAnnotation.ECO_NAME_COL_NAME, "eco 1");
-//        expectedAnnot1.put(SimilarityAnnotation.HOM_NAME_COL_NAME, "historical homology");
-//        expectedAnnot1.put(SimilarityAnnotation.CONF_NAME_COL_NAME, 
-//                "high confidence assertion from single evidence");
-//        expectedAnnot1.put(SimilarityAnnotation.REF_COL_NAME, "REF:2");
-//        expectedAnnot1.put(SimilarityAnnotation.REF_TITLE_COL_NAME, "title2");
-//        expectedAnnot1.put(SimilarityAnnotation.LINE_TYPE_COL_NAME, 
-//                SimilarityAnnotation.RAW_LINE);
-//        
-//        Map<String, Object> annot2 = new HashMap<String, Object>();
-//        annot2.put(SimilarityAnnotation.ENTITY_COL_NAME, "ID:1");
-//        annot2.put(SimilarityAnnotation.TAXON_COL_NAME, 1);
-//        annot2.put(SimilarityAnnotation.ECO_COL_NAME, "ECO:1");
-//        annot2.put(SimilarityAnnotation.HOM_COL_NAME, "HOM:0000007");
-//        annot2.put(SimilarityAnnotation.CONF_COL_NAME, "CONF:0000003");
-//        annot2.put(SimilarityAnnotation.REF_COL_NAME, "REF:3 title3");
-//        Map<String, Object> expectedAnnot2 = new HashMap<String, Object>(annot2);
-//        expectedAnnot2.put(SimilarityAnnotation.ENTITY_NAME_COL_NAME, "uberon 1");
-//        expectedAnnot2.put(SimilarityAnnotation.TAXON_NAME_COL_NAME, "taxon 1");
-//        expectedAnnot2.put(SimilarityAnnotation.ECO_NAME_COL_NAME, "eco 1");
-//        expectedAnnot2.put(SimilarityAnnotation.HOM_NAME_COL_NAME, "historical homology");
-//        expectedAnnot2.put(SimilarityAnnotation.CONF_NAME_COL_NAME, 
-//                "high confidence assertion from single evidence");
-//        expectedAnnot2.put(SimilarityAnnotation.REF_COL_NAME, "REF:3");
-//        expectedAnnot2.put(SimilarityAnnotation.REF_TITLE_COL_NAME, "title3");
-//        expectedAnnot2.put(SimilarityAnnotation.LINE_TYPE_COL_NAME, 
-//                SimilarityAnnotation.RAW_LINE);
-//        
-//        Map<String, Object> generatedAnnot = new HashMap<String, Object>(expectedAnnot1);
-//        generatedAnnot.put(SimilarityAnnotation.CONF_COL_NAME, "CONF:0000017");
-//        generatedAnnot.put(SimilarityAnnotation.CONF_NAME_COL_NAME, 
-//            confOntWrapper.getLabel(confOntWrapper.getOWLClassByIdentifier("CONF:0000017")));
-//        generatedAnnot.put(SimilarityAnnotation.LINE_TYPE_COL_NAME, 
-//                SimilarityAnnotation.SUMMARY_LINE);
-//        generatedAnnot.put(SimilarityAnnotation.QUALIFIER_COL_NAME, null);
-//        generatedAnnot.put(SimilarityAnnotation.ASSIGN_COL_NAME, 
-//                SimilarityAnnotation.BGEE_ASSIGNMENT);
-//        generatedAnnot.put(SimilarityAnnotation.REF_COL_NAME, null);
-//        generatedAnnot.put(SimilarityAnnotation.REF_TITLE_COL_NAME, null);
-//        generatedAnnot.put(SimilarityAnnotation.ECO_COL_NAME, null);
-//        generatedAnnot.put(SimilarityAnnotation.ECO_NAME_COL_NAME, null);
-//        generatedAnnot.put(SimilarityAnnotation.SUPPORT_TEXT_COL_NAME, null);
-//        generatedAnnot.put(SimilarityAnnotation.CURATOR_COL_NAME, null);
-//        generatedAnnot.put(SimilarityAnnotation.DATE_COL_NAME, null);
-//        
-//        annotations.add(annot2);
-//        annotations.add(annot1);
-//        annotations.add(annotSingle);
-//        expectedAnnots.add(expectedAnnotSingle);
-//        expectedAnnots.add(expectedAnnot1);
-//        expectedAnnots.add(expectedAnnot2);
-//        expectedAnnots.add(generatedAnnot);
-//        
-//        assertEquals(expectedAnnots, 
-//                method.invoke(sim, annotations, taxonConstraints, taxonIds, uberonOntWrapper, 
-//                taxOntWrapper, ecoOntWrapper, homOntWrapper, confOntWrapper));
-//    }
-//    
-//    
-//    /**
-//     * Test {@link SimilarityAnnotation#addGeneratedAnnotations(Collection, 
-//     * OWLGraphWrapper, OWLGraphWrapper)}
-//     */
-//    @Test
-//    public void shouldAddGeneratedAnnotations() throws NoSuchMethodException, 
-//        SecurityException, IllegalAccessException, IllegalArgumentException, 
-//        InvocationTargetException, UnknownOWLOntologyException, OWLOntologyCreationException, 
-//        OBOFormatParserException, IOException {
-//        SimilarityAnnotation sim = new SimilarityAnnotation();
-//        Method method = sim.getClass().getDeclaredMethod("addGeneratedAnnotations", 
-//                Collection.class, OWLGraphWrapper.class, OWLGraphWrapper.class);
-//        method.setAccessible(true);
-//        
-//        OWLGraphWrapper ecoOntWrapper = new OWLGraphWrapper(OntologyUtils.loadOntology(
-//                this.getClass().getResource("/similarity_annotations/eco.obo").getPath()));
-//        OWLGraphWrapper confOntWrapper = new OWLGraphWrapper(OntologyUtils.loadOntology(
-//                this.getClass().getResource("/similarity_annotations/conf_information.obo").getPath()));
-//        
-//        
-//        Collection<Map<String, Object>> annotations = new HashSet<Map<String, Object>>();
-//        Map<String, Object> annotSingle = new HashMap<String, Object>();
-//        annotSingle.put(SimilarityAnnotation.ENTITY_COL_NAME, "UBERON:2");
-//        annotSingle.put(SimilarityAnnotation.TAXON_COL_NAME, 1);
-//        annotSingle.put(SimilarityAnnotation.ECO_COL_NAME, "ECO:1");
-//        annotSingle.put(SimilarityAnnotation.HOM_COL_NAME, "HOM:0000007");
-//        annotSingle.put(SimilarityAnnotation.CONF_COL_NAME, "CONF:0000004");
-//        annotations.add(annotSingle);
-//        Map<String, Object> annot1 = new HashMap<String, Object>();
-//        annot1.put(SimilarityAnnotation.ENTITY_COL_NAME, "UBERON:1");
-//        annot1.put(SimilarityAnnotation.TAXON_COL_NAME, 1);
-//        annot1.put(SimilarityAnnotation.ECO_COL_NAME, "ECO:1");
-//        annot1.put(SimilarityAnnotation.HOM_COL_NAME, "HOM:0000007");
-//        annot1.put(SimilarityAnnotation.CONF_COL_NAME, "CONF:0000004");
-//        annotations.add(annot1);
-//        Map<String, Object> annot2 = new HashMap<String, Object>();
-//        annot2.put(SimilarityAnnotation.ENTITY_COL_NAME, "UBERON:1");
-//        annot2.put(SimilarityAnnotation.TAXON_COL_NAME, 1);
-//        annot2.put(SimilarityAnnotation.ECO_COL_NAME, "ECO:2");
-//        annot2.put(SimilarityAnnotation.HOM_COL_NAME, "HOM:0000007");
-//        annot2.put(SimilarityAnnotation.CONF_COL_NAME, "CONF:0000003");
-//        annotations.add(annot2);
-//        
-//        Collection<Map<String, Object>> expectedAnnots = 
-//                new HashSet<Map<String, Object>>(annotations);
-//        Map<String, Object> generatedAnnot = new HashMap<String, Object>();
-//        generatedAnnot.put(SimilarityAnnotation.ENTITY_COL_NAME, "UBERON:1");
-//        generatedAnnot.put(SimilarityAnnotation.TAXON_COL_NAME, 1);
-//        generatedAnnot.put(SimilarityAnnotation.ECO_COL_NAME, null);
-//        generatedAnnot.put(SimilarityAnnotation.HOM_COL_NAME, "HOM:0000007");
-//        generatedAnnot.put(SimilarityAnnotation.CONF_COL_NAME, "CONF:0000017");
-//        generatedAnnot.put(SimilarityAnnotation.CONF_NAME_COL_NAME, 
-//            confOntWrapper.getLabel(confOntWrapper.getOWLClassByIdentifier("CONF:0000017")));
-//        generatedAnnot.put(SimilarityAnnotation.LINE_TYPE_COL_NAME, 
-//                SimilarityAnnotation.SUMMARY_LINE);
-//        generatedAnnot.put(SimilarityAnnotation.QUALIFIER_COL_NAME, null);
-//        generatedAnnot.put(SimilarityAnnotation.ASSIGN_COL_NAME, 
-//                SimilarityAnnotation.BGEE_ASSIGNMENT);
-//        generatedAnnot.put(SimilarityAnnotation.REF_COL_NAME, null);
-//        generatedAnnot.put(SimilarityAnnotation.REF_TITLE_COL_NAME, null);
-//        generatedAnnot.put(SimilarityAnnotation.ECO_COL_NAME, null);
-//        generatedAnnot.put(SimilarityAnnotation.ECO_NAME_COL_NAME, null);
-//        generatedAnnot.put(SimilarityAnnotation.SUPPORT_TEXT_COL_NAME, null);
-//        generatedAnnot.put(SimilarityAnnotation.CURATOR_COL_NAME, null);
-//        generatedAnnot.put(SimilarityAnnotation.DATE_COL_NAME, null);
-//        generatedAnnot.put(SimilarityAnnotation.ENTITY_NAME_COL_NAME, null);
-//        generatedAnnot.put(SimilarityAnnotation.HOM_NAME_COL_NAME, null);
-//        generatedAnnot.put(SimilarityAnnotation.TAXON_NAME_COL_NAME, null);
-//        expectedAnnots.add(generatedAnnot);
-//        
-//        method.invoke(sim, annotations, ecoOntWrapper, confOntWrapper);
-//        assertEquals(expectedAnnots, annotations);
-//        
-//        
-//        annotations = new HashSet<Map<String, Object>>();
-//        annotations.add(annotSingle);
-//        annotations.add(annot1);
-//        annot2.put(SimilarityAnnotation.QUALIFIER_COL_NAME, 
-//                SimilarityAnnotation.NEGATE_QUALIFIER);
-//        annotations.add(annot2);
-//        expectedAnnots = new HashSet<Map<String, Object>>(annotations);
-//        generatedAnnot.put(SimilarityAnnotation.CONF_COL_NAME, "CONF:0000020");
-//        generatedAnnot.put(SimilarityAnnotation.CONF_NAME_COL_NAME, 
-//            confOntWrapper.getLabel(confOntWrapper.getOWLClassByIdentifier("CONF:0000020")));
-//        expectedAnnots.add(generatedAnnot);
-//        method.invoke(sim, annotations, ecoOntWrapper, confOntWrapper);
-//        assertEquals(expectedAnnots, annotations);
-//        
-//        
-//        annotations = new HashSet<Map<String, Object>>();
-//        annotations.add(annotSingle);
-//        annot1.put(SimilarityAnnotation.ECO_COL_NAME, "ECO:3");
-//        annotations.add(annot1);
-//        annotations.add(annot2);
-//        expectedAnnots = new HashSet<Map<String, Object>>(annotations);
-//        generatedAnnot.put(SimilarityAnnotation.CONF_COL_NAME, "CONF:0000010");
-//        generatedAnnot.put(SimilarityAnnotation.CONF_NAME_COL_NAME, 
-//            confOntWrapper.getLabel(confOntWrapper.getOWLClassByIdentifier("CONF:0000010")));
-//        expectedAnnots.add(generatedAnnot);
-//        method.invoke(sim, annotations, ecoOntWrapper, confOntWrapper);
-//        assertEquals(expectedAnnots, annotations);
-//        
-//        
-//        annotations = new HashSet<Map<String, Object>>();
-//        annotations.add(annotSingle);
-//        annotations.add(annot1);
-//        annot2.put(SimilarityAnnotation.QUALIFIER_COL_NAME, null);
-//        annotations.add(annot2);
-//        expectedAnnots = new HashSet<Map<String, Object>>(annotations);
-//        generatedAnnot.put(SimilarityAnnotation.CONF_COL_NAME, "CONF:0000012");
-//        generatedAnnot.put(SimilarityAnnotation.CONF_NAME_COL_NAME, 
-//            confOntWrapper.getLabel(confOntWrapper.getOWLClassByIdentifier("CONF:0000012")));
-//        expectedAnnots.add(generatedAnnot);
-//        method.invoke(sim, annotations, ecoOntWrapper, confOntWrapper);
-//        assertEquals(expectedAnnots, annotations);
-//        
-//        
-//        annotations = new HashSet<Map<String, Object>>();
-//        annotations.add(annotSingle);
-//        annot1.put(SimilarityAnnotation.QUALIFIER_COL_NAME, 
-//                SimilarityAnnotation.NEGATE_QUALIFIER);
-//        annotations.add(annot1);
-//        annot2.put(SimilarityAnnotation.QUALIFIER_COL_NAME, 
-//                SimilarityAnnotation.NEGATE_QUALIFIER);
-//        annotations.add(annot2);
-//        expectedAnnots = new HashSet<Map<String, Object>>(annotations);
-//        generatedAnnot.put(SimilarityAnnotation.CONF_COL_NAME, "CONF:0000012");
-//        generatedAnnot.put(SimilarityAnnotation.CONF_NAME_COL_NAME, 
-//            confOntWrapper.getLabel(confOntWrapper.getOWLClassByIdentifier("CONF:0000012")));
-//        generatedAnnot.put(SimilarityAnnotation.QUALIFIER_COL_NAME, 
-//                SimilarityAnnotation.NEGATE_QUALIFIER);
-//        expectedAnnots.add(generatedAnnot);
-//        method.invoke(sim, annotations, ecoOntWrapper, confOntWrapper);
-//        assertEquals(expectedAnnots, annotations);
-//    }
-//    
-
     /**
      * Test {@link SimilarityAnnotation#extractCuratorAnnotations(String)}.
      */
@@ -1528,24 +1266,24 @@ public class SimilarityAnnotationTest extends TestAncestor {
         //annotations that will be propagated through transformation_of relations
         SimpleDateFormat sdf = new SimpleDateFormat(SimilarityAnnotationUtils.DATE_FORMAT);
         List<CuratorAnnotationBean> annots = new ArrayList<CuratorAnnotationBean>(Arrays.asList(
-                new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:6"), 
+                new CuratorAnnotationBean("HOM:0000007", Arrays.asList("    ID:6    "), 
                         2759, false, "ECO:0000033", "CIO:0000003", 
                         "DOI:10.1073/pnas.032658599", "ref title 1", 
                         "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")), 
-                new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:6"), 
+                new CuratorAnnotationBean("HOM:0000007", Arrays.asList("    ID:6    "), 
                         7742, false, "ECO:0000205", "CIO:0000004", 
                         "DOI:10.1073/pnas.032658599", "ref title 1", 
                         "supporting text 2", "bgee", "ANN", sdf.parse("2013-06-22")), 
-                new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:6"), 
+                new CuratorAnnotationBean("HOM:0000007", Arrays.asList("   ID:6"), 
                         7742, true, "ECO:0000067", "CIO:0000005", 
                         "DOI:10.1073/pnas.032658599", "ref title 1", 
                         "supporting text 3", "bgee", "ANN", sdf.parse("2013-06-23")), 
-                new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:4"), 
+                new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:4   "), 
                         7742, false, "ECO:0000067", "CIO:0000003", 
                         "DOI:10.1073/pnas.032658599", "ref title 1", 
                         "supporting text 3", "bgee", "ANN", sdf.parse("2013-06-23")), 
                 //to check that rejected annotations are discarded
-                new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:5"), 
+                new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:5 "), 
                         7742, false, "ECO:0000067", "CIO:0000039", 
                         "DOI:10.1073/pnas.032658599", "ref title 1", 
                         "supporting text 3", "bgee", "ANN", sdf.parse("2013-06-23"))));
@@ -1554,17 +1292,17 @@ public class SimilarityAnnotationTest extends TestAncestor {
         
         //here, annotations that will be used over parent-child taxa, and same taxon
         //vertebrata
-        annots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:9"), 
+        annots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:9  "), 
                 7742, false, "ECO:0000033", "CIO:0000003", 
                         "DOI:10.1073/pnas.032658599", "ref title 1", 
                         "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")));
         //only the highest level of confidence should be kept
-        annots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:9"), 
+        annots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("  ID:9"), 
                 7742, false, "ECO:0000033", "CIO:0000004", 
                         "DOI:10.1073/pnas.0326585990", "ref title 10", 
                         "supporting text 1 whatever", "bgee", "ANN", sdf.parse("2013-06-21")));
         //metazoa
-        annots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:9"), 
+        annots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:9 "), 
                 33208, false, "ECO:0000033", "CIO:0000003", 
                         "DOI:10.1073/pnas.032658599", "ref title 1", 
                         "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")));
@@ -1574,11 +1312,11 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")));
         
         //here, annotations to unrelated taxa, annotations will not be propagated
-        annots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:18"), 
+        annots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:18  "), 
                 7778, false, "ECO:0000033", "CIO:0000003", 
                         "DOI:10.1073/pnas.032658599", "ref title 1", 
                         "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")));
-        annots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:19"), 
+        annots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:19   "), 
                 32524, false, "ECO:0000033", "CIO:0000003", 
                 "DOI:10.1073/pnas.032658599", "ref title 1", 
                 "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")));
@@ -1999,8 +1737,8 @@ public class SimilarityAnnotationTest extends TestAncestor {
                                 "DOI:10.1146/annurev.cellbio.22.010605.093317", "ref title 7", 
                                 "supporting text 7", "bgee", "ANN", sdf.parse("2013-07-01")), 
                         //case of independent evolution
-                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("UBERON:0010207"), 
-                                7776, true, "ECO:0000034", "CIO:0000003", 
+                        new CuratorAnnotationBean("HOM:0000007 ", Arrays.asList("  UBERON:0010207"), 
+                                7776, true, "ECO:0000034", "CIO:0000003 ", 
                                 "ISBN:978-0030223693", "ref title 8", 
                                 "supporting text 8", "bgee", "ANN", sdf.parse("2013-09-05")), 
                         new CuratorAnnotationBean("HOM:0000007", Arrays.asList("UBERON:0010207"), 
@@ -2013,7 +1751,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                                 "supporting text 8", "bgee", "ANN", sdf.parse("2013-09-05")),
                         //heritance of positive annotations, conflicting annotation 
                         //with positive parent annotations
-                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("CL:0000216"), 
+                        new CuratorAnnotationBean(" HOM:0000007", Arrays.asList("  CL:0000216"), 
                                 7711, false, "ECO:0000067", "CIO:0000005", 
                                 "http://f50006a.eos-intl.net/ELIBSQL12_F50006A_Documents/93grier.pdf", 
                                 "ref title 9", 
@@ -2026,7 +1764,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                                 32524, false, "ECO:0000067", "CIO:0000004", 
                                 "DOI:10.1002/jemt.1070320602", "ref title 11", 
                                 "supporting text 11", "bgee", "ANN", sdf.parse("2015-02-03")), 
-                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("CL:0000216"), 
+                        new CuratorAnnotationBean("HOM:0000007  ", Arrays.asList("CL:0000216 "), 
                                 32524, true, "ECO:0000067", "CIO:0000004", 
                                 "PMID:17026980", "ref title 12", 
                                 "supporting text 12", "bgee", "ANN", sdf.parse("2013-08-30")), 
@@ -2036,16 +1774,16 @@ public class SimilarityAnnotationTest extends TestAncestor {
                                 33213, false, "ECO:0000067", "CIO:0000004", 
                                 "PMID:24281726", "ref title 13", 
                                 "supporting text 13", "bgee", "ANN", sdf.parse("2014-01-13")), 
-                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("UBERON:0000926"), 
+                        new CuratorAnnotationBean(" HOM:0000007", Arrays.asList(" UBERON:0000926"), 
                                 33213, false, "ECO:0000067", "CIO:0000004", 
                                 "PMID:22431747", "ref title 14", 
                                 "supporting text 14", "bgee", "ANN", sdf.parse("2013-07-10")), 
-                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("UBERON:0000926"), 
+                        new CuratorAnnotationBean("HOM:0000007  ", Arrays.asList("  UBERON:0000926"), 
                                 33213, true, "ECO:0000067", "CIO:0000005", 
                                 "PMID:12459924", "ref title 15", 
                                 "supporting text 15", "bgee", "ANN", sdf.parse("2013-07-10")), 
                         //simply strongly conflicting
-                        new CuratorAnnotationBean("HOM:0000007", Arrays.asList("UBERON:0001245"), 
+                        new CuratorAnnotationBean("HOM:0000007  ", Arrays.asList("  UBERON:0001245"), 
                                 33213, false, "ECO:0000355", "CIO:0000004", 
                                 "http://dpc.uba.uva.nl/ctz/vol73/nr01/art01", "ref title 16", 
                                 "supporting text 16", "bgee", "ANN", sdf.parse("2013-10-08")), 

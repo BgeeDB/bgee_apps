@@ -357,13 +357,17 @@ public abstract class GenerateDownloadFile extends CallUser {
     /**
      * Rename temporary files in directory provided at instantiation. 
      *
-     * @param generatedFileNames    A {@code Map} where keys are {@code FileType}s corresponding to 
+     * @param generatedFileNames    A {@code Map} where keys are {@code T}s corresponding to 
      *                              which type of file should be generated, the associated values
      *                              being {@code String}s corresponding to files names.  
      * @param tmpExtension          A {@code String} that is the temporary extension used to write 
      *                              temporary files.
+     * @param <T>                   A {@code FileType} type parameter.
      */
-    protected void renameTempFiles(Map<FileType, String> generatedFileNames, String tmpExtension) {
+    protected <T extends FileType> void renameTempFiles(
+            Map<T, String> generatedFileNames, String tmpExtension) {
+        log.entry(generatedFileNames, tmpExtension);
+        
         for (String fileName: generatedFileNames.values()) {
             //if temporary file exists, rename it.
             File tmpFile = new File(this.directory, fileName + tmpExtension);
@@ -372,18 +376,23 @@ public abstract class GenerateDownloadFile extends CallUser {
                 tmpFile.renameTo(file);
             }
         }
+        
+        log.exit();
     }
 
     /**
      * Delete temporary files from directory provided at instantiation. 
      *
-     * @param generatedFileNames    A {@code Map} where keys are {@code FileType}s corresponding to 
+     * @param generatedFileNames    A {@code Map} where keys are {@code T}s corresponding to 
      *                              which type of file should be generated, the associated values
      *                              being {@code String}s corresponding to files names.  
      * @param tmpExtension          A {@code String} that is the temporary extension used to write 
      *                              temporary files.
      */
-    protected void deleteTempFiles(Map<FileType, String> generatedFileNames, String tmpExtension) {
+    protected <T extends FileType> void deleteTempFiles(
+            Map<T, String> generatedFileNames, String tmpExtension) {
+        log.entry(generatedFileNames, tmpExtension);
+        
         for (String fileName: generatedFileNames.values()) {
             //if tmp file exists, remove it.
             File file = new File(this.directory, fileName + tmpExtension);
@@ -391,18 +400,7 @@ public abstract class GenerateDownloadFile extends CallUser {
                 file.delete();
             }
         }
+        
+        log.exit();
     }
-    
-    
-    
-    
-    
-    
-    //TODO: why aren't all these classes specific to diff expression data 
-    //into GenerateMultiSpeciesDiffExprFile?
-    
-
-    //TODO: why aren't all these classes specific to diff expression data 
-    //into GenerateMultiSpeciesDiffExprFile?
-    
 }

@@ -1046,7 +1046,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * the associated values being {@code Set}s of {@code String}s corresponding to 
      * species IDs belonging to the group.
      */
-    private Map<String,Set<String>> providedGroups;
+    private Map<String, Set<String>> providedGroups;
     
     /**
      * Default constructor. 
@@ -1069,7 +1069,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * @param directory         A {@code String} that is the directory where to store files.
      * @throws IllegalArgumentException If {@code directory} is {@code null} or blank.
      */
-    public GenerateMultiSpeciesDiffExprFile(Map<String,Set<String>> providedGroups, 
+    public GenerateMultiSpeciesDiffExprFile(Map<String, Set<String>> providedGroups, 
             Set<MultiSpDiffExprFileType> fileTypes, String directory) 
                     throws IllegalArgumentException {
         this(null, providedGroups, fileTypes, directory);
@@ -1091,7 +1091,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * @throws IllegalArgumentException If {@code directory} is {@code null} or blank.
      */
     public GenerateMultiSpeciesDiffExprFile(MySQLDAOManager manager, 
-            Map<String,Set<String>> providedGroups, Set<MultiSpDiffExprFileType> fileTypes, 
+            Map<String, Set<String>> providedGroups, Set<MultiSpDiffExprFileType> fileTypes, 
             String directory) throws IllegalArgumentException {
         super(manager, null, fileTypes, directory);
 
@@ -1103,12 +1103,11 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     
     /**
      * Generate multi-species differential expression files, for the types defined by 
-     * {@code fileTypes}, for species defined by {@code speciesIds} with ancestral taxon defined by 
-     * {@code taxonId}, in the directory {@code directory}.
+     * {@code fileTypes}, for groups defined by {@code providedGroups}, in the directory 
+     * {@code directory}.
      * 
      * @throws IllegalArgumentException If no species ID or taxon ID is provided.
      * @throws IOException              If an error occurred while trying to write generated files.
-     * 
      */
     //TODO: re-write javadoc, either by specifying that thee parameters are provided at instantiation, 
     //or by pointing to public getters
@@ -1171,20 +1170,42 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         log.exit();
     }
 
-    //TODO: javadoc
-    private void generateMultiSpeciesDiffExprFilesForOneGroup(String prefix, String taxonId, 
+    /**
+     * Generate multi-species differential expression files, for the types defined by 
+     * {@code fileTypes}, for species defined by {@code speciesNamesByIds} with ancestral taxon 
+     * defined by {@code taxonId}, in the directory {@code directory}.
+     *
+     * @param groupName             A {@code String} that is the group name.
+     * @param taxonId               A {@code String} that is the ancestral taxon.
+     * @param speciesNamesByIds     A {@code Map} where keys are {@code String}s corresponding 
+     *                              to species IDs, the associated values being {@code String}s 
+     *                              corresponding to species names. 
+     * @param geneTOsByIds          A {@code Map} where keys are {@code String}s corresponding  
+     *                              to gene IDs, the associated values being {@code GeneTO}s 
+     *                              corresponding to gene TOs. 
+     * @param stageNamesByIds       A {@code Map} where keys are {@code String}s corresponding  
+     *                              to stage IDs, the associated values being {@code String}s 
+     *                              corresponding to stage names. 
+     * @param anatEntityNamesByIds  A {@code Map} where keys are {@code String}s corresponding  
+     *                              to anatomical entity IDs, the associated values being 
+     *                              {@code String}s corresponding to anatomical entity names.
+     * @param cioStatementsByIds    A {@code Map} where keys are {@code String}s corresponding  
+     *                              to CIO IDs, the associated values being {@code CIOStatementTO}s 
+     *                              corresponding to CIO TOs. 
+     * @throws IOException          If an error occurred while trying to write generated files.
+     */
+    private void generateMultiSpeciesDiffExprFilesForOneGroup(String groupName, String taxonId, 
             Map<String, String> speciesNamesByIds, Map<String, GeneTO> geneTOsByIds, 
             Map<String, String> stageNamesByIds, Map<String, String> anatEntityNamesByIds, 
             Map<String, CIOStatementTO> cioStatementsByIds) throws IOException {
-        //TODO: use actual attributes in logging
-        log.entry(this.directory, prefix, this.fileTypes, taxonId, speciesNamesByIds,
+        log.entry(groupName, taxonId, speciesNamesByIds, 
                 geneTOsByIds, stageNamesByIds, anatEntityNamesByIds, cioStatementsByIds);
 
         Set<String> speciesFilter = speciesNamesByIds.keySet();
 
-        log.debug("Start generating multi-species differential expression files for:" + 
-                " prefix={}, taxon ID={}, species IDs={} and file types {}...", 
-                prefix, taxonId, speciesFilter, this.fileTypes);
+        log.debug("Start generating multi-species differential expression files for: " + 
+                "groupName={}, taxon ID={}, species IDs={} and file types {}...", 
+                groupName, taxonId, speciesFilter, this.fileTypes);
 
         // We check that all file types have the same comparison factor and we retrieve it 
         //TODO: accept more than one comparison factor over all possible file types, 
@@ -1211,8 +1232,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         
         // First we allow to store file names, writers, etc, associated to a FileType, 
         // for the catch and finally clauses.
-        //XXX: why doesn't it use a MultiSpDiffExprFileType?
-        Map<FileType, String> generatedFileNames = new HashMap<FileType, String>();
+        Map<MultiSpDiffExprFileType, String> generatedFileNames = 
+                new HashMap<MultiSpDiffExprFileType, String>();
 
         // We will write results in temporary files that we will rename at the end
         // if everything is correct
@@ -1249,7 +1270,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 processors.put(currentFileType, fileTypeProcessors);
                 
                 // Create file name
-                String fileName = prefix + "_" +
+                String fileName = groupName + "_" +
                         currentFileType.getStringRepresentation() + EXTENSION;
                 generatedFileNames.put(currentFileType, fileName);
 
@@ -1293,7 +1314,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             Map<String, List<String>> mapStageIdToStageGroup = mapStageGroup.get(0);
             Map<String, List<String>> mapStageGroupToStageId = mapStageGroup.get(1);
 
-            // Get summary similarity annotations with CIO Ids
+            // Get summary similarity annotations with CIO IDs
             Map<String, String> mapSumSimCIO = this.getSummarySimilarityAnnotations(taxonId);
 
             // Get relations between similarity annotations and anatomical entities
@@ -1349,10 +1370,9 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                             //maybe there is no homologous genes with expression 
                             //for the selected species...
                             log.warn("No Expression data retrieved for group {}, taxon LCA {}, composed of species {}", 
-                                    prefix, taxonId, speciesFilter);
+                                    groupName, taxonId, speciesFilter);
                             break;
                         }
-
 
                         //We filter and write rows for one OMA node ID.
                         this.filterAndWriteOMANodeRows(geneTOsByIds, stageNamesByIds, 
@@ -1440,7 +1460,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * @throws DAOException If an error occurred while getting the data from the Bgee data source.
      * @throws IllegalStateException If we retrieve several LCA.
      */
-    private Map<String,String> getMappingGeneIdOMANodeId(String taxonId, Set<String> speciesIds)
+    private Map<String, String> getMappingGeneIdOMANodeId(String taxonId, Set<String> speciesIds)
             throws DAOException, IllegalArgumentException {
         log.entry(taxonId, speciesIds);
     
@@ -1448,7 +1468,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     
         HierarchicalGroupDAO dao = this.getHierarchicalGroupDAO();
         
-        Map<String,String> mapping = new HashMap<String,String>();
+        Map<String, String> mapping = new HashMap<String, String>();
         try (HierarchicalGroupToGeneTOResultSet rs = dao.getGroupToGene(taxonId, speciesIds)) {
             boolean hasResult = false;
             while (rs.next()) {
@@ -1512,7 +1532,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     //TODO: this is really an ugly design :p 
     //Implements a first method retrieving information from database, then two other methods 
     //to generate the proper mappings you need. 
-    private List<Map<String,List<String>>> getComparableStages(
+    private List<Map<String, List<String>>> getComparableStages(
             String taxonId, Set<String> speciesIds) throws DAOException, IllegalStateException {
         log.entry(taxonId, speciesIds);
         
@@ -1562,7 +1582,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      *                      corresponding to CIO IDs.
      * @throws DAOException If an error occurred while getting the data from the Bgee data source.
      */
-    private Map<String,String> getSummarySimilarityAnnotations(String taxonId) throws DAOException {
+    private Map<String, String> getSummarySimilarityAnnotations(String taxonId) throws DAOException {
         log.entry(taxonId);
         
         log.debug("Start retrieving summary similarity annotations for the taxon ID {}...", taxonId);
@@ -1571,7 +1591,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         dao.setAttributes(SummarySimilarityAnnotationDAO.Attribute.ID, 
                 SummarySimilarityAnnotationDAO.Attribute.CIO_ID);
     
-        Map<String,String> mapping = new HashMap<String,String>();
+        Map<String, String> mapping = new HashMap<String, String>();
         try (SummarySimilarityAnnotationTOResultSet rs = dao.getSummarySimilarityAnnotations(taxonId)) {
             while (rs.next()) {
                 SummarySimilarityAnnotationTO to = rs.getTO();
@@ -1613,8 +1633,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         SummarySimilarityAnnotationDAO dao = this.getSummarySimilarityAnnotationDAO();
         // setAttributes methods has no effect on attributes retrieved  
     
-        Map<String,List<String>> mappingSimAnnotToAnatEntity = new HashMap<String,List<String>>();
-        Map<String,List<String>> mappingAnatEntityToSimAnnot = new HashMap<String,List<String>>();
+        Map<String, List<String>> mappingSimAnnotToAnatEntity = new HashMap<String, List<String>>();
+        Map<String, List<String>> mappingAnatEntityToSimAnnot = new HashMap<String, List<String>>();
         //note that we retrieve all organs, even those not existing in all species
         try (SimAnnotToAnatEntityTOResultSet rs = dao.getSimAnnotToAnatEntity(taxonId, null)) {
             while (rs.next()) {
@@ -1809,8 +1829,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      *                                  to anatomical entity IDs, the associated values being 
      *                                  {@code String}s corresponding to anatomical entity names.
      * @param cioStatementByIds         A {@code Map} where keys are {@code String}s corresponding  
-     *                                  to CIO IDs, the associated values being {@code String}s 
-     *                                  corresponding to CIO names.
+     *                                  to CIO IDs, the associated values being 
+     *                                  {@code CIOStatementTO}s corresponding to CIO TOs.
      * @param speciesNamesByIds         A {@code Map} where keys are {@code String}s corresponding 
      *                                  to species IDs, the associated values being {@code String}s 
      *                                  corresponding to species names. 
@@ -1857,8 +1877,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     //to hold these params...
     //TODO: do we really need the mapSumSimCIO mapping? It is easy to retrieve it from cioStatementByIds...
     private void filterAndWriteOMANodeRows(Map<String, GeneTO> geneTOsByIds, 
-            Map<String,String> stageNamesByIds, Map<String,String> anatEntityNamesByIds, 
-            Map<String,CIOStatementTO> cioStatementByIds,Map<String,String> speciesNamesByIds,
+            Map<String, String> stageNamesByIds, Map<String, String> anatEntityNamesByIds, 
+            Map<String, CIOStatementTO> cioStatementByIds, Map<String, String> speciesNamesByIds,
             Map<MultiSpDiffExprFileType, ICsvDozerBeanWriter> writersUsed,
             Map<MultiSpDiffExprFileType, CellProcessor[]> processors,
             String omaNodeId, Set<String> omaGeneIds, Map<String, String> mapGeneOMANode,
@@ -2443,17 +2463,25 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         throws IllegalArgumentException {
         log.entry(fileType, speciesNames);
 
-        //TODO: refactor code for comon column between simple and complete file
+        String[] headers = null; 
         if (fileType.isSimpleFileType()) {
             int nbColumns = 5 + 5 * speciesNames.size();
-            String[] headers = new String[nbColumns];
-            headers[0] = OMA_ID_COLUMN_NAME;
-            headers[1] = ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME;
-            headers[2] = ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME;
-            headers[3] = STAGE_ID_COLUMN_NAME;
-            headers[4] = STAGE_NAME_COLUMN_NAME;
-            // the number of columns depends on the number of species
+            headers = new String[nbColumns];
+        } else {
+            headers = new String[22];
+        }
+        
+        // *** Headers common to all file types ***
+        headers[0] = OMA_ID_COLUMN_NAME;
+        headers[1] = ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME;
+        headers[2] = ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME;
+        headers[3] = STAGE_ID_COLUMN_NAME;
+        headers[4] = STAGE_NAME_COLUMN_NAME;
+
+        if (fileType.isSimpleFileType()) {
+            // *** Headers specific to simple file ***
             for (int i = 0; i < speciesNames.size(); i++) {
+                // the number of columns depends on the number of species
                 int columnIndex = 5 + 5 * i;
                 String endHeader = " for " + speciesNames.get(i);
                 headers[columnIndex] = NB_OVER_EXPR_GENES_COLUMN_NAME + endHeader;
@@ -2462,23 +2490,27 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 headers[columnIndex+3] = NB_NOT_EXPR_GENES_COLUMN_NAME + endHeader;
                 headers[columnIndex+4] = NB_NA_GENES_COLUMN_NAME + endHeader;
             }
-            return log.exit(headers);
+        } else {
+            // *** Headers specific to complete file ***
+            headers[5] = SPECIES_LATIN_NAME_COLUMN_NAME;                
+            headers[6] = GENE_ID_COLUMN_NAME;
+            headers[7] = GENE_NAME_COLUMN_NAME; 
+            headers[8] = DIFFEXPRESSION_COLUMN_NAME;
+            headers[9] = QUALITY_COLUMN_NAME;
+            headers[10] = CIO_ID_COLUMN_NAME; 
+            headers[11] = CIO_NAME_ID_COLUMN_NAME;
+            headers[12] = AFFYMETRIX_DATA_COLUMN_NAME; 
+            headers[13] = AFFYMETRIX_CALL_QUALITY_COLUMN_NAME;
+            headers[14] = AFFYMETRIX_P_VALUE_COLUMN_NAME; 
+            headers[15] = AFFYMETRIX_CONSISTENT_DEA_COUNT_COLUMN_NAME; 
+            headers[16] = AFFYMETRIX_INCONSISTENT_DEA_COUNT_COLUMN_NAME;
+            headers[17] = RNASEQ_DATA_COLUMN_NAME; 
+            headers[18] = RNASEQ_CALL_QUALITY_COLUMN_NAME;
+            headers[19] = RNASEQ_P_VALUE_COLUMN_NAME; 
+            headers[20] = RNASEQ_CONSISTENT_DEA_COUNT_COLUMN_NAME; 
+            headers[21] = RNASEQ_INCONSISTENT_DEA_COUNT_COLUMN_NAME;
         }
-
-        return log.exit(new String[] { 
-                OMA_ID_COLUMN_NAME, 
-                ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME, ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME,
-                STAGE_ID_COLUMN_NAME, STAGE_NAME_COLUMN_NAME, 
-                SPECIES_LATIN_NAME_COLUMN_NAME,                
-                GENE_ID_COLUMN_NAME, GENE_NAME_COLUMN_NAME, 
-                DIFFEXPRESSION_COLUMN_NAME, QUALITY_COLUMN_NAME,
-                AFFYMETRIX_DATA_COLUMN_NAME, AFFYMETRIX_CALL_QUALITY_COLUMN_NAME,
-                AFFYMETRIX_P_VALUE_COLUMN_NAME, AFFYMETRIX_CONSISTENT_DEA_COUNT_COLUMN_NAME, 
-                AFFYMETRIX_INCONSISTENT_DEA_COUNT_COLUMN_NAME,
-                RNASEQ_DATA_COLUMN_NAME, RNASEQ_CALL_QUALITY_COLUMN_NAME,
-                RNASEQ_P_VALUE_COLUMN_NAME, RNASEQ_CONSISTENT_DEA_COUNT_COLUMN_NAME, 
-                RNASEQ_INCONSISTENT_DEA_COUNT_COLUMN_NAME,
-                CIO_ID_COLUMN_NAME, CIO_NAME_ID_COLUMN_NAME});
+        return log.exit(headers);
     }
     
     /**

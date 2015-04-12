@@ -588,7 +588,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         "supporting text 7", "bgee", "ANN", sdf.parse("2013-07-01"))));
         
         //everything should work with these annotations
-        simAnnot.checkAnnotations(annots);
+        simAnnot.checkAnnotations(annots, false);
         
         //incorrect HOM name
         RawAnnotationBean incorrectAnnot = new RawAnnotationBean(
@@ -602,7 +602,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 sdf.parse("2013-06-21"));
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for an incorrect HOM name"));
@@ -622,7 +622,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 sdf.parse("2013-06-21"));
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for an untrimmed HOM name"));
@@ -644,7 +644,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 sdf.parse("2013-07-01"));
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for an incorrect entity name"));
@@ -664,7 +664,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 sdf.parse("2013-06-21"));
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for an untrimmed entity name"));
@@ -685,7 +685,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 sdf.parse("2013-06-21"));
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for an incorrect taxon name"));
@@ -705,7 +705,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 sdf.parse("2013-06-21"));
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for an untrimmed taxon name"));
@@ -726,7 +726,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 sdf.parse("2013-06-21"));
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for an incorrect ECO name"));
@@ -746,7 +746,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 sdf.parse("2013-06-21"));
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for an untrimmed ECO name"));
@@ -767,7 +767,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 sdf.parse("2013-06-21"));
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for an incorrect CIO name"));
@@ -787,7 +787,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 sdf.parse("2013-06-21"));
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for an untrimmed CIO name"));
@@ -806,7 +806,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21"));
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for a duplicated annotation"));
@@ -827,7 +827,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 sdf.parse("2013-06-21"));
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for an incorrect taxon constraints"));
@@ -846,7 +846,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21"));
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for a missing HOM ID"));
@@ -866,7 +866,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 sdf.parse("2013-06-21"));
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for an untrimmed HOM ID"));
@@ -885,7 +885,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21"));
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for a missing entity ID"));
@@ -905,7 +905,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 sdf.parse("2013-06-21"));
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for an untrimmed entity ID"));
@@ -924,7 +924,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21"));
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for a missing taxon ID"));
@@ -943,7 +943,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 "supporting text 1 change for no duplicate", "bgee", "ANN", sdf.parse("2013-06-21"));
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for a missing ECO ID"));
@@ -963,7 +963,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 sdf.parse("2013-06-21"));
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for an untrimmed ECO ID"));
@@ -982,7 +982,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 "supporting text 1 change for no duplicate", "bgee", "ANN", sdf.parse("2013-06-21"));
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for a missing CIO ID"));
@@ -1002,7 +1002,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 sdf.parse("2013-06-21"));
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for an untrimmed CIO ID"));
@@ -1023,7 +1023,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 sdf.parse("2013-06-21"));
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for an untrimmed Ref ID"));
@@ -1043,7 +1043,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 sdf.parse("2013-06-21"));
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for an untrimmed Ref title"));
@@ -1062,7 +1062,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 "supporting text 1 change for no duplicate", "bgee", "ANN", null);
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for a missing Date for non-automatic assertion"));
@@ -1080,7 +1080,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 "supporting text 1 change for no duplicate", "bgee", "ANN", null);
         annots.add(incorrectAnnot);
         //everything should be fine
-        simAnnot.checkAnnotations(annots);
+        simAnnot.checkAnnotations(annots, false);
         annots.remove(incorrectAnnot);
     
         //entity IDs incorrectly ordered
@@ -1095,7 +1095,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 "supporting text 7", "bgee", "ANN", sdf.parse("2013-07-01"));
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for entity IDs incorrectly ordered"));
@@ -1116,7 +1116,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 "supporting text 7", "bgee", "ANN", sdf.parse("2013-07-01"));
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for inconsistent order of entity IDs and names"));
@@ -1135,7 +1135,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21"));
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for a missing HOM label"));
@@ -1154,7 +1154,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21"));
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for a missig taxon name"));
@@ -1173,7 +1173,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21"));
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for a missing ECO label"));
@@ -1192,7 +1192,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21"));
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for a missing CIO label"));
@@ -1211,7 +1211,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21"));
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for a missing ref ID"));
@@ -1230,7 +1230,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21"));
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for a missing ref title"));
@@ -1250,7 +1250,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21"));
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for a missing ref title"));
@@ -1261,7 +1261,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
         
         //last verification, to check that the SimilarityAnnotation object is still 
         //in a correct state.
-        simAnnot.checkAnnotations(annots);
+        simAnnot.checkAnnotations(annots, false);
     }
     
     /**
@@ -1314,7 +1314,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         )));
 
         //everything should work with these annotations
-        simAnnot.checkAnnotations(annots);
+        simAnnot.checkAnnotations(annots, false);
         
         //duplicated annotation over HOM ID - entity IDs - taxon ID
         SummaryAnnotationBean incorrectAnnot = new SummaryAnnotationBean(
@@ -1334,7 +1334,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 );
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for a duplicated annotation"));
@@ -1361,7 +1361,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 );
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for an incorrect trust state"));
@@ -1372,7 +1372,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
 
         //last verification, to check that the SimilarityAnnotation object is still 
         //in a correct state.
-        simAnnot.checkAnnotations(annots);
+        simAnnot.checkAnnotations(annots, false);
     }
     
     /**
@@ -1407,7 +1407,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         "CIO:0000004", "medium confidence from single evidence", "-")));
 
         //everything should work with these annotations
-        simAnnot.checkAnnotations(annots);
+        simAnnot.checkAnnotations(annots, false);
         
         //duplicated annotation over HOM ID - entity IDs - taxon ID
         AncestralTaxaAnnotationBean incorrectAnnot = 
@@ -1419,7 +1419,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 "CIO:0000003", "high confidence from single evidence", "fsfsdf");
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for a duplicated annotation"));
@@ -1437,7 +1437,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         "CIO:0000005", "low confidence from single evidence", "-");
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for a non-trusted CIO statement"));
@@ -1457,7 +1457,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         "CIO:0000004", "medium confidence from single evidence", "-");
         annots.add(correctAnnot);
         //everything should work
-        simAnnot.checkAnnotations(annots);
+        simAnnot.checkAnnotations(annots, false);
         annots.remove(correctAnnot);
         
         //but it is not possible if the taxa are related (parent-child relation)
@@ -1470,7 +1470,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         "CIO:0000004", "medium confidence from single evidence", "-");
         annots.add(incorrectAnnot);
         try {
-            simAnnot.checkAnnotations(annots);
+            simAnnot.checkAnnotations(annots, false);
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError(
                     "No exception was thrown for a parent-child taxon annotation"));
@@ -1481,7 +1481,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
 
         //last verification, to check that the SimilarityAnnotation object is still 
         //in a correct state.
-        simAnnot.checkAnnotations(annots);
+        simAnnot.checkAnnotations(annots, false);
     }
     
     /**

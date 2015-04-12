@@ -1393,6 +1393,9 @@ public class SimilarityAnnotation {
         //extract curator annotations
         List<CuratorAnnotationBean> curatorAnnots = 
                 extractCuratorAnnotations(curatorAnnotsFilePath);
+        //check errors and warnings right away (methods latter called will only check 
+        //for errors)
+        this.checkAnnotations(curatorAnnots, true);
         
         //generate RAW annotations. This will verify correctness of curator annotations, 
         //will generate automatically inferred annotations and RAW annotations, 
@@ -1430,12 +1433,15 @@ public class SimilarityAnnotation {
      * @param annots            A {@code Collection} of {@code T}s, where each {@code Map} 
      *                          represents a line of annotation. See {@link 
      *                          #extractAnnotations(String, GeneratedFileType)} for more details.
+     * @param checkWarn         A {@code boolean} defining whether potential errors should be 
+     *                          checked (formal errors are always checked). 
      * @param <T>               The type of {@code AnnotationBean} to check.
      * @throws IllegalArgumentException     If some errors were detected.
      */
-    public <T extends AnnotationBean> void checkAnnotations(Collection<T> annots) 
-                    throws IllegalArgumentException {
-        log.entry(annots);
+    public <T extends AnnotationBean> void checkAnnotations(Collection<T> annots, 
+            boolean checkWarn) throws IllegalArgumentException {
+        log.entry(annots, checkWarn);
+        log.debug("Start checking {} annotations (with warnings? {})", annots.size(), checkWarn);
         
         //We will store taxa associated to positive and negative annotations, 
         //to verify NOT annotations in RAW and curator annotations (if there is a NOT annotation 
@@ -1516,7 +1522,7 @@ public class SimilarityAnnotation {
             if (!checkExactDuplicates.add(checkExactDuplicate)) {
                 //an exception will be thrown afterwards (see method verifyErrors)
                 this.duplicates.add(checkExactDuplicate);
-            } else if (!checkPotentialDuplicates.add(checkPotentialDuplicate)) {
+            } else if (checkWarn && !checkPotentialDuplicates.add(checkPotentialDuplicate)) {
                 //we do not throw an exception for a potential duplicate, 
                 //but we log a warn message, it's still most likely a duplicate
                 log.warn("Some annotations seem duplicated (different supporting textes, "
@@ -1600,7 +1606,7 @@ public class SimilarityAnnotation {
         //(if there is a NOT annotation in a taxon, most likely there should be also 
         //a NOT annotation for all parent taxa annotated; this is not mandatory, 
         //as a structure can disappear in a taxon, so we can only log a warning)
-        if (checkPosNegAnnots) {
+        if (checkWarn && checkPosNegAnnots) {
             
             for (Entry<RawAnnotationBean, Set<Integer>> missingNegativeAnnots: 
                 this.checkNegativeAnnotsParentTaxa(positiveAnnotsToTaxa, negativeAnnotsToTaxa).
@@ -1635,7 +1641,8 @@ public class SimilarityAnnotation {
                 }
             }
         }
-        
+
+        log.debug("Done checking {} annotations", annots.size());
         log.exit();
     }
 
@@ -2268,15 +2275,15 @@ public class SimilarityAnnotation {
             Collection<CuratorAnnotationBean> annots) throws IllegalArgumentException, 
             IllegalStateException {
         log.entry(annots);
-        
-        //make sure there are no duplicates
+
+        this.checkAnnotations(annots, false);
+        //store annots in a new collection to not modify the collection passed as argument
         Set<CuratorAnnotationBean> filteredAnnots = new HashSet<CuratorAnnotationBean>(annots);
-        this.checkAnnotations(filteredAnnots);
         //infer new annotations
         Set<CuratorAnnotationBean> inferredAnnots = 
                 this.generateInferredAnnotations(filteredAnnots);
         //check the inferred annotations
-        this.checkAnnotations(inferredAnnots);
+        this.checkAnnotations(inferredAnnots, false);
         //add to curator annotations
         filteredAnnots.addAll(inferredAnnots);
         
@@ -2291,7 +2298,7 @@ public class SimilarityAnnotation {
         }
         
         //check and sort annotations generated 
-        this.checkAnnotations(rawAnnots);
+        this.checkAnnotations(rawAnnots, false);
         List<RawAnnotationBean> sortedRawAnnots = new ArrayList<RawAnnotationBean>(rawAnnots);
         Collections.sort(sortedRawAnnots, SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR);
         
@@ -3527,7 +3534,7 @@ public class SimilarityAnnotation {
         log.entry(annots);
 
         //check the annotations provided
-        this.checkAnnotations(annots);
+        this.checkAnnotations(annots, false);
         //make sure there are no duplicates and filter annotations with a REJECTED 
         //confidence statement.
         Set<RawAnnotationBean> filteredAnnots = this.filterAnnotations(annots);
@@ -3626,7 +3633,7 @@ public class SimilarityAnnotation {
         }
         
         //check and sort annotations generated 
-        this.checkAnnotations(summaryAnnots);
+        this.checkAnnotations(summaryAnnots, false);
         List<SummaryAnnotationBean> sortedSummaryAnnots = 
                 new ArrayList<SummaryAnnotationBean>(summaryAnnots);
         Collections.sort(sortedSummaryAnnots, 
@@ -3797,7 +3804,7 @@ public class SimilarityAnnotation {
         log.entry(annots);
         
         //check the annotations provided
-        this.checkAnnotations(annots);
+        this.checkAnnotations(annots, false);
         //keep only positive annotations to historical homology concept 
         //(at this point we keep not-trusted annotations to properly infer supporting texts)
         Set<SummaryAnnotationBean> filteredAnnots = new HashSet<SummaryAnnotationBean>();
@@ -3948,7 +3955,7 @@ public class SimilarityAnnotation {
         }
         
         //check and sort annotations generated 
-        this.checkAnnotations(newAnnots);
+        this.checkAnnotations(newAnnots, false);
         List<AncestralTaxaAnnotationBean> sortedAnnots = 
                 new ArrayList<AncestralTaxaAnnotationBean>(newAnnots);
         Collections.sort(sortedAnnots, SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR);

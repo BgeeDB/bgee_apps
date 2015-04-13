@@ -3083,9 +3083,34 @@ public class SimilarityAnnotation {
                     new HashMap<Set<String>, Set<Set<CuratorAnnotationBean>>>();
             //new annotations would have been added at previous iterations, 
             //and will be built up during next iterations
-            for (Entry<Set<String>, Set<Set<CuratorAnnotationBean>>> existingMapping: 
+            existingMapping: for (Entry<Set<String>, Set<Set<CuratorAnnotationBean>>> existingMapping: 
                 entityIdsToAnnotsPerIntersectClass.entrySet()) {
                 log.trace("Test existing inferred annotation: {}", existingMapping);
+
+                //we need to check that the mapping we are going to create is between 
+                //entities with at least some different intersect entities, 
+                //otherwise it is not valid to create a mapping, e.g.: 
+                //left lobe of thyroid gland = (lobe of thyroid gland AND 
+                //    in_left_side_of some thyroid gland) 
+                //right lobe of thyroid gland = (lobe of thyroid gland AND 
+                //    in_right_side_of some thyroid gland) 
+                //=> we should not generate an annotation 
+                //left lobe of thyroid gland|right lobe of thyroid gland
+                for (String alreadyMappedEntityId: existingMapping.getKey()) {
+                    Set<String> mappedIntersectIds = new HashSet<String>(
+                            intersectMapping.get(alreadyMappedEntityId));
+                    Set<String> newIntersectIds = new HashSet<String>(
+                            intersectEntry.getValue());
+                    //check whether the entity used in the source annotation 
+                    //and the entity used in the new annotation have some intersect elements 
+                    //not in common for both of them
+                    mappedIntersectIds.removeAll(intersectEntry.getValue());
+                    newIntersectIds.removeAll(intersectMapping.get(alreadyMappedEntityId));
+                    if (mappedIntersectIds.isEmpty() || newIntersectIds.isEmpty()) {
+                        log.trace("No annotation with multiple entities to infer, no unique intersect class");
+                        continue existingMapping;
+                    }
+                }
                 
                 Set<Set<CuratorAnnotationBean>> commonAnnotsPerIntersectClass = 
                         new HashSet<Set<CuratorAnnotationBean>>();
@@ -3116,41 +3141,11 @@ public class SimilarityAnnotation {
                 //If we found some common annotations for each intersecting class, 
                 //we have a mapping
                 if (commonAnnotsPerIntersectClass.size() == existingMapping.getValue().size()) {
-                    //we need to check that the mapping we are going to create is between 
-                    //entities with at least some different intersect entities, 
-                    //otherwise it is not valid to create a mapping, e.g.: 
-                    //left lobe of thyroid gland = (lobe of thyroid gland AND 
-                    //    in_left_side_of some thyroid gland) 
-                    //right lobe of thyroid gland = (lobe of thyroid gland AND 
-                    //    in_right_side_of some thyroid gland) 
-                    //=> we should not generate an annotation 
-                    //left lobe of thyroid gland|right lobe of thyroid gland
-                    boolean isValid = true;
-                    for (String alreadyMappedEntityId: existingMapping.getKey()) {
-                        Set<String> mappedIntersectIds = new HashSet<String>(
-                                intersectMapping.get(alreadyMappedEntityId));
-                        Set<String> newIntersectIds = new HashSet<String>(
-                                intersectEntry.getValue());
-                        //check whether the entity used in the source annotation 
-                        //and the entity used in the new annotation have some intersect elements 
-                        //not in common for both of them
-                        mappedIntersectIds.removeAll(intersectEntry.getValue());
-                        newIntersectIds.removeAll(intersectMapping.get(alreadyMappedEntityId));
-                        if (mappedIntersectIds.isEmpty() || newIntersectIds.isEmpty()) {
-                            isValid = false;
-                            break;
-                        }
-                    }
-                    if (isValid) {
-                        log.trace("New mapping found from {} to existing mapping {}", 
-                                intersectEntry.getKey(), existingMapping.getKey());
-                        Set<String> entityIds = new HashSet<String>(existingMapping.getKey());
-                        entityIds.add(intersectEntry.getKey());
-                        newMappings.put(entityIds, commonAnnotsPerIntersectClass);
-                    } else {
-                        log.trace("Potential new mapping found from {} to existing mapping {}, but was invalid", 
-                                intersectEntry.getKey(), existingMapping.getKey());
-                    }
+                    log.trace("New mapping found from {} to existing mapping {}", 
+                            intersectEntry.getKey(), existingMapping.getKey());
+                    Set<String> entityIds = new HashSet<String>(existingMapping.getKey());
+                    entityIds.add(intersectEntry.getKey());
+                    newMappings.put(entityIds, commonAnnotsPerIntersectClass);
                 }
             }
             assert newMappings.size() == 0 || Collections.disjoint(newMappings.keySet(), 

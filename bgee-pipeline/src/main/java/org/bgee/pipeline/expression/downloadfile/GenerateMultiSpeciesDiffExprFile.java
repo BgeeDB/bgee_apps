@@ -76,9 +76,51 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             GenerateMultiSpeciesDiffExprFile.class.getName());
     
     /**
-     * Class used to store multi-species differential expression counts: the number of 
-     * over-expressed genes, under-expressed genes, not diff. expressed genes, not expressed genes,
-     * and genes without data in the family.
+     * A {@code String} that is the name of the column containing best p-value using Affymetrix, 
+     * in the download file.
+     */
+    public final static String AFFYMETRIX_P_VALUE_COLUMN_NAME = "Affymetrix best supporting p-value";
+    /**
+     * A {@code String} that is the name of the column containing the number of analysis using 
+     * Affymetrix data where the same call is found, in the download file.
+     */
+    //XXX: maybe we should also provide number of probesets, not only number of analysis
+    public final static String AFFYMETRIX_CONSISTENT_DEA_COUNT_COLUMN_NAME = 
+            "Affymetrix analysis count supporting Affymetrix call";
+    /**
+     * A {@code String} that is the name of the column containing the number of analysis using 
+     * Affymetrix data where a different call is found, in the download file.
+     */
+    //XXX: maybe we should also provide number of probesets, not only number of analysis
+    public final static String AFFYMETRIX_INCONSISTENT_DEA_COUNT_COLUMN_NAME = 
+            "Affymetrix analysis count in conflict with Affymetrix call";
+    /**
+     * A {@code String} that is the name of the column containing best p-value using RNA-Seq, 
+     * in the download file.
+     */
+    public final static String RNASEQ_P_VALUE_COLUMN_NAME = "RNA-Seq best supporting p-value";
+    /**
+     * A {@code String} that is the name of the column containing the number of analysis using 
+     * RNA-Seq data where the same call is found, in the download file.
+     */
+    public final static String RNASEQ_CONSISTENT_DEA_COUNT_COLUMN_NAME = 
+            "RNA-Seq analysis count supporting RNA-Seq call";
+    /**
+     * A {@code String} that is the name of the column containing the number of analysis using 
+     * RNA-Seq data where a different call is found, in the download file.
+     */
+    public final static String RNASEQ_INCONSISTENT_DEA_COUNT_COLUMN_NAME = 
+            "RNA-Seq analysis count in conflict with RNA-Seq call";
+    /**
+     * A {@code String} that is the name of the column containing merged differential expressions 
+     * from different data types, in the download file.
+     */
+    public final static String DIFFEXPRESSION_COLUMN_NAME = "Differential expression";
+
+    /**
+     * Class used to store multi-species differential expression counts: over-expressed gene count, 
+     * under-expressed gene count, not diff. expressed gene count, not expressed gene count,
+     * and count of genes without data in the family.
      *
      * @author  Valentine Rech de Laval
      * @version Bgee 13
@@ -151,7 +193,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             return overExprGeneCount;
         }
         /**
-         * @param overExprGeneCount   An {@code Long} that is the number of over-expressed 
+         * @param overExprGeneCount A {@code Long} that is the number of over-expressed 
          *                          genes in the family.
          */
         public void setOverExprGeneCount(Long overExprGeneCount) {
@@ -165,8 +207,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             return underExprGeneCount;
         }
         /**
-         * @param underExprGeneCount  An {@code Long} that is the number of under-expressed 
-         *                          genes in the family.
+         * @param underExprGeneCount    A {@code Long} that is the number of under-expressed 
+         *                              genes in the family.
          */
         public void setUnderExprGeneCount(Long underExprGeneCount) {
             this.underExprGeneCount = underExprGeneCount;
@@ -179,8 +221,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             return notDiffExprGeneCount;
         }
         /**
-         * @param notDiffExprGeneCount An {@code Long} that is the number of not diff. expressed 
-         *                           genes in the family.
+         * @param notDiffExprGeneCount  A {@code Long} that is the number of not diff. expressed 
+         *                              genes in the family.
          */
         public void setNotDiffExprGeneCount(Long notDiffExprGeneCount) {
             this.notDiffExprGeneCount = notDiffExprGeneCount;
@@ -193,8 +235,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             return notExprGeneCount;
         }
         /**
-         * @param notExprGeneCount An {@code Long} that is the number of not expressed genes 
-         *                      in the family. 
+         * @param notExprGeneCount  A {@code Long} that is the number of not expressed genes 
+         *                          in the family. 
          */
         public void setNotExprGeneCount(Long notExprGeneCount) {
             this.notExprGeneCount = notExprGeneCount;
@@ -207,24 +249,25 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             return naGeneCount;
         }
         /**
-         * @param naGeneCount An {@code Long} that is the number of genes without data in the family.
+         * @param naGeneCount   A {@code Long} that is the number of genes without data in the family.
          */
         public void setNAGeneCount(Long naGeneCount) {
             this.naGeneCount = naGeneCount;
         }
     
-    
         @Override
         public int hashCode() {
             final int prime = 31;
             int result = 1;
-            result = prime * result + ((naGeneCount == null) ? 0 : naGeneCount.hashCode());
+            result = prime * result + ((speciesId == null) ? 0 : speciesId.hashCode());
+            result = prime * result + 
+                    ((overExprGeneCount == null) ? 0 : overExprGeneCount.hashCode());
+            result = prime * result + 
+                    ((underExprGeneCount == null) ? 0 : underExprGeneCount.hashCode());
             result = prime * result +
                     ((notDiffExprGeneCount == null) ? 0 : notDiffExprGeneCount.hashCode());
             result = prime * result + ((notExprGeneCount == null) ? 0 : notExprGeneCount.hashCode());
-            result = prime * result + ((overExprGeneCount == null) ? 0 : overExprGeneCount.hashCode());
-            result = prime * result + ((speciesId == null) ? 0 : speciesId.hashCode());
-            result = prime * result + ((underExprGeneCount == null) ? 0 : underExprGeneCount.hashCode());
+            result = prime * result + ((naGeneCount == null) ? 0 : naGeneCount.hashCode());
             return result;
         }
 
@@ -237,10 +280,20 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             if (getClass() != obj.getClass())
                 return false;
             SpeciesDiffExprCounts other = (SpeciesDiffExprCounts) obj;
-            if (naGeneCount == null) {
-                if (other.naGeneCount != null)
+            if (speciesId == null) {
+                if (other.speciesId != null)
                     return false;
-            } else if (!naGeneCount.equals(other.naGeneCount))
+            } else if (!speciesId.equals(other.speciesId))
+                return false;
+            if (overExprGeneCount == null) {
+                if (other.overExprGeneCount != null)
+                    return false;
+            } else if (!overExprGeneCount.equals(other.overExprGeneCount))
+                return false;
+            if (underExprGeneCount == null) {
+                if (other.underExprGeneCount != null)
+                    return false;
+            } else if (!underExprGeneCount.equals(other.underExprGeneCount))
                 return false;
             if (notDiffExprGeneCount == null) {
                 if (other.notDiffExprGeneCount != null)
@@ -252,20 +305,10 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                     return false;
             } else if (!notExprGeneCount.equals(other.notExprGeneCount))
                 return false;
-            if (overExprGeneCount == null) {
-                if (other.overExprGeneCount != null)
+            if (naGeneCount == null) {
+                if (other.naGeneCount != null)
                     return false;
-            } else if (!overExprGeneCount.equals(other.overExprGeneCount))
-                return false;
-            if (speciesId == null) {
-                if (other.speciesId != null)
-                    return false;
-            } else if (!speciesId.equals(other.speciesId))
-                return false;
-            if (underExprGeneCount == null) {
-                if (other.underExprGeneCount != null)
-                    return false;
-            } else if (!underExprGeneCount.equals(other.underExprGeneCount))
+            } else if (!naGeneCount.equals(other.naGeneCount))
                 return false;
             return true;
         }
@@ -274,9 +317,9 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         public String toString() {
             return super.toString() + " - Species ID: " + getSpeciesId() +
                     " - Over-expressed gene count: " + getOverExprGeneCount() +
-                    " - under-expressed gene count: " + getUnderExprGeneCount() +
-                    " - not diff. expressed gene count: " + getNotDiffExprGeneCount() +
-                    " - no-expressed gene count: " + getNotExprGeneCount() + 
+                    " - Under-expressed gene count: " + getUnderExprGeneCount() +
+                    " - Not diff. expressed gene count: " + getNotDiffExprGeneCount() +
+                    " - No-expressed gene count: " + getNotExprGeneCount() + 
                     " - N/A gene count: " + getNAGeneCount();
         }
     }
@@ -321,15 +364,15 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     
         /**
          * @return  the {@code List} of {@code SpeciesDiffExprCounts}s that are the counts of the 
-         *          genes for one species for a multi-species differential expression file.
+         *          genes for each species of a multi-species differential expression file.
          */
         public List<SpeciesDiffExprCounts> getSpeciesDiffExprCounts() {
             return speciesDiffExprCounts;
         }
         /**
          * @param speciesDiffExprCounts A {@code List} of {@code SpeciesDiffExprCounts}s that are 
-         *                              the counts of the genes for one species for a multi-species 
-         *                              differential expression file. speciesCounts to set
+         *                              the counts of the genes for each species of a multi-species 
+         *                              differential expression file.
          */
         public void setSpeciesDiffExprCounts(List<SpeciesDiffExprCounts> speciesDiffExprCounts) {
             this.speciesDiffExprCounts = speciesDiffExprCounts;
@@ -693,65 +736,65 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             if (getClass() != obj.getClass())
                 return false;
             MultiSpeciesCompleteDiffExprFileBean other = (MultiSpeciesCompleteDiffExprFileBean) obj;
-            if (affymetrixConsistentDEA == null) {
-                if (other.affymetrixConsistentDEA != null)
-                    return false;
-            } else if (!affymetrixConsistentDEA.equals(other.affymetrixConsistentDEA))
-                return false;
             if (affymetrixData == null) {
                 if (other.affymetrixData != null)
                     return false;
             } else if (!affymetrixData.equals(other.affymetrixData))
-                return false;
-            if (affymetrixInconsistentDEA == null) {
-                if (other.affymetrixInconsistentDEA != null)
-                    return false;
-            } else if (!affymetrixInconsistentDEA.equals(other.affymetrixInconsistentDEA))
-                return false;
-            if (affymetrixPValue == null) {
-                if (other.affymetrixPValue != null)
-                    return false;
-            } else if (!affymetrixPValue.equals(other.affymetrixPValue))
                 return false;
             if (affymetrixQuality == null) {
                 if (other.affymetrixQuality != null)
                     return false;
             } else if (!affymetrixQuality.equals(other.affymetrixQuality))
                 return false;
-            if (callQuality == null) {
-                if (other.callQuality != null)
+            if (affymetrixPValue == null) {
+                if (other.affymetrixPValue != null)
                     return false;
-            } else if (!callQuality.equals(other.callQuality))
+            } else if (!affymetrixPValue.equals(other.affymetrixPValue))
                 return false;
-            if (differentialExpression == null) {
-                if (other.differentialExpression != null)
+            if (affymetrixConsistentDEA == null) {
+                if (other.affymetrixConsistentDEA != null)
                     return false;
-            } else if (!differentialExpression.equals(other.differentialExpression))
+            } else if (!affymetrixConsistentDEA.equals(other.affymetrixConsistentDEA))
                 return false;
-            if (rnaSeqConsistentDEA == null) {
-                if (other.rnaSeqConsistentDEA != null)
+            if (affymetrixInconsistentDEA == null) {
+                if (other.affymetrixInconsistentDEA != null)
                     return false;
-            } else if (!rnaSeqConsistentDEA.equals(other.rnaSeqConsistentDEA))
+            } else if (!affymetrixInconsistentDEA.equals(other.affymetrixInconsistentDEA))
                 return false;
             if (rnaSeqData == null) {
                 if (other.rnaSeqData != null)
                     return false;
             } else if (!rnaSeqData.equals(other.rnaSeqData))
                 return false;
-            if (rnaSeqInconsistentDEA == null) {
-                if (other.rnaSeqInconsistentDEA != null)
+            if (rnaSeqQuality == null) {
+                if (other.rnaSeqQuality != null)
                     return false;
-            } else if (!rnaSeqInconsistentDEA.equals(other.rnaSeqInconsistentDEA))
+            } else if (!rnaSeqQuality.equals(other.rnaSeqQuality))
                 return false;
             if (rnaSeqPValue == null) {
                 if (other.rnaSeqPValue != null)
                     return false;
             } else if (!rnaSeqPValue.equals(other.rnaSeqPValue))
                 return false;
-            if (rnaSeqQuality == null) {
-                if (other.rnaSeqQuality != null)
+            if (rnaSeqConsistentDEA == null) {
+                if (other.rnaSeqConsistentDEA != null)
                     return false;
-            } else if (!rnaSeqQuality.equals(other.rnaSeqQuality))
+            } else if (!rnaSeqConsistentDEA.equals(other.rnaSeqConsistentDEA))
+                return false;
+            if (rnaSeqInconsistentDEA == null) {
+                if (other.rnaSeqInconsistentDEA != null)
+                    return false;
+            } else if (!rnaSeqInconsistentDEA.equals(other.rnaSeqInconsistentDEA))
+                return false;
+            if (differentialExpression == null) {
+                if (other.differentialExpression != null)
+                    return false;
+            } else if (!differentialExpression.equals(other.differentialExpression))
+                return false;
+            if (callQuality == null) {
+                if (other.callQuality != null)
+                    return false;
+            } else if (!callQuality.equals(other.callQuality))
                 return false;
             return true;
         }
@@ -885,15 +928,15 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      */
     //XXX: alternatively, if you use the Bean principle, you could simply use different bean types, 
     //so that you don't need this Enum
-    public enum MultiSpDiffExprFileType implements DiffExprFileType {
+    public enum MultiSpeciesDiffExprFileType implements DiffExprFileType {
         MULTI_DIFF_EXPR_ANATOMY_SIMPLE(
-                "multi-expr-anatomy-simple", true, ComparisonFactor.ANATOMY), 
+                "multi-diffexpr-anatomy-simple", true, ComparisonFactor.ANATOMY), 
         MULTI_DIFF_EXPR_ANATOMY_COMPLETE(
-                "multi-expr-anatomy-complete", false, ComparisonFactor.ANATOMY),
+                "multi-diffexpr-anatomy-complete", false, ComparisonFactor.ANATOMY),
         MULTI_DIFF_EXPR_DEVELOPMENT_SIMPLE(
-                "multi-expr-development-simple", true, ComparisonFactor.DEVELOPMENT), 
+                "multi-diffexpr-development-simple", true, ComparisonFactor.DEVELOPMENT), 
         MULTI_DIFF_EXPR_DEVELOPMENT_COMPLETE(
-                "multi-expr-development-complete", false, ComparisonFactor.DEVELOPMENT);
+                "multi-diffexpr-development-complete", false, ComparisonFactor.DEVELOPMENT);
     
         /**
          * A {@code String} that can be used to generate names of files of this type.
@@ -921,7 +964,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
          * {@code ComparisonFactor} defining what is the experimental factor compared 
          * that generated the differential expression calls.
          */
-        private MultiSpDiffExprFileType(String stringRepresentation, boolean simpleFileType,
+        private MultiSpeciesDiffExprFileType(String stringRepresentation, boolean simpleFileType,
                 ComparisonFactor comparisonFactor) {
             this.stringRepresentation = stringRepresentation;
             this.simpleFileType = simpleFileType;
@@ -950,49 +993,6 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     }
 
     /**
-     * A {@code String} that is the name of the column containing best p-value using Affymetrix, 
-     * in the download file.
-     */
-    public final static String AFFYMETRIX_P_VALUE_COLUMN_NAME = "Affymetrix best supporting p-value";
-    /**
-     * A {@code String} that is the name of the column containing the number of analysis using 
-     * Affymetrix data where the same call is found, in the download file.
-     */
-    //XXX: maybe we should also provide number of probesets, not only number of analysis
-    public final static String AFFYMETRIX_CONSISTENT_DEA_COUNT_COLUMN_NAME = 
-            "Affymetrix analysis count supporting Affymetrix call";
-    /**
-     * A {@code String} that is the name of the column containing the number of analysis using 
-     * Affymetrix data where a different call is found, in the download file.
-     */
-    //XXX: maybe we should also provide number of probesets, not only number of analysis
-    public final static String AFFYMETRIX_INCONSISTENT_DEA_COUNT_COLUMN_NAME = 
-            "Affymetrix analysis count in conflict with Affymetrix call";
-    /**
-     * A {@code String} that is the name of the column containing best p-value using RNA-Seq, 
-     * in the download file.
-     */
-    public final static String RNASEQ_P_VALUE_COLUMN_NAME = "RNA-Seq best supporting p-value";
-    /**
-     * A {@code String} that is the name of the column containing the number of analysis using 
-     * RNA-Seq data where the same call is found, in the download file.
-     */
-    public final static String RNASEQ_CONSISTENT_DEA_COUNT_COLUMN_NAME = 
-            "RNA-Seq analysis count supporting RNA-Seq call";
-    /**
-     * A {@code String} that is the name of the column containing the number of analysis using 
-     * RNA-Seq data where a different call is found, in the download file.
-     */
-    public final static String RNASEQ_INCONSISTENT_DEA_COUNT_COLUMN_NAME = 
-            "RNA-Seq analysis count in conflict with RNA-Seq call";
-
-    /**
-     * A {@code String} that is the name of the column containing merged differential expressions 
-     * from different data types, in the download file.
-     */
-    public final static String DIFFEXPRESSION_COLUMN_NAME = "Differential expression";
-
-    /**
      * Main method to trigger the generate multi-species differential expression TSV download files 
      * (simple and advanced) from Bgee database. Parameters that must be provided in order in 
      * {@code args} are: 
@@ -1005,13 +1005,13 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      *     values must be separated using {@link CommandRunner#VALUE_SEPARATOR}, see 
      *     {@link org.bgee.pipeline.CommandRunner#parseMapArgument(String)}
      * <li>a list of files types that will be generated ('multi-diffexpr-anatomy-simple' for 
-     *     {@link MultiSpDiffExprFileType MULTI_DIFF_EXPR_ANATOMY_SIMPLE}, 
+     *     {@link MultiSpeciesDiffExprFileType MULTI_DIFF_EXPR_ANATOMY_SIMPLE}, 
      *     'multi-diffexpr-anatomy-complete' for 
-     *     {@link MultiSpDiffExprFileType MULTI_DIFF_EXPR_ANATOMY_COMPLETE}, 
+     *     {@link MultiSpeciesDiffExprFileType MULTI_DIFF_EXPR_ANATOMY_COMPLETE}, 
      *     'multi-diffexpr-development-simple' for 
-     *     {@link MultiSpDiffExprFileType MULTI_DIFF_EXPR_DEVELOPMENT_SIMPLE}, and 
+     *     {@link MultiSpeciesDiffExprFileType MULTI_DIFF_EXPR_DEVELOPMENT_SIMPLE}, and 
      *     'multi-diffexpr-development-complete' for 
-     *     {@link MultiSpDiffExprFileType MULTI_DIFF_EXPR_DEVELOPMENT_COMPLETE}), separated by the 
+     *     {@link MultiSpeciesDiffExprFileType MULTI_DIFF_EXPR_DEVELOPMENT_COMPLETE}), separated by the 
      *     {@code String} {@link CommandRunner#LIST_SEPARATOR}. If an empty list is provided 
      *     (see {@link CommandRunner#EMPTY_LIST}), all possible file types will be generated.
      * <li>the directory path that will be used to generate download files. 
@@ -1035,7 +1035,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         GenerateMultiSpeciesDiffExprFile generator = new GenerateMultiSpeciesDiffExprFile(
                 CommandRunner.parseMapArgument(args[0]),
                 GenerateDownloadFile.convertToFileTypes(
-                    CommandRunner.parseListArgument(args[1]), MultiSpDiffExprFileType.class),
+                    CommandRunner.parseListArgument(args[1]), MultiSpeciesDiffExprFileType.class),
                 args[2]);
         generator.generateMultiSpeciesDiffExprFiles();
         log.exit();
@@ -1070,7 +1070,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * @throws IllegalArgumentException If {@code directory} is {@code null} or blank.
      */
     public GenerateMultiSpeciesDiffExprFile(Map<String, Set<String>> providedGroups, 
-            Set<MultiSpDiffExprFileType> fileTypes, String directory) 
+            Set<MultiSpeciesDiffExprFileType> fileTypes, String directory) 
                     throws IllegalArgumentException {
         this(null, providedGroups, fileTypes, directory);
     }
@@ -1091,8 +1091,11 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * @throws IllegalArgumentException If {@code directory} is {@code null} or blank.
      */
     public GenerateMultiSpeciesDiffExprFile(MySQLDAOManager manager, 
-            Map<String, Set<String>> providedGroups, Set<MultiSpDiffExprFileType> fileTypes, 
+            Map<String, Set<String>> providedGroups, Set<MultiSpeciesDiffExprFileType> fileTypes, 
             String directory) throws IllegalArgumentException {
+        // We do not use species IDs global variable as for single species files.
+        // TODO: Correct class schema of all download files to avoid to set null 
+        // when calling super constructor for species IDs
         super(manager, null, fileTypes, directory);
 
         if (providedGroups == null || providedGroups.isEmpty()) {
@@ -1118,7 +1121,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 
         // If no file types are given by user, we set all file types
         if (this.fileTypes == null || this.fileTypes.isEmpty()) {
-            this.fileTypes = EnumSet.allOf(MultiSpDiffExprFileType.class);
+            this.fileTypes = EnumSet.allOf(MultiSpeciesDiffExprFileType.class);
         }
         
         // We retrieve all CIO so it's common to all groups
@@ -1173,7 +1176,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     /**
      * Generate multi-species differential expression files, for the types defined by 
      * {@code fileTypes}, for species defined by {@code speciesNamesByIds} with ancestral taxon 
-     * defined by {@code taxonId}, in the directory {@code directory}.
+     * defined by {@code taxonId}, in the directory {@code directory} provided at instantiation.
      *
      * @param groupName             A {@code String} that is the group name.
      * @param taxonId               A {@code String} that is the ancestral taxon.
@@ -1192,12 +1195,15 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * @param cioStatementsByIds    A {@code Map} where keys are {@code String}s corresponding  
      *                              to CIO IDs, the associated values being {@code CIOStatementTO}s 
      *                              corresponding to CIO TOs. 
-     * @throws IOException          If an error occurred while trying to write generated files.
+     * @throws IOException              If an error occurred while trying to write generated files.
+     * @throws IllegalArgumentException If all file types do not have the same comparison factor
+     *                                  or file types defined with development comparison factor.
      */
     private void generateMultiSpeciesDiffExprFilesForOneGroup(String groupName, String taxonId, 
             Map<String, String> speciesNamesByIds, Map<String, GeneTO> geneTOsByIds, 
             Map<String, String> stageNamesByIds, Map<String, String> anatEntityNamesByIds, 
-            Map<String, CIOStatementTO> cioStatementsByIds) throws IOException {
+            Map<String, CIOStatementTO> cioStatementsByIds) 
+                    throws IOException, IllegalArgumentException {
         log.entry(groupName, taxonId, speciesNamesByIds, 
                 geneTOsByIds, stageNamesByIds, anatEntityNamesByIds, cioStatementsByIds);
 
@@ -1214,8 +1220,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         ComparisonFactor factor = null;
         for (FileType fileType: this.fileTypes) {
             if (factor == null) {
-                factor = ((MultiSpDiffExprFileType)fileType).getComparisonFactor(); 
-            } else if (!((MultiSpDiffExprFileType)fileType).getComparisonFactor().equals(factor)) {
+                factor = ((MultiSpeciesDiffExprFileType)fileType).getComparisonFactor(); 
+            } else if (!((MultiSpeciesDiffExprFileType)fileType).getComparisonFactor().equals(factor)) {
                 throw log.throwing(new IllegalArgumentException(
                         "All file types do not have the same comparison factor: " + this.fileTypes));
             }
@@ -1232,33 +1238,33 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         
         // First we allow to store file names, writers, etc, associated to a FileType, 
         // for the catch and finally clauses.
-        Map<MultiSpDiffExprFileType, String> generatedFileNames = 
-                new HashMap<MultiSpDiffExprFileType, String>();
+        Map<MultiSpeciesDiffExprFileType, String> generatedFileNames = 
+                new HashMap<MultiSpeciesDiffExprFileType, String>();
 
         // We will write results in temporary files that we will rename at the end
         // if everything is correct
         String tmpExtension = ".tmp";
 
         // In order to close all writers in a finally clause.
-        Map<MultiSpDiffExprFileType, ICsvDozerBeanWriter> writersUsed = 
-                new HashMap<MultiSpDiffExprFileType, ICsvDozerBeanWriter>();
+        Map<MultiSpeciesDiffExprFileType, ICsvDozerBeanWriter> writersUsed = 
+                new HashMap<MultiSpeciesDiffExprFileType, ICsvDozerBeanWriter>();
         try {
             //**************************
             // OPEN FILES, CREATE WRITERS, WRITE HEADERS
             //**************************
-            Map<MultiSpDiffExprFileType, CellProcessor[]> processors = 
-                    new HashMap<MultiSpDiffExprFileType, CellProcessor[]>();
-            Map<MultiSpDiffExprFileType, String[]> headers = 
-                    new HashMap<MultiSpDiffExprFileType, String[]>();
+            Map<MultiSpeciesDiffExprFileType, CellProcessor[]> processors = 
+                    new HashMap<MultiSpeciesDiffExprFileType, CellProcessor[]>();
+            Map<MultiSpeciesDiffExprFileType, String[]> headers = 
+                    new HashMap<MultiSpeciesDiffExprFileType, String[]>();
 
             // Get ordered species names
             List<String> orderedSpeciesNames = this.getSpeciesNamesOrderBySpeciesId(
                     speciesFilter, speciesNamesByIds);
             
             for (FileType fileType : this.fileTypes) {
-                MultiSpDiffExprFileType currentFileType = (MultiSpDiffExprFileType) fileType;
+                MultiSpeciesDiffExprFileType currentFileType = (MultiSpeciesDiffExprFileType) fileType;
                 if (currentFileType.getComparisonFactor().equals(ComparisonFactor.DEVELOPMENT)) {
-                    throw log.throwing(new IllegalStateException(
+                    throw log.throwing(new IllegalArgumentException(
                             "Development comparison factor is currently not supported."));
                 }
 
@@ -1281,7 +1287,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                     file.delete();
                 }
                 
-                // create writer and write header
+                // create and configure writer
                 ICsvDozerBeanWriter beanWriter = new CsvDozerBeanWriter(new FileWriter(file),
                         Utils.TSVCOMMENTED);
                 // configure the mapping from the fields to the CSV columns
@@ -1292,8 +1298,10 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                     beanWriter.configureBeanMapping(MultiSpeciesCompleteDiffExprFileBean.class, 
                             this.generateFieldMapping(currentFileType, fileTypeHeaders));
                 }
+                //  Write header
                 beanWriter.writeHeader(fileTypeHeaders);
                 log.debug("Write header: {}", Arrays.toString(fileTypeHeaders));
+                
                 writersUsed.put(currentFileType, beanWriter);
             }
             
@@ -1302,22 +1310,23 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             //********************************
             log.trace("Start retrieving secondary data...");
             
-            // Get homologous genes 
-            Map<String, String> mapGeneOMANode = this.getMappingGeneIdOMANodeId(taxonId, 
-                    speciesFilter);
+            // Get homologous genes: Gene ID -> OMA node Id and OMA node ID -> Gene IDs
+            Map<String, String> mapGeneOMANode = 
+                    this.getMappingGeneIdOMANodeId(taxonId, speciesFilter);
             Map<String, Set<String>> mapOMANodeGene = 
                     this.getMappingOMANodeIdGeneIDs(mapGeneOMANode);
 
-            // Get comparable stages
+            // Get comparable stages: Stage ID -> Stage group and Stage group -> Stage IDs
             List<Map<String, List<String>>> mapStageGroup = 
                     this.getComparableStages(taxonId, speciesFilter);
             Map<String, List<String>> mapStageIdToStageGroup = mapStageGroup.get(0);
             Map<String, List<String>> mapStageGroupToStageId = mapStageGroup.get(1);
 
-            // Get summary similarity annotations with CIO IDs
+            // Get summary similarity annotations with CIO IDs: Summary annotation ID -> CIO ID
             Map<String, String> mapSumSimCIO = this.getSummarySimilarityAnnotations(taxonId);
 
-            // Get relations between similarity annotations and anatomical entities
+            // Get relations between similarity annotations and anatomical entities:
+            // Summary annotation ID -> Anat. entities and Anat. entity -> Summary annotation ID 
             List<Map<String, List<String>>> simAnnotToAnatEntity = 
                     this.getSimAnnotToAnatEntities(taxonId, speciesFilter);
             Map<String, List<String>> mapSimAnnotToAnatEntities = simAnnotToAnatEntity.get(0);
@@ -1354,8 +1363,10 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                                         // AFTER retrieving the last TO
                                         //(ResultSet.isAfterLast would return true)
                           (previousOMANodeId != null && !previousOMANodeId.equals(currentOMANodeId))) {
+                        
                         assert (doIteration && currentOMANodeId != null && currentTO != null) || 
                         (!doIteration && currentOMANodeId == null && currentTO == null);
+                        
                         //the calls are supposed to be ordered by ascending OMA group ID
                         if (currentOMANodeId != null && 
                                 currentOMANodeId.compareTo(previousOMANodeId) <= 0) {
@@ -1412,11 +1423,11 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     }
 
     /**
-     * Retrieve from the data source the last common ancestor of the provided species. 
+     * Retrieve from the data source the least common ancestor of the provided species. 
      *
      * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species
      *                      allowing to retrieve the LCA.
-     * @return              A {@code String} that is the ID of last common ancestor of 
+     * @return              A {@code String} that is the ID of least common ancestor of 
      *                      the provided species.
      * @throws DAOException If an error occurred while getting the data from the Bgee data source.
      */
@@ -1429,6 +1440,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         dao.setAttributes(TaxonDAO.Attribute.ID);
     
         String lca = null;
+        // includeAncestors is false to retrieved only the LCA and not all ancestors of the LCA.
         try (TaxonTOResultSet rs = dao.getLeastCommonAncestor(speciesIds, false)) {
             boolean isFirst = true;
             while (rs.next()) {
@@ -1467,6 +1479,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         log.debug("Start retrieving homologous genes for the taxon ID {}...", taxonId);
     
         HierarchicalGroupDAO dao = this.getHierarchicalGroupDAO();
+        // setAttributes methods has no effect on attributes retrieved  
         
         Map<String, String> mapping = new HashMap<String, String>();
         try (HierarchicalGroupToGeneTOResultSet rs = dao.getGroupToGene(taxonId, speciesIds)) {
@@ -1512,6 +1525,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         
         return log.exit(mapOMANodeGene);
     }
+    
     /**
      * Retrieves comparable stages for the requested species in the requested taxon,
      * present into the Bgee database.
@@ -1540,7 +1554,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 taxonId, speciesIds);
         
        StageGroupingDAO dao = this.getStageGroupingDAO();
-        //not attribute to set
+       // setAttributes methods has no effect on attributes retrieved  
         
        Map<String, List<String>> mappingStageIdToStageGroup = new HashMap<String, List<String>>();
        Map<String, List<String>> mappingStageGroupToStageId = new HashMap<String, List<String>>();
@@ -1717,7 +1731,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      */
     private List<String> getSpeciesNamesOrderBySpeciesId(
             Set<String> speciesIds, Map<String, String> speciesNamesByIds) {
-        log.entry();
+        log.entry(speciesIds, speciesNamesByIds);
         
         List<String> ids = new ArrayList<String>(speciesIds);
         Collections.sort(ids);
@@ -1726,15 +1740,13 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             names.add(speciesNamesByIds.get(id));
         }
         assert names.size() == speciesIds.size();
-    
-        Collections.sort(names);
         
         return log.exit(names);
     }
 
     /**
-     * Groups provided differential expression calls by condition (summary similarity annotation 
-     * and stage group).
+     * Groups provided differential expression calls by condition (summary similarity annotation ID
+     * and stage group ID).
      *
      * @param callTOs                   A {@code Set} of {@code DiffExpressionCallTO}s that are 
      *                                  the calls to be grouped.
@@ -1879,8 +1891,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     private void filterAndWriteOMANodeRows(Map<String, GeneTO> geneTOsByIds, 
             Map<String, String> stageNamesByIds, Map<String, String> anatEntityNamesByIds, 
             Map<String, CIOStatementTO> cioStatementByIds, Map<String, String> speciesNamesByIds,
-            Map<MultiSpDiffExprFileType, ICsvDozerBeanWriter> writersUsed,
-            Map<MultiSpDiffExprFileType, CellProcessor[]> processors,
+            Map<MultiSpeciesDiffExprFileType, ICsvDozerBeanWriter> writersUsed,
+            Map<MultiSpeciesDiffExprFileType, CellProcessor[]> processors,
             String omaNodeId, Set<String> omaGeneIds, Map<String, String> mapGeneOMANode,
             Collection<DiffExpressionCallTO> calls,
             Map<String, String> mapSumSimCIO, Map<String, List<String>> mapSimAnnotToAnatEntities,
@@ -1889,8 +1901,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             Map<String, List<String>> mapStageIdToStageGroup)
                     throws IllegalArgumentException, IOException {
         log.entry(geneTOsByIds, stageNamesByIds, anatEntityNamesByIds, cioStatementByIds, 
-                speciesNamesByIds, writersUsed, processors, omaNodeId, calls, omaGeneIds, 
-                mapGeneOMANode, mapSumSimCIO, mapSimAnnotToAnatEntities, mapStageGroupToStageId, 
+                speciesNamesByIds, writersUsed, processors, omaNodeId, omaGeneIds, mapGeneOMANode,  
+                calls, mapSumSimCIO, mapSimAnnotToAnatEntities, mapStageGroupToStageId, 
                 mapAnatEntityToSimAnnot, mapStageIdToStageGroup);
         
         // We group calls (without propagation) by condition 
@@ -1899,8 +1911,11 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             callsGroupByCondition = this.groupByMultiSpeciesCondition(
                 calls, mapAnatEntityToSimAnnot, mapStageIdToStageGroup);
         
+        //TODO refactor in a method that takes a set of IDs and mapping between IDs and names 
         List<String> geneIds = new ArrayList<String>(omaGeneIds),
                      geneNames = new ArrayList<String>();
+        assert geneIds != null && !geneIds.isEmpty();
+        // We sort gene IDs.
         Collections.sort(geneIds);
         // Then, we build gene name list according to ordered gene ID list.
         for (String geneId : geneIds) {
@@ -1925,6 +1940,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             // First, we get some data to be able to build beans 
             String cioId = mapSumSimCIO.get(condition.getSummarySimilarityAnnotationId());
             
+            //TODO see todo for gene IDs and names 
             List<String> stageIds = mapStageGroupToStageId.get(condition.getStageGroupId());
             assert stageIds != null && !stageIds.isEmpty();
             //sort IDs for consistent diff between releases
@@ -1935,6 +1951,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             }
             assert stageIds.size() == stageNames.size();
             
+            //TODO see todo for gene IDs and names 
             List<String> organIds = 
                     mapSimAnnotToAnatEntities.get(condition.getSummarySimilarityAnnotationId());
             assert organIds != null && !organIds.isEmpty();
@@ -1961,7 +1978,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             
             // A map which is filled during the iteration calls where keys corresponding to  
             // species IDs, the associated values being species counts.  
-            Map<String, SpeciesDiffExprCounts> allSpeciesCounts = new HashMap<String, SpeciesDiffExprCounts>();
+            Map<String, SpeciesDiffExprCounts> allSpeciesCounts = 
+                    new HashMap<String, SpeciesDiffExprCounts>();
             
             for (DiffExpressionCallTO to : entry.getValue()) {
                 
@@ -1973,7 +1991,9 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 // We create a complete bean with null differential expression and call quality
                 MultiSpeciesCompleteDiffExprFileBean currentBean = 
                         new MultiSpeciesCompleteDiffExprFileBean(
-                                omaNodeId, organIds, organNames, Arrays.asList(to.getStageId()), 
+                                omaNodeId, organIds, organNames,
+                                // TODO use stageIds and stage names? even if only one stage IDs for the moment
+                                Arrays.asList(to.getStageId()),   
                                 Arrays.asList(stageNamesByIds.get(to.getStageId())), 
                                 to.getGeneId(), geneTOsByIds.get(to.getGeneId()).getName(), 
                                 cioId, cioStatementByIds.get(cioId).getName(),
@@ -1995,7 +2015,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 // And add it to the set of bean to be written
                 currentCompleteBeans.add(currentBean);
                 
-                // We finish by count gene types
+                // We finish by counting gene types
                 SpeciesDiffExprCounts currentCounts = allSpeciesCounts.get(currentBean.getSpeciesId());
                 if (currentCounts == null) {
                     currentCounts = new SpeciesDiffExprCounts(currentBean.getSpeciesId(), 
@@ -2058,18 +2078,16 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             // and conditions with 'no diff expressed' only,
             // and we do not have the same criteria for counting species with data 
             // as for the complete file.
-            MultiSpeciesSimpleDiffExprFileBean simpleBean = null; 
             if (cioStatementByIds.get(cioId).isTrusted() &&
                     speciesIdsWithDataForSimple.size() >= 2) {
-                simpleBean = new MultiSpeciesSimpleDiffExprFileBean(
+                MultiSpeciesSimpleDiffExprFileBean simpleBean = new MultiSpeciesSimpleDiffExprFileBean(
                         omaNodeId, organIds, organNames, stageIds, stageNames, null);
                         
                 // We order species IDs to keep the same order when we regenerate files.
                 List<String> speciesIds = new ArrayList<String>(allSpeciesCounts.keySet());
                 Collections.sort(speciesIds);
                 for (String speciesId: speciesIds) {                
-                    SpeciesDiffExprCounts speciesCounts = allSpeciesCounts.get(speciesId);
-                    simpleBean.getSpeciesDiffExprCounts().add(speciesCounts);
+                    simpleBean.getSpeciesDiffExprCounts().add(allSpeciesCounts.get(speciesId));
                 }
                 // We store the simple bean.
                 allSimpleBeans.add(simpleBean);
@@ -2079,9 +2097,10 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         }
         
         // Then we write all beans for one OMA node ID.
-        for (Entry<MultiSpDiffExprFileType, ICsvDozerBeanWriter> writerFileType: writersUsed.entrySet()) {
-            MultiSpDiffExprFileType fileType = writerFileType.getKey();
-            ICsvDozerBeanWriter writer= writerFileType.getValue();
+        for (Entry<MultiSpeciesDiffExprFileType, ICsvDozerBeanWriter> writerFileType: 
+                                writersUsed.entrySet()) {
+            MultiSpeciesDiffExprFileType fileType = writerFileType.getKey();
+            ICsvDozerBeanWriter writer = writerFileType.getValue();
             
             if (writerFileType.getKey().isSimpleFileType() && allSimpleBeans != null) {
                 this.orderAndWriteRows(fileType, writer, processors, omaNodeId, 
@@ -2099,7 +2118,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     }
     
     /**
-     * Order and write rows from provided beans.
+     * Order and write rows from provided beans, that should be beans of one OMA node ID.
      *
      * @param fileType      A {@code MultiSpDiffExprFileType} defining the type of file 
      *                      that will be written.
@@ -2111,9 +2130,10 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * @throws IOException  If an error occurred while trying to write generated files.
      * @param <T>           A {@code MultiSpeciesFileBean} type parameter.
      */
+    //XXX: maybe we should check that all calls are from a same OMA group ID?
     private <T extends MultiSpeciesFileBean> void orderAndWriteRows(
-            MultiSpDiffExprFileType fileType, ICsvDozerBeanWriter writer, 
-            Map<MultiSpDiffExprFileType, CellProcessor[]> processors, String omaNodeId, 
+            MultiSpeciesDiffExprFileType fileType, ICsvDozerBeanWriter writer, 
+            Map<MultiSpeciesDiffExprFileType, CellProcessor[]> processors, String omaNodeId, 
             List<String> geneIds, List<String> geneNames, List<T> beans) throws IOException {
         log.entry(fileType, writer, processors, omaNodeId, geneIds, geneNames, beans);
         
@@ -2122,11 +2142,11 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 " contains gene IDs " + geneIds +" with gene names " + geneNames;
         writer.writeComment(comment);
         
-        log.trace("Write row: {} - using writer: {}", comment, writer);
+        log.trace("Write comment: {} - using writer: {}", comment, writer);
 
         // We order calls according to OMA ID, entity IDs, stage IDs for simple and complete files
-        // then according to species ID, gene ID for complete files or gene IDs for simple files. 
-        this.sortMultiSpeciesCompleteDiffExprFileBeanCollection(beans);
+        // then according to species ID, gene ID for complete files. 
+        this.sortMultiSpeciesDiffExprFileBeanCollection(beans);
 
         // We write rows
         for (MultiSpeciesFileBean bean: beans) {
@@ -2134,7 +2154,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             log.trace("Write row: {} - using writer: {}", bean, writer);
         }
 
-        // We finish by a comment to separate groups
+        // We finish by a comment to separate OMA groups
         writer.writeComment("//");
         log.trace("Write comment: // - using writer: {}", writer);
 
@@ -2258,32 +2278,31 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 
     /**
      * Sort multi-species diff. expression file beans according to OMA ID, entity IDs, stage IDs 
-     * for simple and complete files then according to species ID, gene ID for complete files 
-     * or gene IDs for simple files.
+     * for simple and complete files then according to species ID, gene ID for complete files.
      * <p>
      * The provided {@code beans} will be modified.
      *
      * @param beans A {@code List} of {@code T} that are beans to be sorted.
      * @param <T>   A {@code MultiSpeciesFileBean} type parameter.
-     */
-    private <T extends MultiSpeciesFileBean> void sortMultiSpeciesCompleteDiffExprFileBeanCollection(
+     */ 
+    private <T extends MultiSpeciesFileBean> void sortMultiSpeciesDiffExprFileBeanCollection(
             List<T> beans) {
         log.entry(beans);
     
         Collections.sort(beans, new Comparator<MultiSpeciesFileBean>(){
             @Override
             public int compare(MultiSpeciesFileBean bean1, MultiSpeciesFileBean bean2) {
-                log.entry();
+                log.entry(bean1, bean2);
                 
                 int omaIdComp = bean1.getOmaId().compareToIgnoreCase(bean2.getOmaId());
                 if (omaIdComp != 0)
                     return omaIdComp;
     
-                int uberonIdComp = compareTwoLists(bean1.getEntityIds(), bean2.getEntityIds());
+                int uberonIdComp = compareTwoStringLists(bean1.getEntityIds(), bean2.getEntityIds());
                 if (uberonIdComp != 0)
                     return uberonIdComp;
     
-                int stageIdComp = compareTwoLists(bean1.getStageIds(), bean2.getStageIds());
+                int stageIdComp = compareTwoStringLists(bean1.getStageIds(), bean2.getStageIds());
                 if (stageIdComp != 0)
                     return stageIdComp;
                 
@@ -2309,7 +2328,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 
     /**
      * Compare two {@code List}s of {@code String}s, elements by elements. When two elements (with 
-     * the same index), are different, the comparison returns an integer whose sign is that of 
+     * the same index), are different, the comparison returns an {@code int} whose sign is that of 
      * calling {@link java.lang.String.compareToIgnoreCase(String)}.
      *
      * @param list1 A {@code List} to be compared to {@code list2}.
@@ -2318,7 +2337,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      *              equal to, or less than this {@code list2}, ignoring case considerations.
      */
     //TODO: transform this method into a Comparator
-    private int compareTwoLists(List<String> list1, List<String> list2) {
+    private int compareTwoStringLists(List<String> list1, List<String> list2) {
         log.entry(list1, list2);
         int minLength = Math.min(list1.size(), list2.size());
 
@@ -2348,8 +2367,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      *                  a multi-species differential expression file.
      * @throw IllegalArgumentException If {@code fileType} is not managed by this method.
      */
-    private CellProcessor[] generateCellProcessors(MultiSpDiffExprFileType fileType, String[] header) 
-            throws IllegalArgumentException {
+    private CellProcessor[] generateCellProcessors(
+            MultiSpeciesDiffExprFileType fileType, String[] header) throws IllegalArgumentException {
         log.entry(fileType, header);
         
         //First, we define all set of possible values
@@ -2376,10 +2395,10 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 case OMA_ID_COLUMN_NAME: 
                     processors[i] = new StrNotNullOrEmpty(); 
                     break;
+                //XXX change STAGE_XX_COLUMN_NAME to STAGE_XX_LIST_COLUMN_NAME 
+                // when we will have several stages for one StageGroup.
                 case STAGE_ID_COLUMN_NAME: 
                 case STAGE_NAME_COLUMN_NAME: 
-                    processors[i] = new Utils.FmtMultipleStringValues(new Trim());
-                    break;
                 case ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME: 
                 case ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME: 
                     processors[i] = new Utils.FmtMultipleStringValues(new Trim()); 
@@ -2394,13 +2413,13 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 
             if (fileType.isSimpleFileType()) {
                 // *** Attributes specific to simple file ***
-                // we use StrNotNullOrEmpty() ant not LMinMax() condition because 
+                // we use StrNotNullOrEmpty() (and not LMinMax() constraint) because 
                 // there is N/A when homologous organ is lost in a species
-                if (header[i].startsWith(NB_OVER_EXPR_GENES_COLUMN_NAME) ||
-                        header[i].startsWith(NB_UNDER_EXPR_GENES_COLUMN_NAME) ||
-                        header[i].startsWith(NB_NO_DIFF_EXPR_GENES_COLUMN_NAME) ||
-                        header[i].startsWith(NB_NOT_EXPR_GENES_COLUMN_NAME) ||
-                        header[i].startsWith(NB_NA_GENES_COLUMN_NAME)) {
+                if (header[i].startsWith(OVER_EXPR_GENE_COUNT_COLUMN_NAME) ||
+                        header[i].startsWith(UNDER_EXPR_GENE_COUNT_COLUMN_NAME) ||
+                        header[i].startsWith(NO_DIFF_EXPR_GENE_COUNT_COLUMN_NAME) ||
+                        header[i].startsWith(NOT_EXPR_GENE_COUNT_COLUMN_NAME) ||
+                        header[i].startsWith(NA_GENES_COUNT_COLUMN_NAME)) {
                     processors[i] = new StrNotNullOrEmpty(); 
                 }
                     
@@ -2459,15 +2478,17 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * @return              An {@code Array} of {@code String}s used to produce the header.
      * @throw IllegalArgumentException If {@code fileType} is not managed by this method.
      */
-    private String[] generateHeader(MultiSpDiffExprFileType fileType, List<String> speciesNames)
+    private String[] generateHeader(MultiSpeciesDiffExprFileType fileType, List<String> speciesNames)
         throws IllegalArgumentException {
         log.entry(fileType, speciesNames);
 
         String[] headers = null; 
         if (fileType.isSimpleFileType()) {
+            // For simple file, we always have 5 columns and 5 columns for each species
             int nbColumns = 5 + 5 * speciesNames.size();
             headers = new String[nbColumns];
         } else {
+            // For complete file, the number of columns is independent of the number of species.
             headers = new String[22];
         }
         
@@ -2484,11 +2505,11 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 // the number of columns depends on the number of species
                 int columnIndex = 5 + 5 * i;
                 String endHeader = " for " + speciesNames.get(i);
-                headers[columnIndex] = NB_OVER_EXPR_GENES_COLUMN_NAME + endHeader;
-                headers[columnIndex+1] = NB_UNDER_EXPR_GENES_COLUMN_NAME + endHeader;
-                headers[columnIndex+2] = NB_NO_DIFF_EXPR_GENES_COLUMN_NAME + endHeader;
-                headers[columnIndex+3] = NB_NOT_EXPR_GENES_COLUMN_NAME + endHeader;
-                headers[columnIndex+4] = NB_NA_GENES_COLUMN_NAME + endHeader;
+                headers[columnIndex] = OVER_EXPR_GENE_COUNT_COLUMN_NAME + endHeader;
+                headers[columnIndex+1] = UNDER_EXPR_GENE_COUNT_COLUMN_NAME + endHeader;
+                headers[columnIndex+2] = NO_DIFF_EXPR_GENE_COUNT_COLUMN_NAME + endHeader;
+                headers[columnIndex+3] = NOT_EXPR_GENE_COUNT_COLUMN_NAME + endHeader;
+                headers[columnIndex+4] = NA_GENES_COUNT_COLUMN_NAME + endHeader;
             }
         } else {
             // *** Headers specific to complete file ***
@@ -2525,7 +2546,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      *                  the {@code Array} at the same index as the column they are supposed 
      *                  to process.
      */
-    private String[] generateFieldMapping(MultiSpDiffExprFileType fileType, String[] header) {
+    private String[] generateFieldMapping(MultiSpeciesDiffExprFileType fileType, String[] header) {
         log.entry(fileType, header);
 
         String[] fieldMapping = new String[header.length];
@@ -2560,7 +2581,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             if (fileType.isSimpleFileType()) {
                 // *** Attributes specific to simple file ***
                 
-                //FIXME: this correction assumes that NB_OVER_EXPR_GENES_COLUMN_NAME is always 
+                //FIXME: this correction assumes that OVER_EXPR_GENE_COUNT_COLUMN_NAME is always 
                 //the first column in the group of columns of a given species. A real correction 
                 //would be to extract the species name from the column names, store the species names 
                 //in a Set, and detect when we change species.
@@ -2568,23 +2589,23 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 //to see a way of coding this. The generation of the names of the columns 
                 //should be modified to ensure that they are in sync with the Pattern used to retrieve 
                 //species names.
-                if (header[i].startsWith(NB_OVER_EXPR_GENES_COLUMN_NAME)) {
+                if (header[i].startsWith(OVER_EXPR_GENE_COUNT_COLUMN_NAME)) {
                     speciesIndex++;
                 }
                 
-                if (header[i].startsWith(NB_OVER_EXPR_GENES_COLUMN_NAME)) {
+                if (header[i].startsWith(OVER_EXPR_GENE_COUNT_COLUMN_NAME)) {
                     fieldMapping[i] = "speciesDiffExprCounts[" + speciesIndex + "].overExprGeneCount";
                     
-                } else if (header[i].startsWith(NB_UNDER_EXPR_GENES_COLUMN_NAME)) {
+                } else if (header[i].startsWith(UNDER_EXPR_GENE_COUNT_COLUMN_NAME)) {
                     fieldMapping[i] = "speciesDiffExprCounts[" + speciesIndex + "].underExprGeneCount";
                     
-                } else if (header[i].startsWith(NB_NO_DIFF_EXPR_GENES_COLUMN_NAME)) {
+                } else if (header[i].startsWith(NO_DIFF_EXPR_GENE_COUNT_COLUMN_NAME)) {
                     fieldMapping[i] = "speciesDiffExprCounts[" + speciesIndex + "].notDiffExprGeneCount";
                     
-                } else if (header[i].startsWith(NB_NOT_EXPR_GENES_COLUMN_NAME)) {
+                } else if (header[i].startsWith(NOT_EXPR_GENE_COUNT_COLUMN_NAME)) {
                     fieldMapping[i] = "speciesDiffExprCounts[" + speciesIndex + "].notExprGeneCount";
                     
-                } else if (header[i].startsWith(NB_NA_GENES_COLUMN_NAME)) {
+                } else if (header[i].startsWith(NA_GENES_COUNT_COLUMN_NAME)) {
                     fieldMapping[i] = "speciesDiffExprCounts[" + speciesIndex + "].naGeneCount";
                 } 
 

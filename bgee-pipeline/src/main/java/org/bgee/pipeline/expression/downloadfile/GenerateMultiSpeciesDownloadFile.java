@@ -52,37 +52,32 @@ public interface GenerateMultiSpeciesDownloadFile {
      * A {@code String} that is the name of the column containing number of expressed genes, 
      * in the download file.
      */
-    public final static String NB_EXPR_GENE_COLUMN_NAME = "Expressed gene count";
-    /**
-     * A {@code String} that is the name of the column containing number of not expressed genes, 
-     * in the download file.
-     */
-    public final static String NB_NO_EXPR_GENES_COLUMN_NAME = "Not expressed gene count";
+    public final static String EXPR_GENE_COUNT_COLUMN_NAME = "Expressed gene count";
     /**
      * A {@code String} that is the name of the column containing number of genes without data, 
      * in the download file.
      */
-    public final static String NB_NA_GENES_COLUMN_NAME = "N/A gene count";
+    public final static String NA_GENES_COUNT_COLUMN_NAME = "N/A gene count";
     /**
      * A {@code String} that is the name of the column containing number of over-expressed genes, 
      * in the download file.
      */
-    public final static String NB_OVER_EXPR_GENES_COLUMN_NAME = "Over-expressed gene count";
+    public final static String OVER_EXPR_GENE_COUNT_COLUMN_NAME = "Over-expressed gene count";
     /**
      * A {@code String} that is the name of the column containing number of under-expressed genes, 
      * in the download file.
      */
-    public final static String NB_UNDER_EXPR_GENES_COLUMN_NAME = "Under-expressed gene count";
+    public final static String UNDER_EXPR_GENE_COUNT_COLUMN_NAME = "Under-expressed gene count";
     /**
      * A {@code String} that is the name of the column containing number of not diff. expressed 
      * genes, in the download file.
      */
-    public final static String NB_NO_DIFF_EXPR_GENES_COLUMN_NAME = "Not diff. expressed gene count";
+    public final static String NO_DIFF_EXPR_GENE_COUNT_COLUMN_NAME = "Not diff. expressed gene count";
     /**
      * A {@code String} that is the name of the column containing number of not diff. expressed 
      * genes, in the download file.
      */
-    public final static String NB_NOT_EXPR_GENES_COLUMN_NAME = "Not expressed gene count";
+    public final static String NOT_EXPR_GENE_COUNT_COLUMN_NAME = "Not expressed gene count";
     /**
      * A {@code String} that is the name of the column containing latin species names, 
      * in the download file.

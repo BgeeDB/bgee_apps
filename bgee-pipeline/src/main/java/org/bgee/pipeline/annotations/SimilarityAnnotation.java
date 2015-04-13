@@ -2950,10 +2950,10 @@ public class SimilarityAnnotation {
                     List<String> entityIds = SimilarityAnnotationUtils.trimAndSort(mapping.getKey());
                     
                     //here, we retrieve a positive and/or a negative annotation 
-                    //(so, between 1 and 2 new annotations inferred for this mapping 
+                    //(between none and 2 new annotations inferred for this mapping 
                     //in this taxon)
                     for (CuratorAnnotationBean inferredInfo: 
-                        this.getConfAndSupportTextFromLogicalConstraints(
+                        this.getInferredInfoFromLogicalConstraints(
                                 mapping.getValue())) {
                         CuratorAnnotationBean newAnnot = 
                                 new CuratorAnnotationBean(baseInferredAnnot);
@@ -3161,7 +3161,9 @@ public class SimilarityAnnotation {
      * or its ancestors. For each intersect class, we will only retain annotations 
      * to the taxon that is the leaf of the valid taxa considered (taxa corresponding to
      * the provided taxon or its ancestors). Retained annotations will be grouped 
-     * per intersecting class. If it is not possible to retrieve annotations valid 
+     * per intersecting class. 
+     * <p>
+     * If it is not possible to retrieve annotations valid 
      * for the provided taxon for each intersecting class, this method returns {@code null}.
      * 
      * @param entityIdToAnnots      A {@code Map} where keys are IDs of annotated entities, 
@@ -3391,29 +3393,27 @@ public class SimilarityAnnotation {
      * provides annotations grouped per intersect classes used in logical constraints. 
      * <p>
      * The returned {@code Set} will contain at most 2 annotations (in that case, 
-     * one positive and one negative), and at least one annotation (in that case, 
-     * either a positive or a negative annotation). The returned {@code CuratorAnnotationBean}s 
+     * one positive and one negative). It can contain none if no inferrence was possible. 
+     * The returned {@code CuratorAnnotationBean}s 
      * have only their negation status (see method {@code isNegated}), confidence 
      * (see method {@code getCioId}), and supporting text (see method {@code getSupportingText}) 
-     * set. If no annotation could be inferred from the provided grouped annotations, 
-     * an {@code IllegalArgumentException} is thrown.
+     * set. 
      * 
      * @param annotsPerIntersectClass   A {@code Set} of {@code Set}s grouping the 
      *                                  {@code CuratorAnnotationBean}s related to  
      *                                  intersect classes used in logical constraints 
      *                                  of a class. 
      * @return                          A {@code Set} of {@code CuratorAnnotationBean}s, 
-     *                                  with a size between 1 and 2, providing inferred 
+     *                                  with a size between 0 and 2, providing inferred 
      *                                  negation status, confidences, and supporting texts.
-     * @throws IllegalArgumentException If {@code annotsPerIntersectClass} did not allow 
-     *                                  to infer any annotation.
      */
-    private Set<CuratorAnnotationBean> getConfAndSupportTextFromLogicalConstraints(
+    private Set<CuratorAnnotationBean> getInferredInfoFromLogicalConstraints(
             Set<Set<CuratorAnnotationBean>> annotsPerIntersectClass) 
                     throws IllegalArgumentException {
         log.entry(annotsPerIntersectClass);
         
         Set<CuratorAnnotationBean> posAndNegAnnot = new HashSet<CuratorAnnotationBean>();
+        OntologyUtils taxUtils = new OntologyUtils(taxOntWrapper);
         //To determine the confidence level: for each intersect class, 
         //we determine the best confidence level (either from positive, or from negative annots); 
         boolean positiveTested = false;
@@ -3452,6 +3452,12 @@ public class SimilarityAnnotation {
             } else if (!negativeTested) {
                 log.trace("Trying to create inferred negative annotation");
                 negativeTested = true;
+                //we create negative annotations only if we have a negative annotation 
+                //to the taxon that is the leaf of the taxa used in the grouped annotations. 
+                //to iterate the interations only once, we store all taxa used in the annotations, 
+                //and all taxa used in negative annotations, to compare them afterwards.
+                Set<OWLClass> allTaxa = new HashSet<OWLClass>();
+                Set<OWLClass> negativeTaxa = new HashSet<OWLClass>();
                 for (Set<CuratorAnnotationBean> relatedAnnots: annotsPerIntersectClass) {
                     Set<OWLClass> confs = new HashSet<OWLClass>();
                     //we will used positive annotations for supporting text only 
@@ -3459,8 +3465,17 @@ public class SimilarityAnnotation {
                     Set<CuratorAnnotationBean> posAnnots = new HashSet<CuratorAnnotationBean>();
                     Set<CuratorAnnotationBean> negAnnots = new HashSet<CuratorAnnotationBean>();
                     for (CuratorAnnotationBean annot: relatedAnnots) {
+                        OWLClass taxCls = taxOntWrapper.getOWLClassByIdentifier(
+                                OntologyUtils.getTaxOntologyId(annot.getNcbiTaxonId()), true);
+                        //it should already have been checked that all taxa are valid, 
+                        //so we only use an assert here.
+                        assert taxCls != null;
+                        allTaxa.add(taxCls);
+                        
                         if (annot.isNegated()) {
-                            //and we consider only confidence of negative annotations 
+                            negativeTaxa.add(taxCls);
+                            
+                            //we consider only confidence of negative annotations 
                             //to compute the confidence level of the inferred annotation
                             confs.add(cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
                                     annot.getCioId().trim()));
@@ -3484,6 +3499,21 @@ public class SimilarityAnnotation {
                     log.trace("No related negative annotations.");
                     continue posNegTest;
                 }
+                //check that we have at least one negative annotation to the most recent 
+                //taxon used in annotations, we do not use negative annotations inferrence 
+                //from higher taxon (otherwise, we would say, e.g., that prostate epithelium 
+                //is not homologous in mammalia, because we have an annotation saying 
+                //that the epithelium is not homologous accros metazoa)
+                taxUtils.retainLeafClasses(allTaxa, null);
+                //all taxa provided should be related, so we should have only one leaf taxon
+                assert allTaxa.size() == 1;
+                allTaxa.removeAll(negativeTaxa);
+                if (!allTaxa.isEmpty()) {
+                    log.trace("No negative annotation to the most recent taxon of the group of annotations");
+                    bestConfsPerIntersectClass.clear();
+                    continue posNegTest;
+                }
+                
                 log.trace("Negative annotation will be created");
             }
             
@@ -3544,12 +3574,6 @@ public class SimilarityAnnotation {
                 posAndNegAnnot.add(newAnnot);
             }
         }
-        
-        if (posAndNegAnnot.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException("The annotations provided "
-                    + "did not allow to generate neither a positive nor a negative annotation"));
-        }
-        assert posAndNegAnnot.size() == 1 || posAndNegAnnot.size() == 2;
         
         return log.exit(posAndNegAnnot);
     }

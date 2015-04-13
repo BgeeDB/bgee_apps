@@ -1586,7 +1586,11 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")));
         
         //here, annotation positive AND negative for a given taxon level (32524, amniota), 
-        //negative at higher taxon level (7742, vertebrata and 7776, Gnathostomata). 
+        //negative at higher taxon level (7742, vertebrata).  The NOT annotation to 
+        //7776, Gnathostomata should not be generated (regression test): a NOT annotation 
+        //should be inferred only if there is a NOT in the taxon considered, not in higher taxa 
+        //(we have only positive annotations to Gnathostomata, so there will be no NOT annotations 
+        //inferred).
         //For each intersecting class, 
         //the best confidence should be kept; but for positive annotations, the lowest 
         //confidence over the best confidences of intersecting classes will be kept; 
@@ -1781,15 +1785,17 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 + " - " + SimilarityAnnotationUtils.ENTITY_COL_NAME 
                     + ": ID:22, negated: true, taxon ID: 7742", 
                 SimilarityAnnotation.AUTOMATIC_ASSIGNED_BY, null, null));
-        expectedAnnots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:23"), 
-                7776, true, SimilarityAnnotation.AUTOMATIC_ASSERTION_ECO, "CIO:0000004", 
-                null, null, 
-                constraintsSupportTextStart 
-                + SimilarityAnnotationUtils.ENTITY_COL_NAME 
-                    + ": ID:21, negated: true, taxon ID: 7711"
-                + " - " + SimilarityAnnotationUtils.ENTITY_COL_NAME 
-                    + ": ID:22, negated: false, taxon ID: 7776", 
-                SimilarityAnnotation.AUTOMATIC_ASSIGNED_BY, null, null));
+        //regression test: actually, the following commented annotations should not be generated, 
+        //as there exist only positive annotations to Gnathostomata
+//        expectedAnnots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:23"), 
+//                7776, true, SimilarityAnnotation.AUTOMATIC_ASSERTION_ECO, "CIO:0000004", 
+//                null, null, 
+//                constraintsSupportTextStart 
+//                + SimilarityAnnotationUtils.ENTITY_COL_NAME 
+//                    + ": ID:21, negated: true, taxon ID: 7711"
+//                + " - " + SimilarityAnnotationUtils.ENTITY_COL_NAME 
+//                    + ": ID:22, negated: false, taxon ID: 7776", 
+//                SimilarityAnnotation.AUTOMATIC_ASSIGNED_BY, null, null));
 
         expectedAnnots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:26"), 
                 7776, true, SimilarityAnnotation.AUTOMATIC_ASSERTION_ECO, "CIO:0000003", 

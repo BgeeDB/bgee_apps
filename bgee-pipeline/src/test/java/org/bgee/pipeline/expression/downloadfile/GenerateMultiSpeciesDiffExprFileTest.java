@@ -40,7 +40,7 @@ import org.bgee.model.dao.mysql.ontologycommon.MySQLCIOStatementDAO.MySQLCIOStat
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO.MySQLSpeciesTOResultSet;
 import org.bgee.model.dao.mysql.species.MySQLTaxonDAO.MySQLTaxonTOResultSet;
 import org.bgee.pipeline.TestAncestor;
-import org.bgee.pipeline.expression.downloadfile.GenerateMultiSpeciesDiffExprFile.MultiSpDiffExprFileType;
+import org.bgee.pipeline.expression.downloadfile.GenerateMultiSpeciesDiffExprFile.MultiSpeciesDiffExprFileType;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -180,9 +180,9 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
         Map<String,Set<String>> providedGroups = new HashMap<String,Set<String>>();
         providedGroups.put("Group 1", speciesIds1);
         
-        Set<MultiSpDiffExprFileType> fileTypes = new HashSet<MultiSpDiffExprFileType>(Arrays.asList(
-                MultiSpDiffExprFileType.MULTI_DIFF_EXPR_ANATOMY_SIMPLE,
-                MultiSpDiffExprFileType.MULTI_DIFF_EXPR_ANATOMY_COMPLETE));
+        Set<MultiSpeciesDiffExprFileType> fileTypes = new HashSet<MultiSpeciesDiffExprFileType>(
+                Arrays.asList(MultiSpeciesDiffExprFileType.MULTI_DIFF_EXPR_ANATOMY_SIMPLE,
+                MultiSpeciesDiffExprFileType.MULTI_DIFF_EXPR_ANATOMY_COMPLETE));
                 
         GenerateMultiSpeciesDiffExprFile generator =  new GenerateMultiSpeciesDiffExprFile(
                 mockManager, providedGroups, fileTypes, testFolder.newFolder("tmpFolder").getPath());

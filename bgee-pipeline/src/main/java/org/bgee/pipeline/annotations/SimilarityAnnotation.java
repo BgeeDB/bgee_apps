@@ -2049,10 +2049,16 @@ public class SimilarityAnnotation {
                     this.incorrectFormat.add(annot);
                     allGood = false;
                 }
+                if (!cioWrapper.isStronglyConflicting(cls) && 
+                        !cioWrapper.hasLeafConfidenceLevel(cls)) {
+                    log.error("The CIO term used does not provide any confidence level, nor it is a strongly conflciting statement, in annotation {}", 
+                            confId, annot);
+                    this.incorrectFormat.add(annot);
+                    allGood = false;
+                }
                 if (annot instanceof CuratorAnnotationBean || annot instanceof RawAnnotationBean) {
-                    if (!cioWrapper.getEvidenceConcordance(cls).equals(
-                            cioGraphWrapper.getOWLClassByIdentifier(
-                                    CIOWrapper.SINGLE_EVIDENCE_CONCORDANCE_ID))) {
+                    if (!cioWrapper.isSingleEvidenceConcordance(
+                            cioWrapper.getEvidenceConcordance(cls))) {
                         log.error("A RAW annotation uses a confidence statement not from the single evidence branch {} in annotation {}", 
                                 confId, annot);
                         this.incorrectFormat.add(annot);

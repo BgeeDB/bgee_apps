@@ -1104,6 +1104,43 @@ public class CIOWrapper {
                 this.confidenceLevel));
     }
     /**
+     * Determine whether the confidence level associated to {@code cls} is usable 
+     * for annotation. It means that the confidence level associated to 
+     * {@code cls} is not the 'confidence level' term itself, but one of its subclass, 
+     * usable for annotation (for instance 'high confidence').
+     * 
+     * @param cls   An {@code OWLClass} for which we want to check the confidence level.
+     * @return      {@code true} if the confidence level of {@code cls} is a leaf of 
+     *              the 'confidence level' branch, {@code false} otherwise.
+     */
+    public boolean hasLeafConfidenceLevel(OWLClass cls) {
+        log.entry(cls);
+        
+        if (this.getConfidenceLevels().contains(this.getConfidenceLevel(cls))) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    /**
+     * Determine whether {@code cls} is one of the 'strongly conflicting' terms. 
+     * This means that the method {@link #getConfidenceLevel(OWLClass)} would return 
+     * {@code null} for {@code cls} (strongly conflicting statements are not associated to 
+     * any confidence level).
+     * 
+     * @param cls   An {@code OWLClass} for which we want to determine whether it is 
+     *              a strongly conflicting statement.
+     * @return      {@code true} if {@code cls} is a strongly conflicting statement, 
+     *              {@code false} otherwise.
+     */
+    public boolean isStronglyConflicting(OWLClass cls) {
+        log.entry(cls);
+        if (STRONGLY_CONFLICTING_CONCORDANCE_ID.equals(
+                this.getOWLGraphWrapper().getIdentifier(this.getEvidenceConcordance(cls)))) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    /**
      * Returns the 'evidence concordance' associated to {@code cls}. The returned {@code OWLClass} 
      * is associated to {@code cls} through the relation 'has evidence concordance' 
      * (see {@link #HAS_EVIDENCE_CONCORDANCE_ID}). 
@@ -1373,7 +1410,6 @@ public class CIOWrapper {
         log.entry(cioTerms, bestTerm);
     
         //check pre-conditions
-        Set<OWLClass> validConfLevels = this.getConfidenceLevels();
         if (cioTerms.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("The provided Collection "
                     + "of OWLClasses to be ordered based on confidence levels is empty."));
@@ -1385,7 +1421,7 @@ public class CIOWrapper {
                 throw log.throwing(new IllegalArgumentException(cls + " is not a confidence "
                         + "information statement, cannot identify best confidence term."));
             }
-            if (!validConfLevels.contains(this.getConfidenceLevel(cls))) {
+            if (!this.hasLeafConfidenceLevel(cls)) {
                 throw log.throwing(new IllegalArgumentException(cls
                         + " is not associated to a valid confidence level, cannot be ordered."));
             }

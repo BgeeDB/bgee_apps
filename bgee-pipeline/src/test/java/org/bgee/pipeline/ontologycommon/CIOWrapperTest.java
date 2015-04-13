@@ -135,6 +135,74 @@ public class CIOWrapperTest {
         
         log.exit();
     }
+    
+    /**
+     * Test {@link CIOWrapper#hasLeafConfidenceLevel(OWLClass)}.
+     */
+    @Test
+    public void testHasLeafConfidenceLevel() {
+        assertEquals("Incorrect value returned by hasLeafConfidenceLevel", false, 
+                cioWrapper.hasLeafConfidenceLevel(
+                        graphWrapper.getOWLClassByIdentifier("CIO:0000000")));
+        assertEquals("Incorrect value returned by hasLeafConfidenceLevel", false, 
+                cioWrapper.hasLeafConfidenceLevel(
+                        graphWrapper.getOWLClassByIdentifier("CIO:0000001")));
+        assertEquals("Incorrect value returned by hasLeafConfidenceLevel", false, 
+                cioWrapper.hasLeafConfidenceLevel(
+                        graphWrapper.getOWLClassByIdentifier("CIO:0000002")));
+        assertEquals("Incorrect value returned by hasLeafConfidenceLevel", true, 
+                cioWrapper.hasLeafConfidenceLevel(
+                        graphWrapper.getOWLClassByIdentifier("CIO:0000003")));
+        assertEquals("Incorrect value returned by hasLeafConfidenceLevel", true, 
+                cioWrapper.hasLeafConfidenceLevel(
+                        graphWrapper.getOWLClassByIdentifier("CIO:0000004")));
+        assertEquals("Incorrect value returned by hasLeafConfidenceLevel", true, 
+                cioWrapper.hasLeafConfidenceLevel(
+                        graphWrapper.getOWLClassByIdentifier("CIO:0000005")));
+        assertEquals("Incorrect value returned by hasLeafConfidenceLevel", false, 
+                cioWrapper.hasLeafConfidenceLevel(
+                        graphWrapper.getOWLClassByIdentifier("CIO:0000006")));
+        assertEquals("Incorrect value returned by hasLeafConfidenceLevel", true, 
+                cioWrapper.hasLeafConfidenceLevel(
+                        graphWrapper.getOWLClassByIdentifier("CIO:0000012")));
+        assertEquals("Incorrect value returned by hasLeafConfidenceLevel", true, 
+                cioWrapper.hasLeafConfidenceLevel(
+                        graphWrapper.getOWLClassByIdentifier("CIO:0000018")));
+        assertEquals("Incorrect value returned by hasLeafConfidenceLevel", true, 
+                cioWrapper.hasLeafConfidenceLevel(
+                        graphWrapper.getOWLClassByIdentifier("CIO:0000024")));
+        assertEquals("Incorrect value returned by hasLeafConfidenceLevel", true, 
+                cioWrapper.hasLeafConfidenceLevel(
+                        graphWrapper.getOWLClassByIdentifier("CIO:0000027")));
+    }
+    
+    /**
+     * Test {@link CIOWrapper#isStronglyConflicting(OWLClass)}.
+     */
+    @Test
+    public void testIsStronglyConflicting() {
+        assertEquals("Incorrect value returned by isStronglyConflicting", false, 
+                cioWrapper.isStronglyConflicting(
+                        graphWrapper.getOWLClassByIdentifier("CIO:0000000")));
+        assertEquals("Incorrect value returned by isStronglyConflicting", false, 
+                cioWrapper.isStronglyConflicting(
+                        graphWrapper.getOWLClassByIdentifier("CIO:0000003")));
+        assertEquals("Incorrect value returned by isStronglyConflicting", false, 
+                cioWrapper.isStronglyConflicting(
+                        graphWrapper.getOWLClassByIdentifier("CIO:0000000")));
+        assertEquals("Incorrect value returned by isStronglyConflicting", false, 
+                cioWrapper.isStronglyConflicting(
+                        graphWrapper.getOWLClassByIdentifier("CIO:0000013")));
+        assertEquals("Incorrect value returned by isStronglyConflicting", false, 
+                cioWrapper.isStronglyConflicting(
+                        graphWrapper.getOWLClassByIdentifier("CIO:0000008")));
+        assertEquals("Incorrect value returned by isStronglyConflicting", true, 
+                cioWrapper.isStronglyConflicting(
+                        graphWrapper.getOWLClassByIdentifier("CIO:0000010")));
+        assertEquals("Incorrect value returned by isStronglyConflicting", true, 
+                cioWrapper.isStronglyConflicting(
+                        graphWrapper.getOWLClassByIdentifier("CIO:0000020")));
+    }
 
     /**
      * Test method {@link CIOWrapper#getEvidenceConcordance(OWLClass)}.

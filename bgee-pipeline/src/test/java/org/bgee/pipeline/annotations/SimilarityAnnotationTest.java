@@ -1667,6 +1667,22 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 7776, false, "ECO:0000033", "CIO:0000003", 
                         "DOI:10.1073/pnas.032658599", "ref title 1", 
                         "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")));
+
+        //annotations that SHOULD NOT link more than 1 anatomical entity, 
+        //this is a regression test, e.g., 
+        //left lobe of thyroid gland = (lobe of thyroid gland AND in_left_side_of some thyroid gland) 
+        //right lobe of thyroid gland = (lobe of thyroid gland AND in_right_side_of some thyroid gland) 
+        //=> we should not generate an annotation 
+        //left lobe of thyroid gland|right lobe of thyroid gland
+        //Vertebrata
+        annots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:27"), 
+                7742, false, "ECO:0000033", "CIO:0000004", 
+                        "DOI:10.1073/pnas.032658599", "ref title 1", 
+                        "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")));
+        annots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:28"), 
+                7742, false, "ECO:0000033", "CIO:0000003", 
+                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")));
         
         
         Set<CuratorAnnotationBean> expectedAnnots = new HashSet<CuratorAnnotationBean>();
@@ -1810,6 +1826,25 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 + " - " + SimilarityAnnotationUtils.ENTITY_COL_NAME 
                     + ": ID:14" + Utils.VALUE_SEPARATORS.get(0) + "ID:15, "
                             + "negated: false, taxon ID: 7742", 
+                SimilarityAnnotation.AUTOMATIC_ASSIGNED_BY, null, null));
+        
+        expectedAnnots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:29"), 
+                7742, false, SimilarityAnnotation.AUTOMATIC_ASSERTION_ECO, "CIO:0000004", 
+                null, null, 
+                constraintsSupportTextStart 
+                + SimilarityAnnotationUtils.ENTITY_COL_NAME 
+                    + ": ID:27, negated: false, taxon ID: 7742"
+                + " - " + SimilarityAnnotationUtils.ENTITY_COL_NAME 
+                    + ": ID:28, negated: false, taxon ID: 7742", 
+                SimilarityAnnotation.AUTOMATIC_ASSIGNED_BY, null, null));
+        expectedAnnots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:30"), 
+                7742, false, SimilarityAnnotation.AUTOMATIC_ASSERTION_ECO, "CIO:0000004", 
+                null, null, 
+                constraintsSupportTextStart 
+                + SimilarityAnnotationUtils.ENTITY_COL_NAME 
+                    + ": ID:27, negated: false, taxon ID: 7742"
+                + " - " + SimilarityAnnotationUtils.ENTITY_COL_NAME 
+                    + ": ID:28, negated: false, taxon ID: 7742", 
                 SimilarityAnnotation.AUTOMATIC_ASSIGNED_BY, null, null));
         
         assertEquals("Incorrect annotations inferred", expectedAnnots, 

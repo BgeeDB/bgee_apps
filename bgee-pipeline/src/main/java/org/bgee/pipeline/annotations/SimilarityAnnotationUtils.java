@@ -2130,7 +2130,7 @@ public class SimilarityAnnotationUtils {
                 switch (header[i]) {
                 // *** Attributes specific to RawAnnotationBean ***
                     case DATE_COL_NAME: 
-                        processors[i] = new ParseDate(DATE_FORMAT);
+                        processors[i] = new Optional(new ParseDate(DATE_FORMAT));
                         break; 
                     case ECO_COL_NAME: 
                     case ECO_NAME_COL_NAME: 

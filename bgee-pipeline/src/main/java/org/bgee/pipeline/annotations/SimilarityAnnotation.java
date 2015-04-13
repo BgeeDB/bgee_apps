@@ -2515,7 +2515,7 @@ public class SimilarityAnnotation {
         
         //first, we filter the annotations.
         //we discard annotations with a REJECTED confidence statement
-        Set<CuratorAnnotationBean> filteredAnnots = this.filterAnnotations(annots);
+        Set<CuratorAnnotationBean> filteredAnnots = this.filterRejectedAnnotations(annots);
         
         log.info("Inferring annotations based on transformation_of relations...");
         //first, we store HOM ID - Uberon IDs to be able to determine when an annotation 
@@ -2625,7 +2625,7 @@ public class SimilarityAnnotation {
      *                                      or not found in the CIO ontology provided 
      *                                      at instantiation.
      */
-    private <T extends AnnotationBean> Set<T> filterAnnotations(Collection<T> annots) 
+    private <T extends AnnotationBean> Set<T> filterRejectedAnnotations(Collection<T> annots) 
         throws IllegalArgumentException{
         log.entry(annots);
         
@@ -2858,7 +2858,7 @@ public class SimilarityAnnotation {
             }
         }
         //we discard annotations with a REJECTED confidence statement
-        filteredAnnots = this.filterAnnotations(filteredAnnots);
+        filteredAnnots = this.filterRejectedAnnotations(filteredAnnots);
         
         //we create a Map where keys are Uberon IDs used in annotations, 
         //the associated values being the annotations using these Uberon IDs; 
@@ -2918,6 +2918,73 @@ public class SimilarityAnnotation {
                     continue taxId;
                 }
                 
+                //this new annotation will be used in any case, at least to be used as sead 
+                //for the loadEntityIdsToAnnotsPerIntersectClass method. But maybe that, 
+                //even if we used it as seed, we won't integrate it into the inferred 
+                //annotations. Considered for instance the following example: 
+                //skin of pes = (zone of skin AND part_of pes)
+                //there are two annotations related to pes: 
+                //1) pes|pelvic fin radial bone in Sarcopterygii, and 
+                //2) pes in tetrapoda.
+                //This leads to generate two annotations for skin of pes: one in tetrapoda, 
+                //and one in Sarcopterygii; it is definitely weird to speak about 
+                //a skin of pes on Sarcopterygii. So, if for an intersect class, 
+                //there are both annotations with single-entity and multiple-entities, 
+                //only the single-entity annotation should be taken into account.
+                //
+                //So, for each itersect class, we check whether we have multiple-entities 
+                //annotations used, and whether we have a single-entity annotations 
+                //available to a child taxon; in that case, we will discard the new annotation.
+                //only positive annotations are discared that way (because negative annotations 
+                //already have a taxon-based filtering)
+                boolean toDiscard = false;
+                for (Set<CuratorAnnotationBean> groupedAnnots: 
+                    this.getAllAnnotsToIntersectClasses(entityIdToAnnots, 
+                            intersectEntry.getValue())) {
+                    //taxon IDs used in multiple-entities positive annotations
+                    Set<Integer> multEntTaxa = new HashSet<Integer>();
+                    //taxon IDs used in single-entity positive annotations
+                    Set<Integer> singleEntTaxa = new HashSet<Integer>();
+                    for (CuratorAnnotationBean annotFromGroup: groupedAnnots) {
+                        assert annotFromGroup.getEntityIds().size() > 0;
+                        if (annotFromGroup.isNegated()) {
+                            continue;
+                        }
+                        if (annotFromGroup.getEntityIds().size() > 1) {
+                            multEntTaxa.add(annotFromGroup.getNcbiTaxonId());
+                        } else {
+                            singleEntTaxa.add(annotFromGroup.getNcbiTaxonId());
+                        }
+                    }
+                    //store IDs of taxon equal to taxId or to any of its ancestor, used 
+                    //in single-entity positive annotations
+                    Set<Integer> singleEntToSelfOrAncestor = new HashSet<Integer>(singleEntTaxa);
+                    singleEntToSelfOrAncestor.retainAll(taxToSelfAndAncestors.get(taxId));
+                    //store IDs of taxon equal to taxId or to any of its ancestor, used 
+                    //in multiple-entity positive annotations
+                    Set<Integer> multEntToSelfOrAncestor = new HashSet<Integer>(multEntTaxa);
+                    multEntToSelfOrAncestor.retainAll(taxToSelfAndAncestors.get(taxId));
+                    //store IDs of taxa children of taxId, used in single-entity positive annotations
+                    Set<Integer> singleEntToChild = new HashSet<Integer>(singleEntTaxa);
+                    for (int singleEntTaxon: singleEntTaxa) {
+                        if (singleEntTaxon != taxId && 
+                                taxToSelfAndAncestors.get(singleEntTaxon).contains(taxId)) {
+                            singleEntToChild.add(singleEntTaxon);
+                        }
+                    }
+                    //if we have no single-entity positive annotation for taxId or its ancestors, 
+                    //and we're using a multiple-entities positive annotation to taxId or its ancestors, 
+                    //while there exist single-entity positive annotation to children of taxId: 
+                    //do not store annotation (but use it as seed for further inferrences)
+                    if (singleEntToSelfOrAncestor.isEmpty() && !multEntToSelfOrAncestor.isEmpty() && 
+                            !singleEntToChild.isEmpty()) {
+                        log.trace("New annotation for class {} and taxon {} will be used to infer multiple-entities annotations, but will not be added: {}", 
+                                intersectEntry.getKey(), taxId);
+                        toDiscard = true;
+                        break;
+                    }
+                }
+                
                 
                 //now we try to find classes with same intersect annotations, to be able 
                 //to recover, e.g.,  if skin is homologous, and limb is homologous to fin, 
@@ -2955,6 +3022,10 @@ public class SimilarityAnnotation {
                     for (CuratorAnnotationBean inferredInfo: 
                         this.getInferredInfoFromLogicalConstraints(
                                 mapping.getValue())) {
+                        if (!inferredInfo.isNegated() && toDiscard && 
+                                entityIds.equals(Arrays.asList(intersectEntry.getKey()))) {
+                            continue;
+                        }
                         CuratorAnnotationBean newAnnot = 
                                 new CuratorAnnotationBean(baseInferredAnnot);
                         newAnnot.setEntityIds(entityIds);
@@ -2970,7 +3041,7 @@ public class SimilarityAnnotation {
         }
         
         //now, we filter annotations for which a same annotation with more entities exists
-        this.filterRedundantAnnotations(inferredAnnots);
+        this.filterInferredAnnotations(inferredAnnots);
         
 
         log.info("Done inferring annotations based on logical constraints, {} annotations inferred.", 
@@ -2979,9 +3050,10 @@ public class SimilarityAnnotation {
     }
     
     /**
-     * Remove redundant annotations from {@code annots}. This method removes 
+     * Filter annotations from {@code annots}. This method removes 
      * annotations for which it exist an annotation with same HOM ID, taxon ID, 
      * negation status, CIO ID, supporting text, that includes all its entity IDs and more.
+     * <p>
      * {@code annots} will be modified as a result of the call to this method 
      * (optional operation).
      * 
@@ -2989,9 +3061,9 @@ public class SimilarityAnnotation {
      *                  for redundant annotations. This {@code Set} can be modified 
      *                  as a result of the call to this method.
      */
-    private void filterRedundantAnnotations(Set<CuratorAnnotationBean> annots) {
+    private void filterInferredAnnotations(Set<CuratorAnnotationBean> annots) {
         log.entry(annots);
-        log.trace("Removing redundant annotations...");
+        log.trace("Filtering inferred annotations...");
         
         Set<CuratorAnnotationBean> toRemove = new HashSet<CuratorAnnotationBean>();
         annot: for (CuratorAnnotationBean annot: annots) {
@@ -3015,7 +3087,7 @@ public class SimilarityAnnotation {
         }
         annots.removeAll(toRemove);
         
-        log.trace("Done removing redundant annotations, {} annotations removed", 
+        log.trace("Done filtering inferred annotations, {} annotations removed", 
                 toRemove.size());
         log.exit();
     }
@@ -3251,6 +3323,50 @@ public class SimilarityAnnotation {
         //if we couldn't find valid annotations for each intersect class, we should 
         //already have returned null in the previous loop.
         assert annotsPerIntersectClass.size() == intersectClassIds.size();
+        
+        return log.exit(annotsPerIntersectClass);
+    }
+    
+    /**
+     * Search for annotations to each provided intersect class. 
+     * Annotations are grouped per intersecting class. 
+     * 
+     * @param entityIdToAnnots      A {@code Map} where keys are IDs of annotated entities, 
+     *                              the associated value being a {@code Set} storing 
+     *                              the {@code CuratorAnnotationBean}s using this entity 
+     *                              (see {@link #getEntityToAnnotsMapping(Collection)}).
+     * @param intersectClassIds     A {@code Set} of {@code String}s that are the IDs of entities 
+     *                              with annotations, that are used to define logical constraints 
+     *                              of a class through IntersectionOf class expression 
+     *                              (see {@link #getIntersectionOfMapping(Map)}).
+     * @return                      A {@code Set} of {@code Set}s, where each {@code Set} 
+     *                              groups the valid annotations related to one 
+     *                              of the intersect classes. So there will be as many 
+     *                              {@code Set}s as intersect classes. 
+     */
+    private Set<Set<CuratorAnnotationBean>> getAllAnnotsToIntersectClasses(
+            Map<String, Set<CuratorAnnotationBean>> entityIdToAnnots, 
+            Set<String> intersectClassIds) {
+        log.entry(entityIdToAnnots, intersectClassIds);
+        
+        Set<Set<CuratorAnnotationBean>> annotsPerIntersectClass = 
+                new HashSet<Set<CuratorAnnotationBean>>();
+        
+        for (String intersectClsId: intersectClassIds) {
+            intersectClsId = intersectClsId.trim();
+            log.trace("Checking annotations available from intersect class {} in all taxa", 
+                    intersectClsId);
+            
+            Set<CuratorAnnotationBean> relatedAnnots = new HashSet<CuratorAnnotationBean>();
+            for (CuratorAnnotationBean relatedAnnot: entityIdToAnnots.get(intersectClsId)) {
+                log.trace("Annotation available: {}", relatedAnnot);
+                relatedAnnots.add(relatedAnnot);
+            }
+
+            annotsPerIntersectClass.add(relatedAnnots);
+        }
+        log.trace("Annotations per intersect classes: {}", annotsPerIntersectClass);
+        assert intersectClassIds.size() == annotsPerIntersectClass.size();
         
         return log.exit(annotsPerIntersectClass);
     }
@@ -3604,7 +3720,7 @@ public class SimilarityAnnotation {
         this.checkAnnotations(annots, false);
         //make sure there are no duplicates and filter annotations with a REJECTED 
         //confidence statement.
-        Set<RawAnnotationBean> filteredAnnots = this.filterAnnotations(annots);
+        Set<RawAnnotationBean> filteredAnnots = this.filterRejectedAnnotations(annots);
         
         
         //in order to identify related annotations, we will use a Map where keys 

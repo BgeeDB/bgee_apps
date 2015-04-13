@@ -186,6 +186,28 @@ intersection_of: ID:27
 intersection_of: ID:28
 comment: used for regression test
 
+[Term]
+id: ID:31
+name: uberon 31
+comment: used for another regression test
+
+[Term]
+id: ID:32
+name: uberon 32
+comment: used for another regression test
+
+[Term]
+id: ID:33
+name: uberon 33
+comment: used for another regression test
+
+[Term]
+id: ID:34
+name: uberon 34
+intersection_of: ID:31
+intersection_of: ID:33
+comment: used for another regression test
+
 [Typedef]
 id: RO:0002324
 name: developmentally related to

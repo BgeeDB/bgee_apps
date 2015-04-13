@@ -1688,6 +1688,32 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 "DOI:10.1073/pnas.032658599", "ref title 1", 
                 "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")));
         
+        //regression test for following case: 
+        //skin of pes = (zone of skin AND part_of pes)
+        //there are two annotations related to pes: 
+        //1) pes|pelvic fin radial bone in Sarcopterygii, and 
+        //2) pes in tetrapoda.
+        //This leads to generate two annotations for skin of pes: one in tetrapoda, 
+        //and one in Sarcopterygii; it is definitely weird to speak about 
+        //a skin of pes on Sarcopterygii. So, if for an intersect class, 
+        //there are both annotations with single-entity and multiple-entities, 
+        //only the single-entity annotation should be taken into account.
+        //Chordata
+        annots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:31", "ID:32"), 
+                7711, false, "ECO:0000033", "CIO:0000003", 
+                        "DOI:10.1073/pnas.032658599", "ref title 1", 
+                        "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")));
+        //Gnathostomata
+        annots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:31"), 
+                7776, false, "ECO:0000033", "CIO:0000004", 
+                        "DOI:10.1073/pnas.032658599", "ref title 1", 
+                        "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")));
+        //other intersect class, we annotate it to whatever higher taxon, here, metazoa
+        annots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:33"), 
+                33208, false, "ECO:0000033", "CIO:0000004", 
+                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21")));
+        
         
         Set<CuratorAnnotationBean> expectedAnnots = new HashSet<CuratorAnnotationBean>();
         
@@ -1834,6 +1860,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                             + "negated: false, taxon ID: 7742", 
                 SimilarityAnnotation.AUTOMATIC_ASSIGNED_BY, null, null));
         
+        //regression test
         expectedAnnots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:29"), 
                 7742, false, SimilarityAnnotation.AUTOMATIC_ASSERTION_ECO, "CIO:0000004", 
                 null, null, 
@@ -1851,6 +1878,17 @@ public class SimilarityAnnotationTest extends TestAncestor {
                     + ": ID:27, negated: false, taxon ID: 7742"
                 + " - " + SimilarityAnnotationUtils.ENTITY_COL_NAME 
                     + ": ID:28, negated: false, taxon ID: 7742", 
+                SimilarityAnnotation.AUTOMATIC_ASSIGNED_BY, null, null));
+        
+        //another regression test
+        expectedAnnots.add(new CuratorAnnotationBean("HOM:0000007", Arrays.asList("ID:34"), 
+                7776, false, SimilarityAnnotation.AUTOMATIC_ASSERTION_ECO, "CIO:0000004", 
+                null, null, 
+                constraintsSupportTextStart 
+                + SimilarityAnnotationUtils.ENTITY_COL_NAME 
+                    + ": ID:31, negated: false, taxon ID: 7776"
+                + " - " + SimilarityAnnotationUtils.ENTITY_COL_NAME 
+                    + ": ID:33, negated: false, taxon ID: 33208", 
                 SimilarityAnnotation.AUTOMATIC_ASSIGNED_BY, null, null));
         
         assertEquals("Incorrect annotations inferred", expectedAnnots, 

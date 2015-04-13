@@ -124,7 +124,7 @@ public interface CIOStatementDAO extends DAO<CIOStatementDAO.Attribute> {
              * @throw IllegalArgumentException  If {@code representation} does not correspond 
              *                                  to any {@code ConfidenceLevel}.
              */
-            public static final ConfidenceLevel convertToOriginOfLine(String representation) {
+            public static final ConfidenceLevel convertToConfidenceLevel(String representation) {
                 log.entry(representation);
                 return log.exit(TransferObject.convert(ConfidenceLevel.class, representation));
             }
@@ -194,7 +194,8 @@ public interface CIOStatementDAO extends DAO<CIOStatementDAO.Attribute> {
              * @throw IllegalArgumentException  If {@code representation} does not correspond 
              *                                  to any {@code EvidenceConcordance}.
              */
-            public static final EvidenceConcordance convertToOriginOfLine(String representation) {
+            public static final EvidenceConcordance convertToEvidenceConcordance(
+                    String representation) {
                 log.entry(representation);
                 return log.exit(TransferObject.convert(EvidenceConcordance.class, representation));
             }
@@ -259,7 +260,8 @@ public interface CIOStatementDAO extends DAO<CIOStatementDAO.Attribute> {
              * @throw IllegalArgumentException  If {@code representation} does not correspond 
              *                                  to any {@code EvidenceTypeConcordance}.
              */
-            public static final EvidenceTypeConcordance convertToOriginOfLine(String representation) {
+            public static final EvidenceTypeConcordance convertToEvidenceTypeConcordance(
+                    String representation) {
                 log.entry(representation);
                 return log.exit(TransferObject.convert(EvidenceTypeConcordance.class, representation));
             }

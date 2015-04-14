@@ -10,6 +10,7 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLAnatEntityDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLTaxonConstraintDAO;
+import org.bgee.model.dao.mysql.anatdev.mapping.MySQLRawSimilarityAnnotationDAO;
 import org.bgee.model.dao.mysql.anatdev.mapping.MySQLStageGroupingDAO;
 import org.bgee.model.dao.mysql.anatdev.mapping.MySQLSummarySimilarityAnnotationDAO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
@@ -222,6 +223,13 @@ public abstract class MySQLDAOUser {
     protected MySQLSummarySimilarityAnnotationDAO getSummarySimilarityAnnotationDAO() {
         return (MySQLSummarySimilarityAnnotationDAO) 
                 this.manager.getSummarySimilarityAnnotationDAO();
+    }
+    /**
+     * @return  A {@code RawSimilarityAnnotationDAO}.
+     */
+    protected MySQLRawSimilarityAnnotationDAO getRawSimilarityAnnotationDAO() {
+        return (MySQLRawSimilarityAnnotationDAO) 
+                this.manager.getRawSimilarityAnnotationDAO();
     }
     /**
      * @return  A {@code SummarySimilarityAnnotationDAO}.

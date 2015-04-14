@@ -1094,6 +1094,20 @@ public abstract class DAOManager implements AutoCloseable
     }
 
     /**
+     * Get a new {@link org.bgee.model.dao.api.anatdev.mapping.RawSimilarityAnnotationDAO 
+     * RawSimilarityAnnotationDAO}, unless this {@code DAOManager} is already closed. 
+     * 
+     * @return  A new {@code RawSimilarityAnnotationDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see org.bgee.model.dao.api.anatdev.mapping.RawSimilarityAnnotationDAO RawSimilarityAnnotationDAO 
+     */
+    public final RawSimilarityAnnotationDAO getRawSimilarityAnnotationDAO() {
+        log.entry();
+        this.checkClosed();
+        return log.exit(this.getNewRawSimilarityAnnotationDAO());
+    }
+
+    /**
      * Get a new {@link org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO StageGroupingDAO}, 
      * unless this {@code DAOManager} is already closed. 
      * 

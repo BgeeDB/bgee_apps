@@ -12,7 +12,6 @@ import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLTaxonConstraintDAO;
 import org.bgee.model.dao.mysql.anatdev.mapping.MySQLStageGroupingDAO;
 import org.bgee.model.dao.mysql.anatdev.mapping.MySQLSummarySimilarityAnnotationDAO;
-import org.bgee.model.dao.mysql.anatdev.mapping.MySQLSummarySimilarityAnnotationDAO.MySQLSummarySimilarityAnnotationTOResultSet;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.expressiondata.MySQLDiffExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO;
@@ -24,6 +23,7 @@ import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneOntologyDAO;
 import org.bgee.model.dao.mysql.gene.MySQLHierarchicalGroupDAO;
 import org.bgee.model.dao.mysql.ontologycommon.MySQLCIOStatementDAO;
+import org.bgee.model.dao.mysql.ontologycommon.MySQLEvidenceOntologyDAO;
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO;
 import org.bgee.model.dao.mysql.species.MySQLTaxonDAO;
 
@@ -209,6 +209,12 @@ public abstract class MySQLDAOUser {
      */
     protected MySQLCIOStatementDAO getCIOStatementDAO() {
         return (MySQLCIOStatementDAO) this.manager.getCIOStatementDAO();
+    }
+    /**
+     * @return  A {@code MySQLEvidenceOntologyDAO}.
+     */
+    protected MySQLEvidenceOntologyDAO getEvidenceOntologyDAO() {
+        return (MySQLEvidenceOntologyDAO) this.manager.getEvidenceOntologyDAO();
     }
     /**
      * @return  A {@code SummarySimilarityAnnotationDAO}.

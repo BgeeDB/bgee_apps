@@ -34,6 +34,7 @@ import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneOntologyDAO;
 import org.bgee.model.dao.mysql.gene.MySQLHierarchicalGroupDAO;
 import org.bgee.model.dao.mysql.ontologycommon.MySQLCIOStatementDAO;
+import org.bgee.model.dao.mysql.ontologycommon.MySQLEvidenceOntologyDAO;
 import org.bgee.model.dao.mysql.ontologycommon.MySQLRelationDAO;
 import org.bgee.model.dao.mysql.source.MySQLSourceDAO;
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO;
@@ -170,6 +171,8 @@ public abstract class TestAncestor
         public final MySQLInSituSpotDAO mockInSituSpotDAO = mock(MySQLInSituSpotDAO.class);
         public final MySQLRNASeqResultDAO mockRNASeqResultDAO = mock(MySQLRNASeqResultDAO.class);
         public final MySQLCIOStatementDAO mockCIOStatementDAO = mock(MySQLCIOStatementDAO.class);
+        public final MySQLEvidenceOntologyDAO mockEvidenceOntologyDAO = 
+                mock(MySQLEvidenceOntologyDAO.class);
         public final MySQLSummarySimilarityAnnotationDAO mockSummarySimilarityAnnotationDAO = 
                 mock(MySQLSummarySimilarityAnnotationDAO.class);
         public final MySQLStageGroupingDAO mockStageGroupingDAO = mock(MySQLStageGroupingDAO.class);
@@ -272,6 +275,10 @@ public abstract class TestAncestor
         @Override
         protected MySQLCIOStatementDAO getNewCIOStatementDAO() {
             return this.mockCIOStatementDAO;
+        }
+        @Override
+        protected MySQLEvidenceOntologyDAO getNewEvidenceOntologyDAO() {
+            return this.mockEvidenceOntologyDAO;
         }
         @Override
         protected MySQLSummarySimilarityAnnotationDAO getNewSummarySimilarityAnnotationDAO() {

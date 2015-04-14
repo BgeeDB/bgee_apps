@@ -1,4 +1,4 @@
-package org.bgee.pipeline.ontologycommon;
+package org.bgee.pipeline.annotations;
 
 import static org.mockito.Mockito.verify;
 
@@ -14,29 +14,31 @@ import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTO.Conf
 import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTO.EvidenceConcordance;
 import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTO.EvidenceTypeConcordance;
 import org.bgee.pipeline.TestAncestor;
+import org.bgee.pipeline.annotations.InsertCIO;
+import org.bgee.pipeline.ontologycommon.OntologyUtils;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 
 /**
- * Tests for {@link InsertBasicOntology}.
+ * Tests for {@link InsertCIO}.
  * 
  * @author Frederic Bastian
  * @version Bgee 13 Apr. 2015
  * @since Bgee 13
  */
-public class InsertBasicOntologyTest extends TestAncestor {
+public class InsertCIOTest extends TestAncestor {
     /**
      * {@code Logger} of the class. 
      */
     private final static Logger log = 
-            LogManager.getLogger(InsertBasicOntologyTest.class.getName());
+            LogManager.getLogger(InsertCIOTest.class.getName());
     
     /**
      * Default Constructor. 
      */
-    public InsertBasicOntologyTest() {
+    public InsertCIOTest() {
         super();
     }
     @Override
@@ -45,7 +47,7 @@ public class InsertBasicOntologyTest extends TestAncestor {
     }
     
     /**
-     * Test {@link InsertBasicOntology#insertCIO(OWLOntology)}
+     * Test {@link InsertCIO#insert(OWLOntology)}
      */
     //warnings raised because of the mockito argument captor, discard
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -53,7 +55,7 @@ public class InsertBasicOntologyTest extends TestAncestor {
     public void shouldInsertCIO() throws OBOFormatParserException, 
     OWLOntologyCreationException, IOException {
         MockDAOManager mockManager = new MockDAOManager();
-        InsertBasicOntology insert = new InsertBasicOntology(mockManager);
+        InsertCIO insert = new InsertCIO(mockManager);
         
         Set<CIOStatementTO> expectedTOs = new HashSet<CIOStatementTO>();
         expectedTOs.add(new CIOStatementTO("CIO:0000003", 
@@ -107,7 +109,7 @@ public class InsertBasicOntologyTest extends TestAncestor {
                 true, ConfidenceLevel.HIGH_CONFIDENCE, EvidenceConcordance.WEAKLY_CONFLICTING, 
                 EvidenceTypeConcordance.DIFFERENT_TYPE));
 
-        insert.insertCIO(OntologyUtils.loadOntology(
+        insert.insert(OntologyUtils.loadOntology(
                 this.getClass().getResource("/ontologies/test_insert_cio.obo").getFile()));
         
         ArgumentCaptor<Set> cioTermTOsArg = ArgumentCaptor.forClass(Set.class);

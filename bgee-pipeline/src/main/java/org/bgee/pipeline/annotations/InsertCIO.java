@@ -1,4 +1,4 @@
-package org.bgee.pipeline.ontologycommon;
+package org.bgee.pipeline.annotations;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -12,26 +12,25 @@ import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTO.Evid
 import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTO.EvidenceTypeConcordance;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.pipeline.MySQLDAOUser;
+import org.bgee.pipeline.ontologycommon.CIOWrapper;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLOntology;
 
 /**
- * This class is used to insert into the database various ontologies, 
- * with no complex operations required (as opposed to, for instance 
- * {@link org.bgee.pipeline.uberon.InsertUberon InsertUberon}).
+ * Class responsible for inserting the CIO ontology.
  * 
  * @author Frederic Bastian
  * @version Bgee 13 Apr. 2015
  * @since Bgee 13
  */
-public class InsertBasicOntology extends MySQLDAOUser {
+public class InsertCIO extends MySQLDAOUser {
     
-    private final static Logger log = LogManager.getLogger(InsertBasicOntology.class.getName());
+    private final static Logger log = LogManager.getLogger(InsertCIO.class.getName());
     
     /**
      * Default constructor. 
      */
-    public InsertBasicOntology() {
+    public InsertCIO() {
         this(null);
     }
     /**
@@ -40,7 +39,7 @@ public class InsertBasicOntology extends MySQLDAOUser {
      * 
      * @param manager   The {@code MySQLDAOManager} to use.
      */
-    public InsertBasicOntology(MySQLDAOManager manager) {
+    public InsertCIO(MySQLDAOManager manager) {
         super(manager);
     }
     
@@ -51,7 +50,7 @@ public class InsertBasicOntology extends MySQLDAOUser {
      * @throws IllegalArgumentException If the provided CIO ontology was invalid and 
      *                                  did not allow to retrieve some required information.
      */
-    public void insertCIO(OWLOntology cioOnt) {
+    public void insert(OWLOntology cioOnt) {
         log.entry(cioOnt);
         log.info("Start inserting CIO into database...");
 

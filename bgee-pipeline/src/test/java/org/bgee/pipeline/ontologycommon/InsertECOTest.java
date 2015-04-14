@@ -1,4 +1,4 @@
-package org.bgee.pipeline.annotations;
+package org.bgee.pipeline.ontologycommon;
 
 import static org.mockito.Mockito.verify;
 
@@ -11,6 +11,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.TOComparator;
 import org.bgee.model.dao.api.ontologycommon.EvidenceOntologyDAO.ECOTermTO;
 import org.bgee.pipeline.TestAncestor;
+import org.bgee.pipeline.ontologycommon.InsertECO;
 import org.bgee.pipeline.ontologycommon.OntologyUtils;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;

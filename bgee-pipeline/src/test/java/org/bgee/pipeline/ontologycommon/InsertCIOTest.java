@@ -1,4 +1,4 @@
-package org.bgee.pipeline.annotations;
+package org.bgee.pipeline.ontologycommon;
 
 import static org.mockito.Mockito.verify;
 
@@ -14,7 +14,7 @@ import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTO.Conf
 import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTO.EvidenceConcordance;
 import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTO.EvidenceTypeConcordance;
 import org.bgee.pipeline.TestAncestor;
-import org.bgee.pipeline.annotations.InsertCIO;
+import org.bgee.pipeline.ontologycommon.InsertCIO;
 import org.bgee.pipeline.ontologycommon.OntologyUtils;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;

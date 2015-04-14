@@ -1,4 +1,4 @@
-package org.bgee.pipeline.annotations;
+package org.bgee.pipeline.ontologycommon;
 
 import java.util.HashSet;
 import java.util.Set;

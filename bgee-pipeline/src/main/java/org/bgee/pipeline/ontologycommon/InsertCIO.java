@@ -1,4 +1,4 @@
-package org.bgee.pipeline.annotations;
+package org.bgee.pipeline.ontologycommon;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -12,7 +12,6 @@ import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTO.Evid
 import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTO.EvidenceTypeConcordance;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.pipeline.MySQLDAOUser;
-import org.bgee.pipeline.ontologycommon.CIOWrapper;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLOntology;
 

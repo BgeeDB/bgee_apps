@@ -29,6 +29,7 @@ import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.mysql.anatdev.MySQLAnatEntityDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLTaxonConstraintDAO;
+import org.bgee.model.dao.mysql.anatdev.mapping.MySQLRawSimilarityAnnotationDAO;
 import org.bgee.model.dao.mysql.anatdev.mapping.MySQLStageGroupingDAO;
 import org.bgee.model.dao.mysql.anatdev.mapping.MySQLSummarySimilarityAnnotationDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLDiffExpressionCallDAO;
@@ -960,8 +961,8 @@ public class MySQLDAOManager extends DAOManager {
     //******************************************
     @Override
     protected MySQLSourceDAO getNewSourceDAO() {
-        // TODO Auto-generated method stub
-        return null;
+        throw log.throwing(new UnsupportedOperationException("Operation not yet implemented "
+                + "in MySQLDAOManager."));
     }
     @Override
     protected MySQLSpeciesDAO getNewSpeciesDAO() {
@@ -1052,6 +1053,11 @@ public class MySQLDAOManager extends DAOManager {
     protected MySQLSummarySimilarityAnnotationDAO getNewSummarySimilarityAnnotationDAO() {
         log.entry();
         return log.exit(new MySQLSummarySimilarityAnnotationDAO(this));
+    }
+    @Override
+    protected MySQLRawSimilarityAnnotationDAO getNewRawSimilarityAnnotationDAO() {
+        log.entry();
+        return log.exit(new MySQLRawSimilarityAnnotationDAO(this));
     }
     @Override
     protected MySQLStageGroupingDAO getNewStageGroupingDAO() {

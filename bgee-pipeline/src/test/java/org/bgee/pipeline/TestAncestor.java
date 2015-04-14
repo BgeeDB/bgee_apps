@@ -20,6 +20,7 @@ import org.bgee.model.dao.api.expressiondata.NoExpressionCallParams;
 import org.bgee.model.dao.mysql.anatdev.MySQLAnatEntityDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLTaxonConstraintDAO;
+import org.bgee.model.dao.mysql.anatdev.mapping.MySQLRawSimilarityAnnotationDAO;
 import org.bgee.model.dao.mysql.anatdev.mapping.MySQLStageGroupingDAO;
 import org.bgee.model.dao.mysql.anatdev.mapping.MySQLSummarySimilarityAnnotationDAO;
 import org.bgee.model.dao.mysql.connector.BgeeConnection;
@@ -175,6 +176,8 @@ public abstract class TestAncestor
                 mock(MySQLEvidenceOntologyDAO.class);
         public final MySQLSummarySimilarityAnnotationDAO mockSummarySimilarityAnnotationDAO = 
                 mock(MySQLSummarySimilarityAnnotationDAO.class);
+        public final MySQLRawSimilarityAnnotationDAO mockRawSimilarityAnnotationDAO = 
+                mock(MySQLRawSimilarityAnnotationDAO.class);
         public final MySQLStageGroupingDAO mockStageGroupingDAO = mock(MySQLStageGroupingDAO.class);
         public MockDAOManager() {
             
@@ -283,6 +286,10 @@ public abstract class TestAncestor
         @Override
         protected MySQLSummarySimilarityAnnotationDAO getNewSummarySimilarityAnnotationDAO() {
             return this.mockSummarySimilarityAnnotationDAO;
+        }
+        @Override
+        protected MySQLRawSimilarityAnnotationDAO getNewRawSimilarityAnnotationDAO() {
+            return this.mockRawSimilarityAnnotationDAO;
         }
         @Override
         protected MySQLStageGroupingDAO getNewStageGroupingDAO() {

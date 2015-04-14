@@ -21,6 +21,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
 import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO;
+import org.bgee.model.dao.api.anatdev.mapping.RawSimilarityAnnotationDAO;
 import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO;
 import org.bgee.model.dao.api.exception.DAOException;
@@ -1360,6 +1361,14 @@ public abstract class DAOManager implements AutoCloseable
      * @return  A new {@code SummarySimilarityAnnotationDAO}
      */
     protected abstract SummarySimilarityAnnotationDAO getNewSummarySimilarityAnnotationDAO();
+    /**
+     * Service provider must return a new 
+     * {@link org.bgee.model.dao.api.anatdev.mapping.RawSimilarityAnnotationDAO 
+     * RawSimilarityAnnotationDAO} instance when this method is called. 
+     * 
+     * @return  A new {@code RawSimilarityAnnotationDAO}
+     */
+    protected abstract RawSimilarityAnnotationDAO getNewRawSimilarityAnnotationDAO();
     /**
      * Service provider must return a new 
      * {@link org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO StageGroupingDAO} instance 

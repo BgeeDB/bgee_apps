@@ -158,7 +158,7 @@ public class MySQLSummarySimilarityAnnotationDAO
         
         String sql = this.getAnnotToAnatEntityQueryStart();
         
-        //retrieve structures existing in ALL requested species
+        //retrieve structures existing in NONE of the requested species
         sql += "AND NOT EXISTS (SELECT 1 FROM anatEntityTaxonConstraint AS t5 "
                 + "WHERE t5.anatEntityId = t4.anatEntityId AND t5.speciesId IS NULL) ";
         for (int i = 0; i < speciesIds.size(); i++) {
@@ -255,13 +255,33 @@ public class MySQLSummarySimilarityAnnotationDAO
                     + "ON t40.summarySimilarityAnnotationId = t30.summarySimilarityAnnotationId "
                     //search for different annotations including the same organ
                     + "WHERE t40.anatEntityId = t4.anatEntityId AND "
-                    + "t30.summarySimilarityAnnotationId != t3.summarySimilarityAnnotationId "
-                    //that are annotated to more recent taxa
-                    + "AND t10.taxonLeftBound > t2.taxonLeftBound AND "
-                    + "t10.taxonRightBound < t2.taxonRightBound AND "
-                    //but that are still annotated to a a valid requested taxon
+                    + "t30.summarySimilarityAnnotationId != t3.summarySimilarityAnnotationId AND "
+                    //annotated to a a valid requested taxon
                     + "t10.taxonLeftBound <= t1.taxonLeftBound AND "
-                    + "t10.taxonRightBound >= t1.taxonRightBound) ";
+                    + "t10.taxonRightBound >= t1.taxonRightBound "
+                    
+                    + " AND ("
+                        //that are annotated to more recent taxa
+                        + "(t10.taxonLeftBound > t2.taxonLeftBound AND "
+                        + "t10.taxonRightBound < t2.taxonRightBound) "
+                        + "OR "
+                        //or that are annotated to the same taxon, with a higher number 
+                        //of related anatomical entities
+                        //(for cases such as, for instance, lung annotated to Gnathostomata, 
+                        //and lung|swim bladder annotated to Gnathostomata 
+                        //=> we want to recover lung|swim bladder).
+                        + "(t10.taxonId = t2.taxonId AND "
+                        //and that have a highest number of anat entities used 
+                        //(for cases such as, for instance, lung annotated to Gnathostomata, 
+                        //and lung|swim bladder annotated to Gnathostomata 
+                        //=> we want to recover lung|swim bladder)
+                        + "(SELECT COUNT(*) FROM similarityAnnotationToAnatEntityId AS t40 "
+                        + "WHERE t40.summarySimilarityAnnotationId = t30.summarySimilarityAnnotationId) "
+                        + "> (SELECT COUNT(*) FROM similarityAnnotationToAnatEntityId AS t40 "
+                        + "WHERE t40.summarySimilarityAnnotationId = t3.summarySimilarityAnnotationId)) "
+                    + ")"
+                    //NOT EXISTS closing bracket    
+                    + ")";
         
         return log.exit(sql);
     }

@@ -315,7 +315,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 
         @Override
         public String toString() {
-            return super.toString() + " - Species ID: " + getSpeciesId() +
+            return "Species ID: " + getSpeciesId() +
                     " - Over-expressed gene count: " + getOverExprGeneCount() +
                     " - Under-expressed gene count: " + getUnderExprGeneCount() +
                     " - Not diff. expressed gene count: " + getNotDiffExprGeneCount() +
@@ -406,7 +406,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         
         @Override
         public String toString() {
-            return super.toString() + " - Species counts: " + getSpeciesDiffExprCounts().toString();
+            return super.toString() + " - Species counts: " + getSpeciesDiffExprCounts();
         }
     }
 
@@ -2081,13 +2081,21 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             if (cioStatementByIds.get(cioId).isTrusted() &&
                     speciesIdsWithDataForSimple.size() >= 2) {
                 MultiSpeciesSimpleDiffExprFileBean simpleBean = new MultiSpeciesSimpleDiffExprFileBean(
-                        omaNodeId, organIds, organNames, stageIds, stageNames, null);
+                        omaNodeId, organIds, organNames, stageIds, stageNames, 
+                        new ArrayList<SpeciesDiffExprCounts>());
                         
                 // We order species IDs to keep the same order when we regenerate files.
-                List<String> speciesIds = new ArrayList<String>(allSpeciesCounts.keySet());
+                List<String> speciesIds = new ArrayList<String>(speciesNamesByIds.keySet());
                 Collections.sort(speciesIds);
-                for (String speciesId: speciesIds) {                
-                    simpleBean.getSpeciesDiffExprCounts().add(allSpeciesCounts.get(speciesId));
+                for (String speciesId: speciesIds) {
+                    // A species could have no data even if at least two other species have some data
+                    SpeciesDiffExprCounts counts = allSpeciesCounts.get(speciesId);
+                    if (counts == null) {
+                        counts = new SpeciesDiffExprCounts(
+                                speciesId, Long.valueOf(0), Long.valueOf(0), Long.valueOf(0), 
+                                Long.valueOf(0), Long.valueOf(0));
+                    }
+                    simpleBean.getSpeciesDiffExprCounts().add(counts);
                 }
                 // We store the simple bean.
                 allSimpleBeans.add(simpleBean);
@@ -2102,7 +2110,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             MultiSpeciesDiffExprFileType fileType = writerFileType.getKey();
             ICsvDozerBeanWriter writer = writerFileType.getValue();
             
-            if (writerFileType.getKey().isSimpleFileType() && allSimpleBeans != null) {
+            if (writerFileType.getKey().isSimpleFileType() && allSimpleBeans != null 
+                    && !allSimpleBeans.isEmpty()) {
                 this.orderAndWriteRows(fileType, writer, processors, omaNodeId, 
                         geneIds, geneNames, allSimpleBeans);
 
@@ -2413,14 +2422,15 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 
             if (fileType.isSimpleFileType()) {
                 // *** Attributes specific to simple file ***
-                // we use StrNotNullOrEmpty() (and not LMinMax() constraint) because 
-                // there is N/A when homologous organ is lost in a species
+                // TODO: for the moment, we use LMinMax() constraint but when we will add dealing 
+                // with lost homologous organs, we should use StrNotNullOrEmpty() because it may
+                // have N/A when an organ is lost.
                 if (header[i].startsWith(OVER_EXPR_GENE_COUNT_COLUMN_NAME) ||
                         header[i].startsWith(UNDER_EXPR_GENE_COUNT_COLUMN_NAME) ||
                         header[i].startsWith(NO_DIFF_EXPR_GENE_COUNT_COLUMN_NAME) ||
                         header[i].startsWith(NOT_EXPR_GENE_COUNT_COLUMN_NAME) ||
                         header[i].startsWith(NA_GENES_COUNT_COLUMN_NAME)) {
-                    processors[i] = new StrNotNullOrEmpty(); 
+                    processors[i] = new LMinMax(0, Long.MAX_VALUE);
                 }
                     
             } else {

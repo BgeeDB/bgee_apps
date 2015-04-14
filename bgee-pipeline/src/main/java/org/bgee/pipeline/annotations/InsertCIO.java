@@ -17,7 +17,7 @@ import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLOntology;
 
 /**
- * Class responsible for inserting the CIO ontology.
+ * Class responsible for inserting the CIO ontology into the database.
  * 
  * @author Frederic Bastian
  * @version Bgee 13 Apr. 2015
@@ -52,21 +52,21 @@ public class InsertCIO extends MySQLDAOUser {
      */
     public void insert(OWLOntology cioOnt) {
         log.entry(cioOnt);
-        log.info("Start inserting CIO into database...");
 
-        CIOWrapper cioWrapper = new CIOWrapper(cioOnt);
         try {
+            log.info("Start inserting CIO into database...");
+            CIOWrapper cioWrapper = new CIOWrapper(cioOnt);
             this.startTransaction();
             
-            this.getCIOStatementDAO().insertCIOStatements(this.getCIOTOs(cioWrapper));
+            Set<CIOStatementTO> tos = this.getCIOTOs(cioWrapper);
+            this.getCIOStatementDAO().insertCIOStatements(tos);
             
             this.commit();
+            log.info("Done inserting CIO into database, inserted {} terms.", tos.size());
         } finally {
             this.closeDAO();
         }
         
-
-        log.info("Done inserting CIO into database.");
         log.exit();
     }
     
@@ -91,7 +91,9 @@ public class InsertCIO extends MySQLDAOUser {
             //we only insert CIO statements, and only CIO statements that either have 
             //a confidence level, or that are the strongly conflicting statements, 
             //with no confidence level
-            if (!cioWrapper.isConfidenceStatement(cls) || 
+            if (cioWrapper.getOWLGraphWrapper().isObsolete(cls) || 
+                    cioWrapper.getOWLGraphWrapper().getIsObsolete(cls) || 
+                    !cioWrapper.isConfidenceStatement(cls) || 
                     (!cioWrapper.hasLeafConfidenceLevel(cls) && 
                             !cioWrapper.isStronglyConflicting(cls))) {
                 log.trace("Not a valid CIO statement, discarded.");
@@ -135,8 +137,10 @@ public class InsertCIO extends MySQLDAOUser {
                                     cioWrapper.getEvidenceTypeConcordance(cls)));
             }
             
-            cioTOs.add(new CIOStatementTO(id, label, description, isTrusted, confLevel, 
-                    evidenceConcordance, evidenceTypeConcordance));
+            CIOStatementTO newTO = new CIOStatementTO(id, label, description, isTrusted, 
+                    confLevel, evidenceConcordance, evidenceTypeConcordance);
+            log.trace("Generating TO: {}", newTO);
+            cioTOs.add(newTO);
         }
         
         if (cioTOs.isEmpty()) {

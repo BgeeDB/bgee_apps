@@ -9,7 +9,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.LogManager;
@@ -2184,7 +2188,100 @@ public class SimilarityAnnotationUtils {
         return log.exit(processors);
     }
     
-
+    /**
+     * Group the provided {@code SummaryAnnotationBean}s with their corresponding 
+     * {@code RawAnnotationBean}s. This method will put the provided 
+     * {@code SummaryAnnotationBean}s as keys of a {@code Map}, associated to a {@code Set}
+     * containing the raw annotations to same HOM ID - entity IDs - taxon ID.
+     * <p>
+     * The summary and raw annotations provided have to be in sync, meaning that all 
+     * summary annotations must have at least one corresponding raw annotation, 
+     * and all raw annotations must have one corresponding summary annotation, 
+     * otherwise, an {@code IllegalArgumentException} is thrown. Also, there must not be several 
+     * {@code SummaryAnnotationBean}s with same HOM ID - entity IDs - taxon ID, otherwise, 
+     * an {@code IllegalArgumentException} is thrown.
+     * 
+     * @param summaryAnnots A {@code Collection} of {@code SummaryAnnotationBean}s to group 
+     *                      with their corresponding {@code RawAnnotationBean}s 
+     *                      in {@code rawAnnots}.
+     * @param rawAnnots     A {@code Collection} of {@code RawAnnotationBean}s, to be grouped 
+     *                      with their corresponding {@code SummaryAnnotationBean}s 
+     *                      in {@code summaryAnnots}.
+     * @return              A {@code Map} where keys are {@code SummaryAnnotationBean}s, 
+     *                      the associated value being a {@code Set} of 
+     *                      {@code RawAnnotationBean}s to same HOM ID - entity IDs - taxon ID.
+     * @throws IllegalArgumentException If some {@code SummaryAnnotationBean}s have no corresponding 
+     *                                  {@code RawAnnotationBean}, or the other way around.
+     *                                  Or if there are several {@code SummaryAnnotationBean}s 
+     *                                  to same HOM ID - entity IDs - taxon ID.
+     */
+    public static Map<SummaryAnnotationBean, Set<RawAnnotationBean>> groupRawPerSummaryAnnots(
+            Collection<SummaryAnnotationBean> summaryAnnots, 
+            Collection<RawAnnotationBean> rawAnnots) throws IllegalArgumentException {
+        log.entry(summaryAnnots, rawAnnots);
+        
+        //To iterate the raw annotations only once, and not for each summary annotation, 
+        //we put them in a Map where the key is a RawAnnotationBean with only 
+        //the HOM ID - entity IDs - taxon ID set
+        Map<RawAnnotationBean, Set<RawAnnotationBean>> relatedAnnotMapper = 
+                new HashMap<RawAnnotationBean, Set<RawAnnotationBean>>();
+        for (RawAnnotationBean annot: rawAnnots) {
+            RawAnnotationBean keyAnnot = new RawAnnotationBean();
+            keyAnnot.setHomId(annot.getHomId());
+            keyAnnot.setNcbiTaxonId(annot.getNcbiTaxonId());
+            //entity IDs in RawAnnotationBean should already be ordered, 
+            //but we're never too sure
+            keyAnnot.setEntityIds(SimilarityAnnotationUtils.trimAndSort(annot.getEntityIds()));
+            
+            Set<RawAnnotationBean> relatedAnnots = relatedAnnotMapper.get(keyAnnot);
+            if (relatedAnnots == null) {
+                relatedAnnots = new HashSet<RawAnnotationBean>();
+                relatedAnnotMapper.put(keyAnnot, relatedAnnots);
+            }
+            relatedAnnots.add(annot);
+        }
+        
+        //now, we iterate the summary annotations, to group them with their raw annotations
+        Map<SummaryAnnotationBean, Set<RawAnnotationBean>> groupedAnnots = 
+                new HashMap<SummaryAnnotationBean, Set<RawAnnotationBean>>();
+        //we will store the keys used to make sure we don't have several summary annotations 
+        //to same HOM ID - entity IDs - taxon ID
+        Set<RawAnnotationBean> keys = new HashSet<RawAnnotationBean>();
+        for (SummaryAnnotationBean summaryAnnot: summaryAnnots) {
+            //create a fake RawAnnotationBean to retrieve the related ones 
+            //from the Map previously created.
+            RawAnnotationBean keyAnnot = new RawAnnotationBean();
+            keyAnnot.setHomId(summaryAnnot.getHomId());
+            keyAnnot.setNcbiTaxonId(summaryAnnot.getNcbiTaxonId());
+            //entity IDs in RawAnnotationBean should already be ordered, 
+            //but we're never too sure
+            keyAnnot.setEntityIds(
+                    SimilarityAnnotationUtils.trimAndSort(summaryAnnot.getEntityIds()));
+            if (!keys.add(keyAnnot)) {
+                throw log.throwing(new IllegalArgumentException("It should not be possible "
+                        + "to have several summary annotations to same "
+                        + "HOM ID - entity IDs - taxon ID, offending key: " + keyAnnot));
+            }
+            
+            //we remove the related annots from the Set for a sanity check at the end
+            Set<RawAnnotationBean> relatedAnnots = relatedAnnotMapper.remove(keyAnnot);
+            if (relatedAnnots == null) {
+                throw log.throwing(new IllegalArgumentException("The provided summary "
+                        + "and raw annotations are not in sync, a summary annotation "
+                        + "has no corresponding raw annotation: " + summaryAnnot));
+            }
+            groupedAnnots.put(summaryAnnot, relatedAnnots);
+        }
+        
+        if (!relatedAnnotMapper.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("The provided summary "
+                    + "and raw annotations are not in sync, some raw annotations "
+                    + "have no corresponding summary annotations: " 
+                    + relatedAnnotMapper.values()));
+        }
+        
+        return log.exit(groupedAnnots);
+    }
     
     /**
      * Trim the provided {@code String}s and sort them by alphabetical order. {@code null} 

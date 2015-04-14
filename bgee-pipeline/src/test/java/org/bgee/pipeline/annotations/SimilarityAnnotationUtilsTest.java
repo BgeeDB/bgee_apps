@@ -12,7 +12,11 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -713,5 +717,124 @@ public class SimilarityAnnotationUtilsTest {
         assertEquals("Incorrect comparison for same Ref IDs", 0, 
                 SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR.compare(bean1, bean2));
         
+    }
+    
+    /**
+     * Test 
+     * {@link SimilarityAnnotationUtils#groupRawPerSummaryAnnots(Collection, Collection)}.
+     */
+    @Test
+    public void shouldGroupRawPerSummaryAnnots() throws ParseException {
+        SimpleDateFormat sdf = new SimpleDateFormat(SimilarityAnnotationUtils.DATE_FORMAT);
+        
+        SummaryAnnotationBean summaryAnnot1 = new SummaryAnnotationBean(
+                "HOM:0000007", "historical homology", 
+                Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                2759, "Eukaryota", false, 
+                "CIO:0000003", "high confidence from single evidence", true, 
+                null, 1
+//                , 1, 0, 
+//                Arrays.asList("ECO:0000033"), 
+//                Arrays.asList("traceable author statement"), 
+//                null, null, null, null, 
+//                Arrays.asList("bgee")
+                );
+        RawAnnotationBean rawAnnot1_1 = new RawAnnotationBean("HOM:0000007", "historical homology", 
+                Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                2759, "Eukaryota", false, "ECO:0000033", 
+                "traceable author statement", 
+                "CIO:0000003", "high confidence from single evidence", 
+                "DOI:10.1073/pnas.032658599", "ref title 1", 
+                "supporting text 1", "bgee", "ANN", sdf.parse("2013-06-21"));
+        
+        SummaryAnnotationBean summaryAnnot2 = 
+                new SummaryAnnotationBean("HOM:0000007", "historical homology", 
+                Arrays.asList("CL:0000015"), Arrays.asList("male germ cell"), 
+                33208, "Metazoa", false, 
+                "CIO:0000019", "confidence statement from congruent evidence "
+                        + "lines of same type, overall confidence medium", 
+                true, 
+                null, 2
+//                , 2, 0, 
+//                Arrays.asList("ECO:0000205"), 
+//                Arrays.asList("curator inference"), 
+//                null, null, null, null, 
+//                Arrays.asList("bgee", "test db")
+                );
+        RawAnnotationBean rawAnnot2_1 = new RawAnnotationBean("HOM:0000007", "historical homology", 
+                Arrays.asList("CL:0000015"), Arrays.asList("male germ cell"), 
+                33208, "Metazoa", false, "ECO:0000205", 
+                "curator inference", 
+                "CIO:0000004", "medium confidence from single evidence", 
+                "DOI:10.1002/bies.950161213", "ref title 2", 
+                "supporting text 2", "bgee", "ANN", sdf.parse("2013-08-29"));
+        RawAnnotationBean rawAnnot2_2 = new RawAnnotationBean("HOM:0000007", "historical homology", 
+                Arrays.asList("CL:0000015"), Arrays.asList("male germ cell"), 
+                33208, "Metazoa", false, "ECO:0000205", 
+                "curator inference", 
+                "CIO:0000005", "low confidence from single evidence", 
+                "ISBN:978-0198566694", "ref title 3", 
+                "supporting text 3", "bgee", "ANN", sdf.parse("2013-08-29"));
+        
+        Map<SummaryAnnotationBean, Set<RawAnnotationBean>> expectedMap = 
+                new HashMap<SummaryAnnotationBean, Set<RawAnnotationBean>>();
+        expectedMap.put(summaryAnnot1, new HashSet<RawAnnotationBean>(
+                Arrays.asList(rawAnnot1_1)));
+        expectedMap.put(summaryAnnot2, new HashSet<RawAnnotationBean>(
+                Arrays.asList(rawAnnot2_1, rawAnnot2_2)));
+        
+        assertEquals("Incorrect grouping of summary and raw annotations", expectedMap, 
+                SimilarityAnnotationUtils.groupRawPerSummaryAnnots(
+                        Arrays.asList(summaryAnnot1, summaryAnnot2), 
+                        Arrays.asList(rawAnnot1_1, rawAnnot2_1, rawAnnot2_2)));
+        
+        //check exceptions that should be raised
+        try {
+            SimilarityAnnotationUtils.groupRawPerSummaryAnnots(
+                    Arrays.asList(summaryAnnot1, summaryAnnot2), 
+                    Arrays.asList(rawAnnot1_1));
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError("An exception should be thrown "
+                    + "when there are summary annotations with no corresponding raw annotations"));
+        } catch (Exception e) {
+            //test passed
+        }
+        try {
+            SimilarityAnnotationUtils.groupRawPerSummaryAnnots(
+                    Arrays.asList(summaryAnnot1), 
+                    Arrays.asList(rawAnnot1_1, rawAnnot2_1, rawAnnot2_2));
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError("An exception should be thrown "
+                    + "when there are raw annotations with no corresponding summary annotations"));
+        } catch (Exception e) {
+            //test passed
+        }
+        try {
+            SimilarityAnnotationUtils.groupRawPerSummaryAnnots(
+                    Arrays.asList(summaryAnnot1, 
+                            //make an annotation to same HOM ID - entity IDs - taxon ID 
+                            //(should never happen), but with different values for the other 
+                            //parameters to make sure the equals return false.
+                            new SummaryAnnotationBean(
+                            "HOM:0000007", "historical homology", 
+                            Arrays.asList("CL:0000000"), Arrays.asList("cell"), 
+                            2759, "Eukaryota", false, 
+                            "CIO:0000020", "confidence statement from strongly conflicting "
+                                    + "evidence lines of same type", false, 
+                            null, 3
+//                            , 1, 0, 
+//                            Arrays.asList("ECO:0000033"), 
+//                            Arrays.asList("traceable author statement"), 
+//                            null, null, null, null, 
+//                            Arrays.asList("bgee")
+                            )), 
+                    Arrays.asList(rawAnnot1_1));
+            //test failed, an exception should have been thrown
+            throw log.throwing(new AssertionError("An exception should be thrown "
+                    + "when there are several summary annotations to same "
+                    + "HOM ID - entity IDs - taxon ID"));
+        } catch (Exception e) {
+            //test passed
+        }
     }
 }

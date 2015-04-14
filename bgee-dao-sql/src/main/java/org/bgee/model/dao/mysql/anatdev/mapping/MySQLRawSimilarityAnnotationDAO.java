@@ -1,6 +1,5 @@
 package org.bgee.model.dao.mysql.anatdev.mapping;
 
-import java.sql.Date;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Map.Entry;
@@ -74,7 +73,7 @@ public class MySQLRawSimilarityAnnotationDAO extends MySQLDAO<RawSimilarityAnnot
         //not the actual results, so we should not close this BgeePreparedStatement.
         BgeePreparedStatement stmt = null;
         try {
-            stmt = this.getManager().getConnection().prepareStatement(sql.toString());
+            stmt = this.getManager().getConnection().prepareStatement(sql);
             return log.exit(new MySQLRawSimilarityAnnotationTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
@@ -185,7 +184,8 @@ public class MySQLRawSimilarityAnnotationDAO extends MySQLDAO<RawSimilarityAnnot
                     rawTO.getSupportingText());
                 stmt.setString(8, rawTO.getAssignedBy() == null ? "" : rawTO.getAssignedBy());
                 stmt.setString(9, rawTO.getCurator() == null ? "" : rawTO.getCurator());
-                stmt.setDate(10, rawTO.getAnnotationDate());
+                stmt.setDate(10, rawTO.getAnnotationDate() == null ? null : 
+                    new java.sql.Date(rawTO.getAnnotationDate().getTime()));
                 annotationInsertedCount += stmt.executeUpdate();
                 stmt.clearParameters();
                 if (log.isDebugEnabled() && annotationInsertedCount % 1000 == 0) {
@@ -258,7 +258,7 @@ public class MySQLRawSimilarityAnnotationDAO extends MySQLDAO<RawSimilarityAnnot
                     referenceId = null, referenceTitle = null, supportingText = null, 
                     assignedBy = null, curator = null; 
             Boolean negated = null;
-            Date annotationDate = null;
+            java.sql.Date annotationDate = null;
 
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {

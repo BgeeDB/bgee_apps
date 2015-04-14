@@ -6,6 +6,7 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.ontologycommon.EvidenceOntologyDAO.ECOTermTO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.pipeline.MySQLDAOUser;
@@ -51,10 +52,12 @@ public class InsertECO extends MySQLDAOUser {
      * Insert the provided ECO ontology into the database.
      * 
      * @param ecoOnt    An {@code OWLOntology} that is the ECO ontology.
+     * @throws DAOException             If an error occurred while inserting the terms 
+     *                                  into the database.
      * @throws IllegalArgumentException If the provided ECO ontology was invalid and 
      *                                  did not allow to retrieve some required information.
      */
-    public void insert(OWLOntology ecoOnt) {
+    public void insert(OWLOntology ecoOnt) throws DAOException, IllegalArgumentException {
         log.entry(ecoOnt);
         
         try {

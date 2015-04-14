@@ -6,6 +6,7 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTO;
 import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTO.ConfidenceLevel;
 import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTO.EvidenceConcordance;
@@ -46,10 +47,12 @@ public class InsertCIO extends MySQLDAOUser {
      * Insert the provided CIO ontology into the database.
      * 
      * @param cioOnt    An {@code OWLOntology} that is the CIO ontology.
+     * @throws DAOException             If an error occurred while inserting the terms 
+     *                                  in the database.
      * @throws IllegalArgumentException If the provided CIO ontology was invalid and 
      *                                  did not allow to retrieve some required information.
      */
-    public void insert(OWLOntology cioOnt) {
+    public void insert(OWLOntology cioOnt) throws DAOException, IllegalArgumentException {
         log.entry(cioOnt);
 
         try {

@@ -403,7 +403,7 @@ public interface RawSimilarityAnnotationDAO extends DAO<RawSimilarityAnnotationD
 
         @Override
         public String toString() {
-            return " Summary similarity annotation ID: " + this.summarySimilarityAnnotationId + 
+            return " Raw similarity annotation ID: " + this.summarySimilarityAnnotationId + 
                     " - Negated: " + this.negated + " - ECO ID: " + this.ecoId + 
                     " - CIO ID: " + this.cioId + " - Reference ID: " + this.referenceId + 
                     " - Reference title: " + this.referenceTitle + 

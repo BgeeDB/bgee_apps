@@ -245,6 +245,7 @@ public class MySQLSummarySimilarityAnnotationDAO
                 + "INNER JOIN summarySimilarityAnnotation AS t3 ON t3.taxonId = t2.taxonId "
                 + "INNER JOIN similarityAnnotationToAnatEntityId AS t4 "
                 + "ON t4.summarySimilarityAnnotationId = t3.summarySimilarityAnnotationId "
+                + "INNER JOIN CIOStatement AS t5 ON t3.cioId = t5.cioId "
                 + "WHERE t4.negated = 0 AND t1.taxonId = ? "
                 //check that this is the similarity annotated to the most recent valid taxon 
                 //for this anatomical structure.
@@ -253,12 +254,16 @@ public class MySQLSummarySimilarityAnnotationDAO
                     + "INNER JOIN taxon AS t10 ON t30.taxonId = t10.taxonId "
                     + "INNER JOIN similarityAnnotationToAnatEntityId AS t40 "
                     + "ON t40.summarySimilarityAnnotationId = t30.summarySimilarityAnnotationId "
+                    + "INNER JOIN CIOStatement AS t50 ON t30.cioId = t50.cioId "
                     //search for different annotations including the same organ
                     + "WHERE t40.anatEntityId = t4.anatEntityId AND "
                     + "t30.summarySimilarityAnnotationId != t3.summarySimilarityAnnotationId AND "
                     //annotated to a a valid requested taxon
                     + "t10.taxonLeftBound <= t1.taxonLeftBound AND "
-                    + "t10.taxonRightBound >= t1.taxonRightBound "
+                    + "t10.taxonRightBound >= t1.taxonRightBound AND "
+                    //that is either trusted, or not trusted, if the annotation 
+                    //that is being checked is not trusted
+                    + "t50.trusted >= t5.trusted "
                     
                     + " AND ("
                         //that are annotated to more recent taxa

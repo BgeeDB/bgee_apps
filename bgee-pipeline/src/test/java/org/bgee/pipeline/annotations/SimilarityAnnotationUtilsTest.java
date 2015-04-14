@@ -12,11 +12,11 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -776,8 +776,9 @@ public class SimilarityAnnotationUtilsTest {
                 "ISBN:978-0198566694", "ref title 3", 
                 "supporting text 3", "bgee", "ANN", sdf.parse("2013-08-29"));
         
-        Map<SummaryAnnotationBean, Set<RawAnnotationBean>> expectedMap = 
-                new HashMap<SummaryAnnotationBean, Set<RawAnnotationBean>>();
+        SortedMap<SummaryAnnotationBean, Set<RawAnnotationBean>> expectedMap = 
+                new TreeMap<SummaryAnnotationBean, Set<RawAnnotationBean>>(
+                        SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR);
         expectedMap.put(summaryAnnot1, new HashSet<RawAnnotationBean>(
                 Arrays.asList(rawAnnot1_1)));
         expectedMap.put(summaryAnnot2, new HashSet<RawAnnotationBean>(

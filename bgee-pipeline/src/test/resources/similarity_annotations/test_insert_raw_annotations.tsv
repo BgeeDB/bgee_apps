@@ -1,0 +1,14 @@
+HOM ID	HOM name	entity	entity name	qualifier	taxon ID	taxon name	ECO ID	ECO name	CIO ID	CIO name	reference	reference title	supporting text	assigned by	curator	date
+//single evidence
+HOM:0000007	historical homology	CL:0000000	cell		2759	Eukaryota	ECO:0000033	traceable author statement	CIO:0000003	high confidence from single evidence	DOI:10.1073/pnas.032658599	ref title 1	supporting text 1	bgee	ANN	2013-06-21
+//congruent evidence lines
+HOM:0000007	historical homology	CL:0000015	male germ cell		33208	Metazoa	ECO:0000205	curator inference	CIO:0000004	medium confidence from single evidence	DOI:10.1002/bies.950161213	ref title 2	supporting text 2	bgee	ANN	2013-08-29
+HOM:0000007	historical homology	CL:0000015	male germ cell		33208	Metazoa	ECO:0000205	curator inference	CIO:0000005	low confidence from single evidence	ISBN:978-0198566694	ref title 3	supporting text 3	bgee	ANN	2013-08-29
+//single evidence
+HOM:0000007	historical homology	CL:0000037	hematopoietic stem cell	NOT	7742	Vertebrata	ECO:0000067	developmental similarity evidence	CIO:0000004	medium confidence from single evidence	DOI:10.1146/annurev.cellbio.22.010605.093317	ref title 4	supporting text 4	bgee	ANN	2013-07-01
+//multiple Uberon IDs
+HOM:0000007	historical homology	CL:0000037|UBERON:0000001|UBERON:0000007	hematopoietic stem cell|whatever name1|whatever name2	NOT	7742	Vertebrata	ECO:0000067	developmental similarity evidence	CIO:0000004	medium confidence from single evidence	DOI:10.1146/annurev.cellbio.22.010605.093317	ref title 7	supporting text 7	bgee	ANN	2013-07-01
+HOM:0000007	historical homology	UBERON:0010207	nictitating membrane	NOT	7776	Gnathostomata	ECO:0000034	non-traceable author statement	CIO:0000003	high confidence from single evidence	ISBN:978-0030223693	ref title 8	supporting text 8	bgee	ANN	2013-09-05
+HOM:0000007	historical homology	UBERON:0010207	nictitating membrane		7778	Elasmobranchii	ECO:0000034	non-traceable author statement	CIO:0000003	high confidence from single evidence	ISBN:978-0030223693	ref title 8	supporting text 8	bgee	ANN	2013-09-05
+HOM:0000007	historical homology	UBERON:0001245	anus		33213	Bilateria	ECO:0000355	phylogenetic distribution evidence	CIO:0000004	medium confidence from single evidence	http://dpc.uba.uva.nl/ctz/vol73/nr01/art01	ref title 16	supporting text 16	bgee	ANN	2013-10-08
+HOM:0000007	historical homology	UBERON:0001245	anus	NOT	33213	Bilateria	ECO:0000033	traceable author statement	CIO:0000004	medium confidence from single evidence	http://dpc.uba.uva.nl/ctz/vol73/nr01/art01	ref title 16	supporting text 16	bgee	ANN	2013-10-08

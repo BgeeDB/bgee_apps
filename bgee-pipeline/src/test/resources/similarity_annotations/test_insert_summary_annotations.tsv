@@ -1,0 +1,16 @@
+HOM ID	HOM name	entity	entity name	qualifier	taxon ID	taxon name	CIO ID	CIO name	trusted	underlying annotation count
+//positive evidence count	negative evidence count	positive ECO ID	positive ECO name	negative ECO ID	negative ECO name	Other taxon aggregated ID	Other taxon aggregated name	assigned by
+HOM:0000007	historical homology	CL:0000000	cell		2759	Eukaryota	CIO:0000003	high confidence from single evidence	T	1
+//1	0	ECO:0000033	traceable author statement					bgee
+HOM:0000007	historical homology	CL:0000015	male germ cell		33208	Metazoa	CIO:0000019	confidence statement from congruent evidence lines of same type, overall confidence medium	T	2
+//2	0	ECO:0000205	curator inference					bgee|test db
+HOM:0000007	historical homology	CL:0000037	hematopoietic stem cell	NOT	7742	Vertebrata	CIO:0000004	medium confidence from single evidence	T	1
+//0	1			ECO:0000067	developmental similarity evidence			bgee
+HOM:0000007	historical homology	CL:0000037|UBERON:0000001|UBERON:0000007	hematopoietic stem cell|whatever name1|whatever name2	NOT	7742	Vertebrata	CIO:0000004	medium confidence from single evidence	T	1
+//0	1			ECO:0000067	developmental similarity evidence			bgee
+HOM:0000007	historical homology	UBERON:0001245	anus		33213	Bilateria	CIO:0000010	confidence statement from strongly conflicting evidence lines of multiple types	F	2
+//1 1   ECO:0000355 phylogenetic distribution evidence  ECO:0000033 traceable author statement          bgee
+HOM:0000007	historical homology	UBERON:0010207	nictitating membrane	NOT	7776	Gnathostomata	CIO:0000003	high confidence from single evidence	T	1
+//0	1			ECO:0000034	non-traceable author statement			bgee
+HOM:0000007	historical homology	UBERON:0010207	nictitating membrane		7778	Elasmobranchii	CIO:0000003	high confidence from single evidence	T	1
+//1	0	ECO:0000034	non-traceable author statement					bgee

@@ -14,6 +14,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.LogManager;
@@ -2192,7 +2194,9 @@ public class SimilarityAnnotationUtils {
      * Group the provided {@code SummaryAnnotationBean}s with their corresponding 
      * {@code RawAnnotationBean}s. This method will put the provided 
      * {@code SummaryAnnotationBean}s as keys of a {@code Map}, associated to a {@code Set}
-     * containing the raw annotations to same HOM ID - entity IDs - taxon ID.
+     * containing the raw annotations to same HOM ID - entity IDs - taxon ID. 
+     * The {@code Map} will be sorted according to the {@code SummaryAnnotationBean}s 
+     * (therefore a {@code SortedMap} is returned).
      * <p>
      * The summary and raw annotations provided have to be in sync, meaning that all 
      * summary annotations must have at least one corresponding raw annotation, 
@@ -2207,7 +2211,7 @@ public class SimilarityAnnotationUtils {
      * @param rawAnnots     A {@code Collection} of {@code RawAnnotationBean}s, to be grouped 
      *                      with their corresponding {@code SummaryAnnotationBean}s 
      *                      in {@code summaryAnnots}.
-     * @return              A {@code Map} where keys are {@code SummaryAnnotationBean}s, 
+     * @return              A {@code SortedMap} where keys are {@code SummaryAnnotationBean}s, 
      *                      the associated value being a {@code Set} of 
      *                      {@code RawAnnotationBean}s to same HOM ID - entity IDs - taxon ID.
      * @throws IllegalArgumentException If some {@code SummaryAnnotationBean}s have no corresponding 
@@ -2215,8 +2219,8 @@ public class SimilarityAnnotationUtils {
      *                                  Or if there are several {@code SummaryAnnotationBean}s 
      *                                  to same HOM ID - entity IDs - taxon ID.
      */
-    public static Map<SummaryAnnotationBean, Set<RawAnnotationBean>> groupRawPerSummaryAnnots(
-            Collection<SummaryAnnotationBean> summaryAnnots, 
+    public static SortedMap<SummaryAnnotationBean, Set<RawAnnotationBean>> 
+        groupRawPerSummaryAnnots(Collection<SummaryAnnotationBean> summaryAnnots, 
             Collection<RawAnnotationBean> rawAnnots) throws IllegalArgumentException {
         log.entry(summaryAnnots, rawAnnots);
         
@@ -2242,8 +2246,9 @@ public class SimilarityAnnotationUtils {
         }
         
         //now, we iterate the summary annotations, to group them with their raw annotations
-        Map<SummaryAnnotationBean, Set<RawAnnotationBean>> groupedAnnots = 
-                new HashMap<SummaryAnnotationBean, Set<RawAnnotationBean>>();
+        SortedMap<SummaryAnnotationBean, Set<RawAnnotationBean>> groupedAnnots = 
+                new TreeMap<SummaryAnnotationBean, Set<RawAnnotationBean>>(
+                        ANNOTATION_BEAN_COMPARATOR);
         //we will store the keys used to make sure we don't have several summary annotations 
         //to same HOM ID - entity IDs - taxon ID
         Set<RawAnnotationBean> keys = new HashSet<RawAnnotationBean>();

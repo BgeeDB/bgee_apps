@@ -26,6 +26,8 @@ import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.SummaryAnnotation
  * {@link org.bgee.pipeline.ontologycommon.InsertECO InsertECO},  
  * {@link org.bgee.pipeline.ontologycommon.InsertCIO InsertCIO}, and 
  * {@link org.bgee.pipeline.species.InsertTaxa InsertTaxa}.
+ * <p>
+ * As of Bgee 13, only annotations to concept of historical homology are considered.
  * 
  * @author Frederic Bastian
  * @version Bgee 13 Apr. 2015
@@ -104,6 +106,8 @@ public class InsertSimilarityAnnotation extends MySQLDAOUser {
     /**
      * Insert the similarity annotations retrieved from the provided raw annotation file 
      * and summary annotation file into the database. 
+     * <p>
+     * As of Bgee 13, only annotations to concept of historical homology are considered.
      * 
      * @param rawAnnotFile      A {@code String} that is the path to a file storing 
      *                          the raw similarity annotations.
@@ -149,6 +153,8 @@ public class InsertSimilarityAnnotation extends MySQLDAOUser {
      * into the database. The annotations are retrieved from {@code rawAnnotFile} and 
      * {@code summaryAnnotFile}, and will be stored as TOs in {@link #summaryAnnotTOs}, 
      * {@link #simAnnotToAnatEntityTOs}, and {@link #rawAnnotTOs}. 
+     * <p>
+     * As of Bgee 13 we only use annotations to concept of historical homology.
      *  
      * @param rawAnnotFile      A {@code String} that is the path to a file storing 
      *                          the raw similarity annotations.
@@ -176,7 +182,14 @@ public class InsertSimilarityAnnotation extends MySQLDAOUser {
             SimilarityAnnotationUtils.groupRawPerSummaryAnnots(
                     SimilarityAnnotationUtils.extractSummaryAnnotations(summaryAnnotFile), 
                     SimilarityAnnotationUtils.extractRawAnnotations(rawAnnotFile)).entrySet()) {
-            
+            //for now, we only use annotations to concept of historical homology
+            if (!SimilarityAnnotation.HISTORICAL_HOMOLOGY_ID.equals(
+                    groupedAnnot.getKey().getHomId())) {
+                throw log.throwing(new IllegalArgumentException("Annotations using "
+                        + "other concept other than historical homology are not "
+                        + "currently supported. Offending annotation: " 
+                        + groupedAnnot.getKey()));
+            }
             SummarySimilarityAnnotationTO summaryAnnotTO = this.getSummaryTO(
                     groupedAnnot.getKey());
             this.summaryAnnotTOs.add(summaryAnnotTO);
@@ -213,8 +226,9 @@ public class InsertSimilarityAnnotation extends MySQLDAOUser {
             throw log.throwing(new IllegalArgumentException("Invalid summary annotation: "
                     + summaryAnnot));
         }
+        this.similarityAnnotIdGenerator++;
         return log.exit(new SummarySimilarityAnnotationTO(
-                Integer.toString(this.similarityAnnotIdGenerator++), 
+                Integer.toString(this.similarityAnnotIdGenerator), 
                 Integer.toString(summaryAnnot.getNcbiTaxonId()), summaryAnnot.isNegated(), 
                 summaryAnnot.getCioId()));
     }

@@ -252,8 +252,7 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                 Arrays.asList(MultiSpeciesDiffExprFileType.MULTI_DIFF_EXPR_ANATOMY_SIMPLE,
                         MultiSpeciesDiffExprFileType.MULTI_DIFF_EXPR_ANATOMY_COMPLETE));
 
-//        String directory = testFolder.newFolder("tmpFolder").getPath();
-        String directory = "/Users/vrechdelaval/Desktop/tmpFolder/";
+        String directory = testFolder.newFolder("tmpFolder").getPath();
 
         GenerateMultiSpeciesDiffExprFile generator =  new GenerateMultiSpeciesDiffExprFile(
                 mockManager, providedGroups, fileTypes, directory);

@@ -69,12 +69,14 @@ public class MySQLRawSimilarityAnnotationDAOIT  extends MySQLITAncestor {
                         "supportingText1", "assignedBy1", "curator1", date1),
                 new RawSimilarityAnnotationTO("2", false, 
                         "ecoId2", "cioId2", "referenceId2", "referenceTitle2", 
-                        "supportingText2", "assignedBy2", "curator2", date2));
+                        "supportingText2", "assignedBy2", "curator2", date2),
+                new RawSimilarityAnnotationTO("2", false, 
+                        "ecoId3", "cioId3", null, null, null, null, null, null));
 
         try {
             MySQLRawSimilarityAnnotationDAO dao = 
                     new MySQLRawSimilarityAnnotationDAO(this.getMySQLDAOManager());
-            assertEquals("Incorrect number of rows inserted", 2, 
+            assertEquals("Incorrect number of rows inserted", 3, 
                     dao.insertRawSimilarityAnnotations(rawTOs));
             
             //we manually verify the insertion, as we do not want to rely on other methods 
@@ -109,6 +111,27 @@ public class MySQLRawSimilarityAnnotationDAOIT  extends MySQLITAncestor {
                 stmt.setString(8, "assignedBy2");
                 stmt.setString(9, "curator2");
                 stmt.setDate(10, date2);
+                assertTrue("RawSimilarityAnnotationTO incorrectly inserted", 
+                        stmt.getRealPreparedStatement().executeQuery().next());
+   
+            }
+            
+            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+                    prepareStatement("SELECT 1 FROM rawSimilarityAnnotation " +
+                            "WHERE summarySimilarityAnnotationId = ? AND negated = ? " +
+                            "AND ECOId = ? AND CIOId = ? AND referenceId = ? AND referenceTitle = ? " +
+                            "AND supportingText = ? AND assignedBy = ? AND curator = ? " +
+                            "AND annotationDate is null")) {
+                
+                stmt.setInt(1, 2);
+                stmt.setBoolean(2, false);
+                stmt.setString(3, "ecoId3");
+                stmt.setString(4, "cioId3");
+                stmt.setString(5, "");
+                stmt.setString(6, "");
+                stmt.setString(7, "");
+                stmt.setString(8, "");
+                stmt.setString(9, "");
                 assertTrue("RawSimilarityAnnotationTO incorrectly inserted", 
                         stmt.getRealPreparedStatement().executeQuery().next());
    

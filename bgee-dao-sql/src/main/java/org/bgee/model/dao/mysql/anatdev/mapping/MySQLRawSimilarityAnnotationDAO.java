@@ -177,11 +177,14 @@ public class MySQLRawSimilarityAnnotationDAO extends MySQLDAO<RawSimilarityAnnot
                 stmt.setBoolean(2, rawTO.isNegated());
                 stmt.setString(3, rawTO.getECOId());
                 stmt.setString(4, rawTO.getCIOId());
-                stmt.setString(5, rawTO.getReferenceId());
-                stmt.setString(6, rawTO.getReferenceTitle());
-                stmt.setString(7, rawTO.getSupportingText());
-                stmt.setString(8, rawTO.getAssignedBy());
-                stmt.setString(9, rawTO.getCurator());
+                //the following fields do not accept null values
+                stmt.setString(5, rawTO.getReferenceId() == null ? "" : rawTO.getReferenceId());
+                stmt.setString(6, rawTO.getReferenceTitle() == null ? "" : 
+                    rawTO.getReferenceTitle());
+                stmt.setString(7, rawTO.getSupportingText() == null ? "" : 
+                    rawTO.getSupportingText());
+                stmt.setString(8, rawTO.getAssignedBy() == null ? "" : rawTO.getAssignedBy());
+                stmt.setString(9, rawTO.getCurator() == null ? "" : rawTO.getCurator());
                 stmt.setDate(10, rawTO.getAnnotationDate());
                 annotationInsertedCount += stmt.executeUpdate();
                 stmt.clearParameters();

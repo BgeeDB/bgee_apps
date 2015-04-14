@@ -241,15 +241,16 @@ public class MySQLCIOStatementDAO extends MySQLDAO<CIOStatementDAO.Attribute>
                         trusted = this.getCurrentResultSet().getBoolean(column.getKey());
 
                     } else if (column.getValue().equals("confidenceLevel")) {
-                        confidenceLevel = ConfidenceLevel.convertToOriginOfLine(
+                        confidenceLevel = ConfidenceLevel.convertToConfidenceLevel(
                                 this.getCurrentResultSet().getString(column.getKey()));
 
                     } else if (column.getValue().equals("evidenceConcordance")) {
-                        evidenceConcordance = EvidenceConcordance.convertToOriginOfLine(
+                        evidenceConcordance = EvidenceConcordance.convertToEvidenceConcordance(
                                 this.getCurrentResultSet().getString(column.getKey()));
 
                     } else if (column.getValue().equals("evidenceTypeConcordance")) {
-                        evidenceTypeConcordance = EvidenceTypeConcordance.convertToOriginOfLine(
+                        evidenceTypeConcordance = 
+                                EvidenceTypeConcordance.convertToEvidenceTypeConcordance(
                                 this.getCurrentResultSet().getString(column.getKey()));
                     } else {
                         throw log.throwing(new UnrecognizedColumnException(column.getValue()));

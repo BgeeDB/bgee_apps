@@ -42,6 +42,7 @@ public interface RNASeqExpDAO {
      * @see org.bgee.model.expressiondata.rawdata.rnaseq.RNASeqExp
      * @since Bgee 12
      */
+    //TODO: implements equals/hashCode
     public final class RNASeqExpTO extends TransferObject {
 
         /**

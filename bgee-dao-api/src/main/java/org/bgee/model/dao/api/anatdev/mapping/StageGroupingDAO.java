@@ -128,5 +128,60 @@ public interface StageGroupingDAO extends DAO {
         public String getStageId() {
             return stageId;
         }
+
+        /* (non-Javadoc)
+         * @see java.lang.Object#hashCode()
+         */
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result
+                    + ((groupId == null) ? 0 : groupId.hashCode());
+            result = prime * result
+                    + ((stageId == null) ? 0 : stageId.hashCode());
+            return result;
+        }
+
+        /* (non-Javadoc)
+         * @see java.lang.Object#equals(java.lang.Object)
+         */
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (!(obj instanceof GroupToStageTO)) {
+                return false;
+            }
+            GroupToStageTO other = (GroupToStageTO) obj;
+            if (groupId == null) {
+                if (other.groupId != null) {
+                    return false;
+                }
+            } else if (!groupId.equals(other.groupId)) {
+                return false;
+            }
+            if (stageId == null) {
+                if (other.stageId != null) {
+                    return false;
+                }
+            } else if (!stageId.equals(other.stageId)) {
+                return false;
+            }
+            return true;
+        }
+
+        /* (non-Javadoc)
+         * @see java.lang.Object#toString()
+         */
+        @Override
+        public String toString() {
+            return "GroupToStageTO [groupId=" + groupId + ", stageId="
+                    + stageId + "]";
+        }
     }
 }

@@ -40,6 +40,7 @@ public interface AffymetrixExpDAO {
 	 * @see org.bgee.model.expressiondata.rawdata.affymetrix.AffymetrixExp
 	 * @since Bgee 11
 	 */
+	//TODO: implements equals/hashCode
 	public final class AffymetrixExpTO extends TransferObject {
 
 	    /**

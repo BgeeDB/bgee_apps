@@ -279,6 +279,128 @@ public interface RawSimilarityAnnotationDAO extends DAO<RawSimilarityAnnotationD
             return this.annotationDate;
         }
 
+        /* (non-Javadoc)
+         * @see java.lang.Object#hashCode()
+         */
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime
+                    * result
+                    + ((annotationDate == null) ? 0 : annotationDate.hashCode());
+            result = prime * result
+                    + ((assignedBy == null) ? 0 : assignedBy.hashCode());
+            result = prime * result + ((cioId == null) ? 0 : cioId.hashCode());
+            result = prime * result
+                    + ((curator == null) ? 0 : curator.hashCode());
+            result = prime * result + ((ecoId == null) ? 0 : ecoId.hashCode());
+            result = prime * result
+                    + ((negated == null) ? 0 : negated.hashCode());
+            result = prime * result
+                    + ((referenceId == null) ? 0 : referenceId.hashCode());
+            result = prime
+                    * result
+                    + ((referenceTitle == null) ? 0 : referenceTitle.hashCode());
+            result = prime
+                    * result
+                    + ((summarySimilarityAnnotationId == null) ? 0
+                            : summarySimilarityAnnotationId.hashCode());
+            result = prime
+                    * result
+                    + ((supportingText == null) ? 0 : supportingText.hashCode());
+            return result;
+        }
+
+        /* (non-Javadoc)
+         * @see java.lang.Object#equals(java.lang.Object)
+         */
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (!(obj instanceof RawSimilarityAnnotationTO)) {
+                return false;
+            }
+            RawSimilarityAnnotationTO other = (RawSimilarityAnnotationTO) obj;
+            if (annotationDate == null) {
+                if (other.annotationDate != null) {
+                    return false;
+                }
+            } else if (!annotationDate.equals(other.annotationDate)) {
+                return false;
+            }
+            if (assignedBy == null) {
+                if (other.assignedBy != null) {
+                    return false;
+                }
+            } else if (!assignedBy.equals(other.assignedBy)) {
+                return false;
+            }
+            if (cioId == null) {
+                if (other.cioId != null) {
+                    return false;
+                }
+            } else if (!cioId.equals(other.cioId)) {
+                return false;
+            }
+            if (curator == null) {
+                if (other.curator != null) {
+                    return false;
+                }
+            } else if (!curator.equals(other.curator)) {
+                return false;
+            }
+            if (ecoId == null) {
+                if (other.ecoId != null) {
+                    return false;
+                }
+            } else if (!ecoId.equals(other.ecoId)) {
+                return false;
+            }
+            if (negated == null) {
+                if (other.negated != null) {
+                    return false;
+                }
+            } else if (!negated.equals(other.negated)) {
+                return false;
+            }
+            if (referenceId == null) {
+                if (other.referenceId != null) {
+                    return false;
+                }
+            } else if (!referenceId.equals(other.referenceId)) {
+                return false;
+            }
+            if (referenceTitle == null) {
+                if (other.referenceTitle != null) {
+                    return false;
+                }
+            } else if (!referenceTitle.equals(other.referenceTitle)) {
+                return false;
+            }
+            if (summarySimilarityAnnotationId == null) {
+                if (other.summarySimilarityAnnotationId != null) {
+                    return false;
+                }
+            } else if (!summarySimilarityAnnotationId
+                    .equals(other.summarySimilarityAnnotationId)) {
+                return false;
+            }
+            if (supportingText == null) {
+                if (other.supportingText != null) {
+                    return false;
+                }
+            } else if (!supportingText.equals(other.supportingText)) {
+                return false;
+            }
+            return true;
+        }
+
         @Override
         public String toString() {
             return " Summary similarity annotation ID: " + this.summarySimilarityAnnotationId + 

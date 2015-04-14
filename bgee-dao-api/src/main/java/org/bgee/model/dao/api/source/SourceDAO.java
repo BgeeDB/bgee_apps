@@ -115,6 +115,119 @@ public interface SourceDAO extends DAO<SourceDAO.Attribute> {
 			this.category              = null;
 			this.dataSourceDescription = null;
 		}
+
+        /* (non-Javadoc)
+         * @see java.lang.Object#hashCode()
+         */
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result
+                    + ((baseUrl == null) ? 0 : baseUrl.hashCode());
+            result = prime * result
+                    + ((category == null) ? 0 : category.hashCode());
+            result = prime
+                    * result
+                    + ((dataSourceDescription == null) ? 0
+                            : dataSourceDescription.hashCode());
+            result = prime * result
+                    + ((evidenceUrl == null) ? 0 : evidenceUrl.hashCode());
+            result = prime * result
+                    + ((experimentUrl == null) ? 0 : experimentUrl.hashCode());
+            result = prime * result
+                    + ((releaseDate == null) ? 0 : releaseDate.hashCode());
+            result = prime
+                    * result
+                    + ((releaseVersion == null) ? 0 : releaseVersion.hashCode());
+            result = prime * result
+                    + ((toDisplay == null) ? 0 : toDisplay.hashCode());
+            result = prime * result
+                    + ((xRefUrl == null) ? 0 : xRefUrl.hashCode());
+            return result;
+        }
+
+        /* (non-Javadoc)
+         * @see java.lang.Object#equals(java.lang.Object)
+         */
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (!(obj instanceof SourceTO)) {
+                return false;
+            }
+            SourceTO other = (SourceTO) obj;
+            if (baseUrl == null) {
+                if (other.baseUrl != null) {
+                    return false;
+                }
+            } else if (!baseUrl.equals(other.baseUrl)) {
+                return false;
+            }
+            if (category == null) {
+                if (other.category != null) {
+                    return false;
+                }
+            } else if (!category.equals(other.category)) {
+                return false;
+            }
+            if (dataSourceDescription == null) {
+                if (other.dataSourceDescription != null) {
+                    return false;
+                }
+            } else if (!dataSourceDescription
+                    .equals(other.dataSourceDescription)) {
+                return false;
+            }
+            if (evidenceUrl == null) {
+                if (other.evidenceUrl != null) {
+                    return false;
+                }
+            } else if (!evidenceUrl.equals(other.evidenceUrl)) {
+                return false;
+            }
+            if (experimentUrl == null) {
+                if (other.experimentUrl != null) {
+                    return false;
+                }
+            } else if (!experimentUrl.equals(other.experimentUrl)) {
+                return false;
+            }
+            if (releaseDate == null) {
+                if (other.releaseDate != null) {
+                    return false;
+                }
+            } else if (!releaseDate.equals(other.releaseDate)) {
+                return false;
+            }
+            if (releaseVersion == null) {
+                if (other.releaseVersion != null) {
+                    return false;
+                }
+            } else if (!releaseVersion.equals(other.releaseVersion)) {
+                return false;
+            }
+            if (toDisplay == null) {
+                if (other.toDisplay != null) {
+                    return false;
+                }
+            } else if (!toDisplay.equals(other.toDisplay)) {
+                return false;
+            }
+            if (xRefUrl == null) {
+                if (other.xRefUrl != null) {
+                    return false;
+                }
+            } else if (!xRefUrl.equals(other.xRefUrl)) {
+                return false;
+            }
+            return true;
+        }
 	}
 
 }

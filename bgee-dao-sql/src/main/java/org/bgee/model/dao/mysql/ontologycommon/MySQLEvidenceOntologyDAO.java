@@ -137,7 +137,6 @@ public class MySQLEvidenceOntologyDAO extends MySQLDAO<EvidenceOntologyDAO.Attri
         }
 
         int termInsertedCount = 0;
-        int totalTermNumber = ecoTOs.size();
         
         // And we need to build two different queries. 
         String sqlExpression = "INSERT INTO evidenceOntology " +
@@ -149,14 +148,11 @@ public class MySQLEvidenceOntologyDAO extends MySQLDAO<EvidenceOntologyDAO.Attri
         try (BgeePreparedStatement stmt = 
                 this.getManager().getConnection().prepareStatement(sqlExpression)) {
             for (ECOTermTO ecoTO: ecoTOs) {
-                stmt.setInt(1, Integer.parseInt(ecoTO.getId()));
+                stmt.setString(1, ecoTO.getId());
                 stmt.setString(2, ecoTO.getName());
                 stmt.setString(3, ecoTO.getDescription());
                 termInsertedCount += stmt.executeUpdate();
                 stmt.clearParameters();
-                if (log.isDebugEnabled() && termInsertedCount % 1000 == 0) {
-                    log.debug("{}/{} ECO terms inserted", termInsertedCount, totalTermNumber);
-                }
             }
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

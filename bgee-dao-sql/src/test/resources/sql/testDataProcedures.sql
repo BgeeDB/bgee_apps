@@ -371,9 +371,9 @@ BEGIN
                ('5', 'name5', null, true, 'high confidence level', 'single evidence', null);
                
         INSERT INTO evidenceOntology(ECOId, ECOName, ECODescription)
-        VALUES ('1', 'name1', 'desc1'),
-               ('2', 'name2', null),
-               ('3', 'name3', 'desc3');
+        VALUES ('ECO:1', 'name1', 'desc1'),
+               ('ECO:2', 'name2', null),
+               ('ECO:3', 'name3', 'desc3');
     END IF; 
 END
 ;

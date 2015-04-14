@@ -135,7 +135,6 @@ public class MySQLCIOStatementDAO extends MySQLDAO<CIOStatementDAO.Attribute>
         }
 
         int stmtInsertedCount = 0;
-        int totalStmtNumber = cioTOs.size();
         
         // And we need to build two different queries. 
         String sqlExpression = "INSERT INTO CIOStatement " +
@@ -157,9 +156,6 @@ public class MySQLCIOStatementDAO extends MySQLDAO<CIOStatementDAO.Attribute>
                 stmt.setEnumDAOField(7, cioTO.getEvidenceTypeConcordance());
                 stmtInsertedCount += stmt.executeUpdate();
                 stmt.clearParameters();
-                if (log.isDebugEnabled() && stmtInsertedCount % 1000 == 0) {
-                    log.debug("{}/{} CIO statements inserted", stmtInsertedCount, totalStmtNumber);
-                }
             }
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

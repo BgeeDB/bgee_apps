@@ -18,6 +18,7 @@ import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
 import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO;
+import org.bgee.model.dao.api.ontologycommon.EvidenceOntologyDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.source.SourceDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO;
@@ -160,6 +161,10 @@ public class MockDAOManager2 extends DAOManager {
     @Override
     protected CIOStatementDAO getNewCIOStatementDAO() {
         return this.instanceMockManager.getNewCIOStatementDAO();
+    }
+    @Override
+    protected EvidenceOntologyDAO getNewEvidenceOntologyDAO() {
+        return this.instanceMockManager.getNewEvidenceOntologyDAO();
     }
     @Override
     protected SummarySimilarityAnnotationDAO getNewSummarySimilarityAnnotationDAO() {

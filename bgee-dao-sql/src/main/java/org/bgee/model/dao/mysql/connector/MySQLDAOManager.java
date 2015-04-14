@@ -25,7 +25,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOManager;
-import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.mysql.anatdev.MySQLAnatEntityDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO;
@@ -42,6 +41,7 @@ import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneOntologyDAO;
 import org.bgee.model.dao.mysql.gene.MySQLHierarchicalGroupDAO;
 import org.bgee.model.dao.mysql.ontologycommon.MySQLCIOStatementDAO;
+import org.bgee.model.dao.mysql.ontologycommon.MySQLEvidenceOntologyDAO;
 import org.bgee.model.dao.mysql.ontologycommon.MySQLRelationDAO;
 import org.bgee.model.dao.mysql.source.MySQLSourceDAO;
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO;
@@ -1042,6 +1042,11 @@ public class MySQLDAOManager extends DAOManager {
     protected MySQLCIOStatementDAO getNewCIOStatementDAO() {
         log.entry();
         return log.exit(new MySQLCIOStatementDAO(this));
+    }
+    @Override
+    protected MySQLEvidenceOntologyDAO getNewEvidenceOntologyDAO() {
+        log.entry();
+        return log.exit(new MySQLEvidenceOntologyDAO(this));
     }
     @Override
     protected MySQLSummarySimilarityAnnotationDAO getNewSummarySimilarityAnnotationDAO() {

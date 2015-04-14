@@ -58,9 +58,9 @@ public class MySQLEvidenceOntologyDAOIT  extends MySQLITAncestor {
 
         // Generate manually expected result
         List<ECOTermTO> expectedECOTerms = Arrays.asList(
-                new ECOTermTO("1", "name1", "desc1"), 
-                new ECOTermTO("2", "name2", null), 
-                new ECOTermTO("3", "name3", "desc3")); 
+                new ECOTermTO("ECO:1", "name1", "desc1"), 
+                new ECOTermTO("ECO:2", "name2", null), 
+                new ECOTermTO("ECO:3", "name3", "desc3")); 
         //Compare
         assertTrue("ECOTermTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(methECOTerms, expectedECOTerms));
@@ -95,8 +95,8 @@ public class MySQLEvidenceOntologyDAOIT  extends MySQLITAncestor {
         // Create a Collection of ECOTermTO to be inserted,
         // only the attribute description could be null according database schema.
         Collection<ECOTermTO> ecoTOs = Arrays.asList(
-                new ECOTermTO("1", "name1", "desc1"),
-                new ECOTermTO("2", "name2", null));
+                new ECOTermTO("ECO:1", "name1", "desc1"),
+                new ECOTermTO("ECO:2", "name2", null));
 
         try {
             MySQLEvidenceOntologyDAO dao = new MySQLEvidenceOntologyDAO(this.getMySQLDAOManager());
@@ -108,7 +108,7 @@ public class MySQLEvidenceOntologyDAOIT  extends MySQLITAncestor {
                     prepareStatement("SELECT 1 FROM evidenceOntology " +
                             "WHERE ECOId = ? AND ECOName = ? AND ECODescription = ?")) {
                 
-                stmt.setInt(1, 1);
+                stmt.setString(1, "ECO:1");
                 stmt.setString(2, "name1");
                 stmt.setString(3, "desc1");
                 assertTrue("ECOTermTO incorrectly inserted", 
@@ -118,7 +118,7 @@ public class MySQLEvidenceOntologyDAOIT  extends MySQLITAncestor {
             try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
                     prepareStatement("SELECT 1 FROM evidenceOntology " +
                             "WHERE ECOId = ? AND ECOName = ? AND ECODescription IS NULL")) {
-                stmt.setInt(1, 2);
+                stmt.setString(1, "ECO:2");
                 stmt.setString(2, "name2");
                 assertTrue("ECOTermTO incorrectly inserted", 
                         stmt.getRealPreparedStatement().executeQuery().next());

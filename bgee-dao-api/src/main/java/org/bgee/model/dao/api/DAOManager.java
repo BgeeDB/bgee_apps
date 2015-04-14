@@ -34,6 +34,7 @@ import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
 import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO;
+import org.bgee.model.dao.api.ontologycommon.EvidenceOntologyDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.source.SourceDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO;
@@ -1064,6 +1065,20 @@ public abstract class DAOManager implements AutoCloseable
     }
 
     /**
+     * Get a new {@link org.bgee.model.dao.api.ontologycommon.EvidenceOntologyDAO EvidenceOntologyDAO}, 
+     * unless this {@code DAOManager} is already closed. 
+     * 
+     * @return  a new {@code EvidenceOntologyDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see org.bgee.model.dao.api.ontologycommon.EvidenceOntologyDAO EvidenceOntologyDAO 
+     */
+    public final EvidenceOntologyDAO getEvidenceOntologyDAO() {
+        log.entry();
+        this.checkClosed();
+        return log.exit(this.getNewEvidenceOntologyDAO());
+    }
+
+    /**
      * Get a new {@link org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO 
      * SummarySimilarityAnnotationDAO}, unless this {@code DAOManager} is already closed. 
      * 
@@ -1329,6 +1344,14 @@ public abstract class DAOManager implements AutoCloseable
      * @return  A new {@code CIOStatementDAO}
      */
     protected abstract CIOStatementDAO getNewCIOStatementDAO();
+    /**
+     * Service provider must return a new 
+     * {@link org.bgee.model.dao.api.ontologycommon.EvidenceOntologyDAO EvidenceOntologyDAO}
+     * instance when this method is called. 
+     * 
+     * @return  A new {@code EvidenceOntologyDAO}
+     */
+    protected abstract EvidenceOntologyDAO getNewEvidenceOntologyDAO();
     /**
      * Service provider must return a new 
      * {@link org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO 

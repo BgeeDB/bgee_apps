@@ -1876,6 +1876,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     //should be stored in class attributes. A good design would be to have *another* class 
     //to hold these params...
     //TODO: do we really need the mapSumSimCIO mapping? It is easy to retrieve it from cioStatementByIds...
+    //TODO: no generate file with absolutely no data in it.
     private void filterAndWriteOMANodeRows(Map<String, GeneTO> geneTOsByIds, 
             Map<String, String> stageNamesByIds, Map<String, String> anatEntityNamesByIds, 
             Map<String, CIOStatementTO> cioStatementByIds, Map<String, String> speciesNamesByIds,
@@ -2108,6 +2109,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         
         if (allCompleteBeans == null || allCompleteBeans.isEmpty()) {
             log.trace("This OMA group doesn't have data in any condition");
+            log.exit();
             return;
         }
         
@@ -2312,28 +2314,28 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 
                 int omaIdComp = bean1.getOmaId().compareToIgnoreCase(bean2.getOmaId());
                 if (omaIdComp != 0)
-                    return omaIdComp;
+                    return log.exit(omaIdComp);
     
                 int uberonIdComp = compareTwoStringLists(bean1.getEntityIds(), bean2.getEntityIds());
                 if (uberonIdComp != 0)
-                    return uberonIdComp;
+                    return log.exit(uberonIdComp);
     
                 int stageIdComp = compareTwoStringLists(bean1.getStageIds(), bean2.getStageIds());
                 if (stageIdComp != 0)
-                    return stageIdComp;
+                    return log.exit(stageIdComp);
                 
                 if (bean1 instanceof MultiSpeciesCompleteDiffExprFileBean) {
                     int speciesIdComp = ((MultiSpeciesCompleteDiffExprFileBean)bean1).getSpeciesId().
                             compareToIgnoreCase(
                                     ((MultiSpeciesCompleteDiffExprFileBean)bean2).getSpeciesId());
                     if (speciesIdComp != 0)
-                        return speciesIdComp;
+                        return log.exit(speciesIdComp);
                     
                     int geneIdComp = ((MultiSpeciesCompleteDiffExprFileBean)bean1).getGeneId().
                             compareToIgnoreCase(
                                     ((MultiSpeciesCompleteDiffExprFileBean)bean2).getGeneId());
                     if (geneIdComp != 0)
-                        return geneIdComp;
+                        return log.exit(geneIdComp);
                 }
                 return log.exit(0);
             }
@@ -2360,15 +2362,15 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         for (int i = 0; i < minLength; i++) {
             final int compareValue = list1.get(i).compareToIgnoreCase(list2.get(i));
             if (compareValue != 0) {
-                return compareValue; // They are already not equal
+                return log.exit(compareValue); // They are already not equal
             }
         }
         if (list1.size() == list2.size()) {
-            return 0; // They are equal
+            return log.exit(0); // They are equal
         } else if (list1.size() < list2.size()) {
-            return -1; // list 1 is smaller
+            return log.exit(-1); // list 1 is smaller
         } else {
-            return 1;
+            return log.exit(1);
         }
     }
 

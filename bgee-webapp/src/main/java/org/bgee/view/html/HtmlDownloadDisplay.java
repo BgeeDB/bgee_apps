@@ -478,9 +478,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     private String getGroupFileData(String groupName) {
         log.entry(groupName);
         
-        String exprSimpleFileSize = null, exprCompleteFileSize = null, 
-                diffExprAnatSimpleFileSize = null, diffExprAnatCompleteFileSize = null, 
-                diffExprDevSimpleFileSize = null, diffExprDevCompleteFileSize = null, 
+        String diffExprAnatSimpleFileSize = null, diffExprAnatCompleteFileSize = null,
+//                exprSimpleFileSize = null, exprCompleteFileSize = null,  
+//                diffExprDevSimpleFileSize = null, diffExprDevCompleteFileSize = null, 
                 filePrefix = null;
 
         switch (groupName) {
@@ -633,24 +633,23 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 return ("");
         }
         
-        //TODO modify directories to use multi-species one when created in BgeeProperties
         // XXX: use MultiSpeciesDiffExprFileType instead of string?
-        String beginExprFilePath = this.prop.getDownloadExprFilesRootDirectory() + filePrefix + "_";
-        String beginDiffExprFilePath = this.prop.getDownloadDiffExprFilesRootDirectory() + filePrefix + "_";
+//        String beginExprFilePath = this.prop.getDownloadMultiExprFilesRootDirectory() + filePrefix + "_";
+        String beginDiffExprFilePath = this.prop.getDownloadMultiDiffExprFilesRootDirectory() + filePrefix + "_";
         String extension = ".tsv.zip";
         
         String data = "";
         
-        if (exprSimpleFileSize != null) {
-            data += " data-bgeeexprsimplefileurl='" + beginExprFilePath + 
-                    "multi-expr-simple" + extension +
-                    "' data-bgeeexprsimplefilesize='" + diffExprAnatSimpleFileSize + "'"; 
-        }
-        if (exprCompleteFileSize != null) {
-            data += " data-bgeeexprcompletefileurl='" + beginExprFilePath + 
-                    "multi-expr-complete" + extension +
-                    "' data-bgeeexprcompletefilesize='" + diffExprAnatSimpleFileSize + "'"; 
-        }
+//        if (exprSimpleFileSize != null) {
+//            data += " data-bgeeexprsimplefileurl='" + beginExprFilePath + 
+//                    "multi-expr-simple" + extension +
+//                    "' data-bgeeexprsimplefilesize='" + diffExprAnatSimpleFileSize + "'"; 
+//        }
+//        if (exprCompleteFileSize != null) {
+//            data += " data-bgeeexprcompletefileurl='" + beginExprFilePath + 
+//                    "multi-expr-complete" + extension +
+//                    "' data-bgeeexprcompletefilesize='" + diffExprAnatSimpleFileSize + "'"; 
+//        }
         
         if (diffExprAnatSimpleFileSize != null) {
             data += " data-bgeediffexpranatomysimplefileurl='" + beginDiffExprFilePath + 
@@ -662,16 +661,16 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                     "multi-diffexpr-anatomy-complete" + extension +
                     "' data-bgeediffexpranatomycompletefilesize='" + diffExprAnatCompleteFileSize + "'"; 
         }
-        if (diffExprDevSimpleFileSize != null) {
-            data += " data-bgeediffexprdevelopmentsimplefileurl='" + beginDiffExprFilePath + 
-                    "multi-diffexpr-development-simple" + extension +
-                    "' data-bgeediffexprdevelopmentsimplefilesize='" + diffExprDevSimpleFileSize + "'"; 
-        }
-        if (diffExprDevCompleteFileSize != null) {
-            data += " data-bgeediffexprdevelopmentcompletefileurl='" + beginDiffExprFilePath + 
-                    "multi-diffexpr-development-complete" + extension +
-                    "' data-bgeediffexprdevelopmentcompletefilesize='" + diffExprDevCompleteFileSize + "'"; 
-        }
+//        if (diffExprDevSimpleFileSize != null) {
+//            data += " data-bgeediffexprdevelopmentsimplefileurl='" + beginDiffExprFilePath + 
+//                    "multi-diffexpr-development-simple" + extension +
+//                    "' data-bgeediffexprdevelopmentsimplefilesize='" + diffExprDevSimpleFileSize + "'"; 
+//        }
+//        if (diffExprDevCompleteFileSize != null) {
+//            data += " data-bgeediffexprdevelopmentcompletefileurl='" + beginDiffExprFilePath + 
+//                    "multi-diffexpr-development-complete" + extension +
+//                    "' data-bgeediffexprdevelopmentcompletefilesize='" + diffExprDevCompleteFileSize + "'"; 
+//        }
         return log.exit(data);
     }
     

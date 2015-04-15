@@ -154,6 +154,27 @@ public class BgeeProperties
     
     /**
      * A {@code String} that is the key to access to the System property that is read at the 
+     * initialization of {@code BgeeProperties} to set the multi-species differential expression 
+     * download files root directory. 
+     * 
+     * @see #DOWNLOAD_MULTI_DIFF_EXPR_FILES_ROOT_DIRECTORY_DEFAULT
+     * @see #getDownloadMultiDiffExprFilesRootDirectory()
+     */
+    public final static String DOWNLOAD_MULTI_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY = 
+            "org.bgee.webapp.downloadMultiDiffExprFilesRootDirectory";
+    /**
+     * A {@code String} that is the default value of the multi-species differential expression
+     * download file root directory. 
+     * 
+     * @see #DOWNLOAD_MULTI_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY
+     * @see #getDownloadMultiDiffExprFilesRootDirectory()
+     */
+    public final static String DOWNLOAD_MULTI_DIFF_EXPR_FILES_ROOT_DIRECTORY_DEFAULT = 
+            "multiDiffExpressionFiles/";
+
+
+    /**
+     * A {@code String} that is the key to access to the System property that is read at the 
      * initialization of {@code BgeeProperties} to set the javascript file root directory. 
      * 
      * @see #JAVASCRIPT_FILES_ROOT_DIRECTORY_DEFAULT
@@ -337,6 +358,14 @@ public class BgeeProperties
     private final String downloadDiffExprFilesRootDirectory;
     
     /**
+     * A {@code String} that defines the multi-species differential expression download file 
+     * directory where are located multi-species differential expression files available for 
+     * download, to be added to the {@code bgeeRootDirectory} to generate URL to multi-species 
+     * differential expression download files.
+     */
+    private final String downloadMultiDiffExprFilesRootDirectory;
+    
+    /**
      * A {@code String} that defines the root directory where are located javascript files, 
      * to be added to the {@code bgeeRootDirectory} to generate URL to obtain javascript files.
      */
@@ -453,6 +482,9 @@ public class BgeeProperties
         downloadDiffExprFilesRootDirectory  = getStringOption(prop, sysProps, fileProps, 
                 DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY, 
                 DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_DEFAULT);
+        downloadMultiDiffExprFilesRootDirectory = getStringOption(prop, sysProps, fileProps, 
+                DOWNLOAD_MULTI_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY, 
+                DOWNLOAD_MULTI_DIFF_EXPR_FILES_ROOT_DIRECTORY_DEFAULT);
         javascriptFilesRootDirectory  = getStringOption(prop, sysProps, fileProps, 
                 JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY, JAVASCRIPT_FILES_ROOT_DIRECTORY_DEFAULT);
         javascriptVersionExtension  = getStringOption(prop, sysProps, fileProps, 
@@ -672,6 +704,17 @@ public class BgeeProperties
      */
     public String getDownloadDiffExprFilesRootDirectory() {
         return downloadDiffExprFilesRootDirectory;
+    }
+    
+    /**
+     * @return  A {@code String} that defines the absolute root directory where are located 
+     *          multi-species differential expression files available for download, to generate URL 
+     *          to download files.
+     * @see #DOWNLOAD_MULTI_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY
+     * @see #DOWNLOAD_MULTI_DIFF_EXPR_FILES_ROOT_DIRECTORY_DEFAULT
+     */
+    public String getDownloadMultiDiffExprFilesRootDirectory() {
+        return downloadMultiDiffExprFilesRootDirectory;
     }
     
     /**

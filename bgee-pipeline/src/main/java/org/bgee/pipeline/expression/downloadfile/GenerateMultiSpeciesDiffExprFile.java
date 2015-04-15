@@ -1338,13 +1338,17 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                         currentTO = diffExprRs.getTO();
                         currentOMANodeId = mapGeneOMANode.get(currentTO.getGeneId());
                     }
+                    log.trace("Previous OMA node ID={} - Current OMA node ID={}", 
+                            previousOMANodeId, currentOMANodeId);
+
                     //if the OMA group changes, or if it is the latest iteration
                     if (!doIteration || //doIteration is false for the latest iteration, 
                                         // AFTER retrieving the last TO
                                         //(ResultSet.isAfterLast would return true)
                           (previousOMANodeId != null && !previousOMANodeId.equals(currentOMANodeId))) {
+                        log.trace("Start generating data for OMA node ID {}", previousOMANodeId);
                         iterationCount++;
-                        assert previousOMANodeId != null;
+
                         assert (doIteration && currentOMANodeId != null && currentTO != null) || 
                                     (!doIteration && currentOMANodeId == null && currentTO == null);
                         
@@ -1375,9 +1379,12 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                                 mapStageGroupToStageId, mapAnatEntityToSimAnnot, 
                                 mapStageIdToStageGroup);
 
+                        log.debug("Done generating data for OMA node ID {}", previousOMANodeId);
+
                         if (log.isDebugEnabled() && iterationCount % 10000 == 0) {
                             log.debug("{} OMA node IDs already iterated", iterationCount);
                         }
+
 
                         // We clear the set containing TOs with the previous OMA Node ID
                         omaGroupCalls.clear();

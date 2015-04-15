@@ -127,7 +127,9 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                         new GeneTO("geneId6", "geneName6", null, 11, null, 222, null),
                         new GeneTO("geneId7", "geneName7", null, 22, null, 222, null),
                         new GeneTO("geneId8", "geneName8", null, 11, null, 444, null),
-                        new GeneTO("geneId9", "geneName9", null, 33, null, 444, null)),
+                        new GeneTO("geneId9", "geneName9", null, 33, null, 444, null),
+                        new GeneTO("geneId10", "geneName10", null, 11, null, 555, null),
+                        new GeneTO("geneId11", "geneName11", null, 33, null, 555, null)),
                         MySQLGeneTOResultSet.class);
         when(mockManager.mockGeneDAO.getGenesBySpeciesIds(speciesIds1)).thenReturn(mockGeneTORs);
 
@@ -174,6 +176,8 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                         new HierarchicalGroupToGeneTO("333", "geneId3"),
                         new HierarchicalGroupToGeneTO("333", "geneId4"),
                         new HierarchicalGroupToGeneTO("333", "geneId5"),
+                        new HierarchicalGroupToGeneTO("555", "geneId10"),
+                        new HierarchicalGroupToGeneTO("555", "geneId11"),
                         new HierarchicalGroupToGeneTO("222", "geneId6"),
                         new HierarchicalGroupToGeneTO("222", "geneId7")),
                         MySQLHierarchicalGroupToGeneTOResultSet.class);
@@ -251,6 +255,14 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                         new DiffExpressionCallTO(null, "geneId9", "entityId2", "stageId1", 
                                 ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                                 DataState.HIGHQUALITY, 0.077f, 8, 1, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                                DataState.HIGHQUALITY, 0.066f, 11, 2),
+                        new DiffExpressionCallTO(null, "geneId10", "entityId4", "stageId2", 
+                                ComparisonFactor.ANATOMY, DiffExprCallType.NO_DATA, 
+                                DataState.NODATA, 1f, 0, 0, DiffExprCallType.UNDER_EXPRESSED,
+                                DataState.LOWQUALITY, 0.5f, 1, 0),
+                        new DiffExpressionCallTO(null, "geneId11", "entityId5", "stageId1", 
+                                ComparisonFactor.ANATOMY, DiffExprCallType.OVER_EXPRESSED, 
+                                DataState.HIGHQUALITY, 0.077f, 8, 1, DiffExprCallType.OVER_EXPRESSED, 
                                 DataState.HIGHQUALITY, 0.066f, 11, 2)),
                                 MySQLDiffExpressionCallTOResultSet.class);
         DiffExpressionCallParams anatDiffExprParams = 
@@ -380,39 +392,20 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
             //the unit of the test.
             List<List<String>> expectedRows = new ArrayList<List<String>>();
 
-            List<String> expectedRow1 = new ArrayList<String>();
-            expectedRow1.add("//OMA node ID 444 contains gene IDs [geneId1, geneId2, " + 
-                    "geneId8, geneId9] with gene names [geneName1, geneName2, geneName8, geneName9]");
+            expectedRows.add(Arrays.asList("//OMA node ID 444 contains gene IDs [geneId1, geneId2, " + 
+                    "geneId8, geneId9] with gene names [geneName1, geneName2, geneName8, geneName9]"));
 
-            List<String> expectedRow2 = new ArrayList<String>();
-            expectedRow2.add("444");
-            expectedRow2.add("entityId1|entityId2");
-            expectedRow2.add("entityName1|entityName2");
-            expectedRow2.add("stageId1");
-            expectedRow2.add("stageName1");
-            //Species 11
-            expectedRow2.add("1");
-            expectedRow2.add("0");
-            expectedRow2.add("0");
-            expectedRow2.add("3");
-            //Species 22
-            expectedRow2.add("0");
-            expectedRow2.add("1");
-            expectedRow2.add("0");
-            expectedRow2.add("3");
-            //Species 33
-            expectedRow2.add("0");
-            expectedRow2.add("0");
-            expectedRow2.add("1");
-            expectedRow2.add("3");
+            expectedRows.add(Arrays.asList("444", "entityId1|entityId2", "entityName1|entityName2", 
+                    "stageId1", "stageName1",
+                    // Species 11
+                    "1", "0", "0", "3",
+                    // Species 22
+                    "0", "1", "0", "3",
+                    // Species 33
+                    "0", "0", "1", "3"));
             
-            List<String> expectedRow3 = new ArrayList<String>();
-            expectedRow3.add("//");
+            expectedRows.add(Arrays.asList("//"));
             
-            expectedRows.add(expectedRow1);
-            expectedRows.add(expectedRow2);
-            expectedRows.add(expectedRow3);
-
             List<List<String>> actualRows = new ArrayList<List<String>>();
             List<String> row;
             while( (row = listReader.read()) != null ) {
@@ -473,239 +466,109 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
             //the unit of the test.
             List<List<String>> expectedRows = new ArrayList<List<String>>();
 
-            List<String> expectedRow2 = new ArrayList<String>();
-            expectedRow2.add("222");
-            expectedRow2.add("entityId4|entityId5");
-            expectedRow2.add("entityName4|entityName5");
-            expectedRow2.add("stageId2");
-            expectedRow2.add("stageName2");
-            expectedRow2.add("GenusZZ_speciesZZ");
-            expectedRow2.add("geneId6");
-            expectedRow2.add("geneName6");
-            expectedRow2.add(DiffExpressionData.STRONG_AMBIGUITY.getStringRepresentation());
-            expectedRow2.add(GenerateDiffExprFile.NA_VALUE);
-            expectedRow2.add("cioId1");
-            expectedRow2.add("cioName1");
-            expectedRow2.add(DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation());
-            expectedRow2.add(DataState.LOWQUALITY.getStringRepresentation());
-            expectedRow2.add("0.3");
-            expectedRow2.add("1");
-            expectedRow2.add("0");
-            expectedRow2.add(DiffExpressionData.OVER_EXPRESSION.getStringRepresentation());
-            expectedRow2.add(DataState.HIGHQUALITY.getStringRepresentation());
-            expectedRow2.add("0.001");
-            expectedRow2.add("4");
-            expectedRow2.add("1");
-            
-            List<String> expectedRow3 = new ArrayList<String>();
-            expectedRow3.add("222");
-            expectedRow3.add("entityId4|entityId5");
-            expectedRow3.add("entityName4|entityName5");
-            expectedRow3.add("stageId2");
-            expectedRow3.add("stageName2");
-            expectedRow3.add("GenusVR_speciesVR");
-            expectedRow3.add("geneId7");
-            expectedRow3.add("geneName7");
-            expectedRow3.add(DiffExpressionData.OVER_EXPRESSION.getStringRepresentation());
-            expectedRow3.add(DataState.LOWQUALITY.getStringRepresentation());
-            expectedRow3.add("cioId1");
-            expectedRow3.add("cioName1");
-            expectedRow3.add(DiffExpressionData.OVER_EXPRESSION.getStringRepresentation());
-            expectedRow3.add(DataState.LOWQUALITY.getStringRepresentation());
-            expectedRow3.add("0.1");
-            expectedRow3.add("2");
-            expectedRow3.add("2");
-            expectedRow3.add(DiffExpressionData.NO_DATA.getStringRepresentation());
-            expectedRow3.add(DataState.NODATA.getStringRepresentation());
-            expectedRow3.add("1.0");
-            expectedRow3.add("0");
-            expectedRow3.add("0");
-          
-            List<String> expectedRow6 = new ArrayList<String>();
-            expectedRow6.add("333");
-            expectedRow6.add("entityId3|entityId6");
-            expectedRow6.add("entityName3|entityName6");
-            expectedRow6.add("stageId1");
-            expectedRow6.add("stageName1");
-            expectedRow6.add("GenusZZ_speciesZZ");
-            expectedRow6.add("geneId5");
-            expectedRow6.add("geneName5");
-            expectedRow6.add(DiffExpressionData.OVER_EXPRESSION.getStringRepresentation());
-            expectedRow6.add(DataState.LOWQUALITY.getStringRepresentation());
-            expectedRow6.add("cioId2");
-            expectedRow6.add("cioName2");
-            expectedRow6.add(DiffExpressionData.NO_DATA.getStringRepresentation());
-            expectedRow6.add(DataState.NODATA.getStringRepresentation());
-            expectedRow6.add("1.0");
-            expectedRow6.add("0");
-            expectedRow6.add("0");
-            expectedRow6.add(DiffExpressionData.OVER_EXPRESSION.getStringRepresentation());
-            expectedRow6.add(DataState.LOWQUALITY.getStringRepresentation());
-            expectedRow6.add("0.7");
-            expectedRow6.add("2");
-            expectedRow6.add("1");
-
-            List<String> expectedRow7 = new ArrayList<String>();
-            expectedRow7.add("333");
-            expectedRow7.add("entityId3|entityId6");
-            expectedRow7.add("entityName3|entityName6");
-            expectedRow7.add("stageId1");
-            expectedRow7.add("stageName1");
-            expectedRow7.add("GenusAA_speciesAA");
-            expectedRow7.add("geneId4");
-            expectedRow7.add("geneName4");
-            expectedRow7.add(DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation());
-            expectedRow7.add(DataState.HIGHQUALITY.getStringRepresentation());
-            expectedRow7.add("cioId2");
-            expectedRow7.add("cioName2");
-            expectedRow7.add(DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation());
-            expectedRow7.add(DataState.HIGHQUALITY.getStringRepresentation());
-            expectedRow7.add("0.007");
-            expectedRow7.add("2");
-            expectedRow7.add("0");
-            expectedRow7.add(DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation());
-            expectedRow7.add(DataState.HIGHQUALITY.getStringRepresentation());
-            expectedRow7.add("0.008");
-            expectedRow7.add("3");
-            expectedRow7.add("1");
-
-            List<String> expectedRow10 = new ArrayList<String>();
-            expectedRow10.add("444");
-            expectedRow10.add("entityId1|entityId2");
-            expectedRow10.add("entityName1|entityName2");
-            expectedRow10.add("stageId1");
-            expectedRow10.add("stageName1");
-            expectedRow10.add("GenusZZ_speciesZZ");
-            expectedRow10.add("geneId1");
-            expectedRow10.add("geneName1");
-            expectedRow10.add(DiffExpressionData.OVER_EXPRESSION.getStringRepresentation());
-            expectedRow10.add(DataState.HIGHQUALITY.getStringRepresentation());
-            expectedRow10.add("cioId1");
-            expectedRow10.add("cioName1");
-            expectedRow10.add(DiffExpressionData.OVER_EXPRESSION.getStringRepresentation());
-            expectedRow10.add(DataState.LOWQUALITY.getStringRepresentation());
-            expectedRow10.add("0.9");
-            expectedRow10.add("1");
-            expectedRow10.add("2");
-            expectedRow10.add(DiffExpressionData.OVER_EXPRESSION.getStringRepresentation());
-            expectedRow10.add(DataState.HIGHQUALITY.getStringRepresentation());
-            expectedRow10.add("0.008");
-            expectedRow10.add("3");
-            expectedRow10.add("0");
-
-            List<String> expectedRow11 = new ArrayList<String>();
-            expectedRow11.add("444");
-            expectedRow11.add("entityId1|entityId2");
-            expectedRow11.add("entityName1|entityName2");
-            expectedRow11.add("stageId1");
-            expectedRow11.add("stageName1");
-            expectedRow11.add("GenusVR_speciesVR");
-            expectedRow11.add("geneId2");
-            expectedRow11.add("geneName2");
-            expectedRow11.add(DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation());
-            expectedRow11.add(DataState.LOWQUALITY.getStringRepresentation());
-            expectedRow11.add("cioId1");
-            expectedRow11.add("cioName1");
-            expectedRow11.add(DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation());
-            expectedRow11.add(DataState.LOWQUALITY.getStringRepresentation());
-            expectedRow11.add("0.5");
-            expectedRow11.add("1");
-            expectedRow11.add("0");
-            expectedRow11.add(DiffExpressionData.NO_DATA.getStringRepresentation());
-            expectedRow11.add(DataState.NODATA.getStringRepresentation());
-            expectedRow11.add("1.0");
-            expectedRow11.add("0");
-            expectedRow11.add("0");
-
-            List<String> expectedRow12 = new ArrayList<String>();
-            expectedRow12.add("444");
-            expectedRow12.add("entityId1|entityId2");
-            expectedRow12.add("entityName1|entityName2");
-            expectedRow12.add("stageId1");
-            expectedRow12.add("stageName1");
-            expectedRow12.add("GenusAA_speciesAA");
-            expectedRow12.add("geneId9");
-            expectedRow12.add("geneName9");
-            expectedRow12.add(DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation());
-            expectedRow12.add(DataState.HIGHQUALITY.getStringRepresentation());
-            expectedRow12.add("cioId1");
-            expectedRow12.add("cioName1");
-            expectedRow12.add(DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation());
-            expectedRow12.add(DataState.HIGHQUALITY.getStringRepresentation());
-            expectedRow12.add("0.077");
-            expectedRow12.add("8");
-            expectedRow12.add("1");
-            expectedRow12.add(DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation());
-            expectedRow12.add(DataState.HIGHQUALITY.getStringRepresentation());
-            expectedRow12.add("0.066");
-            expectedRow12.add("11");
-            expectedRow12.add("2");
-            
-            List<String> expectedRow13 = new ArrayList<String>();
-            expectedRow13.add("444");
-            expectedRow13.add("entityId4|entityId5");
-            expectedRow13.add("entityName4|entityName5");
-            expectedRow13.add("stageId1");
-            expectedRow13.add("stageName1");
-            expectedRow13.add("GenusZZ_speciesZZ");
-            expectedRow13.add("geneId8");
-            expectedRow13.add("geneName8");
-            expectedRow13.add(DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation());
-            expectedRow13.add(DataState.HIGHQUALITY.getStringRepresentation());
-            expectedRow13.add("cioId1");
-            expectedRow13.add("cioName1");
-            expectedRow13.add(DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation());
-            expectedRow13.add(DataState.HIGHQUALITY.getStringRepresentation());
-            expectedRow13.add("0.03");
-            expectedRow13.add("1");
-            expectedRow13.add("0");
-            expectedRow13.add(DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation());
-            expectedRow13.add(DataState.HIGHQUALITY.getStringRepresentation());
-            expectedRow13.add("0.002");
-            expectedRow13.add("6");
-            expectedRow13.add("0");
-
-            List<String> expectedRow14 = new ArrayList<String>();
-            expectedRow14.add("444");
-            expectedRow14.add("entityId4|entityId5");
-            expectedRow14.add("entityName4|entityName5");
-            expectedRow14.add("stageId1");
-            expectedRow14.add("stageName1");
-            expectedRow14.add("GenusAA_speciesAA");
-            expectedRow14.add("geneId9");
-            expectedRow14.add("geneName9");
-            expectedRow14.add(DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation());
-            expectedRow14.add(DataState.LOWQUALITY.getStringRepresentation());
-            expectedRow14.add("cioId1");
-            expectedRow14.add("cioName1");
-            expectedRow14.add(DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation());
-            expectedRow14.add(DataState.LOWQUALITY.getStringRepresentation());
-            expectedRow14.add("0.55");
-            expectedRow14.add("1");
-            expectedRow14.add("0");
-            expectedRow14.add(DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation());
-            expectedRow14.add(DataState.LOWQUALITY.getStringRepresentation());
-            expectedRow14.add("0.44");
-            expectedRow14.add("1");
-            expectedRow14.add("0");
-
             expectedRows.add(Arrays.asList("//OMA node ID 222 contains gene IDs [geneId6, geneId7] " + 
                     "with gene names [geneName6, geneName7]"));
-            expectedRows.add(expectedRow2);
-            expectedRows.add(expectedRow3);
+
+            expectedRows.add(Arrays.asList(
+                    "222", "entityId4|entityId5", "entityName4|entityName5", "stageId2", 
+                    "stageName2", "GenusZZ_speciesZZ", "geneId6", "geneName6", 
+                    DiffExpressionData.STRONG_AMBIGUITY.getStringRepresentation(), 
+                    GenerateDiffExprFile.NA_VALUE, "cioId1", "cioName1", 
+                    DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(), 
+                    DataState.LOWQUALITY.getStringRepresentation(), "0.3", "1", "0", 
+                    DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
+                    DataState.HIGHQUALITY.getStringRepresentation(), "0.001", "4", "1"));
+            
+            expectedRows.add(Arrays.asList(
+                    "222", "entityId4|entityId5", "entityName4|entityName5", "stageId2", 
+                    "stageName2", "GenusVR_speciesVR", "geneId7", "geneName7", 
+                    DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
+                    DataState.LOWQUALITY.getStringRepresentation(), "cioId1", "cioName1", 
+                    DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
+                    DataState.LOWQUALITY.getStringRepresentation(), "0.1", "2", "2", 
+                    DiffExpressionData.NO_DATA.getStringRepresentation(), 
+                    DataState.NODATA.getStringRepresentation(), "1.0", "0", "0"));
+          
             expectedRows.add(Arrays.asList("//"));
+
             expectedRows.add(Arrays.asList("//OMA node ID 333 contains gene IDs [geneId3, geneId4, " + 
                     "geneId5] with gene names [geneName3, geneName4, geneName5]"));
-            expectedRows.add(expectedRow6);
-            expectedRows.add(expectedRow7);
+
+            expectedRows.add(Arrays.asList(
+                    "333", "entityId3|entityId6", "entityName3|entityName6", "stageId1", 
+                    "stageName1", "GenusZZ_speciesZZ", "geneId5", "geneName5", 
+                    DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
+                    DataState.LOWQUALITY.getStringRepresentation(), "cioId2", "cioName2", 
+                    DiffExpressionData.NO_DATA.getStringRepresentation(), 
+                    DataState.NODATA.getStringRepresentation(), "1.0", "0", "0", 
+                    DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
+                    DataState.LOWQUALITY.getStringRepresentation(), "0.7", "2", "1"));
+            
+            expectedRows.add(Arrays.asList(
+                    "333", "entityId3|entityId6", "entityName3|entityName6", "stageId1", 
+                    "stageName1", "GenusAA_speciesAA", "geneId4", "geneName4", 
+                    DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
+                    DataState.HIGHQUALITY.getStringRepresentation(), "cioId2", "cioName2", 
+                    DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
+                    DataState.HIGHQUALITY.getStringRepresentation(), "0.007", "2", "0", 
+                    DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
+                    DataState.HIGHQUALITY.getStringRepresentation(), "0.008", "3", "1"));
+
             expectedRows.add(Arrays.asList("//"));
+
             expectedRows.add(Arrays.asList("//OMA node ID 444 contains gene IDs [geneId1, geneId2, " + 
                     "geneId8, geneId9] with gene names [geneName1, geneName2, geneName8, geneName9]"));
-            expectedRows.add(expectedRow10);
-            expectedRows.add(expectedRow11);
-            expectedRows.add(expectedRow12);
-            expectedRows.add(expectedRow13);
-            expectedRows.add(expectedRow14);
+
+            expectedRows.add(Arrays.asList(
+                    "444", "entityId1|entityId2", "entityName1|entityName2", "stageId1", 
+                    "stageName1", "GenusZZ_speciesZZ", "geneId1", "geneName1", 
+                    DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
+                    DataState.HIGHQUALITY.getStringRepresentation(), "cioId1", "cioName1", 
+                    DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
+                    DataState.LOWQUALITY.getStringRepresentation(), "0.9", "1", "2", 
+                    DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
+                    DataState.HIGHQUALITY.getStringRepresentation(), "0.008", "3", "0"));
+
+            expectedRows.add(Arrays.asList(
+                    "444", "entityId1|entityId2", "entityName1|entityName2", "stageId1", 
+                    "stageName1", "GenusVR_speciesVR", "geneId2", "geneName2", 
+                    DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(), 
+                    DataState.LOWQUALITY.getStringRepresentation(), "cioId1", "cioName1", 
+                    DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(), 
+                    DataState.LOWQUALITY.getStringRepresentation(), "0.5", "1", "0", 
+                    DiffExpressionData.NO_DATA.getStringRepresentation(), 
+                    DataState.NODATA.getStringRepresentation(), "1.0", "0", "0"));
+
+            expectedRows.add(Arrays.asList(
+                    "444", "entityId1|entityId2", "entityName1|entityName2", "stageId1", 
+                    "stageName1", "GenusAA_speciesAA", "geneId9", "geneName9",
+                    DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
+                    DataState.HIGHQUALITY.getStringRepresentation(), "cioId1", "cioName1", 
+                    DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
+                    DataState.HIGHQUALITY.getStringRepresentation(), "0.077", "8", "1", 
+                    DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
+                    DataState.HIGHQUALITY.getStringRepresentation(), "0.066", "11", "2"));
+            
+            expectedRows.add(Arrays.asList(
+                    "444", "entityId4|entityId5", "entityName4|entityName5", "stageId1", 
+                    "stageName1", "GenusZZ_speciesZZ", "geneId8", "geneName8", 
+                    DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
+                    DataState.HIGHQUALITY.getStringRepresentation(), "cioId1", "cioName1", 
+                    DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
+                    DataState.HIGHQUALITY.getStringRepresentation(), "0.03", "1", "0", 
+                    DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
+                    DataState.HIGHQUALITY.getStringRepresentation(), "0.002", "6", "0"));
+
+            expectedRows.add(Arrays.asList(
+                    "444", "entityId4|entityId5", "entityName4|entityName5", "stageId1", 
+                    "stageName1", "GenusAA_speciesAA", "geneId9", "geneName9", 
+                    DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(), 
+                    DataState.LOWQUALITY.getStringRepresentation(), "cioId1", "cioName1", 
+                    DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(), 
+                    DataState.LOWQUALITY.getStringRepresentation(), "0.55", "1", "0", 
+                    DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(), 
+                    DataState.LOWQUALITY.getStringRepresentation(), "0.44", "1", "0"));
+
             expectedRows.add(Arrays.asList("//"));
             
             List<List<String>> actualRows = new ArrayList<List<String>>();

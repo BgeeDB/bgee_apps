@@ -18,7 +18,6 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO;
 import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO.GroupToStageTO;
 import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO.GroupToStageTOResultSet;
@@ -1900,15 +1899,24 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             callsGroupByCondition = this.groupByMultiSpeciesCondition(
                 calls, mapAnatEntityToSimAnnot, mapStageIdToStageGroup);
         
-        //TODO refactor in a method that takes a set of IDs and mapping between IDs and names 
+        //get the gene IDs ordered, to get consistent ordering of gene names
         List<String> geneIds = new ArrayList<String>(omaGeneIds),
                      geneNames = new ArrayList<String>();
         assert geneIds != null && !geneIds.isEmpty();
-        // We sort gene IDs.
         Collections.sort(geneIds);
-        // Then, we build gene name list according to ordered gene ID list.
+        //also, we count number of genes in the OMA group per species (this will be used 
+        //to count number of N/A genes)
+        Map<String, Integer> speciesGeneCount = new HashMap<String, Integer>();
+        // build gene names and species-genes count.
         for (String geneId : geneIds) {
             geneNames.add(geneTOsByIds.get(geneId).getName());
+            
+            String speciesId = String.valueOf(geneTOsByIds.get(geneId).getSpeciesId());
+            Integer geneCount = speciesGeneCount.get(speciesId);
+            if (geneCount == null) {
+                geneCount = new Integer(0);
+            }
+            speciesGeneCount.put(speciesId, new Integer(geneCount.intValue() + 1));
         }
 
         // We store complete and simple multi-species diff. expression file beans to be able to  
@@ -2096,7 +2104,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                                 Long.valueOf(0), Long.valueOf(0), Long.valueOf(0));
                     }
                     // We calculate the number of 'no data'/'not expressed' genes.
-                    counts.setNAGeneCount(geneIds.size() - counts.getOverExprGeneCount() - 
+                    counts.setNAGeneCount(speciesGeneCount.get(speciesId) - 
+                            counts.getOverExprGeneCount() - 
                             counts.getUnderExprGeneCount() - counts.getNotDiffExprGeneCount());
                     simpleBean.getSpeciesDiffExprCounts().add(counts);
                 }

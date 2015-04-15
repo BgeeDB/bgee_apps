@@ -421,11 +421,11 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
             expectedRows.add(Arrays.asList("444", "entityId1|entityId2", "entityName1|entityName2", 
                     "stageId1", "stageName1",
                     // Species 11
-                    "1", "0", "0", "3",
+                    "1", "0", "0", "1",
                     // Species 22
-                    "0", "1", "0", "3",
+                    "0", "1", "0", "0",
                     // Species 33
-                    "0", "0", "1", "3"));
+                    "0", "0", "1", "0"));
             
             expectedRows.add(Arrays.asList("//"));
             

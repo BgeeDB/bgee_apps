@@ -2122,11 +2122,17 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                                 Long.valueOf(0), Long.valueOf(0), Long.valueOf(0));
                     }
                     // We calculate the number of 'no data'/'not expressed' genes.
+                    //First, retrieve number of genes for this species.
+                    //In case there is absolutely no data for a species, we don't even 
+                    //have a gene count in the Map for this species, so we perform a null check.
+                    Integer geneCount = speciesGeneCount.get(speciesId);
+                    if (geneCount == null) {
+                        geneCount = new Integer(0);
+                    }
                     //TODO: I understand that you used long for compatibility with SuperCsv, 
                     //but you should use an int, this is too weird to have a long, 
                     //not a big deal to loose the supercsv checks
-                    long naGeneCount = speciesGeneCount.get(speciesId) - 
-                            counts.getOverExprGeneCount() - 
+                    long naGeneCount = geneCount - counts.getOverExprGeneCount() - 
                             counts.getUnderExprGeneCount() - counts.getNotDiffExprGeneCount();
                     assert naGeneCount >= 0;
                     counts.setNAGeneCount(naGeneCount);

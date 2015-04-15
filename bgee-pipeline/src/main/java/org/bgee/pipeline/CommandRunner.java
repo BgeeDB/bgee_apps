@@ -181,12 +181,12 @@ public class CommandRunner {
         case "InsertECO": 
             InsertECO.main(newArgs);
             break;
-        case "InsertSimilarityAnnotation": 
-            InsertSimilarityAnnotation.main(newArgs);
-            break;
         //---------- Similarity annotation -----------
         case "SimilarityAnnotation": 
             SimilarityAnnotation.main(newArgs);
+            break;
+        case "InsertSimilarityAnnotation": 
+            InsertSimilarityAnnotation.main(newArgs);
             break;
             
         //---------- General annotations -----------

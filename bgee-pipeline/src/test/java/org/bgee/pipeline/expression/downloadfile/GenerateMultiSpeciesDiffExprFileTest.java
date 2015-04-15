@@ -119,13 +119,15 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
 
         MySQLGeneTOResultSet mockGeneTORs = createMockDAOResultSet(
                 Arrays.asList(
-                        new GeneTO("geneId1", "geneName1", null, 11, null, 999, null),
-                        new GeneTO("geneId2", "geneName2", null, 22, null, 999, null),
-                        new GeneTO("geneId3", "geneName3", null, 22, null, 888, null),
-                        new GeneTO("geneId4", "geneName4", null, 33, null, 888, null),
-                        new GeneTO("geneId5", "geneName5", null, 11, null, 888, null),
-                        new GeneTO("geneId6", "geneName6", null, 11, null, 777, null),
-                        new GeneTO("geneId7", "geneName7", null, 22, null, 777, null)),
+                        new GeneTO("geneId1", "geneName1", null, 11, null, 444, null),
+                        new GeneTO("geneId2", "geneName2", null, 22, null, 444, null),
+                        new GeneTO("geneId3", "geneName3", null, 22, null, 333, null),
+                        new GeneTO("geneId4", "geneName4", null, 33, null, 333, null),
+                        new GeneTO("geneId5", "geneName5", null, 11, null, 333, null),
+                        new GeneTO("geneId6", "geneName6", null, 11, null, 222, null),
+                        new GeneTO("geneId7", "geneName7", null, 22, null, 222, null),
+                        new GeneTO("geneId8", "geneName8", null, 11, null, 444, null),
+                        new GeneTO("geneId9", "geneName9", null, 33, null, 444, null)),
                         MySQLGeneTOResultSet.class);
         when(mockManager.mockGeneDAO.getGenesBySpeciesIds(speciesIds1)).thenReturn(mockGeneTORs);
 
@@ -165,13 +167,15 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
 
         MySQLHierarchicalGroupToGeneTOResultSet mockHgtoGeneTORs = createMockDAOResultSet(
                 Arrays.asList(
-                        new HierarchicalGroupToGeneTO("999", "geneId1"),
-                        new HierarchicalGroupToGeneTO("999", "geneId2"),
-                        new HierarchicalGroupToGeneTO("888", "geneId3"),
-                        new HierarchicalGroupToGeneTO("888", "geneId4"),
-                        new HierarchicalGroupToGeneTO("888", "geneId5"),
-                        new HierarchicalGroupToGeneTO("777", "geneId6"),
-                        new HierarchicalGroupToGeneTO("777", "geneId7")),
+                        new HierarchicalGroupToGeneTO("444", "geneId1"),
+                        new HierarchicalGroupToGeneTO("444", "geneId2"),
+                        new HierarchicalGroupToGeneTO("444", "geneId8"),
+                        new HierarchicalGroupToGeneTO("444", "geneId9"),
+                        new HierarchicalGroupToGeneTO("333", "geneId3"),
+                        new HierarchicalGroupToGeneTO("333", "geneId4"),
+                        new HierarchicalGroupToGeneTO("333", "geneId5"),
+                        new HierarchicalGroupToGeneTO("222", "geneId6"),
+                        new HierarchicalGroupToGeneTO("222", "geneId7")),
                         MySQLHierarchicalGroupToGeneTOResultSet.class);
         when(mockManager.mockHierarchicalGroupDAO.getGroupToGene(taxonId1, speciesIds1)).
         thenReturn(mockHgtoGeneTORs);
@@ -235,7 +239,19 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                         new DiffExpressionCallTO(null, "geneId2", "entityId2", "stageId1", 
                                 ComparisonFactor.ANATOMY, DiffExprCallType.UNDER_EXPRESSED, 
                                 DataState.LOWQUALITY, 0.5f, 1, 0, DiffExprCallType.NO_DATA, 
-                                DataState.NODATA, 1f, 0, 0)),
+                                DataState.NODATA, 1f, 0, 0),
+                        new DiffExpressionCallTO(null, "geneId8", "entityId4", "stageId1", 
+                                ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                                DataState.HIGHQUALITY, 0.03f, 1, 0, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                                DataState.HIGHQUALITY, 0.002f,6, 0),
+                        new DiffExpressionCallTO(null, "geneId9", "entityId4", "stageId1", 
+                                ComparisonFactor.ANATOMY, DiffExprCallType.UNDER_EXPRESSED, 
+                                DataState.LOWQUALITY, 0.55f, 1, 0, DiffExprCallType.UNDER_EXPRESSED, 
+                                DataState.LOWQUALITY, 0.44f, 1, 0),
+                        new DiffExpressionCallTO(null, "geneId9", "entityId2", "stageId1", 
+                                ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                                DataState.HIGHQUALITY, 0.077f, 8, 1, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                                DataState.HIGHQUALITY, 0.066f, 11, 2)),
                                 MySQLDiffExpressionCallTOResultSet.class);
         DiffExpressionCallParams anatDiffExprParams = 
                 this.getDiffExpressionCallParams(speciesIds1, ComparisonFactor.ANATOMY);
@@ -252,7 +268,8 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                 Arrays.asList(MultiSpeciesDiffExprFileType.MULTI_DIFF_EXPR_ANATOMY_SIMPLE,
                         MultiSpeciesDiffExprFileType.MULTI_DIFF_EXPR_ANATOMY_COMPLETE));
 
-        String directory = testFolder.newFolder("tmpFolder").getPath();
+//        String directory = testFolder.newFolder("tmpFolder").getPath();
+        String directory = "/Users/vrechdelaval/Desktop/tmpFolder/";
 
         GenerateMultiSpeciesDiffExprFile generator =  new GenerateMultiSpeciesDiffExprFile(
                 mockManager, providedGroups, fileTypes, directory);
@@ -364,27 +381,30 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
             List<List<String>> expectedRows = new ArrayList<List<String>>();
 
             List<String> expectedRow1 = new ArrayList<String>();
-            expectedRow1.add("//OMA node ID 999 contains gene IDs [geneId1, geneId2] with " + 
-                    "gene names [geneName1, geneName2]");
-            
+            expectedRow1.add("//OMA node ID 444 contains gene IDs [geneId1, geneId2, " + 
+                    "geneId8, geneId9] with gene names [geneName1, geneName2, geneName8, geneName9]");
+
             List<String> expectedRow2 = new ArrayList<String>();
-            expectedRow2.add("999");
+            expectedRow2.add("444");
             expectedRow2.add("entityId1|entityId2");
             expectedRow2.add("entityName1|entityName2");
             expectedRow2.add("stageId1");
             expectedRow2.add("stageName1");
+            //Species 11
             expectedRow2.add("1");
             expectedRow2.add("0");
             expectedRow2.add("0");
-            expectedRow2.add("1");
+            expectedRow2.add("3");
+            //Species 22
             expectedRow2.add("0");
             expectedRow2.add("1");
             expectedRow2.add("0");
+            expectedRow2.add("3");
+            //Species 33
+            expectedRow2.add("0");
+            expectedRow2.add("0");
             expectedRow2.add("1");
-            expectedRow2.add("0");
-            expectedRow2.add("0");
-            expectedRow2.add("0");
-            expectedRow2.add("2");
+            expectedRow2.add("3");
             
             List<String> expectedRow3 = new ArrayList<String>();
             expectedRow3.add("//");
@@ -454,7 +474,7 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
             List<List<String>> expectedRows = new ArrayList<List<String>>();
 
             List<String> expectedRow2 = new ArrayList<String>();
-            expectedRow2.add("777");
+            expectedRow2.add("222");
             expectedRow2.add("entityId4|entityId5");
             expectedRow2.add("entityName4|entityName5");
             expectedRow2.add("stageId2");
@@ -478,7 +498,7 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
             expectedRow2.add("1");
             
             List<String> expectedRow3 = new ArrayList<String>();
-            expectedRow3.add("777");
+            expectedRow3.add("222");
             expectedRow3.add("entityId4|entityId5");
             expectedRow3.add("entityName4|entityName5");
             expectedRow3.add("stageId2");
@@ -502,7 +522,7 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
             expectedRow3.add("0");
           
             List<String> expectedRow6 = new ArrayList<String>();
-            expectedRow6.add("888");
+            expectedRow6.add("333");
             expectedRow6.add("entityId3|entityId6");
             expectedRow6.add("entityName3|entityName6");
             expectedRow6.add("stageId1");
@@ -526,7 +546,7 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
             expectedRow6.add("1");
 
             List<String> expectedRow7 = new ArrayList<String>();
-            expectedRow7.add("888");
+            expectedRow7.add("333");
             expectedRow7.add("entityId3|entityId6");
             expectedRow7.add("entityName3|entityName6");
             expectedRow7.add("stageId1");
@@ -550,7 +570,7 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
             expectedRow7.add("1");
 
             List<String> expectedRow10 = new ArrayList<String>();
-            expectedRow10.add("999");
+            expectedRow10.add("444");
             expectedRow10.add("entityId1|entityId2");
             expectedRow10.add("entityName1|entityName2");
             expectedRow10.add("stageId1");
@@ -574,7 +594,7 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
             expectedRow10.add("0");
 
             List<String> expectedRow11 = new ArrayList<String>();
-            expectedRow11.add("999");
+            expectedRow11.add("444");
             expectedRow11.add("entityId1|entityId2");
             expectedRow11.add("entityName1|entityName2");
             expectedRow11.add("stageId1");
@@ -597,20 +617,95 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
             expectedRow11.add("0");
             expectedRow11.add("0");
 
-            expectedRows.add(Arrays.asList("//OMA node ID 777 contains gene IDs [geneId6, geneId7] " + 
+            List<String> expectedRow12 = new ArrayList<String>();
+            expectedRow12.add("444");
+            expectedRow12.add("entityId1|entityId2");
+            expectedRow12.add("entityName1|entityName2");
+            expectedRow12.add("stageId1");
+            expectedRow12.add("stageName1");
+            expectedRow12.add("GenusAA_speciesAA");
+            expectedRow12.add("geneId9");
+            expectedRow12.add("geneName9");
+            expectedRow12.add(DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation());
+            expectedRow12.add(DataState.HIGHQUALITY.getStringRepresentation());
+            expectedRow12.add("cioId1");
+            expectedRow12.add("cioName1");
+            expectedRow12.add(DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation());
+            expectedRow12.add(DataState.HIGHQUALITY.getStringRepresentation());
+            expectedRow12.add("0.077");
+            expectedRow12.add("8");
+            expectedRow12.add("1");
+            expectedRow12.add(DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation());
+            expectedRow12.add(DataState.HIGHQUALITY.getStringRepresentation());
+            expectedRow12.add("0.066");
+            expectedRow12.add("11");
+            expectedRow12.add("2");
+            
+            List<String> expectedRow13 = new ArrayList<String>();
+            expectedRow13.add("444");
+            expectedRow13.add("entityId4|entityId5");
+            expectedRow13.add("entityName4|entityName5");
+            expectedRow13.add("stageId1");
+            expectedRow13.add("stageName1");
+            expectedRow13.add("GenusZZ_speciesZZ");
+            expectedRow13.add("geneId8");
+            expectedRow13.add("geneName8");
+            expectedRow13.add(DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation());
+            expectedRow13.add(DataState.HIGHQUALITY.getStringRepresentation());
+            expectedRow13.add("cioId1");
+            expectedRow13.add("cioName1");
+            expectedRow13.add(DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation());
+            expectedRow13.add(DataState.HIGHQUALITY.getStringRepresentation());
+            expectedRow13.add("0.03");
+            expectedRow13.add("1");
+            expectedRow13.add("0");
+            expectedRow13.add(DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation());
+            expectedRow13.add(DataState.HIGHQUALITY.getStringRepresentation());
+            expectedRow13.add("0.002");
+            expectedRow13.add("6");
+            expectedRow13.add("0");
+
+            List<String> expectedRow14 = new ArrayList<String>();
+            expectedRow14.add("444");
+            expectedRow14.add("entityId4|entityId5");
+            expectedRow14.add("entityName4|entityName5");
+            expectedRow14.add("stageId1");
+            expectedRow14.add("stageName1");
+            expectedRow14.add("GenusAA_speciesAA");
+            expectedRow14.add("geneId9");
+            expectedRow14.add("geneName9");
+            expectedRow14.add(DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation());
+            expectedRow14.add(DataState.LOWQUALITY.getStringRepresentation());
+            expectedRow14.add("cioId1");
+            expectedRow14.add("cioName1");
+            expectedRow14.add(DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation());
+            expectedRow14.add(DataState.LOWQUALITY.getStringRepresentation());
+            expectedRow14.add("0.55");
+            expectedRow14.add("1");
+            expectedRow14.add("0");
+            expectedRow14.add(DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation());
+            expectedRow14.add(DataState.LOWQUALITY.getStringRepresentation());
+            expectedRow14.add("0.44");
+            expectedRow14.add("1");
+            expectedRow14.add("0");
+
+            expectedRows.add(Arrays.asList("//OMA node ID 222 contains gene IDs [geneId6, geneId7] " + 
                     "with gene names [geneName6, geneName7]"));
             expectedRows.add(expectedRow2);
             expectedRows.add(expectedRow3);
             expectedRows.add(Arrays.asList("//"));
-            expectedRows.add(Arrays.asList("//OMA node ID 888 contains gene IDs [geneId3, geneId4, " + 
+            expectedRows.add(Arrays.asList("//OMA node ID 333 contains gene IDs [geneId3, geneId4, " + 
                     "geneId5] with gene names [geneName3, geneName4, geneName5]"));
             expectedRows.add(expectedRow6);
             expectedRows.add(expectedRow7);
             expectedRows.add(Arrays.asList("//"));
-            expectedRows.add(Arrays.asList("//OMA node ID 999 contains gene IDs [geneId1, geneId2] " + 
-                    "with gene names [geneName1, geneName2]"));
+            expectedRows.add(Arrays.asList("//OMA node ID 444 contains gene IDs [geneId1, geneId2, " + 
+                    "geneId8, geneId9] with gene names [geneName1, geneName2, geneName8, geneName9]"));
             expectedRows.add(expectedRow10);
             expectedRows.add(expectedRow11);
+            expectedRows.add(expectedRow12);
+            expectedRows.add(expectedRow13);
+            expectedRows.add(expectedRow14);
             expectedRows.add(Arrays.asList("//"));
             
             List<List<String>> actualRows = new ArrayList<List<String>>();

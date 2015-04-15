@@ -42,12 +42,12 @@ public interface GenerateMultiSpeciesDownloadFile {
      * A {@code String} that is the name of the column containing CIO statement IDs, 
      * in the download file.
      */
-    public final static String CIO_ID_COLUMN_NAME = "CIO ID";
+    public final static String CIO_ID_COLUMN_NAME = "Anatomy homology CIO ID";
     /**
      * A {@code String} that is the name of the column containing CIO statement names, 
      * in the download file.
      */
-    public final static String CIO_NAME_ID_COLUMN_NAME = "CIO name";
+    public final static String CIO_NAME_ID_COLUMN_NAME = "Anatomy homology CIO name";
     /**
      * A {@code String} that is the name of the column containing number of expressed genes, 
      * in the download file.

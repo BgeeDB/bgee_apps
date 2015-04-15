@@ -1952,8 +1952,14 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             int totalOver = 0, totalUnder = 0, totalNotDiffExpr = 0;
             //to count number of species with data (we validate only conditions 
             //with a least two species); the data we accept are not the same for simple 
-            //and complete files, so we use two Sets.
+            //and complete files, so we use different Sets.
+            //For simple files, it is a bit more complex: we want to accept cases 
+            //such as over-expression vs. no diff expression, but not cases with only 
+            //no diff expression. So we count number of species with a call 
+            //over/under/no diff expression on the one hand, and number of species with a call 
+            //over/under expression on the other hand.
             Set<String> speciesIdsWithDataForSimple   = new HashSet<String>();
+            Set<String> speciesIdsWithDiffExprForSimple   = new HashSet<String>();
             Set<String> speciesIdsWithDataForComplete = new HashSet<String>();
             
             // A map which is filled during the iteration calls where keys corresponding to  
@@ -2006,6 +2012,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 }
 
                 boolean hasDataForSimple = false;
+                boolean hasOverUnderExpr = false;
                 boolean hasDataForComplete = false;
                 switch (DiffExpressionData.convertToDiffExpressionData(
                         currentBean.getDifferentialExpression())) {
@@ -2014,14 +2021,21 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                         totalOver++;
                         hasDataForSimple   = true;
                         hasDataForComplete = true;
+                        hasOverUnderExpr = true;
                         break;
                     case UNDER_EXPRESSION:
                         currentCounts.setUnderExprGeneCount(currentCounts.getUnderExprGeneCount() + 1);
                         totalUnder++;
                         hasDataForSimple   = true;
                         hasDataForComplete = true;
+                        hasOverUnderExpr = true;
                         break;
                     case NOT_DIFF_EXPRESSION:
+                        currentCounts.setNotDiffExprGeneCount(currentCounts.getNotDiffExprGeneCount() + 1);
+                        totalNotDiffExpr++;
+                        hasDataForSimple = true;
+                        hasDataForComplete = true;
+                        break;
                     case WEAK_AMBIGUITY:
                     case STRONG_AMBIGUITY:
                         currentCounts.setNotDiffExprGeneCount(currentCounts.getNotDiffExprGeneCount() + 1);
@@ -2040,6 +2054,9 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 
                 if (hasDataForSimple) {
                     speciesIdsWithDataForSimple.add(speciesId);
+                }
+                if (hasOverUnderExpr) {
+                    speciesIdsWithDiffExprForSimple.add(speciesId);
                 }
                 if (hasDataForComplete) {
                     speciesIdsWithDataForComplete.add(speciesId);
@@ -2087,7 +2104,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             // and we do not have the same criteria for counting species with data 
             // as for the complete file.
             if (cioStatementByIds.get(cioId).isTrusted() &&
-                    speciesIdsWithDataForSimple.size() >= 2) {
+                    speciesIdsWithDataForSimple.size() >= 2 && 
+                    speciesIdsWithDiffExprForSimple.size() >= 1) {
                 MultiSpeciesSimpleDiffExprFileBean simpleBean = new MultiSpeciesSimpleDiffExprFileBean(
                         omaNodeId, orderedFoundOrganIds, orderedFoundOrganNames, 
                         orderedFoundStageIds, orderedFoundStageNames, 

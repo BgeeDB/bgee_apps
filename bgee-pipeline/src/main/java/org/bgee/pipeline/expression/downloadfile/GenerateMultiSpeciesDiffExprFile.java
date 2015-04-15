@@ -2104,9 +2104,14 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                                 Long.valueOf(0), Long.valueOf(0), Long.valueOf(0));
                     }
                     // We calculate the number of 'no data'/'not expressed' genes.
-                    counts.setNAGeneCount(speciesGeneCount.get(speciesId) - 
+                    //TODO: I understand that you used long for compatibility with SuperCsv, 
+                    //but you should use an int, this is too weird to have a long, 
+                    //not a big deal to loose the supercsv checks
+                    long naGeneCount = speciesGeneCount.get(speciesId) - 
                             counts.getOverExprGeneCount() - 
-                            counts.getUnderExprGeneCount() - counts.getNotDiffExprGeneCount());
+                            counts.getUnderExprGeneCount() - counts.getNotDiffExprGeneCount();
+                    assert naGeneCount >= 0;
+                    counts.setNAGeneCount(naGeneCount);
                     simpleBean.getSpeciesDiffExprCounts().add(counts);
                 }
                 // We store the simple bean.

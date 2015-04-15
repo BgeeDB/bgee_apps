@@ -232,7 +232,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 //        this.writeln(generateSpeciesFigure(Arrays.asList(10090, 7955), GROUP_NAME_MOUSE_ZEBRAFISH, true));
 //        this.writeln(generateSpeciesFigure(Arrays.asList(10090, 7227), GROUP_NAME_MOUSE_FRUITFLY, true));
 //        this.writeln(generateSpeciesFigure(Arrays.asList(10090, 6239), GROUP_NAME_MOUSE_NEMATODE, true));
-        this.writeln(generateSpeciesFigure(Arrays.asList(7955, 7227), GROUP_NAME_ZEBRAFISH_FRUITFLY, true));
+//        this.writeln(generateSpeciesFigure(Arrays.asList(7955, 7227), GROUP_NAME_ZEBRAFISH_FRUITFLY, true));
 //        this.writeln(generateSpeciesFigure(Arrays.asList(7955, 6239), GROUP_NAME_ZEBRAFISH_NEMATODE, true));
 //        this.writeln(generateSpeciesFigure(Arrays.asList(7227, 6239), GROUP_NAME_FRUITFLY_NEMATODE, true));
         // Groups

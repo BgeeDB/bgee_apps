@@ -70,11 +70,11 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     /**
      * A {@code String} that is the group name of Primates.
      */
-    private final static String GROUP_NAME_PRIMATES = "Primates";
+    private final static String GROUP_NAME_CATARRHINI = "Catarrhini";
     /**
      * A {@code String} that is the group name of Rodentia.
      */
-    private final static String GROUP_NAME_RODENTIA = "Rodentia";
+    private final static String GROUP_NAME_MURINAE = "Murinae";
     /**
      * A {@code String} that is the group name of Theria.
      */
@@ -223,24 +223,31 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("<div id='bgee_multi_species'>");
         this.writeln("<h1>Multi-species</h1> <span>(data of only orthologous genes)</span>");
         this.writeln("<div class='downloadsection'>");
+        //TODO set all groups and with all species when all files will be generated 
         // Pairwises
         this.writeln(generateSpeciesFigure(Arrays.asList(9606, 10090), GROUP_NAME_HUMAN_MOUSE, true));
-        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 7955), GROUP_NAME_HUMAN_ZEBRAFISH, true));
+//        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 7955), GROUP_NAME_HUMAN_ZEBRAFISH, true));
         this.writeln(generateSpeciesFigure(Arrays.asList(9606, 7227), GROUP_NAME_HUMAN_FRUITFLY, true));
-        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 6239), GROUP_NAME_HUMAN_NEMATODE, true));
-        this.writeln(generateSpeciesFigure(Arrays.asList(10090, 7955), GROUP_NAME_MOUSE_ZEBRAFISH, true));
+//        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 6239), GROUP_NAME_HUMAN_NEMATODE, true));
+//        this.writeln(generateSpeciesFigure(Arrays.asList(10090, 7955), GROUP_NAME_MOUSE_ZEBRAFISH, true));
         this.writeln(generateSpeciesFigure(Arrays.asList(10090, 7227), GROUP_NAME_MOUSE_FRUITFLY, true));
-        this.writeln(generateSpeciesFigure(Arrays.asList(10090, 6239), GROUP_NAME_MOUSE_NEMATODE, true));
+//        this.writeln(generateSpeciesFigure(Arrays.asList(10090, 6239), GROUP_NAME_MOUSE_NEMATODE, true));
         this.writeln(generateSpeciesFigure(Arrays.asList(7955, 7227), GROUP_NAME_ZEBRAFISH_FRUITFLY, true));
-        this.writeln(generateSpeciesFigure(Arrays.asList(7955, 6239), GROUP_NAME_ZEBRAFISH_NEMATODE, true));
-        this.writeln(generateSpeciesFigure(Arrays.asList(7227, 6239), GROUP_NAME_FRUITFLY_NEMATODE, true));
+//        this.writeln(generateSpeciesFigure(Arrays.asList(7955, 6239), GROUP_NAME_ZEBRAFISH_NEMATODE, true));
+//        this.writeln(generateSpeciesFigure(Arrays.asList(7227, 6239), GROUP_NAME_FRUITFLY_NEMATODE, true));
         // Groups
-        this.writeln(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544), GROUP_NAME_PRIMATES, true));
-        this.writeln(generateSpeciesFigure(Arrays.asList(10090, 10116), GROUP_NAME_RODENTIA, true));
-        this.writeln(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544, 10116, 10090, 9913, 9823, 13616), GROUP_NAME_THERIA, true));
-        this.writeln(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544, 10116, 10090, 9913, 9823, 13616, 9258), GROUP_NAME_MAMMALIA, true));
-        this.writeln(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544, 10116, 10090, 9913, 9823, 13616, 9258, 28377, 9031), GROUP_NAME_AMNIOTA, true));
-        this.writeln(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544, 10116, 10090, 9913, 9823, 13616, 9258, 28377, 9031, 8364, 7955, 7227, 6239), GROUP_NAME_BILATERIA, true));
+//        this.writeln(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544), GROUP_NAME_PRIMATES, true));
+//        this.writeln(generateSpeciesFigure(Arrays.asList(10090, 10116), GROUP_NAME_RODENTIA, true));
+//        this.writeln(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544, 10116, 10090, 9913, 9823, 13616), GROUP_NAME_THERIA, true));
+//        this.writeln(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544, 10116, 10090, 9913, 9823, 13616, 9258), GROUP_NAME_MAMMALIA, true));
+//        this.writeln(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544, 10116, 10090, 9913, 9823, 13616, 9258, 28377, 9031), GROUP_NAME_AMNIOTA, true));
+//        this.writeln(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544, 10116, 10090, 9913, 9823, 13616, 9258, 28377, 9031, 8364, 7955, 7227, 6239), GROUP_NAME_BILATERIA, true));
+        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9544), GROUP_NAME_CATARRHINI, true));
+        this.writeln(generateSpeciesFigure(Arrays.asList(10090, 10116), GROUP_NAME_MURINAE, true));
+        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9544, 10116, 10090, 9913), GROUP_NAME_THERIA, true));
+        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9544, 10116, 10090, 9913, 9258), GROUP_NAME_MAMMALIA, true));
+        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9544, 10116, 10090, 9913, 9258, 9031), GROUP_NAME_AMNIOTA, true));
+        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9544, 10116, 10090, 9913, 9258, 9031, 8364, 7227), GROUP_NAME_BILATERIA, true));
         this.writeln("</div>");
         this.writeln("</div>");
 
@@ -568,23 +575,23 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 //                diffExprDevCompleteFileSize = "xx MB"; 
                 filePrefix= "fruitfly_nematode";
                 break;
-            case GROUP_NAME_PRIMATES:
+            case GROUP_NAME_CATARRHINI:
 //                exprSimpleFileSize = "xx MB";
 //                exprCompleteFileSize = "xx MB"; 
                 diffExprAnatSimpleFileSize = "xx MB";
                 diffExprAnatCompleteFileSize  = "xx MB";
 //                diffExprDevSimpleFileSize = "xx MB";
 //                diffExprDevCompleteFileSize = "xx MB"; 
-                filePrefix= "primates";
+                filePrefix= "catarrhini";
                 break;
-            case GROUP_NAME_RODENTIA:
+            case GROUP_NAME_MURINAE:
 //                exprSimpleFileSize = "xx MB";
 //                exprCompleteFileSize = "xx MB"; 
                 diffExprAnatSimpleFileSize = "xx MB";
                 diffExprAnatCompleteFileSize  = "xx MB";
 //                diffExprDevSimpleFileSize = "xx MB";
 //                diffExprDevCompleteFileSize = "xx MB"; 
-                filePrefix= "rodentia";
+                filePrefix= "murinae";
                 break;
             case GROUP_NAME_THERIA:
 //                exprSimpleFileSize = "xx MB";
@@ -618,8 +625,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 //                exprCompleteFileSize = "xx MB"; 
                 diffExprAnatSimpleFileSize = "xx MB";
                 diffExprAnatCompleteFileSize  = "xx MB";
-                diffExprDevSimpleFileSize = "xx MB";
-                diffExprDevCompleteFileSize = "xx MB"; 
+//                diffExprDevSimpleFileSize = "xx MB";
+//                diffExprDevCompleteFileSize = "xx MB"; 
                 filePrefix= "bilateria";
                 break;
             default:

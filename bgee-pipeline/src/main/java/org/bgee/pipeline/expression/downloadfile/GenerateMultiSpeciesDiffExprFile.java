@@ -2186,10 +2186,6 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             log.trace("Write row: {} - using writer: {}", bean, writer);
         }
 
-        // We finish by a comment to separate OMA groups
-        writer.writeComment("//");
-        log.trace("Write comment: // - using writer: {}", writer);
-
         log.exit();
     }
 

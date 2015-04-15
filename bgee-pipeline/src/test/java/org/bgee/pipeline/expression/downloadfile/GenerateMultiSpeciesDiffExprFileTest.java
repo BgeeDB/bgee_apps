@@ -427,8 +427,6 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     // Species 33
                     "0", "0", "1", "0"));
             
-            expectedRows.add(Arrays.asList("//"));
-            
             List<List<String>> actualRows = new ArrayList<List<String>>();
             List<String> row;
             while( (row = listReader.read()) != null ) {
@@ -512,8 +510,6 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     DiffExpressionData.NO_DATA.getStringRepresentation(), 
                     DataState.NODATA.getStringRepresentation(), "1.0", "0", "0"));
           
-            expectedRows.add(Arrays.asList("//"));
-
             expectedRows.add(Arrays.asList("//OMA node ID 333 contains gene IDs [geneId12, geneId3, " + 
                     "geneId4, geneId5] with gene names [geneName12, geneName3, geneName4, geneName5]"));
 
@@ -546,8 +542,6 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     DataState.HIGHQUALITY.getStringRepresentation(), "0.007", "2", "0", 
                     DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
                     DataState.HIGHQUALITY.getStringRepresentation(), "0.008", "3", "1"));
-
-            expectedRows.add(Arrays.asList("//"));
 
             expectedRows.add(Arrays.asList("//OMA node ID 444 contains gene IDs [geneId1, geneId2, " + 
                     "geneId8, geneId9] with gene names [geneName1, geneName2, geneName8, geneName9]"));
@@ -602,8 +596,6 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(), 
                     DataState.LOWQUALITY.getStringRepresentation(), "0.44", "1", "0"));
 
-            expectedRows.add(Arrays.asList("//"));
-            
             List<List<String>> actualRows = new ArrayList<List<String>>();
             List<String> row;
             while( (row = listReader.read()) != null ) {

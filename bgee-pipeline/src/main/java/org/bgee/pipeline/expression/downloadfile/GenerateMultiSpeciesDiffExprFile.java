@@ -1629,22 +1629,21 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             while (rs.next()) {
                 SimAnnotToAnatEntityTO to = rs.getTO();
                 
-                List<String> sumAnatEntIds = mappingSimAnnotToAnatEntity.get(
+                List<String> anatEntIds = mappingSimAnnotToAnatEntity.get(
                         to.getSummarySimilarityAnnotationId());
-                if (sumAnatEntIds == null) {
-                    sumAnatEntIds = new ArrayList<String>();
+                if (anatEntIds == null) {
+                    anatEntIds = new ArrayList<String>();
                     mappingSimAnnotToAnatEntity.put(to.getSummarySimilarityAnnotationId(), 
-                            sumAnatEntIds);
+                            anatEntIds);
                 }
-                sumAnatEntIds.add(to.getAnatEntityId());
+                anatEntIds.add(to.getAnatEntityId());
                 
-                if (mappingAnatEntityToSimAnnot.containsKey(to.getAnatEntityId())) {
-                    throw log.throwing(new IllegalStateException(
-                    "An anatomical entity sould not be reported to severals similarity groups"));
+                List<String> simAnnotIds = mappingAnatEntityToSimAnnot.get(to.getAnatEntityId());
+                if (simAnnotIds == null) {
+                    simAnnotIds = new ArrayList<String>();
+                    mappingAnatEntityToSimAnnot.put(to.getAnatEntityId(), simAnnotIds);
                 }
-                mappingAnatEntityToSimAnnot.put(to.getAnatEntityId(), 
-                        Arrays.asList(to.getSummarySimilarityAnnotationId()));
-    
+                simAnnotIds.add(to.getSummarySimilarityAnnotationId());
             }
         }
     
@@ -1754,15 +1753,15 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 new HashMap<MultiSpeciesCondition, Set<String>>();
         
         for (DiffExpressionCallTO diffExpressionCallTO : groupedCallTOs) {
-            //each anat entity is supposed to be mapped to one and only one group.
-            //same for stages.
-            assert mapAnatEntityToSimAnnot.get(diffExpressionCallTO.getAnatEntityId()).size() <= 1;
+            //each stage is supposed to be mapped to one and only one group.
             assert mapStageIdToStageGroup.get(diffExpressionCallTO.getStageId()).size() <= 1;
-            String sumSimAnnotId = null;
+            
+            Set<String> sumSimAnnotIds = new HashSet<String>();
             if (!mapAnatEntityToSimAnnot.get(diffExpressionCallTO.getAnatEntityId()).isEmpty()) {
-                sumSimAnnotId = 
-                        mapAnatEntityToSimAnnot.get(diffExpressionCallTO.getAnatEntityId()).get(0);
+                sumSimAnnotIds.addAll(
+                        mapAnatEntityToSimAnnot.get(diffExpressionCallTO.getAnatEntityId()));
             }
+            
             String stageGroupId = null;
             if (!mapStageIdToStageGroup.get(diffExpressionCallTO.getStageId()).isEmpty()) {
                 stageGroupId = 
@@ -1770,33 +1769,33 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             }
             
             //OK, both the anat entity and the stage have a multi-species mapping
-            if (sumSimAnnotId != null && stageGroupId != null) {
-                MultiSpeciesCondition condition = 
-                        new MultiSpeciesCondition(sumSimAnnotId, stageGroupId);
-                
-                //sanity check, only one call per gene per condition. 
-                //this might change in the future.
-                Set<String> associatedGeneIds = condToGeneIds.get(condition);
-                if (associatedGeneIds == null) {
-                    associatedGeneIds = new HashSet<String>();
-                    condToGeneIds.put(condition, associatedGeneIds);
-                } else if (associatedGeneIds.contains(diffExpressionCallTO.getGeneId())) {
-                    throw log.throwing(new IllegalStateException("Several calls were retrieved "
-                            + "for a same gene in a same multi-species condition. "
-                            + "Condition: " + condition 
-                            + " - Gene: " + diffExpressionCallTO.getGeneId() 
-                            + " - Iterated call: " + diffExpressionCallTO));
+            if (sumSimAnnotIds != null && !sumSimAnnotIds.isEmpty() && stageGroupId != null) {
+                for (String sumSimAnnotId: sumSimAnnotIds) {
+                    MultiSpeciesCondition condition = 
+                            new MultiSpeciesCondition(sumSimAnnotId, stageGroupId);
+                    //sanity check, only one call per gene per condition. 
+                    //this might change in the future.
+                    Set<String> associatedGeneIds = condToGeneIds.get(condition);
+                    if (associatedGeneIds == null) {
+                        associatedGeneIds = new HashSet<String>();
+                        condToGeneIds.put(condition, associatedGeneIds);
+                    } else if (associatedGeneIds.contains(diffExpressionCallTO.getGeneId())) {
+                        throw log.throwing(new IllegalStateException("Several calls were retrieved "
+                                + "for a same gene in a same multi-species condition. "
+                                + "Condition: " + condition 
+                                + " - Gene: " + diffExpressionCallTO.getGeneId() 
+                                + " - Iterated call: " + diffExpressionCallTO));
+                    }
+                    associatedGeneIds.add(diffExpressionCallTO.getGeneId());
+                    
+                    Collection<DiffExpressionCallTO> calls = groupedCalls.get(condition);
+                    if (calls == null) {
+                        log.trace("Create new map key: {}", condition);
+                        calls = new HashSet<DiffExpressionCallTO>();
+                        groupedCalls.put(condition, calls);
+                    }
+                    calls.add(diffExpressionCallTO);
                 }
-                associatedGeneIds.add(diffExpressionCallTO.getGeneId());
-                
-                
-                Collection<DiffExpressionCallTO> calls = groupedCalls.get(condition);
-                if (calls == null) {
-                    log.trace("Create new map key: {}", condition);
-                    calls = new HashSet<DiffExpressionCallTO>();
-                    groupedCalls.put(condition, calls);
-                }
-                calls.add(diffExpressionCallTO);
             }
         }
         return log.exit(groupedCalls);

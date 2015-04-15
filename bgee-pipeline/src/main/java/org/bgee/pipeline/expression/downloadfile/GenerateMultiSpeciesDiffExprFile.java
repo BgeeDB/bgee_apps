@@ -1343,7 +1343,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                                         // AFTER retrieving the last TO
                                         //(ResultSet.isAfterLast would return true)
                           (previousOMANodeId != null && !previousOMANodeId.equals(currentOMANodeId))) {
-                        
+                        iterationCount++;
                         assert previousOMANodeId != null;
                         assert (doIteration && currentOMANodeId != null && currentTO != null) || 
                                     (!doIteration && currentOMANodeId == null && currentTO == null);

@@ -243,6 +243,8 @@ public class MySQLSummarySimilarityAnnotationDAO
     //this requires more thought.
     //Also, hat about cases where the homology is between entities existing in a same species, 
     //such as mouth|anus, or lung|swim bladder in lungfish.
+    //And what about cases such as limb|paired fin and paired fin|median fin fold 
+    //homologous at the vetebrata level?
     private String getAnnotToAnatEntityQueryStart() {
         log.entry();
         

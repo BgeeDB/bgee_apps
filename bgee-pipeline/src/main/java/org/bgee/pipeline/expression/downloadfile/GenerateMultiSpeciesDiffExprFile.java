@@ -1967,9 +1967,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 MultiSpeciesCompleteDiffExprFileBean currentBean = 
                         new MultiSpeciesCompleteDiffExprFileBean(
                                 omaNodeId, organIds, organNames,
-                                // TODO use stageIds and stage names? even if only one stage IDs for the moment
-                                Arrays.asList(to.getStageId()),   
-                                Arrays.asList(stageNamesByIds.get(to.getStageId())), 
+                                stageIds, stageNames,
                                 to.getGeneId(), geneTOsByIds.get(to.getGeneId()).getName(), 
                                 cioId, cioStatementByIds.get(cioId).getName(),
                                 speciesId, speciesNamesByIds.get(speciesId), 

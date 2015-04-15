@@ -1343,12 +1343,13 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                                         //(ResultSet.isAfterLast would return true)
                           (previousOMANodeId != null && !previousOMANodeId.equals(currentOMANodeId))) {
                         
+                        assert previousOMANodeId != null;
                         assert (doIteration && currentOMANodeId != null && currentTO != null) || 
-                        (!doIteration && currentOMANodeId == null && currentTO == null);
+                                    (!doIteration && currentOMANodeId == null && currentTO == null);
                         
                         //the calls are supposed to be ordered by ascending OMA group ID
-                        if (currentOMANodeId != null && 
-                                currentOMANodeId.compareTo(previousOMANodeId) <= 0) {
+                        if (currentOMANodeId != null &&
+                                Integer.valueOf(currentOMANodeId) < Integer.valueOf(previousOMANodeId)) {
                             throw log.throwing(new IllegalStateException("The expression calls "
                                     + "were not retrieved by OMA group ID ascending order, which "
                                     + "is mandatory for proper generation of multi-species data."));
@@ -1753,17 +1754,18 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 new HashMap<MultiSpeciesCondition, Set<String>>();
         
         for (DiffExpressionCallTO diffExpressionCallTO : groupedCallTOs) {
-            //each stage is supposed to be mapped to one and only one group.
-            assert mapStageIdToStageGroup.get(diffExpressionCallTO.getStageId()).size() <= 1;
+            log.trace("Iteration diff. expr call {}", diffExpressionCallTO);
             
-            Set<String> sumSimAnnotIds = new HashSet<String>();
-            if (!mapAnatEntityToSimAnnot.get(diffExpressionCallTO.getAnatEntityId()).isEmpty()) {
-                sumSimAnnotIds.addAll(
-                        mapAnatEntityToSimAnnot.get(diffExpressionCallTO.getAnatEntityId()));
-            }
+            //each stage is supposed to be mapped to one and only one group.
+            assert mapStageIdToStageGroup.get(diffExpressionCallTO.getStageId()) == null ||
+                    mapStageIdToStageGroup.get(diffExpressionCallTO.getStageId()).size() <= 1;
+            
+            List<String> sumSimAnnotIds = 
+                    mapAnatEntityToSimAnnot.get(diffExpressionCallTO.getAnatEntityId());
             
             String stageGroupId = null;
-            if (!mapStageIdToStageGroup.get(diffExpressionCallTO.getStageId()).isEmpty()) {
+            List<String> stageGroupIds = mapStageIdToStageGroup.get(diffExpressionCallTO.getStageId());
+            if (stageGroupIds != null && !stageGroupIds.isEmpty()) {
                 stageGroupId = 
                         mapStageIdToStageGroup.get(diffExpressionCallTO.getStageId()).get(0);
             }

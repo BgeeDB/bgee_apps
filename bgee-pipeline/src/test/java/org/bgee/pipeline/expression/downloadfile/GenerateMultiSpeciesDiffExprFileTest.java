@@ -95,6 +95,9 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
     @Rule
     public final TemporaryFolder testFolder = new TemporaryFolder();
 
+    // TODO add test: an exception should be throw if OMA group ID ascending order are not 
+    // in asc. order of intergers and not string
+    
     /**
      * Test method {@link GenerateMultiSpeciesDiffExprFile#generateMultiSpeciesDiffExprFiles()}.
      * @throws IOException 
@@ -114,7 +117,7 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                         new SpeciesTO("11", null, "GenusZZ", "speciesZZ", null, null, null, null),
                         new SpeciesTO("22", null, "GenusVR", "speciesVR", null, null, null, null),
                         new SpeciesTO("33", null, "GenusAA", "speciesAA", null, null, null, null)),
-                        MySQLSpeciesTOResultSet.class);
+                MySQLSpeciesTOResultSet.class);
         when(mockManager.mockSpeciesDAO.getSpeciesByIds(speciesIds1)).thenReturn(mockSpeciesTORs);
 
         MySQLGeneTOResultSet mockGeneTORs = createMockDAOResultSet(
@@ -131,27 +134,29 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                         new GeneTO("geneId10", "geneName10", null, 11, null, 555, null),
                         new GeneTO("geneId11", "geneName11", null, 33, null, 555, null),
                         new GeneTO("geneId12", "geneName12", null, 33, null, 555, null)),
-                        MySQLGeneTOResultSet.class);
+                MySQLGeneTOResultSet.class);
         when(mockManager.mockGeneDAO.getGenesBySpeciesIds(speciesIds1)).thenReturn(mockGeneTORs);
 
         MySQLStageTOResultSet mockStageTORs = createMockDAOResultSet(
                 Arrays.asList(
                         new StageTO("stageId1", "stageName1", null, null, null, null, null, null),
                         new StageTO("stageId2", "stageName2", null, null, null, null, null, null),
-                        new StageTO("stageIdNotFound", "stageNameNotFound", null, null, null, null, null, null)),
-                        MySQLStageTOResultSet.class);
+                        new StageTO("stageId3", "stageNameNotFound", null, null, null, null, null, null),
+                        new StageTO("stageId4", "stageWithoutMapping", null, null, null, null, null, null)),
+                MySQLStageTOResultSet.class);
         when(mockManager.mockStageDAO.getStagesBySpeciesIds(speciesIds1)).thenReturn(mockStageTORs);
 
         MySQLAnatEntityTOResultSet mockAnatEntityTORs = createMockDAOResultSet(
                 Arrays.asList(
                         new AnatEntityTO("entityId1", "entityName1", null, null, null, null),
-                        new AnatEntityTO("entityIdNotFound", "entityNameNotFound", null, null, null, null),
                         new AnatEntityTO("entityId2", "entityName2", null, null, null, null),
                         new AnatEntityTO("entityId3", "entityName3", null, null, null, null),
                         new AnatEntityTO("entityId4", "entityName4", null, null, null, null),
                         new AnatEntityTO("entityId5", "entityName5", null, null, null, null),
-                        new AnatEntityTO("entityId6", "entityName6", null, null, null, null)),
-                        MySQLAnatEntityTOResultSet.class);
+                        new AnatEntityTO("entityId6", "entityName6", null, null, null, null),
+                        new AnatEntityTO("entityId7", "entityNameNotFound", null, null, null, null),
+                        new AnatEntityTO("entityId8", "entityWithoutMapping", null, null, null, null)),
+                MySQLAnatEntityTOResultSet.class);
         when(mockManager.mockAnatEntityDAO.getAnatEntitiesBySpeciesIds(speciesIds1)).
         thenReturn(mockAnatEntityTORs);
 
@@ -159,14 +164,14 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                 Arrays.asList(
                         new CIOStatementTO("cioId1", "cioName1", null, true, null, null, null),
                         new CIOStatementTO("cioId2", "cioName2", null, false, null, null, null)),
-                        MySQLCIOStatementTOResultSet.class);
+                MySQLCIOStatementTOResultSet.class);
         when(mockManager.mockCIOStatementDAO.getAllCIOStatements()).thenReturn(mockCIOStatementTORs);
 
 
         MySQLTaxonTOResultSet mockTaxonTORs = createMockDAOResultSet(
                 Arrays.asList(
                         new TaxonTO(taxonId1, null, null, null, null, null, null)),
-                        MySQLTaxonTOResultSet.class);
+                MySQLTaxonTOResultSet.class);
         when(mockManager.mockTaxonDAO.getLeastCommonAncestor(speciesIds1, false)).
         thenReturn(mockTaxonTORs);
 
@@ -184,16 +189,16 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                         new HierarchicalGroupToGeneTO("222", "geneId6"),
                         new HierarchicalGroupToGeneTO("222", "geneId7"),
                         new HierarchicalGroupToGeneTO("333", "geneId12")),
-                        MySQLHierarchicalGroupToGeneTOResultSet.class);
+                MySQLHierarchicalGroupToGeneTOResultSet.class);
         when(mockManager.mockHierarchicalGroupDAO.getGroupToGene(taxonId1, speciesIds1)).
         thenReturn(mockHgtoGeneTORs);
 
         MySQLGroupToStageTOResultSet mockGrouptoStageTORs = createMockDAOResultSet(
                 Arrays.asList(
                         new GroupToStageTO("stageGroupIdA", "stageId1"),
-                        new GroupToStageTO("stageGroupIdA", "stageIdNotFound"),
+                        new GroupToStageTO("stageGroupIdA", "stageId3"),
                         new GroupToStageTO("stageGroupIdB", "stageId2")),
-                        MySQLGroupToStageTOResultSet.class);
+                MySQLGroupToStageTOResultSet.class);
         when(mockManager.mockStageGroupingDAO.getGroupToStage(taxonId1, null)).
         thenReturn(mockGrouptoStageTORs);
 
@@ -202,7 +207,7 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                         new SummarySimilarityAnnotationTO("simAnnotIdA", null, null, "cioId1"),
                         new SummarySimilarityAnnotationTO("simAnnotIdB", null, null, "cioId2"),
                         new SummarySimilarityAnnotationTO("simAnnotIdC", null, null, "cioId1")),
-                        MySQLSummarySimilarityAnnotationTOResultSet.class);
+                MySQLSummarySimilarityAnnotationTOResultSet.class);
         when(mockManager.mockSummarySimilarityAnnotationDAO.getSummarySimilarityAnnotations(taxonId1)).
         thenReturn(mockSumSimAnnotTORs);
 
@@ -210,13 +215,13 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                 Arrays.asList(
                         new SimAnnotToAnatEntityTO("simAnnotIdA", "entityId1"),
                         new SimAnnotToAnatEntityTO("simAnnotIdA", "entityId2"),
-                        new SimAnnotToAnatEntityTO("simAnnotIdA", "entityIdNotFound"),
+                        new SimAnnotToAnatEntityTO("simAnnotIdA", "entityId7"),
                         new SimAnnotToAnatEntityTO("simAnnotIdB", "entityId1"),
                         new SimAnnotToAnatEntityTO("simAnnotIdB", "entityId3"),
                         new SimAnnotToAnatEntityTO("simAnnotIdB", "entityId6"),
                         new SimAnnotToAnatEntityTO("simAnnotIdC", "entityId4"),
                         new SimAnnotToAnatEntityTO("simAnnotIdC", "entityId5")),
-                        MySQLSimAnnotToAnatEntityTOResultSet.class);
+                MySQLSimAnnotToAnatEntityTOResultSet.class);
         when(mockManager.mockSummarySimilarityAnnotationDAO.getSimAnnotToAnatEntity(taxonId1, null)).
         thenReturn(mockSimAnnotToAnatEntityTORs);
 
@@ -274,8 +279,16 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                         new DiffExpressionCallTO(null, "geneId11", "entityId5", "stageId1", 
                                 ComparisonFactor.ANATOMY, DiffExprCallType.OVER_EXPRESSED, 
                                 DataState.HIGHQUALITY, 0.077f, 8, 1, DiffExprCallType.OVER_EXPRESSED, 
-                                DataState.HIGHQUALITY, 0.066f, 11, 2)),
-                                MySQLDiffExpressionCallTOResultSet.class);
+                                DataState.HIGHQUALITY, 0.066f, 11, 2),
+                        new DiffExpressionCallTO(null, "geneId10", "entityId8", "stageId2", 
+                                ComparisonFactor.ANATOMY, DiffExprCallType.NO_DATA, 
+                                DataState.NODATA, 1f, 0, 0, DiffExprCallType.UNDER_EXPRESSED,
+                                DataState.LOWQUALITY, 0.5f, 1, 0),
+                        new DiffExpressionCallTO(null, "geneId10", "entityId5", "stageId4", 
+                                ComparisonFactor.ANATOMY, DiffExprCallType.NO_DATA, 
+                                DataState.NODATA, 1f, 0, 0, DiffExprCallType.UNDER_EXPRESSED,
+                                DataState.LOWQUALITY, 0.5f, 1, 0)),
+                MySQLDiffExpressionCallTOResultSet.class);
         DiffExpressionCallParams anatDiffExprParams = 
                 this.getDiffExpressionCallParams(speciesIds1, ComparisonFactor.ANATOMY);
         when(mockManager.mockDiffExpressionCallDAO.getOrderedHomologousGenesDiffExpressionCalls(

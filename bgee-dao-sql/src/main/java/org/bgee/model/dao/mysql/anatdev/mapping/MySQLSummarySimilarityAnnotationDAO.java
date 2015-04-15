@@ -246,18 +246,33 @@ public class MySQLSummarySimilarityAnnotationDAO
                 + "INNER JOIN similarityAnnotationToAnatEntityId AS t4 "
                 + "ON t4.summarySimilarityAnnotationId = t3.summarySimilarityAnnotationId "
                 + "INNER JOIN CIOStatement AS t5 ON t3.cioId = t5.cioId "
-                + "WHERE t4.negated = 0 AND t1.taxonId = ? "
+                + "WHERE t3.negated = 0 AND t1.taxonId = ? "
                 //check that this is the similarity annotated to the most recent valid taxon 
                 //for this anatomical structure.
                 + "AND NOT EXISTS "
-                    + "(SELECT 1 FROM summarySimilarityAnnotation AS t30 "
+                    //first, we search for annotations including the organ currently iterated 
+                    //(t27)
+                    + "(SELECT 1 FROM similarityAnnotationToAnatEntityId AS t27 "
+                    //then, we retrieve these annotations (t28)
+                    + "INNER JOIN similarityAnnotationToAnatEntityId AS t28 "
+                    + "ON t28.summarySimilarityAnnotationId = t27.summarySimilarityAnnotationId "
+                    //and finally, we retrieve all annotations including any organs 
+                    //that were part of the annotations retrieved in t28. 
+                    //so, for instance: we start from the annotation 'mesenchyme pelvic fin'
+                    //-> Sarcopterygii; we retrieve all annotations including this organ, 
+                    //notably 'hindlimb mesenchyme|mesenchyme pelvic fin' -> vertebrata; 
+                    //this allows to retrieve the annotation 'hindlimb mesenchyme' 
+                    //-> tetrapoda (table t29). So, if we were to retrieve the homology for tetrapoda, 
+                    //we could discard the annotation 'mesenchyme pelvic fin' -> Sarcopterygii 
+                    //to keep only the more relevant annotation 'hindlimb mesenchyme' 
+                    //-> tetrapoda
+                    + "INNER JOIN similarityAnnotationToAnatEntityId AS t29 "
+                    + "ON t29.anatEntityId = t28.anatEntityId "
+                    + "INNER JOIN summarySimilarityAnnotation AS t30 "
+                    + "ON t30.summarySimilarityAnnotationId = t29.summarySimilarityAnnotationId "
                     + "INNER JOIN taxon AS t10 ON t30.taxonId = t10.taxonId "
-                    + "INNER JOIN similarityAnnotationToAnatEntityId AS t40 "
-                    + "ON t40.summarySimilarityAnnotationId = t30.summarySimilarityAnnotationId "
                     + "INNER JOIN CIOStatement AS t50 ON t30.cioId = t50.cioId "
-                    //search for different annotations including the same organ
-                    + "WHERE t40.anatEntityId = t4.anatEntityId AND "
-                    + "t30.summarySimilarityAnnotationId != t3.summarySimilarityAnnotationId AND "
+                    + "WHERE t27.anatEntityId = t4.anatEntityId AND "
                     //annotated to a a valid requested taxon
                     + "t10.taxonLeftBound <= t1.taxonLeftBound AND "
                     + "t10.taxonRightBound >= t1.taxonRightBound AND "

@@ -60,15 +60,15 @@ public class MySQLCIOStatementDAOIT extends MySQLITAncestor {
 
         // Generate manually expected result
         List<CIOStatementTO> expectedCIOStmt = Arrays.asList(
-                new CIOStatementTO("1", "name1", "desc1", true, ConfidenceLevel.HIGH_CONFIDENCE, 
+                new CIOStatementTO("CIO:1", "name1", "desc1", true, ConfidenceLevel.HIGH_CONFIDENCE, 
                         EvidenceConcordance.CONGRUENT, EvidenceTypeConcordance.SAME_TYPE),
-                new CIOStatementTO("2", "name2", "desc2", false, ConfidenceLevel.LOW_CONFIDENCE, 
+                new CIOStatementTO("CIO:2", "name2", "desc2", false, ConfidenceLevel.LOW_CONFIDENCE, 
                         EvidenceConcordance.SINGLE_EVIDENCE, null),
-                new CIOStatementTO("3", "name3", null, true, ConfidenceLevel.MEDIUM_CONFIDENCE, 
+                new CIOStatementTO("CIO:3", "name3", null, true, ConfidenceLevel.MEDIUM_CONFIDENCE, 
                         EvidenceConcordance.STRONGLY_CONFLICTING, EvidenceTypeConcordance.DIFFERENT_TYPE),
-                new CIOStatementTO("4", "name4", "desc4", false, ConfidenceLevel.MEDIUM_CONFIDENCE, 
+                new CIOStatementTO("CIO:4", "name4", "desc4", false, ConfidenceLevel.MEDIUM_CONFIDENCE, 
                         EvidenceConcordance.WEAKLY_CONFLICTING, EvidenceTypeConcordance.SAME_TYPE),
-                new CIOStatementTO("5", "name5", null, true, ConfidenceLevel.HIGH_CONFIDENCE, 
+                new CIOStatementTO("CIO:5", "name5", null, true, ConfidenceLevel.HIGH_CONFIDENCE, 
                         EvidenceConcordance.SINGLE_EVIDENCE, null));
 
         //Compare
@@ -109,15 +109,15 @@ public class MySQLCIOStatementDAOIT extends MySQLITAncestor {
         // Create a Collection of CIOStatementTO to be inserted,
         // Only the attribute description could be null according database schema.
         Collection<CIOStatementTO> cioTOs = Arrays.asList(
-                new CIOStatementTO("1", "name1", "desc1", true, ConfidenceLevel.HIGH_CONFIDENCE, 
+                new CIOStatementTO("CIO:1", "name1", "desc1", true, ConfidenceLevel.HIGH_CONFIDENCE, 
                         EvidenceConcordance.CONGRUENT, EvidenceTypeConcordance.SAME_TYPE),
-                new CIOStatementTO("2", "name2", "desc2", false, ConfidenceLevel.LOW_CONFIDENCE, 
+                new CIOStatementTO("CIO:2", "name2", "desc2", false, ConfidenceLevel.LOW_CONFIDENCE, 
                         EvidenceConcordance.SINGLE_EVIDENCE, null),
-                new CIOStatementTO("3", "name3", null, true, ConfidenceLevel.MEDIUM_CONFIDENCE, 
+                new CIOStatementTO("CIO:3", "name3", null, true, ConfidenceLevel.MEDIUM_CONFIDENCE, 
                         EvidenceConcordance.STRONGLY_CONFLICTING, EvidenceTypeConcordance.DIFFERENT_TYPE),
-                new CIOStatementTO("4", "name4", "desc4", false, ConfidenceLevel.MEDIUM_CONFIDENCE, 
+                new CIOStatementTO("CIO:4", "name4", "desc4", false, ConfidenceLevel.MEDIUM_CONFIDENCE, 
                         EvidenceConcordance.WEAKLY_CONFLICTING, EvidenceTypeConcordance.SAME_TYPE),
-                new CIOStatementTO("5", "name5", null, true, ConfidenceLevel.HIGH_CONFIDENCE, 
+                new CIOStatementTO("CIO:5", "name5", null, true, ConfidenceLevel.HIGH_CONFIDENCE, 
                         EvidenceConcordance.SINGLE_EVIDENCE, null));
 
         try {
@@ -133,7 +133,7 @@ public class MySQLCIOStatementDAOIT extends MySQLITAncestor {
                             "WHERE CIOId = ? AND CIOName = ? AND CIODescription = ? " +
                             "AND trusted = ? AND confidenceLevel = ? " +
                             "AND evidenceConcordance = ? AND evidenceTypeConcordance = ?")) { 
-                stmt.setInt(1, 1);
+                stmt.setString(1, "CIO:1");
                 stmt.setString(2, "name1");
                 stmt.setString(3, "desc1");
                 stmt.setBoolean(4, true);
@@ -143,7 +143,7 @@ public class MySQLCIOStatementDAOIT extends MySQLITAncestor {
                 assertTrue("CIOStatementTO incorrectly inserted", 
                         stmt.getRealPreparedStatement().executeQuery().next());
                 
-                stmt.setInt(1, 4);
+                stmt.setString(1, "CIO:4");
                 stmt.setString(2, "name4");
                 stmt.setString(3, "desc4");
                 stmt.setBoolean(4, false);
@@ -160,7 +160,7 @@ public class MySQLCIOStatementDAOIT extends MySQLITAncestor {
                             "WHERE CIOId = ? AND CIOName = ? " +
                             "AND CIODescription IS NULL AND trusted = ? AND confidenceLevel = ? " +
                             "AND evidenceConcordance = ? AND evidenceTypeConcordance = ?")) {
-                stmt.setInt(1, 3);
+                stmt.setString(1, "CIO:3");
                 stmt.setString(2, "name3");
                 stmt.setBoolean(3, true);
                 stmt.setEnumDAOField(4, ConfidenceLevel.MEDIUM_CONFIDENCE);
@@ -176,7 +176,7 @@ public class MySQLCIOStatementDAOIT extends MySQLITAncestor {
                             "WHERE CIOId = ? AND CIOName = ? " +
                             "AND CIODescription = ? AND trusted = ? AND confidenceLevel = ? " +
                             "AND evidenceConcordance = ? AND evidenceTypeConcordance IS NULL")) {
-                stmt.setInt(1, 2);
+                stmt.setString(1, "CIO:2");
                 stmt.setString(2, "name2");
                 stmt.setString(3, "desc2");
                 stmt.setBoolean(4, false);
@@ -192,7 +192,7 @@ public class MySQLCIOStatementDAOIT extends MySQLITAncestor {
                             "WHERE CIOId = ? AND CIOName = ? " +
                             "AND CIODescription IS NULL AND trusted = ? AND confidenceLevel = ? " +
                             "AND evidenceConcordance = ? AND evidenceTypeConcordance IS NULL")) {
-                stmt.setInt(1, 5);
+                stmt.setString(1, "CIO:5");
                 stmt.setString(2, "name5");
                 stmt.setBoolean(3, true);
                 stmt.setEnumDAOField(4, ConfidenceLevel.HIGH_CONFIDENCE);

@@ -147,7 +147,7 @@ public class MySQLCIOStatementDAO extends MySQLDAO<CIOStatementDAO.Attribute>
         try (BgeePreparedStatement stmt = 
                 this.getManager().getConnection().prepareStatement(sqlExpression)) {
             for (CIOStatementTO cioTO: cioTOs) {
-                stmt.setInt(1, Integer.parseInt(cioTO.getId()));
+                stmt.setString(1, cioTO.getId());
                 stmt.setString(2, cioTO.getName());
                 stmt.setString(3, cioTO.getDescription());
                 stmt.setBoolean(4, cioTO.isTrusted());

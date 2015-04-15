@@ -83,12 +83,12 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 "patchwork.png' alt='Expression data screenshot' /></div>" +
                 "<figcaption>Expression data</figcaption>" +
                 "</figure></a>");
-        this.writeln("<a href='" + urlDocGenerator.getRequestURL() + 
-                "' title='Bgee documentation page'>" +
-                "<figure><div><img class='pageimg' src='" + this.prop.getImagesRootDirectory() + 
-                "books.png' alt='Documentation page screenshot' /></div>" +
-                "<figcaption>Documentation</figcaption>" +
-                "</figure></a>");
+//        this.writeln("<a href='" + urlDocGenerator.getRequestURL() + 
+//                "' title='Bgee documentation page'>" +
+//                "<figure><div><img class='pageimg' src='" + this.prop.getImagesRootDirectory() + 
+//                "books.png' alt='Documentation page screenshot' /></div>" +
+//                "<figcaption>Documentation</figcaption>" +
+//                "</figure></a>");
         this.writeln("</div>");
         
         this.writeln("<div id='home_info'>");

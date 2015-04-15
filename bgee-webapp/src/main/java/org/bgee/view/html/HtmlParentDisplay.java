@@ -196,24 +196,24 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("<a title='Expression data page' href='" + urlDownloadGenerator.getRequestURL() + 
                 "'>Expression data</a>");
         this.writeln("</li>");
-        this.writeln("<li>");
-        this.writeln("<a title='Documentation page' href='" + 
-                urlDocGenerator.getRequestURL() + "'>Documentation</a><img class='deploy' src='" + 
-                this.prop.getImagesRootDirectory() + "arrow_down_dark.png' alt='deploy'/>");
-        this.writeln("<ul>");
-        //TODO set section URLs when defined
-        this.writeln("<li><a class='drop' title='Section 1' href='" + urlDocGenerator.getRequestURL() + 
-                "'>Section 1</a></li>");
-        this.writeln("<li><a class='drop' title='Section 2' href='" + urlDocGenerator.getRequestURL() + 
-                "'>Section 2</a></li>");
-        this.writeln("<li><a class='drop' title='Section 1' href='" + urlDocGenerator.getRequestURL() + 
-                "'>Section 3</a></li>");
-        this.writeln("</ul>");
-        this.writeln("</li>");
-        this.writeln("<li>");
-        this.writeln("<a id='about' rel='help' title='About page' href='" + 
-                urlAboutGenerator.getRequestURL() + "'>About</a>");
-        this.writeln("</li>");
+//        this.writeln("<li>");
+//        this.writeln("<a title='Documentation page' href='" + 
+//                urlDocGenerator.getRequestURL() + "'>Documentation</a><img class='deploy' src='" + 
+//                this.prop.getImagesRootDirectory() + "arrow_down_dark.png' alt='deploy'/>");
+//        this.writeln("<ul>");
+//        //TODO set section URLs when defined
+//        this.writeln("<li><a class='drop' title='Section 1' href='" + urlDocGenerator.getRequestURL() + 
+//                "'>Section 1</a></li>");
+//        this.writeln("<li><a class='drop' title='Section 2' href='" + urlDocGenerator.getRequestURL() + 
+//                "'>Section 2</a></li>");
+//        this.writeln("<li><a class='drop' title='Section 1' href='" + urlDocGenerator.getRequestURL() + 
+//                "'>Section 3</a></li>");
+//        this.writeln("</ul>");
+//        this.writeln("</li>");
+//        this.writeln("<li>");
+//        this.writeln("<a id='about' rel='help' title='About page' href='" + 
+//                urlAboutGenerator.getRequestURL() + "'>About</a>");
+//        this.writeln("</li>");
         this.writeln("<li id='contact'>");
         this.writeln(this.getObfuscateEmail(0));
         this.writeln("</li>");

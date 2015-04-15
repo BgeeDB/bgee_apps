@@ -427,6 +427,15 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     // Species 33
                     "0", "0", "1", "0"));
             
+            expectedRows.add(Arrays.asList("444", "entityId4", "entityName4", 
+                    "stageId1", "stageName1",
+                    // Species 11
+                    "0", "0", "1", "1",
+                    // Species 22
+                    "0", "0", "0", "1",
+                    // Species 33
+                    "0", "1", "0", "0"));
+
             List<List<String>> actualRows = new ArrayList<List<String>>();
             List<String> row;
             while( (row = listReader.read()) != null ) {

@@ -227,10 +227,10 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         // Pairwises
         this.writeln(generateSpeciesFigure(Arrays.asList(9606, 10090), GROUP_NAME_HUMAN_MOUSE, true));
 //        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 7955), GROUP_NAME_HUMAN_ZEBRAFISH, true));
-        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 7227), GROUP_NAME_HUMAN_FRUITFLY, true));
+//        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 7227), GROUP_NAME_HUMAN_FRUITFLY, true));
 //        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 6239), GROUP_NAME_HUMAN_NEMATODE, true));
 //        this.writeln(generateSpeciesFigure(Arrays.asList(10090, 7955), GROUP_NAME_MOUSE_ZEBRAFISH, true));
-        this.writeln(generateSpeciesFigure(Arrays.asList(10090, 7227), GROUP_NAME_MOUSE_FRUITFLY, true));
+//        this.writeln(generateSpeciesFigure(Arrays.asList(10090, 7227), GROUP_NAME_MOUSE_FRUITFLY, true));
 //        this.writeln(generateSpeciesFigure(Arrays.asList(10090, 6239), GROUP_NAME_MOUSE_NEMATODE, true));
         this.writeln(generateSpeciesFigure(Arrays.asList(7955, 7227), GROUP_NAME_ZEBRAFISH_FRUITFLY, true));
 //        this.writeln(generateSpeciesFigure(Arrays.asList(7955, 6239), GROUP_NAME_ZEBRAFISH_NEMATODE, true));
@@ -242,7 +242,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 //        this.writeln(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544, 10116, 10090, 9913, 9823, 13616, 9258), GROUP_NAME_MAMMALIA, true));
 //        this.writeln(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544, 10116, 10090, 9913, 9823, 13616, 9258, 28377, 9031), GROUP_NAME_AMNIOTA, true));
 //        this.writeln(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544, 10116, 10090, 9913, 9823, 13616, 9258, 28377, 9031, 8364, 7955, 7227, 6239), GROUP_NAME_BILATERIA, true));
-        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9544), GROUP_NAME_CATARRHINI, true));
+//        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9544), GROUP_NAME_CATARRHINI, true));
         this.writeln(generateSpeciesFigure(Arrays.asList(10090, 10116), GROUP_NAME_MURINAE, true));
         this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9544, 10116, 10090, 9913), GROUP_NAME_THERIA, true));
         this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9544, 10116, 10090, 9913, 9258), GROUP_NAME_MAMMALIA, true));

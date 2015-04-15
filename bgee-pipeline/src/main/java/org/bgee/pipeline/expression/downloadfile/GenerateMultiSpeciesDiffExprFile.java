@@ -1329,6 +1329,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 //we iterate the ResultSet, then we do a last iteration after the last TO is 
                 //retrieved, to properly group all the calls.
                 boolean doIteration = true;
+                int iterationCount = 0;
                 while (doIteration) {
                     doIteration = diffExprRs.next();
                     DiffExpressionCallTO currentTO = null;
@@ -1373,6 +1374,10 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                                 omaGroupCalls, mapSumSimCIO, mapSimAnnotToAnatEntities, 
                                 mapStageGroupToStageId, mapAnatEntityToSimAnnot, 
                                 mapStageIdToStageGroup);
+
+                        if (log.isDebugEnabled() && iterationCount % 10000 == 0) {
+                            log.debug("{} OMA node IDs already iterated", iterationCount);
+                        }
 
                         // We clear the set containing TOs with the previous OMA Node ID
                         omaGroupCalls.clear();
@@ -2116,7 +2121,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             }
         }
 
-        log.debug("Done writing calls of OMA node ID", omaNodeId);
+        log.debug("Done writing calls of OMA node ID {}", omaNodeId);
         
         log.exit();
     }

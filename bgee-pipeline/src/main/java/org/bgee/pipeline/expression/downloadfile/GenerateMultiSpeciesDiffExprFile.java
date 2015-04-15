@@ -1290,8 +1290,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                     this.getMappingOMANodeIdGeneIDs(mapGeneOMANode);
 
             // Get comparable stages: Stage ID -> Stage group and Stage group -> Stage IDs
-            List<Map<String, List<String>>> mapStageGroup = 
-                    this.getComparableStages(taxonId, speciesFilter);
+            List<Map<String, List<String>>> mapStageGroup = this.getComparableStages(taxonId);
             Map<String, List<String>> mapStageIdToStageGroup = mapStageGroup.get(0);
             Map<String, List<String>> mapStageGroupToStageId = mapStageGroup.get(1);
 
@@ -1301,7 +1300,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             // Get relations between similarity annotations and anatomical entities:
             // Summary annotation ID -> Anat. entities and Anat. entity -> Summary annotation ID 
             List<Map<String, List<String>>> simAnnotToAnatEntity = 
-                    this.getSimAnnotToAnatEntities(taxonId, speciesFilter);
+                    this.getSimAnnotToAnatEntities(taxonId);
             Map<String, List<String>> mapSimAnnotToAnatEntities = simAnnotToAnatEntity.get(0);
             Map<String, List<String>> mapAnatEntityToSimAnnot = simAnnotToAnatEntity.get(1);
                     
@@ -1505,8 +1504,6 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      *
      * @param taxonId       A {@code String} that is the ID of the common ancestor taxon 
      *                      we want to into account. 
-     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species
-     *                      allowing to filter the comparable stages to use.
      * @return              the {@code List} of {@code Map}s. The first {@code Map} is the 
      *                      {@code Map} where keys are {@code String}s that are stage IDs, the 
      *                      associated values being {@code Set} of {@code String}s corresponding to 
@@ -1519,19 +1516,19 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     //TODO: this is really an ugly design :p 
     //Implements a first method retrieving information from database, then two other methods 
     //to generate the proper mappings you need. 
-    private List<Map<String, List<String>>> getComparableStages(
-            String taxonId, Set<String> speciesIds) throws DAOException, IllegalStateException {
-        log.entry(taxonId, speciesIds);
+    private List<Map<String, List<String>>> getComparableStages(String taxonId) 
+            throws DAOException, IllegalStateException {
+        log.entry(taxonId);
         
-        log.debug("Start retrieving comparable stages for the taxon ID {} and the species IDs {}...", 
-                taxonId, speciesIds);
+        log.debug("Start retrieving comparable stages for the taxon ID {}...", taxonId);
         
        StageGroupingDAO dao = this.getStageGroupingDAO();
        // setAttributes methods has no effect on attributes retrieved  
         
        Map<String, List<String>> mappingStageIdToStageGroup = new HashMap<String, List<String>>();
        Map<String, List<String>> mappingStageGroupToStageId = new HashMap<String, List<String>>();
-        try (GroupToStageTOResultSet rs = dao.getGroupToStage(taxonId, speciesIds)) {
+       
+        try (GroupToStageTOResultSet rs = dao.getGroupToStage(taxonId, null)) {
             while (rs.next()) {
                 GroupToStageTO to = rs.getTO();
     
@@ -1597,8 +1594,6 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      *
      * @param taxonId       A {@code String} that is the ID of the common ancestor taxon 
      *                      we want to into account. 
-     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species
-     *                      allowing to filter the comparable stages to use.
      * @return              the {@code List} of {@code Map}s. The first {@code Map} is the 
      *                      {@code Map} where keys are {@code String}s that are summary similarity 
      *                      annotation IDs, the associated values being {@code Set} of 
@@ -1609,19 +1604,19 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * @throws DAOException If an error occurred while getting the data from the Bgee data source.
      */
     //TODO: same ugliness than for getComparableStages, to fix.
-    private List<Map<String, List<String>>> getSimAnnotToAnatEntities(
-            String taxonId, Set<String> speciesIds) throws DAOException {
-        log.entry(taxonId, speciesIds);
+    private List<Map<String, List<String>>> getSimAnnotToAnatEntities(String taxonId) 
+            throws DAOException {
+        log.entry(taxonId);
     
         log.debug("Start retrieving relation between summary similarity annotation and " + 
-                "anatomical entity for the taxon ID {} and species IDs {}...", 
-                taxonId, speciesIds);
+                "anatomical entity for the taxon ID {}...", taxonId);
     
         SummarySimilarityAnnotationDAO dao = this.getSummarySimilarityAnnotationDAO();
         // setAttributes methods has no effect on attributes retrieved  
     
         Map<String, List<String>> mappingSimAnnotToAnatEntity = new HashMap<String, List<String>>();
         Map<String, List<String>> mappingAnatEntityToSimAnnot = new HashMap<String, List<String>>();
+
         //note that we retrieve all organs, even those not existing in all species
         try (SimAnnotToAnatEntityTOResultSet rs = dao.getSimAnnotToAnatEntity(taxonId, null)) {
             while (rs.next()) {
@@ -1915,30 +1910,11 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             // First, we get some data to be able to build beans 
             String cioId = mapSumSimCIO.get(condition.getSummarySimilarityAnnotationId());
             
-            //TODO see todo for gene IDs and names 
-            List<String> stageIds = mapStageGroupToStageId.get(condition.getStageGroupId());
-            assert stageIds != null && !stageIds.isEmpty();
-            //sort IDs for consistent diff between releases
-            Collections.sort(stageIds);
-            List<String> stageNames = new ArrayList<String>();
-            for (String stageId: stageIds) {
-                stageNames.add(stageNamesByIds.get(stageId));
-            }
-            assert stageIds.size() == stageNames.size();
-            
-            //TODO see todo for gene IDs and names 
-            List<String> organIds = 
-                    mapSimAnnotToAnatEntities.get(condition.getSummarySimilarityAnnotationId());
-            assert organIds != null && !organIds.isEmpty();
-            //sort IDs for consistent diff between releases
-            Collections.sort(organIds);
-            List<String> organNames = new ArrayList<String>();
-            for (String entityId: organIds) {
-                organNames.add(anatEntityNamesByIds.get(entityId));
-            }
-            assert organIds.size() == organNames.size();
-            
             // Then, we compute data for each species
+            
+            // We store stage IDs and organISd found in calls
+            Set<String> foundStageIds = new HashSet<String>();
+            Set<String> foundOrganIds = new HashSet<String>();
             
             // We store complete beans for one condition to be able to check if there is any problem 
             List<MultiSpeciesCompleteDiffExprFileBean> currentCompleteBeans = 
@@ -1957,7 +1933,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                     new HashMap<String, SpeciesDiffExprCounts>();
             
             for (DiffExpressionCallTO to : entry.getValue()) {
-                
+                log.trace("Iterating diff. expr. call {}", to);
+
                 //We ensure that only one OMA group ID is seen over all the calls iterated.
                 assert omaNodeId.equals(mapGeneOMANode.get(to.getGeneId()));
                 
@@ -1966,8 +1943,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 // We create a complete bean with null differential expression and call quality
                 MultiSpeciesCompleteDiffExprFileBean currentBean = 
                         new MultiSpeciesCompleteDiffExprFileBean(
-                                omaNodeId, organIds, organNames,
-                                stageIds, stageNames,
+                                omaNodeId, null, null, null, null, // organ and stage names and IDs
                                 to.getGeneId(), geneTOsByIds.get(to.getGeneId()).getName(), 
                                 cioId, cioStatementByIds.get(cioId).getName(),
                                 speciesId, speciesNamesByIds.get(speciesId), 
@@ -1987,6 +1963,10 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 this.addDiffExprCallMergedDataToRow(currentBean);
                 // And add it to the set of bean to be written
                 currentCompleteBeans.add(currentBean);
+
+                // We store stage IDs and organISd found in calls
+                foundStageIds.add(to.getStageId());
+                foundOrganIds.add(to.getAnatEntityId());
                 
                 // We finish by counting gene types
                 SpeciesDiffExprCounts currentCounts = allSpeciesCounts.get(currentBean.getSpeciesId());
@@ -2047,6 +2027,32 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             assert totalOver + totalUnder + totalNotDiffExpr >= 2;
             assert currentCompleteBeans != null && !currentCompleteBeans.isEmpty();
 
+            // We get names of found stage and organ IDs.
+            //TODO see todo for gene IDs and names 
+            List<String> orderedFoundStageIds = new ArrayList<String>(foundStageIds);
+            Collections.sort(orderedFoundStageIds);
+            List<String> orderedFoundStageNames = new ArrayList<String>();
+            for (String stageId: orderedFoundStageIds) {
+                orderedFoundStageNames.add(stageNamesByIds.get(stageId));
+            }
+            assert foundStageIds.size() == orderedFoundStageNames.size();
+
+            List<String> orderedFoundOrganIds = new ArrayList<String>(foundOrganIds);
+            Collections.sort(orderedFoundOrganIds);
+            List<String> orderedFoundOrganNames = new ArrayList<String>();
+            for (String organId: orderedFoundOrganIds) {
+                orderedFoundOrganNames.add(anatEntityNamesByIds.get(organId));
+            }
+            assert foundOrganIds.size() == orderedFoundOrganNames.size();
+
+            // We add found stage and organ IDs and names to all complete beans
+            for (MultiSpeciesCompleteDiffExprFileBean bean: currentCompleteBeans) {
+                bean.setStageIds(orderedFoundStageIds);
+                bean.setStageNames(orderedFoundStageNames);
+                bean.setEntityIds(orderedFoundOrganIds);
+                bean.setEntityNames(orderedFoundOrganNames);
+            }
+
             // We filter, in simple file, poor quality homologous annotations (CIO), 
             // and conditions with 'no diff expressed' only,
             // and we do not have the same criteria for counting species with data 
@@ -2054,7 +2060,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             if (cioStatementByIds.get(cioId).isTrusted() &&
                     speciesIdsWithDataForSimple.size() >= 2) {
                 MultiSpeciesSimpleDiffExprFileBean simpleBean = new MultiSpeciesSimpleDiffExprFileBean(
-                        omaNodeId, organIds, organNames, stageIds, stageNames, 
+                        omaNodeId, orderedFoundOrganIds, orderedFoundOrganNames, 
+                        orderedFoundStageIds, orderedFoundStageNames, 
                         new ArrayList<SpeciesDiffExprCounts>());
                         
                 // We order species IDs to keep the same order when we regenerate files.

@@ -136,13 +136,15 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
         MySQLStageTOResultSet mockStageTORs = createMockDAOResultSet(
                 Arrays.asList(
                         new StageTO("stageId1", "stageName1", null, null, null, null, null, null),
-                        new StageTO("stageId2", "stageName2", null, null, null, null, null, null)),
+                        new StageTO("stageId2", "stageName2", null, null, null, null, null, null),
+                        new StageTO("stageIdNotFound", "stageNameNotFound", null, null, null, null, null, null)),
                         MySQLStageTOResultSet.class);
         when(mockManager.mockStageDAO.getStagesBySpeciesIds(speciesIds1)).thenReturn(mockStageTORs);
 
         MySQLAnatEntityTOResultSet mockAnatEntityTORs = createMockDAOResultSet(
                 Arrays.asList(
                         new AnatEntityTO("entityId1", "entityName1", null, null, null, null),
+                        new AnatEntityTO("entityIdNotFound", "entityNameNotFound", null, null, null, null),
                         new AnatEntityTO("entityId2", "entityName2", null, null, null, null),
                         new AnatEntityTO("entityId3", "entityName3", null, null, null, null),
                         new AnatEntityTO("entityId4", "entityName4", null, null, null, null),
@@ -187,9 +189,10 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
         MySQLGroupToStageTOResultSet mockGrouptoStageTORs = createMockDAOResultSet(
                 Arrays.asList(
                         new GroupToStageTO("stageGroupIdA", "stageId1"),
+                        new GroupToStageTO("stageGroupIdA", "stageIdNotFound"),
                         new GroupToStageTO("stageGroupIdB", "stageId2")),
                         MySQLGroupToStageTOResultSet.class);
-        when(mockManager.mockStageGroupingDAO.getGroupToStage(taxonId1, speciesIds1)).
+        when(mockManager.mockStageGroupingDAO.getGroupToStage(taxonId1, null)).
         thenReturn(mockGrouptoStageTORs);
 
         MySQLSummarySimilarityAnnotationTOResultSet mockSumSimAnnotTORs = createMockDAOResultSet(
@@ -205,6 +208,7 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                 Arrays.asList(
                         new SimAnnotToAnatEntityTO("simAnnotIdA", "entityId1"),
                         new SimAnnotToAnatEntityTO("simAnnotIdA", "entityId2"),
+                        new SimAnnotToAnatEntityTO("simAnnotIdA", "entityIdNotFound"),
                         new SimAnnotToAnatEntityTO("simAnnotIdB", "entityId3"),
                         new SimAnnotToAnatEntityTO("simAnnotIdB", "entityId6"),
                         new SimAnnotToAnatEntityTO("simAnnotIdC", "entityId4"),
@@ -495,7 +499,7 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     "geneId5] with gene names [geneName3, geneName4, geneName5]"));
 
             expectedRows.add(Arrays.asList(
-                    "333", "entityId3|entityId6", "entityName3|entityName6", "stageId1", 
+                    "333", "entityId3", "entityName3", "stageId1", 
                     "stageName1", "GenusZZ_speciesZZ", "geneId5", "geneName5", 
                     DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
                     DataState.LOWQUALITY.getStringRepresentation(), "cioId2", "cioName2", 
@@ -505,7 +509,7 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     DataState.LOWQUALITY.getStringRepresentation(), "0.7", "2", "1"));
             
             expectedRows.add(Arrays.asList(
-                    "333", "entityId3|entityId6", "entityName3|entityName6", "stageId1", 
+                    "333", "entityId3", "entityName3", "stageId1", 
                     "stageName1", "GenusAA_speciesAA", "geneId4", "geneName4", 
                     DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
                     DataState.HIGHQUALITY.getStringRepresentation(), "cioId2", "cioName2", 
@@ -550,7 +554,7 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     DataState.HIGHQUALITY.getStringRepresentation(), "0.066", "11", "2"));
             
             expectedRows.add(Arrays.asList(
-                    "444", "entityId4|entityId5", "entityName4|entityName5", "stageId1", 
+                    "444", "entityId4", "entityName4", "stageId1", 
                     "stageName1", "GenusZZ_speciesZZ", "geneId8", "geneName8", 
                     DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
                     DataState.HIGHQUALITY.getStringRepresentation(), "cioId1", "cioName1", 
@@ -560,7 +564,7 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     DataState.HIGHQUALITY.getStringRepresentation(), "0.002", "6", "0"));
 
             expectedRows.add(Arrays.asList(
-                    "444", "entityId4|entityId5", "entityName4|entityName5", "stageId1", 
+                    "444", "entityId4", "entityName4", "stageId1", 
                     "stageName1", "GenusAA_speciesAA", "geneId9", "geneName9", 
                     DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(), 
                     DataState.LOWQUALITY.getStringRepresentation(), "cioId1", "cioName1", 

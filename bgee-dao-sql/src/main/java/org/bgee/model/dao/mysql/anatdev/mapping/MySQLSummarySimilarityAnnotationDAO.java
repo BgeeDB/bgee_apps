@@ -241,6 +241,8 @@ public class MySQLSummarySimilarityAnnotationDAO
     //was to be non-trusted, we would recover both the homology limb|fin AND the homology 
     //limb. Maybe what we need is actually a filtering on the application side...
     //this requires more thought.
+    //Also, hat about cases where the homology is between entities existing in a same species, 
+    //such as mouth|anus, or lung|swim bladder in lungfish.
     private String getAnnotToAnatEntityQueryStart() {
         log.entry();
         

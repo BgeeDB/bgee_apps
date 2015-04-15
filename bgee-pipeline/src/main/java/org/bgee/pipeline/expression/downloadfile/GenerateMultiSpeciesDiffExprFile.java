@@ -66,6 +66,13 @@ import org.supercsv.io.dozer.ICsvDozerBeanWriter;
  * @version Bgee 13
  * @since 	Bgee 13
  */
+//FIXME: there will definitely be cases where a homology group include organs 
+//existing in a same species, such as the homology mouth|anus, or the homology 
+//lung|swim bladder in lungfish. So we need to have a mechanism to merge calls 
+//of a same gene in a same MultiSpeciesCondition. 
+//FIXME: And what should we do with that? When should we decide to not display mouth|anus, 
+//to only display mouth on the one hand, anus on the other hand? Should we display 
+//both the multiple-entities condition, AND the single-entity conditions?
 public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile 
                                                 implements GenerateMultiSpeciesDownloadFile {
 

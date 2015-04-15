@@ -1,5 +1,7 @@
 package org.bgee.pipeline.ontologycommon;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -10,8 +12,10 @@ import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.ontologycommon.EvidenceOntologyDAO.ECOTermTO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.pipeline.MySQLDAOUser;
+import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 
 import owltools.graph.OWLGraphWrapper;
 
@@ -31,6 +35,42 @@ public class InsertECO extends MySQLDAOUser {
      * of the Evidence ontology.
      */
     private static final String EVIDENCE_ID = "ECO:0000000";
+    
+
+    /**
+     * Main method to trigger the insertion of the ECO ontology into the Bgee 
+     * database. Parameters that must be provided in order in {@code args} are: 
+     * <ol>
+     * <li>path to the file storing the ECO ontology, either in OBO or in OWL.
+     * </ol>
+     * 
+     * @param args  An {@code Array} of {@code String}s containing the requested parameters.
+     * @throws FileNotFoundException        If some files could not be found.
+     * @throws IOException                  If some files could not be used.
+     * @throws OWLOntologyCreationException If an error occurred while loading 
+     *                                      the ontology.
+     * @throws OBOFormatParserException     If an error occurred while loading 
+     *                                      the ontology.
+     * @throws IllegalArgumentException     If the files used provided invalid information.
+     * @throws DAOException                 If an error occurred while inserting 
+     *                                      the data into the Bgee database.
+     */
+    public static void main(String[] args) throws FileNotFoundException, 
+        OWLOntologyCreationException, OBOFormatParserException, IllegalArgumentException, 
+        DAOException, IOException {
+        log.entry((Object[]) args);
+        int expectedArgLength = 1;
+        if (args.length != expectedArgLength) {
+            throw log.throwing(new IllegalArgumentException("Incorrect number of arguments " +
+                    "provided, expected " + expectedArgLength + " arguments, " + args.length + 
+                    " provided."));
+        }
+        
+        InsertECO insert = new InsertECO();
+        insert.insert(OntologyUtils.loadOntology(args[0]));
+        
+        log.exit();
+    }
     
     /**
      * Default constructor. 

@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.annotations.AnnotationCommon;
+import org.bgee.pipeline.annotations.InsertSimilarityAnnotation;
 import org.bgee.pipeline.annotations.SimilarityAnnotation;
 import org.bgee.pipeline.expression.FilterNoExprCalls;
 import org.bgee.pipeline.expression.InsertGlobalCalls;
@@ -18,6 +19,8 @@ import org.bgee.pipeline.expression.downloadfile.GenerateExprFile;
 import org.bgee.pipeline.expression.downloadfile.GenerateDiffExprFile;
 import org.bgee.pipeline.gene.InsertGO;
 import org.bgee.pipeline.gene.ParseOrthoXML;
+import org.bgee.pipeline.ontologycommon.InsertCIO;
+import org.bgee.pipeline.ontologycommon.InsertECO;
 import org.bgee.pipeline.ontologycommon.OntologyTools;
 import org.bgee.pipeline.species.GenerateTaxonOntology;
 import org.bgee.pipeline.species.InsertTaxa;
@@ -167,7 +170,20 @@ public class CommandRunner {
         case "UberonSocketTool": 
             UberonSocketTool.main(newArgs);
             break;
-            
+        
+        //---------- General ontologies -----------
+        case "InsertGO": 
+            InsertGO.main(newArgs);
+            break;
+        case "InsertCIO": 
+            InsertCIO.main(newArgs);
+            break;
+        case "InsertECO": 
+            InsertECO.main(newArgs);
+            break;
+        case "InsertSimilarityAnnotation": 
+            InsertSimilarityAnnotation.main(newArgs);
+            break;
         //---------- Similarity annotation -----------
         case "SimilarityAnnotation": 
             SimilarityAnnotation.main(newArgs);
@@ -179,9 +195,6 @@ public class CommandRunner {
             break;
             
         //---------- Genes -----------
-        case "InsertGO": 
-            InsertGO.main(newArgs);
-            break;
         case "OntologyTools": 
             OntologyTools.main(newArgs);
             break;

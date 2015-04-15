@@ -38,6 +38,38 @@ public class InsertSimilarityAnnotation extends MySQLDAOUser {
     private final static Logger log = LogManager.getLogger(
             InsertSimilarityAnnotation.class.getName());
     
+
+    /**
+     * Main method to trigger the insertion of the similarity annotations into the Bgee 
+     * database. Parameters that must be provided in order in {@code args} are: 
+     * <ol>
+     * <li>path to the TSV file storing the raw similarity annotations.
+     * <li>path to the TSV file storing the summary similarity annotations.
+     * </ol>
+     * 
+     * @param args  An {@code Array} of {@code String}s containing the requested parameters.
+     * @throws FileNotFoundException        If some files could not be found.
+     * @throws IOException                  If some files could not be used.
+     * @throws IllegalArgumentException     If the files used provided invalid information.
+     * @throws DAOException                 If an error occurred while inserting 
+     *                                      the data into the Bgee database.
+     */
+    public static void main(String[] args) throws FileNotFoundException, 
+        IllegalArgumentException, DAOException, IOException {
+        log.entry((Object[]) args);
+        int expectedArgLength = 2;
+        if (args.length != expectedArgLength) {
+            throw log.throwing(new IllegalArgumentException("Incorrect number of arguments " +
+                    "provided, expected " + expectedArgLength + " arguments, " + args.length + 
+                    " provided."));
+        }
+        
+        InsertSimilarityAnnotation insert = new InsertSimilarityAnnotation();
+        insert.insert(args[0], args[1]);
+        
+        log.exit();
+    }
+    
     /**
      * A {@code Set} of {@code SummarySimilarityAnnotationTO}s that will be generated 
      * by the {@link #generateTOs(String, String)} method, that will be used 

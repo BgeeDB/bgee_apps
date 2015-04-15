@@ -2545,18 +2545,18 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             headers[7] = GENE_NAME_COLUMN_NAME; 
             headers[8] = DIFFEXPRESSION_COLUMN_NAME;
             headers[9] = QUALITY_COLUMN_NAME;
-            headers[10] = CIO_ID_COLUMN_NAME; 
-            headers[11] = CIO_NAME_ID_COLUMN_NAME;
-            headers[12] = AFFYMETRIX_DATA_COLUMN_NAME; 
-            headers[13] = AFFYMETRIX_CALL_QUALITY_COLUMN_NAME;
-            headers[14] = AFFYMETRIX_P_VALUE_COLUMN_NAME; 
-            headers[15] = AFFYMETRIX_CONSISTENT_DEA_COUNT_COLUMN_NAME; 
-            headers[16] = AFFYMETRIX_INCONSISTENT_DEA_COUNT_COLUMN_NAME;
-            headers[17] = RNASEQ_DATA_COLUMN_NAME; 
-            headers[18] = RNASEQ_CALL_QUALITY_COLUMN_NAME;
-            headers[19] = RNASEQ_P_VALUE_COLUMN_NAME; 
-            headers[20] = RNASEQ_CONSISTENT_DEA_COUNT_COLUMN_NAME; 
-            headers[21] = RNASEQ_INCONSISTENT_DEA_COUNT_COLUMN_NAME;
+            headers[10] = AFFYMETRIX_DATA_COLUMN_NAME; 
+            headers[11] = AFFYMETRIX_CALL_QUALITY_COLUMN_NAME;
+            headers[12] = AFFYMETRIX_P_VALUE_COLUMN_NAME; 
+            headers[13] = AFFYMETRIX_CONSISTENT_DEA_COUNT_COLUMN_NAME; 
+            headers[14] = AFFYMETRIX_INCONSISTENT_DEA_COUNT_COLUMN_NAME;
+            headers[15] = RNASEQ_DATA_COLUMN_NAME; 
+            headers[16] = RNASEQ_CALL_QUALITY_COLUMN_NAME;
+            headers[17] = RNASEQ_P_VALUE_COLUMN_NAME; 
+            headers[18] = RNASEQ_CONSISTENT_DEA_COUNT_COLUMN_NAME; 
+            headers[19] = RNASEQ_INCONSISTENT_DEA_COUNT_COLUMN_NAME;
+            headers[20] = CIO_ID_COLUMN_NAME; 
+            headers[21] = CIO_NAME_ID_COLUMN_NAME;
         }
         return log.exit(headers);
     }

@@ -235,6 +235,12 @@ public class MySQLSummarySimilarityAnnotationDAO
      *          mappings from similarity annotations to anatomical entities, 
      *          valid in a provided taxon.
      */
+    //FIXME: for now, this methods tries to always recover the largest mapping possible, 
+    //so, if for a given taxon, we have valid homology limb|fin, and homology limb, 
+    //it will return the homology limb|fin. Problem is, if the homology limb|fin 
+    //was to be non-trusted, we would recover both the homology limb|fin AND the homology 
+    //limb. Maybe what we need is actually a filtering on the application side...
+    //this requires more thought.
     private String getAnnotToAnatEntityQueryStart() {
         log.entry();
         
@@ -247,61 +253,102 @@ public class MySQLSummarySimilarityAnnotationDAO
                 + "ON t4.summarySimilarityAnnotationId = t3.summarySimilarityAnnotationId "
                 + "INNER JOIN CIOStatement AS t5 ON t3.cioId = t5.cioId "
                 + "WHERE t3.negated = 0 AND t1.taxonId = ? "
-                //check that this is the similarity annotated to the most recent valid taxon 
-                //for this anatomical structure.
+                //we check whether there exists another valid annotation, 
+                //that includes the same anat entity, but that would link more anat entities; 
+                //in that case, we discard the currently examined annotation
+                //(e.g., to retrieve the homology 'lung-swim bladder', and to discard 
+                //the homology 'swim bladder' alone: this will allow more comparisons)
                 + "AND NOT EXISTS "
-                    //first, we search for annotations including the organ currently iterated 
-                    //(t27)
-                    + "(SELECT 1 FROM similarityAnnotationToAnatEntityId AS t27 "
-                    //then, we retrieve these annotations (t28)
-                    + "INNER JOIN similarityAnnotationToAnatEntityId AS t28 "
-                    + "ON t28.summarySimilarityAnnotationId = t27.summarySimilarityAnnotationId "
-                    //and finally, we retrieve all annotations including any organs 
-                    //that were part of the annotations retrieved in t28. 
-                    //so, for instance: we start from the annotation 'mesenchyme pelvic fin'
-                    //-> Sarcopterygii; we retrieve all annotations including this organ, 
-                    //notably 'hindlimb mesenchyme|mesenchyme pelvic fin' -> vertebrata; 
-                    //this allows to retrieve the annotation 'hindlimb mesenchyme' 
-                    //-> tetrapoda (table t29). So, if we were to retrieve the homology for tetrapoda, 
-                    //we could discard the annotation 'mesenchyme pelvic fin' -> Sarcopterygii 
-                    //to keep only the more relevant annotation 'hindlimb mesenchyme' 
-                    //-> tetrapoda
-                    + "INNER JOIN similarityAnnotationToAnatEntityId AS t29 "
-                    + "ON t29.anatEntityId = t28.anatEntityId "
+                    + "(SELECT 1 FROM similarityAnnotationToAnatEntityId AS t29 "
                     + "INNER JOIN summarySimilarityAnnotation AS t30 "
                     + "ON t30.summarySimilarityAnnotationId = t29.summarySimilarityAnnotationId "
                     + "INNER JOIN taxon AS t10 ON t30.taxonId = t10.taxonId "
                     + "INNER JOIN CIOStatement AS t50 ON t30.cioId = t50.cioId "
-                    + "WHERE t27.anatEntityId = t4.anatEntityId AND "
+                    + "WHERE t29.anatEntityId = t4.anatEntityId AND "
+                    //that doesn't have the same ID 
+                    + "t30.summarySimilarityAnnotationId != t3.summarySimilarityAnnotationId AND "
                     //annotated to a a valid requested taxon
                     + "t10.taxonLeftBound <= t1.taxonLeftBound AND "
                     + "t10.taxonRightBound >= t1.taxonRightBound AND "
                     //that is either trusted, or not trusted, if the annotation 
                     //that is being checked is not trusted
                     + "t50.trusted >= t5.trusted "
-                    
                     + " AND ("
-                        //that are annotated to more recent taxa
+                        //that are either annotated to more recent taxa with at least 
+                        //as many structures
                         + "(t10.taxonLeftBound > t2.taxonLeftBound AND "
-                        + "t10.taxonRightBound < t2.taxonRightBound) "
+                        + "t10.taxonRightBound < t2.taxonRightBound AND "
+                        + "(SELECT COUNT(*) FROM similarityAnnotationToAnatEntityId AS t40 "
+                        + "WHERE t40.summarySimilarityAnnotationId = t30.summarySimilarityAnnotationId) "
+                        + ">= (SELECT COUNT(*) FROM similarityAnnotationToAnatEntityId AS t40 "
+                        + "WHERE t40.summarySimilarityAnnotationId = t3.summarySimilarityAnnotationId)) "
                         + "OR "
-                        //or that are annotated to the same taxon, with a higher number 
+                        //or that are annotated to any valid taxa, with a higher number 
                         //of related anatomical entities
-                        //(for cases such as, for instance, lung annotated to Gnathostomata, 
-                        //and lung|swim bladder annotated to Gnathostomata 
-                        //=> we want to recover lung|swim bladder).
-                        + "(t10.taxonId = t2.taxonId AND "
-                        //and that have a highest number of anat entities used 
-                        //(for cases such as, for instance, lung annotated to Gnathostomata, 
-                        //and lung|swim bladder annotated to Gnathostomata 
-                        //=> we want to recover lung|swim bladder)
                         + "(SELECT COUNT(*) FROM similarityAnnotationToAnatEntityId AS t40 "
                         + "WHERE t40.summarySimilarityAnnotationId = t30.summarySimilarityAnnotationId) "
                         + "> (SELECT COUNT(*) FROM similarityAnnotationToAnatEntityId AS t40 "
-                        + "WHERE t40.summarySimilarityAnnotationId = t3.summarySimilarityAnnotationId)) "
+                        + "WHERE t40.summarySimilarityAnnotationId = t3.summarySimilarityAnnotationId) "
                     + ")"
                     //NOT EXISTS closing bracket    
                     + ")";
+                
+                
+//                //check that this is the similarity annotated to the most recent valid taxon 
+//                //for this anatomical structure.
+//                + "AND NOT EXISTS "
+//                    //first, we search for annotations including the organ currently iterated 
+//                    //(t27)
+//                    + "(SELECT 1 FROM similarityAnnotationToAnatEntityId AS t27 "
+//                    //then, we retrieve these annotations (t28)
+//                    + "INNER JOIN similarityAnnotationToAnatEntityId AS t28 "
+//                    + "ON t28.summarySimilarityAnnotationId = t27.summarySimilarityAnnotationId "
+//                    //and finally, we retrieve all annotations including any organs 
+//                    //that were part of the annotations retrieved in t28. 
+//                    //so, for instance: we start from the annotation 'mesenchyme pelvic fin'
+//                    //-> Sarcopterygii; we retrieve all annotations including this organ, 
+//                    //notably 'hindlimb mesenchyme|mesenchyme pelvic fin' -> vertebrata; 
+//                    //this allows to retrieve the annotation 'hindlimb mesenchyme' 
+//                    //-> tetrapoda (table t29). So, if we were to retrieve the homology for tetrapoda, 
+//                    //we could discard the annotation 'mesenchyme pelvic fin' -> Sarcopterygii 
+//                    //to keep only the more relevant annotation 'hindlimb mesenchyme' 
+//                    //-> tetrapoda
+//                    + "INNER JOIN similarityAnnotationToAnatEntityId AS t29 "
+//                    + "ON t29.anatEntityId = t28.anatEntityId "
+//                    + "INNER JOIN summarySimilarityAnnotation AS t30 "
+//                    + "ON t30.summarySimilarityAnnotationId = t29.summarySimilarityAnnotationId "
+//                    + "INNER JOIN taxon AS t10 ON t30.taxonId = t10.taxonId "
+//                    + "INNER JOIN CIOStatement AS t50 ON t30.cioId = t50.cioId "
+//                    + "WHERE t27.anatEntityId = t4.anatEntityId AND "
+//                    //annotated to a a valid requested taxon
+//                    + "t10.taxonLeftBound <= t1.taxonLeftBound AND "
+//                    + "t10.taxonRightBound >= t1.taxonRightBound AND "
+//                    //that is either trusted, or not trusted, if the annotation 
+//                    //that is being checked is not trusted
+//                    + "t50.trusted >= t5.trusted "
+//                    
+//                    + " AND ("
+//                        //that are annotated to more recent taxa
+//                        + "(t10.taxonLeftBound > t2.taxonLeftBound AND "
+//                        + "t10.taxonRightBound < t2.taxonRightBound) "
+//                        + "OR "
+//                        //or that are annotated to the same taxon, with a higher number 
+//                        //of related anatomical entities
+//                        //(for cases such as, for instance, lung annotated to Gnathostomata, 
+//                        //and lung|swim bladder annotated to Gnathostomata 
+//                        //=> we want to recover lung|swim bladder).
+//                        + "(t10.taxonId = t2.taxonId AND "
+//                        //and that have a highest number of anat entities used 
+//                        //(for cases such as, for instance, lung annotated to Gnathostomata, 
+//                        //and lung|swim bladder annotated to Gnathostomata 
+//                        //=> we want to recover lung|swim bladder)
+//                        + "(SELECT COUNT(*) FROM similarityAnnotationToAnatEntityId AS t40 "
+//                        + "WHERE t40.summarySimilarityAnnotationId = t30.summarySimilarityAnnotationId) "
+//                        + "> (SELECT COUNT(*) FROM similarityAnnotationToAnatEntityId AS t40 "
+//                        + "WHERE t40.summarySimilarityAnnotationId = t3.summarySimilarityAnnotationId)) "
+//                    + ")"
+//                    //NOT EXISTS closing bracket    
+//                    + ")";
         
         return log.exit(sql);
     }

@@ -93,10 +93,10 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         
         this.writeln("<div id='home_info'>");
         this.writeln("<p>Features are being added incrementally: </p>");
-//        this.writeln("<ul><li>2015-04-15: release of the multi-species " +
-//                "differential expression data (across anatomy) for 10 groups, see <a href='" + 
-//                urlDownloadGenerator.getRequestURL() + "' " + "title='Bgee download page'>" +
-//                "download page</a>.</li></ul>");
+        this.writeln("<ul><li>2015-04-16: release of the multi-species " +
+                "differential expression data (across anatomy) for 6 groups, see <a href='" + 
+                urlDownloadGenerator.getRequestURL() + "' " + "title='Bgee download page'>" +
+                "download page</a>.</li></ul>");
         this.writeln("<ul><li>2015-03-03: release of the single-species " +
                 "differential expression data for 11 species, see <a href='" + 
                 urlDownloadGenerator.getRequestURL() + "' " + "title='Bgee download page'>" +

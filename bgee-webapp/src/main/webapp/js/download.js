@@ -193,7 +193,9 @@ var download = {
         closeDetailBox: function(){
             this.$species.removeClass( "selected" );
             this.$bgeeDataSelection.hide( "blind" );
-            window.location.hash = "";   
+            //we don't put just an empty hash, otherwise it jumps to the top 
+            //of the document
+            window.location.hash = "!";   
         },
 
         /**

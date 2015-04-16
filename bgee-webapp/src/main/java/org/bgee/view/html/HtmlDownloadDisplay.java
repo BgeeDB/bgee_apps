@@ -149,7 +149,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
         // Single species part
         this.writeln("<div id='bgee_uniq_species'> ");
-        this.writeln("<h1>Species</h1>");
+        this.writeln("<h1>Single-species</h1>");
         this.writeln("<div class='downloadsection'>");
         this.writeln(generateSpeciesFigure(9606));
         this.writeln(generateSpeciesFigure(10090));
@@ -221,7 +221,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
         // Multi-species part
         this.writeln("<div id='bgee_multi_species'>");
-        this.writeln("<h1>Multi-species</h1> <span>(data of only orthologous genes)</span>");
+        this.writeln("<h1>Multi-species</h1> <span>(homologous genes in homologous anatomical structures)</span>");
         this.writeln("<div class='downloadsection'>");
         //TODO set all groups and with all species when all files will be generated 
         // Pairwises
@@ -488,8 +488,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             case GROUP_NAME_HUMAN_MOUSE:
 //                exprSimpleFileSize = "xx MB";
 //                exprCompleteFileSize = "xx MB"; 
-                diffExprAnatSimpleFileSize = "xx MB";
-                diffExprAnatCompleteFileSize  = "xx MB";
+                diffExprAnatSimpleFileSize = "1.1 MB";
+                diffExprAnatCompleteFileSize  = "5.9 MB";
 //                diffExprDevSimpleFileSize = "xx MB";
 //                diffExprDevCompleteFileSize = "xx MB"; 
                 filePrefix= "human_mouse";
@@ -506,8 +506,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             case GROUP_NAME_HUMAN_FRUITFLY:
 //                exprSimpleFileSize = "xx MB";
 //                exprCompleteFileSize = "xx MB"; 
-                diffExprAnatSimpleFileSize = "xx MB";
-                diffExprAnatCompleteFileSize  = "xx MB";
+//                diffExprAnatSimpleFileSize = "xx MB";
+//                diffExprAnatCompleteFileSize  = "xx MB";
 //                diffExprDevSimpleFileSize = "xx MB";
 //                diffExprDevCompleteFileSize = "xx MB"; 
                 filePrefix= "human_fruitfly";
@@ -533,8 +533,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             case GROUP_NAME_MOUSE_FRUITFLY:
 //                exprSimpleFileSize = "xx MB";
 //                exprCompleteFileSize = "xx MB"; 
-                diffExprAnatSimpleFileSize = "xx MB";
-                diffExprAnatCompleteFileSize  = "xx MB";
+//                diffExprAnatSimpleFileSize = "xx MB";
+//                diffExprAnatCompleteFileSize  = "xx MB";
 //                diffExprDevSimpleFileSize = "xx MB";
 //                diffExprDevCompleteFileSize = "xx MB"; 
                 filePrefix= "mouse_fruitfly";
@@ -551,8 +551,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             case GROUP_NAME_ZEBRAFISH_FRUITFLY:
 //                exprSimpleFileSize = "xx MB";
 //                exprCompleteFileSize = "xx MB"; 
-                diffExprAnatSimpleFileSize = "xx MB";
-                diffExprAnatCompleteFileSize  = "xx MB";
+//                diffExprAnatSimpleFileSize = "xx MB";
+//                diffExprAnatCompleteFileSize  = "xx MB";
 //                diffExprDevSimpleFileSize = "xx MB";
 //                diffExprDevCompleteFileSize = "xx MB"; 
                 filePrefix= "zebrafish_fruitfly";
@@ -578,8 +578,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             case GROUP_NAME_CATARRHINI:
 //                exprSimpleFileSize = "xx MB";
 //                exprCompleteFileSize = "xx MB"; 
-                diffExprAnatSimpleFileSize = "xx MB";
-                diffExprAnatCompleteFileSize  = "xx MB";
+//                diffExprAnatSimpleFileSize = "xx MB";
+//                diffExprAnatCompleteFileSize  = "xx MB";
 //                diffExprDevSimpleFileSize = "xx MB";
 //                diffExprDevCompleteFileSize = "xx MB"; 
                 filePrefix= "catarrhini";
@@ -587,8 +587,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             case GROUP_NAME_MURINAE:
 //                exprSimpleFileSize = "xx MB";
 //                exprCompleteFileSize = "xx MB"; 
-                diffExprAnatSimpleFileSize = "xx MB";
-                diffExprAnatCompleteFileSize  = "xx MB";
+                diffExprAnatSimpleFileSize = "745 KB";
+                diffExprAnatCompleteFileSize  = "3.9 MB";
 //                diffExprDevSimpleFileSize = "xx MB";
 //                diffExprDevCompleteFileSize = "xx MB"; 
                 filePrefix= "murinae";
@@ -596,8 +596,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             case GROUP_NAME_THERIA:
 //                exprSimpleFileSize = "xx MB";
 //                exprCompleteFileSize = "xx MB"; 
-                diffExprAnatSimpleFileSize = "xx MB";
-                diffExprAnatCompleteFileSize  = "xx MB";
+                diffExprAnatSimpleFileSize = "2.2 MB";
+                diffExprAnatCompleteFileSize  = "12 MB";
 //                diffExprDevSimpleFileSize = "xx MB";
 //                diffExprDevCompleteFileSize = "xx MB"; 
                 filePrefix= "theria";
@@ -605,8 +605,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             case GROUP_NAME_MAMMALIA:
 //                exprSimpleFileSize = "xx MB";
 //                exprCompleteFileSize = "xx MB"; 
-                diffExprAnatSimpleFileSize = "xx MB";
-                diffExprAnatCompleteFileSize  = "xx MB";
+                diffExprAnatSimpleFileSize = "1.7 MB";
+                diffExprAnatCompleteFileSize  = "9 MB";
 //                diffExprDevSimpleFileSize = "xx MB";
 //                diffExprDevCompleteFileSize = "xx MB"; 
                 filePrefix= "mammalia";
@@ -614,8 +614,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             case GROUP_NAME_AMNIOTA:
 //                exprSimpleFileSize = "xx MB";
 //                exprCompleteFileSize = "xx MB"; 
-                diffExprAnatSimpleFileSize = "xx MB";
-                diffExprAnatCompleteFileSize  = "xx MB";
+                diffExprAnatSimpleFileSize = "2.6 MB";
+                diffExprAnatCompleteFileSize  = "14 MB";
 //                diffExprDevSimpleFileSize = "xx MB";
 //                diffExprDevCompleteFileSize = "xx MB"; 
                 filePrefix= "amniota";
@@ -623,8 +623,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             case GROUP_NAME_BILATERIA:
 //                exprSimpleFileSize = "xx MB";
 //                exprCompleteFileSize = "xx MB"; 
-                diffExprAnatSimpleFileSize = "xx MB";
-                diffExprAnatCompleteFileSize  = "xx MB";
+                diffExprAnatSimpleFileSize = "632 KB";
+                diffExprAnatCompleteFileSize  = "3.4 MB";
 //                diffExprDevSimpleFileSize = "xx MB";
 //                diffExprDevCompleteFileSize = "xx MB"; 
                 filePrefix= "bilateria";

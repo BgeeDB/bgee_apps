@@ -46,8 +46,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     /**
      * Display the output expected in the case of a HTTP error 503
      */
-    public void serviceUnavailable()
-    {
+    public void serviceUnavailable() {
         log.entry();
         this.sendServiceUnavailableHeaders();
 
@@ -63,8 +62,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     }
 
     @Override
-    public void displayHomePage() 
-    {
+    public void displayHomePage() {
         log.entry();
         this.startDisplay("home", 
                 "Welcome on Bgee: a dataBase for Gene Expression Evolution");
@@ -74,7 +72,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
         urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
         RequestParameters urlDocGenerator = this.getNewRequestParameters();
-        urlDocGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlDocGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
 
         this.writeln("<div id='feature_list'>");
         this.writeln("<a href='" + urlDownloadGenerator.getRequestURL() +
@@ -83,12 +81,12 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 "patchwork.png' alt='Expression data screenshot' /></div>" +
                 "<figcaption>Expression data</figcaption>" +
                 "</figure></a>");
-//        this.writeln("<a href='" + urlDocGenerator.getRequestURL() + 
-//                "' title='Bgee documentation page'>" +
-//                "<figure><div><img class='pageimg' src='" + this.prop.getImagesRootDirectory() + 
-//                "books.png' alt='Documentation page screenshot' /></div>" +
-//                "<figcaption>Documentation</figcaption>" +
-//                "</figure></a>");
+        this.writeln("<a href='" + urlDocGenerator.getRequestURL() + 
+                "' title='Bgee documentation page'>" +
+                "<figure><div><img class='pageimg' src='" + this.prop.getImagesRootDirectory() + 
+                "books.png' alt='Documentation page screenshot' /></div>" +
+                "<figcaption>Documentation</figcaption>" +
+                "</figure></a>");
         this.writeln("</div>");
         
         this.writeln("<div id='home_info'>");
@@ -116,8 +114,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     }
 
     @Override
-    public void displayAbout() 
-    {
+    public void displayAbout() {
         log.entry();
         this.startDisplay("home", 
                 "Information about Bgee: a dataBase for Gene Expression Evolution");
@@ -129,8 +126,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     }
 
     @Override
-    public void displayRequestParametersNotFound(String key)
-    {
+    public void displayRequestParametersNotFound(String key) {
         log.entry(key);
         this.sendBadRequestHeaders();
         this.startDisplay("", "Request parameters not found");
@@ -145,8 +141,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     }
 
     @Override
-    public void displayPageNotFound(String message)
-    {
+    public void displayPageNotFound(String message) {
         log.entry(message);
         this.sendPageNotFoundHeaders();
         this.startDisplay("", "404 not found");
@@ -158,8 +153,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     }
 
     @Override
-    public void displayUnexpectedError()
-    {
+    public void displayUnexpectedError() {
         log.entry();
         this.sendInternalErrorHeaders();
         this.startDisplay("", "500 internal server error");

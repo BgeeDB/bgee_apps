@@ -1,31 +1,37 @@
-div.documentationsubsection, div.documentationmenu {
+div.documentationsection, div.documentationmenu {
     position: relative;
     display: inline-block;
 }
 
-div.documentationsubsection {
+div.documentationsection {
     text-align: left;
-    padding: 1%;
     margin: 0;
-    width: 98%;
 }
 
 div.subsectiontext p {
     margin: 1% 0;
 }
 
+.documentationintro {
+	margin: 0 0 1% 0;
+    padding: 0;
+    font-size: 0.9em;
+}
+
 div.documentationmenu {
     width: 100%;
     margin-bottom: 2%;
+    font-size: 0.9em;
 }
 
-div.documentationmenu ul {
+div.documentationmenu > ul {
     margin: 0;
     padding: 0;
 }
 
 div.documentationmenu li {
     list-style-type: none;
+    margin-top: 0.3%;
 }
 
 #sib_body h1, #sib_body h2, #sib_body h3 {
@@ -50,7 +56,7 @@ div.documentationmenu li {
 
 #sib_body h3 {
     font-size: 1.2em;
-    margin: 1% 0 0 0;
+    margin: 2% 0 0 0;
 }
 
 a.backlink, a.backlink:visited {

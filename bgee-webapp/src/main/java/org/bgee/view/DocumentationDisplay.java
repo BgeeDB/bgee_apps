@@ -10,8 +10,12 @@ package org.bgee.view;
 public interface DocumentationDisplay {
     
     /**
-     * Display the documentation page.
+     * Display the documentation home page.
      */
-    public void displayDocumentationPage();
+    public void displayDocumentationHomePage();
+    /**
+     * Display the documentation about download files.
+     */
+    public void displayDownloadFileDocumentation();
 
 }

@@ -86,7 +86,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("");
         log.exit();
     }
-    //TODO: use an enum rather than a String page?
+    //TODO: use an enum rather than a String page? => yep
     //TODO: javadoc
     public void startDisplay(String page, String title)
     {
@@ -126,6 +126,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         
         this.writeln("<body>");
         this.writeln("<noscript>Sorry, your browser does not support JavaScript!</noscript>");
+        //TODO: what's the point of this empty link? If it is to use an anchor #TOP, 
+        //you can use a span or div
         this.writeln("<div id='bgee_top'><a id='TOP'></a></div>");
         this.writeln("<div id='sib_container'>");
         this.displayBgeeHeader();
@@ -196,20 +198,20 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("<a title='Expression data page' href='" + urlDownloadGenerator.getRequestURL() + 
                 "'>Expression data</a>");
         this.writeln("</li>");
-//        this.writeln("<li>");
-//        this.writeln("<a title='Documentation page' href='" + 
-//                urlDocGenerator.getRequestURL() + "'>Documentation</a><img class='deploy' src='" + 
-//                this.prop.getImagesRootDirectory() + "arrow_down_dark.png' alt='deploy'/>");
-//        this.writeln("<ul>");
-//        //TODO set section URLs when defined
-//        this.writeln("<li><a class='drop' title='Section 1' href='" + urlDocGenerator.getRequestURL() + 
-//                "'>Section 1</a></li>");
-//        this.writeln("<li><a class='drop' title='Section 2' href='" + urlDocGenerator.getRequestURL() + 
-//                "'>Section 2</a></li>");
-//        this.writeln("<li><a class='drop' title='Section 1' href='" + urlDocGenerator.getRequestURL() + 
-//                "'>Section 3</a></li>");
-//        this.writeln("</ul>");
-//        this.writeln("</li>");
+        this.writeln("<li>");
+        this.writeln("<a title='Documentation page' href='" + 
+                urlDocGenerator.getRequestURL() + "'>Documentation</a><img class='deploy' src='" + 
+                this.prop.getImagesRootDirectory() + "arrow_down_dark.png' alt='deploy'/>");
+        this.writeln("<ul>");
+        //TODO set section URLs when defined
+        this.writeln("<li><a class='drop' title='Section 1' href='" + urlDocGenerator.getRequestURL() + 
+                "'>Section 1</a></li>");
+        this.writeln("<li><a class='drop' title='Section 2' href='" + urlDocGenerator.getRequestURL() + 
+                "'>Section 2</a></li>");
+        this.writeln("<li><a class='drop' title='Section 1' href='" + urlDocGenerator.getRequestURL() + 
+                "'>Section 3</a></li>");
+        this.writeln("</ul>");
+        this.writeln("</li>");
 //        this.writeln("<li>");
 //        this.writeln("<a id='about' rel='help' title='About page' href='" + 
 //                urlAboutGenerator.getRequestURL() + "'>About</a>");
@@ -230,13 +232,13 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * @return          the {@code String} that is the HTML code of the Contact link.
      */
     //TODO move javascript in common.js
+    //XXX: what's the point of this nbCalled argument?
     private String getObfuscateEmail(int nbCalled) {
         return "<script type=\"text/javascript\">eval(unescape('%66%75%6E%63%74%69%6F%6E%20%74%72%61%6E%73%70%6F%73%65%32%30%28%68%29%20%7B%76%61%72%20%73%3D%27%61%6D%6C%69%6F%74%42%3A%65%67%40%65%73%69%2D%62%69%73%2E%62%68%63%27%3B%76%61%72%20%72%3D%27%27%3B%66%6F%72%28%76%61%72%20%69%3D%30%3B%69%3C%73%2E%6C%65%6E%67%74%68%3B%69%2B%2B%2C%69%2B%2B%29%7B%72%3D%72%2B%73%2E%73%75%62%73%74%72%69%6E%67%28%69%2B%31%2C%69%2B%32%29%2B%73%2E%73%75%62%73%74%72%69%6E%67%28%69%2C%69%2B%31%29%7D%68%2E%68%72%65%66%3D%72%3B%7D%64%6F%63%75%6D%65%6E%74%2E%77%72%69%74%65%28%27%3C%61%20%68%72%65%66%3D%22%23%22%20%6F%6E%4D%6F%75%73%65%4F%76%65%72%3D%22%6A%61%76%61%73%63%72%69%70%74%3A%74%72%61%6E%73%70%6F%73%65%32%30%28%74%68%69%73%29%22%20%6F%6E%46%6F%63%75%73%3D%22%6A%61%76%61%73%63%72%69%70%74%3A%74%72%61%6E%73%70%6F%73%65%32%30%28%74%68%69%73%29%22%20%74%69%74%6C%65%3D%22%43%6F%6E%74%61%63%74%20%75%73%22%20%63%6C%61%73%73%3D%22%6D%65%6E%75%22%3E%43%6F%6E%74%61%63%74%3C%2F%61%3E%27%29%3B'));</script>";
     }
 
     @Override
-	public void sendHeaders(boolean ajax)
-	{
+	public void sendHeaders(boolean ajax) {
 	    log.entry(ajax);
 		if (this.response == null) {
 			log.exit(); return;
@@ -259,8 +261,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     /**
      * Send the header in case of HTTP 503 error
      */
-    public void sendServiceUnavailableHeaders()
-    {
+    public void sendServiceUnavailableHeaders() {
         log.entry();
         if (this.response == null) {
             return;
@@ -275,8 +276,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     /**
      * Send the header in case of HTTP 400 error
      */
-    protected void sendBadRequestHeaders()
-    {
+    protected void sendBadRequestHeaders() {
         log.entry();
         if (this.response == null) {
             return;
@@ -291,8 +291,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     /**
      * Send the header in case of HTTP 404 error
      */
-    protected void sendPageNotFoundHeaders()
-    {
+    protected void sendPageNotFoundHeaders() {
         log.entry();
         if (this.response == null) {
             return;
@@ -307,8 +306,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     /**
      * Send the header in case of HTTP 500 error
      */
-    protected void sendInternalErrorHeaders()
-    {
+    protected void sendInternalErrorHeaders() {
         log.entry();
         if (this.response == null) {
             return;
@@ -323,8 +321,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     /**
      * TODO comment
      */
-    protected String displayHelpLink(String cat, String display)
-    {
+    protected String displayHelpLink(String cat, String display) {
+        //TODO: to provide the cat, use a html5 data- attribute rather than 
+        //a formatted String for the class attribute
         log.entry(cat, display);
         return log.exit("<span class='help'><a href='#' class='help|" + 
                 cat + "'>" + display + "</a></span>");
@@ -332,8 +331,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     /**
      * TODO comment
      */
-    protected String displayHelpLink(String cat)
-    {
+    protected String displayHelpLink(String cat) {
         log.entry(cat);
         return log.exit(this.displayHelpLink(cat, "[?]"));
     }
@@ -352,7 +350,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * </ul>
      * @see #includeJs(String)
      */
-    protected void includeJs(){
+    protected void includeJs() {
         log.entry();
         this.includeJs("lib/jquery.min.js");
         this.includeJs("lib/jquery.visible.js");
@@ -374,7 +372,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * @param filename  The original name of the javascript file to include.
      * @see #getVersionedJsFileName(String)
      */
-    protected void includeJs(String fileName){
+    protected void includeJs(String fileName) {
         log.entry(fileName);
         this.writeln("<script type='text/javascript' src='" +
                 this.prop.getJavascriptFilesRootDirectory() + 
@@ -424,7 +422,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * </ul>
      * @see #includeCss(String)
      */
-    protected void includeCss(){
+    protected void includeCss() {
         this.includeCss("bgee.css"); 
     }
     /**
@@ -438,7 +436,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * @param fileName  The original name of the CSS file to include.
      * @see #getVersionedCssFileName(String)
      */
-    protected void includeCss(String fileName){
+    protected void includeCss(String fileName) {
         log.entry(fileName);
         this.writeln("<link rel='stylesheet' type='text/css' href='"
                 + this.prop.getCssFilesRootDirectory() 

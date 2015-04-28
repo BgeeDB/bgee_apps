@@ -113,9 +113,11 @@ public class RequestParameters {
     
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
-     * (see {@link URLParameters#getParamAction()}) when a documentation is requested.
+     * (see {@link URLParameters#getParamAction()}) when documentation about download files 
+     * providing calls of expression is requested. Value of the parameter page should be 
+     * {@link #PAGE_DOCUMENTATION}.
      */
-    public static final String ACTION_DOC = "documentation";
+    public static final String ACTION_DOC_DOWLOAD_FILES = "call_download_files";
     
     /**
      * A {@code BgeeProperties} instance to provide all the properties values

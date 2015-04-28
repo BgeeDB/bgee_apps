@@ -441,6 +441,11 @@ public class URLParameters {
         public Class<T> getType() {
             return type;
         }
+        
+        @Override
+        public String toString() {
+            return name;
+        }
 
     }
 

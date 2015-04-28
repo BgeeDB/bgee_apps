@@ -50,7 +50,10 @@ public class CommandDocumentation extends CommandParent {
         DocumentationDisplay display = this.viewFactory.getDocumentationDisplay();
         
         if (this.requestParameters.getAction() == null) {
-            display.displayDocumentationPage();
+            display.displayDocumentationHomePage();
+        } else if (this.requestParameters.getAction().equals(
+                RequestParameters.ACTION_DOC_DOWLOAD_FILES)) {
+            display.displayDownloadFileDocumentation();
         } else {
             throw log.throwing(new PageNotFoundException("Incorrect " + 
                 this.requestParameters.getUrlParametersInstance().getParamAction() + 

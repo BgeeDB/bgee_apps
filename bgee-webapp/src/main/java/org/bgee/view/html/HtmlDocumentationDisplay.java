@@ -42,7 +42,8 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
     private final static Logger log = LogManager.getLogger(HtmlDocumentationDisplay.class.getName());
 
     @Override
-    public void displayDocumentationPage() {
+    //XXX: anchors should have meaning: a section1 more easily become a section2 one day (unstable links)
+    public void displayDocumentationHomePage() {
         log.entry();
         
         String subsectionName1 = "Subsection 1 - H2 section";
@@ -52,20 +53,47 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         this.startDisplay("download", "Bgee release 13 documentation page");
         
         this.writeln("<h1 id='sectionname'>Section name</h1>");
-        this.writeln("<div class='documentationmenu'>");
+this.writeln("<div class='documentationmenu'><ul>");
+        
+        this.writeln("<li><a href='#single' title='Quick jump to this section'>" + 
+                            "Single-species download files</a>");
+        this.writeln("<ul>");           //presence/absence
+        this.writeln("<li><a href='#single_expr' title='Quick jump to this section'>" + 
+                            "Presence/absence of expression</a>");
         this.writeln("<ul>");
-        this.writeln("<li><a href='#subsection1' title='Quick jump to this section'>" + 
-                            subsectionName1 + "</a></li>");
-        this.writeln("<li><a href='#subsection2' title='Quick jump to this section'>" + 
-                            subsectionName2 + "</a></li>");
-        this.writeln("<li><a href='#subsection2' title='Quick jump to this section'>" + 
-                            subsectionName3 + "</a></li>");
-        this.writeln("</ul>");
-        this.writeln("</div>"); // end of documentationmenu
+        this.writeln("<li><a href='#single_expr_simple' title='Quick jump to this section'>" + 
+                            "Simple file</a></li>");
+        this.writeln("<li><a href='#single_expr_complete' title='Quick jump to this section'>" + 
+                            "Complete file</a></li>");
+        this.writeln("</ul></li>");     //end of presence/absence
+        this.writeln("<li><a href='#single_diff' title='Quick jump to this section'>" + 
+                "Over-/Under-expression across anatomy or life stages</a>");
+        this.writeln("<ul>");
+        this.writeln("<li><a href='#single_diff_simple' title='Quick jump to this section'>" + 
+                        "Simple file</a></li>");
+        this.writeln("<li><a href='#single_diff_complete' title='Quick jump to this section'>" + 
+                        "Complete file</a></li>");
+        this.writeln("</ul></li>");     //end of diff expression 
+        this.writeln("</ul></li>"); // end of single-species section
+        
+        this.writeln("<li><a href='#multi' title='Quick jump to this section'>" + 
+                            "Multi-species download files</a>");
+        this.writeln("<ul>");    
+        this.writeln("<li><a href='#multi_diff' title='Quick jump to this section'>" + 
+                "Over-/Under-expression across anatomy or life stages</a>");
+        this.writeln("<ul>");
+        this.writeln("<li><a href='#multi_diff_simple' title='Quick jump to this section'>" + 
+                        "Simple file</a></li>");
+        this.writeln("<li><a href='#multi_diff_complete' title='Quick jump to this section'>" + 
+                        "Complete file</a></li>");
+        this.writeln("</ul></li>");     //end of diff expression        
+        this.writeln("</ul></li>"); // end of multi-species section
+        
+        this.writeln("</ul></div>");// end of documentationmenu
 
         this.writeln("<div id='subsection1'>");
         this.writeln("<h2>" + subsectionName1 + "</h2>");
-        this.writeln("<div class='documentationsubsection'>");
+        this.writeln("<div class='documentationsection'>");
         this.writeln("<h3>H3 title</h3>");
         this.writeln("<p>The raw data in .sra format are downloaded from " +
                 "the <a href='http://www.ncbi.nlm.nih.gov/sra' title='External link to SRA' " +
@@ -99,7 +127,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         
         this.writeln("<div id='subsection2'>");
         this.writeln("<h2>" + subsectionName2 + "</h2>");
-        this.writeln("<div class='documentationsubsection'>");
+        this.writeln("<div class='documentationsection'>");
         this.writeln("<p> </p>");
         this.writeln("<p> </p>");
         this.writeln("</div>");
@@ -109,11 +137,123 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         
         this.writeln("<div id='subsection3'>");
         this.writeln("<h2>" + subsectionName3 + "</h2>");
-        this.writeln("<div class='documentationsubsection'>");
+        this.writeln("<div class='documentationsection'>");
         this.writeln("<p> </p>");
         this.writeln("<p> </p>");
         this.writeln("</div>");
         this.writeln("</div>"); // end of subsection3
+        
+        this.writeln(this.getBackToTheTopLink());
+        
+        this.endDisplay();
+
+        log.exit();
+    }
+    
+    public void displayDownloadFileDocumentation() {
+        log.entry();
+        
+        this.startDisplay("download", "Download file documentation");
+        
+        this.writeln("<h1 id='sectionname'>Download file documentation</h1>");
+        RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
+        urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        this.writeln("<p class='documentationintro'>Bgee provides calls of baseline "
+                + "presence/absence of expression, and of over/under expression, "
+                + "either for single species, or compared between species (homologous genes "
+                + "in homologous organs). This documentation describes the format of these "
+                + "<a href='" + urlDownloadGenerator.getRequestURL()
+                + "' title='Bgee expression data page'>download files</a>.</p>");
+        
+        
+        //Documentation menu
+        this.writeln("<div class='documentationmenu'><ul>");
+            //Single-species
+        this.writeln("<li><a href='#single' title='Quick jump to this section'>" + 
+                            "Single-species download files</a>");
+                //presence/absence
+        this.writeln("<ul>");           
+        this.writeln("<li><a href='#single_expr' title='Quick jump to this section'>" + 
+                            "Presence/absence of expression</a>");
+        this.writeln("<ul>");
+        this.writeln("<li><a href='#single_expr_simple' title='Quick jump to this section'>" + 
+                            "Simple file</a></li>");
+        this.writeln("<li><a href='#single_expr_complete' title='Quick jump to this section'>" + 
+                            "Complete file</a></li>");
+        this.writeln("</ul></li>");         //end of presence/absence
+                //diff expression
+        this.writeln("<li><a href='#single_diff' title='Quick jump to this section'>" + 
+                "Over-/Under-expression across anatomy or life stages</a>");
+        this.writeln("<ul>");
+        this.writeln("<li><a href='#single_diff_simple' title='Quick jump to this section'>" + 
+                        "Simple file</a></li>");
+        this.writeln("<li><a href='#single_diff_complete' title='Quick jump to this section'>" + 
+                        "Complete file</a></li>");
+        this.writeln("</ul></li>");         //end of diff expression 
+        this.writeln("</ul></li>");     // end of single-species section
+        
+            //multi-species
+        this.writeln("<li><a href='#multi' title='Quick jump to this section'>" + 
+                            "Multi-species download files</a>");
+                //diff expression
+        this.writeln("<ul>");    
+        this.writeln("<li><a href='#multi_diff' title='Quick jump to this section'>" + 
+                "Over-/Under-expression across anatomy or life stages</a>");
+        this.writeln("<ul>");
+        this.writeln("<li><a href='#multi_diff_simple' title='Quick jump to this section'>" + 
+                        "Simple file</a></li>");
+        this.writeln("<li><a href='#multi_diff_complete' title='Quick jump to this section'>" + 
+                        "Complete file</a></li>");
+        this.writeln("</ul></li>");         //end of diff expression        
+        this.writeln("</ul></li>");     // end of multi-species section
+        
+        this.writeln("</ul></div>");// end of documentationmenu
+        
+        
+        //Single species documentation
+        this.writeln("<div id='single'>");
+        this.writeln("<h2>Single-species download files</h2>");
+        this.writeln("<div class='documentationsection'>");
+        this.writeln("<h3>H3 title</h3>");
+        this.writeln("<p>The raw data in .sra format are downloaded from " +
+                "the <a href='http://www.ncbi.nlm.nih.gov/sra' title='External link to SRA' " +
+                "target='_blank'>Short Read Archive (SRA) database</a>. " +
+                "The extracted reads, in fastq format, are mapped to regions of the reference genome, " +
+                "specified in a .gtf file: i) transcribed regions; " +
+                "ii) selected intergenic regions (see below); iii) exon junction regions. </p>");
+        this.writeln("<p>The raw data in .sra format are downloaded from " +
+                "the <a href='http://www.ncbi.nlm.nih.gov/sra' title='External link to SRA' " +
+                "target='_blank'>Short Read Archive (SRA) database</a>. " +
+                "The extracted reads, in fastq format, are mapped to regions of the reference genome, " +
+                "specified in a .gtf file: i) transcribed regions; " +
+                "ii) selected intergenic regions (see below); iii) exon junction regions. </p>");
+        this.writeln("<h3>H3 title</h3>");
+        this.writeln("<p>The mapping of the reads is performed using " +
+                "<a href='http://tophat.cbcb.umd.edu/' title='External link to TopHat website' " +
+                "target='_blank'>TopHat2</a>, " +
+                "which internally uses " +
+                "the <a href='http://bowtie-bio.sourceforge.net/bowtie2/index.shtml' title='External link to Bowtie website' " +
+                "target='_blank'>Bowtie2</a> aligner. The maximum number of mappings allowed for a read " +
+                "is set to 1. The intergenic regions are chosen in such a way that the distribution of their lengths " +
+                "matches the distribution of lengths of the transcriptome. " +
+                "The minimal distance of boundaries of intergenic regions to the nearest gene is 5 kb. " +
+                "Reads that map to the features are summed up using the htseq-count software. " +
+                "The RPK (read per kilobase) value for every feature is obtained by dividing " +
+                "the number of reads that match a given feature by its length. </p>");
+        this.writeln("</div>");
+        this.writeln("</div>"); // end of subsection1
+        
+        this.writeln(this.getBackToTheTopLink());
+        
+        this.writeln("<div id='multi'>");
+        this.writeln("<h2>Multi-species download files</h2>");
+        this.writeln("<div class='documentationsection'>");
+        this.writeln("<p> </p>");
+        this.writeln("<p> </p>");
+        this.writeln("</div>");
+        this.writeln("</div>"); // end of subsection2
+        
+        this.writeln(this.getBackToTheTopLink());
         
         this.writeln(this.getBackToTheTopLink());
         

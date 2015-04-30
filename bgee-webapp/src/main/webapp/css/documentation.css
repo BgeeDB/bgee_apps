@@ -59,6 +59,24 @@ div.documentationmenu li {
     margin: 2% 0 0 0;
 }
 
+table.call_download_file {
+	width: 100%;
+	border-top: 1px solid black;
+    border-bottom: 1px solid black;
+    font-size: 0.9em;
+    vertical-align: top;
+}
+
+table.call_download_file tr.download_file_header_desc {
+    background-color: #29516A;
+    color: white;
+}
+
+table.call_download_file td {
+    vertical-align: top;
+    padding: 0.3em;
+}
+
 a.backlink, a.backlink:visited {
     color: #626262;
 }

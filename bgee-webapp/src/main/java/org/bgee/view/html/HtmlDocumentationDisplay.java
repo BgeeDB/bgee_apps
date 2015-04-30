@@ -209,24 +209,45 @@ this.writeln("<div class='documentationmenu'><ul>");
         
         this.writeln("</ul></div>");// end of documentationmenu
         
+        //define names of columns common to several files
+        String geneIdCol ="Gene ID";
+        String geneNameCol ="Gene name";
+        String stageIdCol ="Developmental stage ID";
+        String stageNameCol ="Developmental stage name";
+        String anatEntityIdCol ="Anatomical entity ID";
+        String anatEntityNameCol ="Anatomical entity name";
+        String expressionState = "Expression state";
         
         //Single species documentation
-        this.writeln("<div id='single'>");
-        this.writeln("<h2>Single-species download files</h2>");
-        this.writeln("<div class='documentationsection'>");
-        this.writeln("<h3>H3 title</h3>");
-        this.writeln("<p>The raw data in .sra format are downloaded from " +
-                "the <a href='http://www.ncbi.nlm.nih.gov/sra' title='External link to SRA' " +
-                "target='_blank'>Short Read Archive (SRA) database</a>. " +
-                "The extracted reads, in fastq format, are mapped to regions of the reference genome, " +
-                "specified in a .gtf file: i) transcribed regions; " +
-                "ii) selected intergenic regions (see below); iii) exon junction regions. </p>");
-        this.writeln("<p>The raw data in .sra format are downloaded from " +
-                "the <a href='http://www.ncbi.nlm.nih.gov/sra' title='External link to SRA' " +
-                "target='_blank'>Short Read Archive (SRA) database</a>. " +
-                "The extracted reads, in fastq format, are mapped to regions of the reference genome, " +
-                "specified in a .gtf file: i) transcribed regions; " +
-                "ii) selected intergenic regions (see below); iii) exon junction regions. </p>");
+        this.writeln("<div>");
+        this.writeln("<h2 id='single'>Single-species download files</h2>");
+        this.writeln("<h3 id='single_expr'>Presence/absence of expression</h3>");
+        this.writeln("<h4 id='single_expr_simple'>Simple file</h4>");
+        this.writeln("<table class='call_download_file'>");
+        this.writeln("<caption>Header and example line for single species simple expression file</caption>");
+        this.writeln("<tbody>");
+        this.writeln("<tr class='download_file_header_desc'>"
+                + "<td>" + geneIdCol + "</td>"
+                + "<td>" + geneNameCol + "</td>"
+                + "<td>" + stageIdCol + "</td>"
+                + "<td>" + stageNameCol + "</td>"
+                + "<td>" + anatEntityIdCol + "</td>"
+                + "<td>" + anatEntityNameCol + "</td>"
+                //TODO: split into two columns once we regenerate the download files
+                + "<td>" + expressionState + "</td>"
+                + "</tr>");
+        this.writeln("<tr class='download_file_example'>"
+                + "<td>ENSG00000001631</td>"
+                + "<td>KRIT1</td>"
+                + "<td>HsapDv:0000092</td>"
+                + "<td>human middle aged stage (human)</td>"
+                + "<td>UBERON:0004720 </td>"
+                + "<td>cerebellar vermis</td>"
+                + "<td>expression high quality</td>"
+                + "</tr>");
+        this.writeln("</tbody>");
+        this.writeln("</table>");
+        
         this.writeln("<h3>H3 title</h3>");
         this.writeln("<p>The mapping of the reads is performed using " +
                 "<a href='http://tophat.cbcb.umd.edu/' title='External link to TopHat website' " +
@@ -240,7 +261,6 @@ this.writeln("<div class='documentationmenu'><ul>");
                 "Reads that map to the features are summed up using the htseq-count software. " +
                 "The RPK (read per kilobase) value for every feature is obtained by dividing " +
                 "the number of reads that match a given feature by its length. </p>");
-        this.writeln("</div>");
         this.writeln("</div>"); // end of subsection1
         
         this.writeln(this.getBackToTheTopLink());

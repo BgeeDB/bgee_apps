@@ -112,6 +112,72 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
      */
     private final String EXPR_STATE_LINK_TITLE = "See " + EXPR_STATE_COL_NAME 
             + " column description";
+    
+    /**
+     * A {@code String} that is the name of the expression state column for affymetrix data 
+     * in download files, HTML escaped if necessary.
+     * @see #AFFY_EXPR_STATE_LINK_TITLE
+     */
+    private final String AFFY_EXPR_STATE_COL_NAME = "Affymetrix data";
+    /**
+     * A {@code String} to be used in {@code title} attribute of {@code a} tag linking to 
+     * affymetrix expression state column description (used several times), HTML escaped if necessary.
+     * @see #AFFY_EXPR_STATE_COL_NAME
+     */
+    private final String AFFY_EXPR_STATE_LINK_TITLE = "See " + AFFY_EXPR_STATE_COL_NAME 
+            + " column description";
+    /**
+     * A {@code String} that is the name of the expression state column for EST data 
+     * in download files, HTML escaped if necessary.
+     * @see #EST_EXPR_STATE_LINK_TITLE
+     */
+    private final String EST_EXPR_STATE_COL_NAME = "EST data";
+    /**
+     * A {@code String} to be used in {@code title} attribute of {@code a} tag linking to 
+     * EST expression state column description (used several times), HTML escaped if necessary.
+     * @see #EST_EXPR_STATE_COL_NAME
+     */
+    private final String EST_EXPR_STATE_LINK_TITLE = "See " + EST_EXPR_STATE_COL_NAME 
+            + " column description";
+    /**
+     * A {@code String} that is the name of the expression state column for in situ data 
+     * in download files, HTML escaped if necessary.
+     * @see #IN_SITU_EXPR_STATE_LINK_TITLE
+     */
+    private final String IN_SITU_EXPR_STATE_COL_NAME = "In situ data";
+    /**
+     * A {@code String} to be used in {@code title} attribute of {@code a} tag linking to 
+     * in situ expression state column description (used several times), HTML escaped if necessary.
+     * @see #IN_SITU_EXPR_STATE_COL_NAME
+     */
+    private final String IN_SITU_EXPR_STATE_LINK_TITLE = "See " + IN_SITU_EXPR_STATE_COL_NAME 
+            + " column description";
+    /**
+     * A {@code String} that is the name of the expression state column for RNA-Seq data  
+     * in download files, HTML escaped if necessary.
+     * @see #RNA_SEQ_EXPR_STATE_LINK_TITLE
+     */
+    private final String RNA_SEQ_EXPR_STATE_COL_NAME = "RNA-Seq data";
+    /**
+     * A {@code String} to be used in {@code title} attribute of {@code a} tag linking to 
+     * RNA-Seq expression state column description (used several times), HTML escaped if necessary.
+     * @see #RNA_SEQ_EXPR_STATE_COL_NAME
+     */
+    private final String RNA_SEQ_EXPR_STATE_LINK_TITLE = "See " + RNA_SEQ_EXPR_STATE_COL_NAME 
+            + " column description";
+    /**
+     * A {@code String} that is the name of the column describing whether data were "observed",
+     * in download files, HTML escaped if necessary.
+     * @see #OBSERVED_DATA_LINK_TITLE
+     */
+    private final String OBSERVED_DATA_COL_NAME = "Including observed data";
+    /**
+     * A {@code String} to be used in {@code title} attribute of {@code a} tag linking to 
+     * the observed data column description (used several times), HTML escaped if necessary.
+     * @see #OBSERVED_DATA_EXPR_STATE_COL_NAME
+     */
+    private final String OBSERVED_DATA_LINK_TITLE = "See " + OBSERVED_DATA_COL_NAME 
+            + " column description";
 
     /**
      * Default constructor.
@@ -421,7 +487,9 @@ this.writeln("<div class='documentationmenu'><ul>");
         this.writeln("<h5 id='single_expr_simple_col6'>" + ANAT_ENTITY_NAME_COL_NAME + "</h5>");
         this.writeln(this.getAnatEntityNameColDescription(5));
         this.writeln("<h5 id='single_expr_simple_col7'>" + EXPR_STATE_COL_NAME + "</h5>");
-        this.writeln(this.getExprStateColDescription(1, 3, 5)); //end simple expression file single species
+        this.writeln(this.getExprStateColDescription(1, 3, 5)); 
+        this.writeln("<p><a href='#single_expr'>Back to presence/absence of expression menu</a></p>");
+        //end simple expression file single species
         
         //complete expression file
         this.writeln("<h4 id='single_expr_complete'>Complete file</h4>");
@@ -430,17 +498,13 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "<ul class='doc_content'>"
                 + "<li>details of expression status generated from each data type are provided;</li>"
                 + "<li>all calls are provided, propagated to all possible anatomical entities "
-                + "and developmental stages, even in conditions not annotated in experimental data "
+                + "and developmental stages, including in conditions not annotated in experimental data "
                 + "(calls generated from propagation only);</li>"
                 + "<li>a column allows to determine whether a call was generated from propagation "
                 + "only, or whether the anatomical entity/developmental stage was actually "
-                + "seen in experimental data.</li>"
+                + "seen in experimental data (such a call would then also be present "
+                + "in simple file).</li>"
                 + "</ul>");
-        String affyColName = "Affymetrix data";
-        String estColName = "EST data";
-        String inSituColName = "In situ data";
-        String rnaSeqColName = "RNA-Seq data";
-        String observedDataColName = "Including observed data";
         this.writeln("<table class='call_download_file'>");
         this.writeln("<caption>Format description for single species complete expression file</caption>");
         this.writeln("<thead>");
@@ -466,19 +530,19 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + ANAT_ENTITY_NAME_LINK_TITLE + "'>" + ANAT_ENTITY_NAME_COL_NAME 
                 + "</a></td><td>1</td><td>cerebellar vermis</td></tr>");
         this.writeln("<tr><td>7</td><td><a href='#single_expr_complete_col7' title='" 
-                + "See " + affyColName + " column description'>" + affyColName 
+                + AFFY_EXPR_STATE_LINK_TITLE + "'>" + AFFY_EXPR_STATE_COL_NAME 
                 + "</a></td><td>1</td><td>cerebellar vermis</td></tr>");
         this.writeln("<tr><td>8</td><td><a href='#single_expr_complete_col8' title='" 
-                + "See " + estColName + " column description'>" + estColName 
+                + EST_EXPR_STATE_LINK_TITLE + "'>" + EST_EXPR_STATE_COL_NAME 
                 + "</a></td><td>1</td><td>cerebellar vermis</td></tr>");
         this.writeln("<tr><td>9</td><td><a href='#single_expr_complete_col9' title='" 
-                + "See " + inSituColName + " column description'>" + inSituColName 
+                + IN_SITU_EXPR_STATE_LINK_TITLE + "'>" + IN_SITU_EXPR_STATE_COL_NAME 
                 + "</a></td><td>1</td><td>cerebellar vermis</td></tr>");
         this.writeln("<tr><td>10</td><td><a href='#single_expr_complete_col10' title='" 
-                + "See " + rnaSeqColName + " column description'>" + rnaSeqColName 
+                + RNA_SEQ_EXPR_STATE_LINK_TITLE + "'>" + RNA_SEQ_EXPR_STATE_COL_NAME 
                 + "</a></td><td>1</td><td>cerebellar vermis</td></tr>");
         this.writeln("<tr><td>11</td><td><a href='#single_expr_complete_col11' title='" 
-                + "See " + observedDataColName + " column description'>" + observedDataColName 
+                + OBSERVED_DATA_LINK_TITLE + "'>" + OBSERVED_DATA_COL_NAME 
                 + "</a></td><td>1</td><td>cerebellar vermis</td></tr>");
         this.writeln("<tr><td>12</td><td><a href='#single_expr_complete_col12' title='" 
                 + EXPR_STATE_LINK_TITLE + "'>" + EXPR_STATE_COL_NAME 
@@ -497,8 +561,64 @@ this.writeln("<div class='documentationmenu'><ul>");
         this.writeln(this.getAnatEntityIdColDescription());
         this.writeln("<h5 id='single_expr_complete_col6'>" + ANAT_ENTITY_NAME_COL_NAME + "</h5>");
         this.writeln(this.getAnatEntityNameColDescription(5));
+        this.writeln("<h5 id='single_expr_complete_col7'>" + AFFY_EXPR_STATE_COL_NAME + "</h5>");
+        //TODO: add links to data analyses documentation
+        this.writeln("<p>Call generated by Affymetrix data for " 
+                + this.getColumnListForCall(1, 3, 5) + ". One of: </p>"
+                + "<ul class='doc_content'>"
+                + "<li><span class='list_element_title'>expression high quality</span>;</li>"
+                + "<li><span class='list_element_title'>expression low quality;</li>"
+                + "<li><span class='list_element_title'>absent high quality</span>;</li>"
+                + "<li><span class='list_element_title'>no data</span>: no Affymetrix data "
+                + "for this anatomical entity/developmental stage available (data either "
+                + "not available, or discarded by Bgee quality controls);</li>"
+                + "</ul>");
+        this.writeln("<h5 id='single_expr_complete_col8'>" + EST_EXPR_STATE_COL_NAME + "</h5>");
+        //TODO: add links to data analyses documentation
+        this.writeln("<p>Call generated by EST data for " 
+                + this.getColumnListForCall(1, 3, 5) + ". Note that EST data are not used "
+                + "to produce calls of absence of expression. One of: </p>"
+                + "<ul class='doc_content'>"
+                + "<li><span class='list_element_title'>expression high quality</span>;</li>"
+                + "<li><span class='list_element_title'>expression low quality;</li>"
+                + "<li><span class='list_element_title'>no data</span>: no EST data "
+                + "for this anatomical entity/developmental stage available (data either "
+                + "not available, or discarded by Bgee quality controls);</li>"
+                + "</ul>");
+        this.writeln("<h5 id='single_expr_complete_col9'>" + IN_SITU_EXPR_STATE_COL_NAME + "</h5>");
+        //TODO: add links to data analyses documentation
+        this.writeln("<p>Call generated by <i>in situ</i> data for " 
+                + this.getColumnListForCall(1, 3, 5) + ". One of: </p>"
+                + "<ul class='doc_content'>"
+                + "<li><span class='list_element_title'>expression high quality</span>;</li>"
+                + "<li><span class='list_element_title'>expression low quality;</li>"
+                + "<li><span class='list_element_title'>absent high quality</span>;</li>"
+                + "<li><span class='list_element_title'>no data</span>: no <i>in situ</i> data "
+                + "for this anatomical entity/developmental stage available (data either "
+                + "not available, or discarded by Bgee quality controls);</li>"
+                + "</ul>");
+        this.writeln("<h5 id='single_expr_complete_col10'>" + RNA_SEQ_EXPR_STATE_COL_NAME + "</h5>");
+        //TODO: add links to data analyses documentation
+        this.writeln("<p>Call generated by RNA-Seq data for " 
+                + this.getColumnListForCall(1, 3, 5) + ". One of: </p>"
+                + "<ul class='doc_content'>"
+                + "<li><span class='list_element_title'>expression high quality</span>;</li>"
+                + "<li><span class='list_element_title'>expression low quality;</li>"
+                + "<li><span class='list_element_title'>absent high quality</span>;</li>"
+                + "<li><span class='list_element_title'>no data</span>: no RNA-Seq data "
+                + "for this anatomical entity/developmental stage available (data either "
+                + "not available, or discarded by Bgee quality controls);</li>"
+                + "</ul>");
+        this.writeln("<h5 id='single_expr_complete_col11'>" + OBSERVED_DATA_COL_NAME + "</h5>");
+        this.writeln("<p>Values permitted: <code>yes</code> and <code>no</code>.</p>"
+                + "<p>Defines whether a call was generated from propagation only, "
+                + "or whether the anatomical entity/developmental stage was actually seen "
+                + "in experimental data (in which case, the call will also be present "
+                + "in the expression simple file).</p>");
         this.writeln("<h5 id='single_expr_complete_col12'>" + EXPR_STATE_COL_NAME + "</h5>");
-        this.writeln(this.getExprStateColDescription(1, 3, 5)); //end complete expression file single species
+        this.writeln(this.getExprStateColDescription(1, 3, 5)); 
+        this.writeln("<p><a href='#single_expr'>Back to presence/absence of expression menu</a></p>");
+        //end complete expression file single species
         
         
         this.writeln("</div>"); // end of single-species
@@ -596,6 +716,33 @@ this.writeln("<div class='documentationmenu'><ul>");
         return log.exit("<p>Name of the anatomical entity defined by <code>" 
         + ANAT_ENTITY_ID_COL_NAME + "</code> (column " + colNumber + ")</p>");
     }
+    
+    /**
+     * Generates a sentence listing the columns defining a call, in HTML, with HTML escaped 
+     * if necessary.
+     * 
+     * @param geneIdColNumber           An {@code int} that is the index of the column 
+     *                                  containing the gene ID (see {@link #GENE_ID_COL_NAME}). 
+     *                                  Index starting from 1.
+     * @param stageIdColNumber          An {@code int} that is the index of the column 
+     *                                  containing the stage ID (see {@link #STAGE_ID_COL_NAME}). 
+     *                                  Index starting from 1.
+     * @param anatEntityIdColNumber     An {@code int} that is the index of the column 
+     *                                  containing the anatomical entity ID (see 
+     *                                  {@link #ANAT_ENTITY_ID_COL_NAME}). 
+     *                                  Index starting from 1.
+     * @return  A {@code String} that is the sentence "Gene ID (column xx), 
+     *          in Anatomical entity ID (column xx), at Developmental stage ID (column xx)" 
+     *          with proper column name and provided column indexes.
+     */
+    private String getColumnListForCall(int geneIdColNumber, int stageIdColNumber, 
+            int anatEntityIdColNumber) {
+        log.entry(geneIdColNumber, stageIdColNumber, anatEntityIdColNumber);
+        return log.exit(GENE_ID_COL_NAME + " (column " 
+                + geneIdColNumber + "), in " + ANAT_ENTITY_ID_COL_NAME + " (column " 
+                + anatEntityIdColNumber + "), at " + STAGE_ID_COL_NAME + " (column " 
+                + stageIdColNumber + ")");
+    }
     /**
      * Generates description of the expression state column. 
      * 
@@ -617,10 +764,8 @@ this.writeln("<div class='documentationmenu'><ul>");
     private String getExprStateColDescription(int geneIdColNumber, int stageIdColNumber, 
             int anatEntityIdColNumber) {
         log.entry(geneIdColNumber, stageIdColNumber, anatEntityIdColNumber);
-        return log.exit("<p>Reported call for " + GENE_ID_COL_NAME + " (column " 
-                + geneIdColNumber + "), in " + ANAT_ENTITY_ID_COL_NAME + " (column " 
-                + anatEntityIdColNumber + "), at " + STAGE_ID_COL_NAME + " (column " 
-                + stageIdColNumber + "). One of: </p>"
+        return log.exit("<p>Reported call for " + this.getColumnListForCall(geneIdColNumber, 
+                stageIdColNumber, anatEntityIdColNumber) + ". One of: </p>"
                 + "<ul class='doc_content'>"
                 + "<li><span class='list_element_title'>expression high quality</span>: "
                 + "expression reported as high quality, from Bgee statistical tests and/or from "
@@ -679,12 +824,13 @@ this.writeln("<div class='documentationmenu'><ul>");
     }
     
     /**
-     * @return  a {@code String} containing the HTML to create a table containing the header 
-     *          of a single species simple expression file (can be used in "help" links).
+     * @return  a {@code String} containing the HTML to create a table containing the description 
+     *          of the header of a single species simple expression file (can be used 
+     *          in "help" links).
      */
     public String getSingleSpeciesSimpleExprFileHeaderDesc() {
         log.entry();
-        return log.exit("<table class='call_download_file'>"
+        return log.exit("<table class='download_file_header_desc'>"
                 + "<tbody>"
                 + "<tr>"
                 + "<td>" + GENE_ID_COL_NAME + "</td>"
@@ -693,6 +839,32 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "<td>" + STAGE_NAME_COL_NAME + "</td>"
                 + "<td>"  + ANAT_ENTITY_ID_COL_NAME + "</td>"
                 + "<td>" + ANAT_ENTITY_NAME_COL_NAME + "</td>"
+                + "<td>" + EXPR_STATE_COL_NAME + "</td>"
+                + "</tr>"
+                + "</tbody>"
+                + "</table>");
+    }
+    /**
+     * @return  a {@code String} containing the HTML to create a table containing the description 
+     *          of the header of a single species complete expression file (can be used 
+     *          in "help" links).
+     */
+    public String getSingleSpeciesCompleteExprFileHeaderDesc() {
+        log.entry();
+        return log.exit("<table class='download_file_header_desc'>"
+                + "<tbody>"
+                + "<tr>"
+                + "<td>" + GENE_ID_COL_NAME + "</td>"
+                + "<td>" + GENE_NAME_COL_NAME + "</td>"
+                + "<td>"  + STAGE_ID_COL_NAME + "</td>"
+                + "<td>" + STAGE_NAME_COL_NAME + "</td>"
+                + "<td>"  + ANAT_ENTITY_ID_COL_NAME + "</td>"
+                + "<td>" + ANAT_ENTITY_NAME_COL_NAME + "</td>"
+                + "<td>" + AFFY_EXPR_STATE_COL_NAME + "</td>"
+                + "<td>" + EST_EXPR_STATE_COL_NAME + "</td>"
+                + "<td>" + IN_SITU_EXPR_STATE_COL_NAME + "</td>"
+                + "<td>" + RNA_SEQ_EXPR_STATE_COL_NAME + "</td>"
+                + "<td>" + OBSERVED_DATA_COL_NAME + "</td>"
                 + "<td>" + EXPR_STATE_COL_NAME + "</td>"
                 + "</tr>"
                 + "</tbody>"

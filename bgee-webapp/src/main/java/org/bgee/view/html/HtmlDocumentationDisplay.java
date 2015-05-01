@@ -348,7 +348,15 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "absence of expression by RNA-Seq, with report of expression by RNA-Seq "
                 + "for the same gene, in the same anatomical structure and developmental stage, "
                 + "or any child anatomical structure and child developmental stage).</li>"
-                + "</ul>");
+                + "</ul>"
+                + "<p>Call propagation allows a complete integration of the data, "
+                + "even if provided at different anatomical or developmental levels. "
+                + "For instance: if gene A is reported to be expressed in the midbrain dura mater "
+                + "at yound adult stage; gene B is reported to be expressed "
+                + "in the midbrain pia mater at late adult stage; and gene C has an absence "
+                + "of expression reported in the brain at adult stage; it is then possible to retrieve "
+                + "that, in the midbrain at adult stage, gene A and B are both expressed, "
+                + "while gene C is not, thanks to call propagation.</p>");
         this.writeln("<p>Presence/absence calls are then filtered and presented differently "
                 + "depending on whether a <code>simple file</code>, "
                 + "or a <code>complete file</code> is used. Notably: <code>simple files</code> "
@@ -413,21 +421,86 @@ this.writeln("<div class='documentationmenu'><ul>");
         this.writeln("<h5 id='single_expr_simple_col6'>" + ANAT_ENTITY_NAME_COL_NAME + "</h5>");
         this.writeln(this.getAnatEntityNameColDescription(5));
         this.writeln("<h5 id='single_expr_simple_col7'>" + EXPR_STATE_COL_NAME + "</h5>");
-        this.writeln(this.getExprStateColDescription(1, 3, 5));
+        this.writeln(this.getExprStateColDescription(1, 3, 5)); //end simple expression file single species
         
-        this.writeln("<h3>H3 title</h3>");
-        this.writeln("<p>The mapping of the reads is performed using " +
-                "<a href='http://tophat.cbcb.umd.edu/' title='External link to TopHat website' " +
-                "target='_blank'>TopHat2</a>, " +
-                "which internally uses " +
-                "the <a href='http://bowtie-bio.sourceforge.net/bowtie2/index.shtml' title='External link to Bowtie website' " +
-                "target='_blank'>Bowtie2</a> aligner. The maximum number of mappings allowed for a read " +
-                "is set to 1. The intergenic regions are chosen in such a way that the distribution of their lengths " +
-                "matches the distribution of lengths of the transcriptome. " +
-                "The minimal distance of boundaries of intergenic regions to the nearest gene is 5 kb. " +
-                "Reads that map to the features are summed up using the htseq-count software. " +
-                "The RPK (read per kilobase) value for every feature is obtained by dividing " +
-                "the number of reads that match a given feature by its length. </p>");
+        //complete expression file
+        this.writeln("<h4 id='single_expr_complete'>Complete file</h4>");
+        this.writeln("<p>The differences between simple and complete files are that, "
+                + "in complete files: </p>"
+                + "<ul class='doc_content'>"
+                + "<li>details of expression status generated from each data type are provided;</li>"
+                + "<li>all calls are provided, propagated to all possible anatomical entities "
+                + "and developmental stages, even in conditions not annotated in experimental data "
+                + "(calls generated from propagation only);</li>"
+                + "<li>a column allows to determine whether a call was generated from propagation "
+                + "only, or whether the anatomical entity/developmental stage was actually "
+                + "seen in experimental data.</li>"
+                + "</ul>");
+        String affyColName = "Affymetrix data";
+        String estColName = "EST data";
+        String inSituColName = "In situ data";
+        String rnaSeqColName = "RNA-Seq data";
+        String observedDataColName = "Including observed data";
+        this.writeln("<table class='call_download_file'>");
+        this.writeln("<caption>Format description for single species complete expression file</caption>");
+        this.writeln("<thead>");
+        this.writeln("<tr><th>Column</th><th>Content</th><th>Cardinality</th><th>Example</th></tr>");
+        this.writeln("</thead>");
+        this.writeln("<tbody>");
+        this.writeln("<tr><td>1</td><td><a href='#single_expr_complete_col1' title='" 
+                + GENE_ID_LINK_TITLE + "'>" + GENE_ID_COL_NAME 
+                + "</a></td><td>1</td><td>ENSG00000001631</td></tr>");
+        this.writeln("<tr><td>2</td><td><a href='#single_expr_complete_col2' title='" 
+                + GENE_NAME_LINK_TITLE + "'>" + GENE_NAME_COL_NAME 
+                + "</a></td><td>1</td><td>KRIT1</td></tr>");
+        this.writeln("<tr><td>3</td><td><a href='#single_expr_complete_col3' title='" 
+                + STAGE_ID_LINK_TITLE + "'>" + STAGE_ID_COL_NAME 
+                + "</a></td><td>1</td><td>HsapDv:0000092</td></tr>");
+        this.writeln("<tr><td>4</td><td><a href='#single_expr_complete_col4' title='" 
+                + STAGE_NAME_LINK_TITLE + "'>" + STAGE_NAME_COL_NAME 
+                + "</a></td><td>1</td><td>human middle aged stage (human)</td></tr>");
+        this.writeln("<tr><td>5</td><td><a href='#single_expr_complete_col5' title='" 
+                + ANAT_ENTITY_ID_LINK_TITLE + "'>" + ANAT_ENTITY_ID_COL_NAME 
+                + "</a></td><td>1</td><td>UBERON:0004720</td></tr>");
+        this.writeln("<tr><td>6</td><td><a href='#single_expr_complete_col6' title='" 
+                + ANAT_ENTITY_NAME_LINK_TITLE + "'>" + ANAT_ENTITY_NAME_COL_NAME 
+                + "</a></td><td>1</td><td>cerebellar vermis</td></tr>");
+        this.writeln("<tr><td>7</td><td><a href='#single_expr_complete_col7' title='" 
+                + "See " + affyColName + " column description'>" + affyColName 
+                + "</a></td><td>1</td><td>cerebellar vermis</td></tr>");
+        this.writeln("<tr><td>8</td><td><a href='#single_expr_complete_col8' title='" 
+                + "See " + estColName + " column description'>" + estColName 
+                + "</a></td><td>1</td><td>cerebellar vermis</td></tr>");
+        this.writeln("<tr><td>9</td><td><a href='#single_expr_complete_col9' title='" 
+                + "See " + inSituColName + " column description'>" + inSituColName 
+                + "</a></td><td>1</td><td>cerebellar vermis</td></tr>");
+        this.writeln("<tr><td>10</td><td><a href='#single_expr_complete_col10' title='" 
+                + "See " + rnaSeqColName + " column description'>" + rnaSeqColName 
+                + "</a></td><td>1</td><td>cerebellar vermis</td></tr>");
+        this.writeln("<tr><td>11</td><td><a href='#single_expr_complete_col11' title='" 
+                + "See " + observedDataColName + " column description'>" + observedDataColName 
+                + "</a></td><td>1</td><td>cerebellar vermis</td></tr>");
+        this.writeln("<tr><td>12</td><td><a href='#single_expr_complete_col12' title='" 
+                + EXPR_STATE_LINK_TITLE + "'>" + EXPR_STATE_COL_NAME 
+                + "</a></td><td>1</td><td>expression high quality</td></tr>");
+        this.writeln("</tbody>");
+        this.writeln("</table>");
+        this.writeln("<h5 id='single_expr_complete_col1'>" + GENE_ID_COL_NAME + "</h5>");
+        this.writeln(this.getGeneIdColDescription());
+        this.writeln("<h5 id='single_expr_complete_col2'>" + GENE_NAME_COL_NAME + "</h5>");
+        this.writeln(this.getGeneNameColDescription(1));
+        this.writeln("<h5 id='single_expr_complete_col3'>" + STAGE_ID_COL_NAME + "</h5>");
+        this.writeln(this.getStageIdColDescription());
+        this.writeln("<h5 id='single_expr_complete_col4'>" + STAGE_NAME_COL_NAME + "</h5>");
+        this.writeln(this.getStageNameColDescription(3));
+        this.writeln("<h5 id='single_expr_complete_col5'>" + ANAT_ENTITY_ID_COL_NAME + "</h5>");
+        this.writeln(this.getAnatEntityIdColDescription());
+        this.writeln("<h5 id='single_expr_complete_col6'>" + ANAT_ENTITY_NAME_COL_NAME + "</h5>");
+        this.writeln(this.getAnatEntityNameColDescription(5));
+        this.writeln("<h5 id='single_expr_complete_col12'>" + EXPR_STATE_COL_NAME + "</h5>");
+        this.writeln(this.getExprStateColDescription(1, 3, 5)); //end complete expression file single species
+        
+        
         this.writeln("</div>"); // end of single-species
         
         this.writeln(this.getBackToTheTopLink());

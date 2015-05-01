@@ -81,7 +81,7 @@ table.call_download_file td, table.call_download_file th {
 }
 
 ul.doc_content li:not(:first-child) {
-    margin-top: 1em;
+    margin-top: 0.7em;
 }
 
 div.doc_content {

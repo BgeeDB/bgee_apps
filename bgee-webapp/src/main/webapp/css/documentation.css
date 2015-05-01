@@ -16,6 +16,7 @@ div.subsectiontext p {
 	margin: 0 0 1% 0;
     padding: 0;
     font-size: 0.9em;
+    text-align: justify;
 }
 
 div.documentationmenu {
@@ -64,17 +65,36 @@ table.call_download_file {
 	border-top: 1px solid black;
     border-bottom: 1px solid black;
     font-size: 0.9em;
-    vertical-align: top;
+    /* needed to style borders of other table elements */
+    border-collapse: collapse; 
 }
 
-table.call_download_file tr.download_file_header_desc {
-    background-color: #29516A;
-    color: white;
+table.call_download_file thead {
+	border-bottom: 1px solid black;
 }
 
-table.call_download_file td {
+table.call_download_file td, table.call_download_file th {
     vertical-align: top;
-    padding: 0.3em;
+    padding: 0.5em;
+    text-align: left;
+    font-weight: normal;
+}
+
+ul.doc_content li:not(:first-child) {
+    margin-top: 1em;
+}
+
+div.doc_content {
+	padding: 0 0.3em 0 0.3em;
+	text-align: justify;
+}
+
+div.doc_content p, div.doc_content ul {
+    font-size: 0.9em;
+}
+
+span.list_element_title {
+	text-decoration: underline;
 }
 
 a.backlink, a.backlink:visited {

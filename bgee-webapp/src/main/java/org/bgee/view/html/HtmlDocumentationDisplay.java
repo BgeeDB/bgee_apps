@@ -198,7 +198,9 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
     }
 
     @Override
-    //XXX: anchors should have meaning: a section1 more easily become a section2 one day (unstable links)
+    //XXX: anchors should have meaning: a section1 more easily become a section2 one day (unstable links) 
+    //(just for the note: I did the exact opposite for anchors linking to column descriptions 
+    //(#col1, and not #gene_id), this is on purpose :p (so that a change of column is immediately seen))
     public void displayDocumentationHomePage() {
         log.entry();
         
@@ -305,6 +307,10 @@ this.writeln("<div class='documentationmenu'><ul>");
 
         log.exit();
     }
+
+    //*******************************************************
+    // DOCUMENTATION FOR CALL DOWNLOAD FILES 
+    //*******************************************************
     
     public void displayDownloadFileDocumentation() {
         log.entry();
@@ -321,52 +327,103 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "<a href='" + urlDownloadGenerator.getRequestURL()
                 + "' title='Bgee expression data page'>download files</a>.</p>");
         
-        
         //Documentation menu
+        this.writeDocMenuForCallDownloadFiles();
+        
+        //Single species documentation
+        this.writeSingleSpeciesExprCallFileDoc();
+        
+        
+        this.writeln("<div id='multi'>");
+        this.writeln("<h2>Multi-species download files</h2>");
+        this.writeln("<div class='documentationsection'>");
+        this.writeln("<p> </p>");
+        this.writeln("<p> </p>");
+        this.writeln("</div>");
+        this.writeln("</div>"); // end of subsection2
+        
+        this.writeln(this.getBackToTheTopLink());
+        
+        this.writeln(this.getBackToTheTopLink());
+        
+        this.endDisplay();
+
+        log.exit();
+    }
+    
+    /**
+     * Write the documentation menu related to presence/absence and over/under expression call 
+     * download files. Anchors used in this method for quick jump links 
+     * have to stayed in sync with id attributes of h2, h3 and h4 tags defined in 
+     * {@link #writeSingleSpeciesExprCallFileDoc()}, 
+     * {@link #writeSingleSpeciesSimpleExprFileDoc()} and 
+     * {@link #writeSingleSpeciesCompleteExprFileDoc()}.
+     * 
+     * @see #writeSingleSpeciesExprCallFileDoc()
+     * @see #writeSingleSpeciesSimpleExprFileDoc()
+     * @see #writeSingleSpeciesCompleteExprFileDoc()
+     */
+    private void writeDocMenuForCallDownloadFiles() {
+        log.entry();
+        
         this.writeln("<div class='documentationmenu'><ul>");
-            //Single-species
+        //Single-species
         this.writeln("<li><a href='#single' title='Quick jump to this section'>" + 
-                            "Single-species download files</a>");
-                //presence/absence
+                "Single-species download files</a>");
+        //presence/absence
         this.writeln("<ul>");           
         this.writeln("<li><a href='#single_expr' title='Quick jump to this section'>" + 
-                            "Presence/absence of expression</a>");
+                "Presence/absence of expression</a>");
         this.writeln("<ul>");
         this.writeln("<li><a href='#single_expr_simple' title='Quick jump to this section'>" + 
-                            "Simple file</a></li>");
+                "Simple file</a></li>");
         this.writeln("<li><a href='#single_expr_complete' title='Quick jump to this section'>" + 
-                            "Complete file</a></li>");
+                "Complete file</a></li>");
         this.writeln("</ul></li>");         //end of presence/absence
-                //diff expression
+        //diff expression
         this.writeln("<li><a href='#single_diff' title='Quick jump to this section'>" + 
                 "Over-/under-expression across anatomy or life stages</a>");
         this.writeln("<ul>");
         this.writeln("<li><a href='#single_diff_simple' title='Quick jump to this section'>" + 
-                        "Simple file</a></li>");
+                "Simple file</a></li>");
         this.writeln("<li><a href='#single_diff_complete' title='Quick jump to this section'>" + 
-                        "Complete file</a></li>");
+                "Complete file</a></li>");
         this.writeln("</ul></li>");         //end of diff expression 
         this.writeln("</ul></li>");     // end of single-species section
         
-            //multi-species
+        //multi-species
         this.writeln("<li><a href='#multi' title='Quick jump to this section'>" + 
-                            "Multi-species download files</a>");
-                //diff expression
+                "Multi-species download files</a>");
+        //diff expression
         this.writeln("<ul>");    
         this.writeln("<li><a href='#multi_diff' title='Quick jump to this section'>" + 
                 "Over-/under-expression across anatomy or life stages</a>");
         this.writeln("<ul>");
         this.writeln("<li><a href='#multi_diff_simple' title='Quick jump to this section'>" + 
-                        "Simple file</a></li>");
+                "Simple file</a></li>");
         this.writeln("<li><a href='#multi_diff_complete' title='Quick jump to this section'>" + 
-                        "Complete file</a></li>");
+                "Complete file</a></li>");
         this.writeln("</ul></li>");         //end of diff expression        
         this.writeln("</ul></li>");     // end of multi-species section
         
         this.writeln("</ul></div>");// end of documentationmenu
         
+        log.exit();
+    }
+    
+    /**
+     * Write the documentation related to single species presence/absence of expression 
+     * simple and complete download files. Anchors used in this method for quick jump links 
+     * have to stayed in sync with id attributes of h4 tags defined in 
+     * {@link #writeSingleSpeciesSimpleExprFileDoc()} and 
+     * {@link #writeSingleSpeciesCompleteExprFileDoc()}.
+     * 
+     * @see #writeSingleSpeciesSimpleExprFileDoc()
+     * @see #writeSingleSpeciesCompleteExprFileDoc()
+     */
+    private void writeSingleSpeciesExprCallFileDoc() {
+        log.entry();
         
-        //Single species documentation
         this.writeln("<div>");
         this.writeln("<h2 id='single'>Single-species download files</h2>");
         this.writeln("<div class='doc_content'>");
@@ -381,11 +438,12 @@ this.writeln("<div class='documentationmenu'><ul>");
         //TODO: add link to data analyses documentation
         this.writeln("<p>Bgee provides calls of presence/absence of expression. A call "
                 + "corresponds to a gene, with reported presence or absence of expression, "
-                + "in an anatomical structure, during a developmental stage. Only \"normal\" "
-                + "expression is considered in Bgee (i.e., no treatment, no disease, no gene knock-out, etc.). "
+                + "in an anatomical entity, during a developmental stage. Only \"normal\" "
+                + "expression is considered in Bgee (i.e., no treatment, no disease, "
+                + "no gene knock-out, etc.). "
                 + "Bgee collects data from different types, from different studies, "
                 + "in different organisms, and provides a summary from all these data "
-                + "as unique calls <code>gene - anatomical structure - developmental stage</code>.</p>");
+                + "as unique calls <code>gene - anatomical entity - developmental stage</code>.</p>");
         this.writeln("<p>Calls of presence/absence of expression are very similar to the data "
                 + "that can be reported using <i>in situ</i> hybridization methods; Bgee applies "
                 + "dedicated statistical analyses to generate such calls from EST, Affymetrix, "
@@ -400,20 +458,20 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "they are propagated using anatomical and life stage ontologies: </p>"
                 + "<ul class='doc_content'>"
                 + "<li><span class='list_element_title'>calls of expression</span> "
-                + "are propagated to parent anatomical structures "
+                + "are propagated to parent anatomical entities "
                 + "and parent developmental stages; for instance, if gene A is expressed "
                 + "in midbrain at young adult stage, it will also be considered as expressed "
                 + "in brain at adult stage;</li>"
                 + "<li><span class='list_element_title'>calls of absence of expression</span> "
-                + "are propagated to child anatomical structures "
+                + "are propagated to child anatomical entities "
                 + "(and not to child developmental stages); for instance, if gene A is reported "
                 + "as not expressed in the brain at young adult stage, it will also be considered "
                 + "as not expressed in the midbrain at young adult stage. This is only permitted "
                 + "when it does not generate any contradiction with expression calls from "
                 + "the same data type (for instance, no contradiction permitted of reported "
                 + "absence of expression by RNA-Seq, with report of expression by RNA-Seq "
-                + "for the same gene, in the same anatomical structure and developmental stage, "
-                + "or any child anatomical structure and child developmental stage).</li>"
+                + "for the same gene, in the same anatomical entity and developmental stage, "
+                + "or any child anatomical entity and child developmental stage).</li>"
                 + "</ul>"
                 + "<p>Call propagation allows a complete integration of the data, "
                 + "even if provided at different anatomical or developmental levels. "
@@ -427,10 +485,10 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "depending on whether a <code>simple file</code>, "
                 + "or a <code>complete file</code> is used. Notably: <code>simple files</code> "
                 + "aim at providing summarized information over all data types, and only "
-                + "in anatomical structures and developmental stages actually used "
+                + "in anatomical entities and developmental stages actually used "
                 + "in experimental data; <code>complete files</code> aim at reporting all information, "
                 + "allowing for instance to retrieve the contribution of each data type to a call, "
-                + "in all possible anatomical structures and developmental stages.</p>");
+                + "in all possible anatomical entities and developmental stages.</p>");
         this.writeln("<p>Jump to format description for: </p>"
                 + "<ul>"
                 + "<li><a href='#single_expr_simple' title='Quick jump to simple file description'>"
@@ -440,9 +498,31 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "</ul>");
         
         //simple expression file
+        this.writeSingleSpeciesSimpleExprCallFileDoc();
+        
+        //complete expression file
+        this.writeSingleSpeciesCompleteExprCallFileDoc();
+        
+        this.writeln("</div>"); // end of single-species
+        
+        this.writeln(this.getBackToTheTopLink());
+        this.writeln("</div>");
+        
+        log.exit();
+    }
+    /**
+     * Write the documentation related to single species simple presence/absence of expression 
+     * download files. The id attribute used in h4 tag must stay in sync with anchors used 
+     * in quick jump links defined in method {@link #writeSingleSpeciesExprFileDoc()}.
+     * 
+     * @see #writeSingleSpeciesExprFileDoc()
+     */
+    private void writeSingleSpeciesSimpleExprCallFileDoc() {
+        log.entry();
+        
         this.writeln("<h4 id='single_expr_simple'>Simple file</h4>");
         this.writeln("<p>In simple files, propagated presence/absence of expression calls "
-                + "are provided, but only calls in conditions of anatomical structure/developmental stage "
+                + "are provided, but only calls in conditions of anatomical entity/developmental stage "
                 + "actually used in experimental data are displayed (no calls generated "
                 + "from propagation only).</p>");
         this.writeln("<table class='call_download_file'>");
@@ -489,9 +569,20 @@ this.writeln("<div class='documentationmenu'><ul>");
         this.writeln("<h5 id='single_expr_simple_col7'>" + EXPR_STATE_COL_NAME + "</h5>");
         this.writeln(this.getExprStateColDescription(1, 3, 5)); 
         this.writeln("<p><a href='#single_expr'>Back to presence/absence of expression menu</a></p>");
-        //end simple expression file single species
         
-        //complete expression file
+        log.exit();
+    }
+    
+    /**
+     * Write the documentation related to single species complete presence/absence of expression 
+     * download files. The id attribute used in h4 tag must stay in sync with anchors used 
+     * in quick jump links defined in method {@link #writeSingleSpeciesExprFileDoc()}.
+     * 
+     * @see #writeSingleSpeciesExprFileDoc()
+     */
+    private void writeSingleSpeciesCompleteExprCallFileDoc() {
+        log.entry();
+        
         this.writeln("<h4 id='single_expr_complete'>Complete file</h4>");
         this.writeln("<p>The differences between simple and complete files are that, "
                 + "in complete files: </p>"
@@ -618,28 +709,7 @@ this.writeln("<div class='documentationmenu'><ul>");
         this.writeln("<h5 id='single_expr_complete_col12'>" + EXPR_STATE_COL_NAME + "</h5>");
         this.writeln(this.getExprStateColDescription(1, 3, 5)); 
         this.writeln("<p><a href='#single_expr'>Back to presence/absence of expression menu</a></p>");
-        //end complete expression file single species
         
-        
-        this.writeln("</div>"); // end of single-species
-        
-        this.writeln(this.getBackToTheTopLink());
-        this.writeln("</div>");
-        
-        this.writeln("<div id='multi'>");
-        this.writeln("<h2>Multi-species download files</h2>");
-        this.writeln("<div class='documentationsection'>");
-        this.writeln("<p> </p>");
-        this.writeln("<p> </p>");
-        this.writeln("</div>");
-        this.writeln("</div>"); // end of subsection2
-        
-        this.writeln(this.getBackToTheTopLink());
-        
-        this.writeln(this.getBackToTheTopLink());
-        
-        this.endDisplay();
-
         log.exit();
     }
     
@@ -764,63 +834,44 @@ this.writeln("<div class='documentationmenu'><ul>");
     private String getExprStateColDescription(int geneIdColNumber, int stageIdColNumber, 
             int anatEntityIdColNumber) {
         log.entry(geneIdColNumber, stageIdColNumber, anatEntityIdColNumber);
-        return log.exit("<p>Reported call for " + this.getColumnListForCall(geneIdColNumber, 
-                stageIdColNumber, anatEntityIdColNumber) + ". One of: </p>"
+        return log.exit("<p>Call generated from all data types for " 
+                + this.getColumnListForCall(geneIdColNumber, stageIdColNumber, 
+                        anatEntityIdColNumber) + ". One of: </p>"
                 + "<ul class='doc_content'>"
                 + "<li><span class='list_element_title'>expression high quality</span>: "
                 + "expression reported as high quality, from Bgee statistical tests and/or from "
                 + "<i>in situ</i> data sources, with no contradicting call of absence "
-                + "of expression (call generated either from multiple congruent data, "
+                + "of expression for same gene, in same anatomical entity and developmental stage "
+                + "(call generated either from multiple congruent data, "
                 + "or from single data);</li>"
                 + "<li><span class='list_element_title'>expression low quality</span>: "
                 + "expression reported as low quality, either from Bgee statistical tests and/or "
                 + "from <i>in situ</i> data sources, or because there exists a conflict of "
-                + "presence/absence of expression for the same gene, anatomical structure "
-                + "and developmental stage, from different samples of a same data type "
+                + "presence/absence of expression for the same gene, anatomical entity "
+                + "and developmental stage, from different data of a same type "
                 + "(conflicts between different data types are treated differently, see below);</li>"
                 + "<li><span class='list_element_title'>absent high quality</span>: "
                 + "report of absence of expression, either from Bgee statistical tests and/or "
                 + "from <i>in situ</i> data sources; in Bgee, calls of absence of expression "
                 + "are always discarded if there exists a contradicting call of expression, "
-                + "from the same data type and for the same gene, in the same anatomical structure "
-                + "and developmental stage, or in a child structure or child developmental stage; "
+                + "from the same data type and for the same gene, in the same anatomical entity "
+                + "and developmental stage, or in a child entity or child developmental stage; "
                 + "this is why they are always considered of high quality;</li>"
                 + "<li><span class='list_element_title'>low ambiguity</span>: "
                 + "there exists a call of expression generated from a data type, but "
                 + "there exists a call of absence of expression generated from another data type "
-                + "for the same gene in a parent anatomical structure; for instance, gene A "
-                + "is reported to be expressed in the midbrain at young adult stage "
-                + "from Affymetrix data, but is reported to be not expressed in the brain "
-                + "at young adult stage from RNA-Seq data;</li>"
+                + "for the same gene in a parent anatomical entity at the same developmental "
+                + "stage; for instance, gene A is reported to be expressed in the midbrain "
+                + "at young adult stage from Affymetrix data, but is reported to be not expressed "
+                + "in the brain at young adult stage from RNA-Seq data;</li>"
                 + "<li><span class='list_element_title'>high ambiguity</span>: "
                 + "there exists a call of expression generated from a data type, but "
                 + "there exists a call of absence of expression generated from another data type "
-                + "for the same gene, anatomical structure and developmental stage; for instance, "
+                + "for the same gene, anatomical entity and developmental stage; for instance, "
                 + "gene A is reported to be expressed in the midbrain at young adult stage "
                 + "from Affymetrix data, but is reported to be not expressed in the midbrain "
                 + "at young adult stage from RNA-Seq data.</li>"
                 + "</ul>");
-    }
-    
-    /**
-     * Provide explanations about how to retrieve correct genes in Ensembl, when we use 
-     * the genome of another species for a given species. For instance, for bonobo we use 
-     * the chimpanzee genome, and replace the 'ENSPTRG' prefix of chimp genes by 
-     * the prefix 'PPAG'.
-     * 
-     * @return  A {@code String} formatted in HTML, providing the explanation.
-     */
-    //TODO: this needs to be generated automatically from the species table in database.
-    public String getGenomeMappingExplanation() {
-        log.entry();
-        return log.exit("Please note that "
-        + "for <i>P. paniscus</i> (bonobo) we use <i>P. troglodytes</i> genome (chimpanzee), "
-        + "and that for <i>P. pygmaeus</i> (Bornean orangutan) we use <i>P. abelii</i> genome "
-        + "(Sumatran orangutan). Only for those species (bonobo and Bornean orangutan), "
-        + "we modify the Ensembl gene IDs, to ensure that we provide unique gene identifiers "
-        + "over all species. It is therefore necessary, to obtain correct Ensembl gene IDs "
-        + "for those species, to replace gene ID prefix 'PPAG' with 'ENSPTRG', "
-        + "and 'PPYG' prefix with 'ENSPPYG'.");
     }
     
     /**
@@ -869,6 +920,30 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "</tr>"
                 + "</tbody>"
                 + "</table>");
+    }
+
+    //*******************************************************
+    // MISCELLANEOUS 
+    //*******************************************************
+    /**
+     * Provide explanations about how to retrieve correct genes in Ensembl, when we use 
+     * the genome of another species for a given species. For instance, for bonobo we use 
+     * the chimpanzee genome, and replace the 'ENSPTRG' prefix of chimp genes by 
+     * the prefix 'PPAG'.
+     * 
+     * @return  A {@code String} formatted in HTML, providing the explanation.
+     */
+    //TODO: this needs to be generated automatically from the species table in database.
+    public String getGenomeMappingExplanation() {
+        log.entry();
+        return log.exit("Please note that "
+        + "for <i>P. paniscus</i> (bonobo) we use <i>P. troglodytes</i> genome (chimpanzee), "
+        + "and that for <i>P. pygmaeus</i> (Bornean orangutan) we use <i>P. abelii</i> genome "
+        + "(Sumatran orangutan). Only for those species (bonobo and Bornean orangutan), "
+        + "we modify the Ensembl gene IDs, to ensure that we provide unique gene identifiers "
+        + "over all species. It is therefore necessary, to obtain correct Ensembl gene IDs "
+        + "for those species, to replace gene ID prefix 'PPAG' with 'ENSPTRG', "
+        + "and 'PPYG' prefix with 'ENSPPYG'.");
     }
 
     /**

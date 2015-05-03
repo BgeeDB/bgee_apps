@@ -331,7 +331,24 @@ this.writeln("<div class='documentationmenu'><ul>");
         this.writeDocMenuForCallDownloadFiles();
         
         //Single species documentation
+        this.writeln("<div>");
+        this.writeln("<h2 id='single'>Single-species download files</h2>");
+        this.writeln("<div class='doc_content'>");
+        this.writeln("<p>Jump to: </p>"
+                + "<ul>"
+                + "<li><a href='#single_expr' title='Quick jump to presence/absence of expression'>"
+                + "Presence/absence of expression</a></li>"
+                + "<li><a href='#single_diff' title='Quick jump to differential expression'>"
+                + "Over-/under-expression across anatomy or life stages</a></li>"
+                + "</ul>");
+        //presence/absence
         this.writeSingleSpeciesExprCallFileDoc();
+        //over/under
+        this.writeSingleSpeciesDiffExprCallFileDoc();
+        this.writeln("</div>"); // end of single-species
+        
+        this.writeln(this.getBackToTheTopLink());
+        this.writeln("</div>");
         
         
         this.writeln("<div id='multi'>");
@@ -374,21 +391,27 @@ this.writeln("<div class='documentationmenu'><ul>");
         this.writeln("<ul>");           
         this.writeln("<li><a href='#single_expr' title='Quick jump to this section'>" + 
                 "Presence/absence of expression</a>");
-        this.writeln("<ul>");
-        this.writeln("<li><a href='#single_expr_simple' title='Quick jump to this section'>" + 
-                "Simple file</a></li>");
-        this.writeln("<li><a href='#single_expr_complete' title='Quick jump to this section'>" + 
-                "Complete file</a></li>");
-        this.writeln("</ul></li>");         //end of presence/absence
+        //Actually there explanations common to simple and complete files, so we don't provide
+        //direct links to simple/common files, that would skip the common explanations.
+//        this.writeln("<ul>");
+//        this.writeln("<li><a href='#single_expr_simple' title='Quick jump to this section'>" + 
+//                "Simple file</a></li>");
+//        this.writeln("<li><a href='#single_expr_complete' title='Quick jump to this section'>" + 
+//                "Complete file</a></li>");
+//        this.writeln("</ul>");   
+        this.writeln("</li>");              //end of presence/absence
         //diff expression
         this.writeln("<li><a href='#single_diff' title='Quick jump to this section'>" + 
                 "Over-/under-expression across anatomy or life stages</a>");
-        this.writeln("<ul>");
-        this.writeln("<li><a href='#single_diff_simple' title='Quick jump to this section'>" + 
-                "Simple file</a></li>");
-        this.writeln("<li><a href='#single_diff_complete' title='Quick jump to this section'>" + 
-                "Complete file</a></li>");
-        this.writeln("</ul></li>");         //end of diff expression 
+        //Actually there explanations common to simple and complete files, so we don't provide
+        //direct links to simple/common files, that would skip the common explanations.
+//        this.writeln("<ul>");
+//        this.writeln("<li><a href='#single_diff_simple' title='Quick jump to this section'>" + 
+//                "Simple file</a></li>");
+//        this.writeln("<li><a href='#single_diff_complete' title='Quick jump to this section'>" + 
+//                "Complete file</a></li>");
+//        this.writeln("</ul>"); 
+        this.writeln("</li>");              //end of diff expression 
         this.writeln("</ul></li>");     // end of single-species section
         
         //multi-species
@@ -398,12 +421,15 @@ this.writeln("<div class='documentationmenu'><ul>");
         this.writeln("<ul>");    
         this.writeln("<li><a href='#multi_diff' title='Quick jump to this section'>" + 
                 "Over-/under-expression across anatomy or life stages</a>");
-        this.writeln("<ul>");
-        this.writeln("<li><a href='#multi_diff_simple' title='Quick jump to this section'>" + 
-                "Simple file</a></li>");
-        this.writeln("<li><a href='#multi_diff_complete' title='Quick jump to this section'>" + 
-                "Complete file</a></li>");
-        this.writeln("</ul></li>");         //end of diff expression        
+        //Actually there explanations common to simple and complete files, so we don't provide
+        //direct links to simple/common files, that would skip the common explanations.
+//        this.writeln("<ul>");
+//        this.writeln("<li><a href='#multi_diff_simple' title='Quick jump to this section'>" + 
+//                "Simple file</a></li>");
+//        this.writeln("<li><a href='#multi_diff_complete' title='Quick jump to this section'>" + 
+//                "Complete file</a></li>");
+//        this.writeln("</ul>");         
+        this.writeln("</li>");              //end of diff expression        
         this.writeln("</ul></li>");     // end of multi-species section
         
         this.writeln("</ul></div>");// end of documentationmenu
@@ -424,36 +450,10 @@ this.writeln("<div class='documentationmenu'><ul>");
     private void writeSingleSpeciesExprCallFileDoc() {
         log.entry();
         
-        this.writeln("<div>");
-        this.writeln("<h2 id='single'>Single-species download files</h2>");
-        this.writeln("<div class='doc_content'>");
-        this.writeln("<p>Jump to: </p>"
-                + "<ul>"
-                + "<li><a href='#single_expr' title='Quick jump to presence/absence of expression'>"
-                + "Presence/absence of expression</a></li>"
-                + "<li><a href='#single_diff' title='Quick jump to differential expression'>"
-                + "Over-/under-expression across anatomy or life stages</a></li>"
-                + "</ul>");
+        //presence/absence of expression
         this.writeln("<h3 id='single_expr'>Presence/absence of expression</h3>");
         //TODO: add link to data analyses documentation
-        this.writeln("<p>Bgee provides calls of presence/absence of expression. A call "
-                + "corresponds to a gene, with reported presence or absence of expression, "
-                + "in an anatomical entity, during a developmental stage. Only \"normal\" "
-                + "expression is considered in Bgee (i.e., no treatment, no disease, "
-                + "no gene knock-out, etc.). "
-                + "Bgee collects data from different types, from different studies, "
-                + "in different organisms, and provides a summary from all these data "
-                + "as unique calls <code>gene - anatomical entity - developmental stage</code>.</p>");
-        this.writeln("<p>Calls of presence/absence of expression are very similar to the data "
-                + "that can be reported using <i>in situ</i> hybridization methods; Bgee applies "
-                + "dedicated statistical analyses to generate such calls from EST, Affymetrix, "
-                + "and RNA-Seq data, with confidence information, and also collects "
-                + "<i>in situ</i> hybridization calls from model organism databases. "
-                + "This offers the possibility to aggregate and compare these calls of "
-                + "presence/absence of expression between different experiments, "
-                + "different data types, and different species, and to benefit from both "
-                + "the high anatomy coverage provided by low-throughput methods, "
-                + "and the high genomic coverage provided by high-throughput methods.</p>");
+        this.writeln(this.getExprCallExplanation());
         this.writeln("<p>After presence/absence calls are generated from the raw data, "
                 + "they are propagated using anatomical and life stage ontologies: </p>"
                 + "<ul class='doc_content'>"
@@ -501,12 +501,8 @@ this.writeln("<div class='documentationmenu'><ul>");
         this.writeSingleSpeciesSimpleExprCallFileDoc();
         
         //complete expression file
-        this.writeSingleSpeciesCompleteExprCallFileDoc();
+        this.writeSingleSpeciesCompleteExprCallFileDoc(); //end of presence/absence of expression
         
-        this.writeln("</div>"); // end of single-species
-        
-        this.writeln(this.getBackToTheTopLink());
-        this.writeln("</div>");
         
         log.exit();
     }
@@ -533,22 +529,22 @@ this.writeln("<div class='documentationmenu'><ul>");
         this.writeln("<tbody>");
         this.writeln("<tr><td>1</td><td><a href='#single_expr_simple_col1' title='" 
                 + GENE_ID_LINK_TITLE + "'>" + GENE_ID_COL_NAME 
-                + "</a></td><td>1</td><td>ENSG00000001631</td></tr>");
+                + "</a></td><td>1</td><td>FBgn0005427</td></tr>");
         this.writeln("<tr><td>2</td><td><a href='#single_expr_simple_col2' title='" 
                 + GENE_NAME_LINK_TITLE + "'>" + GENE_NAME_COL_NAME 
-                + "</a></td><td>1</td><td>KRIT1</td></tr>");
+                + "</a></td><td>1</td><td>ewg</td></tr>");
         this.writeln("<tr><td>3</td><td><a href='#single_expr_simple_col3' title='" 
                 + STAGE_ID_LINK_TITLE + "'>" + STAGE_ID_COL_NAME 
-                + "</a></td><td>1</td><td>HsapDv:0000092</td></tr>");
+                + "</a></td><td>1</td><td>FBdv:00005348</td></tr>");
         this.writeln("<tr><td>4</td><td><a href='#single_expr_simple_col4' title='" 
                 + STAGE_NAME_LINK_TITLE + "'>" + STAGE_NAME_COL_NAME 
-                + "</a></td><td>1</td><td>human middle aged stage (human)</td></tr>");
+                + "</a></td><td>1</td><td>prepupal stage P4(ii) (Drosophila)</td></tr>");
         this.writeln("<tr><td>5</td><td><a href='#single_expr_simple_col5' title='" 
                 + ANAT_ENTITY_ID_LINK_TITLE + "'>" + ANAT_ENTITY_ID_COL_NAME 
-                + "</a></td><td>1</td><td>UBERON:0004720</td></tr>");
+                + "</a></td><td>1</td><td>FBbt:00003404</td></tr>");
         this.writeln("<tr><td>6</td><td><a href='#single_expr_simple_col6' title='" 
                 + ANAT_ENTITY_NAME_LINK_TITLE + "'>" + ANAT_ENTITY_NAME_COL_NAME 
-                + "</a></td><td>1</td><td>cerebellar vermis</td></tr>");
+                + "</a></td><td>1</td><td>mesothoracic extracoxal depressor muscle 66 (Drosophila)</td></tr>");
         this.writeln("<tr><td>7</td><td><a href='#single_expr_simple_col7' title='" 
                 + EXPR_STATE_LINK_TITLE + "'>" + EXPR_STATE_COL_NAME 
                 + "</a></td><td>1</td><td>expression high quality</td></tr>");
@@ -604,37 +600,37 @@ this.writeln("<div class='documentationmenu'><ul>");
         this.writeln("<tbody>");
         this.writeln("<tr><td>1</td><td><a href='#single_expr_complete_col1' title='" 
                 + GENE_ID_LINK_TITLE + "'>" + GENE_ID_COL_NAME 
-                + "</a></td><td>1</td><td>ENSG00000001631</td></tr>");
+                + "</a></td><td>1</td><td>ENSDARG00000070769</td></tr>");
         this.writeln("<tr><td>2</td><td><a href='#single_expr_complete_col2' title='" 
                 + GENE_NAME_LINK_TITLE + "'>" + GENE_NAME_COL_NAME 
-                + "</a></td><td>1</td><td>KRIT1</td></tr>");
+                + "</a></td><td>1</td><td>foxg1a</td></tr>");
         this.writeln("<tr><td>3</td><td><a href='#single_expr_complete_col3' title='" 
                 + STAGE_ID_LINK_TITLE + "'>" + STAGE_ID_COL_NAME 
-                + "</a></td><td>1</td><td>HsapDv:0000092</td></tr>");
+                + "</a></td><td>1</td><td>UBERON:0000113</td></tr>");
         this.writeln("<tr><td>4</td><td><a href='#single_expr_complete_col4' title='" 
                 + STAGE_NAME_LINK_TITLE + "'>" + STAGE_NAME_COL_NAME 
-                + "</a></td><td>1</td><td>human middle aged stage (human)</td></tr>");
+                + "</a></td><td>1</td><td>post-juvenile adult stage</td></tr>");
         this.writeln("<tr><td>5</td><td><a href='#single_expr_complete_col5' title='" 
                 + ANAT_ENTITY_ID_LINK_TITLE + "'>" + ANAT_ENTITY_ID_COL_NAME 
-                + "</a></td><td>1</td><td>UBERON:0004720</td></tr>");
+                + "</a></td><td>1</td><td>UBERON:0000955</td></tr>");
         this.writeln("<tr><td>6</td><td><a href='#single_expr_complete_col6' title='" 
                 + ANAT_ENTITY_NAME_LINK_TITLE + "'>" + ANAT_ENTITY_NAME_COL_NAME 
-                + "</a></td><td>1</td><td>cerebellar vermis</td></tr>");
+                + "</a></td><td>1</td><td>brain</td></tr>");
         this.writeln("<tr><td>7</td><td><a href='#single_expr_complete_col7' title='" 
                 + AFFY_EXPR_STATE_LINK_TITLE + "'>" + AFFY_EXPR_STATE_COL_NAME 
-                + "</a></td><td>1</td><td>cerebellar vermis</td></tr>");
+                + "</a></td><td>1</td><td>expression high quality</td></tr>");
         this.writeln("<tr><td>8</td><td><a href='#single_expr_complete_col8' title='" 
                 + EST_EXPR_STATE_LINK_TITLE + "'>" + EST_EXPR_STATE_COL_NAME 
-                + "</a></td><td>1</td><td>cerebellar vermis</td></tr>");
+                + "</a></td><td>1</td><td>expression low quality</td></tr>");
         this.writeln("<tr><td>9</td><td><a href='#single_expr_complete_col9' title='" 
                 + IN_SITU_EXPR_STATE_LINK_TITLE + "'>" + IN_SITU_EXPR_STATE_COL_NAME 
-                + "</a></td><td>1</td><td>cerebellar vermis</td></tr>");
+                + "</a></td><td>1</td><td>expression high quality</td></tr>");
         this.writeln("<tr><td>10</td><td><a href='#single_expr_complete_col10' title='" 
                 + RNA_SEQ_EXPR_STATE_LINK_TITLE + "'>" + RNA_SEQ_EXPR_STATE_COL_NAME 
-                + "</a></td><td>1</td><td>cerebellar vermis</td></tr>");
+                + "</a></td><td>1</td><td>no data</td></tr>");
         this.writeln("<tr><td>11</td><td><a href='#single_expr_complete_col11' title='" 
                 + OBSERVED_DATA_LINK_TITLE + "'>" + OBSERVED_DATA_COL_NAME 
-                + "</a></td><td>1</td><td>cerebellar vermis</td></tr>");
+                + "</a></td><td>1</td><td>yes</td></tr>");
         this.writeln("<tr><td>12</td><td><a href='#single_expr_complete_col12' title='" 
                 + EXPR_STATE_LINK_TITLE + "'>" + EXPR_STATE_COL_NAME 
                 + "</a></td><td>1</td><td>expression high quality</td></tr>");
@@ -709,6 +705,50 @@ this.writeln("<div class='documentationmenu'><ul>");
         this.writeln("<h5 id='single_expr_complete_col12'>" + EXPR_STATE_COL_NAME + "</h5>");
         this.writeln(this.getExprStateColDescription(1, 3, 5)); 
         this.writeln("<p><a href='#single_expr'>Back to presence/absence of expression menu</a></p>");
+        
+        log.exit();
+    }
+    
+    /**
+     * Write the documentation related to single species over/under expression 
+     * simple and complete download files. Anchors used in this method for quick jump links 
+     * have to stayed in sync with id attributes of h4 tags defined in 
+     * {@link #writeSingleSpeciesSimpleDiffExprFileDoc()} and 
+     * {@link #writeSingleSpeciesCompleteDiffExprFileDoc()}.
+     * 
+     * @see #writeSingleSpeciesSimpleDiffExprFileDoc()
+     * @see #writeSingleSpeciesCompleteDiffExprFileDoc()
+     */
+    private void writeSingleSpeciesDiffExprCallFileDoc() {
+        log.entry();
+        
+        //presence/absence of expression
+        this.writeln("<h3 id='single_diff'>Over-/under-expression across anatomy or life stages</h3>");
+        //TODO: add link to data analyses documentation
+        this.writeln(this.getDiffExprCallExplanation());
+        this.writeln("<p>Note that, as opposed to calls of presence/absence of expression, "
+                + "no propagation of differential expression calls is performed "
+                + "using anatomical and life stage ontologies.</p>");
+        this.writeln("<p>Over-/under-expression calls are then filtered and presented differently "
+                + "depending on whether a <code>simple file</code>, "
+                + "or a <code>complete file</code> is used. Notably: <code>simple files</code> "
+                + "aim at providing summarized information over all data types; "
+                + "<code>complete files</code> aim at reporting all information, "
+                + "allowing for instance to retrieve the contribution of each data type to a call.</p>");
+        this.writeln("<p>Jump to format description for: </p>"
+                + "<ul>"
+                + "<li><a href='#single_diff_simple' title='Quick jump to simple file description'>"
+                + "simple file</a></li>"
+                + "<li><a href='#single_diff_complete' title='Quick jump to complete file description'>"
+                + "complete file</a></li>"
+                + "</ul>");
+        
+        //simple expression file
+        //this.writeSingleSpeciesSimpleExprCallFileDoc();
+        
+        //complete expression file
+        //this.writeSingleSpeciesCompleteExprCallFileDoc(); //end of presence/absence of expression
+        
         
         log.exit();
     }
@@ -944,6 +984,61 @@ this.writeln("<div class='documentationmenu'><ul>");
         + "over all species. It is therefore necessary, to obtain correct Ensembl gene IDs "
         + "for those species, to replace gene ID prefix 'PPAG' with 'ENSPTRG', "
         + "and 'PPYG' prefix with 'ENSPPYG'.");
+    }
+    
+    /**
+     * @return  A {@code String} that is a general introduction to the concept 
+     *          of presence/absence calls of expression, to be used in various places 
+     *          of the documentation, in HTML, and HTML escaped if necessary.
+     */
+    public String getExprCallExplanation() {
+        log.entry();
+        return log.exit("<p>Bgee provides calls of presence/absence of expression. A call "
+                + "corresponds to a gene, with reported presence or absence of expression, "
+                + "in an anatomical entity, during a developmental stage. Only \"normal\" "
+                + "expression is considered in Bgee (i.e., no treatment, no disease, "
+                + "no gene knock-out, etc.). Bgee collects data from different types, "
+                + "from different studies, in different organisms, and provides a summary "
+                + "from all these data as unique calls <code>gene - anatomical entity - "
+                + "developmental stage</code>, with confidence information, notably taking "
+                + "into account potential conflicts.</p>"
+                + "<p>Calls of presence/absence of expression are very similar to the data "
+                + "that can be reported using <i>in situ</i> hybridization methods; Bgee applies "
+                + "dedicated statistical analyses to generate such calls from EST, Affymetrix, "
+                + "and RNA-Seq data, with confidence information, and also collects "
+                + "<i>in situ</i> hybridization calls from model organism databases. "
+                + "This offers the possibility to aggregate and compare these calls of "
+                + "presence/absence of expression between different experiments, "
+                + "different data types, and different species, and to benefit from both "
+                + "the high anatomy coverage provided by low-throughput methods, "
+                + "and the high genomic coverage provided by high-throughput methods.</p>");
+    }
+    /**
+     * @return  A {@code String} that is a general introduction to the concept 
+     *          of over-/under-expression calls, to be used in various places 
+     *          of the documentation, in HTML, and HTML escaped if necessary.
+     */
+    public String getDiffExprCallExplanation() {
+        log.entry();
+        return log.exit("<p>Bgee provides calls of over-/under-expression. A call "
+                + "corresponds to a gene, with significant variation of "
+                + "its level of expression, in an anatomical entity "
+                + "during a developmental stage, as compared to, either: i) other anatomical entities "
+                + "at the same (broad) developmental stage (over-/under-expression across anatomy); "
+                + "ii) the same anatomical entity at different (precise) developmental stages "
+                + "(over-/under-expression across life stages). "
+                + "These analyses of differential expression are performed using Affymetrix "
+                + "and RNA-Seq experiments with at least 3 suitable conditions (anatomical entity/"
+                + "developmental stage), and at least 2 replicates for each; as for all data in Bgee, "
+                + "only \"normal\" expression is considered (i.e., no treatment, no disease, "
+                + "no gene knock-out, etc.). </p>"
+                + "<p>Bgee runs all possible differential expression analyses for each experiment "
+                + "independently, then collects all results and provides a summary "
+                + "as unique calls <code>gene - anatomical entity - developmental stage</code>, "
+                + "with confidence information, and conflicts resolved using a voting system "
+                + "weighted by p-values. This offers the possibility to aggregate and compare "
+                + "these calls between different experiments, different data types, "
+                + "and different species. </p>");
     }
 
     /**

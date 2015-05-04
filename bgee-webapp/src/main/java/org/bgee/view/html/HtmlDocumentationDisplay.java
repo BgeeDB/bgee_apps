@@ -350,14 +350,48 @@ this.writeln("<div class='documentationmenu'><ul>");
         this.writeln(this.getBackToTheTopLink());
         this.writeln("</div>");
         
-        
-        this.writeln("<div id='multi'>");
-        this.writeln("<h2>Multi-species download files</h2>");
-        this.writeln("<div class='documentationsection'>");
-        this.writeln("<p> </p>");
-        this.writeln("<p> </p>");
+        //multi-species documentation
+        this.writeln("<div>");
+        this.writeln("<h2 id='multi'>Multi-species download files</h2>");
+        this.writeln("<div class='doc_content'>");
+        this.writeln("<p>Bgee provides the ability to compare expression data between species, "
+                + "with great anatomical details, using formal concepts of homology: "
+                + "homology of genes, homology of anatomical entities. This allows to perform "
+                + "accurate comparisons between species, even for distant species "
+                + "for which the anatomy mapping might not be obvious.</p>");
+        this.writeln("<ul class='doc_content'>"
+                + "<li><span class='list_element_title'>homology of anatomical entities</span>: "
+                + "When comparing multiple species, only anatomical entities homologous "
+                + "between all species compared are considered, meaning, only anatomical entities "
+                + "derived from an organ existing before the divergence of the species compared. "
+                + "This requires careful annotations of the homology history of animal anatomy. "
+                + "These annotations are described in a separate project maintained "
+                + "by the Bgee team, see <a target='_blank' "
+                + "href='https://github.com/BgeeDB/anatomical-similarity-annotations/' "
+                + "title='See anatomical-similarity-annotations project on GitHub'>"
+                + "homology annotation project on GitHub</a>. <br />"
+                + "In practice, when comparing expression data between several species, "
+                + "the anatomical entities used are those with a homology relation valid "
+                + "for their Least Common Ancestor (LCA), and any of its ancestral taxa. "
+                + "For instance, if comparing data between human and zebrafish, "
+                + "the LCA would be the taxon <i>Euteleostomi</i>; as a result, "
+                + "annotations to this taxon would be used, such as the relation of homology "
+                + "between \"tetrapod parietal bone\" (UBERON:0000210) and "
+                + "\"actinopterygian frontal bone\" (UBERON:0004866); but also, annotations "
+                + "to ancestral taxa, such as the annotation stating that \"ophthalmic nerve\" "
+                + "appeared in the <i>Vertebrata</i> common ancestor; annotations to more recent taxa "
+                + "than the LCA would be discarded, such as the annotation to the \"forelimb\" "
+                + "structure (UBERON:0002102), homologous in the <i>Tetrapoda</i> lineage.</li>"
+                + "</ul>");
+        this.writeln("<p>Jump to: </p>"
+                + "<ul>"
+//                + "<li><a href='#multi_expr' title='Quick jump to presence/absence of expression'>"
+//                + "Presence/absence of expression</a></li>"
+                + "<li><a href='#multi_diff' title='Quick jump to differential expression'>"
+                + "Over-/under-expression across anatomy or life stages</a></li>"
+                + "</ul>");
         this.writeln("</div>");
-        this.writeln("</div>"); // end of subsection2
+        this.writeln("</div>"); // end of multi-species download file
         
         this.writeln(this.getBackToTheTopLink());
         
@@ -1035,10 +1069,11 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "<p>Bgee runs all possible differential expression analyses for each experiment "
                 + "independently, then collects all results and provides a summary "
                 + "as unique calls <code>gene - anatomical entity - developmental stage</code>, "
-                + "with confidence information, and conflicts resolved using a voting system "
-                + "weighted by p-values. This offers the possibility to aggregate and compare "
-                + "these calls between different experiments, different data types, "
-                + "and different species. </p>");
+                + "with confidence information, and conflicts within each data type resolved "
+                + "using a voting system weighted by p-values (conflicts between different "
+                + "data types are treated differently). This offers the possibility "
+                + "to aggregate and compare these calls between different experiments, "
+                + "different data types, and different species. </p>");
     }
 
     /**

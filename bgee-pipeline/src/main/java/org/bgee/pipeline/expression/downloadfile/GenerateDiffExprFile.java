@@ -215,10 +215,14 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
      * @version Bgee 13
      * @since Bgee 13
      */
+    //TODO: what level of ambiguity of 'no diff expressed' vs. 'not expressed'? no ambiguity? 
+    //lower qual?
+    //TODO: actually, for weak ambiguity, shouldn't we provide the direction of the diff expression? 
+    //There is kind of a "winning" call in case of weak ambiguity
     public enum DiffExpressionData {
         NO_DATA("no data"), NOT_EXPRESSED("not expressed"), OVER_EXPRESSION("over-expression"), 
         UNDER_EXPRESSION("under-expression"), NOT_DIFF_EXPRESSION("no diff expression"), 
-        WEAK_AMBIGUITY("weak ambiguity"), STRONG_AMBIGUITY("strong ambiguity");
+        WEAK_AMBIGUITY("low ambiguity"), STRONG_AMBIGUITY("high ambiguity");
 
         private final String stringRepresentation;
 
@@ -979,9 +983,13 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
                             "Both DiffExprCallType are set to 'no data' or 'not expressed'"));
             }
             if (allDataQuality.contains(DataState.HIGHQUALITY)) {
-                quality = DataState.HIGHQUALITY.getStringRepresentation();
+                //TODO: OK, now I know why I didn't like the idea of using an Enum 
+                //directly from a TO...
+                //quality = DataState.HIGHQUALITY.getStringRepresentation();
+                quality = "high quality";
             } else {
-                quality = DataState.LOWQUALITY.getStringRepresentation();
+                //quality = DataState.LOWQUALITY.getStringRepresentation();
+                quality = "low quality";
             }
 
         // All possible cases where the summary is WEAK_AMBIGUITY:
@@ -1006,7 +1014,8 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         } else if (allType.contains(DiffExprCallType.NOT_EXPRESSED) && 
                 allType.contains(DiffExprCallType.UNDER_EXPRESSED)) {
             summary = DiffExpressionData.UNDER_EXPRESSION;
-            quality = DataState.LOWQUALITY.getStringRepresentation();
+            //quality = DataState.LOWQUALITY.getStringRepresentation();
+            quality = "low quality";
             
         } else {
             throw log.throwing(new AssertionError("All logical conditions should have been checked."));

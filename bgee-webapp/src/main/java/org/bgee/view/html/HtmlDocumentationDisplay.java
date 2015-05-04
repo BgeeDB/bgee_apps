@@ -15,8 +15,9 @@ import org.bgee.view.DocumentationDisplay;
  * This class displays the page having the category "documentation", i.e. with the parameter
  * page=documentation for the {@code displayTypes} HTML.
  *
+ * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13
+ * @version Bgee 13 May 2015
  * @since   Bgee 13
  */
 public class HtmlDocumentationDisplay extends HtmlParentDisplay implements DocumentationDisplay {
@@ -177,6 +178,19 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
      * @see #OBSERVED_DATA_EXPR_STATE_COL_NAME
      */
     private final String OBSERVED_DATA_LINK_TITLE = "See " + OBSERVED_DATA_COL_NAME 
+            + " column description";
+    /**
+     * A {@code String} that is the name of the differential expression state column in download files, 
+     * HTML escaped if necessary.
+     * @see #DIFF_EXPR_STATE_LINK_TITLE
+     */
+    private final String DIFF_EXPR_STATE_COL_NAME = "Differential expression";
+    /**
+     * A {@code String} to be used in {@code title} attribute of {@code a} tag linking to 
+     * differential expression state column description (used several times), HTML escaped if necessary.
+     * @see #EXPR_STATE_COL_NAME
+     */
+    private final String DIFF_EXPR_STATE_LINK_TITLE = "See " + DIFF_EXPR_STATE_COL_NAME 
             + " column description";
 
     /**
@@ -777,12 +791,77 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "complete file</a></li>"
                 + "</ul>");
         
-        //simple expression file
-        //this.writeSingleSpeciesSimpleExprCallFileDoc();
+        //simple diff expression file
+        this.writeSingleSpeciesSimpleDiffExprCallFileDoc();
         
-        //complete expression file
-        //this.writeSingleSpeciesCompleteExprCallFileDoc(); //end of presence/absence of expression
+        //complete diff expression file
+        //this.writeSingleSpeciesCompleteDiffExprCallFileDoc(); //end of presence/absence of expression
         
+        
+        log.exit();
+    }
+    
+    /**
+     * Write the documentation related to single species simple over-/under-expression 
+     * download files. The id attributes used in h4 tag must stay in sync with anchors used 
+     * in quick jump links defined in method {@link #writeSingleSpeciesDiffExprFileDoc()}.
+     * 
+     * @see #writeSingleSpeciesDiffExprFileDoc()
+     */
+    private void writeSingleSpeciesSimpleDiffExprCallFileDoc() {
+        log.entry();
+        
+        this.writeln("<h4 id='single_diff_simple'>Simple file</h4>");
+        this.writeln("<p>In simple files, only calls of over-expression and under-expression "
+                + "are provided, with summarized information hiding the contribution "
+                + "of ech data type to the call.</p>");
+        this.writeln("<table class='call_download_file'>");
+        this.writeln("<caption>Format description for single species simple differential expression file</caption>");
+        this.writeln("<thead>");
+        this.writeln("<tr><th>Column</th><th>Content</th><th>Cardinality</th><th>Example</th></tr>");
+        this.writeln("</thead>");
+        this.writeln("<tbody>");
+        this.writeln("<tr><td>1</td><td><a href='#single_diff_simple_col1' title='" 
+                + GENE_ID_LINK_TITLE + "'>" + GENE_ID_COL_NAME 
+                + "</a></td><td>1</td><td>ENSG00000000419</td></tr>");
+        this.writeln("<tr><td>2</td><td><a href='#single_diff_simple_col2' title='" 
+                + GENE_NAME_LINK_TITLE + "'>" + GENE_NAME_COL_NAME 
+                + "</a></td><td>1</td><td>DPM1</td></tr>");
+        this.writeln("<tr><td>3</td><td><a href='#single_diff_simple_col3' title='" 
+                + STAGE_ID_LINK_TITLE + "'>" + STAGE_ID_COL_NAME 
+                + "</a></td><td>1</td><td>HsapDv:0000083</td></tr>");
+        this.writeln("<tr><td>4</td><td><a href='#single_diff_simple_col4' title='" 
+                + STAGE_NAME_LINK_TITLE + "'>" + STAGE_NAME_COL_NAME 
+                + "</a></td><td>1</td><td>infant stage (human)</td></tr>");
+        this.writeln("<tr><td>5</td><td><a href='#single_diff_simple_col5' title='" 
+                + ANAT_ENTITY_ID_LINK_TITLE + "'>" + ANAT_ENTITY_ID_COL_NAME 
+                + "</a></td><td>1</td><td>UBERON:0009834</td></tr>");
+        this.writeln("<tr><td>6</td><td><a href='#single_diff_simple_col6' title='" 
+                + ANAT_ENTITY_NAME_LINK_TITLE + "'>" + ANAT_ENTITY_NAME_COL_NAME 
+                + "</a></td><td>1</td><td>dorsolateral prefrontal cortex</td></tr>");
+        this.writeln("<tr><td>7</td><td><a href='#single_diff_simple_col7' title='" 
+                + EXPR_STATE_LINK_TITLE + "'>" + EXPR_STATE_COL_NAME 
+                + "</a></td><td>1</td><td>under-expression</td></tr>");
+        this.writeln("<tr><td>8</td><td><a href='#single_diff_simple_col8' title='" 
+                + EXPR_STATE_LINK_TITLE + "'>" + EXPR_STATE_COL_NAME 
+                + "</a></td><td>1</td><td>high quality</td></tr>");
+        this.writeln("</tbody>");
+        this.writeln("</table>");
+        this.writeln("<h5 id='single_diff_simple_col1'>" + GENE_ID_COL_NAME + "</h5>");
+        this.writeln(this.getGeneIdColDescription());
+        this.writeln("<h5 id='single_diff_simple_col2'>" + GENE_NAME_COL_NAME + "</h5>");
+        this.writeln(this.getGeneNameColDescription(1));
+        this.writeln("<h5 id='single_diff_simple_col3'>" + STAGE_ID_COL_NAME + "</h5>");
+        this.writeln(this.getStageIdColDescription());
+        this.writeln("<h5 id='single_diff_simple_col4'>" + STAGE_NAME_COL_NAME + "</h5>");
+        this.writeln(this.getStageNameColDescription(3));
+        this.writeln("<h5 id='single_diff_simple_col5'>" + ANAT_ENTITY_ID_COL_NAME + "</h5>");
+        this.writeln(this.getAnatEntityIdColDescription());
+        this.writeln("<h5 id='single_diff_simple_col6'>" + ANAT_ENTITY_NAME_COL_NAME + "</h5>");
+        this.writeln(this.getAnatEntityNameColDescription(5));
+        this.writeln("<h5 id='single_diff_simple_col7'>" + EXPR_STATE_COL_NAME + "</h5>");
+        this.writeln(this.getExprStateColDescription(1, 3, 5)); 
+        this.writeln("<p><a href='#single_expr'>Back to presence/absence of expression menu</a></p>");
         
         log.exit();
     }

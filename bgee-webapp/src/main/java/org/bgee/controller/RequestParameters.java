@@ -103,7 +103,7 @@ public class RequestParameters {
      * A {@code String} that is the value taken by the {@code page} parameter 
      * (see {@link URLParameters#getParamPage()}) when a download page is requested.
      */
-    public static final String PAGE_DOCUMENTATION = "documentation";
+    public static final String PAGE_DOCUMENTATION = "doc";
     
     /**
      * A {@code String} that is the value taken by the {@code page} parameter 
@@ -117,7 +117,7 @@ public class RequestParameters {
      * providing calls of expression is requested. Value of the parameter page should be 
      * {@link #PAGE_DOCUMENTATION}.
      */
-    public static final String ACTION_DOC_DOWLOAD_FILES = "call_download_files";
+    public static final String ACTION_DOC_DOWLOAD_FILES = "call_files";
     
     /**
      * A {@code BgeeProperties} instance to provide all the properties values

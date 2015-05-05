@@ -632,14 +632,14 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         }
         
         List<Object> specificTypeQualities = new ArrayList<Object>();
-        specificTypeQualities.add(DataState.HIGHQUALITY.getStringRepresentation());
-        specificTypeQualities.add(DataState.LOWQUALITY.getStringRepresentation());
-        specificTypeQualities.add(DataState.NODATA.getStringRepresentation());
+        specificTypeQualities.add(this.convertDataStateToString(DataState.HIGHQUALITY));
+        specificTypeQualities.add(this.convertDataStateToString(DataState.LOWQUALITY));
+        specificTypeQualities.add(this.convertDataStateToString(DataState.NODATA));
         
         List<Object> resumeQualities = new ArrayList<Object>();
-        resumeQualities.add(DataState.HIGHQUALITY.getStringRepresentation());
-        resumeQualities.add(DataState.LOWQUALITY.getStringRepresentation());
-        resumeQualities.add(GenerateDiffExprFile.NA_VALUE);
+        resumeQualities.add(this.convertDataStateToString(DataState.HIGHQUALITY));
+        resumeQualities.add(this.convertDataStateToString(DataState.LOWQUALITY));
+        resumeQualities.add(this.convertDataStateToString(DataState.NODATA));
         
         if (fileType.isSimpleFileType()) {
             return log.exit(new CellProcessor[] { 
@@ -874,8 +874,12 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         if (!fileType.isSimpleFileType()) {
             row.put(AFFYMETRIX_DATA_COLUMN_NAME, 
                     to.getDiffExprCallTypeAffymetrix().getStringRepresentation());
+            //TODO: OK, now I know why I didn't like the idea of using an Enum 
+            //directly from a TO...
             row.put(AFFYMETRIX_CALL_QUALITY_COLUMN_NAME, 
-                    to.getAffymetrixData().getStringRepresentation());
+                    //to.getAffymetrixData().getStringRepresentation());
+                    this.convertDataStateToString(to.getAffymetrixData()));
+            
             row.put(AFFYMETRIX_P_VALUE_COLUMN_NAME, String.valueOf(to.getBestPValueAffymetrix()));
             row.put(AFFYMETRIX_CONSISTENT_DEA_COUNT_COLUMN_NAME, 
                     String.valueOf(to.getConsistentDEACountAffymetrix()));
@@ -885,7 +889,9 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
             row.put(RNASEQ_DATA_COLUMN_NAME,
                     to.getDiffExprCallTypeRNASeq().getStringRepresentation());
             row.put(RNASEQ_CALL_QUALITY_COLUMN_NAME,
-                    to.getRNASeqData().getStringRepresentation());
+                    //to.getRNASeqData().getStringRepresentation());
+                    this.convertDataStateToString(to.getRNASeqData()));
+            
             row.put(RNASEQ_P_VALUE_COLUMN_NAME, String.valueOf(to.getBestPValueRNASeq()));
             row.put(RNASEQ_CONSISTENT_DEA_COUNT_COLUMN_NAME,
                     String.valueOf(to.getConsistentDEACountRNASeq()));
@@ -923,7 +929,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         log.entry(fileType, row, affymetrixType, affymetrixQuality, rnaSeqType, rnaSeqQuality);
         
         DiffExpressionData summary = DiffExpressionData.NO_DATA;
-        String quality = GenerateDiffExprFile.NA_VALUE;
+        String quality = this.convertDataStateToString(DataState.NODATA);
 
         Set<DiffExprCallType> allType = EnumSet.of(affymetrixType, rnaSeqType);
 
@@ -941,7 +947,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         if ((allType.contains(DiffExprCallType.UNDER_EXPRESSED) &&
                 allType.contains(DiffExprCallType.OVER_EXPRESSED))) {
             summary = DiffExpressionData.STRONG_AMBIGUITY;
-            quality = GenerateDiffExprFile.NA_VALUE;
+            quality = this.convertDataStateToString(DataState.NODATA);
 
         // Both data types are equals or only one is set to 'no data': 
         // we choose the data which is not 'no data'.
@@ -986,10 +992,10 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
                 //TODO: OK, now I know why I didn't like the idea of using an Enum 
                 //directly from a TO...
                 //quality = DataState.HIGHQUALITY.getStringRepresentation();
-                quality = "high quality";
+                quality = this.convertDataStateToString(DataState.HIGHQUALITY);
             } else {
                 //quality = DataState.LOWQUALITY.getStringRepresentation();
-                quality = "low quality";
+                quality = this.convertDataStateToString(DataState.LOWQUALITY);
             }
 
         // All possible cases where the summary is WEAK_AMBIGUITY:
@@ -1005,7 +1011,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
                         (allType.contains(DiffExprCallType.OVER_EXPRESSED)) || 
                         allType.contains(DiffExprCallType.NOT_DIFF_EXPRESSED))) {
             summary = DiffExpressionData.WEAK_AMBIGUITY;
-            quality = GenerateDiffExprFile.NA_VALUE;
+            quality = this.convertDataStateToString(DataState.NODATA);
 
         // One call containing NOT_EXPRESSED and UNDER_EXPRESSED returns 
         // UNDER_EXPRESSION with LOWQUALITY 
@@ -1015,7 +1021,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
                 allType.contains(DiffExprCallType.UNDER_EXPRESSED)) {
             summary = DiffExpressionData.UNDER_EXPRESSION;
             //quality = DataState.LOWQUALITY.getStringRepresentation();
-            quality = "low quality";
+            quality = this.convertDataStateToString(DataState.LOWQUALITY);
             
         } else {
             throw log.throwing(new AssertionError("All logical conditions should have been checked."));
@@ -1026,5 +1032,25 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         row.put(QUALITY_COLUMN_NAME, quality);
 
         return log.exit(true);
+    }
+    
+    /**
+     * Convert a {@code org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState} 
+     * into a {@code String}. This is because its method {@code getStringRepresentation} 
+     * is not convenient for display in diff expression files.
+     * 
+     * @param dataState A {@code DataState} to be converted.
+     * @return          A {@code String} corresponding to {@code dataState}, to be used 
+     *                  in diff expression files.
+     */
+    private String convertDataStateToString(DataState dataState) {
+        log.entry(dataState);
+        if (DataState.HIGHQUALITY.equals(dataState)) {
+            return log.exit("high quality");
+        }
+        if (DataState.LOWQUALITY.equals(dataState)) {
+            return log.exit("low quality");
+        }
+        return log.exit(GenerateDiffExprFile.NA_VALUE);
     }
 }

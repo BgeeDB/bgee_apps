@@ -262,6 +262,50 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
             "RNA-Seq analysis count in conflict with RNA-Seq call";
 
     /**
+     * A {@code String} that is the name of the column storing homologous anatomical 
+     * entity IDs in multi-species download files, HTML escaped if necessary.
+     */
+    private final String MULTI_ANAT_ENTITY_IDS_COL_NAME ="Anatomical entity IDs";
+    /**
+     * A {@code String} that is the name of the column storing homologous anatomical 
+     * entity names in multi-species download files, HTML escaped if necessary.
+     */
+    private final String MULTI_ANAT_ENTITY_NAMES_COL_NAME ="Anatomical entity names";
+    /**
+     * A {@code String} that is the name of the column storing the OMA HOG ID 
+     * in multi-species download files, HTML escaped if necessary.
+     */
+    private final String OMA_ID_COL_NAME = "OMA ID";
+    /**
+     * A {@code String} that is the prefix of the name of the columns storing the number 
+     * of over-expressed genes in a condition for a gene homology group, for a given species 
+     * (the suffix of the column name is the latin name of the species) in multi-species 
+     * download file, HTML escaped if necessary.
+     */
+    private final String OVER_EXPRESSED_FOR_SPECIES_COL_NAME = "Over-expressed gene count for";
+    /**
+     * A {@code String} that is the prefix of the name of the columns storing the number 
+     * of under-expressed genes in a condition for a gene homology group, for a given species 
+     * (the suffix of the column name is the latin name of the species) in multi-species 
+     * download file, HTML escaped if necessary.
+     */
+    private final String UNDER_EXPRESSED_FOR_SPECIES_COL_NAME = "Under-expressed gene count for";
+    /**
+     * A {@code String} that is the prefix of the name of the columns storing the number 
+     * of genes with no diff. expression in a condition for a gene homology group, for a given species 
+     * (the suffix of the column name is the latin name of the species) in multi-species 
+     * download file, HTML escaped if necessary.
+     */
+    private final String NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME = "Not diff. expressed gene count for";
+    /**
+     * A {@code String} that is the prefix of the name of the columns storing the number 
+     * of genes with no data or inconclusive results in a condition for a gene homology group, 
+     * for a given species (the suffix of the column name is the latin name of the species) 
+     * in multi-species download file, HTML escaped if necessary.
+     */
+    private final String NA_FOR_SPECIES_COL_NAME = "N/A gene count for";
+
+    /**
      * Default constructor.
      *
      * @param response          A {@code HttpServletResponse} that will be used to display the 
@@ -492,12 +536,12 @@ this.writeln("<div class='documentationmenu'><ul>");
      * download files. Anchors used in this method for quick jump links 
      * have to stayed in sync with id attributes of h2, h3 and h4 tags defined in 
      * {@link #writeSingleSpeciesExprCallFileDoc()}, 
-     * {@link #writeSingleSpeciesSimpleExprFileDoc()} and 
-     * {@link #writeSingleSpeciesCompleteExprFileDoc()}.
+     * {@link #writeSingleSpeciesSimpleExprCallFileDoc()} and 
+     * {@link #writeSingleSpeciesCompleteExprCallFileDoc()}.
      * 
      * @see #writeSingleSpeciesExprCallFileDoc()
-     * @see #writeSingleSpeciesSimpleExprFileDoc()
-     * @see #writeSingleSpeciesCompleteExprFileDoc()
+     * @see #writeSingleSpeciesSimpleExprCallFileDoc()
+     * @see #writeSingleSpeciesCompleteExprCallFileDoc()
      */
     private void writeDocMenuForCallDownloadFiles() {
         log.entry();
@@ -560,11 +604,11 @@ this.writeln("<div class='documentationmenu'><ul>");
      * Write the documentation related to single species presence/absence of expression 
      * simple and complete download files. Anchors used in this method for quick jump links 
      * have to stayed in sync with id attributes of h4 tags defined in 
-     * {@link #writeSingleSpeciesSimpleExprFileDoc()} and 
-     * {@link #writeSingleSpeciesCompleteExprFileDoc()}.
+     * {@link #writeSingleSpeciesSimpleExprCallFileDoc()} and 
+     * {@link #writeSingleSpeciesCompleteExprCallFileDoc()}.
      * 
-     * @see #writeSingleSpeciesSimpleExprFileDoc()
-     * @see #writeSingleSpeciesCompleteExprFileDoc()
+     * @see #writeSingleSpeciesSimpleExprCallFileDoc()
+     * @see #writeSingleSpeciesCompleteExprCallFileDoc()
      */
     private void writeSingleSpeciesExprCallFileDoc() {
         log.entry();
@@ -628,11 +672,11 @@ this.writeln("<div class='documentationmenu'><ul>");
     /**
      * Write the documentation related to single species simple presence/absence of expression 
      * download files. The id attribute used in h4 tag must stay in sync with anchors used 
-     * in quick jump links defined in method {@link #writeSingleSpeciesExprFileDoc()}.
+     * in quick jump links defined in method {@link #writeSingleSpeciesExprCallFileDoc()}.
      * If the header of this file changes, {@link #getSingleSpeciesSimpleExprFileHeaderDesc()} 
      * must be updated.
      * 
-     * @see #writeSingleSpeciesExprFileDoc()
+     * @see #writeSingleSpeciesExprCallFileDoc()
      * @see #getSingleSpeciesSimpleExprFileHeaderDesc()
      */
     private void writeSingleSpeciesSimpleExprCallFileDoc() {
@@ -694,11 +738,11 @@ this.writeln("<div class='documentationmenu'><ul>");
     /**
      * Write the documentation related to single species complete presence/absence of expression 
      * download files. The id attribute used in h4 tag must stay in sync with anchors used 
-     * in quick jump links defined in method {@link #writeSingleSpeciesExprFileDoc()}.
+     * in quick jump links defined in method {@link #writeSingleSpeciesExprCallFileDoc()}.
      * If the header of this file changes, {@link #getSingleSpeciesCompleteExprFileHeaderDesc()} 
      * must be updated.
      * 
-     * @see #writeSingleSpeciesExprFileDoc()
+     * @see #writeSingleSpeciesExprCallFileDoc()
      * @see #getSingleSpeciesCompleteExprFileHeaderDesc()
      */
     private void writeSingleSpeciesCompleteExprCallFileDoc() {
@@ -1148,6 +1192,166 @@ this.writeln("<div class='documentationmenu'><ul>");
     }
     
     /**
+     * Write the documentation related to multiple-species over/under expression 
+     * simple and complete download files. Anchors used in this method for quick jump links 
+     * have to stayed in sync with id attributes of h4 tags defined in 
+     * {@link #writeMultiSpeciesSimpleDiffExprFileDoc()} and 
+     * {@link #writeMultiSpeciesCompleteDiffExprFileDoc()}.
+     * 
+     * @see #writeMultiSpeciesSimpleDiffExprFileDoc()
+     * @see #writeMultiSpeciesCompleteDiffExprFileDoc()
+     */
+    private void writeMultiSpeciesDiffExprCallFileDoc() {
+        log.entry();
+        
+        //presence/absence of expression
+        this.writeln("<h3 id='multi_diff'>Over-/under-expression across anatomy or life stages in multiple species</h3>");
+        //TODO: add link to data analyses documentation
+        this.writeln(this.getDiffExprCallExplanation());
+        this.writeln("<p>In multi-species files, results are made comparable "
+                + "between homologous genes, in homologous anatomical entities and comparable "
+                + "developmental stages: only genes sharing a common ancestral gene "
+                + "in the least common ancestor of the species compared are studied, "
+                + "and only in anatomical entities sharing a homology relation between "
+                + "all species compared, with data mapped to broad developmental stages "
+                + "shared across animal kingdom (see <a href='#multi' "
+                + "title='Quick jump to multi-species file description'>"
+                + "use of homology in multi-species files</a>).</p>");
+        this.writeln("<p>Note that, as opposed to calls of presence/absence of expression, "
+                + "no propagation of differential expression calls is performed "
+                + "using anatomical and life stage ontologies.</p>");
+        this.writeln("<p>Over-/under-expression calls are then filtered and presented differently "
+                + "depending on whether a <code>simple file</code>, "
+                + "or a <code>complete file</code> is used. Notably: <code>simple files</code> "
+                + "aim at providing one line per homology gene group and homologous organ/developmental stage; "
+                + "<code>complete files</code> aim at reporting all information, for each gene "
+                + "of the homology groups, allowing for instance to retrieve the contribution "
+                + "of each data type to a call, or to retrieve all genes and conditions tested, including genes "
+                + "having no differential expression in these conditions.</p>");
+        this.writeln("<p>Jump to format description for: </p>"
+                + "<ul>"
+                + "<li><a href='#multi_diff_simple' title='Quick jump to simple file description'>"
+                + "simple file</a></li>"
+                + "<li><a href='#multi_diff_complete' title='Quick jump to complete file description'>"
+                + "complete file</a></li>"
+                + "</ul>");
+        
+        //simple diff expression file
+        this.writeMultiSpeciesSimpleDiffExprCallFileDoc();
+//        
+//        //complete diff expression file
+//        this.writeSingleSpeciesCompleteDiffExprCallFileDoc(); //end of presence/absence of expression
+        
+        
+        log.exit();
+    }
+    /**
+     * Write the documentation related to multi-species simple over-/under-expression 
+     * download files. The id attributes used in h4 tag must stay in sync with anchors used 
+     * in quick jump links defined in method {@link #writeMultiSpeciesDiffExprFileDoc()}. 
+     * If the header of this file changes, {@link #getMultiSpeciesSimpleDiffExprFileHeaderDesc()} 
+     * must be updated.
+     * 
+     * @see #writeMultiSpeciesDiffExprCallFileDoc()
+     * @see #getMultiSpeciesSimpleDiffExprCallFileHeaderDesc()
+     */
+    private void writeMultiSpeciesSimpleDiffExprCallFileDoc() {
+        log.entry();
+        
+        this.writeln("<h4 id='multi_diff_simple'>Simple file</h4>");
+        this.writeln("<p>In simple files, each line provides information for a gene homology group, "
+                + "in a condition (homologous anatomical entity/comparable developmental stage); "
+                + "columns then provide, for each species, the number of genes over-expressed, "
+                + "under-expressed, not differentially expressed, and with no data, or "
+                + "inconclusive results; this means that the number of columns is variable "
+                + "depending on the number of species compared.</p>");
+        this.writeln("<p>In simple files, only lines with data in at least two species, and at least "
+                + "one over-expression or under-expression call in a species, are provided.</p>");
+        this.writeln("<p>Each gene homology group is separated with a \"header\" line, "
+                + "starting with <code>//</code>, providing the IDs and names of the genes "
+                //TODO: change when format has been updated
+                + "member of the group. Please note that this format is likely to change "
+                + "in the next release of Bgee.</p>");
+        this.writeln("<table class='call_download_file'>");
+        this.writeln("<caption>Format description for multi-species simple differential expression file</caption>");
+        this.writeln("<thead>");
+        this.writeln("<tr><th>Column</th><th>Content</th><th>Cardinality</th><th>Example</th></tr>");
+        this.writeln("</thead>");
+        this.writeln("<tbody>");
+        this.writeln("<tr><td>1</td><td><a href='#multi_diff_simple_col1' title='" 
+                + "See " + OMA_ID_COL_NAME + " column description'>" 
+                + OMA_ID_COL_NAME 
+                + "</a></td><td>1</td><td>ENSG00000000419</td></tr>");
+        //TODO: change order of columns anat entity/stage once we re-generate the files.
+        this.writeln("<tr><td>2</td><td><a href='#multi_diff_simple_col2' title='" 
+                + "See " + MULTI_ANAT_ENTITY_IDS_COL_NAME + " column description'>" 
+                + MULTI_ANAT_ENTITY_IDS_COL_NAME 
+                + "</a></td><td>1 or greater</td><td>UBERON:0009834</td></tr>");
+        this.writeln("<tr><td>3</td><td><a href='#multi_diff_simple_col3' title='" 
+                + "See " + MULTI_ANAT_ENTITY_NAMES_COL_NAME + " column description'>" 
+                + MULTI_ANAT_ENTITY_NAMES_COL_NAME 
+                + "</a></td><td>1 or greater</td><td>UBERON:0009834</td></tr>");
+        this.writeln("<tr><td>4</td><td><a href='#multi_diff_simple_col4' title='" 
+                + STAGE_ID_LINK_TITLE + "'>" + STAGE_ID_COL_NAME 
+                + "</a></td><td>1</td><td>HsapDv:0000083</td></tr>");
+        this.writeln("<tr><td>5</td><td><a href='#multi_diff_simple_col5' title='" 
+                + STAGE_NAME_LINK_TITLE + "'>" + STAGE_NAME_COL_NAME 
+                + "</a></td><td>1</td><td>infant stage (human)</td></tr>");
+        this.writeln("<tr><td>6</td><td><a href='#multi_diff_simple_col6' title='" 
+                + "See " + OVER_EXPRESSED_FOR_SPECIES_COL_NAME + " species1 column description'>" 
+                + OVER_EXPRESSED_FOR_SPECIES_COL_NAME + " species1 "
+                + "</a></td><td>1</td><td>dorsolateral prefrontal cortex</td></tr>");
+        this.writeln("<tr><td>7</td><td><a href='#multi_diff_simple_col7' title='" 
+                + "See " + UNDER_EXPRESSED_FOR_SPECIES_COL_NAME + " species1 column description'>" 
+                + UNDER_EXPRESSED_FOR_SPECIES_COL_NAME + " species1 "
+                + "</a></td><td>1</td><td>dorsolateral prefrontal cortex</td></tr>");
+        this.writeln("<tr><td>8</td><td><a href='#multi_diff_simple_col8' title='" 
+                + "See " + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME + " species1 column description'>" 
+                + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME + " species1 "
+                + "</a></td><td>1</td><td>dorsolateral prefrontal cortex</td></tr>");
+        this.writeln("<tr><td>9</td><td><a href='#multi_diff_simple_col9' title='" 
+                + "See " + NA_FOR_SPECIES_COL_NAME + " species1 column description'>" 
+                + NA_FOR_SPECIES_COL_NAME + " species1 "
+                + "</a></td><td>1</td><td>dorsolateral prefrontal cortex</td></tr>");
+        this.writeln("<tr><td>10</td><td><a href='#multi_diff_simple_col10' title='" 
+                + "See " + OVER_EXPRESSED_FOR_SPECIES_COL_NAME + " species2 column description'>" 
+                + OVER_EXPRESSED_FOR_SPECIES_COL_NAME + " species2 "
+                + "</a></td><td>1</td><td>dorsolateral prefrontal cortex</td></tr>");
+        this.writeln("<tr><td>11</td><td><a href='#multi_diff_simple_col11' title='" 
+                + "See " + UNDER_EXPRESSED_FOR_SPECIES_COL_NAME + " species2 column description'>" 
+                + UNDER_EXPRESSED_FOR_SPECIES_COL_NAME + " species2 "
+                + "</a></td><td>1</td><td>dorsolateral prefrontal cortex</td></tr>");
+        this.writeln("<tr><td>12</td><td><a href='#multi_diff_simple_col12' title='" 
+                + "See " + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME + " species2 column description'>" 
+                + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME + " species2 "
+                + "</a></td><td>1</td><td>dorsolateral prefrontal cortex</td></tr>");
+        this.writeln("<tr><td>13</td><td><a href='#multi_diff_simple_col13' title='" 
+                + "See " + NA_FOR_SPECIES_COL_NAME + " species2 column description'>" 
+                + NA_FOR_SPECIES_COL_NAME + " species2 "
+                + "</a></td><td>1</td><td>dorsolateral prefrontal cortex</td></tr>");
+        this.writeln("<tr><td>...</td><td>" 
+                + OVER_EXPRESSED_FOR_SPECIES_COL_NAME + " speciesXX "
+                + "</td><td>1</td><td>...</td></tr>");
+        this.writeln("<tr><td>...</td><td>...</td><td></td><td></td></tr>");
+        this.writeln("</tbody>");
+        this.writeln("</table>");
+        this.writeln("<h5 id='multi_diff_simple_col1'>" + GENE_ID_COL_NAME + " (column 1)</h5>");
+        this.writeln(this.getGeneIdColDescription());
+        this.writeln("<h5 id='multi_diff_simple_col2'>" + GENE_NAME_COL_NAME + " (column 2)</h5>");
+        this.writeln(this.getGeneNameColDescription(1));
+        this.writeln("<h5 id='multi_diff_simple_col3'>" + STAGE_ID_COL_NAME + " (column 3)</h5>");
+        this.writeln(this.getStageIdColDescription());
+        this.writeln("<h5 id='multi_diff_simple_col4'>" + STAGE_NAME_COL_NAME + " (column 4)</h5>");
+        this.writeln(this.getStageNameColDescription(3));
+        this.writeln("<h5 id='multi_diff_simple_col5'>" + ANAT_ENTITY_ID_COL_NAME + " (column 5)</h5>");
+        this.writeln(this.getAnatEntityIdColDescription());
+        this.writeln("<h5 id='multi_diff_simple_col6'>" + ANAT_ENTITY_NAME_COL_NAME + " (column 6)</h5>");
+        this.writeln(this.getAnatEntityNameColDescription(5));
+        
+        log.exit();
+    }
+
+    /**
      * @return  A {@code String} that is the description of the gene ID column 
      *          in download files (because we use it several times), formated in HTML 
      *          and HTML escaped if necessary.
@@ -1445,56 +1649,6 @@ this.writeln("<div class='documentationmenu'><ul>");
     } 
     
 
-    /**
-     * Write the documentation related to multiple-species over/under expression 
-     * simple and complete download files. Anchors used in this method for quick jump links 
-     * have to stayed in sync with id attributes of h4 tags defined in 
-     * {@link #writeMultiSpeciesSimpleDiffExprFileDoc()} and 
-     * {@link #writeMultiSpeciesCompleteDiffExprFileDoc()}.
-     * 
-     * @see #writeMultiSpeciesSimpleDiffExprFileDoc()
-     * @see #writeMultiSpeciesCompleteDiffExprFileDoc()
-     */
-    private void writeMultiSpeciesDiffExprCallFileDoc() {
-        log.entry();
-        
-        //presence/absence of expression
-        this.writeln("<h3 id='multi_diff'>Over-/under-expression across anatomy or life stages in multiple species</h3>");
-        //TODO: add link to data analyses documentation
-        this.writeln(this.getDiffExprCallExplanation());
-        this.writeln("<p>Moreover, in multi-species files, results are made comparable "
-                + "between homologous genes, in homologous anatomical entities (see "
-                + "<a href='#multi' title='Quick jump to multi-species file description'>"
-                + "use of homology in multi-species files</a>).</p>");
-        this.writeln("<p>Note that, as opposed to calls of presence/absence of expression, "
-                + "no propagation of differential expression calls is performed "
-                + "using anatomical and life stage ontologies.</p>");
-        this.writeln("<p>Over-/under-expression calls are then filtered and presented differently "
-                + "depending on whether a <code>simple file</code>, "
-                + "or a <code>complete file</code> is used. Notably: <code>simple files</code> "
-                + "aim at providing one line per homology gene group and homologous organ/developmental stage; "
-                + "<code>complete files</code> aim at reporting all information, for each gene "
-                + "of the homology groups, allowing for instance to retrieve the contribution "
-                + "of each data type to a call, or to retrieve all genes and conditions tested, including genes "
-                + "having no differential expression in these conditions.</p>");
-        this.writeln("<p>Jump to format description for: </p>"
-                + "<ul>"
-                + "<li><a href='#multi_diff_simple' title='Quick jump to simple file description'>"
-                + "simple file</a></li>"
-                + "<li><a href='#multi_diff_complete' title='Quick jump to complete file description'>"
-                + "complete file</a></li>"
-                + "</ul>");
-        
-//        //simple diff expression file
-//        this.writeSingleSpeciesSimpleDiffExprCallFileDoc();
-//        
-//        //complete diff expression file
-//        this.writeSingleSpeciesCompleteDiffExprCallFileDoc(); //end of presence/absence of expression
-        
-        
-        log.exit();
-    }
-    
     /**
      * @return  a {@code String} containing the HTML to create a table containing the description 
      *          of the header of a single species simple expression file (can be used 

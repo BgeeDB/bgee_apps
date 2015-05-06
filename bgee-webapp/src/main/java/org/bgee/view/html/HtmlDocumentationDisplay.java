@@ -1155,35 +1155,45 @@ this.writeln("<div class='documentationmenu'><ul>");
         this.writeln(this.getDiffExprStateColDescription(1, 3, 5, true, false, true, "Affymetrix data")); 
         this.writeln("<h5 id='single_diff_complete_col10'>" + AFFY_DIFF_EXPR_QUAL_COL_NAME + " (column 10)</h5>");
         this.writeln(this.getDiffExprQualColDescription(AFFY_DIFF_EXPR_STATE_COL_NAME, 9, false, true)); 
-        this.writeln("<h5 id='single_diff_complete_col11'>" + AFFY_DIFF_EXPR_P_VAL_COL_NAME + " (column 11)</h5>");
-        this.writeln("<p>Best p-value from the Affymetrix analyses supporting the Affymetrix call provided in "
-                + AFFY_DIFF_EXPR_STATE_COL_NAME + " (column 9). Set to 1.0 if no data available "
+        this.writeln("<h5 id='single_diff_complete_col11'>" + AFFY_DIFF_EXPR_P_VAL_COL_NAME 
+                + " (column 11)</h5>");
+        this.writeln("<p>Best p-value from the Affymetrix analyses supporting the Affymetrix "
+                + "call provided in <code>"
+                + AFFY_DIFF_EXPR_STATE_COL_NAME + "</code> (column 9). Set to 1.0 if no data available "
                 + "by Affymetrix.</p>");
-        this.writeln("<h5 id='single_diff_complete_col12'>" + AFFY_DIFF_EXPR_SUPPORT_COUNT_COL_NAME + " (column 12)</h5>");
-        this.writeln("<p>Number of Affymetrix analyses supporting the Affymetrix call provided in "
-                + AFFY_DIFF_EXPR_STATE_COL_NAME + " (column 9). Set to 0 if no data available "
-                + "by Affymetrix.</p>");
-        this.writeln("<h5 id='single_diff_complete_col13'>" + AFFY_DIFF_EXPR_CONFLICT_COUNT_COL_NAME + " (column 13)</h5>");
+        this.writeln("<h5 id='single_diff_complete_col12'>" + AFFY_DIFF_EXPR_SUPPORT_COUNT_COL_NAME 
+                + " (column 12)</h5>");
+        this.writeln("<p>Number of Affymetrix analyses supporting the Affymetrix call "
+                + "provided in <code>" + AFFY_DIFF_EXPR_STATE_COL_NAME + "</code> (column 9). "
+                + "Set to 0 if no data available by Affymetrix.</p>");
+        this.writeln("<h5 id='single_diff_complete_col13'>" + AFFY_DIFF_EXPR_CONFLICT_COUNT_COL_NAME 
+                + " (column 13)</h5>");
         this.writeln("<p>Number of Affymetrix analyses in conflict, generating a call different from "
-                + "the Affymetrix call provided in " 
-                + AFFY_DIFF_EXPR_STATE_COL_NAME + " (column 9). Set to 0 if no data available "
+                + "the Affymetrix call provided in <code>" 
+                + AFFY_DIFF_EXPR_STATE_COL_NAME + "</code> (column 9). Set to 0 if no data available "
                 + "by Affymetrix.</p>");
-        this.writeln("<h5 id='single_diff_complete_col14'>" + RNA_SEQ_DIFF_EXPR_STATE_COL_NAME + " (column 14)</h5>");
+        this.writeln("<h5 id='single_diff_complete_col14'>" + RNA_SEQ_DIFF_EXPR_STATE_COL_NAME 
+                + " (column 14)</h5>");
         this.writeln(this.getDiffExprStateColDescription(1, 3, 5, true, false, true, "RNA-Seq data")); 
-        this.writeln("<h5 id='single_diff_complete_col15'>" + RNA_SEQ_DIFF_EXPR_QUAL_COL_NAME + " (column 15)</h5>");
+        this.writeln("<h5 id='single_diff_complete_col15'>" + RNA_SEQ_DIFF_EXPR_QUAL_COL_NAME 
+                + " (column 15)</h5>");
         this.writeln(this.getDiffExprQualColDescription(RNA_SEQ_DIFF_EXPR_STATE_COL_NAME, 14, false, true)); 
-        this.writeln("<h5 id='single_diff_complete_col16'>" + RNA_SEQ_DIFF_EXPR_P_VAL_COL_NAME + " (column 16)</h5>");
-        this.writeln("<p>Best p-value from the RNA-Seq analyses supporting the RNA-Seq call provided in "
-                + RNA_SEQ_DIFF_EXPR_STATE_COL_NAME + " (column 14). Set to 1.0 if no data available "
+        this.writeln("<h5 id='single_diff_complete_col16'>" + RNA_SEQ_DIFF_EXPR_P_VAL_COL_NAME 
+                + " (column 16)</h5>");
+        this.writeln("<p>Best p-value from the RNA-Seq analyses supporting the RNA-Seq call "
+                + "provided in <code>"
+                + RNA_SEQ_DIFF_EXPR_STATE_COL_NAME + "</code> (column 14). Set to 1.0 if no data available "
                 + "by RNA-Seq.</p>");
-        this.writeln("<h5 id='single_diff_complete_col17'>" + RNA_SEQ_DIFF_EXPR_SUPPORT_COUNT_COL_NAME + " (column 17)</h5>");
-        this.writeln("<p>Number of RNA-Seq analyses supporting the RNA-Seq call provided in "
-                + RNA_SEQ_DIFF_EXPR_STATE_COL_NAME + " (column 14). Set to 0 if no data available "
+        this.writeln("<h5 id='single_diff_complete_col17'>" + RNA_SEQ_DIFF_EXPR_SUPPORT_COUNT_COL_NAME 
+                + " (column 17)</h5>");
+        this.writeln("<p>Number of RNA-Seq analyses supporting the RNA-Seq call provided in <code>"
+                + RNA_SEQ_DIFF_EXPR_STATE_COL_NAME + "</code> (column 14). Set to 0 if no data available "
                 + "by RNA-Seq.</p>");
-        this.writeln("<h5 id='single_diff_complete_col18'>" + RNA_SEQ_DIFF_EXPR_CONFLICT_COUNT_COL_NAME + " (column 18)</h5>");
+        this.writeln("<h5 id='single_diff_complete_col18'>" + RNA_SEQ_DIFF_EXPR_CONFLICT_COUNT_COL_NAME 
+                + " (column 18)</h5>");
         this.writeln("<p>Number of RNA-Seq analyses in conflict, generating a call different from "
-                + "the RNA-Seq call provided in " 
-                + RNA_SEQ_DIFF_EXPR_STATE_COL_NAME + " (column 14). Set to 0 if no data available "
+                + "the RNA-Seq call provided in <code>" 
+                + RNA_SEQ_DIFF_EXPR_STATE_COL_NAME + "</code> (column 14). Set to 0 if no data available "
                 + "by RNA-Seq.</p>");
         
         this.writeln("<p><a href='#single_diff'>Back to over-/under-expression menu</a></p>");
@@ -1356,17 +1366,41 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + " (column 3)</h5>");
         this.writeln(this.getMultiAnatEntityNamesColDescription(2));
         this.writeln("<h5 id='multi_diff_simple_col4'>" + STAGE_ID_COL_NAME + " (column 4)</h5>");
-        this.writeln(this.getStageIdColDescription());
+        this.writeln(this.getMultiSpeciesStageIdColDescription());
         this.writeln("<h5 id='multi_diff_simple_col5'>" + STAGE_NAME_COL_NAME + " (column 5)</h5>");
-        this.writeln(this.getStageNameColDescription(3));
+        this.writeln(this.getStageNameColDescription(4));
+        
+        String totalNumberOfGenes = "<p>Please note that the list of all genes member of "
+                + "the OMA homologous gene group with ID provided in <code>" 
+                + OMA_ID_COL_NAME + "</code> (column 1) is provided through the OMA header line.</p>";
         this.writeln("<h5 id='multi_diff_simple_col6'>" + OVER_EXPRESSED_FOR_SPECIES_COL_NAME 
                 + " speciesXX</h5>");
+        this.writeln(this.getOverUnderExprForSpeciesColDescription(1, 4, 2, true));
+        this.writeln(totalNumberOfGenes);
         this.writeln("<h5 id='multi_diff_simple_col7'>" + UNDER_EXPRESSED_FOR_SPECIES_COL_NAME 
                 + " speciesXX</h5>");
+        this.writeln(this.getOverUnderExprForSpeciesColDescription(1, 4, 2, false));
+        this.writeln(totalNumberOfGenes);
         this.writeln("<h5 id='multi_diff_simple_col8'>" + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME 
                 + " speciesXX</h5>");
+        this.writeln("<p>Number of genes, members of the OMA homologous gene group "
+                + "with ID provided in <code>" + OMA_ID_COL_NAME + "</code> (column 1), "
+                + "that were tested for differential expression in this condition (<code>" 
+                + MULTI_ANAT_ENTITY_IDS_COL_NAME + "</code> (column 2), at <code>" 
+                + STAGE_ID_COL_NAME + "</code> (column 4)), "
+                + "but that were never shown to have a significant variation of "
+                + "their level of expression as compared to the other conditions "
+                + "of the analyses.</p>");
+        this.writeln(totalNumberOfGenes);
         this.writeln("<h5 id='multi_diff_simple_col9'>" + NA_FOR_SPECIES_COL_NAME 
                 + " speciesXX</h5>");
+        this.writeln("<p>Number of genes, members of the OMA homologous gene group "
+                + "with ID provided in <code>" + OMA_ID_COL_NAME + "</code> (column 1), "
+                + "that were either not tested for differential expression in this condition (<code>" 
+                + MULTI_ANAT_ENTITY_IDS_COL_NAME + "</code> (column 2), at <code>" 
+                + STAGE_ID_COL_NAME + "</code> (column 4)), or for which coflicting "
+                + "results were generated from different data types.</p>");
+        this.writeln(totalNumberOfGenes);
         
         log.exit();
     }
@@ -1405,7 +1439,7 @@ this.writeln("<div class='documentationmenu'><ul>");
     private String getOMAIdColDescription() {
         log.entry();
         return log.exit("<p>Unique identifier of the OMA gene homology group. Note that "
-                + "these identifiers are not stable bewteen releases, and cannot be used "
+                + "these identifiers are not stable between releases, and cannot be used "
                 + "to retrieve data from <a target='_blank' "
                 + "href='http://omabrowser.org/oma/hogs/' title='External link to OMA browser'>"
                 + "the OMA browser</a>. They are provided solely to group data "
@@ -1420,6 +1454,18 @@ this.writeln("<div class='documentationmenu'><ul>");
     private String getStageIdColDescription() {
         log.entry();
         return log.exit("<p>Unique identifier of the developmental stage, from the Uberon ontology.</p>");
+    }
+    /**
+     * @return  A {@code String} that is the description of the stage ID column 
+     *          in multi-species download files (because we use it several times), formated in HTML 
+     *          and HTML escaped if necessary.
+     * @see #STAGE_ID_COL_NAME
+     */
+    private String getMultiSpeciesStageIdColDescription() {
+        log.entry();
+        return log.exit("<p>Unique identifier of the developmental stage, from the Uberon ontology. "
+                + "For multi-species analyses, only broad developmental stages are used, "
+                + "common to the species being compared.</p>");
     }
     /**
      * @param colNumber An {@code int} that is the index of the column containing 
@@ -1473,7 +1519,7 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "<code>|</code>.</p>"
                 + "<p>In most cases, the cardinality is 1, as most of "
                 + "the homologous anatomical entities compared in different species are not derived "
-                + "enough that they are described by different anatomical concepts. "
+                + "enough so that they are described by different anatomical concepts. "
                 + "But the cardinality can sometimes be greater, when homologous "
                 + "anatomical entities are highly derived in the species compared, "
                 + "and represented by distinct anatomical concepts.</p>"
@@ -1487,7 +1533,7 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "swim bladder (UBERON:0006860): these organs "
                 + "are believed to descend from a same common ancestral organ, existing "
                 + "in the ancestor of <i>Gnathostomata</i>, but are now sufficiently derived "
-                + "that the are represented by different anatomical concepts in these species; "
+                + "that they are represented by different anatomical concepts in these species; "
                 + "the cardinality of the value of this column would be 2, and the IDs "
                 + "of these anatomical entities would be separated by the character "
                 + "<code>|</code>, e.g., <code>UBERON:0002048|UBERON:0006860</code>.</p>");
@@ -1532,9 +1578,9 @@ this.writeln("<div class='documentationmenu'><ul>");
     private String getColumnListForCall(int geneIdColNumber, int stageIdColNumber, 
             int anatEntityIdColNumber) {
         log.entry(geneIdColNumber, stageIdColNumber, anatEntityIdColNumber);
-        return log.exit(GENE_ID_COL_NAME + " (column " 
-                + geneIdColNumber + "), in " + ANAT_ENTITY_ID_COL_NAME + " (column " 
-                + anatEntityIdColNumber + "), at " + STAGE_ID_COL_NAME + " (column " 
+        return log.exit("<code>" + GENE_ID_COL_NAME + "</code> (column " 
+                + geneIdColNumber + "), in <code>" + ANAT_ENTITY_ID_COL_NAME + "</code> (column " 
+                + anatEntityIdColNumber + "), at <code>" + STAGE_ID_COL_NAME + "</code> (column " 
                 + stageIdColNumber + ")");
     }
     /**
@@ -1696,8 +1742,8 @@ this.writeln("<div class='documentationmenu'><ul>");
     private String getDiffExprQualColDescription(String diffExprStateColName, 
             int diffExprStateColNumber, boolean displayNA, boolean displayNoData) {
         log.entry(diffExprStateColName, diffExprStateColNumber, displayNA, displayNoData);
-        String desc = "<p>Confidence in the differential expression call provided in "
-                + diffExprStateColName + " (column " + diffExprStateColNumber + "). One of: </p>"
+        String desc = "<p>Confidence in the differential expression call provided in <code>"
+                + diffExprStateColName + "</code> (column " + diffExprStateColNumber + "). One of: </p>"
                 + "<ul class='doc_content'>"
                 + "<li><span class='list_element_title'>high quality</span>: "
                 + "differential expression reported as high quality, with no contradicting "
@@ -1721,18 +1767,65 @@ this.writeln("<div class='documentationmenu'><ul>");
         if (displayNA) {
             //TODO: merge N/A and 'no data' once we re-generate the files
             desc += "<li><span class='list_element_title'>N/A</span>: no quality applicable "
-                + "when ambiguity state in " + diffExprStateColName 
-                + " (column " + diffExprStateColNumber + ");</li>";
+                + "when ambiguity state in <code>" + diffExprStateColName 
+                + "</code> (column " + diffExprStateColNumber + ");</li>";
         }
         if (displayNoData) {
             desc += "<li><span class='list_element_title'>no data</span>: no data associated "
-                    + "to " + diffExprStateColName 
-                    + " (column " + diffExprStateColNumber + ");</li>";
+                    + "to <code>" + diffExprStateColName 
+                    + "</code> (column " + diffExprStateColNumber + ");</li>";
         }
         desc += "</ul>";
         
         return log.exit(desc);
     } 
+    
+    /**
+     * Get the description for columns providing number of over-expressed or under-expressed 
+     * genes in multi-species simple differential expression files.
+     * 
+     * @param omaIdColNumber            An {@code int} that is the index of the column containing 
+     *                                  the OMA ID (see {@link #OMA_ID_COL_NAME}). 
+     *                                  Index starting from 1.
+     * @param stageIdColNumber          An {@code int} that is the index of the column containing 
+     *                                  the stage ID (see {@link #STAGE_ID_COL_NAME}). 
+     *                                  Index starting from 1.
+     * @param anatEntityIdsColNumber    An {@code int} that is the index of the column containing 
+     *                                  the anatomical entity IDs (see 
+     *                                  {@link #MULTI_ANAT_ENTITY_IDS_COL_NAME}). 
+     *                                  Index starting from 1.
+     * @param overExpressed             A {@code boolean} defining whether the column described 
+     *                                  contains over-expressed gene count or under-expressed 
+     *                                  gene count. If {@code true}, it contains 
+     *                                  over-expressed gene count.
+     * @return  A {@code String} that is the description of the over-/under-expressed gene count 
+     *          column in multi-species diff expression download files, 
+     *          formated in HTML and HTML escaped if necessary.
+     */
+    private String getOverUnderExprForSpeciesColDescription(int omaIdColNumber, 
+            int stageIdColNumber, int anatEntityIdsColNumber, boolean overExpressed) {
+        log.entry(omaIdColNumber, stageIdColNumber, anatEntityIdsColNumber, overExpressed);
+        
+        String desc = "<p>Number of genes, members of the OMA homologous gene group "
+                + "with ID provided in <code>" + OMA_ID_COL_NAME + "</code> (column " 
+                + omaIdColNumber + "), shown in one or more analyses to have a significant " +  
+                (overExpressed ? "over-expression " : "under-expression ")
+                + "in this condition (<code>" + MULTI_ANAT_ENTITY_IDS_COL_NAME + "</code> (column " 
+                + anatEntityIdsColNumber + "), at <code>" + STAGE_ID_COL_NAME + "</code> (column " 
+                + stageIdColNumber + ")), as compared to the expression levels "
+                + "in other conditions of the analyses. This means that there were no conflicts "
+                + "found between results generated from different data types "
+                + "(result generated either from a single data type, or from "
+                + "congruent analyses of different data types). Note that there can still "
+                + "be conflicts between different analyses within a same data type, "
+                //TODO: add link to data analyses documentation
+                + "but such conflicts are resolved by a voting system based on the number "
+                + "of conditions compared, weighted by p-value, in order to produce "
+                + "a single differential expression call, taking into account all analyses "
+                + "from a given data type.</p>";
+        
+        return log.exit(desc);
+    }
     
 
     /**

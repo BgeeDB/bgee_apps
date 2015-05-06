@@ -1281,72 +1281,92 @@ this.writeln("<div class='documentationmenu'><ul>");
         this.writeln("<tr><td>1</td><td><a href='#multi_diff_simple_col1' title='" 
                 + "See " + OMA_ID_COL_NAME + " column description'>" 
                 + OMA_ID_COL_NAME 
-                + "</a></td><td>1</td><td>ENSG00000000419</td></tr>");
+                + "</a></td><td>1</td><td>80</td></tr>");
         //TODO: change order of columns anat entity/stage once we re-generate the files.
         this.writeln("<tr><td>2</td><td><a href='#multi_diff_simple_col2' title='" 
                 + "See " + MULTI_ANAT_ENTITY_IDS_COL_NAME + " column description'>" 
                 + MULTI_ANAT_ENTITY_IDS_COL_NAME 
-                + "</a></td><td>1 or greater</td><td>UBERON:0009834</td></tr>");
+                + "</a></td><td>1 or greater</td><td>UBERON:0001898</td></tr>");
         this.writeln("<tr><td>3</td><td><a href='#multi_diff_simple_col3' title='" 
                 + "See " + MULTI_ANAT_ENTITY_NAMES_COL_NAME + " column description'>" 
                 + MULTI_ANAT_ENTITY_NAMES_COL_NAME 
-                + "</a></td><td>1 or greater</td><td>UBERON:0009834</td></tr>");
+                + "</a></td><td>1 or greater</td><td>hypothalamus</td></tr>");
         this.writeln("<tr><td>4</td><td><a href='#multi_diff_simple_col4' title='" 
                 + STAGE_ID_LINK_TITLE + "'>" + STAGE_ID_COL_NAME 
-                + "</a></td><td>1</td><td>HsapDv:0000083</td></tr>");
+                + "</a></td><td>1</td><td>UBERON:0000113</td></tr>");
         this.writeln("<tr><td>5</td><td><a href='#multi_diff_simple_col5' title='" 
                 + STAGE_NAME_LINK_TITLE + "'>" + STAGE_NAME_COL_NAME 
-                + "</a></td><td>1</td><td>infant stage (human)</td></tr>");
+                + "</a></td><td>1</td><td>post-juvenile adult stage</td></tr>");
         this.writeln("<tr><td>6</td><td><a href='#multi_diff_simple_col6' title='" 
                 + "See " + OVER_EXPRESSED_FOR_SPECIES_COL_NAME + " species1 column description'>" 
-                + OVER_EXPRESSED_FOR_SPECIES_COL_NAME + " species1 "
-                + "</a></td><td>1</td><td>dorsolateral prefrontal cortex</td></tr>");
+                + OVER_EXPRESSED_FOR_SPECIES_COL_NAME + " species1</a> (e.g., <code>"
+                + OVER_EXPRESSED_FOR_SPECIES_COL_NAME + " Mus musculus</code>)"
+                + "</td><td>1</td><td>1</td></tr>");
         this.writeln("<tr><td>7</td><td><a href='#multi_diff_simple_col7' title='" 
                 + "See " + UNDER_EXPRESSED_FOR_SPECIES_COL_NAME + " species1 column description'>" 
-                + UNDER_EXPRESSED_FOR_SPECIES_COL_NAME + " species1 "
-                + "</a></td><td>1</td><td>dorsolateral prefrontal cortex</td></tr>");
+                + UNDER_EXPRESSED_FOR_SPECIES_COL_NAME + " species1</a> (e.g., <code>"
+                + UNDER_EXPRESSED_FOR_SPECIES_COL_NAME + " Mus musculus</code>)"
+                + "</td><td>1</td><td>0</td></tr>");
         this.writeln("<tr><td>8</td><td><a href='#multi_diff_simple_col8' title='" 
                 + "See " + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME + " species1 column description'>" 
-                + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME + " species1 "
-                + "</a></td><td>1</td><td>dorsolateral prefrontal cortex</td></tr>");
+                + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME + " species1</a> (e.g., <code>"
+                + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME + " Mus musculus</code>)"
+                + "</td><td>1</td><td>0</td></tr>");
         this.writeln("<tr><td>9</td><td><a href='#multi_diff_simple_col9' title='" 
                 + "See " + NA_FOR_SPECIES_COL_NAME + " species1 column description'>" 
-                + NA_FOR_SPECIES_COL_NAME + " species1 "
-                + "</a></td><td>1</td><td>dorsolateral prefrontal cortex</td></tr>");
-        this.writeln("<tr><td>10</td><td><a href='#multi_diff_simple_col10' title='" 
+                + NA_FOR_SPECIES_COL_NAME + " species1</a> (e.g., <code>"
+                + NA_FOR_SPECIES_COL_NAME + " Mus musculus</code>)"
+                + "</td><td>1</td><td>0</td></tr>");
+        this.writeln("<tr><td>10</td><td><a href='#multi_diff_simple_col6' title='" 
                 + "See " + OVER_EXPRESSED_FOR_SPECIES_COL_NAME + " species2 column description'>" 
-                + OVER_EXPRESSED_FOR_SPECIES_COL_NAME + " species2 "
-                + "</a></td><td>1</td><td>dorsolateral prefrontal cortex</td></tr>");
-        this.writeln("<tr><td>11</td><td><a href='#multi_diff_simple_col11' title='" 
+                + OVER_EXPRESSED_FOR_SPECIES_COL_NAME + " species2</a> (e.g., <code>"
+                + OVER_EXPRESSED_FOR_SPECIES_COL_NAME + " Homo sapiens</code>)"
+                + "</td><td>1</td><td>1</td></tr>");
+        this.writeln("<tr><td>11</td><td><a href='#multi_diff_simple_col7' title='" 
                 + "See " + UNDER_EXPRESSED_FOR_SPECIES_COL_NAME + " species2 column description'>" 
-                + UNDER_EXPRESSED_FOR_SPECIES_COL_NAME + " species2 "
-                + "</a></td><td>1</td><td>dorsolateral prefrontal cortex</td></tr>");
-        this.writeln("<tr><td>12</td><td><a href='#multi_diff_simple_col12' title='" 
+                + UNDER_EXPRESSED_FOR_SPECIES_COL_NAME + " species2</a> (e.g., <code>"
+                + UNDER_EXPRESSED_FOR_SPECIES_COL_NAME + " Homo sapiens</code>)"
+                + "</td><td>1</td><td>0</td></tr>");
+        this.writeln("<tr><td>12</td><td><a href='#multi_diff_simple_col8' title='" 
                 + "See " + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME + " species2 column description'>" 
-                + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME + " species2 "
-                + "</a></td><td>1</td><td>dorsolateral prefrontal cortex</td></tr>");
-        this.writeln("<tr><td>13</td><td><a href='#multi_diff_simple_col13' title='" 
+                + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME + " species2</a> (e.g., <code>"
+                + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME + " Homo sapiens</code>)"
+                + "</td><td>1</td><td>0</td></tr>");
+        this.writeln("<tr><td>13</td><td><a href='#multi_diff_simple_col9' title='" 
                 + "See " + NA_FOR_SPECIES_COL_NAME + " species2 column description'>" 
-                + NA_FOR_SPECIES_COL_NAME + " species2 "
-                + "</a></td><td>1</td><td>dorsolateral prefrontal cortex</td></tr>");
+                + NA_FOR_SPECIES_COL_NAME + " species2</a> (e.g., <code>"
+                + NA_FOR_SPECIES_COL_NAME + " Homo sapiens</code>)"
+                + "</td><td>1</td><td>0</td></tr>");
         this.writeln("<tr><td>...</td><td>" 
                 + OVER_EXPRESSED_FOR_SPECIES_COL_NAME + " speciesXX "
                 + "</td><td>1</td><td>...</td></tr>");
         this.writeln("<tr><td>...</td><td>...</td><td></td><td></td></tr>");
         this.writeln("</tbody>");
         this.writeln("</table>");
-        this.writeln("<h5 id='multi_diff_simple_col1'>" + GENE_ID_COL_NAME + " (column 1)</h5>");
-        this.writeln(this.getGeneIdColDescription());
-        this.writeln("<h5 id='multi_diff_simple_col2'>" + GENE_NAME_COL_NAME + " (column 2)</h5>");
-        this.writeln(this.getGeneNameColDescription(1));
-        this.writeln("<h5 id='multi_diff_simple_col3'>" + STAGE_ID_COL_NAME + " (column 3)</h5>");
+        this.writeln("<p>An example OMA header line could be: <code>//OMA node ID 80 "
+                + "contains gene IDs [ENSG00000169057, ENSMUSG00000031393] with gene names "
+                + "[MECP2, Mecp2]</code></p>");
+        
+        this.writeln("<h5 id='multi_diff_simple_col1'>" + OMA_ID_COL_NAME + " (column 1)</h5>");
+        this.writeln(this.getOMAIdColDescription());
+        this.writeln("<h5 id='multi_diff_simple_col2'>" + MULTI_ANAT_ENTITY_IDS_COL_NAME 
+                + " (column 2)</h5>");
+        this.writeln(this.getMultiAnatEntityIdsColDescription());
+        this.writeln("<h5 id='multi_diff_simple_col3'>" + MULTI_ANAT_ENTITY_NAMES_COL_NAME 
+                + " (column 3)</h5>");
+        this.writeln(this.getMultiAnatEntityNamesColDescription(2));
+        this.writeln("<h5 id='multi_diff_simple_col4'>" + STAGE_ID_COL_NAME + " (column 4)</h5>");
         this.writeln(this.getStageIdColDescription());
-        this.writeln("<h5 id='multi_diff_simple_col4'>" + STAGE_NAME_COL_NAME + " (column 4)</h5>");
+        this.writeln("<h5 id='multi_diff_simple_col5'>" + STAGE_NAME_COL_NAME + " (column 5)</h5>");
         this.writeln(this.getStageNameColDescription(3));
-        this.writeln("<h5 id='multi_diff_simple_col5'>" + ANAT_ENTITY_ID_COL_NAME + " (column 5)</h5>");
-        this.writeln(this.getAnatEntityIdColDescription());
-        this.writeln("<h5 id='multi_diff_simple_col6'>" + ANAT_ENTITY_NAME_COL_NAME + " (column 6)</h5>");
-        this.writeln(this.getAnatEntityNameColDescription(5));
+        this.writeln("<h5 id='multi_diff_simple_col6'>" + OVER_EXPRESSED_FOR_SPECIES_COL_NAME 
+                + " speciesXX</h5>");
+        this.writeln("<h5 id='multi_diff_simple_col7'>" + UNDER_EXPRESSED_FOR_SPECIES_COL_NAME 
+                + " speciesXX</h5>");
+        this.writeln("<h5 id='multi_diff_simple_col8'>" + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME 
+                + " speciesXX</h5>");
+        this.writeln("<h5 id='multi_diff_simple_col9'>" + NA_FOR_SPECIES_COL_NAME 
+                + " speciesXX</h5>");
         
         log.exit();
     }
@@ -1375,6 +1395,21 @@ this.writeln("<div class='documentationmenu'><ul>");
         log.entry();
         return log.exit("<p>Name of the gene defined by <code>" + GENE_ID_COL_NAME 
                 + "</code> (column " + colNumber + ")</p>");
+    }
+    /**
+     * @return  A {@code String} that is the description of the OMA ID column 
+     *          in multi-species download files (because we use it several times), formated in HTML 
+     *          and HTML escaped if necessary.
+     * @see #OMA_ID_COL_NAME
+     */
+    private String getOMAIdColDescription() {
+        log.entry();
+        return log.exit("<p>Unique identifier of the OMA gene homology group. Note that "
+                + "these identifiers are not stable bewteen releases, and cannot be used "
+                + "to retrieve data from <a target='_blank' "
+                + "href='http://omabrowser.org/oma/hogs/' title='External link to OMA browser'>"
+                + "the OMA browser</a>. They are provided solely to group data "
+                + "from homologous genes belonging to a same homology group.</p>");
     }
     /**
      * @return  A {@code String} that is the description of the stage ID column 
@@ -1423,6 +1458,57 @@ this.writeln("<div class='documentationmenu'><ul>");
         log.entry();
         return log.exit("<p>Name of the anatomical entity defined by <code>" 
         + ANAT_ENTITY_ID_COL_NAME + "</code> (column " + colNumber + ")</p>");
+    }
+    /**
+     * @return  A {@code String} that is the description of the column for multiple 
+     *          anatomical IDs for multi-species download files (because we use it several times), 
+     *          formated in HTML and HTML escaped if necessary.
+     * @see #MULTI_ANAT_ENTITY_IDS_COL_NAME
+     */
+    private String getMultiAnatEntityIdsColDescription() {
+        log.entry();
+        return log.exit("<p>Unique identifiers of the homologous anatomical entities, "
+                + "from the Uberon ontology. Cardinality 1 or greater. When more than "
+                + "one anatomical entity is used, they are separated with the character "
+                + "<code>|</code>.</p>"
+                + "<p>In most cases, the cardinality is 1, as most of "
+                + "the homologous anatomical entities compared in different species are not derived "
+                + "enough that they are described by different anatomical concepts. "
+                + "But the cardinality can sometimes be greater, when homologous "
+                + "anatomical entities are highly derived in the species compared, "
+                + "and represented by distinct anatomical concepts.</p>"
+                + "<p>For instance, if comparing expression data in human and zebrafish, "
+                + "the anatomical entity \"bulbus arteriosus\" (UBERON:0004152) would be considered, "
+                + "as it is believed to be homologous in the <i>Euteleostomi</i> lineage; "
+                + "as it is represented by the same anatomical term in both species, "
+                + "the cardinality of the value for this column would be 1. But "
+                + "homology relations between distinct anatomical concepts would also "
+                + "be considered, such as the homology between lung (UBERON:0002048) and "
+                + "swim bladder (UBERON:0006860): these organs "
+                + "are believed to descend from a same common ancestral organ, existing "
+                + "in the ancestor of <i>Gnathostomata</i>, but are now sufficiently derived "
+                + "that the are represented by different anatomical concepts in these species; "
+                + "the cardinality of the value of this column would be 2, and the IDs "
+                + "of these anatomical entities would be separated by the character "
+                + "<code>|</code>, e.g., <code>UBERON:0002048|UBERON:0006860</code>.</p>");
+    }
+    /**
+     * @param colNumber An {@code int} that is the index of the column containing 
+     *                  the anatomical entity IDs (see {@link #MULTI_ANAT_ENTITY_IDS_COL_NAME}). 
+     *                  Index starting from 1.
+     * @return  A {@code String} that is the description of the column for multiple 
+     *          anatomical entity names in multi-species download files (because we use it 
+     *          several times), formated in HTML and HTML escaped if necessary.
+     * @see #MULTI_ANAT_ENTITY_NAMES_COL_NAME
+     */
+    private String getMultiAnatEntityNamesColDescription(int colNumber) {
+        log.entry();
+        return log.exit("<p>Names of the anatomical entities defined by <code>" 
+            + MULTI_ANAT_ENTITY_IDS_COL_NAME + "</code> (column " + colNumber + "). "
+            + "Cardinality 1 or greater. When more than "
+            + "one anatomical entity is used, they are separated with the character "
+            + "<code>|</code>. See "+ MULTI_ANAT_ENTITY_IDS_COL_NAME + " column description "
+            + "for more details.</p>");
     }
     
     /**
@@ -1755,6 +1841,36 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "<td>" + RNA_SEQ_DIFF_EXPR_P_VAL_COL_NAME + "</td>"
                 + "<td>" + RNA_SEQ_DIFF_EXPR_SUPPORT_COUNT_COL_NAME + "</td>"
                 + "<td>" + RNA_SEQ_DIFF_EXPR_CONFLICT_COUNT_COL_NAME + "</td>"
+                + "</tr>"
+                + "</tbody>"
+                + "</table>");
+    }
+    /**
+     * @return  a {@code String} containing the HTML to create a table containing the description 
+     *          of the header of a multi-species simple differential expression file (can be used 
+     *          in "help" links).
+     */
+    public String getMultiSpeciesSimpleDiffExprFileHeaderDesc() {
+        log.entry();
+        return log.exit("<table class='download_file_header_desc'>"
+                + "<tbody>"
+                + "<tr><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td>"
+                + "<td>8</td><td>9</td><td>10</td><td>11</td><td>12</td><td>13</td><td>...</td></tr>"
+                + "<tr>"
+                + "<td>" + OMA_ID_COL_NAME + "</td>"
+                + "<td>" + MULTI_ANAT_ENTITY_IDS_COL_NAME + "</td>"
+                + "<td>" + MULTI_ANAT_ENTITY_NAMES_COL_NAME + "</td>"
+                + "<td>" + STAGE_ID_COL_NAME + "</td>"
+                + "<td>" + STAGE_NAME_COL_NAME + "</td>"
+                + "<td>" + OVER_EXPRESSED_FOR_SPECIES_COL_NAME + " species1</td>"
+                + "<td>" + UNDER_EXPRESSED_FOR_SPECIES_COL_NAME + " species1</td>"
+                + "<td>" + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME + " species1</td>"
+                + "<td>" + NA_FOR_SPECIES_COL_NAME + " species1</td>"
+                + "<td>" + OVER_EXPRESSED_FOR_SPECIES_COL_NAME + " species2</td>"
+                + "<td>" + UNDER_EXPRESSED_FOR_SPECIES_COL_NAME + " species2</td>"
+                + "<td>" + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME + " species2</td>"
+                + "<td>" + NA_FOR_SPECIES_COL_NAME + " species2</td>"
+                + "<td>...</td>"
                 + "</tr>"
                 + "</tbody>"
                 + "</table>");

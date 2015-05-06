@@ -510,7 +510,7 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "<li><span class='list_element_title'>homology of genes</span>: relations of homology "
                 + "between genes are retrieved using the <a target='_blank' "
                 + "href='http://omabrowser.org/oma/hogs/' title='External link to OMA browser'>"
-                + "OMA Hierarchical orthologous groups</a>; when comparing sevral species, "
+                + "OMA Hierarchical orthologous groups</a>; when comparing several species, "
                 + "Bgee identifies their Least Common Ancestor (LCA), and retrieve genes "
                 + "that have descended from a single common ancestral gene in that LCA.</li>"
                 + "</ul>");

@@ -1413,6 +1413,8 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + STAGE_ID_COL_NAME + "</code> (column 4)), or for which coflicting "
                 + "results were generated from different data types.</p>");
         this.writeln(totalNumberOfGenes);
+
+        this.writeln("<p><a href='#multi_diff'>Back to over-/under-expression menu</a></p>");
         
         log.exit();
     }
@@ -1457,63 +1459,63 @@ this.writeln("<div class='documentationmenu'><ul>");
         this.writeln("<tbody>");
         this.writeln("<tr><td>1</td><td><a href='#multi_diff_complete_col1' title='" 
                 + "See " + OMA_ID_COL_NAME + " column description'>" + OMA_ID_COL_NAME 
-                + "</a></td><td>1</td><td>80</td></tr>");
+                + "</a></td><td>1</td><td>42861</td></tr>");
         //TODO: change order of columns anat entity/stage once we re-generate the files.
         this.writeln("<tr><td>2</td><td><a href='#multi_diff_complete_col2' title='" 
                 + "See " + MULTI_ANAT_ENTITY_IDS_COL_NAME + " column description'>" 
                 + MULTI_ANAT_ENTITY_IDS_COL_NAME 
-                + "</a></td><td>1 or greater</td><td>UBERON:0001898</td></tr>");
+                + "</a></td><td>1 or greater</td><td>UBERON:0002037</td></tr>");
         this.writeln("<tr><td>3</td><td><a href='#multi_diff_complete_col3' title='" 
                 + "See " + MULTI_ANAT_ENTITY_NAMES_COL_NAME + " column description'>" 
                 + MULTI_ANAT_ENTITY_NAMES_COL_NAME 
-                + "</a></td><td>1 or greater</td><td>hypothalamus</td></tr>");
+                + "</a></td><td>1 or greater</td><td>cerebellum</td></tr>");
         this.writeln("<tr><td>4</td><td><a href='#multi_diff_complete_col4' title='" 
                 + STAGE_ID_LINK_TITLE + "'>" + STAGE_ID_COL_NAME 
-                + "</a></td><td>1</td><td>UBERON:0000113</td></tr>");
+                + "</a></td><td>1</td><td>UBERON:0018241</td></tr>");
         this.writeln("<tr><td>5</td><td><a href='#multi_diff_complete_col5' title='" 
                 + STAGE_NAME_LINK_TITLE + "'>" + STAGE_NAME_COL_NAME 
-                + "</a></td><td>1</td><td>post-juvenile adult stage</td></tr>");
+                + "</a></td><td>1</td><td>prime adult stage</td></tr>");
         this.writeln("<tr><td>6</td><td><a href='#multi_diff_complete_col6' title='" 
                 + "See " + SPECIES_LATIN_NAME_COL_NAME + " column description'>" 
                 + SPECIES_LATIN_NAME_COL_NAME 
-                + "</a></td><td>1</td><td>1</td></tr>");
+                + "</a></td><td>1</td><td>Macaca_mulatta</td></tr>");
         this.writeln("<tr><td>7</td><td><a href='#multi_diff_complete_col7' title='" 
                 + GENE_ID_LINK_TITLE + "'>" + GENE_ID_COL_NAME 
-                + "</a></td><td>1</td><td>1</td></tr>");
+                + "</a></td><td>1</td><td>ENSMMUG00000012094</td></tr>");
         this.writeln("<tr><td>8</td><td><a href='#multi_diff_complete_col8' title='" 
                 + GENE_NAME_LINK_TITLE + "'>" + GENE_NAME_COL_NAME 
-                + "</a></td><td>1</td><td>1</td></tr>");
+                + "</a></td><td>1</td><td>RAB17</td></tr>");
         this.writeln("<tr><td>9</td><td><a href='#multi_diff_complete_col9' title='" 
                 + DIFF_EXPR_STATE_LINK_TITLE + "'>" + DIFF_EXPR_STATE_COL_NAME 
-                + "</a></td><td>1</td><td>over-expression</td></tr>");
+                + "</a></td><td>1</td><td>under-expression</td></tr>");
         this.writeln("<tr><td>10</td><td><a href='#multi_diff_complete_col10' title='" 
                 + DIFF_EXPR_QUAL_LINK_TITLE + "'>" + DIFF_EXPR_QUAL_COL_NAME 
                 + "</a></td><td>1</td><td>high quality</td></tr>");
         this.writeln("<tr><td>11</td><td><a href='#multi_diff_complete_col11' title='" 
                 + "See " + AFFY_DIFF_EXPR_STATE_COL_NAME + " column description'>" 
                 + AFFY_DIFF_EXPR_STATE_COL_NAME 
-                + "</a></td><td>1</td><td>over-expression</td></tr>");
+                + "</a></td><td>1</td><td>no data</td></tr>");
         this.writeln("<tr><td>12</td><td><a href='#multi_diff_complete_col12' title='" 
                 + "See " + AFFY_DIFF_EXPR_QUAL_COL_NAME + " column description'>" 
                 + AFFY_DIFF_EXPR_QUAL_COL_NAME
         //TODO: change 'poor' to 'low'
-                + "</a></td><td>1</td><td>poor quality</td></tr>");
+                + "</a></td><td>1</td><td>no data</td></tr>");
         this.writeln("<tr><td>13</td><td><a href='#multi_diff_complete_col13' title='" 
                 + "See " + AFFY_DIFF_EXPR_P_VAL_COL_NAME + " column description'>" 
                 + AFFY_DIFF_EXPR_P_VAL_COL_NAME 
-                + "</a></td><td>1</td><td>0.0035659347</td></tr>");
+                + "</a></td><td>1</td><td>1.0</td></tr>");
         this.writeln("<tr><td>14</td><td><a href='#multi_diff_complete_col14' title='" 
                 + "See " + AFFY_DIFF_EXPR_SUPPORT_COUNT_COL_NAME + " column description'>" 
                 + AFFY_DIFF_EXPR_SUPPORT_COUNT_COL_NAME 
-                + "</a></td><td>1</td><td>1</td></tr>");
+                + "</a></td><td>1</td><td>0</td></tr>");
         this.writeln("<tr><td>15</td><td><a href='#multi_diff_complete_col15' title='" 
                 + "See " + AFFY_DIFF_EXPR_CONFLICT_COUNT_COL_NAME + " column description'>" 
                 + AFFY_DIFF_EXPR_CONFLICT_COUNT_COL_NAME 
-                + "</a></td><td>1</td><td>1</td></tr>");
+                + "</a></td><td>1</td><td>0</td></tr>");
         this.writeln("<tr><td>16</td><td><a href='#multi_diff_complete_col16' title='" 
                 + "See " + RNA_SEQ_DIFF_EXPR_STATE_COL_NAME + " column description'>" 
                 + RNA_SEQ_DIFF_EXPR_STATE_COL_NAME 
-                + "</a></td><td>1</td><td>over-expression</td></tr>");
+                + "</a></td><td>1</td><td>under-expression</td></tr>");
         this.writeln("<tr><td>17</td><td><a href='#multi_diff_complete_col17' title='" 
                 + "See " + RNA_SEQ_DIFF_EXPR_QUAL_COL_NAME + " column description'>" 
                 + RNA_SEQ_DIFF_EXPR_QUAL_COL_NAME 
@@ -1521,11 +1523,11 @@ this.writeln("<div class='documentationmenu'><ul>");
         this.writeln("<tr><td>18</td><td><a href='#multi_diff_complete_col18' title='" 
                 + "See " + RNA_SEQ_DIFF_EXPR_P_VAL_COL_NAME + " column description'>" 
                 + RNA_SEQ_DIFF_EXPR_P_VAL_COL_NAME 
-                + "</a></td><td>1</td><td>2.96E-8</td></tr>");
+                + "</a></td><td>1</td><td>8.82E-7</td></tr>");
         this.writeln("<tr><td>19</td><td><a href='#multi_diff_complete_col19' title='" 
                 + "See " + RNA_SEQ_DIFF_EXPR_SUPPORT_COUNT_COL_NAME + " column description'>" 
                 + RNA_SEQ_DIFF_EXPR_SUPPORT_COUNT_COL_NAME 
-                + "</a></td><td>1</td><td>2</td></tr>");
+                + "</a></td><td>1</td><td>1</td></tr>");
         this.writeln("<tr><td>20</td><td><a href='#multi_diff_complete_col20' title='" 
                 + "See " + RNA_SEQ_DIFF_EXPR_CONFLICT_COUNT_COL_NAME + " column description'>" 
                 + RNA_SEQ_DIFF_EXPR_CONFLICT_COUNT_COL_NAME 
@@ -1533,16 +1535,17 @@ this.writeln("<div class='documentationmenu'><ul>");
         this.writeln("<tr><td>21</td><td><a href='#multi_diff_complete_col21' title='" 
                 + "See " + ANAT_HOMOLOGY_CIO_ID_COL_NAME + " column description'>" 
                 + ANAT_HOMOLOGY_CIO_ID_COL_NAME 
-                + "</a></td><td>1</td><td>0</td></tr>");
+                + "</a></td><td>1</td><td>CIO:0000003</td></tr>");
         this.writeln("<tr><td>22</td><td><a href='#multi_diff_complete_col22' title='" 
                 + "See " + ANAT_HOMOLOGY_CIO_NAME_COL_NAME + " column description'>" 
                 + ANAT_HOMOLOGY_CIO_NAME_COL_NAME 
-                + "</a></td><td>1</td><td>0</td></tr>");
+                + "</a></td><td>1</td><td>high confidence from single evidence</td></tr>");
         this.writeln("</tbody>");
         this.writeln("</table>");
-        this.writeln("<p>An example OMA header line could be: <code>//OMA node ID 80 "
-                + "contains gene IDs [ENSG00000169057, ENSMUSG00000031393] with gene names "
-                + "[MECP2, Mecp2]</code></p>");
+        this.writeln("<p>An example OMA header line could be: <code>//OMA node ID 42861 "
+                + "contains gene IDs [ENSBTAG00000017624, ENSG00000124839, ENSMMUG00000012094, "
+                + "ENSMODG00000008949, ENSMUSG00000026304, ENSRNOG00000019887] with gene names "
+                + "[RAB17, RAB17, RAB17, RAB17, Rab17, Rab17]</code></p>");
         
         this.writeln("<h5 id='multi_diff_complete_col1'>" + OMA_ID_COL_NAME + " (column 1)</h5>");
         this.writeln(this.getOMAIdColDescription());
@@ -1632,6 +1635,8 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + " (column 22)</h5>");
         this.writeln("<p>Name of the CIO term defined by <code>" 
                 + ANAT_HOMOLOGY_CIO_ID_COL_NAME + "</code> (column 21)</p>");
+        
+        this.writeln("<p><a href='#multi_diff'>Back to over-/under-expression menu</a></p>");
         
         log.exit();
     }

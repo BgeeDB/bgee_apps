@@ -77,6 +77,12 @@ public abstract class GenerateDownloadFile extends CallUser {
      * with Affymetrix experiment, in the download file.
      */
     public final static String AFFYMETRIX_CALL_QUALITY_COLUMN_NAME = "Affymetrix call quality";
+       /**
+     * A {@code String} that is the name of the column containing if an Affymetrix experiment 
+     * is observed, in the download file.
+     */
+    public final static String AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME = 
+            "Including Affymetrix observed data"; 
     /**
      * A {@code String} that is the name of the column containing expression, no-expression or
      * differential expression found with RNA-Seq experiment, in the download file.
@@ -87,6 +93,11 @@ public abstract class GenerateDownloadFile extends CallUser {
      * with RNA-Seq experiment, in the download file.
      */
     public final static String RNASEQ_CALL_QUALITY_COLUMN_NAME = "RNA-Seq call quality";
+    /**
+     * A {@code String} that is the name of the column containing if a RNA-Seq experiment 
+     * is observed, in the download file.
+     */
+    public final static String RNASEQ_OBSERVED_DATA_COLUMN_NAME = "Including RNA-Seq observed data"; 
     /**
      * A {@code String} that is the name of the column containing the merged quality of the call,
      * in the download file.

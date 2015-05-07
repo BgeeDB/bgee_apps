@@ -71,6 +71,12 @@ public class GenerateExprFile extends GenerateDownloadFile {
     public final static String EST_CALL_QUALITY_COLUMN_NAME = "EST call quality";
 
     /**
+     * A {@code String} that is the name of the column containing if an EST experiment is observed, 
+     * in the download file.
+     */
+    public final static String EST_OBSERVED_DATA_COLUMN_NAME = "Including EST observed data";
+    
+    /**
      * A {@code String} that is the name of the column containing expression/no-expression
      * found with <em>in situ</em> experiment, in the download file.
      */
@@ -83,18 +89,31 @@ public class GenerateExprFile extends GenerateDownloadFile {
     public final static String INSITU_CALL_QUALITY_COLUMN_NAME = "In situ call quality";
 
     /**
+     * A {@code String} that is the name of the column containing if an <em>in situ</em> experiment 
+     * is observed, in the download file.
+     */
+    public final static String INSITU_OBSERVED_DATA_COLUMN_NAME = "Including in situ observed data";
+    
+    /**
      * A {@code String} that is the name of the column containing expression/no-expression
      * found with relaxed <em>in situ</em> experiment, in the download file.
      */
     public final static String RELAXED_INSITU_DATA_COLUMN_NAME = "Relaxed in situ data";
 
     /**
-     * A {@code String} that is the name of the column containing call quality found with
+     * A {@code String} that is the name of the column containing call quality found with relaxed
      * <em>in situ</em> experiment, in the download file.
      */
     public final static String RELAXED_INSITU_CALL_QUALITY_COLUMN_NAME = 
             "Relaxed in situ call quality";
 
+    /**
+     * A {@code String} that is the name of the column containing if a relaxed
+     * <em>in situ</em> experiment is observed, in the download file.
+     */
+    public final static String RELAXED_INSITU_OBSERVED_DATA_COLUMN_NAME = 
+            "Including relaxed in situ observed data";
+    
     /**
      * A {@code String} that is the name of the column containing whether the call include
      * observed data or not.
@@ -452,7 +471,7 @@ public class GenerateExprFile extends GenerateDownloadFile {
      *                                      Bgee data source.
      */
     private Map<String, Set<ExpressionCallTO>> loadExprCallsByGeneIds(Set<String> speciesIds, 
-            boolean includeSubstructures, Set<String> nonInformativesAnatEntityIds) 
+            boolean includeSubstructures, Set<String> nonInformativesAnatEntityIds)
                     throws DAOException {
         log.entry(speciesIds, includeSubstructures, nonInformativesAnatEntityIds);
 
@@ -463,8 +482,8 @@ public class GenerateExprFile extends GenerateDownloadFile {
         ExpressionCallDAO dao = this.getExpressionCallDAO();
         // We need all attributes except ID, stageOriginOfLine and observedData
         dao.setAttributes(EnumSet.complementOf(EnumSet.of(ExpressionCallDAO.Attribute.ID,
-            ExpressionCallDAO.Attribute.OBSERVED_DATA,
-            ExpressionCallDAO.Attribute.STAGE_ORIGIN_OF_LINE)));
+                        ExpressionCallDAO.Attribute.OBSERVED_DATA,
+                        ExpressionCallDAO.Attribute.STAGE_ORIGIN_OF_LINE)));
 
         ExpressionCallParams params = new ExpressionCallParams();
         params.addAllSpeciesIds(speciesIds);
@@ -526,7 +545,7 @@ public class GenerateExprFile extends GenerateDownloadFile {
      *                                      Bgee database.
      */
     private Map<String, Set<NoExpressionCallTO>> loadNoExprCallsByGeneIds(Set<String> speciesIds, 
-            boolean includeParentStructures, Set<String> nonInformativesAnatEntityIds) 
+            boolean includeParentStructures, Set<String> nonInformativesAnatEntityIds)
                     throws DAOException {
         log.entry(speciesIds, includeParentStructures, nonInformativesAnatEntityIds);
 
@@ -636,10 +655,30 @@ public class GenerateExprFile extends GenerateDownloadFile {
         Map<String, Set<NoExpressionCallTO>> globalNoExprTOsByGeneIds = 
                 this.loadNoExprCallsByGeneIds(speciesFilter, true, nonInformativesAnatEntities);
 
+        // We always load expression calls and no-expression calls, because we need to find 
+        // if the call is "observed data" for each data type.
+        Map<String, Set<ExpressionCallTO>> exprTOsByGeneIds =
+                this.loadExprCallsByGeneIds(speciesFilter, false, nonInformativesAnatEntities);
+        Map<String, Set<NoExpressionCallTO>> noExprTOsByGeneIds =
+                this.loadNoExprCallsByGeneIds(speciesFilter, false, nonInformativesAnatEntities);
         // In order to propagate expression calls to parent stages, we need to retrieve
         // relations between stages.
         Map<String, Set<String>> stageParentsFromChildren = 
                 BgeeDBUtils.getStageParentsFromChildren(speciesFilter, this.getRelationDAO());
+        Map<String, Set<String>> anatEntityParentsFromChildren = 
+                BgeeDBUtils.getAnatEntityParentsFromChildren(speciesFilter, this.getRelationDAO());
+        
+        // Get stage and anatomical entity propagated conditions from expression calls. 
+        Set<SingleSpeciesCondition> propagatedExprConditions = this.propagateExprConditions(
+                this.getConditions(exprTOsByGeneIds), stageParentsFromChildren, anatEntityParentsFromChildren);
+        // Get non-propagated conditions from no-expression calls.
+        Set<SingleSpeciesCondition> noExprConditions = this.getConditions(noExprTOsByGeneIds);
+
+        // Filter global no-expression calls with conditions.
+        Set<SingleSpeciesCondition> allConditions = new HashSet<SingleSpeciesCondition>();
+        allConditions.addAll(propagatedExprConditions);
+        allConditions.addAll(noExprConditions);
+        globalNoExprTOsByGeneIds = this.getFilteredNoExprTOs(globalNoExprTOsByGeneIds, allConditions);
 
         log.trace("Done retrieving data for expression files for the species {}.", speciesId);
 
@@ -724,21 +763,30 @@ public class GenerateExprFile extends GenerateDownloadFile {
                 // performed)
                 Set<ExpressionCallTO> stagePropagatedExprCallTOs = new HashSet<ExpressionCallTO>();
                 // remove calls from Map to free some memory
-                Set<ExpressionCallTO> exprCallTOs = globalExprTOsByGeneIds.remove(geneId);
-                if (exprCallTOs != null && !exprCallTOs.isEmpty()) {
+                Set<ExpressionCallTO> globalExprCallTOs = globalExprTOsByGeneIds.remove(geneId);
+                if (globalExprCallTOs != null && !globalExprCallTOs.isEmpty()) {
                     stagePropagatedExprCallTOs = this.updateGlobalExpressions(
                             this.groupExpressionCallTOsByPropagatedCalls(
-                                    exprCallTOs, stageParentsFromChildren, false), 
+                                    globalExprCallTOs, stageParentsFromChildren, false), 
                                     false, true).keySet();
                 }
 
-                // now, we need to aggregate expression and no-expression calls, and to order them.
-                Set<CallTO> allCallTOs = new HashSet<CallTO>();
+                // now, we need to aggregate expression and no-expression calls (basic and global), 
+                // and to order them.
+                Collection<CallTO> allCallTOs = new ArrayList<CallTO>();
                 allCallTOs.addAll(stagePropagatedExprCallTOs);
                 // remove calls from Map to free some memory
-                Set<NoExpressionCallTO> noExprCallTOs = globalNoExprTOsByGeneIds.remove(geneId);
+                Set<NoExpressionCallTO> globalNoExprCallTOs = globalNoExprTOsByGeneIds.remove(geneId);
+                if (globalNoExprCallTOs != null) {
+                    allCallTOs.addAll(globalNoExprCallTOs);
+                }
+                Set<NoExpressionCallTO> noExprCallTOs = noExprTOsByGeneIds.remove(geneId);
                 if (noExprCallTOs != null) {
                     allCallTOs.addAll(noExprCallTOs);
+                }
+                Set<ExpressionCallTO> exprCallTOs = exprTOsByGeneIds.remove(geneId);
+                if (exprCallTOs != null) {
+                    allCallTOs.addAll(exprCallTOs);
                 }
 
                 // and now, we compute and write the rows in all files
@@ -757,6 +805,108 @@ public class GenerateExprFile extends GenerateDownloadFile {
         this.renameTempFiles(generatedFileNames, tmpExtension);
 
         log.exit();
+    }
+
+    /**
+     * Propagate {@code SingleSpeciesCondition}s to parent anatomical entities and to parent 
+     * developmental stages, using the relations provided through {@code stageParentsFromChildren} 
+     * and {@code anatEntityParentsFromChildren}.
+     *
+     * @param conditions                    A {@code Set} of {@code SingleSpeciesCondition}s that 
+     *                                      are conditions to be propagated.
+     * @param stageParentsFromChildren      A {@code Map} where keys are {@code String}s 
+     *                                      representing the IDs of stages that are the source of 
+     *                                      a relation, the associated value being a {@code Set} of 
+     *                                      {@code String}s that are the IDs of their associated 
+     *                                      targets. 
+     * @param anatEntityParentsFromChildren A {@code Map} where keys are {@code String}s 
+     *                                      representing the IDs of anatomical entities that are  
+     *                                      the source of a relation, the associated value being a 
+     *                                      {@code Set} of {@code String}s that are the IDs of 
+     *                                      their associated targets. 
+     * @return                              A {@code Set} of {@code SingleSpeciesCondition}s that 
+     *                                      are stage and anatomical propagated conditions.
+     */
+    private Set<SingleSpeciesCondition> propagateExprConditions(
+            Set<SingleSpeciesCondition> conditions, 
+            Map<String, Set<String>> stageParentsFromChildren,
+            Map<String, Set<String>> anatEntityParentsFromChildren) {
+        log.entry(conditions, stageParentsFromChildren, anatEntityParentsFromChildren);
+        
+        Set<SingleSpeciesCondition> propagatedExprConditions = new HashSet<SingleSpeciesCondition>();
+        
+        for (SingleSpeciesCondition currentCondition : conditions) {
+            propagatedExprConditions.add(currentCondition);
+            for (String stageParentId : stageParentsFromChildren.get(currentCondition.getStageId())) {
+                for (String anatEntityParentId : 
+                        anatEntityParentsFromChildren.get(currentCondition.getAnatEntityId())) {
+                    propagatedExprConditions.add(
+                            new SingleSpeciesCondition(anatEntityParentId, stageParentId));
+                }                
+            }
+        }
+        
+        return log.exit(propagatedExprConditions);
+    }
+
+    /**
+     * Retrieved filtered no-expression calls according to the provided conditions.
+     *
+     * @param noExprTOsByGeneIds    A {@code Map} where keys are {@code String}s that are gene IDs, 
+     *                              the associated values being a {@code Set} of 
+     *                              {@code NoExpressionCallTO}s associated to this gene.
+     * @param conditions            A {@code Set} of {@code SingleSpeciesCondition}s that are 
+     *                              conditions (anatomical entity/stage) to be satisfied.
+     * @return                      A {@code Map} where keys are {@code String}s that are gene IDs, 
+     *                              the associated values being a {@code Set} of filtered
+     *                              {@code NoExpressionCallTO}s, according to provided conditions, 
+     *                              associated to this gene.
+     */
+    private Map<String, Set<NoExpressionCallTO>> getFilteredNoExprTOs(
+            Map<String, Set<NoExpressionCallTO>> noExprTOsByGeneIds,
+            Set<SingleSpeciesCondition> conditions) {
+        log.entry(noExprTOsByGeneIds, conditions);
+        
+        Map<String, Set<NoExpressionCallTO>> filteredMap = 
+                new HashMap<String, Set<NoExpressionCallTO>>();
+        for (Entry<String, Set<NoExpressionCallTO>> groupedCallTOs: noExprTOsByGeneIds.entrySet()) {
+            Set<NoExpressionCallTO> filteredCalls = new HashSet<NoExpressionCallTO>();
+            for (NoExpressionCallTO callTO : groupedCallTOs.getValue()) {
+                if (conditions.contains(
+                        new SingleSpeciesCondition(callTO.getAnatEntityId(), callTO.getStageId()))) {
+                    filteredCalls.add(callTO);
+                }
+            }
+            if (!filteredCalls.isEmpty()) {
+                filteredMap.put(groupedCallTOs.getKey(), filteredCalls);
+            }
+        }
+        
+        return log.exit(filteredMap);
+    }
+
+    /**
+     * Retrieves all conditions (anatomical entity/stage) of the provided calls.
+     *
+     * @param callTOsByGeneIds  A {@code Map} where keys are {@code String}s that are gene IDs, 
+     *                          the associated values being a {@code Set} of {@code T}s 
+     *                          associated to this gene.
+     * @return                  A {@code Set} of {@code SingleSpeciesCondition}s that are 
+     *                          conditions (anatomical entity/stage) contains in the provided calls.
+     */
+    private <T extends CallTO> Set<SingleSpeciesCondition> getConditions(
+            Map<String, Set<T>> callTOsByGeneIds) {
+      log.entry(callTOsByGeneIds);
+      
+      Set<SingleSpeciesCondition> allConditions = new HashSet<SingleSpeciesCondition>();
+      for (Set<T> groupedCallTOs: callTOsByGeneIds.values()) {
+          for (T callTO : groupedCallTOs) {
+              allConditions.add(
+                      new SingleSpeciesCondition(callTO.getAnatEntityId(), callTO.getStageId()));
+          }
+      }
+
+      return log.exit(allConditions);
     }
 
     /**
@@ -816,15 +966,20 @@ public class GenerateExprFile extends GenerateDownloadFile {
                 new IsElementOf(originValues),          // Including observed data
                 new IsElementOf(expressionValues),      // Affymetrix data
                 new IsElementOf(specificTypeQualities), // Affymetrix quality
+                new IsElementOf(originValues),          // Including Affymetrix data
                 new IsElementOf(expressionValues),      // EST data
                 new IsElementOf(specificTypeQualities), // EST quality
+                new IsElementOf(originValues),          // Including EST data
                 new IsElementOf(expressionValues),      // In Situ data
                 new IsElementOf(specificTypeQualities), // In Situ quality
+                new IsElementOf(originValues),          // Including in Situ data
                 // TODO: when relaxed in situ will be in the database, uncomment following line
                 // new IsElementOf(dataElements),        // Relaxed in Situ data
                 // new IsElementOf(qualityValues),       // Relaxed in Situ quality
-                new IsElementOf(expressionValues),          // RNA-seq data
-                new IsElementOf(specificTypeQualities) });  // RNA-seq quality
+                // new IsElementOf(originValues),        // Including relaxed in Situ data
+                new IsElementOf(expressionValues),      // RNA-seq data
+                new IsElementOf(specificTypeQualities), // RNA-seq quality
+                new IsElementOf(originValues)});        // Including RNA-seq data
     }
 
     /**
@@ -853,12 +1008,15 @@ public class GenerateExprFile extends GenerateDownloadFile {
                 ANATENTITY_ID_COLUMN_NAME, ANATENTITY_NAME_COLUMN_NAME,
                 EXPRESSION_COLUMN_NAME, QUALITY_COLUMN_NAME,
                 INCLUDING_OBSERVED_DATA_COLUMN_NAME, AFFYMETRIX_DATA_COLUMN_NAME,
-                AFFYMETRIX_CALL_QUALITY_COLUMN_NAME, EST_DATA_COLUMN_NAME,
-                EST_CALL_QUALITY_COLUMN_NAME, INSITU_DATA_COLUMN_NAME,
-                INSITU_CALL_QUALITY_COLUMN_NAME,
+                AFFYMETRIX_CALL_QUALITY_COLUMN_NAME, AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME,
+                EST_DATA_COLUMN_NAME, EST_CALL_QUALITY_COLUMN_NAME, EST_OBSERVED_DATA_COLUMN_NAME,
+                INSITU_DATA_COLUMN_NAME, INSITU_CALL_QUALITY_COLUMN_NAME, 
+                INSITU_OBSERVED_DATA_COLUMN_NAME,
                 // TODO: when relaxed in situ will be in the database, uncomment following line
                 // RELAXED_INSITU_DATA_COLUMN_NAME, RELAXED_INSITU_DATA_COLUMN_NAME,
-                RNASEQ_DATA_COLUMN_NAME, RNASEQ_CALL_QUALITY_COLUMN_NAME });
+                // RELAXED_INSITU_OBSERVED_DATA_COLUMN_NAME,
+                RNASEQ_DATA_COLUMN_NAME, RNASEQ_CALL_QUALITY_COLUMN_NAME, 
+                RNASEQ_OBSERVED_DATA_COLUMN_NAME });
     }
 
     /**
@@ -912,7 +1070,6 @@ public class GenerateExprFile extends GenerateDownloadFile {
         Collection<CallTO> callTOs, FileType fileType) throws IllegalArgumentException {
         log.entry(geneId, geneName, stageId, stageName, anatEntityId, anatEntityName,
             callTOs, fileType);
-
         Map<String, String> row = new HashMap<String, String>();
 
         // ********************************
@@ -923,11 +1080,11 @@ public class GenerateExprFile extends GenerateDownloadFile {
         // ********************************
         // Set simple file columns
         // ********************************
-        // the current version of this method assumes that there will never be a mixture
-        // of global propagated calls and of basic calls. This is why we only have
-        // one ExpressionCallTO, and one NoExpressionCallTO.
-        ExpressionCallTO expressionTO = null;
-        NoExpressionCallTO noExpressionTO = null;
+        // the current version of this method assumes that it is possible to have a mixture of 
+        // global propagated calls and of basic calls to be able to add "observed data" for each 
+        // data type. 
+        ExpressionCallTO globalExpressionTO = null, expressionTO = null;
+        NoExpressionCallTO globalNoExpressionTO = null, noExpressionTO = null;
 
         for (CallTO call : callTOs) {
             if (!call.getGeneId().equals(geneId) || 
@@ -937,27 +1094,38 @@ public class GenerateExprFile extends GenerateDownloadFile {
                         "between calls and IDs provided, for call: " + call));
             }
             if (call instanceof ExpressionCallTO) {
-                if (expressionTO == null) {
-                    expressionTO = (ExpressionCallTO) call;
-                    if (!expressionTO.isIncludeSubstructures() || 
-                            !expressionTO.isIncludeSubStages()) {
-                        throw log.throwing(new IllegalArgumentException(
-                                "The provided ExpressionCallTO should be a global expression call"));
+                ExpressionCallTO currentCallTO = (ExpressionCallTO) call;
+                if (!currentCallTO.isIncludeSubstructures() || !currentCallTO.isIncludeSubStages()) {
+                    if (expressionTO == null) {
+                        expressionTO = currentCallTO;
+                    } else {
+                        throw log.throwing(new IllegalArgumentException("The provided CallTO list(" + 
+                                call.getClass() + ") contains severals expression calls"));
                     }
                 } else {
-                    throw log.throwing(new IllegalArgumentException("The provided CallTO list(" + 
-                            call.getClass() + ") contains severals expression calls"));
+                    if (globalExpressionTO == null) {
+                        globalExpressionTO = currentCallTO;
+                    } else {
+                        throw log.throwing(new IllegalArgumentException("The provided CallTO list(" + 
+                                call.getClass() + ") contains severals global expression calls"));
+                    }
                 }
             } else if (call instanceof NoExpressionCallTO) {
-                if (noExpressionTO == null) {
-                    noExpressionTO = (NoExpressionCallTO) call;
-                    if (!noExpressionTO.isIncludeParentStructures()) {
-                        throw log.throwing(new IllegalArgumentException("The provided " +
-                                    "NoExpressionCallTO should be a global no-expression call"));
+                NoExpressionCallTO currentCallTO = (NoExpressionCallTO) call;
+                if (!currentCallTO.isIncludeParentStructures()) {
+                    if (noExpressionTO == null) {
+                        noExpressionTO = currentCallTO;
+                    } else {
+                        throw log.throwing(new IllegalArgumentException("The provided CallTO list(" + 
+                                call.getClass() + ") contains severals no-expression calls"));
                     }
                 } else {
-                    throw log.throwing(new IllegalArgumentException("The provided CallTO list(" + 
-                            call.getClass() + ") contains severals no-expression calls"));
+                    if (globalNoExpressionTO == null) {
+                        globalNoExpressionTO = currentCallTO;
+                    } else {
+                        throw log.throwing(new IllegalArgumentException("The provided CallTO list(" + 
+                                call.getClass() + ") contains severals global no-expression calls"));
+                    }
                 }
             } else {
                 throw log.throwing(new IllegalArgumentException("The CallTO provided (" +
@@ -966,37 +1134,37 @@ public class GenerateExprFile extends GenerateDownloadFile {
             }
         }
 
-        if (expressionTO == null && noExpressionTO == null) {
+        if (globalExpressionTO == null && globalNoExpressionTO == null) {
             throw log.throwing(new IllegalArgumentException("No global call " +
-                    "for the triplet gene (" + geneId + 
-                    ") - organ (" + anatEntityId + 
-                    ") - stage (" + stageId + ")"));
+                                "for the triplet gene (" + geneId + 
+                                ") - organ (" + anatEntityId + 
+                                ") - stage (" + stageId + ")"));
         }
-        if (expressionTO != null) {
-            if (isCallWithNoData(expressionTO)) {
+        if (globalExpressionTO != null) {
+            if (isCallWithNoData(globalExpressionTO)) {
                 throw log.throwing(new IllegalArgumentException("All data states of " + 
-                        "the expression call (" + expressionTO + ") are set to no data"));
+                        "the expression call (" + globalExpressionTO + ") are set to no data"));
             }
-            if (expressionTO.isObservedData() == null) {
+            if (globalExpressionTO.isObservedData() == null) {
                 throw log.throwing(new IllegalArgumentException("An ExpressionCallTO " + 
-                        "does not allow to determine origin of the data: " + expressionTO));
+                        "does not allow to determine origin of the data: " + globalExpressionTO));
             }
         }
-        if (noExpressionTO != null) {
-            if (isCallWithNoData(noExpressionTO)) {
+        if (globalNoExpressionTO != null) {
+            if (isCallWithNoData(globalNoExpressionTO)) {
                 throw log.throwing(new IllegalArgumentException("All data states of " + 
-                        "the no-expression call (" + noExpressionTO + ") are set to no data"));
+                        "the no-expression call (" + globalNoExpressionTO + ") are set to no data"));
             }
-            if (noExpressionTO.getOriginOfLine() == null) {
-                throw log.throwing(new IllegalArgumentException("An NoExpressionCallTO " +
-                        "does not allow to determine origin of the data: " + noExpressionTO));
+            if (globalNoExpressionTO.getOriginOfLine() == null) {
+                throw log.throwing(new IllegalArgumentException("A NoExpressionCallTO " +
+                        "does not allow to determine origin of the data: " + globalNoExpressionTO));
             }
         }
-
+        
         // Define if the call include observed data
         ObservedData observedData = ObservedData.NOT_OBSERVED;
-        if ((expressionTO != null && !isPropagatedOnly(expressionTO)) || 
-                (noExpressionTO != null && !isPropagatedOnly(noExpressionTO))) {
+        if ((globalExpressionTO != null && !isPropagatedOnly(globalExpressionTO)) || 
+                (globalNoExpressionTO != null && !isPropagatedOnly(globalNoExpressionTO))) {
             // stage and anatomical entity not propagated in the expression call
             // OR anatomical entity not propagated in the no-expression call
             observedData = ObservedData.OBSERVED;
@@ -1010,16 +1178,16 @@ public class GenerateExprFile extends GenerateDownloadFile {
         // Define summary column
         ExpressionData summary = ExpressionData.NO_DATA;
         String callQuality = GenerateDownloadFile.NA_VALUE;
-        if (expressionTO != null && noExpressionTO != null) {
-            if (noExpressionTO.getOriginOfLine().equals(NoExpressionCallTO.OriginOfLine.PARENT)) {
+        if (globalExpressionTO != null && globalNoExpressionTO != null) {
+            if (globalNoExpressionTO.getOriginOfLine().equals(NoExpressionCallTO.OriginOfLine.PARENT)) {
                 summary = ExpressionData.LOW_AMBIGUITY;
             } else {
                 summary = ExpressionData.HIGH_AMBIGUITY;
             }
-        } else if (expressionTO != null) {
+        } else if (globalExpressionTO != null) {
             Set<DataState> allDataState = EnumSet.of(
-                    expressionTO.getAffymetrixData(), expressionTO.getESTData(), 
-                    expressionTO.getInSituData(), expressionTO.getRNASeqData());
+                    globalExpressionTO.getAffymetrixData(), globalExpressionTO.getESTData(), 
+                    globalExpressionTO.getInSituData(), globalExpressionTO.getRNASeqData());
 
             if (allDataState.contains(DataState.HIGHQUALITY)) {
                 callQuality = DataState.HIGHQUALITY.getStringRepresentation();
@@ -1029,7 +1197,7 @@ public class GenerateExprFile extends GenerateDownloadFile {
                 // summary = ExpressionData.LOW_QUALITY;
             }
             summary = ExpressionData.EXPRESSION;
-        } else if (noExpressionTO != null) {
+        } else if (globalNoExpressionTO != null) {
             summary = ExpressionData.NO_EXPRESSION;
             callQuality = DataState.HIGHQUALITY.getStringRepresentation();
         }
@@ -1048,13 +1216,13 @@ public class GenerateExprFile extends GenerateDownloadFile {
         row.put(INCLUDING_OBSERVED_DATA_COLUMN_NAME, observedData.getStringRepresentation());
 
         // Define data state for each data types
-        if(expressionTO == null) {
-            expressionTO = new ExpressionCallTO(null, null, null, null, 
+        if(globalExpressionTO == null) {
+            globalExpressionTO = new ExpressionCallTO(null, null, null, null, 
                     DataState.NODATA, DataState.NODATA, DataState.NODATA, DataState.NODATA, 
                     null, null, null, null, null);
         }
-        if (noExpressionTO == null) {
-            noExpressionTO = new NoExpressionCallTO(null, null, null, null,
+        if (globalNoExpressionTO == null) {
+            globalNoExpressionTO = new NoExpressionCallTO(null, null, null, null,
                     DataState.NODATA, DataState.NODATA, DataState.NODATA, DataState.NODATA,
                     null, null);
         }
@@ -1062,34 +1230,62 @@ public class GenerateExprFile extends GenerateDownloadFile {
         // Define data state for each data type
         try {
             String[] affyData = this.mergeExprAndNoExprDataStates(
-                expressionTO.getAffymetrixData(), noExpressionTO.getAffymetrixData());
+                globalExpressionTO.getAffymetrixData(), globalNoExpressionTO.getAffymetrixData());
             row.put(AFFYMETRIX_DATA_COLUMN_NAME, affyData[0]);
             row.put(AFFYMETRIX_CALL_QUALITY_COLUMN_NAME, affyData[1]);
+            if (noExpressionTO != null && !noExpressionTO.getAffymetrixData().equals(DataState.NODATA) ||
+                    expressionTO != null && !expressionTO.getAffymetrixData().equals(DataState.NODATA)) {
+                row.put(AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME, ObservedData.OBSERVED.getStringRepresentation());
+            } else {
+                row.put(AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME, ObservedData.NOT_OBSERVED.getStringRepresentation());
+            }
 
             String[] estData = this.mergeExprAndNoExprDataStates(
-                expressionTO.getESTData(), DataState.NODATA);
+                globalExpressionTO.getESTData(), DataState.NODATA);
             row.put(EST_DATA_COLUMN_NAME, estData[0]);
             row.put(EST_CALL_QUALITY_COLUMN_NAME, estData[1]);
+            if (expressionTO != null && !expressionTO.getESTData().equals(DataState.NODATA)) {
+                row.put(EST_OBSERVED_DATA_COLUMN_NAME, ObservedData.OBSERVED.getStringRepresentation());
+            } else {
+                row.put(EST_OBSERVED_DATA_COLUMN_NAME, ObservedData.NOT_OBSERVED.getStringRepresentation());
+            }
 
             String[] inSituData = this.mergeExprAndNoExprDataStates(
-                expressionTO.getInSituData(), noExpressionTO.getInSituData());
+                globalExpressionTO.getInSituData(), globalNoExpressionTO.getInSituData());
             row.put(INSITU_DATA_COLUMN_NAME, inSituData[0]);
             row.put(INSITU_CALL_QUALITY_COLUMN_NAME, inSituData[1]);
+            if (noExpressionTO != null && !noExpressionTO.getInSituData().equals(DataState.NODATA) ||
+                    expressionTO != null && !expressionTO.getInSituData().equals(DataState.NODATA)) {
+                row.put(INSITU_OBSERVED_DATA_COLUMN_NAME, ObservedData.OBSERVED.getStringRepresentation());
+            } else {
+                row.put(INSITU_OBSERVED_DATA_COLUMN_NAME, ObservedData.NOT_OBSERVED.getStringRepresentation());
+            }
 
             // TODO: when relaxed in situ will be in the database, uncomment following line
             // String[] relaxedInSituData = this.mergeExprAndNoExprDataStates(
             //      DataState.NODATA, noExpressionTO.getRelaxedInSituData());
             // row.put(RELAXED_INSITU_DATA_COLUMN_NAME, relaxedInSituData[0]);
             // row.put(RELAXED_INSITU_CALL_QUALITY_COLUMN_NAME, relaxedInSituData[1]);
+            // if (noExpressionTO != null && !noExpressionTO.getRelaxedInSituData().equals(DataState.NODATA)) {
+            //  row.put(RELAXED_INSITU_OBSERVED_DATA_COLUMN_NAME, ObservedData.OBSERVED);
+            // } else {
+            //     row.put(RELAXED_INSITU_OBSERVED_DATA_COLUMN_NAME, ObservedData.NOT_OBSERVED);
+            // }
 
             String[] rnaSeqData = this.mergeExprAndNoExprDataStates(
-                expressionTO.getRNASeqData(), noExpressionTO.getRNASeqData());
+                globalExpressionTO.getRNASeqData(), globalNoExpressionTO.getRNASeqData());
             row.put(RNASEQ_DATA_COLUMN_NAME, rnaSeqData[0]);
             row.put(RNASEQ_CALL_QUALITY_COLUMN_NAME, rnaSeqData[1]);
+            if (noExpressionTO != null && !noExpressionTO.getRNASeqData().equals(DataState.NODATA) ||
+                    expressionTO != null && !expressionTO.getRNASeqData().equals(DataState.NODATA)) {
+                row.put(RNASEQ_OBSERVED_DATA_COLUMN_NAME, ObservedData.OBSERVED.getStringRepresentation());
+            } else {
+                row.put(RNASEQ_OBSERVED_DATA_COLUMN_NAME, ObservedData.NOT_OBSERVED.getStringRepresentation());
+            }
 
         } catch (Exception e) {
             throw log.throwing(new IllegalArgumentException("Incorrect data states, " +
-                "ExpressionCallTO: " + expressionTO + ", NoExpressionCallTo: " + noExpressionTO, e));
+                "ExpressionCallTO: " + globalExpressionTO + ", NoExpressionCallTo: " + globalNoExpressionTO, e));
         }
 
         return log.exit(row);
@@ -1186,7 +1382,7 @@ public class GenerateExprFile extends GenerateDownloadFile {
             Map<String, String> stageNamesByIds, Map<String, String> anatEntityNamesByIds, 
             Map<FileType, ICsvMapWriter> writersUsed, 
             Map<FileType, CellProcessor[]> processors, 
-            Map<FileType, String[]> headers, String geneId, Set<CallTO> allCallTOs) 
+            Map<FileType, String[]> headers, String geneId, Collection<CallTO> allCallTOs) 
                     throws IOException {
         log.entry(geneNamesByIds, stageNamesByIds, anatEntityNamesByIds, writersUsed, 
                 processors, headers, geneId, allCallTOs);

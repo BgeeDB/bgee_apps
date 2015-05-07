@@ -24,7 +24,11 @@ public class TestDocumentationDisplay extends TestParentDisplay implements Docum
     }
 
     @Override
-    public void displayDocumentationPage() {
+    public void displayDocumentationHomePage() {
         this.out.println("Test page is good !");
+    }
+    @Override
+    public void displayDownloadFileDocumentation() {
+        this.out.println("Test2");
     }
 }

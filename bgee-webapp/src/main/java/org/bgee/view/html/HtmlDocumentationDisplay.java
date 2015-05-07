@@ -292,14 +292,15 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
     private final String UNDER_EXPRESSED_FOR_SPECIES_COL_NAME = "Under-expressed gene count for";
     /**
      * A {@code String} that is the prefix of the name of the columns storing the number 
-     * of genes with no diff. expression in a condition for a gene homology group, for a given species 
+     * of genes with no diff. expression or inconclusive results in a condition for 
+     * a gene homology group, for a given species 
      * (the suffix of the column name is the latin name of the species) in multi-species 
      * download file, HTML escaped if necessary.
      */
     private final String NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME = "Not diff. expressed gene count for";
     /**
      * A {@code String} that is the prefix of the name of the columns storing the number 
-     * of genes with no data or inconclusive results in a condition for a gene homology group, 
+     * of genes with no data in a condition for a gene homology group, 
      * for a given species (the suffix of the column name is the latin name of the species) 
      * in multi-species download file, HTML escaped if necessary.
      */
@@ -464,7 +465,7 @@ this.writeln("<div class='documentationmenu'><ul>");
         RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
         urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
         this.writeln("<p class='documentationintro'>Bgee provides calls of baseline "
-                + "presence/absence of expression, and of over/under expression, "
+                + "presence/absence of expression, and of differential over-/under-expression, "
                 + "either for single species, or compared between species (homologous genes "
                 + "in homologous organs). This documentation describes the format of these "
                 + "<a href='" + urlDownloadGenerator.getRequestURL()
@@ -651,7 +652,7 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "the same data type (for instance, no contradiction permitted of reported "
                 + "absence of expression by RNA-Seq, with report of expression by RNA-Seq "
                 + "for the same gene, in the same anatomical entity and developmental stage, "
-                + "or any child anatomical entity and child developmental stage).</li>"
+                + "or any child anatomical entity or child developmental stage).</li>"
                 + "</ul>"
                 + "<p>Call propagation allows a complete integration of the data, "
                 + "even if provided at different anatomical or developmental levels. "
@@ -700,7 +701,7 @@ this.writeln("<div class='documentationmenu'><ul>");
         log.entry();
         
         this.writeln("<h4 id='single_expr_simple'>Simple file</h4>");
-        this.writeln("<p>In simple files, propagated presence/absence of expression calls "
+        this.writeln("<p>In simple files, propagated presence/absence expression calls "
                 + "are provided, but only calls in conditions of anatomical entity/developmental stage "
                 + "actually used in experimental data are displayed (no calls generated "
                 + "from propagation only).</p>");
@@ -1282,8 +1283,8 @@ this.writeln("<div class='documentationmenu'><ul>");
         this.writeln("<p>In simple files, each line provides information for a gene homology group, "
                 + "in a condition (homologous anatomical entity/comparable developmental stage); "
                 + "columns then provide, for each species, the number of genes over-expressed, "
-                + "under-expressed, not differentially expressed, and with no data, or "
-                + "inconclusive results; this means that the number of columns is variable "
+                + "under-expressed, not differentially expressed or with inconclusive results, "
+                + "and with no data; this means that the number of columns is variable "
                 + "depending on the number of species compared.</p>");
         this.writeln("<p>In simple files, only lines with data in at least two species, and at least "
                 + "one over-expression or under-expression call in a species, are provided, "
@@ -1402,16 +1403,16 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + STAGE_ID_COL_NAME + "</code> (column 4)), "
                 + "but that were never shown to have a significant variation of "
                 + "their level of expression as compared to the other conditions "
-                + "of the analyses.</p>");
+                + "of the analyses, or for which conflicting results were generated "
+                + "from different data types.</p>");
         this.writeln(totalNumberOfGenes);
         this.writeln("<h5 id='multi_diff_simple_col9'>" + NA_FOR_SPECIES_COL_NAME 
                 + " speciesXX</h5>");
         this.writeln("<p>Number of genes, members of the OMA homologous gene group "
                 + "with ID provided in <code>" + OMA_ID_COL_NAME + "</code> (column 1), "
-                + "that were either not tested for differential expression in this condition (<code>" 
+                + "that were not tested for differential expression in this condition (<code>" 
                 + MULTI_ANAT_ENTITY_IDS_COL_NAME + "</code> (column 2), at <code>" 
-                + STAGE_ID_COL_NAME + "</code> (column 4)), or for which coflicting "
-                + "results were generated from different data types.</p>");
+                + STAGE_ID_COL_NAME + "</code> (column 4)).</p>");
         this.writeln(totalNumberOfGenes);
 
         this.writeln("<p><a href='#multi_diff'>Back to over-/under-expression menu</a></p>");
@@ -1606,7 +1607,7 @@ this.writeln("<div class='documentationmenu'><ul>");
         this.writeln(this.getDiffExprStateColDescription(7, 4, 2, false, true, false, true, "RNA-Seq data")); 
         this.writeln("<h5 id='multi_diff_complete_col17'>" + RNA_SEQ_DIFF_EXPR_QUAL_COL_NAME 
                 + " (column 17)</h5>");
-        this.writeln(this.getDiffExprQualColDescription(RNA_SEQ_DIFF_EXPR_STATE_COL_NAME, 14, false, true)); 
+        this.writeln(this.getDiffExprQualColDescription(RNA_SEQ_DIFF_EXPR_STATE_COL_NAME, 16, false, true)); 
         this.writeln("<h5 id='multi_diff_complete_col18'>" + RNA_SEQ_DIFF_EXPR_P_VAL_COL_NAME 
                 + " (column 18)</h5>");
         this.writeln(this.getDiffExprPvalColDescription(
@@ -1789,7 +1790,7 @@ this.writeln("<div class='documentationmenu'><ul>");
             + MULTI_ANAT_ENTITY_IDS_COL_NAME + "</code> (column " + colNumber + "). "
             + "Cardinality 1 or greater. When more than "
             + "one anatomical entity is used, they are separated with the character "
-            + "<code>|</code>. See "+ MULTI_ANAT_ENTITY_IDS_COL_NAME + " column description "
+            + "<code>|</code>. See <code>"+ MULTI_ANAT_ENTITY_IDS_COL_NAME + "</code> column description "
             + "for more details.</p>");
     }
     
@@ -1956,10 +1957,14 @@ this.writeln("<div class='documentationmenu'><ul>");
             desc += "<li><span class='list_element_title'>weak ambiguity</span>: "
                 + "there exists a call of over-expression or under-expression generated "
                 + "from a data type, but another data type showed no significant variation "
-                + "of the level of expression of this gene in the same condition; or, a call "
-                + "of over-expression was generated from a data type, but the gene was "
-                + "shown to be never expressed in another analysis including the same condition, "
-                + "using a different data type;</li>"
+                + "of the level of expression of this gene in the same condition; or, a gene "
+                + "was shown to be never expressed in a condition by some analyses of a given data type, "
+                + "but other analyses of different data types produced a call of over-expression "
+                + "or of absence of differential expression for the same gene, "
+                + "in the same condition (note that conflicts where a data type produced "
+                + "an under-expression call in a condition, while another data type showed the same gene "
+                + "to be never expressed in that condition, do not produce a <code>weak ambiguity</code> "
+                + "call, but a call of <code>under-expression low quality</code>);</li>"
                 //TODO: change 'weak' to 'low' when files will be re-generated
                 + "<li><span class='list_element_title'>strong ambiguity</span>: "
                 + "there exists a call of over-expression or under-expression generated "
@@ -1978,6 +1983,70 @@ this.writeln("<div class='documentationmenu'><ul>");
         
         return log.exit(desc);
     }
+
+    /**
+     * Generates description of the expression state column. 
+     * 
+     * @param diffExprStateColName      A {@code String} that is the name of the column 
+     *                                  containing the related differential expression state. 
+     *                                  Index starting from 1.
+     * @param diffExprStateColNumber    An {@code int} that is the index of the column 
+     *                                  containing the related differential expression state. 
+     *                                  Index starting from 1.
+     * @param displayNA                 A {@code boolean} defining whether explanation 
+     *                                  about the "N/A" quality should be provided. 
+     * @param displayNoData             A {@code boolean} defining whether explanation 
+     *                                  about the "no data" quality should be provided. 
+     * @return  A {@code String} that is the description of the diff expression quality column 
+     *          in download files (because we use it several times), formated in HTML 
+     *          and HTML escaped if necessary.
+     * @see #getDiffExprStateColDescription(int, int, int, boolean, boolean, String)
+     */
+    private String getDiffExprQualColDescription(String diffExprStateColName, 
+            int diffExprStateColNumber, boolean displayNA, boolean displayNoData) {
+        log.entry(diffExprStateColName, diffExprStateColNumber, displayNA, displayNoData);
+        String desc = "<p>Confidence in the differential expression call provided in <code>"
+                + diffExprStateColName + "</code> (column " + diffExprStateColNumber + "). One of: </p>"
+                + "<ul class='doc_content'>"
+                + "<li><span class='list_element_title'>high quality</span>: "
+                + "differential expression reported as high quality, with no contradicting "
+                + "call from same type of analysis (across anatomy/across life stages), "
+                + "for same gene, in same anatomical entity and developmental stage, "
+                + "(call generated either from multiple congruent analyses, "
+                + "or from a single analysis);</li>"
+                //TODO: change 'poor' to 'low' after we re-generate the file
+                + "<li><span class='list_element_title'>poor quality</span>: "
+                + "differential expression reported as low quality, or there exists a conflict "
+                + "for the same gene, anatomical entity and developmental stage, "
+                + "from different analyses of a same data type "
+                + "(conflicts between different data types are treated differently); "
+                + "for instance, an analysis showed a gene to be over-expressed in a condition, "
+                + "while another analysis showed the same gene to be under-expressed or "
+                //TODO: add link to data analyses section
+                + "not differentially expressed in the same condition; such conflicts "
+                + "are resolved by a voting system based on the number of conditions compared, "
+                + "weighted by p-value; Note that in one case, this quality level is used "
+                + "to reconcile conflicting calls from different data types: "
+                + "when a data type produced an under-expression call, while a different "
+                + "data type has shown that the same gene was never seen as expressed in the same condition; "
+                + "in that case, the overall summary is <code>under-expression "
+                + "low quality</code>.</li>";
+        if (displayNA) {
+            //TODO: merge N/A and 'no data' once we re-generate the files
+            desc += "<li><span class='list_element_title'>N/A</span>: no quality applicable "
+                + "when ambiguity state in <code>" + diffExprStateColName 
+                + "</code> (column " + diffExprStateColNumber + ");</li>";
+        }
+        if (displayNoData) {
+            desc += "<li><span class='list_element_title'>no data</span>: no data associated "
+                    + "to <code>" + diffExprStateColName 
+                    + "</code> (column " + diffExprStateColNumber + ");</li>";
+        }
+        desc += "</ul>";
+        
+        return log.exit(desc);
+    }
+
     /**
      * Generates the description of the column storing best p-values for each data type 
      * in complete differential expression files.
@@ -2046,65 +2115,6 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "</code> (column " + diffExprStateColIndex + "). Set to 0 if no data available by " 
                 + dataType + ".</p>");
     }
-    /**
-     * Generates description of the expression state column. 
-     * 
-     * @param diffExprStateColName      A {@code String} that is the name of the column 
-     *                                  containing the related differential expression state. 
-     *                                  Index starting from 1.
-     * @param diffExprStateColNumber    An {@code int} that is the index of the column 
-     *                                  containing the related differential expression state. 
-     *                                  Index starting from 1.
-     * @param displayNA                 A {@code boolean} defining whether explanation 
-     *                                  about the "N/A" quality should be provided. 
-     * @param displayNoData             A {@code boolean} defining whether explanation 
-     *                                  about the "no data" quality should be provided. 
-     * @return  A {@code String} that is the description of the diff expression quality column 
-     *          in download files (because we use it several times), formated in HTML 
-     *          and HTML escaped if necessary.
-     * @see #getDiffExprStateColDescription(int, int, int, boolean, boolean, String)
-     */
-    private String getDiffExprQualColDescription(String diffExprStateColName, 
-            int diffExprStateColNumber, boolean displayNA, boolean displayNoData) {
-        log.entry(diffExprStateColName, diffExprStateColNumber, displayNA, displayNoData);
-        String desc = "<p>Confidence in the differential expression call provided in <code>"
-                + diffExprStateColName + "</code> (column " + diffExprStateColNumber + "). One of: </p>"
-                + "<ul class='doc_content'>"
-                + "<li><span class='list_element_title'>high quality</span>: "
-                + "differential expression reported as high quality, with no contradicting "
-                + "call from same type of analysis (across anatomy/across life stages), "
-                + "for same gene, in same anatomical entity and developmental stage, "
-                + "(call generated either from multiple congruent analyses, "
-                + "or from a single analysis);</li>"
-                //TODO: change 'poor' to 'low' after we re-generate the file
-                + "<li><span class='list_element_title'>poor quality</span>: "
-                + "differential expression reported as low quality, or there exists a conflict "
-                + "from same type of analysis (across anatomy/across life stages), "
-                + "for the same gene, anatomical entity and developmental stage, "
-                + "from different analyses of a same data type "
-                + "(conflicts between different data types are treated differently); "
-                + "for instance, an analysis showed a gene to be over-expressed on a condition, "
-                + "while another analysis showed the same gene to be under-expressed or "
-                //TODO: add link to data analyses section
-                + "not differentially expressed in the same condition; such conflicts "
-                + "are resolved by a voting system based on the number of conditions compared, "
-                + "weighted by p-value.</li>";
-        if (displayNA) {
-            //TODO: merge N/A and 'no data' once we re-generate the files
-            desc += "<li><span class='list_element_title'>N/A</span>: no quality applicable "
-                + "when ambiguity state in <code>" + diffExprStateColName 
-                + "</code> (column " + diffExprStateColNumber + ");</li>";
-        }
-        if (displayNoData) {
-            desc += "<li><span class='list_element_title'>no data</span>: no data associated "
-                    + "to <code>" + diffExprStateColName 
-                    + "</code> (column " + diffExprStateColNumber + ");</li>";
-        }
-        desc += "</ul>";
-        
-        return log.exit(desc);
-    } 
-    
     /**
      * Get the description for columns providing number of over-expressed or under-expressed 
      * genes in multi-species simple differential expression files.

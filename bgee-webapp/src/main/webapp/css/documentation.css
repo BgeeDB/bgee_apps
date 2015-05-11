@@ -60,24 +60,30 @@ div.documentationmenu li {
     margin: 2% 0 0 0;
 }
 
-table.call_download_file {
+table.call_download_file_desc, table.call_download_file_example {
 	width: 100%;
 	border-top: 1px solid black;
     border-bottom: 1px solid black;
     font-size: 0.9em;
     /* needed to style borders of other table elements */
     border-collapse: collapse; 
+    margin-bottom: 1em;
 }
 
-table.call_download_file thead {
+table.call_download_file_desc thead, table.call_download_file_example thead {
 	border-bottom: 1px solid black;
 }
 
-table.call_download_file td, table.call_download_file th {
+table.call_download_file_desc td, table.call_download_file_desc th, 
+table.call_download_file_example td, table.call_download_file_example th {
     vertical-align: top;
     padding: 0.5em;
     text-align: left;
     font-weight: normal;
+}
+
+table.call_download_file_example tr {
+    font-size: 0.8em;
 }
 
 ul.doc_content li:not(:first-child) {

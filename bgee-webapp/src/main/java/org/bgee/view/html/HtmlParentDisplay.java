@@ -144,6 +144,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         log.entry();
 
         this.writeln("</div>");
+        //FIXME: I noticed that this footer messes up print version on firefox
         this.writeln("<footer>");
         this.writeln("<div id='sib_footer_content'>");
         this.writeln("<a href='http://www.isb-sib.ch'>SIB Swiss Institute of Bioinformatics</a>");

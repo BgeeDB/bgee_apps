@@ -278,14 +278,14 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
     private final String OMA_ID_COL_NAME = "OMA ID";
     /**
      * A {@code String} that is the prefix of the name of the columns storing the number 
-     * of over-expressed genes in a condition for a gene homology group, for a given species 
+     * of over-expressed genes in a condition for a gene orthology group, for a given species 
      * (the suffix of the column name is the latin name of the species) in multi-species 
      * download file, HTML escaped if necessary.
      */
     private final String OVER_EXPRESSED_FOR_SPECIES_COL_NAME = "Over-expressed gene count for";
     /**
      * A {@code String} that is the prefix of the name of the columns storing the number 
-     * of under-expressed genes in a condition for a gene homology group, for a given species 
+     * of under-expressed genes in a condition for a gene orthology group, for a given species 
      * (the suffix of the column name is the latin name of the species) in multi-species 
      * download file, HTML escaped if necessary.
      */
@@ -293,14 +293,14 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
     /**
      * A {@code String} that is the prefix of the name of the columns storing the number 
      * of genes with no diff. expression or inconclusive results in a condition for 
-     * a gene homology group, for a given species 
+     * a gene orthology group, for a given species 
      * (the suffix of the column name is the latin name of the species) in multi-species 
      * download file, HTML escaped if necessary.
      */
     private final String NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME = "Not diff. expressed gene count for";
     /**
      * A {@code String} that is the prefix of the name of the columns storing the number 
-     * of genes with no data in a condition for a gene homology group, 
+     * of genes with no data in a condition for a gene orthology group, 
      * for a given species (the suffix of the column name is the latin name of the species) 
      * in multi-species download file, HTML escaped if necessary.
      */
@@ -466,7 +466,7 @@ this.writeln("<div class='documentationmenu'><ul>");
         urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
         this.writeln("<p class='documentationintro'>Bgee provides calls of baseline "
                 + "presence/absence of expression, and of differential over-/under-expression, "
-                + "either for single species, or compared between species (homologous genes "
+                + "either for single species, or compared between species (orthologous genes "
                 + "in homologous organs). This documentation describes the format of these "
                 + "<a href='" + urlDownloadGenerator.getRequestURL()
                 + "' title='Bgee expression data page'>download files</a>.</p>");
@@ -498,8 +498,8 @@ this.writeln("<div class='documentationmenu'><ul>");
         this.writeln("<h2 id='multi'>Multi-species download files</h2>");
         this.writeln("<div class='doc_content'>");
         this.writeln("<p>Bgee provides the ability to compare expression data between species, "
-                + "with great anatomical details, using formal concepts of homology: "
-                + "homology of genes, homology of anatomical entities. This allows to perform "
+                + "with great anatomical detail, using formal concepts of homology: "
+                + "orthology of genes, homology of anatomical entities. This allows to perform "
                 + "accurate comparisons between species, even for distant species "
                 + "for which the anatomy mapping might not be obvious.</p>");
         this.writeln("<ul class='doc_content'>"
@@ -515,7 +515,7 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "homology annotation project on GitHub</a>. <br />"
                 + "In practice, when comparing expression data between several species, "
                 + "the anatomical entities used are those with a homology relation valid "
-                + "for their Least Common Ancestor (LCA), and any of its ancestral taxa. "
+                + "for their Least Common Ancestor (LCA), or any of its ancestral taxa. "
                 + "For instance, if comparing data between human and zebrafish, "
                 + "the LCA would be the taxon <i>Euteleostomi</i>; as a result, "
                 + "annotations to this taxon would be used, such as the relation of homology "
@@ -525,8 +525,8 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "appeared in the <i>Vertebrata</i> common ancestor; annotations to more recent taxa "
                 + "than the LCA would be discarded, such as the annotation to the \"forelimb\" "
                 + "structure (UBERON:0002102), homologous in the <i>Tetrapoda</i> lineage.</li> "
-                + "<li><span class='list_element_title'>homology of genes</span>: relations of homology "
-                + "between genes are retrieved using the <a target='_blank' "
+                + "<li><span class='list_element_title'>orthology of genes</span>: relations of "
+                + "orthology between genes are retrieved using the <a target='_blank' "
                 + "href='http://omabrowser.org/oma/hogs/' title='External link to OMA browser'>"
                 + "OMA Hierarchical orthologous groups</a>; when comparing several species, "
                 + "Bgee identifies their Least Common Ancestor (LCA), and retrieve genes "
@@ -640,12 +640,12 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "<ul class='doc_content'>"
                 + "<li><span class='list_element_title'>calls of expression</span> "
                 + "are propagated to parent anatomical entities "
-                + "and parent developmental stages; for instance, if gene A is expressed "
+                + "and parent developmental stages. For instance, if gene A is expressed "
                 + "in midbrain at young adult stage, it will also be considered as expressed "
-                + "in brain at adult stage;</li>"
+                + "in brain at adult stage.</li>"
                 + "<li><span class='list_element_title'>calls of absence of expression</span> "
                 + "are propagated to child anatomical entities "
-                + "(and not to child developmental stages); for instance, if gene A is reported "
+                + "(and not to child developmental stages). For instance, if gene A is reported "
                 + "as not expressed in the brain at young adult stage, it will also be considered "
                 + "as not expressed in the midbrain at young adult stage. This is only permitted "
                 + "when it does not generate any contradiction with expression calls from "
@@ -657,7 +657,7 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "<p>Call propagation allows a complete integration of the data, "
                 + "even if provided at different anatomical or developmental levels. "
                 + "For instance: if gene A is reported to be expressed in the midbrain dura mater "
-                + "at yound adult stage; gene B is reported to be expressed "
+                + "at young adult stage; gene B is reported to be expressed "
                 + "in the midbrain pia mater at late adult stage; and gene C has an absence "
                 + "of expression reported in the brain at adult stage; it is then possible to retrieve "
                 + "that, in the midbrain at adult stage, gene A and B are both expressed, "
@@ -705,35 +705,36 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "are provided, but only calls in conditions of anatomical entity/developmental stage "
                 + "actually used in experimental data are displayed (no calls generated "
                 + "from propagation only).</p>");
-        this.writeln("<table class='call_download_file'>");
+        this.writeln("<table class='call_download_file_desc'>");
         this.writeln("<caption>Format description for single species simple expression file</caption>");
         this.writeln("<thead>");
-        this.writeln("<tr><th>Column</th><th>Content</th><th>Cardinality</th><th>Example</th></tr>");
+        this.writeln("<tr><th>Column</th><th>Content</th><th>Example</th></tr>");
         this.writeln("</thead>");
         this.writeln("<tbody>");
         this.writeln("<tr><td>1</td><td><a href='#single_expr_simple_col1' title='" 
                 + GENE_ID_LINK_TITLE + "'>" + GENE_ID_COL_NAME 
-                + "</a></td><td>1</td><td>FBgn0005427</td></tr>");
+                + "</a></td><td>FBgn0005427</td></tr>");
         this.writeln("<tr><td>2</td><td><a href='#single_expr_simple_col2' title='" 
                 + GENE_NAME_LINK_TITLE + "'>" + GENE_NAME_COL_NAME 
-                + "</a></td><td>1</td><td>ewg</td></tr>");
+                + "</a></td><td>ewg</td></tr>");
         this.writeln("<tr><td>3</td><td><a href='#single_expr_simple_col3' title='" 
                 + STAGE_ID_LINK_TITLE + "'>" + STAGE_ID_COL_NAME 
-                + "</a></td><td>1</td><td>FBdv:00005348</td></tr>");
+                + "</a></td><td>FBdv:00005348</td></tr>");
         this.writeln("<tr><td>4</td><td><a href='#single_expr_simple_col4' title='" 
                 + STAGE_NAME_LINK_TITLE + "'>" + STAGE_NAME_COL_NAME 
-                + "</a></td><td>1</td><td>prepupal stage P4(ii) (Drosophila)</td></tr>");
+                + "</a></td><td>prepupal stage P4(ii) (Drosophila)</td></tr>");
         this.writeln("<tr><td>5</td><td><a href='#single_expr_simple_col5' title='" 
                 + ANAT_ENTITY_ID_LINK_TITLE + "'>" + ANAT_ENTITY_ID_COL_NAME 
-                + "</a></td><td>1</td><td>FBbt:00003404</td></tr>");
+                + "</a></td><td>FBbt:00003404</td></tr>");
         this.writeln("<tr><td>6</td><td><a href='#single_expr_simple_col6' title='" 
                 + ANAT_ENTITY_NAME_LINK_TITLE + "'>" + ANAT_ENTITY_NAME_COL_NAME 
-                + "</a></td><td>1</td><td>mesothoracic extracoxal depressor muscle 66 (Drosophila)</td></tr>");
+                + "</a></td><td>mesothoracic extracoxal depressor muscle 66 (Drosophila)</td></tr>");
         this.writeln("<tr><td>7</td><td><a href='#single_expr_simple_col7' title='" 
                 + EXPR_STATE_LINK_TITLE + "'>" + EXPR_STATE_COL_NAME 
-                + "</a></td><td>1</td><td>expression high quality</td></tr>");
+                + "</a></td><td>expression high quality</td></tr>");
         this.writeln("</tbody>");
         this.writeln("</table>");
+        this.writeln(this.getSingleSpeciesSimpleExprFileExample());
         this.writeln("<h5 id='single_expr_simple_col1'>" + GENE_ID_COL_NAME + " (column 1)</h5>");
         this.writeln(this.getGeneIdColDescription());
         this.writeln("<h5 id='single_expr_simple_col2'>" + GENE_NAME_COL_NAME + " (column 2)</h5>");
@@ -770,57 +771,57 @@ this.writeln("<div class='documentationmenu'><ul>");
         this.writeln("<p>The differences between simple and complete files are that, "
                 + "in complete files: </p>"
                 + "<ul class='doc_content'>"
-                + "<li>details of expression status generated from each data type are provided;</li>"
+                + "<li>details of expression status generated from each data type are provided.</li>"
                 + "<li>all calls are provided, propagated to all possible anatomical entities "
                 + "and developmental stages, including in conditions not annotated in experimental data "
-                + "(calls generated from propagation only);</li>"
+                + "(calls generated from propagation only).</li>"
                 + "<li>a column allows to determine whether a call was generated from propagation "
                 + "only, or whether the anatomical entity/developmental stage was actually "
                 + "seen in experimental data (such a call would then also be present "
                 + "in simple file).</li>"
                 + "</ul>");
-        this.writeln("<table class='call_download_file'>");
+        this.writeln("<table class='call_download_file_desc'>");
         this.writeln("<caption>Format description for single species complete expression file</caption>");
         this.writeln("<thead>");
-        this.writeln("<tr><th>Column</th><th>Content</th><th>Cardinality</th><th>Example</th></tr>");
+        this.writeln("<tr><th>Column</th><th>Content</th><th>Example</th></tr>");
         this.writeln("</thead>");
         this.writeln("<tbody>");
         this.writeln("<tr><td>1</td><td><a href='#single_expr_complete_col1' title='" 
                 + GENE_ID_LINK_TITLE + "'>" + GENE_ID_COL_NAME 
-                + "</a></td><td>1</td><td>ENSDARG00000070769</td></tr>");
+                + "</a></td><td>ENSDARG00000070769</td></tr>");
         this.writeln("<tr><td>2</td><td><a href='#single_expr_complete_col2' title='" 
                 + GENE_NAME_LINK_TITLE + "'>" + GENE_NAME_COL_NAME 
-                + "</a></td><td>1</td><td>foxg1a</td></tr>");
+                + "</a></td><td>foxg1a</td></tr>");
         this.writeln("<tr><td>3</td><td><a href='#single_expr_complete_col3' title='" 
                 + STAGE_ID_LINK_TITLE + "'>" + STAGE_ID_COL_NAME 
-                + "</a></td><td>1</td><td>UBERON:0000113</td></tr>");
+                + "</a></td><td>UBERON:0000113</td></tr>");
         this.writeln("<tr><td>4</td><td><a href='#single_expr_complete_col4' title='" 
                 + STAGE_NAME_LINK_TITLE + "'>" + STAGE_NAME_COL_NAME 
-                + "</a></td><td>1</td><td>post-juvenile adult stage</td></tr>");
+                + "</a></td><td>post-juvenile adult stage</td></tr>");
         this.writeln("<tr><td>5</td><td><a href='#single_expr_complete_col5' title='" 
                 + ANAT_ENTITY_ID_LINK_TITLE + "'>" + ANAT_ENTITY_ID_COL_NAME 
-                + "</a></td><td>1</td><td>UBERON:0000955</td></tr>");
+                + "</a></td><td>UBERON:0000955</td></tr>");
         this.writeln("<tr><td>6</td><td><a href='#single_expr_complete_col6' title='" 
                 + ANAT_ENTITY_NAME_LINK_TITLE + "'>" + ANAT_ENTITY_NAME_COL_NAME 
-                + "</a></td><td>1</td><td>brain</td></tr>");
+                + "</a></td><td>brain</td></tr>");
         this.writeln("<tr><td>7</td><td><a href='#single_expr_complete_col7' title='" 
                 + AFFY_EXPR_STATE_LINK_TITLE + "'>" + AFFY_EXPR_STATE_COL_NAME 
-                + "</a></td><td>1</td><td>expression high quality</td></tr>");
+                + "</a></td><td>expression high quality</td></tr>");
         this.writeln("<tr><td>8</td><td><a href='#single_expr_complete_col8' title='" 
                 + EST_EXPR_STATE_LINK_TITLE + "'>" + EST_EXPR_STATE_COL_NAME 
-                + "</a></td><td>1</td><td>expression low quality</td></tr>");
+                + "</a></td><td>expression low quality</td></tr>");
         this.writeln("<tr><td>9</td><td><a href='#single_expr_complete_col9' title='" 
                 + IN_SITU_EXPR_STATE_LINK_TITLE + "'>" + IN_SITU_EXPR_STATE_COL_NAME 
-                + "</a></td><td>1</td><td>expression high quality</td></tr>");
+                + "</a></td><td>expression high quality</td></tr>");
         this.writeln("<tr><td>10</td><td><a href='#single_expr_complete_col10' title='" 
                 + RNA_SEQ_EXPR_STATE_LINK_TITLE + "'>" + RNA_SEQ_EXPR_STATE_COL_NAME 
-                + "</a></td><td>1</td><td>no data</td></tr>");
+                + "</a></td><td>no data</td></tr>");
         this.writeln("<tr><td>11</td><td><a href='#single_expr_complete_col11' title='" 
                 + OBSERVED_DATA_LINK_TITLE + "'>" + OBSERVED_DATA_COL_NAME 
-                + "</a></td><td>1</td><td>yes</td></tr>");
+                + "</a></td><td>yes</td></tr>");
         this.writeln("<tr><td>12</td><td><a href='#single_expr_complete_col12' title='" 
                 + EXPR_STATE_LINK_TITLE + "'>" + EXPR_STATE_COL_NAME 
-                + "</a></td><td>1</td><td>expression high quality</td></tr>");
+                + "</a></td><td>expression high quality</td></tr>");
         this.writeln("</tbody>");
         this.writeln("</table>");
         this.writeln("<h5 id='single_expr_complete_col1'>" + GENE_ID_COL_NAME + " (column 1)</h5>");
@@ -846,17 +847,17 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "in same anatomical entity and developmental stage, that would have been "
                 + "generated by other Affymetrix probesets or chips "
                 + "(meaning that the call was either generated from multiple congruent data, "
-                + "or from a single probeset/chip);</li>"
+                + "or from a single probeset/chip).</li>"
                 + "<li><span class='list_element_title'>expression low quality</span>: "
                 + "expression reported as low quality, either from Bgee statistical tests, "
                 + "or because there exists a conflict of presence/absence of expression "
                 + "for the same gene, anatomical entity and developmental stage, generated from "
-                + "other Affymetrix probesets/chips;</li>"
+                + "other Affymetrix probesets/chips.</li>"
                 + "<li><span class='list_element_title'>absent high quality</span>: "
                 + "report of absence of expression from Bgee statistical tests, "
                 + "with no contradicting call of presence of expression generated by other "
                 + "Affymetrix probesets or chips for the same gene, in the same anatomical entity "
-                + "and developmental stage, or in a child entity or child developmental stage;</li>"
+                + "and developmental stage, or in a child entity or child developmental stage.</li>"
                 + "<li><span class='list_element_title'>no data</span>: no Affymetrix data "
                 + "available for this gene/anatomical entity/developmental stage (data either "
                 + "not available, or discarded by Bgee quality controls).</li>"
@@ -868,9 +869,9 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "to produce calls of absence of expression. One of: </p>"
                 + "<ul class='doc_content'>"
                 + "<li><span class='list_element_title'>expression high quality</span>: "
-                + "expression reported as high quality from Bgee statistical tests;</li>"
+                + "expression reported as high quality from Bgee statistical tests.</li>"
                 + "<li><span class='list_element_title'>expression low quality</span>: "
-                + "expression reported as low quality from Bgee statistical tests;</li>"
+                + "expression reported as low quality from Bgee statistical tests.</li>"
                 + "<li><span class='list_element_title'>no data</span>: no EST data "
                 + "available for this gene/anatomical entity/developmental stage (data either "
                 + "not available, or discarded by Bgee quality controls).</li>"
@@ -885,18 +886,18 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "with no contradicting call of absence of expression for same gene, "
                 + "in same anatomical entity and developmental stage "
                 + "(meaning that the call was either generated from multiple congruent "
-                + "<i>in situ</i> hybridization evidence lines, or from a single hybridization);</li>"
+                + "<i>in situ</i> hybridization evidence lines, or from a single hybridization).</li>"
                 + "<li><span class='list_element_title'>expression low quality</span>: "
                 + "expression reported as low quality, either from <i>in situ</i> data sources, "
                 + "or because there exists a conflict of presence/absence of expression "
                 + "for the same gene, anatomical entity and developmental stage, generated from "
-                + "different <i>in situ</i> hybridization evidence lines;</li>"
+                + "different <i>in situ</i> hybridization evidence lines.</li>"
                 + "<li><span class='list_element_title'>absent high quality</span>: "
                 + "report of absence of expression from <i>in situ</i> data sources, "
                 + "with no contradicting call of presence of expression generated by other "
                 + "<i>in situ</i> hybridization evidence lines "
                 + "for the same gene, in the same anatomical entity "
-                + "and developmental stage, or in a child entity or child developmental stage;</li>"
+                + "and developmental stage, or in a child entity or child developmental stage.</li>"
                 + "<li><span class='list_element_title'>no data</span>: no <i>in situ</i> data "
                 + "available for this gene/anatomical entity/developmental stage (data either "
                 + "not available, or discarded by Bgee quality controls).</li>"
@@ -912,17 +913,17 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "in same anatomical entity and developmental stage, that would have been "
                 + "generated from other RNA-Seq libraries (meaning that the call was either "
                 + "generated from several libraries providing congruent results, "
-                + "or from a single library);</li>"
+                + "or from a single library).</li>"
                 + "<li><span class='list_element_title'>expression low quality</span>: "
                 + "expression reported as low quality, either from Bgee statistical tests, "
                 + "or because there exists a conflict of presence/absence of expression "
                 + "for the same gene, anatomical entity and developmental stage, generated from "
-                + "different RNA-Seq libraries;</li>"
+                + "different RNA-Seq libraries.</li>"
                 + "<li><span class='list_element_title'>absent high quality</span>: "
                 + "report of absence of expression from Bgee statistical tests, "
                 + "with no contradicting call of presence of expression generated by other RNA-Seq libraries "
                 + "for the same gene, in the same anatomical entity "
-                + "and developmental stage, or in a child entity or child developmental stage;</li>"
+                + "and developmental stage, or in a child entity or child developmental stage.</li>"
                 + "<li><span class='list_element_title'>no data</span>: no RNA-Seq data "
                 + "available for this gene/anatomical entity/developmental stage (data either "
                 + "not available, or discarded by Bgee quality controls).</li>"
@@ -936,6 +937,8 @@ this.writeln("<div class='documentationmenu'><ul>");
         this.writeln("<h5 id='single_expr_complete_col12'>" + EXPR_STATE_COL_NAME + " (column 12)</h5>");
         this.writeln(this.getExprStateColDescription(1, 3, 5, true)); 
         this.writeln("<p><a href='#single_expr'>Back to presence/absence of expression menu</a></p>");
+        this.writeln("<p>This corresponds to the same expression state summary column "
+                + "as in simple files (column 7 of presence/absence simple file)</p>");
         
         log.exit();
     }
@@ -1003,36 +1006,36 @@ this.writeln("<div class='documentationmenu'><ul>");
         this.writeln("<p>In simple files, only calls of over-expression and under-expression "
                 + "are provided, summarizing the contribution "
                 + "of each data type to the call.</p>");
-        this.writeln("<table class='call_download_file'>");
+        this.writeln("<table class='call_download_file_desc'>");
         this.writeln("<caption>Format description for single species simple differential expression file</caption>");
         this.writeln("<thead>");
-        this.writeln("<tr><th>Column</th><th>Content</th><th>Cardinality</th><th>Example</th></tr>");
+        this.writeln("<tr><th>Column</th><th>Content</th><th>Example</th></tr>");
         this.writeln("</thead>");
         this.writeln("<tbody>");
         this.writeln("<tr><td>1</td><td><a href='#single_diff_simple_col1' title='" 
                 + GENE_ID_LINK_TITLE + "'>" + GENE_ID_COL_NAME 
-                + "</a></td><td>1</td><td>ENSG00000000419</td></tr>");
+                + "</a></td><td>ENSG00000000419</td></tr>");
         this.writeln("<tr><td>2</td><td><a href='#single_diff_simple_col2' title='" 
                 + GENE_NAME_LINK_TITLE + "'>" + GENE_NAME_COL_NAME 
-                + "</a></td><td>1</td><td>DPM1</td></tr>");
+                + "</a></td><td>DPM1</td></tr>");
         this.writeln("<tr><td>3</td><td><a href='#single_diff_simple_col3' title='" 
                 + STAGE_ID_LINK_TITLE + "'>" + STAGE_ID_COL_NAME 
-                + "</a></td><td>1</td><td>HsapDv:0000083</td></tr>");
+                + "</a></td><td>HsapDv:0000083</td></tr>");
         this.writeln("<tr><td>4</td><td><a href='#single_diff_simple_col4' title='" 
                 + STAGE_NAME_LINK_TITLE + "'>" + STAGE_NAME_COL_NAME 
-                + "</a></td><td>1</td><td>infant stage (human)</td></tr>");
+                + "</a></td><td>infant stage (human)</td></tr>");
         this.writeln("<tr><td>5</td><td><a href='#single_diff_simple_col5' title='" 
                 + ANAT_ENTITY_ID_LINK_TITLE + "'>" + ANAT_ENTITY_ID_COL_NAME 
-                + "</a></td><td>1</td><td>UBERON:0009834</td></tr>");
+                + "</a></td><td>UBERON:0009834</td></tr>");
         this.writeln("<tr><td>6</td><td><a href='#single_diff_simple_col6' title='" 
                 + ANAT_ENTITY_NAME_LINK_TITLE + "'>" + ANAT_ENTITY_NAME_COL_NAME 
-                + "</a></td><td>1</td><td>dorsolateral prefrontal cortex</td></tr>");
+                + "</a></td><td>dorsolateral prefrontal cortex</td></tr>");
         this.writeln("<tr><td>7</td><td><a href='#single_diff_simple_col7' title='" 
                 + DIFF_EXPR_STATE_LINK_TITLE + "'>" + DIFF_EXPR_STATE_COL_NAME 
-                + "</a></td><td>1</td><td>under-expression</td></tr>");
+                + "</a></td><td>under-expression</td></tr>");
         this.writeln("<tr><td>8</td><td><a href='#single_diff_simple_col8' title='" 
                 + DIFF_EXPR_QUAL_LINK_TITLE + "'>" + DIFF_EXPR_QUAL_COL_NAME 
-                + "</a></td><td>1</td><td>high quality</td></tr>");
+                + "</a></td><td>high quality</td></tr>");
         this.writeln("</tbody>");
         this.writeln("</table>");
         this.writeln("<h5 id='single_diff_simple_col1'>" + GENE_ID_COL_NAME + " (column 1)</h5>");
@@ -1075,82 +1078,82 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "<ul class='doc_content'>"
                 + "<li>details of the contribution of each data type to the final calls "
                 + "are provided, notably with information about best p-values, or number "
-                + "of supporting/conflicting analyses;</li>"
+                + "of supporting/conflicting analyses.</li>"
                 + "<li>calls representing absence of differential expression are provided, "
                 + "allowing to determine all genes and conditions tested for differential "
                 + "expression.</li>"
                 + "</ul>");
-        this.writeln("<table class='call_download_file'>");
+        this.writeln("<table class='call_download_file_desc'>");
         this.writeln("<caption>Format description for single species complete differential expression file</caption>");
         this.writeln("<thead>");
-        this.writeln("<tr><th>Column</th><th>Content</th><th>Cardinality</th><th>Example</th></tr>");
+        this.writeln("<tr><th>Column</th><th>Content</th><th>Example</th></tr>");
         this.writeln("</thead>");
         this.writeln("<tbody>");
         this.writeln("<tr><td>1</td><td><a href='#single_diff_complete_col1' title='" 
                 + GENE_ID_LINK_TITLE + "'>" + GENE_ID_COL_NAME 
-                + "</a></td><td>1</td><td>ENSMUSG00000093930</td></tr>");
+                + "</a></td><td>ENSMUSG00000093930</td></tr>");
         this.writeln("<tr><td>2</td><td><a href='#single_diff_complete_col2' title='" 
                 + GENE_NAME_LINK_TITLE + "'>" + GENE_NAME_COL_NAME 
-                + "</a></td><td>1</td><td>Hmgcs1</td></tr>");
+                + "</a></td><td>Hmgcs1</td></tr>");
         this.writeln("<tr><td>3</td><td><a href='#single_diff_complete_col3' title='" 
                 + STAGE_ID_LINK_TITLE + "'>" + STAGE_ID_COL_NAME 
-                + "</a></td><td>1</td><td>UBERON:0000113</td></tr>");
+                + "</a></td><td>UBERON:0000113</td></tr>");
         this.writeln("<tr><td>4</td><td><a href='#single_diff_complete_col4' title='" 
                 + STAGE_NAME_LINK_TITLE + "'>" + STAGE_NAME_COL_NAME 
-                + "</a></td><td>1</td><td>post-juvenile adult stage</td></tr>");
+                + "</a></td><td>post-juvenile adult stage</td></tr>");
         this.writeln("<tr><td>5</td><td><a href='#single_diff_complete_col5' title='" 
                 + ANAT_ENTITY_ID_LINK_TITLE + "'>" + ANAT_ENTITY_ID_COL_NAME 
-                + "</a></td><td>1</td><td>UBERON:0002107</td></tr>");
+                + "</a></td><td>UBERON:0002107</td></tr>");
         this.writeln("<tr><td>6</td><td><a href='#single_diff_complete_col6' title='" 
                 + ANAT_ENTITY_NAME_LINK_TITLE + "'>" + ANAT_ENTITY_NAME_COL_NAME 
-                + "</a></td><td>1</td><td>liver</td></tr>");
+                + "</a></td><td>liver</td></tr>");
         this.writeln("<tr><td>7</td><td><a href='#single_diff_complete_col7' title='" 
                 + DIFF_EXPR_STATE_LINK_TITLE + "'>" + DIFF_EXPR_STATE_COL_NAME 
-                + "</a></td><td>1</td><td>over-expression</td></tr>");
+                + "</a></td><td>over-expression</td></tr>");
         this.writeln("<tr><td>8</td><td><a href='#single_diff_complete_col8' title='" 
                 + DIFF_EXPR_QUAL_LINK_TITLE + "'>" + DIFF_EXPR_QUAL_COL_NAME 
-                + "</a></td><td>1</td><td>high quality</td></tr>");
+                + "</a></td><td>high quality</td></tr>");
         this.writeln("<tr><td>9</td><td><a href='#single_diff_complete_col9' title='" 
                 + "See " + AFFY_DIFF_EXPR_STATE_COL_NAME + " column description'>" 
                 + AFFY_DIFF_EXPR_STATE_COL_NAME 
-                + "</a></td><td>1</td><td>over-expression</td></tr>");
+                + "</a></td><td>over-expression</td></tr>");
         this.writeln("<tr><td>10</td><td><a href='#single_diff_complete_col10' title='" 
                 + "See " + AFFY_DIFF_EXPR_QUAL_COL_NAME + " column description'>" 
                 + AFFY_DIFF_EXPR_QUAL_COL_NAME
         //TODO: change 'poor' to 'low'
-                + "</a></td><td>1</td><td>poor quality</td></tr>");
+                + "</a></td><td>poor quality</td></tr>");
         this.writeln("<tr><td>11</td><td><a href='#single_diff_complete_col11' title='" 
                 + "See " + AFFY_DIFF_EXPR_P_VAL_COL_NAME + " column description'>" 
                 + AFFY_DIFF_EXPR_P_VAL_COL_NAME 
-                + "</a></td><td>1</td><td>0.0035659347</td></tr>");
+                + "</a></td><td>0.0035659347</td></tr>");
         this.writeln("<tr><td>12</td><td><a href='#single_diff_complete_col12' title='" 
                 + "See " + AFFY_DIFF_EXPR_SUPPORT_COUNT_COL_NAME + " column description'>" 
                 + AFFY_DIFF_EXPR_SUPPORT_COUNT_COL_NAME 
-                + "</a></td><td>1</td><td>1</td></tr>");
+                + "</a></td><td>1</td></tr>");
         this.writeln("<tr><td>13</td><td><a href='#single_diff_complete_col13' title='" 
                 + "See " + AFFY_DIFF_EXPR_CONFLICT_COUNT_COL_NAME + " column description'>" 
                 + AFFY_DIFF_EXPR_CONFLICT_COUNT_COL_NAME 
-                + "</a></td><td>1</td><td>1</td></tr>");
+                + "</a></td><td>1</td></tr>");
         this.writeln("<tr><td>14</td><td><a href='#single_diff_complete_col14' title='" 
                 + "See " + RNA_SEQ_DIFF_EXPR_STATE_COL_NAME + " column description'>" 
                 + RNA_SEQ_DIFF_EXPR_STATE_COL_NAME 
-                + "</a></td><td>1</td><td>over-expression</td></tr>");
+                + "</a></td><td>over-expression</td></tr>");
         this.writeln("<tr><td>15</td><td><a href='#single_diff_complete_col15' title='" 
                 + "See " + RNA_SEQ_DIFF_EXPR_QUAL_COL_NAME + " column description'>" 
                 + RNA_SEQ_DIFF_EXPR_QUAL_COL_NAME 
-                + "</a></td><td>1</td><td>high quality</td></tr>");
+                + "</a></td><td>high quality</td></tr>");
         this.writeln("<tr><td>16</td><td><a href='#single_diff_complete_col16' title='" 
                 + "See " + RNA_SEQ_DIFF_EXPR_P_VAL_COL_NAME + " column description'>" 
                 + RNA_SEQ_DIFF_EXPR_P_VAL_COL_NAME 
-                + "</a></td><td>1</td><td>2.96E-8</td></tr>");
+                + "</a></td><td>2.96E-8</td></tr>");
         this.writeln("<tr><td>17</td><td><a href='#single_diff_complete_col17' title='" 
                 + "See " + RNA_SEQ_DIFF_EXPR_SUPPORT_COUNT_COL_NAME + " column description'>" 
                 + RNA_SEQ_DIFF_EXPR_SUPPORT_COUNT_COL_NAME 
-                + "</a></td><td>1</td><td>2</td></tr>");
+                + "</a></td><td>2</td></tr>");
         this.writeln("<tr><td>18</td><td><a href='#single_diff_complete_col18' title='" 
                 + "See " + RNA_SEQ_DIFF_EXPR_CONFLICT_COUNT_COL_NAME + " column description'>" 
                 + RNA_SEQ_DIFF_EXPR_CONFLICT_COUNT_COL_NAME 
-                + "</a></td><td>1</td><td>0</td></tr>");
+                + "</a></td><td>0</td></tr>");
         this.writeln("</tbody>");
         this.writeln("</table>");
         this.writeln("<h5 id='single_diff_complete_col1'>" + GENE_ID_COL_NAME + " (column 1)</h5>");
@@ -1167,8 +1170,12 @@ this.writeln("<div class='documentationmenu'><ul>");
         this.writeln(this.getAnatEntityNameColDescription(5));
         this.writeln("<h5 id='single_diff_complete_col7'>" + DIFF_EXPR_STATE_COL_NAME + " (column 7)</h5>");
         this.writeln(this.getDiffExprStateColDescription(1, 3, 5, true, true, true, false, "all data types")); 
+        this.writeln("<p>This corresponds to the same differential expression state summary column "
+                + "as in simple files (column 7 of over-/under-expression simple file)</p>");
         this.writeln("<h5 id='single_diff_complete_col8'>" + DIFF_EXPR_QUAL_COL_NAME + " (column 8)</h5>");
         this.writeln(this.getDiffExprQualColDescription(DIFF_EXPR_STATE_COL_NAME, 7, true, false)); 
+        this.writeln("<p>This corresponds to the same differential expression quality column "
+                + "as in simple files (column 8 of over-/under-expression simple file)</p>");
         this.writeln("<h5 id='single_diff_complete_col9'>" + AFFY_DIFF_EXPR_STATE_COL_NAME + " (column 9)</h5>");
         this.writeln(this.getDiffExprStateColDescription(1, 3, 5, true, true, false, true, "Affymetrix data")); 
         this.writeln("<h5 id='single_diff_complete_col10'>" + AFFY_DIFF_EXPR_QUAL_COL_NAME + " (column 10)</h5>");
@@ -1227,7 +1234,7 @@ this.writeln("<div class='documentationmenu'><ul>");
         //TODO: add link to data analyses documentation
         this.writeln(this.getDiffExprCallExplanation());
         this.writeln("<p>In multi-species files, results are made comparable "
-                + "between homologous genes, in homologous anatomical entities and comparable "
+                + "between orthologous genes, in homologous anatomical entities and comparable "
                 + "developmental stages: only genes sharing a common ancestral gene "
                 + "in the least common ancestor of the species compared are studied, "
                 + "and only in anatomical entities sharing a homology relation between "
@@ -1241,11 +1248,11 @@ this.writeln("<div class='documentationmenu'><ul>");
         this.writeln("<p>Over-/under-expression calls are then filtered and presented differently "
                 + "depending on whether a <code>simple file</code>, "
                 + "or a <code>complete file</code> is used. Notably: <code>simple files</code> "
-                + "aim at providing one line per homology gene group and homologous "
+                + "aim at providing one line per orthology gene group and homologous "
                 + "anatomical entities/developmental stage, and only for anatomical entities "
-                + "with a homology relation defined with good level of confidence; "
+                + "with a homology relation defined with good level of confidence. "
                 + "<code>complete files</code> aim at reporting all information, for each gene "
-                + "of the homology groups, using all available homology relations between "
+                + "of the orthology groups, using all available homology relations between "
                 + "anatomical entities, and allowing for instance to retrieve the contribution "
                 + "of each data type to a call, or to retrieve all genes and conditions tested, "
                 + "including genes having no differential expression in these conditions.</p>");
@@ -1280,22 +1287,22 @@ this.writeln("<div class='documentationmenu'><ul>");
         log.entry();
         
         this.writeln("<h4 id='multi_diff_simple'>Simple file</h4>");
-        this.writeln("<p>In simple files, each line provides information for a gene homology group, "
+        this.writeln("<p>In simple files, each line provides information for a gene orthology group, "
                 + "in a condition (homologous anatomical entity/comparable developmental stage); "
                 + "columns then provide, for each species, the number of genes over-expressed, "
                 + "under-expressed, not differentially expressed or with inconclusive results, "
-                + "and with no data; this means that the number of columns is variable "
+                + "and with no data. This means that the number of columns is variable "
                 + "depending on the number of species compared.</p>");
         this.writeln("<p>In simple files, only lines with data in at least two species, and at least "
                 + "one over-expression or under-expression call in a species, are provided, "
                 + "and only for anatomical entities with a homology relation defined "
                 + "with a good level of confidence.</p>");
-        this.writeln("<p>Each gene homology group is separated with a \"header\" line, "
+        this.writeln("<p>Each gene orthology group is separated with a \"header\" line, "
                 + "starting with <code>//</code>, providing the IDs and names of the genes "
                 //TODO: change when format has been updated
-                + "member of the group. Please note that this format is likely to change "
-                + "in the next release of Bgee.</p>");
-        this.writeln("<table class='call_download_file'>");
+                + "member of the group. <strong>Please note that this format is likely to change "
+                + "in the next release of Bgee.</strong></p>");
+        this.writeln("<table class='call_download_file_desc'>");
         this.writeln("<caption>Format description for multi-species simple differential expression file</caption>");
         this.writeln("<thead>");
         this.writeln("<tr><th>Column</th><th>Content</th><th>Cardinality</th><th>Example</th></tr>");
@@ -1384,7 +1391,7 @@ this.writeln("<div class='documentationmenu'><ul>");
         this.writeln(this.getStageNameColDescription(4));
         
         String totalNumberOfGenes = "<p>Please note that the list of all genes member of "
-                + "the OMA homologous gene group with ID provided in <code>" 
+                + "the OMA orthologous gene group with ID provided in <code>" 
                 + OMA_ID_COL_NAME + "</code> (column 1) is provided through the OMA header line.</p>";
         this.writeln("<h5 id='multi_diff_simple_col6'>" + OVER_EXPRESSED_FOR_SPECIES_COL_NAME 
                 + " speciesXX</h5>");
@@ -1396,7 +1403,7 @@ this.writeln("<div class='documentationmenu'><ul>");
         this.writeln(totalNumberOfGenes);
         this.writeln("<h5 id='multi_diff_simple_col8'>" + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME 
                 + " speciesXX</h5>");
-        this.writeln("<p>Number of genes, members of the OMA homologous gene group "
+        this.writeln("<p>Number of genes, members of the OMA orthologous gene group "
                 + "with ID provided in <code>" + OMA_ID_COL_NAME + "</code> (column 1), "
                 + "that were tested for differential expression in this condition (<code>" 
                 + MULTI_ANAT_ENTITY_IDS_COL_NAME + "</code> (column 2), at <code>" 
@@ -1408,7 +1415,7 @@ this.writeln("<div class='documentationmenu'><ul>");
         this.writeln(totalNumberOfGenes);
         this.writeln("<h5 id='multi_diff_simple_col9'>" + NA_FOR_SPECIES_COL_NAME 
                 + " speciesXX</h5>");
-        this.writeln("<p>Number of genes, members of the OMA homologous gene group "
+        this.writeln("<p>Number of genes, members of the OMA orthologous gene group "
                 + "with ID provided in <code>" + OMA_ID_COL_NAME + "</code> (column 1), "
                 + "that were not tested for differential expression in this condition (<code>" 
                 + MULTI_ANAT_ENTITY_IDS_COL_NAME + "</code> (column 2), at <code>" 
@@ -1442,16 +1449,16 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "hypotheses with low support; a column allows to retrieve the level of confidence "
                 + "in the homology hypothesis used. Also, the number of columns in complete files "
                 + "is not variable, whatever the number of species compared is.</p>");
-        this.writeln("<p>Each gene homology group is separated with a \"header\" line, "
+        this.writeln("<p>Each gene orthology group is separated with a \"header\" line, "
                 + "starting with <code>//</code>, providing the IDs and names of the genes "
                 //TODO: change when format has been updated
                 + "member of the group. This allows notably to detect genes with no data "
-                + "for a condition: if a gene is listed as a member of a homology group, "
+                + "for a condition: if a gene is listed as a member of an orthology group, "
                 + "but there is no call for this gene in a given condition, it means "
                 + "that there is no data available for this gene in this condition. "
-                + "Please note that this format is likely to change "
-                + "in the next release of Bgee.</p>");
-        this.writeln("<table class='call_download_file'>");
+                + "<strong>Please note that this format is likely to change "
+                + "in the next release of Bgee.</strong></p>");
+        this.writeln("<table class='call_download_file_desc'>");
         this.writeln("<caption>Format description for multi-species complete differential "
                 + "expression file</caption>");
         this.writeln("<thead>");
@@ -1568,7 +1575,7 @@ this.writeln("<div class='documentationmenu'><ul>");
         this.writeln("<h5 id='multi_diff_complete_col7'>" + GENE_ID_COL_NAME + " (column 7)</h5>");
         this.writeln(this.getGeneIdColDescription());
         this.writeln("<p>Please note that the list of all genes member of "
-                + "the OMA homologous gene group with ID provided in <code>" 
+                + "the OMA ortholoogous gene group with ID provided in <code>" 
                 + OMA_ID_COL_NAME + "</code> (column 1) is provided through the OMA header line. "
                 + "If a gene listed in this header line has no call for the condition "
                 + "<code>" + MULTI_ANAT_ENTITY_IDS_COL_NAME + "</code> (column 2), at <code>" 
@@ -1675,12 +1682,12 @@ this.writeln("<div class='documentationmenu'><ul>");
      */
     private String getOMAIdColDescription() {
         log.entry();
-        return log.exit("<p>Unique identifier of the OMA gene homology group. Note that "
+        return log.exit("<p>Unique identifier of the OMA gene orthology group. Note that "
                 + "these identifiers are not stable between releases, and cannot be used "
                 + "to retrieve data from <a target='_blank' "
                 + "href='http://omabrowser.org/oma/hogs/' title='External link to OMA browser'>"
                 + "the OMA browser</a>. They are provided solely to group data "
-                + "from homologous genes belonging to a same homology group.</p>");
+                + "from orthologous genes belonging to a same orthology group.</p>");
     }
     /**
      * @return  A {@code String} that is the description of the stage ID column 
@@ -1865,31 +1872,31 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "<i>in situ</i> data sources, with no contradicting call of absence "
                 + "of expression for same gene, in same anatomical entity and developmental stage "
                 + "(call generated either from multiple congruent data, "
-                + "or from single data);</li>"
+                + "or from single data).</li>"
                 + "<li><span class='list_element_title'>expression low quality</span>: "
                 + "expression reported as low quality, either from Bgee statistical tests and/or "
                 + "from <i>in situ</i> data sources, or because there exists a conflict of "
                 + "presence/absence of expression for the same gene, anatomical entity "
                 + "and developmental stage, from different data of a same type "
-                + "(conflicts between different data types are treated differently, see below);</li>"
+                + "(conflicts between different data types are treated differently, see below).</li>"
                 + "<li><span class='list_element_title'>absent high quality</span>: "
                 + "report of absence of expression, either from Bgee statistical tests and/or "
-                + "from <i>in situ</i> data sources; in Bgee, calls of absence of expression "
+                + "from <i>in situ</i> data sources. In Bgee, calls of absence of expression "
                 + "are always discarded if there exists a contradicting call of expression, "
                 + "from the same data type and for the same gene, in the same anatomical entity "
-                + "and developmental stage, or in a child entity or child developmental stage; "
-                + "this is why they are always considered of high quality;</li>"
+                + "and developmental stage, or in a child entity or child developmental stage. "
+                + "This is why they are always considered of high quality.</li>"
                 + "<li><span class='list_element_title'>low ambiguity</span>: "
                 + "there exists a call of expression generated from a data type, but "
                 + "there exists a call of absence of expression generated from another data type "
                 + "for the same gene in a parent anatomical entity at the same developmental "
-                + "stage; for instance, gene A is reported to be expressed in the midbrain "
+                + "stage. For instance, gene A is reported to be expressed in the midbrain "
                 + "at young adult stage from Affymetrix data, but is reported to be not expressed "
-                + "in the brain at young adult stage from RNA-Seq data;</li>"
+                + "in the brain at young adult stage from RNA-Seq data.</li>"
                 + "<li><span class='list_element_title'>high ambiguity</span>: "
                 + "there exists a call of expression generated from a data type, but "
                 + "there exists a call of absence of expression generated from another data type "
-                + "for the same gene, anatomical entity and developmental stage; for instance, "
+                + "for the same gene, anatomical entity and developmental stage. For instance, "
                 + "gene A is reported to be expressed in the midbrain at young adult stage "
                 + "from Affymetrix data, but is reported to be not expressed in the midbrain "
                 + "at young adult stage from RNA-Seq data.</li>"
@@ -1941,16 +1948,16 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "<li><span class='list_element_title'>over-expression</span>: "
                 + "the gene was shown in one or more analyses to have a significant over-expression "
                 + "in this condition, as compared to the expression levels in other conditions "
-                + "of the analyses;</li>"
+                + "of the analyses.</li>"
                 + "<li><span class='list_element_title'>under-expression</span>: "
                 + "the gene was shown in one or more analyses to have a significant under-expression "
                 + "in this condition, as compared to the expression levels in other conditions "
-                + "of the analyses;</li>";
+                + "of the analyses.</li>";
         if (noDiffExpr) {
             desc += "<li><span class='list_element_title'>no diff expression</span>: "
                     + "the gene was tested for differential expression in this condition, "
                     + "but was never shown to have a significant variation of expression "
-                    + "as compared to the other conditions of the analyses;</li>";
+                    + "as compared to the other conditions of the analyses.</li>";
         }
         if (ambiguity) {
                 //TODO: change 'weak' to 'low' when files will be re-generated
@@ -1964,20 +1971,20 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "in the same condition (note that conflicts where a data type produced "
                 + "an under-expression call in a condition, while another data type showed the same gene "
                 + "to be never expressed in that condition, do not produce a <code>weak ambiguity</code> "
-                + "call, but a call of <code>under-expression low quality</code>);</li>"
+                + "call, but a call of <code>under-expression low quality</code>).</li>"
                 //TODO: change 'weak' to 'low' when files will be re-generated
                 + "<li><span class='list_element_title'>strong ambiguity</span>: "
                 + "there exists a call of over-expression or under-expression generated "
                 + "from a data type, but there exists a call in the opposite direction "
                 + "generated from another data type for the same gene, anatomical entity "
-                + "and developmental stage; for instance, gene A is reported to be over-expressed "
+                + "and developmental stage. For instance, gene A is reported to be over-expressed "
                 + "in the midbrain at young adult stage from Affymetrix data, but is reported "
                 + "to be under-expressed in the midbrain at young adult stage from RNA-Seq data.</li>";
         }
         if (noData) {
             desc += "<li><span class='list_element_title'>no data</span>: "
                     + "no analyses of this data type compared expression level of this gene "
-                    + "in this condition;</li>";
+                    + "in this condition.</li>";
         }
         desc += "</ul>";
         
@@ -2013,34 +2020,34 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "call from same type of analysis (across anatomy/across life stages), "
                 + "for same gene, in same anatomical entity and developmental stage, "
                 + "(call generated either from multiple congruent analyses, "
-                + "or from a single analysis);</li>"
+                + "or from a single analysis).</li>"
                 //TODO: change 'poor' to 'low' after we re-generate the file
                 + "<li><span class='list_element_title'>poor quality</span>: "
                 + "differential expression reported as low quality, or there exists a conflict "
                 + "for the same gene, anatomical entity and developmental stage, "
                 + "from different analyses of a same data type "
-                + "(conflicts between different data types are treated differently); "
-                + "for instance, an analysis showed a gene to be over-expressed in a condition, "
+                + "(conflicts between different data types are treated differently). "
+                + "For instance, an analysis showed a gene to be over-expressed in a condition, "
                 + "while another analysis showed the same gene to be under-expressed or "
                 //TODO: add link to data analyses section
-                + "not differentially expressed in the same condition; such conflicts "
+                + "not differentially expressed in the same condition. Such conflicts "
                 + "are resolved by a voting system based on the number of conditions compared, "
-                + "weighted by p-value; Note that in one case, this quality level is used "
+                + "weighted by p-value. Note that in one case, this quality level is used "
                 + "to reconcile conflicting calls from different data types: "
                 + "when a data type produced an under-expression call, while a different "
-                + "data type has shown that the same gene was never seen as expressed in the same condition; "
-                + "in that case, the overall summary is <code>under-expression "
-                + "low quality</code>.</li>";
+                + "data type has shown that the same gene was never seen as expressed "
+                + "in the same condition. In that case, the overall summary "
+                + "is <code>under-expression low quality</code>.</li>";
         if (displayNA) {
             //TODO: merge N/A and 'no data' once we re-generate the files
             desc += "<li><span class='list_element_title'>N/A</span>: no quality applicable "
                 + "when ambiguity state in <code>" + diffExprStateColName 
-                + "</code> (column " + diffExprStateColNumber + ");</li>";
+                + "</code> (column " + diffExprStateColNumber + ").</li>";
         }
         if (displayNoData) {
             desc += "<li><span class='list_element_title'>no data</span>: no data associated "
                     + "to <code>" + diffExprStateColName 
-                    + "</code> (column " + diffExprStateColNumber + ");</li>";
+                    + "</code> (column " + diffExprStateColNumber + ").</li>";
         }
         desc += "</ul>";
         
@@ -2141,7 +2148,7 @@ this.writeln("<div class='documentationmenu'><ul>");
             int stageIdColNumber, int anatEntityIdsColNumber, boolean overExpressed) {
         log.entry(omaIdColNumber, stageIdColNumber, anatEntityIdsColNumber, overExpressed);
         
-        String desc = "<p>Number of genes, members of the OMA homologous gene group "
+        String desc = "<p>Number of genes, members of the OMA orthologous gene group "
                 + "with ID provided in <code>" + OMA_ID_COL_NAME + "</code> (column " 
                 + omaIdColNumber + "), shown in one or more analyses to have a significant " +  
                 (overExpressed ? "over-expression " : "under-expression ")
@@ -2174,17 +2181,57 @@ this.writeln("<div class='documentationmenu'><ul>");
         return log.exit("<table class='download_file_header_desc'>"
                 + "<tbody>"
                 + "<tr><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td></tr>"
-                + "<tr>"
-                + "<td>" + GENE_ID_COL_NAME + "</td>"
-                + "<td>" + GENE_NAME_COL_NAME + "</td>"
-                + "<td>" + STAGE_ID_COL_NAME + "</td>"
-                + "<td>" + STAGE_NAME_COL_NAME + "</td>"
-                + "<td>" + ANAT_ENTITY_ID_COL_NAME + "</td>"
-                + "<td>" + ANAT_ENTITY_NAME_COL_NAME + "</td>"
-                + "<td>" + EXPR_STATE_COL_NAME + "</td>"
-                + "</tr>"
+                + this.getSingleSpeciesSimpleExprFileHeader(true)
                 + "</tbody>"
                 + "</table>");
+    }
+    /**
+     * @return  a {@code String} containing the HTML to create a table containing the header 
+     *          and example lines of a single species simple expression file.
+     */
+    public String getSingleSpeciesSimpleExprFileExample() {
+        log.entry();
+        return log.exit("<table class='call_download_file_example'>"
+                + "<caption>Example lines for single species simple expression file</caption>"
+                + "<thead>" 
+                + this.getSingleSpeciesSimpleExprFileHeader(false) 
+                + "</thead>"
+                + "<tbody>"
+                + "<tr><td>FBgn0005533</td><td>RpS17</td><td>FBdv:00007124</td>"
+                + "<td>day 49 of adulthood (Drosophila)</td><td>UBERON:0015230</td>"
+                + "<td>dorsal vessel heart</td><td>expression high quality</td></tr>"
+                + "<tr><td>FBgn0005536</td><td>Mbs</td><td>UBERON:0000066</td>"
+                + "<td>fully formed stage</td><td>FBbt:00003023</td>"
+                + "<td>adult abdomen (Drosophila)</td><td>expression low quality</td></tr>"
+                + "<tr><td>FBgn0005558</td><td>ey</td><td>FBdv:00005339</td>"
+                + "<td>third instar larval stage (Drosophila)</td><td>FBbt:00001684</td>"
+                + "<td>embryonic/larval hemocyte (Drosophila)</td><td>absent high quality</td></tr>"
+                + "</tbody>"
+                + "</table>");
+    }
+    /**
+     * Get the header of single species simple expression file as a HTML 'tr' element, 
+     * with column being either 'td' or 'th' elements depending on argument {@code withTd}.
+     * @param withTd    A {@code boolean} defining whether the column type should be 'td' 
+     *                  or 'th'. If {@code true}, 'td' is used.
+     * @return          A {@code String} that is the header of single species simple 
+     *                  expression file as a HTML 'tr' element.
+     */
+    private String getSingleSpeciesSimpleExprFileHeader(boolean withTd) {
+        log.entry(withTd);
+        String colType ="td";
+        if (!withTd) {
+            colType = "th";
+        }
+        return log.exit("<tr>"
+                + "<" + colType + ">" + GENE_ID_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + GENE_NAME_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + STAGE_ID_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + STAGE_NAME_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + ANAT_ENTITY_ID_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + ANAT_ENTITY_NAME_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + EXPR_STATE_COL_NAME + "</" + colType + ">"
+                + "</tr>");
     }
     /**
      * @return  a {@code String} containing the HTML to create a table containing the description 
@@ -2197,22 +2244,63 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "<tbody>"
                 + "<tr><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td>"
                 + "<td>8</td><td>9</td><td>10</td><td>11</td><td>12</td></tr>"
-                + "<tr>"
-                + "<td>" + GENE_ID_COL_NAME + "</td>"
-                + "<td>" + GENE_NAME_COL_NAME + "</td>"
-                + "<td>" + STAGE_ID_COL_NAME + "</td>"
-                + "<td>" + STAGE_NAME_COL_NAME + "</td>"
-                + "<td>" + ANAT_ENTITY_ID_COL_NAME + "</td>"
-                + "<td>" + ANAT_ENTITY_NAME_COL_NAME + "</td>"
-                + "<td>" + AFFY_EXPR_STATE_COL_NAME + "</td>"
-                + "<td>" + EST_EXPR_STATE_COL_NAME + "</td>"
-                + "<td>" + IN_SITU_EXPR_STATE_COL_NAME + "</td>"
-                + "<td>" + RNA_SEQ_EXPR_STATE_COL_NAME + "</td>"
-                + "<td>" + OBSERVED_DATA_COL_NAME + "</td>"
-                + "<td>" + EXPR_STATE_COL_NAME + "</td>"
-                + "</tr>"
+                + this.getSingleSpeciesCompleteExprFileHeader(true)
                 + "</tbody>"
                 + "</table>");
+    }
+    /**
+     * @return  a {@code String} containing the HTML to create a table containing the header 
+     *          and example lines of a single species complete expression file.
+     */
+    public String getSingleSpeciesCompleteExprFileExample() {
+        log.entry();
+        return log.exit("<table class='call_download_file_example'>"
+                + "<caption>Example lines for single species complete expression file</caption>"
+                + "<thead>" 
+                + this.getSingleSpeciesCompleteExprFileHeader(false) 
+                + "</thead>"
+                + "<tbody>"
+                + "<tr><td>FBgn0005427</td><td>ewg</td><td>FBdv:00005348</td>"
+                + "<td>prepupal stage P4(ii) (Drosophila)</td><td>FBbt:00003404</td>"
+                + "<td>mesothoracic extracoxal depressor muscle 66 (Drosophila)</td>"
+                + "<td>expression high quality</td></tr>"
+                + "<tr><td>FBgn0005536</td><td>Mbs</td><td>UBERON:0000066</td>"
+                + "<td>fully formed stage</td><td>FBbt:00003023</td>"
+                + "<td>adult abdomen (Drosophila)</td><td>expression low quality</td></tr>"
+                + "<tr><td>FBgn0005558</td><td>ey</td><td>FBdv:00005339</td>"
+                + "<td>third instar larval stage (Drosophila)</td><td>FBbt:00001684</td>"
+                + "<td>embryonic/larval hemocyte (Drosophila)</td><td>absent high quality</td></tr>"
+                + "</tbody>"
+                + "</table>");
+    }
+    /**
+     * Get the header of single species complete expression file as a HTML 'tr' element, 
+     * with column being either 'td' or 'th' elements depending on argument {@code withTd}.
+     * @param withTd    A {@code boolean} defining whether the column type should be 'td' 
+     *                  or 'th'. If {@code true}, 'td' is used.
+     * @return          A {@code String} that is the header of single species complete 
+     *                  expression file as a HTML 'tr' element.
+     */
+    private String getSingleSpeciesCompleteExprFileHeader(boolean withTd) {
+        log.entry(withTd);
+        String colType ="td";
+        if (!withTd) {
+            colType = "th";
+        }
+        return log.exit("<tr>"
+                + "<" + colType + ">" + GENE_ID_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + GENE_NAME_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + STAGE_ID_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + STAGE_NAME_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + ANAT_ENTITY_ID_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + ANAT_ENTITY_NAME_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + AFFY_EXPR_STATE_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + EST_EXPR_STATE_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + IN_SITU_EXPR_STATE_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + RNA_SEQ_EXPR_STATE_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + OBSERVED_DATA_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + EXPR_STATE_COL_NAME + "</" + colType + ">"
+                + "</tr>");
     }
     /**
      * @return  a {@code String} containing the HTML to create a table containing the description 
@@ -2225,18 +2313,34 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "<tbody>"
                 + "<tr><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td>"
                 + "<td>8</td></tr>"
-                + "<tr>"
-                + "<td>" + GENE_ID_COL_NAME + "</td>"
-                + "<td>" + GENE_NAME_COL_NAME + "</td>"
-                + "<td>" + STAGE_ID_COL_NAME + "</td>"
-                + "<td>" + STAGE_NAME_COL_NAME + "</td>"
-                + "<td>" + ANAT_ENTITY_ID_COL_NAME + "</td>"
-                + "<td>" + ANAT_ENTITY_NAME_COL_NAME + "</td>"
-                + "<td>" + DIFF_EXPR_STATE_COL_NAME + "</td>"
-                + "<td>" + DIFF_EXPR_QUAL_COL_NAME + "</td>"
-                + "</tr>"
+                + this.getSingleSpeciesSimpleDiffExprFileHeader(true)
                 + "</tbody>"
                 + "</table>");
+    }
+    /**
+     * Get the header of single species simple over-/under-expression file as a HTML 'tr' element, 
+     * with column being either 'td' or 'th' elements depending on argument {@code withTd}.
+     * @param withTd    A {@code boolean} defining whether the column type should be 'td' 
+     *                  or 'th'. If {@code true}, 'td' is used.
+     * @return          A {@code String} that is the header of single species simple 
+     *                  over-/under-expression file as a HTML 'tr' element.
+     */
+    private String getSingleSpeciesSimpleDiffExprFileHeader(boolean withTd) {
+        log.entry(withTd);
+        String colType ="td";
+        if (!withTd) {
+            colType = "th";
+        }
+        return log.exit("<tr>"
+                + "<" + colType + ">" + GENE_ID_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + GENE_NAME_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + STAGE_ID_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + STAGE_NAME_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + ANAT_ENTITY_ID_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + ANAT_ENTITY_NAME_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + DIFF_EXPR_STATE_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + DIFF_EXPR_QUAL_COL_NAME + "</" + colType + ">"
+                + "</tr>");
     }
     /**
      * @return  a {@code String} containing the HTML to create a table containing the description 
@@ -2250,28 +2354,44 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "<tr><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td>"
                 + "<td>8</td><td>9</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td>"
                 + "<td>15</td><td>16</td><td>17</td><td>18</td></tr>"
-                + "<tr>"
-                + "<td>" + GENE_ID_COL_NAME + "</td>"
-                + "<td>" + GENE_NAME_COL_NAME + "</td>"
-                + "<td>" + STAGE_ID_COL_NAME + "</td>"
-                + "<td>" + STAGE_NAME_COL_NAME + "</td>"
-                + "<td>" + ANAT_ENTITY_ID_COL_NAME + "</td>"
-                + "<td>" + ANAT_ENTITY_NAME_COL_NAME + "</td>"
-                + "<td>" + DIFF_EXPR_STATE_COL_NAME + "</td>"
-                + "<td>" + DIFF_EXPR_QUAL_COL_NAME + "</td>"
-                + "<td>" + AFFY_DIFF_EXPR_STATE_COL_NAME + "</td>"
-                + "<td>" + AFFY_DIFF_EXPR_QUAL_COL_NAME + "</td>"
-                + "<td>" + AFFY_DIFF_EXPR_P_VAL_COL_NAME + "</td>"
-                + "<td>" + AFFY_DIFF_EXPR_SUPPORT_COUNT_COL_NAME + "</td>"
-                + "<td>" + AFFY_DIFF_EXPR_CONFLICT_COUNT_COL_NAME + "</td>"
-                + "<td>" + RNA_SEQ_DIFF_EXPR_STATE_COL_NAME + "</td>"
-                + "<td>" + RNA_SEQ_DIFF_EXPR_QUAL_COL_NAME + "</td>"
-                + "<td>" + RNA_SEQ_DIFF_EXPR_P_VAL_COL_NAME + "</td>"
-                + "<td>" + RNA_SEQ_DIFF_EXPR_SUPPORT_COUNT_COL_NAME + "</td>"
-                + "<td>" + RNA_SEQ_DIFF_EXPR_CONFLICT_COUNT_COL_NAME + "</td>"
-                + "</tr>"
+                + this.getSingleSpeciesCompleteDiffExprFileHeader(true)
                 + "</tbody>"
                 + "</table>");
+    }
+    /**
+     * Get the header of single species simple over-/under-expression file as a HTML 'tr' element, 
+     * with column being either 'td' or 'th' elements depending on argument {@code withTd}.
+     * @param withTd    A {@code boolean} defining whether the column type should be 'td' 
+     *                  or 'th'. If {@code true}, 'td' is used.
+     * @return          A {@code String} that is the header of single species simple 
+     *                  over-/under-expression file as a HTML 'tr' element.
+     */
+    private String getSingleSpeciesCompleteDiffExprFileHeader(boolean withTd) {
+        log.entry(withTd);
+        String colType ="td";
+        if (!withTd) {
+            colType = "th";
+        }
+        return log.exit("<tr>"
+                + "<" + colType + ">" + GENE_ID_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + GENE_NAME_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + STAGE_ID_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + STAGE_NAME_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + ANAT_ENTITY_ID_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + ANAT_ENTITY_NAME_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + DIFF_EXPR_STATE_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + DIFF_EXPR_QUAL_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + AFFY_DIFF_EXPR_STATE_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + AFFY_DIFF_EXPR_QUAL_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + AFFY_DIFF_EXPR_P_VAL_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + AFFY_DIFF_EXPR_SUPPORT_COUNT_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + AFFY_DIFF_EXPR_CONFLICT_COUNT_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + RNA_SEQ_DIFF_EXPR_STATE_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + RNA_SEQ_DIFF_EXPR_QUAL_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + RNA_SEQ_DIFF_EXPR_P_VAL_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + RNA_SEQ_DIFF_EXPR_SUPPORT_COUNT_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + RNA_SEQ_DIFF_EXPR_CONFLICT_COUNT_COL_NAME + "</" + colType + ">"
+                + "</tr>");
     }
     /**
      * @return  a {@code String} containing the HTML to create a table containing the description 
@@ -2316,32 +2436,48 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "<td>8</td><td>9</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td>"
                 + "<td>15</td><td>16</td><td>17</td><td>18</td><td>19</td><td>20</td>"
                 + "<td>21</td><td>22</td></tr>"
-                + "<tr>"
-                + "<td>" + OMA_ID_COL_NAME + "</td>"
-                + "<td>" + MULTI_ANAT_ENTITY_IDS_COL_NAME + "</td>"
-                + "<td>" + MULTI_ANAT_ENTITY_NAMES_COL_NAME + "</td>"
-                + "<td>" + STAGE_ID_COL_NAME + "</td>"
-                + "<td>" + STAGE_NAME_COL_NAME + "</td>"
-                + "<td>" + SPECIES_LATIN_NAME_COL_NAME + "</td>"
-                + "<td>" + GENE_ID_COL_NAME + "</td>"
-                + "<td>" + GENE_NAME_COL_NAME + "</td>"
-                + "<td>" + DIFF_EXPR_STATE_COL_NAME + "</td>"
-                + "<td>" + DIFF_EXPR_QUAL_COL_NAME + "</td>"
-                + "<td>" + AFFY_DIFF_EXPR_STATE_COL_NAME + "</td>"
-                + "<td>" + AFFY_DIFF_EXPR_QUAL_COL_NAME + "</td>"
-                + "<td>" + AFFY_DIFF_EXPR_P_VAL_COL_NAME + "</td>"
-                + "<td>" + AFFY_DIFF_EXPR_SUPPORT_COUNT_COL_NAME + "</td>"
-                + "<td>" + AFFY_DIFF_EXPR_CONFLICT_COUNT_COL_NAME + "</td>"
-                + "<td>" + RNA_SEQ_DIFF_EXPR_STATE_COL_NAME + "</td>"
-                + "<td>" + RNA_SEQ_DIFF_EXPR_QUAL_COL_NAME + "</td>"
-                + "<td>" + RNA_SEQ_DIFF_EXPR_P_VAL_COL_NAME + "</td>"
-                + "<td>" + RNA_SEQ_DIFF_EXPR_SUPPORT_COUNT_COL_NAME + "</td>"
-                + "<td>" + RNA_SEQ_DIFF_EXPR_CONFLICT_COUNT_COL_NAME + "</td>"
-                + "<td>" + ANAT_HOMOLOGY_CIO_ID_COL_NAME + "</td>"
-                + "<td>" + ANAT_HOMOLOGY_CIO_NAME_COL_NAME + "</td>"
-                + "</tr>"
+                + this.getMultiSpeciesCompleteDiffExprFileHeader(true)
                 + "</tbody>"
                 + "</table>");
+    }
+    /**
+     * Get the header of multi-species complete differential expression file as a HTML 'tr' element, 
+     * with column being either 'td' or 'th' elements depending on argument {@code withTd}.
+     * @param withTd    A {@code boolean} defining whether the column type should be 'td' 
+     *                  or 'th'. If {@code true}, 'td' is used.
+     * @return          A {@code String} that is the header of multi-species complete differential 
+     *                  expression file as a HTML 'tr' element.
+     */
+    private String getMultiSpeciesCompleteDiffExprFileHeader(boolean withTd) {
+        log.entry(withTd);
+        String colType ="td";
+        if (!withTd) {
+            colType = "th";
+        }
+        return log.exit("<tr>"
+                + "<" + colType + ">" + OMA_ID_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + MULTI_ANAT_ENTITY_IDS_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + MULTI_ANAT_ENTITY_NAMES_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + STAGE_ID_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + STAGE_NAME_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + SPECIES_LATIN_NAME_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + GENE_ID_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + GENE_NAME_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + DIFF_EXPR_STATE_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + DIFF_EXPR_QUAL_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + AFFY_DIFF_EXPR_STATE_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + AFFY_DIFF_EXPR_QUAL_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + AFFY_DIFF_EXPR_P_VAL_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + AFFY_DIFF_EXPR_SUPPORT_COUNT_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + AFFY_DIFF_EXPR_CONFLICT_COUNT_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + RNA_SEQ_DIFF_EXPR_STATE_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + RNA_SEQ_DIFF_EXPR_QUAL_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + RNA_SEQ_DIFF_EXPR_P_VAL_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + RNA_SEQ_DIFF_EXPR_SUPPORT_COUNT_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + RNA_SEQ_DIFF_EXPR_CONFLICT_COUNT_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + ANAT_HOMOLOGY_CIO_ID_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + ANAT_HOMOLOGY_CIO_NAME_COL_NAME + "</" + colType + ">"
+                + "</tr>");
     }
 
     //*******************************************************
@@ -2375,9 +2511,10 @@ this.writeln("<div class='documentationmenu'><ul>");
      */
     public String getExprCallExplanation() {
         log.entry();
-        return log.exit("<p>Bgee provides calls of presence/absence of expression. A call "
-                + "corresponds to a gene, with reported presence or absence of expression, "
-                + "in an anatomical entity, during a developmental stage. Only \"normal\" "
+        return log.exit("<p>Bgee provides calls of presence/absence of expression. Each call "
+                + "corresponds to a unique combination of a gene, an anatomical entity, "
+                + "and a life stage, with reported presence or absence of expression. "
+                + "Life stages describe development and aging. Only \"normal\" "
                 + "expression is considered in Bgee (i.e., no treatment, no disease, "
                 + "no gene knock-out, etc.). Bgee collects data from different types, "
                 + "from different studies, in different organisms, and provides a summary "
@@ -2406,7 +2543,8 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "corresponds to a gene, with significant variation of "
                 + "its level of expression, in an anatomical entity "
                 + "during a developmental stage, as compared to, either: i) other anatomical entities "
-                + "at the same (broad) developmental stage (over-/under-expression across anatomy); "
+                + "at the same (broadly defined) developmental stage (over-/under-expression "
+                + "across anatomy); "
                 + "ii) the same anatomical entity at different (precise) developmental stages "
                 + "(over-/under-expression across life stages). "
                 + "These analyses of differential expression are performed using Affymetrix "

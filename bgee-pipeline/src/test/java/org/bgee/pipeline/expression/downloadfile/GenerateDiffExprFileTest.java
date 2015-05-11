@@ -597,6 +597,12 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
             String[] headers = mapReader.getHeader(true);
             log.trace("Headers: {}", (Object[]) headers);
 
+            // These three variables are created to avoid having to change the values 
+            // in different places in the code if we change them 
+            String highQuality = "high quality";
+            String lowQuality = "low quality";
+            String noQuality = GenerateDiffExprFile.NA_VALUE;
+            
             // Check that the headers are what we expect
             String[] expecteds = new String[] { 
                     GenerateDownloadFile.GENE_ID_COLUMN_NAME, 
@@ -635,14 +641,14 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                 dataElements.add(data.getStringRepresentation());
             } 
             List<Object> specificTypeQualities = new ArrayList<Object>();
-            specificTypeQualities.add(DataState.HIGHQUALITY.getStringRepresentation());
-            specificTypeQualities.add(DataState.LOWQUALITY.getStringRepresentation());
-            specificTypeQualities.add(DataState.NODATA.getStringRepresentation());
+            specificTypeQualities.add(highQuality);
+            specificTypeQualities.add(lowQuality);
+            specificTypeQualities.add(noQuality);
             
             List<Object> resumeQualities = new ArrayList<Object>();
-            resumeQualities.add(DataState.HIGHQUALITY.getStringRepresentation());
-            resumeQualities.add(DataState.LOWQUALITY.getStringRepresentation());
-            resumeQualities.add(GenerateDiffExprFile.NA_VALUE);
+            resumeQualities.add("high quality");
+            resumeQualities.add(lowQuality);
+            resumeQualities.add(noQuality);
 
             CellProcessor[] processors = null;
             if (isSimplified) {
@@ -716,16 +722,16 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                             this.assertCommonColumnRowEqual(geneId, "genN1", geneName,
                                     "stageN1", stageName, "anatName1", anatEntityName, 
                                     DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), resume,
-                                    DataState.HIGHQUALITY.getStringRepresentation(), quality);
+                                    highQuality, quality);
                             if (!isSimplified) {
                                 this.assertCompleteDiffExprColumnRowEqual(geneId,
                                         DiffExprCallType.OVER_EXPRESSED, affymetrixData,
-                                        DataState.HIGHQUALITY, affymetrixQuality,
+                                        highQuality, affymetrixQuality,
                                         0.001f, affymetrixPValue,
                                         3, affymetrixConsistentCount,
                                         1, affymetrixInconsistentCount,
                                         DiffExprCallType.OVER_EXPRESSED, rnaSeqData,
-                                        DataState.LOWQUALITY, rnaSeqQuality,
+                                        lowQuality, rnaSeqQuality,
                                         0.05f, rnaSeqPValue,
                                         1, rnaSeqConsistentCount, 
                                         0, rnaSeqInconsistentCount);
@@ -735,16 +741,16 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                             this.assertCommonColumnRowEqual(geneId, "genN1", geneName,
                                     "stageN2", stageName, "anatName2", anatEntityName, 
                                     DiffExpressionData.STRONG_AMBIGUITY.getStringRepresentation(), resume,
-                                    GenerateDiffExprFile.NA_VALUE, quality);
+                                    noQuality, quality);
                             if (!isSimplified) {
                                 this.assertCompleteDiffExprColumnRowEqual(geneId,
                                         DiffExprCallType.UNDER_EXPRESSED, affymetrixData,
-                                        DataState.HIGHQUALITY, affymetrixQuality,
+                                        highQuality, affymetrixQuality,
                                         0.001f, affymetrixPValue,
                                         5, affymetrixConsistentCount,
                                         0, affymetrixInconsistentCount,
                                         DiffExprCallType.OVER_EXPRESSED, rnaSeqData,
-                                        DataState.LOWQUALITY, rnaSeqQuality,
+                                        lowQuality, rnaSeqQuality,
                                         0.03f, rnaSeqPValue,
                                         1, rnaSeqConsistentCount, 
                                         0, rnaSeqInconsistentCount);
@@ -754,16 +760,16 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                             this.assertCommonColumnRowEqual(geneId, "genN1", geneName,
                                     "stageN18", stageName, "anatName13", anatEntityName, 
                                     DiffExpressionData.WEAK_AMBIGUITY.getStringRepresentation(), resume,
-                                    GenerateDiffExprFile.NA_VALUE, quality);
+                                    noQuality, quality);
                             if (!isSimplified) {
                                 this.assertCompleteDiffExprColumnRowEqual(geneId,
                                         DiffExprCallType.OVER_EXPRESSED, affymetrixData,
-                                        DataState.LOWQUALITY, affymetrixQuality,
+                                        lowQuality, affymetrixQuality,
                                         0.03f, affymetrixPValue,
                                         2, affymetrixConsistentCount,
                                         1, affymetrixInconsistentCount,
                                         DiffExprCallType.NOT_EXPRESSED, rnaSeqData,
-                                        DataState.NODATA, rnaSeqQuality,
+                                        noQuality, rnaSeqQuality,
                                         1f, rnaSeqPValue,
                                         0, rnaSeqConsistentCount, 
                                         0, rnaSeqInconsistentCount);
@@ -778,16 +784,16 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                             this.assertCommonColumnRowEqual(geneId, "genN1", geneName,
                                     "stageN1", stageName, "anatName2", anatEntityName, 
                                     DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), resume,
-                                    DataState.LOWQUALITY.getStringRepresentation(), quality);
+                                    lowQuality, quality);
                             if (!isSimplified) {
                                 this.assertCompleteDiffExprColumnRowEqual(geneId,
                                         DiffExprCallType.OVER_EXPRESSED, affymetrixData,
-                                        DataState.LOWQUALITY, affymetrixQuality,
+                                        lowQuality, affymetrixQuality,
                                         0.05f, affymetrixPValue,
                                         2, affymetrixConsistentCount,
                                         1, affymetrixInconsistentCount,
                                         DiffExprCallType.NO_DATA, rnaSeqData,
-                                        DataState.NODATA, rnaSeqQuality,
+                                        noQuality, rnaSeqQuality,
                                         1f, rnaSeqPValue,
                                         0, rnaSeqConsistentCount, 
                                         0, rnaSeqInconsistentCount);
@@ -797,16 +803,16 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                             this.assertCommonColumnRowEqual(geneId, "genN1", geneName,
                                     "stageN18", stageName, "anatName13", anatEntityName, 
                                     DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(), resume,
-                                    DataState.LOWQUALITY.getStringRepresentation(), quality);
+                                    lowQuality, quality);
                             if (!isSimplified) {
                                 this.assertCompleteDiffExprColumnRowEqual(geneId,
                                         DiffExprCallType.NOT_EXPRESSED, affymetrixData,
-                                        DataState.NODATA, affymetrixQuality,
+                                        noQuality, affymetrixQuality,
                                         1f, affymetrixPValue,
                                         0, affymetrixConsistentCount,
                                         0, affymetrixInconsistentCount,
                                         DiffExprCallType.UNDER_EXPRESSED, rnaSeqData,
-                                        DataState.HIGHQUALITY, rnaSeqQuality,
+                                        highQuality, rnaSeqQuality,
                                         0.001f, rnaSeqPValue,
                                         1, rnaSeqConsistentCount, 
                                         0, rnaSeqInconsistentCount);
@@ -826,16 +832,16 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                             this.assertCommonColumnRowEqual(geneId, "genN2", geneName,
                                     "stageN1", stageName, "anatName2", anatEntityName, 
                                     DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(), resume,
-                                    DataState.HIGHQUALITY.getStringRepresentation(), quality);
+                                    highQuality, quality);
                             if (!isSimplified) {
                                 this.assertCompleteDiffExprColumnRowEqual(geneId,
                                         DiffExprCallType.NO_DATA, affymetrixData,
-                                        DataState.NODATA, affymetrixQuality,
+                                        noQuality, affymetrixQuality,
                                         1f, affymetrixPValue,
                                         0, affymetrixConsistentCount,
                                         0, affymetrixInconsistentCount,
                                         DiffExprCallType.UNDER_EXPRESSED, rnaSeqData,
-                                        DataState.HIGHQUALITY, rnaSeqQuality,
+                                        highQuality, rnaSeqQuality,
                                         0.008f, rnaSeqPValue,
                                         3, rnaSeqConsistentCount, 
                                         0, rnaSeqInconsistentCount);
@@ -845,16 +851,16 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                             this.assertCommonColumnRowEqual(geneId, "genN2", geneName,
                                     "stageN3", stageName, "anatName13", anatEntityName, 
                                     DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), resume,
-                                    DataState.HIGHQUALITY.getStringRepresentation(), quality);
+                                    highQuality, quality);
                             if (!isSimplified) {
                                 this.assertCompleteDiffExprColumnRowEqual(geneId,
                                         DiffExprCallType.NOT_DIFF_EXPRESSED, affymetrixData,
-                                        DataState.HIGHQUALITY, affymetrixQuality,
+                                        highQuality, affymetrixQuality,
                                         0.002f, affymetrixPValue,
                                         10, affymetrixConsistentCount,
                                         1, affymetrixInconsistentCount,
                                         DiffExprCallType.NOT_DIFF_EXPRESSED, rnaSeqData,
-                                        DataState.HIGHQUALITY, rnaSeqQuality,
+                                        highQuality, rnaSeqQuality,
                                         0.007f, rnaSeqPValue,
                                         9, rnaSeqConsistentCount, 
                                         2, rnaSeqInconsistentCount);
@@ -869,16 +875,16 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                             this.assertCommonColumnRowEqual(geneId, "genN2", geneName,
                                     "stageN1", stageName, "anatName2", anatEntityName, 
                                     DiffExpressionData.WEAK_AMBIGUITY.getStringRepresentation(), resume,
-                                    GenerateDiffExprFile.NA_VALUE, quality);
+                                    noQuality, quality);
                             if (!isSimplified) {
                                 this.assertCompleteDiffExprColumnRowEqual(geneId,
                                         DiffExprCallType.NOT_EXPRESSED, affymetrixData,
-                                        DataState.NODATA, affymetrixQuality,
+                                        noQuality, affymetrixQuality,
                                         1f, affymetrixPValue,
                                         0, affymetrixConsistentCount,
                                         0, affymetrixInconsistentCount,
                                         DiffExprCallType.NOT_DIFF_EXPRESSED, rnaSeqData,
-                                        DataState.HIGHQUALITY, rnaSeqQuality,
+                                        highQuality, rnaSeqQuality,
                                         0.009f, rnaSeqPValue,
                                         4, rnaSeqConsistentCount, 
                                         1, rnaSeqInconsistentCount);
@@ -888,16 +894,16 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                             this.assertCommonColumnRowEqual(geneId, "genN2", geneName,
                                     "stageN3", stageName, "anatName13", anatEntityName, 
                                     DiffExpressionData.WEAK_AMBIGUITY.getStringRepresentation(), resume,
-                                    GenerateDiffExprFile.NA_VALUE, quality);
+                                    noQuality, quality);
                             if (!isSimplified) {
                                 this.assertCompleteDiffExprColumnRowEqual(geneId,
                                         DiffExprCallType.OVER_EXPRESSED, affymetrixData,
-                                        DataState.HIGHQUALITY, affymetrixQuality,
+                                        highQuality, affymetrixQuality,
                                         0.003f, affymetrixPValue,
                                         8, affymetrixConsistentCount,
                                         0, affymetrixInconsistentCount,
                                         DiffExprCallType.NOT_DIFF_EXPRESSED, rnaSeqData,
-                                        DataState.HIGHQUALITY, rnaSeqQuality,
+                                        highQuality, rnaSeqQuality,
                                         0.008f, rnaSeqPValue,
                                         22, rnaSeqConsistentCount, 
                                         6, rnaSeqInconsistentCount);
@@ -925,19 +931,19 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
      */
     private void assertCompleteDiffExprColumnRowEqual(String geneId, 
             DiffExprCallType expAffyData, String affyData,
-            DataState expAffyQuality, String affyQuality,
+            String expAffyQuality, String affyQuality,
             Float expAffyPValue, Float affyPValue,
             int expAffyConsistentCount, int affyConsistentCount,
             int expAffyInonsistentCount, int affyInconsistentCount,
             DiffExprCallType expRNASeqData, String rnaSeqData,
-            DataState expRNASeqQuality, String rnaSeqQuality,
+            String expRNASeqQuality, String rnaSeqQuality,
             Float expRNASeqPValue, Float rnaSeqPValue,
             int expRNASeqConsistentCount, int rnaSeqConsistentCount, 
             int expRNASeqInconsistentCount, int rnaSeqInconsistentCount) {
         assertEquals("Incorrect Affymetrix data for " + geneId, 
                 expAffyData.getStringRepresentation(), affyData);
         assertEquals("Incorrect Affymetrix quality for " + geneId, 
-                expAffyQuality.getStringRepresentation(), affyQuality);
+                expAffyQuality, affyQuality);
         double epsilon = 1e-11;
         assertEquals("Incorrect Affymetrix p-value for " + geneId + ": expected " +  
                 String.valueOf(expAffyPValue) + ", but was " + String.valueOf(affyPValue), 
@@ -952,7 +958,7 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
         assertEquals("Incorrect RNA-Seq data for " + geneId, 
                 expRNASeqData.getStringRepresentation(), rnaSeqData);
         assertEquals("Incorrect RNA-Seq quality for " + geneId, 
-                expRNASeqQuality.getStringRepresentation(), rnaSeqQuality);
+                expRNASeqQuality, rnaSeqQuality);
         assertEquals("Incorrect Affymetrix p-value for " + geneId + ": expected " +  
                 String.valueOf(expAffyPValue) + ", but was " + String.valueOf(affyPValue), 
                 expRNASeqPValue, rnaSeqPValue, epsilon);

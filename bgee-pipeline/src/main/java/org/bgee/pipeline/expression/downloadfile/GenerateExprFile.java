@@ -204,7 +204,7 @@ public class GenerateExprFile extends GenerateDownloadFile {
      * @since Bgee 13
      */
     public enum ExpressionData {
-        NO_DATA("no data"), NO_EXPRESSION("absent"), EXPRESSION("expression"),
+        NO_DATA("no data"), NO_EXPRESSION("absent"), EXPRESSION("present"),
         LOW_AMBIGUITY("low ambiguity"), HIGH_AMBIGUITY("high ambiguity");
 
         private final String stringRepresentation;
@@ -633,9 +633,11 @@ public class GenerateExprFile extends GenerateDownloadFile {
         // Load non-informative anatomical entities: 
         // calls occurring in these anatomical entities, and generated from 
         // data propagation only (no observed data in them), will be discarded. 
-        Set<String> nonInformativesAnatEntities = 
-                this.loadNonInformativeAnatEntities(speciesFilter);
-
+        //TODO: Disable temporarily, there is a problem with this field in database
+//        Set<String> nonInformativesAnatEntities = 
+//                this.loadNonInformativeAnatEntities(speciesFilter);
+        Set<String> nonInformativesAnatEntities = new HashSet<String>();
+        
         //we retrieve expression and no-expression calls grouped by geneIds. This is because, 
         //to correctly propagate expression calls to parent stages, we need to examine all calls 
         //related to a gene at the same time. We cannot propagate everything at once because 
@@ -946,21 +948,21 @@ public class GenerateExprFile extends GenerateDownloadFile {
             return log.exit(new CellProcessor[] { 
                     new StrNotNullOrEmpty(),    // gene ID
                     new NotNull(),              // gene Name
-                    new StrNotNullOrEmpty(),    // developmental stage ID
-                    new StrNotNullOrEmpty(),    // developmental stage name
                     new StrNotNullOrEmpty(),    // anatomical entity ID
                     new StrNotNullOrEmpty(),    // anatomical entity name
+                    new StrNotNullOrEmpty(),    // developmental stage ID
+                    new StrNotNullOrEmpty(),    // developmental stage name
                     new IsElementOf(expressionValues),   // Expression
                     new IsElementOf(resumeQualities) }); // Call quality
         }
 
         return log.exit(new CellProcessor[] {
-                new StrNotNullOrEmpty(),    // gene ID
-                new NotNull(),              // gene Name
-                new StrNotNullOrEmpty(),    // developmental stage ID
-                new StrNotNullOrEmpty(),    // developmental stage name
-                new StrNotNullOrEmpty(),    // anatomical entity ID
-                new StrNotNullOrEmpty(),    // anatomical entity name
+                new StrNotNullOrEmpty(),                // gene ID
+                new NotNull(),                          // gene Name
+                new StrNotNullOrEmpty(),                // anatomical entity ID
+                new StrNotNullOrEmpty(),                // anatomical entity name
+                new StrNotNullOrEmpty(),                // developmental stage ID
+                new StrNotNullOrEmpty(),                // developmental stage name
                 new IsElementOf(expressionValues),      // Expression
                 new IsElementOf(resumeQualities),       // Call quality
                 new IsElementOf(originValues),          // Including observed data
@@ -997,18 +999,18 @@ public class GenerateExprFile extends GenerateDownloadFile {
         if (fileType.isSimpleFileType()) {
             return log.exit(new String[] { 
                     GENE_ID_COLUMN_NAME, GENE_NAME_COLUMN_NAME,
-                    STAGE_ID_COLUMN_NAME, STAGE_NAME_COLUMN_NAME,
                     ANATENTITY_ID_COLUMN_NAME, ANATENTITY_NAME_COLUMN_NAME,
+                    STAGE_ID_COLUMN_NAME, STAGE_NAME_COLUMN_NAME,
                     EXPRESSION_COLUMN_NAME, QUALITY_COLUMN_NAME });
         }
 
         return log.exit(new String[] { 
                 GENE_ID_COLUMN_NAME, GENE_NAME_COLUMN_NAME,
-                STAGE_ID_COLUMN_NAME, STAGE_NAME_COLUMN_NAME, 
                 ANATENTITY_ID_COLUMN_NAME, ANATENTITY_NAME_COLUMN_NAME,
-                EXPRESSION_COLUMN_NAME, QUALITY_COLUMN_NAME,
-                INCLUDING_OBSERVED_DATA_COLUMN_NAME, AFFYMETRIX_DATA_COLUMN_NAME,
-                AFFYMETRIX_CALL_QUALITY_COLUMN_NAME, AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME,
+                STAGE_ID_COLUMN_NAME, STAGE_NAME_COLUMN_NAME, 
+                EXPRESSION_COLUMN_NAME, QUALITY_COLUMN_NAME, INCLUDING_OBSERVED_DATA_COLUMN_NAME, 
+                AFFYMETRIX_DATA_COLUMN_NAME, AFFYMETRIX_CALL_QUALITY_COLUMN_NAME, 
+                AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME,
                 EST_DATA_COLUMN_NAME, EST_CALL_QUALITY_COLUMN_NAME, EST_OBSERVED_DATA_COLUMN_NAME,
                 INSITU_DATA_COLUMN_NAME, INSITU_CALL_QUALITY_COLUMN_NAME, 
                 INSITU_OBSERVED_DATA_COLUMN_NAME,

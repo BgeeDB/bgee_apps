@@ -162,12 +162,14 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
         speciesIds = new HashSet<String>(Arrays.asList("11")); 
 
         // Non informative anatomical entities
-        MySQLAnatEntityTOResultSet mockAnatEntityRsSp11 = createMockDAOResultSet(
-                Arrays.asList(
-                        new AnatEntityTO("NonInfoAnatEnt1", null, null, null, null, null)),
-                        MySQLAnatEntityTOResultSet.class);
-        when(mockManager.mockAnatEntityDAO.getNonInformativeAnatEntitiesBySpeciesIds(speciesIds)).
-                thenReturn(mockAnatEntityRsSp11);
+        // TODO: loading non-informative anat. entities is temporarily disabled, 
+        // there is a problem with this field in database
+//        MySQLAnatEntityTOResultSet mockAnatEntityRsSp11 = createMockDAOResultSet(
+//                Arrays.asList(
+//                        new AnatEntityTO("NonInfoAnatEnt1", null, null, null, null, null)),
+//                        MySQLAnatEntityTOResultSet.class);
+//        when(mockManager.mockAnatEntityDAO.getNonInformativeAnatEntitiesBySpeciesIds(speciesIds)).
+//                thenReturn(mockAnatEntityRsSp11);
         
         //stage relations
         MySQLRelationTOResultSet mockStageRelationRsSp11 = createMockDAOResultSet(
@@ -357,12 +359,14 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
         speciesIds = new HashSet<String>(Arrays.asList("22")); 
 
         // Non informative anatomical entities
-        MySQLAnatEntityTOResultSet mockAnatEntityRsSp22 = createMockDAOResultSet(
-                Arrays.asList(
-                        new AnatEntityTO("NonInfoAnatEnt2", null, null, null, null, null)),
-                        MySQLAnatEntityTOResultSet.class);
-        when(mockManager.mockAnatEntityDAO.getNonInformativeAnatEntitiesBySpeciesIds(speciesIds)).
-                thenReturn(mockAnatEntityRsSp22);
+        // TODO: loading non-informative anat. entities is temporarily disabled, 
+        // there is a problem with this field in database.
+//        MySQLAnatEntityTOResultSet mockAnatEntityRsSp22 = createMockDAOResultSet(
+//                Arrays.asList(
+//                        new AnatEntityTO("NonInfoAnatEnt2", null, null, null, null, null)),
+//                        MySQLAnatEntityTOResultSet.class);
+//        when(mockManager.mockAnatEntityDAO.getNonInformativeAnatEntitiesBySpeciesIds(speciesIds)).
+//                thenReturn(mockAnatEntityRsSp22);
 
         //stage relations
         MySQLRelationTOResultSet mockStageRelationRsSp22 = createMockDAOResultSet(
@@ -530,8 +534,12 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
         String outputAdvancedFile22 = new File(directory, "Genus22_species22_" + 
                 SingleSpExprFileType.EXPR_COMPLETE + GenerateDownloadFile.EXTENSION).getAbsolutePath();
 
-        assertExpressionFile(outputSimpleFile11, "11", true, 6);
-        assertExpressionFile(outputAdvancedFile11, "11", false, 8);
+        // TODO: loading non-informative anat. entities is temporarily disabled, 
+        // there is a problem with this field in database. So we have one more line.
+        assertExpressionFile(outputSimpleFile11, "11", true, 7);
+        // TODO: loading non-informative anat. entities is temporarily disabled, 
+        // there is a problem with this field in database. So we have one more line.
+        assertExpressionFile(outputAdvancedFile11, "11", false, 9);
         assertExpressionFile(outputSimpleFile22, "22", true, 5);
         assertExpressionFile(outputAdvancedFile22, "22", false, 9);
 
@@ -540,13 +548,17 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
         verify(mockGeneTORs).close();
         verify(mockAnatEntityTORs).close();
         verify(mockStageTORs).close();
-        
-        verify(mockAnatEntityRsSp11).close();
+
+        // TODO: loading non-informative anat. entities is temporarily disabled, 
+        // there is a problem with this field in database
+        // verify(mockAnatEntityRsSp11).close();
         verify(mockStageRelationRsSp11).close();
         verify(mockGlobalExprRsSp11).close();
         verify(mockGlobalNoExprRsSp11).close();
         
-        verify(mockAnatEntityRsSp22).close();
+        // TODO: loading non-informative anat. entities is temporarily disabled, 
+        // there is a problem with this field in database
+        // verify(mockAnatEntityRsSp22).close();
         verify(mockStageRelationRsSp22).close();
         verify(mockGlobalExprRsSp22).close();
         verify(mockGlobalNoExprRsSp22).close();
@@ -555,7 +567,9 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
         verify(mockManager.mockManager, times(2)).releaseResources();
 
         // Verify that setAttributes are correctly called.
-        verify(mockManager.mockAnatEntityDAO, times(2)).setAttributes(AnatEntityDAO.Attribute.ID);
+        // TODO: loading non-informative anat. entities is temporarily disabled, 
+        // there is a problem with this field in database
+//        verify(mockManager.mockAnatEntityDAO, times(2)).setAttributes(AnatEntityDAO.Attribute.ID);
         verify(mockManager.mockRelationDAO, times(4)).setAttributes(
                 RelationDAO.Attribute.SOURCE_ID, RelationDAO.Attribute.TARGET_ID);
         verify(mockManager.mockExpressionCallDAO, times(4)).setAttributes(
@@ -567,6 +581,7 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                 // All Attributes except ID
                 EnumSet.complementOf(EnumSet.of(NoExpressionCallDAO.Attribute.ID)));
         
+
         verify(mockManager.mockAnatEntityDAO, times(1)).setAttributes(
                 AnatEntityDAO.Attribute.ID, AnatEntityDAO.Attribute.NAME);
         verify(mockManager.mockGeneDAO, times(1)).setAttributes(
@@ -619,11 +634,13 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
         thenReturn(mockAnatEntityTORs33);
 
         // Non informative anatomical entities
-        MySQLAnatEntityTOResultSet mockAnatEntityRsSp33 = createMockDAOResultSet(
-                Arrays.asList(new AnatEntityTO("NonInfoAnatEnt3", null, null, null, null, null)),
-                MySQLAnatEntityTOResultSet.class);
-        when(mockManager.mockAnatEntityDAO.getNonInformativeAnatEntitiesBySpeciesIds(speciesIds)).
-        thenReturn(mockAnatEntityRsSp33);
+        // TODO: loading non-informative anat. entities is temporarily disabled, 
+        // there is a problem with this field in database
+//        MySQLAnatEntityTOResultSet mockAnatEntityRsSp33 = createMockDAOResultSet(
+//                Arrays.asList(new AnatEntityTO("NonInfoAnatEnt3", null, null, null, null, null)),
+//                MySQLAnatEntityTOResultSet.class);
+//        when(mockManager.mockAnatEntityDAO.getNonInformativeAnatEntitiesBySpeciesIds(speciesIds)).
+//        thenReturn(mockAnatEntityRsSp33);
         
         //stage relations
         MySQLRelationTOResultSet mockStageRelationRsSp33 = createMockDAOResultSet(
@@ -722,7 +739,9 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
         verify(mockGeneTORs33).close();
         verify(mockStageTORs33).close();
         verify(mockAnatEntityTORs33).close();
-        verify(mockAnatEntityRsSp33).close();
+        // TODO: loading non-informative anat. entities is temporarily disabled, 
+        // there is a problem with this field in database
+//        verify(mockAnatEntityRsSp33).close();
         verify(mockStageRelationRsSp33).close();
         verify(mockGlobalExprRsSp33).close();
         verify(mockGlobalNoExprRsSp33).close();
@@ -731,7 +750,9 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
         verify(mockManager.mockManager, times(1)).releaseResources();
 
         // Verify that setAttributes are correctly called.
-        verify(mockManager.mockAnatEntityDAO, times(1)).setAttributes(AnatEntityDAO.Attribute.ID);
+        // TODO: loading non-informative anat. entities is temporarily disabled, 
+        // there is a problem with this field in database        
+//        verify(mockManager.mockAnatEntityDAO, times(1)).setAttributes(AnatEntityDAO.Attribute.ID);
         verify(mockManager.mockRelationDAO, times(2)).setAttributes(
                 RelationDAO.Attribute.SOURCE_ID, RelationDAO.Attribute.TARGET_ID);
         verify(mockManager.mockExpressionCallDAO, times(2)).setAttributes(
@@ -795,11 +816,13 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
         thenReturn(mockAnatEntityTORs33);
 
         // Non informative anatomical entities
-        MySQLAnatEntityTOResultSet mockAnatEntityRsSp33 = createMockDAOResultSet(
-                Arrays.asList(new AnatEntityTO("NonInfoAnatEnt3", null, null, null, null, null)),
-                MySQLAnatEntityTOResultSet.class);
-        when(mockManager.mockAnatEntityDAO.getNonInformativeAnatEntitiesBySpeciesIds(speciesIds)).
-        thenReturn(mockAnatEntityRsSp33);
+        // TODO: loading non-informative anat. entities is temporarily disabled, 
+        // there is a problem with this field in database
+//        MySQLAnatEntityTOResultSet mockAnatEntityRsSp33 = createMockDAOResultSet(
+//                Arrays.asList(new AnatEntityTO("NonInfoAnatEnt3", null, null, null, null, null)),
+//                MySQLAnatEntityTOResultSet.class);
+//        when(mockManager.mockAnatEntityDAO.getNonInformativeAnatEntitiesBySpeciesIds(speciesIds)).
+//        thenReturn(mockAnatEntityRsSp33);
         
         //stage relations
         MySQLRelationTOResultSet mockStageRelationRsSp33 = createMockDAOResultSet(
@@ -897,7 +920,9 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
         verify(mockGeneTORs33).close();
         verify(mockStageTORs33).close();
         verify(mockAnatEntityTORs33).close();
-        verify(mockAnatEntityRsSp33).close();
+        // TODO: loading non-informative anat. entities is temporarily disabled, 
+        // there is a problem with this field in database
+//        verify(mockAnatEntityRsSp33).close();
         verify(mockStageRelationRsSp33).close();
         verify(mockGlobalExprRsSp33).close();
         verify(mockGlobalNoExprRsSp33).close();
@@ -906,7 +931,9 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
         verify(mockManager.mockManager, times(1)).releaseResources();
 
         // Verify that setAttributes are correctly called.
-        verify(mockManager.mockAnatEntityDAO, times(1)).setAttributes(AnatEntityDAO.Attribute.ID);
+        // TODO: loading non-informative anat. entities is temporarily disabled, 
+        // there is a problem with this field in database
+//        verify(mockManager.mockAnatEntityDAO, times(1)).setAttributes(AnatEntityDAO.Attribute.ID);
         verify(mockManager.mockRelationDAO, times(2)).setAttributes(
                 RelationDAO.Attribute.SOURCE_ID, RelationDAO.Attribute.TARGET_ID);
         verify(mockManager.mockExpressionCallDAO, times(2)).setAttributes(
@@ -950,20 +977,20 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
             String[] expecteds = new String[] { 
                     GenerateDownloadFile.GENE_ID_COLUMN_NAME, 
                     GenerateDownloadFile.GENE_NAME_COLUMN_NAME, 
-                    GenerateDownloadFile.STAGE_ID_COLUMN_NAME, 
-                    GenerateDownloadFile.STAGE_NAME_COLUMN_NAME,
                     GenerateDownloadFile.ANATENTITY_ID_COLUMN_NAME, 
                     GenerateDownloadFile.ANATENTITY_NAME_COLUMN_NAME,
+                    GenerateDownloadFile.STAGE_ID_COLUMN_NAME, 
+                    GenerateDownloadFile.STAGE_NAME_COLUMN_NAME,
                     GenerateExprFile.EXPRESSION_COLUMN_NAME,
                     GenerateDownloadFile.QUALITY_COLUMN_NAME};
             if (!isSimplified) {
                 expecteds = new String[] { 
                         GenerateDownloadFile.GENE_ID_COLUMN_NAME, 
                         GenerateDownloadFile.GENE_NAME_COLUMN_NAME, 
-                        GenerateDownloadFile.STAGE_ID_COLUMN_NAME, 
-                        GenerateDownloadFile.STAGE_NAME_COLUMN_NAME,   
                         GenerateDownloadFile.ANATENTITY_ID_COLUMN_NAME, 
                         GenerateDownloadFile.ANATENTITY_NAME_COLUMN_NAME,
+                        GenerateDownloadFile.STAGE_ID_COLUMN_NAME, 
+                        GenerateDownloadFile.STAGE_NAME_COLUMN_NAME,   
                         GenerateExprFile.EXPRESSION_COLUMN_NAME,
                         GenerateDownloadFile.QUALITY_COLUMN_NAME,
                         GenerateExprFile.INCLUDING_OBSERVED_DATA_COLUMN_NAME,
@@ -1011,20 +1038,20 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                 processors = new CellProcessor[] { 
                     new StrNotNullOrEmpty(), // gene ID
                     new NotNull(),           // gene Name
-                    new StrNotNullOrEmpty(), // developmental stage ID
-                    new StrNotNullOrEmpty(), // developmental stage name
                     new StrNotNullOrEmpty(), // anatomical entity ID
                     new StrNotNullOrEmpty(), // anatomical entity name
+                    new StrNotNullOrEmpty(), // developmental stage ID
+                    new StrNotNullOrEmpty(), // developmental stage name
                     new IsElementOf(expressionValues),  // Expression
                     new IsElementOf(resumeQualities)};   // Call quality
             } else {
                 processors = new CellProcessor[] { 
                     new StrNotNullOrEmpty(), // gene ID
                     new NotNull(),           // gene Name
-                    new StrNotNullOrEmpty(), // developmental stage ID
-                    new StrNotNullOrEmpty(), // developmental stage name
                     new StrNotNullOrEmpty(), // anatomical entity ID
                     new StrNotNullOrEmpty(), // anatomical entity name
+                    new StrNotNullOrEmpty(), // developmental stage ID
+                    new StrNotNullOrEmpty(), // developmental stage name
                     new IsElementOf(expressionValues),      // Expression
                     new IsElementOf(resumeQualities),       // Call quality
                     new IsElementOf(originValues),          // Including observed data 
@@ -1050,10 +1077,10 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                 nbLines++;
                 String geneId = (String) rowMap.get(headers[0]);
                 String geneName = (String) rowMap.get(headers[1]);
-                String stageId = (String) rowMap.get(headers[2]);
-                String stageName = (String) rowMap.get(headers[3]);
-                String anatEntityId = (String) rowMap.get(headers[4]);
-                String anatEntityName = (String) rowMap.get(headers[5]);
+                String anatEntityId = (String) rowMap.get(headers[2]);
+                String anatEntityName = (String) rowMap.get(headers[3]);
+                String stageId = (String) rowMap.get(headers[4]);
+                String stageName = (String) rowMap.get(headers[5]);
                 String resume = (String) rowMap.get(headers[6]);
                 String quality = (String) rowMap.get(headers[7]);
 
@@ -1280,6 +1307,34 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                                 ExpressionData.NO_EXPRESSION, rnaSeqData,
                                 DataState.HIGHQUALITY.getStringRepresentation(), rnaSeqQual,
                                 ObservedData.OBSERVED, rnaSeqObsData,
+                                ObservedData.OBSERVED, observedData);
+                        }
+                    // This call is no longer correct because it is filtered on the conditions 
+                    //} else if (geneId.equals("ID2") && anatEntityId.equals("Anat_id3") && 
+                    //        stageId.equals("Stage_id2")) {
+                    // TODO: loading non-informative anat. entities is temporarily disabled, 
+                    // there is a problem with this field in database. 
+                    // So we have one more possible line.
+                    } else if (geneId.equals("ID2") && anatEntityId.equals("NonInfoAnatEnt1") && 
+                            stageId.equals("ParentStage_id2")) {
+                        this.assertCommonColumnRowEqual(geneId, "genN2", geneName,
+                                "parentstageN2", stageName, "xxx", anatEntityName,
+                                ExpressionData.EXPRESSION.getStringRepresentation(), resume,
+                                DataState.HIGHQUALITY.getStringRepresentation(), quality);
+                        if (!isSimplified) {
+                            this.assertCompleteExprColumnRowEqual(geneId, 
+                                ExpressionData.EXPRESSION, affymetrixData,
+                                DataState.HIGHQUALITY.getStringRepresentation(), affymetrixQual,
+                                ObservedData.OBSERVED, affymetrixObsData,
+                                ExpressionData.NO_DATA, estData,
+                                DataState.NODATA.getStringRepresentation(), estQual,
+                                ObservedData.NOT_OBSERVED, estObsData,
+                                ExpressionData.EXPRESSION, inSituData,
+                                DataState.HIGHQUALITY.getStringRepresentation(), inSituQual,
+                                ObservedData.OBSERVED, inSituObsData,
+                                ExpressionData.NO_DATA, rnaSeqData,
+                                DataState.NODATA.getStringRepresentation(), rnaSeqQual,
+                                ObservedData.NOT_OBSERVED, rnaSeqObsData,
                                 ObservedData.OBSERVED, observedData);
                         }
                     // This call is no longer correct because it is filtered on the conditions 

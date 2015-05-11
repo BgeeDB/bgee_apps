@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -1237,8 +1238,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                     new HashMap<MultiSpeciesDiffExprFileType, String[]>();
 
             // Get ordered species names
-            List<String> orderedSpeciesNames = this.getSpeciesNamesOrderBySpeciesId(
-                    speciesFilter, speciesNamesByIds);
+            List<String> orderedSpeciesNames = 
+                    this.getSpeciesOrderBySpeciesId(speciesNamesByIds, true);
             
             for (FileType fileType : this.fileTypes) {
                 MultiSpeciesDiffExprFileType currentFileType = (MultiSpeciesDiffExprFileType) fileType;
@@ -1706,30 +1707,39 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     }
 
     /**
-     * Return species names in the alphabetical order of provided species IDs. 
+     * Return species names or IDs in the order of species IDs from smallest to biggest. 
      *
-     * @param speciesIds        A {@code Set} of {@code String}s that are the IDs of species.
      * @param speciesNamesByIds A {@code Map} where keys are {@code String}s corresponding to 
      *                          species IDs, the associated values being {@code String}s 
      *                          corresponding to species names. 
-     * @return                  the {@code List} of {@code String}s that are species names in the 
-     *                          alphabetical order from the provided species IDs.
+     * @param names             A {@code boolean} defining whether to retrieve names, or IDs. 
+     *                          If {@code true}, names are retrieved.
+     * @return                  the {@code List} of {@code String}s that are species names or IDs
+     *                          from smallest to biggest.
      */
-    private List<String> getSpeciesNamesOrderBySpeciesId(
-            Set<String> speciesIds, Map<String, String> speciesNamesByIds) {
-        log.entry(speciesIds, speciesNamesByIds);
+    private List<String> getSpeciesOrderBySpeciesId(
+            Map<String, String> speciesNamesByIds, boolean names) {
+        log.entry(speciesNamesByIds);
         
-        List<String> ids = new ArrayList<String>(speciesIds);
-        Collections.sort(ids);
-        List<String> names = new ArrayList<String>();
-        for (String id : ids) {
-            names.add(speciesNamesByIds.get(id));
+        List<String> ids = new ArrayList<String>(speciesNamesByIds.keySet());
+        Set<Integer> orderedIds = new TreeSet<Integer>();
+        for (String id: ids) {
+            orderedIds.add(Integer.valueOf(id));
         }
-        assert names.size() == speciesIds.size();
         
-        return log.exit(names);
+        List<String> output = new ArrayList<String>();
+        for (Integer id : orderedIds) {
+            if (names) {
+                output.add(speciesNamesByIds.get(String.valueOf(id)));
+            } else {
+                output.add(String.valueOf(id));
+            }
+        }
+        assert output.size() == speciesNamesByIds.size();
+        
+        return log.exit(output);
     }
-
+    
     /**
      * Groups provided differential expression calls by condition (summary similarity annotation ID
      * and stage group ID).
@@ -2111,10 +2121,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                         orderedFoundStageIds, orderedFoundStageNames, 
                         new ArrayList<SpeciesDiffExprCounts>());
                         
-                // We order species IDs to keep the same order when we regenerate files.
-                List<String> speciesIds = new ArrayList<String>(speciesNamesByIds.keySet());
-                Collections.sort(speciesIds);
-                for (String speciesId: speciesIds) {
+                // We use order species IDs to keep the same order when we regenerate files.
+                for (String speciesId: this.getSpeciesOrderBySpeciesId(speciesNamesByIds, false)) {
                     // A species could have no data even if at least two other species have some data
                     SpeciesDiffExprCounts counts = allSpeciesCounts.get(speciesId);
                     if (counts == null) {
@@ -2359,9 +2367,12 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                     return log.exit(stageIdComp);
                 
                 if (bean1 instanceof MultiSpeciesCompleteDiffExprFileBean) {
-                    int speciesIdComp = ((MultiSpeciesCompleteDiffExprFileBean)bean1).getSpeciesId().
-                            compareToIgnoreCase(
-                                    ((MultiSpeciesCompleteDiffExprFileBean)bean2).getSpeciesId());
+                    int speciesIdComp =
+                                Integer.valueOf(
+                                    ((MultiSpeciesCompleteDiffExprFileBean)bean1).getSpeciesId()).
+                            compareTo(
+                                Integer.valueOf(
+                                    ((MultiSpeciesCompleteDiffExprFileBean)bean2).getSpeciesId()));
                     if (speciesIdComp != 0)
                         return log.exit(speciesIdComp);
                     
@@ -2546,17 +2557,24 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         
         // *** Headers common to all file types ***
         headers[0] = OMA_ID_COLUMN_NAME;
-        headers[1] = ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME;
-        headers[2] = ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME;
-        headers[3] = STAGE_ID_COLUMN_NAME;
-        headers[4] = STAGE_NAME_COLUMN_NAME;
+        if (fileType.isSimpleFileType()) {
+            headers[1] = ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME;
+            headers[2] = ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME;
+            headers[3] = STAGE_ID_COLUMN_NAME;
+            headers[4] = STAGE_NAME_COLUMN_NAME;
+        } else {
+            headers[3] = ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME;
+            headers[4] = ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME;
+            headers[5] = STAGE_ID_COLUMN_NAME;
+            headers[6] = STAGE_NAME_COLUMN_NAME;
+        }
 
         if (fileType.isSimpleFileType()) {
             // *** Headers specific to simple file ***
             for (int i = 0; i < speciesNames.size(); i++) {
                 // the number of columns depends on the number of species
                 int columnIndex = 5 + 4 * i;
-                String endHeader = " for " + speciesNames.get(i);
+                String endHeader = " for " + speciesNames.get(i).replaceAll("_", " ");
                 headers[columnIndex] = OVER_EXPR_GENE_COUNT_COLUMN_NAME + endHeader;
                 headers[columnIndex+1] = UNDER_EXPR_GENE_COUNT_COLUMN_NAME + endHeader;
                 headers[columnIndex+2] = NO_DIFF_EXPR_GENE_COUNT_COLUMN_NAME + endHeader;
@@ -2564,9 +2582,10 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             }
         } else {
             // *** Headers specific to complete file ***
-            headers[5] = SPECIES_LATIN_NAME_COLUMN_NAME;                
-            headers[6] = GENE_ID_COLUMN_NAME;
-            headers[7] = GENE_NAME_COLUMN_NAME; 
+            headers[1] = GENE_ID_COLUMN_NAME;
+            headers[2] = GENE_NAME_COLUMN_NAME;
+            
+            headers[7] = SPECIES_LATIN_NAME_COLUMN_NAME;                
             headers[8] = DIFFEXPRESSION_COLUMN_NAME;
             headers[9] = QUALITY_COLUMN_NAME;
             headers[10] = AFFYMETRIX_DATA_COLUMN_NAME; 

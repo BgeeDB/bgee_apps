@@ -110,13 +110,15 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
         MockDAOManager mockManager = new MockDAOManager();
 
         String taxonId1 = "9191";
-        Set<String> speciesIds1 = new HashSet<String>(Arrays.asList("22", "11", "33"));
+        Set<String> speciesIds1 = new HashSet<String>(Arrays.asList("22", "11", "1033"));
 
         MySQLSpeciesTOResultSet mockSpeciesTORs = createMockDAOResultSet(
                 Arrays.asList(
+                        // The order of species IDs is not the same 
+                        // if they are ordered as Strings or as Integers
                         new SpeciesTO("11", null, "GenusZZ", "speciesZZ", null, null, null, null),
                         new SpeciesTO("22", null, "GenusVR", "speciesVR", null, null, null, null),
-                        new SpeciesTO("33", null, "GenusAA", "speciesAA", null, null, null, null)),
+                        new SpeciesTO("1033", null, "GenusAA", "speciesAA", null, null, null, null)),
                 MySQLSpeciesTOResultSet.class);
         when(mockManager.mockSpeciesDAO.getSpeciesByIds(speciesIds1)).thenReturn(mockSpeciesTORs);
 
@@ -125,15 +127,15 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                         new GeneTO("geneId1", "geneName1", null, 11, null, 444, null),
                         new GeneTO("geneId2", "geneName2", null, 22, null, 444, null),
                         new GeneTO("geneId3", "geneName3", null, 22, null, 333, null),
-                        new GeneTO("geneId4", "geneName4", null, 33, null, 333, null),
+                        new GeneTO("geneId4", "geneName4", null, 1033, null, 333, null),
                         new GeneTO("geneId5", "geneName5", null, 11, null, 333, null),
                         new GeneTO("geneId6", "geneName6", null, 11, null, 222, null),
                         new GeneTO("geneId7", "geneName7", null, 22, null, 222, null),
                         new GeneTO("geneId8", "geneName8", null, 11, null, 444, null),
-                        new GeneTO("geneId9", "geneName9", null, 33, null, 444, null),
+                        new GeneTO("geneId9", "geneName9", null, 1033, null, 444, null),
                         new GeneTO("geneId10", "geneName10", null, 11, null, 555, null),
-                        new GeneTO("geneId11", "geneName11", null, 33, null, 555, null),
-                        new GeneTO("geneId12", "geneName12", null, 33, null, 555, null)),
+                        new GeneTO("geneId11", "geneName11", null, 1033, null, 555, null),
+                        new GeneTO("geneId12", "geneName12", null, 1033, null, 555, null)),
                 MySQLGeneTOResultSet.class);
         when(mockManager.mockGeneDAO.getGenesBySpeciesIds(speciesIds1)).thenReturn(mockGeneTORs);
 
@@ -399,7 +401,7 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
             for (int i = 0; i < speciesNames.size(); i++) {
                 // the number of columns depends on the number of species
                 int columnIndex = 5 + 4 * i;
-                String endHeader = " for " + speciesNames.get(i);
+                String endHeader = " for " + speciesNames.get(i).replaceAll("_", " ");
                 expectedHeaders[columnIndex] = 
                         GenerateMultiSpeciesDownloadFile.OVER_EXPR_GENE_COUNT_COLUMN_NAME + endHeader;
                 expectedHeaders[columnIndex+1] = 
@@ -424,7 +426,7 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     "1", "0", "0", "1",
                     // Species 22
                     "0", "1", "0", "0",
-                    // Species 33
+                    // Species 1033
                     "0", "0", "1", "0"));
             
             expectedRows.add(Arrays.asList("444", "entityId4", "entityName4", 
@@ -433,7 +435,7 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     "0", "0", "1", "1",
                     // Species 22
                     "0", "0", "0", "1",
-                    // Species 33
+                    // Species 1033
                     "0", "1", "0", "0"));
 
             List<List<String>> actualRows = new ArrayList<List<String>>();
@@ -468,13 +470,13 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
 
             // *** Headers common to all file types ***
             expectedHeaders[0] = GenerateMultiSpeciesDownloadFile.OMA_ID_COLUMN_NAME;
-            expectedHeaders[1] = GenerateMultiSpeciesDownloadFile.ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME;
-            expectedHeaders[2] = GenerateMultiSpeciesDownloadFile.ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME;
-            expectedHeaders[3] = GenerateDownloadFile.STAGE_ID_COLUMN_NAME;
-            expectedHeaders[4] = GenerateDownloadFile.STAGE_NAME_COLUMN_NAME;
-            expectedHeaders[5] = GenerateMultiSpeciesDownloadFile.SPECIES_LATIN_NAME_COLUMN_NAME;                
-            expectedHeaders[6] = GenerateDownloadFile.GENE_ID_COLUMN_NAME;
-            expectedHeaders[7] = GenerateDownloadFile.GENE_NAME_COLUMN_NAME; 
+            expectedHeaders[1] = GenerateDownloadFile.GENE_ID_COLUMN_NAME;
+            expectedHeaders[2] = GenerateDownloadFile.GENE_NAME_COLUMN_NAME; 
+            expectedHeaders[3] = GenerateMultiSpeciesDownloadFile.ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME;
+            expectedHeaders[4] = GenerateMultiSpeciesDownloadFile.ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME;
+            expectedHeaders[5] = GenerateDownloadFile.STAGE_ID_COLUMN_NAME;
+            expectedHeaders[6] = GenerateDownloadFile.STAGE_NAME_COLUMN_NAME;
+            expectedHeaders[7] = GenerateMultiSpeciesDownloadFile.SPECIES_LATIN_NAME_COLUMN_NAME;                
             expectedHeaders[8] = GenerateMultiSpeciesDiffExprFile.DIFFEXPRESSION_COLUMN_NAME;
             expectedHeaders[9] = GenerateDownloadFile.QUALITY_COLUMN_NAME;
             expectedHeaders[10] = GenerateDownloadFile.AFFYMETRIX_DATA_COLUMN_NAME; 
@@ -500,8 +502,8 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     "with gene names [geneName6, geneName7]"));
 
             expectedRows.add(Arrays.asList(
-                    "222", "entityId4|entityId5", "entityName4|entityName5", "stageId2", 
-                    "stageName2", "GenusZZ_speciesZZ", "geneId6", "geneName6", 
+                    "222", "geneId6", "geneName6", "entityId4|entityId5", "entityName4|entityName5",
+                    "stageId2", "stageName2", "GenusZZ_speciesZZ",  
                     DiffExpressionData.STRONG_AMBIGUITY.getStringRepresentation(), 
                     GenerateDiffExprFile.NA_VALUE,  
                     DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(), 
@@ -511,8 +513,8 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     "cioId1", "cioName1"));
             
             expectedRows.add(Arrays.asList(
-                    "222", "entityId4|entityId5", "entityName4|entityName5", "stageId2", 
-                    "stageName2", "GenusVR_speciesVR", "geneId7", "geneName7", 
+                    "222", "geneId7", "geneName7", "entityId4|entityId5", "entityName4|entityName5", 
+                    "stageId2", "stageName2", "GenusVR_speciesVR", 
                     DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
                     DataState.LOWQUALITY.getStringRepresentation(), 
                     DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
@@ -525,8 +527,8 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     "geneId4, geneId5] with gene names [geneName12, geneName3, geneName4, geneName5]"));
 
             expectedRows.add(Arrays.asList(
-                    "333", "entityId1|entityId3", "entityName1|entityName3", "stageId1", 
-                    "stageName1", "GenusZZ_speciesZZ", "geneId5", "geneName5", 
+                    "333", "geneId5", "geneName5", "entityId1|entityId3", "entityName1|entityName3", 
+                    "stageId1", "stageName1", "GenusZZ_speciesZZ", 
                     DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
                     DataState.LOWQUALITY.getStringRepresentation(), 
                     DiffExpressionData.NO_DATA.getStringRepresentation(), 
@@ -536,8 +538,8 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     "cioId2", "cioName2"));
             
             expectedRows.add(Arrays.asList(
-                    "333", "entityId1|entityId3", "entityName1|entityName3", "stageId1", 
-                    "stageName1", "GenusAA_speciesAA", "geneId12", "geneName12", 
+                    "333", "geneId12", "geneName12", "entityId1|entityId3", "entityName1|entityName3", 
+                    "stageId1", "stageName1", "GenusAA_speciesAA", 
                     DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
                     DataState.HIGHQUALITY.getStringRepresentation(),
                     DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
@@ -547,8 +549,8 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     "cioId2", "cioName2"));
 
             expectedRows.add(Arrays.asList(
-                    "333", "entityId1|entityId3", "entityName1|entityName3", "stageId1", 
-                    "stageName1", "GenusAA_speciesAA", "geneId4", "geneName4", 
+                    "333", "geneId4", "geneName4", "entityId1|entityId3", "entityName1|entityName3", 
+                    "stageId1", "stageName1", "GenusAA_speciesAA", 
                     DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
                     DataState.HIGHQUALITY.getStringRepresentation(), 
                     DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
@@ -561,8 +563,8 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     "geneId8, geneId9] with gene names [geneName1, geneName2, geneName8, geneName9]"));
 
             expectedRows.add(Arrays.asList(
-                    "444", "entityId1|entityId2", "entityName1|entityName2", "stageId1", 
-                    "stageName1", "GenusZZ_speciesZZ", "geneId1", "geneName1", 
+                    "444", "geneId1", "geneName1", "entityId1|entityId2", "entityName1|entityName2", 
+                    "stageId1", "stageName1", "GenusZZ_speciesZZ", 
                     DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
                     DataState.HIGHQUALITY.getStringRepresentation(), 
                     DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
@@ -572,8 +574,8 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     "cioId1", "cioName1"));
 
             expectedRows.add(Arrays.asList(
-                    "444", "entityId1|entityId2", "entityName1|entityName2", "stageId1", 
-                    "stageName1", "GenusVR_speciesVR", "geneId2", "geneName2", 
+                    "444", "geneId2", "geneName2", "entityId1|entityId2", "entityName1|entityName2", 
+                    "stageId1", "stageName1", "GenusVR_speciesVR", 
                     DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(), 
                     DataState.LOWQUALITY.getStringRepresentation(), 
                     DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(), 
@@ -583,8 +585,8 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     "cioId1", "cioName1"));
 
             expectedRows.add(Arrays.asList(
-                    "444", "entityId1|entityId2", "entityName1|entityName2", "stageId1", 
-                    "stageName1", "GenusAA_speciesAA", "geneId9", "geneName9",
+                    "444", "geneId9", "geneName9", "entityId1|entityId2", "entityName1|entityName2", 
+                    "stageId1", "stageName1", "GenusAA_speciesAA", 
                     DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
                     DataState.HIGHQUALITY.getStringRepresentation(), 
                     DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
@@ -594,8 +596,8 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     "cioId1", "cioName1"));
             
             expectedRows.add(Arrays.asList(
-                    "444", "entityId4", "entityName4", "stageId1", 
-                    "stageName1", "GenusZZ_speciesZZ", "geneId8", "geneName8", 
+                    "444", "geneId8", "geneName8", "entityId4", "entityName4", 
+                    "stageId1", "stageName1", "GenusZZ_speciesZZ",  
                     DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
                     DataState.HIGHQUALITY.getStringRepresentation(), 
                     DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
@@ -605,8 +607,8 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     "cioId1", "cioName1"));
 
             expectedRows.add(Arrays.asList(
-                    "444", "entityId4", "entityName4", "stageId1", 
-                    "stageName1", "GenusAA_speciesAA", "geneId9", "geneName9", 
+                    "444", "geneId9", "geneName9", "entityId4", "entityName4", 
+                    "stageId1", "stageName1", "GenusAA_speciesAA", 
                     DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(), 
                     DataState.LOWQUALITY.getStringRepresentation(), 
                     DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(), 

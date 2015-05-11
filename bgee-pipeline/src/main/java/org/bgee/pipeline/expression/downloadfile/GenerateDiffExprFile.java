@@ -643,35 +643,35 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         
         if (fileType.isSimpleFileType()) {
             return log.exit(new CellProcessor[] { 
-                    new StrNotNullOrEmpty(),      // gene ID
-                    new NotNull(),                // gene Name
-                    new StrNotNullOrEmpty(),      // developmental stage ID
-                    new StrNotNullOrEmpty(),      // developmental stage name
-                    new StrNotNullOrEmpty(),      // anatomical entity ID
-                    new StrNotNullOrEmpty(),      // anatomical entity name
-                    new IsElementOf(data),        // Differential expression
-                    new IsElementOf(resumeQualities)});     // Quality
+                    new StrNotNullOrEmpty(),            // gene ID
+                    new NotNull(),                      // gene Name
+                    new StrNotNullOrEmpty(),            // anatomical entity ID
+                    new StrNotNullOrEmpty(),            // anatomical entity name
+                    new StrNotNullOrEmpty(),            // developmental stage ID
+                    new StrNotNullOrEmpty(),            // developmental stage name
+                    new IsElementOf(data),              // Differential expression
+                    new IsElementOf(resumeQualities)}); // Quality
         } 
         
         return log.exit(new CellProcessor[] { 
-                new StrNotNullOrEmpty(),        // gene ID
-                new NotNull(),                  // gene Name
-                new StrNotNullOrEmpty(),        // developmental stage ID
-                new StrNotNullOrEmpty(),        // developmental stage name
-                new StrNotNullOrEmpty(),        // anatomical entity ID
-                new StrNotNullOrEmpty(),        // anatomical entity name
-                new IsElementOf(data),          // Differential expression
-                new IsElementOf(resumeQualities),// Quality
-                new IsElementOf(data),          // Affymetrix data
-                new IsElementOf(specificTypeQualities),     // Affymetrix call quality
-                new DMinMax(0, 1),              // Best p-value using Affymetrix
-                new LMinMax(0, Long.MAX_VALUE), // Consistent DEA count using Affymetrix
-                new LMinMax(0, Long.MAX_VALUE), // Inconsistent DEA count using Affymetrix
-                new IsElementOf(data),          // RNA-seq data
-                new IsElementOf(specificTypeQualities),     // RNA-seq call quality
-                new DMinMax(0, 1),              // Best p-value using RNA-Seq
-                new LMinMax(0, Long.MAX_VALUE), // Consistent DEA count using RNA-Seq
-                new LMinMax(0, Long.MAX_VALUE)}); // Inconsistent DEA count using RNA-Seq
+                new StrNotNullOrEmpty(),                // gene ID
+                new NotNull(),                          // gene Name
+                new StrNotNullOrEmpty(),                // anatomical entity ID
+                new StrNotNullOrEmpty(),                // anatomical entity name
+                new StrNotNullOrEmpty(),                // developmental stage ID
+                new StrNotNullOrEmpty(),                // developmental stage name
+                new IsElementOf(data),                  // Differential expression
+                new IsElementOf(resumeQualities),       // Quality
+                new IsElementOf(data),                  // Affymetrix data
+                new IsElementOf(specificTypeQualities), // Affymetrix call quality
+                new DMinMax(0, 1),                      // Best p-value using Affymetrix
+                new LMinMax(0, Long.MAX_VALUE),         // Consistent DEA count using Affymetrix
+                new LMinMax(0, Long.MAX_VALUE),         // Inconsistent DEA count using Affymetrix
+                new IsElementOf(data),                  // RNA-seq data
+                new IsElementOf(specificTypeQualities), // RNA-seq call quality
+                new DMinMax(0, 1),                      // Best p-value using RNA-Seq
+                new LMinMax(0, Long.MAX_VALUE),         // Consistent DEA count using RNA-Seq
+                new LMinMax(0, Long.MAX_VALUE)});       // Inconsistent DEA count using RNA-Seq
     }
     
     /**
@@ -687,14 +687,14 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         if (fileType.isSimpleFileType()) {
             return log.exit(new String[] { 
                     GENE_ID_COLUMN_NAME, GENE_NAME_COLUMN_NAME, 
-                    STAGE_ID_COLUMN_NAME, STAGE_NAME_COLUMN_NAME,
                     ANATENTITY_ID_COLUMN_NAME, ANATENTITY_NAME_COLUMN_NAME,
+                    STAGE_ID_COLUMN_NAME, STAGE_NAME_COLUMN_NAME,
                     DIFFEXPRESSION_COLUMN_NAME, QUALITY_COLUMN_NAME});
         } 
         return log.exit(new String[] {
                 GENE_ID_COLUMN_NAME, GENE_NAME_COLUMN_NAME, 
-                STAGE_ID_COLUMN_NAME, STAGE_NAME_COLUMN_NAME,   
                 ANATENTITY_ID_COLUMN_NAME, ANATENTITY_NAME_COLUMN_NAME,
+                STAGE_ID_COLUMN_NAME, STAGE_NAME_COLUMN_NAME,   
                 DIFFEXPRESSION_COLUMN_NAME, QUALITY_COLUMN_NAME, 
                 AFFYMETRIX_DATA_COLUMN_NAME, AFFYMETRIX_CALL_QUALITY_COLUMN_NAME,
                 AFFYMETRIX_P_VALUE_COLUMN_NAME, AFFYMETRIX_CONSISTENT_DEA_COUNT_COLUMN_NAME, 

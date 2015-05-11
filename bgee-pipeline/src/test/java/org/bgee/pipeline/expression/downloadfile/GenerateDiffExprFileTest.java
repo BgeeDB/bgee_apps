@@ -41,9 +41,7 @@ import org.bgee.pipeline.Utils;
 import org.bgee.pipeline.expression.downloadfile.GenerateDiffExprFile.DiffExpressionData;
 import org.bgee.pipeline.expression.downloadfile.GenerateDiffExprFile.SingleSpDiffExprFileType;
 import org.bgee.pipeline.expression.downloadfile.GenerateExprFile.SingleSpExprFileType;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.supercsv.cellprocessor.constraint.DMinMax;
 import org.supercsv.cellprocessor.constraint.IsElementOf;
 import org.supercsv.cellprocessor.constraint.LMinMax;
@@ -66,9 +64,6 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
      * {@code Logger} of the class. 
      */
     private final static Logger log = LogManager.getLogger(GenerateDiffExprFileTest.class.getName());
-
-    @Rule
-    public final TemporaryFolder testFolder = new TemporaryFolder();
 
     public GenerateDiffExprFileTest(){
         super();
@@ -607,20 +602,20 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
             String[] expecteds = new String[] { 
                     GenerateDownloadFile.GENE_ID_COLUMN_NAME, 
                     GenerateDownloadFile.GENE_NAME_COLUMN_NAME, 
-                    GenerateDownloadFile.STAGE_ID_COLUMN_NAME, 
-                    GenerateDownloadFile.STAGE_NAME_COLUMN_NAME,
                     GenerateDownloadFile.ANATENTITY_ID_COLUMN_NAME, 
                     GenerateDownloadFile.ANATENTITY_NAME_COLUMN_NAME,
+                    GenerateDownloadFile.STAGE_ID_COLUMN_NAME, 
+                    GenerateDownloadFile.STAGE_NAME_COLUMN_NAME,
                     GenerateDiffExprFile.DIFFEXPRESSION_COLUMN_NAME,
                     GenerateDiffExprFile.QUALITY_COLUMN_NAME};
             if (!isSimplified) {
                 expecteds = new String[] { 
                         GenerateDownloadFile.GENE_ID_COLUMN_NAME, 
                         GenerateDownloadFile.GENE_NAME_COLUMN_NAME, 
-                        GenerateDownloadFile.STAGE_ID_COLUMN_NAME, 
-                        GenerateDownloadFile.STAGE_NAME_COLUMN_NAME,   
                         GenerateDownloadFile.ANATENTITY_ID_COLUMN_NAME, 
                         GenerateDownloadFile.ANATENTITY_NAME_COLUMN_NAME, 
+                        GenerateDownloadFile.STAGE_ID_COLUMN_NAME, 
+                        GenerateDownloadFile.STAGE_NAME_COLUMN_NAME,   
                         GenerateDiffExprFile.DIFFEXPRESSION_COLUMN_NAME,
                         GenerateDiffExprFile.QUALITY_COLUMN_NAME,
                         GenerateDownloadFile.AFFYMETRIX_DATA_COLUMN_NAME, 
@@ -655,20 +650,20 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                 processors = new CellProcessor[] { 
                         new NotNull(), // gene ID
                         new NotNull(), // gene Name
-                        new NotNull(), // developmental stage ID
-                        new NotNull(), // developmental stage name
                         new NotNull(), // anatomical entity ID
                         new NotNull(), // anatomical entity name
+                        new NotNull(), // developmental stage ID
+                        new NotNull(), // developmental stage name
                         new IsElementOf(dataElements), // Differential expression
                         new IsElementOf(resumeQualities)}; // Quality
             } else {
                 processors = new CellProcessor[] { 
                         new NotNull(), // gene ID
                         new NotNull(), // gene Name
-                        new NotNull(), // developmental stage ID
-                        new NotNull(), // developmental stage name
                         new NotNull(), // anatomical entity ID
                         new NotNull(), // anatomical entity name
+                        new NotNull(), // developmental stage ID
+                        new NotNull(), // developmental stage name
                         new IsElementOf(dataElements),  // Differential expression
                         new IsElementOf(resumeQualities),    // Quality
                         new IsElementOf(dataElements),  // Affymetrix data
@@ -691,10 +686,10 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                 i++;
                 String geneId = (String) rowMap.get(headers[0]);
                 String geneName = (String) rowMap.get(headers[1]);
-                String stageId = (String) rowMap.get(headers[2]);
-                String stageName = (String) rowMap.get(headers[3]);
-                String anatEntityId = (String) rowMap.get(headers[4]);
-                String anatEntityName = (String) rowMap.get(headers[5]);
+                String anatEntityId = (String) rowMap.get(headers[2]);
+                String anatEntityName = (String) rowMap.get(headers[3]);
+                String stageId = (String) rowMap.get(headers[4]);
+                String stageName = (String) rowMap.get(headers[5]);
                 String resume = (String) rowMap.get(headers[6]);
                 String quality = (String) rowMap.get(headers[7]);
                 String affymetrixData = null, affymetrixQuality = null,  

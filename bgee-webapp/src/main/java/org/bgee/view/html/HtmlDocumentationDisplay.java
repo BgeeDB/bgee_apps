@@ -612,7 +612,9 @@ this.writeln("<div class='documentationmenu'><ul>");
 //        this.writeln("</ul>");         
         this.writeln("</li>");              //end of diff expression        
         this.writeln("</ul></li>");     // end of multi-species section
-        
+
+        this.writeln("<li><a href='#troubleshooting' title='Quick jump to this section'>" + 
+                "Troubleshooting</a>");
         this.writeln("</ul></div>");// end of documentationmenu
         
         log.exit();
@@ -735,6 +737,7 @@ this.writeln("<div class='documentationmenu'><ul>");
         this.writeln("</tbody>");
         this.writeln("</table>");
         this.writeln(this.getSingleSpeciesSimpleExprFileExample());
+        
         this.writeln("<h5 id='single_expr_simple_col1'>" + GENE_ID_COL_NAME + " (column 1)</h5>");
         this.writeln(this.getGeneIdColDescription());
         this.writeln("<h5 id='single_expr_simple_col2'>" + GENE_NAME_COL_NAME + " (column 2)</h5>");
@@ -824,6 +827,8 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "</a></td><td>expression high quality</td></tr>");
         this.writeln("</tbody>");
         this.writeln("</table>");
+        this.writeln(this.getSingleSpeciesCompleteExprFileExample());
+        
         this.writeln("<h5 id='single_expr_complete_col1'>" + GENE_ID_COL_NAME + " (column 1)</h5>");
         this.writeln(this.getGeneIdColDescription());
         this.writeln("<h5 id='single_expr_complete_col2'>" + GENE_NAME_COL_NAME + " (column 2)</h5>");
@@ -1038,6 +1043,8 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "</a></td><td>high quality</td></tr>");
         this.writeln("</tbody>");
         this.writeln("</table>");
+        this.writeln(this.getSingleSpeciesSimpleDiffExprFileExample());
+        
         this.writeln("<h5 id='single_diff_simple_col1'>" + GENE_ID_COL_NAME + " (column 1)</h5>");
         this.writeln(this.getGeneIdColDescription());
         this.writeln("<h5 id='single_diff_simple_col2'>" + GENE_NAME_COL_NAME + " (column 2)</h5>");
@@ -1156,6 +1163,8 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "</a></td><td>0</td></tr>");
         this.writeln("</tbody>");
         this.writeln("</table>");
+        this.writeln(this.getSingleSpeciesCompleteDiffExprFileExample());
+        
         this.writeln("<h5 id='single_diff_complete_col1'>" + GENE_ID_COL_NAME + " (column 1)</h5>");
         this.writeln(this.getGeneIdColDescription());
         this.writeln("<h5 id='single_diff_complete_col2'>" + GENE_NAME_COL_NAME + " (column 2)</h5>");
@@ -1554,6 +1563,7 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "contains gene IDs [ENSBTAG00000017624, ENSG00000124839, ENSMMUG00000012094, "
                 + "ENSMODG00000008949, ENSMUSG00000026304, ENSRNOG00000019887] with gene names "
                 + "[RAB17, RAB17, RAB17, RAB17, Rab17, Rab17]</code></p>");
+        this.writeln(this.getMultiSpeciesCompleteDiffExprFileExample());
         
         this.writeln("<h5 id='multi_diff_complete_col1'>" + OMA_ID_COL_NAME + " (column 1)</h5>");
         this.writeln(this.getOMAIdColDescription());
@@ -2260,16 +2270,22 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + this.getSingleSpeciesCompleteExprFileHeader(false) 
                 + "</thead>"
                 + "<tbody>"
-                + "<tr><td>FBgn0005427</td><td>ewg</td><td>FBdv:00005348</td>"
-                + "<td>prepupal stage P4(ii) (Drosophila)</td><td>FBbt:00003404</td>"
-                + "<td>mesothoracic extracoxal depressor muscle 66 (Drosophila)</td>"
+                //TODO: change when files re-generated
+                + "<tr><td>ENSDARG00000000002</td><td>ccdc80</td><td>ZFS:0000033</td>"
+                + "<td>Hatching:Long-pec (Danio)</td><td>UBERON:0000965</td>"
+                + "<td>lens of camera-type eye</td><td>no data</td><td>no data</td>"
+                + "<td>expression high quality</td><td>no data</td><td>yes</td>"
                 + "<td>expression high quality</td></tr>"
-                + "<tr><td>FBgn0005536</td><td>Mbs</td><td>UBERON:0000066</td>"
-                + "<td>fully formed stage</td><td>FBbt:00003023</td>"
-                + "<td>adult abdomen (Drosophila)</td><td>expression low quality</td></tr>"
-                + "<tr><td>FBgn0005558</td><td>ey</td><td>FBdv:00005339</td>"
-                + "<td>third instar larval stage (Drosophila)</td><td>FBbt:00001684</td>"
-                + "<td>embryonic/larval hemocyte (Drosophila)</td><td>absent high quality</td></tr>"
+                + "<tr><td>ENSDARG00000000175</td><td>hoxb2a</td><td>ZFS:0000017</td>"
+                + "<td>Gastrula:50%-epiboly (Danio)</td><td>UBERON:0004734</td>"
+                + "<td>gastrula</td><td>absent high quality</td><td>no data</td>"
+                + "<td>absent high quality</td><td>no data</td><td>yes</td>"
+                + "<td>absent high quality</td></tr>"
+                + "<tr><td>ENSDARG00000000241</td><td>slc40a1</td><td>ZFS:0000019</td>"
+                + "<td>Gastrula:Shield (Danio)</td><td>UBERON:0000922</td>"
+                + "<td>embryo</td><td>absent high quality</td><td>no data</td>"
+                + "<td>expression high quality</td><td>no data</td><td>no</td>"
+                + "<td>low ambiguity</td></tr>"
                 + "</tbody>"
                 + "</table>");
     }
@@ -2318,6 +2334,33 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "</table>");
     }
     /**
+     * @return  a {@code String} containing the HTML to create a table containing the header 
+     *          and example lines of a single species simple differential expression file.
+     */
+    public String getSingleSpeciesSimpleDiffExprFileExample() {
+        log.entry();
+        return log.exit("<table class='call_download_file_example'>"
+                + "<caption>Example lines for single species simple differential expression file</caption>"
+                + "<thead>" 
+                + this.getSingleSpeciesSimpleDiffExprFileHeader(false) 
+                + "</thead>"
+                + "<tbody>"
+                + "<tr><td>ENSG00000000003</td><td>TSPAN6</td><td>HsapDv:0000017</td>"
+                + "<td>Carnegie stage 10 (human)</td><td>UBERON:0000922</td>"
+                + "<td>embryo</td><td>over-expression</td><td>high quality</td></tr>"
+                + "<tr><td>ENSG00000000419</td><td>DPM1</td><td>HsapDv:0000020</td>"
+                + "<td>Carnegie stage 13 (human)</td><td>UBERON:0000922</td>"
+                //TODO: change to low
+                + "<td>embryo</td><td>under-expression</td><td>poor quality</td></tr>"
+                + "<tr><td>ENSG00000000457</td><td>SCYL3</td><td>HsapDv:0000094</td>"
+                + "<td>65-79 year-old human stage (human)</td><td>UBERON:0000178</td>"
+                //TODO: change to low
+                + "<td>blood</td><td>over-expression</td><td>poor quality</td></tr>"
+                + "</tbody>"
+                + "</table>");
+    }
+    /*
+    /**
      * Get the header of single species simple over-/under-expression file as a HTML 'tr' element, 
      * with column being either 'td' or 'th' elements depending on argument {@code withTd}.
      * @param withTd    A {@code boolean} defining whether the column type should be 'td' 
@@ -2355,6 +2398,40 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "<td>8</td><td>9</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td>"
                 + "<td>15</td><td>16</td><td>17</td><td>18</td></tr>"
                 + this.getSingleSpeciesCompleteDiffExprFileHeader(true)
+                + "</tbody>"
+                + "</table>");
+    }
+    /**
+     * @return  a {@code String} containing the HTML to create a table containing the header 
+     *          and example lines of a single species complete differential expression file.
+     */
+    public String getSingleSpeciesCompleteDiffExprFileExample() {
+        log.entry();
+        return log.exit("<table class='call_download_file_example'>"
+                + "<caption>Example lines for single species complete differential expression file</caption>"
+                + "<thead>" 
+                + this.getSingleSpeciesCompleteDiffExprFileHeader(false) 
+                + "</thead>"
+                + "<tbody>"
+                //TODO: change 'poor' to 'low'
+                + "<tr><td>ENSMUSG00000000001</td><td>Gnai3</td><td>MmusDv:0000027</td>"
+                + "<td>Theiler stage 20 (mouse)</td><td>UBERON:0000081</td>"
+                + "<td>metanephros</td><td>no diff expression</td><td>high quality</td>"
+                + "<td>no diff expression</td><td>high quality</td><td>0.22166589</td>"
+                + "<td>1</td><td>0</td><td>no data</td><td>no data</td><td>1.0</td>"
+                + "<td>0</td><td>0</td></tr>"
+                + "<tr><td>ENSMUSG00000000028</td><td>Cdc45</td><td>MmusDv:0000035</td>"
+                + "<td>Theiler stage 26 (mouse)</td><td>UBERON:0000992</td>"
+                + "<td>female gonad</td><td>under-expression</td><td>poor quality</td>"
+                + "<td>under-expression</td><td>poor quality</td><td>6.386149E-4</td>"
+                + "<td>1</td><td>1</td><td>no data</td><td>no data</td><td>1.0</td>"
+                + "<td>0</td><td>0</td></tr>"
+                + "<tr><td>ENSMUSG00000000031</td><td>H19</td><td>MmusDv:0000036</td>"
+                + "<td>Theiler stage 27 (mouse)</td><td>UBERON:0002037</td>"
+                + "<td>cerebellum</td><td>over-expression</td><td>high quality</td>"
+                + "<td>over-expression</td><td>high quality</td><td>1.2336E-6</td>"
+                + "<td>2</td><td>0</td><td>no data</td><td>no data</td><td>1.0</td>"
+                + "<td>0</td><td>0</td></tr>"
                 + "</tbody>"
                 + "</table>");
     }
@@ -2437,6 +2514,45 @@ this.writeln("<div class='documentationmenu'><ul>");
                 + "<td>15</td><td>16</td><td>17</td><td>18</td><td>19</td><td>20</td>"
                 + "<td>21</td><td>22</td></tr>"
                 + this.getMultiSpeciesCompleteDiffExprFileHeader(true)
+                + "</tbody>"
+                + "</table>");
+    }
+    /**
+     * @return  a {@code String} containing the HTML to create a table containing the header 
+     *          and example lines of a multi species complete differential expression file.
+     */
+    public String getMultiSpeciesCompleteDiffExprFileExample() {
+        log.entry();
+        return log.exit("<table class='call_download_file_example'>"
+                + "<caption>Example lines for multi-species complete differential expression file</caption>"
+                + "<thead>" 
+                + this.getMultiSpeciesCompleteDiffExprFileHeader(false) 
+                + "</thead>"
+                + "<tbody>"
+                + "<tr><td>59</td><td>UBERON:0000948</td><td>heart</td>"
+                + "<td>UBERON:0018241</td><td>prime adult stage</td>"
+                + "<td>Mus_musculus</td><td>ENSMUSG00000030516</td><td>Tjp1</td>"
+                + "<td>over-expression</td><td>high quality</td>"
+                + "<td>over-expression</td><td>high quality</td><td>0.0</td>"
+                + "<td>5</td><td>0</td><td>no data</td><td>no data</td><td>1.0</td>"
+                + "<td>0</td><td>0</td><td>CIO:0000004</td>"
+                + "<td>medium confidence from single evidence</td></tr>"
+                + "<tr><td>59</td><td>UBERON:0000948</td><td>heart</td>"
+                + "<td>UBERON:0018241</td><td>prime adult stage</td>"
+                + "<td>Macaca_mulatta</td><td>ENSMMUG00000017878</td><td>Tjp1</td>"
+                + "<td>no diff expression</td><td>high quality</td>"
+                + "<td>no data</td><td>no data</td><td>1.0</td>"
+                + "<td>0</td><td>0</td><td>no diff expression</td><td>high quality</td>"
+                + "<td>0.6239275</td><td>2</td><td>0</td><td>CIO:0000004</td>"
+                + "<td>medium confidence from single evidence</td></tr>"
+                + "<tr><td>59</td><td>UBERON:0000948</td><td>heart</td>"
+                + "<td>UBERON:0018241</td><td>prime adult stage</td>"
+                + "<td>Bos_taurus</td><td>ENSBTAG00000015398</td><td>ZO1</td>"
+                + "<td>over-expression</td><td>high quality</td>"
+                + "<td>no data</td><td>no data</td><td>1.0</td>"
+                + "<td>0</td><td>0</td><td>over-expression</td><td>high quality</td>"
+                + "<td>8.741838E-4</td><td>1</td><td>0</td><td>CIO:0000004</td>"
+                + "<td>medium confidence from single evidence</td></tr>"
                 + "</tbody>"
                 + "</table>");
     }

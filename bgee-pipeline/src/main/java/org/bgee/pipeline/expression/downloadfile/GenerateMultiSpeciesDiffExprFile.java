@@ -317,6 +317,14 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     public static class MultiSpeciesSimpleDiffExprFileBean extends MultiSpeciesFileBean {
     
         /**
+         * See {@link #getGeneIds()}
+         */
+        private List<String> geneIds;
+        /**
+         * See {@link #getGeneNames()}
+         */
+        private List<String> geneNames;
+        /**
          * See {@link #getSpeciesDiffExprCounts()}.
          */
         private List<SpeciesDiffExprCounts> speciesDiffExprCounts;
@@ -331,19 +339,55 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
          * Constructor providing all arguments of the class.
          *
          * @param omaId             See {@link #getOmaId()}.
+         * @param geneIds           See {@link #getGeneIds()}.
+         * @param geneNames         See {@link #getGeneNames()}.
          * @param entityIds         See {@link #getEntityIds()}.
          * @param entityNames       See {@link #getEntityNames()}.
          * @param stageIds          See {@link #getStageIds()}.
          * @param stageNames        See {@link #getStageNames()}.
          * @param speciesCounts     See {@link #getSpeciesDiffExprCounts()}.
          */
-        public MultiSpeciesSimpleDiffExprFileBean(String omaId,
-                List<String> entityIds, List<String> entityNames, List<String> stageIds, 
-                List<String> stageNames, List<SpeciesDiffExprCounts> speciesDiffExprCounts) {
+        public MultiSpeciesSimpleDiffExprFileBean(String omaId, List<String> geneIds, 
+                List<String> geneNames, List<String> entityIds, List<String> entityNames, 
+                List<String> stageIds, List<String> stageNames, 
+                List<SpeciesDiffExprCounts> speciesDiffExprCounts) {
             super(omaId, entityIds, entityNames, stageIds, stageNames);
+            this.geneIds = geneIds;
+            this.geneNames = geneNames;
             this.speciesDiffExprCounts = speciesDiffExprCounts;
         }
     
+        /**
+         * @return  the {@code List} of {@code String}s that are the IDs of the genes.
+         *          When there is several genes, they are provided in alphabetical order.
+         */
+        public List<String> getGeneIds() {
+            return geneIds;
+        }
+        /** 
+         * @param geneIds   A {@code List} of {@code String}s that are the IDs of the genes.
+         * @see #getGeneIds()
+         */
+        public void setGeneIds(List<String> geneIds) {
+            this.geneIds = geneIds;
+        }
+
+        /**
+         * @return  the {@code List} of {@code String}s that are the names of the genes.
+         *          When there is several genes, they are provided in same order as their 
+         *          corresponding ID, as returned by {@link #getGeneIds()}.
+         */
+        public List<String> getGeneNames() {
+            return geneNames;
+        }
+        /**
+         * @param geneNames A {@code List} of {@code String}s that are the names of genes.
+         * @see #getGeneNames()
+         */
+        public void setGeneNames(List<String> geneNames) {
+            this.geneNames = geneNames;
+        }
+
         /**
          * @return  the {@code List} of {@code SpeciesDiffExprCounts}s that are the counts of the 
          *          genes for each species of a multi-species differential expression file.
@@ -364,6 +408,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         public int hashCode() {
             final int prime = 31;
             int result = super.hashCode();
+            result = prime * result + ((geneIds == null) ? 0 : geneIds.hashCode());
+            result = prime * result + ((geneNames == null) ? 0 : geneNames.hashCode());
             result = prime * result + 
                     ((speciesDiffExprCounts == null) ? 0 : speciesDiffExprCounts.hashCode());
             return result;
@@ -378,6 +424,16 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             if (getClass() != obj.getClass())
                 return false;
             MultiSpeciesSimpleDiffExprFileBean other = (MultiSpeciesSimpleDiffExprFileBean) obj;
+            if (geneIds == null) {
+                if (other.geneIds != null)
+                    return false;
+            } else if (!geneIds.equals(other.geneIds))
+                return false;
+            if (geneNames == null) {
+                if (other.geneNames != null)
+                    return false;
+            } else if (!geneNames.equals(other.geneNames))
+                return false;
             if (speciesDiffExprCounts == null) {
                 if (other.speciesDiffExprCounts != null)
                     return false;
@@ -388,7 +444,9 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         
         @Override
         public String toString() {
-            return super.toString() + " - Species counts: " + getSpeciesDiffExprCounts();
+            return super.toString() + 
+                    " - Gene IDs: " + getGeneIds() + " - Gene names: " + getGeneNames() +
+                    " - Species counts: " + getSpeciesDiffExprCounts();
         }
     }
 
@@ -2135,10 +2193,9 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                     speciesIdsWithDataForSimple.size() >= 2 && 
                     speciesIdsWithDiffExprForSimple.size() >= 1) {
                 MultiSpeciesSimpleDiffExprFileBean simpleBean = new MultiSpeciesSimpleDiffExprFileBean(
-                        omaNodeId, orderedFoundOrganIds, orderedFoundOrganNames, 
+                        omaNodeId, geneIds, geneNames, orderedFoundOrganIds, orderedFoundOrganNames, 
                         orderedFoundStageIds, orderedFoundStageNames, 
                         new ArrayList<SpeciesDiffExprCounts>());
-                        
                 // We use order species IDs to keep the same order when we regenerate files.
                 for (String speciesId: this.getSpeciesOrderBySpeciesId(speciesNamesByIds, false)) {
                     // A species could have no data even if at least two other species have some data
@@ -2494,6 +2551,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 case OMA_ID_COLUMN_NAME: 
                     processors[i] = new StrNotNullOrEmpty(); 
                     break;
+                case GENE_ID_LIST_COLUMN_NAME: 
+                case GENE_NAME_LIST_COLUMN_NAME: 
                 //XXX change STAGE_XX_COLUMN_NAME to STAGE_XX_LIST_COLUMN_NAME 
                 // when we will have several stages for one StageGroup.
                 case STAGE_ID_COLUMN_NAME: 
@@ -2584,7 +2643,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         String[] headers = null; 
         if (fileType.isSimpleFileType()) {
             // For simple file, we always have 5 columns and 5 columns for each species
-            int nbColumns = 5 + 4 * speciesNames.size();
+            int nbColumns = 7 + 4 * speciesNames.size();
             headers = new String[nbColumns];
         } else {
             // For complete file, the number of columns is independent of the number of species.
@@ -2593,23 +2652,18 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         
         // *** Headers common to all file types ***
         headers[0] = OMA_ID_COLUMN_NAME;
-        if (fileType.isSimpleFileType()) {
-            headers[1] = ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME;
-            headers[2] = ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME;
-            headers[3] = STAGE_ID_COLUMN_NAME;
-            headers[4] = STAGE_NAME_COLUMN_NAME;
-        } else {
-            headers[3] = ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME;
-            headers[4] = ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME;
-            headers[5] = STAGE_ID_COLUMN_NAME;
-            headers[6] = STAGE_NAME_COLUMN_NAME;
-        }
+        headers[3] = ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME;
+        headers[4] = ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME;
+        headers[5] = STAGE_ID_COLUMN_NAME;
+        headers[6] = STAGE_NAME_COLUMN_NAME;
 
         if (fileType.isSimpleFileType()) {
             // *** Headers specific to simple file ***
+            headers[1] = GENE_ID_LIST_COLUMN_NAME;
+            headers[2] = GENE_NAME_LIST_COLUMN_NAME;
             for (int i = 0; i < speciesNames.size(); i++) {
                 // the number of columns depends on the number of species
-                int columnIndex = 5 + 4 * i;
+                int columnIndex = 7 + 4 * i;
                 String endHeader = " for " + speciesNames.get(i).replaceAll("_", " ");
                 headers[columnIndex] = OVER_EXPR_GENE_COUNT_COLUMN_NAME + endHeader;
                 headers[columnIndex+1] = UNDER_EXPR_GENE_COUNT_COLUMN_NAME + endHeader;
@@ -2687,6 +2741,19 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             if (fileType.isSimpleFileType()) {
                 // *** Attributes specific to simple file ***
                 
+                switch (header[i]) {
+                    case GENE_ID_LIST_COLUMN_NAME: 
+                        fieldMapping[i] = "geneIds";
+                        break;
+                    case GENE_NAME_LIST_COLUMN_NAME: 
+                        fieldMapping[i] = "geneNames";
+                        break;
+                }
+                //if header found, iterate next column name
+                if (fieldMapping[i] != null) {
+                    continue;
+                }
+
                 //FIXME: this correction assumes that OVER_EXPR_GENE_COUNT_COLUMN_NAME is always 
                 //the first column in the group of columns of a given species. A real correction 
                 //would be to extract the species name from the column names, store the species names 
@@ -2777,12 +2844,19 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         
         return log.exit(fieldMapping);
     }
+    
     /**
-     * TODO Javadoc
+     * Write the OMA file.
      *
-     * @param groupName
-     * @param mapOMANodeGene
-     * @throws IOException 
+     * @param groupName         A {@code String} that is the group name.
+     * @param mapOMANodeGene    A {@code Map} where keys are {@code String}s that are OMA node IDs, 
+     *                          the associated values being {@code List} of {@code String}s 
+     *                          corresponding to gene IDs.
+     * @param geneTOsByIds      A {@code Map} where keys are {@code String}s corresponding 
+     *                          to gene IDs, the associated values being {@code GeneTO}s 
+     *                          corresponding to gene TOs. 
+     * @param beanWriter        A {@code ICsvBeanWriter} that is the writer to use.
+     * @throws IOException      If an error occurred while trying to write generated files.
      */
     private void writeOMAFile(String groupName, Map<String, Set<String>> mapOMANodeGene, 
             Map<String, GeneTO> geneTOsByIds, ICsvBeanWriter beanWriter) throws IOException {
@@ -2819,6 +2893,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 
         log.exit();
     }
+    
     /**
      * Generates an {@code Array} of {@code String}s used to generate the header of an OMA TSV file.
      * 
@@ -2837,6 +2912,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     
         return log.exit(headers);
     }
+    
     /**
      * Generates an {@code Array} of {@code CellProcessor}s used to process an OMA TSV file.
      * 
@@ -2869,6 +2945,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     
         return log.exit(processors);
     }
+    
     /**
      * Map the column names of a TSV file to the attributes of an {@code OMAFileBean}.
      * This mapping will then be used to populate or read the bean, 

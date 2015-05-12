@@ -393,19 +393,21 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
             log.trace("Headers: {}", (Object[]) actualHeaders);
 
             // Check that the headers are what we expect            
-            int nbColumns = 5 + 4 * speciesNames.size();
+            int nbColumns = 7 + 4 * speciesNames.size();
             String[] expectedHeaders = new String[nbColumns];
 
             // *** Headers common to all file types ***
             expectedHeaders[0] = GenerateMultiSpeciesDownloadFile.OMA_ID_COLUMN_NAME;
-            expectedHeaders[1] = GenerateMultiSpeciesDownloadFile.ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME;
-            expectedHeaders[2] = GenerateMultiSpeciesDownloadFile.ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME;
-            expectedHeaders[3] = GenerateDownloadFile.STAGE_ID_COLUMN_NAME;
-            expectedHeaders[4] = GenerateDownloadFile.STAGE_NAME_COLUMN_NAME;
+            expectedHeaders[1] = GenerateMultiSpeciesDownloadFile.GENE_ID_LIST_COLUMN_NAME;
+            expectedHeaders[2] = GenerateMultiSpeciesDownloadFile.GENE_NAME_LIST_COLUMN_NAME;
+            expectedHeaders[3] = GenerateMultiSpeciesDownloadFile.ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME;
+            expectedHeaders[4] = GenerateMultiSpeciesDownloadFile.ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME;
+            expectedHeaders[5] = GenerateDownloadFile.STAGE_ID_COLUMN_NAME;
+            expectedHeaders[6] = GenerateDownloadFile.STAGE_NAME_COLUMN_NAME;
             // *** Headers specific to simple file ***
             for (int i = 0; i < speciesNames.size(); i++) {
                 // the number of columns depends on the number of species
-                int columnIndex = 5 + 4 * i;
+                int columnIndex = 7 + 4 * i;
                 String endHeader = " for " + speciesNames.get(i).replaceAll("_", " ");
                 expectedHeaders[columnIndex] = 
                         GenerateMultiSpeciesDownloadFile.OVER_EXPR_GENE_COUNT_COLUMN_NAME + endHeader;
@@ -425,8 +427,9 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
             expectedRows.add(Arrays.asList("//OMA node ID 444 contains gene IDs [geneId1, geneId2, " + 
                     "geneId8, geneId9] with gene names [geneName1, geneName2, geneName8, geneName9]"));
 
-            expectedRows.add(Arrays.asList("444", "entityId1|entityId2", "entityName1|entityName2", 
-                    "stageId1", "stageName1",
+            expectedRows.add(Arrays.asList("444", 
+                    "geneId1|geneId2|geneId8|geneId9", "geneName1|geneName2|geneName8|geneName9", 
+                    "entityId1|entityId2", "entityName1|entityName2", "stageId1", "stageName1",
                     // Species 11
                     "1", "0", "0", "1",
                     // Species 22
@@ -434,8 +437,9 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     // Species 1033
                     "0", "0", "1", "0"));
             
-            expectedRows.add(Arrays.asList("444", "entityId4", "entityName4", 
-                    "stageId1", "stageName1",
+            expectedRows.add(Arrays.asList("444", 
+                    "geneId1|geneId2|geneId8|geneId9", "geneName1|geneName2|geneName8|geneName9",
+                    "entityId4", "entityName4", "stageId1", "stageName1",
                     // Species 11
                     "0", "0", "1", "1",
                     // Species 22

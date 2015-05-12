@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -128,7 +129,7 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                         new GeneTO("geneId2", "geneName2", null, 22, null, 444, null),
                         new GeneTO("geneId3", "geneName3", null, 22, null, 333, null),
                         new GeneTO("geneId4", "geneName4", null, 1033, null, 333, null),
-                        new GeneTO("geneId5", "geneName5", null, 11, null, 333, null),
+                        new GeneTO("geneId5", "-", null, 11, null, 333, null),
                         new GeneTO("geneId6", "geneName6", null, 11, null, 222, null),
                         new GeneTO("geneId7", "geneName7", null, 22, null, 222, null),
                         new GeneTO("geneId8", "geneName8", null, 11, null, 444, null),
@@ -319,11 +320,15 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
         String outputCompleteAnatFile = new File(directory, groupName + "_" + 
                 MultiSpeciesDiffExprFileType.MULTI_DIFF_EXPR_ANATOMY_COMPLETE + 
                 GenerateDownloadFile.EXTENSION).getAbsolutePath();
+        String outputOMAFile = new File(directory, groupName + "_" + 
+                GenerateMultiSpeciesDownloadFile.OMA_FILE_NAME + GenerateDownloadFile.EXTENSION)
+                .getAbsolutePath();
 
         List<String> orderedSpeciesNames = 
                 Arrays.asList("GenusZZ_speciesZZ", "GenusVR_speciesVR", "GenusAA_speciesAA");
         this.assertMultiSpeciesDiffExpressionSimpleFile(outputSimpleAnatFile, orderedSpeciesNames);
         this.assertMultiSpeciesDiffExpressionCompleteFile(outputCompleteAnatFile);
+        this.assertOMAFile(outputOMAFile);
 
         //Verify that the connection was closed at each group iteration
         verify(mockManager.mockManager, times(1)).releaseResources();
@@ -524,10 +529,10 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     "cioId1", "cioName1"));
           
             expectedRows.add(Arrays.asList("//OMA node ID 333 contains gene IDs [geneId12, geneId3, " + 
-                    "geneId4, geneId5] with gene names [geneName12, geneName3, geneName4, geneName5]"));
+                    "geneId4, geneId5] with gene names [geneName12, geneName3, geneName4, -]"));
 
             expectedRows.add(Arrays.asList(
-                    "333", "geneId5", "geneName5", "entityId1|entityId3", "entityName1|entityName3", 
+                    "333", "geneId5", "-", "entityId1|entityId3", "entityName1|entityName3", 
                     "stageId1", "stageName1", "GenusZZ_speciesZZ", 
                     DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
                     DataState.LOWQUALITY.getStringRepresentation(), 
@@ -617,6 +622,48 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     DataState.LOWQUALITY.getStringRepresentation(), "0.44", "1", "0",
                     "cioId1", "cioName1"));
 
+            List<List<String>> actualRows = new ArrayList<List<String>>();
+            List<String> row;
+            while( (row = listReader.read()) != null ) {
+                actualRows.add(row);
+            }
+            assertEquals("Incorrect rows written", expectedRows, actualRows);
+        }
+    }
+
+    /**
+     * Asserts that the OMA file is good.
+     * <p>
+     * Read given download file and check whether the file contents corresponds to what is expected. 
+     */
+    private void assertOMAFile(String outputOMAFile) throws FileNotFoundException, IOException {
+
+        // We retrieve the annotations without using the extraction methods, to maintain 
+        // the unit of the test. 
+        // We use ICsvListReader to be able to read comments lines. Moreover this is why 
+        // we do not use Utils.TSVCOMMENTED that skip comments.
+        try (ICsvListReader listReader = new CsvListReader(new FileReader(outputOMAFile), 
+                new CsvPreference.Builder(CsvPreference.TAB_PREFERENCE).build())) {
+            String[] actualHeaders = listReader.getHeader(true);
+            log.trace("Headers: {}", (Object[]) actualHeaders);
+
+            // Check that the headers are what we expect            
+            String[] expectedHeaders = new String[3];
+            expectedHeaders[0] = GenerateMultiSpeciesDownloadFile.OMA_ID_COLUMN_NAME;
+            expectedHeaders[1] = GenerateMultiSpeciesDownloadFile.GENE_ID_LIST_COLUMN_NAME;
+            expectedHeaders[2] = GenerateMultiSpeciesDownloadFile.GENE_NAME_LIST_COLUMN_NAME;
+            
+            assertArrayEquals("Incorrect headers", expectedHeaders, actualHeaders);
+
+            // Check that the rows are what we expect            
+            List<List<String>> expectedRows = new ArrayList<List<String>>();
+            expectedRows.add(Arrays.asList("222", "geneId6|geneId7", "geneName6|geneName7"));
+            expectedRows.add(Arrays.asList("333", "geneId12|geneId3|geneId4|geneId5", 
+                    "geneName12|geneName3|geneName4|-"));
+            expectedRows.add(Arrays.asList("444", "geneId1|geneId2|geneId8|geneId9", 
+                    "geneName1|geneName2|geneName8|geneName9"));
+            expectedRows.add(Arrays.asList("555", "geneId10|geneId11", "geneName10|geneName11"));
+            
             List<List<String>> actualRows = new ArrayList<List<String>>();
             List<String> row;
             while( (row = listReader.read()) != null ) {

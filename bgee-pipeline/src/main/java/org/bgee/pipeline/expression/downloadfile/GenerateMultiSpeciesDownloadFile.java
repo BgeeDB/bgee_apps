@@ -85,6 +85,11 @@ public interface GenerateMultiSpeciesDownloadFile {
     public final static String SPECIES_LATIN_NAME_COLUMN_NAME = "Latin species name";
 
     /**
+     * A {@code String} that is the file name of OMA file to be generated.
+     */
+    public final static String OMA_FILE_NAME = "oma";
+
+    /**
      * Class parent of bean storing multi-species expression and differential expression calls, 
      * holding parameters common to all of them.
      *
@@ -489,4 +494,139 @@ public interface GenerateMultiSpeciesDownloadFile {
                     " - Species ID: " + getSpeciesId() + " - Species name: " + getSpeciesName();
         }
     }
+    
+    
+    /**
+     * A bean representing a row of an OMA file. 
+     * Getter and setter names must follow standard bean definitions.
+     * 
+     * @author Valentine Rech de Laval
+     * @version Bgee 13 May 2015
+     * @since Bgee 13
+     */
+    public static class OMAFileBean {
+
+        /**
+         * @see #getOmaId()
+         */
+        private String omaId;
+        /**
+         * @see #getGeneIds()
+         */
+        private List<String> geneIds;
+        /**
+         * @see #getGeneNames()
+         */
+        private List<String> geneNames;
+
+        /**
+         * 0-argument constructor of the bean.
+         */
+        protected OMAFileBean() {
+        }
+
+        /**
+         * Constructor providing all arguments of the class.
+         *
+         * @param omaId     See {@link #getOmaId()}.
+         * @param geneIds   See {@link #getGeneIds()}.
+         * @param geneNames See {@link #getGeneNames()}.
+         */
+        public OMAFileBean(String omaId, List<String> geneIds, List<String> geneNames) {
+            this.omaId = omaId;
+            this.geneIds = geneIds;
+            this.geneNames = geneNames;
+        }
+
+        /** 
+         * @return  the {@code String} that is the ID of OMA node.
+         */
+        public String getOmaId() {
+            return omaId;
+        }
+        /**
+         * @param omaId A {@code String} that is the ID of OMA node.
+         * @see #getOmaId()
+         */
+        public void setOmaId(String omaId) {
+            this.omaId = omaId;
+        }
+
+        /**
+         * @return  the {@code List} of {@code String}s that are the IDs of the genes.
+         *          When there is several genes, they are provided in alphabetical order.
+         */
+        public List<String> getGeneIds() {
+            return geneIds;
+        }
+        /** 
+         * @param geneIds   A {@code List} of {@code String}s that are the IDs of the genes.
+         * @see #getGeneIds()
+         */
+        public void setGeneIds(List<String> geneIds) {
+            this.geneIds = geneIds;
+        }
+
+        /**
+         * @return  the {@code List} of {@code String}s that are the names of the genes.
+         *          When there is several genes, they are provided in same order as their 
+         *          corresponding ID, as returned by {@link #getGeneIds()}.
+         */
+        public List<String> getGeneNames() {
+            return geneNames;
+        }
+        /**
+         * @param geneNames A {@code List} of {@code String}s that are the names of genes.
+         * @see #getGeneNames()
+         */
+        public void setGeneNames(List<String> geneNames) {
+            this.geneNames = geneNames;
+        }
+        
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((omaId == null) ? 0 : omaId.hashCode());
+            result = prime * result + ((geneIds == null) ? 0 : geneIds.hashCode());
+            result = prime * result + ((geneNames == null) ? 0 : geneNames.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            OMAFileBean other = (OMAFileBean) obj;
+            if (omaId == null) {
+                if (other.omaId != null)
+                    return false;
+            } else if (!omaId.equals(other.omaId))
+                return false;
+            if (geneIds == null) {
+                if (other.geneIds != null)
+                    return false;
+            } else if (!geneIds.equals(other.geneIds))
+                return false;
+            if (geneNames == null) {
+                if (other.geneNames != null)
+                    return false;
+            } else if (!geneNames.equals(other.geneNames))
+                return false;
+            return true;
+        }
+
+        @Override
+        public String toString() {
+            return  "OMA ID: " + getOmaId() +
+                    " - Gene IDs: " + getGeneIds() + " - Gene names: " + getGeneNames();
+        }
+    }
+
+
 }

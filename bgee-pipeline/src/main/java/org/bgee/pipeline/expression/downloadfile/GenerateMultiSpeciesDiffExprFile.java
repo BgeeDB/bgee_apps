@@ -54,6 +54,8 @@ import org.supercsv.cellprocessor.constraint.LMinMax;
 import org.supercsv.cellprocessor.constraint.NotNull;
 import org.supercsv.cellprocessor.constraint.StrNotNullOrEmpty;
 import org.supercsv.cellprocessor.ift.CellProcessor;
+import org.supercsv.io.CsvBeanWriter;
+import org.supercsv.io.ICsvBeanWriter;
 import org.supercsv.io.dozer.CsvDozerBeanWriter;
 import org.supercsv.io.dozer.ICsvDozerBeanWriter;
 
@@ -1228,6 +1230,11 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         // In order to close all writers in a finally clause.
         Map<MultiSpeciesDiffExprFileType, ICsvDozerBeanWriter> writersUsed = 
                 new HashMap<MultiSpeciesDiffExprFileType, ICsvDozerBeanWriter>();
+        String omaFileName = groupName + "_" + OMA_FILE_NAME + EXTENSION;
+        ICsvBeanWriter omaBeanWriter = new CsvBeanWriter(
+                new FileWriter(new File(this.directory, omaFileName + tmpExtension)), 
+                Utils.TSVCOMMENTED);
+
         try {
             //**************************
             // OPEN FILES, CREATE WRITERS, WRITE HEADERS
@@ -1284,7 +1291,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 
                 writersUsed.put(currentFileType, beanWriter);
             }
-            
+
             //********************************
             // RETRIEVE DATA FROM DATA SOURCE
             //********************************
@@ -1296,6 +1303,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             Map<String, Set<String>> mapOMANodeGene = 
                     this.getMappingOMANodeIdGeneIDs(mapGeneOMANode);
 
+            this.writeOMAFile(groupName, mapOMANodeGene, geneTOsByIds, omaBeanWriter);
+            
             // Get comparable stages: Stage ID -> Stage group and Stage group -> Stage IDs
             List<Map<String, List<String>>> mapStageGroup = this.getComparableStages(taxonId);
             Map<String, List<String>> mapStageIdToStageGroup = mapStageGroup.get(0);
@@ -1401,15 +1410,24 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 
         } catch (Exception e) {
             this.deleteTempFiles(generatedFileNames, tmpExtension);
+            File file = new File(this.directory, omaFileName + tmpExtension);
+            if (file.exists()) {
+                file.delete();
+            }
             throw e;
         } finally {
             for (ICsvDozerBeanWriter writer : writersUsed.values()) {
                 writer.close();
             }
+            omaBeanWriter.close();
         }
 
         // Now, if everything went fine, we rename the temporary files
         this.renameTempFiles(generatedFileNames, tmpExtension);
+        File tmpFile = new File(this.directory, omaFileName + tmpExtension);
+        if (tmpFile.exists()) {
+            tmpFile.renameTo(new File(this.directory, omaFileName));
+        }
 
         log.exit();
     }
@@ -1919,7 +1937,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         Map<String, Integer> speciesGeneCount = new HashMap<String, Integer>();
         // build gene names and species-genes count.
         for (String geneId : geneIds) {
-            geneNames.add(geneTOsByIds.get(geneId).getName());
+            geneNames.add(this.getFormattedGeneName(geneId, geneTOsByIds));
             
             String speciesId = String.valueOf(geneTOsByIds.get(geneId).getSpeciesId());
             Integer geneCount = speciesGeneCount.get(speciesId);
@@ -1989,7 +2007,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 MultiSpeciesCompleteDiffExprFileBean currentBean = 
                         new MultiSpeciesCompleteDiffExprFileBean(
                                 omaNodeId, null, null, null, null, // organ and stage names and IDs
-                                to.getGeneId(), geneTOsByIds.get(to.getGeneId()).getName(), 
+                                to.getGeneId(), this.getFormattedGeneName(to.getGeneId(), geneTOsByIds), 
                                 cioId, cioStatementByIds.get(cioId).getName(),
                                 speciesId, speciesNamesByIds.get(speciesId), 
                                 to.getDiffExprCallTypeAffymetrix().getStringRepresentation(), 
@@ -2182,6 +2200,24 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     }
     
     /**
+     * Get gene name corresponding to {@code geneId} formatted for files. 
+     *
+     * @param geneId        A {@code String} that is the ID of the gene.         
+     * @param geneTOsByIds  A {@code Map} where keys are {@code String}s corresponding to gene IDs, 
+     *                      the associated values being {@code GeneTO}s corresponding to gene TOs. 
+     * @return              A {@code String} that this the gene name corresponding to {@code geneId}.
+     */
+    private String getFormattedGeneName(String geneId, Map<String, GeneTO> geneTOsByIds) {
+        log.entry(geneId, geneTOsByIds);
+        
+        String geneName = geneTOsByIds.get(geneId).getName();
+        if (!geneName.isEmpty()) {
+            return log.exit(geneName);
+        }
+        return log.exit("-");
+    }
+    
+    /**
      * Order and write rows from provided beans, that should be beans of one OMA node ID.
      *
      * @param fileType      A {@code MultiSpDiffExprFileType} defining the type of file 
@@ -2220,7 +2256,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 
         log.exit();
     }
-
+    
     /**
      * Add to the provided {@code CompleteMultiSpeciesDiffExprFileBean} merged 
      * {@code DataState}s and qualities.
@@ -2740,5 +2776,133 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         }
         
         return log.exit(fieldMapping);
+    }
+    /**
+     * TODO Javadoc
+     *
+     * @param groupName
+     * @param mapOMANodeGene
+     * @throws IOException 
+     */
+    private void writeOMAFile(String groupName, Map<String, Set<String>> mapOMANodeGene, 
+            Map<String, GeneTO> geneTOsByIds, ICsvBeanWriter beanWriter) throws IOException {
+        log.entry();
+
+        // Get header
+        final String[] header = this.generateOMAFileHeader();
+
+        // Get processors
+        CellProcessor[] processors = this.generateOMAFileCellProcessors(header);
+
+        // Get attribute
+        String[] attributes = this.mapOMAFileAttributes(header);
+
+        // Write the header
+        log.debug("Write header: {}", Arrays.toString(header));
+        beanWriter.writeHeader(header);
+
+        // Write the rows
+        List<String> omaIds = new ArrayList<String>(mapOMANodeGene.keySet());
+        Collections.sort(omaIds);
+        for (String omaId: omaIds) {
+            List<String> orderedGeneIds= new ArrayList<String>(mapOMANodeGene.get(omaId));
+            Collections.sort(orderedGeneIds);
+            List<String> orderedGeneNames = new ArrayList<String>();
+            for (String geneId: orderedGeneIds) {
+                orderedGeneNames.add(this.getFormattedGeneName(geneId, geneTOsByIds));
+            }
+
+            OMAFileBean bean = new OMAFileBean(omaId, orderedGeneIds, orderedGeneNames);
+            log.trace("Write row: {} - using writer: {}", bean, beanWriter);
+            beanWriter.write(bean, attributes, processors);                
+        }
+
+        log.exit();
+    }
+    /**
+     * Generates an {@code Array} of {@code String}s used to generate the header of an OMA TSV file.
+     * 
+     * @param fileType      The {@code MultiSpDiffExprFileType} of the file to be generated.
+     * @param speciesNames  A {@code List} of {@code String}s that are the names of species 
+     *                      we want to generate data for.
+     * @return              An {@code Array} of {@code String}s used to produce the header.
+     */
+    private String[] generateOMAFileHeader() {
+        log.entry();
+    
+        String[] headers = new String[3];
+        headers[0] = OMA_ID_COLUMN_NAME;
+        headers[1] = GENE_ID_LIST_COLUMN_NAME;
+        headers[2] = GENE_NAME_LIST_COLUMN_NAME;
+    
+        return log.exit(headers);
+    }
+    /**
+     * Generates an {@code Array} of {@code CellProcessor}s used to process an OMA TSV file.
+     * 
+     * @param header    An {@code Array} of {@code String}s representing the names 
+     *                  of the columns of the OMA TSV file to be created.
+     * @return          An {@code Array} of {@code CellProcessor}s used to process 
+     *                  an OMA file TSV file.
+     * @throws IllegalArgumentException If an header is unrecognized.
+     */
+    private CellProcessor[] generateOMAFileCellProcessors(String[] header) {
+        log.entry(header);
+    
+        CellProcessor[] processors = new CellProcessor[header.length];
+        for (int i = 0; i < header.length; i++) {
+    
+            switch (header[i]) {
+                // *** CellProcessors common to all file types ***
+                case OMA_ID_COLUMN_NAME: 
+                    processors[i] = new StrNotNullOrEmpty(); 
+                    break;
+                case GENE_ID_LIST_COLUMN_NAME: 
+                case GENE_NAME_LIST_COLUMN_NAME: 
+                    processors[i] = new Utils.FmtMultipleStringValues(new Trim()); 
+                    break;
+                default:
+                    throw log.throwing(new IllegalArgumentException(
+                            "Unrecognized header: " + header[i] + " for OMA TSV file."));
+            }
+        }
+    
+        return log.exit(processors);
+    }
+    /**
+     * Map the column names of a TSV file to the attributes of an {@code OMAFileBean}.
+     * This mapping will then be used to populate or read the bean, 
+     * using standard getter/setter name convention. 
+     * <p>
+     * Thanks to this method, we can adapt to any change in column names or column order.
+     * 
+     * @param header    An {@code Array} of {@code String}s representing the names 
+     *                  of the columns of an OMA TSV file.
+     * @return          An {@code Array} of {@code String}s that are the names 
+     *                  of the attributes of the requested {@code OMAFileBean} type, put in 
+     *                  the {@code Array} at the same index as their corresponding column.
+     * @throws IllegalArgumentException If a {@code String} in {@code header} is not recognized.
+     */
+    private String[] mapOMAFileAttributes(String[] header) throws IllegalArgumentException {
+        log.entry(header);
+        
+        String[] mapping = new String[header.length];
+        for (int i = 0; i < header.length; i++) {
+            switch (header[i]) {
+                case OMA_ID_COLUMN_NAME: 
+                    mapping[i] = "omaId";
+                    break;
+                case GENE_ID_LIST_COLUMN_NAME: 
+                    mapping[i] = "geneIds";
+                    break;
+                case GENE_NAME_LIST_COLUMN_NAME:
+                    mapping[i] = "geneNames"; 
+                    break;
+                default:
+                    throw log.throwing(new IllegalArgumentException(
+                            "Unrecognized header: " + header[i] + " for OMA TSV file."));
+            }
+        }
+        return log.exit(mapping);
     }
 }

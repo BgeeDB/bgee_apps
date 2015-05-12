@@ -16,6 +16,6 @@ public interface DocumentationDisplay {
     /**
      * Display the documentation about download files.
      */
-    public void displayDownloadFileDocumentation();
+    public void displayCallDownloadFileDocumentation();
 
 }

@@ -46,17 +46,15 @@ public abstract class ConcreteDisplayParent {
     protected BgeeProperties prop;
 
     /**
-     * Constructor 
+     * Default Constructor. 
      * @param response          A {@code HttpServletResponse} that will be used to display the 
      *                          page to the client
-
      * @param prop              A {@code BgeeProperties} instance that contains the properties
      *                          to use.
-     *                          
      * @throws IOException      If there is an issue when trying to get or to use the
      *                          {@code PrintWriter} 
      */
-    public ConcreteDisplayParent(HttpServletResponse response, BgeeProperties prop) 
+    protected ConcreteDisplayParent(HttpServletResponse response, BgeeProperties prop) 
             throws IOException {
         log.entry(response, prop);
         this.response = response;
@@ -77,7 +75,7 @@ public abstract class ConcreteDisplayParent {
      * using the {@code PrintWriter}, with a line return at the end.
      * @param stringToWrite
      */
-    public void writeln(String stringToWrite)
+    protected void writeln(String stringToWrite)
     {
         log.entry(stringToWrite);
         this.out.println(stringToWrite);
@@ -88,15 +86,15 @@ public abstract class ConcreteDisplayParent {
      * using the {@code PrintWriter}, without a line return at the end.
      * @param stringToWrite
      */
-    public void write(String stringToWrite)
+    protected void write(String stringToWrite)
     {
         log.entry(stringToWrite);
         this.out.print(stringToWrite);
         log.exit();
     }
-    /**
-     * Send the header of the page
-     * @param ajax  A {@code boolean} to indicate whether the request is ajax
-     */
-    public abstract void sendHeaders(boolean ajax);
+//    /**
+//     * Send the header of the page
+//     * @param ajax  A {@code boolean} to indicate whether the request is ajax
+//     */
+//    public abstract void sendHeaders(boolean ajax);
 }

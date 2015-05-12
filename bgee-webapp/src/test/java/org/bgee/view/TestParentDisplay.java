@@ -25,10 +25,10 @@ public class TestParentDisplay extends ConcreteDisplayParent
 		super(response,prop);
 	}
 
-    @SuppressWarnings("unused")
-    @Override
-    public void sendHeaders(boolean ajax) {
-        // Do nothing
-    }
+//    @SuppressWarnings("unused")
+//    @Override
+//    public void sendHeaders(boolean ajax) {
+//        // Do nothing
+//    }
 
 }

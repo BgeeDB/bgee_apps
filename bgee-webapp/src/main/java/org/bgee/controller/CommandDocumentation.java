@@ -53,7 +53,7 @@ public class CommandDocumentation extends CommandParent {
             display.displayDocumentationHomePage();
         } else if (this.requestParameters.getAction().equals(
                 RequestParameters.ACTION_DOC_DOWLOAD_FILES)) {
-            display.displayDownloadFileDocumentation();
+            display.displayCallDownloadFileDocumentation();
         } else {
             throw log.throwing(new PageNotFoundException("Incorrect " + 
                 this.requestParameters.getUrlParametersInstance().getParamAction() + 

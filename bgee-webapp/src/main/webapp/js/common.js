@@ -32,7 +32,7 @@ $(document).ready(function() {
     var currentRequest = new requestParameters(null,true, "&");
     
     // Add a listener in navbar to change caret image when mouse over 'li'
-    var $deployLi =  $( "#nav li" );
+    var $deployLi =  $( "#nav li .deploy" );
     $deployLi.mouseover( function() {
     	// Change img
     	$("img", this).attr('src', '/img/arrow_down_light.png');

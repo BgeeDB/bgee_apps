@@ -221,7 +221,21 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("<li id='contact'>");
         this.writeln(this.getObfuscateEmail(0));
         this.writeln("</li>");
+
         this.writeln("</ul>");
+
+        this.writeln("<div id='social-links'>");
+
+        this.writeln("<a id='twitter' class='social-link' title='See @Bgeedb account' " +
+                "href='https://twitter.com/Bgeedb'>" + 
+                "<img alt='Twitter logo' src='" + this.prop.getImagesRootDirectory() + 
+                "Twitter.png'></img></a>");
+        this.writeln("<a id='wordpress' class='social-link'  alt='' title='See our blog' " + 
+                "href='https://bgeedb.wordpress.com'>" + 
+                "<img alt='Wordpress logo' src='" + this.prop.getImagesRootDirectory() + 
+                "wordpress.png'></img></a>");
+        this.writeln("</div>"); // end social-links
+
         this.writeln("</div>");
         
         this.writeln("</header>");

@@ -11,8 +11,9 @@ import org.bgee.controller.RequestParameters;
 import org.bgee.view.DocumentationDisplay;
 
 
+//XXX: what is this {@code displayType}?
 /**
- * This class displays the documentation for the {@code displayTypes} HTML.
+ * This class displays the documentation for the {@code displayType} HTML.
  *
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
@@ -163,9 +164,6 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
     }
     
     @Override
-    //XXX: anchors should have meaning: a section1 more easily become a section2 one day (unstable links) 
-    //(just for the note: I did the exact opposite for anchors linking to column descriptions 
-    //(#col1, and not #gene_id), this is on purpose :p (so that a change of column is immediately seen))
     public void displayDocumentationHomePage() {
         log.entry();
         

@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -15,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.TestAncestor;
 import org.bgee.pipeline.Utils;
 import org.bgee.pipeline.ontologycommon.OntologyUtils;
+import org.bgee.pipeline.ontologycommon.OntologyUtilsTest;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -232,6 +234,28 @@ public class UberonTest extends TestAncestor {
         }
         assertEquals("Incorrect number of lines in TSV output", 12, i);
     }
+    
+    /**
+     * Test the method {@link Uberon#isNonInformativeSubsetMember(OWLObject)}.
+     */
+    @Test
+    public void testIsNonInformativeSubsetMember() throws OWLOntologyCreationException, 
+        OBOFormatParserException, IOException {
+        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+                getResource("/ontologies/nonInformativeSubset.obo").getFile());
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        OntologyUtils utils = new OntologyUtils(wrapper);
+        Uberon ub = new Uberon(utils);
+        
+        assertTrue(ub.isNonInformativeSubsetMember(
+                wrapper.getOWLClassByIdentifier("UBERON:0000001")));
+        assertFalse(ub.isNonInformativeSubsetMember(
+                wrapper.getOWLClassByIdentifier("UBERON:0000002")));
+        assertFalse(ub.isNonInformativeSubsetMember(
+                wrapper.getOWLClassByIdentifier("UBERON:0000003")));
+        assertFalse(ub.isNonInformativeSubsetMember(
+                wrapper.getOWLClassByIdentifier("UBERON:0000004")));
+    }
 
     
     //@Test
@@ -239,31 +263,16 @@ public class UberonTest extends TestAncestor {
         OWLOntology ont = OntologyUtils.loadOntology("/Users/admin/Desktop/composite-metazoan.owl");
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         
-        log.info(wrapper.getOWLClassByIdentifier("UBERON:5112262").getEquivalentClasses(wrapper.getAllOntologies()));
-        
-        for (OWLEquivalentClassesAxiom ax: 
-            wrapper.getSourceOntology().getAxioms(AxiomType.EQUIVALENT_CLASSES)) {
-            if (ax.containsNamedEquivalentClass() && ax.getClassExpressions().contains(
-                    wrapper.getOWLClassByIdentifier("UBERON:5112262"))) {
-                if (ax.getClassExpressions().size() != 2) {
-                    continue;
-                }
-                boolean hasClass = false;
-                boolean hasIntersectionOf = false;
-                for (OWLClassExpression exp: ax.getClassExpressions()) {
-                    if (exp instanceof OWLClass) {
-                        hasClass = true;
-                    }
-                    if (exp instanceof OWLObjectIntersectionOf) {
-                        hasIntersectionOf = true;
-                        log.info(((OWLObjectIntersectionOf) exp).getClassesInSignature());
-                    }
-                }
-                if (!hasClass || !hasIntersectionOf) {
-                    continue;
-                }
-                log.info(ax);
+        String toWrite = "";
+        for (OWLClass cls: wrapper.getAllOWLClasses()) {
+            if (!Collections.disjoint(
+                    Arrays.asList("efo_slim", "uberon_slim", "organ_slim", 
+                            "anatomical_site_slim", "cell_slim", "vertebrate_core"), 
+                            wrapper.getSubsets(cls))) {
+                toWrite += "'" + wrapper.getIdentifier(cls) + "', ";
             }
         }
+        
+        log.info(toWrite);
     }
 }

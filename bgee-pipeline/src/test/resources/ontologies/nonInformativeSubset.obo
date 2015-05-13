@@ -1,6 +1,7 @@
 format-version: 1.4
 ontology: xRefForFiltering
 subsetdef: non_informative "non informative"
+subsetdef: uberon_slim "informative"
 
 [Term]
 id: UBERON:0000001
@@ -10,3 +11,14 @@ subset: non_informative
 [Term]
 id: UBERON:0000002
 name: test B
+
+[Term]
+id: UBERON:0000003
+name: test C
+subset: non_informative
+subset: uberon_slim
+
+[Term]
+id: UBERON:0000004
+name: test D
+subset: uberon_slim

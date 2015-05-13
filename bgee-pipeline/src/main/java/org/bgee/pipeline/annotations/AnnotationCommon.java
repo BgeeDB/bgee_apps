@@ -277,6 +277,7 @@ public class AnnotationCommon {
         
         OWLGraphWrapper wrapper = new OWLGraphWrapper(originalOnt);
         OntologyUtils utils = new OntologyUtils(wrapper);
+        Uberon uberon = new Uberon(utils);
         
         //now, we get from the original ontology the association from XRefs to Uberon IDs, 
         //to be able to recognize a term even if the annotation was using a xref
@@ -416,7 +417,7 @@ public class AnnotationCommon {
                         if (!annotatedAnatEntityIds.contains(entityId) && 
                                 (cls == null || !annotatedAnatEntityIds.contains(
                                         wrapper.getIdentifier(cls)))) {
-                            if (cls != null && utils.isNonInformativeSubsetMember(cls)) {
+                            if (cls != null && uberon.isNonInformativeSubsetMember(cls)) {
                                 if (log.isTraceEnabled()) {
                                     log.trace("Discarding row because parent " +
                                             "of a term used in annotations, but member of " +
@@ -439,7 +440,7 @@ public class AnnotationCommon {
                                     utils.getIsAPartOfOutgoingEdges(cls)) {
                                     //if the parent is member of a non-informative subset, 
                                     //we will not discard the term anyway
-                                    if (utils.isNonInformativeSubsetMember(edge.getTarget())) {
+                                    if (uberon.isNonInformativeSubsetMember(edge.getTarget())) {
                                         continue edgeLoop;
                                     }
                                     //check if the parent is itself in the info file

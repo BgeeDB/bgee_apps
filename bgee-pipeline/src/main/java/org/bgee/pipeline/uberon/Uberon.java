@@ -31,6 +31,7 @@ import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLLiteral;
+import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -62,7 +63,24 @@ public class Uberon extends UberonCommon {
      */
     private final static Logger log = 
             LogManager.getLogger(Uberon.class.getName());
-    
+
+    /**
+     * An unmodifiable {@code Set} of {@code String}s that are the names 
+     * of non-informative subsets in Uberon.
+     * @see #INFORMATIVE_SUBSETS
+     */
+    public final static Set<String> NON_INFORMATIVE_SUBSETS = Collections.unmodifiableSet(
+            new HashSet<String>(Arrays.asList("grouping_class", "non_informative", 
+                    "ubprop:upper_level", "upper_level")));
+    /**
+     * An unmodifiable {@code Set} of {@code String}s that are the names 
+     * of informative subsets in Uberon (terms belonging to these subsets should never 
+     * be discarded, even if also part of a non-informative subset).
+     * @see #NON_INFORMATIVE_SUBSETS
+     */
+    public final static Set<String> INFORMATIVE_SUBSETS = Collections.unmodifiableSet(
+            new HashSet<String>(Arrays.asList("efo_slim", "uberon_slim", "organ_slim", 
+                    "anatomical_site_slim", "cell_slim", "vertebrate_core")));
 
     /**
      * Several actions can be launched from this main method, depending on the first 
@@ -960,6 +978,22 @@ public class Uberon extends UberonCommon {
         }
         
         log.exit();
+    }
+    
+    /**
+     * Determines whether {@code object} is a member of a non-informative subset.
+     * 
+     * @param object    the {@code OWLObject} which we want subset information about.
+     * @return          {@code true} if {@code object} is member of a non-informative subset.
+     * @see #NON_INFORMATIVE_SUBSETS
+     * @see #INFORMATIVE_SUBSETS
+     */
+    public boolean isNonInformativeSubsetMember(OWLObject object) {
+        log.entry(object);
+        
+        Collection<String> subsets = this.getOntologyUtils().getWrapper().getSubsets(object);
+        return log.exit(!Collections.disjoint(NON_INFORMATIVE_SUBSETS, subsets) && 
+                Collections.disjoint(INFORMATIVE_SUBSETS, subsets));
     }
 
     /**

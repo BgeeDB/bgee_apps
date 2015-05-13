@@ -67,13 +67,6 @@ public class OntologyUtils {
      */
     private final static Logger log = 
             LogManager.getLogger(OntologyUtils.class.getName());
-    /**
-     * An unmodifiable {@code Set} of {@code String}s that are the names 
-     * of non-informative subsets in Uberon.
-     */
-    public final static Set<String> NON_INFORMATIVE_SUBSETS = Collections.unmodifiableSet(
-            new HashSet<String>(Arrays.asList("grouping_class", "non_informative", 
-                    "ubprop:upper_level", "upper_level")));
 
     //****************************
     // OBJECT PROPERTIES
@@ -1598,20 +1591,6 @@ public class OntologyUtils {
                     edge.getSingleQuantifiedProperty().getProperty()) && 
                     
                     edge.getSingleQuantifiedProperty().isSomeValuesFrom());
-    }
-    
-    /**
-     * Determines whether {@code object} is a member of a non-informative subset.
-     * 
-     * @param object    the {@code OWLObject} which we want subset information about.
-     * @return          {@code true} if {@code object} is member of a non-informative subset.
-     * @see #NON_INFORMATIVE_SUBSETS
-     */
-    public boolean isNonInformativeSubsetMember(OWLObject object) {
-        log.entry(object);
-        
-        return log.exit(!Collections.disjoint(NON_INFORMATIVE_SUBSETS, 
-                this.getWrapper().getSubsets(object)));
     }
     
     /**

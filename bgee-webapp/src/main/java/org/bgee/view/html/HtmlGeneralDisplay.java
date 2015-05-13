@@ -103,11 +103,16 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 "expression data for 17 species, see <a href='" + 
                 urlDownloadGenerator.getRequestURL() + "' " + "title='Bgee download page'>" +
                 "download page</a>.</li></ul>");
-        this.writeln("<p>The complete website remains available for the previous release of Bgee, " +
-        		"see <a href='http://bgee.org/bgee/bgee/'>Bgee release 12</a>. ");
-        this.writeln("You can follow us on <a href='https://twitter.com/Bgeedb'>twitter</a> " +
-        		"or <a href='https://bgeedb.wordpress.com'>our blog</a>.</p>");
+        this.writeln("<p>The complete website remains available for the previous release of Bgee:</p>");
+        this.writeln("<div id='feature_list'>");
+        this.writeln("<a href='http://bgee.org/bgee/bgee' title='Bgee 12 home page'>" +
+                "<figure><div><img class='pageimg' src='" + this.prop.getImagesRootDirectory() + 
+                "bgee12.png' alt='Bgee 12 logo' /></div>" +
+                "<figcaption>Bgee 12</figcaption>" +
+                "</figure></a>");
         this.writeln("</div>");
+        this.writeln("</div>");
+
 
         this.endDisplay();
         log.exit();

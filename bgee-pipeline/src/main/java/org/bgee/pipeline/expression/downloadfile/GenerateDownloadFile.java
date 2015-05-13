@@ -107,7 +107,7 @@ public abstract class GenerateDownloadFile extends CallUser {
      * A {@code String} that is the value of the cell containing not applicable,
      * in the download file.
      */
-    public final static String NA_VALUE = "N/A";
+    public final static String NA_VALUE = "NA";
     /**
      * A {@code String} that is the extension of download files to be generated.
      */

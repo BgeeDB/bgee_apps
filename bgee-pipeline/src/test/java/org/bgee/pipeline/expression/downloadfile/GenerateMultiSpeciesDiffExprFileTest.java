@@ -129,11 +129,11 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                         new GeneTO("geneId2", "geneName2", null, 22, null, 444, null),
                         new GeneTO("geneId3", "geneName3", null, 22, null, 333, null),
                         new GeneTO("geneId4", "geneName4", null, 1033, null, 333, null),
-                        new GeneTO("geneId5", "-", null, 11, null, 333, null),
+                        new GeneTO("geneId5", "", null, 11, null, 333, null),
                         new GeneTO("geneId6", "geneName6", null, 11, null, 222, null),
                         new GeneTO("geneId7", "geneName7", null, 22, null, 222, null),
                         new GeneTO("geneId8", "geneName8", null, 11, null, 444, null),
-                        new GeneTO("geneId9", "geneName9", null, 1033, null, 444, null),
+                        new GeneTO("geneId9", "null", null, 1033, null, 444, null),
                         new GeneTO("geneId10", "geneName10", null, 11, null, 555, null),
                         new GeneTO("geneId11", "geneName11", null, 1033, null, 555, null),
                         new GeneTO("geneId12", "geneName12", null, 1033, null, 555, null)),
@@ -398,16 +398,14 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
 
             // *** Headers common to all file types ***
             expectedHeaders[0] = GenerateMultiSpeciesDownloadFile.OMA_ID_COLUMN_NAME;
-            expectedHeaders[1] = GenerateMultiSpeciesDownloadFile.GENE_ID_LIST_COLUMN_NAME;
-            expectedHeaders[2] = GenerateMultiSpeciesDownloadFile.GENE_NAME_LIST_COLUMN_NAME;
-            expectedHeaders[3] = GenerateMultiSpeciesDownloadFile.ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME;
-            expectedHeaders[4] = GenerateMultiSpeciesDownloadFile.ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME;
-            expectedHeaders[5] = GenerateDownloadFile.STAGE_ID_COLUMN_NAME;
-            expectedHeaders[6] = GenerateDownloadFile.STAGE_NAME_COLUMN_NAME;
+            expectedHeaders[1] = GenerateMultiSpeciesDownloadFile.ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME;
+            expectedHeaders[2] = GenerateMultiSpeciesDownloadFile.ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME;
+            expectedHeaders[3] = GenerateDownloadFile.STAGE_ID_COLUMN_NAME;
+            expectedHeaders[4] = GenerateDownloadFile.STAGE_NAME_COLUMN_NAME;
             // *** Headers specific to simple file ***
             for (int i = 0; i < speciesNames.size(); i++) {
                 // the number of columns depends on the number of species
-                int columnIndex = 7 + 4 * i;
+                int columnIndex = 5 + 4 * i;
                 String endHeader = " for " + speciesNames.get(i).replaceAll("_", " ");
                 expectedHeaders[columnIndex] = 
                         GenerateMultiSpeciesDownloadFile.OVER_EXPR_GENE_COUNT_COLUMN_NAME + endHeader;
@@ -418,34 +416,36 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                 expectedHeaders[columnIndex+3] = 
                         GenerateMultiSpeciesDownloadFile.NA_GENES_COUNT_COLUMN_NAME + endHeader;
             }
+            expectedHeaders[nbColumns - 2] =
+                    GenerateMultiSpeciesDownloadFile.GENE_ID_LIST_COLUMN_NAME;
+            expectedHeaders[nbColumns - 1] = 
+                    GenerateMultiSpeciesDownloadFile.GENE_NAME_LIST_COLUMN_NAME;
+            
             assertArrayEquals("Incorrect headers", expectedHeaders, actualHeaders);
 
             //we retrieve the annotations without using the extraction methods, to maintain 
             //the unit of the test.
             List<List<String>> expectedRows = new ArrayList<List<String>>();
 
-            expectedRows.add(Arrays.asList("//OMA node ID 444 contains gene IDs [geneId1, geneId2, " + 
-                    "geneId8, geneId9] with gene names [geneName1, geneName2, geneName8, geneName9]"));
-
-            expectedRows.add(Arrays.asList("444", 
-                    "geneId1|geneId2|geneId8|geneId9", "geneName1|geneName2|geneName8|geneName9", 
+            expectedRows.add(Arrays.asList("444",  
                     "entityId1|entityId2", "entityName1|entityName2", "stageId1", "stageName1",
                     // Species 11
                     "1", "0", "0", "1",
                     // Species 22
                     "0", "1", "0", "0",
                     // Species 1033
-                    "0", "0", "1", "0"));
+                    "0", "0", "1", "0",
+                    "geneId1|geneId2|geneId8|geneId9", "geneName1|geneName2|geneName8|null"));
             
-            expectedRows.add(Arrays.asList("444", 
-                    "geneId1|geneId2|geneId8|geneId9", "geneName1|geneName2|geneName8|geneName9",
+            expectedRows.add(Arrays.asList("444",
                     "entityId4", "entityName4", "stageId1", "stageName1",
                     // Species 11
                     "0", "0", "1", "1",
                     // Species 22
                     "0", "0", "0", "1",
                     // Species 1033
-                    "0", "1", "0", "0"));
+                    "0", "1", "0", "0", 
+                    "geneId1|geneId2|geneId8|geneId9", "geneName1|geneName2|geneName8|null"));
 
             List<List<String>> actualRows = new ArrayList<List<String>>();
             List<String> row;
@@ -507,9 +507,6 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
             //the unit of the test.
             List<List<String>> expectedRows = new ArrayList<List<String>>();
 
-            expectedRows.add(Arrays.asList("//OMA node ID 222 contains gene IDs [geneId6, geneId7] " + 
-                    "with gene names [geneName6, geneName7]"));
-
             expectedRows.add(Arrays.asList(
                     "222", "geneId6", "geneName6", "entityId4|entityId5", "entityName4|entityName5",
                     "stageId2", "stageName2", "GenusZZ_speciesZZ",  
@@ -532,11 +529,9 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     DataState.NODATA.getStringRepresentation(), "1.0", "0", "0",
                     "cioId1", "cioName1"));
           
-            expectedRows.add(Arrays.asList("//OMA node ID 333 contains gene IDs [geneId12, geneId3, " + 
-                    "geneId4, geneId5] with gene names [geneName12, geneName3, geneName4, -]"));
-
             expectedRows.add(Arrays.asList(
-                    "333", "geneId5", "-", "entityId1|entityId3", "entityName1|entityName3", 
+                    //The gene name geneId5 of is an empty String but it is converted by SuperCSV into null.
+                    "333", "geneId5", null, "entityId1|entityId3", "entityName1|entityName3", 
                     "stageId1", "stageName1", "GenusZZ_speciesZZ", 
                     DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
                     DataState.LOWQUALITY.getStringRepresentation(), 
@@ -568,9 +563,6 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     DataState.HIGHQUALITY.getStringRepresentation(), "0.008", "3", "1",
                     "cioId2", "cioName2"));
 
-            expectedRows.add(Arrays.asList("//OMA node ID 444 contains gene IDs [geneId1, geneId2, " + 
-                    "geneId8, geneId9] with gene names [geneName1, geneName2, geneName8, geneName9]"));
-
             expectedRows.add(Arrays.asList(
                     "444", "geneId1", "geneName1", "entityId1|entityId2", "entityName1|entityName2", 
                     "stageId1", "stageName1", "GenusZZ_speciesZZ", 
@@ -594,7 +586,7 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     "cioId1", "cioName1"));
 
             expectedRows.add(Arrays.asList(
-                    "444", "geneId9", "geneName9", "entityId1|entityId2", "entityName1|entityName2", 
+                    "444", "geneId9", "null", "entityId1|entityId2", "entityName1|entityName2", 
                     "stageId1", "stageName1", "GenusAA_speciesAA", 
                     DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
                     DataState.HIGHQUALITY.getStringRepresentation(), 
@@ -616,7 +608,7 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     "cioId1", "cioName1"));
 
             expectedRows.add(Arrays.asList(
-                    "444", "geneId9", "geneName9", "entityId4", "entityName4", 
+                    "444", "geneId9", "null", "entityId4", "entityName4", 
                     "stageId1", "stageName1", "GenusAA_speciesAA", 
                     DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(), 
                     DataState.LOWQUALITY.getStringRepresentation(), 
@@ -654,19 +646,26 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
             // Check that the headers are what we expect            
             String[] expectedHeaders = new String[3];
             expectedHeaders[0] = GenerateMultiSpeciesDownloadFile.OMA_ID_COLUMN_NAME;
-            expectedHeaders[1] = GenerateMultiSpeciesDownloadFile.GENE_ID_LIST_COLUMN_NAME;
-            expectedHeaders[2] = GenerateMultiSpeciesDownloadFile.GENE_NAME_LIST_COLUMN_NAME;
+            expectedHeaders[1] = GenerateDownloadFile.GENE_ID_COLUMN_NAME;
+            expectedHeaders[2] = GenerateDownloadFile.GENE_NAME_COLUMN_NAME;
             
             assertArrayEquals("Incorrect headers", expectedHeaders, actualHeaders);
 
             // Check that the rows are what we expect            
             List<List<String>> expectedRows = new ArrayList<List<String>>();
-            expectedRows.add(Arrays.asList("222", "geneId6|geneId7", "geneName6|geneName7"));
-            expectedRows.add(Arrays.asList("333", "geneId12|geneId3|geneId4|geneId5", 
-                    "geneName12|geneName3|geneName4|-"));
-            expectedRows.add(Arrays.asList("444", "geneId1|geneId2|geneId8|geneId9", 
-                    "geneName1|geneName2|geneName8|geneName9"));
-            expectedRows.add(Arrays.asList("555", "geneId10|geneId11", "geneName10|geneName11"));
+            expectedRows.add(Arrays.asList("222", "geneId6", "geneName6"));
+            expectedRows.add(Arrays.asList("222", "geneId7", "geneName7"));
+            expectedRows.add(Arrays.asList("333", "geneId12", "geneName12"));
+            expectedRows.add(Arrays.asList("333", "geneId3", "geneName3"));
+            expectedRows.add(Arrays.asList("333", "geneId4", "geneName4"));
+            //The gene name geneId5 of is an empty String but it is converted by SuperCSV into null.
+            expectedRows.add(Arrays.asList("333", "geneId5", null));
+            expectedRows.add(Arrays.asList("444", "geneId1", "geneName1"));
+            expectedRows.add(Arrays.asList("444", "geneId2", "geneName2"));
+            expectedRows.add(Arrays.asList("444", "geneId8", "geneName8"));
+            expectedRows.add(Arrays.asList("444", "geneId9", "null"));
+            expectedRows.add(Arrays.asList("555", "geneId10", "geneName10"));
+            expectedRows.add(Arrays.asList("555", "geneId11", "geneName11"));
             
             List<List<String>> actualRows = new ArrayList<List<String>>();
             List<String> row;

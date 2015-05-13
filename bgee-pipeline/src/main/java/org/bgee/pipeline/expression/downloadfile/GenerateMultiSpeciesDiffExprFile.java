@@ -47,6 +47,7 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.pipeline.BgeeDBUtils;
 import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.Utils;
+import org.supercsv.cellprocessor.Optional;
 import org.supercsv.cellprocessor.Trim;
 import org.supercsv.cellprocessor.constraint.DMinMax;
 import org.supercsv.cellprocessor.constraint.IsElementOf;
@@ -2242,12 +2243,10 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             
             if (writerFileType.getKey().isSimpleFileType() && allSimpleBeans != null 
                     && !allSimpleBeans.isEmpty()) {
-                this.orderAndWriteRows(fileType, writer, processors, omaNodeId, 
-                        geneIds, geneNames, allSimpleBeans);
+                this.orderAndWriteRows(fileType, writer, processors, allSimpleBeans);
 
             } else if (!writerFileType.getKey().isSimpleFileType()) {
-                this.orderAndWriteRows(fileType, writer, processors, omaNodeId, 
-                        geneIds, geneNames, allCompleteBeans);
+                this.orderAndWriteRows(fileType, writer, processors, allCompleteBeans);
             }
         }
 
@@ -2280,9 +2279,6 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * @param fileType      A {@code MultiSpDiffExprFileType} defining the type of file 
      *                      that will be written.
      * @param writer        A {@code ICsvDozerBeanWriter} that is the writer to use.
-     * @param omaNodeId     A {@code String} that is the OMA node ID.
-     * @param geneIds       A {@code List} of {@code String}s that are gene IDs of the OMA node ID.
-     * @param geneNames     A {@code List} of {@code String}s that are gene names of the OMA node ID.
      * @param beans         A {@code List} of {@code T} that are beans to be written.   
      * @throws IOException  If an error occurred while trying to write generated files.
      * @param <T>           A {@code MultiSpeciesFileBean} type parameter.
@@ -2290,17 +2286,10 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     //XXX: maybe we should check that all calls are from a same OMA group ID?
     private <T extends MultiSpeciesFileBean> void orderAndWriteRows(
             MultiSpeciesDiffExprFileType fileType, ICsvDozerBeanWriter writer, 
-            Map<MultiSpeciesDiffExprFileType, CellProcessor[]> processors, String omaNodeId, 
-            List<String> geneIds, List<String> geneNames, List<T> beans) throws IOException {
-        log.entry(fileType, writer, processors, omaNodeId, geneIds, geneNames, beans);
+            Map<MultiSpeciesDiffExprFileType, CellProcessor[]> processors, List<T> beans) 
+                    throws IOException {
+        log.entry(fileType, writer, processors, beans);
         
-        // We write gene IDs and names of the OMA group in a comment row
-        String comment = "//OMA node ID " + omaNodeId + 
-                " contains gene IDs " + geneIds +" with gene names " + geneNames;
-        writer.writeComment(comment);
-        
-        log.trace("Write comment: {} - using writer: {}", comment, writer);
-
         // We order calls according to OMA ID, entity IDs, stage IDs for simple and complete files
         // then according to species ID, gene ID for complete files. 
         this.sortMultiSpeciesDiffExprFileBeanCollection(beans);
@@ -2551,8 +2540,6 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 case OMA_ID_COLUMN_NAME: 
                     processors[i] = new StrNotNullOrEmpty(); 
                     break;
-                case GENE_ID_LIST_COLUMN_NAME: 
-                case GENE_NAME_LIST_COLUMN_NAME: 
                 //XXX change STAGE_XX_COLUMN_NAME to STAGE_XX_LIST_COLUMN_NAME 
                 // when we will have several stages for one StageGroup.
                 case STAGE_ID_COLUMN_NAME: 
@@ -2571,6 +2558,18 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 
             if (fileType.isSimpleFileType()) {
                 // *** Attributes specific to simple file ***
+                switch (header[i]) {
+                    case GENE_ID_LIST_COLUMN_NAME: 
+                    case GENE_NAME_LIST_COLUMN_NAME: 
+                        processors[i] = new Utils.FmtMultipleStringValues(new Trim()); 
+                        break;
+                }
+
+                //if it was one of the gene columns, iterate next column name
+                if (processors[i] != null) {
+                    continue;
+                }
+
                 // TODO: for the moment, we use LMinMax() constraint but when we will add dealing 
                 // with lost homologous organs, we should use StrNotNullOrEmpty() because it may
                 // have N/A when an organ is lost.
@@ -2591,7 +2590,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                         processors[i] = new StrNotNullOrEmpty();
                         break;
                     case GENE_NAME_COLUMN_NAME:
-                        processors[i] = new NotNull();
+                        processors[i] = new Optional();
                         break;
                     case DIFFEXPRESSION_COLUMN_NAME:
                     case AFFYMETRIX_DATA_COLUMN_NAME:
@@ -2641,9 +2640,9 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         log.entry(fileType, speciesNames);
 
         String[] headers = null; 
+        int nbColumns = 7 + 4 * speciesNames.size();
         if (fileType.isSimpleFileType()) {
             // For simple file, we always have 5 columns and 5 columns for each species
-            int nbColumns = 7 + 4 * speciesNames.size();
             headers = new String[nbColumns];
         } else {
             // For complete file, the number of columns is independent of the number of species.
@@ -2652,24 +2651,33 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         
         // *** Headers common to all file types ***
         headers[0] = OMA_ID_COLUMN_NAME;
-        headers[3] = ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME;
-        headers[4] = ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME;
-        headers[5] = STAGE_ID_COLUMN_NAME;
-        headers[6] = STAGE_NAME_COLUMN_NAME;
+        if (fileType.isSimpleFileType()) {
+            headers[1] = ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME;
+            headers[2] = ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME;
+            headers[3] = STAGE_ID_COLUMN_NAME;
+            headers[4] = STAGE_NAME_COLUMN_NAME;
+        } else {
+            headers[3] = ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME;
+            headers[4] = ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME;
+            headers[5] = STAGE_ID_COLUMN_NAME;
+            headers[6] = STAGE_NAME_COLUMN_NAME;
+        }
 
         if (fileType.isSimpleFileType()) {
             // *** Headers specific to simple file ***
-            headers[1] = GENE_ID_LIST_COLUMN_NAME;
-            headers[2] = GENE_NAME_LIST_COLUMN_NAME;
             for (int i = 0; i < speciesNames.size(); i++) {
                 // the number of columns depends on the number of species
-                int columnIndex = 7 + 4 * i;
+                // gene columns are the end, so there is only 5 columns before species counts
+                int columnIndex = 5 + 4 * i;
                 String endHeader = " for " + speciesNames.get(i).replaceAll("_", " ");
                 headers[columnIndex] = OVER_EXPR_GENE_COUNT_COLUMN_NAME + endHeader;
                 headers[columnIndex+1] = UNDER_EXPR_GENE_COUNT_COLUMN_NAME + endHeader;
                 headers[columnIndex+2] = NO_DIFF_EXPR_GENE_COUNT_COLUMN_NAME + endHeader;
                 headers[columnIndex+3] = NA_GENES_COUNT_COLUMN_NAME + endHeader;
             }
+            // the indexes depend on the number of columns because gene columns are at the end
+            headers[nbColumns - 2] = GENE_ID_LIST_COLUMN_NAME;
+            headers[nbColumns - 1] = GENE_NAME_LIST_COLUMN_NAME;
         } else {
             // *** Headers specific to complete file ***
             headers[1] = GENE_ID_COLUMN_NAME;
@@ -2881,14 +2889,12 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         for (String omaId: omaIds) {
             List<String> orderedGeneIds= new ArrayList<String>(mapOMANodeGene.get(omaId));
             Collections.sort(orderedGeneIds);
-            List<String> orderedGeneNames = new ArrayList<String>();
             for (String geneId: orderedGeneIds) {
-                orderedGeneNames.add(this.getFormattedGeneName(geneId, geneTOsByIds));
+                OMAFileBean bean = new OMAFileBean(
+                        omaId, geneId, this.getFormattedGeneName(geneId, geneTOsByIds));
+                log.trace("Write row: {} - using writer: {}", bean, beanWriter);
+                beanWriter.write(bean, attributes, processors);                
             }
-
-            OMAFileBean bean = new OMAFileBean(omaId, orderedGeneIds, orderedGeneNames);
-            log.trace("Write row: {} - using writer: {}", bean, beanWriter);
-            beanWriter.write(bean, attributes, processors);                
         }
 
         log.exit();
@@ -2907,8 +2913,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     
         String[] headers = new String[3];
         headers[0] = OMA_ID_COLUMN_NAME;
-        headers[1] = GENE_ID_LIST_COLUMN_NAME;
-        headers[2] = GENE_NAME_LIST_COLUMN_NAME;
+        headers[1] = GENE_ID_COLUMN_NAME;
+        headers[2] = GENE_NAME_COLUMN_NAME;
     
         return log.exit(headers);
     }
@@ -2931,11 +2937,11 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             switch (header[i]) {
                 // *** CellProcessors common to all file types ***
                 case OMA_ID_COLUMN_NAME: 
+                case GENE_ID_COLUMN_NAME: 
                     processors[i] = new StrNotNullOrEmpty(); 
                     break;
-                case GENE_ID_LIST_COLUMN_NAME: 
-                case GENE_NAME_LIST_COLUMN_NAME: 
-                    processors[i] = new Utils.FmtMultipleStringValues(new Trim()); 
+                case GENE_NAME_COLUMN_NAME: 
+                    processors[i] = new NotNull();
                     break;
                 default:
                     throw log.throwing(new IllegalArgumentException(
@@ -2969,11 +2975,11 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 case OMA_ID_COLUMN_NAME: 
                     mapping[i] = "omaId";
                     break;
-                case GENE_ID_LIST_COLUMN_NAME: 
-                    mapping[i] = "geneIds";
+                case GENE_ID_COLUMN_NAME: 
+                    mapping[i] = "geneId";
                     break;
-                case GENE_NAME_LIST_COLUMN_NAME:
-                    mapping[i] = "geneNames"; 
+                case GENE_NAME_COLUMN_NAME:
+                    mapping[i] = "geneName"; 
                     break;
                 default:
                     throw log.throwing(new IllegalArgumentException(

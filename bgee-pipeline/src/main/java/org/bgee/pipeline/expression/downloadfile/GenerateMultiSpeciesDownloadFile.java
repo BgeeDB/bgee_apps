@@ -511,13 +511,13 @@ public interface GenerateMultiSpeciesDownloadFile {
          */
         private String omaId;
         /**
-         * @see #getGeneIds()
+         * @see #getGeneId()
          */
-        private List<String> geneIds;
+        private String geneId;
         /**
-         * @see #getGeneNames()
+         * @see #getGeneName()
          */
-        private List<String> geneNames;
+        private String geneName;
 
         /**
          * 0-argument constructor of the bean.
@@ -529,13 +529,13 @@ public interface GenerateMultiSpeciesDownloadFile {
          * Constructor providing all arguments of the class.
          *
          * @param omaId     See {@link #getOmaId()}.
-         * @param geneIds   See {@link #getGeneIds()}.
-         * @param geneNames See {@link #getGeneNames()}.
+         * @param geneId    See {@link #getGeneId()}.
+         * @param geneName  See {@link #getGeneName()}.
          */
-        public OMAFileBean(String omaId, List<String> geneIds, List<String> geneNames) {
+        public OMAFileBean(String omaId, String geneId, String geneName) {
             this.omaId = omaId;
-            this.geneIds = geneIds;
-            this.geneNames = geneNames;
+            this.geneId = geneId;
+            this.geneName = geneName;
         }
 
         /** 
@@ -553,34 +553,31 @@ public interface GenerateMultiSpeciesDownloadFile {
         }
 
         /**
-         * @return  the {@code List} of {@code String}s that are the IDs of the genes.
-         *          When there is several genes, they are provided in alphabetical order.
+         * @return  the {@code String} that is the ID of the gene.
          */
-        public List<String> getGeneIds() {
-            return geneIds;
+        public String getGeneId() {
+            return geneId;
         }
         /** 
-         * @param geneIds   A {@code List} of {@code String}s that are the IDs of the genes.
-         * @see #getGeneIds()
+         * @param geneId    A {@code String} that is the ID of the gene.
+         * @see #getGeneId()
          */
-        public void setGeneIds(List<String> geneIds) {
-            this.geneIds = geneIds;
+        public void setGeneId(String geneId) {
+            this.geneId = geneId;
         }
 
         /**
-         * @return  the {@code List} of {@code String}s that are the names of the genes.
-         *          When there is several genes, they are provided in same order as their 
-         *          corresponding ID, as returned by {@link #getGeneIds()}.
+         * @return  the {@code String} that is the name of the gene.
          */
-        public List<String> getGeneNames() {
-            return geneNames;
+        public String getGeneName() {
+            return geneName;
         }
         /**
-         * @param geneNames A {@code List} of {@code String}s that are the names of genes.
-         * @see #getGeneNames()
+         * @param geneName  A {@code String} that is the name of gene.
+         * @see #getGeneName()
          */
-        public void setGeneNames(List<String> geneNames) {
-            this.geneNames = geneNames;
+        public void setGeneName(String geneName) {
+            this.geneName = geneName;
         }
         
 
@@ -589,8 +586,8 @@ public interface GenerateMultiSpeciesDownloadFile {
             final int prime = 31;
             int result = 1;
             result = prime * result + ((omaId == null) ? 0 : omaId.hashCode());
-            result = prime * result + ((geneIds == null) ? 0 : geneIds.hashCode());
-            result = prime * result + ((geneNames == null) ? 0 : geneNames.hashCode());
+            result = prime * result + ((geneId == null) ? 0 : geneId.hashCode());
+            result = prime * result + ((geneName == null) ? 0 : geneName.hashCode());
             return result;
         }
 
@@ -608,15 +605,15 @@ public interface GenerateMultiSpeciesDownloadFile {
                     return false;
             } else if (!omaId.equals(other.omaId))
                 return false;
-            if (geneIds == null) {
-                if (other.geneIds != null)
+            if (geneId == null) {
+                if (other.geneId != null)
                     return false;
-            } else if (!geneIds.equals(other.geneIds))
+            } else if (!geneId.equals(other.geneId))
                 return false;
-            if (geneNames == null) {
-                if (other.geneNames != null)
+            if (geneName == null) {
+                if (other.geneName != null)
                     return false;
-            } else if (!geneNames.equals(other.geneNames))
+            } else if (!geneName.equals(other.geneName))
                 return false;
             return true;
         }
@@ -624,9 +621,7 @@ public interface GenerateMultiSpeciesDownloadFile {
         @Override
         public String toString() {
             return  "OMA ID: " + getOmaId() +
-                    " - Gene IDs: " + getGeneIds() + " - Gene names: " + getGeneNames();
+                    " - Gene ID: " + getGeneId() + " - Gene name: " + getGeneName();
         }
     }
-
-
 }

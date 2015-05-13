@@ -2271,7 +2271,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         if (!geneName.isEmpty()) {
             return log.exit(geneName);
         }
-        return log.exit("-");
+        return log.exit("");
     }
     
     /**

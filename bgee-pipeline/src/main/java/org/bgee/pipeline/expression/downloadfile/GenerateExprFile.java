@@ -633,10 +633,8 @@ public class GenerateExprFile extends GenerateDownloadFile {
         // Load non-informative anatomical entities: 
         // calls occurring in these anatomical entities, and generated from 
         // data propagation only (no observed data in them), will be discarded. 
-        //TODO: Disable temporarily, there is a problem with this field in database
-//        Set<String> nonInformativesAnatEntities = 
-//                this.loadNonInformativeAnatEntities(speciesFilter);
-        Set<String> nonInformativesAnatEntities = new HashSet<String>();
+        Set<String> nonInformativesAnatEntities = 
+                this.loadNonInformativeAnatEntities(speciesFilter);
         
         //we retrieve expression and no-expression calls grouped by geneIds. This is because, 
         //to correctly propagate expression calls to parent stages, we need to examine all calls 

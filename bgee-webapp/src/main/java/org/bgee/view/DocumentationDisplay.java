@@ -3,9 +3,9 @@ package org.bgee.view;
 /**
  * Interface that defines methods displaying the documentation category, i.e. page=documentation
  *
- * @author Valentine Rech de Laval
- * @version Bgee 13
- * @since Bgee 13
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13 May 2014
+ * @since   Bgee 13
  */
 public interface DocumentationDisplay {
     
@@ -13,9 +13,15 @@ public interface DocumentationDisplay {
      * Display the documentation home page.
      */
     public void displayDocumentationHomePage();
+
     /**
      * Display the documentation about download files.
      */
     public void displayCallDownloadFileDocumentation();
 
+    /**
+     * Display the documentation about how to access to Bgee data.
+     */
+    public void displayHowToAccessDataDocumentation();
+    
 }

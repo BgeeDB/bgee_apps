@@ -46,9 +46,16 @@ public class CommandDownload extends CommandParent {
     @Override
     public void processRequest() throws IOException, PageNotFoundException {
         log.entry();
+
         DownloadDisplay display = this.viewFactory.getDownloadDisplay();
         if (this.requestParameters.getAction() == null) {
-            display.displayDownloadPage();
+            display.displayDownloadHomePage();
+        } else if (this.requestParameters.getAction().equals(
+                RequestParameters.ACTION_DOWLOAD_RAW_FILES)) {
+            display.displayProcessedRawDataDownloadPage();
+        } else if (this.requestParameters.getAction().equals(
+                RequestParameters.ACTION_DOWLOAD_CALL_FILES)) {
+            display.displayGeneExpressionCallDownloadPage();
         } else {
             throw log.throwing(new PageNotFoundException("Incorrect " + 
                 this.requestParameters.getUrlParametersInstance().getParamAction() + 

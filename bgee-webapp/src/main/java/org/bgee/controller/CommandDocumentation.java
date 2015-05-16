@@ -54,6 +54,9 @@ public class CommandDocumentation extends CommandParent {
         } else if (this.requestParameters.getAction().equals(
                 RequestParameters.ACTION_DOC_DOWLOAD_FILES)) {
             display.displayCallDownloadFileDocumentation();
+        } else if (this.requestParameters.getAction().equals(
+                RequestParameters.ACTION_DOC_HOW_TO_ACCESS)) {
+            display.displayHowToAccessDataDocumentation();
         } else {
             throw log.throwing(new PageNotFoundException("Incorrect " + 
                 this.requestParameters.getUrlParametersInstance().getParamAction() + 

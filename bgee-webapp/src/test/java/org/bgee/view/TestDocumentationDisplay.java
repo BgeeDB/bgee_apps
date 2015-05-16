@@ -13,7 +13,7 @@ import org.bgee.controller.RequestParameters;
  * in the URL is 'documentation'.
  *
  * @author 	Valentine Rech de Laval
- * @version Bgee 13
+ * @version Bgee May 2015
  * @since 	Bgee 13
  */
 public class TestDocumentationDisplay extends TestParentDisplay implements DocumentationDisplay {
@@ -30,5 +30,10 @@ public class TestDocumentationDisplay extends TestParentDisplay implements Docum
     @Override
     public void displayCallDownloadFileDocumentation() {
         this.out.println("Test2");
+    }
+
+    @Override
+    public void displayHowToAccessDataDocumentation() {
+        this.out.println("Test3");
     }
 }

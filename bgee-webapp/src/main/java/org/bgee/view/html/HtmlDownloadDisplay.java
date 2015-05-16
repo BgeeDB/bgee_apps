@@ -92,6 +92,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      */
     private final static String GROUP_NAME_BILATERIA = "Bilateria";
         
+    public enum DownloadPageType {
+        RAW_DATA, EXPR_CALLS;
+    }
     /**
      * Constructor
      * 
@@ -111,172 +114,365 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     }
 
     @Override
-    public void displayDownloadPage() {
+    public void displayDownloadHomePage() {
         log.entry();
-        this.startDisplay("download", "Bgee release 13 download page");
+        this.startDisplay("download", "Bgee release 13 download pages");
 
-        //TODO: do not use &nbsp;, use css with a left-margin or something
-        this.writeln("<div id='bgee_more_results_up'> &uarr;&nbsp;&nbsp;&nbsp;More result(s)</div>");
-        this.writeln("<div id='bgee_more_results_down'> &darr;&nbsp;&nbsp;&nbsp;More result(s)</div>");
+        this.writeln("<h1>Bgee release 13 download page</h1>");
 
+        RequestParameters urlDownloadRawGenerator = this.getNewRequestParameters();
+        urlDownloadRawGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlDownloadRawGenerator.setAction(RequestParameters.ACTION_DOWLOAD_RAW_FILES);
+
+        RequestParameters urlDownloadCallsGenerator = this.getNewRequestParameters();
+        urlDownloadCallsGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlDownloadCallsGenerator.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
+        
+        this.writeln("<div id='feature_list'>");
+        
+        this.writeln(HtmlParentDisplay.getLogoLink(urlDownloadRawGenerator.getRequestURL(), 
+                "Bgee processed raw data page", "Processed raw data", 
+                this.prop.getImagesRootDirectory() + "logo/raw_data_logo.png"));
+
+        this.writeln(HtmlParentDisplay.getLogoLink(urlDownloadCallsGenerator.getRequestURL(), 
+                "Bgee gene expression call page", "Gene expression calls", 
+                this.prop.getImagesRootDirectory() + "logo/expr_calls_logo.png"));
+
+        this.writeln("</div>");
+        
+        this.endDisplay();
+
+        log.exit();
+    }
+    
+    @Override
+    public void displayGeneExpressionCallDownloadPage() {
+        log.entry();
+        
+        this.startDisplay("download", "Bgee release 13 gene expression call download page");
+
+        this.getMoreResultDivs();
+
+        this.writeln("<h1>Gene expression calls</h1>");
+
+        this.writeln("<div class='expr_calls'>");
+        
         // Introduction
-        this.writeln("<div id='bgee_introduction'>");
-        this.writeln("<h1>Welcome to the Bgee release 13 download page</h1>");
-        this.writeln("<div class='downloadsection'>");
+        this.writeln("<div id='bgee_introduction' class='downloadsection'>");
         this.writeln("<p>Bgee is a database to retrieve and compare gene expression patterns between animal species. ");
-        this.writeln("This is a beta download page, more features and documentation will be deployed soon. </p>");
+        this.writeln("This is a beta download page, more features will be deployed soon. </p>");
         this.writeln("<p>Click on a species to browse files to download. You can also download " +
         //TODO: change this ugly '../' once we'll have added a property to distinguish 
         //FTP root and download_files directory. See todo in BgeeProperties
         		"<a href='" + this.prop.getDownloadRootDirectory() + "../statistics.tsv' " +
         				"title='Database statistics TSV file'>database statistics</a>.</p>");
-        this.writeln("<p>See also previous <a href='http://bgee.unil.ch/bgee/bgee'>Bgee release 12</a>. ");
-        this.writeln("You can follow us on <a href='https://twitter.com/Bgeedb'>twitter</a> or <a href='https://bgeedb.wordpress.com'>our blog</a>.</p>");
-        this.writeln("</div>");
+        this.writeln("<p>See also previous <a href='http://bgee.unil.ch/bgee/bgee'>Bgee release 12</a>.</p>");
         this.writeln("</div>");
 
-        // Search box
-        this.writeln("<div id='bgee_search_box'>");
-        this.writeln("<form action='/' method='get'>");
-        this.writeln("<label for='search_label'>Search species</label>&nbsp;&nbsp;");
-        this.writeln("<input id='search_label' class='sib_text' type='text' name='search' "
-                + "value='Scientific name, common name...'/>&nbsp;&nbsp;");
-        this.writeln("<input type='image' alt='Submit' "
-                + "src='"+this.prop.getImagesRootDirectory()+"submit_button.png'/>");
-        this.writeln("<div id='results_nb'></div>");
-        this.writeln("</form>");
-        this.writeln("</div>");
-
+        // Search Box
+        this.writeln(this.getSearchBox());
+        
         // Single species part
-        this.writeln("<div id='bgee_uniq_species'> ");
-        this.writeln("<h1>Single-species</h1>");
-        this.writeln("<div class='downloadsection'>");
-        this.writeln(generateSpeciesFigure(9606));
-        this.writeln(generateSpeciesFigure(10090));
-        this.writeln(generateSpeciesFigure(7955));
-        this.writeln(generateSpeciesFigure(7227));
-        this.writeln(generateSpeciesFigure(6239));
-        this.writeln(generateSpeciesFigure(9597));
-        this.writeln(generateSpeciesFigure(9598));
-        this.writeln(generateSpeciesFigure(9593));
-//        this.writeln(generateSpeciesFigure(9600)); // no more data for Pongo pygmaeus
-        this.writeln(generateSpeciesFigure(9544));
-        this.writeln(generateSpeciesFigure(10116));
-        this.writeln(generateSpeciesFigure(9913));
-        this.writeln(generateSpeciesFigure(9823));
-        this.writeln(generateSpeciesFigure(13616));
-        this.writeln(generateSpeciesFigure(9258));
-        this.writeln(generateSpeciesFigure(9031));
-        this.writeln(generateSpeciesFigure(28377));
-        this.writeln(generateSpeciesFigure(8364));
-//        this.writeln(generateSpeciesFigure(99883)); // no more data for Tetraodon nigroviridis
+        this.writeln(this.getSingleSpeciesSection(DownloadPageType.EXPR_CALLS));
 
         // Black banner when a species or a group is selected.
-        // This section is empty, it will be filled by JavaScript.
-        this.writeln("<div id='bgee_data_selection'>");
+        this.writeln(this.getBlackBanner(DownloadPageType.EXPR_CALLS));
         
-        // Cross to close the banner
-        this.writeln("<div id='bgee_data_selection_cross'>");
-        this.writeln("<img src='"+this.prop.getImagesRootDirectory()+"cross.png' "
-                + "title='Close banner' alt='Close banner' /> ");
-        this.writeln("</div>");
-        
-        // Section on the left of the black banner: image for single species or patchwork for group
-        this.writeln("<div id='bgee_data_selection_img'></div>");
-
-        // Section on the right of the black banner
-        this.writeln("<div id='bgee_data_selection_text'>");
-        this.writeln("<h1 class='scientificname'></h1>&nbsp;&nbsp;<h1 class='commonname'></h1>");
-        this.writeln("<p class='groupdescription'></p>");
-        // Presence/absence expression files
-        this.writeln("<div class='bgee_download_file_buttons'>");
-        this.writeln("<h2>Presence/absence of expression</h2>");    
-        this.writeln("<p id='expr_no_data' class='no_data'>Not enough data</p>");
-        this.writeln("<p id='expr_coming_soon' class='no_data'>Coming soon</p>");
-        this.writeln("<a id='expr_simple_csv' class='download_link' href='' download></a>");
-        this.writeln("&nbsp;&nbsp;");
-        this.writeln("<a id='expr_complete_csv' class='download_link' href='' download></a>");
-        this.writeln("</div>");
-        // Differential expression files
-        this.writeln("<div class='bgee_download_file_buttons'>");
-        this.writeln("<h2>Over-/Under-expression across anatomy</h2>");
-        this.writeln("<p id='diffexpr_anatomy_no_data' class='no_data'>Not enough data</p>");
-        this.writeln("<p id='diffexpr_anatomy_coming_soon' class='no_data'>Coming soon</p>");
-        this.writeln("<a id='diffexpr_anatomy_simple_csv' class='download_link' href='' download></a>");
-        this.writeln("&nbsp;&nbsp;");
-        this.writeln("<a id='diffexpr_anatomy_complete_csv' class='download_link' href='' download></a>");
-        this.writeln("</div>");
-        this.writeln("<div class='bgee_download_file_buttons'>");
-        this.writeln("<h2>Over-/Under-expression across life stages</h2>");
-        this.writeln("<p id='diffexpr_development_no_data' class='no_data'>Not enough data</p>");
-        this.writeln("<p id='diffexpr_development_coming_soon' class='no_data'>Coming soon</p>");
-        this.writeln("<a id='diffexpr_development_simple_csv' class='download_link' href='' download></a>");
-        this.writeln("&nbsp;&nbsp;");
-        this.writeln("<a id='diffexpr_development_complete_csv' class='download_link' href='' download></a>");
-        this.writeln("</div>");
-        this.writeln("</div>");
-        this.writeln("</div>");
-        this.writeln("</div>");
-        this.writeln("</div>");
-
         // Multi-species part
-        this.writeln("<div id='bgee_multi_species'>");
-        this.writeln("<h1>Multi-species</h1> <span>(homologous genes in homologous anatomical structures)</span>");
-        this.writeln("<div class='downloadsection'>");
+        this.writeln(this.getMultiSpeciesSection(DownloadPageType.EXPR_CALLS));
+
+        this.writeln("</div>");
+
+        // Image sources
+        this.writeln(this.getImageSources());
+        
+        this.endDisplay();
+        
+        log.exit();
+    }
+
+    @Override
+    public void displayProcessedRawDataDownloadPage() {
+        log.entry();
+        this.startDisplay("download", "Bgee release 13 processed raw data download page");
+        
+        this.getMoreResultDivs();
+    
+        this.writeln("<h1>Processed raw data</h1>");
+    
+        this.writeln("<div class='raw_data'>");
+    
+        // Introduction
+        this.writeln("<div id='bgee_introduction' class='downloadsection'>");
+        this.writeln("<p>Bgee is a database to retrieve and compare processed raw data in species. ");
+        this.writeln("This is a beta download page, more features will be deployed soon. </p>");
+        this.writeln("<p>Click on a species to browse files to download. You can also download " +
+        //TODO: change this ugly '../' once we'll have added a property to distinguish 
+        //FTP root and download_files directory. See todo in BgeeProperties
+                "<a href='" + this.prop.getDownloadRootDirectory() + "../statistics.tsv' " +
+                        "title='Database statistics TSV file'>database statistics</a>.</p>");
+        this.writeln("<p>See also previous <a href='http://bgee.unil.ch/bgee/bgee'>Bgee release 12</a>.</p>");
+        this.writeln("</div>");
+    
+        // Search Box
+        this.writeln(this.getSearchBox());
+        
+        // Single species part
+        this.writeln(this.getSingleSpeciesSection(DownloadPageType.RAW_DATA));
+
+        // Black banner when a species or a group is selected.
+        this.writeln(this.getBlackBanner(DownloadPageType.RAW_DATA));
+        
+        this.writeln("</div>"); // close raw_data div
+
+        // Image sources
+        this.writeln(this.getImageSources());
+        
+        this.endDisplay();
+        
+        log.exit();
+    }
+
+    /**
+     * Get the 'More results' of a download page as a HTML 'div' element. 
+     *
+     * @return  the {@code String} that is the 'More results' HTML 'div' element.
+     */
+    private String getMoreResultDivs() {
+        log.entry();
+        
+        //TODO: do not use &nbsp;, use css with a left-margin or something
+        return log.exit(
+                "<div id='bgee_more_results_up'> &uarr;&nbsp;&nbsp;&nbsp;More result(s)</div>" +
+                "<div id='bgee_more_results_down'> &darr;&nbsp;&nbsp;&nbsp;More result(s)</div>");
+    }
+
+    /**
+     * Get the search box of a download page as a HTML 'div' element. 
+     *
+     * @return  the {@code String} that is the search box as HTML 'div' element.
+     */
+    private String getSearchBox() {
+        log.entry();
+    
+        return log.exit(
+                "<div id='bgee_search_box'>" +
+                        "<form action='/' method='get'>" +
+                            "<label for='search_label'>Search species</label>&nbsp;&nbsp;" +
+                            "<input id='search_label' class='sib_text' type='text' name='search' " +
+                                "value='Scientific name, common name...'/>&nbsp;&nbsp;" +
+                            "<input type='image' alt='Submit' " +
+                                "src='"+this.prop.getImagesRootDirectory()+"submit_button.png'/>" +
+                            "<div id='results_nb'></div>" +
+                        "</form>" +
+                "</div>");
+    }
+
+    /**
+     * Get the single species section of a download page as a HTML 'div' element,
+     * according the provided page type.
+     *
+     * @param pageType  A {@code DownloadPageType} that is the type of the page.
+     * @return          the {@code String} that is the single species section as HTML 'div' element,
+     *                  according {@code pageType}.
+     */
+    private String getSingleSpeciesSection(DownloadPageType pageType) {
+        log.entry(pageType);
+
+        StringBuffer s = new StringBuffer(); 
+        s.append("<div id='bgee_uniq_species'> ");
+        s.append("<h2 class='downloadsection'>Single-species</h2>");
+        s.append("<div class='downloadsection'>");
+        s.append(generateSpeciesFigure(9606, pageType));
+        s.append(generateSpeciesFigure(10090, pageType));
+        s.append(generateSpeciesFigure(7955, pageType));
+        s.append(generateSpeciesFigure(7227, pageType));
+        s.append(generateSpeciesFigure(6239, pageType));
+        s.append(generateSpeciesFigure(9597, pageType));
+        s.append(generateSpeciesFigure(9598, pageType));
+        s.append(generateSpeciesFigure(9593, pageType));
+//        s.append(generateSpeciesFigure(9600, pageType)); // no more data for Pongo pygmaeus
+        s.append(generateSpeciesFigure(9544, pageType));
+        s.append(generateSpeciesFigure(10116, pageType));
+        s.append(generateSpeciesFigure(9913, pageType));
+        s.append(generateSpeciesFigure(9823, pageType));
+        s.append(generateSpeciesFigure(13616, pageType));
+        s.append(generateSpeciesFigure(9258, pageType));
+        s.append(generateSpeciesFigure(9031, pageType));
+        s.append(generateSpeciesFigure(28377, pageType));
+        s.append(generateSpeciesFigure(8364, pageType));
+//        s.append(generateSpeciesFigure(99883, pageType)); // no more data for Tetraodon nigroviridis
+        s.append("</div>");
+        s.append("</div>");
+        
+        return log.exit(s.toString());
+    }
+
+    /**
+     * Get the multi-species section of a download page as a HTML 'div' element, 
+     * according the provided page type.
+     *
+     * @param pageType  A {@code DownloadPageType} that is the type of the page.
+     * @return          the {@code String} that is the multi-species section as HTML 'div' element,
+     *                  according {@code pageType}.
+     */
+    private String getMultiSpeciesSection(DownloadPageType pageType) {
+        log.entry();
+
+        StringBuffer s = new StringBuffer(); 
+        s.append("<div id='bgee_multi_species'>");
+        s.append("<h2 class='downloadsection'>Multi-species</h2> <span>(homologous genes in homologous anatomical structures)</span>");
+        s.append("<div class='downloadsection'>");
         //TODO set all groups and with all species when all files will be generated 
         // Pairwises
-        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 10090), GROUP_NAME_HUMAN_MOUSE, true));
-//        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 7955), GROUP_NAME_HUMAN_ZEBRAFISH, true));
-//        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 7227), GROUP_NAME_HUMAN_FRUITFLY, true));
-//        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 6239), GROUP_NAME_HUMAN_NEMATODE, true));
-//        this.writeln(generateSpeciesFigure(Arrays.asList(10090, 7955), GROUP_NAME_MOUSE_ZEBRAFISH, true));
-//        this.writeln(generateSpeciesFigure(Arrays.asList(10090, 7227), GROUP_NAME_MOUSE_FRUITFLY, true));
-//        this.writeln(generateSpeciesFigure(Arrays.asList(10090, 6239), GROUP_NAME_MOUSE_NEMATODE, true));
-//        this.writeln(generateSpeciesFigure(Arrays.asList(7955, 7227), GROUP_NAME_ZEBRAFISH_FRUITFLY, true));
-//        this.writeln(generateSpeciesFigure(Arrays.asList(7955, 6239), GROUP_NAME_ZEBRAFISH_NEMATODE, true));
-//        this.writeln(generateSpeciesFigure(Arrays.asList(7227, 6239), GROUP_NAME_FRUITFLY_NEMATODE, true));
+        s.append(generateSpeciesFigure(Arrays.asList(9606, 10090), GROUP_NAME_HUMAN_MOUSE, true, pageType));
+        //        s.append(generateSpeciesFigure(Arrays.asList(9606, 7955), GROUP_NAME_HUMAN_ZEBRAFISH, true, pageType));
+        //        s.append(generateSpeciesFigure(Arrays.asList(9606, 7227), GROUP_NAME_HUMAN_FRUITFLY, true, pageType));
+        //        s.append(generateSpeciesFigure(Arrays.asList(9606, 6239), GROUP_NAME_HUMAN_NEMATODE, true, pageType));
+        //        s.append(generateSpeciesFigure(Arrays.asList(10090, 7955), GROUP_NAME_MOUSE_ZEBRAFISH, true, pageType));
+        //        s.append(generateSpeciesFigure(Arrays.asList(10090, 7227), GROUP_NAME_MOUSE_FRUITFLY, true, pageType));
+        //        s.append(generateSpeciesFigure(Arrays.asList(10090, 6239), GROUP_NAME_MOUSE_NEMATODE, true, pageType));
+        //        s.append(generateSpeciesFigure(Arrays.asList(7955, 7227), GROUP_NAME_ZEBRAFISH_FRUITFLY, true, pageType));
+        //        s.append(generateSpeciesFigure(Arrays.asList(7955, 6239), GROUP_NAME_ZEBRAFISH_NEMATODE, true, pageType));
+        //        s.append(generateSpeciesFigure(Arrays.asList(7227, 6239), GROUP_NAME_FRUITFLY_NEMATODE, true, pageType));
         // Groups
-//        this.writeln(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544), GROUP_NAME_PRIMATES, true));
-//        this.writeln(generateSpeciesFigure(Arrays.asList(10090, 10116), GROUP_NAME_RODENTIA, true));
-//        this.writeln(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544, 10116, 10090, 9913, 9823, 13616), GROUP_NAME_THERIA, true));
-//        this.writeln(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544, 10116, 10090, 9913, 9823, 13616, 9258), GROUP_NAME_MAMMALIA, true));
-//        this.writeln(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544, 10116, 10090, 9913, 9823, 13616, 9258, 28377, 9031), GROUP_NAME_AMNIOTA, true));
-//        this.writeln(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544, 10116, 10090, 9913, 9823, 13616, 9258, 28377, 9031, 8364, 7955, 7227, 6239), GROUP_NAME_BILATERIA, true));
-//        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9544), GROUP_NAME_CATARRHINI, true));
-        this.writeln(generateSpeciesFigure(Arrays.asList(10090, 10116), GROUP_NAME_MURINAE, true));
-        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9544, 10116, 10090, 9913), GROUP_NAME_THERIA, true));
-        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9544, 10116, 10090, 9913, 9258), GROUP_NAME_MAMMALIA, true));
-        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9544, 10116, 10090, 9913, 9258, 9031), GROUP_NAME_AMNIOTA, true));
-        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9544, 10116, 10090, 9913, 9258, 9031, 8364, 7227), GROUP_NAME_BILATERIA, true));
-        this.writeln("</div>");
-        this.writeln("</div>");
+        //        s.append(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544), GROUP_NAME_PRIMATES, true, pageType));
+        //        s.append(generateSpeciesFigure(Arrays.asList(10090, 10116), GROUP_NAME_RODENTIA, true, pageType));
+        //        s.append(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544, 10116, 10090, 9913, 9823, 13616), GROUP_NAME_THERIA, true, pageType));
+        //        s.append(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544, 10116, 10090, 9913, 9823, 13616, 9258), GROUP_NAME_MAMMALIA, true, pageType));
+        //        s.append(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544, 10116, 10090, 9913, 9823, 13616, 9258, 28377, 9031), GROUP_NAME_AMNIOTA, true, pageType));
+        //        s.append(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544, 10116, 10090, 9913, 9823, 13616, 9258, 28377, 9031, 8364, 7955, 7227, 6239), GROUP_NAME_BILATERIA, true, pageType));
+        //        s.append(generateSpeciesFigure(Arrays.asList(9606, 9544), GROUP_NAME_CATARRHINI, true, pageType));
+        s.append(generateSpeciesFigure(Arrays.asList(10090, 10116), GROUP_NAME_MURINAE, true, pageType));
+        s.append(generateSpeciesFigure(Arrays.asList(9606, 9544, 10116, 10090, 9913), GROUP_NAME_THERIA, true, pageType));
+        s.append(generateSpeciesFigure(Arrays.asList(9606, 9544, 10116, 10090, 9913, 9258), GROUP_NAME_MAMMALIA, true, pageType));
+        s.append(generateSpeciesFigure(Arrays.asList(9606, 9544, 10116, 10090, 9913, 9258, 9031), GROUP_NAME_AMNIOTA, true, pageType));
+        s.append(generateSpeciesFigure(Arrays.asList(9606, 9544, 10116, 10090, 9913, 9258, 9031, 8364, 7227), GROUP_NAME_BILATERIA, true, pageType));
+        s.append("</div>");
+        s.append("</div>");
 
-        // Images source
-        this.writeln("<p id='creativecommons_title'>Images from Wikimedia Commons. In most cases, pictures corresponds to the sequenced strains. <a>Show information about original images.</a></p>");
-        this.writeln("<div id='creativecommons'>");
-        this.writeln("<p><i>Homo sapiens</i> picture by Leonardo da Vinci (Life time: 1519) [Public domain]. <a target='_blank' href='http://commons.wikimedia.org/wiki/File:Da_Vinci%27s_Anatomical_Man.jpg#mediaviewer/File:Da_Vinci%27s_Anatomical_Man.jpg'>See <i>H. sapiens</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("<p><i>Mus musculus</i> picture by Rasbak [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AApodemus_sylvaticus_bosmuis.jpg'>See <i>M. musculus</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("<p><i>Danio rerio</i> picture by Azul (Own work) [see page for license], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AZebrafisch.jpg'>See <i>D. rerio</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("<p><i>Drosophila melanogaster</i> picture by Andr&eacute; Karwath aka Aka (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/2.5'>CC-BY-SA-2.5</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ADrosophila_melanogaster_-_side_(aka).jpg'>See <i>D. melanogaster</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("<p><i>Caenorhabditis elegans</i> picture by Bob Goldstein, UNC Chapel Hill http://bio.unc.edu/people/faculty/goldstein/ (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ACelegansGoldsteinLabUNC.jpg'>See <i>C. elegans</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("<p><i>Pan paniscus</i> picture by Ltshears (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a> or <a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ABonobo1_CincinnatiZoo.jpg'>See <i>P. paniscus</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("<p><i>Pan troglodytes</i> picture by Thomas Lersch (Own work) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a>, <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a> or <a target='_blank' href='http://creativecommons.org/licenses/by/2.5'>CC-BY-2.5</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ASchimpanse_Zoo_Leipzig.jpg'>See <i>P. troglodytes</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("<p><i>Gorilla gorilla</i> picture by Brocken Inaglory (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a> or <a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AMale_gorilla_in_SF_zoo.jpg'>See <i>G. gorilla</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("<p><i>Pongo pygmaeus</i> picture by Greg Hume (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ASUMATRAN_ORANGUTAN.jpg'>See <i>P. pygmaeus</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("<p><i>Macaca mulatta</i> picture by Aiwok (Own work) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0-2.5-2.0-1.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AMacaca_mulatta_3.JPG'>See <i>M. mulatta</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("<p><i>Rattus norvegicus</i> picture by Reg Mckenna (originally posted to Flickr as Wild Rat) [<a target='_blank' href='http://creativecommons.org/licenses/by/2.0'>CC-BY-2.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AWildRat.jpg'>See <i>R. norvegicus</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("<p><i>Bos taurus</i> picture by User Robert Merkel on en.wikipedia (US Department of Agriculture) [Public domain], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AHereford_bull_large.jpg'>See <i>B. taurus</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("<p><i>Sus scrofa</i> picture by Joshua Lutz (Own work) [Public domain], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ASus_scrofa_scrofa.jpg'>See <i>S. scrofa</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("<p><i>Monodelphis domestica</i> picture by <i>Marsupial Genome Sheds Light on the Evolution of Immunity.</i> Hill E, PLoS Biology Vol. 4/3/2006, e75 <a rel='nofollow' href='http://dx.doi.org/10.1371/journal.pbio.0040075'>http://dx.doi.org/10.1371/journal.pbio.0040075</a> [<a target='_blank' href='http://creativecommons.org/licenses/by/2.5'>CC-BY-2.5</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AOpossum_with_young.png'>See <i>M. domestica</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("<p><i>Ornithorhynchus anatinus</i> picture by Dr. Philip Bethge (private) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0-2.5-2.0-1.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AOrnithorhynchus.jpg'>See <i>O. anatinus</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("<p><i>Gallus gallus</i> picture by Subramanya C K (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ARed_jungle_fowl.png'>See <i>G. gallus</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("<p><i>Anolis carolinensis</i> picture by PiccoloNamek (Moved from Image:P1010027.jpg) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AAnolis_carolinensis.jpg'>See <i>A. carolinensis</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("<p><i>Xenopus tropicalis</i> picture by V&aacute;clav Gvo&zcaron;d&iacute;k (http://calphotos.berkeley.edu) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/2.5'>CC-BY-SA-2.5</a>, <a target='_blank' href='http://creativecommons.org/licenses/by-sa/2.5'>CC-BY-SA-2.5</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AXenopus_tropicalis01.jpeg'>See <i>X. tropicalis</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("<p><i>Tetraodon nigroviridis</i> picture by Starseed (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/de/deed.en'>CC-BY-SA-3.0-de</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ATetraodon_nigroviridis_1.jpg'>See <i>T. nigroviridis</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("</div>");
+        return log.exit(s.toString());
+    }
 
-        this.endDisplay();
-        log.exit();
+    /**
+     * Get the images sources of a download page as a HTML 'div' element. 
+     *
+     * @return  the {@code String} that is the images sources as HTML 'div' element.
+     */
+    private String getImageSources() {
+        log.entry();
+        
+        StringBuffer sources = new StringBuffer();
+        sources.append("<p id='creativecommons_title'>Images from Wikimedia Commons. In most cases, pictures corresponds to the sequenced strains. <a>Show information about original images.</a></p>");
+        sources.append("<div id='creativecommons'>");
+        sources.append("<p><i>Homo sapiens</i> picture by Leonardo da Vinci (Life time: 1519) [Public domain]. <a target='_blank' href='http://commons.wikimedia.org/wiki/File:Da_Vinci%27s_Anatomical_Man.jpg#mediaviewer/File:Da_Vinci%27s_Anatomical_Man.jpg'>See <i>H. sapiens</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Mus musculus</i> picture by Rasbak [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AApodemus_sylvaticus_bosmuis.jpg'>See <i>M. musculus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Danio rerio</i> picture by Azul (Own work) [see page for license], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AZebrafisch.jpg'>See <i>D. rerio</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Drosophila melanogaster</i> picture by Andr&eacute; Karwath aka Aka (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/2.5'>CC-BY-SA-2.5</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ADrosophila_melanogaster_-_side_(aka).jpg'>See <i>D. melanogaster</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Caenorhabditis elegans</i> picture by Bob Goldstein, UNC Chapel Hill http://bio.unc.edu/people/faculty/goldstein/ (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ACelegansGoldsteinLabUNC.jpg'>See <i>C. elegans</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Pan paniscus</i> picture by Ltshears (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a> or <a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ABonobo1_CincinnatiZoo.jpg'>See <i>P. paniscus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Pan troglodytes</i> picture by Thomas Lersch (Own work) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a>, <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a> or <a target='_blank' href='http://creativecommons.org/licenses/by/2.5'>CC-BY-2.5</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ASchimpanse_Zoo_Leipzig.jpg'>See <i>P. troglodytes</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Gorilla gorilla</i> picture by Brocken Inaglory (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a> or <a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AMale_gorilla_in_SF_zoo.jpg'>See <i>G. gorilla</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Pongo pygmaeus</i> picture by Greg Hume (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ASUMATRAN_ORANGUTAN.jpg'>See <i>P. pygmaeus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Macaca mulatta</i> picture by Aiwok (Own work) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0-2.5-2.0-1.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AMacaca_mulatta_3.JPG'>See <i>M. mulatta</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Rattus norvegicus</i> picture by Reg Mckenna (originally posted to Flickr as Wild Rat) [<a target='_blank' href='http://creativecommons.org/licenses/by/2.0'>CC-BY-2.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AWildRat.jpg'>See <i>R. norvegicus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Bos taurus</i> picture by User Robert Merkel on en.wikipedia (US Department of Agriculture) [Public domain], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AHereford_bull_large.jpg'>See <i>B. taurus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Sus scrofa</i> picture by Joshua Lutz (Own work) [Public domain], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ASus_scrofa_scrofa.jpg'>See <i>S. scrofa</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Monodelphis domestica</i> picture by <i>Marsupial Genome Sheds Light on the Evolution of Immunity.</i> Hill E, PLoS Biology Vol. 4/3/2006, e75 <a rel='nofollow' href='http://dx.doi.org/10.1371/journal.pbio.0040075'>http://dx.doi.org/10.1371/journal.pbio.0040075</a> [<a target='_blank' href='http://creativecommons.org/licenses/by/2.5'>CC-BY-2.5</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AOpossum_with_young.png'>See <i>M. domestica</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Ornithorhynchus anatinus</i> picture by Dr. Philip Bethge (private) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0-2.5-2.0-1.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AOrnithorhynchus.jpg'>See <i>O. anatinus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Gallus gallus</i> picture by Subramanya C K (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ARed_jungle_fowl.png'>See <i>G. gallus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Anolis carolinensis</i> picture by PiccoloNamek (Moved from Image:P1010027.jpg) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AAnolis_carolinensis.jpg'>See <i>A. carolinensis</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Xenopus tropicalis</i> picture by V&aacute;clav Gvo&zcaron;d&iacute;k (http://calphotos.berkeley.edu) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/2.5'>CC-BY-SA-2.5</a>, <a target='_blank' href='http://creativecommons.org/licenses/by-sa/2.5'>CC-BY-SA-2.5</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AXenopus_tropicalis01.jpeg'>See <i>X. tropicalis</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Tetraodon nigroviridis</i> picture by Starseed (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/de/deed.en'>CC-BY-SA-3.0-de</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ATetraodon_nigroviridis_1.jpg'>See <i>T. nigroviridis</i> picture via Wikimedia Commons</a></p>");
+        sources.append("</div>");
+    
+        return log.exit(sources.toString());
+    }
+
+    /**
+     * Get the black banner of a download page as a HTML 'div' element, 
+     * according the provided page type.
+     *
+     * @param pageType  A {@code DownloadPageType} that is the type of the page.
+     * @return          the {@code String} that is the black banner of a download page 
+     *                  as a HTML 'div' element according {@code pageType}.
+     */
+    private String getBlackBanner(DownloadPageType pageType) {
+        log.entry(pageType);
+    
+        StringBuffer banner = new StringBuffer();
+        // This section is empty, it will be filled by JavaScript.
+        banner.append("<div id='bgee_data_selection'>");
+        
+        // Cross to close the banner
+        banner.append("<div id='bgee_data_selection_cross'>");
+        banner.append("<img src='"+this.prop.getImagesRootDirectory()+"cross.png' "
+                + "title='Close banner' alt='Close banner' /> ");
+        banner.append("</div>");
+        
+        // Section on the left of the black banner: image for single species or patchwork for group
+        banner.append("<div id='bgee_data_selection_img'></div>");
+    
+        // Section on the right of the black banner
+        banner.append("<div id='bgee_data_selection_text'>");
+        banner.append("<h1 class='scientificname'></h1>&nbsp;&nbsp;<h1 class='commonname'></h1>");
+        banner.append("<p class='groupdescription'></p>");
+        
+        if (pageType.equals(DownloadPageType.EXPR_CALLS)) {
+            // Presence/absence expression files
+            banner.append("<div class='bgee_download_file_buttons'>");
+            banner.append("<h2>Presence/absence of expression</h2>");    
+            banner.append("<p id='expr_no_data' class='no_data'>Not enough data</p>");
+            banner.append("<p id='expr_coming_soon' class='no_data'>Coming soon</p>");
+            banner.append("<a id='expr_simple_csv' class='download_link' href='' download></a>");
+            banner.append("&nbsp;&nbsp;");
+            banner.append("<a id='expr_complete_csv' class='download_link' href='' download></a>");
+            banner.append("</div>");
+            // Differential expression files across anatomy
+            banner.append("<div class='bgee_download_file_buttons'>");
+            banner.append("<h2>Over-/Under-expression across anatomy</h2>");
+            banner.append("<p id='diffexpr_anatomy_no_data' class='no_data'>Not enough data</p>");
+            banner.append("<p id='diffexpr_anatomy_coming_soon' class='no_data'>Coming soon</p>");
+            banner.append("<a id='diffexpr_anatomy_simple_csv' class='download_link' href='' download></a>");
+            banner.append("&nbsp;&nbsp;");
+            banner.append("<a id='diffexpr_anatomy_complete_csv' class='download_link' href='' download></a>");
+            banner.append("</div>");
+            // Differential expression files across life stages
+            banner.append("<div class='bgee_download_file_buttons'>");
+            banner.append("<h2>Over-/Under-expression across life stages</h2>");
+            banner.append("<p id='diffexpr_development_no_data' class='no_data'>Not enough data</p>");
+            banner.append("<p id='diffexpr_development_coming_soon' class='no_data'>Coming soon</p>");
+            banner.append("<a id='diffexpr_development_simple_csv' class='download_link' href='' download></a>");
+            banner.append("&nbsp;&nbsp;");
+            banner.append("<a id='diffexpr_development_complete_csv' class='download_link' href='' download></a>");
+            banner.append("</div>");            
+        } else {
+            // XX
+            banner.append("<div class='bgee_download_file_buttons'>");
+            banner.append("<h2>AA</h2>");    
+            banner.append("<p id='aa' class='no_data'>Coming soon</p>");
+            banner.append("</div>");
+            // BB
+            banner.append("<div class='bgee_download_file_buttons'>");
+            banner.append("<h2>BB</h2>");
+            banner.append("<p id='bb' class='no_data'>Coming soon</p>");
+            banner.append("</div>");
+            // CC
+            banner.append("<div class='bgee_download_file_buttons'>");
+            banner.append("<h2>CC</h2>");
+            banner.append("<p id='cc' class='no_data'>Coming soon</p>");
+            banner.append("</div>");            
+            // DD
+            banner.append("<div class='bgee_download_file_buttons'>");
+            banner.append("<h2>DD</h2>");
+            banner.append("<p id='dd' class='no_data'>Coming soon</p>");
+            banner.append("</div>");            
+        }
+        
+        banner.append("</div>");
+        banner.append("</div>");
+    
+        return log.exit(banner.toString());
     }
 
     /**
@@ -284,13 +480,14 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      * species ID.
      * 
      * @param speciesId     An {@code int} that is the species ID of the species to be 
-     *                      diplayed.
-     * @return             A {@code String} that is the  HTML figure tag generated from the 
-     *                     provided {@code int} of a species ID.
+     *                      displayed.
+     * @param pageType      A {@code DownloadPageType} that is the type of the page.
+     * @return              A {@code String} that is the  HTML figure tag generated from the 
+     *                      provided {@code int} of a species ID.
      */
-    private String generateSpeciesFigure(int speciesId) {
+    private String generateSpeciesFigure(int speciesId, DownloadPageType pageType) {
         log.entry(speciesId);
-        return log.exit(generateSpeciesFigure(Arrays.asList(speciesId), null, false));
+        return log.exit(generateSpeciesFigure(Arrays.asList(speciesId), null, false, pageType));
     }
 
     /**
@@ -303,12 +500,13 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      *                     {@code List}.
      * @param isGroup      A {@code boolean} that is {@code true} if the figure represents 
      *                     a group of species.
+     * @param              A {@code DownloadPageType} that is the type of the page.
      * @return             A {@code String} that is the  HTML figure tag generated from the 
      *                     provided {@code List} of species IDs.
      */
     private String generateSpeciesFigure(List<Integer> speciesIds, String figcaption, 
-            boolean isGroup) {
-        log.entry(speciesIds, figcaption, isGroup);
+            boolean isGroup, DownloadPageType pageType) {
+        log.entry(speciesIds, figcaption, isGroup, pageType);
         
         StringBuilder images = new StringBuilder();
         if (speciesIds == null || speciesIds.size() == 0) {
@@ -455,12 +653,20 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         }
 
         String figure = null;
-        if (isGroup) {
-            figure = "<figure data-bgeegroupname='" + figcaption + "' " + 
+        if (pageType.equals(DownloadPageType.EXPR_CALLS)) {
+            if (isGroup) {
+                figure = "<figure data-bgeegroupname='" + figcaption + "' " + 
                         this.getGroupFileData(figcaption) + ">";
+            } else {
+                figure = "<figure " + this.getSingleSpeciesFileData(speciesIds.get(0)) + ">";
+            }
+        } else if (pageType.equals(DownloadPageType.RAW_DATA)) {
+            figure = "<figure>";
         } else {
-            figure = "<figure " + this.getSingleSpeciesFileData(speciesIds.get(0)) + ">";
+            //TODO
         }
+        
+
         figure += "<div>" + images + "</div>" +
                   "<figcaption>" + figcaption + 
                   " <span class='invisible'>" + hiddenInfo + "</span>" + 

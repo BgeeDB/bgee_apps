@@ -67,7 +67,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         this.startDisplay("home", 
                 "Welcome on Bgee: a dataBase for Gene Expression Evolution");
 
-        this.writeln("<h2>Welcome on the latest release of Bgee, Bgee release 13</h2>");
+        this.writeln("<h1>Welcome on the latest release of Bgee, Bgee release 13</h1>");
         
         RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
         urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
@@ -75,18 +75,15 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         urlDocGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
 
         this.writeln("<div id='feature_list'>");
-        this.writeln("<a href='" + urlDownloadGenerator.getRequestURL() +
-                "' title='Bgee expression data page'>" +
-                "<figure><div><img class='pageimg' src='" + this.prop.getImagesRootDirectory() + 
-                "patchwork.png' alt='Expression data screenshot' /></div>" +
-                "<figcaption>Expression data</figcaption>" +
-                "</figure></a>");
-        this.writeln("<a href='" + urlDocGenerator.getRequestURL() + 
-                "' title='Bgee documentation page'>" +
-                "<figure><div><img class='pageimg' src='" + this.prop.getImagesRootDirectory() + 
-                "books.png' alt='Documentation page screenshot' /></div>" +
-                "<figcaption>Documentation</figcaption>" +
-                "</figure></a>");
+        
+        this.writeln(HtmlParentDisplay.getLogoLink(urlDownloadGenerator.getRequestURL(), 
+                "Bgee expression data page", "Expression data", 
+                this.prop.getImagesRootDirectory() + "logo/download_logo.png"));
+
+        this.writeln(HtmlParentDisplay.getLogoLink(urlDocGenerator.getRequestURL(), 
+                "Bgee documentation page", "Documentation", 
+                this.prop.getImagesRootDirectory() + "logo/doc_logo.png"));
+
         this.writeln("</div>");
         
         this.writeln("<div id='home_info'>");
@@ -105,11 +102,10 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 "download page</a>.</li></ul>");
         this.writeln("<p>The complete website remains available for the previous release of Bgee:</p>");
         this.writeln("<div id='feature_list'>");
-        this.writeln("<a href='http://bgee.org/bgee/bgee' title='Bgee 12 home page'>" +
-                "<figure><div><img class='pageimg' src='" + this.prop.getImagesRootDirectory() + 
-                "bgee12.png' alt='Bgee 12 logo' /></div>" +
-                "<figcaption>Bgee 12</figcaption>" +
-                "</figure></a>");
+        this.writeln(HtmlParentDisplay.getLogoLink("http://bgee.org/bgee/bgee", 
+                "Bgee 12 home page", "Bgee 12", 
+                this.prop.getImagesRootDirectory() + "logo/bgee12_logo.png"));
+
         this.writeln("</div>");
         this.writeln("</div>");
 

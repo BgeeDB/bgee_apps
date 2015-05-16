@@ -167,104 +167,28 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
     public void displayDocumentationHomePage() {
         log.entry();
         
-        String subsectionName1 = "Subsection 1 - H2 section";
-        String subsectionName2 = "Subsection 2 - H2 section";
-        String subsectionName3 = "Subsection 3 - H2 section";
-        
-        this.startDisplay("download", "Bgee release 13 documentation page");
-        
-        this.writeln("<h1 id='sectionname'>Section name</h1>");
-this.writeln("<div class='documentationmenu'><ul>");
-        
-        this.writeln("<li><a href='#single' title='Quick jump to this section'>" + 
-                            "Single-species download files</a>");
-        this.writeln("<ul>");           //presence/absence
-        this.writeln("<li><a href='#single_expr' title='Quick jump to this section'>" + 
-                            "Presence/absence of expression</a>");
-        this.writeln("<ul>");
-        this.writeln("<li><a href='#single_expr_simple' title='Quick jump to this section'>" + 
-                            "Simple file</a></li>");
-        this.writeln("<li><a href='#single_expr_complete' title='Quick jump to this section'>" + 
-                            "Complete file</a></li>");
-        this.writeln("</ul></li>");     //end of presence/absence
-        this.writeln("<li><a href='#single_diff' title='Quick jump to this section'>" + 
-                "Over-/under-expression across anatomy or life stages</a>");
-        this.writeln("<ul>");
-        this.writeln("<li><a href='#single_diff_simple' title='Quick jump to this section'>" + 
-                        "Simple file</a></li>");
-        this.writeln("<li><a href='#single_diff_complete' title='Quick jump to this section'>" + 
-                        "Complete file</a></li>");
-        this.writeln("</ul></li>");     //end of diff expression 
-        this.writeln("</ul></li>"); // end of single-species section
-        
-        this.writeln("<li><a href='#multi' title='Quick jump to this section'>" + 
-                            "Multi-species download files</a>");
-        this.writeln("<ul>");    
-        this.writeln("<li><a href='#multi_diff' title='Quick jump to this section'>" + 
-                "Over-/under-expression across anatomy or life stages</a>");
-        this.writeln("<ul>");
-        this.writeln("<li><a href='#multi_diff_simple' title='Quick jump to this section'>" + 
-                        "Simple file</a></li>");
-        this.writeln("<li><a href='#multi_diff_complete' title='Quick jump to this section'>" + 
-                        "Complete file</a></li>");
-        this.writeln("</ul></li>");     //end of diff expression        
-        this.writeln("</ul></li>"); // end of multi-species section
-        
-        this.writeln("</ul></div>");// end of documentationmenu
+        this.startDisplay("documentation", "Bgee release 13 documentation home page");
 
-        this.writeln("<div id='subsection1'>");
-        this.writeln("<h2>" + subsectionName1 + "</h2>");
-        this.writeln("<div class='documentationsection'>");
-        this.writeln("<h3>H3 title</h3>");
-        this.writeln("<p>The raw data in .sra format are downloaded from " +
-                "the <a href='http://www.ncbi.nlm.nih.gov/sra' title='External link to SRA' " +
-                "target='_blank'>Short Read Archive (SRA) database</a>. " +
-                "The extracted reads, in fastq format, are mapped to regions of the reference genome, " +
-                "specified in a .gtf file: i) transcribed regions; " +
-                "ii) selected intergenic regions (see below); iii) exon junction regions. </p>");
-        this.writeln("<p>The raw data in .sra format are downloaded from " +
-                "the <a href='http://www.ncbi.nlm.nih.gov/sra' title='External link to SRA' " +
-                "target='_blank'>Short Read Archive (SRA) database</a>. " +
-                "The extracted reads, in fastq format, are mapped to regions of the reference genome, " +
-                "specified in a .gtf file: i) transcribed regions; " +
-                "ii) selected intergenic regions (see below); iii) exon junction regions. </p>");
-        this.writeln("<h3>H3 title</h3>");
-        this.writeln("<p>The mapping of the reads is performed using " +
-                "<a href='http://tophat.cbcb.umd.edu/' title='External link to TopHat website' " +
-                "target='_blank'>TopHat2</a>, " +
-                "which internally uses " +
-                "the <a href='http://bowtie-bio.sourceforge.net/bowtie2/index.shtml' title='External link to Bowtie website' " +
-                "target='_blank'>Bowtie2</a> aligner. The maximum number of mappings allowed for a read " +
-                "is set to 1. The intergenic regions are chosen in such a way that the distribution of their lengths " +
-                "matches the distribution of lengths of the transcriptome. " +
-                "The minimal distance of boundaries of intergenic regions to the nearest gene is 5 kb. " +
-                "Reads that map to the features are summed up using the htseq-count software. " +
-                "The RPK (read per kilobase) value for every feature is obtained by dividing " +
-                "the number of reads that match a given feature by its length. </p>");
+        this.writeln("<h1>Bgee release 13 documentation pages</h1>");
+
+        RequestParameters urlHowToAccessGenerator = this.getNewRequestParameters();
+        urlHowToAccessGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
+        urlHowToAccessGenerator.setAction(RequestParameters.ACTION_DOC_HOW_TO_ACCESS);
+        
+        RequestParameters urlCallFilesGenerator = this.getNewRequestParameters();
+        urlCallFilesGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
+        urlCallFilesGenerator.setAction(RequestParameters.ACTION_DOC_DOWLOAD_FILES);
+
+        this.writeln("<div id='feature_list'>");
+        this.writeln(HtmlParentDisplay.getLogoLink(urlHowToAccessGenerator.getRequestURL(), 
+                "How to access to Bgee data", "Access to Bgee data", 
+                this.prop.getImagesRootDirectory() + "logo/bgee_access_logo.png"));
+
+        this.writeln(HtmlParentDisplay.getLogoLink(urlCallFilesGenerator.getRequestURL(), 
+                "Download file documentation page", "Download file documentation", 
+                this.prop.getImagesRootDirectory() + "logo/download_logo.png"));
+
         this.writeln("</div>");
-        this.writeln("</div>"); // end of subsection1
-        
-//        this.writeln(this.getBackToTheTopLink());
-        
-        this.writeln("<div id='subsection2'>");
-        this.writeln("<h2>" + subsectionName2 + "</h2>");
-        this.writeln("<div class='documentationsection'>");
-        this.writeln("<p> </p>");
-        this.writeln("<p> </p>");
-        this.writeln("</div>");
-        this.writeln("</div>"); // end of subsection2
-        
-//        this.writeln(this.getBackToTheTopLink());
-        
-        this.writeln("<div id='subsection3'>");
-        this.writeln("<h2>" + subsectionName3 + "</h2>");
-        this.writeln("<div class='documentationsection'>");
-        this.writeln("<p> </p>");
-        this.writeln("<p> </p>");
-        this.writeln("</div>");
-        this.writeln("</div>"); // end of subsection3
-        
-//        this.writeln(this.getBackToTheTopLink());
         
         this.endDisplay();
 
@@ -278,7 +202,7 @@ this.writeln("<div class='documentationmenu'><ul>");
     public void displayCallDownloadFileDocumentation() {
         log.entry();
         
-        this.startDisplay("download", "Download file documentation");
+        this.startDisplay("documentation", "Download file documentation");
         
         this.callFileDoc.writeDocumentation();
         
@@ -286,7 +210,49 @@ this.writeln("<div class='documentationmenu'><ul>");
 
         log.exit();
     }
-    
+
+    @Override
+    public void displayHowToAccessDataDocumentation() {
+        log.entry();
+        
+        this.startDisplay("documentation", "How to access to Bgee data");
+
+        this.writeln("<h1>How to access to Bgee data</h1>");
+
+        RequestParameters urlDownloadRawGenerator = this.getNewRequestParameters();
+        urlDownloadRawGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlDownloadRawGenerator.setAction(RequestParameters.ACTION_DOWLOAD_RAW_FILES);
+
+        RequestParameters urlDownloadCallsGenerator = this.getNewRequestParameters();
+        urlDownloadCallsGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlDownloadCallsGenerator.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
+        
+        this.writeln("<div id='feature_list'>");
+        
+        this.writeln(HtmlParentDisplay.getLogoLink(urlDownloadRawGenerator.getRequestURL(), 
+                "Bgee processed raw data page", "Processed raw data", 
+                this.prop.getImagesRootDirectory() + "logo/raw_data_logo.png"));
+
+        this.writeln(HtmlParentDisplay.getLogoLink(urlDownloadCallsGenerator.getRequestURL(), 
+                "Bgee gene expression call page", "Gene expression calls", 
+                this.prop.getImagesRootDirectory() + "logo/expr_calls_logo.png"));
+
+        this.writeln(HtmlParentDisplay.getLogoLink("https://github.com/BgeeDB", 
+                "BgeeDB GitHub", "GitHub", 
+                this.prop.getImagesRootDirectory() + "logo/github_logo.png"));
+
+        //TODO add URL
+        this.writeln(HtmlParentDisplay.getLogoLink("", 
+                "MySQL dump", "MySQL dump", 
+                this.prop.getImagesRootDirectory() + "logo/mysql_logo.png"));
+
+        this.writeln("</div>");
+        
+        this.endDisplay();
+
+        log.exit();
+    }
+
 
     //*******************************************************
     // COMMON METHODS

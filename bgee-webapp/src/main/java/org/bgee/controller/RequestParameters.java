@@ -110,7 +110,23 @@ public class RequestParameters {
      * (see {@link URLParameters#getParamPage()}) when a download page is requested.
      */
     public static final String PAGE_ABOUT = "about";
-    
+
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link URLParameters#getParamAction()}) when download page about files 
+     * providing calls of expression is requested. Value of the parameter page should be 
+     * {@link #PAGE_DOWNLOAD}.
+     */
+    public static final String ACTION_DOWLOAD_CALL_FILES = "expr_calls";
+
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link URLParameters#getParamAction()}) when download page about files 
+     * providing processed raw data is requested. Value of the parameter page should be 
+     * {@link #PAGE_DOWNLOAD}.
+     */
+    public static final String ACTION_DOWLOAD_RAW_FILES = "raw_data";
+
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
      * (see {@link URLParameters#getParamAction()}) when documentation about download files 
@@ -118,6 +134,14 @@ public class RequestParameters {
      * {@link #PAGE_DOCUMENTATION}.
      */
     public static final String ACTION_DOC_DOWLOAD_FILES = "call_files";
+    
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link URLParameters#getParamAction()}) when documentation about how to access to
+     * Bgee data is requested. Value of the parameter page should be 
+     * {@link #PAGE_DOCUMENTATION}.
+     */
+    public static final String ACTION_DOC_HOW_TO_ACCESS = "how_to_access";
     
     /**
      * A {@code BgeeProperties} instance to provide all the properties values

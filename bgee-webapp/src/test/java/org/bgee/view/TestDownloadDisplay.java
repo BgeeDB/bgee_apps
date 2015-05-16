@@ -12,7 +12,8 @@ import org.bgee.controller.RequestParameters;
  * in the URL is 'download'.
  * 
  * @author Mathieu Seppey
- * @version Bgee 13 Aug 2014
+ * @author Valentine Rech de Laval
+ * @version Bgee 13 May 2015
  * @since   Bgee 13
  */
 public class TestDownloadDisplay extends TestParentDisplay implements DownloadDisplay
@@ -29,7 +30,17 @@ public class TestDownloadDisplay extends TestParentDisplay implements DownloadDi
      * controller handles all parameters correctly to send the correct output to the
      * {@code HttpServletResponse}
      */
-    public void displayDownloadPage() {
+    public void displayDownloadHomePage() {
         this.out.println("Test page is good !");
+    }
+
+    @Override
+    public void displayProcessedRawDataDownloadPage() {
+        this.out.println("TestB");
+    }
+
+    @Override
+    public void displayGeneExpressionCallDownloadPage() {
+        this.out.println("TestC");
     }
 }

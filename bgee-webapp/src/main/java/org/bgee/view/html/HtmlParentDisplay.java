@@ -67,6 +67,15 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.uniqueId = 0;
     }
 
+    protected static String getLogoLink(String url, 
+            String title, String figcaption, String imgPath) {
+        log.entry(url, title, figcaption, imgPath);
+        return log.exit("<a href='" + url + "' title='" + title + "'>" +
+                "<figure><img class='pageimg' src='" + imgPath + "' alt='" + title + " logo' />" +
+                "<figcaption>" + figcaption + "</figcaption>" +
+                "</figure></a>");
+    }
+
     /**
      * @return An {@code int} TODO be more specific
      */
@@ -87,6 +96,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         log.exit();
     }
     //TODO: use an enum rather than a String page? => yep
+    // but String page is not used
     //TODO: javadoc
     protected void startDisplay(String page, String title)
     {
@@ -168,8 +178,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         
         // Bgee logo
         this.writeln("<a href='" + this.prop.getBgeeRootDirectory() + "' title='Go to Bgee home page'>"
-                + "<img id='sib_other_logo' src='"+this.prop.getImagesRootDirectory()+"bgee_logo.png' "
-                + "title='Bgee: a dataBase for Gene Expression Evolution' "
+                + "<img id='sib_other_logo' src='"+this.prop.getImagesRootDirectory()
+                + "logo/bgee13_logo.png' title='Bgee: a dataBase for Gene Expression Evolution' "
                 + "alt='Bgee: a dataBase for Gene Expression Evolution' />"
                 + "</a>");
     
@@ -182,36 +192,58 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         // SIB logo
         this.writeln("<a href='http://www.isb-sib.ch/' target='_blank' " +
                 "title='Link to the SIB Swiss Institute of Bioinformatics'>" + 
-                "<img id='sib_logo' src='"+this.prop.getImagesRootDirectory()+"sib_logo_141x75.png' " + 
+                "<img id='sib_logo' src='"+this.prop.getImagesRootDirectory()+
+                "logo/sib_logo.png' " + 
                 "title='Bgee is part of the SIB Swiss Institute of Bioinformatics' " + 
                 "alt='SIB Swiss Institute of Bioinformatics' /></a>");
     
         RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
         urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+
+        RequestParameters urlDownloadRawDataGenerator = this.getNewRequestParameters();
+        urlDownloadRawDataGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlDownloadRawDataGenerator.setAction(RequestParameters.ACTION_DOWLOAD_RAW_FILES);
+        
+        RequestParameters urlDownloadCallsGenerator = this.getNewRequestParameters();
+        urlDownloadCallsGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlDownloadCallsGenerator.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
+
         RequestParameters urlDocGenerator = this.getNewRequestParameters();
         urlDocGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
+
+        RequestParameters urlBgeeAccessGenerator = this.getNewRequestParameters();
+        urlBgeeAccessGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
+        urlBgeeAccessGenerator.setAction(RequestParameters.ACTION_DOC_HOW_TO_ACCESS);
+
+        RequestParameters urlDownloadFilesDocGenerator = this.getNewRequestParameters();
+        urlDownloadFilesDocGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
+        urlDownloadFilesDocGenerator.setAction(RequestParameters.ACTION_DOC_DOWLOAD_FILES);
+
         RequestParameters urlAboutGenerator = this.getNewRequestParameters();
         urlAboutGenerator.setPage(RequestParameters.PAGE_ABOUT);
+
 
         // Navigation bar
         this.writeln("<div id='nav'>");
         this.writeln("<ul>");
         this.writeln("<li>");
         this.writeln("<a title='Expression data page' href='" + urlDownloadGenerator.getRequestURL() + 
-                "'>Expression data</a>");
+                "'>Expression data</a>" + this.getCaret());
+        this.writeln("<ul>");
+        this.writeln("<li><a class='drop' title='Processed raw data' href='" + 
+                urlDownloadRawDataGenerator.getRequestURL() + "'>Processed raw data</a></li>");
+        this.writeln("<li><a class='drop' title='Gene expression calls' href='" + 
+                urlDownloadCallsGenerator.getRequestURL() + "'>Gene expression calls</a></li>");
+        this.writeln("</ul>");
         this.writeln("</li>");
         this.writeln("<li>");
-        this.writeln("<a title='Documentation page' href='" + 
-                urlDocGenerator.getRequestURL() + "'>Documentation</a><img class='deploy' src='" + 
-                this.prop.getImagesRootDirectory() + "arrow_down_dark.png' alt='deploy'/>");
+        this.writeln("<a title='Documentation page' href='" + urlDocGenerator.getRequestURL() + 
+                "'>Documentation</a>" + this.getCaret());
         this.writeln("<ul>");
-        //TODO set section URLs when defined
-        this.writeln("<li><a class='drop' title='Section 1' href='" + urlDocGenerator.getRequestURL() + 
-                "'>Section 1</a></li>");
-        this.writeln("<li><a class='drop' title='Section 2' href='" + urlDocGenerator.getRequestURL() + 
-                "'>Section 2</a></li>");
-        this.writeln("<li><a class='drop' title='Section 1' href='" + urlDocGenerator.getRequestURL() + 
-                "'>Section 3</a></li>");
+        this.writeln("<li><a class='drop' title='How to access to Bgee data' href='" + 
+                urlBgeeAccessGenerator.getRequestURL() + "'>Bgee data accesses</a></li>");
+        this.writeln("<li><a class='drop' title='' href='" + 
+                urlDownloadFilesDocGenerator.getRequestURL() + "'>Download files</a></li>");
         this.writeln("</ul>");
         this.writeln("</li>");
 //        this.writeln("<li>");
@@ -253,6 +285,14 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         return "<script type=\"text/javascript\">eval(unescape('%66%75%6E%63%74%69%6F%6E%20%74%72%61%6E%73%70%6F%73%65%32%30%28%68%29%20%7B%76%61%72%20%73%3D%27%61%6D%6C%69%6F%74%42%3A%65%67%40%65%73%69%2D%62%69%73%2E%62%68%63%27%3B%76%61%72%20%72%3D%27%27%3B%66%6F%72%28%76%61%72%20%69%3D%30%3B%69%3C%73%2E%6C%65%6E%67%74%68%3B%69%2B%2B%2C%69%2B%2B%29%7B%72%3D%72%2B%73%2E%73%75%62%73%74%72%69%6E%67%28%69%2B%31%2C%69%2B%32%29%2B%73%2E%73%75%62%73%74%72%69%6E%67%28%69%2C%69%2B%31%29%7D%68%2E%68%72%65%66%3D%72%3B%7D%64%6F%63%75%6D%65%6E%74%2E%77%72%69%74%65%28%27%3C%61%20%68%72%65%66%3D%22%23%22%20%6F%6E%4D%6F%75%73%65%4F%76%65%72%3D%22%6A%61%76%61%73%63%72%69%70%74%3A%74%72%61%6E%73%70%6F%73%65%32%30%28%74%68%69%73%29%22%20%6F%6E%46%6F%63%75%73%3D%22%6A%61%76%61%73%63%72%69%70%74%3A%74%72%61%6E%73%70%6F%73%65%32%30%28%74%68%69%73%29%22%20%74%69%74%6C%65%3D%22%43%6F%6E%74%61%63%74%20%75%73%22%20%63%6C%61%73%73%3D%22%6D%65%6E%75%22%3E%43%6F%6E%74%61%63%74%3C%2F%61%3E%27%29%3B'));</script>";
     }
 
+    /**
+     * @return  the {@code String} that is the HTML code of the caret in navbar.
+     */
+    private String getCaret() {
+        return "<img class='deploy' src='" + 
+                this.prop.getImagesRootDirectory() + "arrow_down_dark.png' alt='deploy'/>";
+    }
+    
 //    @Override
 	protected void sendHeaders(boolean ajax) {
 	    log.entry(ajax);

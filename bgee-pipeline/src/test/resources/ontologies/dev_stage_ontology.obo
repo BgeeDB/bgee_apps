@@ -7970,6 +7970,7 @@ xref: BTO:0001043
 xref: EFO:0001272
 xref: FBdv:00005369
 xref: WBls:0000041
+xref: WBls:0000063
 xref: XtroDO:0000084
 relationship: part_of UBERON:0000092 ! post-embryonic stage
 relationship: preceded_by UBERON:0000111 ! organogenesis stage
@@ -7992,6 +7993,8 @@ xref: MmusDv:0000002
 xref: OGES:000000
 xref: OGES:000022
 xref: WBls:0000003
+xref: WBls:0000004
+xref: WBls:0000021
 xref: WBls:0000092
 xref: WBls:0000102
 xref: XAO:1000012
@@ -8137,6 +8140,8 @@ xref: VHOG:0000745
 xref: XAO:1000001
 xref: ZFS:0000001
 xref: HsapDv:0000003
+xref: TS01
+xref: MmusDv:0000003
 relationship: part_of UBERON:0000068 ! embryo stage
 property_value: homology_notes "As in all metazoans, eumetazoan development begins with a fertilized egg, or zygote.[well established][VHOG]" xsd:string {date_retrieved="2012-09-17", external_class="VHOG:0000745", ontology="VHOG", source="ISBN:978-0030259821 Ruppert EE, Fox RS, Barnes RD, Invertebrate zoology: a functional evolutionary approach (2003) p.107", source="http://bgee.unil.ch/"}
 
@@ -8178,6 +8183,8 @@ xref: OGES:000016
 xref: OGES:000021
 xref: OpenCyc:Mx4rEetFnKP2EdqAAAACs4vPlg
 xref: WBls:0000005
+xref: WBls:0000006
+xref: WBls:0000007
 xref: XAO:1000003
 xref: ZFS:0000045
 relationship: part_of UBERON:0000068 ! embryo stage
@@ -8205,6 +8212,7 @@ xref: HsapDv:0000010
 xref: MmusDv:0000013
 xref: OGES:000004
 xref: OGES:000019
+xref: WBls:0000009
 xref: WBls:0000010
 xref: XAO:1000005
 xref: ZFS:0000047
@@ -8278,6 +8286,9 @@ xref: MIAA:0000403
 xref: MmusDv:0000110
 xref: OGES:000026
 xref: OGES:000027
+xref: WBls:0000064
+xref: WBls:0000065
+xref: WBls:0000069
 xref: XAO:1000093
 xref: ZFS:0000044
 relationship: part_of UBERON:0000066 ! fully formed stage
@@ -8323,6 +8334,10 @@ name: nematode larval stage
 namespace: uberon
 def: "Nematode larval development begins with the newly hatched first-stage larva (L1) and ends with the end of the last larval stage (for example the fourth larval stage (L4) in C. elegans). Each stage of nematode larval development is characterized by proliferation of specific cell lineages and an increase in body size without alteration of the basic body plan. Nematode larval stages are separated by molts in which each stage-specific exoskeleton, or cuticle, is shed and replaced anew." [GO:0002119]
 xref: WBls:0000023
+xref: WBls:0000024
+xref: WBls:0000027
+xref: WBls:0000035
+xref: WBls:0000038
 is_a: UBERON:0000069 ! larval stage
 
 [Term]
@@ -8406,6 +8421,8 @@ xref: OanaDv:0000006
 xref: SscrDv:0000008
 xref: MmulDv:0000045
 xref: GgorDv:0000008
+xref: WBls:0000070
+xref: WBls:0000074
 xref: http://linkedlifedata.com/resource/umls/id/C0001792
 xref: http://ncicb.nci.nih.gov/xml/owl/EVS/Elderly
 xref: NIF_Organism:birnlex_691

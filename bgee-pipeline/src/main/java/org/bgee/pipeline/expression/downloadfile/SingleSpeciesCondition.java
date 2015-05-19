@@ -1,5 +1,7 @@
 package org.bgee.pipeline.expression.downloadfile;
 
+import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
+
 /**
  * Class used by classes that generate single species expression TSV download files 
  * to store conditions. 
@@ -30,6 +32,15 @@ public class SingleSpeciesCondition {
     public SingleSpeciesCondition(String anatEntityId, String stageId) {
         this.anatEntityId = anatEntityId;
         this.stageId = stageId;
+    }
+    /**
+     * Constructor allowing to retrieve the condition information from a {@code CallTO}. 
+     *
+     * @param call  A {@code CallTO} to retrieve condition information from.
+     */
+    public SingleSpeciesCondition(CallTO call) {
+        this.anatEntityId = call.getAnatEntityId();
+        this.stageId = call.getStageId();
     }
     
     /**

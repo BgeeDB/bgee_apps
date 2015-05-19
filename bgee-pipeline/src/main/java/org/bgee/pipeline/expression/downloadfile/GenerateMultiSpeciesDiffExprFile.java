@@ -1362,7 +1362,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             Map<String, Set<String>> mapOMANodeGene = 
                     this.getMappingOMANodeIdGeneIDs(mapGeneOMANode);
 
-            this.writeOMAFile(groupName, mapOMANodeGene, geneTOsByIds, omaBeanWriter);
+            this.writeOMAFile(mapOMANodeGene, geneTOsByIds, omaBeanWriter);
             
             // Get comparable stages: Stage ID -> Stage group and Stage group -> Stage IDs
             List<Map<String, List<String>>> mapStageGroup = this.getComparableStages(taxonId);
@@ -2263,6 +2263,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      *                      the associated values being {@code GeneTO}s corresponding to gene TOs. 
      * @return              A {@code String} that this the gene name corresponding to {@code geneId}.
      */
+    //XXX: is this method still necessary? Do we have null gene names?
     private String getFormattedGeneName(String geneId, Map<String, GeneTO> geneTOsByIds) {
         log.entry(geneId, geneTOsByIds);
         
@@ -2431,6 +2432,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             List<T> beans) {
         log.entry(beans);
     
+        // XXX: store this comparator as a private final static attribute?
         Collections.sort(beans, new Comparator<MultiSpeciesFileBean>(){
             @Override
             public int compare(MultiSpeciesFileBean bean1, MultiSpeciesFileBean bean2) {
@@ -2590,6 +2592,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                         processors[i] = new StrNotNullOrEmpty();
                         break;
                     case GENE_NAME_COLUMN_NAME:
+                        //XXX: really? Shouldn't it be new NotNull?
                         processors[i] = new Optional();
                         break;
                     case DIFFEXPRESSION_COLUMN_NAME:
@@ -2640,14 +2643,13 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         log.entry(fileType, speciesNames);
 
         String[] headers = null; 
+        // For simple file, we always have 7 columns and 4 columns for each species
         int nbColumns = 7 + 4 * speciesNames.size();
-        if (fileType.isSimpleFileType()) {
-            // For simple file, we always have 5 columns and 5 columns for each species
-            headers = new String[nbColumns];
-        } else {
+        if (!fileType.isSimpleFileType()) {
             // For complete file, the number of columns is independent of the number of species.
-            headers = new String[22];
+            nbColumns = 22;
         }
+        headers = new String[nbColumns];
         
         // *** Headers common to all file types ***
         headers[0] = OMA_ID_COLUMN_NAME;
@@ -2657,6 +2659,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             headers[3] = STAGE_ID_COLUMN_NAME;
             headers[4] = STAGE_NAME_COLUMN_NAME;
         } else {
+            //gene ID and gene name will be columns with index 1 and 2
             headers[3] = ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME;
             headers[4] = ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME;
             headers[5] = STAGE_ID_COLUMN_NAME;
@@ -2669,6 +2672,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 // the number of columns depends on the number of species
                 // gene columns are the end, so there is only 5 columns before species counts
                 int columnIndex = 5 + 4 * i;
+                // XXX: this seems weird, why are there underscores in speciesNames?
                 String endHeader = " for " + speciesNames.get(i).replaceAll("_", " ");
                 headers[columnIndex] = OVER_EXPR_GENE_COUNT_COLUMN_NAME + endHeader;
                 headers[columnIndex+1] = UNDER_EXPR_GENE_COUNT_COLUMN_NAME + endHeader;
@@ -2856,7 +2860,6 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     /**
      * Write the OMA file.
      *
-     * @param groupName         A {@code String} that is the group name.
      * @param mapOMANodeGene    A {@code Map} where keys are {@code String}s that are OMA node IDs, 
      *                          the associated values being {@code List} of {@code String}s 
      *                          corresponding to gene IDs.
@@ -2866,9 +2869,9 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * @param beanWriter        A {@code ICsvBeanWriter} that is the writer to use.
      * @throws IOException      If an error occurred while trying to write generated files.
      */
-    private void writeOMAFile(String groupName, Map<String, Set<String>> mapOMANodeGene, 
+    private void writeOMAFile(Map<String, Set<String>> mapOMANodeGene, 
             Map<String, GeneTO> geneTOsByIds, ICsvBeanWriter beanWriter) throws IOException {
-        log.entry();
+        log.entry(mapOMANodeGene, geneTOsByIds, beanWriter);
 
         // Get header
         final String[] header = this.generateOMAFileHeader();
@@ -2903,9 +2906,6 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     /**
      * Generates an {@code Array} of {@code String}s used to generate the header of an OMA TSV file.
      * 
-     * @param fileType      The {@code MultiSpDiffExprFileType} of the file to be generated.
-     * @param speciesNames  A {@code List} of {@code String}s that are the names of species 
-     *                      we want to generate data for.
      * @return              An {@code Array} of {@code String}s used to produce the header.
      */
     private String[] generateOMAFileHeader() {
@@ -2929,13 +2929,12 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * @throws IllegalArgumentException If an header is unrecognized.
      */
     private CellProcessor[] generateOMAFileCellProcessors(String[] header) {
-        log.entry(header);
+        log.entry((Object[]) header);
     
         CellProcessor[] processors = new CellProcessor[header.length];
         for (int i = 0; i < header.length; i++) {
     
             switch (header[i]) {
-                // *** CellProcessors common to all file types ***
                 case OMA_ID_COLUMN_NAME: 
                 case GENE_ID_COLUMN_NAME: 
                     processors[i] = new StrNotNullOrEmpty(); 
@@ -2967,7 +2966,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * @throws IllegalArgumentException If a {@code String} in {@code header} is not recognized.
      */
     private String[] mapOMAFileAttributes(String[] header) throws IllegalArgumentException {
-        log.entry(header);
+        log.entry((Object[]) header);
         
         String[] mapping = new String[header.length];
         for (int i = 0; i < header.length; i++) {

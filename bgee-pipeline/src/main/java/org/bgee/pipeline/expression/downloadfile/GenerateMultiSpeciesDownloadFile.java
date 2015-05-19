@@ -85,9 +85,9 @@ public interface GenerateMultiSpeciesDownloadFile {
     public final static String SPECIES_LATIN_NAME_COLUMN_NAME = "Latin species name";
 
     /**
-     * A {@code String} that is the file name of OMA file to be generated.
+     * A {@code String} that is a part of the file name of OMA files to be generated.
      */
-    public final static String OMA_FILE_NAME = "oma";
+    public final static String OMA_FILE_NAME = "orthologs";
 
     /**
      * Class parent of bean storing multi-species expression and differential expression calls, 

@@ -594,6 +594,7 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
 
             // These three variables are created to avoid having to change the values 
             // in different places in the code if we change them 
+            //XXX: why doesn't it correspond to some static variable?
             String highQuality = "high quality";
             String lowQuality = "low quality";
             String noQuality = GenerateDiffExprFile.NA_VALUE;
@@ -641,7 +642,7 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
             specificTypeQualities.add(noQuality);
             
             List<Object> resumeQualities = new ArrayList<Object>();
-            resumeQualities.add("high quality");
+            resumeQualities.add(highQuality);
             resumeQualities.add(lowQuality);
             resumeQualities.add(noQuality);
 

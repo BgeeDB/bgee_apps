@@ -665,19 +665,25 @@ public class GenerateExprFile extends GenerateDownloadFile {
         // relations between stages.
         Map<String, Set<String>> stageParentsFromChildren = 
                 BgeeDBUtils.getStageParentsFromChildren(speciesFilter, this.getRelationDAO());
+        // same for anatomical entities
         Map<String, Set<String>> anatEntityParentsFromChildren = 
                 BgeeDBUtils.getAnatEntityParentsFromChildren(speciesFilter, this.getRelationDAO());
         
-        // Get stage and anatomical entity propagated conditions from expression calls. 
+        // Get stage and anatomical entity propagated conditions from expression calls, 
+        // in order to get the valid conditions to propagate no-expression calls. 
         Set<SingleSpeciesCondition> propagatedExprConditions = this.propagateExprConditions(
                 this.getConditions(exprTOsByGeneIds), stageParentsFromChildren, anatEntityParentsFromChildren);
         // Get non-propagated conditions from no-expression calls.
+        // TODO: actually, we could also propagate the no-expression conditions, exactly as 
+        // for the expression conditions
         Set<SingleSpeciesCondition> noExprConditions = this.getConditions(noExprTOsByGeneIds);
 
         // Filter global no-expression calls with conditions.
         Set<SingleSpeciesCondition> allConditions = new HashSet<SingleSpeciesCondition>();
         allConditions.addAll(propagatedExprConditions);
         allConditions.addAll(noExprConditions);
+        // XXX: why not applying this filtering directly when calling loadNoExprCallsByGeneIds?
+        // This would save lots of memory.
         globalNoExprTOsByGeneIds = this.getFilteredNoExprTOs(globalNoExprTOsByGeneIds, allConditions);
 
         log.trace("Done retrieving data for expression files for the species {}.", speciesId);
@@ -810,7 +816,8 @@ public class GenerateExprFile extends GenerateDownloadFile {
     /**
      * Propagate {@code SingleSpeciesCondition}s to parent anatomical entities and to parent 
      * developmental stages, using the relations provided through {@code stageParentsFromChildren} 
-     * and {@code anatEntityParentsFromChildren}.
+     * and {@code anatEntityParentsFromChildren}. The returned {@code Set} will also include 
+     * the non-propagated {@code conditions}.
      *
      * @param conditions                    A {@code Set} of {@code SingleSpeciesCondition}s that 
      *                                      are conditions to be propagated.
@@ -818,14 +825,21 @@ public class GenerateExprFile extends GenerateDownloadFile {
      *                                      representing the IDs of stages that are the source of 
      *                                      a relation, the associated value being a {@code Set} of 
      *                                      {@code String}s that are the IDs of their associated 
-     *                                      targets. 
+     *                                      targets. Only relations with a {@code RelationType} 
+     *                                      {@code ISA_PARTOF} should be provided, but with 
+     *                                      any {@code RelationStatus} ({@code REFLEXIVE}, 
+     *                                      {@code DIRECT}, {@code INDIRECT}).
      * @param anatEntityParentsFromChildren A {@code Map} where keys are {@code String}s 
      *                                      representing the IDs of anatomical entities that are  
      *                                      the source of a relation, the associated value being a 
      *                                      {@code Set} of {@code String}s that are the IDs of 
-     *                                      their associated targets. 
+     *                                      their associated targets. Only relations with a 
+     *                                      {@code RelationType} {@code ISA_PARTOF} should be 
+     *                                      provided, but with any {@code RelationStatus} (
+     *                                      {@code REFLEXIVE}, {@code DIRECT}, {@code INDIRECT}).
      * @return                              A {@code Set} of {@code SingleSpeciesCondition}s that 
-     *                                      are stage and anatomical propagated conditions.
+     *                                      are stage and anatomical propagated conditions, 
+     *                                      also including the provided {@code conditions}.
      */
     private Set<SingleSpeciesCondition> propagateExprConditions(
             Set<SingleSpeciesCondition> conditions, 
@@ -836,6 +850,8 @@ public class GenerateExprFile extends GenerateDownloadFile {
         Set<SingleSpeciesCondition> propagatedExprConditions = new HashSet<SingleSpeciesCondition>();
         
         for (SingleSpeciesCondition currentCondition : conditions) {
+            assert currentCondition.getAnatEntityId() != null;
+            assert currentCondition.getStageId() != null;
             propagatedExprConditions.add(currentCondition);
             for (String stageParentId : stageParentsFromChildren.get(currentCondition.getStageId())) {
                 for (String anatEntityParentId : 
@@ -862,6 +878,8 @@ public class GenerateExprFile extends GenerateDownloadFile {
      *                              {@code NoExpressionCallTO}s, according to provided conditions, 
      *                              associated to this gene.
      */
+    // XXX: Really lots of memory used here, I'd rather modify the provided Map, 
+    // or apply the filtering directly when propagation no-expression calls.
     private Map<String, Set<NoExpressionCallTO>> getFilteredNoExprTOs(
             Map<String, Set<NoExpressionCallTO>> noExprTOsByGeneIds,
             Set<SingleSpeciesCondition> conditions) {
@@ -872,8 +890,7 @@ public class GenerateExprFile extends GenerateDownloadFile {
         for (Entry<String, Set<NoExpressionCallTO>> groupedCallTOs: noExprTOsByGeneIds.entrySet()) {
             Set<NoExpressionCallTO> filteredCalls = new HashSet<NoExpressionCallTO>();
             for (NoExpressionCallTO callTO : groupedCallTOs.getValue()) {
-                if (conditions.contains(
-                        new SingleSpeciesCondition(callTO.getAnatEntityId(), callTO.getStageId()))) {
+                if (conditions.contains(new SingleSpeciesCondition(callTO))) {
                     filteredCalls.add(callTO);
                 }
             }
@@ -901,8 +918,7 @@ public class GenerateExprFile extends GenerateDownloadFile {
       Set<SingleSpeciesCondition> allConditions = new HashSet<SingleSpeciesCondition>();
       for (Set<T> groupedCallTOs: callTOsByGeneIds.values()) {
           for (T callTO : groupedCallTOs) {
-              allConditions.add(
-                      new SingleSpeciesCondition(callTO.getAnatEntityId(), callTO.getStageId()));
+              allConditions.add(new SingleSpeciesCondition(callTO));
           }
       }
 
@@ -1095,36 +1111,38 @@ public class GenerateExprFile extends GenerateDownloadFile {
             }
             if (call instanceof ExpressionCallTO) {
                 ExpressionCallTO currentCallTO = (ExpressionCallTO) call;
+                //TODO: abstract this into a "isPropagated" method?
                 if (!currentCallTO.isIncludeSubstructures() || !currentCallTO.isIncludeSubStages()) {
                     if (expressionTO == null) {
                         expressionTO = currentCallTO;
                     } else {
                         throw log.throwing(new IllegalArgumentException("The provided CallTO list(" + 
-                                call.getClass() + ") contains severals expression calls"));
+                                call.getClass() + ") contains several basic expression calls"));
                     }
                 } else {
                     if (globalExpressionTO == null) {
                         globalExpressionTO = currentCallTO;
                     } else {
                         throw log.throwing(new IllegalArgumentException("The provided CallTO list(" + 
-                                call.getClass() + ") contains severals global expression calls"));
+                                call.getClass() + ") contains several global expression calls"));
                     }
                 }
             } else if (call instanceof NoExpressionCallTO) {
                 NoExpressionCallTO currentCallTO = (NoExpressionCallTO) call;
+                //TODO: abstract this into a "isPropagated" method?
                 if (!currentCallTO.isIncludeParentStructures()) {
                     if (noExpressionTO == null) {
                         noExpressionTO = currentCallTO;
                     } else {
                         throw log.throwing(new IllegalArgumentException("The provided CallTO list(" + 
-                                call.getClass() + ") contains severals no-expression calls"));
+                                call.getClass() + ") contains several basic no-expression calls"));
                     }
                 } else {
                     if (globalNoExpressionTO == null) {
                         globalNoExpressionTO = currentCallTO;
                     } else {
                         throw log.throwing(new IllegalArgumentException("The provided CallTO list(" + 
-                                call.getClass() + ") contains severals global no-expression calls"));
+                                call.getClass() + ") contains several global no-expression calls"));
                     }
                 }
             } else {
@@ -1145,6 +1163,7 @@ public class GenerateExprFile extends GenerateDownloadFile {
                 throw log.throwing(new IllegalArgumentException("All data states of " + 
                         "the expression call (" + globalExpressionTO + ") are set to no data"));
             }
+            //XXX: why not using getOriginOfLine here, as for the globalNoExpressionTO?
             if (globalExpressionTO.isObservedData() == null) {
                 throw log.throwing(new IllegalArgumentException("An ExpressionCallTO " + 
                         "does not allow to determine origin of the data: " + globalExpressionTO));

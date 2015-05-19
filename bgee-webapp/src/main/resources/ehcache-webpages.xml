@@ -16,7 +16,7 @@
     xsi:noNamespaceSchemaLocation="ehcache.xsd" updateCheck="true"
     monitoring="autodetect" dynamicConfig="true">
     <diskStore path="java.io.tmpdir" />
-    <cache name="BgeeWebCache" maxBytesLocalOffHeap="1G"
+    <cache name="BgeeWebCache" maxBytesLocalOffHeap="32G"
         maxBytesLocalHeap="1b" maxEntriesLocalDisk="0" eternal="true"
         memoryStoreEvictionPolicy="LFU"
         overflowToOffHeap="true">

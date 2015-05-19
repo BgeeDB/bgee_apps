@@ -47,7 +47,6 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.pipeline.BgeeDBUtils;
 import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.Utils;
-import org.supercsv.cellprocessor.Optional;
 import org.supercsv.cellprocessor.Trim;
 import org.supercsv.cellprocessor.constraint.DMinMax;
 import org.supercsv.cellprocessor.constraint.IsElementOf;
@@ -126,6 +125,67 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * from different data types, in the download file.
      */
     public final static String DIFFEXPRESSION_COLUMN_NAME = "Differential expression";
+
+    private final static Comparator<MultiSpeciesFileBean> MULTI_SPECIES_BEAN_COMPARATOR = 
+            new Comparator<MultiSpeciesFileBean>(){
+        @Override
+        public int compare(MultiSpeciesFileBean bean1, MultiSpeciesFileBean bean2) {
+            log.entry(bean1, bean2);
+
+            int omaIdComp = bean1.getOmaId().compareToIgnoreCase(bean2.getOmaId());
+            if (omaIdComp != 0)
+                return log.exit(omaIdComp);
+
+            int uberonIdComp = STRING_LIST_COMPARATOR.compare(bean1.getEntityIds(), bean2.getEntityIds());
+            if (uberonIdComp != 0)
+                return log.exit(uberonIdComp);
+            
+            int stageIdComp = STRING_LIST_COMPARATOR.compare(bean1.getStageIds(), bean2.getStageIds());
+            if (stageIdComp != 0)
+                return log.exit(stageIdComp);
+
+            if (bean1 instanceof MultiSpeciesCompleteDiffExprFileBean) {
+                int speciesIdComp =
+                        Integer.valueOf(
+                                    ((MultiSpeciesCompleteDiffExprFileBean)bean1).getSpeciesId()).
+                                compareTo(
+                                    Integer.valueOf(
+                                        ((MultiSpeciesCompleteDiffExprFileBean)bean2).getSpeciesId()));
+                if (speciesIdComp != 0)
+                    return log.exit(speciesIdComp);
+
+                int geneIdComp = ((MultiSpeciesCompleteDiffExprFileBean)bean1).getGeneId().
+                        compareToIgnoreCase(
+                                ((MultiSpeciesCompleteDiffExprFileBean)bean2).getGeneId());
+                if (geneIdComp != 0)
+                    return log.exit(geneIdComp);
+            }
+            return log.exit(0);
+        }
+    };
+ 
+    private final static Comparator<List<String>> STRING_LIST_COMPARATOR = 
+            new Comparator<List<String>>(){
+        @Override
+        public int compare(List<String> list1, List<String> list2) {
+            log.entry(list1, list2);
+            int minLength = Math.min(list1.size(), list2.size());
+
+            for (int i = 0; i < minLength; i++) {
+                final int compareValue = list1.get(i).compareToIgnoreCase(list2.get(i));
+                if (compareValue != 0) {
+                    return log.exit(compareValue); // They are already not equal
+                }
+            }
+            if (list1.size() == list2.size()) {
+                return log.exit(0); // They are equal
+            } else if (list1.size() < list2.size()) {
+                return log.exit(-1); // list 1 is smaller
+            } else {
+                return log.exit(1);
+            }
+        }
+    };
 
     /**
      * Class used to store multi-species differential expression counts: over-expressed gene count, 
@@ -1335,7 +1395,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 
                 // create and configure writer
                 ICsvDozerBeanWriter beanWriter = new CsvDozerBeanWriter(new FileWriter(file),
-                        Utils.TSVCOMMENTED);
+                        Utils.getCsvPreferenceWithQuote(this.generateQuoteMode(fileTypeHeaders)));
                 // configure the mapping from the fields to the CSV columns
                 if (currentFileType.isSimpleFileType()) {
                     beanWriter.configureBeanMapping(MultiSpeciesSimpleDiffExprFileBean.class, 
@@ -1996,7 +2056,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         Map<String, Integer> speciesGeneCount = new HashMap<String, Integer>();
         // build gene names and species-genes count.
         for (String geneId : geneIds) {
-            geneNames.add(this.getFormattedGeneName(geneId, geneTOsByIds));
+            geneNames.add(geneTOsByIds.get(geneId).getName());
             
             String speciesId = String.valueOf(geneTOsByIds.get(geneId).getSpeciesId());
             Integer geneCount = speciesGeneCount.get(speciesId);
@@ -2066,7 +2126,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 MultiSpeciesCompleteDiffExprFileBean currentBean = 
                         new MultiSpeciesCompleteDiffExprFileBean(
                                 omaNodeId, null, null, null, null, // organ and stage names and IDs
-                                to.getGeneId(), this.getFormattedGeneName(to.getGeneId(), geneTOsByIds), 
+                                to.getGeneId(), geneTOsByIds.get(to.getGeneId()).getName(), 
                                 cioId, cioStatementByIds.get(cioId).getName(),
                                 speciesId, speciesNamesByIds.get(speciesId), 
                                 to.getDiffExprCallTypeAffymetrix().getStringRepresentation(), 
@@ -2256,25 +2316,6 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     }
     
     /**
-     * Get gene name corresponding to {@code geneId} formatted for files. 
-     *
-     * @param geneId        A {@code String} that is the ID of the gene.         
-     * @param geneTOsByIds  A {@code Map} where keys are {@code String}s corresponding to gene IDs, 
-     *                      the associated values being {@code GeneTO}s corresponding to gene TOs. 
-     * @return              A {@code String} that this the gene name corresponding to {@code geneId}.
-     */
-    //XXX: is this method still necessary? Do we have null gene names?
-    private String getFormattedGeneName(String geneId, Map<String, GeneTO> geneTOsByIds) {
-        log.entry(geneId, geneTOsByIds);
-        
-        String geneName = geneTOsByIds.get(geneId).getName();
-        if (!geneName.isEmpty()) {
-            return log.exit(geneName);
-        }
-        return log.exit("");
-    }
-    
-    /**
      * Order and write rows from provided beans, that should be beans of one OMA node ID.
      *
      * @param fileType      A {@code MultiSpDiffExprFileType} defining the type of file 
@@ -2292,8 +2333,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         log.entry(fileType, writer, processors, beans);
         
         // We order calls according to OMA ID, entity IDs, stage IDs for simple and complete files
-        // then according to species ID, gene ID for complete files. 
-        this.sortMultiSpeciesDiffExprFileBeanCollection(beans);
+        // then according to species ID, gene ID for complete files.
+        Collections.sort(beans, MULTI_SPECIES_BEAN_COMPARATOR);
 
         // We write rows
         for (MultiSpeciesFileBean bean: beans) {
@@ -2420,90 +2461,6 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     }
 
     /**
-     * Sort multi-species diff. expression file beans according to OMA ID, entity IDs, stage IDs 
-     * for simple and complete files then according to species ID, gene ID for complete files.
-     * <p>
-     * The provided {@code beans} will be modified.
-     *
-     * @param beans A {@code List} of {@code T} that are beans to be sorted.
-     * @param <T>   A {@code MultiSpeciesFileBean} type parameter.
-     */ 
-    private <T extends MultiSpeciesFileBean> void sortMultiSpeciesDiffExprFileBeanCollection(
-            List<T> beans) {
-        log.entry(beans);
-    
-        // XXX: store this comparator as a private final static attribute?
-        Collections.sort(beans, new Comparator<MultiSpeciesFileBean>(){
-            @Override
-            public int compare(MultiSpeciesFileBean bean1, MultiSpeciesFileBean bean2) {
-                log.entry(bean1, bean2);
-                
-                int omaIdComp = bean1.getOmaId().compareToIgnoreCase(bean2.getOmaId());
-                if (omaIdComp != 0)
-                    return log.exit(omaIdComp);
-    
-                int uberonIdComp = compareTwoStringLists(bean1.getEntityIds(), bean2.getEntityIds());
-                if (uberonIdComp != 0)
-                    return log.exit(uberonIdComp);
-    
-                int stageIdComp = compareTwoStringLists(bean1.getStageIds(), bean2.getStageIds());
-                if (stageIdComp != 0)
-                    return log.exit(stageIdComp);
-                
-                if (bean1 instanceof MultiSpeciesCompleteDiffExprFileBean) {
-                    int speciesIdComp =
-                                Integer.valueOf(
-                                    ((MultiSpeciesCompleteDiffExprFileBean)bean1).getSpeciesId()).
-                            compareTo(
-                                Integer.valueOf(
-                                    ((MultiSpeciesCompleteDiffExprFileBean)bean2).getSpeciesId()));
-                    if (speciesIdComp != 0)
-                        return log.exit(speciesIdComp);
-                    
-                    int geneIdComp = ((MultiSpeciesCompleteDiffExprFileBean)bean1).getGeneId().
-                            compareToIgnoreCase(
-                                    ((MultiSpeciesCompleteDiffExprFileBean)bean2).getGeneId());
-                    if (geneIdComp != 0)
-                        return log.exit(geneIdComp);
-                }
-                return log.exit(0);
-            }
-        });
-        
-        log.exit();
-    }
-
-    /**
-     * Compare two {@code List}s of {@code String}s, elements by elements. When two elements (with 
-     * the same index), are different, the comparison returns an {@code int} whose sign is that of 
-     * calling {@link java.lang.String.compareToIgnoreCase(String)}.
-     *
-     * @param list1 A {@code List} to be compared to {@code list2}.
-     * @param list2 A {@code List} to be compared to {@code list1}.
-     * @return      A negative integer, zero, or a positive integer as {@code list1} is greater than, 
-     *              equal to, or less than this {@code list2}, ignoring case considerations.
-     */
-    //TODO: transform this method into a Comparator
-    private int compareTwoStringLists(List<String> list1, List<String> list2) {
-        log.entry(list1, list2);
-        int minLength = Math.min(list1.size(), list2.size());
-
-        for (int i = 0; i < minLength; i++) {
-            final int compareValue = list1.get(i).compareToIgnoreCase(list2.get(i));
-            if (compareValue != 0) {
-                return log.exit(compareValue); // They are already not equal
-            }
-        }
-        if (list1.size() == list2.size()) {
-            return log.exit(0); // They are equal
-        } else if (list1.size() < list2.size()) {
-            return log.exit(-1); // list 1 is smaller
-        } else {
-            return log.exit(1);
-        }
-    }
-
-    /**
      * Generates an {@code Array} of {@code CellProcessor}s used to process a multi-species 
      * differential expression TSV file of type {@code fileType}.
      * 
@@ -2592,8 +2549,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                         processors[i] = new StrNotNullOrEmpty();
                         break;
                     case GENE_NAME_COLUMN_NAME:
-                        //XXX: really? Shouldn't it be new NotNull?
-                        processors[i] = new Optional();
+                        processors[i] = new NotNull();
                         break;
                     case DIFFEXPRESSION_COLUMN_NAME:
                     case AFFYMETRIX_DATA_COLUMN_NAME:
@@ -2706,6 +2662,70 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         return log.exit(headers);
     }
     
+    /**
+     * Generate {@code Array} of {@code booleans} (one per CSV column) indicating 
+     * whether each column should be quoted or not.
+     *
+     * @param headers   An {@code Array} of {@code String}s representing the names of the columns.
+     * @return          the {@code Array } of {@code booleans} (one per CSV column) indicating 
+     *                  whether each column should be quoted or not.
+     */
+    private boolean[] generateQuoteMode(String[] headers) {
+        log.entry((Object[]) headers);
+        
+        boolean[] quoteMode = new boolean[headers.length];
+        for (int i = 0; i < headers.length; i++) {
+
+            if (headers[i].startsWith(OVER_EXPR_GENE_COUNT_COLUMN_NAME) ||
+                    headers[i].startsWith(UNDER_EXPR_GENE_COUNT_COLUMN_NAME) ||
+                    headers[i].startsWith(NO_DIFF_EXPR_GENE_COUNT_COLUMN_NAME) ||
+                    headers[i].startsWith(NA_GENES_COUNT_COLUMN_NAME)) {
+                quoteMode[i] = false;
+                continue;
+            } 
+
+            switch (headers[i]) {
+                case OMA_ID_COLUMN_NAME:
+                case ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME:
+                case STAGE_ID_COLUMN_NAME:
+                case OVER_EXPR_GENE_COUNT_COLUMN_NAME:
+                case UNDER_EXPR_GENE_COUNT_COLUMN_NAME:
+                case NO_DIFF_EXPR_GENE_COUNT_COLUMN_NAME:
+                case NA_GENES_COUNT_COLUMN_NAME:
+                case GENE_ID_LIST_COLUMN_NAME:
+                case GENE_NAME_LIST_COLUMN_NAME:
+                case GENE_ID_COLUMN_NAME:
+                case SPECIES_LATIN_NAME_COLUMN_NAME:                
+                case DIFFEXPRESSION_COLUMN_NAME:
+                case QUALITY_COLUMN_NAME:
+                case AFFYMETRIX_DATA_COLUMN_NAME: 
+                case AFFYMETRIX_CALL_QUALITY_COLUMN_NAME:
+                case AFFYMETRIX_P_VALUE_COLUMN_NAME: 
+                case AFFYMETRIX_CONSISTENT_DEA_COUNT_COLUMN_NAME: 
+                case AFFYMETRIX_INCONSISTENT_DEA_COUNT_COLUMN_NAME:
+                case RNASEQ_DATA_COLUMN_NAME: 
+                case RNASEQ_CALL_QUALITY_COLUMN_NAME:
+                case RNASEQ_P_VALUE_COLUMN_NAME: 
+                case RNASEQ_CONSISTENT_DEA_COUNT_COLUMN_NAME: 
+                case RNASEQ_INCONSISTENT_DEA_COUNT_COLUMN_NAME:
+                case CIO_ID_COLUMN_NAME: 
+                case CIO_NAME_ID_COLUMN_NAME:
+                    quoteMode[i] = false; 
+                    break;
+                case GENE_NAME_COLUMN_NAME:
+                case ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME:
+                case STAGE_NAME_COLUMN_NAME:
+                    quoteMode[i] = true; 
+                    break;
+                default:
+                    throw log.throwing(new IllegalArgumentException(
+                            "Unrecognized header: " + headers[i] + " for OMA TSV file."));
+            }
+        }
+        
+        return log.exit(quoteMode);
+    }
+
     /**
      * Generate the field mapping for each column of the header of a multi-species
      * differential expression TSV file of type {@code fileType}.
@@ -2894,7 +2914,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             Collections.sort(orderedGeneIds);
             for (String geneId: orderedGeneIds) {
                 OMAFileBean bean = new OMAFileBean(
-                        omaId, geneId, this.getFormattedGeneName(geneId, geneTOsByIds));
+                        omaId, geneId, geneTOsByIds.get(geneId).getName());
                 log.trace("Write row: {} - using writer: {}", bean, beanWriter);
                 beanWriter.write(bean, attributes, processors);                
             }

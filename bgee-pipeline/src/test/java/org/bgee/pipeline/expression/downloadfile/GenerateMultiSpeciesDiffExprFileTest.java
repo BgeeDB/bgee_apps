@@ -467,10 +467,13 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
 
         // We retrieve the annotations without using the extraction methods, to maintain 
         // the unit of the test. 
-        // We use ICsvListReader to be able to read comments lines. Moreover this is why 
-        // we do not use Utils.TSVCOMMENTED that skip comments.
-        try (ICsvListReader listReader = new CsvListReader(new FileReader(file), 
-                new CsvPreference.Builder(CsvPreference.TAB_PREFERENCE).build())) {
+        // We use ICsvListReader to be able to read comments lines. 
+        // Moreover we do not use Utils.TSVCOMMENTED that skip comments and to 
+        // use '$' as character used to escape columns containing the delimiter to be able 
+        // to test that '"' is around columns with name
+        CsvPreference preference = new CsvPreference.Builder('$', '\t', "\n").build();
+
+        try (ICsvListReader listReader = new CsvListReader(new FileReader(file), preference)) {
             String[] actualHeaders = listReader.getHeader(true);
             log.trace("Headers: {}", (Object[]) actualHeaders);
 
@@ -480,11 +483,11 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
             // *** Headers common to all file types ***
             expectedHeaders[0] = GenerateMultiSpeciesDownloadFile.OMA_ID_COLUMN_NAME;
             expectedHeaders[1] = GenerateDownloadFile.GENE_ID_COLUMN_NAME;
-            expectedHeaders[2] = GenerateDownloadFile.GENE_NAME_COLUMN_NAME; 
+            expectedHeaders[2] = "\"" + GenerateDownloadFile.GENE_NAME_COLUMN_NAME + "\""; 
             expectedHeaders[3] = GenerateMultiSpeciesDownloadFile.ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME;
-            expectedHeaders[4] = GenerateMultiSpeciesDownloadFile.ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME;
+            expectedHeaders[4] = "\"" + GenerateMultiSpeciesDownloadFile.ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME + "\"";
             expectedHeaders[5] = GenerateDownloadFile.STAGE_ID_COLUMN_NAME;
-            expectedHeaders[6] = GenerateDownloadFile.STAGE_NAME_COLUMN_NAME;
+            expectedHeaders[6] = "\"" + GenerateDownloadFile.STAGE_NAME_COLUMN_NAME + "\"";
             expectedHeaders[7] = GenerateMultiSpeciesDownloadFile.SPECIES_LATIN_NAME_COLUMN_NAME;                
             expectedHeaders[8] = GenerateMultiSpeciesDiffExprFile.DIFFEXPRESSION_COLUMN_NAME;
             expectedHeaders[9] = GenerateDownloadFile.QUALITY_COLUMN_NAME;
@@ -508,8 +511,8 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
             List<List<String>> expectedRows = new ArrayList<List<String>>();
 
             expectedRows.add(Arrays.asList(
-                    "222", "geneId6", "geneName6", "entityId4|entityId5", "entityName4|entityName5",
-                    "stageId2", "stageName2", "GenusZZ_speciesZZ",  
+                    "222", "geneId6", "\"geneName6\"", "entityId4|entityId5", "\"entityName4|entityName5\"",
+                    "stageId2", "\"stageName2\"", "GenusZZ_speciesZZ",  
                     DiffExpressionData.STRONG_AMBIGUITY.getStringRepresentation(), 
                     GenerateDiffExprFile.NA_VALUE,  
                     DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(), 
@@ -519,8 +522,8 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     "cioId1", "cioName1"));
             
             expectedRows.add(Arrays.asList(
-                    "222", "geneId7", "geneName7", "entityId4|entityId5", "entityName4|entityName5", 
-                    "stageId2", "stageName2", "GenusVR_speciesVR", 
+                    "222", "geneId7", "\"geneName7\"", "entityId4|entityId5", "\"entityName4|entityName5\"", 
+                    "stageId2", "\"stageName2\"", "GenusVR_speciesVR", 
                     DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
                     DataState.LOWQUALITY.getStringRepresentation(), 
                     DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
@@ -530,9 +533,8 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     "cioId1", "cioName1"));
           
             expectedRows.add(Arrays.asList(
-                    //The gene name geneId5 of is an empty String but it is converted by SuperCSV into null.
-                    "333", "geneId5", null, "entityId1|entityId3", "entityName1|entityName3", 
-                    "stageId1", "stageName1", "GenusZZ_speciesZZ", 
+                    "333", "geneId5", "\"\"", "entityId1|entityId3", "\"entityName1|entityName3\"", 
+                    "stageId1", "\"stageName1\"", "GenusZZ_speciesZZ", 
                     DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
                     DataState.LOWQUALITY.getStringRepresentation(), 
                     DiffExpressionData.NO_DATA.getStringRepresentation(), 
@@ -542,8 +544,8 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     "cioId2", "cioName2"));
             
             expectedRows.add(Arrays.asList(
-                    "333", "geneId12", "geneName12", "entityId1|entityId3", "entityName1|entityName3", 
-                    "stageId1", "stageName1", "GenusAA_speciesAA", 
+                    "333", "geneId12", "\"geneName12\"", "entityId1|entityId3", "\"entityName1|entityName3\"", 
+                    "stageId1", "\"stageName1\"", "GenusAA_speciesAA", 
                     DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
                     DataState.HIGHQUALITY.getStringRepresentation(),
                     DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
@@ -553,8 +555,8 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     "cioId2", "cioName2"));
 
             expectedRows.add(Arrays.asList(
-                    "333", "geneId4", "geneName4", "entityId1|entityId3", "entityName1|entityName3", 
-                    "stageId1", "stageName1", "GenusAA_speciesAA", 
+                    "333", "geneId4", "\"geneName4\"", "entityId1|entityId3", "\"entityName1|entityName3\"", 
+                    "stageId1", "\"stageName1\"", "GenusAA_speciesAA", 
                     DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
                     DataState.HIGHQUALITY.getStringRepresentation(), 
                     DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
@@ -564,8 +566,8 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     "cioId2", "cioName2"));
 
             expectedRows.add(Arrays.asList(
-                    "444", "geneId1", "geneName1", "entityId1|entityId2", "entityName1|entityName2", 
-                    "stageId1", "stageName1", "GenusZZ_speciesZZ", 
+                    "444", "geneId1", "\"geneName1\"", "entityId1|entityId2", "\"entityName1|entityName2\"", 
+                    "stageId1", "\"stageName1\"", "GenusZZ_speciesZZ", 
                     DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
                     DataState.HIGHQUALITY.getStringRepresentation(), 
                     DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
@@ -575,8 +577,8 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     "cioId1", "cioName1"));
 
             expectedRows.add(Arrays.asList(
-                    "444", "geneId2", "geneName2", "entityId1|entityId2", "entityName1|entityName2", 
-                    "stageId1", "stageName1", "GenusVR_speciesVR", 
+                    "444", "geneId2", "\"geneName2\"", "entityId1|entityId2", "\"entityName1|entityName2\"", 
+                    "stageId1", "\"stageName1\"", "GenusVR_speciesVR", 
                     DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(), 
                     DataState.LOWQUALITY.getStringRepresentation(), 
                     DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(), 
@@ -586,8 +588,8 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     "cioId1", "cioName1"));
 
             expectedRows.add(Arrays.asList(
-                    "444", "geneId9", "null", "entityId1|entityId2", "entityName1|entityName2", 
-                    "stageId1", "stageName1", "GenusAA_speciesAA", 
+                    "444", "geneId9", "\"null\"", "entityId1|entityId2", "\"entityName1|entityName2\"", 
+                    "stageId1", "\"stageName1\"", "GenusAA_speciesAA", 
                     DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
                     DataState.HIGHQUALITY.getStringRepresentation(), 
                     DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
@@ -597,8 +599,8 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     "cioId1", "cioName1"));
             
             expectedRows.add(Arrays.asList(
-                    "444", "geneId8", "geneName8", "entityId4", "entityName4", 
-                    "stageId1", "stageName1", "GenusZZ_speciesZZ",  
+                    "444", "geneId8", "\"geneName8\"", "entityId4", "\"entityName4\"", 
+                    "stageId1", "\"stageName1\"", "GenusZZ_speciesZZ",  
                     DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
                     DataState.HIGHQUALITY.getStringRepresentation(), 
                     DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
@@ -608,8 +610,8 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     "cioId1", "cioName1"));
 
             expectedRows.add(Arrays.asList(
-                    "444", "geneId9", "null", "entityId4", "entityName4", 
-                    "stageId1", "stageName1", "GenusAA_speciesAA", 
+                    "444", "geneId9", "\"null\"", "entityId4", "\"entityName4\"", 
+                    "stageId1", "\"stageName1\"", "GenusAA_speciesAA", 
                     DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(), 
                     DataState.LOWQUALITY.getStringRepresentation(), 
                     DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(), 

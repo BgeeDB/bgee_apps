@@ -526,7 +526,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
                 processors.put(fileType, fileTypeProcessors);
                 String[] fileTypeHeaders = this.generateDiffExprFileHeader(fileType);
                 headers.put(fileType, fileTypeHeaders);
-    
+
                 //Create file name
                 String fileName = fileNamePrefix + "_" + fileType.getStringRepresentation() 
                         + EXTENSION;
@@ -541,7 +541,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
                 
                 //create writer and write header
                 ICsvMapWriter mapWriter = new CsvMapWriter(new FileWriter(file), 
-                        Utils.TSVCOMMENTED);
+                        Utils.getCsvPreferenceWithQuote(this.generateQuoteMode(fileTypeHeaders)));
                 mapWriter.writeHeader(fileTypeHeaders);
                 writersUsed.put(fileType, mapWriter);
             }
@@ -566,6 +566,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
     
         log.exit();
     }
+
     /**
      * Retrieves all differential expression calls for the requested species from the Bgee data 
      * source.
@@ -702,6 +703,51 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
                 RNASEQ_DATA_COLUMN_NAME, RNASEQ_CALL_QUALITY_COLUMN_NAME,
                 RNASEQ_P_VALUE_COLUMN_NAME, RNASEQ_CONSISTENT_DEA_COUNT_COLUMN_NAME, 
                 RNASEQ_INCONSISTENT_DEA_COUNT_COLUMN_NAME});
+    }
+
+    /**
+     * Generate {@code Array} of {@code booleans} (one per CSV column) indicating 
+     * whether each column should be quoted or not.
+     *
+     * @param headers   An {@code Array} of {@code String}s representing the names of the columns.
+     * @return          the {@code Array} of {@code booleans} (one per CSV column) indicating 
+     *                  whether each column should be quoted or not.
+     */
+    private boolean[] generateQuoteMode(String[] headers) {
+        log.entry((Object[]) headers);
+        
+        boolean[] quoteMode = new boolean[headers.length];
+        for (int i = 0; i < headers.length; i++) {
+            switch (headers[i]) {
+                case GENE_ID_COLUMN_NAME:
+                case ANATENTITY_ID_COLUMN_NAME:
+                case STAGE_ID_COLUMN_NAME:
+                case DIFFEXPRESSION_COLUMN_NAME:
+                case QUALITY_COLUMN_NAME:
+                case AFFYMETRIX_DATA_COLUMN_NAME:
+                case AFFYMETRIX_CALL_QUALITY_COLUMN_NAME:
+                case AFFYMETRIX_P_VALUE_COLUMN_NAME:
+                case AFFYMETRIX_CONSISTENT_DEA_COUNT_COLUMN_NAME:
+                case AFFYMETRIX_INCONSISTENT_DEA_COUNT_COLUMN_NAME:
+                case RNASEQ_DATA_COLUMN_NAME:
+                case RNASEQ_CALL_QUALITY_COLUMN_NAME:
+                case RNASEQ_P_VALUE_COLUMN_NAME:
+                case RNASEQ_CONSISTENT_DEA_COUNT_COLUMN_NAME:
+                case RNASEQ_INCONSISTENT_DEA_COUNT_COLUMN_NAME:
+                    quoteMode[i] = false; 
+                    break;
+                case GENE_NAME_COLUMN_NAME:
+                case ANATENTITY_NAME_COLUMN_NAME:
+                case STAGE_NAME_COLUMN_NAME:
+                    quoteMode[i] = true; 
+                    break;
+                default:
+                    throw log.throwing(new IllegalArgumentException(
+                            "Unrecognized header: " + headers[i] + " for OMA TSV file."));
+            }
+        }
+        
+        return log.exit(quoteMode);
     }
 
     /**

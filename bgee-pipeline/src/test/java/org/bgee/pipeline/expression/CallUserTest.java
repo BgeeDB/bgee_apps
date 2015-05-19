@@ -357,7 +357,9 @@ public class CallUserTest extends TestAncestor {
     @Test
     public void testIsPropagatedOnly() {
         CallUser callUser = new FakeCallUser();
-        
+        // Some CallTOs are not necessarily correct but they are given to check that 
+        // the other attributes are ignored 
+
         // Test expression calls
         ExpressionCallTO exprTO = new ExpressionCallTO(  
                 null, null, null, null, null, null, null, null, null, null, 
@@ -407,6 +409,19 @@ public class CallUserTest extends TestAncestor {
         assertTrue("Incorrect boolean returned by isPropagatedOnly", 
                 callUser.isPropagatedOnly(exprTO));
 
+        try {
+            exprTO = new ExpressionCallTO(  
+                    null, null, null, null, null, null, null, null, null, null, 
+                    ExpressionCallTO.OriginOfLine.DESCENT, ExpressionCallTO.OriginOfLine.DESCENT, 
+                    null);
+            callUser.isPropagatedOnly(exprTO);
+            // test failed
+            throw new AssertionError("isPropagatedOnly did not throw " +
+                "an IllegalArgumentException as expected");
+        } catch (IllegalArgumentException e) {
+            // test passed, do nothing
+        }
+
         // Test no-expression calls
         NoExpressionCallTO noExprTO = new NoExpressionCallTO(  
                 null, null, null, null, null,  null, null, null, null,
@@ -425,6 +440,95 @@ public class CallUserTest extends TestAncestor {
                 NoExpressionCallTO.OriginOfLine.PARENT);
         assertTrue("Incorrect boolean returned by isPropagatedOnly", 
                 callUser.isPropagatedOnly(noExprTO));
+        try {
+            noExprTO = new NoExpressionCallTO(  
+                    null, null, null, null, null, null, null, null, true, null);
+            callUser.isPropagatedOnly(noExprTO);
+            // test failed
+            throw new AssertionError("isPropagatedOnly did not throw " +
+                "an IllegalArgumentException as expected");
+        } catch (IllegalArgumentException e) {
+            // test passed, do nothing
+        }
+
+    }
+    
+    /**
+     * Test the method {@link CallUser#isGlobal(CallTO)}.
+     */
+    @Test
+    public void testIsGlobal() {
+        CallUser callUser = new FakeCallUser();
+        // Some CallTOs are not necessarily correct but they are given to check that 
+        // the other attributes are ignored 
+        
+        // Test expression calls
+        ExpressionCallTO exprTO = new ExpressionCallTO(  
+                null, null, null, null, null, null, null, null, true, true, 
+                ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.SELF, true);
+        assertTrue("Incorrect boolean returned by isGlobal", 
+                callUser.isGlobal(exprTO));
+        
+        exprTO = new ExpressionCallTO(  
+                null, null, null, null, null, null, null, null, true, false, 
+                ExpressionCallTO.OriginOfLine.DESCENT, ExpressionCallTO.OriginOfLine.SELF, true);
+        assertTrue("Incorrect boolean returned by isGlobal", 
+                callUser.isGlobal(exprTO));
+        
+        exprTO = new ExpressionCallTO(  
+                null, null, null, null, null, null, null, null, false, true, 
+                ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.SELF, true);
+        assertTrue("Incorrect boolean returned by isGlobal", 
+                callUser.isGlobal(exprTO));
+        
+        exprTO = new ExpressionCallTO(  
+                null, null, null, null, null, null, null, null, false, false, 
+                ExpressionCallTO.OriginOfLine.BOTH, ExpressionCallTO.OriginOfLine.BOTH, true);
+        assertFalse("Incorrect boolean returned by isGlobal", 
+                callUser.isGlobal(exprTO));
+        
+        try {
+            exprTO = new ExpressionCallTO(  
+                    null, null, null, null, null, null, null, null, null, null, 
+                    null, null, true);
+            callUser.isGlobal(exprTO);
+            // test failed
+            throw new AssertionError("isGlobal did not throw " +
+                "an IllegalArgumentException as expected");
+        } catch (IllegalArgumentException e) {
+            // test passed, do nothing
+        }
+
+        // Test no-expression calls
+        NoExpressionCallTO noExprTO = new NoExpressionCallTO(  
+                null, null, null, null, null, null, null, null, true,
+                NoExpressionCallTO.OriginOfLine.SELF);
+        assertTrue("Incorrect boolean returned by isGlobal", 
+                callUser.isGlobal(noExprTO));
+        
+        noExprTO = new NoExpressionCallTO(  
+                null, null, null, null, null, null, null, null, false,
+                NoExpressionCallTO.OriginOfLine.BOTH);
+        assertFalse("Incorrect boolean returned by isGlobal", 
+                callUser.isGlobal(noExprTO));
+        
+        noExprTO = new NoExpressionCallTO(  
+                null, null, null, null, null, null, null, null, false,
+                NoExpressionCallTO.OriginOfLine.SELF);
+        assertFalse("Incorrect boolean returned by isGlobal", 
+                callUser.isGlobal(noExprTO));
+        try {
+            noExprTO = new NoExpressionCallTO(  
+                    null, null, null, null, null, null, null, null, null,
+                    NoExpressionCallTO.OriginOfLine.PARENT);
+            callUser.isGlobal(noExprTO);
+            // test failed
+            throw new AssertionError("isGlobal did not throw " +
+                "an IllegalArgumentException as expected");
+        } catch (IllegalArgumentException e) {
+            // test passed, do nothing
+        }
+
     }
     
     /**

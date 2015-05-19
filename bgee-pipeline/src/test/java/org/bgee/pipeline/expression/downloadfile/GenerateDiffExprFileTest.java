@@ -37,7 +37,6 @@ import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
 import org.bgee.model.dao.mysql.expressiondata.MySQLDiffExpressionCallDAO.MySQLDiffExpressionCallTOResultSet;
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO.MySQLSpeciesTOResultSet;
 import org.bgee.pipeline.TestAncestor;
-import org.bgee.pipeline.Utils;
 import org.bgee.pipeline.expression.downloadfile.GenerateDiffExprFile.DiffExpressionData;
 import org.bgee.pipeline.expression.downloadfile.GenerateDiffExprFile.SingleSpDiffExprFileType;
 import org.bgee.pipeline.expression.downloadfile.GenerateExprFile.SingleSpExprFileType;
@@ -49,6 +48,7 @@ import org.supercsv.cellprocessor.constraint.NotNull;
 import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.io.CsvMapReader;
 import org.supercsv.io.ICsvMapReader;
+import org.supercsv.prefs.CsvPreference;
 
 
 /**
@@ -588,13 +588,17 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
      */
     private void assertDiffExpressionFile(String file, String speciesId, boolean isSimplified, 
             ComparisonFactor factor, int expNbLines) throws IOException {
-        try (ICsvMapReader mapReader = new CsvMapReader(new FileReader(file), Utils.TSVCOMMENTED)) {
+        
+        // We use '$' as character used to escape columns containing the delimiter to be able 
+        // to test that '"' is around columns with name
+        CsvPreference preference = new CsvPreference.Builder('$', '\t', "\n").build();
+
+        try (ICsvMapReader mapReader = new CsvMapReader(new FileReader(file), preference)) {
             String[] headers = mapReader.getHeader(true);
             log.trace("Headers: {}", (Object[]) headers);
 
             // These three variables are created to avoid having to change the values 
             // in different places in the code if we change them 
-            //XXX: why doesn't it correspond to some static variable?
             String highQuality = "high quality";
             String lowQuality = "low quality";
             String noQuality = GenerateDiffExprFile.NA_VALUE;
@@ -602,21 +606,21 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
             // Check that the headers are what we expect
             String[] expecteds = new String[] { 
                     GenerateDownloadFile.GENE_ID_COLUMN_NAME, 
-                    GenerateDownloadFile.GENE_NAME_COLUMN_NAME, 
+                    "\"" + GenerateDownloadFile.GENE_NAME_COLUMN_NAME + "\"", 
                     GenerateDownloadFile.ANATENTITY_ID_COLUMN_NAME, 
-                    GenerateDownloadFile.ANATENTITY_NAME_COLUMN_NAME,
+                    "\"" + GenerateDownloadFile.ANATENTITY_NAME_COLUMN_NAME + "\"",
                     GenerateDownloadFile.STAGE_ID_COLUMN_NAME, 
-                    GenerateDownloadFile.STAGE_NAME_COLUMN_NAME,
+                    "\"" + GenerateDownloadFile.STAGE_NAME_COLUMN_NAME + "\"",   
                     GenerateDiffExprFile.DIFFEXPRESSION_COLUMN_NAME,
                     GenerateDiffExprFile.QUALITY_COLUMN_NAME};
             if (!isSimplified) {
                 expecteds = new String[] { 
                         GenerateDownloadFile.GENE_ID_COLUMN_NAME, 
-                        GenerateDownloadFile.GENE_NAME_COLUMN_NAME, 
+                        "\"" + GenerateDownloadFile.GENE_NAME_COLUMN_NAME + "\"", 
                         GenerateDownloadFile.ANATENTITY_ID_COLUMN_NAME, 
-                        GenerateDownloadFile.ANATENTITY_NAME_COLUMN_NAME, 
+                        "\"" + GenerateDownloadFile.ANATENTITY_NAME_COLUMN_NAME + "\"",
                         GenerateDownloadFile.STAGE_ID_COLUMN_NAME, 
-                        GenerateDownloadFile.STAGE_NAME_COLUMN_NAME,   
+                        "\"" + GenerateDownloadFile.STAGE_NAME_COLUMN_NAME + "\"",   
                         GenerateDiffExprFile.DIFFEXPRESSION_COLUMN_NAME,
                         GenerateDiffExprFile.QUALITY_COLUMN_NAME,
                         GenerateDownloadFile.AFFYMETRIX_DATA_COLUMN_NAME, 
@@ -715,8 +719,8 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                     if (factor.equals(ComparisonFactor.ANATOMY)) {
                         if (geneId.equals("ID1") && stageId.equals("Stage_id1") && 
                                 anatEntityId.equals("Anat_id1")) {
-                            this.assertCommonColumnRowEqual(geneId, "genN1", geneName,
-                                    "stageN1", stageName, "anatName1", anatEntityName, 
+                            this.assertCommonColumnRowEqual(geneId, "\"genN1\"", geneName,
+                                    "\"stageN1\"", stageName, "\"anatName1\"", anatEntityName, 
                                     DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), resume,
                                     highQuality, quality);
                             if (!isSimplified) {
@@ -734,8 +738,8 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                             }
                         } else if (geneId.equals("ID1") && stageId.equals("Stage_id2") && 
                                 anatEntityId.equals("Anat_id2")) {
-                            this.assertCommonColumnRowEqual(geneId, "genN1", geneName,
-                                    "stageN2", stageName, "anatName2", anatEntityName, 
+                            this.assertCommonColumnRowEqual(geneId, "\"genN1\"", geneName,
+                                    "\"stageN2\"", stageName, "\"anatName2\"", anatEntityName, 
                                     DiffExpressionData.STRONG_AMBIGUITY.getStringRepresentation(), resume,
                                     noQuality, quality);
                             if (!isSimplified) {
@@ -753,8 +757,8 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                             }
                         } else if (geneId.equals("ID1") && stageId.equals("Stage_id18") && 
                                 anatEntityId.equals("Anat_id13")) {
-                            this.assertCommonColumnRowEqual(geneId, "genN1", geneName,
-                                    "stageN18", stageName, "anatName13", anatEntityName, 
+                            this.assertCommonColumnRowEqual(geneId, "\"genN1\"", geneName,
+                                    "\"stageN18\"", stageName, "\"anatName13\"", anatEntityName, 
                                     DiffExpressionData.WEAK_AMBIGUITY.getStringRepresentation(), resume,
                                     noQuality, quality);
                             if (!isSimplified) {
@@ -777,8 +781,8 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                     } else if (factor.equals(ComparisonFactor.DEVELOPMENT)) {
                         if (geneId.equals("ID1") && stageId.equals("Stage_id1") && 
                                 anatEntityId.equals("Anat_id2")) {
-                            this.assertCommonColumnRowEqual(geneId, "genN1", geneName,
-                                    "stageN1", stageName, "anatName2", anatEntityName, 
+                            this.assertCommonColumnRowEqual(geneId, "\"genN1\"", geneName,
+                                    "\"stageN1\"", stageName, "\"anatName2\"", anatEntityName, 
                                     DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), resume,
                                     lowQuality, quality);
                             if (!isSimplified) {
@@ -796,8 +800,8 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                             }
                         } else if (geneId.equals("ID1") && stageId.equals("Stage_id18") && 
                                 anatEntityId.equals("Anat_id13")) {
-                            this.assertCommonColumnRowEqual(geneId, "genN1", geneName,
-                                    "stageN18", stageName, "anatName13", anatEntityName, 
+                            this.assertCommonColumnRowEqual(geneId, "\"genN1\"", geneName,
+                                    "\"stageN18\"", stageName, "\"anatName13\"", anatEntityName, 
                                     DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(), resume,
                                     lowQuality, quality);
                             if (!isSimplified) {
@@ -825,8 +829,8 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                     if (factor.equals(ComparisonFactor.ANATOMY)) {
                         if (geneId.equals("ID2") && stageId.equals("Stage_id1") && 
                                 anatEntityId.equals("Anat_id2")) {
-                            this.assertCommonColumnRowEqual(geneId, "genN2", geneName,
-                                    "stageN1", stageName, "anatName2", anatEntityName, 
+                            this.assertCommonColumnRowEqual(geneId, "\"genN2\"", geneName,
+                                    "\"stageN1\"", stageName, "\"anatName2\"", anatEntityName, 
                                     DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(), resume,
                                     highQuality, quality);
                             if (!isSimplified) {
@@ -844,8 +848,8 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                             }
                         } else if (geneId.equals("ID2") && stageId.equals("Stage_id3") && 
                                 anatEntityId.equals("Anat_id13")) {
-                            this.assertCommonColumnRowEqual(geneId, "genN2", geneName,
-                                    "stageN3", stageName, "anatName13", anatEntityName, 
+                            this.assertCommonColumnRowEqual(geneId, "\"genN2\"", geneName,
+                                    "\"stageN3\"", stageName, "\"anatName13\"", anatEntityName, 
                                     DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), resume,
                                     highQuality, quality);
                             if (!isSimplified) {
@@ -868,8 +872,8 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                     } else if (factor.equals(ComparisonFactor.DEVELOPMENT)) {
                         if (geneId.equals("ID2") && stageId.equals("Stage_id1") && 
                                 anatEntityId.equals("Anat_id2")) {
-                            this.assertCommonColumnRowEqual(geneId, "genN2", geneName,
-                                    "stageN1", stageName, "anatName2", anatEntityName, 
+                            this.assertCommonColumnRowEqual(geneId, "\"genN2\"", geneName,
+                                    "\"stageN1\"", stageName, "\"anatName2\"", anatEntityName, 
                                     DiffExpressionData.WEAK_AMBIGUITY.getStringRepresentation(), resume,
                                     noQuality, quality);
                             if (!isSimplified) {
@@ -887,8 +891,8 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                             }
                         } else if (geneId.equals("ID2") && stageId.equals("Stage_id3") && 
                                 anatEntityId.equals("Anat_id13")) {
-                            this.assertCommonColumnRowEqual(geneId, "genN2", geneName,
-                                    "stageN3", stageName, "anatName13", anatEntityName, 
+                            this.assertCommonColumnRowEqual(geneId, "\"genN2\"", geneName,
+                                    "\"stageN3\"", stageName, "\"anatName13\"", anatEntityName, 
                                     DiffExpressionData.WEAK_AMBIGUITY.getStringRepresentation(), resume,
                                     noQuality, quality);
                             if (!isSimplified) {

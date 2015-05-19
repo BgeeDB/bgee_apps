@@ -11,6 +11,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -48,11 +49,10 @@ import org.bgee.model.dao.mysql.gene.MySQLGeneDAO.MySQLGeneTOResultSet;
 import org.bgee.model.dao.mysql.ontologycommon.MySQLRelationDAO.MySQLRelationTOResultSet;
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO.MySQLSpeciesTOResultSet;
 import org.bgee.pipeline.TestAncestor;
-import org.bgee.pipeline.Utils;
 import org.bgee.pipeline.expression.downloadfile.GenerateDiffExprFile.SingleSpDiffExprFileType;
-import org.bgee.pipeline.expression.downloadfile.GenerateExprFile.SingleSpExprFileType;
 import org.bgee.pipeline.expression.downloadfile.GenerateExprFile.ExpressionData;
 import org.bgee.pipeline.expression.downloadfile.GenerateExprFile.ObservedData;
+import org.bgee.pipeline.expression.downloadfile.GenerateExprFile.SingleSpExprFileType;
 import org.junit.Test;
 import org.supercsv.cellprocessor.constraint.IsElementOf;
 import org.supercsv.cellprocessor.constraint.NotNull;
@@ -60,6 +60,7 @@ import org.supercsv.cellprocessor.constraint.StrNotNullOrEmpty;
 import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.io.CsvMapReader;
 import org.supercsv.io.ICsvMapReader;
+import org.supercsv.prefs.CsvPreference;
 
 /**
  * Unit tests for {@link GenerateExprFile}
@@ -514,6 +515,7 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                 thenReturn(mockGlobalNoExprRsSp22);
 
         String directory = testFolder.newFolder("tmpFolder").getPath();
+        
         Set<SingleSpExprFileType> fileTypes = new HashSet<SingleSpExprFileType>(
                 Arrays.asList(SingleSpExprFileType.EXPR_SIMPLE, SingleSpExprFileType.EXPR_COMPLETE)); 
         GenerateExprFile generate = new GenerateExprFile(mockManager, 
@@ -943,28 +945,32 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
             int expNbLines) throws IOException {
         log.entry(file, speciesId, isSimplified, expNbLines);
         
-        try (ICsvMapReader mapReader = new CsvMapReader(new FileReader(file), Utils.TSVCOMMENTED)) {
+        // We use '$' as character used to escape columns containing the delimiter to be able 
+        // to test that '"' is around columns with name
+        CsvPreference preference = new CsvPreference.Builder('$', '\t', "\n").build();
+
+        try (ICsvMapReader mapReader = new CsvMapReader(new FileReader(file), preference)) {
             String[] headers = mapReader.getHeader(true);
             log.trace("Headers: {}", (Object[]) headers);
 
             // Check that the headers are what we expect
             String[] expecteds = new String[] { 
                     GenerateDownloadFile.GENE_ID_COLUMN_NAME, 
-                    GenerateDownloadFile.GENE_NAME_COLUMN_NAME, 
+                    "\"" + GenerateDownloadFile.GENE_NAME_COLUMN_NAME + "\"", 
                     GenerateDownloadFile.ANATENTITY_ID_COLUMN_NAME, 
-                    GenerateDownloadFile.ANATENTITY_NAME_COLUMN_NAME,
+                    "\"" + GenerateDownloadFile.ANATENTITY_NAME_COLUMN_NAME + "\"",
                     GenerateDownloadFile.STAGE_ID_COLUMN_NAME, 
-                    GenerateDownloadFile.STAGE_NAME_COLUMN_NAME,
+                    "\"" + GenerateDownloadFile.STAGE_NAME_COLUMN_NAME + "\"",   
                     GenerateExprFile.EXPRESSION_COLUMN_NAME,
                     GenerateDownloadFile.QUALITY_COLUMN_NAME};
             if (!isSimplified) {
                 expecteds = new String[] { 
                         GenerateDownloadFile.GENE_ID_COLUMN_NAME, 
-                        GenerateDownloadFile.GENE_NAME_COLUMN_NAME, 
+                        "\"" + GenerateDownloadFile.GENE_NAME_COLUMN_NAME + "\"", 
                         GenerateDownloadFile.ANATENTITY_ID_COLUMN_NAME, 
-                        GenerateDownloadFile.ANATENTITY_NAME_COLUMN_NAME,
+                        "\"" + GenerateDownloadFile.ANATENTITY_NAME_COLUMN_NAME + "\"",
                         GenerateDownloadFile.STAGE_ID_COLUMN_NAME, 
-                        GenerateDownloadFile.STAGE_NAME_COLUMN_NAME,   
+                        "\"" + GenerateDownloadFile.STAGE_NAME_COLUMN_NAME + "\"",   
                         GenerateExprFile.EXPRESSION_COLUMN_NAME,
                         GenerateDownloadFile.QUALITY_COLUMN_NAME,
                         GenerateExprFile.INCLUDING_OBSERVED_DATA_COLUMN_NAME,
@@ -1081,8 +1087,8 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                 if (speciesId.equals("11")) {
                     if (geneId.equals("ID1") && anatEntityId.equals("Anat_id1") &&
                             stageId.equals("Stage_id1")) {
-                        this.assertCommonColumnRowEqual(geneId, "genN1", geneName,
-                                "stageN1", stageName, "anatName1", anatEntityName, 
+                        this.assertCommonColumnRowEqual(geneId, "\"genN1\"", geneName,
+                                "\"stageN1\"", stageName, "\"anatName1\"", anatEntityName, 
                                 ExpressionData.HIGH_AMBIGUITY.getStringRepresentation(), resume,
                                 GenerateDownloadFile.NA_VALUE, quality);
                         if (!isSimplified) {
@@ -1103,8 +1109,8 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                         }
                     } else if (geneId.equals("ID1") && anatEntityId.equals("Anat_id1") &&
                             stageId.equals("ParentStage_id1")) {
-                        this.assertCommonColumnRowEqual(geneId, "genN1", geneName,
-                                "parentstageN1", stageName, "anatName1", anatEntityName, 
+                        this.assertCommonColumnRowEqual(geneId, "\"genN1\"", geneName,
+                                "\"parentstageN1\"", stageName, "\"anatName1\"", anatEntityName, 
                                 ExpressionData.EXPRESSION.getStringRepresentation(), resume,
                                 DataState.LOWQUALITY.getStringRepresentation(), quality);
                         if (isSimplified) {
@@ -1126,8 +1132,8 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                             ObservedData.NOT_OBSERVED, observedData);
                     } else if (geneId.equals("ID1") && anatEntityId.equals("Anat_id1") &&
                             stageId.equals("ParentStage_id2")) {
-                        this.assertCommonColumnRowEqual(geneId, "genN1", geneName,
-                                "parentstageN2", stageName, "anatName1", anatEntityName, 
+                        this.assertCommonColumnRowEqual(geneId, "\"genN1\"", geneName,
+                                "\"parentstageN2\"", stageName, "\"anatName1\"", anatEntityName, 
                                 ExpressionData.EXPRESSION.getStringRepresentation(), resume,
                                 DataState.HIGHQUALITY.getStringRepresentation(), quality);
                         if (!isSimplified) {
@@ -1148,8 +1154,8 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                         }
                     } else if (geneId.equals("ID1") && anatEntityId.equals("Anat_id1") &&
                             stageId.equals("Stage_id2")) {
-                        this.assertCommonColumnRowEqual(geneId, "genN1", geneName,
-                                "stageN2", stageName, "anatName1", anatEntityName, 
+                        this.assertCommonColumnRowEqual(geneId, "\"genN1\"", geneName,
+                                "\"stageN2\"", stageName, "\"anatName1\"", anatEntityName, 
                                 ExpressionData.EXPRESSION.getStringRepresentation(), resume,
                                 DataState.HIGHQUALITY.getStringRepresentation(), quality);
                         if (!isSimplified) {
@@ -1173,8 +1179,8 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                     //       stageId.equals("Stage_id1")) {
                     } else if (geneId.equals("ID2") && anatEntityId.equals("Anat_id1") && 
                             stageId.equals("Stage_id2")) {
-                        this.assertCommonColumnRowEqual(geneId, "genN2", geneName,
-                                "stageN2", stageName, "anatName1", anatEntityName,
+                        this.assertCommonColumnRowEqual(geneId, "\"genN2\"", geneName,
+                                "\"stageN2\"", stageName, "\"anatName1\"", anatEntityName,
                                 ExpressionData.HIGH_AMBIGUITY.getStringRepresentation(), resume,
                                 GenerateDownloadFile.NA_VALUE, quality);
                         if (!isSimplified) {
@@ -1195,8 +1201,8 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                         }
                     } else if (geneId.equals("ID2") && anatEntityId.equals("Anat_id1") && 
                             stageId.equals("ParentStage_id2")) {
-                        this.assertCommonColumnRowEqual(geneId, "genN2", geneName,
-                                "parentstageN2", stageName, "anatName1", anatEntityName,
+                        this.assertCommonColumnRowEqual(geneId, "\"genN2\"", geneName,
+                                "\"parentstageN2\"", stageName, "\"anatName1\"", anatEntityName,
                                 ExpressionData.EXPRESSION.getStringRepresentation(), resume,
                                 DataState.HIGHQUALITY.getStringRepresentation(), quality);
                         if (!isSimplified) {
@@ -1217,8 +1223,8 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                         }
                     } else if (geneId.equals("ID2") && anatEntityId.equals("Anat_id2") && 
                             stageId.equals("Stage_id2")) {
-                        this.assertCommonColumnRowEqual(geneId, "genN2", geneName,
-                                "stageN2", stageName, "anatName2", anatEntityName,
+                        this.assertCommonColumnRowEqual(geneId, "\"genN2\"", geneName,
+                                "\"stageN2\"", stageName, "\"anatName2\"", anatEntityName,
                                 DataState.HIGHQUALITY.getStringRepresentation(), resume,
                                 GenerateDownloadFile.NA_VALUE, quality);
                         if (isSimplified) {
@@ -1240,8 +1246,8 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                             ObservedData.NOT_OBSERVED, observedData);
                     } else if (geneId.equals("ID2") && anatEntityId.equals("Anat_id2") && 
                             stageId.equals("ParentStage_id2")) {
-                        this.assertCommonColumnRowEqual(geneId, "genN2", geneName,
-                                "parentstageN2", stageName, "anatName2", anatEntityName,
+                        this.assertCommonColumnRowEqual(geneId, "\"genN2\"", geneName,
+                                "\"parentstageN2\"", stageName, "\"anatName2\"", anatEntityName,
                                 ExpressionData.EXPRESSION.getStringRepresentation(), resume,
                                 DataState.HIGHQUALITY.getStringRepresentation(), quality);
                         if (isSimplified) {
@@ -1263,8 +1269,8 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                             ObservedData.NOT_OBSERVED, observedData);
                     } else if (geneId.equals("ID2") && anatEntityId.equals("Anat_id3") && 
                             stageId.equals("ParentStage_id2")) {
-                        this.assertCommonColumnRowEqual(geneId, "genN2", geneName,
-                                "parentstageN2", stageName, "anatName3", anatEntityName,
+                        this.assertCommonColumnRowEqual(geneId, "\"genN2\"", geneName,
+                                "\"parentstageN2\"", stageName, "\"anatName3\"", anatEntityName,
                                 ExpressionData.HIGH_AMBIGUITY.getStringRepresentation(), resume,
                                 GenerateDownloadFile.NA_VALUE, quality);
                         if (!isSimplified) {
@@ -1292,8 +1298,8 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                 } else if (speciesId.equals("22")){
                     if (geneId.equals("ID3") && anatEntityId.equals("Anat_id1") &&
                             stageId.equals("Stage_id2")) {
-                        this.assertCommonColumnRowEqual(geneId, "genN3", geneName,
-                                "stageN2", stageName, "anatName1", anatEntityName,
+                        this.assertCommonColumnRowEqual(geneId, "\"genN3\"", geneName,
+                                "\"stageN2\"", stageName, "\"anatName1\"", anatEntityName,
                                 ExpressionData.EXPRESSION.getStringRepresentation(), resume,
                                 DataState.HIGHQUALITY.getStringRepresentation(), quality);
                         if (!isSimplified) {
@@ -1314,8 +1320,8 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                         }
                     } else if (geneId.equals("ID3") && anatEntityId.equals("Anat_id4") &&
                             stageId.equals("Stage_id2")) {
-                        this.assertCommonColumnRowEqual(geneId, "genN3", geneName,
-                                "stageN2", stageName, "anatName4", anatEntityName,
+                        this.assertCommonColumnRowEqual(geneId, "\"genN3\"", geneName,
+                                "\"stageN2\"", stageName, "\"anatName4\"", anatEntityName,
                                 ExpressionData.EXPRESSION.getStringRepresentation(), resume,
                                 DataState.HIGHQUALITY.getStringRepresentation(), quality);
                         if (isSimplified) {
@@ -1337,8 +1343,8 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                             ObservedData.NOT_OBSERVED, observedData);
                     } else if (geneId.equals("ID3") && anatEntityId.equals("Anat_id5") &&
                             stageId.equals("Stage_id2")) {
-                        this.assertCommonColumnRowEqual(geneId, "genN3", geneName,
-                                "stageN2", stageName, "anatName5", anatEntityName,
+                        this.assertCommonColumnRowEqual(geneId, "\"genN3\"", geneName,
+                                "\"stageN2\"", stageName, "\"anatName5\"", anatEntityName,
                                 ExpressionData.EXPRESSION.getStringRepresentation(), resume,
                                 DataState.HIGHQUALITY.getStringRepresentation(), quality);
                         if (!isSimplified) {
@@ -1359,8 +1365,8 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                         }
                     } else if (geneId.equals("ID4") && anatEntityId.equals("Anat_id1") &&
                             stageId.equals("Stage_id5")) {
-                        this.assertCommonColumnRowEqual(geneId, "genN4", geneName,
-                                "stageN5", stageName, "anatName1", anatEntityName,
+                        this.assertCommonColumnRowEqual(geneId, "\"genN4\"", geneName,
+                                "\"stageN5\"", stageName, "\"anatName1\"", anatEntityName,
                                 ExpressionData.NO_EXPRESSION.getStringRepresentation(), resume,
                                 DataState.HIGHQUALITY.getStringRepresentation(), quality);
                         if (!isSimplified) {
@@ -1381,8 +1387,8 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                         }
                     } else if (geneId.equals("ID4") && anatEntityId.equals("Anat_id4") &&
                             stageId.equals("Stage_id5")) {
-                        this.assertCommonColumnRowEqual(geneId, "genN4", geneName,
-                                "stageN5", stageName, "anatName4", anatEntityName,
+                        this.assertCommonColumnRowEqual(geneId, "\"genN4\"", geneName,
+                                "\"stageN5\"", stageName, "\"anatName4\"", anatEntityName,
                                 ExpressionData.NO_EXPRESSION.getStringRepresentation(), resume,
                                 DataState.HIGHQUALITY.getStringRepresentation(), quality);
                         if (!isSimplified) {
@@ -1403,8 +1409,8 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                         }
                     } else if (geneId.equals("ID4") && anatEntityId.equals("Anat_id5") &&
                             stageId.equals("Stage_id5")) {
-                        this.assertCommonColumnRowEqual(geneId, "genN4", geneName,
-                                "stageN5", stageName, "anatName5", anatEntityName,
+                        this.assertCommonColumnRowEqual(geneId, "\"genN4\"", geneName,
+                                "\"stageN5\"", stageName, "\"anatName5\"", anatEntityName,
                                 ExpressionData.NO_EXPRESSION.getStringRepresentation(), resume,
                                 DataState.HIGHQUALITY.getStringRepresentation(), quality);
                         if (isSimplified) {
@@ -1426,8 +1432,8 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                             ObservedData.NOT_OBSERVED, observedData);
                     } else if (geneId.equals("ID5") && anatEntityId.equals("Anat_id1") &&
                             stageId.equals("Stage_id5")) {
-                        this.assertCommonColumnRowEqual(geneId, "genN5", geneName,
-                                "stageN5", stageName, "anatName1", anatEntityName,
+                        this.assertCommonColumnRowEqual(geneId, "\"genN5\"", geneName,
+                                "\"stageN5\"", stageName, "\"anatName1\"", anatEntityName,
                                 ExpressionData.EXPRESSION.getStringRepresentation(), resume,
                                 DataState.HIGHQUALITY.getStringRepresentation(), quality);
                         if (isSimplified) {
@@ -1449,8 +1455,8 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                             ObservedData.NOT_OBSERVED, observedData);
                     } else if (geneId.equals("ID5") && anatEntityId.equals("Anat_id1") &&
                             stageId.equals("ParentStage_id5")) {
-                        this.assertCommonColumnRowEqual(geneId, "genN5", geneName,
-                                "parentstageN5", stageName, "anatName1", anatEntityName,
+                        this.assertCommonColumnRowEqual(geneId, "\"genN5\"", geneName,
+                                "\"parentstageN5\"", stageName, "\"anatName1\"", anatEntityName,
                                 ExpressionData.EXPRESSION.getStringRepresentation(), resume,
                                 DataState.HIGHQUALITY.getStringRepresentation(), quality);
                         if (isSimplified) {
@@ -1472,8 +1478,8 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                             ObservedData.NOT_OBSERVED, observedData);
                     } else if (geneId.equals("ID5") && anatEntityId.equals("Anat_id4") &&
                             stageId.equals("Stage_id5")) {
-                        this.assertCommonColumnRowEqual(geneId, "genN5", geneName,
-                                "stageN5", stageName, "anatName4", anatEntityName, 
+                        this.assertCommonColumnRowEqual(geneId, "\"genN5\"", geneName,
+                                "\"stageN5\"", stageName, "\"anatName4\"", anatEntityName, 
                                 //note that the ambiguity comes only from relaxedInSituData, 
                                 //which are not yet implemented.
                                 ExpressionData.HIGH_AMBIGUITY.getStringRepresentation(), resume,
@@ -1496,8 +1502,8 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                         }
                     } else if (geneId.equals("ID5") && anatEntityId.equals("Anat_id4") &&
                             stageId.equals("ParentStage_id5")) {
-                        this.assertCommonColumnRowEqual(geneId, "genN5", geneName,
-                                "parentstageN5", stageName, "anatName4", anatEntityName,
+                        this.assertCommonColumnRowEqual(geneId, "\"genN5\"", geneName,
+                                "\"parentstageN5\"", stageName, "\"anatName4\"", anatEntityName,
                                 ExpressionData.EXPRESSION.getStringRepresentation(), resume,
                                 DataState.HIGHQUALITY.getStringRepresentation(), quality);
                         if (isSimplified) {

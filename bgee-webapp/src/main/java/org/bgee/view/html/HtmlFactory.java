@@ -31,10 +31,8 @@ public class HtmlFactory extends ViewFactory {
      * 
      * @param response          A {@code HttpServletResponse} that will be used to display the page to 
      *                          the client
-     *                          
      * @param requestParameters The {@code RequestParameters} that handles the parameters of the 
      *                          current request.
-     *                          
      * @param prop              An instance of {@code BgeeProperties} to provide the all 
      *                          the properties values
      */
@@ -47,27 +45,27 @@ public class HtmlFactory extends ViewFactory {
 	public DownloadDisplay getDownloadDisplay()  throws IOException {
 	    log.entry();
 		return log.exit(new HtmlDownloadDisplay(this.response, this.requestParameters,
-		        this.prop));
+		        this.prop, this));
 	}
 
 	@Override
 	public GeneralDisplay getGeneralDisplay() throws IOException {
 	    log.entry();
 		return log.exit(new HtmlGeneralDisplay(this.response, this.requestParameters,
-		        this.prop));
+		        this.prop, this));
 	}
 
     @Override
     public DocumentationDisplay getDocumentationDisplay() throws IOException {
         log.entry();
         return log.exit(new HtmlDocumentationDisplay(
-                this.response, this.requestParameters, this.prop));
+                this.response, this.requestParameters, this.prop, this));
     }
 
     @Override
     public AboutDisplay getAboutDisplay() throws IOException {
         log.entry();
         return log.exit(new HtmlAboutDisplay(
-                this.response, this.requestParameters, this.prop));
+                this.response, this.requestParameters, this.prop, this));
     }
 }

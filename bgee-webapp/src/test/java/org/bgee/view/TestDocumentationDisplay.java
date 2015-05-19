@@ -19,8 +19,9 @@ import org.bgee.controller.RequestParameters;
 public class TestDocumentationDisplay extends TestParentDisplay implements DocumentationDisplay {
 
     public TestDocumentationDisplay(HttpServletResponse response, 
-            RequestParameters requestParameters, BgeeProperties prop) throws IOException {
-        super(response, requestParameters, prop);
+            RequestParameters requestParameters, BgeeProperties prop, ViewFactory factory) 
+                    throws IOException {
+        super(response, requestParameters, prop, factory);
     }
 
     @Override

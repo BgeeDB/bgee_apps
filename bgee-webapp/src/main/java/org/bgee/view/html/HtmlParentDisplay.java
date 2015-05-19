@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.ConcreteDisplayParent;
+import org.bgee.view.ViewFactory;
 
 /**
  * Parent of all display for the {@code displayTypes} HTML
@@ -61,12 +62,12 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      *                          {@code PrintWriter} 
      */
     public HtmlParentDisplay(HttpServletResponse response, RequestParameters requestParameters, 
-            BgeeProperties prop) throws IOException {
-        super(response,prop);
+            BgeeProperties prop, ViewFactory factory) throws IOException {
+        super(response, prop, factory);
         this.requestParameters = requestParameters;
         this.uniqueId = 0;
     }
-
+    
     //TODO: javadoc. It should be specified whether arguments are already html escaped / URL encoded if necessary
     protected static String getLogoLink(String url, 
             String title, String figcaption, String imgPath) {
@@ -203,9 +204,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
         urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
 
-        RequestParameters urlDownloadRawDataGenerator = this.getNewRequestParameters();
-        urlDownloadRawDataGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
-        urlDownloadRawDataGenerator.setAction(RequestParameters.ACTION_DOWLOAD_RAW_FILES);
+        RequestParameters urlDownloadRefExprGenerator = this.getNewRequestParameters();
+        urlDownloadRefExprGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlDownloadRefExprGenerator.setAction(RequestParameters.ACTION_DOWLOAD_REF_EXPR_FILES);
         
         RequestParameters urlDownloadCallsGenerator = this.getNewRequestParameters();
         urlDownloadCallsGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
@@ -233,8 +234,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("<a title='Expression data page' href='" + urlDownloadGenerator.getRequestURL() + 
                 "'>Expression data</a>" + this.getCaret());
         this.writeln("<ul>");
-        this.writeln("<li><a class='drop' title='Processed raw data' href='" + 
-                urlDownloadRawDataGenerator.getRequestURL() + "'>Processed raw data</a></li>");
+        this.writeln("<li><a class='drop' title='Reference gene expression' href='" + 
+                urlDownloadRefExprGenerator.getRequestURL() + "'>Reference gene expression</a></li>");
         this.writeln("<li><a class='drop' title='Gene expression calls' href='" + 
                 urlDownloadCallsGenerator.getRequestURL() + "'>Gene expression calls</a></li>");
         this.writeln("</ul>");

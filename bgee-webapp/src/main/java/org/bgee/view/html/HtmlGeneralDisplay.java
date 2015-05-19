@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.GeneralDisplay;
+import org.bgee.view.ViewFactory;
 
 /**
  * HTML View for the general category display
@@ -27,20 +28,17 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
      * 
      * @param response          A {@code HttpServletResponse} that will be used to display the 
      *                          page to the client
-     *                          
      * @param requestParameters The {@code RequestParameters} that handles the parameters of the 
      *                          current request.
-     *                          
      * @param prop              A {@code BgeeProperties} instance that contains the properties
      *                          to use.
-     * 
+     * @param factory           A {@code ViewFactory} that instantiated this object.
      * @throws IOException      If there is an issue when trying to get or to use the
      *                          {@code PrintWriter} 
      */
     public HtmlGeneralDisplay(HttpServletResponse response, RequestParameters requestParameters,
-            BgeeProperties prop) throws IOException
-    {
-        super(response, requestParameters, prop);
+            BgeeProperties prop, ViewFactory factory) throws IOException {
+        super(response, requestParameters, prop, factory);
     }
 
     /**

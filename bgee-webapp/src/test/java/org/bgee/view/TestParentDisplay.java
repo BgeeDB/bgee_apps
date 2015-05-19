@@ -15,14 +15,12 @@ import org.bgee.controller.RequestParameters;
  * @since   Bgee 13
  */
 // None of these classes launch test
-public class TestParentDisplay extends ConcreteDisplayParent
-{
+public class TestParentDisplay extends ConcreteDisplayParent {
 
 	@SuppressWarnings("unused")
     public TestParentDisplay(HttpServletResponse response, RequestParameters requestParameters, 
-	        BgeeProperties prop) throws IOException
-	{
-		super(response,prop);
+	        BgeeProperties prop, ViewFactory factory) throws IOException {
+		super(response, prop, factory);
 	}
 
 //    @SuppressWarnings("unused")

@@ -35,7 +35,7 @@ public class TestFactory extends ViewFactory {
         if(prop.getUrlMaxLength() == 9999 && this.requestParameters.getFirstValue(
                 ((TestURLParameters)this.requestParameters.getUrlParametersInstance())
                 .getParamTestString()).equals("test")){
-            return new TestDownloadDisplay(this.response, this.requestParameters, prop);
+            return new TestDownloadDisplay(this.response, this.requestParameters, this.prop, this);
         }
         return null;
     }
@@ -55,7 +55,7 @@ public class TestFactory extends ViewFactory {
         if(prop.getUrlMaxLength() == 9999 && this.requestParameters.getFirstValue(
                 ((TestURLParameters)this.requestParameters.getUrlParametersInstance())
                 .getParamTestString()).equals("test")){
-            return new TestDocumentationDisplay(this.response, this.requestParameters, prop);
+            return new TestDocumentationDisplay(this.response, this.requestParameters, prop, this);
         }
         return null;
     }
@@ -65,7 +65,7 @@ public class TestFactory extends ViewFactory {
         if(prop.getUrlMaxLength() == 9999 && this.requestParameters.getFirstValue(
                 ((TestURLParameters)this.requestParameters.getUrlParametersInstance())
                 .getParamTestString()).equals("test")){
-            return new TestAboutDisplay(this.response, this.requestParameters, prop);
+            return new TestAboutDisplay(this.response, this.requestParameters, prop, this);
         }
         return null;
     }

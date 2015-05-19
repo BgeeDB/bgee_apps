@@ -16,12 +16,11 @@ import org.bgee.controller.RequestParameters;
  * @version Bgee 13 May 2015
  * @since   Bgee 13
  */
-public class TestDownloadDisplay extends TestParentDisplay implements DownloadDisplay
-{
+public class TestDownloadDisplay extends TestParentDisplay implements DownloadDisplay {
+    
     public TestDownloadDisplay(HttpServletResponse response, RequestParameters requestParameters,
-            BgeeProperties prop) throws IOException
-    {
-        super(response, requestParameters, prop);
+            BgeeProperties prop, ViewFactory factory) throws IOException {
+        super(response, requestParameters, prop, factory);
     }
 
     @Override
@@ -35,7 +34,7 @@ public class TestDownloadDisplay extends TestParentDisplay implements DownloadDi
     }
 
     @Override
-    public void displayProcessedRawDataDownloadPage() {
+    public void displayReferenceGeneExpressionDownloadPage() {
         this.out.println("TestB");
     }
 

@@ -10,20 +10,24 @@ div.downloadsection {
     text-align: left;
 }
 
-.expr_calls div.downloadsection {
+#expr_calls div.downloadsection {
     border-color: #920209;
 }
 	
-.raw_data div.downloadsection {
-    border-color: #02811D;
+#ref_expr div.downloadsection {
+    border-color: #1375AB;
 }
 
-#sib_body .expr_calls h2.downloadsection {
+#sib_body #expr_calls h2.downloadsection {
     color: #920209;
 }
-    
-#sib_body .raw_data h2.downloadsection {
-    color: #02811D;
+
+#sib_body #expr_calls h1 {
+    color: #920209;
+}
+
+#sib_body #ref_expr h2.downloadsection, #sib_body #expr_calls h1 {
+    color: #1375AB;
 }
 
 div.downloadsection figcaption p {
@@ -172,12 +176,12 @@ figure.highlight {
 }
 
 /****BGEE DATASELECTION****/
-.expr_calls label {
+#expr_calls label {
     color: #920209;
 }
 
-.raw_data label {
-    color: #02811D;
+#ref_expr label {
+    color: #1375AB;
 }
 
 p {
@@ -188,20 +192,14 @@ p {
     position: relative;
     background-color: #282828;
     padding: 30px;
-    left: -3%;
-    width: 101%;
+    left: -4%;
+    width: 103%;
     clear: left;
     display: none;
 }
 
-#bgee_data_selection p {
-    font-size: 0.7em;
-    color: #DBDBDB;
-    width: 95%;
-}
-
 #bgee_data_selection h1, #bgee_data_selection h2 {
-	display: block;
+    display: inline-block;
     white-space: nowrap;
     text-align: left;
     color: #DBDBDB;
@@ -270,8 +268,7 @@ p {
 
 #bgee_data_selection_text div.bgee_download_file_buttons {
     margin: 0px 0px 0px 30px;
-    height: 55px;
-}
+ç}
 
 .download_link, #bgee_data_selection p.no_data {
 	padding: 5px;
@@ -297,9 +294,19 @@ p {
     background-color:#717171;
 }
 
+a.banner_link {
+    margin: 0 1.2em 0 0.4em;
+    font-size: 0.8em;
+    color: #7D7D7D;
+    text-decoration: underline;
+}
+
+a.banner_link:hover {
+    color: #D6D6D6;
+}
+
 #bgee_data_selection p.no_data {
     color: #717171;
-    margin: 0;
 }
 
 div.downloadsection figure {
@@ -353,4 +360,24 @@ div.downloadsection figure.selected {
     font-size: 0.6em;
     margin: 2px 2%;
     color: #515151;
+}
+
+.header_table {
+    display: none;
+}
+
+div.header_table table {
+    display: block;
+    width: 90%;
+    overflow-y: scroll;    
+    font-size: 0.7em;
+    margin: 0.4em 0 0 0;
+	border-collapse: collapse;
+    color: #141414;
+    background-color:#919191;
+}
+
+div.header_table table td {
+    padding: 0.2em;
+    border: 1px solid #141414;
 }

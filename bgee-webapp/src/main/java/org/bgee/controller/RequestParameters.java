@@ -122,10 +122,10 @@ public class RequestParameters {
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
      * (see {@link URLParameters#getParamAction()}) when download page about files 
-     * providing processed raw data is requested. Value of the parameter page should be 
+     * providing reference gene expression is requested. Value of the parameter page should be 
      * {@link #PAGE_DOWNLOAD}.
      */
-    public static final String ACTION_DOWLOAD_RAW_FILES = "ref_expression";
+    public static final String ACTION_DOWLOAD_REF_EXPR_FILES = "ref_expression";
 
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 

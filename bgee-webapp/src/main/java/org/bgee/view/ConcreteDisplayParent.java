@@ -26,7 +26,7 @@ public abstract class ConcreteDisplayParent {
      * A {@code HttpServletResponse} that will be used to display the page to 
      * the client
      */
-    protected HttpServletResponse response;
+    protected final HttpServletResponse response;
     /**
      * The {@code PrintWriter} that produces the output
      */
@@ -43,7 +43,11 @@ public abstract class ConcreteDisplayParent {
     /**
      * A {@code BgeeProperties} instance that contains the properties to use.
      */
-    protected BgeeProperties prop;
+    protected final BgeeProperties prop;
+    /**
+     * The {@code ViewFactory} that was responsible for instantiating this object.
+     */
+    private final ViewFactory factory;
 
     /**
      * Default Constructor. 
@@ -51,13 +55,15 @@ public abstract class ConcreteDisplayParent {
      *                          page to the client
      * @param prop              A {@code BgeeProperties} instance that contains the properties
      *                          to use.
+     * @param factory           A {@code ViewFactory} that instantiated this object.
      * @throws IOException      If there is an issue when trying to get or to use the
      *                          {@code PrintWriter} 
      */
-    protected ConcreteDisplayParent(HttpServletResponse response, BgeeProperties prop) 
-            throws IOException {
+    protected ConcreteDisplayParent(HttpServletResponse response, BgeeProperties prop, 
+            ViewFactory factory) throws IOException {
         log.entry(response, prop);
         this.response = response;
+        this.factory = factory;
 
         if (this.response != null) {
             this.response.setCharacterEncoding("UTF-8");
@@ -68,6 +74,13 @@ public abstract class ConcreteDisplayParent {
         this.displayAlreadyStarted = false;
         this.prop = prop;
         log.exit();
+    }
+    
+    /**
+     * @return  The {@code ViewFactory} that instantiated this object.
+     */
+    protected ViewFactory getFactory() {
+        return this.factory;
     }
 
     /**

@@ -108,7 +108,7 @@ header img {
 #nav a, #nav a:visited {
     color: #29516A;
     text-decoration: none;
-    width: 160px;
+    width: 170px;
 }
 #nav a:hover, #nav :hover>a {
     color: white;
@@ -130,20 +130,19 @@ header img {
 /* hide the sub levels and give them a position absolute so that they take up no room */
 #nav ul ul {
     visibility: hidden;
-    padding: 5px;
     position: absolute;
     height: auto;
     top: 29px;
     left: 0;
-    width: 160px;
+    width: 170px;
     border-bottom: none;
 }
 #nav ul ul li{
+    border-bottom: 1px solid #29516A;
 	width: 100%;
 }
 
 #nav ul ul li:hover {
-	border-bottom: none;
 	background-color: #29516A;
 }
 

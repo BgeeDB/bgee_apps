@@ -15,6 +15,9 @@ var download = {
         $container: null,
         // All the figure tag that represent the species and groups
         $species: null,
+        //
+        $exprCalls: null,
+        $refExpr: null,
         // The detail box and its sub elements
         $bgeeDataSelection: null,
         $bgeeDataSelectionCross: null,
@@ -22,10 +25,43 @@ var download = {
         $bgeeDataSelectionTextScientific: null,
         $bgeeDataSelectionTextCommon: null,
         $bgeeGroupDescription: null,
+        $exprSimpleData: null,
         $exprSimpleCsv: null,
-        $exprCompleteCsv: null,
-        $overUnderSimpleCsv: null,
-        $overUnderCompleteCsv: null,
+        $diffExprAnatomyData: null,
+        $diffExprAnatomySimpleCsv: null,
+        $diffExprAnatomyCompleteCsv: null,   
+        $diffExprDevelopmentData: null,
+        $diffExprDevelopmentSimpleCsv: null,
+        $diffExprDevelopmentCompleteCsv: null,
+        $rnaseqData: null,   
+        $affyData: null,
+        $inSituData: null,
+        $estData: null,
+        $exprHelp: null,
+        $diffAnatHelp: null,
+        $diffDevHelp: null,
+        $showSingleSimpleExprHeaders: null,
+        $showSingleCompleteExprHeaders: null,
+        $showSingleSimpleDiffexprAnatomyHeaders: null,
+        $showSingleCompleteDiffexprAnatomyHeaders: null,
+        $showMultiSimpleDiffexprAnatomyHeaders: null,
+        $showMultiCompleteDiffexprAnatomyHeaders: null,
+        $showSingleSimpleDiffexprDevelopmentHeaders: null,
+        $showSingleCompleteDiffexprDevelopmentHeaders: null,
+        $singleSimpleExprHeaders: null,
+        $singleCompleteExprHeaders: null,        
+        $singleSimpleDiffexprAnatomyHeaders: null,
+        $singleCompleteDiffexprAnatomyHeaders: null,   
+        $multiSimpleDiffexprAnatomyHeaders: null,
+        $multiCompleteDiffexprAnatomyHeaders: null,
+        $singleSimpleDiffexprDevelopmentHeaders: null,
+        $singleCompleteDiffexprDevelopmentHeaders: null,
+        $exprNoData: null,
+        $diffExprAnatomyNoData: null,
+        $diffExprDevelopmentNoData: null,
+        $exprComingSoon: null,
+        $diffExprAnatomyComingSoon: null,
+        $diffExprDevelopmentComingSoon: null,
         // The search elements
         $bgeeSearchForm: null,
         $bgeeSearchBox: null,
@@ -49,6 +85,10 @@ var download = {
             // Fetch all needed elements from the DOM
             this.$container = $( "html, body" );
             this.$species = $( "figure" );
+            //
+            this.$exprCalls = $( "#expr_calls" );
+            this.$refExpr= $( "#ref_expr" );
+            // bgee_data_selection
             this.$bgeeDataSelection = $( "#bgee_data_selection" );
             this.$bgeeDataSelectionCross = $( "#bgee_data_selection_cross" );
             this.$bgeeDataSelectionImg = $( "#bgee_data_selection_img" );
@@ -57,23 +97,58 @@ var download = {
             this.$bgeeDataSelectionTextCommon = 
                 $( "#bgee_data_selection_text h1.commonname" );
             this.$bgeeGroupDescription = $( "#bgee_data_selection_text p.groupdescription" );
+            // Data
+            this.$exprSimpleData = $( "#expr_data" );
             this.$exprSimpleCsv = $( "#expr_simple_csv" );
             this.$exprCompleteCsv = $( "#expr_complete_csv" );        
+            this.$diffExprAnatomyData = $( "#diffexpr_anatomy_data" );
             this.$diffExprAnatomySimpleCsv = $( "#diffexpr_anatomy_simple_csv" );
             this.$diffExprAnatomyCompleteCsv = $( "#diffexpr_anatomy_complete_csv" );   
+            this.$diffExprDevelopmentData = $( "#diffexpr_development_data" );
             this.$diffExprDevelopmentSimpleCsv = $( "#diffexpr_development_simple_csv" );
             this.$diffExprDevelopmentCompleteCsv = $( "#diffexpr_development_complete_csv" );
+            //
+            this.$rnaseqData = $( "#rnaseq_data" );   
+            this.$affyData = $( "#affy_data" );
+            this.$inSituData = $( "#in_situ_data" );
+            this.$estData = $( "#est_data" );
+            //Help
+            this.$exprHelp = $( "#expr_help" );
+            this.$diffAnatHelp = $( "#diffexpr_anatomy_help" );
+            this.$diffDevHelp = $( "#diffexpr_development_help" );
+            // Show headers
+            this.$showSingleSimpleExprHeaders = $( "#show_single_simple_expr_headers" );
+            this.$showSingleCompleteExprHeaders = $( "#show_single_complete_expr_headers" );
+            this.$showSingleSimpleDiffexprAnatomyHeaders = $( "#show_single_simple_diffexpr_anatomy_headers" );
+            this.$showSingleCompleteDiffexprAnatomyHeaders = $( "#show_single_complete_diffexpr_anatomy_headers" );
+            this.$showMultiSimpleDiffexprAnatomyHeaders = $( "#show_multi_simple_diffexpr_anatomy_headers" );
+            this.$showMultiCompleteDiffexprAnatomyHeaders = $( "#show_multi_complete_diffexpr_anatomy_headers" );
+            this.$showSingleSimpleDiffexprDevelopmentHeaders = $( "#show_single_simple_diffexpr_development_headers" );
+            this.$showSingleCompleteDiffexprDevelopmentHeaders = $( "#show_single_complete_diffexpr_development_headers" );
+            // Show Headers
+            this.$singleSimpleExprHeaders = $( "#single_simple_expr_headers" );
+            this.$singleCompleteExprHeaders = $( "#single_complete_expr_headers" );        
+            this.$singleSimpleDiffexprAnatomyHeaders = $( "#single_simple_diffexpr_anatomy_headers" );
+            this.$singleCompleteDiffexprAnatomyHeaders = $( "#single_complete_diffexpr_anatomy_headers" );   
+            this.$multiSimpleDiffexprAnatomyHeaders = $( "#multi_simple_diffexpr_anatomy_headers" );
+            this.$multiCompleteDiffexprAnatomyHeaders = $( "#multi_complete_diffexpr_anatomy_headers" );
+            this.$singleSimpleDiffexprDevelopmentHeaders = $( "#single_simple_diffexpr_development_headers" );
+            this.$singleCompleteDiffexprDevelopmentHeaders = $( "#single_complete_diffexpr_development_headers" );
+            // No data 
             this.$exprNoData = $( "#expr_no_data" );
             this.$diffExprAnatomyNoData = $( "#diffexpr_anatomy_no_data" );
             this.$diffExprDevelopmentNoData = $( "#diffexpr_development_no_data" );
+            // Coming soon
             this.$exprComingSoon = $( "#expr_coming_soon" );
             this.$diffExprAnatomyComingSoon = $( "#diffexpr_anatomy_coming_soon" );
             this.$diffExprDevelopmentComingSoon = $( "#diffexpr_development_coming_soon" );
+            // Search box
             this.$bgeeSearchForm = $( "#bgee_search_box form" );
             this.$bgeeSearchBox = $( "#bgee_search_box input" );
             this.$bgeeSearchResults = $( "#results_nb" );
             this.$bgeeMoreResultsDown = $( "#bgee_more_results_down" );
             this.$bgeeMoreResultsUp = $( "#bgee_more_results_up" );
+            // Creative commons
             this.$creativeCommonsTitleLink =  $( "#creativecommons_title a");
             this.$creativeCommons = $( "#creativecommons" );
             // Initialize the values that have to be dynamically set, i.e. ids and search content  
@@ -138,6 +213,81 @@ var download = {
                     $( this ).text($( this ).text().replace( "Show","Hide" ));
                 }
             });
+            
+            // Add listener to the links to show/hide headers
+            this.$showSingleSimpleExprHeaders.click( function(){
+            	download.$singleSimpleExprHeaders.toggle( "blind" );
+                if($( this ).text().indexOf( "Hide" ) > -1){
+                    $( this ).text($( this ).text().replace( "Hide","Show" ));
+                }
+                else{
+                    $( this ).text($( this ).text().replace( "Show","Hide" ));
+                }
+            });
+            this.$showSingleCompleteExprHeaders.click( function(){
+                download.$singleCompleteExprHeaders.toggle( "blind" );
+                if($( this ).text().indexOf( "Hide" ) > -1){
+                    $( this ).text($( this ).text().replace( "Hide","Show" ));
+                }
+                else{
+                    $( this ).text($( this ).text().replace( "Show","Hide" ));
+                }
+            });
+            this.$showSingleSimpleDiffexprAnatomyHeaders.click( function(){
+                download.$singleSimpleDiffexprAnatomyHeaders.toggle( "blind" );
+                if($( this ).text().indexOf( "Hide" ) > -1){
+                    $( this ).text($( this ).text().replace( "Hide","Show" ));
+                }
+                else{
+                    $( this ).text($( this ).text().replace( "Show","Hide" ));
+                }
+            });
+            this.$showSingleCompleteDiffexprAnatomyHeaders.click( function(){
+                download.$singleCompleteDiffexprAnatomyHeaders.toggle( "blind" );
+                if($( this ).text().indexOf( "Hide" ) > -1){
+                    $( this ).text($( this ).text().replace( "Hide","Show" ));
+                }
+                else{
+                    $( this ).text($( this ).text().replace( "Show","Hide" ));
+                }
+            });
+            this.$showMultiSimpleDiffexprAnatomyHeaders.click( function(){
+                download.$multiSimpleDiffexprAnatomyHeaders.toggle( "blind" );
+                if($( this ).text().indexOf( "Hide" ) > -1){
+                    $( this ).text($( this ).text().replace( "Hide","Show" ));
+                }
+                else{
+                    $( this ).text($( this ).text().replace( "Show","Hide" ));
+                }
+            });
+            this.$showMultiCompleteDiffexprAnatomyHeaders.click( function(){
+                download.$multiCompleteDiffexprAnatomyHeaders.toggle( "blind" );
+                if($( this ).text().indexOf( "Hide" ) > -1){
+                    $( this ).text($( this ).text().replace( "Hide","Show" ));
+                }
+                else{
+                    $( this ).text($( this ).text().replace( "Show","Hide" ));
+                }
+            });
+            this.$showSingleSimpleDiffexprDevelopmentHeaders.click( function(){
+                download.$singleSimpleDiffexprDevelopmentHeaders.toggle( "blind" );
+                if($( this ).text().indexOf( "Hide" ) > -1){
+                    $( this ).text($( this ).text().replace( "Hide","Show" ));
+                }
+                else{
+                    $( this ).text($( this ).text().replace( "Show","Hide" ));
+                }
+            });
+            this.$showSingleCompleteDiffexprDevelopmentHeaders.click( function(){
+                download.$singleCompleteDiffexprDevelopmentHeaders.toggle( "blind" );
+                if($( this ).text().indexOf( "Hide" ) > -1){
+                    $( this ).text($( this ).text().replace( "Hide","Show" ));
+                }
+                else{
+                    $( this ).text($( this ).text().replace( "Show","Hide" ));
+                }
+            });
+
             // Add the autocompletion to the search box.
             this.$bgeeSearchBox.autocomplete({
                 select: function( event, ui ) {
@@ -265,17 +415,42 @@ var download = {
                 this.$bgeeDataSelectionTextCommon.text( bgeeGroupName );
                 this.$bgeeGroupDescription.text( numberOfSpecies + " species: " );
                 this.$bgeeGroupDescription.append( $( "<i></i>" ).append( namesOfAllSpecies ) );
+                this.$showMultiSimpleDiffexprAnatomyHeaders.show();
+                this.$showMultiCompleteDiffexprAnatomyHeaders.show();
+                this.$showSingleSimpleDiffexprAnatomyHeaders.hide();
+                this.$showSingleCompleteDiffexprAnatomyHeaders.hide();
+                if ( this.$exprCalls.length > 0 ) {
+                	this.$exprHelp.attr( "href", this.$exprHelp.attr("href").split('#')[0] + "#multi_expr");
+                	this.$diffDevHelp.attr( "href", this.$diffDevHelp.attr("href").split('#')[0] + "#multi_diff");
+                	this.$diffAnatHelp.attr( "href", this.$diffAnatHelp.attr("href").split('#')[0] + "#multi_diff");
+                }
             } else {
                 this.$bgeeDataSelectionTextScientific.text( bgeeSpeciesName );
                 this.$bgeeDataSelectionTextCommon.text( "("+ bgeeSpeciesCommonNames +")" );
                 this.$bgeeGroupDescription.text( "" );
+                this.$showMultiSimpleDiffexprAnatomyHeaders.hide();
+                this.$showMultiCompleteDiffexprAnatomyHeaders.hide();
+                this.$showSingleSimpleDiffexprAnatomyHeaders.show();
+                this.$showSingleCompleteDiffexprAnatomyHeaders.show();
+                if ( this.$exprCalls.length > 0 ) {
+                	this.$exprHelp.attr( "href", this.$exprHelp.attr("href").split('#')[0] + "#single_expr");
+                	this.$diffDevHelp.attr( "href", this.$diffDevHelp.attr("href").split('#')[0] + "#single_diff");
+                	this.$diffAnatHelp.attr( "href", this.$diffAnatHelp.attr("href").split('#')[0] + "#single_diff");
+                }
+            }
+            
+            //TODO remove when files added
+            if ( this.$refExpr.length > 0 ) {
+            	this.$rnaseqData.hide();   
+            	this.$affyData.hide();
+            	this.$inSituData.hide();
+            	this.$estData.hide();
             }
             
             // Update the values of the download links and size files
             // Expression files
             if (bgeeExprSimpleFileUrl === undefined) {
-            	this.$exprSimpleCsv.hide();
-            	this.$exprCompleteCsv.hide();
+            	this.$exprSimpleData.hide();
             	//TODO remove when multi-species expression files are computed
             	if( bgeeGroupName ){
             		this.$exprNoData.hide();
@@ -285,8 +460,7 @@ var download = {
             		this.$exprComingSoon.hide();
             	}
             } else {
-            	this.$exprSimpleCsv.show();
-            	this.$exprCompleteCsv.show();
+            	this.$exprSimpleData.show();
             	this.$exprSimpleCsv.attr( "href", bgeeExprSimpleFileUrl );
             	this.$exprSimpleCsv.text( "Download simple file (" + bgeeExprSimpleFileSize + ")" );
             	this.$exprCompleteCsv.attr( "href", bgeeExprCompleteFileUrl );
@@ -297,13 +471,11 @@ var download = {
 
             // Differential expression - anatomy comparison
             if (bgeeDiffExprAnatomySimpleFileUrl === undefined) {
-            	this.$diffExprAnatomySimpleCsv.hide();
-            	this.$diffExprAnatomyCompleteCsv.hide();
+            	this.$diffExprAnatomyData.hide(); 
             	this.$diffExprAnatomyNoData.show();
             	this.$diffExprAnatomyComingSoon.hide();
             } else {
-            	this.$diffExprAnatomySimpleCsv.show();
-            	this.$diffExprAnatomyCompleteCsv.show();
+            	this.$diffExprAnatomyData.show(); 
             	this.$diffExprAnatomyNoData.hide();
             	this.$diffExprAnatomyComingSoon.hide();
             	this.$diffExprAnatomySimpleCsv.attr( "href", bgeeDiffExprAnatomySimpleFileUrl );
@@ -316,8 +488,7 @@ var download = {
 
             // Differential expression - development comparison
             if( bgeeDiffExprDevelopmentSimpleFileUrl === undefined ) {
-            	this.$diffExprDevelopmentSimpleCsv.hide();
-            	this.$diffExprDevelopmentCompleteCsv.hide();
+            	this.$diffExprDevelopmentData.hide();
             	//TODO remove when multi-species developmental diff. expression files are computed
                 if( bgeeGroupName ){
                 	this.$diffExprDevelopmentNoData.hide();
@@ -327,8 +498,7 @@ var download = {
                 	this.$diffExprDevelopmentComingSoon.hide();
                 }
             } else {
-            	this.$diffExprDevelopmentSimpleCsv.show();
-            	this.$diffExprDevelopmentCompleteCsv.show();
+            	this.$diffExprDevelopmentData.show(); 
             	this.$diffExprDevelopmentNoData.hide();
             	this.$diffExprDevelopmentComingSoon.hide();
             	this.$diffExprDevelopmentSimpleCsv.attr( "href", bgeeDiffExprDevelopmentSimpleFileUrl );

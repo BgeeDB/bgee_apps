@@ -51,8 +51,8 @@ public class CommandDownload extends CommandParent {
         if (this.requestParameters.getAction() == null) {
             display.displayDownloadHomePage();
         } else if (this.requestParameters.getAction().equals(
-                RequestParameters.ACTION_DOWLOAD_RAW_FILES)) {
-            display.displayProcessedRawDataDownloadPage();
+                RequestParameters.ACTION_DOWLOAD_REF_EXPR_FILES)) {
+            display.displayReferenceGeneExpressionDownloadPage();
         } else if (this.requestParameters.getAction().equals(
                 RequestParameters.ACTION_DOWLOAD_CALL_FILES)) {
             display.displayGeneExpressionCallDownloadPage();

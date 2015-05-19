@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.DownloadDisplay;
+import org.bgee.view.ViewFactory;
 
 /**
  * This class displays the page having the category "download", i.e. with the parameter
@@ -93,7 +94,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     private final static String GROUP_NAME_BILATERIA = "Bilateria";
         
     public enum DownloadPageType {
-        RAW_DATA, EXPR_CALLS;
+        REF_EXPR, EXPR_CALLS;
     }
     /**
      * Constructor
@@ -105,12 +106,13 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      *                          and for display purposes.
      * @param prop              A {@code BgeeProperties} instance that contains the properties
      *                          to use.
+     * @param factory           A {@code ViewFactory} that instantiated this object.
      * @throws IOException      If there is an issue when trying to get or to use the
      *                          {@code PrintWriter} 
      */
     public HtmlDownloadDisplay(HttpServletResponse response, RequestParameters requestParameters, 
-            BgeeProperties prop) throws IOException {
-        super(response,requestParameters, prop);
+            BgeeProperties prop, ViewFactory factory) throws IOException {
+        super(response, requestParameters, prop, factory);
     }
 
     @Override
@@ -120,24 +122,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
         this.writeln("<h1>Bgee release 13 download page</h1>");
 
-        RequestParameters urlDownloadRawGenerator = this.getNewRequestParameters();
-        urlDownloadRawGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
-        urlDownloadRawGenerator.setAction(RequestParameters.ACTION_DOWLOAD_RAW_FILES);
-
-        RequestParameters urlDownloadCallsGenerator = this.getNewRequestParameters();
-        urlDownloadCallsGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
-        urlDownloadCallsGenerator.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
-        
         this.writeln("<div id='feature_list'>");
-        
-        this.writeln(HtmlParentDisplay.getLogoLink(urlDownloadRawGenerator.getRequestURL(), 
-                "Bgee processed raw data page", "Processed raw data", 
-                this.prop.getImagesRootDirectory() + "logo/raw_data_logo.png"));
-
-        this.writeln(HtmlParentDisplay.getLogoLink(urlDownloadCallsGenerator.getRequestURL(), 
-                "Bgee gene expression call page", "Gene expression calls", 
-                this.prop.getImagesRootDirectory() + "logo/expr_calls_logo.png"));
-
+        this.writeln(getHomePageLogos(this, this.prop.getImagesRootDirectory()));
         this.writeln("</div>");
         
         this.endDisplay();
@@ -153,10 +139,10 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
         this.getMoreResultDivs();
 
+        this.writeln("<div id='expr_calls'>");
+
         this.writeln("<h1>Gene expression calls</h1>");
 
-        this.writeln("<div class='expr_calls'>");
-        
         // Introduction
         this.writeln("<div id='bgee_introduction' class='downloadsection'>");
         this.writeln("<p>Bgee is a database to retrieve and compare gene expression patterns between animal species. ");
@@ -176,7 +162,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln(this.getSingleSpeciesSection(DownloadPageType.EXPR_CALLS));
 
         // Black banner when a species or a group is selected.
-        this.writeln(this.getBlackBanner(DownloadPageType.EXPR_CALLS));
+        this.writeln(this.getDownloadBanner(DownloadPageType.EXPR_CALLS));
         
         // Multi-species part
         this.writeln(this.getMultiSpeciesSection(DownloadPageType.EXPR_CALLS));
@@ -192,19 +178,19 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     }
 
     @Override
-    public void displayProcessedRawDataDownloadPage() {
+    public void displayReferenceGeneExpressionDownloadPage() {
         log.entry();
-        this.startDisplay("download", "Bgee release 13 processed raw data download page");
+        this.startDisplay("download", "Bgee release 13 reference gene expression download page");
         
         this.getMoreResultDivs();
+
+        this.writeln("<div id='ref_expr'>");
     
-        this.writeln("<h1>Processed raw data</h1>");
-    
-        this.writeln("<div class='raw_data'>");
+        this.writeln("<h1>Reference gene expression</h1>");
     
         // Introduction
         this.writeln("<div id='bgee_introduction' class='downloadsection'>");
-        this.writeln("<p>Bgee is a database to retrieve and compare processed raw data in species. ");
+        this.writeln("<p>Bgee is a database to retrieve reference gene expression in species. ");
         this.writeln("This is a beta download page, more features will be deployed soon. </p>");
         this.writeln("<p>Click on a species to browse files to download. You can also download " +
         //TODO: change this ugly '../' once we'll have added a property to distinguish 
@@ -218,12 +204,12 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln(this.getSearchBox());
         
         // Single species part
-        this.writeln(this.getSingleSpeciesSection(DownloadPageType.RAW_DATA));
+        this.writeln(this.getSingleSpeciesSection(DownloadPageType.REF_EXPR));
 
         // Black banner when a species or a group is selected.
-        this.writeln(this.getBlackBanner(DownloadPageType.RAW_DATA));
+        this.writeln(this.getDownloadBanner(DownloadPageType.REF_EXPR));
         
-        this.writeln("</div>"); // close raw_data div
+        this.writeln("</div>"); // close ref_expr div
 
         // Image sources
         this.writeln(this.getImageSources());
@@ -233,6 +219,35 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         log.exit();
     }
 
+    /**
+     * TODO Javadoc
+     *
+     * @param display
+     * @param imgDirectory
+     * @return
+     */
+    public static String getHomePageLogos(HtmlDownloadDisplay display, String imgDirectory) {
+        RequestParameters urlDownloadRefExprGenerator = display.getNewRequestParameters();
+        urlDownloadRefExprGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlDownloadRefExprGenerator.setAction(RequestParameters.ACTION_DOWLOAD_REF_EXPR_FILES);
+
+        RequestParameters urlDownloadCallsGenerator = display.getNewRequestParameters();
+        urlDownloadCallsGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlDownloadCallsGenerator.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
+        
+        StringBuffer logos = new StringBuffer(); 
+        
+        logos.append(HtmlParentDisplay.getLogoLink(urlDownloadCallsGenerator.getRequestURL(), 
+                "Bgee gene expression call page", "Gene expression calls", 
+                imgDirectory + "logo/expr_calls_logo.png"));
+
+        logos.append(HtmlParentDisplay.getLogoLink(urlDownloadRefExprGenerator.getRequestURL(), 
+                "Bgee reference gene expression page", "Reference gene expression", 
+                imgDirectory + "logo/ref_expr_logo.png"));
+        
+        return log.exit(logos.toString());
+    }
+    
     /**
      * Get the 'More results' of a download page as a HTML 'div' element. 
      *
@@ -397,8 +412,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      * @return          the {@code String} that is the black banner of a download page 
      *                  as a HTML 'div' element according {@code pageType}.
      */
-    // FIXME: change method name, what if tomorrow the banner becomes red?
-    private String getBlackBanner(DownloadPageType pageType) {
+    private String getDownloadBanner(DownloadPageType pageType) {
         log.entry(pageType);
     
         StringBuffer banner = new StringBuffer();
@@ -420,53 +434,105 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         banner.append("<p class='groupdescription'></p>");
         
         if (pageType.equals(DownloadPageType.EXPR_CALLS)) {
+            RequestParameters urlDoc = this.getNewRequestParameters();
+            urlDoc.setPage(RequestParameters.PAGE_DOCUMENTATION);
+            urlDoc.setAction(RequestParameters.ACTION_DOC_DOWLOAD_FILES);
+            
             // Presence/absence expression files
             banner.append("<div class='bgee_download_file_buttons'>");
-            banner.append("<h2>Presence/absence of expression</h2>");    
+            banner.append("<h2>Presence/absence of expression</h2>" +
+                    "<a id='expr_help' class='banner_link' href='" + urlDoc.getRequestURL() + "'>Help</a>");    
             banner.append("<p id='expr_no_data' class='no_data'>Not enough data</p>");
             banner.append("<p id='expr_coming_soon' class='no_data'>Coming soon</p>");
-            banner.append("<a id='expr_simple_csv' class='download_link' href='' download></a>");
-            banner.append("&nbsp;&nbsp;");
-            banner.append("<a id='expr_complete_csv' class='download_link' href='' download></a>");
+            banner.append("<div id='expr_data'>" +
+                    "<a id='expr_simple_csv' class='download_link' href='' download></a>" +
+                    "<a id='show_single_simple_expr_headers' class='banner_link'>Show headers</a>" +
+                    "<a id='expr_complete_csv' class='download_link' href='' download></a>" +
+                    "<a id='show_single_complete_expr_headers' class='banner_link'>Show headers</a></div>");
+            banner.append("<div id='single_simple_expr_headers' class='header_table'>" +
+                    HtmlDocumentationCallFile.getSingleSpeciesSimpleExprFileHeaderDesc() + "</div>");
+            banner.append("<div id='single_complete_expr_headers' class='header_table'>" + 
+                    HtmlDocumentationCallFile.getSingleSpeciesCompleteExprFileHeaderDesc() + "</div>");
             banner.append("</div>");
             // Differential expression files across anatomy
             banner.append("<div class='bgee_download_file_buttons'>");
-            banner.append("<h2>Over-/Under-expression across anatomy</h2>");
+            banner.append("<h2>Over-/Under-expression across anatomy</h2>" +
+                    "<a id='diffexpr_anatomy_help' class='banner_link' href='" + urlDoc.getRequestURL() + "'>Help</a>");
             banner.append("<p id='diffexpr_anatomy_no_data' class='no_data'>Not enough data</p>");
             banner.append("<p id='diffexpr_anatomy_coming_soon' class='no_data'>Coming soon</p>");
-            banner.append("<a id='diffexpr_anatomy_simple_csv' class='download_link' href='' download></a>");
-            banner.append("&nbsp;&nbsp;");
-            banner.append("<a id='diffexpr_anatomy_complete_csv' class='download_link' href='' download></a>");
+            banner.append("<div id='diffexpr_anatomy_data'>" + 
+                    "<a id='diffexpr_anatomy_simple_csv' class='download_link' href='' download></a>" +
+                    "<a id='show_single_simple_diffexpr_anatomy_headers' class='banner_link'>Show headers</a>" +
+                    "<a id='show_multi_simple_diffexpr_anatomy_headers' class='banner_link'>Show headers</a>" +
+                    "<a id='diffexpr_anatomy_complete_csv' class='download_link' href='' download></a>" +
+                    "<a id='show_single_complete_diffexpr_anatomy_headers' class='banner_link'>Show headers</a>" +
+                    "<a id='show_multi_complete_diffexpr_anatomy_headers' class='banner_link'>Show headers</a></div>");
+            banner.append("<div id='single_simple_diffexpr_anatomy_headers' class='header_table'>" + 
+                    HtmlDocumentationCallFile.getSingleSpeciesSimpleDiffExprFileHeaderDesc() + "</div>");
+            banner.append("<div id='single_complete_diffexpr_anatomy_headers' class='header_table'>" + 
+                    HtmlDocumentationCallFile.getSingleSpeciesCompleteDiffExprFileHeaderDesc() + "</div>");
+            banner.append("<div id='multi_simple_diffexpr_anatomy_headers' class='header_table'>" + 
+                    HtmlDocumentationCallFile.getMultiSpeciesSimpleDiffExprFileHeaderDesc() + "</div>");
+            banner.append("<div id='multi_complete_diffexpr_anatomy_headers' class='header_table'>" + 
+                    HtmlDocumentationCallFile.getMultiSpeciesCompleteDiffExprFileHeaderDesc() + "</div>");
             banner.append("</div>");
             // Differential expression files across life stages
             banner.append("<div class='bgee_download_file_buttons'>");
-            banner.append("<h2>Over-/Under-expression across life stages</h2>");
+            banner.append("<h2>Over-/Under-expression across life stages</h2>" +
+                    "<a id='diffexpr_development_help' class='banner_link' href='" + urlDoc.getRequestURL() + "'>Help</a>");
             banner.append("<p id='diffexpr_development_no_data' class='no_data'>Not enough data</p>");
             banner.append("<p id='diffexpr_development_coming_soon' class='no_data'>Coming soon</p>");
-            banner.append("<a id='diffexpr_development_simple_csv' class='download_link' href='' download></a>");
-            banner.append("&nbsp;&nbsp;");
-            banner.append("<a id='diffexpr_development_complete_csv' class='download_link' href='' download></a>");
+            banner.append("<div id='diffexpr_development_data'>" + 
+                    "<a id='diffexpr_development_simple_csv' class='download_link' href='' download></a>" +
+                    "<a id='show_single_simple_diffexpr_development_headers' class='banner_link'>Show headers</a>" +
+                    "<a id='diffexpr_development_complete_csv' class='download_link' href='' download></a>" +
+                    "<a id='show_single_complete_diffexpr_development_headers' class='banner_link'>Show headers</a></div>");
+            banner.append("<div id='single_simple_diffexpr_development_headers' class='header_table'>" + 
+                    HtmlDocumentationCallFile.getSingleSpeciesSimpleDiffExprFileHeaderDesc() + "</div>");
+            banner.append("<div id='single_complete_diffexpr_development_headers' class='header_table'>" + 
+                    HtmlDocumentationCallFile.getSingleSpeciesCompleteDiffExprFileHeaderDesc() + "</div>");
+
             banner.append("</div>");            
         } else {
-            // XX
+            // RNA-Seq data
             banner.append("<div class='bgee_download_file_buttons'>");
-            banner.append("<h2>AA</h2>");    
-            banner.append("<p id='aa' class='no_data'>Coming soon</p>");
+            banner.append("<h2>RNA-Seq data</h2>");
+            banner.append("<p id='rnaseq_coming_soon' class='no_data'>Coming soon</p>");
+            banner.append("<div id='rnaseq_data'>" + 
+                    "<a id='rnaseq_annotation_csv' class='download_link' href='' download></a>" +
+                    "<a id='show_rnaseq_annotation_headers' class='banner_link'>Show headers</a>" +
+                    "<a id='rnaseq_ref_data_csv' class='download_link' href='' download></a>" +
+                    "<a id='show_rnaseq_ref_data_headers' class='banner_link'>Show headers</a></div>");
             banner.append("</div>");
-            // BB
+            // Affymetrix data
             banner.append("<div class='bgee_download_file_buttons'>");
-            banner.append("<h2>BB</h2>");
-            banner.append("<p id='bb' class='no_data'>Coming soon</p>");
+            banner.append("<h2>Affymetrix data</h2>");
+            banner.append("<p id='affy_coming_soon' class='no_data'>Coming soon</p>");
+            banner.append("<div id='affy_data'>" + 
+                    "<a id='affy_annotation_csv' class='download_link' href='' download></a>" +
+                    "<a id='show_affy_annotation_headers' class='banner_link'>Show headers</a>" +
+                    "<a id='affy_ref_data_csv' class='download_link' href='' download></a>" +
+                    "<a id='show_affy_ref_data_headers' class='banner_link'>Show headers</a></div>");
             banner.append("</div>");
-            // CC
+            // In situ data
             banner.append("<div class='bgee_download_file_buttons'>");
-            banner.append("<h2>CC</h2>");
-            banner.append("<p id='cc' class='no_data'>Coming soon</p>");
+            banner.append("<h2><em>In situ</em> data</h2>");
+            banner.append("<p id='in_situ_coming_soon' class='no_data'>Coming soon</p>");
+            banner.append("<div id='in_situ_data'>" + 
+                    "<a id='in_situ_annotation_csv' class='download_link' href='' download></a>" +
+                    "<a id='show_in_situ_annotation_headers' class='banner_link'>Show headers</a>" +
+                    "<a id='in_situ_ref_data_csv' class='download_link' href='' download></a>" +
+                    "<a id='show_in_situ_ref_data_headers' class='banner_link'>Show headers</a></div>");
             banner.append("</div>");            
-            // DD
+            // EST data
             banner.append("<div class='bgee_download_file_buttons'>");
-            banner.append("<h2>DD</h2>");
-            banner.append("<p id='dd' class='no_data'>Coming soon</p>");
+            banner.append("<h2>EST data</h2>");
+            banner.append("<p id='est_coming_soon' class='no_data'>Coming soon</p>");
+            banner.append("<div id='est_data'>" + 
+                    "<a id='est_annotation_csv' class='download_link' href='' download></a>" +
+                    "<a id='show_est_annotation_headers' class='banner_link'>Show headers</a>" +
+                    "<a id='est_ref_data_csv' class='download_link' href='' download></a>" +
+                    "<a id='show_est_ref_data_headers' class='banner_link'>Show headers</a></div>");
             banner.append("</div>");            
         }
         
@@ -661,7 +727,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             } else {
                 figure = "<figure " + this.getSingleSpeciesFileData(speciesIds.get(0)) + ">";
             }
-        } else if (pageType.equals(DownloadPageType.RAW_DATA)) {
+        } else if (pageType.equals(DownloadPageType.REF_EXPR)) {
             figure = "<figure>";
         } else {
             //TODO

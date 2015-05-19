@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.DocumentationDisplay;
+import org.bgee.view.ViewFactory;
 
 
 //XXX: what is this {@code displayType}?
@@ -127,12 +128,14 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
      *                          and for display purposes.
      * @param prop              A {@code BgeeProperties} instance that contains the properties
      *                          to use.
+     * @param factory           A {@code ViewFactory} that instantiated this object.
      * @throws IOException      If there is an issue when trying to get or to use the
      *                          {@code PrintWriter}.
      */
     public HtmlDocumentationDisplay(HttpServletResponse response,
-            RequestParameters requestParameters, BgeeProperties prop) throws IOException {
-        this(response, requestParameters, prop, null);
+            RequestParameters requestParameters, BgeeProperties prop, ViewFactory factory) 
+                    throws IOException {
+        this(response, requestParameters, prop, factory, null);
     }
     /**
      * Constructor providing other dependencies.
@@ -149,15 +152,17 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
      *                          #displayCallDownloadFileDocumentation()}). If {@code null}, 
      *                          the default implementation will be used 
      *                          ({@link HtmlDocumentationCallFile}).
+     * @param factory           A {@code ViewFactory} that instantiated this object.
      * @throws IOException      If there is an issue when trying to get or to use the
      *                          {@code PrintWriter}.
      */
     public HtmlDocumentationDisplay(HttpServletResponse response,
-            RequestParameters requestParameters, BgeeProperties prop, 
+            RequestParameters requestParameters, BgeeProperties prop, ViewFactory factory,
             HtmlDocumentationCallFile callFileDoc) throws IOException {
-        super(response, requestParameters, prop);
+        super(response, requestParameters, prop, factory);
         if (callFileDoc == null) {
-            this.callFileDoc = new HtmlDocumentationCallFile(response, requestParameters, prop);
+            this.callFileDoc = 
+                    new HtmlDocumentationCallFile(response, requestParameters, prop, factory);
         } else {
             this.callFileDoc = callFileDoc;
         }
@@ -219,9 +224,9 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
 
         this.writeln("<h1>How to access to Bgee data</h1>");
 
-        RequestParameters urlDownloadRawGenerator = this.getNewRequestParameters();
-        urlDownloadRawGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
-        urlDownloadRawGenerator.setAction(RequestParameters.ACTION_DOWLOAD_RAW_FILES);
+        RequestParameters urlDownloadRefExprGenerator = this.getNewRequestParameters();
+        urlDownloadRefExprGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlDownloadRefExprGenerator.setAction(RequestParameters.ACTION_DOWLOAD_REF_EXPR_FILES);
 
         RequestParameters urlDownloadCallsGenerator = this.getNewRequestParameters();
         urlDownloadCallsGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
@@ -229,9 +234,9 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         
         this.writeln("<div id='feature_list'>");
         
-        this.writeln(HtmlParentDisplay.getLogoLink(urlDownloadRawGenerator.getRequestURL(), 
-                "Bgee processed raw data page", "Processed raw data", 
-                this.prop.getImagesRootDirectory() + "logo/raw_data_logo.png"));
+        this.writeln(HtmlParentDisplay.getLogoLink(urlDownloadRefExprGenerator.getRequestURL(), 
+                "Bgee reference gene expression page", "Reference gene expression", 
+                this.prop.getImagesRootDirectory() + "logo/ref_expr_logo.png"));
 
         this.writeln(HtmlParentDisplay.getLogoLink(urlDownloadCallsGenerator.getRequestURL(), 
                 "Bgee gene expression call page", "Gene expression calls", 

@@ -67,6 +67,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.uniqueId = 0;
     }
 
+    //TODO: javadoc. It should be specified whether arguments are already html escaped / URL encoded if necessary
     protected static String getLogoLink(String url, 
             String title, String figcaption, String imgPath) {
         log.entry(url, title, figcaption, imgPath);
@@ -178,6 +179,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         
         // Bgee logo
         this.writeln("<a href='" + this.prop.getBgeeRootDirectory() + "' title='Go to Bgee home page'>"
+                //TODO: create a "logo" property or something, this shouldn't be hardcoded.
+                //also everywhere where getLogoLink is called.
                 + "<img id='sib_other_logo' src='"+this.prop.getImagesRootDirectory()
                 + "logo/bgee13_logo.png' title='Bgee: a dataBase for Gene Expression Evolution' "
                 + "alt='Bgee: a dataBase for Gene Expression Evolution' />"

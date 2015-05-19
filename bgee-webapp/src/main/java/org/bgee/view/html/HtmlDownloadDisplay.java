@@ -397,6 +397,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      * @return          the {@code String} that is the black banner of a download page 
      *                  as a HTML 'div' element according {@code pageType}.
      */
+    // FIXME: change method name, what if tomorrow the banner becomes red?
     private String getBlackBanner(DownloadPageType pageType) {
         log.entry(pageType);
     

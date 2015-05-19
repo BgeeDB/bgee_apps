@@ -5,7 +5,7 @@ package org.bgee.view;
  * has to implements
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
- * @version Bgee 13 May 2014
+ * @version Bgee 13 May 2015
  * @since   Bgee 13
  */
 public interface DownloadDisplay {

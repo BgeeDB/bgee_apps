@@ -4,7 +4,7 @@ package org.bgee.view;
  * Interface that defines methods displaying the documentation category, i.e. page=documentation
  *
  * @author  Valentine Rech de Laval
- * @version Bgee 13 May 2014
+ * @version Bgee 13 May 2015
  * @since   Bgee 13
  */
 public interface DocumentationDisplay {

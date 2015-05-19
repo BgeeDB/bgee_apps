@@ -125,7 +125,7 @@ public class RequestParameters {
      * providing processed raw data is requested. Value of the parameter page should be 
      * {@link #PAGE_DOWNLOAD}.
      */
-    public static final String ACTION_DOWLOAD_RAW_FILES = "raw_data";
+    public static final String ACTION_DOWLOAD_RAW_FILES = "ref_expression";
 
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
@@ -141,7 +141,7 @@ public class RequestParameters {
      * Bgee data is requested. Value of the parameter page should be 
      * {@link #PAGE_DOCUMENTATION}.
      */
-    public static final String ACTION_DOC_HOW_TO_ACCESS = "how_to_access";
+    public static final String ACTION_DOC_HOW_TO_ACCESS = "access";
     
     /**
      * A {@code BgeeProperties} instance to provide all the properties values

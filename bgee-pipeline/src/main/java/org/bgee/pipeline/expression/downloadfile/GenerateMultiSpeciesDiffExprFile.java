@@ -126,6 +126,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      */
     public final static String DIFFEXPRESSION_COLUMN_NAME = "Differential expression";
 
+    //TODO: javadoc
     private final static Comparator<MultiSpeciesFileBean> MULTI_SPECIES_BEAN_COMPARATOR = 
             new Comparator<MultiSpeciesFileBean>(){
         @Override
@@ -163,7 +164,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             return log.exit(0);
         }
     };
- 
+
+    //TODO: javadoc
     private final static Comparator<List<String>> STRING_LIST_COMPARATOR = 
             new Comparator<List<String>>(){
         @Override
@@ -2688,12 +2690,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 case OMA_ID_COLUMN_NAME:
                 case ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME:
                 case STAGE_ID_COLUMN_NAME:
-                case OVER_EXPR_GENE_COUNT_COLUMN_NAME:
-                case UNDER_EXPR_GENE_COUNT_COLUMN_NAME:
-                case NO_DIFF_EXPR_GENE_COUNT_COLUMN_NAME:
-                case NA_GENES_COUNT_COLUMN_NAME:
                 case GENE_ID_LIST_COLUMN_NAME:
-                case GENE_NAME_LIST_COLUMN_NAME:
                 case GENE_ID_COLUMN_NAME:
                 case SPECIES_LATIN_NAME_COLUMN_NAME:                
                 case DIFFEXPRESSION_COLUMN_NAME:
@@ -2709,17 +2706,19 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 case RNASEQ_CONSISTENT_DEA_COUNT_COLUMN_NAME: 
                 case RNASEQ_INCONSISTENT_DEA_COUNT_COLUMN_NAME:
                 case CIO_ID_COLUMN_NAME: 
-                case CIO_NAME_ID_COLUMN_NAME:
                     quoteMode[i] = false; 
                     break;
                 case GENE_NAME_COLUMN_NAME:
                 case ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME:
                 case STAGE_NAME_COLUMN_NAME:
+                case GENE_NAME_LIST_COLUMN_NAME:
+                case CIO_NAME_ID_COLUMN_NAME:
                     quoteMode[i] = true; 
                     break;
                 default:
                     throw log.throwing(new IllegalArgumentException(
-                            "Unrecognized header: " + headers[i] + " for OMA TSV file."));
+                            "Unrecognized header: " + headers[i] 
+                                    + " for multi-species diff. expression file."));
             }
         }
         

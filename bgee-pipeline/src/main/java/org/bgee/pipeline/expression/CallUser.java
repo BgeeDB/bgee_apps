@@ -366,19 +366,23 @@ public abstract class CallUser extends MySQLDAOUser {
 
         if (callTO instanceof  ExpressionCallTO) {
             ExpressionCallTO exprTO = (ExpressionCallTO) callTO;
-            if (exprTO.isIncludeSubstructures() == null && exprTO.isIncludeSubStages() == null) {
-                throw log.throwing(new IllegalArgumentException("The CallTO provided (" +
-                        callTO.getClass() + ") has a null value for observed data : " + 
-                        callTO.toString()));
+            if (exprTO.isIncludeSubstructures() != null && exprTO.isIncludeSubstructures() || 
+                exprTO.isIncludeSubStages() != null && exprTO.isIncludeSubStages()) {
+                return log.exit(true);
             }
-            return log.exit(exprTO.isIncludeSubstructures() || exprTO.isIncludeSubStages());
+            if (exprTO.isIncludeSubstructures() == null || exprTO.isIncludeSubStages() == null) {
+                throw log.throwing(new IllegalArgumentException("The CallTO provided (" +
+                        callTO.getClass() + ") does not allow to determine whether "
+                      + "substructures/substages were considered: " + callTO.toString()));
+            }
+            return log.exit(false);
             
         } else if (callTO instanceof NoExpressionCallTO) {
             NoExpressionCallTO noExprTO = (NoExpressionCallTO) callTO;
             if (noExprTO.isIncludeParentStructures() == null) {
-                throw log.throwing(new IllegalArgumentException("The CallTO provided (" +
-                        callTO.getClass() + ") has a null value for origin of line: " + 
-                        callTO.toString()));                
+                throw log.throwing(new IllegalArgumentException("The CallTO provided (" 
+                      + callTO.getClass() + ") does not allow to determine whether "
+                      + "parent structures were considered: " + callTO.toString()));                
             }
             return log.exit(noExprTO.isIncludeParentStructures());
             

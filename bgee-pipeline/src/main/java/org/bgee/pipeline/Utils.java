@@ -130,23 +130,6 @@ public class Utils {
             skipComments(new CommentStartsWith("//")).build();
 
     /**
-     * Return a {@code CsvPreference} used to parse TSV files allowing commented line, 
-     * starting with "//", and using a custom {@code QuoteMode} that quotes columns if the element 
-     * representing that column in the supplied array is {@code true}.
-     *
-     * @param columnsToQuote    An {@code Array} of {@code booleans} (one per CSV column) indicating 
-     *                          whether each column should be quoted or not.
-     * @return                  the {@code CsvPreference} used to parse TSV files allowing commented 
-     *                          line and using a custom {@code QuoteMode}.
-     */
-    public static CsvPreference getCsvPreferenceWithQuote(boolean[] columnsToQuote) {
-        log.entry(columnsToQuote);
-        return log.exit(new CsvPreference.Builder(CsvPreference.TAB_PREFERENCE).
-                useQuoteMode(new ColumnQuoteMode(columnsToQuote)).
-                skipComments(new CommentStartsWith("//")).build());
-    }
-    
-    /**
      * A {@code String} corresponding to {@code System.getProperty("line.separator")}.
      * CR stands for Carriage Return.
      */
@@ -164,6 +147,23 @@ public class Utils {
             Collections.unmodifiableList(Arrays.asList("|", ","));
 
 
+
+    /**
+     * Return a {@code CsvPreference} used to parse TSV files allowing commented line, 
+     * starting with "//", and using a custom {@code QuoteMode} that quotes columns if the element 
+     * representing that column in the supplied array is {@code true}.
+     *
+     * @param columnsToQuote    An {@code Array} of {@code boolean}s (one per CSV column) indicating 
+     *                          whether each column should be quoted or not.
+     * @return                  the {@code CsvPreference} used to parse TSV files allowing commented 
+     *                          line and using a custom {@code QuoteMode}.
+     */
+    public static CsvPreference getCsvPreferenceWithQuote(boolean[] columnsToQuote) {
+        log.entry(columnsToQuote);
+        return log.exit(new CsvPreference.Builder(CsvPreference.TAB_PREFERENCE).
+                useQuoteMode(new ColumnQuoteMode(columnsToQuote)).
+                skipComments(new CommentStartsWith("//")).build());
+    }
 
     /**
      * Transform a {@code List} of {@code String}s into a {@code String} where each element 

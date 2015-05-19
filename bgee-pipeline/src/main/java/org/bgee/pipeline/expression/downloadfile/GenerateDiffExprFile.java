@@ -624,6 +624,8 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
      * @return          An {@code Array} of {@code CellProcessor}s used to process 
      *                  a differential expression file.
      */
+    //TODO: this should be adapted to the system used elsewhere: providing a String[] 
+    //to determine the columns
     private CellProcessor[] generateDiffExprFileCellProcessors(SingleSpDiffExprFileType fileType) {
         log.entry(fileType);
         
@@ -743,7 +745,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
                     break;
                 default:
                     throw log.throwing(new IllegalArgumentException(
-                            "Unrecognized header: " + headers[i] + " for OMA TSV file."));
+                            "Unrecognized header: " + headers[i] + " for diff. expression file."));
             }
         }
         

@@ -387,6 +387,7 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
         // the unit of the test. 
         // We use ICsvListReader to be able to read comments lines. Moreover this is why 
         // we do not use Utils.TSVCOMMENTED that skip comments.
+        //TODO: we do not use comment lines anymore
         try (ICsvListReader listReader = new CsvListReader(new FileReader(file), 
                 new CsvPreference.Builder(CsvPreference.TAB_PREFERENCE).build())) {
             String[] actualHeaders = listReader.getHeader(true);
@@ -471,6 +472,7 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
         // Moreover we do not use Utils.TSVCOMMENTED that skip comments and to 
         // use '$' as character used to escape columns containing the delimiter to be able 
         // to test that '"' is around columns with name
+        //TODO: we do not use comment lines anymore
         CsvPreference preference = new CsvPreference.Builder('$', '\t', "\n").build();
 
         try (ICsvListReader listReader = new CsvListReader(new FileReader(file), preference)) {
@@ -502,7 +504,7 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
             expectedHeaders[18] = GenerateMultiSpeciesDiffExprFile.RNASEQ_CONSISTENT_DEA_COUNT_COLUMN_NAME; 
             expectedHeaders[19] = GenerateMultiSpeciesDiffExprFile.RNASEQ_INCONSISTENT_DEA_COUNT_COLUMN_NAME;
             expectedHeaders[20] = GenerateMultiSpeciesDownloadFile.CIO_ID_COLUMN_NAME; 
-            expectedHeaders[21] = GenerateMultiSpeciesDownloadFile.CIO_NAME_ID_COLUMN_NAME;
+            expectedHeaders[21] = "\"" + GenerateMultiSpeciesDownloadFile.CIO_NAME_ID_COLUMN_NAME + "\"";
 
             assertArrayEquals("Incorrect headers", expectedHeaders, actualHeaders);
 
@@ -519,7 +521,7 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     DataState.LOWQUALITY.getStringRepresentation(), "0.3", "1", "0", 
                     DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
                     DataState.HIGHQUALITY.getStringRepresentation(), "0.001", "4", "1",
-                    "cioId1", "cioName1"));
+                    "cioId1", "\"cioName1\""));
             
             expectedRows.add(Arrays.asList(
                     "222", "geneId7", "\"geneName7\"", "entityId4|entityId5", "\"entityName4|entityName5\"", 
@@ -530,7 +532,7 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     DataState.LOWQUALITY.getStringRepresentation(), "0.1", "2", "2", 
                     DiffExpressionData.NO_DATA.getStringRepresentation(), 
                     DataState.NODATA.getStringRepresentation(), "1.0", "0", "0",
-                    "cioId1", "cioName1"));
+                    "cioId1", "\"cioName1\""));
           
             expectedRows.add(Arrays.asList(
                     "333", "geneId5", "\"\"", "entityId1|entityId3", "\"entityName1|entityName3\"", 
@@ -541,7 +543,7 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     DataState.NODATA.getStringRepresentation(), "1.0", "0", "0", 
                     DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
                     DataState.LOWQUALITY.getStringRepresentation(), "0.7", "2", "1", 
-                    "cioId2", "cioName2"));
+                    "cioId2", "\"cioName2\""));
             
             expectedRows.add(Arrays.asList(
                     "333", "geneId12", "\"geneName12\"", "entityId1|entityId3", "\"entityName1|entityName3\"", 
@@ -552,7 +554,7 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     DataState.LOWQUALITY.getStringRepresentation(), "0.7", "1", "0", 
                     DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
                     DataState.HIGHQUALITY.getStringRepresentation(), "0.008", "3", "1",
-                    "cioId2", "cioName2"));
+                    "cioId2", "\"cioName2\""));
 
             expectedRows.add(Arrays.asList(
                     "333", "geneId4", "\"geneName4\"", "entityId1|entityId3", "\"entityName1|entityName3\"", 
@@ -563,7 +565,7 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     DataState.HIGHQUALITY.getStringRepresentation(), "0.007", "2", "0", 
                     DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
                     DataState.HIGHQUALITY.getStringRepresentation(), "0.008", "3", "1",
-                    "cioId2", "cioName2"));
+                    "cioId2", "\"cioName2\""));
 
             expectedRows.add(Arrays.asList(
                     "444", "geneId1", "\"geneName1\"", "entityId1|entityId2", "\"entityName1|entityName2\"", 
@@ -574,7 +576,7 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     DataState.LOWQUALITY.getStringRepresentation(), "0.9", "1", "2", 
                     DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
                     DataState.HIGHQUALITY.getStringRepresentation(), "0.008", "3", "0",
-                    "cioId1", "cioName1"));
+                    "cioId1", "\"cioName1\""));
 
             expectedRows.add(Arrays.asList(
                     "444", "geneId2", "\"geneName2\"", "entityId1|entityId2", "\"entityName1|entityName2\"", 
@@ -585,7 +587,7 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     DataState.LOWQUALITY.getStringRepresentation(), "0.5", "1", "0", 
                     DiffExpressionData.NO_DATA.getStringRepresentation(), 
                     DataState.NODATA.getStringRepresentation(), "1.0", "0", "0",
-                    "cioId1", "cioName1"));
+                    "cioId1", "\"cioName1\""));
 
             expectedRows.add(Arrays.asList(
                     "444", "geneId9", "\"null\"", "entityId1|entityId2", "\"entityName1|entityName2\"", 
@@ -596,7 +598,7 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     DataState.HIGHQUALITY.getStringRepresentation(), "0.077", "8", "1", 
                     DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
                     DataState.HIGHQUALITY.getStringRepresentation(), "0.066", "11", "2",
-                    "cioId1", "cioName1"));
+                    "cioId1", "\"cioName1\""));
             
             expectedRows.add(Arrays.asList(
                     "444", "geneId8", "\"geneName8\"", "entityId4", "\"entityName4\"", 
@@ -607,7 +609,7 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     DataState.HIGHQUALITY.getStringRepresentation(), "0.03", "1", "0", 
                     DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
                     DataState.HIGHQUALITY.getStringRepresentation(), "0.002", "6", "0",
-                    "cioId1", "cioName1"));
+                    "cioId1", "\"cioName1\""));
 
             expectedRows.add(Arrays.asList(
                     "444", "geneId9", "\"null\"", "entityId4", "\"entityName4\"", 
@@ -618,7 +620,7 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     DataState.LOWQUALITY.getStringRepresentation(), "0.55", "1", "0", 
                     DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(), 
                     DataState.LOWQUALITY.getStringRepresentation(), "0.44", "1", "0",
-                    "cioId1", "cioName1"));
+                    "cioId1", "\"cioName1\""));
 
             List<List<String>> actualRows = new ArrayList<List<String>>();
             List<String> row;
@@ -640,6 +642,7 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
         // the unit of the test. 
         // We use ICsvListReader to be able to read comments lines. Moreover this is why 
         // we do not use Utils.TSVCOMMENTED that skip comments.
+        //TODO: we do not use comment lines anymore
         try (ICsvListReader listReader = new CsvListReader(new FileReader(outputOMAFile), 
                 new CsvPreference.Builder(CsvPreference.TAB_PREFERENCE).build())) {
             String[] actualHeaders = listReader.getHeader(true);

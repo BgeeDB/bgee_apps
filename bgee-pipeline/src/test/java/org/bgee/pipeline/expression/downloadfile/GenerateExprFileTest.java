@@ -371,7 +371,10 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                         new RelationTO("Stage_id5", "ParentStage_id5"), 
                         new RelationTO("ParentStage_id5", "ParentStage_id5"),
                         new RelationTO("Stage_id2", "Stage_id2"), 
-                        new RelationTO("Stage_id5", "Stage_id5")),
+                        new RelationTO("Stage_id5", "Stage_id5"),
+                        new RelationTO("Stage_id7", "Stage_id57"),
+                        new RelationTO("Stage_id7", "Stage_id6"),
+                        new RelationTO("Stage_id6", "Stage_id6")),
                         MySQLRelationTOResultSet.class);
         when(mockManager.mockRelationDAO.getStageRelationsBySpeciesIds(speciesIds, null)).
                 thenReturn(mockStageRelationRsSp22);
@@ -383,7 +386,10 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                         new RelationTO("Anat_id4", "Anat_id4"),
                         new RelationTO("Anat_id4", "Anat_id1"),
                         new RelationTO("Anat_id5", "Anat_id5"),
-                        new RelationTO("Anat_id5", "Anat_id4")),
+                        new RelationTO("Anat_id5", "Anat_id4"),
+                        new RelationTO("Anat_id8", "Anat_id8"),
+                        new RelationTO("Anat_id9", "Anat_id9"),
+                        new RelationTO("Anat_id9", "Anat_id8")),
                         MySQLRelationTOResultSet.class);
         when(mockManager.mockRelationDAO.getAnatEntityRelationsBySpeciesIds(speciesIds, 
                 EnumSet.of(RelationType.ISA_PARTOF), null)).thenReturn(mockOrganRelationRsSp22);
@@ -477,6 +483,10 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                                 
                         new NoExpressionCallTO(null, "ID5", "Anat_id4", "Stage_id5", 
                                 DataState.NODATA, DataState.NODATA, DataState.NODATA, 
+                                DataState.HIGHQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF),
+                                
+                        new NoExpressionCallTO(null, "ID6", "Anat_id9", "Stage_id7", 
+                                DataState.NODATA, DataState.NODATA, DataState.NODATA, 
                                 DataState.HIGHQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF)),
                         MySQLNoExpressionCallTOResultSet.class);
         NoExpressionCallParams basicNoExprParams22 = new NoExpressionCallParams();
@@ -504,6 +514,15 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                                 DataState.NODATA, DataState.NODATA, DataState.NODATA, 
                                 DataState.HIGHQUALITY, true, NoExpressionCallTO.OriginOfLine.SELF),
                         new NoExpressionCallTO(null, "ID5", "Anat_id5", "Stage_id5", 
+                                DataState.NODATA, DataState.NODATA, DataState.NODATA, 
+                                DataState.HIGHQUALITY, true, NoExpressionCallTO.OriginOfLine.PARENT),
+                                
+                        new NoExpressionCallTO(null, "ID6", "Anat_id9", "Stage_id7", 
+                                DataState.NODATA, DataState.NODATA, DataState.NODATA, 
+                                DataState.HIGHQUALITY, true, NoExpressionCallTO.OriginOfLine.SELF),
+                        // This global call is not derived from propagation of the previous call, 
+                        // it's a fake call to be able to test no-expression condition propagation. 
+                        new NoExpressionCallTO(null, "ID6", "Anat_id8", "Stage_id6", 
                                 DataState.NODATA, DataState.NODATA, DataState.NODATA, 
                                 DataState.HIGHQUALITY, true, NoExpressionCallTO.OriginOfLine.PARENT)),
                         MySQLNoExpressionCallTOResultSet.class);
@@ -534,8 +553,8 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
 
         assertExpressionFile(outputSimpleFile11, "11", true, 6);
         assertExpressionFile(outputAdvancedFile11, "11", false, 8);
-        assertExpressionFile(outputSimpleFile22, "22", true, 5);
-        assertExpressionFile(outputAdvancedFile22, "22", false, 9);
+        assertExpressionFile(outputSimpleFile22, "22", true, 6);
+        assertExpressionFile(outputAdvancedFile22, "22", false, 11);
 
         // Verify that all ResultSet are closed.
         verify(mockSpeciesTORs).close();
@@ -1521,6 +1540,51 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                             ObservedData.NOT_OBSERVED, inSituObsData,
                             ExpressionData.NO_DATA, rnaSeqData,
                             DataState.NODATA.getStringRepresentation(), rnaSeqQual,
+                            ObservedData.NOT_OBSERVED, rnaSeqObsData,
+                            ObservedData.NOT_OBSERVED, observedData);
+                    } else if (geneId.equals("ID6") && anatEntityId.equals("Anat_id9") &&
+                            stageId.equals("Stage_id7")) {
+                        this.assertCommonColumnRowEqual(geneId, "\"genN6\"", geneName,
+                                "\"stageN7\"", stageName, "\"anatName9\"", anatEntityName,
+                                ExpressionData.NO_EXPRESSION.getStringRepresentation(), resume,
+                                DataState.HIGHQUALITY.getStringRepresentation(), quality);
+                        if (!isSimplified) {
+                            this.assertCompleteExprColumnRowEqual(geneId, 
+                                    ExpressionData.NO_DATA, affymetrixData,
+                                    DataState.NODATA.getStringRepresentation(), affymetrixQual,
+                                    ObservedData.NOT_OBSERVED, affymetrixObsData,
+                                    ExpressionData.NO_DATA, estData,
+                                    DataState.NODATA.getStringRepresentation(), estQual,
+                                    ObservedData.NOT_OBSERVED, estObsData,
+                                    ExpressionData.NO_DATA, inSituData,
+                                    DataState.NODATA.getStringRepresentation(), inSituQual,
+                                    ObservedData.NOT_OBSERVED, inSituObsData,
+                                    ExpressionData.NO_EXPRESSION, rnaSeqData,
+                                    DataState.HIGHQUALITY.getStringRepresentation(), rnaSeqQual,
+                                    ObservedData.OBSERVED, rnaSeqObsData,
+                                    ObservedData.OBSERVED, observedData);
+                        }
+                    } else if (geneId.equals("ID6") && anatEntityId.equals("Anat_id8") &&
+                            stageId.equals("Stage_id6")) {
+                        this.assertCommonColumnRowEqual(geneId, "\"genN6\"", geneName,
+                                "\"stageN6\"", stageName, "\"anatName8\"", anatEntityName,
+                                ExpressionData.NO_EXPRESSION.getStringRepresentation(), resume,
+                                DataState.HIGHQUALITY.getStringRepresentation(), quality);
+                        if (isSimplified) {
+                            throw new IllegalStateException("This triplet should not be present in the simple file");
+                        }
+                        this.assertCompleteExprColumnRowEqual(geneId, 
+                            ExpressionData.NO_DATA, affymetrixData,
+                            DataState.NODATA.getStringRepresentation(), affymetrixQual,
+                            ObservedData.NOT_OBSERVED, affymetrixObsData,
+                            ExpressionData.NO_DATA, estData,
+                            DataState.NODATA.getStringRepresentation(), estQual,
+                            ObservedData.NOT_OBSERVED, estObsData,
+                            ExpressionData.NO_DATA, inSituData,
+                            DataState.NODATA.getStringRepresentation(), inSituQual,
+                            ObservedData.NOT_OBSERVED, inSituObsData,
+                            ExpressionData.NO_EXPRESSION, rnaSeqData,
+                            DataState.HIGHQUALITY.getStringRepresentation(), rnaSeqQual,
                             ObservedData.NOT_OBSERVED, rnaSeqObsData,
                             ObservedData.NOT_OBSERVED, observedData);
                     } else {

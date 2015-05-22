@@ -104,7 +104,8 @@ public abstract class GenerateDownloadFileTest extends TestAncestor {
                         new GeneTO("ID2", "genN2", null),
                         new GeneTO("ID3", "genN3", null),
                         new GeneTO("ID4", "genN4", null),
-                        new GeneTO("ID5", "genN5", null)),
+                        new GeneTO("ID5", "genN5", null),
+                        new GeneTO("ID6", "genN6", null)),
                         MySQLGeneTOResultSet.class);
         // The only Attributes requested should be ID and name, this will be checked 
         // at the end of the test
@@ -127,6 +128,8 @@ public abstract class GenerateDownloadFileTest extends TestAncestor {
                         new StageTO("Stage_id3", "stageN3", null, null, null, null, null, null),
                         new StageTO("Stage_id5", "stageN5", null, null, null, null, null, null),
                         new StageTO("ParentStage_id5", "parentstageN5", null, null, null, null, null, null),
+                        new StageTO("Stage_id6", "stageN6", null, null, null, null, null, null),
+                        new StageTO("Stage_id7", "stageN7", null, null, null, null, null, null),
                         new StageTO("Stage_id18", "stageN18", null, null, null, null, null, null)),
                 MySQLStageTOResultSet.class);
         // The only Attributes requested should be ID and name, this will be checked 
@@ -150,6 +153,8 @@ public abstract class GenerateDownloadFileTest extends TestAncestor {
                         new AnatEntityTO("Anat_id5", "anatName5", null, null, null, null),
                         new AnatEntityTO("NonInfoAnatEnt1", "xxx", null, null, null, null),
                         new AnatEntityTO("NonInfoAnatEnt2", "zzz", null, null, null, null),
+                        new AnatEntityTO("Anat_id8", "anatName8", null, null, null, null),
+                        new AnatEntityTO("Anat_id9", "anatName9", null, null, null, null),
                         new AnatEntityTO("Anat_id13", "anatName13", null, null, null, null)),
                  MySQLAnatEntityTOResultSet.class);
         // The only Attributes requested should be ID and name, this will be checked 

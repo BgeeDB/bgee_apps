@@ -123,7 +123,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("<h1>Bgee release 13 download page</h1>");
 
         this.writeln("<div id='feature_list'>");
-        this.writeln(getHomePageLogos(this, this.prop.getImagesRootDirectory()));
+        this.writeln(HtmlDownloadDisplay.getFeatureLogos(this, this.prop.getImagesRootDirectory()));
         this.writeln("</div>");
         
         this.endDisplay();
@@ -220,30 +220,63 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     }
 
     /**
-     * TODO Javadoc
+     * Get the main logo of the download page, as HTML 'div' element.
      *
-     * @param display
-     * @param imgDirectory
-     * @return
+     * @param display       A {@code DownloadDisplay} instance that is the view to be used.
+     * @param imgDirectory  A {@code String} that is the directory of the image.
+     * @return              A {@code String} that is the main logo as HTML 'div' element,
+     *                      formated in HTML and HTML escaped if necessary.
      */
-    public static String getHomePageLogos(HtmlDownloadDisplay display, String imgDirectory) {
-        RequestParameters urlDownloadRefExprGenerator = display.getNewRequestParameters();
+    public static String getMainLogo(DownloadDisplay display, String imgDirectory) {
+        log.entry(display, imgDirectory);
+        
+        RequestParameters urlDownloadGenerator = 
+                ((HtmlParentDisplay) display).getNewRequestParameters();
+        urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+    
+        return log.exit(HtmlParentDisplay.getSingleFeatureLogo(urlDownloadGenerator.getRequestURL(), 
+                "Bgee expression data page", "Expression data", 
+                imgDirectory + "logo/download_logo.png", ""));
+    }
+
+    /**
+     * Get the feature logos of the download page, as HTML 'div' elements.
+     *
+     * @param display       A {@code DownloadDisplay} instance that is the view to be used.
+     * @param imgDirectory  A {@code String} that is the directory of the image.
+     * @return              A {@code String} that is the feature logos as HTML 'div' elements,
+     *                      formated in HTML and HTML escaped if necessary.
+     */
+    public static String getFeatureLogos(DownloadDisplay display, String imgDirectory) {
+        log.entry(display, imgDirectory);
+
+        RequestParameters urlDownloadRefExprGenerator = 
+                ((HtmlParentDisplay) display).getNewRequestParameters();
         urlDownloadRefExprGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
         urlDownloadRefExprGenerator.setAction(RequestParameters.ACTION_DOWLOAD_REF_EXPR_FILES);
 
-        RequestParameters urlDownloadCallsGenerator = display.getNewRequestParameters();
+        RequestParameters urlDownloadCallsGenerator = 
+                ((HtmlParentDisplay) display).getNewRequestParameters();
         urlDownloadCallsGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
         urlDownloadCallsGenerator.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
         
         StringBuffer logos = new StringBuffer(); 
         
-        logos.append(HtmlParentDisplay.getLogoLink(urlDownloadCallsGenerator.getRequestURL(), 
+        logos.append(HtmlParentDisplay.getSingleFeatureLogo(
+                urlDownloadCallsGenerator.getRequestURL(), 
                 "Bgee gene expression call page", "Gene expression calls", 
-                imgDirectory + "logo/expr_calls_logo.png"));
+                imgDirectory + "logo/expr_calls_logo.png", 
+                "Bgee gene expression call page - Bgee gene expression call page - " +
+                "Bgee gene expression call page - Bgee gene expression call page - " +
+                "Bgee gene expression call page - Bgee gene expression call page - " +
+                "Bgee gene expression call page - Bgee gene expression call page"));
 
-        logos.append(HtmlParentDisplay.getLogoLink(urlDownloadRefExprGenerator.getRequestURL(), 
+        logos.append(HtmlParentDisplay.getSingleFeatureLogo(
+                urlDownloadRefExprGenerator.getRequestURL(), 
                 "Bgee reference gene expression page", "Reference gene expression", 
-                imgDirectory + "logo/ref_expr_logo.png"));
+                imgDirectory + "logo/ref_expr_logo.png", 
+                "Bgee reference gene expression page - Bgee reference gene expression page -" +
+                        "Bgee reference gene expression page - Bgee reference gene expression page"));
         
         return log.exit(logos.toString());
     }
@@ -370,42 +403,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     }
 
     /**
-     * Get the images sources of a download page as a HTML 'div' element. 
-     *
-     * @return  the {@code String} that is the images sources as HTML 'div' element.
-     */
-    private String getImageSources() {
-        log.entry();
-        
-        StringBuffer sources = new StringBuffer();
-        sources.append("<p id='creativecommons_title'>Images from Wikimedia Commons. In most cases, pictures corresponds to the sequenced strains. <a>Show information about original images.</a></p>");
-        sources.append("<div id='creativecommons'>");
-        sources.append("<p><i>Homo sapiens</i> picture by Leonardo da Vinci (Life time: 1519) [Public domain]. <a target='_blank' href='http://commons.wikimedia.org/wiki/File:Da_Vinci%27s_Anatomical_Man.jpg#mediaviewer/File:Da_Vinci%27s_Anatomical_Man.jpg'>See <i>H. sapiens</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Mus musculus</i> picture by Rasbak [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AApodemus_sylvaticus_bosmuis.jpg'>See <i>M. musculus</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Danio rerio</i> picture by Azul (Own work) [see page for license], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AZebrafisch.jpg'>See <i>D. rerio</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Drosophila melanogaster</i> picture by Andr&eacute; Karwath aka Aka (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/2.5'>CC-BY-SA-2.5</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ADrosophila_melanogaster_-_side_(aka).jpg'>See <i>D. melanogaster</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Caenorhabditis elegans</i> picture by Bob Goldstein, UNC Chapel Hill http://bio.unc.edu/people/faculty/goldstein/ (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ACelegansGoldsteinLabUNC.jpg'>See <i>C. elegans</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Pan paniscus</i> picture by Ltshears (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a> or <a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ABonobo1_CincinnatiZoo.jpg'>See <i>P. paniscus</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Pan troglodytes</i> picture by Thomas Lersch (Own work) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a>, <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a> or <a target='_blank' href='http://creativecommons.org/licenses/by/2.5'>CC-BY-2.5</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ASchimpanse_Zoo_Leipzig.jpg'>See <i>P. troglodytes</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Gorilla gorilla</i> picture by Brocken Inaglory (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a> or <a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AMale_gorilla_in_SF_zoo.jpg'>See <i>G. gorilla</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Pongo pygmaeus</i> picture by Greg Hume (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ASUMATRAN_ORANGUTAN.jpg'>See <i>P. pygmaeus</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Macaca mulatta</i> picture by Aiwok (Own work) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0-2.5-2.0-1.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AMacaca_mulatta_3.JPG'>See <i>M. mulatta</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Rattus norvegicus</i> picture by Reg Mckenna (originally posted to Flickr as Wild Rat) [<a target='_blank' href='http://creativecommons.org/licenses/by/2.0'>CC-BY-2.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AWildRat.jpg'>See <i>R. norvegicus</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Bos taurus</i> picture by User Robert Merkel on en.wikipedia (US Department of Agriculture) [Public domain], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AHereford_bull_large.jpg'>See <i>B. taurus</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Sus scrofa</i> picture by Joshua Lutz (Own work) [Public domain], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ASus_scrofa_scrofa.jpg'>See <i>S. scrofa</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Monodelphis domestica</i> picture by <i>Marsupial Genome Sheds Light on the Evolution of Immunity.</i> Hill E, PLoS Biology Vol. 4/3/2006, e75 <a rel='nofollow' href='http://dx.doi.org/10.1371/journal.pbio.0040075'>http://dx.doi.org/10.1371/journal.pbio.0040075</a> [<a target='_blank' href='http://creativecommons.org/licenses/by/2.5'>CC-BY-2.5</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AOpossum_with_young.png'>See <i>M. domestica</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Ornithorhynchus anatinus</i> picture by Dr. Philip Bethge (private) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0-2.5-2.0-1.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AOrnithorhynchus.jpg'>See <i>O. anatinus</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Gallus gallus</i> picture by Subramanya C K (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ARed_jungle_fowl.png'>See <i>G. gallus</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Anolis carolinensis</i> picture by PiccoloNamek (Moved from Image:P1010027.jpg) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AAnolis_carolinensis.jpg'>See <i>A. carolinensis</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Xenopus tropicalis</i> picture by V&aacute;clav Gvo&zcaron;d&iacute;k (http://calphotos.berkeley.edu) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/2.5'>CC-BY-SA-2.5</a>, <a target='_blank' href='http://creativecommons.org/licenses/by-sa/2.5'>CC-BY-SA-2.5</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AXenopus_tropicalis01.jpeg'>See <i>X. tropicalis</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Tetraodon nigroviridis</i> picture by Starseed (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/de/deed.en'>CC-BY-SA-3.0-de</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ATetraodon_nigroviridis_1.jpg'>See <i>T. nigroviridis</i> picture via Wikimedia Commons</a></p>");
-        sources.append("</div>");
-    
-        return log.exit(sources.toString());
-    }
-
-    /**
-     * Get the black banner of a download page as a HTML 'div' element, 
+     * Get the banner of a download page as a HTML 'div' element, 
      * according the provided page type.
      *
      * @param pageType  A {@code DownloadPageType} that is the type of the page.
@@ -441,14 +439,15 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             // Presence/absence expression files
             banner.append("<div class='bgee_download_file_buttons'>");
             banner.append("<h2>Presence/absence of expression</h2>" +
-                    "<a id='expr_help' class='banner_link' href='" + urlDoc.getRequestURL() + "'>Help</a>");    
+                    "<a id='expr_help' href='" + urlDoc.getRequestURL() + "'>"+
+                    this.getHelpImg() + "</a>");
             banner.append("<p id='expr_no_data' class='no_data'>Not enough data</p>");
             banner.append("<p id='expr_coming_soon' class='no_data'>Coming soon</p>");
             banner.append("<div id='expr_data'>" +
                     "<a id='expr_simple_csv' class='download_link' href='' download></a>" +
-                    "<a id='show_single_simple_expr_headers' class='banner_link'>Show headers</a>" +
+                    "<a id='show_single_simple_expr_headers'>" + this.getShowHeaderImg() + "</a>" +
                     "<a id='expr_complete_csv' class='download_link' href='' download></a>" +
-                    "<a id='show_single_complete_expr_headers' class='banner_link'>Show headers</a></div>");
+                    "<a id='show_single_complete_expr_headers'>" + this.getShowHeaderImg() + "</a></div>");
             banner.append("<div id='single_simple_expr_headers' class='header_table'>" +
                     HtmlDocumentationCallFile.getSingleSpeciesSimpleExprFileHeaderDesc() + "</div>");
             banner.append("<div id='single_complete_expr_headers' class='header_table'>" + 
@@ -457,16 +456,17 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             // Differential expression files across anatomy
             banner.append("<div class='bgee_download_file_buttons'>");
             banner.append("<h2>Over-/Under-expression across anatomy</h2>" +
-                    "<a id='diffexpr_anatomy_help' class='banner_link' href='" + urlDoc.getRequestURL() + "'>Help</a>");
+                    "<a id='diffexpr_anatomy_help' href='" + urlDoc.getRequestURL() + "'>" + 
+                    this.getHelpImg() + "</a>");
             banner.append("<p id='diffexpr_anatomy_no_data' class='no_data'>Not enough data</p>");
             banner.append("<p id='diffexpr_anatomy_coming_soon' class='no_data'>Coming soon</p>");
             banner.append("<div id='diffexpr_anatomy_data'>" + 
                     "<a id='diffexpr_anatomy_simple_csv' class='download_link' href='' download></a>" +
-                    "<a id='show_single_simple_diffexpr_anatomy_headers' class='banner_link'>Show headers</a>" +
-                    "<a id='show_multi_simple_diffexpr_anatomy_headers' class='banner_link'>Show headers</a>" +
+                    "<a id='show_single_simple_diffexpr_anatomy_headers'>" + this.getShowHeaderImg() + "</a>" +
+                    "<a id='show_multi_simple_diffexpr_anatomy_headers'>" + this.getShowHeaderImg() + "</a>" +
                     "<a id='diffexpr_anatomy_complete_csv' class='download_link' href='' download></a>" +
-                    "<a id='show_single_complete_diffexpr_anatomy_headers' class='banner_link'>Show headers</a>" +
-                    "<a id='show_multi_complete_diffexpr_anatomy_headers' class='banner_link'>Show headers</a></div>");
+                    "<a id='show_single_complete_diffexpr_anatomy_headers'>" + this.getShowHeaderImg() + "</a>" +
+                    "<a id='show_multi_complete_diffexpr_anatomy_headers'>" + this.getShowHeaderImg() + "</a></div>");
             banner.append("<div id='single_simple_diffexpr_anatomy_headers' class='header_table'>" + 
                     HtmlDocumentationCallFile.getSingleSpeciesSimpleDiffExprFileHeaderDesc() + "</div>");
             banner.append("<div id='single_complete_diffexpr_anatomy_headers' class='header_table'>" + 
@@ -479,14 +479,15 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             // Differential expression files across life stages
             banner.append("<div class='bgee_download_file_buttons'>");
             banner.append("<h2>Over-/Under-expression across life stages</h2>" +
-                    "<a id='diffexpr_development_help' class='banner_link' href='" + urlDoc.getRequestURL() + "'>Help</a>");
+                    "<a id='diffexpr_development_help' href='" + urlDoc.getRequestURL() + "'>"+
+                    this.getHelpImg() + "</a>");
             banner.append("<p id='diffexpr_development_no_data' class='no_data'>Not enough data</p>");
             banner.append("<p id='diffexpr_development_coming_soon' class='no_data'>Coming soon</p>");
             banner.append("<div id='diffexpr_development_data'>" + 
                     "<a id='diffexpr_development_simple_csv' class='download_link' href='' download></a>" +
-                    "<a id='show_single_simple_diffexpr_development_headers' class='banner_link'>Show headers</a>" +
+                    "<a id='show_single_simple_diffexpr_development_headers'>" + this.getShowHeaderImg() + "</a>" +
                     "<a id='diffexpr_development_complete_csv' class='download_link' href='' download></a>" +
-                    "<a id='show_single_complete_diffexpr_development_headers' class='banner_link'>Show headers</a></div>");
+                    "<a id='show_single_complete_diffexpr_development_headers'>" + this.getShowHeaderImg() + "</a></div>");
             banner.append("<div id='single_simple_diffexpr_development_headers' class='header_table'>" + 
                     HtmlDocumentationCallFile.getSingleSpeciesSimpleDiffExprFileHeaderDesc() + "</div>");
             banner.append("<div id='single_complete_diffexpr_development_headers' class='header_table'>" + 
@@ -500,9 +501,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             banner.append("<p id='rnaseq_coming_soon' class='no_data'>Coming soon</p>");
             banner.append("<div id='rnaseq_data'>" + 
                     "<a id='rnaseq_annotation_csv' class='download_link' href='' download></a>" +
-                    "<a id='show_rnaseq_annotation_headers' class='banner_link'>Show headers</a>" +
+                    "<a id='show_rnaseq_annotation_headers'>" + this.getShowHeaderImg() + "</a>" +
                     "<a id='rnaseq_ref_data_csv' class='download_link' href='' download></a>" +
-                    "<a id='show_rnaseq_ref_data_headers' class='banner_link'>Show headers</a></div>");
+                    "<a id='show_rnaseq_ref_data_headers'>" + this.getShowHeaderImg() + "</a></div>");
             banner.append("</div>");
             // Affymetrix data
             banner.append("<div class='bgee_download_file_buttons'>");
@@ -510,9 +511,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             banner.append("<p id='affy_coming_soon' class='no_data'>Coming soon</p>");
             banner.append("<div id='affy_data'>" + 
                     "<a id='affy_annotation_csv' class='download_link' href='' download></a>" +
-                    "<a id='show_affy_annotation_headers' class='banner_link'>Show headers</a>" +
+                    "<a id='show_affy_annotation_headers'>" + this.getShowHeaderImg() + "</a>" +
                     "<a id='affy_ref_data_csv' class='download_link' href='' download></a>" +
-                    "<a id='show_affy_ref_data_headers' class='banner_link'>Show headers</a></div>");
+                    "<a id='show_affy_ref_data_headers'>" + this.getShowHeaderImg() + "</a></div>");
             banner.append("</div>");
             // In situ data
             banner.append("<div class='bgee_download_file_buttons'>");
@@ -520,9 +521,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             banner.append("<p id='in_situ_coming_soon' class='no_data'>Coming soon</p>");
             banner.append("<div id='in_situ_data'>" + 
                     "<a id='in_situ_annotation_csv' class='download_link' href='' download></a>" +
-                    "<a id='show_in_situ_annotation_headers' class='banner_link'>Show headers</a>" +
+                    "<a id='show_in_situ_annotation_headers'>" + this.getShowHeaderImg() + "</a>" +
                     "<a id='in_situ_ref_data_csv' class='download_link' href='' download></a>" +
-                    "<a id='show_in_situ_ref_data_headers' class='banner_link'>Show headers</a></div>");
+                    "<a id='show_in_situ_ref_data_headers'>" + this.getShowHeaderImg() + "</a></div>");
             banner.append("</div>");            
             // EST data
             banner.append("<div class='bgee_download_file_buttons'>");
@@ -530,9 +531,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             banner.append("<p id='est_coming_soon' class='no_data'>Coming soon</p>");
             banner.append("<div id='est_data'>" + 
                     "<a id='est_annotation_csv' class='download_link' href='' download></a>" +
-                    "<a id='show_est_annotation_headers' class='banner_link'>Show headers</a>" +
+                    "<a id='show_est_annotation_headers'>" + this.getShowHeaderImg() + "</a>" +
                     "<a id='est_ref_data_csv' class='download_link' href='' download></a>" +
-                    "<a id='show_est_ref_data_headers' class='banner_link'>Show headers</a></div>");
+                    "<a id='show_est_ref_data_headers'>" + this.getShowHeaderImg() + "</a></div>");
             banner.append("</div>");            
         }
         
@@ -540,6 +541,63 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         banner.append("</div>");
     
         return log.exit(banner.toString());
+    }
+
+    /**
+     * Get the 'help' image of the banner in a download page as a HTML 'img' element. 
+     *
+     * @return  the {@code String} that is the 'help' image as HTML 'img' element.
+     */
+    private String getHelpImg() {
+        log.entry();
+        return log.exit("<img class='details' src='" + this.prop.getImagesRootDirectory() +
+                "help.png' title='Help' alt='Help' />");
+    }
+
+    /**
+     * Get the 'show headers' image of the banner in a download page as a HTML 'img' element. 
+     *
+     * @return  the {@code String} that is the 'show headers' image as HTML 'img' element.
+     */
+    private String getShowHeaderImg() {
+        log.entry();
+        return log.exit("<img class='details' src='" + this.prop.getImagesRootDirectory() +
+                "show.png' title='Show headers' alt='Show headers'/>");
+    }
+
+    /**
+     * Get the images sources of a download page as a HTML 'div' element. 
+     *
+     * @return  the {@code String} that is the images sources as HTML 'div' element.
+     */
+    private String getImageSources() {
+        log.entry();
+        
+        StringBuffer sources = new StringBuffer();
+        sources.append("<p id='creativecommons_title'>Images from Wikimedia Commons. In most cases, pictures corresponds to the sequenced strains. <a>Show information about original images.</a></p>");
+        sources.append("<div id='creativecommons'>");
+        sources.append("<p><i>Homo sapiens</i> picture by Leonardo da Vinci (Life time: 1519) [Public domain]. <a target='_blank' href='http://commons.wikimedia.org/wiki/File:Da_Vinci%27s_Anatomical_Man.jpg#mediaviewer/File:Da_Vinci%27s_Anatomical_Man.jpg'>See <i>H. sapiens</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Mus musculus</i> picture by Rasbak [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AApodemus_sylvaticus_bosmuis.jpg'>See <i>M. musculus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Danio rerio</i> picture by Azul (Own work) [see page for license], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AZebrafisch.jpg'>See <i>D. rerio</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Drosophila melanogaster</i> picture by Andr&eacute; Karwath aka Aka (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/2.5'>CC-BY-SA-2.5</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ADrosophila_melanogaster_-_side_(aka).jpg'>See <i>D. melanogaster</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Caenorhabditis elegans</i> picture by Bob Goldstein, UNC Chapel Hill http://bio.unc.edu/people/faculty/goldstein/ (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ACelegansGoldsteinLabUNC.jpg'>See <i>C. elegans</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Pan paniscus</i> picture by Ltshears (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a> or <a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ABonobo1_CincinnatiZoo.jpg'>See <i>P. paniscus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Pan troglodytes</i> picture by Thomas Lersch (Own work) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a>, <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a> or <a target='_blank' href='http://creativecommons.org/licenses/by/2.5'>CC-BY-2.5</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ASchimpanse_Zoo_Leipzig.jpg'>See <i>P. troglodytes</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Gorilla gorilla</i> picture by Brocken Inaglory (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a> or <a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AMale_gorilla_in_SF_zoo.jpg'>See <i>G. gorilla</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Pongo pygmaeus</i> picture by Greg Hume (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ASUMATRAN_ORANGUTAN.jpg'>See <i>P. pygmaeus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Macaca mulatta</i> picture by Aiwok (Own work) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0-2.5-2.0-1.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AMacaca_mulatta_3.JPG'>See <i>M. mulatta</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Rattus norvegicus</i> picture by Reg Mckenna (originally posted to Flickr as Wild Rat) [<a target='_blank' href='http://creativecommons.org/licenses/by/2.0'>CC-BY-2.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AWildRat.jpg'>See <i>R. norvegicus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Bos taurus</i> picture by User Robert Merkel on en.wikipedia (US Department of Agriculture) [Public domain], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AHereford_bull_large.jpg'>See <i>B. taurus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Sus scrofa</i> picture by Joshua Lutz (Own work) [Public domain], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ASus_scrofa_scrofa.jpg'>See <i>S. scrofa</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Monodelphis domestica</i> picture by <i>Marsupial Genome Sheds Light on the Evolution of Immunity.</i> Hill E, PLoS Biology Vol. 4/3/2006, e75 <a rel='nofollow' href='http://dx.doi.org/10.1371/journal.pbio.0040075'>http://dx.doi.org/10.1371/journal.pbio.0040075</a> [<a target='_blank' href='http://creativecommons.org/licenses/by/2.5'>CC-BY-2.5</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AOpossum_with_young.png'>See <i>M. domestica</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Ornithorhynchus anatinus</i> picture by Dr. Philip Bethge (private) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0-2.5-2.0-1.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AOrnithorhynchus.jpg'>See <i>O. anatinus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Gallus gallus</i> picture by Subramanya C K (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ARed_jungle_fowl.png'>See <i>G. gallus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Anolis carolinensis</i> picture by PiccoloNamek (Moved from Image:P1010027.jpg) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AAnolis_carolinensis.jpg'>See <i>A. carolinensis</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Xenopus tropicalis</i> picture by V&aacute;clav Gvo&zcaron;d&iacute;k (http://calphotos.berkeley.edu) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/2.5'>CC-BY-SA-2.5</a>, <a target='_blank' href='http://creativecommons.org/licenses/by-sa/2.5'>CC-BY-SA-2.5</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AXenopus_tropicalis01.jpeg'>See <i>X. tropicalis</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Tetraodon nigroviridis</i> picture by Starseed (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/de/deed.en'>CC-BY-SA-3.0-de</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ATetraodon_nigroviridis_1.jpg'>See <i>T. nigroviridis</i> picture via Wikimedia Commons</a></p>");
+        sources.append("</div>");
+    
+        return log.exit(sources.toString());
     }
 
     /**

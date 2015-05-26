@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.DocumentationDisplay;
+import org.bgee.view.DownloadDisplay;
 import org.bgee.view.ViewFactory;
 
 
@@ -176,22 +177,10 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
 
         this.writeln("<h1>Bgee release 13 documentation pages</h1>");
 
-        RequestParameters urlHowToAccessGenerator = this.getNewRequestParameters();
-        urlHowToAccessGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
-        urlHowToAccessGenerator.setAction(RequestParameters.ACTION_DOC_HOW_TO_ACCESS);
-        
-        RequestParameters urlCallFilesGenerator = this.getNewRequestParameters();
-        urlCallFilesGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
-        urlCallFilesGenerator.setAction(RequestParameters.ACTION_DOC_DOWLOAD_FILES);
-
         this.writeln("<div id='feature_list'>");
-        this.writeln(HtmlParentDisplay.getLogoLink(urlHowToAccessGenerator.getRequestURL(), 
-                "How to access to Bgee data", "Access to Bgee data", 
-                this.prop.getImagesRootDirectory() + "logo/bgee_access_logo.png"));
 
-        this.writeln(HtmlParentDisplay.getLogoLink(urlCallFilesGenerator.getRequestURL(), 
-                "Download file documentation page", "Download file documentation", 
-                this.prop.getImagesRootDirectory() + "logo/download_logo.png"));
+        this.writeln(HtmlDocumentationDisplay.getFeatureLogos(
+                this, this.prop.getImagesRootDirectory()));
 
         this.writeln("</div>");
         
@@ -234,28 +223,85 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         
         this.writeln("<div id='feature_list'>");
         
-        this.writeln(HtmlParentDisplay.getLogoLink(urlDownloadRefExprGenerator.getRequestURL(), 
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(urlDownloadRefExprGenerator.getRequestURL(), 
                 "Bgee reference gene expression page", "Reference gene expression", 
-                this.prop.getImagesRootDirectory() + "logo/ref_expr_logo.png"));
+                this.prop.getImagesRootDirectory() + "logo/ref_expr_logo.png", ""));
 
-        this.writeln(HtmlParentDisplay.getLogoLink(urlDownloadCallsGenerator.getRequestURL(), 
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(urlDownloadCallsGenerator.getRequestURL(), 
                 "Bgee gene expression call page", "Gene expression calls", 
-                this.prop.getImagesRootDirectory() + "logo/expr_calls_logo.png"));
+                this.prop.getImagesRootDirectory() + "logo/expr_calls_logo.png", ""));
 
-        this.writeln(HtmlParentDisplay.getLogoLink("https://github.com/BgeeDB", 
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo("https://github.com/BgeeDB", 
                 "BgeeDB GitHub", "GitHub", 
-                this.prop.getImagesRootDirectory() + "logo/github_logo.png"));
+                this.prop.getImagesRootDirectory() + "logo/github_logo.png", ""));
 
-        //TODO add URL
-        this.writeln(HtmlParentDisplay.getLogoLink("", 
-                "MySQL dump", "MySQL dump", 
-                this.prop.getImagesRootDirectory() + "logo/mysql_logo.png"));
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(this.prop.getDownloadRootDirectory() + 
+                //TODO: change this ugly '../' once we'll have added a property to distinguish 
+                //FTP root and download_files directory. See todo in BgeeProperties
+                "../bgee.dump", "MySQL dump", "MySQL dump", 
+                this.prop.getImagesRootDirectory() + "logo/mysql_logo.png", ""));
 
         this.writeln("</div>");
         
         this.endDisplay();
 
         log.exit();
+    }
+
+    
+    /**
+     * Get the main logo of the documentation page, as HTML 'div' element.
+     *
+     * @param display       A {@code DownloadDisplay} instance that is the view to be used.
+     * @param imgDirectory  A {@code String} that is the directory of the image.
+     * @return              A {@code String} that is the main logo as HTML 'div' element,
+     *                      formated in HTML and HTML escaped if necessary.
+     */
+    public static String getMainLogo(DocumentationDisplay display, String imgDirectory) {
+        log.entry(display, imgDirectory);
+        
+        RequestParameters urlDocumentationGenerator = 
+                ((HtmlParentDisplay) display).getNewRequestParameters();
+        urlDocumentationGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
+    
+        return log.exit(HtmlParentDisplay.getSingleFeatureLogo(
+                urlDocumentationGenerator.getRequestURL(), 
+                "Bgee documentation page", "Documentation", 
+                imgDirectory + "logo/doc_logo.png", ""));
+    }
+
+    /**
+     * Get the feature logos of the documentation page, as HTML 'div' elements.
+     *
+     * @param display       A {@code DownloadDisplay} instance that is the view to be used.
+     * @param imgDirectory  A {@code String} that is the directory of the image.
+     * @return              A {@code String} that is the feature logos as HTML 'div' elements,
+     *                      formated in HTML and HTML escaped if necessary.
+     */
+    public static String getFeatureLogos(DocumentationDisplay display, String imgDirectory) {
+        log.entry(display, imgDirectory);
+
+        RequestParameters urlHowToAccessGenerator = 
+                ((HtmlParentDisplay) display).getNewRequestParameters();
+        urlHowToAccessGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
+        urlHowToAccessGenerator.setAction(RequestParameters.ACTION_DOC_HOW_TO_ACCESS);
+        
+        RequestParameters urlCallFilesGenerator = 
+                ((HtmlParentDisplay) display).getNewRequestParameters();
+        urlCallFilesGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
+        urlCallFilesGenerator.setAction(RequestParameters.ACTION_DOC_DOWLOAD_FILES);
+
+        StringBuffer logos = new StringBuffer(); 
+
+        logos.append(HtmlParentDisplay.getSingleFeatureLogo(urlHowToAccessGenerator.getRequestURL(), 
+                "How to access to Bgee data", "Access to Bgee data", 
+                imgDirectory + "logo/bgee_access_logo.png", ""));
+
+        logos.append(HtmlParentDisplay.getSingleFeatureLogo(urlCallFilesGenerator.getRequestURL(), 
+                "Download file documentation page", "Download file documentation", 
+                imgDirectory + "logo/download_logo.png", ""));
+
+        return log.exit(logos.toString());
     }
 
 

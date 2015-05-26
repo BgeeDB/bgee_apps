@@ -68,14 +68,27 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.uniqueId = 0;
     }
     
-    //TODO: javadoc. It should be specified whether arguments are already html escaped / URL encoded if necessary
-    protected static String getLogoLink(String url, 
-            String title, String figcaption, String imgPath) {
-        log.entry(url, title, figcaption, imgPath);
-        return log.exit("<a href='" + url + "' title='" + title + "'>" +
-                "<figure><img class='pageimg' src='" + imgPath + "' alt='" + title + " logo' />" +
+    /**
+     * Get the single feature logo with a description as a HTML 'div' element.
+     *
+     * @param url           A {@code String} that is the URL of the link.
+     * @param title         A {@code String} that is the title and the alternate text of the image.
+     * @param figcaption    A {@code String} that is the caption of the 'figure' element.
+     * @param imgPath       A {@code String} that is the path of the image.
+     * @param desc          A {@code String} that is the description of this feature.
+     * @return              A {@code String} that is the single feature logo as a HTML 'div' element,
+     *                      formated in HTML and HTML escaped if necessary.
+     */
+    protected static String getSingleFeatureLogo(
+            String url, String title, String figcaption, String imgPath, String desc) {
+        log.entry(url, title, figcaption, imgPath, desc);
+        return log.exit("<div class='single_feature'>" +
+                "<a href='" + url + "' title='" + title + "'>" +
+                "<figure><img src='" + imgPath + "' alt='" + title + " logo' />" +
                 "<figcaption>" + figcaption + "</figcaption>" +
-                "</figure></a>");
+                "</figure></a>" + 
+                "<p>" + desc + "</p>" +
+                "</div>");
     }
 
     /**
@@ -234,10 +247,10 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("<a title='Expression data page' href='" + urlDownloadGenerator.getRequestURL() + 
                 "'>Expression data</a>" + this.getCaret());
         this.writeln("<ul>");
-        this.writeln("<li><a class='drop' title='Reference gene expression' href='" + 
-                urlDownloadRefExprGenerator.getRequestURL() + "'>Reference gene expression</a></li>");
         this.writeln("<li><a class='drop' title='Gene expression calls' href='" + 
                 urlDownloadCallsGenerator.getRequestURL() + "'>Gene expression calls</a></li>");
+        this.writeln("<li><a class='drop' title='Reference gene expression' href='" + 
+                urlDownloadRefExprGenerator.getRequestURL() + "'>Reference gene expression</a></li>");
         this.writeln("</ul>");
         this.writeln("</li>");
         this.writeln("<li>");

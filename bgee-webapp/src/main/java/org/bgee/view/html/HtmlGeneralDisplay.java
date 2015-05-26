@@ -72,17 +72,21 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         RequestParameters urlDocGenerator = this.getNewRequestParameters();
         urlDocGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
 
-        this.writeln("<div id='feature_list'>");
-        
-        this.writeln(HtmlParentDisplay.getLogoLink(urlDownloadGenerator.getRequestURL(), 
-                "Bgee expression data page", "Expression data", 
-                this.prop.getImagesRootDirectory() + "logo/download_logo.png"));
+        //TODO: is it the good way to manage this exception?
+        try {
+            this.writeln("<div id='feature_list'>");
 
-        this.writeln(HtmlParentDisplay.getLogoLink(urlDocGenerator.getRequestURL(), 
-                "Bgee documentation page", "Documentation", 
-                this.prop.getImagesRootDirectory() + "logo/doc_logo.png"));
+            this.writeln(HtmlDownloadDisplay.getFeatureLogos(
+                    this.getFactory().getDownloadDisplay(), this.prop.getImagesRootDirectory()));
 
-        this.writeln("</div>");
+            this.writeln(HtmlDocumentationDisplay.getMainLogo(
+                    this.getFactory().getDocumentationDisplay(), this.prop.getImagesRootDirectory()));
+            
+            this.writeln("</div>");
+
+        } catch (IOException e) {
+            this.writeln("");
+        }
         
         this.writeln("<div id='home_info'>");
         this.writeln("<p>Features are being added incrementally: </p>");
@@ -100,9 +104,9 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 "download page</a>.</li></ul>");
         this.writeln("<p>The complete website remains available for the previous release of Bgee:</p>");
         this.writeln("<div id='feature_list'>");
-        this.writeln(HtmlParentDisplay.getLogoLink("http://bgee.org/bgee/bgee", 
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo("http://bgee.org/bgee/bgee", 
                 "Bgee 12 home page", "Bgee 12", 
-                this.prop.getImagesRootDirectory() + "logo/bgee12_logo.png"));
+                this.prop.getImagesRootDirectory() + "logo/bgee12_logo.png", ""));
 
         this.writeln("</div>");
         this.writeln("</div>");

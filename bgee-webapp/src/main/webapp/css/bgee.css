@@ -95,7 +95,7 @@ header img {
     float: left;
     width: 170px;
     height: 19px;
-    padding-top: 0.4em;
+    padding-top: 0.3em;
     text-align: center;
 }
 
@@ -132,7 +132,7 @@ header img {
     visibility: hidden;
     position: absolute;
     height: auto;
-    top: 29px;
+    top: 28px;
     left: 0;
     width: 170px;
     border-bottom: none;
@@ -140,6 +140,7 @@ header img {
 #nav ul ul li{
     border-bottom: 1px solid #29516A;
 	width: 100%;
+    height: auto;
 }
 
 #nav ul ul li:hover {
@@ -217,7 +218,10 @@ figure img {
 }
 
 #feature_list {
+	display: table;
+	width: 100%;
 	text-align: center;
+	table-layout: fixed;
 }
 
 #feature_list figure {
@@ -232,7 +236,7 @@ figure img {
     width: 130px;
 }
 
-img.pageimg {
+#feature_list img {
     border-radius: 8px;
     height: 120px;
     width: 120px;
@@ -240,9 +244,22 @@ img.pageimg {
     box-shadow: 4px 4px 6px 0px #555;
 }
 
-img.pageimg:hover {
+#feature_list img:hover {
     box-shadow: 0px 0px 10px 4px #920209;
 }
+
+#feature_list p {
+    margin: 0; 
+}
+
+#feature_list .single_feature {
+    display: table-cell;
+    text-align: center;
+    vertical-align: top;
+    table-layout: fixed;
+}
+
+
 /****SIB FOOTER****/
 footer {
     position: absolute;

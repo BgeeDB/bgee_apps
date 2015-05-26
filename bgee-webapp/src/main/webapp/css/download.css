@@ -12,22 +12,12 @@ div.downloadsection {
 
 #expr_calls div.downloadsection {
     border-color: #920209;
+    background-color: #E8DADB;
 }
 	
 #ref_expr div.downloadsection {
     border-color: #1375AB;
-}
-
-#sib_body #expr_calls h2.downloadsection {
-    color: #920209;
-}
-
-#sib_body #expr_calls h1 {
-    color: #920209;
-}
-
-#sib_body #ref_expr h2.downloadsection, #sib_body #expr_calls h1 {
-    color: #1375AB;
+    background-color: #CFE3EE;
 }
 
 div.downloadsection figcaption p {
@@ -176,12 +166,8 @@ figure.highlight {
 }
 
 /****BGEE DATASELECTION****/
-#expr_calls label {
+label {
     color: #920209;
-}
-
-#ref_expr label {
-    color: #1375AB;
 }
 
 p {
@@ -275,7 +261,7 @@ p {
 	font-size: 0.9em;
 }
 
-.download_link {
+.download_link, .download_link:visited {
     display:inline-block;
     background-color:#3E3E3E;
     border: 1px solid #141414;
@@ -285,7 +271,7 @@ p {
     color: #AAA;
 }
 
-.download_link:hover, .download_link:visited {
+.download_link:hover {
     color: #141414;
 }
 
@@ -294,15 +280,10 @@ p {
     background-color:#717171;
 }
 
-a.banner_link {
+#bgee_data_selection img.details {
     margin: 0 1.2em 0 0.4em;
-    font-size: 0.8em;
-    color: #7D7D7D;
-    text-decoration: underline;
-}
-
-a.banner_link:hover {
-    color: #D6D6D6;
+    width: 1em;
+    height: 1em;
 }
 
 #bgee_data_selection p.no_data {
@@ -368,7 +349,7 @@ div.downloadsection figure.selected {
 
 div.header_table table {
     display: block;
-    width: 90%;
+    width: 500px;
     overflow-y: scroll;    
     font-size: 0.7em;
     margin: 0.4em 0 0 0;

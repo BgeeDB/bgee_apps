@@ -27,6 +27,7 @@ var download = {
         $bgeeGroupDescription: null,
         $exprSimpleData: null,
         $exprSimpleCsv: null,
+        $exprCompleteCsv: null,
         $diffExprAnatomyData: null,
         $diffExprAnatomySimpleCsv: null,
         $diffExprAnatomyCompleteCsv: null,   
@@ -217,75 +218,28 @@ var download = {
             // Add listener to the links to show/hide headers
             this.$showSingleSimpleExprHeaders.click( function(){
             	download.$singleSimpleExprHeaders.toggle( "blind" );
-                if($( this ).text().indexOf( "Hide" ) > -1){
-                    $( this ).text($( this ).text().replace( "Hide","Show" ));
-                }
-                else{
-                    $( this ).text($( this ).text().replace( "Show","Hide" ));
-                }
+            	
             });
             this.$showSingleCompleteExprHeaders.click( function(){
                 download.$singleCompleteExprHeaders.toggle( "blind" );
-                if($( this ).text().indexOf( "Hide" ) > -1){
-                    $( this ).text($( this ).text().replace( "Hide","Show" ));
-                }
-                else{
-                    $( this ).text($( this ).text().replace( "Show","Hide" ));
-                }
             });
             this.$showSingleSimpleDiffexprAnatomyHeaders.click( function(){
                 download.$singleSimpleDiffexprAnatomyHeaders.toggle( "blind" );
-                if($( this ).text().indexOf( "Hide" ) > -1){
-                    $( this ).text($( this ).text().replace( "Hide","Show" ));
-                }
-                else{
-                    $( this ).text($( this ).text().replace( "Show","Hide" ));
-                }
             });
             this.$showSingleCompleteDiffexprAnatomyHeaders.click( function(){
                 download.$singleCompleteDiffexprAnatomyHeaders.toggle( "blind" );
-                if($( this ).text().indexOf( "Hide" ) > -1){
-                    $( this ).text($( this ).text().replace( "Hide","Show" ));
-                }
-                else{
-                    $( this ).text($( this ).text().replace( "Show","Hide" ));
-                }
             });
             this.$showMultiSimpleDiffexprAnatomyHeaders.click( function(){
                 download.$multiSimpleDiffexprAnatomyHeaders.toggle( "blind" );
-                if($( this ).text().indexOf( "Hide" ) > -1){
-                    $( this ).text($( this ).text().replace( "Hide","Show" ));
-                }
-                else{
-                    $( this ).text($( this ).text().replace( "Show","Hide" ));
-                }
             });
             this.$showMultiCompleteDiffexprAnatomyHeaders.click( function(){
                 download.$multiCompleteDiffexprAnatomyHeaders.toggle( "blind" );
-                if($( this ).text().indexOf( "Hide" ) > -1){
-                    $( this ).text($( this ).text().replace( "Hide","Show" ));
-                }
-                else{
-                    $( this ).text($( this ).text().replace( "Show","Hide" ));
-                }
             });
             this.$showSingleSimpleDiffexprDevelopmentHeaders.click( function(){
                 download.$singleSimpleDiffexprDevelopmentHeaders.toggle( "blind" );
-                if($( this ).text().indexOf( "Hide" ) > -1){
-                    $( this ).text($( this ).text().replace( "Hide","Show" ));
-                }
-                else{
-                    $( this ).text($( this ).text().replace( "Show","Hide" ));
-                }
             });
             this.$showSingleCompleteDiffexprDevelopmentHeaders.click( function(){
                 download.$singleCompleteDiffexprDevelopmentHeaders.toggle( "blind" );
-                if($( this ).text().indexOf( "Hide" ) > -1){
-                    $( this ).text($( this ).text().replace( "Hide","Show" ));
-                }
-                else{
-                    $( this ).text($( this ).text().replace( "Show","Hide" ));
-                }
             });
 
             // Add the autocompletion to the search box.
@@ -446,7 +400,16 @@ var download = {
             	this.$inSituData.hide();
             	this.$estData.hide();
             }
-            
+            // Hide all header table to hide tables already opened in another detail box (banner)
+            this.$singleSimpleExprHeaders.hide();
+            this.$singleCompleteExprHeaders.hide();        
+            this.$singleSimpleDiffexprAnatomyHeaders.hide();
+            this.$singleCompleteDiffexprAnatomyHeaders.hide();   
+            this.$multiSimpleDiffexprAnatomyHeaders.hide();
+            this.$multiCompleteDiffexprAnatomyHeaders.hide();
+            this.$singleSimpleDiffexprDevelopmentHeaders.hide();
+            this.$singleCompleteDiffexprDevelopmentHeaders.hide();
+
             // Update the values of the download links and size files
             // Expression files
             if (bgeeExprSimpleFileUrl === undefined) {

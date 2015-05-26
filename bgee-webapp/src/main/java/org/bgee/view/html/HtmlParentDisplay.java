@@ -82,13 +82,19 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     protected static String getSingleFeatureLogo(
             String url, String title, String figcaption, String imgPath, String desc) {
         log.entry(url, title, figcaption, imgPath, desc);
-        return log.exit("<div class='single_feature'>" +
-                "<a href='" + url + "' title='" + title + "'>" +
+        
+        StringBuffer feature = new StringBuffer();
+        feature.append("<div class='single_feature'>");
+        feature.append("<a href='" + url + "' title='" + title + "'>" +
                 "<figure><img src='" + imgPath + "' alt='" + title + " logo' />" +
                 "<figcaption>" + figcaption + "</figcaption>" +
-                "</figure></a>" + 
-                "<p>" + desc + "</p>" +
-                "</div>");
+                "</figure></a>");
+        if (desc != null && !desc.isEmpty()) {
+            feature.append("<p>" + desc + "</p>");
+        }
+        feature.append("</div>");
+        
+        return log.exit(feature.toString());
     }
 
     /**

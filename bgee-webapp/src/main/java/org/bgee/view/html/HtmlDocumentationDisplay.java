@@ -225,21 +225,21 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         
         this.writeln(HtmlParentDisplay.getSingleFeatureLogo(urlDownloadRefExprGenerator.getRequestURL(), 
                 "Bgee reference gene expression page", "Reference gene expression", 
-                this.prop.getImagesRootDirectory() + "logo/ref_expr_logo.png", ""));
+                this.prop.getImagesRootDirectory() + "logo/ref_expr_logo.png", null));
 
         this.writeln(HtmlParentDisplay.getSingleFeatureLogo(urlDownloadCallsGenerator.getRequestURL(), 
                 "Bgee gene expression call page", "Gene expression calls", 
-                this.prop.getImagesRootDirectory() + "logo/expr_calls_logo.png", ""));
+                this.prop.getImagesRootDirectory() + "logo/expr_calls_logo.png", null));
 
         this.writeln(HtmlParentDisplay.getSingleFeatureLogo("https://github.com/BgeeDB", 
                 "BgeeDB GitHub", "GitHub", 
-                this.prop.getImagesRootDirectory() + "logo/github_logo.png", ""));
+                this.prop.getImagesRootDirectory() + "logo/github_logo.png", null));
 
         this.writeln(HtmlParentDisplay.getSingleFeatureLogo(this.prop.getDownloadRootDirectory() + 
                 //TODO: change this ugly '../' once we'll have added a property to distinguish 
                 //FTP root and download_files directory. See todo in BgeeProperties
                 "../bgee.dump", "MySQL dump", "MySQL dump", 
-                this.prop.getImagesRootDirectory() + "logo/mysql_logo.png", ""));
+                this.prop.getImagesRootDirectory() + "logo/mysql_logo.png", null));
 
         this.writeln("</div>");
         
@@ -267,7 +267,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         return log.exit(HtmlParentDisplay.getSingleFeatureLogo(
                 urlDocumentationGenerator.getRequestURL(), 
                 "Bgee documentation page", "Documentation", 
-                imgDirectory + "logo/doc_logo.png", ""));
+                imgDirectory + "logo/doc_logo.png", null));
     }
 
     /**
@@ -295,11 +295,11 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
 
         logos.append(HtmlParentDisplay.getSingleFeatureLogo(urlHowToAccessGenerator.getRequestURL(), 
                 "How to access to Bgee data", "Access to Bgee data", 
-                imgDirectory + "logo/bgee_access_logo.png", ""));
+                imgDirectory + "logo/bgee_access_logo.png", null));
 
         logos.append(HtmlParentDisplay.getSingleFeatureLogo(urlCallFilesGenerator.getRequestURL(), 
                 "Download file documentation page", "Download file documentation", 
-                imgDirectory + "logo/download_logo.png", ""));
+                imgDirectory + "logo/download_logo.png", null));
 
         return log.exit(logos.toString());
     }

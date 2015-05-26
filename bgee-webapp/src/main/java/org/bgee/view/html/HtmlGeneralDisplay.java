@@ -88,29 +88,31 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
             this.writeln("");
         }
         
-        this.writeln("<div id='home_info'>");
-        this.writeln("<p>Features are being added incrementally: </p>");
+        
+        this.writeln("<h2>News</h2>" +
+                     "<span class='header_details'>(features are being added incrementally)</span>");
+        this.writeln("<div id='bgee_news' class='bgee_section'>");
         this.writeln("<ul><li>2015-04-16: release of the multi-species " +
                 "differential expression data (across anatomy) for 6 groups, see <a href='" + 
                 urlDownloadGenerator.getRequestURL() + "' " + "title='Bgee download page'>" +
-                "download page</a>.</li></ul>");
-        this.writeln("<ul><li>2015-03-03: release of the single-species " +
+                "download page</a>.</li>");
+        this.writeln("<li>2015-03-03: release of the single-species " +
                 "differential expression data for 11 species, see <a href='" + 
                 urlDownloadGenerator.getRequestURL() + "' " + "title='Bgee download page'>" +
-                "download page</a>.</li></ul>");
-        this.writeln("<ul><li>2014-12-19: release of the single-species " +
+                "download page</a>.</li>");
+        this.writeln("<li>2014-12-19: release of the single-species " +
                 "expression data for 17 species, see <a href='" + 
                 urlDownloadGenerator.getRequestURL() + "' " + "title='Bgee download page'>" +
                 "download page</a>.</li></ul>");
-        this.writeln("<p>The complete website remains available for the previous release of Bgee:</p>");
+        this.writeln("</div>"); // end home_info
+
+        this.writeln("<p id='bgee_more_info'>" +
+                       "The complete website remains available for the previous release of Bgee:</p>");
         this.writeln("<div id='feature_list'>");
         this.writeln(HtmlParentDisplay.getSingleFeatureLogo("http://bgee.org/bgee/bgee", 
                 "Bgee 12 home page", "Bgee 12", 
-                this.prop.getImagesRootDirectory() + "logo/bgee12_logo.png", ""));
-
+                this.prop.getImagesRootDirectory() + "logo/bgee12_logo.png", null));
         this.writeln("</div>");
-        this.writeln("</div>");
-
 
         this.endDisplay();
         log.exit();

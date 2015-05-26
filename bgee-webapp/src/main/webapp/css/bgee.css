@@ -196,7 +196,7 @@ header img {
     display: inline-block; 
     margin: 0 0 0 2%;
     color: #920209;
-    font-size: 1em;
+    font-size: 1.2em;
     font-weight: normal;
 }
 
@@ -212,9 +212,34 @@ a:visited, a:hover {
 }
 
 /****BGEE SPECIFIC STUFF****/
+.external_link {
+    background-position: right center;
+    background-repeat: no-repeat;
+    background-image: linear-gradient(transparent, transparent), url("../img/external_link.png");
+    background-size: 9px;
+    padding-right: 13px;
+}
 
 figure img {
     margin: 0 auto;
+}
+
+div.bgee_section {
+    position: relative;
+    display: inline-block;
+    width: 95%;
+    margin: 0 2% 10px 2%;
+    border-width: 2px;
+    border-style: solid;
+    border-radius: 8px;
+    padding: 0.5%;
+    text-align: left;
+    border-color: #920209;
+}
+
+span.header_details {
+    font-size: 0.85em;
+    margin-left: 0.5em;
 }
 
 #feature_list {
@@ -222,6 +247,7 @@ figure img {
 	width: 100%;
 	text-align: center;
 	table-layout: fixed;
+	margin-bottom: 30px;
 }
 
 #feature_list figure {
@@ -249,7 +275,7 @@ figure img {
 }
 
 #feature_list p {
-    margin: 0; 
+    margin: 0;
 }
 
 #feature_list .single_feature {
@@ -258,7 +284,6 @@ figure img {
     vertical-align: top;
     table-layout: fixed;
 }
-
 
 /****SIB FOOTER****/
 footer {

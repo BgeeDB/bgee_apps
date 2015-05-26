@@ -1,38 +1,33 @@
-div.downloadsection {
-    position: relative;
-    display: inline-block;
-    width: 95%;
-    margin: 0 2% 10px 2%;
-    border-width: 2px;
-    border-style: solid;
-    border-radius: 8px;
-    padding: 0.5%;
-    text-align: left;
-}
 
-#expr_calls div.downloadsection {
-    border-color: #920209;
+#expr_calls div.bgee_section {
     background-color: #E8DADB;
 }
 	
-#ref_expr div.downloadsection {
-    border-color: #1375AB;
+#ref_expr div.bgee_section {
     background-color: #CFE3EE;
 }
 
-div.downloadsection figcaption p {
+div.bgee_download_section figcaption p {
     text-align: center;
     color: #515151;
     font-size: 0.75em;
     margin: 0;
 }
 
-img {
-    border-radius: 8px;
+div.bgee_download_section figure {
+    cursor: pointer;
+    float: left;
 }
 
-#bgee_multi_species span {
-    font-size: 0.85em;
+div.bgee_download_section figure.selected {
+    border: 4px #282828 solid;
+    background: #282828;
+    border-radius: 12px 12px 0 0;
+    padding: 0px;
+}
+
+img {
+    border-radius: 8px;
 }
 
 #bgee_uniq_species img {
@@ -288,18 +283,6 @@ p {
 
 #bgee_data_selection p.no_data {
     color: #717171;
-}
-
-div.downloadsection figure {
-    cursor: pointer;
-    float: left;
-}
-
-div.downloadsection figure.selected {
-    border: 4px #282828 solid;
-    background: #282828;
-    border-radius: 12px 12px 0 0;
-    padding: 0px;
 }
 
 #bgee_uniq_species figure.selected {

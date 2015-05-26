@@ -1,0 +1,15 @@
+div#bgee_news.bgee_section {
+    background-color: #E8DADB;
+}
+
+#bgee_news ul {
+    margin: 0.5%;
+}
+
+#bgee_news ul li {
+    margin: 0.5% 0;
+}
+
+#bgee_more_info {
+	margin: 1% 2% 0;
+}

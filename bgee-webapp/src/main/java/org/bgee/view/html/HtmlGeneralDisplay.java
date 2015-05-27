@@ -69,26 +69,38 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         
         RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
         urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        
         RequestParameters urlDocGenerator = this.getNewRequestParameters();
         urlDocGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
 
-        //TODO: is it the good way to manage this exception?
-        try {
-            this.writeln("<div id='feature_list'>");
+        RequestParameters urlDownloadRefExprGenerator = this.getNewRequestParameters();
+        urlDownloadRefExprGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlDownloadRefExprGenerator.setAction(RequestParameters.ACTION_DOWLOAD_REF_EXPR_FILES);
 
-            this.writeln(HtmlDownloadDisplay.getFeatureLogos(
-                    this.getFactory().getDownloadDisplay(), this.prop.getImagesRootDirectory()));
-
-            this.writeln(HtmlDocumentationDisplay.getMainLogo(
-                    this.getFactory().getDocumentationDisplay(), this.prop.getImagesRootDirectory()));
-            
-            this.writeln("</div>");
-
-        } catch (IOException e) {
-            this.writeln("");
-        }
+        RequestParameters urlDownloadCallsGenerator = this.getNewRequestParameters();
+        urlDownloadCallsGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlDownloadCallsGenerator.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
         
-        
+
+        this.writeln("<div id='feature_list'>");
+
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
+                urlDownloadCallsGenerator.getRequestURL(), 
+                "Bgee gene expression call page", "Gene expression calls", 
+                this.prop.getImagesRootDirectory() + "logo/expr_calls_logo.png", null));
+
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
+                urlDownloadRefExprGenerator.getRequestURL(), 
+                "Bgee reference gene expression page", "Reference gene expression", 
+                this.prop.getImagesRootDirectory() + "logo/ref_expr_logo.png", null));
+
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
+                urlDocGenerator.getRequestURL(), 
+                "Bgee documentation page", "Documentation", 
+                this.prop.getImagesRootDirectory() + "logo/doc_logo.png", null));
+
+        this.writeln("</div>");
+
         this.writeln("<h2>News</h2>" +
                      "<span class='header_details'>(features are being added incrementally)</span>");
         this.writeln("<div id='bgee_news' class='bgee_section'>");

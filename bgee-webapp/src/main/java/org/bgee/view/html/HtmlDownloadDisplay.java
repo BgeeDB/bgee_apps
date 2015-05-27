@@ -123,7 +123,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("<h1>Bgee release 13 download page</h1>");
 
         this.writeln("<div id='feature_list'>");
-        this.writeln(HtmlDownloadDisplay.getFeatureLogos(this, this.prop.getImagesRootDirectory()));
+        this.writeln(this.getFeatureLogos());
         this.writeln("</div>");
         
         this.endDisplay();
@@ -222,41 +222,34 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     /**
      * Get the main logo of the download page, as HTML 'div' element.
      *
-     * @param display       A {@code DownloadDisplay} instance that is the view to be used.
-     * @param imgDirectory  A {@code String} that is the directory of the image.
      * @return              A {@code String} that is the main logo as HTML 'div' element,
      *                      formated in HTML and HTML escaped if necessary.
      */
-    public static String getMainLogo(DownloadDisplay display, String imgDirectory) {
-        log.entry(display, imgDirectory);
+    private String getMainLogo() {
+        log.entry();
         
-        RequestParameters urlDownloadGenerator = 
-                ((HtmlParentDisplay) display).getNewRequestParameters();
+        RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
         urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
     
         return log.exit(HtmlParentDisplay.getSingleFeatureLogo(urlDownloadGenerator.getRequestURL(), 
                 "Bgee expression data page", "Expression data", 
-                imgDirectory + "logo/download_logo.png", null));
+                this.prop.getImagesRootDirectory() + "logo/download_logo.png", null));
     }
 
     /**
      * Get the feature logos of the download page, as HTML 'div' elements.
      *
-     * @param display       A {@code DownloadDisplay} instance that is the view to be used.
-     * @param imgDirectory  A {@code String} that is the directory of the image.
      * @return              A {@code String} that is the feature logos as HTML 'div' elements,
      *                      formated in HTML and HTML escaped if necessary.
      */
-    public static String getFeatureLogos(DownloadDisplay display, String imgDirectory) {
-        log.entry(display, imgDirectory);
+    private String getFeatureLogos() {
+        log.entry();
 
-        RequestParameters urlDownloadRefExprGenerator = 
-                ((HtmlParentDisplay) display).getNewRequestParameters();
+        RequestParameters urlDownloadRefExprGenerator = this.getNewRequestParameters();
         urlDownloadRefExprGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
         urlDownloadRefExprGenerator.setAction(RequestParameters.ACTION_DOWLOAD_REF_EXPR_FILES);
 
-        RequestParameters urlDownloadCallsGenerator = 
-                ((HtmlParentDisplay) display).getNewRequestParameters();
+        RequestParameters urlDownloadCallsGenerator = this.getNewRequestParameters();
         urlDownloadCallsGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
         urlDownloadCallsGenerator.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
         
@@ -265,12 +258,12 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         logos.append(HtmlParentDisplay.getSingleFeatureLogo(
                 urlDownloadCallsGenerator.getRequestURL(), 
                 "Bgee gene expression call page", "Gene expression calls", 
-                imgDirectory + "logo/expr_calls_logo.png", null));
+                this.prop.getImagesRootDirectory() + "logo/expr_calls_logo.png", null));
 
         logos.append(HtmlParentDisplay.getSingleFeatureLogo(
                 urlDownloadRefExprGenerator.getRequestURL(), 
                 "Bgee reference gene expression page", "Reference gene expression", 
-                imgDirectory + "logo/ref_expr_logo.png", null));
+                this.prop.getImagesRootDirectory() + "logo/ref_expr_logo.png", null));
         
         return log.exit(logos.toString());
     }

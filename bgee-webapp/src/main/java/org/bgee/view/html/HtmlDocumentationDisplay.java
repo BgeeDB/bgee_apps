@@ -9,7 +9,6 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.DocumentationDisplay;
-import org.bgee.view.DownloadDisplay;
 import org.bgee.view.ViewFactory;
 
 
@@ -252,22 +251,19 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
     /**
      * Get the main logo of the documentation page, as HTML 'div' element.
      *
-     * @param display       A {@code DownloadDisplay} instance that is the view to be used.
-     * @param imgDirectory  A {@code String} that is the directory of the image.
      * @return              A {@code String} that is the main logo as HTML 'div' element,
      *                      formated in HTML and HTML escaped if necessary.
      */
-    public static String getMainLogo(DocumentationDisplay display, String imgDirectory) {
-        log.entry(display, imgDirectory);
+    private String getMainLogo() {
+        log.entry();
         
-        RequestParameters urlDocumentationGenerator = 
-                ((HtmlParentDisplay) display).getNewRequestParameters();
+        RequestParameters urlDocumentationGenerator = this.getNewRequestParameters();
         urlDocumentationGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
     
         return log.exit(HtmlParentDisplay.getSingleFeatureLogo(
                 urlDocumentationGenerator.getRequestURL(), 
                 "Bgee documentation page", "Documentation", 
-                imgDirectory + "logo/doc_logo.png", null));
+                this.prop.getImagesRootDirectory() + "logo/doc_logo.png", null));
     }
 
     /**

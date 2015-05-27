@@ -1351,10 +1351,12 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         // In order to close all writers in a finally clause.
         Map<MultiSpeciesDiffExprFileType, ICsvDozerBeanWriter> writersUsed = 
                 new HashMap<MultiSpeciesDiffExprFileType, ICsvDozerBeanWriter>();
+        
         String omaFileName = groupName + "_" + OMA_FILE_NAME + EXTENSION;
+        final String[] omaHeaders = this.generateOMAFileHeader();
         ICsvBeanWriter omaBeanWriter = new CsvBeanWriter(
                 new FileWriter(new File(this.directory, omaFileName + tmpExtension)), 
-                Utils.TSVCOMMENTED);
+                Utils.getCsvPreferenceWithQuote(this.generateQuoteMode(omaHeaders)));
 
         try {
             //**************************
@@ -1424,7 +1426,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             Map<String, Set<String>> mapOMANodeGene = 
                     this.getMappingOMANodeIdGeneIDs(mapGeneOMANode);
 
-            this.writeOMAFile(mapOMANodeGene, geneTOsByIds, omaBeanWriter);
+            this.writeOMAFile(mapOMANodeGene, geneTOsByIds, omaBeanWriter, omaHeaders);
             
             // Get comparable stages: Stage ID -> Stage group and Stage group -> Stage IDs
             List<Map<String, List<String>>> mapStageGroup = this.getComparableStages(taxonId);
@@ -2889,11 +2891,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * @throws IOException      If an error occurred while trying to write generated files.
      */
     private void writeOMAFile(Map<String, Set<String>> mapOMANodeGene, 
-            Map<String, GeneTO> geneTOsByIds, ICsvBeanWriter beanWriter) throws IOException {
+            Map<String, GeneTO> geneTOsByIds, ICsvBeanWriter beanWriter, String[] header) throws IOException {
         log.entry(mapOMANodeGene, geneTOsByIds, beanWriter);
-
-        // Get header
-        final String[] header = this.generateOMAFileHeader();
 
         // Get processors
         CellProcessor[] processors = this.generateOMAFileCellProcessors(header);

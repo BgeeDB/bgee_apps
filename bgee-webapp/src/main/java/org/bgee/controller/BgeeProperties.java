@@ -172,7 +172,44 @@ public class BgeeProperties
     public final static String DOWNLOAD_MULTI_DIFF_EXPR_FILES_ROOT_DIRECTORY_DEFAULT = 
             "multiDiffExpressionFiles/";
 
-
+    /**
+     * A {@code String} that is the key to access to the System property that is read at the 
+     * initialization of {@code BgeeProperties} to set the ortholog download files root directory. 
+     * 
+     * @see #DOWNLOAD_ORTHOLOG_FILES_ROOT_DIRECTORY_DEFAULT
+     * @see #getDownloadOrthologFilesRootDirectory()
+     */
+    public final static String DOWNLOAD_ORTHOLOG_FILES_ROOT_DIRECTORY_KEY = 
+            "org.bgee.webapp.downloadOrthologFilesRootDirectory";
+    /**
+     * A {@code String} that is the default value of the ortholog download files root directory. 
+     * 
+     * @see #DOWNLOAD_ORTHOLOG_FILES_ROOT_DIRECTORY_KEY
+     * @see #getDownloadOrthologFilesRootDirectory()
+     */
+    public final static String DOWNLOAD_ORTHOLOG_FILES_ROOT_DIRECTORY_DEFAULT = 
+            "orthologFiles/";
+    
+    /**
+     * A {@code String} that is the key to access to the System property that is read at the 
+     * initialization of {@code BgeeProperties} to set the reference gene expression download 
+     * files root directory. 
+     * 
+     * @see #DOWNLOAD_REF_EXPR_FILES_ROOT_DIRECTORY_DEFAULT
+     * @see #getDownloadRefExprFilesRootDirectory()
+     */
+    public final static String DOWNLOAD_REF_EXPR_FILES_ROOT_DIRECTORY_KEY = 
+            "org.bgee.webapp.downloadRefExprFilesRootDirectory";
+    /**
+     * A {@code String} that is the default value of the reference gene expression
+     * download files root directory. 
+     * 
+     * @see #DOWNLOAD_REF_EXPR_FILES_ROOT_DIRECTORY_KEY
+     * @see #getDownloadRefExprFilesRootDirectory()
+     */
+    public final static String DOWNLOAD_REF_EXPR_FILES_ROOT_DIRECTORY_DEFAULT = 
+            "refExprFiles/";
+    
     /**
      * A {@code String} that is the key to access to the System property that is read at the 
      * initialization of {@code BgeeProperties} to set the javascript file root directory. 
@@ -358,12 +395,26 @@ public class BgeeProperties
     private final String downloadDiffExprFilesRootDirectory;
     
     /**
+     * A {@code String} that defines the reference gene expression download file directory where  
+     * are located reference gene expression files available for download, to be added to the 
+     * {@code bgeeRootDirectory} to generate URL to reference gene expression download files.
+     */
+    private final String downloadRefFilesRootDirectory;
+    
+    /**
      * A {@code String} that defines the multi-species differential expression download file 
      * directory where are located multi-species differential expression files available for 
      * download, to be added to the {@code bgeeRootDirectory} to generate URL to multi-species 
      * differential expression download files.
      */
     private final String downloadMultiDiffExprFilesRootDirectory;
+    
+    /**
+     * A {@code String} that defines the ortholog download file directory where are located 
+     * ortholog files available for download, to be added to the {@code bgeeRootDirectory} to 
+     * generate URL to ortholog download files.
+     */
+    private final String downloadOrthologFilesRootDirectory;
     
     /**
      * A {@code String} that defines the root directory where are located javascript files, 
@@ -485,6 +536,12 @@ public class BgeeProperties
         downloadMultiDiffExprFilesRootDirectory = getStringOption(prop, sysProps, fileProps, 
                 DOWNLOAD_MULTI_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY, 
                 DOWNLOAD_MULTI_DIFF_EXPR_FILES_ROOT_DIRECTORY_DEFAULT);
+        downloadOrthologFilesRootDirectory = getStringOption(prop, sysProps, fileProps, 
+                DOWNLOAD_ORTHOLOG_FILES_ROOT_DIRECTORY_KEY, 
+                DOWNLOAD_ORTHOLOG_FILES_ROOT_DIRECTORY_DEFAULT);
+        downloadRefFilesRootDirectory = getStringOption(prop, sysProps, fileProps, 
+                DOWNLOAD_REF_EXPR_FILES_ROOT_DIRECTORY_KEY, 
+                DOWNLOAD_REF_EXPR_FILES_ROOT_DIRECTORY_DEFAULT);
         javascriptFilesRootDirectory  = getStringOption(prop, sysProps, fileProps, 
                 JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY, JAVASCRIPT_FILES_ROOT_DIRECTORY_DEFAULT);
         javascriptVersionExtension  = getStringOption(prop, sysProps, fileProps, 
@@ -647,8 +704,7 @@ public class BgeeProperties
      */
     private int getIntegerOption(Properties prop, Properties sysProps, 
             Properties fileProps, String key, 
-            int defaultValue)
-    {
+            int defaultValue) {
         log.entry(prop, fileProps, sysProps, key, defaultValue);
 
         String propValue = this.getStringOption(prop,sysProps, fileProps, key, null);
@@ -708,6 +764,17 @@ public class BgeeProperties
     
     /**
      * @return  A {@code String} that defines the absolute root directory where are located 
+     *          reference gene expression files available for download, to generate URL 
+     *          to download files.
+     * @see #DOWNLOAD_REF_EXPR_FILES_ROOT_DIRECTORY_KEY
+     * @see #DOWNLOAD_REF_EXPR_FILES_ROOT_DIRECTORY_DEFAULT
+     */
+    public String getDownloadRefExprFilesRootDirectory() {
+        return downloadRefFilesRootDirectory;
+    }
+    
+    /**
+     * @return  A {@code String} that defines the absolute root directory where are located 
      *          multi-species differential expression files available for download, to generate URL 
      *          to download files.
      * @see #DOWNLOAD_MULTI_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY
@@ -717,6 +784,15 @@ public class BgeeProperties
         return downloadMultiDiffExprFilesRootDirectory;
     }
     
+    /**
+     * @return  A {@code String} that defines the absolute root directory where are located 
+     *          ortholog files available for download, to generate URL to download files.
+     * @see #DOWNLOAD_ORTHOLOG_FILES_ROOT_DIRECTORY_KEY
+     * @see #DOWNLOAD_ORTHOLOG_FILES_ROOT_DIRECTORY_DEFAULT
+     */
+    public String getDownloadOrthologFilesRootDirectory() {
+        return downloadOrthologFilesRootDirectory;
+    }
     /**
      * @return  A {@code String} that defines the root directory where are located javascript 
      *          files, to be added to the {@code bgeeRootDirectory} to generate URL to obtain 

@@ -42,6 +42,8 @@ public class BgeePropertiesThirdTest extends BgeePropertiesParentTest {
         System.setProperty(BgeeProperties.DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY, "/downDiffExprFileDir");
         System.setProperty(BgeeProperties.DOWNLOAD_MULTI_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY, 
                 "/downMultiDiffExprFileDir");
+        System.setProperty(BgeeProperties.DOWNLOAD_ORTHOLOG_FILES_ROOT_DIRECTORY_KEY, "/downOrthologFileDir");
+        System.setProperty(BgeeProperties.DOWNLOAD_REF_EXPR_FILES_ROOT_DIRECTORY_KEY, "/downRefExprFileDir");
         System.setProperty(BgeeProperties.JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY, "/jsFilesRootDir");
         System.setProperty(BgeeProperties.JAVASCRIPT_VERSION_EXTENSION_KEY, "-extension-js-1");
         System.setProperty(BgeeProperties.CSS_FILES_ROOT_DIRECTORY_KEY, "/cssFileRootDir");
@@ -64,6 +66,10 @@ public class BgeePropertiesThirdTest extends BgeePropertiesParentTest {
                 "/downDiffExprFileDir", bgeeProp.getDownloadDiffExprFilesRootDirectory());
         assertEquals("Wrong property value retrieved", 
                 "/downMultiDiffExprFileDir", bgeeProp.getDownloadMultiDiffExprFilesRootDirectory());
+        assertEquals("Wrong property value retrieved", 
+                "/downOrthologFileDir", bgeeProp.getDownloadOrthologFilesRootDirectory());
+        assertEquals("Wrong property value retrieved", 
+                "/downRefExprFileDir", bgeeProp.getDownloadRefExprFilesRootDirectory());
         assertEquals("Wrong property value retrieved",
                 "/jsFilesRootDir", bgeeProp.getJavascriptFilesRootDirectory());
         assertEquals("Wrong property value retrieved",

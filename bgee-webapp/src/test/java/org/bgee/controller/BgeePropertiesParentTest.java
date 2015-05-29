@@ -41,6 +41,8 @@ public abstract class BgeePropertiesParentTest {
         System.clearProperty(BgeeProperties.DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.DOWNLOAD_MULTI_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.DOWNLOAD_ORTHOLOG_FILES_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.DOWNLOAD_REF_EXPR_FILES_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.JAVASCRIPT_VERSION_EXTENSION_KEY);
         System.clearProperty(BgeeProperties.CSS_FILES_ROOT_DIRECTORY_KEY);
@@ -67,6 +69,8 @@ public abstract class BgeePropertiesParentTest {
         System.clearProperty(BgeeProperties.DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.DOWNLOAD_MULTI_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.DOWNLOAD_ORTHOLOG_FILES_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.DOWNLOAD_REF_EXPR_FILES_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.JAVASCRIPT_VERSION_EXTENSION_KEY);
         System.clearProperty(BgeeProperties.CSS_FILES_ROOT_DIRECTORY_KEY);

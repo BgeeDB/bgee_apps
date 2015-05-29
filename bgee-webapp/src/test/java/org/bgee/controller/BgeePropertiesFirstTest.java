@@ -49,6 +49,8 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
         prop.put(BgeeProperties.DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY, "/injecteddiffexprfiles");
         prop.put(BgeeProperties.DOWNLOAD_MULTI_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY, 
                 "/injectedmultidiffexprfiles");
+        prop.put(BgeeProperties.DOWNLOAD_ORTHOLOG_FILES_ROOT_DIRECTORY_KEY, "/injectedorthologfiles");
+        prop.put(BgeeProperties.DOWNLOAD_REF_EXPR_FILES_ROOT_DIRECTORY_KEY, "/injectedrefexprfiles");
         prop.put(BgeeProperties.IMAGES_ROOT_DIRECTORY_KEY, "/injectedimg");
         prop.put(BgeeProperties.JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY, "/injectedjs");
         prop.put(BgeeProperties.JAVASCRIPT_VERSION_EXTENSION_KEY, "injectedJsVersion");
@@ -72,6 +74,10 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
                 "/injecteddiffexprfiles", bgeeProp.getDownloadDiffExprFilesRootDirectory());
         assertEquals("Wrong property value retrieved", 
                 "/injectedmultidiffexprfiles", bgeeProp.getDownloadMultiDiffExprFilesRootDirectory());
+        assertEquals("Wrong property value retrieved", 
+                "/injectedorthologfiles", bgeeProp.getDownloadOrthologFilesRootDirectory());
+        assertEquals("Wrong property value retrieved", 
+                "/injectedrefexprfiles", bgeeProp.getDownloadRefExprFilesRootDirectory());
         assertEquals("Wrong property value retrieved", 
                 "/injectedimg", bgeeProp.getImagesRootDirectory());
         assertEquals("Wrong property value retrieved", 

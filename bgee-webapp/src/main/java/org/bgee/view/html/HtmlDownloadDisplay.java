@@ -420,41 +420,51 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         banner.append("<p class='groupdescription'></p>");
         
         if (pageType.equals(DownloadPageType.EXPR_CALLS)) {
-            RequestParameters urlDoc = this.getNewRequestParameters();
-            urlDoc.setPage(RequestParameters.PAGE_DOCUMENTATION);
-            urlDoc.setAction(RequestParameters.ACTION_DOC_DOWLOAD_FILES);
-            
+            //Ortholog file
+            banner.append("<div id='ortholog_file_buttons' class='bgee_download_file_buttons'>");
+            banner.append("<h2>Hierarchical ortholgous groups</h2>");
+            //TODO: uncomment when documentation generated, add url management in JS
+//            banner.append("<a id='ortholog_help' href='" + urlDoc.getRequestURL() + "'>"+
+//                    this.getHelpImg() + "</a>");
+            banner.append("<div id='ortholog_data'>" +
+                    "<a id='ortholog_csv' class='download_link' href='' download></a>" +
+//                    this.getShowHeaderLink("show_ortholog_headers") + 
+                    "</div>");
+            //TODO: uncomment when documentation generated, add url management in JS
+//            banner.append("<div id='ortholog_headers' class='header_table'>" +
+//                    HtmlDocumentationCallFile.getOrthologHeaderDesc() + "</div>");
+            banner.append("</div>"); 
+
             // Presence/absence expression files
             banner.append("<div class='bgee_download_file_buttons'>");
-            banner.append("<h2>Presence/absence of expression</h2>" +
-                    "<a id='expr_help' href='" + urlDoc.getRequestURL() + "'>"+
-                    this.getHelpImg() + "</a>");
-            banner.append("<p id='expr_no_data' class='no_data'>Not enough data</p>");
+            banner.append("<h2>Presence/absence of expression</h2>");
+            banner.append(this.getHelpLink("expr_help"));
             banner.append("<p id='expr_coming_soon' class='no_data'>Coming soon</p>");
+            banner.append("<p id='expr_no_data' class='no_data'>Not enough data</p>");
             banner.append("<div id='expr_data'>" +
                     "<a id='expr_simple_csv' class='download_link' href='' download></a>" +
-                    "<a id='show_single_simple_expr_headers'>" + this.getShowHeaderImg() + "</a>" +
+                    this.getShowHeaderLink("show_single_simple_expr_headers") +
                     "<a id='expr_complete_csv' class='download_link' href='' download></a>" +
-                    "<a id='show_single_complete_expr_headers'>" + this.getShowHeaderImg() + "</a></div>");
+                    this.getShowHeaderLink("show_single_complete_expr_headers") + "</div>");
             banner.append("<div id='single_simple_expr_headers' class='header_table'>" +
                     HtmlDocumentationCallFile.getSingleSpeciesSimpleExprFileHeaderDesc() + "</div>");
             banner.append("<div id='single_complete_expr_headers' class='header_table'>" + 
                     HtmlDocumentationCallFile.getSingleSpeciesCompleteExprFileHeaderDesc() + "</div>");
             banner.append("</div>");
+            
             // Differential expression files across anatomy
             banner.append("<div class='bgee_download_file_buttons'>");
-            banner.append("<h2>Over-/Under-expression across anatomy</h2>" +
-                    "<a id='diffexpr_anatomy_help' href='" + urlDoc.getRequestURL() + "'>" + 
-                    this.getHelpImg() + "</a>");
+            banner.append("<h2>Over-/Under-expression across anatomy</h2>");
+            banner.append(this.getHelpLink("diffexpr_anatomy_help"));
             banner.append("<p id='diffexpr_anatomy_no_data' class='no_data'>Not enough data</p>");
-            banner.append("<p id='diffexpr_anatomy_coming_soon' class='no_data'>Coming soon</p>");
             banner.append("<div id='diffexpr_anatomy_data'>" + 
                     "<a id='diffexpr_anatomy_simple_csv' class='download_link' href='' download></a>" +
-                    "<a id='show_single_simple_diffexpr_anatomy_headers'>" + this.getShowHeaderImg() + "</a>" +
-                    "<a id='show_multi_simple_diffexpr_anatomy_headers'>" + this.getShowHeaderImg() + "</a>" +
+                    this.getShowHeaderLink("show_single_simple_diffexpr_anatomy_headers") +
+                    this.getShowHeaderLink("show_multi_simple_diffexpr_anatomy_headers") +
                     "<a id='diffexpr_anatomy_complete_csv' class='download_link' href='' download></a>" +
-                    "<a id='show_single_complete_diffexpr_anatomy_headers'>" + this.getShowHeaderImg() + "</a>" +
-                    "<a id='show_multi_complete_diffexpr_anatomy_headers'>" + this.getShowHeaderImg() + "</a></div>");
+                    this.getShowHeaderLink("show_single_complete_diffexpr_anatomy_headers") +
+                    this.getShowHeaderLink("show_multi_complete_diffexpr_anatomy_headers") +
+                    "</div>");
             banner.append("<div id='single_simple_diffexpr_anatomy_headers' class='header_table'>" + 
                     HtmlDocumentationCallFile.getSingleSpeciesSimpleDiffExprFileHeaderDesc() + "</div>");
             banner.append("<div id='single_complete_diffexpr_anatomy_headers' class='header_table'>" + 
@@ -464,64 +474,76 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             banner.append("<div id='multi_complete_diffexpr_anatomy_headers' class='header_table'>" + 
                     HtmlDocumentationCallFile.getMultiSpeciesCompleteDiffExprFileHeaderDesc() + "</div>");
             banner.append("</div>");
+            
             // Differential expression files across life stages
             banner.append("<div class='bgee_download_file_buttons'>");
-            banner.append("<h2>Over-/Under-expression across life stages</h2>" +
-                    "<a id='diffexpr_development_help' href='" + urlDoc.getRequestURL() + "'>"+
-                    this.getHelpImg() + "</a>");
-            banner.append("<p id='diffexpr_development_no_data' class='no_data'>Not enough data</p>");
+            banner.append("<h2>Over-/Under-expression across life stages</h2>");
+            banner.append(this.getHelpLink("diffexpr_development_help"));
             banner.append("<p id='diffexpr_development_coming_soon' class='no_data'>Coming soon</p>");
+            banner.append("<p id='diffexpr_development_no_data' class='no_data'>Not enough data</p>");
             banner.append("<div id='diffexpr_development_data'>" + 
                     "<a id='diffexpr_development_simple_csv' class='download_link' href='' download></a>" +
-                    "<a id='show_single_simple_diffexpr_development_headers'>" + this.getShowHeaderImg() + "</a>" +
+                    this.getShowHeaderLink("show_single_simple_diffexpr_development_headers") +
                     "<a id='diffexpr_development_complete_csv' class='download_link' href='' download></a>" +
-                    "<a id='show_single_complete_diffexpr_development_headers'>" + this.getShowHeaderImg() + "</a></div>");
+                    this.getShowHeaderLink("show_single_complete_diffexpr_development_headers") +
+                    "</div>");
             banner.append("<div id='single_simple_diffexpr_development_headers' class='header_table'>" + 
                     HtmlDocumentationCallFile.getSingleSpeciesSimpleDiffExprFileHeaderDesc() + "</div>");
             banner.append("<div id='single_complete_diffexpr_development_headers' class='header_table'>" + 
                     HtmlDocumentationCallFile.getSingleSpeciesCompleteDiffExprFileHeaderDesc() + "</div>");
-
             banner.append("</div>");            
         } else {
             // RNA-Seq data
             banner.append("<div class='bgee_download_file_buttons'>");
-            banner.append("<h2>RNA-Seq data</h2>");
-            banner.append("<p id='rnaseq_coming_soon' class='no_data'>Coming soon</p>");
+            banner.append("<h2>RNA-Seq experiments</h2>");
+//            banner.append(this.getHelpLink("rnaseq_help"));
+//            banner.append("<p class='no_data'>Coming soon</p>");
+            banner.append("<p id='rnaseq_no_data' class='no_data'>Not enough data</p>");
             banner.append("<div id='rnaseq_data'>" + 
-                    "<a id='rnaseq_annotation_csv' class='download_link' href='' download></a>" +
-                    "<a id='show_rnaseq_annotation_headers'>" + this.getShowHeaderImg() + "</a>" +
-                    "<a id='rnaseq_ref_data_csv' class='download_link' href='' download></a>" +
-                    "<a id='show_rnaseq_ref_data_headers'>" + this.getShowHeaderImg() + "</a></div>");
+                    "<a id='rnaseq_data_csv' class='download_link' href='' download></a>" +
+                    this.getShowHeaderLink("show_rnaseq_data_headers") +
+                    "<a id='rnaseq_annot_csv' class='download_link' href='' download></a>" +
+                    this.getShowHeaderLink("show_rnaseq_annot_headers") +
+                    "</div>");
             banner.append("</div>");
             // Affymetrix data
             banner.append("<div class='bgee_download_file_buttons'>");
-            banner.append("<h2>Affymetrix data</h2>");
-            banner.append("<p id='affy_coming_soon' class='no_data'>Coming soon</p>");
+            banner.append("<h2>Affymetrix experiments</h2>");
+//            banner.append(this.getHelpLink("affy_help"));
+//            banner.append("<p class='no_data'>Coming soon</p>");
+            banner.append("<p id='affy_no_data' class='no_data'>Not enough data</p>");
             banner.append("<div id='affy_data'>" + 
-                    "<a id='affy_annotation_csv' class='download_link' href='' download></a>" +
-                    "<a id='show_affy_annotation_headers'>" + this.getShowHeaderImg() + "</a>" +
-                    "<a id='affy_ref_data_csv' class='download_link' href='' download></a>" +
-                    "<a id='show_affy_ref_data_headers'>" + this.getShowHeaderImg() + "</a></div>");
+                    "<a id='affy_data_csv' class='download_link' href='' download></a>" +
+                    this.getShowHeaderLink("show_affy_data_headers") +
+                    "<a id='affy_annot_csv' class='download_link' href='' download></a>" +
+                    this.getShowHeaderLink("show_affy_annot_headers") +
+                    "</div>");
             banner.append("</div>");
             // In situ data
             banner.append("<div class='bgee_download_file_buttons'>");
-            banner.append("<h2><em>In situ</em> data</h2>");
-            banner.append("<p id='in_situ_coming_soon' class='no_data'>Coming soon</p>");
+            banner.append("<h2><em>In situ</em> experiments</h2>");
+//            banner.append(this.getHelpLink("in_situ_help"));
+//            banner.append("<p class='no_data'>Coming soon</p>");
+            banner.append("<p id='in_situ_no_data' class='no_data'>Not enough data</p>");
             banner.append("<div id='in_situ_data'>" + 
-                    "<a id='in_situ_annotation_csv' class='download_link' href='' download></a>" +
-                    "<a id='show_in_situ_annotation_headers'>" + this.getShowHeaderImg() + "</a>" +
-                    "<a id='in_situ_ref_data_csv' class='download_link' href='' download></a>" +
-                    "<a id='show_in_situ_ref_data_headers'>" + this.getShowHeaderImg() + "</a></div>");
+                    "<a id='in_situ_data_csv' class='download_link' href='' download></a>" +
+                    this.getShowHeaderLink("show_in_situ_data_headers") +
+                    "<a id='in_situ_annot_csv' class='download_link' href='' download></a>" +
+                    this.getShowHeaderLink("show_in_situ_annot_headers") +
+                    "</div>");
             banner.append("</div>");            
             // EST data
             banner.append("<div class='bgee_download_file_buttons'>");
-            banner.append("<h2>EST data</h2>");
-            banner.append("<p id='est_coming_soon' class='no_data'>Coming soon</p>");
+            banner.append("<h2>EST libraries</h2>");
+//            banner.append(this.getHelpLink("est_help"));
+//            banner.append("<p class='no_data'>Coming soon</p>");
+            banner.append("<p id='est_no_data' class='no_data'>Not enough data</p>");
             banner.append("<div id='est_data'>" + 
-                    "<a id='est_annotation_csv' class='download_link' href='' download></a>" +
-                    "<a id='show_est_annotation_headers'>" + this.getShowHeaderImg() + "</a>" +
-                    "<a id='est_ref_data_csv' class='download_link' href='' download></a>" +
-                    "<a id='show_est_ref_data_headers'>" + this.getShowHeaderImg() + "</a></div>");
+                    "<a id='est_data_csv' class='download_link' href='' download></a>" +
+                    this.getShowHeaderLink("show_est_data_headers") +
+                    "<a id='est_annot_csv' class='download_link' href='' download></a>" +
+                    this.getShowHeaderLink("show_est_annot_headers") +
+                    "</div>");
             banner.append("</div>");            
         }
         
@@ -536,10 +558,16 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      *
      * @return  the {@code String} that is the 'help' image as HTML 'img' element.
      */
-    private String getHelpImg() {
-        log.entry();
-        return log.exit("<img class='details' src='" + this.prop.getImagesRootDirectory() +
-                "help.png' title='Help' alt='Help' />");
+    private String getHelpLink(String id) {
+        log.entry(id);
+        
+        RequestParameters urlDoc = this.getNewRequestParameters();
+        urlDoc.setPage(RequestParameters.PAGE_DOCUMENTATION);
+        urlDoc.setAction(RequestParameters.ACTION_DOC_DOWLOAD_FILES);
+
+        return log.exit("<a id='" + id + "' href='" + urlDoc.getRequestURL() + "'>"+
+                        "<img class='details' src='" + this.prop.getImagesRootDirectory() +
+                        "help.png' title='Help' alt='Help' /></a>");
     }
 
     /**
@@ -547,10 +575,11 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      *
      * @return  the {@code String} that is the 'show headers' image as HTML 'img' element.
      */
-    private String getShowHeaderImg() {
-        log.entry();
-        return log.exit("<img class='details' src='" + this.prop.getImagesRootDirectory() +
-                "show.png' title='Show headers' alt='Show headers'/>");
+    private String getShowHeaderLink(String id) {
+        log.entry(id);
+        return log.exit("<a id='" + id + "'>" + 
+                "<img class='details' src='" + this.prop.getImagesRootDirectory() +
+                "show.png' title='Show headers' alt='Show headers'/></a>");
     }
 
     /**
@@ -613,7 +642,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      *                     {@code List}.
      * @param isGroup      A {@code boolean} that is {@code true} if the figure represents 
      *                     a group of species.
-     * @param              A {@code DownloadPageType} that is the type of the page.
+     * @param pageType     A {@code DownloadPageType} that is the type of the page.
      * @return             A {@code String} that is the  HTML figure tag generated from the 
      *                     provided {@code List} of species IDs.
      */
@@ -766,19 +795,12 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         }
 
         String figure = null;
-        if (pageType.equals(DownloadPageType.EXPR_CALLS)) {
-            if (isGroup) {
-                figure = "<figure data-bgeegroupname='" + figcaption + "' " + 
-                        this.getGroupFileData(figcaption) + ">";
-            } else {
-                figure = "<figure " + this.getSingleSpeciesFileData(speciesIds.get(0)) + ">";
-            }
-        } else if (pageType.equals(DownloadPageType.REF_EXPR)) {
-            figure = "<figure>";
+        if (isGroup) {
+            figure = "<figure data-bgeegroupname='" + figcaption + "' " + 
+                    this.getGroupFileData(figcaption) + ">";
         } else {
-            //TODO
+            figure = "<figure " + this.getSingleSpeciesFileData(speciesIds.get(0), pageType) + ">";
         }
-        
 
         figure += "<div>" + images + "</div>" +
                   "<figcaption>" + figcaption + 
@@ -800,7 +822,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         String diffExprAnatSimpleFileSize = null, diffExprAnatCompleteFileSize = null,
 //                exprSimpleFileSize = null, exprCompleteFileSize = null,  
 //                diffExprDevSimpleFileSize = null, diffExprDevCompleteFileSize = null, 
-                filePrefix = null;
+                orthologFileSize = null, filePrefix = null;
 
         switch (groupName) {
             //TODO: set file sizes            
@@ -811,6 +833,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 diffExprAnatCompleteFileSize  = "5.9 MB";
 //                diffExprDevSimpleFileSize = "xx MB";
 //                diffExprDevCompleteFileSize = "xx MB"; 
+                orthologFileSize = "xx MB"; 
                 filePrefix= "human_mouse";
                 break;
             case GROUP_NAME_HUMAN_ZEBRAFISH:
@@ -820,6 +843,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 //                diffExprAnatCompleteFileSize  = "xx MB";
 //                diffExprDevSimpleFileSize = "xx MB";
 //                diffExprDevCompleteFileSize = "xx MB"; 
+                orthologFileSize = "xx MB"; 
                 filePrefix= "human_zebrafish";
                 break;
             case GROUP_NAME_HUMAN_FRUITFLY:
@@ -829,6 +853,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 //                diffExprAnatCompleteFileSize  = "xx MB";
 //                diffExprDevSimpleFileSize = "xx MB";
 //                diffExprDevCompleteFileSize = "xx MB"; 
+                orthologFileSize = "xx MB"; 
                 filePrefix= "human_fruitfly";
                 break;
             case GROUP_NAME_HUMAN_NEMATODE:
@@ -838,6 +863,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 //                diffExprAnatCompleteFileSize  = "xx MB";
 //                diffExprDevSimpleFileSize = "xx MB";
 //                diffExprDevCompleteFileSize = "xx MB"; 
+                orthologFileSize = "xx MB"; 
                 filePrefix= "human_nematode";
                 break;
             case GROUP_NAME_MOUSE_ZEBRAFISH:
@@ -847,6 +873,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 //                diffExprAnatCompleteFileSize  = "xx MB";
 //                diffExprDevSimpleFileSize = "xx MB";
 //                diffExprDevCompleteFileSize = "xx MB"; 
+                orthologFileSize = "xx MB"; 
                 filePrefix= "mouse_zebrafish";
                 break;
             case GROUP_NAME_MOUSE_FRUITFLY:
@@ -856,6 +883,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 //                diffExprAnatCompleteFileSize  = "xx MB";
 //                diffExprDevSimpleFileSize = "xx MB";
 //                diffExprDevCompleteFileSize = "xx MB"; 
+                orthologFileSize = "xx MB"; 
                 filePrefix= "mouse_fruitfly";
                 break;
             case GROUP_NAME_MOUSE_NEMATODE:
@@ -865,6 +893,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 //                diffExprAnatCompleteFileSize  = "xx MB";
 //                diffExprDevSimpleFileSize = "xx MB";
 //                diffExprDevCompleteFileSize = "xx MB"; 
+                orthologFileSize = "xx MB"; 
                 filePrefix= "mouse_nematode";
                 break;
             case GROUP_NAME_ZEBRAFISH_FRUITFLY:
@@ -874,6 +903,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 //                diffExprAnatCompleteFileSize  = "xx MB";
 //                diffExprDevSimpleFileSize = "xx MB";
 //                diffExprDevCompleteFileSize = "xx MB"; 
+                orthologFileSize = "xx MB"; 
                 filePrefix= "zebrafish_fruitfly";
                 break;
             case GROUP_NAME_ZEBRAFISH_NEMATODE:
@@ -883,6 +913,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 //                diffExprAnatCompleteFileSize  = "xx MB";
 //                diffExprDevSimpleFileSize = "xx MB";
 //                diffExprDevCompleteFileSize = "xx MB"; 
+                orthologFileSize = "xx MB"; 
                 filePrefix= "zebrafish_nematode";
                 break;
             case GROUP_NAME_FRUITFLY_NEMATODE:
@@ -892,6 +923,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 //                diffExprAnatCompleteFileSize  = "xx MB";
 //                diffExprDevSimpleFileSize = "xx MB";
 //                diffExprDevCompleteFileSize = "xx MB"; 
+                orthologFileSize = "xx MB"; 
                 filePrefix= "fruitfly_nematode";
                 break;
             case GROUP_NAME_CATARRHINI:
@@ -901,6 +933,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 //                diffExprAnatCompleteFileSize  = "xx MB";
 //                diffExprDevSimpleFileSize = "xx MB";
 //                diffExprDevCompleteFileSize = "xx MB"; 
+                orthologFileSize = "xx MB"; 
                 filePrefix= "catarrhini";
                 break;
             case GROUP_NAME_MURINAE:
@@ -910,6 +943,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 diffExprAnatCompleteFileSize  = "3.9 MB";
 //                diffExprDevSimpleFileSize = "xx MB";
 //                diffExprDevCompleteFileSize = "xx MB"; 
+                orthologFileSize = "xx MB"; 
                 filePrefix= "murinae";
                 break;
             case GROUP_NAME_THERIA:
@@ -919,6 +953,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 diffExprAnatCompleteFileSize  = "12 MB";
 //                diffExprDevSimpleFileSize = "xx MB";
 //                diffExprDevCompleteFileSize = "xx MB"; 
+                orthologFileSize = "xx MB"; 
                 filePrefix= "theria";
                 break;
             case GROUP_NAME_MAMMALIA:
@@ -928,6 +963,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 diffExprAnatCompleteFileSize  = "9 MB";
 //                diffExprDevSimpleFileSize = "xx MB";
 //                diffExprDevCompleteFileSize = "xx MB"; 
+                orthologFileSize = "xx MB"; 
                 filePrefix= "mammalia";
                 break;
             case GROUP_NAME_AMNIOTA:
@@ -937,6 +973,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 diffExprAnatCompleteFileSize  = "14 MB";
 //                diffExprDevSimpleFileSize = "xx MB";
 //                diffExprDevCompleteFileSize = "xx MB"; 
+                orthologFileSize = "xx MB"; 
                 filePrefix= "amniota";
                 break;
             case GROUP_NAME_BILATERIA:
@@ -946,6 +983,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 diffExprAnatCompleteFileSize  = "3.4 MB";
 //                diffExprDevSimpleFileSize = "xx MB";
 //                diffExprDevCompleteFileSize = "xx MB"; 
+                orthologFileSize = "xx MB"; 
                 filePrefix= "bilateria";
                 break;
             default:
@@ -958,6 +996,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         String extension = ".tsv.zip";
         
         String data = "";
+        data += " data-bgeeorthologfileurl='" + this.prop.getDownloadOrthologFilesRootDirectory() + 
+                filePrefix + "_orthologs" + extension +
+                "' data-bgeeorthologfilesize='" + orthologFileSize + "'";
         
 //        if (exprSimpleFileSize != null) {
 //            data += " data-bgeeexprsimplefileurl='" + beginExprFilePath + 
@@ -997,15 +1038,18 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      * Get custom data for a single species.
      * 
      * @param speciesId A {@code String} that is the ID of the species.
+     * @param pageType  A {@code DownloadPageType} that is the type of the page.
      * @return          A {@code String} that is data according to the given species ID.
      */
-    private String getSingleSpeciesFileData(int speciesId) {
+    private String getSingleSpeciesFileData(int speciesId, DownloadPageType pageType) {
         log.entry(speciesId);
         
         String exprSimpleFileSize = null, exprCompleteFileSize = null, 
                 diffExprAnatSimpleFileSize = null, diffExprAnatCompleteFileSize = null, 
                 diffExprDevSimpleFileSize = null, diffExprDevCompleteFileSize = null, 
-                latinName = null;
+                rnaSeqDataFileSize = null, affyDataFileSize = null, inSituDataFileSize = null, 
+                estDataFileSize = null, rnaSeqAnnotFileSize = null, affyAnnotFileSize = null, 
+                inSituAnnotFileSize = null, estAnnotFileSize = null, latinName = null;
 
         switch (speciesId) {
             case 9606: 
@@ -1015,6 +1059,12 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 diffExprAnatCompleteFileSize  = "24.5 MB";
                 diffExprDevSimpleFileSize = "0.7 MB";
                 diffExprDevCompleteFileSize = "15.8 MB"; 
+                rnaSeqDataFileSize = "xx MB";
+                rnaSeqAnnotFileSize = "xx MB";
+                affyDataFileSize = "xx MB";
+                affyAnnotFileSize = "xx MB";
+                estDataFileSize = "xx MB";
+                estAnnotFileSize = "xx MB";
                 latinName = "Homo_sapiens";
                 break;
             case 10090: 
@@ -1023,14 +1073,28 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 diffExprAnatSimpleFileSize = "7.8 MB";
                 diffExprAnatCompleteFileSize  = "30.9 MB";
                 diffExprDevSimpleFileSize = "4.3 MB";
-                diffExprDevCompleteFileSize = "33.2 MB"; 
+                diffExprDevCompleteFileSize = "33.2 MB";
+                rnaSeqDataFileSize = "xx MB";
+                rnaSeqAnnotFileSize = "xx MB";
+                affyDataFileSize = "xx MB";
+                affyAnnotFileSize = "xx MB";
+                inSituDataFileSize = "xx MB";
+                inSituAnnotFileSize = "xx MB";
+                estDataFileSize = "xx MB";
+                estAnnotFileSize = "xx MB";
                 latinName = "Mus_musculus";
                 break;
             case 7955: 
                 exprSimpleFileSize = "4.3 MB";
                 exprCompleteFileSize = "588 MB"; 
                 diffExprDevSimpleFileSize = "0,4 MB";
-                diffExprDevCompleteFileSize = "1.3 MB"; 
+                diffExprDevCompleteFileSize = "1.3 MB";
+                affyDataFileSize = "xx MB";
+                affyAnnotFileSize = "xx MB";
+                inSituDataFileSize = "xx MB";
+                inSituAnnotFileSize = "xx MB";
+                estDataFileSize = "xx MB";
+                estAnnotFileSize = "xx MB";
                 latinName = "Danio_rerio";
                 break;
             case 7227: 
@@ -1040,6 +1104,12 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 diffExprAnatCompleteFileSize  = "1.3 MB";
                 diffExprDevSimpleFileSize = "0.2 MB";
                 diffExprDevCompleteFileSize = "0.8 MB"; 
+                affyDataFileSize = "xx MB";
+                affyAnnotFileSize = "xx MB";
+                inSituDataFileSize = "xx MB";
+                inSituAnnotFileSize = "xx MB";
+                estDataFileSize = "xx MB";
+                estAnnotFileSize = "xx MB";
                 latinName = "Drosophila_melanogaster";
                 break;
             case 6239: 
@@ -1047,76 +1117,102 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 exprCompleteFileSize = "340 MB"; 
                 diffExprDevSimpleFileSize = "0.1 MB";
                 diffExprDevCompleteFileSize = "1.2 MB"; 
+                affyDataFileSize = "xx MB";
+                affyAnnotFileSize = "xx MB";
+                rnaSeqDataFileSize = "xx MB";
+                rnaSeqAnnotFileSize = "xx MB";
+                inSituDataFileSize = "xx MB";
+                inSituAnnotFileSize = "xx MB";
                 latinName = "Caenorhabditis_elegans";
                 break;
             case 9597: 
                 exprSimpleFileSize = "0.7 MB";
                 exprCompleteFileSize = "38 MB"; 
+                rnaSeqDataFileSize = "xx MB";
+                rnaSeqAnnotFileSize = "xx MB";
                 latinName = "Pan_paniscus";
                 break;
             case 9598: 
                 exprSimpleFileSize = "0.5 MB";
-                exprCompleteFileSize = "31 MB"; 
+                exprCompleteFileSize = "31 MB";  
+                rnaSeqDataFileSize = "xx MB";
+                rnaSeqAnnotFileSize = "xx MB";
                 latinName = "Pan_troglodytes";
                 break;
             case 9593: 
                 exprSimpleFileSize = "0.5 MB";
-                exprCompleteFileSize = "30 MB"; 
+                exprCompleteFileSize = "30 MB";  
+                rnaSeqDataFileSize = "xx MB";
+                rnaSeqAnnotFileSize = "xx MB";
                 latinName = "Gorilla_gorilla";
                 break;
             case 9600: 
-                exprSimpleFileSize = "33 MB";
-                exprCompleteFileSize = "34 GB"; 
                 latinName = "Pongo_pygmaeus";
                 break;
             case 9544: 
                 exprSimpleFileSize = "1.2 MB";
                 exprCompleteFileSize = "112 MB"; 
                 diffExprAnatSimpleFileSize = "0.4 MB";
-                diffExprAnatCompleteFileSize  = "2.5 MB";
+                diffExprAnatCompleteFileSize  = "2.5 MB"; 
+                rnaSeqDataFileSize = "xx MB";
+                rnaSeqAnnotFileSize = "xx MB";
                 latinName = "Macaca_mulatta";
                 break;
             case 10116: 
                 exprSimpleFileSize = "0.8 MB";
                 exprCompleteFileSize = "59 MB"; 
                 diffExprAnatSimpleFileSize = "0.5 MB";
-                diffExprAnatCompleteFileSize  = "1.9 MB";
+                diffExprAnatCompleteFileSize  = "1.9 MB"; 
+                rnaSeqDataFileSize = "xx MB";
+                rnaSeqAnnotFileSize = "xx MB";
                 latinName = "Rattus_norvegicus";
                 break;
             case 9913: 
                 exprSimpleFileSize = "0.7 MB";
                 exprCompleteFileSize = "58 MB"; 
                 diffExprAnatSimpleFileSize = "0.3 MB";
-                diffExprAnatCompleteFileSize  = "1.8 MB";
+                diffExprAnatCompleteFileSize  = "1.8 MB"; 
+                rnaSeqDataFileSize = "xx MB";
+                rnaSeqAnnotFileSize = "xx MB";
                 latinName = "Bos_taurus";
                 break;
             case 9823: 
                 exprSimpleFileSize = "0.3 MB";
-                exprCompleteFileSize = "6.4 MB"; 
+                exprCompleteFileSize = "6.4 MB";  
+                rnaSeqDataFileSize = "xx MB";
+                rnaSeqAnnotFileSize = "xx MB";
                 latinName = "Sus_scrofa";
                 break;
             case 13616: 
                 exprSimpleFileSize = "0.9 MB";
-                exprCompleteFileSize = "49 MB"; 
+                exprCompleteFileSize = "49 MB";  
+                rnaSeqDataFileSize = "xx MB";
+                rnaSeqAnnotFileSize = "xx MB";
                 latinName = "Monodelphis_domestica";
                 break;
             case 9258: 
                 exprSimpleFileSize = "0.6 MB";
                 exprCompleteFileSize = "34 MB"; 
                 diffExprAnatSimpleFileSize = "0.2 MB";
-                diffExprAnatCompleteFileSize  = "1.2 MB";
+                diffExprAnatCompleteFileSize  = "1.2 MB"; 
+                rnaSeqDataFileSize = "xx MB";
+                rnaSeqAnnotFileSize = "xx MB";
                 latinName = "Ornithorhynchus_anatinus";
                 break;
             case 9031: 
                 exprSimpleFileSize = "1 MB";
                 exprCompleteFileSize = "55 MB"; 
                 diffExprAnatSimpleFileSize = "0.4 MB";
-                diffExprAnatCompleteFileSize  = "1.7 MB";
+                diffExprAnatCompleteFileSize  = "1.7 MB"; 
+                rnaSeqDataFileSize = "xx MB";
+                rnaSeqAnnotFileSize = "xx MB";
                 latinName = "Gallus_gallus";
                 break;
             case 28377: 
                 exprSimpleFileSize = "0.3 MB";
-                exprCompleteFileSize = "19 MB"; 
+                exprCompleteFileSize = "19 MB";  
+                rnaSeqDataFileSize = "xx MB";
+                rnaSeqAnnotFileSize = "xx MB";
                 latinName = "Anolis_carolinensis";
                 break;
             case 8364: 
@@ -1125,48 +1221,92 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 diffExprAnatSimpleFileSize = "0.2 MB";
                 diffExprAnatCompleteFileSize  = "1 MB";
                 diffExprDevSimpleFileSize = "0.1 MB";
-                diffExprDevCompleteFileSize = "0.6 MB"; 
+                diffExprDevCompleteFileSize = "0.6 MB";  
+                rnaSeqDataFileSize = "xx MB";
+                rnaSeqAnnotFileSize = "xx MB";
+                inSituDataFileSize = "xx MB";
+                inSituAnnotFileSize = "xx MB";
+                estDataFileSize = "xx MB";
+                estAnnotFileSize = "xx MB";
                 latinName = "Xenopus_tropicalis";
                 break;
             case 99883: 
-                exprSimpleFileSize = "73 MB";
-                exprCompleteFileSize = "74 GB"; 
                 latinName = "Tetraodon_nigroviridis";
                 break;
             default:
                 return ("");
         }
         
-        String beginExprFilePath = this.prop.getDownloadExprFilesRootDirectory() + latinName + "_";
-        String beginDiffExprFilePath = this.prop.getDownloadDiffExprFilesRootDirectory() + latinName + "_";
         String extension = ".tsv.zip";
         
-        String data = " data-bgeeexprsimplefileurl='" + beginExprFilePath + "expr-simple" + extension + 
-                "' data-bgeeexprsimplefilesize='" + exprSimpleFileSize + 
-                "' data-bgeeexprcompletefileurl='" + beginExprFilePath + "expr-complete" + extension + 
-                "' data-bgeeexprcompletefilesize='" + exprCompleteFileSize+ "'";
+        StringBuffer data = new StringBuffer();
+        if (pageType.equals(DownloadPageType.EXPR_CALLS)) {
+            String beginExprFilePath = this.prop.getDownloadExprFilesRootDirectory() + latinName + "_";
+            String beginDiffExprFilePath = this.prop.getDownloadDiffExprFilesRootDirectory() + latinName + "_";
+            data.append(" data-bgeeexprsimplefileurl='" + beginExprFilePath + "expr-simple" + extension + 
+                    "' data-bgeeexprsimplefilesize='" + exprSimpleFileSize + 
+                    "' data-bgeeexprcompletefileurl='" + beginExprFilePath + "expr-complete" + extension + 
+                    "' data-bgeeexprcompletefilesize='" + exprCompleteFileSize+ "'");
+            if (diffExprAnatSimpleFileSize != null) {
+                data.append(" data-bgeediffexpranatomysimplefileurl='" + beginDiffExprFilePath + 
+                                        "diffexpr-anatomy-simple" + extension +
+                        "' data-bgeediffexpranatomysimplefilesize='" + diffExprAnatSimpleFileSize + "'"); 
+            }
+            if (diffExprAnatCompleteFileSize != null) {
+                data.append(" data-bgeediffexpranatomycompletefileurl='" + beginDiffExprFilePath + 
+                                        "diffexpr-anatomy-complete" + extension +
+                        "' data-bgeediffexpranatomycompletefilesize='" + diffExprAnatCompleteFileSize + "'"); 
+            }
+            if (diffExprDevSimpleFileSize != null) {
+                data.append(" data-bgeediffexprdevelopmentsimplefileurl='" + beginDiffExprFilePath + 
+                                        "diffexpr-development-simple" + extension +
+                        "' data-bgeediffexprdevelopmentsimplefilesize='" + diffExprDevSimpleFileSize + "'"); 
+            }
+            if (diffExprDevCompleteFileSize != null) {
+                data.append(" data-bgeediffexprdevelopmentcompletefileurl='" + beginDiffExprFilePath + 
+                                        "diffexpr-development-complete" + extension +
+                        "' data-bgeediffexprdevelopmentcompletefilesize='" + diffExprDevCompleteFileSize + "'"); 
+            }
+
+        } else if (pageType.equals(DownloadPageType.REF_EXPR)) {
+            String beginRefExprFilePath = this.prop.getDownloadRefExprFilesRootDirectory() + latinName + "_";
+            if (rnaSeqDataFileSize != null) {
+                data.append(" data-bgeernaseqdatafileurl='" + beginRefExprFilePath + 
+                        "RNA-Seq_read_counts_RPKM" + extension +
+                        "' data-bgeernaseqdatafilesize='" + rnaSeqDataFileSize + "'"); 
+                data.append(" data-bgeernaseqannotfileurl='" + beginRefExprFilePath + 
+                        "RNA-Seq_annotations" + extension +
+                        "' data-bgeernaseqannotfilesize='" + rnaSeqAnnotFileSize + "'"); 
+            }
+            if (affyDataFileSize != null) {
+                data.append(" data-bgeeaffydatafileurl='" + beginRefExprFilePath + 
+                        "Affymetrix_probesets" + extension +
+                        "' data-bgeeaffydatafilesize='" + affyDataFileSize + "'"); 
+                data.append(" data-bgeeaffyannotfileurl='" + beginRefExprFilePath + 
+                        "Affymetrix_annotations" + extension +
+                        "' data-bgeeaffyannotfilesize='" + affyAnnotFileSize + "'"); 
+            }
+            if (inSituDataFileSize != null) {
+                data.append(" data-bgeeinsitudatafileurl='" + beginRefExprFilePath + 
+                                        "InSitu_data" + extension +
+                        "' data-bgeeinsitudatafilesize='" + inSituDataFileSize + "'"); 
+                data.append(" data-bgeeinsituannotfileurl='" + beginRefExprFilePath + 
+                        "InSitu_annotations" + extension +
+                        "' data-bgeeinsituannotfilesize='" + inSituAnnotFileSize + "'"); 
+            }
+            if (estDataFileSize != null) {
+                data.append(" data-bgeeestdatafileurl='" + beginRefExprFilePath + 
+                                        "EST_data" + extension +
+                        "' data-bgeeestdatafilesize='" + estDataFileSize + "'"); 
+                data.append(" data-bgeeestannotfileurl='" + beginRefExprFilePath + 
+                        "EST_annotations" + extension +
+                        "' data-bgeeestannotfilesize='" + estAnnotFileSize + "'"); 
+            }
+        } else {
+            //TODO what to do?  
+        }
         
-        if (diffExprAnatSimpleFileSize != null) {
-            data += " data-bgeediffexpranatomysimplefileurl='" + beginDiffExprFilePath + 
-                                    "diffexpr-anatomy-simple" + extension +
-                    "' data-bgeediffexpranatomysimplefilesize='" + diffExprAnatSimpleFileSize + "'"; 
-        }
-        if (diffExprAnatCompleteFileSize != null) {
-            data += " data-bgeediffexpranatomycompletefileurl='" + beginDiffExprFilePath + 
-                                    "diffexpr-anatomy-complete" + extension +
-                    "' data-bgeediffexpranatomycompletefilesize='" + diffExprAnatCompleteFileSize + "'"; 
-        }
-        if (diffExprDevSimpleFileSize != null) {
-            data += " data-bgeediffexprdevelopmentsimplefileurl='" + beginDiffExprFilePath + 
-                                    "diffexpr-development-simple" + extension +
-                    "' data-bgeediffexprdevelopmentsimplefilesize='" + diffExprDevSimpleFileSize + "'"; 
-        }
-        if (diffExprDevCompleteFileSize != null) {
-            data += " data-bgeediffexprdevelopmentcompletefileurl='" + beginDiffExprFilePath + 
-                                    "diffexpr-development-complete" + extension +
-                    "' data-bgeediffexprdevelopmentcompletefilesize='" + diffExprDevCompleteFileSize + "'"; 
-        }
-        return log.exit(data);
+        return log.exit(data.toString());
     }
 
     /**

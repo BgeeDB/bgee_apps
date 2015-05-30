@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.bgee.controller.exception.MultipleValuesNotAllowedException;
@@ -61,8 +62,10 @@ public class RequestParametersTest {
     public static void loadParameters(){
 
         System.getProperties().setProperty(
-                "org.bgee.webapp.requestParametersStorageDirectory",
+                BgeeProperties.REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY,
                 System.getProperty("java.io.tmpdir"));
+        System.getProperties().setProperty(
+                BgeeProperties.URL_MAX_LENGTH_KEY, "120");
 
         testURLParameters = new TestURLParameters();	
 
@@ -118,7 +121,7 @@ public class RequestParametersTest {
         when(mockHttpServletRequest.getParameter("data"))
         .thenReturn(null) // for new RequestParameters
         .thenReturn(null) // for requestParametersWithNoKey
-        .thenReturn("cde384a208277a175428167464e49bf9ee3ee831");
+        .thenReturn("5ec011a6490dee0a9e652fdb4829f2a5de341e7b");
         //for requestParametersHavingAKey
 
         // To ensure that the key is generated and written on the disk before the tests start,
@@ -158,25 +161,27 @@ public class RequestParametersTest {
         // the mockHttpServletRequest. Do it with the default parameters separator and with
         // a custom one
 
-        assertEquals("Incorrect query returned ","?test_string=string1%26test_integer="
-                + "1234%26test_integer=2345%26test_boolean=true%26test_boolean="
+        assertEquals("Incorrect query returned ","?test_string=string1&test_integer="
+                + "1234&test_integer=2345&test_boolean=true&test_boolean="
                 + "false",this.requestParametersWithNoKey.getRequestURL());
 
-        assertEquals("Incorrect query returned ","?test_string=string1%2Btest_integer="
-                + "1234%2Btest_integer=2345%2Btest_boolean=true%2Btest_boolean="
+        assertEquals("Incorrect query returned ","?test_string=string1+test_integer="
+                + "1234+test_integer=2345+test_boolean=true+test_boolean="
                 + "false",this.requestParametersWithNoKey.getRequestURL("+"));
 
         // Add a parameter value to exceed the threshold over which a key is used
-        // (120 for this test),
+        // (120 for this test, see method loadParameters()),
         // and check that indeed, a key is present after a new call of 
         // getRequestURL(), with still test_string written because
         // it is non storable
         this.requestParametersWithNoKey.addValue(
                 testURLParameters.getParamTestInteger(),987654321);
+        this.requestParametersWithNoKey.addValue(
+                testURLParameters.getParamTestInteger(),987654322);
 
         assertEquals("Incorrect query returned ", 
                 "?test_string=string1"
-                        + "%2Bdata=cde384a208277a175428167464e49bf9ee3ee831", 
+                        + "+data=5ec011a6490dee0a9e652fdb4829f2a5de341e7b", 
                         this.requestParametersWithNoKey.getRequestURL("+"));
 
         // Check that the storable parameters are loaded correctly from the 
@@ -184,11 +189,12 @@ public class RequestParametersTest {
         // and that getRequestURL() returns the key correctly with the 
         // non storable parameters as well.
         assertEquals("Parameters are not correctly loaded from the key ", 
-                "[1234, 2345, 987654321]",this.requestParametersHavingAKey.getValues(
-                        testURLParameters.getParamTestInteger()).toString());
+                Arrays.asList(1234, 2345, 987654321, 987654322), 
+                this.requestParametersHavingAKey.getValues(
+                        testURLParameters.getParamTestInteger()));
         assertEquals("Incorrect query returned ", 
                 "?test_string=string1"
-                        + "%2Bdata=cde384a208277a175428167464e49bf9ee3ee831", 
+                        + "+data=5ec011a6490dee0a9e652fdb4829f2a5de341e7b", 
                         this.requestParametersHavingAKey.getRequestURL("+"));
 
     }

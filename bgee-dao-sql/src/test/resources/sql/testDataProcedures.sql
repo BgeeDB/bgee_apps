@@ -346,12 +346,12 @@ BEGIN
         INSERT INTO rnaSeqPlatform (rnaSeqPlatformId, rnaSeqPlatformDescription)
         VALUES ('Illumina HiSeq 2000', '');
 
-        INSERT INTO rnaSeqLibrary(rnaSeqLibraryId, rnaSeqSecondaryLibraryId, rnaSeqExperimentId, rnaSeqPlatformId, anatEntityId, stageId, log2RPKThreshold, allGenesPercentPresent, proteinCodingGenesPercentPresent, intergenicRegionsPercentPresent, allReadsCount, leftMappedReadsCount, rightMappedReadsCount, minReadLength, maxReadLength, libraryType, libraryOrientation)
+        INSERT INTO rnaSeqLibrary(rnaSeqLibraryId, rnaSeqSecondaryLibraryId, rnaSeqExperimentId, rnaSeqPlatformId, anatEntityId, stageId, log2RPKMThreshold, allGenesPercentPresent, proteinCodingGenesPercentPresent, intergenicRegionsPercentPresent, allReadsCount, leftMappedReadsCount, rightMappedReadsCount, minReadLength, maxReadLength, libraryType, libraryOrientation)
         VALUES ('GSM1015161', 'SRX191160', 'GSE41338', 'Illumina HiSeq 2000', 'Anat_id11', 'Stage_id1', 1.000000, 68.27, 58.96, 15.85, 91641467, 33352222, 32332998, 75, 75, 'paired', 'unstranded'),
                ('GSM1015164', 'SRX191163', 'GSE41338', 'Illumina HiSeq 2000', 'Anat_id13', 'Stage_id18', 1.000000, 43.85, 37.72, 6.23, 81401754, 28408829, 28299304, 75, 75, 'paired', 'unstranded'),
                ('GSM1015162', 'SRX191161', 'GSE41338', 'Illumina HiSeq 2000', 'Anat_id10', 'Stage_id4', 1.000000, 60.13, 51.96, 12.61, 81401754, 43858614, 10260750, 75, 75, 'paired', 'unstranded');
 
-        INSERT INTO rnaSeqResult (rnaSeqLibraryId, geneId, log2RPK, readsCount, expressionId, noExpressionId, detectionFlag, rnaSeqData, reasonForExclusion)
+        INSERT INTO rnaSeqResult (rnaSeqLibraryId, geneId, log2RPKM, readsCount, expressionId, noExpressionId, detectionFlag, rnaSeqData, reasonForExclusion)
         VALUES ('GSM1015164', 'ID1', 0.780113, 117, 2, NULL, 'present', 'high quality', 'not excluded'),
                ('GSM1015161', 'ID1', -26.575425, 0, NULL, NULL, 'absent', 'high quality', 'pre-filtering'),
                ('GSM1015161', 'ID2', -1.687530, 31, NULL, 4, 'absent', 'high quality', 'not excluded'),

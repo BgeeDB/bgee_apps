@@ -54,7 +54,7 @@ public class MySQLRNASeqResultDAOIT  extends MySQLITAncestor {
 
             try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
                     prepareStatement("SELECT 1 FROM rnaSeqResult WHERE rnaSeqLibraryId = ? AND " +
-                            "geneId = ? AND log2RPK = ? AND readsCount = ? AND " +
+                            "geneId = ? AND log2RPKM = ? AND readsCount = ? AND " +
                             "expressionId is null AND noExpressionId is null " +
                             "AND detectionFlag = ? AND rnaSeqData = ? AND reasonForExclusion = ?")) {
                 stmt.setString(1, "GSM1015161");

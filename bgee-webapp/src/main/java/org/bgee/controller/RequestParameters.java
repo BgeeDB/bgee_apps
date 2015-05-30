@@ -752,8 +752,8 @@ public class RequestParameters {
                         if(parameterValue != null && StringUtils.isNotBlank(
                                 parameterValue.toString())){
                             urlFragment += parameter.getName()+ "=";
-                            urlFragment += this.urlEncode(parameterValue.toString() 
-                                    + parametersSeparator);
+                            urlFragment += this.urlEncode(parameterValue.toString()) 
+                                    + parametersSeparator;
                         }
                     }
                 }
@@ -762,7 +762,7 @@ public class RequestParameters {
 
         // Remove the extra separator at the end 
         if(StringUtils.isNotBlank(urlFragment)){
-            int paramSeparatorLength = this.urlEncode(parametersSeparator).length();
+            int paramSeparatorLength = parametersSeparator.length();
             urlFragment = urlFragment.substring(0, urlFragment.length()-paramSeparatorLength);
         }
 

@@ -555,7 +555,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     /**
      * Get the 'help' image of the banner in a download page as a HTML 'img' element. 
      *
-     * @return  the {@code String} that is the 'help' image as HTML 'img' element.
+     * @param id    A {@code String} that is the 'id' attribute of the HTML 'a' element.
+     * @return      the {@code String} that is the 'help' image as HTML 'img' element.
      */
     private String getHelpLink(String id) {
         log.entry(id);

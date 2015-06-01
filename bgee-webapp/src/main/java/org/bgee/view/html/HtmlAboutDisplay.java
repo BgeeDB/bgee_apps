@@ -9,7 +9,6 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.AboutDisplay;
-import org.bgee.view.ViewFactory;
 
 
 /**
@@ -34,12 +33,12 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
      *                          and for display purposes.
      * @param prop              A {@code BgeeProperties} instance that contains the properties
      *                          to use.
-     * @param factory           A {@code ViewFactory} that instantiated this object.
+     * @param factory           The {@code HtmlFactory} that instantiated this object.
      * @throws IOException      If there is an issue when trying to get or to use the
      *                          {@code PrintWriter}.
      */
     public HtmlAboutDisplay(HttpServletResponse response,
-            RequestParameters requestParameters, BgeeProperties prop, ViewFactory factory) throws IOException {
+            RequestParameters requestParameters, BgeeProperties prop, HtmlFactory factory) throws IOException {
         super(response, requestParameters, prop, factory);
     }
 

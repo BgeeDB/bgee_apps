@@ -56,14 +56,19 @@ public abstract class ConcreteDisplayParent {
      * @param prop              A {@code BgeeProperties} instance that contains the properties
      *                          to use.
      * @param factory           A {@code ViewFactory} that instantiated this object.
+     * @throws IllegalArgumentException If {@code factory} is {@code null}.
      * @throws IOException      If there is an issue when trying to get or to use the
      *                          {@code PrintWriter} 
      */
     protected ConcreteDisplayParent(HttpServletResponse response, BgeeProperties prop, 
-            ViewFactory factory) throws IOException {
-        log.entry(response, prop);
+            ViewFactory factory) throws IllegalArgumentException, IOException {
+        log.entry(response, prop, factory);
+        if (factory == null) {
+            throw log.throwing(new IllegalArgumentException("The provided factory cannot be null"));
+        }
         this.response = response;
         this.factory = factory;
+        this.prop = prop;
 
         if (this.response != null) {
             this.response.setCharacterEncoding("UTF-8");
@@ -72,7 +77,6 @@ public abstract class ConcreteDisplayParent {
 
         this.headersAlreadySent = false;
         this.displayAlreadyStarted = false;
-        this.prop = prop;
         log.exit();
     }
     

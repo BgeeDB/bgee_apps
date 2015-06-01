@@ -12,7 +12,6 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.DownloadDisplay;
-import org.bgee.view.ViewFactory;
 
 /**
  * This class displays the page having the category "download", i.e. with the parameter
@@ -106,12 +105,12 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      *                          and for display purposes.
      * @param prop              A {@code BgeeProperties} instance that contains the properties
      *                          to use.
-     * @param factory           A {@code ViewFactory} that instantiated this object.
+     * @param factory           The {@code HtmlFactory} that instantiated this object.
      * @throws IOException      If there is an issue when trying to get or to use the
      *                          {@code PrintWriter} 
      */
     public HtmlDownloadDisplay(HttpServletResponse response, RequestParameters requestParameters, 
-            BgeeProperties prop, ViewFactory factory) throws IOException {
+            BgeeProperties prop, HtmlFactory factory) throws IOException {
         super(response, requestParameters, prop, factory);
     }
 
@@ -357,7 +356,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         StringBuffer s = new StringBuffer(); 
         s.append("<div id='bgee_multi_species'>");
         s.append("<h2>Multi-species</h2>" +
-                 "<span class='header_details'>(homologous genes in homologous anatomical structures)</span>");
+                 "<span class='header_details'>(orthologous genes in homologous anatomical structures)</span>");
         s.append("<div class='bgee_section bgee_download_section'>");
         //TODO set all groups and with all species when all files will be generated 
         // Pairwises

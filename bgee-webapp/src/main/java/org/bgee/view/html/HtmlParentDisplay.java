@@ -57,12 +57,13 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      *                          current request.
      * @param prop              A {@code BgeeProperties} instance that contains the properties
      *                          to use.
+     * @param factory           The {@code HtmlFactory} that was used to instantiate this object.
      * 
      * @throws IOException      If there is an issue when trying to get or to use the
      *                          {@code PrintWriter} 
      */
     public HtmlParentDisplay(HttpServletResponse response, RequestParameters requestParameters, 
-            BgeeProperties prop, ViewFactory factory) throws IOException {
+            BgeeProperties prop, HtmlFactory factory) throws IOException {
         super(response, prop, factory);
         this.requestParameters = requestParameters;
         this.uniqueId = 0;
@@ -564,5 +565,24 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         log.entry();
         return log.exit(new RequestParameters(this.requestParameters.getUrlParametersInstance(), 
                 this.prop, true, "&amp;"));
+    }
+
+    /**
+     * @return  The {@code HtmlFactory} that instantiated this object. This method is provided 
+     *          only to avoid having to cast the {@code Viewfactory} returned by {@link #getFactory()}.
+     */
+    //method overridden only to provide more accurate javadoc
+    protected HtmlFactory getHtmlFactory() {
+        return (HtmlFactory) super.getFactory();
+    }
+    /**
+     * @return  The {@code ViewFactory} that instantiated this object, of type {@code HtmlFactory}.
+     *          See {@link getHtmlFactory()} for a method returning directly the factory 
+     *          as a {@code HtmlFactory}.
+     */
+    @Override
+    //method overridden only to provide more accurate javadoc
+    protected ViewFactory getFactory() {
+        return super.getFactory();
     }
 }

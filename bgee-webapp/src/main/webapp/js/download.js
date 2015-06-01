@@ -25,6 +25,8 @@ var download = {
         $bgeeDataSelectionTextScientific: null,
         $bgeeDataSelectionTextCommon: null,
         $bgeeGroupDescription: null,
+        $orthologButtons: null,
+        $orthologCvs: null,
         $exprSimpleData: null,
         $exprSimpleCsv: null,
         $exprCompleteCsv: null,
@@ -34,10 +36,22 @@ var download = {
         $diffExprDevelopmentData: null,
         $diffExprDevelopmentSimpleCsv: null,
         $diffExprDevelopmentCompleteCsv: null,
-        $rnaseqData: null,   
+        $rnaSeqData: null,
+        $rnaSeqNoData: null,
+        $rnaSeqDataCsv: null,
+        $rnaSeqAnnotCsv: null,
         $affyData: null,
+        $affyNoData: null,
+        $affyDataCsv: null,
+        $affyAnnotCsv: null,
         $inSituData: null,
+        $inSituNoData: null,
+        $inSituDataCsv: null,
+        $inSituAnnotCsv: null,
         $estData: null,
+        $estNoData: null,
+        $estDataCsv: null,
+        $estAnnotCsv: null,
         $exprHelp: null,
         $diffAnatHelp: null,
         $diffDevHelp: null,
@@ -99,6 +113,8 @@ var download = {
                 $( "#bgee_data_selection_text h1.commonname" );
             this.$bgeeGroupDescription = $( "#bgee_data_selection_text p.groupdescription" );
             // Data
+            this.$orthologButtons = $( "#ortholog_file_buttons" );
+            this.$orthologCvs = $( "#ortholog_csv" );
             this.$exprSimpleData = $( "#expr_data" );
             this.$exprSimpleCsv = $( "#expr_simple_csv" );
             this.$exprCompleteCsv = $( "#expr_complete_csv" );        
@@ -108,11 +124,26 @@ var download = {
             this.$diffExprDevelopmentData = $( "#diffexpr_development_data" );
             this.$diffExprDevelopmentSimpleCsv = $( "#diffexpr_development_simple_csv" );
             this.$diffExprDevelopmentCompleteCsv = $( "#diffexpr_development_complete_csv" );
-            //
-            this.$rnaseqData = $( "#rnaseq_data" );   
+            // RNA-Seq reference gene expression
+            this.$rnaSeqData = $( "#rnaseq_data" );
+            this.$rnaSeqNoData = $( "#rnaseq_no_data" );
+            this.$rnaSeqDataCsv = $( "#rnaseq_data_csv" );
+            this.$rnaSeqAnnotCsv = $( "#rnaseq_annot_csv" );
+            // Affymetrix reference gene expression
             this.$affyData = $( "#affy_data" );
+            this.$affyNoData = $( "#affy_no_data" );
+            this.$affyDataCsv = $( "#affy_data_csv" );
+            this.$affyAnnotCsv = $( "#affy_annot_csv" );
+            // In situ reference gene expression
             this.$inSituData = $( "#in_situ_data" );
+            this.$inSituNoData = $( "#in_situ_no_data" );
+            this.$inSituDataCsv = $( "#in_situ_data_csv" );
+            this.$inSituAnnotCsv = $( "#in_situ_annot_csv" );
+            // EST reference gene expression
             this.$estData = $( "#est_data" );
+            this.$estNoData = $( "#est_no_data" );
+            this.$estDataCsv = $( "#est_data_csv" );
+            this.$estAnnotCsv = $( "#est_annot_csv" );
             //Help
             this.$exprHelp = $( "#expr_help" );
             this.$diffAnatHelp = $( "#diffexpr_anatomy_help" );
@@ -320,6 +351,7 @@ var download = {
             var bgeeSpeciesCommonNames = $images.data( "bgeespeciescommonname" );
             var bgeeGroupName = $currentSpecies.data( "bgeegroupname" );
             // Get files urls for the current species/group
+            var bgeeOrthologFileUrl = $currentSpecies.data( "bgeeorthologfileurl" );
             var bgeeExprSimpleFileUrl = $currentSpecies.data( "bgeeexprsimplefileurl" );
             var bgeeExprCompleteFileUrl = $currentSpecies.data( "bgeeexprcompletefileurl" );
             var bgeeDiffExprAnatomySimpleFileUrl =
@@ -330,6 +362,7 @@ var download = {
             	$currentSpecies.data( "bgeediffexprdevelopmentsimplefileurl" );
             var bgeeDiffExprDevelopmentCompleteFileUrl = 
             	$currentSpecies.data( "bgeediffexprdevelopmentcompletefileurl" );
+            var bgeeOrthologFileSize = $currentSpecies.data( "bgeeorthologfilesize" );
             var bgeeExprSimpleFileSize = $currentSpecies.data( "bgeeexprsimplefilesize" );
             var bgeeExprCompleteFileSize = $currentSpecies.data( "bgeeexprcompletefilesize" );
             var bgeeDiffExprAnatomySimpleFileSize =
@@ -340,6 +373,30 @@ var download = {
             	$currentSpecies.data( "bgeediffexprdevelopmentsimplefilesize" );
             var bgeeDiffExprDevelopmentCompleteFileSize =
             	$currentSpecies.data( "bgeediffexprdevelopmentcompletefilesize" );
+
+            // RNA-Seq reference gene expression
+            var bgeeRnaSeqDataFileUrl = $currentSpecies.data( "bgeernaseqdatafileurl" );
+            var bgeeRnaSeqAnnotFileUrl = $currentSpecies.data( "bgeernaseqannotfileurl" );
+            var bgeeRnaSeqDataFileSize = $currentSpecies.data( "bgeernaseqdatafilesize" );
+            var bgeeRnaSeqAnnotFileSize = $currentSpecies.data( "bgeernaseqannotfilesize" );
+
+            // Affymetrix reference gene expression
+            var bgeeAffyDataFileUrl = $currentSpecies.data( "bgeeaffydatafileurl" );
+            var bgeeAffyAnnotFileUrl = $currentSpecies.data( "bgeeaffyannotfileurl" );
+            var bgeeAffyDataFileSize = $currentSpecies.data( "bgeeaffydatafilesize" );
+            var bgeeAffyAnnotFileSize = $currentSpecies.data( "bgeeaffyannotfilesize" );
+
+            // In situ reference gene expression
+            var bgeeInSituDataFileUrl = $currentSpecies.data( "bgeeinsitudatafileurl" );
+            var bgeeInSituAnnotFileUrl = $currentSpecies.data( "bgeeinsituannotfileurl" );
+            var bgeeInSituDataFileSize = $currentSpecies.data( "bgeeinsitudatafilesize" );
+            var bgeeInSituAnnotFileSize = $currentSpecies.data( "bgeeinsituannotfilesize" );
+
+            // EST reference gene expression
+            var bgeeEstDataFileUrl = $currentSpecies.data( "bgeeestdatafileurl" );
+            var bgeeEstAnnotFileUrl = $currentSpecies.data( "bgeeestannotfileurl" );
+            var bgeeEstDataFileSize = $currentSpecies.data( "bgeeestdatafilesize" );
+            var bgeeEstAnnotFileSize = $currentSpecies.data( "bgeeestannotfilesize" );
 
             // Proceed to the update
             var numberOfSpecies = $images.size() ;
@@ -387,19 +444,13 @@ var download = {
                 this.$showSingleSimpleDiffexprAnatomyHeaders.show();
                 this.$showSingleCompleteDiffexprAnatomyHeaders.show();
                 if ( this.$exprCalls.length > 0 ) {
+                	// TODO: add statics variables in RequestParameters instead to be hardcoded
                 	this.$exprHelp.attr( "href", this.$exprHelp.attr("href").split('#')[0] + "#single_expr");
                 	this.$diffDevHelp.attr( "href", this.$diffDevHelp.attr("href").split('#')[0] + "#single_diff");
                 	this.$diffAnatHelp.attr( "href", this.$diffAnatHelp.attr("href").split('#')[0] + "#single_diff");
                 }
             }
             
-            //TODO remove when files added
-            if ( this.$refExpr.length > 0 ) {
-            	this.$rnaseqData.hide();   
-            	this.$affyData.hide();
-            	this.$inSituData.hide();
-            	this.$estData.hide();
-            }
             // Hide all header table to hide tables already opened in another detail box (banner)
             this.$singleSimpleExprHeaders.hide();
             this.$singleCompleteExprHeaders.hide();        
@@ -411,6 +462,16 @@ var download = {
             this.$singleCompleteDiffexprDevelopmentHeaders.hide();
 
             // Update the values of the download links and size files
+            
+            // Ortholog file
+            if (bgeeOrthologFileUrl === undefined) {
+            	this.$orthologButtons.hide();
+            } else {
+            	this.$orthologButtons.show();
+            	this.$orthologCvs.attr( "href", bgeeOrthologFileUrl );
+            	this.$orthologCvs.text( "Download file (" + bgeeOrthologFileSize + ")" );
+            }
+
             // Expression files
             if (bgeeExprSimpleFileUrl === undefined) {
             	this.$exprSimpleData.hide();
@@ -470,6 +531,58 @@ var download = {
             			"Download simple file (" + bgeeDiffExprDevelopmentSimpleFileSize + ")" );
             	this.$diffExprDevelopmentCompleteCsv.text( 
             			"Download complete file (" + bgeeDiffExprDevelopmentCompleteFileSize + ")" );
+            }
+            
+            // RNA-Seq reference gene expression
+            if (bgeeRnaSeqDataFileUrl === undefined) {
+            	this.$rnaSeqData.hide(); 
+            	this.$rnaSeqNoData.show();
+            } else {
+            	this.$rnaSeqData.show(); 
+            	this.$rnaSeqNoData.hide();
+            	this.$rnaSeqDataCsv.attr( "href", bgeeRnaSeqDataFileUrl );
+            	this.$rnaSeqAnnotCsv.attr( "href", bgeeRnaSeqAnnotFileUrl );
+            	this.$rnaSeqDataCsv.text( "Download data file (" + bgeeRnaSeqDataFileSize + ")" );
+            	this.$rnaSeqAnnotCsv.text( "Download annotation file (" + bgeeRnaSeqAnnotFileSize + ")" );
+            }
+
+            // Affymetrix reference gene expression
+            if (bgeeAffyDataFileUrl === undefined) {
+            	this.$affyData.hide(); 
+            	this.$affyNoData.show();
+            } else {
+            	this.$affyData.show(); 
+            	this.$affyNoData.hide();
+            	this.$affyDataCsv.attr( "href", bgeeAffyDataFileUrl );
+            	this.$affyAnnotCsv.attr( "href", bgeeAffyAnnotFileUrl );
+            	this.$affyDataCsv.text( "Download data file (" + bgeeAffyDataFileSize + ")" );
+            	this.$affyAnnotCsv.text( "Download annotation file (" + bgeeAffyAnnotFileSize + ")" );
+            }
+
+            // In situ reference gene expression
+            if (bgeeInSituDataFileUrl === undefined) {
+            	this.$inSituData.hide(); 
+            	this.$inSituNoData.show();
+            } else {
+            	this.$inSituData.show(); 
+            	this.$inSituNoData.hide();
+            	this.$inSituDataCsv.attr( "href", bgeeInSituDataFileUrl );
+            	this.$inSituAnnotCsv.attr( "href", bgeeInSituAnnotFileUrl );
+            	this.$inSituDataCsv.text( "Download data file (" + bgeeInSituDataFileSize + ")" );
+            	this.$inSituAnnotCsv.text( "Download annotation file (" + bgeeInSituAnnotFileSize + ")" );
+            }
+
+            // EST reference gene expression
+            if (bgeeEstDataFileUrl === undefined) {
+            	this.$estData.hide(); 
+            	this.$estNoData.show();
+            } else {
+            	this.$estData.show(); 
+            	this.$estNoData.hide();
+            	this.$estDataCsv.attr( "href", bgeeEstDataFileUrl );
+            	this.$estAnnotCsv.attr( "href", bgeeEstAnnotFileUrl );
+            	this.$estDataCsv.text( "Download data file (" + bgeeEstDataFileSize + ")" );
+            	this.$estAnnotCsv.text( "Download annotation file (" + bgeeEstAnnotFileSize + ")" );
             }
 
             // Add the "selected" css class to the current species and display the detail 

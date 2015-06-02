@@ -344,7 +344,7 @@ var download = {
             // Fetch all DOM elements and values needed to update the display
             var id = $currentSpecies.attr( "id" );
             // The images contain the data fields related to the species
-            var $images = $currentSpecies.find( "img" ); 
+            var $images = $currentSpecies.find( ".species_img" ); 
             var bgeeSpeciesName = $images.data( "bgeespeciesname" ); // Only the last one is kept when 
             // there are multiple images, in the case of group, but the field is not used in this case,
             // so no need to care about 
@@ -683,7 +683,7 @@ var download = {
         generateIds: function(){
             this.$species.each(function() {   
                 var id = "";
-                $( this ).find( "img" ).each(function() {
+                $( this ).find( ".species_img" ).each(function() {
                     id = id + $( this ).data( "bgeespeciesid" ) + "_";
                 });
                 id = id.slice( 0, - 1 ); // Remove the extra _ at the end.
@@ -715,7 +715,7 @@ var download = {
                     download.addToAutoCompletionList( groupName ); // Add the value to the
                 }                                                  // auto completion list
                 // Then, fetch the values of the data fields contained in images
-                $( this ).find( "img" ).each(function() {
+                $( this ).find( ".species_img" ).each(function() {
                     var currentName = $( this ).data( "bgeespeciesname" ).toLowerCase();
                     if( currentName ){
                         names = names +  currentName + " "; // Concat the name of all images, 

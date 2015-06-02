@@ -140,8 +140,12 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
         this.writeln("<div id='expr_calls'>");
 
-        this.writeln("<h1>Gene expression calls</h1>");
-
+        this.writeln("<div id='bgee_title'>");
+        this.writeln("<h1><img src='" + this.prop.getImagesRootDirectory() + "logo/expr_calls_logo.png'"
+                + " title='Gene expression calls' alt='Gene expression calls logo'/>"
+                + "Gene expression calls</h1>");
+        this.writeln("</div>");
+        
         // Introduction
         this.writeln("<div id='bgee_introduction' class='bgee_section bgee_download_section'>");
         this.writeln("<p>Bgee is a database to retrieve and compare gene expression patterns between animal species. ");
@@ -185,8 +189,12 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
         this.writeln("<div id='ref_expr'>");
     
-        this.writeln("<h1>Reference gene expression</h1>");
-    
+        this.writeln("<div id='bgee_title'>");
+        this.writeln("<h1><img src='" + this.prop.getImagesRootDirectory() + "logo/ref_expr_logo.png'"
+                + " title='Reference gene expression' alt='Reference gene expression logo'/>"
+                + "Reference gene expression</h1>");
+        this.writeln("</div>");
+
         // Introduction
         this.writeln("<div id='bgee_introduction' class='bgee_section bgee_download_section'>");
         this.writeln("<p>Bgee is a database to retrieve reference gene expression in species. ");
@@ -786,8 +794,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 hiddenInfo = name;
             }
             
-            images.append(
-                    generateSpeciesImg(speciesId, name, shortName, commonName, alternateNames, true));
+            images.append(generateSpeciesImg(speciesId, name, shortName, commonName, alternateNames, true));
         }
         if (StringUtils.isBlank(figcaption)) {
             // If empty or null, it's generated with the last species ID of the given List. 
@@ -802,7 +809,20 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             figure = "<figure " + this.getSingleSpeciesFileData(speciesIds.get(0), pageType) + ">";
         }
 
-        figure += "<div>" + images + "</div>" +
+        String pageImg = null, pageImgFileName = null, pageImgtitle = null;
+        if (pageType.equals(DownloadPageType.EXPR_CALLS)) {
+            pageImgFileName = "expr_calls_zoom_logo.png";
+            pageImgtitle = "Gene expression calls";
+        } else if (pageType.equals(DownloadPageType.REF_EXPR)) {
+            pageImgFileName = "ref_expr_zoom_logo.png";
+            pageImgtitle = "Reference gene expression";
+        }
+        if (!pageImgFileName.isEmpty()) {
+            pageImg = "<img class='page_img' src='" + this.prop.getImagesRootDirectory() + "logo/" +
+                    pageImgFileName + "' alt='" + pageImgtitle + "' />";
+        }
+
+        figure += "<div>" + images + pageImg + "</div>" + 
                   "<figcaption>" + figcaption + 
                   " <span class='invisible'>" + hiddenInfo + "</span>" + 
                   "</figcaption>" + 
@@ -1326,7 +1346,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             String commonName, String alternateNames, boolean lightImg) {
         log.entry(id, name, shortName, commonName, alternateNames, lightImg);
         StringBuilder image = new StringBuilder();
-        image.append("<img src='");
+        image.append("<img class='species_img' src='");
         image.append(this.prop.getImagesRootDirectory());
         image.append("species/");
         image.append(id);
@@ -1346,6 +1366,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         image.append("' data-bgeespeciesalternatenames='");
         image.append(alternateNames);
         image.append("' />");
+                
         return log.exit(image.toString());
     }
 

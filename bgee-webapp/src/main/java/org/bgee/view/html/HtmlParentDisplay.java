@@ -221,6 +221,18 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 "title='Bgee is part of the SIB Swiss Institute of Bioinformatics' " + 
                 "alt='SIB Swiss Institute of Bioinformatics' /></a>");
     
+        this.writeln(this.getNavBar());
+        
+        this.writeln("</header>");
+        log.exit();
+    }
+    
+    /**
+     * @return  the {@code String} that is the HTML code of the navigation bar.
+     */
+    private String getNavBar() {
+        log.entry();
+        
         RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
         urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
 
@@ -248,56 +260,56 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 
 
         // Navigation bar
-        this.writeln("<div id='nav'>");
-        this.writeln("<ul>");
-        this.writeln("<li>");
-        this.writeln("<a title='Expression data page' href='" + urlDownloadGenerator.getRequestURL() + 
-                "'>Expression data</a>" + this.getCaret());
-        this.writeln("<ul>");
-        this.writeln("<li><a class='drop' title='Gene expression calls' href='" + 
+        StringBuffer navbar = new StringBuffer();
+
+        navbar.append("<div id='nav'>");
+        
+        navbar.append("<ul>");
+        navbar.append("<li>");
+        navbar.append("<a title='Expression data page' href='" + 
+                urlDownloadGenerator.getRequestURL() + "'>Expression data</a>" + this.getCaret());
+        navbar.append("<ul>");
+        navbar.append("<li><a class='drop' title='Gene expression calls' href='" + 
                 urlDownloadCallsGenerator.getRequestURL() + "'>Gene expression calls</a></li>");
-        this.writeln("<li><a class='drop' title='Reference gene expression' href='" + 
+        navbar.append("<li><a class='drop' title='Reference gene expression' href='" + 
                 urlDownloadRefExprGenerator.getRequestURL() + "'>Reference gene expression</a></li>");
-        this.writeln("</ul>");
-        this.writeln("</li>");
-        this.writeln("<li>");
-        this.writeln("<a title='Documentation page' href='" + urlDocGenerator.getRequestURL() + 
+        navbar.append("</ul>");
+        navbar.append("</li>");
+        navbar.append("<li>");
+        navbar.append("<a title='Documentation page' href='" + urlDocGenerator.getRequestURL() + 
                 "'>Documentation</a>" + this.getCaret());
-        this.writeln("<ul>");
-        this.writeln("<li><a class='drop' title='How to access to Bgee data' href='" + 
+        navbar.append("<ul>");
+        navbar.append("<li><a class='drop' title='How to access to Bgee data' href='" + 
                 urlBgeeAccessGenerator.getRequestURL() + "'>Bgee data accesses</a></li>");
-        this.writeln("<li><a class='drop' title='' href='" + 
+        navbar.append("<li><a class='drop' title='' href='" + 
                 urlDownloadFilesDocGenerator.getRequestURL() + "'>Download files</a></li>");
-        this.writeln("</ul>");
-        this.writeln("</li>");
-//        this.writeln("<li>");
-//        this.writeln("<a id='about' rel='help' title='About page' href='" + 
+        navbar.append("</ul>");
+        navbar.append("</li>");
+//        navbar.append("<li>");
+//        navbar.append("<a id='about' rel='help' title='About page' href='" + 
 //                urlAboutGenerator.getRequestURL() + "'>About</a>");
-//        this.writeln("</li>");
-        this.writeln("<li id='contact'>");
-        this.writeln(this.getObfuscateEmail(0));
-        this.writeln("</li>");
+//        navbar.append("</li>");
+        navbar.append("<li id='contact'>");
+        navbar.append(this.getObfuscateEmail(0));
+        navbar.append("</li>");
+        navbar.append("</ul>");
 
-        this.writeln("</ul>");
-
-        this.writeln("<div id='social-links'>");
-
-        this.writeln("<a id='twitter' class='social-link' title='See @Bgeedb account' " +
+        navbar.append("<div id='social-links'>");
+        navbar.append("<a id='twitter' class='social-link' title='See @Bgeedb account' " +
                 "href='https://twitter.com/Bgeedb'>" + 
                 "<img alt='Twitter logo' src='" + this.prop.getImagesRootDirectory() + 
                 "Twitter.png'></img></a>");
-        this.writeln("<a id='wordpress' class='social-link'  alt='' title='See our blog' " + 
+        navbar.append("<a id='wordpress' class='social-link'  alt='' title='See our blog' " + 
                 "href='https://bgeedb.wordpress.com'>" + 
                 "<img alt='Wordpress logo' src='" + this.prop.getImagesRootDirectory() + 
                 "wordpress.png'></img></a>");
-        this.writeln("</div>"); // end social-links
+        navbar.append("</div>"); // end #social-links
 
-        this.writeln("</div>");
-        
-        this.writeln("</header>");
-        log.exit();
+        navbar.append("</div>"); // end #nav
+
+        return log.exit(navbar.toString());
     }
-    
+
     /**
      * @param nbCalled  An {@code int} that is the different number every time 
      *                  this method is called per page!

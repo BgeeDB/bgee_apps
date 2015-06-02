@@ -1,10 +1,19 @@
-
-#expr_calls div.bgee_section {
-    background-color: #E8DADB;
+#bgee_title {
+    margin-top: -10px;	
 }
-	
-#ref_expr div.bgee_section {
-    background-color: #CFE3EE;
+
+#bgee_title img {
+    height: 1.7em;
+    width: 1.7em;
+    margin-right: 0.4em;
+    margin-bottom: -0.5em;
+}
+
+#sib_body img.page_img {
+    height: 25px;
+    width: 25px;
+    margin: 0px 0px -4px -21px;
+    z-index: 10;
 }
 
 div.bgee_download_section figcaption p {
@@ -20,7 +29,9 @@ div.bgee_download_section figure {
 }
 
 div.bgee_download_section figure.selected {
-    border: 4px #282828 solid;
+    border-left: 4px #282828 solid;
+    border-bottom: 4px #282828 solid;
+    border-top: 4px #282828 solid;
     background: #282828;
     border-radius: 12px 12px 0 0;
     padding: 0px;
@@ -36,7 +47,7 @@ img {
 
 #bgee_multi_species img {
     width: 60px;
-    margin: 0px 1px;
+    margin: 0px 1px;ç
 }
 
 #bgee_uniq_species figure {

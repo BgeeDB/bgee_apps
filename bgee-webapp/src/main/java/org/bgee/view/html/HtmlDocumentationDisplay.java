@@ -116,6 +116,11 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
      * about call download files (see {@link #displayCallDownloadFileDocumentation()}).
      */
     private final HtmlDocumentationCallFile callFileDoc;
+    /**
+     * A {@code HtmlDocumentationRefExprFile} used to write the documentation 
+     * about ref. expression download files (see {@link #displayRefExprDownloadFileDocumentation()}).
+     */
+    private final HtmlDocumentationRefExprFile refExprFileDoc;
 
     /**
      * Default constructor.
@@ -134,7 +139,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
     public HtmlDocumentationDisplay(HttpServletResponse response,
             RequestParameters requestParameters, BgeeProperties prop, HtmlFactory factory) 
                     throws IOException {
-        this(response, requestParameters, prop, factory, null);
+        this(response, requestParameters, prop, factory, null, null);
     }
     /**
      * Constructor providing other dependencies.
@@ -146,24 +151,36 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
      *                          and for display purposes.
      * @param prop              A {@code BgeeProperties} instance that contains the properties
      *                          to use.
+     * @param factory           The {@code HtmlFactory} that instantiated this object.
      * @param callFileDoc       A {@code HtmlDocumentationCallFile} used to write the documentation 
      *                          about call download files (see {@link 
      *                          #displayCallDownloadFileDocumentation()}). If {@code null}, 
      *                          the default implementation will be used 
      *                          ({@link HtmlDocumentationCallFile}).
-     * @param factory           The {@code HtmlFactory} that instantiated this object.
+     * @param refExprFileDoc    A {@code HtmlDocumentationRefExprFile} used to write the documentation 
+     *                          about ref. expression download files (see {@link 
+     *                          #displayRefExprDownloadFileDocumentation()}). If {@code null}, 
+     *                          the default implementation will be used 
+     *                          ({@link HtmlDocumentationRefExprFile}).
      * @throws IOException      If there is an issue when trying to get or to use the
      *                          {@code PrintWriter}.
      */
     public HtmlDocumentationDisplay(HttpServletResponse response,
             RequestParameters requestParameters, BgeeProperties prop, HtmlFactory factory,
-            HtmlDocumentationCallFile callFileDoc) throws IOException {
+            HtmlDocumentationCallFile callFileDoc, HtmlDocumentationRefExprFile refExprFileDoc) 
+                    throws IOException {
         super(response, requestParameters, prop, factory);
         if (callFileDoc == null) {
             this.callFileDoc = 
                     new HtmlDocumentationCallFile(response, requestParameters, prop, factory);
         } else {
             this.callFileDoc = callFileDoc;
+        }
+        if (refExprFileDoc == null) {
+            this.refExprFileDoc = 
+                    new HtmlDocumentationRefExprFile(response, requestParameters, prop, factory);
+        } else {
+            this.refExprFileDoc = refExprFileDoc;
         }
     }
     
@@ -194,9 +211,21 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
     public void displayCallDownloadFileDocumentation() {
         log.entry();
         
-        this.startDisplay("documentation", "Download file documentation");
+        this.startDisplay("documentation", "Expression call download file documentation");
         
         this.callFileDoc.writeDocumentation();
+        
+        this.endDisplay();
+
+        log.exit();
+    }
+    @Override
+    public void displayRefExprDownloadFileDocumentation() {
+        log.entry();
+        
+        this.startDisplay("documentation", "Reference expression download file documentation");
+        
+        this.refExprFileDoc.writeDocumentation();
         
         this.endDisplay();
 
@@ -284,7 +313,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         RequestParameters urlCallFilesGenerator = 
                 ((HtmlParentDisplay) display).getNewRequestParameters();
         urlCallFilesGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
-        urlCallFilesGenerator.setAction(RequestParameters.ACTION_DOC_DOWLOAD_FILES);
+        urlCallFilesGenerator.setAction(RequestParameters.ACTION_DOC_CALL_DOWLOAD_FILES);
 
         StringBuffer logos = new StringBuffer(); 
 

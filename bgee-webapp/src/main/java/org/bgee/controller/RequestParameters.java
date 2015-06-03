@@ -133,7 +133,14 @@ public class RequestParameters {
      * providing calls of expression is requested. Value of the parameter page should be 
      * {@link #PAGE_DOCUMENTATION}.
      */
-    public static final String ACTION_DOC_DOWLOAD_FILES = "call_files";
+    public static final String ACTION_DOC_CALL_DOWLOAD_FILES = "call_files";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link URLParameters#getParamAction()}) when documentation about download files 
+     * providing reference expression is requested. Value of the parameter page should be 
+     * {@link #PAGE_DOCUMENTATION}.
+     */
+    public static final String ACTION_DOC_REF_EXPR_DOWLOAD_FILES = "ref_expr_files";
     
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 

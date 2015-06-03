@@ -254,7 +254,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 
         RequestParameters urlDownloadFilesDocGenerator = this.getNewRequestParameters();
         urlDownloadFilesDocGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
-        urlDownloadFilesDocGenerator.setAction(RequestParameters.ACTION_DOC_DOWLOAD_FILES);
+        urlDownloadFilesDocGenerator.setAction(RequestParameters.ACTION_DOC_CALL_DOWLOAD_FILES);
 
         RequestParameters urlAboutGenerator = this.getNewRequestParameters();
         urlAboutGenerator.setPage(RequestParameters.PAGE_ABOUT);

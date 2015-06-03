@@ -34,6 +34,11 @@ public class TestDocumentationDisplay extends TestParentDisplay implements Docum
     }
 
     @Override
+    public void displayRefExprDownloadFileDocumentation() {
+        this.out.println("Test4");
+    }
+
+    @Override
     public void displayHowToAccessDataDocumentation() {
         this.out.println("Test3");
     }

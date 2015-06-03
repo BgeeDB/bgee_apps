@@ -15,9 +15,13 @@ public interface DocumentationDisplay {
     public void displayDocumentationHomePage();
 
     /**
-     * Display the documentation about download files.
+     * Display the documentation about expression call download files.
      */
     public void displayCallDownloadFileDocumentation();
+    /**
+     * Display the documentation about reference expression download files.
+     */
+    public void displayRefExprDownloadFileDocumentation();
 
     /**
      * Display the documentation about how to access to Bgee data.

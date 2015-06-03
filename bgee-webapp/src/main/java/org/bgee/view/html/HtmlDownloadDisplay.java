@@ -571,7 +571,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         
         RequestParameters urlDoc = this.getNewRequestParameters();
         urlDoc.setPage(RequestParameters.PAGE_DOCUMENTATION);
-        urlDoc.setAction(RequestParameters.ACTION_DOC_DOWLOAD_FILES);
+        urlDoc.setAction(RequestParameters.ACTION_DOC_CALL_DOWLOAD_FILES);
 
         return log.exit("<a id='" + id + "' href='" + urlDoc.getRequestURL() + "'>"+
                         "<img class='details' src='" + this.prop.getImagesRootDirectory() +

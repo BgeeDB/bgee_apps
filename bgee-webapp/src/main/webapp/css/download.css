@@ -12,7 +12,7 @@
 #sib_body img.page_img {
     height: 25px;
     width: 25px;
-    margin: 0px 0px -4px -21px;
+    margin: 0 0 0 -25px;
     z-index: 10;
 }
 
@@ -29,9 +29,7 @@ div.bgee_download_section figure {
 }
 
 div.bgee_download_section figure.selected {
-    border-left: 4px #282828 solid;
-    border-bottom: 4px #282828 solid;
-    border-top: 4px #282828 solid;
+    border: 4px #282828 solid;
     background: #282828;
     border-radius: 12px 12px 0 0;
     padding: 0px;
@@ -206,6 +204,7 @@ p {
 
 #bgee_data_selection h1.scientificname {
     font-style: italic;
+    margin-right: 0.3em;
 }
 
 #bgee_data_selection h2 {
@@ -219,6 +218,18 @@ p {
     width: 25px;
     white-space: nowrap;
     list-style-image: url(../img/arrow.png);
+}
+
+#bgee_data_selection_cross .switch_page_link, #bgee_data_selection_cross .switch_page_link:visited {
+    position: absolute;
+    top: 30px;
+    right: 60px;
+    z-index: 2;
+	color: #717171;
+}
+
+#bgee_data_selection_cross .switch_page_link:hover {
+    color: #DBDBDB;
 }
 
 #bgee_data_selection_cross img {

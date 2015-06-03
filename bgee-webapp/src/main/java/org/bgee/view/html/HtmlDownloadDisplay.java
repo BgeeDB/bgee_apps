@@ -414,8 +414,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         
         // Cross to close the banner
         banner.append("<div id='bgee_data_selection_cross'>");
-        banner.append("<img src='"+this.prop.getImagesRootDirectory()+"cross.png' "
-                + "title='Close banner' alt='Close banner' /> ");
+        banner.append("<a class='switch_page_link' href=''></a>");
+        banner.append("<img src='" + this.prop.getImagesRootDirectory() + "cross.png' " +
+                "title='Close banner' alt='Close banner' />");
         banner.append("</div>");
         
         // Section on the left of the black banner: image for single species or patchwork for group
@@ -423,7 +424,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     
         // Section on the right of the black banner
         banner.append("<div id='bgee_data_selection_text'>");
-        banner.append("<h1 class='scientificname'></h1>&nbsp;&nbsp;<h1 class='commonname'></h1>");
+        banner.append("<h1 class='scientificname'></h1><h1 class='commonname'></h1>");
         banner.append("<p class='groupdescription'></p>");
         
         if (pageType.equals(DownloadPageType.EXPR_CALLS)) {
@@ -809,15 +810,10 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             figure = "<figure " + this.getSingleSpeciesFileData(speciesIds.get(0), pageType) + ">";
         }
 
-        String pageImg = null, pageImgFileName = null, pageImgtitle = null;
-        if (pageType.equals(DownloadPageType.EXPR_CALLS)) {
-            pageImgFileName = "expr_calls_zoom_logo.png";
-            pageImgtitle = "Gene expression calls";
-        } else if (pageType.equals(DownloadPageType.REF_EXPR)) {
+        String pageImg = "", pageImgFileName = null, pageImgtitle = null;
+        if (pageType.equals(DownloadPageType.REF_EXPR)) {
             pageImgFileName = "ref_expr_zoom_logo.png";
             pageImgtitle = "Reference gene expression";
-        }
-        if (!pageImgFileName.isEmpty()) {
             pageImg = "<img class='page_img' src='" + this.prop.getImagesRootDirectory() + "logo/" +
                     pageImgFileName + "' alt='" + pageImgtitle + "' />";
         }

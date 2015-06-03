@@ -24,6 +24,7 @@ var download = {
         $bgeeDataSelectionImg: null,
         $bgeeDataSelectionTextScientific: null,
         $bgeeDataSelectionTextCommon: null,
+        $switchPageLink: null,
         $bgeeGroupDescription: null,
         $orthologButtons: null,
         $orthologCvs: null,
@@ -111,6 +112,7 @@ var download = {
                 $( "#bgee_data_selection_text h1.scientificname" );
             this.$bgeeDataSelectionTextCommon = 
                 $( "#bgee_data_selection_text h1.commonname" );
+            this.$switchPageLink = $( ".switch_page_link" );
             this.$bgeeGroupDescription = $( "#bgee_data_selection_text p.groupdescription" );
             // Data
             this.$orthologButtons = $( "#ortholog_file_buttons" );
@@ -227,6 +229,23 @@ var download = {
             this.$bgeeDataSelectionCross.click(function(){
                 download.closeDetailBox();
             });
+            
+            // Manage link to the other page
+            this.$switchPageLink.each( function(){
+            	var requestSwitchPage = new requestParameters("", true, "&");
+            	if ( download.$exprCalls.length > 0 ) {
+            		requestSwitchPage.addValue(urlParameters.PAGE, "download");
+            		requestSwitchPage.addValue(urlParameters.ACTION, "ref_expression");
+            		download.$switchPageLink.text( "See reference gene expression" );
+            	} else {
+            		requestSwitchPage.addValue(urlParameters.PAGE, "download");
+            		requestSwitchPage.addValue(urlParameters.ACTION, "expr_calls");
+            		download.$switchPageLink.text( "See gene expression calls" );    
+            	}
+            	download.$switchPageLink.attr( "href", 
+            			requestSwitchPage.getRequestURL() + window.location.hash);
+            });
+
             // Add a listener to the search box to remove the initial displayed text if present
             // First, keep the initial text in a var for later use
             this.initialText = this.$bgeeSearchBox.val();
@@ -422,6 +441,7 @@ var download = {
             namesOfAllSpecies = namesOfAllSpecies.slice( 0, - 2 ); // Remove the extra ' ,'
             // if it is a group, use the group name as label, else the species name
             if( bgeeGroupName ){
+            	this.$switchPageLink.hide();
                 this.$bgeeDataSelectionTextScientific.text( "" );
                 this.$bgeeDataSelectionTextCommon.text( bgeeGroupName );
                 this.$bgeeGroupDescription.text( numberOfSpecies + " species: " );
@@ -436,6 +456,7 @@ var download = {
                 	this.$diffAnatHelp.attr( "href", this.$diffAnatHelp.attr("href").split('#')[0] + "#multi_diff");
                 }
             } else {
+            	this.$switchPageLink.show();
                 this.$bgeeDataSelectionTextScientific.text( bgeeSpeciesName );
                 this.$bgeeDataSelectionTextCommon.text( "("+ bgeeSpeciesCommonNames +")" );
                 this.$bgeeGroupDescription.text( "" );

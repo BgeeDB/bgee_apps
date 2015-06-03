@@ -12,7 +12,7 @@ import org.bgee.controller.RequestParameters;
 /**
  * This class encapsulates the documentation for call download files. It does not implement 
  * any interface from the {@code view} package, it is meant to be used by the class 
- * {@link HtmlDocumentationDisplay}. The only reason is because the class 
+ * {@link HtmlDocumentationDisplay}. The only reason is that the class 
  * {@code HtmlDocumentationDisplay} was getting too large and too complicated. 
  * 
  * @author  Frederic Bastian
@@ -20,21 +20,9 @@ import org.bgee.controller.RequestParameters;
  * @version Bgee 13 May 2015
  * @since   Bgee 13
  */
-public class HtmlDocumentationCallFile extends HtmlParentDisplay {
-
+public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
     private static final Logger log = LogManager.getLogger(HtmlDocumentationCallFile.class.getName());
-    /**
-     * A {@code String} that is the name of the gene ID column in download files, 
-     * HTML escaped if necessary.
-     * @see #GENE_ID_LINK_TITLE
-     */
-    private static final String GENE_ID_COL_NAME ="Gene ID";
-    /**
-     * A {@code String} to be used in {@code title} attribute of {@code a} tag linking to 
-     * gene ID column description (used several times), HTML escaped if necessary.
-     * @see #GENE_ID_COL_NAME
-     */
-    private static final String GENE_ID_LINK_TITLE = "See " + GENE_ID_COL_NAME + " column description";
+    
     /**
      * A {@code String} that is the name of the gene name column in download files, 
      * HTML escaped if necessary.
@@ -47,57 +35,6 @@ public class HtmlDocumentationCallFile extends HtmlParentDisplay {
      * @see #GENE_NAME_COL_NAME
      */
     private static final String GENE_NAME_LINK_TITLE = "See " + GENE_NAME_COL_NAME + " column description";
-    /**
-     * A {@code String} that is the name of the stage ID column in download files, 
-     * HTML escaped if necessary.
-     * @see #STAGE_ID_LINK_TITLE
-     */
-    private static final String STAGE_ID_COL_NAME ="Developmental stage ID";
-    /**
-     * A {@code String} to be used in {@code title} attribute of {@code a} tag linking to 
-     * stage ID column description (used several times), HTML escaped if necessary.
-     * @see #STAGE_ID_COL_NAME
-     */
-    private static final String STAGE_ID_LINK_TITLE = "See " + STAGE_ID_COL_NAME + " column description";
-    /**
-     * A {@code String} that is the name of the stage name column in download files, 
-     * HTML escaped if necessary.
-     * @see #STAGE_NAME_LINK_TITLE
-     */
-    private static final String STAGE_NAME_COL_NAME ="Developmental stage name";
-    /**
-     * A {@code String} to be used in {@code title} attribute of {@code a} tag linking to 
-     * stage name column description (used several times), HTML escaped if necessary.
-     * @see #STAGE_NAME_COL_NAME
-     */
-    private static final String STAGE_NAME_LINK_TITLE = "See " + STAGE_NAME_COL_NAME 
-            + " column description";
-    /**
-     * A {@code String} that is the name of the anatomical entity ID column in download files, 
-     * HTML escaped if necessary.
-     * @see #ANAT_ENTITY_ID_LINK_TITLE
-     */
-    private static final String ANAT_ENTITY_ID_COL_NAME ="Anatomical entity ID";
-    /**
-     * A {@code String} to be used in {@code title} attribute of {@code a} tag linking to 
-     * anatomical entity ID column description (used several times), HTML escaped if necessary.
-     * @see #ANAT_ENTITY_ID_COL_NAME
-     */
-    private static final String ANAT_ENTITY_ID_LINK_TITLE = "See " + ANAT_ENTITY_ID_COL_NAME 
-            + " column description";
-    /**
-     * A {@code String} that is the name of the anatomical entity name column in download files, 
-     * HTML escaped if necessary.
-     * @see #ANAT_ENTITY_NAME_LINK_TITLE
-     */
-    private static final String ANAT_ENTITY_NAME_COL_NAME ="Anatomical entity name";
-    /**
-     * A {@code String} to be used in {@code title} attribute of {@code a} tag linking to 
-     * anatomical entity name column description (used several times), HTML escaped if necessary.
-     * @see #ANAT_ENTITY_NAME_COL_NAME
-     */
-    private static final String ANAT_ENTITY_NAME_LINK_TITLE = "See " + ANAT_ENTITY_NAME_COL_NAME 
-            + " column description";
     /**
      * A {@code String} that is the name of the expression state column in download files, 
      * HTML escaped if necessary.
@@ -322,17 +259,6 @@ public class HtmlDocumentationCallFile extends HtmlParentDisplay {
      */
     private static final String ANAT_HOMOLOGY_CIO_NAME_COL_NAME = "Anatomy homology CIO name";
     
-    /**
-     * @return  A {@code String} that is the description of the gene ID column 
-     *          in download files (because we use it several times), formated in HTML 
-     *          and HTML escaped if necessary.
-     * @see #GENE_ID_COL_NAME
-     */
-    private static String getGeneIdColDescription() {
-        log.entry();
-        return log.exit("<p>Unique identifier of gene from Ensembl. </p><p>" 
-                + HtmlDocumentationDisplay.getGenomeMappingExplanation() + "</p>");
-    }
 
 
 
@@ -369,21 +295,6 @@ public class HtmlDocumentationCallFile extends HtmlParentDisplay {
                 + "from orthologous genes belonging to a same orthology group.</p>");
     }
 
-
-
-    /**
-     * @return  A {@code String} that is the description of the stage ID column 
-     *          in download files (because we use it several times), formated in HTML 
-     *          and HTML escaped if necessary.
-     * @see #STAGE_ID_COL_NAME
-     */
-    private static String getStageIdColDescription() {
-        log.entry();
-        return log.exit("<p>Unique identifier of the developmental stage, from the Uberon ontology.</p>");
-    }
-
-
-
     /**
      * @return  A {@code String} that is the description of the stage ID column 
      *          in multi-species download files (because we use it several times), formated in HTML 
@@ -396,56 +307,6 @@ public class HtmlDocumentationCallFile extends HtmlParentDisplay {
                 + "For multi-species analyses, only broad developmental stages are used, "
                 + "common to the species being compared.</p>");
     }
-
-
-
-    /**
-     * @param colNumber An {@code int} that is the index of the column containing 
-     *                  the stage ID (see {@link #STAGE_ID_COL_NAME}). 
-     *                  Index starting from 1.
-     * @return  A {@code String} that is the description of the stage name column 
-     *          in download files (because we use it several times), formated in HTML 
-     *          and HTML escaped if necessary.
-     * @see #STAGE_NAME_COL_NAME
-     */
-    private static String getStageNameColDescription(int colNumber) {
-        log.entry();
-        return log.exit("<p>Name of the developmental stage defined by <code>" 
-        + STAGE_ID_COL_NAME + "</code> (column " + colNumber + ")</p>");
-    }
-
-
-
-    /**
-     * @return  A {@code String} that is the description of the anatomical entity ID column 
-     *          in download files (because we use it several times), formated in HTML 
-     *          and HTML escaped if necessary.
-     * @see #ANAT_ENTITY_ID_COL_NAME
-     */
-    private static String getAnatEntityIdColDescription() {
-        log.entry();
-        return log.exit("<p>Unique identifier of the anatomical entity, from the Uberon ontology.</p>");
-    }
-
-
-
-    /**
-     * @param colNumber An {@code int} that is the index of the column containing 
-     *                  the anatomical entity ID (see {@link #ANAT_ENTITY_ID_COL_NAME}). 
-     *                  Index starting from 1.
-     * @return  A {@code String} that is the description of the anatomical entity name column 
-     *          in download files (because we use it several times), formated in HTML 
-     *          and HTML escaped if necessary.
-     * @see #ANAT_ENTITY_NAME_COL_NAME
-     */
-    private static String getAnatEntityNameColDescription(int colNumber) {
-        log.entry();
-        return log.exit("<p>Name of the anatomical entity defined by <code>" 
-        + ANAT_ENTITY_ID_COL_NAME + "</code> (column " + colNumber + ")</p>");
-    }
-
-
-
     /**
      * @return  A {@code String} that is the description of the column for multiple 
      *          anatomical IDs for multi-species download files (because we use it several times), 
@@ -479,9 +340,6 @@ public class HtmlDocumentationCallFile extends HtmlParentDisplay {
                 + "of these anatomical entities would be separated by the character "
                 + "<code>|</code>, e.g., <code>UBERON:0002048|UBERON:0006860</code>.</p>");
     }
-
-
-
     /**
      * @param colNumber An {@code int} that is the index of the column containing 
      *                  the anatomical entity IDs (see {@link #MULTI_ANAT_ENTITY_IDS_COL_NAME}). 
@@ -500,9 +358,6 @@ public class HtmlDocumentationCallFile extends HtmlParentDisplay {
             + "<code>|</code>. See <code>"+ MULTI_ANAT_ENTITY_IDS_COL_NAME + "</code> column description "
             + "for more details.</p>");
     }
-
-
-
     /**
      * Generates a sentence listing the columns defining a call, in HTML, with HTML escaped 
      * if necessary.
@@ -538,9 +393,6 @@ public class HtmlDocumentationCallFile extends HtmlParentDisplay {
                 + anatEntityIdColNumber + "), at <code>" + STAGE_ID_COL_NAME + "</code> (column " 
                 + stageIdColNumber + ")");
     }
-
-
-
     /**
      * Generates description of the expression state column. 
      * 
@@ -607,9 +459,6 @@ public class HtmlDocumentationCallFile extends HtmlParentDisplay {
                 + "at young adult stage from RNA-Seq data.</li>"
                 + "</ul>");
     }
-
-
-
     /**
      * Generates description of the differential expression state column. 
      * 
@@ -698,9 +547,6 @@ public class HtmlDocumentationCallFile extends HtmlParentDisplay {
         
         return log.exit(desc);
     }
-
-
-
     /**
      * Generates description of the expression state column. 
      * 
@@ -763,9 +609,6 @@ public class HtmlDocumentationCallFile extends HtmlParentDisplay {
         
         return log.exit(desc);
     }
-
-
-
     /**
      * Generates the description of the column storing best p-values for each data type 
      * in complete differential expression files.
@@ -788,9 +631,6 @@ public class HtmlDocumentationCallFile extends HtmlParentDisplay {
                 + "</code> (column " + diffExprStateColIndex + "). Set to 1.0 if no data available "
                 + "by " + dataType + ".</p>");
     }
-
-
-
     /**
      * Generates the description of the column storing for each data type the number of 
      * analyses supporting a differential expressionc call, 
@@ -814,9 +654,6 @@ public class HtmlDocumentationCallFile extends HtmlParentDisplay {
                 + diffExprStateColIndex + "). Set to 0 if no data available by " + dataType 
                 + ".</p>");
     }
-
-
-
     /**
      * Generates the description of the column storing for each data type the number of 
      * analyses in conflict with a differential expressionc call produced, 
@@ -840,9 +677,6 @@ public class HtmlDocumentationCallFile extends HtmlParentDisplay {
                 + "</code> (column " + diffExprStateColIndex + "). Set to 0 if no data available by " 
                 + dataType + ".</p>");
     }
-
-
-
     /**
      * Get the description for columns providing number of over-expressed or under-expressed 
      * genes in multi-species simple differential expression files.
@@ -889,9 +723,6 @@ public class HtmlDocumentationCallFile extends HtmlParentDisplay {
         
         return log.exit(desc);
     }
-
-
-
     /**
      * @return  a {@code String} containing the HTML to create a table containing the description 
      *          of the header of a single species simple expression file (can be used 
@@ -907,9 +738,6 @@ public class HtmlDocumentationCallFile extends HtmlParentDisplay {
                 + "</tbody>"
                 + "</table>");
     }
-
-
-
     /**
      * @return  a {@code String} containing the HTML to create a table containing the header 
      *          and example lines of a single species simple expression file.
@@ -934,9 +762,6 @@ public class HtmlDocumentationCallFile extends HtmlParentDisplay {
                 + "</tbody>"
                 + "</table>");
     }
-
-
-
     /**
      * Get the header of single species simple expression file as a HTML 'tr' element, 
      * with column being either 'td' or 'th' elements depending on argument {@code withTd}.
@@ -961,9 +786,6 @@ public class HtmlDocumentationCallFile extends HtmlParentDisplay {
                 + "<" + colType + ">" + EXPR_STATE_COL_NAME + "</" + colType + ">"
                 + "</tr>");
     }
-
-
-
     /**
      * @return  a {@code String} containing the HTML to create a table containing the description 
      *          of the header of a single species complete expression file (can be used 
@@ -979,9 +801,6 @@ public class HtmlDocumentationCallFile extends HtmlParentDisplay {
                 + "</tbody>"
                 + "</table>");
     }
-
-
-
     /**
      * @return  a {@code String} containing the HTML to create a table containing the header 
      *          and example lines of a single species complete expression file.
@@ -1013,9 +832,6 @@ public class HtmlDocumentationCallFile extends HtmlParentDisplay {
                 + "</tbody>"
                 + "</table>");
     }
-
-
-
     /**
      * Get the header of single species complete expression file as a HTML 'tr' element, 
      * with column being either 'td' or 'th' elements depending on argument {@code withTd}.
@@ -1045,9 +861,6 @@ public class HtmlDocumentationCallFile extends HtmlParentDisplay {
                 + "<" + colType + ">" + EXPR_STATE_COL_NAME + "</" + colType + ">"
                 + "</tr>");
     }
-
-
-
     /**
      * @return  a {@code String} containing the HTML to create a table containing the description 
      *          of the header of a single species simple over-/under-expression file (can be used 
@@ -1063,9 +876,6 @@ public class HtmlDocumentationCallFile extends HtmlParentDisplay {
                 + "</tbody>"
                 + "</table>");
     }
-
-
-
     /**
      * @return  a {@code String} containing the HTML to create a table containing the header 
      *          and example lines of a single species simple differential expression file.
@@ -1092,9 +902,6 @@ public class HtmlDocumentationCallFile extends HtmlParentDisplay {
                 + "</tbody>"
                 + "</table>");
     }
-
-
-
     /*
     /**
      * Get the header of single species simple over-/under-expression file as a HTML 'tr' element, 
@@ -1121,9 +928,6 @@ public class HtmlDocumentationCallFile extends HtmlParentDisplay {
                 + "<" + colType + ">" + DIFF_EXPR_QUAL_COL_NAME + "</" + colType + ">"
                 + "</tr>");
     }
-
-
-
     /**
      * @return  a {@code String} containing the HTML to create a table containing the description 
      *          of the header of a single species complete differential expression file (can be used 
@@ -1140,9 +944,6 @@ public class HtmlDocumentationCallFile extends HtmlParentDisplay {
                 + "</tbody>"
                 + "</table>");
     }
-
-
-
     /**
      * @return  a {@code String} containing the HTML to create a table containing the header 
      *          and example lines of a single species complete differential expression file.
@@ -1177,9 +978,6 @@ public class HtmlDocumentationCallFile extends HtmlParentDisplay {
                 + "</tbody>"
                 + "</table>");
     }
-
-
-
     /**
      * Get the header of single species simple over-/under-expression file as a HTML 'tr' element, 
      * with column being either 'td' or 'th' elements depending on argument {@code withTd}.
@@ -1215,9 +1013,6 @@ public class HtmlDocumentationCallFile extends HtmlParentDisplay {
                 + "<" + colType + ">" + RNA_SEQ_DIFF_EXPR_CONFLICT_COUNT_COL_NAME + "</" + colType + ">"
                 + "</tr>");
     }
-
-
-
     /**
      * @return  a {@code String} containing the HTML to create a table containing the description 
      *          of the header of a multi-species simple differential expression file (can be used 
@@ -1248,9 +1043,6 @@ public class HtmlDocumentationCallFile extends HtmlParentDisplay {
                 + "</tbody>"
                 + "</table>");
     }
-
-
-
     /**
      * @return  a {@code String} containing the HTML to create a table containing the header 
      *          and example lines of a multi species simple differential expression file.
@@ -1292,9 +1084,6 @@ public class HtmlDocumentationCallFile extends HtmlParentDisplay {
                 + "</tbody>"
                 + "</table>");
     }
-
-
-
     /**
      * @return  a {@code String} containing the HTML to create a table containing the description 
      *          of the header of a multi-species complete differential expression file (can be used 
@@ -1312,9 +1101,6 @@ public class HtmlDocumentationCallFile extends HtmlParentDisplay {
                 + "</tbody>"
                 + "</table>");
     }
-
-
-
     /**
      * @return  a {@code String} containing the HTML to create a table containing the header 
      *          and example lines of a multi species complete differential expression file.
@@ -1354,9 +1140,6 @@ public class HtmlDocumentationCallFile extends HtmlParentDisplay {
                 + "</tbody>"
                 + "</table>");
     }
-
-
-
     /**
      * Get the header of multi-species complete differential expression file as a HTML 'tr' element, 
      * with column being either 'td' or 'th' elements depending on argument {@code withTd}.
@@ -1407,12 +1190,13 @@ public class HtmlDocumentationCallFile extends HtmlParentDisplay {
      * @param prop              A {@code BgeeProperties} instance that contains the properties
      *                          to use.
      * @param factory           The {@code HtmlFactory} that instantiated this object.
-     * @throws IOException      If there is an issue when trying to get or to use the
-     *                          {@code PrintWriter} 
+     * @throws IllegalArgumentException If {@code factory} is {@code null}.
+     * @throws IOException              If there is an issue when trying to get or to use the
+     *                                  {@code PrintWriter} 
      */
     protected HtmlDocumentationCallFile(HttpServletResponse response,
             RequestParameters requestParameters, BgeeProperties prop, HtmlFactory factory)
-            throws IOException {
+            throws IllegalArgumentException, IOException {
         super(response, requestParameters, prop, factory);
     }
 
@@ -1518,12 +1302,14 @@ public class HtmlDocumentationCallFile extends HtmlParentDisplay {
      * download files. Anchors used in this method for quick jump links 
      * have to stayed in sync with id attributes of h2, h3 and h4 tags defined in 
      * {@link #writeSingleSpeciesExprCallFileDoc()}, 
-     * {@link #writeSingleSpeciesSimpleExprCallFileDoc()} and 
-     * {@link #writeSingleSpeciesCompleteExprCallFileDoc()}.
+     * {@link #writeSingleSpeciesSimpleExprCallFileDoc()},  
+     * {@link #writeSingleSpeciesCompleteExprCallFileDoc()}, and 
+     * {@link #writeMultiSpeciesDiffExprCallFileDoc()}.
      * 
      * @see #writeSingleSpeciesExprCallFileDoc()
      * @see #writeSingleSpeciesSimpleExprCallFileDoc()
      * @see #writeSingleSpeciesCompleteExprCallFileDoc()
+     * @see #writeMultiSpeciesDiffExprCallFileDoc()
      */
     private void writeDocMenuForCallDownloadFiles() {
         log.entry();

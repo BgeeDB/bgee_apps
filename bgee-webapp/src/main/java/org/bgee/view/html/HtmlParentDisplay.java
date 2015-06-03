@@ -59,11 +59,12 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      *                          to use.
      * @param factory           The {@code HtmlFactory} that was used to instantiate this object.
      * 
-     * @throws IOException      If there is an issue when trying to get or to use the
-     *                          {@code PrintWriter} 
+     * @throws IllegalArgumentException If {@code factory} is {@code null}.
+     * @throws IOException              If there is an issue when trying to get or to use the
+     *                                  {@code PrintWriter} 
      */
     public HtmlParentDisplay(HttpServletResponse response, RequestParameters requestParameters, 
-            BgeeProperties prop, HtmlFactory factory) throws IOException {
+            BgeeProperties prop, HtmlFactory factory) throws IllegalArgumentException, IOException {
         super(response, prop, factory);
         this.requestParameters = requestParameters;
         this.uniqueId = 0;

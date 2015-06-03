@@ -147,14 +147,13 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
             if(parameterValues != undefined){
                 for(j in parameterValues){
                     urlFragment += parameter.name+ "=";
-                    urlFragment += this.urlEncode(parameterValues[j] + parametersSeparator);
+                    urlFragment += this.urlEncode(parameterValues[j]) + parametersSeparator;
                 }
             }
         }
-        // Remove the extra separator at the end
-        paramSeparatorLength = this.urlEncode(parametersSeparator).length;
+        // Append the '?' and remove the extra separator at the end
         if(urlFragment){
-            urlFragment = urlFragment.substring(0, urlFragment.length - paramSeparatorLength);
+            urlFragment = '?' + urlFragment.substring(0, urlFragment.length - parametersSeparator.length);
         }
         return urlFragment;
     };

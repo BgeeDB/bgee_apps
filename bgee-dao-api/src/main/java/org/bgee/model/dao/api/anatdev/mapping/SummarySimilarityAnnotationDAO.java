@@ -85,10 +85,10 @@ public interface SummarySimilarityAnnotationDAO extends
      * the same {@code summarySimilarityAnnotationId} (see 
      * {@link SimAnnotToAnatEntityTO#getSummarySimilarityAnnotationId()}).
      * Note that if an anatomical entity is used in several similarity annotations 
-     * (for instance, 'lung' would be used in a 'lung - swim bladder' annotation, but also 
-     * in a standalone 'lung' annotation, to know when the structure specialized 
-     * and became a "true" lung), only the annotation with the most recent valid taxon 
-     * will be returned (in the previous example, only the standalone 'lung' annotation).
+     * (for instance, 'swim bladder' would be used in a 'lung - swim bladder' annotation, but also 
+     * in a standalone 'swim bladder' annotation, to know when the structure specialized 
+     * and became a "true" swim bladder), only the annotation with the most recent valid taxon 
+     * will be returned (in the previous example, only the standalone 'swim bladder' annotation).
      * <p>
      * Note that in vast majority of cases, similarity annotations target 
      * only a single anatomical entity. 

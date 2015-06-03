@@ -42,7 +42,7 @@ public class HtmlDocumentationRefExprFile extends HtmlDocumentationDownloadFile 
      * @return  A {@code String} that is the documentation menu for RNA-Seq data, 
      *          formatted in HTML, with {@code ul} element including {@code li} elements.
      */
-    private static String getRnaSeqDocMenu() {
+    private static String getRNASeqDocMenu() {
         log.entry();
         return log.exit("<ul>"
                 + "<li><a href='#rna-seq_exp' title='Quick jump to this section'>" + 
@@ -87,88 +87,28 @@ public class HtmlDocumentationRefExprFile extends HtmlDocumentationDownloadFile 
     protected void writeDocumentation() {
         log.entry();
         
-        this.writeln("<h1 id='sectionname'>Download file documentation</h1>");
+        this.writeln("<h1 id='sectionname'>Reference expression download file documentation</h1>");
         RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
         urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
-        this.writeln("<p class='documentationintro'>Bgee provides calls of baseline "
-                + "presence/absence of expression, and of differential over-/under-expression, "
-                + "either for single species, or compared between species (orthologous genes "
-                + "in homologous organs). This documentation describes the format of these "
+        urlDownloadGenerator.setAction(RequestParameters.ACTION_DOWLOAD_REF_EXPR_FILES);
+        this.writeln("<p class='documentationintro'>Blabla. "
+                + "This documentation describes the format of these "
                 + "<a href='" + urlDownloadGenerator.getRequestURL()
-                + "' title='Bgee expression data page'>download files</a>.</p>");
+                + "' title='Bgee reference expression data page'>download files</a>.</p>");
         
         //Documentation menu
         this.writeDocMenuForRefExprDownloadFiles();
         
-        //Single species documentation
+        //Affymetrix download file documentation
         this.writeln("<div>");
-        this.writeln("<h2 id='single'>Single-species download files</h2>");
-        this.writeln("<div class='doc_content'>");
-        this.writeln("<p>Jump to: </p>"
-                + "<ul>"
-                + "<li><a href='#single_expr' title='Quick jump to presence/absence of expression'>"
-                + "Presence/absence of expression</a></li>"
-                + "<li><a href='#single_diff' title='Quick jump to differential expression'>"
-                + "Over-/under-expression across anatomy or life stages</a></li>"
-                + "</ul>");
-        //presence/absence
-//        this.writeSingleSpeciesExprCallFileDoc();
-        //over/under
-//        this.writeSingleSpeciesDiffExprCallFileDoc();
-        this.writeln("</div>"); // end of single-species
+        this.writeAffyRefExprFileDoc();
+        this.writeln("</div>"); // end of Affymetrix
         
-        this.writeln("</div>");
         
-        //multi-species documentation
+        //RNA-Seq download file documentation
         this.writeln("<div>");
-        this.writeln("<h2 id='multi'>Multi-species download files</h2>");
-        this.writeln("<div class='doc_content'>");
-        this.writeln("<p>Bgee provides the ability to compare expression data between species, "
-                + "with great anatomical detail, using formal concepts of homology: "
-                + "orthology of genes, homology of anatomical entities. This allows to perform "
-                + "accurate comparisons between species, even for distant species "
-                + "for which the anatomy mapping might not be obvious.</p>");
-        this.writeln("<ul class='doc_content'>"
-                + "<li><span class='list_element_title'>homology of anatomical entities</span>: "
-                + "When comparing multiple species, only anatomical entities homologous "
-                + "between all species compared are considered, meaning, only anatomical entities "
-                + "derived from an organ existing before the divergence of the species compared. "
-                + "This requires careful annotations of the homology history of animal anatomy. "
-                + "These annotations are described in a separate project maintained "
-                + "by the Bgee team, see <a target='_blank' class='external_link' "
-                + "href='https://github.com/BgeeDB/anatomical-similarity-annotations/' "
-                + "title='See anatomical-similarity-annotations project on GitHub'>"
-                + "homology annotation project on GitHub</a>. <br />"
-                + "In practice, when comparing expression data between several species, "
-                + "the anatomical entities used are those with a homology relation valid "
-                + "for their Least Common Ancestor (LCA), or any of its ancestral taxa. "
-                + "For instance, if comparing data between human and zebrafish, "
-                + "the LCA would be the taxon <i>Euteleostomi</i>; as a result, "
-                + "annotations to this taxon would be used, such as the relation of homology "
-                + "between \"tetrapod parietal bone\" (UBERON:0000210) and "
-                + "\"actinopterygian frontal bone\" (UBERON:0004866); but also, annotations "
-                + "to ancestral taxa, such as the annotation stating that \"ophthalmic nerve\" "
-                + "appeared in the <i>Vertebrata</i> common ancestor; annotations to more recent taxa "
-                + "than the LCA would be discarded, such as the annotation to the \"forelimb\" "
-                + "structure (UBERON:0002102), homologous in the <i>Tetrapoda</i> lineage.</li> "
-                + "<li><span class='list_element_title'>orthology of genes</span>: relations of "
-                + "orthology between genes are retrieved using the <a target='_blank' class='external_link' "
-                + "href='http://omabrowser.org/oma/hogs/' title='External link to OMA browser'>"
-                + "OMA Hierarchical orthologous groups</a>; when comparing several species, "
-                + "Bgee identifies their Least Common Ancestor (LCA), and retrieve genes "
-                + "that have descended from a single common ancestral gene in that LCA.</li>"
-                + "</ul>");
-        this.writeln("<p>Jump to: </p>"
-                + "<ul>"
-//                + "<li><a href='#multi_expr' title='Quick jump to presence/absence of expression'>"
-//                + "Presence/absence of expression</a></li>"
-                + "<li><a href='#multi_diff' title='Quick jump to differential expression'>"
-                + "Over-/under-expression across anatomy or life stages</a></li>"
-                + "</ul>");
-        //over/under
-//        this.writeMultiSpeciesDiffExprCallFileDoc();
-        this.writeln("</div>");
-        this.writeln("</div>"); // end of multi-species download file
+        this.writeRNASeqRefExprFileDoc();
+        this.writeln("</div>"); // end of RNA-Seq
 
         log.exit();
     }
@@ -178,10 +118,10 @@ public class HtmlDocumentationRefExprFile extends HtmlDocumentationDownloadFile 
      * download files. Anchors used in this method for quick jump links 
      * have to stayed in sync with id attributes of h2, h3 and h4 tags defined in 
      * {@link #writeAffyRefExprFileDoc()},  and
-     * {@link #writeRnaSeqRefExprFileDoc()}.
+     * {@link #writeRNASeqRefExprFileDoc()}.
      * 
      * @see #writeAffyRefExprFileDoc()
-     * @see #writeRnaSeqRefExprFileDoc()
+     * @see #writeRNASeqRefExprFileDoc()
      */
     private void writeDocMenuForRefExprDownloadFiles() {
         log.entry();
@@ -196,7 +136,7 @@ public class HtmlDocumentationRefExprFile extends HtmlDocumentationDownloadFile 
         //RNA-Seq
         this.writeln("<li><a href='#rna-seq' title='Quick jump to this section'>" + 
                 "RNA-Seq data download files</a>");
-        this.writeln(getRnaSeqDocMenu());
+        this.writeln(getRNASeqDocMenu());
         this.writeln("</li>"); // end of RNA-Seq
 
         this.writeln("<li><a href='#troubleshooting' title='Quick jump to this section'>" + 
@@ -220,10 +160,9 @@ public class HtmlDocumentationRefExprFile extends HtmlDocumentationDownloadFile 
     private void writeAffyRefExprFileDoc() {
         log.entry();
         
-        //Affymetrix
-        this.writeln("<h3 id='single_expr'>Affymetrix processed and annotated data</h3>");
-        //TODO: add link to data analyses documentation
-        this.writeln("<p>Affymetrix data used in Bgee are retrieved from <a target='_blank' "
+        this.writeln("<h2 id='single'>Affymetrix data download files</h2>");
+        this.writeln("<div class='doc_content'>"
+                + "<p>Affymetrix data used in Bgee are retrieved from <a target='_blank' "
                 + "class='external_link' title='External link to ArrayExpress' "
                 + "href='http://www.ebi.ac.uk/arrayexpress/'>ArrayExpress</a> and "
                 + "<a target='_blank' class='external_link' title='External link to GEO' "
@@ -233,15 +172,49 @@ public class HtmlDocumentationRefExprFile extends HtmlDocumentationDownloadFile 
                 + "expression data are integrated in Bgee (i.e., no treatment, no disease, "
                 + "no gene knock-out, etc.). Here are described the format "
                 + "of the files providing processed, annotated Affymetrix data.</p>");
-        this.writeln("<p>Jump to format description for: </p>"
+        this.writeln("<p>Jump to: </p>"
                 + getAffyDocMenu());
+        //experiments
+//        this.writeAffyExpFileDoc();
+        //chips
+//        this.writeAffyChipFileDoc();
+        //probesets
+//      this.writeAffyProbesetFileDoc();
         
-        //simple expression file
-        //this.writeSingleSpeciesSimpleExprCallFileDoc();
         
-        //complete expression file
-        //this.writeSingleSpeciesCompleteExprCallFileDoc(); //end of presence/absence of expression
+        this.writeln("</div>"); //end of doc_content
         
+        log.exit();
+    }
+    
+    /**
+     * Write the documentation related to RNA-Seq reference expression download files. 
+     * Anchors used in this method for quick jump links 
+     * have to stayed in sync with id attributes of h4 tags defined in 
+     * {@link #writeRNASeqExpFileDoc()}, {@link #writeRNASeqLibraryFileDoc()}, and 
+     * {@link #writeRNASeqGeneFileDoc()}.
+     * 
+     * @see #writeRNASeqExpFileDoc()
+     * @see #writeRNASeqLibraryFileDoc()
+     * @see #writeRNASeqGeneFileDoc()
+     */
+    private void writeRNASeqRefExprFileDoc() {
+        log.entry();
+        
+        this.writeln("<h2 id='single'>RNA-Seq data download files</h2>");
+        this.writeln("<div class='doc_content'>"
+                + "<p>blabla...</p>");
+        this.writeln("<p>Jump to: </p>"
+                + getRNASeqDocMenu());
+        //experiments
+//        this.writeRNASeqExpFileDoc();
+        //libraries
+//        this.writeRNASeqLibraryFileDoc();
+        //genes
+//      this.writeRNASeqGeneFileDoc();
+        
+        
+        this.writeln("</div>"); //end of doc_content
         
         log.exit();
     }

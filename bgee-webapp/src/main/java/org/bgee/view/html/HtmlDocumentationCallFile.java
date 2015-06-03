@@ -1210,9 +1210,10 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
     protected void writeDocumentation() {
         log.entry();
         
-        this.writeln("<h1 id='sectionname'>Download file documentation</h1>");
+        this.writeln("<h1 id='sectionname'>Expression call download file documentation</h1>");
         RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
         urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlDownloadGenerator.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
         this.writeln("<p class='documentationintro'>Bgee provides calls of baseline "
                 + "presence/absence of expression, and of differential over-/under-expression, "
                 + "either for single species, or compared between species (orthologous genes "
@@ -1238,9 +1239,9 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeSingleSpeciesExprCallFileDoc();
         //over/under
         this.writeSingleSpeciesDiffExprCallFileDoc();
-        this.writeln("</div>"); // end of single-species
+        this.writeln("</div>");   //end of doc_content
         
-        this.writeln("</div>");
+        this.writeln("</div>");// end of single-species
         
         //multi-species documentation
         this.writeln("<div>");
@@ -1290,7 +1291,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "</ul>");
         //over/under
         this.writeMultiSpeciesDiffExprCallFileDoc();
-        this.writeln("</div>");
+        this.writeln("</div>");   //end of doc_content
         this.writeln("</div>"); // end of multi-species download file
 
         log.exit();

@@ -48,7 +48,7 @@ public class BgeePropertiesSecondTest extends BgeePropertiesParentTest {
         assertEquals("Wrong property value retrieved", 
                 "/downloadOrthologFileDirectory", bgeeProp.getDownloadOrthologFilesRootDirectory());
         assertEquals("Wrong property value retrieved", 
-                "/downloadRefExprFileDirectory", bgeeProp.getDownloadRefExprFilesRootDirectory());
+                "/downloadProcExprValueFileDirectory", bgeeProp.getDownloadProcExprValueFilesRootDirectory());
         assertEquals("Wrong property value retrieved",
                 "/javascriptFilesRootDirectory", bgeeProp.getJavascriptFilesRootDirectory());
         assertEquals("Wrong property value retrieved",

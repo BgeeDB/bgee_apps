@@ -194,8 +194,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
 
         this.writeln("<div id='feature_list'>");
 
-        this.writeln(HtmlDocumentationDisplay.getFeatureLogos(
-                this, this.prop.getImagesRootDirectory()));
+        this.writeln(this.getFeatureDocumentationLogos());
 
         this.writeln("</div>");
         
@@ -223,7 +222,8 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
     public void displayRefExprDownloadFileDocumentation() {
         log.entry();
         
-        this.startDisplay("documentation", "Reference expression download file documentation");
+        this.startDisplay("documentation", 
+                PROCESSED_EXPR_VALUES_PAGE_NAME + " download file documentation");
         
         this.refExprFileDoc.writeDocumentation();
         
@@ -240,9 +240,9 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
 
         this.writeln("<h1>How to access to Bgee data</h1>");
 
-        RequestParameters urlDownloadRefExprGenerator = this.getNewRequestParameters();
-        urlDownloadRefExprGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
-        urlDownloadRefExprGenerator.setAction(RequestParameters.ACTION_DOWLOAD_REF_EXPR_FILES);
+        RequestParameters urlDownloadProcExprValuesGenerator = this.getNewRequestParameters();
+        urlDownloadProcExprValuesGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlDownloadProcExprValuesGenerator.setAction(RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES);
 
         RequestParameters urlDownloadCallsGenerator = this.getNewRequestParameters();
         urlDownloadCallsGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
@@ -250,12 +250,14 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         
         this.writeln("<div id='feature_list'>");
         
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(urlDownloadRefExprGenerator.getRequestURL(), 
-                "Bgee reference gene expression page", "Reference gene expression", 
-                this.prop.getImagesRootDirectory() + "logo/ref_expr_logo.png", null));
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
+                urlDownloadProcExprValuesGenerator.getRequestURL(), 
+                "Bgee " + PROCESSED_EXPR_VALUES_PAGE_NAME.toLowerCase() + " page", 
+                PROCESSED_EXPR_VALUES_PAGE_NAME, 
+                this.prop.getImagesRootDirectory() + "logo/proc_values_logo.png", null));
 
         this.writeln(HtmlParentDisplay.getSingleFeatureLogo(urlDownloadCallsGenerator.getRequestURL(), 
-                "Bgee gene expression call page", "Gene expression calls", 
+                "Bgee " + GENE_EXPR_CALLS_PAGE_NAME.toLowerCase() + " page", GENE_EXPR_CALLS_PAGE_NAME, 
                 this.prop.getImagesRootDirectory() + "logo/expr_calls_logo.png", null));
 
         this.writeln(HtmlParentDisplay.getSingleFeatureLogo("https://github.com/BgeeDB", 
@@ -274,60 +276,6 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
 
         log.exit();
     }
-
-    
-    /**
-     * Get the main logo of the documentation page, as HTML 'div' element.
-     *
-     * @return              A {@code String} that is the main logo as HTML 'div' element,
-     *                      formated in HTML and HTML escaped if necessary.
-     */
-    private String getMainLogo() {
-        log.entry();
-        
-        RequestParameters urlDocumentationGenerator = this.getNewRequestParameters();
-        urlDocumentationGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
-    
-        return log.exit(HtmlParentDisplay.getSingleFeatureLogo(
-                urlDocumentationGenerator.getRequestURL(), 
-                "Bgee documentation page", "Documentation", 
-                this.prop.getImagesRootDirectory() + "logo/doc_logo.png", null));
-    }
-
-    /**
-     * Get the feature logos of the documentation page, as HTML 'div' elements.
-     *
-     * @param display       A {@code DownloadDisplay} instance that is the view to be used.
-     * @param imgDirectory  A {@code String} that is the directory of the image.
-     * @return              A {@code String} that is the feature logos as HTML 'div' elements,
-     *                      formated in HTML and HTML escaped if necessary.
-     */
-    public static String getFeatureLogos(DocumentationDisplay display, String imgDirectory) {
-        log.entry(display, imgDirectory);
-
-        RequestParameters urlHowToAccessGenerator = 
-                ((HtmlParentDisplay) display).getNewRequestParameters();
-        urlHowToAccessGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
-        urlHowToAccessGenerator.setAction(RequestParameters.ACTION_DOC_HOW_TO_ACCESS);
-        
-        RequestParameters urlCallFilesGenerator = 
-                ((HtmlParentDisplay) display).getNewRequestParameters();
-        urlCallFilesGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
-        urlCallFilesGenerator.setAction(RequestParameters.ACTION_DOC_CALL_DOWLOAD_FILES);
-
-        StringBuffer logos = new StringBuffer(); 
-
-        logos.append(HtmlParentDisplay.getSingleFeatureLogo(urlHowToAccessGenerator.getRequestURL(), 
-                "How to access to Bgee data", "Access to Bgee data", 
-                imgDirectory + "logo/bgee_access_logo.png", null));
-
-        logos.append(HtmlParentDisplay.getSingleFeatureLogo(urlCallFilesGenerator.getRequestURL(), 
-                "Download file documentation page", "Download file documentation", 
-                imgDirectory + "logo/download_logo.png", null));
-
-        return log.exit(logos.toString());
-    }
-
 
     //*******************************************************
     // COMMON METHODS

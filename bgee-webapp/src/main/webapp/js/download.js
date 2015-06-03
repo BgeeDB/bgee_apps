@@ -103,7 +103,7 @@ var download = {
             this.$species = $( "figure" );
             //
             this.$exprCalls = $( "#expr_calls" );
-            this.$refExpr= $( "#ref_expr" );
+            this.$refExpr= $( "#proc_values" );
             // bgee_data_selection
             this.$bgeeDataSelection = $( "#bgee_data_selection" );
             this.$bgeeDataSelectionCross = $( "#bgee_data_selection_cross" );
@@ -126,22 +126,22 @@ var download = {
             this.$diffExprDevelopmentData = $( "#diffexpr_development_data" );
             this.$diffExprDevelopmentSimpleCsv = $( "#diffexpr_development_simple_csv" );
             this.$diffExprDevelopmentCompleteCsv = $( "#diffexpr_development_complete_csv" );
-            // RNA-Seq reference gene expression
+            // RNA-Seq processed expression values
             this.$rnaSeqData = $( "#rnaseq_data" );
             this.$rnaSeqNoData = $( "#rnaseq_no_data" );
             this.$rnaSeqDataCsv = $( "#rnaseq_data_csv" );
             this.$rnaSeqAnnotCsv = $( "#rnaseq_annot_csv" );
-            // Affymetrix reference gene expression
+            // Affymetrix processed expression values
             this.$affyData = $( "#affy_data" );
             this.$affyNoData = $( "#affy_no_data" );
             this.$affyDataCsv = $( "#affy_data_csv" );
             this.$affyAnnotCsv = $( "#affy_annot_csv" );
-            // In situ reference gene expression
+            // In situ processed expression values
             this.$inSituData = $( "#in_situ_data" );
             this.$inSituNoData = $( "#in_situ_no_data" );
             this.$inSituDataCsv = $( "#in_situ_data_csv" );
             this.$inSituAnnotCsv = $( "#in_situ_annot_csv" );
-            // EST reference gene expression
+            // EST processed expression values
             this.$estData = $( "#est_data" );
             this.$estNoData = $( "#est_no_data" );
             this.$estDataCsv = $( "#est_data_csv" );
@@ -235,8 +235,8 @@ var download = {
             	var requestSwitchPage = new requestParameters("", true, "&");
             	if ( download.$exprCalls.length > 0 ) {
             		requestSwitchPage.addValue(urlParameters.PAGE, "download");
-            		requestSwitchPage.addValue(urlParameters.ACTION, "ref_expression");
-            		download.$switchPageLink.text( "See reference gene expression" );
+            		requestSwitchPage.addValue(urlParameters.ACTION, "proc_values");
+            		download.$switchPageLink.text( "See processed expression values" );
             	} else {
             		requestSwitchPage.addValue(urlParameters.PAGE, "download");
             		requestSwitchPage.addValue(urlParameters.ACTION, "expr_calls");
@@ -393,25 +393,25 @@ var download = {
             var bgeeDiffExprDevelopmentCompleteFileSize =
             	$currentSpecies.data( "bgeediffexprdevelopmentcompletefilesize" );
 
-            // RNA-Seq reference gene expression
+            // RNA-Seq processed expression values
             var bgeeRnaSeqDataFileUrl = $currentSpecies.data( "bgeernaseqdatafileurl" );
             var bgeeRnaSeqAnnotFileUrl = $currentSpecies.data( "bgeernaseqannotfileurl" );
             var bgeeRnaSeqDataFileSize = $currentSpecies.data( "bgeernaseqdatafilesize" );
             var bgeeRnaSeqAnnotFileSize = $currentSpecies.data( "bgeernaseqannotfilesize" );
 
-            // Affymetrix reference gene expression
+            // Affymetrix processed expression values
             var bgeeAffyDataFileUrl = $currentSpecies.data( "bgeeaffydatafileurl" );
             var bgeeAffyAnnotFileUrl = $currentSpecies.data( "bgeeaffyannotfileurl" );
             var bgeeAffyDataFileSize = $currentSpecies.data( "bgeeaffydatafilesize" );
             var bgeeAffyAnnotFileSize = $currentSpecies.data( "bgeeaffyannotfilesize" );
 
-            // In situ reference gene expression
+            // In situ processed expression values
             var bgeeInSituDataFileUrl = $currentSpecies.data( "bgeeinsitudatafileurl" );
             var bgeeInSituAnnotFileUrl = $currentSpecies.data( "bgeeinsituannotfileurl" );
             var bgeeInSituDataFileSize = $currentSpecies.data( "bgeeinsitudatafilesize" );
             var bgeeInSituAnnotFileSize = $currentSpecies.data( "bgeeinsituannotfilesize" );
 
-            // EST reference gene expression
+            // EST processed expression values
             var bgeeEstDataFileUrl = $currentSpecies.data( "bgeeestdatafileurl" );
             var bgeeEstAnnotFileUrl = $currentSpecies.data( "bgeeestannotfileurl" );
             var bgeeEstDataFileSize = $currentSpecies.data( "bgeeestdatafilesize" );
@@ -554,7 +554,7 @@ var download = {
             			"Download complete file (" + bgeeDiffExprDevelopmentCompleteFileSize + ")" );
             }
             
-            // RNA-Seq reference gene expression
+            // RNA-Seq processed expression values
             if (bgeeRnaSeqDataFileUrl === undefined) {
             	this.$rnaSeqData.hide(); 
             	this.$rnaSeqNoData.show();
@@ -567,7 +567,7 @@ var download = {
             	this.$rnaSeqAnnotCsv.text( "Download annotation file (" + bgeeRnaSeqAnnotFileSize + ")" );
             }
 
-            // Affymetrix reference gene expression
+            // Affymetrix processed expression values
             if (bgeeAffyDataFileUrl === undefined) {
             	this.$affyData.hide(); 
             	this.$affyNoData.show();
@@ -580,7 +580,7 @@ var download = {
             	this.$affyAnnotCsv.text( "Download annotation file (" + bgeeAffyAnnotFileSize + ")" );
             }
 
-            // In situ reference gene expression
+            // In situ processed expression values
             if (bgeeInSituDataFileUrl === undefined) {
             	this.$inSituData.hide(); 
             	this.$inSituNoData.show();
@@ -593,7 +593,7 @@ var download = {
             	this.$inSituAnnotCsv.text( "Download annotation file (" + bgeeInSituAnnotFileSize + ")" );
             }
 
-            // EST reference gene expression
+            // EST processed expression values
             if (bgeeEstDataFileUrl === undefined) {
             	this.$estData.hide(); 
             	this.$estNoData.show();

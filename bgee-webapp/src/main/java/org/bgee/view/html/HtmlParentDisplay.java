@@ -25,6 +25,15 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     private final static Logger log = LogManager.getLogger(HtmlParentDisplay.class.getName());
 
     /**
+     * A {@code String} that is the page name of the 'processed expression values' download page.
+     */
+    protected final static String PROCESSED_EXPR_VALUES_PAGE_NAME = "Processed expression values";
+    /**
+     * A {@code String} that is the page name of the 'gene expression calls' download page.
+     */
+    protected final static String GENE_EXPR_CALLS_PAGE_NAME = "Gene expression calls";
+
+    /**
      * Escape HTML entities in the provided {@code String}
      * @param stringToWrite A {@code String} that contains the HTML to escape
      * @return  The escaped HTML
@@ -239,7 +248,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 
         RequestParameters urlDownloadRefExprGenerator = this.getNewRequestParameters();
         urlDownloadRefExprGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
-        urlDownloadRefExprGenerator.setAction(RequestParameters.ACTION_DOWLOAD_REF_EXPR_FILES);
+        urlDownloadRefExprGenerator.setAction(RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES);
         
         RequestParameters urlDownloadCallsGenerator = this.getNewRequestParameters();
         urlDownloadCallsGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
@@ -270,10 +279,12 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<a title='Expression data page' href='" + 
                 urlDownloadGenerator.getRequestURL() + "'>Expression data</a>" + this.getCaret());
         navbar.append("<ul>");
-        navbar.append("<li><a class='drop' title='Gene expression calls' href='" + 
-                urlDownloadCallsGenerator.getRequestURL() + "'>Gene expression calls</a></li>");
-        navbar.append("<li><a class='drop' title='Reference gene expression' href='" + 
-                urlDownloadRefExprGenerator.getRequestURL() + "'>Reference gene expression</a></li>");
+        navbar.append("<li><a class='drop' title='" + GENE_EXPR_CALLS_PAGE_NAME + "' href='" + 
+                urlDownloadCallsGenerator.getRequestURL() + "'>" + GENE_EXPR_CALLS_PAGE_NAME + 
+                "</a></li>");
+        navbar.append("<li><a class='drop' title='" + PROCESSED_EXPR_VALUES_PAGE_NAME + "' href='" + 
+                urlDownloadRefExprGenerator.getRequestURL() + "'>" + 
+                PROCESSED_EXPR_VALUES_PAGE_NAME + "</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
         navbar.append("<li>");
@@ -330,6 +341,104 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 this.prop.getImagesRootDirectory() + "arrow_down_dark.png' alt='deploy'/>";
     }
     
+    /**
+     * Get the main logo of the documentation page, as HTML 'div' element.
+     *
+     * @return  A {@code String} that is the main documentation logo as HTML 'div' element,
+     *          formated in HTML and HTML escaped if necessary.
+     */
+    protected String getMainDocumentationLogo() {
+        log.entry();
+        
+        RequestParameters urlDocumentationGenerator = this.getNewRequestParameters();
+        urlDocumentationGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
+    
+        return log.exit(HtmlParentDisplay.getSingleFeatureLogo(
+                urlDocumentationGenerator.getRequestURL(), 
+                "Bgee documentation page", "Documentation", 
+                this.prop.getImagesRootDirectory() + "logo/doc_logo.png", null));
+    }
+
+    /**
+     * Get the feature logos of the documentation page, as HTML 'div' elements.
+     *
+     * @return  A {@code String} that is the feature documentation logos as HTML 'div' elements,
+     *          formated in HTML and HTML escaped if necessary.
+     */
+    protected String getFeatureDocumentationLogos() {
+        log.entry();
+
+        RequestParameters urlHowToAccessGenerator = this.getNewRequestParameters();
+        urlHowToAccessGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
+        urlHowToAccessGenerator.setAction(RequestParameters.ACTION_DOC_HOW_TO_ACCESS);
+        
+        RequestParameters urlCallFilesGenerator = this.getNewRequestParameters();
+        urlCallFilesGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
+        urlCallFilesGenerator.setAction(RequestParameters.ACTION_DOC_CALL_DOWLOAD_FILES);
+
+        StringBuffer logos = new StringBuffer(); 
+
+        logos.append(HtmlParentDisplay.getSingleFeatureLogo(urlHowToAccessGenerator.getRequestURL(), 
+                "How to access to Bgee data", "Access to Bgee data", 
+                this.prop.getImagesRootDirectory() + "logo/bgee_access_logo.png", null));
+
+        logos.append(HtmlParentDisplay.getSingleFeatureLogo(urlCallFilesGenerator.getRequestURL(), 
+                "Download file documentation page", "Download file documentation", 
+                this.prop.getImagesRootDirectory() + "logo/download_logo.png", null));
+
+        return log.exit(logos.toString());
+    }
+
+    /**
+     * Get the main logo of the download page, as HTML 'div' element.
+     *
+     * @return  A {@code String} that is the main download logo as HTML 'div' element,
+     *          formated in HTML and HTML escaped if necessary.
+     */
+    protected String getMainDownloadLogo() {
+        log.entry();
+        
+        RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
+        urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+    
+        return log.exit(HtmlParentDisplay.getSingleFeatureLogo(urlDownloadGenerator.getRequestURL(), 
+                "Bgee expression data page", "Expression data", 
+                this.prop.getImagesRootDirectory() + "logo/download_logo.png", null));
+    }
+
+    /**
+     * Get the feature logos of the download page, as HTML 'div' elements.
+     *
+     * @return  A {@code String} that is the feature download logos as HTML 'div' elements,
+     *          formated in HTML and HTML escaped if necessary.
+     */
+    protected String getFeatureDownloadLogos() {
+        log.entry();
+
+        RequestParameters urlDownloadRefExprGenerator = this.getNewRequestParameters();
+        urlDownloadRefExprGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlDownloadRefExprGenerator.setAction(RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES);
+
+        RequestParameters urlDownloadCallsGenerator = this.getNewRequestParameters();
+        urlDownloadCallsGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlDownloadCallsGenerator.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
+        
+        StringBuffer logos = new StringBuffer(); 
+        
+        logos.append(HtmlParentDisplay.getSingleFeatureLogo(
+                urlDownloadCallsGenerator.getRequestURL(), 
+                "Bgee " + GENE_EXPR_CALLS_PAGE_NAME.toLowerCase() + " page", GENE_EXPR_CALLS_PAGE_NAME, 
+                this.prop.getImagesRootDirectory() + "logo/expr_calls_logo.png", null));
+
+        logos.append(HtmlParentDisplay.getSingleFeatureLogo(
+                urlDownloadRefExprGenerator.getRequestURL(), 
+                "Bgee " + PROCESSED_EXPR_VALUES_PAGE_NAME.toLowerCase() + " page", 
+                PROCESSED_EXPR_VALUES_PAGE_NAME, 
+                this.prop.getImagesRootDirectory() + "logo/proc_values_logo.png", null));
+        
+        return log.exit(logos.toString());
+    }
+
 //    @Override
 	protected void sendHeaders(boolean ajax) {
 	    log.entry(ajax);

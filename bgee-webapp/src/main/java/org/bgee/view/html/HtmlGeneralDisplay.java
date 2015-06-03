@@ -72,9 +72,9 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         RequestParameters urlDocGenerator = this.getNewRequestParameters();
         urlDocGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
 
-        RequestParameters urlDownloadRefExprGenerator = this.getNewRequestParameters();
-        urlDownloadRefExprGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
-        urlDownloadRefExprGenerator.setAction(RequestParameters.ACTION_DOWLOAD_REF_EXPR_FILES);
+        RequestParameters urlDownloadProcValuesGenerator = this.getNewRequestParameters();
+        urlDownloadProcValuesGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlDownloadProcValuesGenerator.setAction(RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES);
 
         RequestParameters urlDownloadCallsGenerator = this.getNewRequestParameters();
         urlDownloadCallsGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
@@ -83,20 +83,9 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
         this.writeln("<div id='feature_list'>");
 
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
-                urlDownloadCallsGenerator.getRequestURL(), 
-                "Bgee gene expression call page", "Gene expression calls", 
-                this.prop.getImagesRootDirectory() + "logo/expr_calls_logo.png", null));
+        this.writeln(this.getFeatureDownloadLogos());
 
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
-                urlDownloadRefExprGenerator.getRequestURL(), 
-                "Bgee reference gene expression page", "Reference gene expression", 
-                this.prop.getImagesRootDirectory() + "logo/ref_expr_logo.png", null));
-
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
-                urlDocGenerator.getRequestURL(), 
-                "Bgee documentation page", "Documentation", 
-                this.prop.getImagesRootDirectory() + "logo/doc_logo.png", null));
+        this.writeln(this.getMainDocumentationLogo());
 
         this.writeln("</div>");
 

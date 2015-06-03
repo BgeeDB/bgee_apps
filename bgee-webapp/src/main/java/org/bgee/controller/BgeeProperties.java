@@ -192,23 +192,23 @@ public class BgeeProperties
     
     /**
      * A {@code String} that is the key to access to the System property that is read at the 
-     * initialization of {@code BgeeProperties} to set the reference gene expression download 
+     * initialization of {@code BgeeProperties} to set the processed expression value download 
      * files root directory. 
      * 
-     * @see #DOWNLOAD_REF_EXPR_FILES_ROOT_DIRECTORY_DEFAULT
-     * @see #getDownloadRefExprFilesRootDirectory()
+     * @see #DOWNLOAD_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT
+     * @see #getDownloadProcExprValueFilesRootDirectory()
      */
-    public final static String DOWNLOAD_REF_EXPR_FILES_ROOT_DIRECTORY_KEY = 
-            "org.bgee.webapp.downloadRefExprFilesRootDirectory";
+    public final static String DOWNLOAD_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY = 
+            "org.bgee.webapp.downloadProcExprValueFilesRootDirectory";
     /**
-     * A {@code String} that is the default value of the reference gene expression
+     * A {@code String} that is the default value of the processed expression value
      * download files root directory. 
      * 
-     * @see #DOWNLOAD_REF_EXPR_FILES_ROOT_DIRECTORY_KEY
-     * @see #getDownloadRefExprFilesRootDirectory()
+     * @see #DOWNLOAD_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY
+     * @see #getDownloadProcExprValueFilesRootDirectory()
      */
-    public final static String DOWNLOAD_REF_EXPR_FILES_ROOT_DIRECTORY_DEFAULT = 
-            "refExprFiles/";
+    public final static String DOWNLOAD_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT = 
+            "procExprValueFiles/";
     
     /**
      * A {@code String} that is the key to access to the System property that is read at the 
@@ -395,11 +395,11 @@ public class BgeeProperties
     private final String downloadDiffExprFilesRootDirectory;
     
     /**
-     * A {@code String} that defines the reference gene expression download file directory where  
-     * are located reference gene expression files available for download, to be added to the 
-     * {@code bgeeRootDirectory} to generate URL to reference gene expression download files.
+     * A {@code String} that defines the processed expression value download file directory where  
+     * are located processed expression value files available for download, to be added to the 
+     * {@code bgeeRootDirectory} to generate URL to processed expression value download files.
      */
-    private final String downloadRefFilesRootDirectory;
+    private final String downloadProcExprValueFilesRootDirectory;
     
     /**
      * A {@code String} that defines the multi-species differential expression download file 
@@ -539,9 +539,9 @@ public class BgeeProperties
         downloadOrthologFilesRootDirectory = getStringOption(prop, sysProps, fileProps, 
                 DOWNLOAD_ORTHOLOG_FILES_ROOT_DIRECTORY_KEY, 
                 DOWNLOAD_ORTHOLOG_FILES_ROOT_DIRECTORY_DEFAULT);
-        downloadRefFilesRootDirectory = getStringOption(prop, sysProps, fileProps, 
-                DOWNLOAD_REF_EXPR_FILES_ROOT_DIRECTORY_KEY, 
-                DOWNLOAD_REF_EXPR_FILES_ROOT_DIRECTORY_DEFAULT);
+        downloadProcExprValueFilesRootDirectory = getStringOption(prop, sysProps, fileProps, 
+                DOWNLOAD_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY, 
+                DOWNLOAD_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT);
         javascriptFilesRootDirectory  = getStringOption(prop, sysProps, fileProps, 
                 JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY, JAVASCRIPT_FILES_ROOT_DIRECTORY_DEFAULT);
         javascriptVersionExtension  = getStringOption(prop, sysProps, fileProps, 
@@ -764,13 +764,13 @@ public class BgeeProperties
     
     /**
      * @return  A {@code String} that defines the absolute root directory where are located 
-     *          reference gene expression files available for download, to generate URL 
+     *          processed expression value files available for download, to generate URL 
      *          to download files.
-     * @see #DOWNLOAD_REF_EXPR_FILES_ROOT_DIRECTORY_KEY
-     * @see #DOWNLOAD_REF_EXPR_FILES_ROOT_DIRECTORY_DEFAULT
+     * @see #DOWNLOAD_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY
+     * @see #DOWNLOAD_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT
      */
-    public String getDownloadRefExprFilesRootDirectory() {
-        return downloadRefFilesRootDirectory;
+    public String getDownloadProcExprValueFilesRootDirectory() {
+        return downloadProcExprValueFilesRootDirectory;
     }
     
     /**

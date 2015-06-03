@@ -93,7 +93,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     private final static String GROUP_NAME_BILATERIA = "Bilateria";
         
     public enum DownloadPageType {
-        REF_EXPR, EXPR_CALLS;
+        PROC_EXPR_VALUES, EXPR_CALLS;
     }
     /**
      * Constructor
@@ -122,7 +122,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("<h1>Bgee release 13 download page</h1>");
 
         this.writeln("<div id='feature_list'>");
-        this.writeln(this.getFeatureLogos());
+        this.writeln(this.getFeatureDownloadLogos());
         this.writeln("</div>");
         
         this.endDisplay();
@@ -142,8 +142,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
         this.writeln("<div id='bgee_title'>");
         this.writeln("<h1><img src='" + this.prop.getImagesRootDirectory() + "logo/expr_calls_logo.png'"
-                + " title='Gene expression calls' alt='Gene expression calls logo'/>"
-                + "Gene expression calls</h1>");
+                + " title='" + GENE_EXPR_CALLS_PAGE_NAME + 
+                "' alt='" + GENE_EXPR_CALLS_PAGE_NAME + " logo'/>" + GENE_EXPR_CALLS_PAGE_NAME + "</h1>");
         this.writeln("</div>");
         
         // Introduction
@@ -181,23 +181,26 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     }
 
     @Override
-    public void displayReferenceGeneExpressionDownloadPage() {
+    public void displayProcessedExpressionValuesDownloadPage() {
         log.entry();
-        this.startDisplay("download", "Bgee release 13 reference gene expression download page");
+        this.startDisplay("download", 
+                "Bgee release 13 " + PROCESSED_EXPR_VALUES_PAGE_NAME.toLowerCase() + " download page");
         
         this.getMoreResultDivs();
 
-        this.writeln("<div id='ref_expr'>");
+        this.writeln("<div id='proc_values'>");
     
         this.writeln("<div id='bgee_title'>");
-        this.writeln("<h1><img src='" + this.prop.getImagesRootDirectory() + "logo/ref_expr_logo.png'"
-                + " title='Reference gene expression' alt='Reference gene expression logo'/>"
-                + "Reference gene expression</h1>");
+        this.writeln("<h1><img src='" + this.prop.getImagesRootDirectory() + "logo/proc_values_logo.png'"
+                + " title='" + PROCESSED_EXPR_VALUES_PAGE_NAME + 
+                "' alt='" + PROCESSED_EXPR_VALUES_PAGE_NAME + " logo'/>"
+                + PROCESSED_EXPR_VALUES_PAGE_NAME + "</h1>");
         this.writeln("</div>");
 
         // Introduction
         this.writeln("<div id='bgee_introduction' class='bgee_section bgee_download_section'>");
-        this.writeln("<p>Bgee is a database to retrieve reference gene expression in species. ");
+        this.writeln("<p>Bgee is a database to retrieve " + 
+                PROCESSED_EXPR_VALUES_PAGE_NAME.toLowerCase() + " in species. ");
         this.writeln("This is a beta download page, more features will be deployed soon. </p>");
         this.writeln("<p>Click on a species to browse files to download. You can also download " +
         //TODO: change this ugly '../' once we'll have added a property to distinguish 
@@ -211,12 +214,12 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln(this.getSearchBox());
         
         // Single species part
-        this.writeln(this.getSingleSpeciesSection(DownloadPageType.REF_EXPR));
+        this.writeln(this.getSingleSpeciesSection(DownloadPageType.PROC_EXPR_VALUES));
 
         // Black banner when a species or a group is selected.
-        this.writeln(this.getDownloadBanner(DownloadPageType.REF_EXPR));
+        this.writeln(this.getDownloadBanner(DownloadPageType.PROC_EXPR_VALUES));
         
-        this.writeln("</div>"); // close ref_expr div
+        this.writeln("</div>"); // close proc_values div
 
         // Image sources
         this.writeln(this.getImageSources());
@@ -224,55 +227,6 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.endDisplay();
         
         log.exit();
-    }
-
-    /**
-     * Get the main logo of the download page, as HTML 'div' element.
-     *
-     * @return              A {@code String} that is the main logo as HTML 'div' element,
-     *                      formated in HTML and HTML escaped if necessary.
-     */
-    private String getMainLogo() {
-        log.entry();
-        
-        RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
-        urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
-    
-        return log.exit(HtmlParentDisplay.getSingleFeatureLogo(urlDownloadGenerator.getRequestURL(), 
-                "Bgee expression data page", "Expression data", 
-                this.prop.getImagesRootDirectory() + "logo/download_logo.png", null));
-    }
-
-    /**
-     * Get the feature logos of the download page, as HTML 'div' elements.
-     *
-     * @return              A {@code String} that is the feature logos as HTML 'div' elements,
-     *                      formated in HTML and HTML escaped if necessary.
-     */
-    private String getFeatureLogos() {
-        log.entry();
-
-        RequestParameters urlDownloadRefExprGenerator = this.getNewRequestParameters();
-        urlDownloadRefExprGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
-        urlDownloadRefExprGenerator.setAction(RequestParameters.ACTION_DOWLOAD_REF_EXPR_FILES);
-
-        RequestParameters urlDownloadCallsGenerator = this.getNewRequestParameters();
-        urlDownloadCallsGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
-        urlDownloadCallsGenerator.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
-        
-        StringBuffer logos = new StringBuffer(); 
-        
-        logos.append(HtmlParentDisplay.getSingleFeatureLogo(
-                urlDownloadCallsGenerator.getRequestURL(), 
-                "Bgee gene expression call page", "Gene expression calls", 
-                this.prop.getImagesRootDirectory() + "logo/expr_calls_logo.png", null));
-
-        logos.append(HtmlParentDisplay.getSingleFeatureLogo(
-                urlDownloadRefExprGenerator.getRequestURL(), 
-                "Bgee reference gene expression page", "Reference gene expression", 
-                this.prop.getImagesRootDirectory() + "logo/ref_expr_logo.png", null));
-        
-        return log.exit(logos.toString());
     }
     
     /**
@@ -811,9 +765,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         }
 
         String pageImg = "", pageImgFileName = null, pageImgtitle = null;
-        if (pageType.equals(DownloadPageType.REF_EXPR)) {
-            pageImgFileName = "ref_expr_zoom_logo.png";
-            pageImgtitle = "Reference gene expression";
+        if (pageType.equals(DownloadPageType.PROC_EXPR_VALUES)) {
+            pageImgFileName = "proc_values_zoom_logo.png";
+            pageImgtitle = PROCESSED_EXPR_VALUES_PAGE_NAME;
             pageImg = "<img class='page_img' src='" + this.prop.getImagesRootDirectory() + "logo/" +
                     pageImgFileName + "' alt='" + pageImgtitle + "' />";
         }
@@ -1284,37 +1238,38 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                         "' data-bgeediffexprdevelopmentcompletefilesize='" + diffExprDevCompleteFileSize + "'"); 
             }
 
-        } else if (pageType.equals(DownloadPageType.REF_EXPR)) {
-            String beginRefExprFilePath = this.prop.getDownloadRefExprFilesRootDirectory() + latinName + "_";
+        } else if (pageType.equals(DownloadPageType.PROC_EXPR_VALUES)) {
+            String beginProcValueFilePath = 
+                    this.prop.getDownloadProcExprValueFilesRootDirectory() + latinName + "_";
             if (rnaSeqDataFileSize != null) {
-                data.append(" data-bgeernaseqdatafileurl='" + beginRefExprFilePath + 
+                data.append(" data-bgeernaseqdatafileurl='" + beginProcValueFilePath + 
                         "RNA-Seq_read_counts_RPKM" + extension +
                         "' data-bgeernaseqdatafilesize='" + rnaSeqDataFileSize + "'"); 
-                data.append(" data-bgeernaseqannotfileurl='" + beginRefExprFilePath + 
+                data.append(" data-bgeernaseqannotfileurl='" + beginProcValueFilePath + 
                         "RNA-Seq_annotations" + extension +
                         "' data-bgeernaseqannotfilesize='" + rnaSeqAnnotFileSize + "'"); 
             }
             if (affyDataFileSize != null) {
-                data.append(" data-bgeeaffydatafileurl='" + beginRefExprFilePath + 
+                data.append(" data-bgeeaffydatafileurl='" + beginProcValueFilePath + 
                         "Affymetrix_probesets" + extension +
                         "' data-bgeeaffydatafilesize='" + affyDataFileSize + "'"); 
-                data.append(" data-bgeeaffyannotfileurl='" + beginRefExprFilePath + 
+                data.append(" data-bgeeaffyannotfileurl='" + beginProcValueFilePath + 
                         "Affymetrix_annotations" + extension +
                         "' data-bgeeaffyannotfilesize='" + affyAnnotFileSize + "'"); 
             }
             if (inSituDataFileSize != null) {
-                data.append(" data-bgeeinsitudatafileurl='" + beginRefExprFilePath + 
+                data.append(" data-bgeeinsitudatafileurl='" + beginProcValueFilePath + 
                                         "InSitu_data" + extension +
                         "' data-bgeeinsitudatafilesize='" + inSituDataFileSize + "'"); 
-                data.append(" data-bgeeinsituannotfileurl='" + beginRefExprFilePath + 
+                data.append(" data-bgeeinsituannotfileurl='" + beginProcValueFilePath + 
                         "InSitu_annotations" + extension +
                         "' data-bgeeinsituannotfilesize='" + inSituAnnotFileSize + "'"); 
             }
             if (estDataFileSize != null) {
-                data.append(" data-bgeeestdatafileurl='" + beginRefExprFilePath + 
+                data.append(" data-bgeeestdatafileurl='" + beginProcValueFilePath + 
                                         "EST_data" + extension +
                         "' data-bgeeestdatafilesize='" + estDataFileSize + "'"); 
-                data.append(" data-bgeeestannotfileurl='" + beginRefExprFilePath + 
+                data.append(" data-bgeeestannotfileurl='" + beginProcValueFilePath + 
                         "EST_annotations" + extension +
                         "' data-bgeeestannotfilesize='" + estAnnotFileSize + "'"); 
             }

@@ -18,7 +18,7 @@ public interface DownloadDisplay {
     /**
      * Display the download page of processed raw data files.
      */
-    public void displayReferenceGeneExpressionDownloadPage();
+    public void displayProcessedExpressionValuesDownloadPage();
 
     /**
      * Display the download page of gene expression call files.

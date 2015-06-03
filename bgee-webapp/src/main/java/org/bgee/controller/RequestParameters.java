@@ -122,10 +122,10 @@ public class RequestParameters {
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
      * (see {@link URLParameters#getParamAction()}) when download page about files 
-     * providing reference gene expression is requested. Value of the parameter page should be 
+     * providing processed expression values is requested. Value of the parameter page should be 
      * {@link #PAGE_DOWNLOAD}.
      */
-    public static final String ACTION_DOWLOAD_REF_EXPR_FILES = "ref_expression";
+    public static final String ACTION_DOWLOAD_PROC_VALUE_FILES = "proc_values";
 
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
@@ -137,10 +137,10 @@ public class RequestParameters {
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
      * (see {@link URLParameters#getParamAction()}) when documentation about download files 
-     * providing reference expression is requested. Value of the parameter page should be 
+     * providing processed expression values is requested. Value of the parameter page should be 
      * {@link #PAGE_DOCUMENTATION}.
      */
-    public static final String ACTION_DOC_REF_EXPR_DOWLOAD_FILES = "ref_expr_files";
+    public static final String ACTION_DOC_PROC_EXPR_VALUE_DOWLOAD_FILES = "proc_value_files";
     
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 

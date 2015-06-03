@@ -34,7 +34,7 @@ public class TestDownloadDisplay extends TestParentDisplay implements DownloadDi
     }
 
     @Override
-    public void displayReferenceGeneExpressionDownloadPage() {
+    public void displayProcessedExpressionValuesDownloadPage() {
         this.out.println("TestB");
     }
 

@@ -51,22 +51,50 @@ public class Utils {
      * @version Bgee 13 Apr. 2015
      * @since Bgee 13
      */
-    //TODO: unit test
+    //TODO: unit test with 'blankValuesAllowed' set to true
     public static class FmtMultipleStringValues extends CellProcessorAdaptor {
         
         /**
-         * Default constructor, no other {@code CellProcessor} in the chain.
+         * A {@code boolean} defining whether elements of the {@code List} provided to 
+         * the method {@code execute} can be blank. If {@code true}, blank values are allowed.
+         */
+        private final boolean blankValuesAllowed;
+        
+        /**
+         * Default constructor, with no other {@code CellProcessor} in the chain, 
+         * and with no blank list elements allowed (see {@link #FmtMultipleStringValues(boolean)}).
          */
         public FmtMultipleStringValues() {
-            super();
+            this(false);
         }
         /**
-         * Constructor allowing other processors to be chained 
-         * after {@code FmtMultipleValuesCell}.
+         * Constructor allowing other processors to be chained after {@code FmtMultipleValuesCell}, 
+         * and with no blank list elements allowed (see {@link #FmtMultipleStringValues(boolean)}).
          * @param next  A {@code CellProcessor} that is the next to be called. 
          */
         public FmtMultipleStringValues(CellProcessor next) {
+            this(next, false);
+        }
+        /**
+         * Constructor providing no other {@code CellProcessor} in the chain, and defining whether 
+         * elements of the {@code List} provided to the method {@code execute} can be blank.
+         * @param blankValuesAllowed    A {@code boolean} defining whether list elements 
+         *                              can be blank. If {@code true}, blank values are allowed.
+         */
+        public FmtMultipleStringValues(boolean blankValuesAllowed) {
+            super();
+            this.blankValuesAllowed = blankValuesAllowed;
+        }
+        /**
+         * Constructor providing other {@code CellProcessor} to be chained, and defining whether 
+         * elements of the {@code List} provided to the method {@code execute} can be blank.
+         * @param next                  A {@code CellProcessor} that is the next to be called. 
+         * @param blankValuesAllowed    A {@code boolean} defining whether list elements 
+         *                              can be blank. If {@code true}, blank values are allowed.
+         */
+        public FmtMultipleStringValues(CellProcessor next, boolean blankValuesAllowed) {
             super(next);
+            this.blankValuesAllowed = blankValuesAllowed;
         }
         
         @Override
@@ -97,7 +125,7 @@ public class Utils {
                             + valueElement + " of type " + valueElement.getClass().getSimpleName(), 
                             context, this));
                 }
-                if (StringUtils.isBlank((String) valueElement)) {
+                if (!this.blankValuesAllowed && StringUtils.isBlank((String) valueElement)) {
                     throw log.throwing(new SuperCsvCellProcessorException(
                             "The provided List cannot contain blank values. List provided: "
                             + value, context, this));

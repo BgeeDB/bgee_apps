@@ -2523,8 +2523,12 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 // *** Attributes specific to simple file ***
                 switch (header[i]) {
                     case GENE_ID_LIST_COLUMN_NAME: 
-                    case GENE_NAME_LIST_COLUMN_NAME: 
                         processors[i] = new Utils.FmtMultipleStringValues(new Trim()); 
+                        break;
+                    //TODO: regresssion test with some blank gene names
+                    case GENE_NAME_LIST_COLUMN_NAME: 
+                        //gene names can be blank
+                        processors[i] = new Utils.FmtMultipleStringValues(new Trim(), true); 
                         break;
                 }
 

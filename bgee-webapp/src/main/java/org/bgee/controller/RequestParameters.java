@@ -76,6 +76,11 @@ import org.bgee.controller.servletutils.BgeeHttpServletRequest;
  * @version Bgee 13, Aug 2014
  * @since Bgee 1
  */
+//TODO: the anchor part of an URL should be considered exactly as a normal parameter, 
+//such as "page" or "action". Maybe it could have its dedicated methods rather than 
+//a real parameter name, but that's it. Add corresponding behavior, and modify all code 
+//in the view package generating URLs with anchors.
+// (assigned to fbastian or mseppey)
 public class RequestParameters {
 
     private final static Logger log = LogManager.getLogger(RequestParameters.class.getName());

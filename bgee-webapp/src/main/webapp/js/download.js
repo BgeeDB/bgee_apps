@@ -114,7 +114,7 @@ var download = {
                 $( "#bgee_data_selection_text h1.scientificname" );
             this.$bgeeDataSelectionTextCommon = 
                 $( "#bgee_data_selection_text h1.commonname" );
-            this.$switchPageLink = $( ".switch_page_link" );
+            this.$switchPageLink = $( "#switch_page_link" );
             this.$bgeeGroupDescription = $( "#bgee_data_selection_text p.groupdescription" );
             // Data
             this.$orthologButtons = $( "#ortholog_file_buttons" );
@@ -233,22 +233,6 @@ var download = {
             this.$bgeeDataSelectionCross.click(function(){
                 download.closeDetailBox();
             });
-            
-            // Manage link to the other page
-            this.$switchPageLink.each( function(){
-            	var requestSwitchPage = new requestParameters("", true, "&");
-            	if ( download.$exprCalls.length > 0 ) {
-            		requestSwitchPage.addValue(urlParameters.PAGE, "download");
-            		requestSwitchPage.addValue(urlParameters.ACTION, "proc_values");
-            		download.$switchPageLink.text( "See processed expression values" );
-            	} else {
-            		requestSwitchPage.addValue(urlParameters.PAGE, "download");
-            		requestSwitchPage.addValue(urlParameters.ACTION, "expr_calls");
-            		download.$switchPageLink.text( "See gene expression calls" );    
-            	}
-            	download.$switchPageLink.attr( "href", 
-            			requestSwitchPage.getRequestURL() + window.location.hash);
-            });
 
             // Add a listener to the search box to remove the initial displayed text if present
             // First, keep the initial text in a var for later use
@@ -366,6 +350,29 @@ var download = {
 
             // Fetch all DOM elements and values needed to update the display
             var id = $currentSpecies.attr( "id" );
+            // Generate value for the hash.
+            // Add "id" in front to avoid the automatic anchor behavior that would mess up the scroll
+            var hashToUse = "#id"+id; 
+            
+            //manahe link to processed vaulues/gene expression calls
+            var requestSwitchPage = new requestParameters("", true, "&");
+            //TODO: should add static variables as in RequestParameters.java, 
+            //to provide parameter values
+        	if ( this.$exprCalls.length > 0 ) {
+        		requestSwitchPage.addValue(urlParameters.PAGE, "download");
+        		requestSwitchPage.addValue(urlParameters.ACTION, "proc_values");
+        		this.$switchPageLink.text( "See processed expression values" );
+        	} else {
+        		requestSwitchPage.addValue(urlParameters.PAGE, "download");
+        		requestSwitchPage.addValue(urlParameters.ACTION, "expr_calls");
+        		this.$switchPageLink.text( "See gene expression calls" );    
+        	}
+        	this.$switchPageLink.attr( "href", 
+        			//TODO: handle the hash exactly as another parameter (see TODO 
+        			//in RequestParameters.java)
+        			requestSwitchPage.getRequestURL() + hashToUse);
+            
+            
             // The images contain the data fields related to the species
             var $images = $currentSpecies.find( ".species_img" ); 
             var bgeeSpeciesName = $images.data( "bgeespeciesname" ); // Only the last one is kept when 
@@ -654,7 +661,7 @@ var download = {
 
             // Update the URL with the id, to allow the link to be copied and sent
             // Add "id" in front to avoid the automatic anchor behavior that would mess up the scroll
-            window.location.hash = "#id"+id; 
+            window.location.hash = hashToUse; 
         },
 
         /**

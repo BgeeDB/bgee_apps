@@ -225,7 +225,7 @@ p.file_description {
     list-style-image: url(../img/arrow.png);
 }
 
-#bgee_data_selection_cross .switch_page_link, #bgee_data_selection_cross .switch_page_link:visited {
+#bgee_data_selection_cross #switch_page_link, #bgee_data_selection_cross #switch_page_link:visited {
     position: absolute;
     top: 30px;
     right: 60px;
@@ -233,7 +233,7 @@ p.file_description {
 	color: #717171;
 }
 
-#bgee_data_selection_cross .switch_page_link:hover {
+#bgee_data_selection_cross #switch_page_link:hover {
     color: #DBDBDB;
 }
 

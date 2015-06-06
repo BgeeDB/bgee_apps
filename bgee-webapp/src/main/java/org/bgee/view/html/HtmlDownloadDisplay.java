@@ -377,7 +377,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         
         // Cross to close the banner
         banner.append("<div id='bgee_data_selection_cross'>");
-        banner.append("<a class='switch_page_link' href=''></a>");
+        banner.append("<a id='switch_page_link' href=''></a>");
         banner.append("<img src='" + this.prop.getImagesRootDirectory() + "cross.png' " +
                 "title='Close banner' alt='Close banner' />");
         banner.append("</div>");

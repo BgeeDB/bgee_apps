@@ -274,10 +274,11 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 
         navbar.append("<div id='nav'>");
         
-        navbar.append("<ul>");
+        navbar.append("<ul id='bgee_links'>");
         navbar.append("<li>");
         navbar.append("<a title='Expression data page' href='" + 
-                urlDownloadGenerator.getRequestURL() + "'>Expression data</a>" + this.getCaret());
+                urlDownloadGenerator.getRequestURL() + "'>Expression data" + this.getCaret() 
+                + "</a>");
         navbar.append("<ul>");
         navbar.append("<li><a class='drop' title='" + GENE_EXPR_CALLS_PAGE_NAME + "' href='" + 
                 urlDownloadCallsGenerator.getRequestURL() + "'>" + GENE_EXPR_CALLS_PAGE_NAME + 
@@ -289,7 +290,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("</li>");
         navbar.append("<li>");
         navbar.append("<a title='Documentation page' href='" + urlDocGenerator.getRequestURL() + 
-                "'>Documentation</a>" + this.getCaret());
+                "'>Documentation" + this.getCaret() 
+                + "</a>");
         navbar.append("<ul>");
         navbar.append("<li><a class='drop' title='How to access to Bgee data' href='" + 
                 urlBgeeAccessGenerator.getRequestURL() + "'>Bgee data accesses</a></li>");
@@ -304,18 +306,18 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<li id='contact'>");
         navbar.append(this.getObfuscateEmail(0));
         navbar.append("</li>");
-        navbar.append("</ul>");
+        navbar.append("</ul>"); //end of Bgee links
 
-        navbar.append("<div id='social-links'>");
-        navbar.append("<a id='twitter' class='social-link' title='See @Bgeedb account' " +
-                "href='https://twitter.com/Bgeedb'>" + 
+        navbar.append("<ul id='social_links'>");
+        navbar.append("<li><a id='twitter' class='social-link' title='See @Bgeedb account' " +
+                "target='_blank' href='https://twitter.com/Bgeedb'>" + 
                 "<img alt='Twitter logo' src='" + this.prop.getImagesRootDirectory() + 
-                "Twitter.png'></img></a>");
-        navbar.append("<a id='wordpress' class='social-link'  alt='' title='See our blog' " + 
-                "href='https://bgeedb.wordpress.com'>" + 
+                "Twitter.png'></img></a></li>");
+        navbar.append("<li><a id='wordpress' class='social-link'  alt='' title='See our blog' " + 
+                "target='_blank' href='https://bgeedb.wordpress.com'>" + 
                 "<img alt='Wordpress logo' src='" + this.prop.getImagesRootDirectory() + 
-                "wordpress.png'></img></a>");
-        navbar.append("</div>"); // end #social-links
+                "wordpress.png'></img></a></li>");
+        navbar.append("</ul>");  // end #social-links
 
         navbar.append("</div>"); // end #nav
 
@@ -365,6 +367,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * @return  A {@code String} that is the feature documentation logos as HTML 'div' elements,
      *          formated in HTML and HTML escaped if necessary.
      */
+    //XXX: why isn't this in the HtmlDocumentationDisplay?
     protected String getFeatureDocumentationLogos() {
         log.entry();
 
@@ -389,22 +392,24 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         return log.exit(logos.toString());
     }
 
-    /**
-     * Get the main logo of the download page, as HTML 'div' element.
-     *
-     * @return  A {@code String} that is the main download logo as HTML 'div' element,
-     *          formated in HTML and HTML escaped if necessary.
-     */
-    protected String getMainDownloadLogo() {
-        log.entry();
-        
-        RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
-        urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
-    
-        return log.exit(HtmlParentDisplay.getSingleFeatureLogo(urlDownloadGenerator.getRequestURL(), 
-                "Bgee expression data page", "Expression data", 
-                this.prop.getImagesRootDirectory() + "logo/download_logo.png", null));
-    }
+//    /**
+//     * Get the main logo of the download page, as HTML 'div' element.
+//     *
+//     * @return  A {@code String} that is the main download logo as HTML 'div' element,
+//     *          formated in HTML and HTML escaped if necessary.
+//     */
+//    protected String getMainDownloadLogo() {
+//        log.entry();
+//        
+//        RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
+//        urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+//    
+//        return log.exit(HtmlParentDisplay.getSingleFeatureLogo(urlDownloadGenerator.getRequestURL(), 
+//                "Bgee expression data page", "Expression data", 
+//                this.prop.getImagesRootDirectory() + "logo/download_logo.png", 
+//                "Calls of baseline presence/absence of expression, "
+//                + "and of differential over-under expression."));
+//    }
 
     /**
      * Get the feature logos of the download page, as HTML 'div' elements.
@@ -428,13 +433,17 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         logos.append(HtmlParentDisplay.getSingleFeatureLogo(
                 urlDownloadCallsGenerator.getRequestURL(), 
                 "Bgee " + GENE_EXPR_CALLS_PAGE_NAME.toLowerCase() + " page", GENE_EXPR_CALLS_PAGE_NAME, 
-                this.prop.getImagesRootDirectory() + "logo/expr_calls_logo.png", null));
+                this.prop.getImagesRootDirectory() + "logo/expr_calls_logo.png", 
+                "Calls of baseline presence/absence of expression, "
+                + "and of differential over-under expression."));
 
         logos.append(HtmlParentDisplay.getSingleFeatureLogo(
                 urlDownloadRefExprGenerator.getRequestURL(), 
                 "Bgee " + PROCESSED_EXPR_VALUES_PAGE_NAME.toLowerCase() + " page", 
                 PROCESSED_EXPR_VALUES_PAGE_NAME, 
-                this.prop.getImagesRootDirectory() + "logo/proc_values_logo.png", null));
+                this.prop.getImagesRootDirectory() + "logo/proc_values_logo.png", 
+                "Annotations and processed expression data (e.g., read counts, RPKM values, "
+                + "normalized Affymetrix probeset signal intensity values)."));
         
         return log.exit(logos.toString());
     }

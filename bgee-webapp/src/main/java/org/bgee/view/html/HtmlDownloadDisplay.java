@@ -323,28 +323,29 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         //TODO set all groups and with all species when all files will be generated 
         // Pairwises
         s.append(generateSpeciesFigure(Arrays.asList(9606, 10090), GROUP_NAME_HUMAN_MOUSE, true, pageType));
-        //        s.append(generateSpeciesFigure(Arrays.asList(9606, 7955), GROUP_NAME_HUMAN_ZEBRAFISH, true, pageType));
-        //        s.append(generateSpeciesFigure(Arrays.asList(9606, 7227), GROUP_NAME_HUMAN_FRUITFLY, true, pageType));
-        //        s.append(generateSpeciesFigure(Arrays.asList(9606, 6239), GROUP_NAME_HUMAN_NEMATODE, true, pageType));
-        //        s.append(generateSpeciesFigure(Arrays.asList(10090, 7955), GROUP_NAME_MOUSE_ZEBRAFISH, true, pageType));
-        //        s.append(generateSpeciesFigure(Arrays.asList(10090, 7227), GROUP_NAME_MOUSE_FRUITFLY, true, pageType));
-        //        s.append(generateSpeciesFigure(Arrays.asList(10090, 6239), GROUP_NAME_MOUSE_NEMATODE, true, pageType));
-        //        s.append(generateSpeciesFigure(Arrays.asList(7955, 7227), GROUP_NAME_ZEBRAFISH_FRUITFLY, true, pageType));
-        //        s.append(generateSpeciesFigure(Arrays.asList(7955, 6239), GROUP_NAME_ZEBRAFISH_NEMATODE, true, pageType));
-        //        s.append(generateSpeciesFigure(Arrays.asList(7227, 6239), GROUP_NAME_FRUITFLY_NEMATODE, true, pageType));
+        s.append(generateSpeciesFigure(Arrays.asList(9606, 7955), GROUP_NAME_HUMAN_ZEBRAFISH, true, pageType));
+        s.append(generateSpeciesFigure(Arrays.asList(9606, 7227), GROUP_NAME_HUMAN_FRUITFLY, true, pageType));
+        s.append(generateSpeciesFigure(Arrays.asList(9606, 6239), GROUP_NAME_HUMAN_NEMATODE, true, pageType));
+        s.append(generateSpeciesFigure(Arrays.asList(10090, 7955), GROUP_NAME_MOUSE_ZEBRAFISH, true, pageType));
+        s.append(generateSpeciesFigure(Arrays.asList(10090, 7227), GROUP_NAME_MOUSE_FRUITFLY, true, pageType));
+        s.append(generateSpeciesFigure(Arrays.asList(10090, 6239), GROUP_NAME_MOUSE_NEMATODE, true, pageType));
+        s.append(generateSpeciesFigure(Arrays.asList(7955, 7227), GROUP_NAME_ZEBRAFISH_FRUITFLY, true, pageType));
+        s.append(generateSpeciesFigure(Arrays.asList(7955, 6239), GROUP_NAME_ZEBRAFISH_NEMATODE, true, pageType));
+        s.append(generateSpeciesFigure(Arrays.asList(7227, 6239), GROUP_NAME_FRUITFLY_NEMATODE, true, pageType));
         // Groups
+        //        s.append(generateSpeciesFigure(Arrays.asList(9598, 9606, 9593, 9544), GROUP_NAME_CATARRHINI, true, pageType));
         //        s.append(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544), GROUP_NAME_PRIMATES, true, pageType));
-        //        s.append(generateSpeciesFigure(Arrays.asList(10090, 10116), GROUP_NAME_RODENTIA, true, pageType));
         //        s.append(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544, 10116, 10090, 9913, 9823, 13616), GROUP_NAME_THERIA, true, pageType));
         //        s.append(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544, 10116, 10090, 9913, 9823, 13616, 9258), GROUP_NAME_MAMMALIA, true, pageType));
         //        s.append(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544, 10116, 10090, 9913, 9823, 13616, 9258, 28377, 9031), GROUP_NAME_AMNIOTA, true, pageType));
         //        s.append(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544, 10116, 10090, 9913, 9823, 13616, 9258, 28377, 9031, 8364, 7955, 7227, 6239), GROUP_NAME_BILATERIA, true, pageType));
         //        s.append(generateSpeciesFigure(Arrays.asList(9606, 9544), GROUP_NAME_CATARRHINI, true, pageType));
         s.append(generateSpeciesFigure(Arrays.asList(10090, 10116), GROUP_NAME_MURINAE, true, pageType));
-        s.append(generateSpeciesFigure(Arrays.asList(9606, 9544, 10116, 10090, 9913), GROUP_NAME_THERIA, true, pageType));
-        s.append(generateSpeciesFigure(Arrays.asList(9606, 9544, 10116, 10090, 9913, 9258), GROUP_NAME_MAMMALIA, true, pageType));
-        s.append(generateSpeciesFigure(Arrays.asList(9606, 9544, 10116, 10090, 9913, 9258, 9031), GROUP_NAME_AMNIOTA, true, pageType));
-        s.append(generateSpeciesFigure(Arrays.asList(9606, 9544, 10116, 10090, 9913, 9258, 9031, 8364, 7227), GROUP_NAME_BILATERIA, true, pageType));
+        s.append(generateSpeciesFigure(Arrays.asList(9598, 9606, 9593, 9544), GROUP_NAME_CATARRHINI, true, pageType));
+        s.append(generateSpeciesFigure(Arrays.asList(9598, 9606, 9593, 9544, 10116, 10090, 9913, 13616), GROUP_NAME_THERIA, true, pageType));
+        s.append(generateSpeciesFigure(Arrays.asList(9598, 9606, 9593, 9544, 10116, 10090, 9913, 13616, 9258), GROUP_NAME_MAMMALIA, true, pageType));
+        s.append(generateSpeciesFigure(Arrays.asList(9598, 9606, 9593, 9544, 10116, 10090, 9913, 13616, 9258, 9031), GROUP_NAME_AMNIOTA, true, pageType));
+        s.append(generateSpeciesFigure(Arrays.asList(9598, 9606, 9593, 9544, 10116, 10090, 9913, 13616, 9258, 9031, 8364, 7955, 7227), GROUP_NAME_BILATERIA, true, pageType));
         s.append("</div>");
         s.append("</div>");
 

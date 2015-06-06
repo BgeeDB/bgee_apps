@@ -192,23 +192,42 @@ public class BgeeProperties
     
     /**
      * A {@code String} that is the key to access to the System property that is read at the 
-     * initialization of {@code BgeeProperties} to set the processed expression value download 
-     * files root directory. 
-     * 
-     * @see #DOWNLOAD_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT
-     * @see #getDownloadProcExprValueFilesRootDirectory()
-     */
-    public final static String DOWNLOAD_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY = 
-            "org.bgee.webapp.downloadProcExprValueFilesRootDirectory";
-    /**
-     * A {@code String} that is the default value of the processed expression value
+     * initialization of {@code BgeeProperties} to set the Affymetrix processed expression value 
      * download files root directory. 
      * 
-     * @see #DOWNLOAD_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY
-     * @see #getDownloadProcExprValueFilesRootDirectory()
+     * @see #DOWNLOAD_AFFY_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT
+     * @see #getDownloadAffyProcExprValueFilesRootDirectory()
      */
-    public final static String DOWNLOAD_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT = 
-            "procExprValueFiles/";
+    public final static String DOWNLOAD_AFFY_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY = 
+            "org.bgee.webapp.downloadAffyProcExprValueFilesRootDirectory";
+    /**
+     * A {@code String} that is the default value of the Affymetrix processed expression value
+     * download files root directory. 
+     * 
+     * @see #DOWNLOAD_AFFY_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY
+     * @see #getDownloadAffyProcExprValueFilesRootDirectory()
+     */
+    public final static String DOWNLOAD_AFFY_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT = 
+            "processed_expr_values/affymetrix/";
+    /**
+     * A {@code String} that is the key to access to the System property that is read at the 
+     * initialization of {@code BgeeProperties} to set the RNA-Seq processed expression value 
+     * download files root directory. 
+     * 
+     * @see #DOWNLOAD_RNA_SEQ_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT
+     * @see #getDownloadRNASeqProcExprValueFilesRootDirectory()
+     */
+    public final static String DOWNLOAD_RNA_SEQ_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY = 
+            "org.bgee.webapp.downloadRNASeqProcExprValueFilesRootDirectory";
+    /**
+     * A {@code String} that is the default value of the RNA-Seq processed expression value
+     * download files root directory. 
+     * 
+     * @see #DOWNLOAD_RNA_SEQ_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY
+     * @see #getDownloadRNASeqProcExprValueFilesRootDirectory()
+     */
+    public final static String DOWNLOAD_RNA_SEQ_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT = 
+            "processed_expr_values/rna_seq/";
     
     /**
      * A {@code String} that is the key to access to the System property that is read at the 
@@ -382,24 +401,26 @@ public class BgeeProperties
 
     /**
      * A {@code String} that defines the expression download file directory where are located 
-     * expression files available for download, to be added to the {@code bgeeRootDirectory} to 
-     * generate URL to expression download files.
+     * expression files available for download.
      */
     private final String downloadExprFilesRootDirectory;
     
     /**
      * A {@code String} that defines the differential expression download file directory where are 
-     * located differential expression files available for download, to be added to the 
-     * {@code bgeeRootDirectory} to generate URL to differential expression download files.
+     * located differential expression files available for download.
      */
     private final String downloadDiffExprFilesRootDirectory;
     
     /**
-     * A {@code String} that defines the processed expression value download file directory where  
-     * are located processed expression value files available for download, to be added to the 
-     * {@code bgeeRootDirectory} to generate URL to processed expression value download files.
+     * A {@code String} that defines the Affymetrix processed expression value download file
+     * directory where  are located processed expression value files available for download.
      */
-    private final String downloadProcExprValueFilesRootDirectory;
+    private final String downloadAffyProcExprValueFilesRootDirectory;
+    /**
+     * A {@code String} that defines the RNA-Seq processed expression value download file
+     * directory where  are located processed expression value files available for download.
+     */
+    private final String downloadRNASeqProcExprValueFilesRootDirectory;
     
     /**
      * A {@code String} that defines the multi-species differential expression download file 
@@ -539,9 +560,12 @@ public class BgeeProperties
         downloadOrthologFilesRootDirectory = getStringOption(prop, sysProps, fileProps, 
                 DOWNLOAD_ORTHOLOG_FILES_ROOT_DIRECTORY_KEY, 
                 DOWNLOAD_ORTHOLOG_FILES_ROOT_DIRECTORY_DEFAULT);
-        downloadProcExprValueFilesRootDirectory = getStringOption(prop, sysProps, fileProps, 
-                DOWNLOAD_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY, 
-                DOWNLOAD_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT);
+        downloadAffyProcExprValueFilesRootDirectory = getStringOption(prop, sysProps, fileProps, 
+                DOWNLOAD_AFFY_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY, 
+                DOWNLOAD_AFFY_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT);
+        downloadRNASeqProcExprValueFilesRootDirectory = getStringOption(prop, sysProps, fileProps, 
+                DOWNLOAD_RNA_SEQ_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY, 
+                DOWNLOAD_RNA_SEQ_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT);
         javascriptFilesRootDirectory  = getStringOption(prop, sysProps, fileProps, 
                 JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY, JAVASCRIPT_FILES_ROOT_DIRECTORY_DEFAULT);
         javascriptVersionExtension  = getStringOption(prop, sysProps, fileProps, 
@@ -764,13 +788,23 @@ public class BgeeProperties
     
     /**
      * @return  A {@code String} that defines the absolute root directory where are located 
-     *          processed expression value files available for download, to generate URL 
+     *          Affymetrix processed expression value files available for download, to generate URL 
      *          to download files.
-     * @see #DOWNLOAD_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY
-     * @see #DOWNLOAD_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT
+     * @see #DOWNLOAD_AFFY_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY
+     * @see #DOWNLOAD_AFFY_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT
      */
-    public String getDownloadProcExprValueFilesRootDirectory() {
-        return downloadProcExprValueFilesRootDirectory;
+    public String getDownloadAffyProcExprValueFilesRootDirectory() {
+        return downloadAffyProcExprValueFilesRootDirectory;
+    }
+    /**
+     * @return  A {@code String} that defines the absolute root directory where are located 
+     *          RNA-Seq processed expression value files available for download, to generate URL 
+     *          to download files.
+     * @see #DOWNLOAD_RNA_SEQ_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY
+     * @see #DOWNLOAD_RNA_SEQ_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT
+     */
+    public String getDownloadRNASeqProcExprValueFilesRootDirectory() {
+        return downloadRNASeqProcExprValueFilesRootDirectory;
     }
     
     /**

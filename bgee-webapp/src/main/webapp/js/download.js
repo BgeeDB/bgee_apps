@@ -78,6 +78,8 @@ var download = {
         $exprComingSoon: null,
         $diffExprAnatomyComingSoon: null,
         $diffExprDevelopmentComingSoon: null,
+        $inSituDataComingSoon: null,
+        $estDataComingSoon: null,
         // The search elements
         $bgeeSearchForm: null,
         $bgeeSearchBox: null,
@@ -176,6 +178,8 @@ var download = {
             this.$exprComingSoon = $( "#expr_coming_soon" );
             this.$diffExprAnatomyComingSoon = $( "#diffexpr_anatomy_coming_soon" );
             this.$diffExprDevelopmentComingSoon = $( "#diffexpr_development_coming_soon" );
+            this.$inSituDataComingSoon = $( "#insitudata_coming_soon" );
+            this.$estDataComingSoon = $( "#estdata_coming_soon" );
             // Search box
             this.$bgeeSearchForm = $( "#bgee_search_box form" );
             this.$bgeeSearchBox = $( "#bgee_search_box input" );
@@ -563,8 +567,8 @@ var download = {
             	this.$rnaSeqNoData.hide();
             	this.$rnaSeqDataCsv.attr( "href", bgeeRnaSeqDataFileUrl );
             	this.$rnaSeqAnnotCsv.attr( "href", bgeeRnaSeqAnnotFileUrl );
-            	this.$rnaSeqDataCsv.text( "Download data file (" + bgeeRnaSeqDataFileSize + ")" );
-            	this.$rnaSeqAnnotCsv.text( "Download annotation file (" + bgeeRnaSeqAnnotFileSize + ")" );
+            	this.$rnaSeqAnnotCsv.text( "Download experiments/libraries info (" + bgeeRnaSeqAnnotFileSize + ")" );
+            	this.$rnaSeqDataCsv.text( "Download read counts and RPKMs (" + bgeeRnaSeqDataFileSize + ")" );
             }
 
             // Affymetrix processed expression values
@@ -576,27 +580,31 @@ var download = {
             	this.$affyNoData.hide();
             	this.$affyDataCsv.attr( "href", bgeeAffyDataFileUrl );
             	this.$affyAnnotCsv.attr( "href", bgeeAffyAnnotFileUrl );
-            	this.$affyDataCsv.text( "Download data file (" + bgeeAffyDataFileSize + ")" );
-            	this.$affyAnnotCsv.text( "Download annotation file (" + bgeeAffyAnnotFileSize + ")" );
+            	this.$affyAnnotCsv.text( "Download experiments/chips info (" + bgeeAffyAnnotFileSize + ")" );
+            	this.$affyDataCsv.text( "Download signal intensities (" + bgeeAffyDataFileSize + ")" );
             }
 
             // In situ processed expression values
             if (bgeeInSituDataFileUrl === undefined) {
             	this.$inSituData.hide(); 
-            	this.$inSituNoData.show();
+            	this.$inSituNoData.hide();
+            	//TODO remove when in situ data files are computed
+        		this.$inSituDataComingSoon.show();
             } else {
             	this.$inSituData.show(); 
             	this.$inSituNoData.hide();
             	this.$inSituDataCsv.attr( "href", bgeeInSituDataFileUrl );
             	this.$inSituAnnotCsv.attr( "href", bgeeInSituAnnotFileUrl );
-            	this.$inSituDataCsv.text( "Download data file (" + bgeeInSituDataFileSize + ")" );
             	this.$inSituAnnotCsv.text( "Download annotation file (" + bgeeInSituAnnotFileSize + ")" );
+            	this.$inSituDataCsv.text( "Download data file (" + bgeeInSituDataFileSize + ")" );
             }
 
             // EST processed expression values
             if (bgeeEstDataFileUrl === undefined) {
             	this.$estData.hide(); 
-            	this.$estNoData.show();
+            	this.$estNoData.hide();
+            	//TODO remove when EST data files are computed
+        		this.$estDataComingSoon.show();
             } else {
             	this.$estData.show(); 
             	this.$estNoData.hide();

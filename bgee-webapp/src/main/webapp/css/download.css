@@ -174,8 +174,13 @@ label {
     color: #920209;
 }
 
-p {
+p:not(.file_description) {
     margin: 0 2%;
+}
+
+p.file_description {
+	margin-top: 0;
+	margin-bottom: 2%;
 }
 
 #bgee_data_selection {

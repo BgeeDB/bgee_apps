@@ -37,7 +37,8 @@ public class BgeePropertiesFourthTest extends BgeePropertiesParentTest {
         System.clearProperty(BgeeProperties.DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.DOWNLOAD_MULTI_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.DOWNLOAD_ORTHOLOG_FILES_ROOT_DIRECTORY_KEY);
-        System.clearProperty(BgeeProperties.DOWNLOAD_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.DOWNLOAD_AFFY_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.DOWNLOAD_RNA_SEQ_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.JAVASCRIPT_VERSION_EXTENSION_KEY);
         System.clearProperty(BgeeProperties.CSS_FILES_ROOT_DIRECTORY_KEY);
@@ -75,8 +76,11 @@ public class BgeePropertiesFourthTest extends BgeePropertiesParentTest {
                 BgeeProperties.DOWNLOAD_ORTHOLOG_FILES_ROOT_DIRECTORY_DEFAULT, 
                 bgeeProp.getDownloadOrthologFilesRootDirectory());
         assertEquals("Wrong property value retrieved", 
-                BgeeProperties.DOWNLOAD_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT, 
-                bgeeProp.getDownloadProcExprValueFilesRootDirectory());
+                BgeeProperties.DOWNLOAD_AFFY_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT, 
+                bgeeProp.getDownloadAffyProcExprValueFilesRootDirectory());
+        assertEquals("Wrong property value retrieved", 
+                BgeeProperties.DOWNLOAD_RNA_SEQ_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT, 
+                bgeeProp.getDownloadRNASeqProcExprValueFilesRootDirectory());
         assertEquals("Wrong property value retrieved", 
                 BgeeProperties.JAVASCRIPT_FILES_ROOT_DIRECTORY_DEFAULT, 
                 bgeeProp.getJavascriptFilesRootDirectory());

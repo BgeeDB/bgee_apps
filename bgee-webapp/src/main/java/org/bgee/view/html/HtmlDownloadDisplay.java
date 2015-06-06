@@ -68,7 +68,11 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      */
     private final static String GROUP_NAME_FRUITFLY_NEMATODE = "Fruit fly/Nematode";
     /**
-     * A {@code String} that is the group name of Primates.
+     * A {@code String} that is the group name of the pairwise Fruit fly/Nematode.
+     */
+    private final static String GROUP_NAME_MACAQUE_CHIMP = "Macaque/Chimpanzee";
+    /**
+     * A {@code String} that is the group name of Catarrhini.
      */
     private final static String GROUP_NAME_CATARRHINI = "Catarrhini";
     /**
@@ -87,6 +91,10 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      * A {@code String} that is the group name of Amniota.
      */
     private final static String GROUP_NAME_AMNIOTA = "Amniota";
+    /**
+     * A {@code String} that is the group name of Tetrapoda.
+     */
+    private final static String GROUP_NAME_TETRAPODA = "Tetrapoda";
     /**
      * A {@code String} that is the group name of Bilateria.
      */
@@ -323,17 +331,17 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         //TODO set all groups and with all species when all files will be generated 
         // Pairwises
         s.append(generateSpeciesFigure(Arrays.asList(9606, 10090), GROUP_NAME_HUMAN_MOUSE, true, pageType));
-        s.append(generateSpeciesFigure(Arrays.asList(9606, 7955), GROUP_NAME_HUMAN_ZEBRAFISH, true, pageType));
-        s.append(generateSpeciesFigure(Arrays.asList(9606, 7227), GROUP_NAME_HUMAN_FRUITFLY, true, pageType));
-        s.append(generateSpeciesFigure(Arrays.asList(9606, 6239), GROUP_NAME_HUMAN_NEMATODE, true, pageType));
-        s.append(generateSpeciesFigure(Arrays.asList(10090, 7955), GROUP_NAME_MOUSE_ZEBRAFISH, true, pageType));
-        s.append(generateSpeciesFigure(Arrays.asList(10090, 7227), GROUP_NAME_MOUSE_FRUITFLY, true, pageType));
-        s.append(generateSpeciesFigure(Arrays.asList(10090, 6239), GROUP_NAME_MOUSE_NEMATODE, true, pageType));
-        s.append(generateSpeciesFigure(Arrays.asList(7955, 7227), GROUP_NAME_ZEBRAFISH_FRUITFLY, true, pageType));
-        s.append(generateSpeciesFigure(Arrays.asList(7955, 6239), GROUP_NAME_ZEBRAFISH_NEMATODE, true, pageType));
-        s.append(generateSpeciesFigure(Arrays.asList(7227, 6239), GROUP_NAME_FRUITFLY_NEMATODE, true, pageType));
+        //s.append(generateSpeciesFigure(Arrays.asList(9606, 7955), GROUP_NAME_HUMAN_ZEBRAFISH, true, pageType));
+        //s.append(generateSpeciesFigure(Arrays.asList(9606, 7227), GROUP_NAME_HUMAN_FRUITFLY, true, pageType));
+        //s.append(generateSpeciesFigure(Arrays.asList(9606, 6239), GROUP_NAME_HUMAN_NEMATODE, true, pageType));
+        //s.append(generateSpeciesFigure(Arrays.asList(10090, 7955), GROUP_NAME_MOUSE_ZEBRAFISH, true, pageType));
+        //s.append(generateSpeciesFigure(Arrays.asList(10090, 7227), GROUP_NAME_MOUSE_FRUITFLY, true, pageType));
+        //s.append(generateSpeciesFigure(Arrays.asList(10090, 6239), GROUP_NAME_MOUSE_NEMATODE, true, pageType));
+        //s.append(generateSpeciesFigure(Arrays.asList(7955, 7227), GROUP_NAME_ZEBRAFISH_FRUITFLY, true, pageType));
+        //s.append(generateSpeciesFigure(Arrays.asList(7955, 6239), GROUP_NAME_ZEBRAFISH_NEMATODE, true, pageType));
+        //s.append(generateSpeciesFigure(Arrays.asList(7227, 6239), GROUP_NAME_FRUITFLY_NEMATODE, true, pageType));
         // Groups
-        //        s.append(generateSpeciesFigure(Arrays.asList(9598, 9606, 9593, 9544), GROUP_NAME_CATARRHINI, true, pageType));
+        //        s.append(generateSpeciesFigure(Arrays.asList(9606, 9598, 9593, 9544), GROUP_NAME_CATARRHINI, true, pageType));
         //        s.append(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544), GROUP_NAME_PRIMATES, true, pageType));
         //        s.append(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544, 10116, 10090, 9913, 9823, 13616), GROUP_NAME_THERIA, true, pageType));
         //        s.append(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544, 10116, 10090, 9913, 9823, 13616, 9258), GROUP_NAME_MAMMALIA, true, pageType));
@@ -341,11 +349,11 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         //        s.append(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544, 10116, 10090, 9913, 9823, 13616, 9258, 28377, 9031, 8364, 7955, 7227, 6239), GROUP_NAME_BILATERIA, true, pageType));
         //        s.append(generateSpeciesFigure(Arrays.asList(9606, 9544), GROUP_NAME_CATARRHINI, true, pageType));
         s.append(generateSpeciesFigure(Arrays.asList(10090, 10116), GROUP_NAME_MURINAE, true, pageType));
-        s.append(generateSpeciesFigure(Arrays.asList(9598, 9606, 9593, 9544), GROUP_NAME_CATARRHINI, true, pageType));
-        s.append(generateSpeciesFigure(Arrays.asList(9598, 9606, 9593, 9544, 10116, 10090, 9913, 13616), GROUP_NAME_THERIA, true, pageType));
-        s.append(generateSpeciesFigure(Arrays.asList(9598, 9606, 9593, 9544, 10116, 10090, 9913, 13616, 9258), GROUP_NAME_MAMMALIA, true, pageType));
-        s.append(generateSpeciesFigure(Arrays.asList(9598, 9606, 9593, 9544, 10116, 10090, 9913, 13616, 9258, 9031), GROUP_NAME_AMNIOTA, true, pageType));
-        s.append(generateSpeciesFigure(Arrays.asList(9598, 9606, 9593, 9544, 10116, 10090, 9913, 13616, 9258, 9031, 8364, 7955, 7227), GROUP_NAME_BILATERIA, true, pageType));
+        s.append(generateSpeciesFigure(Arrays.asList(9598, 9544), GROUP_NAME_MACAQUE_CHIMP, true, pageType));
+        s.append(generateSpeciesFigure(Arrays.asList(9606, 9598, 9593, 9544, 10116, 10090, 9913, 13616), GROUP_NAME_THERIA, true, pageType));
+        s.append(generateSpeciesFigure(Arrays.asList(9606, 9598, 9593, 9544, 10116, 10090, 9913, 13616, 9258), GROUP_NAME_MAMMALIA, true, pageType));
+        s.append(generateSpeciesFigure(Arrays.asList(9606, 9598, 9593, 9544, 10116, 10090, 9913, 13616, 9258, 9031), GROUP_NAME_AMNIOTA, true, pageType));
+        s.append(generateSpeciesFigure(Arrays.asList(9606, 9598, 9593, 9544, 10116, 10090, 9913, 13616, 9258, 9031, 8364), GROUP_NAME_TETRAPODA, true, pageType));
         s.append("</div>");
         s.append("</div>");
 
@@ -385,7 +393,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         if (pageType.equals(DownloadPageType.EXPR_CALLS)) {
             //Ortholog file
             banner.append("<div id='ortholog_file_buttons' class='bgee_download_file_buttons'>");
-            banner.append("<h2>Hierarchical ortholgous groups</h2>");
+            banner.append("<h2>Hierarchical orthologous groups</h2>");
+            banner.append("<p class='file_description'>This file provides groups of genes orthologous between the selected taxa.</p>");
             //TODO: uncomment when documentation generated, add url management in JS
 //            banner.append("<a id='ortholog_help' href='" + urlDoc.getRequestURL() + "'>"+
 //                    this.getHelpImg() + "</a>");
@@ -458,54 +467,54 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         } else {
             // RNA-Seq data
             banner.append("<div class='bgee_download_file_buttons'>");
-            banner.append("<h2>RNA-Seq experiments</h2>");
+            banner.append("<h2>RNA-Seq data</h2>");
 //            banner.append(this.getHelpLink("rnaseq_help"));
 //            banner.append("<p class='no_data'>Coming soon</p>");
             banner.append("<p id='rnaseq_no_data' class='no_data'>Not enough data</p>");
             banner.append("<div id='rnaseq_data'>" + 
-                    "<a id='rnaseq_data_csv' class='download_link' href='' download></a>" +
-                    this.getShowHeaderLink("show_rnaseq_data_headers") +
                     "<a id='rnaseq_annot_csv' class='download_link' href='' download></a>" +
                     this.getShowHeaderLink("show_rnaseq_annot_headers") +
+                    "<a id='rnaseq_data_csv' class='download_link' href='' download></a>" +
+                    this.getShowHeaderLink("show_rnaseq_data_headers") +
                     "</div>");
             banner.append("</div>");
             // Affymetrix data
             banner.append("<div class='bgee_download_file_buttons'>");
-            banner.append("<h2>Affymetrix experiments</h2>");
+            banner.append("<h2>Affymetrix data</h2>");
 //            banner.append(this.getHelpLink("affy_help"));
 //            banner.append("<p class='no_data'>Coming soon</p>");
             banner.append("<p id='affy_no_data' class='no_data'>Not enough data</p>");
             banner.append("<div id='affy_data'>" + 
-                    "<a id='affy_data_csv' class='download_link' href='' download></a>" +
-                    this.getShowHeaderLink("show_affy_data_headers") +
                     "<a id='affy_annot_csv' class='download_link' href='' download></a>" +
                     this.getShowHeaderLink("show_affy_annot_headers") +
+                    "<a id='affy_data_csv' class='download_link' href='' download></a>" +
+                    this.getShowHeaderLink("show_affy_data_headers") +
                     "</div>");
             banner.append("</div>");
             // In situ data
             banner.append("<div class='bgee_download_file_buttons'>");
-            banner.append("<h2><em>In situ</em> experiments</h2>");
+            banner.append("<h2><em>In situ</em> data</h2>");
 //            banner.append(this.getHelpLink("in_situ_help"));
-//            banner.append("<p class='no_data'>Coming soon</p>");
+            banner.append("<p id='insitudata_coming_soon' class='no_data'>Coming soon</p>");
             banner.append("<p id='in_situ_no_data' class='no_data'>Not enough data</p>");
             banner.append("<div id='in_situ_data'>" + 
-                    "<a id='in_situ_data_csv' class='download_link' href='' download></a>" +
-                    this.getShowHeaderLink("show_in_situ_data_headers") +
                     "<a id='in_situ_annot_csv' class='download_link' href='' download></a>" +
                     this.getShowHeaderLink("show_in_situ_annot_headers") +
+                    "<a id='in_situ_data_csv' class='download_link' href='' download></a>" +
+                    this.getShowHeaderLink("show_in_situ_data_headers") +
                     "</div>");
             banner.append("</div>");            
             // EST data
             banner.append("<div class='bgee_download_file_buttons'>");
-            banner.append("<h2>EST libraries</h2>");
+            banner.append("<h2>EST data</h2>");
 //            banner.append(this.getHelpLink("est_help"));
-//            banner.append("<p class='no_data'>Coming soon</p>");
+            banner.append("<p id='estdata_coming_soon' class='no_data'>Coming soon</p>");
             banner.append("<p id='est_no_data' class='no_data'>Not enough data</p>");
             banner.append("<div id='est_data'>" + 
-                    "<a id='est_data_csv' class='download_link' href='' download></a>" +
-                    this.getShowHeaderLink("show_est_data_headers") +
                     "<a id='est_annot_csv' class='download_link' href='' download></a>" +
                     this.getShowHeaderLink("show_est_annot_headers") +
+                    "<a id='est_data_csv' class='download_link' href='' download></a>" +
+                    this.getShowHeaderLink("show_est_data_headers") +
                     "</div>");
             banner.append("</div>");            
         }
@@ -1208,10 +1217,10 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 return ("");
         }
         
-        String extension = ".tsv.zip";
         
         StringBuffer data = new StringBuffer();
         if (pageType.equals(DownloadPageType.EXPR_CALLS)) {
+            String extension = ".tsv.zip";
             String beginExprFilePath = this.prop.getDownloadExprFilesRootDirectory() + latinName + "_";
             String beginDiffExprFilePath = this.prop.getDownloadDiffExprFilesRootDirectory() + latinName + "_";
             data.append(" data-bgeeexprsimplefileurl='" + beginExprFilePath + "expr-simple" + extension + 
@@ -1240,40 +1249,45 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             }
 
         } else if (pageType.equals(DownloadPageType.PROC_EXPR_VALUES)) {
-            String beginProcValueFilePath = 
-                    this.prop.getDownloadProcExprValueFilesRootDirectory() + latinName + "_";
+            String extension = ".zip";
+            String beginAffyProcValueFilePath = 
+                    this.prop.getDownloadAffyProcExprValueFilesRootDirectory() + "/" 
+                    + latinName + "/" + latinName + "_Affymetrix_";
+            String beginRNASeqProcValueFilePath = 
+                    this.prop.getDownloadRNASeqProcExprValueFilesRootDirectory() + "/" 
+                    + latinName + "/" + latinName + "_RNA-Seq_";
             if (rnaSeqDataFileSize != null) {
-                data.append(" data-bgeernaseqdatafileurl='" + beginProcValueFilePath + 
-                        "RNA-Seq_read_counts_RPKM" + extension +
+                data.append(" data-bgeernaseqdatafileurl='" + beginRNASeqProcValueFilePath + 
+                        "read_counts_RPKM" + extension +
                         "' data-bgeernaseqdatafilesize='" + rnaSeqDataFileSize + "'"); 
-                data.append(" data-bgeernaseqannotfileurl='" + beginProcValueFilePath + 
-                        "RNA-Seq_annotations" + extension +
+                data.append(" data-bgeernaseqannotfileurl='" + beginRNASeqProcValueFilePath + 
+                        "experiments_libraries" + extension +
                         "' data-bgeernaseqannotfilesize='" + rnaSeqAnnotFileSize + "'"); 
             }
             if (affyDataFileSize != null) {
-                data.append(" data-bgeeaffydatafileurl='" + beginProcValueFilePath + 
-                        "Affymetrix_probesets" + extension +
+                data.append(" data-bgeeaffydatafileurl='" + beginAffyProcValueFilePath + 
+                        "probesets" + extension +
                         "' data-bgeeaffydatafilesize='" + affyDataFileSize + "'"); 
-                data.append(" data-bgeeaffyannotfileurl='" + beginProcValueFilePath + 
-                        "Affymetrix_annotations" + extension +
+                data.append(" data-bgeeaffyannotfileurl='" + beginAffyProcValueFilePath + 
+                        "experiments_chips" + extension +
                         "' data-bgeeaffyannotfilesize='" + affyAnnotFileSize + "'"); 
             }
-            if (inSituDataFileSize != null) {
-                data.append(" data-bgeeinsitudatafileurl='" + beginProcValueFilePath + 
-                                        "InSitu_data" + extension +
-                        "' data-bgeeinsitudatafilesize='" + inSituDataFileSize + "'"); 
-                data.append(" data-bgeeinsituannotfileurl='" + beginProcValueFilePath + 
-                        "InSitu_annotations" + extension +
-                        "' data-bgeeinsituannotfilesize='" + inSituAnnotFileSize + "'"); 
-            }
-            if (estDataFileSize != null) {
-                data.append(" data-bgeeestdatafileurl='" + beginProcValueFilePath + 
-                                        "EST_data" + extension +
-                        "' data-bgeeestdatafilesize='" + estDataFileSize + "'"); 
-                data.append(" data-bgeeestannotfileurl='" + beginProcValueFilePath + 
-                        "EST_annotations" + extension +
-                        "' data-bgeeestannotfilesize='" + estAnnotFileSize + "'"); 
-            }
+//            if (inSituDataFileSize != null) {
+//                data.append(" data-bgeeinsitudatafileurl='" + beginProcValueFilePath + 
+//                                        "InSitu_data" + extension +
+//                        "' data-bgeeinsitudatafilesize='" + inSituDataFileSize + "'"); 
+//                data.append(" data-bgeeinsituannotfileurl='" + beginProcValueFilePath + 
+//                        "InSitu_annotations" + extension +
+//                        "' data-bgeeinsituannotfilesize='" + inSituAnnotFileSize + "'"); 
+//            }
+//            if (estDataFileSize != null) {
+//                data.append(" data-bgeeestdatafileurl='" + beginProcValueFilePath + 
+//                                        "EST_data" + extension +
+//                        "' data-bgeeestdatafilesize='" + estDataFileSize + "'"); 
+//                data.append(" data-bgeeestannotfileurl='" + beginProcValueFilePath + 
+//                        "EST_annotations" + extension +
+//                        "' data-bgeeestannotfilesize='" + estAnnotFileSize + "'"); 
+//            }
         } else {
             //TODO what to do?  
         }

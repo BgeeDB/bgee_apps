@@ -50,7 +50,10 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
         prop.put(BgeeProperties.DOWNLOAD_MULTI_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY, 
                 "/injectedmultidiffexprfiles");
         prop.put(BgeeProperties.DOWNLOAD_ORTHOLOG_FILES_ROOT_DIRECTORY_KEY, "/injectedorthologfiles");
-        prop.put(BgeeProperties.DOWNLOAD_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY, "/injectedprocvaluefiles");
+        prop.put(BgeeProperties.DOWNLOAD_AFFY_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY, 
+                "/injectedaffyprocvaluefiles");
+        prop.put(BgeeProperties.DOWNLOAD_RNA_SEQ_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY, 
+                "/injectedrnaseqprocvaluefiles");
         prop.put(BgeeProperties.IMAGES_ROOT_DIRECTORY_KEY, "/injectedimg");
         prop.put(BgeeProperties.JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY, "/injectedjs");
         prop.put(BgeeProperties.JAVASCRIPT_VERSION_EXTENSION_KEY, "injectedJsVersion");
@@ -77,7 +80,9 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
         assertEquals("Wrong property value retrieved", 
                 "/injectedorthologfiles", bgeeProp.getDownloadOrthologFilesRootDirectory());
         assertEquals("Wrong property value retrieved", 
-                "/injectedprocvaluefiles", bgeeProp.getDownloadProcExprValueFilesRootDirectory());
+                "/injectedaffyprocvaluefiles", bgeeProp.getDownloadAffyProcExprValueFilesRootDirectory());
+        assertEquals("Wrong property value retrieved", 
+                "/injectedrnaseqprocvaluefiles", bgeeProp.getDownloadRNASeqProcExprValueFilesRootDirectory());
         assertEquals("Wrong property value retrieved", 
                 "/injectedimg", bgeeProp.getImagesRootDirectory());
         assertEquals("Wrong property value retrieved", 

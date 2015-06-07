@@ -512,7 +512,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             banner.append("<h2>RNA-Seq data</h2>");
 //            banner.append(this.getHelpLink("rnaseq_help"));
 //            banner.append("<p class='no_data'>Coming soon</p>");
-            banner.append("<p id='rnaseq_no_data' class='no_data'>Not enough data</p>");
+            banner.append("<p id='rnaseq_no_data' class='no_data'>No data</p>");
             
             //data section
             banner.append("<div id='rnaseq_data'>");
@@ -534,7 +534,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             banner.append("<h2>Affymetrix data</h2>");
 //            banner.append(this.getHelpLink("affy_help"));
 //            banner.append("<p class='no_data'>Coming soon</p>");
-            banner.append("<p id='affy_no_data' class='no_data'>Not enough data</p>");
+            banner.append("<p id='affy_no_data' class='no_data'>No data</p>");
             
             //data section
             banner.append("<div id='affy_data'>"); 
@@ -555,7 +555,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             banner.append("<h2><em>In situ</em> data</h2>");
 //            banner.append(this.getHelpLink("in_situ_help"));
             banner.append("<p id='insitudata_coming_soon' class='no_data'>Coming soon</p>");
-            banner.append("<p id='in_situ_no_data' class='no_data'>Not enough data</p>");
+            banner.append("<p id='in_situ_no_data' class='no_data'>No data</p>");
             banner.append("<div id='in_situ_data'>" + 
                     "<a id='in_situ_annot_csv' class='download_link' href='' download></a>" +
                     this.getShowHeaderLink("show_in_situ_annot_headers") +
@@ -568,7 +568,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             banner.append("<h2>EST data</h2>");
 //            banner.append(this.getHelpLink("est_help"));
             banner.append("<p id='estdata_coming_soon' class='no_data'>Coming soon</p>");
-            banner.append("<p id='est_no_data' class='no_data'>Not enough data</p>");
+            banner.append("<p id='est_no_data' class='no_data'>No data</p>");
             banner.append("<div id='est_data'>" + 
                     "<a id='est_annot_csv' class='download_link' href='' download></a>" +
                     this.getShowHeaderLink("show_est_annot_headers") +
@@ -868,13 +868,23 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             case GROUP_NAME_HUMAN_MOUSE:
 //                exprSimpleFileSize = "xx MB";
 //                exprCompleteFileSize = "xx MB"; 
-                diffExprAnatSimpleFileSize = "1.1 MB";
-                diffExprAnatCompleteFileSize  = "5.9 MB";
+                diffExprAnatSimpleFileSize = "0.7 MB";
+                diffExprAnatCompleteFileSize  = "6 MB";
 //                diffExprDevSimpleFileSize = "xx MB";
 //                diffExprDevCompleteFileSize = "xx MB"; 
-                orthologFileSize = "xx MB"; 
+                orthologFileSize = "0.4 MB"; 
                 filePrefix= "human_mouse";
-                break;
+                break;         
+            case GROUP_NAME_MACAQUE_CHIMP:
+//              exprSimpleFileSize = "xx MB";
+//              exprCompleteFileSize = "xx MB"; 
+              diffExprAnatSimpleFileSize = "0.3 MB";
+              diffExprAnatCompleteFileSize  = "1 MB";
+//              diffExprDevSimpleFileSize = "xx MB";
+//              diffExprDevCompleteFileSize = "xx MB"; 
+              orthologFileSize = "0.3 MB"; 
+              filePrefix= "macaque_chimpanzee";
+              break;
             case GROUP_NAME_HUMAN_ZEBRAFISH:
 //                exprSimpleFileSize = "xx MB";
 //                exprCompleteFileSize = "xx MB"; 
@@ -978,43 +988,53 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             case GROUP_NAME_MURINAE:
 //                exprSimpleFileSize = "xx MB";
 //                exprCompleteFileSize = "xx MB"; 
-                diffExprAnatSimpleFileSize = "745 KB";
-                diffExprAnatCompleteFileSize  = "3.9 MB";
+                diffExprAnatSimpleFileSize = "0.7 MB";
+                diffExprAnatCompleteFileSize  = "4 MB";
 //                diffExprDevSimpleFileSize = "xx MB";
 //                diffExprDevCompleteFileSize = "xx MB"; 
-                orthologFileSize = "xx MB"; 
+                orthologFileSize = "0.3 MB"; 
                 filePrefix= "murinae";
                 break;
             case GROUP_NAME_THERIA:
 //                exprSimpleFileSize = "xx MB";
 //                exprCompleteFileSize = "xx MB"; 
-                diffExprAnatSimpleFileSize = "2.2 MB";
-                diffExprAnatCompleteFileSize  = "12 MB";
+                diffExprAnatSimpleFileSize = "3 MB";
+                diffExprAnatCompleteFileSize  = "15 MB";
 //                diffExprDevSimpleFileSize = "xx MB";
 //                diffExprDevCompleteFileSize = "xx MB"; 
-                orthologFileSize = "xx MB"; 
+                orthologFileSize = "1 MB"; 
                 filePrefix= "theria";
                 break;
             case GROUP_NAME_MAMMALIA:
 //                exprSimpleFileSize = "xx MB";
 //                exprCompleteFileSize = "xx MB"; 
-                diffExprAnatSimpleFileSize = "1.7 MB";
-                diffExprAnatCompleteFileSize  = "9 MB";
+                diffExprAnatSimpleFileSize = "2 MB";
+                diffExprAnatCompleteFileSize  = "12 MB";
 //                diffExprDevSimpleFileSize = "xx MB";
 //                diffExprDevCompleteFileSize = "xx MB"; 
-                orthologFileSize = "xx MB"; 
+                orthologFileSize = "0.7 MB"; 
                 filePrefix= "mammalia";
                 break;
             case GROUP_NAME_AMNIOTA:
 //                exprSimpleFileSize = "xx MB";
 //                exprCompleteFileSize = "xx MB"; 
-                diffExprAnatSimpleFileSize = "2.6 MB";
-                diffExprAnatCompleteFileSize  = "14 MB";
+                diffExprAnatSimpleFileSize = "3 MB";
+                diffExprAnatCompleteFileSize  = "17 MB";
 //                diffExprDevSimpleFileSize = "xx MB";
 //                diffExprDevCompleteFileSize = "xx MB"; 
-                orthologFileSize = "xx MB"; 
+                orthologFileSize = "1 MB"; 
                 filePrefix= "amniota";
                 break;
+            case GROUP_NAME_TETRAPODA:
+//              exprSimpleFileSize = "xx MB";
+//              exprCompleteFileSize = "xx MB"; 
+              diffExprAnatSimpleFileSize = "3 MB";
+              diffExprAnatCompleteFileSize  = "17 MB";
+//              diffExprDevSimpleFileSize = "xx MB";
+//              diffExprDevCompleteFileSize = "xx MB"; 
+              orthologFileSize = "1 MB"; 
+              filePrefix= "tetrapoda";
+              break;
             case GROUP_NAME_BILATERIA:
 //                exprSimpleFileSize = "xx MB";
 //                exprCompleteFileSize = "xx MB"; 
@@ -1026,7 +1046,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 filePrefix= "bilateria";
                 break;
             default:
-                return ("");
+                throw log.throwing(new IllegalArgumentException("Unrecognized group: " + groupName));
         }
         
         // XXX: use MultiSpeciesDiffExprFileType instead of string?
@@ -1092,97 +1112,103 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
         switch (speciesId) {
             case 9606: 
-                exprSimpleFileSize = "85 MB";
-                exprCompleteFileSize = "963 MB"; 
-                diffExprAnatSimpleFileSize = "4.3 MB";
-                diffExprAnatCompleteFileSize  = "24.5 MB";
-                diffExprDevSimpleFileSize = "0.7 MB";
-                diffExprDevCompleteFileSize = "15.8 MB"; 
-                rnaSeqDataFileSize = "xx MB";
-                rnaSeqAnnotFileSize = "xx MB";
-                affyDataFileSize = "xx MB";
-                affyAnnotFileSize = "xx MB";
-                estDataFileSize = "xx MB";
-                estAnnotFileSize = "xx MB";
+                exprSimpleFileSize = "87 MB";
+                exprCompleteFileSize = "711 MB"; 
+                diffExprAnatSimpleFileSize = "4.4 MB";
+                diffExprAnatCompleteFileSize  = "25 MB";
+                diffExprDevSimpleFileSize = "0.5 MB";
+                diffExprDevCompleteFileSize = "13 MB"; 
+                rnaSeqDataFileSize = "32 MB";
+                rnaSeqAnnotFileSize = "6 KB";
+                affyDataFileSize = "1.4 GB";
+                affyAnnotFileSize = "0.3 MB";
+                //estDataFileSize = "xx MB";
+                //estAnnotFileSize = "xx MB";
                 latinName = "Homo_sapiens";
                 break;
             case 10090: 
-                exprSimpleFileSize = "115 MB";
-                exprCompleteFileSize = "1.5 GB"; 
-                diffExprAnatSimpleFileSize = "7.8 MB";
-                diffExprAnatCompleteFileSize  = "30.9 MB";
-                diffExprDevSimpleFileSize = "4.3 MB";
-                diffExprDevCompleteFileSize = "33.2 MB";
-                rnaSeqDataFileSize = "xx MB";
-                rnaSeqAnnotFileSize = "xx MB";
-                affyDataFileSize = "xx MB";
-                affyAnnotFileSize = "xx MB";
-                inSituDataFileSize = "xx MB";
-                inSituAnnotFileSize = "xx MB";
-                estDataFileSize = "xx MB";
-                estAnnotFileSize = "xx MB";
+                exprSimpleFileSize = "121 MB";
+                exprCompleteFileSize = "1.2 GB"; 
+                diffExprAnatSimpleFileSize = "8 MB";
+                diffExprAnatCompleteFileSize  = "40 MB";
+                diffExprDevSimpleFileSize = "4 MB";
+                diffExprDevCompleteFileSize = "32 MB";
+                rnaSeqDataFileSize = "32 MB";
+                rnaSeqAnnotFileSize = "9 KB";
+                affyDataFileSize = "1.2 GB";
+                affyAnnotFileSize = "0.5 MB";
+                //inSituDataFileSize = "xx MB";
+                //inSituAnnotFileSize = "xx MB";
+                //estDataFileSize = "xx MB";
+                //estAnnotFileSize = "xx MB";
                 latinName = "Mus_musculus";
                 break;
             case 7955: 
-                exprSimpleFileSize = "4.3 MB";
-                exprCompleteFileSize = "588 MB"; 
+                exprSimpleFileSize = "4.2 MB";
+                exprCompleteFileSize = "158 MB"; 
+                diffExprAnatSimpleFileSize = "0.02 MB";
+                diffExprAnatCompleteFileSize  = "0.2 MB";
                 diffExprDevSimpleFileSize = "0,4 MB";
                 diffExprDevCompleteFileSize = "1.3 MB";
-                affyDataFileSize = "xx MB";
-                affyAnnotFileSize = "xx MB";
-                inSituDataFileSize = "xx MB";
-                inSituAnnotFileSize = "xx MB";
-                estDataFileSize = "xx MB";
-                estAnnotFileSize = "xx MB";
+                affyDataFileSize = "20 MB";
+                affyAnnotFileSize = "22 KB";
+                //inSituDataFileSize = "xx MB";
+                //inSituAnnotFileSize = "xx MB";
+                //estDataFileSize = "xx MB";
+                //estAnnotFileSize = "xx MB";
                 latinName = "Danio_rerio";
                 break;
             case 7227: 
-                exprSimpleFileSize = "4.9 MB";
-                exprCompleteFileSize = "730 MB"; 
-                diffExprAnatSimpleFileSize = "0.4 MB";
-                diffExprAnatCompleteFileSize  = "1.3 MB";
+                exprSimpleFileSize = "4.7 MB";
+                exprCompleteFileSize = "207 MB"; 
+                diffExprAnatSimpleFileSize = "0.5 MB";
+                diffExprAnatCompleteFileSize  = "1.6 MB";
                 diffExprDevSimpleFileSize = "0.2 MB";
-                diffExprDevCompleteFileSize = "0.8 MB"; 
-                affyDataFileSize = "xx MB";
-                affyAnnotFileSize = "xx MB";
-                inSituDataFileSize = "xx MB";
-                inSituAnnotFileSize = "xx MB";
-                estDataFileSize = "xx MB";
-                estAnnotFileSize = "xx MB";
+                diffExprDevCompleteFileSize = "0.9 MB"; 
+                affyDataFileSize = "115 MB";
+                affyAnnotFileSize = "69 KB";
+                //inSituDataFileSize = "xx MB";
+                //inSituAnnotFileSize = "xx MB";
+                //estDataFileSize = "xx MB";
+                //estAnnotFileSize = "xx MB";
                 latinName = "Drosophila_melanogaster";
                 break;
             case 6239: 
                 exprSimpleFileSize = "1.2 MB";
-                exprCompleteFileSize = "340 MB"; 
-                diffExprDevSimpleFileSize = "0.1 MB";
-                diffExprDevCompleteFileSize = "1.2 MB"; 
-                affyDataFileSize = "xx MB";
-                affyAnnotFileSize = "xx MB";
-                rnaSeqDataFileSize = "xx MB";
-                rnaSeqAnnotFileSize = "xx MB";
-                inSituDataFileSize = "xx MB";
-                inSituAnnotFileSize = "xx MB";
+                exprCompleteFileSize = "13 MB"; 
+                diffExprDevSimpleFileSize = "0.2 MB";
+                diffExprDevCompleteFileSize = "1.7 MB"; 
+                affyDataFileSize = "13 MB";
+                affyAnnotFileSize = "4 KB";
+                rnaSeqDataFileSize = "11 MB";
+                rnaSeqAnnotFileSize = "4 KB";
+                //inSituDataFileSize = "xx MB";
+                //inSituAnnotFileSize = "xx MB";
                 latinName = "Caenorhabditis_elegans";
                 break;
             case 9597: 
                 exprSimpleFileSize = "0.7 MB";
-                exprCompleteFileSize = "38 MB"; 
-                rnaSeqDataFileSize = "xx MB";
-                rnaSeqAnnotFileSize = "xx MB";
+                exprCompleteFileSize = "33 MB"; 
+                rnaSeqDataFileSize = "3 MB";
+                rnaSeqAnnotFileSize = "2 KB";
                 latinName = "Pan_paniscus";
                 break;
             case 9598: 
                 exprSimpleFileSize = "0.5 MB";
-                exprCompleteFileSize = "31 MB";  
-                rnaSeqDataFileSize = "xx MB";
-                rnaSeqAnnotFileSize = "xx MB";
+                exprCompleteFileSize = "29 MB";  
+                diffExprAnatSimpleFileSize = "0.2 MB";
+                diffExprAnatCompleteFileSize  = "0.9 MB";
+                rnaSeqDataFileSize = "3 MB";
+                rnaSeqAnnotFileSize = "3 KB";
                 latinName = "Pan_troglodytes";
                 break;
             case 9593: 
-                exprSimpleFileSize = "0.5 MB";
-                exprCompleteFileSize = "30 MB";  
-                rnaSeqDataFileSize = "xx MB";
-                rnaSeqAnnotFileSize = "xx MB";
+                exprSimpleFileSize = "0.6 MB";
+                exprCompleteFileSize = "26 MB"; 
+                diffExprAnatSimpleFileSize = "0.2 MB";
+                diffExprAnatCompleteFileSize  = "0.9 MB";
+                rnaSeqDataFileSize = "3 MB";
+                rnaSeqAnnotFileSize = "3 KB";
                 latinName = "Gorilla_gorilla";
                 break;
             case 9600: 
@@ -1190,83 +1216,85 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 break;
             case 9544: 
                 exprSimpleFileSize = "1.2 MB";
-                exprCompleteFileSize = "112 MB"; 
+                exprCompleteFileSize = "54 MB"; 
                 diffExprAnatSimpleFileSize = "0.4 MB";
                 diffExprAnatCompleteFileSize  = "2.5 MB"; 
-                rnaSeqDataFileSize = "xx MB";
-                rnaSeqAnnotFileSize = "xx MB";
+                rnaSeqDataFileSize = "10 MB";
+                rnaSeqAnnotFileSize = "5 KB";
                 latinName = "Macaca_mulatta";
                 break;
             case 10116: 
                 exprSimpleFileSize = "0.8 MB";
-                exprCompleteFileSize = "59 MB"; 
+                exprCompleteFileSize = "27 MB"; 
                 diffExprAnatSimpleFileSize = "0.5 MB";
-                diffExprAnatCompleteFileSize  = "1.9 MB"; 
-                rnaSeqDataFileSize = "xx MB";
-                rnaSeqAnnotFileSize = "xx MB";
+                diffExprAnatCompleteFileSize  = "2 MB"; 
+                rnaSeqDataFileSize = "6.2 MB";
+                rnaSeqAnnotFileSize = "3 KB";
                 latinName = "Rattus_norvegicus";
                 break;
             case 9913: 
                 exprSimpleFileSize = "0.7 MB";
-                exprCompleteFileSize = "58 MB"; 
-                diffExprAnatSimpleFileSize = "0.3 MB";
-                diffExprAnatCompleteFileSize  = "1.8 MB"; 
-                rnaSeqDataFileSize = "xx MB";
-                rnaSeqAnnotFileSize = "xx MB";
+                exprCompleteFileSize = "33 MB"; 
+                diffExprAnatSimpleFileSize = "0.4 MB";
+                diffExprAnatCompleteFileSize  = "1.9 MB"; 
+                rnaSeqDataFileSize = "6 MB";
+                rnaSeqAnnotFileSize = "3 KB";
                 latinName = "Bos_taurus";
                 break;
             case 9823: 
                 exprSimpleFileSize = "0.3 MB";
-                exprCompleteFileSize = "6.4 MB";  
-                rnaSeqDataFileSize = "xx MB";
-                rnaSeqAnnotFileSize = "xx MB";
+                exprCompleteFileSize = "2.3 MB";  
+                rnaSeqDataFileSize = "0.8 MB";
+                rnaSeqAnnotFileSize = "1 KB";
                 latinName = "Sus_scrofa";
                 break;
             case 13616: 
                 exprSimpleFileSize = "0.9 MB";
-                exprCompleteFileSize = "49 MB";  
-                rnaSeqDataFileSize = "xx MB";
-                rnaSeqAnnotFileSize = "xx MB";
+                exprCompleteFileSize = "25 MB";  
+                diffExprAnatSimpleFileSize = "0.2 MB";
+                diffExprAnatCompleteFileSize  = "0.5 MB"; 
+                rnaSeqDataFileSize = "4 MB";
+                rnaSeqAnnotFileSize = "3 KB";
                 latinName = "Monodelphis_domestica";
                 break;
             case 9258: 
                 exprSimpleFileSize = "0.6 MB";
-                exprCompleteFileSize = "34 MB"; 
+                exprCompleteFileSize = "19 MB"; 
                 diffExprAnatSimpleFileSize = "0.2 MB";
                 diffExprAnatCompleteFileSize  = "1.2 MB"; 
-                rnaSeqDataFileSize = "xx MB";
-                rnaSeqAnnotFileSize = "xx MB";
+                rnaSeqDataFileSize = "4 MB";
+                rnaSeqAnnotFileSize = "3 KB";
                 latinName = "Ornithorhynchus_anatinus";
                 break;
             case 9031: 
                 exprSimpleFileSize = "1 MB";
-                exprCompleteFileSize = "55 MB"; 
+                exprCompleteFileSize = "29 MB"; 
                 diffExprAnatSimpleFileSize = "0.4 MB";
                 diffExprAnatCompleteFileSize  = "1.7 MB"; 
-                rnaSeqDataFileSize = "xx MB";
-                rnaSeqAnnotFileSize = "xx MB";
+                rnaSeqDataFileSize = "7 MB";
+                rnaSeqAnnotFileSize = "5 KB";
                 latinName = "Gallus_gallus";
                 break;
             case 28377: 
                 exprSimpleFileSize = "0.3 MB";
-                exprCompleteFileSize = "19 MB";  
-                rnaSeqDataFileSize = "xx MB";
-                rnaSeqAnnotFileSize = "xx MB";
+                exprCompleteFileSize = "5.7 MB";  
+                rnaSeqDataFileSize = "0.8 MB";
+                rnaSeqAnnotFileSize = "2 KB";
                 latinName = "Anolis_carolinensis";
                 break;
             case 8364: 
                 exprSimpleFileSize = "2.6 MB";
-                exprCompleteFileSize = "287 MB"; 
+                exprCompleteFileSize = "65 MB"; 
                 diffExprAnatSimpleFileSize = "0.2 MB";
                 diffExprAnatCompleteFileSize  = "1 MB";
                 diffExprDevSimpleFileSize = "0.1 MB";
                 diffExprDevCompleteFileSize = "0.6 MB";  
-                rnaSeqDataFileSize = "xx MB";
-                rnaSeqAnnotFileSize = "xx MB";
-                inSituDataFileSize = "xx MB";
-                inSituAnnotFileSize = "xx MB";
-                estDataFileSize = "xx MB";
-                estAnnotFileSize = "xx MB";
+                rnaSeqDataFileSize = "12 MB";
+                rnaSeqAnnotFileSize = "6 KB";
+                //inSituDataFileSize = "xx MB";
+                //inSituAnnotFileSize = "xx MB";
+                //estDataFileSize = "xx MB";
+                //estAnnotFileSize = "xx MB";
                 latinName = "Xenopus_tropicalis";
                 break;
             case 99883: 

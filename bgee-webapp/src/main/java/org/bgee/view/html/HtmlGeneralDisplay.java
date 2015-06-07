@@ -111,7 +111,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                        "The complete website remains available for the previous release of Bgee:</p>");
         this.writeln("<div id='feature_list'>");
         this.writeln(HtmlParentDisplay.getSingleFeatureLogo("http://bgee.org/bgee/bgee", 
-                "Bgee 12 home page", "Bgee 12", 
+                true, "Bgee 12 home page", "Bgee 12", 
                 this.prop.getImagesRootDirectory() + "logo/bgee12_logo.png", null));
         this.writeln("</div>");
 

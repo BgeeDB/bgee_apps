@@ -83,6 +83,10 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * Get the single feature logo with a description as a HTML 'div' element.
      *
      * @param url           A {@code String} that is the URL of the link.
+     * @param externalLink  A {@code boolean} defining whether the link points to a Bgee 
+     *                      internal URL, or an external resource (in which case a 'target' 
+     *                      attribute with the '_blank' value will be append to the link). 
+     *                      If {@code true}, the link points to an external resource.
      * @param title         A {@code String} that is the title and the alternate text of the image.
      * @param figcaption    A {@code String} that is the caption of the 'figure' element.
      * @param imgPath       A {@code String} that is the path of the image.
@@ -91,12 +95,14 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      *                      formated in HTML and HTML escaped if necessary.
      */
     protected static String getSingleFeatureLogo(
-            String url, String title, String figcaption, String imgPath, String desc) {
-        log.entry(url, title, figcaption, imgPath, desc);
+            String url, boolean externalLink, String title, String figcaption, 
+            String imgPath, String desc) {
+        log.entry(url, externalLink, title, figcaption, imgPath, desc);
         
         StringBuffer feature = new StringBuffer();
         feature.append("<div class='single_feature'>");
-        feature.append("<a href='" + url + "' title='" + title + "'>" +
+        feature.append("<a href='" + url + "' title='" + title + "'"
+                + (externalLink ? " target='_blank'" : "") + ">" +
                 "<figure><img src='" + imgPath + "' alt='" + title + " logo' />" +
                 "<figcaption>" + figcaption + "</figcaption>" +
                 "</figure></a>");
@@ -357,7 +363,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         urlDocumentationGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
     
         return log.exit(HtmlParentDisplay.getSingleFeatureLogo(
-                urlDocumentationGenerator.getRequestURL(), 
+                urlDocumentationGenerator.getRequestURL(), false, 
                 "Bgee documentation page", "Documentation", 
                 this.prop.getImagesRootDirectory() + "logo/doc_logo.png", null));
     }
@@ -383,11 +389,11 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         StringBuffer logos = new StringBuffer(); 
 
         logos.append(HtmlParentDisplay.getSingleFeatureLogo(urlHowToAccessGenerator.getRequestURL(), 
-                "How to access to Bgee data", "Access to Bgee data", 
+                false, "How to access to Bgee data", "Access to Bgee data", 
                 this.prop.getImagesRootDirectory() + "logo/bgee_access_logo.png", null));
 
         logos.append(HtmlParentDisplay.getSingleFeatureLogo(urlCallFilesGenerator.getRequestURL(), 
-                "Download file documentation page", "Download file documentation", 
+                false, "Download file documentation page", "Download file documentation", 
                 this.prop.getImagesRootDirectory() + "logo/download_logo.png", null));
 
         return log.exit(logos.toString());
@@ -432,20 +438,19 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         StringBuffer logos = new StringBuffer(); 
         
         logos.append(HtmlParentDisplay.getSingleFeatureLogo(
-                urlDownloadCallsGenerator.getRequestURL(), 
+                urlDownloadCallsGenerator.getRequestURL(), false, 
                 "Bgee " + GENE_EXPR_CALLS_PAGE_NAME.toLowerCase() + " page", GENE_EXPR_CALLS_PAGE_NAME, 
                 this.prop.getImagesRootDirectory() + "logo/expr_calls_logo.png", 
                 "Calls of baseline presence/absence of expression, "
-                + "and of differential over-under expression, in single species, "
-                + "or made comparable between species."));
+                + "and of differential over-under expression, in single or multiple species."));
 
         logos.append(HtmlParentDisplay.getSingleFeatureLogo(
-                urlDownloadRefExprGenerator.getRequestURL(), 
+                urlDownloadRefExprGenerator.getRequestURL(), false, 
                 "Bgee " + PROCESSED_EXPR_VALUES_PAGE_NAME.toLowerCase() + " page", 
                 PROCESSED_EXPR_VALUES_PAGE_NAME, 
                 this.prop.getImagesRootDirectory() + "logo/proc_values_logo.png", 
                 "Annotations and processed expression data (e.g., read counts, RPKM values, "
-                + "log values of Affymetrix probeset normalized signal intensities)."));
+                + "Affymetrix probeset signal intensities)."));
         
         return log.exit(logos.toString());
     }

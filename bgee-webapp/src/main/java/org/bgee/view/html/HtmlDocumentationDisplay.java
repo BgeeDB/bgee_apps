@@ -233,6 +233,8 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
     }
 
     @Override
+    //TODO: use a different ID than 'feature_list', to provide a different look, 
+    //notably with much larger elements, to provide more text below the figures.
     public void displayHowToAccessDataDocumentation() {
         log.entry();
         
@@ -250,25 +252,23 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         
         this.writeln("<div id='feature_list'>");
         
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
-                urlDownloadProcExprValuesGenerator.getRequestURL(), 
-                "Bgee " + PROCESSED_EXPR_VALUES_PAGE_NAME.toLowerCase() + " page", 
-                PROCESSED_EXPR_VALUES_PAGE_NAME, 
-                this.prop.getImagesRootDirectory() + "logo/proc_values_logo.png", null));
-
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(urlDownloadCallsGenerator.getRequestURL(), 
-                "Bgee " + GENE_EXPR_CALLS_PAGE_NAME.toLowerCase() + " page", GENE_EXPR_CALLS_PAGE_NAME, 
-                this.prop.getImagesRootDirectory() + "logo/expr_calls_logo.png", null));
+        this.writeln(this.getFeatureDownloadLogos());
 
         this.writeln(HtmlParentDisplay.getSingleFeatureLogo("https://github.com/BgeeDB", 
-                "BgeeDB GitHub", "GitHub", 
-                this.prop.getImagesRootDirectory() + "logo/github_logo.png", null));
+                true, "GitHub of the Bgee project", "GitHub", 
+                this.prop.getImagesRootDirectory() + "logo/github_logo.png", 
+                "Retrieve our annotations of homology between anatomical structures, "
+                + "as well as the Confidence Information Ontology (CIO) "
+                + "and the Homology Ontology (HOM), from our GitHub repository."));
 
+        //TODO: add a bgee property to link to the MySQL dump
         this.writeln(HtmlParentDisplay.getSingleFeatureLogo(this.prop.getDownloadRootDirectory() + 
                 //TODO: change this ugly '../' once we'll have added a property to distinguish 
                 //FTP root and download_files directory. See todo in BgeeProperties
-                "../bgee.dump", "MySQL dump", "MySQL dump", 
-                this.prop.getImagesRootDirectory() + "logo/mysql_logo.png", null));
+                "../sql_dump.tar.gz", false, "Download dump the MySQL Bgee database", "MySQL dump", 
+                this.prop.getImagesRootDirectory() + "logo/mysql_logo.png", 
+                "Download the complete dump of the MySQL Bgee database, that contains "
+                + "all the data used to generate the information displayed on this website."));
 
         this.writeln("</div>");
         

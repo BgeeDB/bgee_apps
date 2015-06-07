@@ -237,6 +237,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         String intro = "<p>Bgee is a database to retrieve and compare gene expression patterns "
                 + "in multiple animal species, based exclusively on curated \"normal\" "
                 + "expression data (e.g., no gene knock-out, no treatment, no disease), "
+                + "from multiple data types, "
                 + "to provide a comparable reference of normal gene expression.</p>";
         if (pageType == DownloadPageType.EXPR_CALLS) {
             intro += "<p>This page provides calls of baseline "
@@ -253,9 +254,24 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         } else {
             assert false: "Unknown DownloadPageType";
         }
+        intro += "See also ";
+        if (pageType == DownloadPageType.EXPR_CALLS) {
+            RequestParameters urlGenerator = this.getNewRequestParameters();
+            urlGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+            urlGenerator.setAction(RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES);
+            intro += "<a href='" + urlGenerator.getRequestURL() 
+                    + "' title='See Bgee processed expression values'>processed expression values</a>";
+        } else {
+            RequestParameters urlGenerator = this.getNewRequestParameters();
+            urlGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+            urlGenerator.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
+            intro += "<a href='" + urlGenerator.getRequestURL() 
+                    + "' title='See Bgee gene expression calls'>gene expression calls</a>";
+        }
+
         //TODO: change this ugly '../' once we'll have added a property to distinguish 
         //FTP root and download_files directory. See todo in BgeeProperties
-        intro += "See also <a href='" + this.prop.getDownloadRootDirectory() 
+        intro += ", and <a href='" + this.prop.getDownloadRootDirectory() 
                 + "../statistics.tsv' title='Database statistics TSV file'>"
                 + "database statistics</a>.</p>";
         return log.exit(intro);
@@ -418,7 +434,6 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             //Ortholog file
             banner.append("<div id='ortholog_file_buttons' class='bgee_download_file_buttons'>");
             banner.append("<h2>Hierarchical orthologous groups</h2>");
-            banner.append("<p class='file_info'>This file provides groups of genes orthologous between the selected taxa.</p>");
             //TODO: uncomment when documentation generated, add url management in JS
 //            banner.append("<a id='ortholog_help' href='" + urlDoc.getRequestURL() + "'>"+
 //                    this.getHelpImg() + "</a>");
@@ -426,6 +441,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                     "<a id='ortholog_csv' class='download_link' href='' download></a>" +
 //                    this.getShowHeaderLink("show_ortholog_headers") + 
                     "</div>");
+            banner.append("<p class='file_info'>This file provides groups of genes orthologous "
+                    + "between the selected taxa.</p>");
             //TODO: uncomment when documentation generated, add url management in JS
 //            banner.append("<div id='ortholog_headers' class='header_table'>" +
 //                    HtmlDocumentationCallFile.getOrthologHeaderDesc() + "</div>");

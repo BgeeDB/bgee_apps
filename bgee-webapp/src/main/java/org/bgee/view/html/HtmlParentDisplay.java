@@ -293,10 +293,11 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 "'>Documentation" + this.getCaret() 
                 + "</a>");
         navbar.append("<ul>");
-        navbar.append("<li><a class='drop' title='How to access to Bgee data' href='" + 
-                urlBgeeAccessGenerator.getRequestURL() + "'>Bgee data accesses</a></li>");
+        navbar.append("<li><a class='drop' title='See how to access to Bgee data' href='" + 
+                urlBgeeAccessGenerator.getRequestURL() + "'>How to access Bgee data</a></li>");
         navbar.append("<li><a class='drop' title='' href='" + 
-                urlDownloadFilesDocGenerator.getRequestURL() + "'>Download files</a></li>");
+                urlDownloadFilesDocGenerator.getRequestURL() 
+                + "'>Expression call file documentation</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
 //        navbar.append("<li>");
@@ -435,7 +436,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 "Bgee " + GENE_EXPR_CALLS_PAGE_NAME.toLowerCase() + " page", GENE_EXPR_CALLS_PAGE_NAME, 
                 this.prop.getImagesRootDirectory() + "logo/expr_calls_logo.png", 
                 "Calls of baseline presence/absence of expression, "
-                + "and of differential over-under expression."));
+                + "and of differential over-under expression, in single species, "
+                + "or made comparable between species."));
 
         logos.append(HtmlParentDisplay.getSingleFeatureLogo(
                 urlDownloadRefExprGenerator.getRequestURL(), 
@@ -443,7 +445,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 PROCESSED_EXPR_VALUES_PAGE_NAME, 
                 this.prop.getImagesRootDirectory() + "logo/proc_values_logo.png", 
                 "Annotations and processed expression data (e.g., read counts, RPKM values, "
-                + "normalized Affymetrix probeset signal intensity values)."));
+                + "log values of Affymetrix probeset normalized signal intensities)."));
         
         return log.exit(logos.toString());
     }

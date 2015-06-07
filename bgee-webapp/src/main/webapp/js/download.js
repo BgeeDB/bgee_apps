@@ -7,6 +7,8 @@
  * @version Bgee 13, Jul 2014
  */
 //Declaration of an object literal to contain the download page specific code.
+//XXX: Should we let this code generate URL by using RequestParameters, or should all URLs 
+//used to generate links provided server-side? (notably, documentation links)
 var download = {
         // Declaration of the variables used throughout the download page and accessible
         // through the download object. Will be initialized by the init method.
@@ -41,10 +43,12 @@ var download = {
         $rnaSeqNoData: null,
         $rnaSeqDataCsv: null,
         $rnaSeqAnnotCsv: null,
+        $rnaSeqDataRoot: null,
         $affyData: null,
         $affyNoData: null,
         $affyDataCsv: null,
         $affyAnnotCsv: null,
+        $affyDataRoot: null,
         $inSituData: null,
         $inSituNoData: null,
         $inSituDataCsv: null,
@@ -133,11 +137,13 @@ var download = {
             this.$rnaSeqNoData = $( "#rnaseq_no_data" );
             this.$rnaSeqDataCsv = $( "#rnaseq_data_csv" );
             this.$rnaSeqAnnotCsv = $( "#rnaseq_annot_csv" );
+            this.$rnaSeqDataRoot = $( "#rna_seq_data_root_link" );
             // Affymetrix processed expression values
             this.$affyData = $( "#affy_data" );
             this.$affyNoData = $( "#affy_no_data" );
             this.$affyDataCsv = $( "#affy_data_csv" );
             this.$affyAnnotCsv = $( "#affy_annot_csv" );
+            this.$affyDataRoot = $( "#affy_data_root_link" );
             // In situ processed expression values
             this.$inSituData = $( "#in_situ_data" );
             this.$inSituNoData = $( "#in_situ_no_data" );
@@ -253,6 +259,9 @@ var download = {
                 }
             });
             
+            //TODO: this should be code using a common class, with a single method 
+            //performing the operation based on the ID of the link clicked.
+            //TODO: toggle the + link into a '-' when header displayed
             // Add listener to the links to show/hide headers
             this.$showSingleSimpleExprHeaders.click( function(){
             	download.$singleSimpleExprHeaders.toggle( "blind" );
@@ -354,7 +363,7 @@ var download = {
             // Add "id" in front to avoid the automatic anchor behavior that would mess up the scroll
             var hashToUse = "#id"+id; 
             
-            //manahe link to processed vaulues/gene expression calls
+            //manage link to processed vaulues/gene expression calls
             var requestSwitchPage = new requestParameters("", true, "&");
             //TODO: should add static variables as in RequestParameters.java, 
             //to provide parameter values
@@ -392,6 +401,7 @@ var download = {
             	$currentSpecies.data( "bgeediffexprdevelopmentsimplefileurl" );
             var bgeeDiffExprDevelopmentCompleteFileUrl = 
             	$currentSpecies.data( "bgeediffexprdevelopmentcompletefileurl" );
+            //get file sizes
             var bgeeOrthologFileSize = $currentSpecies.data( "bgeeorthologfilesize" );
             var bgeeExprSimpleFileSize = $currentSpecies.data( "bgeeexprsimplefilesize" );
             var bgeeExprCompleteFileSize = $currentSpecies.data( "bgeeexprcompletefilesize" );
@@ -407,12 +417,14 @@ var download = {
             // RNA-Seq processed expression values
             var bgeeRnaSeqDataFileUrl = $currentSpecies.data( "bgeernaseqdatafileurl" );
             var bgeeRnaSeqAnnotFileUrl = $currentSpecies.data( "bgeernaseqannotfileurl" );
+            var bgeeRNASeqDataRootURL = $currentSpecies.data( "bgeernaseqdatarooturl" );
             var bgeeRnaSeqDataFileSize = $currentSpecies.data( "bgeernaseqdatafilesize" );
             var bgeeRnaSeqAnnotFileSize = $currentSpecies.data( "bgeernaseqannotfilesize" );
 
             // Affymetrix processed expression values
             var bgeeAffyDataFileUrl = $currentSpecies.data( "bgeeaffydatafileurl" );
             var bgeeAffyAnnotFileUrl = $currentSpecies.data( "bgeeaffyannotfileurl" );
+            var bgeeAffyDataRootURL = $currentSpecies.data( "bgeeaffydatarooturl" );
             var bgeeAffyDataFileSize = $currentSpecies.data( "bgeeaffydatafilesize" );
             var bgeeAffyAnnotFileSize = $currentSpecies.data( "bgeeaffyannotfilesize" );
 
@@ -462,10 +474,15 @@ var download = {
                 this.$showSingleSimpleDiffexprAnatomyHeaders.hide();
                 this.$showSingleCompleteDiffexprAnatomyHeaders.hide();
                 if ( this.$exprCalls.length > 0 ) {
-                	this.$exprHelp.attr( "href", this.$exprHelp.attr("href").split('#')[0] + "#multi_expr");
-                	this.$diffDevHelp.attr( "href", this.$diffDevHelp.attr("href").split('#')[0] + "#multi_diff");
-                	this.$diffAnatHelp.attr( "href", this.$diffAnatHelp.attr("href").split('#')[0] + "#multi_diff");
-                }
+                    var urlDoc = new requestParameters("", true, "&");
+                    //TODO: use static variable rather than hardcoding
+                    urlDoc.addValue(urlParameters.PAGE, "doc");
+                    urlDoc.addValue(urlParameters.ACTION, "call_files");
+                    //TODO: manage anchor as a parameter
+                	this.$exprHelp.attr( "href", urlDoc.getRequestURL() + "#multi");
+                	this.$diffDevHelp.attr( "href", urlDoc.getRequestURL() + "#multi");
+                	this.$diffAnatHelp.attr( "href", urlDoc.getRequestURL() + "#multi");
+                } 
             } else {
             	this.$switchPageLink.show();
                 this.$bgeeDataSelectionTextScientific.text( bgeeSpeciesName );
@@ -476,10 +493,14 @@ var download = {
                 this.$showSingleSimpleDiffexprAnatomyHeaders.show();
                 this.$showSingleCompleteDiffexprAnatomyHeaders.show();
                 if ( this.$exprCalls.length > 0 ) {
-                	// TODO: add statics variables in RequestParameters instead to be hardcoded
-                	this.$exprHelp.attr( "href", this.$exprHelp.attr("href").split('#')[0] + "#single_expr");
-                	this.$diffDevHelp.attr( "href", this.$diffDevHelp.attr("href").split('#')[0] + "#single_diff");
-                	this.$diffAnatHelp.attr( "href", this.$diffAnatHelp.attr("href").split('#')[0] + "#single_diff");
+                	var urlDoc = new requestParameters("", true, "&");
+                    //TODO: use static variable rather than hardcoding
+                    urlDoc.addValue(urlParameters.PAGE, "doc");
+                    urlDoc.addValue(urlParameters.ACTION, "call_files");
+                    //TODO: manage anchor as a parameter
+                	this.$exprHelp.attr( "href", urlDoc.getRequestURL() + "#single_expr");
+                	this.$diffDevHelp.attr( "href", urlDoc.getRequestURL() + "#single_diff");
+                	this.$diffAnatHelp.attr( "href", urlDoc.getRequestURL() + "#single_diff");
                 }
             }
             
@@ -511,12 +532,15 @@ var download = {
             	if( bgeeGroupName ){
             		this.$exprNoData.hide();
             		this.$exprComingSoon.show();
+            		this.$exprHelp.hide();
             	} else {
             		this.$exprNoData.show();
             		this.$exprComingSoon.hide();
+            		this.$exprHelp.show();
             	}
             } else {
             	this.$exprSimpleData.show();
+        		this.$exprHelp.show();
             	this.$exprSimpleCsv.attr( "href", bgeeExprSimpleFileUrl );
             	this.$exprSimpleCsv.text( "Download simple file (" + bgeeExprSimpleFileSize + ")" );
             	this.$exprCompleteCsv.attr( "href", bgeeExprCompleteFileUrl );
@@ -549,12 +573,15 @@ var download = {
                 if( bgeeGroupName ){
                 	this.$diffExprDevelopmentNoData.hide();
                 	this.$diffExprDevelopmentComingSoon.show();
+                	this.$diffDevHelp.hide();
                 } else {
                 	this.$diffExprDevelopmentNoData.show();
                 	this.$diffExprDevelopmentComingSoon.hide();
+                	this.$diffDevHelp.show();
                 }
             } else {
             	this.$diffExprDevelopmentData.show(); 
+            	this.$diffDevHelp.show();
             	this.$diffExprDevelopmentNoData.hide();
             	this.$diffExprDevelopmentComingSoon.hide();
             	this.$diffExprDevelopmentSimpleCsv.attr( "href", bgeeDiffExprDevelopmentSimpleFileUrl );
@@ -576,6 +603,7 @@ var download = {
             	this.$rnaSeqAnnotCsv.attr( "href", bgeeRnaSeqAnnotFileUrl );
             	this.$rnaSeqAnnotCsv.text( "Download experiments/libraries info (" + bgeeRnaSeqAnnotFileSize + ")" );
             	this.$rnaSeqDataCsv.text( "Download read counts and RPKMs (" + bgeeRnaSeqDataFileSize + ")" );
+            	this.$rnaSeqDataRoot.attr("href", bgeeRNASeqDataRootURL);
             }
 
             // Affymetrix processed expression values
@@ -589,6 +617,7 @@ var download = {
             	this.$affyAnnotCsv.attr( "href", bgeeAffyAnnotFileUrl );
             	this.$affyAnnotCsv.text( "Download experiments/chips info (" + bgeeAffyAnnotFileSize + ")" );
             	this.$affyDataCsv.text( "Download signal intensities (" + bgeeAffyDataFileSize + ")" );
+            	this.$affyDataRoot.attr("href", bgeeAffyDataRootURL);
             }
 
             // In situ processed expression values

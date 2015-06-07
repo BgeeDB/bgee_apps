@@ -79,6 +79,10 @@ img {
     color: #515151;
 }
 
+#bgee_introduction p+p {
+	margin-top: 0.5%;
+}
+
 /****BGEE SEARCH BOX****/
 #bgee_search_box {
     width: 690px;
@@ -174,13 +178,21 @@ label {
     color: #920209;
 }
 
-p:not(.file_description) {
+p:not(.file_info) {
     margin: 0 2%;
 }
 
-p.file_description {
-	margin-top: 0;
+p.file_info {
+	margin-top: 1%;
 	margin-bottom: 2%;
+}
+
+p.file_info a, p.file_info a:visited {
+    color: #717171;
+}
+
+p.file_info a:hover {
+    color: #DBDBDB;
 }
 
 #bgee_data_selection {

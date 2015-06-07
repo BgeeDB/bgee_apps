@@ -64,7 +64,8 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         this.startDisplay("home", 
                 "Welcome on Bgee: a dataBase for Gene Expression Evolution");
 
-        this.writeln("<h1>Welcome on the latest release of Bgee, Bgee release 13</h1>");
+        //TODO: manage the version either from database, or from bgee-webapp.properties file.
+        this.writeln("<h1>Welcome on the latest release of Bgee, Bgee release 13.1</h1>");
         
         RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
         urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);

@@ -125,9 +125,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     @Override
     public void displayDownloadHomePage() {
         log.entry();
-        this.startDisplay("download", "Bgee release 13 download pages");
+        this.startDisplay("download", "Bgee download pages");
 
-        this.writeln("<h1>Bgee release 13 download page</h1>");
+        this.writeln("<h1>Bgee download page</h1>");
 
         this.writeln("<div id='feature_list'>");
         this.writeln(this.getFeatureDownloadLogos());
@@ -142,7 +142,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     public void displayGeneExpressionCallDownloadPage() {
         log.entry();
         
-        this.startDisplay("download", "Bgee release 13 gene expression call download page");
+        this.startDisplay("download", "Bgee gene expression call download page");
 
         this.getMoreResultDivs();
 
@@ -156,14 +156,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         
         // Introduction
         this.writeln("<div id='bgee_introduction' class='bgee_section bgee_download_section'>");
-        this.writeln("<p>Bgee is a database to retrieve and compare gene expression patterns between animal species. ");
-        this.writeln("This is a beta download page, more features will be deployed soon. </p>");
-        this.writeln("<p>Click on a species to browse files to download. You can also download " +
-        //TODO: change this ugly '../' once we'll have added a property to distinguish 
-        //FTP root and download_files directory. See todo in BgeeProperties
-        		"<a href='" + this.prop.getDownloadRootDirectory() + "../statistics.tsv' " +
-        				"title='Database statistics TSV file'>database statistics</a>.</p>");
-        this.writeln("<p>See also previous <a href='http://bgee.unil.ch/bgee/bgee'>Bgee release 12</a>.</p>");
+        this.writeln(this.getIntroduction(DownloadPageType.EXPR_CALLS));
         this.writeln("</div>");
 
         // Search Box
@@ -192,7 +185,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     public void displayProcessedExpressionValuesDownloadPage() {
         log.entry();
         this.startDisplay("download", 
-                "Bgee release 13 " + PROCESSED_EXPR_VALUES_PAGE_NAME.toLowerCase() + " download page");
+                "Bgee " + PROCESSED_EXPR_VALUES_PAGE_NAME.toLowerCase() + " download page");
         
         this.getMoreResultDivs();
 
@@ -207,15 +200,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
         // Introduction
         this.writeln("<div id='bgee_introduction' class='bgee_section bgee_download_section'>");
-        this.writeln("<p>Bgee is a database to retrieve " + 
-                PROCESSED_EXPR_VALUES_PAGE_NAME.toLowerCase() + " in species. ");
-        this.writeln("This is a beta download page, more features will be deployed soon. </p>");
-        this.writeln("<p>Click on a species to browse files to download. You can also download " +
-        //TODO: change this ugly '../' once we'll have added a property to distinguish 
-        //FTP root and download_files directory. See todo in BgeeProperties
-                "<a href='" + this.prop.getDownloadRootDirectory() + "../statistics.tsv' " +
-                        "title='Database statistics TSV file'>database statistics</a>.</p>");
-        this.writeln("<p>See also previous <a href='http://bgee.unil.ch/bgee/bgee'>Bgee release 12</a>.</p>");
+        this.writeln(this.getIntroduction(DownloadPageType.PROC_EXPR_VALUES));
         this.writeln("</div>");
     
         // Search Box
@@ -235,6 +220,45 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.endDisplay();
         
         log.exit();
+    }
+    
+    /**
+     * Return the introduction text for pages providing download files in HTML. 
+     * This HTML contains only 'p' elements, and text.
+     * 
+     * @param pageType  A {@code DownloadPageType} defining for which type od download page 
+     *                  the introduction text should be generated.
+     * @return          A {@code String} that is an introduction text for {@code pageType}, 
+     *                  in HTML.
+     */
+    private String getIntroduction(DownloadPageType pageType) {
+        log.entry(pageType);
+        
+        String intro = "<p>Bgee is a database to retrieve and compare gene expression patterns "
+                + "in multiple animal species, based exclusively on curated \"normal\" "
+                + "expression data (e.g., no gene knock-out, no treatment, no disease), "
+                + "to provide a comparable reference of normal gene expression.</p>";
+        if (pageType == DownloadPageType.EXPR_CALLS) {
+            intro += "<p>This page provides calls of baseline "
+                + "presence/absence of expression, and of differential over-/under-expression, "
+                + "either in single species, or made comparable between multiple species. "
+                + "Click on a species or a group of species to browse files available for download. ";
+        } else if (pageType == DownloadPageType.PROC_EXPR_VALUES) {
+            intro += "<p>This page provides annotations and experiment information "
+                    + "(e.g., annotations to anatomy and development, quality scores used in QCs, "
+                    + "chip or library information), and processed expression values "
+                    + "(e.g., read counts, RPKM values, log values of Affymetrix "
+                    + "probeset normalized signal intensities). Click on a species "
+                    + "to browse files available for download. ";
+        } else {
+            assert false: "Unknown DownloadPageType";
+        }
+        //TODO: change this ugly '../' once we'll have added a property to distinguish 
+        //FTP root and download_files directory. See todo in BgeeProperties
+        intro += "See also <a href='" + this.prop.getDownloadRootDirectory() 
+                + "../statistics.tsv' title='Database statistics TSV file'>"
+                + "database statistics</a>.</p>";
+        return log.exit(intro);
     }
     
     /**
@@ -394,7 +418,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             //Ortholog file
             banner.append("<div id='ortholog_file_buttons' class='bgee_download_file_buttons'>");
             banner.append("<h2>Hierarchical orthologous groups</h2>");
-            banner.append("<p class='file_description'>This file provides groups of genes orthologous between the selected taxa.</p>");
+            banner.append("<p class='file_info'>This file provides groups of genes orthologous between the selected taxa.</p>");
             //TODO: uncomment when documentation generated, add url management in JS
 //            banner.append("<a id='ortholog_help' href='" + urlDoc.getRequestURL() + "'>"+
 //                    this.getHelpImg() + "</a>");
@@ -467,30 +491,48 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         } else {
             // RNA-Seq data
             banner.append("<div class='bgee_download_file_buttons'>");
+            
             banner.append("<h2>RNA-Seq data</h2>");
 //            banner.append(this.getHelpLink("rnaseq_help"));
 //            banner.append("<p class='no_data'>Coming soon</p>");
             banner.append("<p id='rnaseq_no_data' class='no_data'>Not enough data</p>");
-            banner.append("<div id='rnaseq_data'>" + 
-                    "<a id='rnaseq_annot_csv' class='download_link' href='' download></a>" +
-                    this.getShowHeaderLink("show_rnaseq_annot_headers") +
-                    "<a id='rnaseq_data_csv' class='download_link' href='' download></a>" +
-                    this.getShowHeaderLink("show_rnaseq_data_headers") +
-                    "</div>");
-            banner.append("</div>");
+            
+            //data section
+            banner.append("<div id='rnaseq_data'>");
+                    //XXX: what is this 'download' with a space in front of it?
+            banner.append("<a id='rnaseq_annot_csv' class='download_link' href='' download></a>" +
+                    //this.getShowHeaderLink("show_rnaseq_annot_headers") +
+                    "<a id='rnaseq_data_csv' class='download_link' href='' download></a>");
+                    //this.getShowHeaderLink("show_rnaseq_data_headers") +
+            banner.append("<p class='file_info'>Files can also be retrieved per experiment, "
+                    //href will be filed by the javascript.
+                    + "see <a id='rna_seq_data_root_link' title='Retrieve RNA-Seq data "
+                    + "per experiment for this species'>RNA-Seq data directory</a>.</p>");
+            banner.append("</div>"); //end data section
+            
+            banner.append("</div>"); // end RNA-Seq data
+            
             // Affymetrix data
             banner.append("<div class='bgee_download_file_buttons'>");
             banner.append("<h2>Affymetrix data</h2>");
 //            banner.append(this.getHelpLink("affy_help"));
 //            banner.append("<p class='no_data'>Coming soon</p>");
             banner.append("<p id='affy_no_data' class='no_data'>Not enough data</p>");
-            banner.append("<div id='affy_data'>" + 
-                    "<a id='affy_annot_csv' class='download_link' href='' download></a>" +
-                    this.getShowHeaderLink("show_affy_annot_headers") +
-                    "<a id='affy_data_csv' class='download_link' href='' download></a>" +
-                    this.getShowHeaderLink("show_affy_data_headers") +
-                    "</div>");
-            banner.append("</div>");
+            
+            //data section
+            banner.append("<div id='affy_data'>"); 
+            banner.append("<a id='affy_annot_csv' class='download_link' href='' download></a>" +
+                    //this.getShowHeaderLink("show_affy_annot_headers") +
+                    "<a id='affy_data_csv' class='download_link' href='' download></a>");
+                    //this.getShowHeaderLink("show_affy_data_headers") +
+            banner.append("<p class='file_info'>Files can also be retrieved per experiment, "
+                    //href will be filed by the javascript.
+                    + "see <a id='affy_data_root_link' title='Retrieve Affymetrix data "
+                    + "per experiment for this species'>Affymetrix data directory</a>.</p>");
+            banner.append("</div>"); // end of data section
+            
+            banner.append("</div>"); // end of Affy data
+            
             // In situ data
             banner.append("<div class='bgee_download_file_buttons'>");
             banner.append("<h2><em>In situ</em> data</h2>");
@@ -538,7 +580,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         urlDoc.setPage(RequestParameters.PAGE_DOCUMENTATION);
         urlDoc.setAction(RequestParameters.ACTION_DOC_CALL_DOWLOAD_FILES);
 
-        return log.exit("<a id='" + id + "' href='" + urlDoc.getRequestURL() + "'>"+
+        return log.exit("<a id='" + id + "' href=''>"+
                         "<img class='details' src='" + this.prop.getImagesRootDirectory() +
                         "help.png' title='Help' alt='Help' /></a>");
     }
@@ -1250,27 +1292,29 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
         } else if (pageType.equals(DownloadPageType.PROC_EXPR_VALUES)) {
             String extension = ".zip";
-            String beginAffyProcValueFilePath = 
-                    this.prop.getDownloadAffyProcExprValueFilesRootDirectory() + "/" 
-                    + latinName + "/" + latinName + "_Affymetrix_";
-            String beginRNASeqProcValueFilePath = 
-                    this.prop.getDownloadRNASeqProcExprValueFilesRootDirectory() + "/" 
-                    + latinName + "/" + latinName + "_RNA-Seq_";
             if (rnaSeqDataFileSize != null) {
-                data.append(" data-bgeernaseqdatafileurl='" + beginRNASeqProcValueFilePath + 
+                String rnaSeqProcValueDir = this.prop.getDownloadRNASeqProcExprValueFilesRootDirectory()
+                        + latinName + "/";
+                String filePrefix = latinName + "_RNA-Seq_";
+                data.append(" data-bgeernaseqdatafileurl='" + rnaSeqProcValueDir + filePrefix + 
                         "read_counts_RPKM" + extension +
                         "' data-bgeernaseqdatafilesize='" + rnaSeqDataFileSize + "'"); 
-                data.append(" data-bgeernaseqannotfileurl='" + beginRNASeqProcValueFilePath + 
+                data.append(" data-bgeernaseqannotfileurl='" + rnaSeqProcValueDir + filePrefix + 
                         "experiments_libraries" + extension +
                         "' data-bgeernaseqannotfilesize='" + rnaSeqAnnotFileSize + "'"); 
+                data.append(" data-bgeernaseqdatarooturl='" + rnaSeqProcValueDir + "' ");
             }
             if (affyDataFileSize != null) {
-                data.append(" data-bgeeaffydatafileurl='" + beginAffyProcValueFilePath + 
-                        "probesets" + extension +
-                        "' data-bgeeaffydatafilesize='" + affyDataFileSize + "'"); 
-                data.append(" data-bgeeaffyannotfileurl='" + beginAffyProcValueFilePath + 
-                        "experiments_chips" + extension +
+                String affyProcValueDir = this.prop.getDownloadAffyProcExprValueFilesRootDirectory()
+                        + latinName + "/";
+                String filePrefix = latinName + "_Affymetrix_";
+                data.append(" data-bgeeaffydatafileurl='" + affyProcValueDir + filePrefix
+                        + "probesets" + extension 
+                        + "' data-bgeeaffydatafilesize='" + affyDataFileSize + "'"); 
+                data.append(" data-bgeeaffyannotfileurl='" + affyProcValueDir + filePrefix 
+                        + "experiments_chips" + extension +
                         "' data-bgeeaffyannotfilesize='" + affyAnnotFileSize + "'"); 
+                data.append(" data-bgeeaffydatarooturl='" + affyProcValueDir + "' ");
             }
 //            if (inSituDataFileSize != null) {
 //                data.append(" data-bgeeinsitudatafileurl='" + beginProcValueFilePath + 

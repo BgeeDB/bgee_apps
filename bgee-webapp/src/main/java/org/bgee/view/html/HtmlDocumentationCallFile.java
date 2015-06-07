@@ -37,6 +37,16 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      */
     private static final String GENE_NAME_LINK_TITLE = "See " + GENE_NAME_COL_NAME + " column description";
     /**
+     * A {@code String} that is the name of the gene names column in multi-species download files, 
+     * HTML escaped if necessary.
+     */
+    private static final String GENE_NAMES_COL_NAME ="Gene names";
+    /**
+     * A {@code String} that is the name of the gene IDs column in multi-species download files, 
+     * HTML escaped if necessary.
+     */
+    private static final String GENE_IDS_COL_NAME ="Gene IDs";
+    /**
      * A {@code String} that is the name of the expression state column in download files, 
      * HTML escaped if necessary.
      * @see #EXPR_STATE_LINK_TITLE
@@ -338,7 +348,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      * for a given species (the suffix of the column name is the latin name of the species) 
      * in multi-species download file, HTML escaped if necessary.
      */
-    private static final String NA_FOR_SPECIES_COL_NAME = "N/A gene count for";
+    private static final String NA_FOR_SPECIES_COL_NAME = "NA gene count for";
     /**
      * A {@code String} that is the name of the column storing the latin name of species 
      * in multi-species complete download files, HTML escaped if necessary.
@@ -390,7 +400,11 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "to retrieve data from <a target='_blank' class='external_link' "
                 + "href='http://omabrowser.org/oma/hogs/' title='External link to OMA browser'>"
                 + "the OMA browser</a>. They are provided solely to group data "
-                + "from orthologous genes belonging to a same orthology group.</p>");
+                + "from orthologous genes belonging to a same orthology group. "
+                + "Genes member of a OMA gene orthology group can be retrieved "
+                + "through the associated "
+                + "<a href='#oma_hog' title='Jump to hierarchical orthologous groups "
+                + "file documentation'>hierarchical orthologous groups file</a>.</p>");
     }
 
     /**
@@ -748,7 +762,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      *                                  containing the related differential expression state. 
      *                                  Index starting from 1.
      * @param displayNA                 A {@code boolean} defining whether explanation 
-     *                                  about the "N/A" quality should be provided. 
+     *                                  about the "NA" quality should be provided. 
      * @param displayNoData             A {@code boolean} defining whether explanation 
      *                                  about the "no data" quality should be provided. 
      * @return  A {@code String} that is the description of the diff expression quality column 
@@ -786,8 +800,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "in the same condition. In that case, the overall summary "
                 + "is <code>under-expression low quality</code>.</li>";
         if (displayNA) {
-            //TODO: merge N/A and 'no data' once we re-generate the files
-            desc += "<li><span class='list_element_title'>N/A</span>: no quality applicable "
+            //TODO: merge NA and 'no data' once we re-generate the files
+            desc += "<li><span class='list_element_title'>NA</span>: no quality applicable "
                 + "when ambiguity state in <code>" + diffExprStateColName 
                 + "</code> (column " + diffExprStateColNumber + ").</li>";
         }
@@ -1101,17 +1115,15 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + getSingleSpeciesSimpleDiffExprFileHeader(false) 
                 + "</thead>"
                 + "<tbody>"
-                + "<tr><td>ENSG00000000003</td><td>TSPAN6</td><td>HsapDv:0000017</td>"
-                + "<td>Carnegie stage 10 (human)</td><td>UBERON:0000922</td>"
-                + "<td>embryo</td><td>over-expression</td><td>high quality</td></tr>"
-                + "<tr><td>ENSG00000000419</td><td>DPM1</td><td>HsapDv:0000020</td>"
-                + "<td>Carnegie stage 13 (human)</td><td>UBERON:0000922</td>"
-                //TODO: change to low
-                + "<td>embryo</td><td>under-expression</td><td>poor quality</td></tr>"
-                + "<tr><td>ENSG00000000457</td><td>SCYL3</td><td>HsapDv:0000094</td>"
-                + "<td>65-79 year-old human stage (human)</td><td>UBERON:0000178</td>"
-                //TODO: change to low
-                + "<td>blood</td><td>over-expression</td><td>poor quality</td></tr>"
+                + "<tr><td>ENSG00000000003</td><td>TSPAN6</td><td>UBERON:0000922</td>"
+                + "<td>embryo</td><td>HsapDv:0000017</td><td>Carnegie stage 10 (human)</td>"
+                + "<td>over-expression</td><td>low quality</td></tr>"
+                + "<tr><td>ENSG00000000419</td><td>DPM1</td><td>UBERON:0000922</td>"
+                + "<td>embryo</td><td>HsapDv:0000020</td><td>Carnegie stage 13 (human)</td>"
+                + "<td>under-expression</td><td>low quality</td></tr>"
+                + "<tr><td>ENSG00000000457</td><td>SCYL3</td><td>UBERON:0000178</td>"
+                + "<td>blood</td><td>HsapDv:0000094</td><td>65-79 year-old human stage (human)</td>"
+                + "<td>over-expression</td><td>low quality</td></tr>"
                 + "</tbody>"
                 + "</table>");
     }
@@ -1133,10 +1145,10 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         return log.exit("<tr>"
                 + "<" + colType + ">" + GENE_ID_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + GENE_NAME_COL_NAME + "</" + colType + ">"
-                + "<" + colType + ">" + STAGE_ID_COL_NAME + "</" + colType + ">"
-                + "<" + colType + ">" + STAGE_NAME_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + ANAT_ENTITY_ID_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + ANAT_ENTITY_NAME_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + STAGE_ID_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + STAGE_NAME_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + DIFF_EXPR_STATE_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + EXPR_QUAL_COL_NAME + "</" + colType + ">"
                 + "</tr>");
@@ -1170,21 +1182,21 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "</thead>"
                 + "<tbody>"
                 //TODO: change 'poor' to 'low'
-                + "<tr><td>ENSMUSG00000000001</td><td>Gnai3</td><td>MmusDv:0000027</td>"
-                + "<td>Theiler stage 20 (mouse)</td><td>UBERON:0000081</td>"
-                + "<td>metanephros</td><td>no diff expression</td><td>high quality</td>"
+                + "<tr><td>ENSMUSG00000000001</td><td>Gnai3</td><td>UBERON:0000081</td>"
+                + "<td>metanephros</td><td>MmusDv:0000027</td><td>Theiler stage 20 (mouse)</td>"
+                + "<td>no diff expression</td><td>high quality</td>"
                 + "<td>no diff expression</td><td>high quality</td><td>0.22166589</td>"
                 + "<td>1</td><td>0</td><td>no data</td><td>no data</td><td>1.0</td>"
                 + "<td>0</td><td>0</td></tr>"
-                + "<tr><td>ENSMUSG00000000028</td><td>Cdc45</td><td>MmusDv:0000035</td>"
-                + "<td>Theiler stage 26 (mouse)</td><td>UBERON:0000992</td>"
-                + "<td>female gonad</td><td>under-expression</td><td>poor quality</td>"
+                + "<tr><td>ENSMUSG00000000028</td><td>Cdc45</td><td>UBERON:0000992</td>"
+                + "<td>female gonad</td><td>MmusDv:0000035</td><td>Theiler stage 26 (mouse)</td>"
+                + "<td>under-expression</td><td>poor quality</td>"
                 + "<td>under-expression</td><td>poor quality</td><td>6.386149E-4</td>"
                 + "<td>1</td><td>1</td><td>no data</td><td>no data</td><td>1.0</td>"
                 + "<td>0</td><td>0</td></tr>"
-                + "<tr><td>ENSMUSG00000000031</td><td>H19</td><td>MmusDv:0000036</td>"
-                + "<td>Theiler stage 27 (mouse)</td><td>UBERON:0002037</td>"
-                + "<td>cerebellum</td><td>over-expression</td><td>high quality</td>"
+                + "<tr><td>ENSMUSG00000000031</td><td>H19</td><td>UBERON:0002037</td>"
+                + "<td>cerebellum</td><td>MmusDv:0000036</td><td>Theiler stage 27 (mouse)</td>"
+                + "<td>over-expression</td><td>high quality</td>"
                 + "<td>over-expression</td><td>high quality</td><td>1.2336E-6</td>"
                 + "<td>2</td><td>0</td><td>no data</td><td>no data</td><td>1.0</td>"
                 + "<td>0</td><td>0</td></tr>"
@@ -1208,10 +1220,10 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         return log.exit("<tr>"
                 + "<" + colType + ">" + GENE_ID_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + GENE_NAME_COL_NAME + "</" + colType + ">"
-                + "<" + colType + ">" + STAGE_ID_COL_NAME + "</" + colType + ">"
-                + "<" + colType + ">" + STAGE_NAME_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + ANAT_ENTITY_ID_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + ANAT_ENTITY_NAME_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + STAGE_ID_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + STAGE_NAME_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + DIFF_EXPR_STATE_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + EXPR_QUAL_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + AFFY_DIFF_EXPR_STATE_COL_NAME + "</" + colType + ">"
@@ -1236,7 +1248,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         return log.exit("<table class='download_file_header_desc'>"
                 + "<tbody>"
                 + "<tr><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td>"
-                + "<td>8</td><td>9</td><td>10</td><td>11</td><td>12</td><td>13</td><td>...</td></tr>"
+                + "<td>8</td><td>9</td><td>10</td><td>11</td><td>12</td><td>13</td><td>...</td>"
+                + "<td>(species*4 + 6)</td><td>(species*4 + 7)</td></tr>"
                 + "<tr>"
                 + "<td>" + OMA_ID_COL_NAME + "</td>"
                 + "<td>" + MULTI_ANAT_ENTITY_IDS_COL_NAME + "</td>"
@@ -1252,6 +1265,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "<td>" + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME + " species2</td>"
                 + "<td>" + NA_FOR_SPECIES_COL_NAME + " species2</td>"
                 + "<td>...</td>"
+                + "<td>" + GENE_IDS_COL_NAME + "</td>"
+                + "<td>" + GENE_NAMES_COL_NAME + "</td>"
                 + "</tr>"
                 + "</tbody>"
                 + "</table>");
@@ -1271,29 +1286,34 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "<th>" + MULTI_ANAT_ENTITY_NAMES_COL_NAME + "</th>"
                 + "<th>" + STAGE_ID_COL_NAME + "</th>"
                 + "<th>" + STAGE_NAME_COL_NAME + "</th>"
-                + "<th>" + OVER_EXPRESSED_FOR_SPECIES_COL_NAME + " Mus musculus</th>"
-                + "<th>" + UNDER_EXPRESSED_FOR_SPECIES_COL_NAME + " Mus musculus</th>"
-                + "<th>" + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME + " Mus musculus</th>"
-                + "<th>" + NA_FOR_SPECIES_COL_NAME + " Mus musculus</th>"
                 + "<th>" + OVER_EXPRESSED_FOR_SPECIES_COL_NAME + " Homo sapiens</th>"
                 + "<th>" + UNDER_EXPRESSED_FOR_SPECIES_COL_NAME + " Homo sapiens</th>"
                 + "<th>" + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME + " Homo sapiens</th>"
                 + "<th>" + NA_FOR_SPECIES_COL_NAME + " Homo sapiens</th>"
+                + "<th>" + OVER_EXPRESSED_FOR_SPECIES_COL_NAME + " Mus musculus</th>"
+                + "<th>" + UNDER_EXPRESSED_FOR_SPECIES_COL_NAME + " Mus musculus</th>"
+                + "<th>" + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME + " Mus musculus</th>"
+                + "<th>" + NA_FOR_SPECIES_COL_NAME + " Mus musculus</th>"
+                + "<th>" + GENE_IDS_COL_NAME + "</th>"
+                + "<th>" + GENE_NAMES_COL_NAME + "</th>"
                 + "</tr>"
                 + "</thead>"
                 + "<tbody>"
-                + "<tr><td>93</td><td>UBERON:0001155</td><td>colon</td>"
+                + "<tr><td>93</td><td>UBERON:0000473</td><td>testis</td>"
                 + "<td>UBERON:0000113</td><td>post-juvenile adult stage</td>"
                 + "<td>0</td><td>1</td><td>0</td><td>0</td>"
-                + "<td>0</td><td>0</td><td>1</td><td>0</td></tr>"
-                + "<tr><td>93</td><td>UBERON:0001898</td><td>hypothalamus</td>"
+                + "<td>0</td><td>1</td><td>0</td><td>0</td>"
+                + "<td>ENSG00000162512|ENSMUSG00000025743</td><td>SDC3|Sdc3</td></tr>"
+                + "<tr><td>93</td><td>UBERON:0000955</td><td>brain</td>"
                 + "<td>UBERON:0000113</td><td>post-juvenile adult stage</td>"
                 + "<td>1</td><td>0</td><td>0</td><td>0</td>"
-                + "<td>1</td><td>0</td><td>0</td><td>0</td></tr>"
-                + "<tr><td>93</td><td>UBERON:0002037</td><td>cerebellum</td>"
-                + "<td>UBERON:0000113</td><td>post-juvenile adult stage</td>"
                 + "<td>1</td><td>0</td><td>0</td><td>0</td>"
-                + "<td>1</td><td>0</td><td>0</td><td>0</td></tr>"
+                + "<td>ENSG00000162512|ENSMUSG00000025743</td><td>SDC3|Sdc3</td></tr>"
+                + "<tr><td>93</td><td>UBERON:0001134</td><td>skeletal muscle tissue</td>"
+                + "<td>UBERON:0000113</td><td>post-juvenile adult stage</td>"
+                + "<td>0</td><td>1</td><td>0</td><td>0</td>"
+                + "<td>0</td><td>1</td><td>0</td><td>0</td>"
+                + "<td>ENSG00000162512|ENSMUSG00000025743</td><td>SDC3|Sdc3</td></tr>"
                 + "</tbody>"
                 + "</table>");
     }
@@ -1326,25 +1346,28 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + getMultiSpeciesCompleteDiffExprFileHeader(false) 
                 + "</thead>"
                 + "<tbody>"
-                + "<tr><td>59</td><td>UBERON:0000948</td><td>heart</td>"
+                + "<tr><td>59</td><td>ENSMUSG00000030516</td><td>Tjp1</td>"
+                + "<td>UBERON:0000948</td><td>heart</td>"
                 + "<td>UBERON:0018241</td><td>prime adult stage</td>"
-                + "<td>Mus_musculus</td><td>ENSMUSG00000030516</td><td>Tjp1</td>"
+                + "<td>Mus_musculus</td>"
                 + "<td>over-expression</td><td>high quality</td>"
                 + "<td>over-expression</td><td>high quality</td><td>0.0</td>"
                 + "<td>5</td><td>0</td><td>no data</td><td>no data</td><td>1.0</td>"
                 + "<td>0</td><td>0</td><td>CIO:0000004</td>"
                 + "<td>medium confidence from single evidence</td></tr>"
-                + "<tr><td>59</td><td>UBERON:0000948</td><td>heart</td>"
+                + "<tr><td>59</td><td>ENSMMUG00000017878</td><td>Tjp1</td>"
+                + "<td>UBERON:0000948</td><td>heart</td>"
                 + "<td>UBERON:0018241</td><td>prime adult stage</td>"
-                + "<td>Macaca_mulatta</td><td>ENSMMUG00000017878</td><td>Tjp1</td>"
+                + "<td>Macaca_mulatta</td>"
                 + "<td>no diff expression</td><td>high quality</td>"
                 + "<td>no data</td><td>no data</td><td>1.0</td>"
                 + "<td>0</td><td>0</td><td>no diff expression</td><td>high quality</td>"
                 + "<td>0.6239275</td><td>2</td><td>0</td><td>CIO:0000004</td>"
                 + "<td>medium confidence from single evidence</td></tr>"
-                + "<tr><td>59</td><td>UBERON:0000948</td><td>heart</td>"
+                + "<tr><td>59</td><td>ENSBTAG00000015398</td><td>ZO1</td>"
+                + "<td>UBERON:0000948</td><td>heart</td>"
                 + "<td>UBERON:0018241</td><td>prime adult stage</td>"
-                + "<td>Bos_taurus</td><td>ENSBTAG00000015398</td><td>ZO1</td>"
+                + "<td>Bos_taurus</td>"
                 + "<td>over-expression</td><td>high quality</td>"
                 + "<td>no data</td><td>no data</td><td>1.0</td>"
                 + "<td>0</td><td>0</td><td>over-expression</td><td>high quality</td>"
@@ -1369,13 +1392,13 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         }
         return log.exit("<tr>"
                 + "<" + colType + ">" + OMA_ID_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + GENE_ID_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + GENE_NAME_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + MULTI_ANAT_ENTITY_IDS_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + MULTI_ANAT_ENTITY_NAMES_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + STAGE_ID_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + STAGE_NAME_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + SPECIES_LATIN_NAME_COL_NAME + "</" + colType + ">"
-                + "<" + colType + ">" + GENE_ID_COL_NAME + "</" + colType + ">"
-                + "<" + colType + ">" + GENE_NAME_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + DIFF_EXPR_STATE_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + EXPR_QUAL_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + AFFY_DIFF_EXPR_STATE_COL_NAME + "</" + colType + ">"
@@ -1489,11 +1512,14 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "than the LCA would be discarded, such as the annotation to the \"forelimb\" "
                 + "structure (UBERON:0002102), homologous in the <i>Tetrapoda</i> lineage.</li> "
                 + "<li><span class='list_element_title'>orthology of genes</span>: relations of "
-                + "orthology between genes are retrieved using the <a target='_blank' class='external_link' "
+                + "orthology between genes are retrieved using <a target='_blank' class='external_link' "
                 + "href='http://omabrowser.org/oma/hogs/' title='External link to OMA browser'>"
-                + "OMA Hierarchical orthologous groups</a>; when comparing several species, "
+                + "OMA</a>; when comparing several species, "
                 + "Bgee identifies their Least Common Ancestor (LCA), and retrieve genes "
-                + "that have descended from a single common ancestral gene in that LCA.</li>"
+                + "that have descended from a single common ancestral gene in that LCA. "
+                + "Relations of orthology between genes are provided in Bgee through "
+                + "<a href='#oma_hog' title='Jump to hierarchical orthologous groups "
+                + "file documentation'>hierarchical orthologous groups files</a>.</li>"
                 + "</ul>");
         this.writeln("<p>Jump to: </p>"
                 + "<ul>"
@@ -2111,17 +2137,17 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + GENE_NAME_LINK_TITLE + "'>" + GENE_NAME_COL_NAME 
                 + "</a></td><td>DPM1</td></tr>");
         this.writeln("<tr><td>3</td><td><a href='#single_diff_simple_col3' title='" 
-                + STAGE_ID_LINK_TITLE + "'>" + STAGE_ID_COL_NAME 
-                + "</a></td><td>HsapDv:0000083</td></tr>");
-        this.writeln("<tr><td>4</td><td><a href='#single_diff_simple_col4' title='" 
-                + STAGE_NAME_LINK_TITLE + "'>" + STAGE_NAME_COL_NAME 
-                + "</a></td><td>infant stage (human)</td></tr>");
-        this.writeln("<tr><td>5</td><td><a href='#single_diff_simple_col5' title='" 
                 + ANAT_ENTITY_ID_LINK_TITLE + "'>" + ANAT_ENTITY_ID_COL_NAME 
                 + "</a></td><td>UBERON:0009834</td></tr>");
-        this.writeln("<tr><td>6</td><td><a href='#single_diff_simple_col6' title='" 
+        this.writeln("<tr><td>4</td><td><a href='#single_diff_simple_col4' title='" 
                 + ANAT_ENTITY_NAME_LINK_TITLE + "'>" + ANAT_ENTITY_NAME_COL_NAME 
                 + "</a></td><td>dorsolateral prefrontal cortex</td></tr>");
+        this.writeln("<tr><td>5</td><td><a href='#single_diff_simple_col5' title='" 
+                + STAGE_ID_LINK_TITLE + "'>" + STAGE_ID_COL_NAME 
+                + "</a></td><td>HsapDv:0000083</td></tr>");
+        this.writeln("<tr><td>6</td><td><a href='#single_diff_simple_col6' title='" 
+                + STAGE_NAME_LINK_TITLE + "'>" + STAGE_NAME_COL_NAME 
+                + "</a></td><td>infant stage (human)</td></tr>");
         this.writeln("<tr><td>7</td><td><a href='#single_diff_simple_col7' title='" 
                 + DIFF_EXPR_STATE_LINK_TITLE + "'>" + DIFF_EXPR_STATE_COL_NAME 
                 + "</a></td><td>under-expression</td></tr>");
@@ -2136,16 +2162,16 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeln(getGeneIdColDescription());
         this.writeln("<h5 id='single_diff_simple_col2'>" + GENE_NAME_COL_NAME + " (column 2)</h5>");
         this.writeln(getGeneNameColDescription(1));
-        this.writeln("<h5 id='single_diff_simple_col3'>" + STAGE_ID_COL_NAME + " (column 3)</h5>");
-        this.writeln(getStageIdColDescription());
-        this.writeln("<h5 id='single_diff_simple_col4'>" + STAGE_NAME_COL_NAME + " (column 4)</h5>");
-        this.writeln(getStageNameColDescription(3));
-        this.writeln("<h5 id='single_diff_simple_col5'>" + ANAT_ENTITY_ID_COL_NAME + " (column 5)</h5>");
+        this.writeln("<h5 id='single_diff_simple_col3'>" + ANAT_ENTITY_ID_COL_NAME + " (column 3)</h5>");
         this.writeln(getAnatEntityIdColDescription());
-        this.writeln("<h5 id='single_diff_simple_col6'>" + ANAT_ENTITY_NAME_COL_NAME + " (column 6)</h5>");
-        this.writeln(getAnatEntityNameColDescription(5));
+        this.writeln("<h5 id='single_diff_simple_col4'>" + ANAT_ENTITY_NAME_COL_NAME + " (column 4)</h5>");
+        this.writeln(getAnatEntityNameColDescription(3));
+        this.writeln("<h5 id='single_diff_simple_col5'>" + STAGE_ID_COL_NAME + " (column 5)</h5>");
+        this.writeln(getStageIdColDescription());
+        this.writeln("<h5 id='single_diff_simple_col6'>" + STAGE_NAME_COL_NAME + " (column 6)</h5>");
+        this.writeln(getStageNameColDescription(5));
         this.writeln("<h5 id='single_diff_simple_col7'>" + DIFF_EXPR_STATE_COL_NAME + " (column 7)</h5>");
-        this.writeln(getDiffExprStateColDescription(1, 3, 5, true, false, true, false, "all data types")); 
+        this.writeln(getDiffExprStateColDescription(1, 5, 3, true, false, true, false, "all data types")); 
         this.writeln("<h5 id='single_diff_simple_col8'>" + EXPR_QUAL_COL_NAME + " (column 8)</h5>");
         this.writeln(getDiffExprQualColDescription(DIFF_EXPR_STATE_COL_NAME, 7, true, false)); 
         this.writeln("<p><a href='#single_diff'>Back to over-/under-expression menu</a></p>");
@@ -2190,17 +2216,17 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + GENE_NAME_LINK_TITLE + "'>" + GENE_NAME_COL_NAME 
                 + "</a></td><td>Hmgcs1</td></tr>");
         this.writeln("<tr><td>3</td><td><a href='#single_diff_complete_col3' title='" 
-                + STAGE_ID_LINK_TITLE + "'>" + STAGE_ID_COL_NAME 
-                + "</a></td><td>UBERON:0000113</td></tr>");
-        this.writeln("<tr><td>4</td><td><a href='#single_diff_complete_col4' title='" 
-                + STAGE_NAME_LINK_TITLE + "'>" + STAGE_NAME_COL_NAME 
-                + "</a></td><td>post-juvenile adult stage</td></tr>");
-        this.writeln("<tr><td>5</td><td><a href='#single_diff_complete_col5' title='" 
                 + ANAT_ENTITY_ID_LINK_TITLE + "'>" + ANAT_ENTITY_ID_COL_NAME 
                 + "</a></td><td>UBERON:0002107</td></tr>");
-        this.writeln("<tr><td>6</td><td><a href='#single_diff_complete_col6' title='" 
+        this.writeln("<tr><td>4</td><td><a href='#single_diff_complete_col4' title='" 
                 + ANAT_ENTITY_NAME_LINK_TITLE + "'>" + ANAT_ENTITY_NAME_COL_NAME 
                 + "</a></td><td>liver</td></tr>");
+        this.writeln("<tr><td>5</td><td><a href='#single_diff_complete_col5' title='" 
+                + STAGE_ID_LINK_TITLE + "'>" + STAGE_ID_COL_NAME 
+                + "</a></td><td>UBERON:0000113</td></tr>");
+        this.writeln("<tr><td>6</td><td><a href='#single_diff_complete_col6' title='" 
+                + STAGE_NAME_LINK_TITLE + "'>" + STAGE_NAME_COL_NAME 
+                + "</a></td><td>post-juvenile adult stage</td></tr>");
         this.writeln("<tr><td>7</td><td><a href='#single_diff_complete_col7' title='" 
                 + DIFF_EXPR_STATE_LINK_TITLE + "'>" + DIFF_EXPR_STATE_COL_NAME 
                 + "</a></td><td>over-expression</td></tr>");
@@ -2256,14 +2282,14 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeln(getGeneIdColDescription());
         this.writeln("<h5 id='single_diff_complete_col2'>" + GENE_NAME_COL_NAME + " (column 2)</h5>");
         this.writeln(getGeneNameColDescription(1));
-        this.writeln("<h5 id='single_diff_complete_col3'>" + STAGE_ID_COL_NAME + " (column 3)</h5>");
-        this.writeln(getStageIdColDescription());
-        this.writeln("<h5 id='single_diff_complete_col4'>" + STAGE_NAME_COL_NAME + " (column 4)</h5>");
-        this.writeln(getStageNameColDescription(3));
-        this.writeln("<h5 id='single_diff_complete_col5'>" + ANAT_ENTITY_ID_COL_NAME + " (column 5)</h5>");
+        this.writeln("<h5 id='single_diff_complete_col3'>" + ANAT_ENTITY_ID_COL_NAME + " (column 3)</h5>");
         this.writeln(getAnatEntityIdColDescription());
-        this.writeln("<h5 id='single_diff_complete_col6'>" + ANAT_ENTITY_NAME_COL_NAME + " (column 6)</h5>");
-        this.writeln(getAnatEntityNameColDescription(5));
+        this.writeln("<h5 id='single_diff_complete_col4'>" + ANAT_ENTITY_NAME_COL_NAME + " (column 4)</h5>");
+        this.writeln(getAnatEntityNameColDescription(3));
+        this.writeln("<h5 id='single_diff_complete_col5'>" + STAGE_ID_COL_NAME + " (column 5)</h5>");
+        this.writeln(getStageIdColDescription());
+        this.writeln("<h5 id='single_diff_complete_col6'>" + STAGE_NAME_COL_NAME + " (column 6)</h5>");
+        this.writeln(getStageNameColDescription(5));
         this.writeln("<h5 id='single_diff_complete_col7'>" + DIFF_EXPR_STATE_COL_NAME + " (column 7)</h5>");
         this.writeln(getDiffExprStateColDescription(1, 3, 5, true, true, true, false, "all data types")); 
         this.writeln("<p>This corresponds to the same differential expression state summary column "
@@ -2344,7 +2370,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeln("<p>Over-/under-expression calls are then filtered and presented differently "
                 + "depending on whether a <code>simple file</code>, "
                 + "or a <code>complete file</code> is used. Notably: <code>simple files</code> "
-                + "aim at providing one line per orthology gene group and homologous "
+                + "aim at providing one line per gene orthology group and homologous "
                 + "anatomical entities/developmental stage, and only for anatomical entities "
                 + "with a homology relation defined with good level of confidence. "
                 + "<code>complete files</code> aim at reporting all information, for each gene "
@@ -2393,11 +2419,10 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "one over-expression or under-expression call in a species, are provided, "
                 + "and only for anatomical entities with a homology relation defined "
                 + "with a good level of confidence.</p>");
-        this.writeln("<p>Each gene orthology group is separated with a \"header\" line, "
-                + "starting with <code>//</code>, providing the IDs and names of the genes "
-                //TODO: change when format has been updated
-                + "member of the group. <strong>Please note that this format is likely to change "
-                + "in the next release of Bgee.</strong></p>");
+        this.writeln("<p>Relations of orthology between genes member of a same orthology "
+                + "gene group are provided through the associated "
+                + "<a href='#oma_hog' title='Jump to hierarchical orthologous groups "
+                + "file documentation'>hierarchical orthologous groups file</a>.</p>");
         this.writeln("<table class='call_download_file_desc'>");
         this.writeln("<caption>Format description for multi-species simple differential expression file</caption>");
         this.writeln("<thead>");
@@ -2426,53 +2451,56 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeln("<tr><td>6</td><td><a href='#multi_diff_simple_col6' title='" 
                 + "See " + OVER_EXPRESSED_FOR_SPECIES_COL_NAME + " species1 column description'>" 
                 + OVER_EXPRESSED_FOR_SPECIES_COL_NAME + " species1</a> (e.g., <code>"
-                + OVER_EXPRESSED_FOR_SPECIES_COL_NAME + " Mus musculus</code>)"
+                + OVER_EXPRESSED_FOR_SPECIES_COL_NAME + " Homo sapiens</code>)"
                 + "</td><td>1</td><td>1</td></tr>");
         this.writeln("<tr><td>7</td><td><a href='#multi_diff_simple_col7' title='" 
                 + "See " + UNDER_EXPRESSED_FOR_SPECIES_COL_NAME + " species1 column description'>" 
                 + UNDER_EXPRESSED_FOR_SPECIES_COL_NAME + " species1</a> (e.g., <code>"
-                + UNDER_EXPRESSED_FOR_SPECIES_COL_NAME + " Mus musculus</code>)"
+                + UNDER_EXPRESSED_FOR_SPECIES_COL_NAME + " Homo sapiens</code>)"
                 + "</td><td>1</td><td>0</td></tr>");
         this.writeln("<tr><td>8</td><td><a href='#multi_diff_simple_col8' title='" 
                 + "See " + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME + " species1 column description'>" 
                 + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME + " species1</a> (e.g., <code>"
-                + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME + " Mus musculus</code>)"
+                + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME + " Homo sapiens</code>)"
                 + "</td><td>1</td><td>0</td></tr>");
         this.writeln("<tr><td>9</td><td><a href='#multi_diff_simple_col9' title='" 
                 + "See " + NA_FOR_SPECIES_COL_NAME + " species1 column description'>" 
                 + NA_FOR_SPECIES_COL_NAME + " species1</a> (e.g., <code>"
-                + NA_FOR_SPECIES_COL_NAME + " Mus musculus</code>)"
+                + NA_FOR_SPECIES_COL_NAME + " Homo sapiens</code>)"
                 + "</td><td>1</td><td>0</td></tr>");
         this.writeln("<tr><td>10</td><td><a href='#multi_diff_simple_col6' title='" 
                 + "See " + OVER_EXPRESSED_FOR_SPECIES_COL_NAME + " species2 column description'>" 
                 + OVER_EXPRESSED_FOR_SPECIES_COL_NAME + " species2</a> (e.g., <code>"
-                + OVER_EXPRESSED_FOR_SPECIES_COL_NAME + " Homo sapiens</code>)"
+                + OVER_EXPRESSED_FOR_SPECIES_COL_NAME + " Mus musculus</code>)"
                 + "</td><td>1</td><td>1</td></tr>");
         this.writeln("<tr><td>11</td><td><a href='#multi_diff_simple_col7' title='" 
                 + "See " + UNDER_EXPRESSED_FOR_SPECIES_COL_NAME + " species2 column description'>" 
                 + UNDER_EXPRESSED_FOR_SPECIES_COL_NAME + " species2</a> (e.g., <code>"
-                + UNDER_EXPRESSED_FOR_SPECIES_COL_NAME + " Homo sapiens</code>)"
+                + UNDER_EXPRESSED_FOR_SPECIES_COL_NAME + " Mus musculus</code>)"
                 + "</td><td>1</td><td>0</td></tr>");
         this.writeln("<tr><td>12</td><td><a href='#multi_diff_simple_col8' title='" 
                 + "See " + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME + " species2 column description'>" 
                 + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME + " species2</a> (e.g., <code>"
-                + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME + " Homo sapiens</code>)"
+                + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME + " Mus musculus</code>)"
                 + "</td><td>1</td><td>0</td></tr>");
         this.writeln("<tr><td>13</td><td><a href='#multi_diff_simple_col9' title='" 
                 + "See " + NA_FOR_SPECIES_COL_NAME + " species2 column description'>" 
                 + NA_FOR_SPECIES_COL_NAME + " species2</a> (e.g., <code>"
-                + NA_FOR_SPECIES_COL_NAME + " Homo sapiens</code>)"
+                + NA_FOR_SPECIES_COL_NAME + " Mus musculus</code>)"
                 + "</td><td>1</td><td>0</td></tr>");
         this.writeln("<tr><td>...</td><td>" 
                 + OVER_EXPRESSED_FOR_SPECIES_COL_NAME + " speciesXX "
                 + "</td><td>1</td><td>...</td></tr>");
         this.writeln("<tr><td>...</td><td>...</td><td></td><td></td></tr>");
+        this.writeln("<tr><td>(species*4 + 6)</td><td><a href='#multi_diff_simple_col_gene_ids' title='" 
+                + "See " + GENE_IDS_COL_NAME + " column description'>"+ GENE_IDS_COL_NAME + "</a></td>"
+                + "<td>2 or greater</td><td>ENSG00000169057|ENSMUSG00000031393</td></tr>");
+        this.writeln("<tr><td>(species*4 + 7)</td><td><a href='#multi_diff_simple_col_gene_names' title='" 
+                + "See " + GENE_NAMES_COL_NAME + " column description'>"+ GENE_NAMES_COL_NAME + "</a></td>"
+                + "<td>2 or greater</td><td>MECP2|Mecp2</td></tr>");
         this.writeln("</tbody>");
         this.writeln("</table>");
         this.writeln(getMultiSpeciesSimpleDiffExprFileExample());
-        this.writeln("<p>An example OMA header line could be: <code>//OMA node ID 80 "
-                + "contains gene IDs [ENSG00000169057, ENSMUSG00000031393] with gene names "
-                + "[MECP2, Mecp2]</code></p>");
         
         this.writeln("<h5 id='multi_diff_simple_col1'>" + OMA_ID_COL_NAME + " (column 1)</h5>");
         this.writeln(getOMAIdColDescription());
@@ -2489,7 +2517,9 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         
         String totalNumberOfGenes = "<p>Please note that the list of all genes member of "
                 + "the OMA orthologous gene group with ID provided in <code>" 
-                + OMA_ID_COL_NAME + "</code> (column 1) is provided through the OMA header line.</p>";
+                + OMA_ID_COL_NAME + "</code> (column 1) is provided through "
+                + "the <a href='#oma_hog' title='Jump to hierarchical orthologous groups "
+                + "file documentation'>hierarchical orthologous groups file</a>.</p>";
         this.writeln("<h5 id='multi_diff_simple_col6'>" + OVER_EXPRESSED_FOR_SPECIES_COL_NAME 
                 + " speciesXX</h5>");
         this.writeln(getOverUnderExprForSpeciesColDescription(1, 4, 2, true));
@@ -2518,6 +2548,22 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + MULTI_ANAT_ENTITY_IDS_COL_NAME + "</code> (column 2), at <code>" 
                 + STAGE_ID_COL_NAME + "</code> (column 4)).</p>");
         this.writeln(totalNumberOfGenes);
+        this.writeln("<h5 id='multi_diff_simple_col_gene_ids'>" + GENE_IDS_COL_NAME + "</h5>");
+        this.writeln("<p>IDs of the genes member of the OMA orthologous gene group "
+                + "with ID provided in <code>" + OMA_ID_COL_NAME + "</code> (column 1). "
+                + "Cardinality 2 or greater. IDs are separated with the character |.</p>"
+                + "<p>This column is provided as additional information, members "
+                + "of OMA orthologous gene groups can be retrieved through the use "
+                + "of the <a href='#oma_hog' title='Jump to hierarchical orthologous groups "
+                + "file documentation'>hierarchical orthologous groups file</a>.</p>");
+        this.writeln("<h5 id='multi_diff_simple_col_gene_names'>" + GENE_NAMES_COL_NAME + "</h5>");
+        this.writeln("<p>Name of the genes member of the OMA orthologous gene group "
+                + "with ID provided in <code>" + OMA_ID_COL_NAME + "</code> (column 1). "
+                + "Cardinality 2 or greater. Names are separated with the character |.</p>"
+                + "<p>This column is provided as additional information, members "
+                + "of OMA orthologous gene groups can be retrieved through the use "
+                + "of the <a href='#oma_hog' title='Jump to hierarchical orthologous groups "
+                + "file documentation'>hierarchical orthologous groups file</a>.</p>");
 
         this.writeln("<p><a href='#multi_diff'>Back to over-/under-expression menu</a></p>");
         
@@ -2546,15 +2592,13 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "hypotheses with low support; a column allows to retrieve the level of confidence "
                 + "in the homology hypothesis used. Also, the number of columns in complete files "
                 + "is not variable, whatever the number of species compared is.</p>");
-        this.writeln("<p>Each gene orthology group is separated with a \"header\" line, "
-                + "starting with <code>//</code>, providing the IDs and names of the genes "
-                //TODO: change when format has been updated
-                + "member of the group. This allows notably to detect genes with no data "
+        this.writeln("<p>Relations of orthology between genes can be retrieved through the use "
+                + "of the <a href='#oma_hog' title='Jump to hierarchical orthologous groups "
+                + "file documentation'>hierarchical orthologous groups file</a>. "
+                + "This allows notably to detect genes with no data "
                 + "for a condition: if a gene is listed as a member of an orthology group, "
                 + "but there is no call for this gene in a given condition, it means "
-                + "that there is no data available for this gene in this condition. "
-                + "<strong>Please note that this format is likely to change "
-                + "in the next release of Bgee.</strong></p>");
+                + "that there is no data available for this gene in this condition.</p>");
         this.writeln("<table class='call_download_file_desc'>");
         this.writeln("<caption>Format description for multi-species complete differential "
                 + "expression file</caption>");
@@ -2564,32 +2608,31 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeln("<tbody>");
         this.writeln("<tr><td>1</td><td><a href='#multi_diff_complete_col1' title='" 
                 + "See " + OMA_ID_COL_NAME + " column description'>" + OMA_ID_COL_NAME 
-                + "</a></td><td>1</td><td>42861</td></tr>");
-        //TODO: change order of columns anat entity/stage once we re-generate the files.
+                + "</a></td><td>1</td><td>42865</td></tr>");
         this.writeln("<tr><td>2</td><td><a href='#multi_diff_complete_col2' title='" 
+                + GENE_ID_LINK_TITLE + "'>" + GENE_ID_COL_NAME 
+                + "</a></td><td>1</td><td>ENSMMUG00000012094</td></tr>");
+        this.writeln("<tr><td>3</td><td><a href='#multi_diff_complete_col3' title='" 
+                + GENE_NAME_LINK_TITLE + "'>" + GENE_NAME_COL_NAME 
+                + "</a></td><td>1</td><td>RAB17</td></tr>");
+        this.writeln("<tr><td>4</td><td><a href='#multi_diff_complete_col4' title='" 
                 + "See " + MULTI_ANAT_ENTITY_IDS_COL_NAME + " column description'>" 
                 + MULTI_ANAT_ENTITY_IDS_COL_NAME 
                 + "</a></td><td>1 or greater</td><td>UBERON:0002037</td></tr>");
-        this.writeln("<tr><td>3</td><td><a href='#multi_diff_complete_col3' title='" 
+        this.writeln("<tr><td>5</td><td><a href='#multi_diff_complete_col5' title='" 
                 + "See " + MULTI_ANAT_ENTITY_NAMES_COL_NAME + " column description'>" 
                 + MULTI_ANAT_ENTITY_NAMES_COL_NAME 
                 + "</a></td><td>1 or greater</td><td>cerebellum</td></tr>");
-        this.writeln("<tr><td>4</td><td><a href='#multi_diff_complete_col4' title='" 
+        this.writeln("<tr><td>6</td><td><a href='#multi_diff_complete_col6' title='" 
                 + STAGE_ID_LINK_TITLE + "'>" + STAGE_ID_COL_NAME 
                 + "</a></td><td>1</td><td>UBERON:0018241</td></tr>");
-        this.writeln("<tr><td>5</td><td><a href='#multi_diff_complete_col5' title='" 
+        this.writeln("<tr><td>7</td><td><a href='#multi_diff_complete_col7' title='" 
                 + STAGE_NAME_LINK_TITLE + "'>" + STAGE_NAME_COL_NAME 
                 + "</a></td><td>1</td><td>prime adult stage</td></tr>");
-        this.writeln("<tr><td>6</td><td><a href='#multi_diff_complete_col6' title='" 
+        this.writeln("<tr><td>8</td><td><a href='#multi_diff_complete_col8' title='" 
                 + "See " + SPECIES_LATIN_NAME_COL_NAME + " column description'>" 
                 + SPECIES_LATIN_NAME_COL_NAME 
                 + "</a></td><td>1</td><td>Macaca_mulatta</td></tr>");
-        this.writeln("<tr><td>7</td><td><a href='#multi_diff_complete_col7' title='" 
-                + GENE_ID_LINK_TITLE + "'>" + GENE_ID_COL_NAME 
-                + "</a></td><td>1</td><td>ENSMMUG00000012094</td></tr>");
-        this.writeln("<tr><td>8</td><td><a href='#multi_diff_complete_col8' title='" 
-                + GENE_NAME_LINK_TITLE + "'>" + GENE_NAME_COL_NAME 
-                + "</a></td><td>1</td><td>RAB17</td></tr>");
         this.writeln("<tr><td>9</td><td><a href='#multi_diff_complete_col9' title='" 
                 + DIFF_EXPR_STATE_LINK_TITLE + "'>" + DIFF_EXPR_STATE_COL_NAME 
                 + "</a></td><td>1</td><td>under-expression</td></tr>");
@@ -2647,50 +2690,47 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "</a></td><td>1</td><td>high confidence from single evidence</td></tr>");
         this.writeln("</tbody>");
         this.writeln("</table>");
-        this.writeln("<p>An example OMA header line could be: <code>//OMA node ID 42861 "
-                + "contains gene IDs [ENSBTAG00000017624, ENSG00000124839, ENSMMUG00000012094, "
-                + "ENSMODG00000008949, ENSMUSG00000026304, ENSRNOG00000019887] with gene names "
-                + "[RAB17, RAB17, RAB17, RAB17, Rab17, Rab17]</code></p>");
         this.writeln(getMultiSpeciesCompleteDiffExprFileExample());
         
         this.writeln("<h5 id='multi_diff_complete_col1'>" + OMA_ID_COL_NAME + " (column 1)</h5>");
         this.writeln(getOMAIdColDescription());
-        this.writeln("<h5 id='multi_diff_complete_col2'>" + MULTI_ANAT_ENTITY_IDS_COL_NAME 
-                + " (column 2)</h5>");
-        this.writeln(getMultiAnatEntityIdsColDescription());
-        this.writeln("<h5 id='multi_diff_complete_col3'>" + MULTI_ANAT_ENTITY_NAMES_COL_NAME 
-                + " (column 3)</h5>");
-        this.writeln(getMultiAnatEntityNamesColDescription(2));
-        //invert anat entities and stages columns after files are re-generated
-        this.writeln("<h5 id='multi_diff_complete_col4'>" + STAGE_ID_COL_NAME + " (column 4)</h5>");
-        this.writeln(getMultiSpeciesStageIdColDescription());
-        this.writeln("<h5 id='multi_diff_complete_col5'>" + STAGE_NAME_COL_NAME + " (column 5)</h5>");
-        this.writeln(getStageNameColDescription(4));
-        this.writeln("<h5 id='multi_diff_complete_col6'>" + SPECIES_LATIN_NAME_COL_NAME 
-                + " (column 6)</h5>");
-        this.writeln("<p>The latin name of the species which the gene in " + GENE_ID_COL_NAME 
-                + " (column 7) belongs to.</p>");
-        this.writeln("<h5 id='multi_diff_complete_col7'>" + GENE_ID_COL_NAME + " (column 7)</h5>");
+        this.writeln("<h5 id='multi_diff_complete_col2'>" + GENE_ID_COL_NAME + " (column 2)</h5>");
         this.writeln(getGeneIdColDescription());
         this.writeln("<p>Please note that the list of all genes member of "
                 + "the OMA ortholoogous gene group with ID provided in <code>" 
-                + OMA_ID_COL_NAME + "</code> (column 1) is provided through the OMA header line. "
-                + "If a gene listed in this header line has no call for the condition "
-                + "<code>" + MULTI_ANAT_ENTITY_IDS_COL_NAME + "</code> (column 2), at <code>" 
-                + STAGE_ID_COL_NAME + "</code> (column 4), it means "
+                + OMA_ID_COL_NAME + "</code> (column 1) is provided through the "
+                + "<a href='#oma_hog' title='Jump to hierarchical orthologous groups "
+                + "file documentation'>hierarchical orthologous groups file</a>. "
+                + "If a gene listed in this file has no call for the condition "
+                + "<code>" + MULTI_ANAT_ENTITY_IDS_COL_NAME + "</code> (column 4), at <code>" 
+                + STAGE_ID_COL_NAME + "</code> (column 6), it means "
                 + "that there is no data available for this gene in this condition.</p>");
-        this.writeln("<h5 id='multi_diff_complete_col8'>" + GENE_NAME_COL_NAME + " (column 8)</h5>");
-        this.writeln(getGeneNameColDescription(7));
+        this.writeln("<h5 id='multi_diff_complete_col3'>" + GENE_NAME_COL_NAME + " (column 3)</h5>");
+        this.writeln(getGeneNameColDescription(2));
+        this.writeln("<h5 id='multi_diff_complete_col4'>" + MULTI_ANAT_ENTITY_IDS_COL_NAME 
+                + " (column 4)</h5>");
+        this.writeln(getMultiAnatEntityIdsColDescription());
+        this.writeln("<h5 id='multi_diff_complete_col5'>" + MULTI_ANAT_ENTITY_NAMES_COL_NAME 
+                + " (column 5)</h5>");
+        this.writeln(getMultiAnatEntityNamesColDescription(4));
+        this.writeln("<h5 id='multi_diff_complete_col6'>" + STAGE_ID_COL_NAME + " (column 6)</h5>");
+        this.writeln(getMultiSpeciesStageIdColDescription());
+        this.writeln("<h5 id='multi_diff_complete_col7'>" + STAGE_NAME_COL_NAME + " (column 7)</h5>");
+        this.writeln(getStageNameColDescription(6));
+        this.writeln("<h5 id='multi_diff_complete_col8'>" + SPECIES_LATIN_NAME_COL_NAME 
+                + " (column 8)</h5>");
+        this.writeln("<p>The latin name of the species which the gene in " + GENE_ID_COL_NAME 
+                + " (column 2) belongs to.</p>");
         this.writeln("<h5 id='multi_diff_complete_col9'>" + DIFF_EXPR_STATE_COL_NAME 
                 + " (column 9)</h5>");
-        this.writeln(getDiffExprStateColDescription(7, 4, 2, false, true, true, false, 
+        this.writeln(getDiffExprStateColDescription(2, 6, 4, false, true, true, false, 
                 "all data types")); 
         this.writeln("<h5 id='multi_diff_complete_col10'>" + EXPR_QUAL_COL_NAME 
                 + " (column 10)</h5>");
-        this.writeln(getDiffExprQualColDescription(DIFF_EXPR_STATE_COL_NAME, 7, true, false)); 
+        this.writeln(getDiffExprQualColDescription(DIFF_EXPR_STATE_COL_NAME, 2, true, false)); 
         this.writeln("<h5 id='multi_diff_complete_col11'>" + AFFY_DIFF_EXPR_STATE_COL_NAME 
                 + " (column 11)</h5>");
-        this.writeln(getDiffExprStateColDescription(7, 4, 2, false, true, false, true, 
+        this.writeln(getDiffExprStateColDescription(2, 6, 4, false, true, false, true, 
                 "Affymetrix data")); 
         this.writeln("<h5 id='multi_diff_complete_col12'>" + AFFY_EXPR_QUAL_COL_NAME 
                 + " (column 12)</h5>");
@@ -2709,7 +2749,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 "Affymetrix", AFFY_DIFF_EXPR_STATE_COL_NAME, 11));
         this.writeln("<h5 id='multi_diff_complete_col16'>" + RNA_SEQ_DIFF_EXPR_STATE_COL_NAME 
                 + " (column 16)</h5>");
-        this.writeln(getDiffExprStateColDescription(7, 4, 2, false, true, false, true, "RNA-Seq data")); 
+        this.writeln(getDiffExprStateColDescription(2, 6, 4, false, true, false, true, "RNA-Seq data")); 
         this.writeln("<h5 id='multi_diff_complete_col17'>" + RNA_SEQ_EXPR_QUAL_COL_NAME 
                 + " (column 17)</h5>");
         this.writeln(getDiffExprQualColDescription(RNA_SEQ_DIFF_EXPR_STATE_COL_NAME, 16, false, true)); 
@@ -2732,7 +2772,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "href='https://github.com/BgeeDB/confidence-information-ontology/blob/master/src/ontology/cio-simple.obo'>"
                 + "Confidence Information Ontology</a>, providing the confidence "
                 + "in the annotation of homology of anatomical entities defined in <code>"
-                + MULTI_ANAT_ENTITY_IDS_COL_NAME + "</code> (column 2). This ontology is an attempt "
+                + MULTI_ANAT_ENTITY_IDS_COL_NAME + "</code> (column 4). This ontology is an attempt "
                 + "to provide a mean to capture the confidence in annotations. "
                 + "See <a target='_blank' class='external_link' title='External link to CIO project' "
                 + "href='https://github.com/BgeeDB/confidence-information-ontology'>"

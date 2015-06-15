@@ -1,6 +1,7 @@
 package org.bgee.pipeline.annotations;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
@@ -59,10 +60,15 @@ import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.exception.SuperCsvException;
 import org.supercsv.io.CsvBeanReader;
 import org.supercsv.io.CsvBeanWriter;
+import org.supercsv.io.CsvListReader;
+import org.supercsv.io.CsvListWriter;
 import org.supercsv.io.CsvMapWriter;
 import org.supercsv.io.ICsvBeanReader;
 import org.supercsv.io.ICsvBeanWriter;
+import org.supercsv.io.ICsvListReader;
+import org.supercsv.io.ICsvListWriter;
 import org.supercsv.io.ICsvMapWriter;
+import org.supercsv.prefs.CsvPreference;
 
 import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
@@ -563,11 +569,66 @@ public class SimilarityAnnotation {
             throws FileNotFoundException, IOException, IllegalArgumentException {
         log.entry(similarityFile);
         
-        try (ICsvBeanReader annotReader = new CsvBeanReader(new FileReader(similarityFile), 
+        //FIXME: doesn't work!
+        //curator file has variable number of columns on each line. We cannot use a CsvBeanReader 
+        //for such files, so, we modify the file to have same number of columns on all lines.
+        //First, we need to have maximum number of columns
+        int maxColCount = 0;
+        try (ICsvListReader listReader = new CsvListReader(new FileReader(similarityFile), 
+                CsvPreference.STANDARD_PREFERENCE)) {
+            listReader.getHeader(true); // skip the header (can't be used with CsvListReader)
+            while( (listReader.read()) != null ) {
+                if (listReader.length() > maxColCount) {
+                    maxColCount = listReader.length();
+                }
+            }
+        }
+        log.debug("Max number of columns in curator file: {}", maxColCount);
+        assert maxColCount > 0;
+        //and now we create the new file with equal number of columns on all lines
+        File tmpFile = File.createTempFile("curator_generated_", "_tmp");
+        try (ICsvListReader listReader = new CsvListReader(new FileReader(similarityFile), 
+                CsvPreference.STANDARD_PREFERENCE)) {
+            try (ICsvListWriter listWriter = new CsvListWriter(new FileWriter(tmpFile), 
+                    CsvPreference.STANDARD_PREFERENCE)) {
+                
+                List<String> newLine;
+                while( (newLine = listReader.read()) != null ) {
+                    log.trace("Number of columns in row before treatment: {}", newLine.size());
+                    for (int i = newLine.size(); i < maxColCount; i++) {
+                        newLine.add("");
+                    }
+                    log.trace("Number of columns in row after treatment: {}", newLine.size());
+                    listWriter.write(newLine);
+                }
+            }
+        }
+        
+        try (ICsvBeanReader annotReader = new CsvBeanReader(new FileReader(tmpFile), 
                 SimilarityAnnotationUtils.TSV_COMMENTED)) {
             
             List<CuratorAnnotationBean> annots = new ArrayList<CuratorAnnotationBean>();
             final String[] header = annotReader.getHeader(true);
+            log.trace("Number of column in heaer line: {}", header.length);
+//            final String[] tempHeader = annotReader.getHeader(true);
+//            if (tempHeader.length == 0) {
+//                throw log.throwing(new IllegalArgumentException("No columns defined in file " 
+//                        + similarityFile));
+//            }
+//            //filter the header, there can be "empty" columns at the end of lines.
+//            //iterate the array backward, and note the first index with not null column
+//            int copyRange = -1;
+//            for (int i = tempHeader.length - 1; i >= 0; i--) {
+//                log.info("YEE " + i);
+//                if (tempHeader[i] != null) {
+//                    copyRange = i;
+//                    log.info("YEE2 " + i);
+//                    break;
+//                }
+//            }
+//            assert copyRange >= 0; //at least one column
+//            final String[] header = Arrays.copyOfRange(tempHeader, 0, 100);
+            
             String[] attributeMapping = mapCuratorHeaderToAttributes(header);
             CellProcessor[] cellProcessorMapping = mapCuratorHeaderToCellProcessors(header);
             CuratorAnnotationBean annot;
@@ -586,6 +647,7 @@ public class SimilarityAnnotation {
             throw log.throwing(new IllegalArgumentException("The provided file " 
                     + similarityFile + " could not be properly parsed", e));
         }
+        //TODO: remove tmp file in a finally clause?
     }
 
     /**

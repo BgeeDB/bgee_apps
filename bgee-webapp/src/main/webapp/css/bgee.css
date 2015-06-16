@@ -221,7 +221,7 @@ a:visited, a:hover {
 }
 
 /****BGEE SPECIFIC STUFF****/
-/* TODO: no need for a class, you can do: a[target=_blank], or something based on the href value using regex */
+/* This class is automatically added with jQuery to each 'a[target=_blank]' element without 'img' inside */
 .external_link {
     background-position: right center;
     background-repeat: no-repeat;

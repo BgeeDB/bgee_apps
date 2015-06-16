@@ -163,9 +163,9 @@ public class HtmlDocumentationRefExprFile extends HtmlDocumentationDownloadFile 
         this.writeln("<h2 id='single'>Affymetrix data download files</h2>");
         this.writeln("<div class='doc_content'>"
                 + "<p>Affymetrix data used in Bgee are retrieved from <a target='_blank' "
-                + "class='external_link' title='External link to ArrayExpress' "
+                + "title='External link to ArrayExpress' "
                 + "href='http://www.ebi.ac.uk/arrayexpress/'>ArrayExpress</a> and "
-                + "<a target='_blank' class='external_link' title='External link to GEO' "
+                + "<a target='_blank' title='External link to GEO' "
                 + "href='http://www.ncbi.nlm.nih.gov/geo/'>GEO</a>. They are annotated "
                 + "to anatomical and developmental stage ontologies, filtered by quality controls "
                 + "and analyzed to produce expression data. Only \"normal\" "

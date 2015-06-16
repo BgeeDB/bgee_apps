@@ -397,7 +397,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         log.entry();
         return log.exit("<p>Unique identifier of the OMA gene orthology group. Note that "
                 + "these identifiers are not stable between releases, and cannot be used "
-                + "to retrieve data from <a target='_blank' class='external_link' "
+                + "to retrieve data from <a target='_blank' "
                 + "href='http://omabrowser.org/oma/hogs/' title='External link to OMA browser'>"
                 + "the OMA browser</a>. They are provided solely to group data "
                 + "from orthologous genes belonging to a same orthology group. "
@@ -1495,7 +1495,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "derived from an organ existing before the divergence of the species compared. "
                 + "This requires careful annotations of the homology history of animal anatomy. "
                 + "These annotations are described in a separate project maintained "
-                + "by the Bgee team, see <a target='_blank' class='external_link' "
+                + "by the Bgee team, see <a target='_blank' "
                 + "href='https://github.com/BgeeDB/anatomical-similarity-annotations/' "
                 + "title='See anatomical-similarity-annotations project on GitHub'>"
                 + "homology annotation project on GitHub</a>. <br />"
@@ -1512,7 +1512,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "than the LCA would be discarded, such as the annotation to the \"forelimb\" "
                 + "structure (UBERON:0002102), homologous in the <i>Tetrapoda</i> lineage.</li> "
                 + "<li><span class='list_element_title'>orthology of genes</span>: relations of "
-                + "orthology between genes are retrieved using <a target='_blank' class='external_link' "
+                + "orthology between genes are retrieved using <a target='_blank' "
                 + "href='http://omabrowser.org/oma/hogs/' title='External link to OMA browser'>"
                 + "OMA</a>; when comparing several species, "
                 + "Bgee identifies their Least Common Ancestor (LCA), and retrieve genes "
@@ -2768,13 +2768,13 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeln("<h5 id='multi_diff_complete_col21'>" + ANAT_HOMOLOGY_CIO_ID_COL_NAME 
                 + " (column 21)</h5>");
         this.writeln("<p>Unique identifier from the "
-                + "<a target='_blank' class='external_link' title='External link to CIO in OBO' "
+                + "<a target='_blank' title='External link to CIO in OBO' "
                 + "href='https://github.com/BgeeDB/confidence-information-ontology/blob/master/src/ontology/cio-simple.obo'>"
                 + "Confidence Information Ontology</a>, providing the confidence "
                 + "in the annotation of homology of anatomical entities defined in <code>"
                 + MULTI_ANAT_ENTITY_IDS_COL_NAME + "</code> (column 4). This ontology is an attempt "
                 + "to provide a mean to capture the confidence in annotations. "
-                + "See <a target='_blank' class='external_link' title='External link to CIO project' "
+                + "See <a target='_blank' title='External link to CIO project' "
                 + "href='https://github.com/BgeeDB/confidence-information-ontology'>"
                 + "project home</a> for more details.</p>");
         this.writeln("<h5 id='multi_diff_complete_col22'>" + ANAT_HOMOLOGY_CIO_NAME_COL_NAME 

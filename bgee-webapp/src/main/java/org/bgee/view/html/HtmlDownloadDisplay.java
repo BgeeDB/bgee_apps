@@ -15,7 +15,7 @@ import org.bgee.view.DownloadDisplay;
 
 /**
  * This class displays the page having the category "download", i.e. with the parameter
- * page=download for the {@code displayTypes} HTML
+ * page=download for the HTML view.
  * 
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval

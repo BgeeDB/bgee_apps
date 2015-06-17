@@ -41,18 +41,15 @@ public class CommandHome extends CommandParent
      *                          current request.
      * @param prop              A {@code BgeeProperties} instance that contains the properties
      *                          to use.
-     * @param viewFactory       A {@code ViewFactory} that provides the display for the correct
-     *                          {@code displayTypes}
+     * @param viewFactory       A {@code ViewFactory} that provides the display type to be used.
      */
     public CommandHome(HttpServletResponse response, 
-            RequestParameters requestParameters, BgeeProperties prop, ViewFactory viewFactory)
-    {
+            RequestParameters requestParameters, BgeeProperties prop, ViewFactory viewFactory) {
         super(response, requestParameters, prop, viewFactory);
     }
 
     @Override
-    public void processRequest() throws IOException, PageNotFoundException 
-    {
+    public void processRequest() throws IOException, PageNotFoundException {
         log.entry();
         GeneralDisplay display = this.viewFactory.getGeneralDisplay();
 

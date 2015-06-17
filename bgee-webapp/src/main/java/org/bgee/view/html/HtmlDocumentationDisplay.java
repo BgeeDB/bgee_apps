@@ -10,10 +10,8 @@ import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.DocumentationDisplay;
 
-
-//XXX: what is this {@code displayType}?
 /**
- * This class displays the documentation for the {@code displayType} HTML.
+ * This class displays the documentation for the HTML view.
  *
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval

@@ -13,7 +13,7 @@ import org.bgee.view.AboutDisplay;
 
 /**
  * This class displays the page having the category "about", i.e. with the parameter
- * page=about for the {@code displayTypes} HTML.
+ * page=about for the HTML view.
  *
  * @author 	Valentine Rech de Laval
  * @version Bgee 13

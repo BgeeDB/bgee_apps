@@ -15,7 +15,7 @@ import org.bgee.view.GeneralDisplay;
 import org.bgee.view.ViewFactory;
 
 /**
- * {@code ViewFactory} that returns all displays for the {@code displayTypes} HTML
+ * {@code ViewFactory} that returns all displays for the HTML view.
  * 
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval

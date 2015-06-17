@@ -13,7 +13,7 @@ import org.bgee.view.ConcreteDisplayParent;
 import org.bgee.view.ViewFactory;
 
 /**
- * Parent of all display for the {@code displayTypes} HTML
+ * Parent of all display for the HTML view.
  * 
  * @author Mathieu Seppey
  * @author Frederic Bastian

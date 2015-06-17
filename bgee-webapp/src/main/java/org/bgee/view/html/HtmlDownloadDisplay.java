@@ -300,9 +300,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         return log.exit(
                 "<div id='bgee_search_box'>" +
                         "<form action='/' method='get'>" +
-                            "<label for='search_label'>Search species</label>&nbsp;&nbsp;" +
+                            "<label for='search_label'>Search species</label>" +
                             "<input id='search_label' class='sib_text' type='text' name='search' " +
-                                "value='Scientific name, common name...'/>&nbsp;&nbsp;" +
+                                "value='Scientific name, common name...'/>" +
                             "<input type='image' alt='Submit' " +
                                 "src='"+this.prop.getImagesRootDirectory()+"submit_button.png'/>" +
                             "<div id='results_nb'></div>" +

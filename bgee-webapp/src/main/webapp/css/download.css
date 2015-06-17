@@ -97,6 +97,10 @@ img {
     display: inline-block;
 }
 
+#bgee_search_box label, #search_label{
+	margin-right: 10px;
+}
+
 input[type="image"] {
     margin-top: -1px;
     vertical-align: middle;

@@ -125,27 +125,32 @@ div#results_nb {
     background-color: #D6161D;
     border: 3px solid #F7F8FA;
     border-left: 0px;
-    padding: 6px;
+    padding: 6px 0 6px 9px;
     height: 15px;
     width: 120px;
     left: 0%;
     color: white;
-    font-size: 0.75em;
-    font-weight: 900;
+    font-size: 0.9em;
     z-index: 10;
     display: none;
+    background-repeat: no-repeat;
+    background-size: 9px; 
 }
 
 #bgee_more_results_up {
     border-top: 0px;
     border-radius: 0px 0px 12px 0px;
     top: 0%;
+    background-image: linear-gradient(transparent, transparent), url("../img/more_results_up.png");
+    background-position: 7px 5px;
 }
 
 #bgee_more_results_down {
     border-bottom: 0px;
     border-radius: 0px 12px 0px 0px;
     bottom: 0%;
+    background-image: linear-gradient(transparent, transparent), url("../img/more_results_down.png");
+    background-position: 7px 7px;
 }
 
 figure.highlight {

@@ -143,7 +143,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         
         this.startDisplay("download", "Bgee gene expression call download page");
 
-        this.getMoreResultDivs();
+        this.writeln(this.getMoreResultDivs());
 
         this.writeln("<div id='expr_calls'>");
 
@@ -187,7 +187,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.startDisplay("download", 
                 "Bgee " + PROCESSED_EXPR_VALUES_PAGE_NAME.toLowerCase() + " download page");
         
-        this.getMoreResultDivs();
+        this.writeln(this.getMoreResultDivs());
 
         this.writeln("<div id='proc_values'>");
     
@@ -284,10 +284,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     private String getMoreResultDivs() {
         log.entry();
         
-        //TODO: do not use &nbsp;, use css with a left-margin or something
         return log.exit(
-                "<div id='bgee_more_results_up'> &uarr;&nbsp;&nbsp;&nbsp;More result(s)</div>" +
-                "<div id='bgee_more_results_down'> &darr;&nbsp;&nbsp;&nbsp;More result(s)</div>");
+                "<div id='bgee_more_results_up'>More result(s)</div>" +
+                "<div id='bgee_more_results_down'>More result(s)</div>");
     }
 
     /**

@@ -60,22 +60,12 @@ var download = {
         $exprHelp: null,
         $diffAnatHelp: null,
         $diffDevHelp: null,
-        $showSingleSimpleExprHeaders: null,
-        $showSingleCompleteExprHeaders: null,
         $showSingleSimpleDiffexprAnatomyHeaders: null,
         $showSingleCompleteDiffexprAnatomyHeaders: null,
         $showMultiSimpleDiffexprAnatomyHeaders: null,
         $showMultiCompleteDiffexprAnatomyHeaders: null,
         $showSingleSimpleDiffexprDevelopmentHeaders: null,
         $showSingleCompleteDiffexprDevelopmentHeaders: null,
-        $singleSimpleExprHeaders: null,
-        $singleCompleteExprHeaders: null,        
-        $singleSimpleDiffexprAnatomyHeaders: null,
-        $singleCompleteDiffexprAnatomyHeaders: null,   
-        $multiSimpleDiffexprAnatomyHeaders: null,
-        $multiCompleteDiffexprAnatomyHeaders: null,
-        $singleSimpleDiffexprDevelopmentHeaders: null,
-        $singleCompleteDiffexprDevelopmentHeaders: null,
         $exprNoData: null,
         $diffExprAnatomyNoData: null,
         $diffExprDevelopmentNoData: null,
@@ -159,23 +149,12 @@ var download = {
             this.$diffAnatHelp = $( "#diffexpr_anatomy_help" );
             this.$diffDevHelp = $( "#diffexpr_development_help" );
             // Show headers
-            this.$showSingleSimpleExprHeaders = $( "#show_single_simple_expr_headers" );
-            this.$showSingleCompleteExprHeaders = $( "#show_single_complete_expr_headers" );
             this.$showSingleSimpleDiffexprAnatomyHeaders = $( "#show_single_simple_diffexpr_anatomy_headers" );
             this.$showSingleCompleteDiffexprAnatomyHeaders = $( "#show_single_complete_diffexpr_anatomy_headers" );
             this.$showMultiSimpleDiffexprAnatomyHeaders = $( "#show_multi_simple_diffexpr_anatomy_headers" );
             this.$showMultiCompleteDiffexprAnatomyHeaders = $( "#show_multi_complete_diffexpr_anatomy_headers" );
             this.$showSingleSimpleDiffexprDevelopmentHeaders = $( "#show_single_simple_diffexpr_development_headers" );
             this.$showSingleCompleteDiffexprDevelopmentHeaders = $( "#show_single_complete_diffexpr_development_headers" );
-            // Show Headers
-            this.$singleSimpleExprHeaders = $( "#single_simple_expr_headers" );
-            this.$singleCompleteExprHeaders = $( "#single_complete_expr_headers" );        
-            this.$singleSimpleDiffexprAnatomyHeaders = $( "#single_simple_diffexpr_anatomy_headers" );
-            this.$singleCompleteDiffexprAnatomyHeaders = $( "#single_complete_diffexpr_anatomy_headers" );   
-            this.$multiSimpleDiffexprAnatomyHeaders = $( "#multi_simple_diffexpr_anatomy_headers" );
-            this.$multiCompleteDiffexprAnatomyHeaders = $( "#multi_complete_diffexpr_anatomy_headers" );
-            this.$singleSimpleDiffexprDevelopmentHeaders = $( "#single_simple_diffexpr_development_headers" );
-            this.$singleCompleteDiffexprDevelopmentHeaders = $( "#single_complete_diffexpr_development_headers" );
             // No data 
             this.$exprNoData = $( "#expr_no_data" );
             this.$diffExprAnatomyNoData = $( "#diffexpr_anatomy_no_data" );
@@ -259,34 +238,29 @@ var download = {
                 }
             });
             
-            //TODO: this should be code using a common class, with a single method 
-            //performing the operation based on the ID of the link clicked.
-            //TODO: toggle the + link into a '-' when header displayed
-            // Add listener to the links to show/hide headers
-            this.$showSingleSimpleExprHeaders.click( function(){
-            	download.$singleSimpleExprHeaders.toggle( "blind" );
-            	
-            });
-            this.$showSingleCompleteExprHeaders.click( function(){
-                download.$singleCompleteExprHeaders.toggle( "blind" );
-            });
-            this.$showSingleSimpleDiffexprAnatomyHeaders.click( function(){
-                download.$singleSimpleDiffexprAnatomyHeaders.toggle( "blind" );
-            });
-            this.$showSingleCompleteDiffexprAnatomyHeaders.click( function(){
-                download.$singleCompleteDiffexprAnatomyHeaders.toggle( "blind" );
-            });
-            this.$showMultiSimpleDiffexprAnatomyHeaders.click( function(){
-                download.$multiSimpleDiffexprAnatomyHeaders.toggle( "blind" );
-            });
-            this.$showMultiCompleteDiffexprAnatomyHeaders.click( function(){
-                download.$multiCompleteDiffexprAnatomyHeaders.toggle( "blind" );
-            });
-            this.$showSingleSimpleDiffexprDevelopmentHeaders.click( function(){
-                download.$singleSimpleDiffexprDevelopmentHeaders.toggle( "blind" );
-            });
-            this.$showSingleCompleteDiffexprDevelopmentHeaders.click( function(){
-                download.$singleCompleteDiffexprDevelopmentHeaders.toggle( "blind" );
+            // For each links with show-header class, 
+            // we add listener to show/hide headers and toggle plus/minus src, title and alt image.          
+            $( "a.show-header" ).each(function() {
+                $( this ).click( function(){
+                	var headerTableId = $( this ).attr( "id" ).replace( "show_" , "" );
+                	$( "#" + headerTableId ).toggle( "blind" );
+                	
+                	var source =  $( this ).find( "img" ).attr( "src" );
+                	var title = $( this ).find( "img" ).attr( "title" );
+                	var alt = $( this ).find( "img" ).attr( "alt" );
+                	if ( source.indexOf( "plus" ) > -1 ) {
+                		source = source.replace( "plus", "minus" );
+                		title = title.replace( "Show", "Hide" );
+                		alt = alt.replace( "Plus", "Minus" );
+                	} else {
+                		source = source.replace( "minus", "plus" );
+                		title = title.replace( "Hide", "Show" );
+                		alt = alt.replace( "Minus", "Plus");
+                	}
+                	$( this ).find( "img" ).attr( "src" , source );
+                	$( this ).find( "img" ).attr( "title" , title );
+                	$( this ).find( "img" ).attr( "alt" , alt );
+                });
             });
 
             // Add the autocompletion to the search box.
@@ -505,14 +479,15 @@ var download = {
             }
             
             // Hide all header table to hide tables already opened in another detail box (banner)
-            this.$singleSimpleExprHeaders.hide();
-            this.$singleCompleteExprHeaders.hide();        
-            this.$singleSimpleDiffexprAnatomyHeaders.hide();
-            this.$singleCompleteDiffexprAnatomyHeaders.hide();   
-            this.$multiSimpleDiffexprAnatomyHeaders.hide();
-            this.$multiCompleteDiffexprAnatomyHeaders.hide();
-            this.$singleSimpleDiffexprDevelopmentHeaders.hide();
-            this.$singleCompleteDiffexprDevelopmentHeaders.hide();
+            $( ".header_table" ).each(function() {
+                $( this ).hide();
+            });
+            
+            // Reset all header details to plus image
+            $( "a.show-header img.details" ).each(function() {
+            	//TODO: manage image scr to be not hardcoded            
+            	$( this ).attr( "src" , "img/plus.png" );
+            });
 
             // Update the values of the download links and size files
             

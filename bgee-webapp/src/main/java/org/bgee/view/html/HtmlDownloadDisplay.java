@@ -595,7 +595,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         urlDoc.setPage(RequestParameters.PAGE_DOCUMENTATION);
         urlDoc.setAction(RequestParameters.ACTION_DOC_CALL_DOWLOAD_FILES);
 
-        return log.exit("<a id='" + id + "' href=''>"+
+        return log.exit("<a id='" + id + "' class='specific-help' href=''>"+
                         "<img class='details' src='" + this.prop.getImagesRootDirectory() +
                         "help.png' title='Help' alt='Help' /></a>");
     }
@@ -607,9 +607,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      */
     private String getShowHeaderLink(String id) {
         log.entry(id);
-        return log.exit("<a id='" + id + "'>" + 
+        return log.exit("<a id='" + id + "' class='show-header'>" + 
                 "<img class='details' src='" + this.prop.getImagesRootDirectory() +
-                "show.png' title='Show headers' alt='Show headers'/></a>");
+                "plus.png' title='Show headers' alt='Plus'/></a>");
     }
 
     /**

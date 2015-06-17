@@ -215,13 +215,12 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("<header>");
         
         // Bgee logo
-        this.writeln("<a href='" + this.prop.getBgeeRootDirectory() + "' title='Go to Bgee home page'>"
-                //TODO: create a "logo" property or something, this shouldn't be hardcoded.
-                //also everywhere where getLogoLink is called.
-                + "<img id='sib_other_logo' src='"+this.prop.getImagesRootDirectory()
-                + "logo/bgee13_logo.png' title='Bgee: a dataBase for Gene Expression Evolution' "
-                + "alt='Bgee: a dataBase for Gene Expression Evolution' />"
-                + "</a>");
+        this.writeln("<a href='" + this.prop.getBgeeRootDirectory() + "' title='Go to Bgee home page'>");
+        //TODO: create a "logo" property or something, this shouldn't be hardcoded.
+        //also everywhere where getLogoLink is called.
+        this.writeln("<img id='sib_other_logo' src='" + 
+                this.prop.getImagesRootDirectory() + "logo/bgee13_logo.png' alt='Bgee logo' />");
+        this.writeln("</a>");
     
         // Title
         //TODO: change this hardcoded 'Release 13 download page', provide it as argument
@@ -231,11 +230,10 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     
         // SIB logo
         this.writeln("<a href='http://www.isb-sib.ch/' target='_blank' " +
-                "title='Link to the SIB Swiss Institute of Bioinformatics'>" + 
-                "<img id='sib_logo' src='"+this.prop.getImagesRootDirectory()+
-                "logo/sib_logo.png' " + 
-                "title='Bgee is part of the SIB Swiss Institute of Bioinformatics' " + 
-                "alt='SIB Swiss Institute of Bioinformatics' /></a>");
+                "title='Link to the SIB Swiss Institute of Bioinformatics'>");
+        this.writeln("<img id='sib_logo' src='"+this.prop.getImagesRootDirectory() +
+                "logo/sib_logo.png' alt='SIB Swiss Institute of Bioinformatics' />");
+        this.writeln("</a>");
     
         this.writeln(this.getNavBar());
         
@@ -347,7 +345,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     private String getCaret() {
         return "<img class='deploy' src='" + 
-                this.prop.getImagesRootDirectory() + "arrow_down_dark.png' alt='deploy'/>";
+                this.prop.getImagesRootDirectory() + "arrow_down_dark.png' alt='Deploy'/>";
     }
     
     /**

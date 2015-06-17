@@ -22,7 +22,6 @@ import org.bgee.view.DownloadDisplay;
  * @version Bgee 13 Aug 2014
  * @since   Bgee 13
  */
-//TODO: all images should have an alt attribute
 public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDisplay {
  
     private final static Logger log = LogManager.getLogger(HtmlDownloadDisplay.class.getName());
@@ -149,9 +148,10 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("<div id='expr_calls'>");
 
         this.writeln("<div id='bgee_title'>");
-        this.writeln("<h1><img src='" + this.prop.getImagesRootDirectory() + "logo/expr_calls_logo.png'"
-                + " title='" + GENE_EXPR_CALLS_PAGE_NAME + 
-                "' alt='" + GENE_EXPR_CALLS_PAGE_NAME + " logo'/>" + GENE_EXPR_CALLS_PAGE_NAME + "</h1>");
+        this.writeln("<h1>");
+        this.writeln("<img src='" + this.prop.getImagesRootDirectory() + "logo/expr_calls_logo.png' " + 
+                "alt='" + GENE_EXPR_CALLS_PAGE_NAME + " logo'/>" + GENE_EXPR_CALLS_PAGE_NAME);
+        this.writeln("</h1>");
         this.writeln("</div>");
         
         // Introduction
@@ -192,10 +192,11 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("<div id='proc_values'>");
     
         this.writeln("<div id='bgee_title'>");
-        this.writeln("<h1><img src='" + this.prop.getImagesRootDirectory() + "logo/proc_values_logo.png'"
-                + " title='" + PROCESSED_EXPR_VALUES_PAGE_NAME + 
-                "' alt='" + PROCESSED_EXPR_VALUES_PAGE_NAME + " logo'/>"
-                + PROCESSED_EXPR_VALUES_PAGE_NAME + "</h1>");
+        this.writeln("<h1>");
+        this.writeln("<img src='" + this.prop.getImagesRootDirectory() + "logo/proc_values_logo.png'" + 
+                "' alt='" + PROCESSED_EXPR_VALUES_PAGE_NAME + " logo'/>" + 
+                PROCESSED_EXPR_VALUES_PAGE_NAME);
+        this.writeln("</h1>");
         this.writeln("</div>");
 
         // Introduction
@@ -419,7 +420,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         banner.append("<div id='bgee_data_selection_cross'>");
         banner.append("<a id='switch_page_link' href=''></a>");
         banner.append("<img src='" + this.prop.getImagesRootDirectory() + "cross.png' " +
-                "title='Close banner' alt='Close banner' />");
+                "title='Close banner' alt='Cross' />");
         banner.append("</div>");
         
         // Section on the left of the black banner: image for single species or patchwork for group
@@ -833,12 +834,10 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             figure = "<figure " + this.getSingleSpeciesFileData(speciesIds.get(0), pageType) + ">";
         }
 
-        String pageImg = "", pageImgFileName = null, pageImgtitle = null;
+        String pageImg = "";
         if (pageType.equals(DownloadPageType.PROC_EXPR_VALUES)) {
-            pageImgFileName = "proc_values_zoom_logo.png";
-            pageImgtitle = PROCESSED_EXPR_VALUES_PAGE_NAME;
-            pageImg = "<img class='page_img' src='" + this.prop.getImagesRootDirectory() + "logo/" +
-                    pageImgFileName + "' alt='" + pageImgtitle + "' />";
+            pageImg = "<img class='page_img' src='" + this.prop.getImagesRootDirectory() + 
+                    "logo/proc_values_zoom_logo.png' alt='" + PROCESSED_EXPR_VALUES_PAGE_NAME + "' />";
         }
 
         figure += "<div>" + images + pageImg + "</div>" + 

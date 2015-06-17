@@ -11,28 +11,27 @@ import org.bgee.view.html.HtmlFactory;
 import org.bgee.view.xml.XmlFactory;
 
 /**
- * This class provide the appropriate {@code ViewFactory} depending on the {@code DisplayTypes}
+ * This class provide the appropriate {@code ViewFactory} depending on the {@code DisplayType}
  * 
  * @author Mathieu Seppey
  * @version Bgee 13 Aug 2014
  * @since   Bgee 13
  */
-public class ViewFactoryProvider
-{
+public class ViewFactoryProvider {
     
     private final static Logger log = LogManager.getLogger(ViewFactoryProvider.class.getName());
     
     /**
      * An {@code enum} of the different display types
      */
-    public static enum displayTypes {
+    public static enum DisplayType {
         HTML, XML, CSV, TSV;
     }
     
     /**
-     * The {@code displayTypes} used as default
+     * The {@code DisplayType} used as default
      */
-    public static final displayTypes DEFAULT = displayTypes.HTML;
+    public static final DisplayType DEFAULT = DisplayType.HTML;
     
     /**
      * An instance of {@code BgeeProperties} to provide the all 
@@ -46,14 +45,12 @@ public class ViewFactoryProvider
      * @param prop  An instance of {@code BgeeProperties} to provide the all 
      *              the properties values
      */
-    public ViewFactoryProvider(BgeeProperties prop)
-    {
+    public ViewFactoryProvider(BgeeProperties prop) {
         this.prop = prop;
     }
 
     /**
-     * Return the appropriate {@code ViewFactory} 
-     * (either {@code HtmlFactory}, {@code XmlFactory}, 
+     * Return the appropriate {@code ViewFactory} (either {@code HtmlFactory}, {@code XmlFactory}, 
      * or {@code DsvFactory}), based on the display type requested 
      * in the provided {@code requestParameters}
      *
@@ -62,25 +59,22 @@ public class ViewFactoryProvider
      * @param requestParameters the {@code RequestParameters} handling the parameters of the 
      *                          current request, 
      *                          to determine the requested displayType, and for display purposes.
-     * @return  the appropriate {@code ViewFactory} (either {@code HtmlFactory},
-     *          {@code XmlFactory}, or {@code DsvFactory})
-     *          
+     * @return                  the appropriate {@code ViewFactory} (either {@code HtmlFactory},
+     *                          {@code XmlFactory}, or {@code DsvFactory})
      * @see org.bgee.view.html.HtmlFactory
      * @see org.bgee.view.xml.XmlFactory
      * @see org.bgee.view.dsv.DsvFactory
      * @see org.bgee.controller.URLParameters#DISPLAY_TYPE
      */
-    public ViewFactory getFactory(HttpServletResponse response, 
-            RequestParameters requestParameters)
-    {        
+    public ViewFactory getFactory(HttpServletResponse response, RequestParameters requestParameters) {        
         log.entry(response, requestParameters);
-        displayTypes displayType = DEFAULT;
+        DisplayType displayType = DEFAULT;
         if (requestParameters.isXmlDisplayType()) {
-            displayType = displayTypes.XML;
+            displayType = DisplayType.XML;
         } else if (requestParameters.isCsvDisplayType()) {
-            displayType = displayTypes.CSV;
+            displayType = DisplayType.CSV;
         } else if (requestParameters.isTsvDisplayType()) {
-            displayType = displayTypes.TSV;
+            displayType = DisplayType.TSV;
         }
         return log.exit(getFactory(response, displayType, requestParameters));
     }
@@ -92,33 +86,29 @@ public class ViewFactoryProvider
      * 
      * @param response          the {@code HttpServletResponse} where the outputs of the view 
      *                          classes will be written
-     * @param displayType       an {@code int} specifying the requested display type, 
+     * @param displayType       a {@code DisplayType} specifying the requested display type, 
      *                          corresponding to either 
      *                          {@code HTML}, {@code XML}, {@code TSV}, or {@code CSV}.
      * @param requestParameters the {@code RequestParameters} handling the parameters of the 
      *                          current request, for display purposes.
-     * @return     the appropriate {@code ViewFactory}(either {@code HtmlFactory},
-     *             {@code XmlFactory}, or {@code DsvFactory})
-
+     * @return                  the appropriate {@code ViewFactory}(either {@code HtmlFactory},
+     *                          {@code XmlFactory}, or {@code DsvFactory})
      * @see org.bgee.view.html.HtmlFactory
      * @see org.bgee.view.xml.XmlFactory
      * @see org.bgee.view.dsv.DsvFactory
      */
     protected synchronized ViewFactory getFactory(HttpServletResponse response, 
-            displayTypes displayType, 
-            RequestParameters requestParameters)
-    {
+            DisplayType displayType, RequestParameters requestParameters) {
         log.entry(response, displayType, requestParameters);
-        if (displayType == displayTypes.XML) {
+        if (displayType == DisplayType.XML) {
             return new XmlFactory(response, requestParameters, this.prop);
         }
-        if (displayType == displayTypes.CSV) {
+        if (displayType == DisplayType.CSV) {
             return new DsvFactory(response, ",", requestParameters, this.prop);
         }
-        if (displayType == displayTypes.TSV) {
+        if (displayType == DisplayType.TSV) {
             return new DsvFactory(response, "\t", requestParameters, this.prop);
         }
         return log.exit(new HtmlFactory(response, requestParameters, this.prop));
     }
-
 }

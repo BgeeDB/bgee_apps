@@ -118,8 +118,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     /**
      * @return An {@code int} TODO be more specific
      */
-    protected int getUniqueId()
-    {
+    protected int getUniqueId() {
         log.entry();
         //need to return 0 the first time this method is called;
         int idToReturn = this.uniqueId;
@@ -127,19 +126,20 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         return log.exit(idToReturn);
     }
 
-    public void emptyDisplay()
-    {
+    public void emptyDisplay() {
         log.entry();
         this.sendHeaders(true);
         this.writeln("");
         log.exit();
     }
-    //TODO: use an enum rather than a String page? => yep
-    // but String page is not used
-    //TODO: javadoc
-    protected void startDisplay(String page, String title)
-    {
-        log.entry(page, title);
+
+    /**
+     * Display the start of the HTML page (common to all pages).
+     *
+     * @param title A {@code String} that is the title to be used for the page. 
+     */
+    protected void startDisplay(String title) {
+        log.entry(title);
         this.sendHeaders(false);
         this.writeln("<!DOCTYPE html>");
         this.writeln("<html lang='en'>");
@@ -175,9 +175,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         
         this.writeln("<body>");
         this.writeln("<noscript>Sorry, your browser does not support JavaScript!</noscript>");
-        //TODO: what's the point of this empty link? If it is to use an anchor #TOP, 
-        //you can use a span or div
-        this.writeln("<div id='bgee_top'><a id='TOP'></a></div>");
+        this.writeln("<div id='bgee_top'><span id='TOP'></span></div>");
         this.writeln("<div id='sib_container'>");
         this.displayBgeeHeader();
         this.writeln("<div id='sib_body'>");
@@ -186,10 +184,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     }
 
     /**
-     * Display the end of the page
+     * Display the end of the HTML page (common to all pages).
      */
-    protected void endDisplay()
-    {
+    protected void endDisplay() {
         log.entry();
 
         this.writeln("</div>");
@@ -210,7 +207,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         log.exit();
     }
 
-    //TODO: javadoc
+    /**
+     * Display the Bgee header of the HTML page.
+     */
     private void displayBgeeHeader() {
         log.entry();
         this.writeln("<header>");
@@ -222,10 +221,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("</a>");
     
         // Title
-        //TODO: change this hardcoded 'Release 13 download page', provide it as argument
-        this.writeln("<h1>Bgee: Gene Expression Evolution</h1>"
-                //+ "<h2>Release 13 download page</h2>"
-                );
+        this.writeln("<h1>Bgee: Gene Expression Evolution</h1>");
     
         // SIB logo
         this.writeln("<a href='http://www.isb-sib.ch/' target='_blank' " +
@@ -488,6 +484,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         }
         log.exit();
     }
+    
     /**
      * Send the header in case of HTTP 400 error
      */
@@ -503,6 +500,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         }
         log.exit();
     }
+    
     /**
      * Send the header in case of HTTP 404 error
      */
@@ -518,6 +516,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         }
         log.exit();
     }
+    
     /**
      * Send the header in case of HTTP 500 error
      */
@@ -533,6 +532,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         }
         log.exit();
     }
+    
     /**
      * TODO comment
      */
@@ -543,6 +543,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         return log.exit("<span class='help'><a href='#' class='help|" + 
                 cat + "'>" + display + "</a></span>");
     }
+    
     /**
      * TODO comment
      */

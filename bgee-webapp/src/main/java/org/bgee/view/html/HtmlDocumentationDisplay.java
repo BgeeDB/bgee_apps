@@ -186,7 +186,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
     public void displayDocumentationHomePage() {
         log.entry();
         
-        this.startDisplay("documentation", "Bgee release 13 documentation home page");
+        this.startDisplay("Bgee release 13 documentation home page");
 
         this.writeln("<h1>Bgee release 13 documentation pages</h1>");
 
@@ -208,7 +208,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
     public void displayCallDownloadFileDocumentation() {
         log.entry();
         
-        this.startDisplay("documentation", "Expression call download file documentation");
+        this.startDisplay("Expression call download file documentation");
         
         this.callFileDoc.writeDocumentation();
         
@@ -220,8 +220,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
     public void displayRefExprDownloadFileDocumentation() {
         log.entry();
         
-        this.startDisplay("documentation", 
-                PROCESSED_EXPR_VALUES_PAGE_NAME + " download file documentation");
+        this.startDisplay(PROCESSED_EXPR_VALUES_PAGE_NAME + " download file documentation");
         
         this.refExprFileDoc.writeDocumentation();
         
@@ -236,7 +235,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
     public void displayHowToAccessDataDocumentation() {
         log.entry();
         
-        this.startDisplay("documentation", "How to access to Bgee data");
+        this.startDisplay("How to access to Bgee data");
 
         this.writeln("<h1>How to access to Bgee data</h1>");
 

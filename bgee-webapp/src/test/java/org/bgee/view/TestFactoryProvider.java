@@ -44,11 +44,11 @@ public class TestFactoryProvider extends ViewFactoryProvider
      */
     @Override
     protected synchronized ViewFactory getFactory(HttpServletResponse response, 
-            displayTypes displayType, 
+            DisplayType displayType, 
             RequestParameters requestParameters)
     {
                        
-        if (displayType == displayTypes.XML) {
+        if (displayType == DisplayType.XML) {
             return new TestFactory(response, requestParameters, this.prop);
         }
         ViewFactory mockFactory = mock(ViewFactory.class);

@@ -124,7 +124,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     @Override
     public void displayDownloadHomePage() {
         log.entry();
-        this.startDisplay("download", "Bgee download pages");
+        
+        this.startDisplay("Bgee download pages");
 
         this.writeln("<h1>Bgee download page</h1>");
 
@@ -141,7 +142,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     public void displayGeneExpressionCallDownloadPage() {
         log.entry();
         
-        this.startDisplay("download", "Bgee gene expression call download page");
+        this.startDisplay("Bgee gene expression call download page");
 
         this.writeln(this.getMoreResultDivs());
 
@@ -184,8 +185,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     @Override
     public void displayProcessedExpressionValuesDownloadPage() {
         log.entry();
-        this.startDisplay("download", 
-                "Bgee " + PROCESSED_EXPR_VALUES_PAGE_NAME.toLowerCase() + " download page");
+        
+        this.startDisplay("Bgee " + PROCESSED_EXPR_VALUES_PAGE_NAME.toLowerCase() + " download page");
         
         this.writeln(this.getMoreResultDivs());
 

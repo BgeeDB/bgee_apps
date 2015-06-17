@@ -48,8 +48,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         log.entry();
         this.sendServiceUnavailableHeaders();
 
-        this.startDisplay("unavailable", 
-                "Service unavailable for maintenance");
+        this.startDisplay("Service unavailable for maintenance");
 
         this.writeln("<p class='alert'>Due to technical problems, Bgee is currently unavailable. " +
                 "We are working to restore Bgee as soon as possible. " +
@@ -62,8 +61,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     @Override
     public void displayHomePage() {
         log.entry();
-        this.startDisplay("home", 
-                "Welcome on Bgee: a dataBase for Gene Expression Evolution");
+        this.startDisplay("Welcome on Bgee: a dataBase for Gene Expression Evolution");
 
         //TODO: manage the version either from database, or from bgee-webapp.properties file.
         this.writeln("<h1>Welcome on the latest release of Bgee, Bgee release 13.1</h1>");
@@ -123,8 +121,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     @Override
     public void displayAbout() {
         log.entry();
-        this.startDisplay("home", 
-                "Information about Bgee: a dataBase for Gene Expression Evolution");
+        this.startDisplay("Information about Bgee: a dataBase for Gene Expression Evolution");
 
         this.writeln("<h1>What is Bgee?</h1>");
 
@@ -136,7 +133,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     public void displayRequestParametersNotFound(String key) {
         log.entry(key);
         this.sendBadRequestHeaders();
-        this.startDisplay("", "Request parameters not found");
+        this.startDisplay("Request parameters not found");
         this.writeln("<p class='alert'>Woops, something wrong happened</p>");
         this.writeln("<p>You tried to use in your query some parameters supposed to be stored on our server, " +
                 "but we could not find them. Either the key you used was wrong, " +
@@ -151,7 +148,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     public void displayPageNotFound(String message) {
         log.entry(message);
         this.sendPageNotFoundHeaders();
-        this.startDisplay("", "404 not found");
+        this.startDisplay("404 not found");
         this.writeln("<p class='alert'>Woops, something wrong happened</p>");
         this.writeln("<p>404 not found. We could not understand your query, see details below:</p> " +
                 "<p>" + htmlEntities(message) + "</p>");
@@ -163,7 +160,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     public void displayUnexpectedError() {
         log.entry();
         this.sendInternalErrorHeaders();
-        this.startDisplay("", "500 internal server error");
+        this.startDisplay("500 internal server error");
         this.writeln("<p class='alert'>Woops, something wrong happened</p>");
         this.writeln("<p>500 internal server error. " +
                 "An error occurred on our side. This error was logged and will be investigated. " +
@@ -176,7 +173,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     public void displayMultipleParametersNotAllowed(String message) {
         log.entry(message);
         this.sendBadRequestHeaders();
-        this.startDisplay("", "Multiple values not allowed");
+        this.startDisplay("Multiple values not allowed");
         this.writeln("<p class='alert'>Woops, something wrong happened</p>");
         this.writeln("<p>"+ message
                 + "</p>"
@@ -189,7 +186,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     public void displayRequestParametersNotStorable(String message) {
         log.entry(message);
         this.sendBadRequestHeaders();
-        this.startDisplay("", "A parameter is not storable or the key is missing");
+        this.startDisplay("A parameter is not storable or the key is missing");
         this.writeln("<p class='alert'>Woops, something wrong happened</p>");
         this.writeln("<p>"+ message
                 + "</p>");
@@ -201,7 +198,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     public void displayWrongFormat(String message) {
         log.entry(message);
         this.sendBadRequestHeaders();
-        this.startDisplay("", "Wrong format for a parameter");
+        this.startDisplay("Wrong format for a parameter");
         this.writeln("<p class='alert'>Woops, something wrong happened</p>");
         this.writeln("<p>"+ message
                 + "</p>"

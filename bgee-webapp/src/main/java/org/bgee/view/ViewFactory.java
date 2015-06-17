@@ -25,8 +25,7 @@ import org.bgee.controller.RequestParameters;
  * @see ViewFactoryProvider
  * 
  */
-public abstract class ViewFactory
-{
+public abstract class ViewFactory {
 
     private final static Logger log = LogManager.getLogger(ViewFactory.class.getName());
 
@@ -59,8 +58,7 @@ public abstract class ViewFactory
      *                          the properties values
      */
     public ViewFactory(HttpServletResponse response, RequestParameters requestParameters,
-            BgeeProperties prop)
-    {
+            BgeeProperties prop) {
         log.entry(response, requestParameters, prop);
         this.response = response;
         this.requestParameters = requestParameters;

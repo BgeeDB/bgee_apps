@@ -23,7 +23,7 @@ import org.junit.Test;
  * @author Mathieu Seppey
  * @author Valentine Rech de Laval
  * @author Frederic Bastian
- * @version Bgee 13 Mar. 2015
+ * @version Bgee 13, June 2015
  * @since Bgee 13
  * @see BgeePropertiesParentTest
  * @see BgeePropertiesFirstTest
@@ -44,6 +44,7 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
         prop.put(BgeeProperties.URL_MAX_LENGTH_KEY, "10");
         prop.put(BgeeProperties.CSS_FILES_ROOT_DIRECTORY_KEY, "/injectedcss");
         prop.put(BgeeProperties.CSS_VERSION_EXTENSION_KEY, "injectedCssVersion");
+        prop.put(BgeeProperties.FTP_ROOT_DIRECTORY_KEY, "/injectedftp");
         prop.put(BgeeProperties.DOWNLOAD_ROOT_DIRECTORY_KEY, "/injecteddownload");
         prop.put(BgeeProperties.DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_KEY, "/injectedexprfiles");
         prop.put(BgeeProperties.DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY, "/injecteddiffexprfiles");
@@ -55,6 +56,8 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
         prop.put(BgeeProperties.DOWNLOAD_RNA_SEQ_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY, 
                 "/injectedrnaseqprocvaluefiles");
         prop.put(BgeeProperties.IMAGES_ROOT_DIRECTORY_KEY, "/injectedimg");
+        prop.put(BgeeProperties.LOGO_IMAGES_ROOT_DIRECTORY_KEY, "/injectedlogoimg");
+        prop.put(BgeeProperties.SPECIES_IMAGES_ROOT_DIRECTORY_KEY, "/injectedspeciesimg");
         prop.put(BgeeProperties.JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY, "/injectedjs");
         prop.put(BgeeProperties.JAVASCRIPT_VERSION_EXTENSION_KEY, "injectedJsVersion");
         prop.put(BgeeProperties.REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY, "/injectedrequestparam");
@@ -69,6 +72,8 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
                 "/injectedcss", bgeeProp.getCssFilesRootDirectory());
         assertEquals("Wrong property value retrieved", 
                 "injectedCssVersion", bgeeProp.getCssVersionExtension());
+        assertEquals("Wrong property value retrieved", 
+                "/injectedftp", bgeeProp.getFTPRootDirectory());
         assertEquals("Wrong property value retrieved", 
                 "/injecteddownload", bgeeProp.getDownloadRootDirectory());
         assertEquals("Wrong property value retrieved", 
@@ -85,6 +90,10 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
                 "/injectedrnaseqprocvaluefiles", bgeeProp.getDownloadRNASeqProcExprValueFilesRootDirectory());
         assertEquals("Wrong property value retrieved", 
                 "/injectedimg", bgeeProp.getImagesRootDirectory());
+        assertEquals("Wrong property value retrieved", 
+                "/injectedlogoimg", bgeeProp.getLogoImagesRootDirectory());
+        assertEquals("Wrong property value retrieved", 
+                "/injectedspeciesimg", bgeeProp.getSpeciesImagesRootDirectory());
         assertEquals("Wrong property value retrieved", 
                 "/injectedjs", bgeeProp.getJavascriptFilesRootDirectory());
         assertEquals("Wrong property value retrieved", 

@@ -13,7 +13,7 @@ import org.junit.Test;
  * @author Mathieu Seppey
  * @author Valentine Rech de Laval
  * @author Frederic Bastian
- * @version Bgee 13 Mar. 2015
+ * @version Bgee 13, June 2015
  * @since Bgee 13
  * @see BgeePropertiesParentTest
  * @see BgeePropertiesFirstTest
@@ -39,6 +39,7 @@ public class BgeePropertiesThirdTest extends BgeePropertiesParentTest {
         System.setProperty(BgeeProperties.REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY, 
                 "/requestParamStorDir");
         System.setProperty(BgeeProperties.DOWNLOAD_ROOT_DIRECTORY_KEY, "/downRootDir");
+        System.setProperty(BgeeProperties.FTP_ROOT_DIRECTORY_KEY, "/ftpRootDir");
         System.setProperty(BgeeProperties.DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_KEY, "/downExprFileDir");
         System.setProperty(BgeeProperties.DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY, 
                 "/downDiffExprFileDir");
@@ -55,6 +56,8 @@ public class BgeePropertiesThirdTest extends BgeePropertiesParentTest {
         System.setProperty(BgeeProperties.CSS_FILES_ROOT_DIRECTORY_KEY, "/cssFileRootDir");
         System.setProperty(BgeeProperties.CSS_VERSION_EXTENSION_KEY, "-extension-css-1");
         System.setProperty(BgeeProperties.IMAGES_ROOT_DIRECTORY_KEY, "/imgRootDir");
+        System.setProperty(BgeeProperties.LOGO_IMAGES_ROOT_DIRECTORY_KEY, "/logoImgRootDir");
+        System.setProperty(BgeeProperties.SPECIES_IMAGES_ROOT_DIRECTORY_KEY, "/speciesImgRootDir");
         System.setProperty(BgeeProperties.TOP_OBO_RESULTS_URL_ROOT_DIRECTORY_KEY, "/topOboDir");
         System.setProperty(BgeeProperties.WEBPAGES_CACHE_CONFIG_FILE_NAME_KEY, "cacheConfigFileName");
         
@@ -64,6 +67,8 @@ public class BgeePropertiesThirdTest extends BgeePropertiesParentTest {
         assertEquals("Wrong property value retrieved", 30, bgeeProp.getUrlMaxLength());
         assertEquals("Wrong property value retrieved",
                 "/requestParamStorDir", bgeeProp.getRequestParametersStorageDirectory());
+        assertEquals("Wrong property value retrieved", 
+                "/ftpRootDir", bgeeProp.getFTPRootDirectory());
         assertEquals("Wrong property value retrieved", 
                 "/downRootDir", bgeeProp.getDownloadRootDirectory());
         assertEquals("Wrong property value retrieved", 
@@ -88,6 +93,10 @@ public class BgeePropertiesThirdTest extends BgeePropertiesParentTest {
                 "-extension-css-1", bgeeProp.getCssVersionExtension());
         assertEquals("Wrong property value retrieved",
                 "/imgRootDir", bgeeProp.getImagesRootDirectory());
+        assertEquals("Wrong property value retrieved",
+                "/logoImgRootDir", bgeeProp.getLogoImagesRootDirectory());
+        assertEquals("Wrong property value retrieved",
+                "/speciesImgRootDir", bgeeProp.getSpeciesImagesRootDirectory());
         assertEquals("Wrong property value retrieved", 
                 "/topOboDir", bgeeProp.getTopOBOResultsUrlRootDirectory());
         assertEquals("Wrong property value retrieved",

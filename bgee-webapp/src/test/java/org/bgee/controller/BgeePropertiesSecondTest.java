@@ -13,7 +13,7 @@ import org.junit.Test;
  * @author Mathieu Seppey
  * @author Valentine Rech de Laval
  * @author Frederic Bastian
- * @version Bgee 13 Mar. 2015
+ * @version Bgee 13, June 2015
  * @since Bgee 13
  * @see BgeePropertiesParentTest
  * @see BgeePropertiesFirstTest
@@ -38,6 +38,8 @@ public class BgeePropertiesSecondTest extends BgeePropertiesParentTest {
         assertEquals("Wrong property value retrieved",
                 "/requestParametersStorageDirectory", bgeeProp.getRequestParametersStorageDirectory());
         assertEquals("Wrong property value retrieved", 
+                "/ftpRootDirectory", bgeeProp.getFTPRootDirectory());
+        assertEquals("Wrong property value retrieved", 
                 "/downloadRootDirectory", bgeeProp.getDownloadRootDirectory());
         assertEquals("Wrong property value retrieved", 
                 "/downloadExprFileDirectory", bgeeProp.getDownloadExprFilesRootDirectory());
@@ -61,6 +63,10 @@ public class BgeePropertiesSecondTest extends BgeePropertiesParentTest {
                 "", bgeeProp.getCssVersionExtension());
         assertEquals("Wrong property value retrieved",
                 "/imagesRootDirectory", bgeeProp.getImagesRootDirectory());
+        assertEquals("Wrong property value retrieved",
+                "/logoImagesRootDirectory", bgeeProp.getLogoImagesRootDirectory());
+        assertEquals("Wrong property value retrieved",
+                "/speciesImagesRootDirectory", bgeeProp.getSpeciesImagesRootDirectory());
         assertEquals("Wrong property value retrieved",
                 "/topOBOResultsUrlRootDirectory", bgeeProp.getTopOBOResultsUrlRootDirectory());
         assertEquals("Wrong property value retrieved",

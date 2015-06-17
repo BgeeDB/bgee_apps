@@ -31,7 +31,8 @@ import org.apache.logging.log4j.Logger;
  * 
  * @author Frederic Bastian
  * @author Mathieu Seppey
- * @version Bgee 14, August 2014
+ * @author Valentine Rech de Laval
+ * @version Bgee 13, June 2015
  * @since Bgee 13
  */
 public class BgeeProperties 
@@ -97,6 +98,23 @@ public class BgeeProperties
      * @see #getBgeeRootDirectory()
      */
     public final static String BGEE_ROOT_DIRECTORY_DEFAULT = "/";
+    
+    /**
+     * A {@code String} that is the key to access to the System property that is read at the 
+     * initialization of {@code BgeeProperties} to set the FTP server root directory. 
+     * 
+     * @see #FTP_ROOT_DIRECTORY_DEFAULT
+     * @see #getFTPRootDirectory()
+     */
+    public final static String FTP_ROOT_DIRECTORY_KEY = 
+            "org.bgee.webapp.ftpRootDirectory";
+    /**
+     * A {@code String} that is the default value of the FTP server root directory. 
+     * 
+     * @see #FTP_ROOT_DIRECTORY_KEY
+     * @see #getFTPRootDirectory()
+     */
+    public final static String FTP_ROOT_DIRECTORY_DEFAULT = "ftp/";
 
     /**
      * A {@code String} that is the key to access to the System property that is read at the 
@@ -314,6 +332,40 @@ public class BgeeProperties
 
     /**
      * A {@code String} that is the key to access to the System property that is read at the 
+     * initialization of {@code BgeeProperties} to set the logo images root directory. 
+     * 
+     * @see #LOGO_IMAGES_ROOT_DIRECTORY_DEFAULT
+     * @see #getLogoImagesRootDirectory()
+     */
+    public final static String LOGO_IMAGES_ROOT_DIRECTORY_KEY = 
+            "org.bgee.webapp.logoImagesRootDirectory";
+    /**
+     * A {@code String} that is the default value of the logo images root directory. 
+     * 
+     * @see #LOGO_IMAGES_ROOT_DIRECTORY_KEY
+     * @see #getLogoImagesRootDirectory()
+     */
+    public final static String LOGO_IMAGES_ROOT_DIRECTORY_DEFAULT = "img/logo/";
+
+    /**
+     * A {@code String} that is the key to access to the System property that is read at the 
+     * initialization of {@code BgeeProperties} to set the species images root directory. 
+     * 
+     * @see #SPECIES_IMAGES_ROOT_DIRECTORY_DEFAULT
+     * @see #getSpeciesImagesRootDirectory()
+     */
+    public final static String SPECIES_IMAGES_ROOT_DIRECTORY_KEY = 
+            "org.bgee.webapp.speciesImagesRootDirectory";
+    /**
+     * A {@code String} that is the default value of the species images root directory. 
+     * 
+     * @see #SPECIES_IMAGES_ROOT_DIRECTORY_KEY
+     * @see #getSpeciesImagesRootDirectory()
+     */
+    public final static String SPECIES_IMAGES_ROOT_DIRECTORY_DEFAULT = "img/species/";
+
+    /**
+     * A {@code String} that is the key to access to the System property that is read at the 
      * initialization of {@code BgeeProperties} to set the top OBO results url root directory. 
      * 
      * @see #TOP_OBO_RESULTS_URL_ROOT_DIRECTORY_DEFAULT
@@ -394,6 +446,12 @@ public class BgeeProperties
     private final String bgeeRootDirectory;
 
     /**
+     * A {@code String} that defines the root directory where is the FTP server, 
+     * to be added to the {@code bgeeRootDirectory} to generate URL of the FTP server.
+     */
+    private final String ftpRootDirectory;
+
+    /**
      * A {@code String} that defines the root directory where are located files available for download, 
      * to be added to the {@code bgeeRootDirectory} to generate URL to download files.
      */
@@ -470,6 +528,18 @@ public class BgeeProperties
     private final String imagesRootDirectory;
 
     /**
+     * A {@code String} that defines the root directory where are located logo images, 
+     * to be added to the {@code bgeeRootDirectory} to generate URL to obtain images.
+     */
+    private final String logoImagesRootDirectory;
+
+    /**
+     * A {@code String} that defines the root directory where are located species images, 
+     * to be added to the {@code bgeeRootDirectory} to generate URL to obtain images.
+     */
+    private final String speciesImagesRootDirectory;
+
+    /**
      * A {@code String} that defines the directory where are stored TopOBO result files, 
      * to be added to the {@code bgeeRootDirectory} to generate URL to obtain result files.
      */
@@ -542,16 +612,18 @@ public class BgeeProperties
         // Initialize all properties using the injected prop first, alternatively the System
         // properties and then the file. The default value provided will be use if none of the
         // previous solutions contain the property
-        requestParametersStorageDirectory  = getStringOption(prop, sysProps, fileProps, 
+        requestParametersStorageDirectory = getStringOption(prop, sysProps, fileProps, 
                 REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY,  
                 REQUEST_PARAMETERS_STORAGE_DIRECTORY_DEFAULT);
-        bgeeRootDirectory  = getStringOption(prop, sysProps, fileProps, 
+        bgeeRootDirectory = getStringOption(prop, sysProps, fileProps, 
                 BGEE_ROOT_DIRECTORY_KEY, BGEE_ROOT_DIRECTORY_DEFAULT);
-        downloadRootDirectory  = getStringOption(prop, sysProps, fileProps, 
+        ftpRootDirectory = getStringOption(prop, sysProps, fileProps, 
+                FTP_ROOT_DIRECTORY_KEY, FTP_ROOT_DIRECTORY_DEFAULT);
+        downloadRootDirectory = getStringOption(prop, sysProps, fileProps, 
                 DOWNLOAD_ROOT_DIRECTORY_KEY, DOWNLOAD_ROOT_DIRECTORY_DEFAULT);
-        downloadExprFilesRootDirectory  = getStringOption(prop, sysProps, fileProps, 
+        downloadExprFilesRootDirectory = getStringOption(prop, sysProps, fileProps, 
                 DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_KEY, DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_DEFAULT);
-        downloadDiffExprFilesRootDirectory  = getStringOption(prop, sysProps, fileProps, 
+        downloadDiffExprFilesRootDirectory = getStringOption(prop, sysProps, fileProps, 
                 DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY, 
                 DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_DEFAULT);
         downloadMultiDiffExprFilesRootDirectory = getStringOption(prop, sysProps, fileProps, 
@@ -566,17 +638,21 @@ public class BgeeProperties
         downloadRNASeqProcExprValueFilesRootDirectory = getStringOption(prop, sysProps, fileProps, 
                 DOWNLOAD_RNA_SEQ_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY, 
                 DOWNLOAD_RNA_SEQ_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT);
-        javascriptFilesRootDirectory  = getStringOption(prop, sysProps, fileProps, 
+        javascriptFilesRootDirectory = getStringOption(prop, sysProps, fileProps, 
                 JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY, JAVASCRIPT_FILES_ROOT_DIRECTORY_DEFAULT);
-        javascriptVersionExtension  = getStringOption(prop, sysProps, fileProps, 
+        javascriptVersionExtension = getStringOption(prop, sysProps, fileProps, 
                 JAVASCRIPT_VERSION_EXTENSION_KEY, JAVASCRIPT_VERSION_EXTENSION_DEFAULT);
-        cssFilesRootDirectory  = getStringOption(prop, sysProps, fileProps, 
+        cssFilesRootDirectory = getStringOption(prop, sysProps, fileProps, 
                 CSS_FILES_ROOT_DIRECTORY_KEY, CSS_FILES_ROOT_DIRECTORY_DEFAULT);
-        cssVersionExtension  = getStringOption(prop, sysProps, fileProps, 
+        cssVersionExtension = getStringOption(prop, sysProps, fileProps, 
                 CSS_VERSION_EXTENSION_KEY, CSS_VERSION_EXTENSION_DEFAULT);
-        imagesRootDirectory  = getStringOption(prop, sysProps, fileProps, 
+        imagesRootDirectory = getStringOption(prop, sysProps, fileProps, 
                 IMAGES_ROOT_DIRECTORY_KEY, IMAGES_ROOT_DIRECTORY_DEFAULT);
-        topOBOResultsUrlRootDirectory  = getStringOption(prop, sysProps, fileProps, 
+        logoImagesRootDirectory = getStringOption(prop, sysProps, fileProps, 
+                LOGO_IMAGES_ROOT_DIRECTORY_KEY, LOGO_IMAGES_ROOT_DIRECTORY_DEFAULT);
+        speciesImagesRootDirectory = getStringOption(prop, sysProps, fileProps, 
+                SPECIES_IMAGES_ROOT_DIRECTORY_KEY, SPECIES_IMAGES_ROOT_DIRECTORY_DEFAULT);
+        topOBOResultsUrlRootDirectory = getStringOption(prop, sysProps, fileProps, 
                 TOP_OBO_RESULTS_URL_ROOT_DIRECTORY_KEY, 
                 TOP_OBO_RESULTS_URL_ROOT_DIRECTORY_DEFAULT);
         urlMaxLength = getIntegerOption(prop, sysProps, fileProps, 
@@ -655,8 +731,7 @@ public class BgeeProperties
      *                      properties to look for {@code key} first
      * @param sysProps      {@code java.util.Properties} retrieved from System properties, 
      *                      where {@code key} is searched in second
-     * @param fileProps     {@code java.util.Properties} retrieved 
-     *                      from the Bgee properties file, 
+     * @param fileProps     {@code java.util.Properties} retrieved from the Bgee properties file, 
      *                      where {@code key} is searched in if {@code prop} and {@code sysProps}
      *                      were undefined or empty for {@code key}. 
      *                      Can be {@code null} if no properties file was found.
@@ -668,10 +743,8 @@ public class BgeeProperties
      *                      Or {@code defaultValue} if not defined or empty.
      */
     private String getStringOption(Properties prop, Properties sysProps, 
-            Properties fileProps, String key, 
-            String defaultValue)
-    {
-        log.entry(prop, sysProps, fileProps,  key, defaultValue);
+            Properties fileProps, String key, String defaultValue) {
+        log.entry(prop, sysProps, fileProps, key, defaultValue);
 
         String propValue = null;
 
@@ -727,8 +800,7 @@ public class BgeeProperties
      *                     Or {@code defaultValue} if not defined or empty.
      */
     private int getIntegerOption(Properties prop, Properties sysProps, 
-            Properties fileProps, String key, 
-            int defaultValue) {
+            Properties fileProps, String key, int defaultValue) {
         log.entry(prop, fileProps, sysProps, key, defaultValue);
 
         String propValue = this.getStringOption(prop,sysProps, fileProps, key, null);
@@ -757,8 +829,16 @@ public class BgeeProperties
     }
 
     /**
-     * @return  A {@code String} that defines the root directory where are located files 
-     *          available for download, to be added to the {@code bgeeRootDirectory} to 
+     * @return  A {@code String} that defines the FTP root directory, to be added to the 
+     *          {@code bgeeRootDirectory} to generate URL of FTP server.
+     */
+    public String getFTPRootDirectory() {
+        return ftpRootDirectory;
+    }
+
+    /**
+     * @return  A {@code String} that defines the download files root directory where are located 
+     *          data files available for download, to be added to the {@code bgeeRootDirectory} to 
      *          generate URL to download files
      */
     public String getDownloadRootDirectory() {
@@ -874,6 +954,22 @@ public class BgeeProperties
      */
     public String getImagesRootDirectory() {
         return imagesRootDirectory;
+    }
+
+    /**
+     * @return  A {@code String} that defines the root directory where are located logo images, 
+     *          to be added to the {@code bgeeRootDirectory} to generate URL to obtain images.
+     */
+    public String getLogoImagesRootDirectory() {
+        return logoImagesRootDirectory;
+    }
+
+    /**
+     * @return  A {@code String} that defines the root directory where are located species images, 
+     *          to be added to the {@code bgeeRootDirectory} to generate URL to obtain images.
+     */
+    public String getSpeciesImagesRootDirectory() {
+        return speciesImagesRootDirectory;
     }
 
     /**

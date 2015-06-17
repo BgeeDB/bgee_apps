@@ -17,7 +17,7 @@ import org.bgee.view.DocumentationDisplay;
  *
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13 May 2015
+ * @version Bgee 13, June 2015
  * @since   Bgee 13
  */
 public class HtmlDocumentationDisplay extends HtmlParentDisplay implements DocumentationDisplay {
@@ -256,17 +256,14 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
 
         this.writeln(HtmlParentDisplay.getSingleFeatureLogo("https://github.com/BgeeDB", 
                 true, "GitHub of the Bgee project", "GitHub", 
-                this.prop.getImagesRootDirectory() + "logo/github_logo.png", 
+                this.prop.getLogoImagesRootDirectory() + "github_logo.png", 
                 "Retrieve our annotations of homology between anatomical structures, "
                 + "as well as the Confidence Information Ontology (CIO) "
                 + "and the Homology Ontology (HOM), from our GitHub repository."));
 
-        //TODO: add a bgee property to link to the MySQL dump
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(this.prop.getDownloadRootDirectory() + 
-                //TODO: change this ugly '../' once we'll have added a property to distinguish 
-                //FTP root and download_files directory. See todo in BgeeProperties
-                "../sql_dump.tar.gz", false, "Download dump the MySQL Bgee database", "MySQL dump", 
-                this.prop.getImagesRootDirectory() + "logo/mysql_logo.png", 
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(this.prop.getFTPRootDirectory() + 
+                "sql_dump.tar.gz", false, "Download dump the MySQL Bgee database", "MySQL dump", 
+                this.prop.getLogoImagesRootDirectory() + "mysql_logo.png", 
                 "Download the complete dump of the MySQL Bgee database, that contains "
                 + "all the data used to generate the information displayed on this website."));
 

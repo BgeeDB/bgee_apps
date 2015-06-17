@@ -15,7 +15,8 @@ import org.bgee.view.GeneralDisplay;
  * 
  * @author Mathieu Seppey
  * @author Frederic Bastian
- * @version Bgee 13, Aug 2014
+ * @author Valentine Rech de Laval
+ * @version Bgee 13, June 2015
  * @since Bgee 13
  */
 public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisplay {
@@ -112,7 +113,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         this.writeln("<div id='feature_list'>");
         this.writeln(HtmlParentDisplay.getSingleFeatureLogo("http://bgee.org/bgee/bgee", 
                 true, "Bgee 12 home page", "Bgee 12", 
-                this.prop.getImagesRootDirectory() + "logo/bgee12_logo.png", null));
+                this.prop.getLogoImagesRootDirectory() + "bgee12_logo.png", null));
         this.writeln("</div>");
 
         this.endDisplay();

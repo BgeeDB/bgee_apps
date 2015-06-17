@@ -14,7 +14,7 @@ import org.junit.Before;
  * @author Mathieu Seppey
  * @author Valentine Rech de Laval
  * @author Frederic Bastian
- * @version Bgee 13 Mar. 2015
+ * @version Bgee 13, June 2015
  * @since Bgee 13
  * @see BgeePropertiesParentTest
  * @see BgeePropertiesFirstTest
@@ -34,23 +34,7 @@ public abstract class BgeePropertiesParentTest {
      */
     @Before
     public void initTests(){
-        System.clearProperty(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY);
-        System.clearProperty(BgeeProperties.URL_MAX_LENGTH_KEY);
-        System.clearProperty(BgeeProperties.REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY);
-        System.clearProperty(BgeeProperties.DOWNLOAD_ROOT_DIRECTORY_KEY);
-        System.clearProperty(BgeeProperties.DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_KEY);
-        System.clearProperty(BgeeProperties.DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY);
-        System.clearProperty(BgeeProperties.DOWNLOAD_MULTI_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY);
-        System.clearProperty(BgeeProperties.DOWNLOAD_ORTHOLOG_FILES_ROOT_DIRECTORY_KEY);
-        System.clearProperty(BgeeProperties.DOWNLOAD_AFFY_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY);
-        System.clearProperty(BgeeProperties.DOWNLOAD_RNA_SEQ_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY);
-        System.clearProperty(BgeeProperties.JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY);
-        System.clearProperty(BgeeProperties.JAVASCRIPT_VERSION_EXTENSION_KEY);
-        System.clearProperty(BgeeProperties.CSS_FILES_ROOT_DIRECTORY_KEY);
-        System.clearProperty(BgeeProperties.CSS_VERSION_EXTENSION_KEY);
-        System.clearProperty(BgeeProperties.IMAGES_ROOT_DIRECTORY_KEY);
-        System.clearProperty(BgeeProperties.TOP_OBO_RESULTS_URL_ROOT_DIRECTORY_KEY);
-        System.clearProperty(BgeeProperties.WEBPAGES_CACHE_CONFIG_FILE_NAME_KEY);
+        this.clearCommonProperties();
         // set the properties file to an non-existing file, 
         // so that no property file is used (otherwise, property files in src/test/resources/ 
         // or src/main/resources/ would be used).
@@ -62,10 +46,18 @@ public abstract class BgeePropertiesParentTest {
      */
     @After
     public void resetProperties(){
+        this.clearCommonProperties();
         System.clearProperty(BgeeProperties.PROPERTIES_FILE_NAME_KEY);
+    }
+
+    /**
+     * Clear the common properties to be cleared before and after tests.
+     */
+    private void clearCommonProperties() {
         System.clearProperty(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.URL_MAX_LENGTH_KEY);
         System.clearProperty(BgeeProperties.REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.FTP_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.DOWNLOAD_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY);
@@ -78,8 +70,9 @@ public abstract class BgeePropertiesParentTest {
         System.clearProperty(BgeeProperties.CSS_FILES_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.CSS_VERSION_EXTENSION_KEY);
         System.clearProperty(BgeeProperties.IMAGES_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.LOGO_IMAGES_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.SPECIES_IMAGES_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.TOP_OBO_RESULTS_URL_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.WEBPAGES_CACHE_CONFIG_FILE_NAME_KEY);
     }
-
 }

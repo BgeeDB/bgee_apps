@@ -15,9 +15,10 @@ import org.bgee.view.ViewFactory;
 /**
  * Parent of all display for the {@code displayTypes} HTML
  * 
- * @author  Mathieu Seppey
+ * @author Mathieu Seppey
  * @author Frederic Bastian
- * @version Bgee 13 Mar. 2015
+ * @author Valentine Rech de Laval
+ * @version Bgee 13, June 2015
  * @since   Bgee 13
  */
 public class HtmlParentDisplay extends ConcreteDisplayParent {
@@ -216,10 +217,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         
         // Bgee logo
         this.writeln("<a href='" + this.prop.getBgeeRootDirectory() + "' title='Go to Bgee home page'>");
-        //TODO: create a "logo" property or something, this shouldn't be hardcoded.
-        //also everywhere where getLogoLink is called.
         this.writeln("<img id='sib_other_logo' src='" + 
-                this.prop.getImagesRootDirectory() + "logo/bgee13_logo.png' alt='Bgee logo' />");
+                this.prop.getLogoImagesRootDirectory() + "bgee13_logo.png' alt='Bgee logo' />");
         this.writeln("</a>");
     
         // Title
@@ -231,8 +230,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         // SIB logo
         this.writeln("<a href='http://www.isb-sib.ch/' target='_blank' " +
                 "title='Link to the SIB Swiss Institute of Bioinformatics'>");
-        this.writeln("<img id='sib_logo' src='"+this.prop.getImagesRootDirectory() +
-                "logo/sib_logo.png' alt='SIB Swiss Institute of Bioinformatics' />");
+        this.writeln("<img id='sib_logo' src='"+this.prop.getLogoImagesRootDirectory() +
+                "sib_logo.png' alt='SIB Swiss Institute of Bioinformatics' />");
         this.writeln("</a>");
     
         this.writeln(this.getNavBar());
@@ -363,7 +362,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         return log.exit(HtmlParentDisplay.getSingleFeatureLogo(
                 urlDocumentationGenerator.getRequestURL(), false, 
                 "Bgee documentation page", "Documentation", 
-                this.prop.getImagesRootDirectory() + "logo/doc_logo.png", null));
+                this.prop.getLogoImagesRootDirectory() + "doc_logo.png", null));
     }
 
     /**
@@ -388,11 +387,11 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 
         logos.append(HtmlParentDisplay.getSingleFeatureLogo(urlHowToAccessGenerator.getRequestURL(), 
                 false, "How to access to Bgee data", "Access to Bgee data", 
-                this.prop.getImagesRootDirectory() + "logo/bgee_access_logo.png", null));
+                this.prop.getLogoImagesRootDirectory() + "bgee_access_logo.png", null));
 
         logos.append(HtmlParentDisplay.getSingleFeatureLogo(urlCallFilesGenerator.getRequestURL(), 
                 false, "Download file documentation page", "Download file documentation", 
-                this.prop.getImagesRootDirectory() + "logo/download_logo.png", null));
+                this.prop.getLogoImagesRootDirectory() + "download_logo.png", null));
 
         return log.exit(logos.toString());
     }
@@ -411,7 +410,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 //    
 //        return log.exit(HtmlParentDisplay.getSingleFeatureLogo(urlDownloadGenerator.getRequestURL(), 
 //                "Bgee expression data page", "Expression data", 
-//                this.prop.getImagesRootDirectory() + "logo/download_logo.png", 
+//                this.prop.getLogoImagesRootDirectory() + "download_logo.png", 
 //                "Calls of baseline presence/absence of expression, "
 //                + "and of differential over-under expression."));
 //    }
@@ -438,7 +437,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         logos.append(HtmlParentDisplay.getSingleFeatureLogo(
                 urlDownloadCallsGenerator.getRequestURL(), false, 
                 "Bgee " + GENE_EXPR_CALLS_PAGE_NAME.toLowerCase() + " page", GENE_EXPR_CALLS_PAGE_NAME, 
-                this.prop.getImagesRootDirectory() + "logo/expr_calls_logo.png", 
+                this.prop.getLogoImagesRootDirectory() + "expr_calls_logo.png", 
                 "Calls of baseline presence/absence of expression, "
                 + "and of differential over-under expression, in single or multiple species."));
 
@@ -446,7 +445,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 urlDownloadRefExprGenerator.getRequestURL(), false, 
                 "Bgee " + PROCESSED_EXPR_VALUES_PAGE_NAME.toLowerCase() + " page", 
                 PROCESSED_EXPR_VALUES_PAGE_NAME, 
-                this.prop.getImagesRootDirectory() + "logo/proc_values_logo.png", 
+                this.prop.getLogoImagesRootDirectory() + "proc_values_logo.png", 
                 "Annotations and processed expression data (e.g., read counts, RPKM values, "
                 + "Affymetrix probeset signal intensities)."));
         

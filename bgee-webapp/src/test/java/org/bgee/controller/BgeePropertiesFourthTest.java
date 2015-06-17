@@ -13,7 +13,7 @@ import org.junit.Test;
  * @author Mathieu Seppey
  * @author Valentine Rech de Laval
  * @author Frederic Bastian
- * @version Bgee 13 Mar. 2015
+ * @version Bgee 13, June 2015
  * @since Bgee 13
  * @see BgeePropertiesParentTest
  * @see BgeePropertiesFirstTest
@@ -32,6 +32,7 @@ public class BgeePropertiesFourthTest extends BgeePropertiesParentTest {
         System.clearProperty(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.URL_MAX_LENGTH_KEY);
         System.clearProperty(BgeeProperties.REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY);  
+        System.clearProperty(BgeeProperties.FTP_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.DOWNLOAD_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY);
@@ -44,6 +45,8 @@ public class BgeePropertiesFourthTest extends BgeePropertiesParentTest {
         System.clearProperty(BgeeProperties.CSS_FILES_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.CSS_VERSION_EXTENSION_KEY);
         System.clearProperty(BgeeProperties.IMAGES_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.LOGO_IMAGES_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.SPECIES_IMAGES_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.TOP_OBO_RESULTS_URL_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.WEBPAGES_CACHE_CONFIG_FILE_NAME_KEY);
         // Also, set the properties file to an non-existing file, 
@@ -60,6 +63,9 @@ public class BgeePropertiesFourthTest extends BgeePropertiesParentTest {
         assertEquals("Wrong property value retrieved", 
                 BgeeProperties.REQUEST_PARAMETERS_STORAGE_DIRECTORY_DEFAULT, 
                 bgeeProp.getRequestParametersStorageDirectory());
+        assertEquals("Wrong property value retrieved", 
+                BgeeProperties.FTP_ROOT_DIRECTORY_DEFAULT, 
+                bgeeProp.getFTPRootDirectory());
         assertEquals("Wrong property value retrieved", 
                 BgeeProperties.DOWNLOAD_ROOT_DIRECTORY_DEFAULT, 
                 bgeeProp.getDownloadRootDirectory());
@@ -96,6 +102,12 @@ public class BgeePropertiesFourthTest extends BgeePropertiesParentTest {
         assertEquals("Wrong property value retrieved", 
                 BgeeProperties.IMAGES_ROOT_DIRECTORY_DEFAULT, 
                 bgeeProp.getImagesRootDirectory());
+        assertEquals("Wrong property value retrieved", 
+                BgeeProperties.LOGO_IMAGES_ROOT_DIRECTORY_DEFAULT, 
+                bgeeProp.getLogoImagesRootDirectory());
+        assertEquals("Wrong property value retrieved", 
+                BgeeProperties.SPECIES_IMAGES_ROOT_DIRECTORY_DEFAULT, 
+                bgeeProp.getSpeciesImagesRootDirectory());
         assertEquals("Wrong property value retrieved", 
                 BgeeProperties.TOP_OBO_RESULTS_URL_ROOT_DIRECTORY_DEFAULT, 
                 bgeeProp.getTopOBOResultsUrlRootDirectory());

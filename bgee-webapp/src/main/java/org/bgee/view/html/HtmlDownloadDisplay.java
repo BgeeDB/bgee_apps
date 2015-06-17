@@ -19,7 +19,7 @@ import org.bgee.view.DownloadDisplay;
  * 
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
- * @version Bgee 13 Aug 2014
+ * @version Bgee 13, June 2015
  * @since   Bgee 13
  */
 public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDisplay {
@@ -149,7 +149,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
         this.writeln("<div id='bgee_title'>");
         this.writeln("<h1>");
-        this.writeln("<img src='" + this.prop.getImagesRootDirectory() + "logo/expr_calls_logo.png' " + 
+        this.writeln("<img src='" + this.prop.getLogoImagesRootDirectory() + "expr_calls_logo.png' " + 
                 "alt='" + GENE_EXPR_CALLS_PAGE_NAME + " logo'/>" + GENE_EXPR_CALLS_PAGE_NAME);
         this.writeln("</h1>");
         this.writeln("</div>");
@@ -193,7 +193,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     
         this.writeln("<div id='bgee_title'>");
         this.writeln("<h1>");
-        this.writeln("<img src='" + this.prop.getImagesRootDirectory() + "logo/proc_values_logo.png'" + 
+        this.writeln("<img src='" + this.prop.getLogoImagesRootDirectory() + "proc_values_logo.png'" + 
                 "' alt='" + PROCESSED_EXPR_VALUES_PAGE_NAME + " logo'/>" + 
                 PROCESSED_EXPR_VALUES_PAGE_NAME);
         this.writeln("</h1>");
@@ -270,10 +270,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                     + "' title='See Bgee gene expression calls'>gene expression calls</a>";
         }
 
-        //TODO: change this ugly '../' once we'll have added a property to distinguish 
-        //FTP root and download_files directory. See todo in BgeeProperties
-        intro += ", and <a href='" + this.prop.getDownloadRootDirectory() 
-                + "../statistics.tsv' title='Database statistics TSV file'>"
+        intro += ", and <a href='" + this.prop.getFTPRootDirectory() 
+                + "statistics.tsv' title='Database statistics TSV file'>"
                 + "database statistics</a>.</p>";
         return log.exit(intro);
     }
@@ -432,7 +430,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         banner.append("<p class='groupdescription'></p>");
         
         if (pageType.equals(DownloadPageType.EXPR_CALLS)) {
-            //Ortholog file
+            //Ortholog file (only in multi-species banner, manage by download.js)
             banner.append("<div id='ortholog_file_buttons' class='bgee_download_file_buttons'>");
             banner.append("<h2>Hierarchical orthologous groups</h2>");
             //TODO: uncomment when documentation generated, add url management in JS
@@ -517,7 +515,6 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             
             //data section
             banner.append("<div id='rnaseq_data'>");
-                    //XXX: what is this 'download' with a space in front of it?
             banner.append("<a id='rnaseq_annot_csv' class='download_link' href='' download></a>" +
                     //this.getShowHeaderLink("show_rnaseq_annot_headers") +
                     "<a id='rnaseq_data_csv' class='download_link' href='' download></a>");
@@ -836,8 +833,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
         String pageImg = "";
         if (pageType.equals(DownloadPageType.PROC_EXPR_VALUES)) {
-            pageImg = "<img class='page_img' src='" + this.prop.getImagesRootDirectory() + 
-                    "logo/proc_values_zoom_logo.png' alt='" + PROCESSED_EXPR_VALUES_PAGE_NAME + "' />";
+            pageImg = "<img class='page_img' src='" + this.prop.getLogoImagesRootDirectory() + 
+                    "proc_values_zoom_logo.png' alt='" + PROCESSED_EXPR_VALUES_PAGE_NAME + "' />";
         }
 
         figure += "<div>" + images + pageImg + "</div>" + 
@@ -1048,7 +1045,6 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 throw log.throwing(new IllegalArgumentException("Unrecognized group: " + groupName));
         }
         
-        // XXX: use MultiSpeciesDiffExprFileType instead of string?
 //        String beginExprFilePath = this.prop.getDownloadMultiExprFilesRootDirectory() + filePrefix + "_";
         String beginDiffExprFilePath = this.prop.getDownloadMultiDiffExprFilesRootDirectory() + filePrefix + "_";
         String extension = ".tsv.zip";
@@ -1401,8 +1397,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         log.entry(id, name, shortName, commonName, alternateNames, lightImg);
         StringBuilder image = new StringBuilder();
         image.append("<img class='species_img' src='");
-        image.append(this.prop.getImagesRootDirectory());
-        image.append("species/");
+        image.append(this.prop.getSpeciesImagesRootDirectory());
         image.append(id);
         if (lightImg) {
             image.append("_light");

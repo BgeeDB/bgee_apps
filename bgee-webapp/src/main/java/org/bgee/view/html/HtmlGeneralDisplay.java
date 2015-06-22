@@ -79,6 +79,10 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         RequestParameters urlDownloadCallsGenerator = this.getNewRequestParameters();
         urlDownloadCallsGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
         urlDownloadCallsGenerator.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
+
+        RequestParameters urlCallDocGenerator = this.getNewRequestParameters();
+        urlCallDocGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
+        urlCallDocGenerator.setAction(RequestParameters.ACTION_DOC_CALL_DOWLOAD_FILES);
         
 
         this.writeln("<div id='feature_list'>");
@@ -92,7 +96,34 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         this.writeln("<h2>News</h2>" +
                      "<span class='header_details'>(features are being added incrementally)</span>");
         this.writeln("<div id='bgee_news' class='bgee_section'>");
-        this.writeln("<ul><li>2015-04-16: release of the multi-species " +
+        this.writeln("<ul><li>2015-06-08: release of Bgee release 13.1: "
+                + "<ul>"
+                + "<li>Update of the website interfaces.</li>"
+                + "<li><a href='" + urlDownloadProcValuesGenerator.getRequestURL() 
+                + "'>New download page</a> providing processed expression values.</li>"
+                + "<li>Addition of mouse <i>in situ</i> data from MGI, see "
+                + "<a href='" + urlDownloadCallsGenerator.getRequestURL() + "#id10090"
+                + "'>mouse data</a>.</li>"
+                + "<li>Differential expression data have been added for "
+                + "<a href='" + urlDownloadCallsGenerator.getRequestURL() + "#id7955"
+                + "'>zebrafish</a>, <a href='" + urlDownloadCallsGenerator.getRequestURL() + "#id9598"
+                + "'>chimpanzee</a>, <a href='" + urlDownloadCallsGenerator.getRequestURL() + "#id9593"
+                + "'>gorilla</a>, and <a href='" + urlDownloadCallsGenerator.getRequestURL() + "#id13616"
+                + "'>opposum</a>.</li>"
+                + "<li>Addition of new multi-species differential expression data, see "
+                + "for instance <a href='" + urlDownloadCallsGenerator.getRequestURL() + "#id9598_9544"
+                + "'>chimpanzee/macaque comparison</a>.</li>"
+                + "<li>New format to provide gene orthology information in multi-species files, "
+                + "see for instance <a href='" + urlCallDocGenerator.getRequestURL() + "#oma_hog"
+                + "'>OMA Hierarchical orthologous groups documentation</a>.</li>"
+                + "<li>Removal of data incorrectly considered as normal in <i>C. elegans</i>, "
+                + "see <a href='" + urlDownloadCallsGenerator.getRequestURL() + "#id6239"
+                + "'>worm data</a>.</li>"
+                + "<li>Improved filtering of propagated no-expression calls. As a result, "
+                + "complete expression calls files do not contain invalid conditions anymore.</li>"
+                + "<li>Filtering of invalid developmental stages for differential expression analyses.</li>"
+                + "</ul></li>");
+        this.writeln("<li>2015-04-16: release of the multi-species " +
                 "differential expression data (across anatomy) for 6 groups, see <a href='" + 
                 urlDownloadGenerator.getRequestURL() + "' " + "title='Bgee download page'>" +
                 "download page</a>.</li>");

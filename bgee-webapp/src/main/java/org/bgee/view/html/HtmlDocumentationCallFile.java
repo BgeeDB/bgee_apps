@@ -1238,6 +1238,58 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "<" + colType + ">" + RNA_SEQ_DIFF_EXPR_CONFLICT_COUNT_COL_NAME + "</" + colType + ">"
                 + "</tr>");
     }
+
+    /**
+     * @return  a {@code String} containing the HTML to create a table containing the description 
+     *          of the header of OMA HOG files (can be used in "help" links).
+     */
+    public static String getOMAGroupFileHeaderDesc() {
+        log.entry();
+        //TODO: change when we split the state and the qual
+        return log.exit("<table class='download_file_header_desc'>"
+                + "<tbody>"
+                + "<tr><td>1</td><td>2</td><td>3</td></tr>" 
+                + getOMAGroupFileHeader(true)
+                + "</tbody>"
+                + "</table>");
+    }
+    /**
+     * @return  a {@code String} containing the HTML to create a table containing the header 
+     *          and example lines of a OMA HOG file.
+     */
+    public static String getOMAGroupFileExample() {
+        log.entry();
+        return log.exit("<table class='call_download_file_example'>"
+                + "<caption>Example lines for a OMA Hierarchical orthologous groups file</caption>"
+                + "<thead>" 
+                + getOMAGroupFileHeader(false) 
+                + "</thead>"
+                + "<tbody>"
+                + "<tr><td>98828</td><td>ENSG00000158473</td><td>CD1D</td></tr>"
+                + "<tr><td>98828</td><td>ENSMUSG00000028076</td><td>Cd1d1</td></tr>"
+                + "<tr><td>98828</td><td>ENSMUSG00000041750</td><td>Cd1d2</td></tr>"
+                + "</tbody>"
+                + "</table>");
+    }
+    /**
+     * Get the header of a OMA HOG file as a HTML 'tr' element, 
+     * with column being either 'td' or 'th' elements depending on argument {@code withTd}.
+     * @param withTd    A {@code boolean} defining whether the column type should be 'td' 
+     *                  or 'th'. If {@code true}, 'td' is used.
+     * @return          A {@code String} that is the header of a OMA HOG file as a HTML 'tr' element.
+     */
+    private static String getOMAGroupFileHeader(boolean withTd) {
+        log.entry(withTd);
+        String colType ="td";
+        if (!withTd) {
+            colType = "th";
+        }
+        return log.exit("<tr>"
+                + "<" + colType + ">" + OMA_ID_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + GENE_ID_COL_NAME + "</" + colType + ">"
+                + "<" + colType + ">" + GENE_NAME_COL_NAME + "</" + colType + ">"
+                + "</tr>");
+    }
     /**
      * @return  a {@code String} containing the HTML to create a table containing the description 
      *          of the header of a multi-species simple differential expression file (can be used 
@@ -1523,11 +1575,16 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "</ul>");
         this.writeln("<p>Jump to: </p>"
                 + "<ul>"
+                + "<li><a href='#oma_hog' title='Quick jump to OMA HOG file'>"
+                + "OMA Hierarchical orthologous groups</a></li>"
 //                + "<li><a href='#multi_expr' title='Quick jump to presence/absence of expression'>"
 //                + "Presence/absence of expression</a></li>"
                 + "<li><a href='#multi_diff' title='Quick jump to differential expression'>"
                 + "Over-/under-expression across anatomy or life stages</a></li>"
                 + "</ul>");
+
+        //OMA HOG file
+        this.writeOMAGroupFileDoc();
         //over/under
         this.writeMultiSpeciesDiffExprCallFileDoc();
         this.writeln("</div>");   //end of doc_content
@@ -1590,6 +1647,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 "Multi-species download files</a>");
         //diff expression
         this.writeln("<ul>");    
+        this.writeln("<li><a href='#oma_hog' title='Quick jump to OMA HOG file'>"
+                + "OMA Hierarchical orthologous groups</a></li>");
         this.writeln("<li><a href='#multi_diff' title='Quick jump to this section'>" + 
                 "Over-/under-expression across anatomy or life stages</a>");
         //Actually there explanations common to simple and complete files, so we don't provide
@@ -2392,6 +2451,56 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         //complete diff expression file
         this.writeMultiSpeciesCompleteDiffExprCallFileDoc(); 
         
+        
+        log.exit();
+    }
+    /**
+     * Write the documentation related to OMA Groups 
+     * download files. The id attribute used in h3-h4 tag must stay in sync with anchors used 
+     * in quick jump links defined in method {@link #writeMultiSpeciesDiffExprCallFileDoc()}.
+     * If the header of this file changes, {@link #getOMAGroupFileHeaderDesc()} 
+     * must be updated.
+     * 
+     * @see #writeMultiSpeciesDiffExprCallFileDoc()
+     * @see #getOMAGroupFileHeaderDesc()
+     */
+    private void writeOMAGroupFileDoc() {
+        log.entry();
+        
+        this.writeln("<h3 id='oma_hog'>OMA Hierarchical orthologous groups file</h3>");
+        this.writeln("<p>OMA Hierarchical orthologous groups files provide "
+                + "gene orthology relations, by grouping genes that have descended "
+                + "from a single common ancestral gene in the taxon of interest. The targeted "
+                + "taxon is provided in the file name. Orthologous genes are grouped "
+                + "by common OMA IDs, provided in the column " + OMA_ID_COL_NAME 
+                + " (column 1, see below).</p>");
+        this.writeln("<table class='call_download_file_desc'>");
+        this.writeln("<caption>Format description for OMA Hierarchical orthologous groups file</caption>");
+        this.writeln("<thead>");
+        this.writeln("<tr><th>Column</th><th>Content</th><th>Example</th></tr>");
+        this.writeln("</thead>");
+        this.writeln("<tbody>");
+        this.writeln("<tr><td>1</td><td><a href='#oma_hog_col1' title='" 
+                + "See " + OMA_ID_COL_NAME + " column description'>" + OMA_ID_COL_NAME 
+                + "</a></td><td>10</td></tr>");
+        this.writeln("<tr><td>2</td><td><a href='#oma_hog_col2' title='" 
+                + GENE_ID_LINK_TITLE + "'>" + GENE_ID_COL_NAME 
+                + "</a></td><td>ENSG00000105298</td></tr>");
+        this.writeln("<tr><td>3</td><td><a href='#oma_hog_col3' title='" 
+                + GENE_NAME_LINK_TITLE + "'>" + GENE_NAME_COL_NAME 
+                + "</a></td><td>CACTIN</td></tr>");
+        this.writeln("</tbody>");
+        this.writeln("</table>");
+        this.writeln(getOMAGroupFileExample());
+
+        this.writeln("<h5 id='oma_hog_col1'>" + OMA_ID_COL_NAME + " (column 1)</h5>");
+        this.writeln(getOMAIdColDescription());
+        this.writeln("<h5 id='oma_hog_col2'>" + GENE_ID_COL_NAME + " (column 2)</h5>");
+        this.writeln(getGeneIdColDescription());
+        this.writeln("<h5 id='oma_hog_col3'>" + GENE_NAME_COL_NAME + " (column 3)</h5>");
+        this.writeln(getGeneNameColDescription(2));
+
+        this.writeln("<p><a href='#multi'>Back to multi-species download files menu</a></p>");
         
         log.exit();
     }

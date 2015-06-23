@@ -339,15 +339,17 @@ var download = {
             
             //manage link to processed vaulues/gene expression calls
             var requestSwitchPage = new requestParameters("", true, "&");
-            //TODO: should add static variables as in RequestParameters.java, 
-            //to provide parameter values
         	if ( this.$exprCalls.length > 0 ) {
-        		requestSwitchPage.addValue(urlParameters.PAGE, "download");
-        		requestSwitchPage.addValue(urlParameters.ACTION, "proc_values");
+        		requestSwitchPage.addValue(urlParameters.getParamPage(), 
+        				requestSwitchPage.PAGE_DOWNLOAD);
+        		requestSwitchPage.addValue(urlParameters.getParamAction(), 
+        				requestSwitchPage.ACTION_DOWLOAD_PROC_VALUE_FILES);
         		this.$switchPageLink.text( "See processed expression values" );
         	} else {
-        		requestSwitchPage.addValue(urlParameters.PAGE, "download");
-        		requestSwitchPage.addValue(urlParameters.ACTION, "expr_calls");
+        		requestSwitchPage.addValue(urlParameters.getParamPage(), 
+        				requestSwitchPage.PAGE_DOWNLOAD);
+        		requestSwitchPage.addValue(urlParameters.getParamAction(), 
+        				requestSwitchPage.ACTION_DOWLOAD_CALL_FILES);
         		this.$switchPageLink.text( "See gene expression calls" );    
         	}
         	this.$switchPageLink.attr( "href", 
@@ -449,9 +451,10 @@ var download = {
                 this.$showSingleCompleteDiffexprAnatomyHeaders.hide();
                 if ( this.$exprCalls.length > 0 ) {
                     var urlDoc = new requestParameters("", true, "&");
-                    //TODO: use static variable rather than hardcoding
-                    urlDoc.addValue(urlParameters.PAGE, "doc");
-                    urlDoc.addValue(urlParameters.ACTION, "call_files");
+                    urlDoc.addValue(urlParameters.getParamPage(), 
+                    		urlDoc.PAGE_DOCUMENTATION);
+                    urlDoc.addValue(urlParameters.getParamAction(), 
+                    		urlDoc.ACTION_DOC_CALL_DOWLOAD_FILES);
                     //TODO: manage anchor as a parameter
                 	this.$exprHelp.attr( "href", urlDoc.getRequestURL() + "#multi");
                 	this.$diffDevHelp.attr( "href", urlDoc.getRequestURL() + "#multi");
@@ -468,9 +471,10 @@ var download = {
                 this.$showSingleCompleteDiffexprAnatomyHeaders.show();
                 if ( this.$exprCalls.length > 0 ) {
                 	var urlDoc = new requestParameters("", true, "&");
-                    //TODO: use static variable rather than hardcoding
-                    urlDoc.addValue(urlParameters.PAGE, "doc");
-                    urlDoc.addValue(urlParameters.ACTION, "call_files");
+                    urlDoc.addValue(urlParameters.getParamPage(), 
+                    		urlDoc.PAGE_DOCUMENTATION);
+                    urlDoc.addValue(urlParameters.getParamAction(), 
+                    		urlDoc.ACTION_DOC_CALL_DOWLOAD_FILES);
                     //TODO: manage anchor as a parameter
                 	this.$exprHelp.attr( "href", urlDoc.getRequestURL() + "#single_expr");
                 	this.$diffDevHelp.attr( "href", urlDoc.getRequestURL() + "#single_diff");

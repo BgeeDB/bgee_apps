@@ -32,6 +32,53 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      * A {@code String} used as parameters separator
      */
     this.parametersSeparator = null ;
+    
+    /**
+     * A {@code String} that is the value taken by the {@code page} parameter 
+     * (see {@link urlParameters#getParamPage()}) when a download page is requested.
+     */
+    this.PAGE_DOWNLOAD = 'download';
+    /**
+     * A {@code String} that is the value taken by the {@code page} parameter 
+     * (see {@link #getParamPage()}) when a documentation page is requested.
+     */
+    this.PAGE_DOCUMENTATION = 'doc';
+    /**
+     * A {@code String} that is the value taken by the {@code page} parameter  
+     * (see {@link #getParamPage()}) when an about page is requested.
+     */
+    this.PAGE_ABOUT = 'about';
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link #getParamAction()}) when download page about files providing calls of 
+     * expression is requested.
+     */
+    this.ACTION_DOWLOAD_CALL_FILES = 'expr_calls';
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link #getParamAction()}) when download page about files providing processed 
+     * expression values is requested.
+     */
+    this.ACTION_DOWLOAD_PROC_VALUE_FILES = 'proc_values';
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link #getParamAction()}) when documentation about download files providing calls of
+     * expression is requested.
+     */
+    this.ACTION_DOC_CALL_DOWLOAD_FILES = 'call_files';
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link #getParamAction()}) when documentation about download files providing processed 
+     * expression values is requested.
+     */
+    this.ACTION_DOC_PROC_EXPR_VALUE_DOWLOAD_FILES = 'proc_value_files';
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter
+     * (see {@link #getParamAction()}) when documentation about how to access to 
+     * Bgee data is requested.
+     */
+    this.ACTION_DOC_HOW_TO_ACCESS = 'access';
+
     /**
      * Initialization
      * 

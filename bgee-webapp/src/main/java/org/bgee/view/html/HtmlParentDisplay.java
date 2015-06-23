@@ -53,10 +53,6 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * being treated.
      */
     protected final RequestParameters requestParameters;
-    /**
-     * TODO comment, what is this ?
-     */
-    private int uniqueId;
 
     /**
      * Constructor 
@@ -77,7 +73,6 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             BgeeProperties prop, HtmlFactory factory) throws IllegalArgumentException, IOException {
         super(response, prop, factory);
         this.requestParameters = requestParameters;
-        this.uniqueId = 0;
     }
     
     /**
@@ -113,17 +108,6 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         feature.append("</div>");
         
         return log.exit(feature.toString());
-    }
-
-    /**
-     * @return An {@code int} TODO be more specific
-     */
-    protected int getUniqueId() {
-        log.entry();
-        //need to return 0 the first time this method is called;
-        int idToReturn = this.uniqueId;
-        this.uniqueId++;
-        return log.exit(idToReturn);
     }
 
     public void emptyDisplay() {

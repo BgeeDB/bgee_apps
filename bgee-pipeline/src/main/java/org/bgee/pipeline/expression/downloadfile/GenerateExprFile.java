@@ -60,8 +60,8 @@ public class GenerateExprFile extends GenerateDownloadFile {
     private final static Logger log = LogManager.getLogger(GenerateExprFile.class.getName());
 
     /**
-     * A {@code boolean} defining whether simple file contains observed data only ({@code true}) or
-     * propagated stages are allowed for expression calls ({@code false}).
+     * A {@code boolean} defining whether the filter for simple file keeps observed data only 
+     * if {@code true} or organ observed data only (propagated stages are allowed) if {@code false}.
      */
     protected final static boolean OBSERVED_DATA_ONLY = true;
 
@@ -735,8 +735,8 @@ public class GenerateExprFile extends GenerateDownloadFile {
                 headers.put(fileType, fileTypeHeaders);
 
                 // Create file name
-                String fileName = fileNamePrefix + "_" +
-                        fileType.getStringRepresentation() + EXTENSION;
+                String fileName = this.formatString(fileNamePrefix + "_" +
+                        fileType.getStringRepresentation() + EXTENSION);
                 generatedFileNames.put(fileType, fileName);
 
                 // write in temp file

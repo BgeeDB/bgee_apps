@@ -2636,8 +2636,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 // the number of columns depends on the number of species
                 // gene columns are the end, so there is only 5 columns before species counts
                 int columnIndex = 5 + 4 * i;
-                // XXX: this seems weird, why are there underscores in speciesNames?
-                String endHeader = " for " + speciesNames.get(i).replaceAll("_", " ");
+                String endHeader = " for " + speciesNames.get(i);
                 headers[columnIndex] = OVER_EXPR_GENE_COUNT_COLUMN_NAME + endHeader;
                 headers[columnIndex+1] = UNDER_EXPR_GENE_COUNT_COLUMN_NAME + endHeader;
                 headers[columnIndex+2] = NO_DIFF_EXPR_GENE_COUNT_COLUMN_NAME + endHeader;

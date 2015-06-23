@@ -310,7 +310,6 @@ public abstract class GenerateDownloadFile extends CallUser {
      * if {@code speciesIds} is {@code null} or empty, and returns a {@code Map} 
      * where keys are the species IDs, the associated values being a {@code String} that can be 
      * conveniently used to construct download file names for the associated species. 
-     * It is the latin name with all whitespace replaced by "_".
      * <p>
      * If a species ID could not be identified, an {@code IllegalArgumentException} is thrown.
      * 
@@ -319,8 +318,7 @@ public abstract class GenerateDownloadFile extends CallUser {
      *                      used to construct download file names. Can be {@code null} or empty 
      *                      to retrieve information for all species. 
      * @return              A {@code Map} where keys are {@code String}s that are the species IDs, 
-     *                      the associated values being a {@code String} that is its latin name, 
-     *                      with whitespace replaced by "_".
+     *                      the associated values being a {@code String} that is its latin name.
      */
     protected Map<String, String> checkAndGetLatinNamesBySpeciesIds(Set<String> speciesIds) {
         log.entry(speciesIds);
@@ -344,7 +342,6 @@ public abstract class GenerateDownloadFile extends CallUser {
                 //concatenate using "_", we replace all white spaces
                 String latinNameForFile = 
                         speciesTO.getGenus() + " " + speciesTO.getSpeciesName();
-                latinNameForFile = latinNameForFile.replace(" ", "_");
                 namesByIds.put(speciesTO.getId(), latinNameForFile);
             }
         }
@@ -363,6 +360,18 @@ public abstract class GenerateDownloadFile extends CallUser {
         }
         
         return log.exit(namesByIds);
+    }
+
+    /**
+     * Format the provided {@code string} replacing whitespace by "_".
+     *
+     * @param string    A {@code String} that is the word to be used. 
+     * @return          A {@code String} that is the modified word where whitespace 
+     *                  are replaced by "_".
+     */
+    protected String formatString(String word) {
+        log.entry(word);
+        return log.exit(word.replaceAll(" ", "_"));
     }
     
     /**

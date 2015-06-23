@@ -528,8 +528,8 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
                 headers.put(fileType, fileTypeHeaders);
 
                 //Create file name
-                String fileName = fileNamePrefix + "_" + fileType.getStringRepresentation() 
-                        + EXTENSION;
+                String fileName = this.formatString(fileNamePrefix + "_" + fileType.getStringRepresentation() 
+                        + EXTENSION);
                 generatedFileNames.put(fileType, fileName);
                 
                 //write in temp file

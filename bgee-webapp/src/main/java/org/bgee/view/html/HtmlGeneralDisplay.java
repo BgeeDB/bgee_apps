@@ -109,7 +109,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 + "'>zebrafish</a>, <a href='" + urlDownloadCallsGenerator.getRequestURL() + "#id9598"
                 + "'>chimpanzee</a>, <a href='" + urlDownloadCallsGenerator.getRequestURL() + "#id9593"
                 + "'>gorilla</a>, and <a href='" + urlDownloadCallsGenerator.getRequestURL() + "#id13616"
-                + "'>opposum</a>.</li>"
+                + "'>opossum</a>.</li>"
                 + "<li>Addition of new multi-species differential expression data, see "
                 + "for instance <a href='" + urlDownloadCallsGenerator.getRequestURL() + "#id9598_9544"
                 + "'>chimpanzee/macaque comparison</a>.</li>"

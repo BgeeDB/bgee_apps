@@ -392,7 +392,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 //                "Bgee expression data page", "Expression data", 
 //                this.prop.getLogoImagesRootDirectory() + "download_logo.png", 
 //                "Calls of baseline presence/absence of expression, "
-//                + "and of differential over-under expression."));
+//                + "and of differential over-/under-expression."));
 //    }
 
     /**
@@ -419,7 +419,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 "Bgee " + GENE_EXPR_CALLS_PAGE_NAME.toLowerCase() + " page", GENE_EXPR_CALLS_PAGE_NAME, 
                 this.prop.getLogoImagesRootDirectory() + "expr_calls_logo.png", 
                 "Calls of baseline presence/absence of expression, "
-                + "and of differential over-under expression, in single or multiple species."));
+                + "and of differential over-/under-expression, in single or multiple species."));
 
         logos.append(HtmlParentDisplay.getSingleFeatureLogo(
                 urlDownloadRefExprGenerator.getRequestURL(), false, 

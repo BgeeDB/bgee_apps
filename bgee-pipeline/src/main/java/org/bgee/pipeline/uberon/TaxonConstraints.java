@@ -169,6 +169,7 @@ public class TaxonConstraints {
      * @throws OWLOntologyStorageException  If an error occurred while saving the 
      *                                      intermediate ontologies in owl.
      */
+    //XXX: currently, only the ontology ext.owl allows to correctly infer taxon constraints
     public static void main(String[] args) throws UnknownOWLOntologyException, 
         IllegalArgumentException, FileNotFoundException, OWLOntologyCreationException, 
         OBOFormatParserException, IOException, OWLOntologyStorageException {

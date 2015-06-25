@@ -146,6 +146,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.includeJs();  // load default js files, and css files specific of a view 
                            // (views must override this method if needed)
         //google analytics
+        //TODO: add the UA ID to properties. If no UA ID defined, do not display the google analytics code.
+        //This will notably allow to stop messing up the google analytics results with our development tests 
+        //(there would be no UA ID defined in test resource properties)
         this.writeln("<script>");
         this.writeln("(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){");
         this.writeln("(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),");

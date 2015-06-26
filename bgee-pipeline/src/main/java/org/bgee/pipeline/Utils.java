@@ -1,7 +1,9 @@
 package org.bgee.pipeline;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,7 +19,9 @@ import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.comment.CommentStartsWith;
 import org.supercsv.exception.SuperCsvCellProcessorException;
 import org.supercsv.io.CsvListReader;
+import org.supercsv.io.CsvListWriter;
 import org.supercsv.io.ICsvListReader;
+import org.supercsv.io.ICsvListWriter;
 import org.supercsv.prefs.CsvPreference;
 import org.supercsv.quote.ColumnQuoteMode;
 import org.supercsv.util.CsvContext;
@@ -178,19 +182,82 @@ public class Utils {
 
     /**
      * Return a {@code CsvPreference} used to parse TSV files allowing commented line, 
-     * starting with "//", and using a custom {@code QuoteMode} that quotes columns if the element 
+     * starting with "//", quoting columns if the element 
      * representing that column in the supplied array is {@code true}.
+     * <p>
+     * Of note, columnsToQuote only activates quotes if a column wouldn't normally 
+     * be quoted because it doesn't contain special characters; it does not allow to deactivate 
+     * quoting. So, for columns that would be quoted anyway, the value corresponding 
+     * to such columns in {@code columnsToQuote} does not matter (but there still needs 
+     * to be a value, either {@code true} or {@code false}).
      *
      * @param columnsToQuote    An {@code Array} of {@code boolean}s (one per CSV column) indicating 
      *                          whether each column should be quoted or not.
      * @return                  the {@code CsvPreference} used to parse TSV files allowing commented 
-     *                          line and using a custom {@code QuoteMode}.
+     *                          lines, and forcing the quoting of some columns.
      */
     public static CsvPreference getCsvPreferenceWithQuote(boolean[] columnsToQuote) {
         log.entry(columnsToQuote);
         return log.exit(new CsvPreference.Builder(CsvPreference.TAB_PREFERENCE).
                 useQuoteMode(new ColumnQuoteMode(columnsToQuote)).
                 skipComments(new CommentStartsWith("//")).build());
+    }
+    
+    /**
+     * Standardize the number of columns in the provided CSV file. 
+     * <p>
+     * CSV files with variable number of columns between lines are not standard CSV, 
+     * and cannot be properly used by some tools. This method takes an original CSV file, 
+     * and write in another the equivalent raws, but with equal number of columns 
+     * in all of them.
+     * <p>
+     * Note that depending on {@code csvPreference}, the standardized file will not be 
+     * the exact equivalent of the original file: for instance, if comments are allowed 
+     * in the original file and should be skipped, then they will not appear 
+     * in the standardized file. 
+     * 
+     * @param originalFile      A {@code File} that is the original CSV file to standardize.
+     * @param standardizedFile  A {@code File} that will be used to store standardized raws 
+     *                          from {@code originalFile}.
+     * @param csvPreference     A {@code CsvPreference} defining how the CSV files 
+     *                          should be written and read.
+     * @throws FileNotFoundException    If a file could not be found.
+     * @throws IOException              If a file could not be read or written.
+     */
+    public static void standardizeCSVFileColumnCount(File originalFile, File standardizedFile, 
+            CsvPreference csvPreference) 
+                    throws FileNotFoundException, IOException {
+        log.entry(originalFile, standardizedFile, csvPreference);
+        
+        int maxColCount = 0;
+        try (ICsvListReader listReader = new CsvListReader(new FileReader(originalFile), 
+                csvPreference)) {
+            while( (listReader.read()) != null ) {
+                if (listReader.length() > maxColCount) {
+                    maxColCount = listReader.length();
+                }
+            }
+        }
+        log.debug("Max number of columns in curator file: {}", maxColCount);
+        assert maxColCount > 0;
+        
+        //and now we write the new file with equal number of columns on all lines
+        try (ICsvListReader listReader = new CsvListReader(new FileReader(originalFile), 
+                csvPreference)) {
+            try (ICsvListWriter listWriter = new CsvListWriter(new FileWriter(standardizedFile), 
+                    csvPreference)) {
+                
+                List<String> newLine;
+                while( (newLine = listReader.read()) != null ) {
+                    log.trace("Number of columns in row before treatment: {}", newLine.size());
+                    for (int i = newLine.size(); i < maxColCount; i++) {
+                        newLine.add("");
+                    }
+                    log.trace("Number of columns in row after treatment: {}", newLine.size());
+                    listWriter.write(newLine);
+                }
+            }
+        } 
     }
 
     /**

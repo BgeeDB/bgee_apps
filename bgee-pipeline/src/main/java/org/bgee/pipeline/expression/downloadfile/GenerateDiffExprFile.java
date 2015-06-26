@@ -708,12 +708,13 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
     }
 
     /**
-     * Generate {@code Array} of {@code booleans} (one per CSV column) indicating 
-     * whether each column should be quoted or not.
+     * Generate {@code Array} of {@code boolean}s (one per CSV column) indicating 
+     * whether the quoting of the corresponding column should be forced.
      *
      * @param headers   An {@code Array} of {@code String}s representing the names of the columns.
-     * @return          the {@code Array} of {@code booleans} (one per CSV column) indicating 
-     *                  whether each column should be quoted or not.
+     * @return          the {@code Array} of {@code boolean}s (one per CSV column) indicating 
+     *                  whether quoting of the corresponding column should be forced.
+     * @see Utils#getCsvPreferenceWithQuote(Object[])
      */
     private boolean[] generateQuoteMode(String[] headers) {
         log.entry((Object[]) headers);

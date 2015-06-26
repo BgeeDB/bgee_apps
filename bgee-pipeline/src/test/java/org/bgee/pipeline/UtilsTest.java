@@ -3,7 +3,9 @@ package org.bgee.pipeline;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,11 +13,15 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.supercsv.cellprocessor.ParseInt;
 import org.supercsv.cellprocessor.ift.CellProcessor;
+import org.supercsv.io.CsvListReader;
+import org.supercsv.io.ICsvListReader;
 import org.supercsv.util.CsvContext;
 
 /**
@@ -32,6 +38,9 @@ public class UtilsTest extends TestAncestor {
     private final static Logger log = 
             LogManager.getLogger(UtilsTest.class.getName());
 
+    @Rule
+    public final TemporaryFolder testFolder = new TemporaryFolder();
+
     /**
      * Default Constructor. 
      */
@@ -41,6 +50,29 @@ public class UtilsTest extends TestAncestor {
     @Override
     protected Logger getLogger() {
         return log;
+    }
+    
+    @Test
+    public void shouldStandardizeCSVFileColumnCount() throws IOException {
+        File originalFile = new File(
+                this.getClass().getResource("/utils/tsvVariableColumns.tsv").getFile());
+        File standardizedFile = testFolder.newFile("standard");
+        Utils.standardizeCSVFileColumnCount(originalFile, standardizedFile, 
+                Utils.TSVCOMMENTED);
+        //now we read the standardized file and count number of columns: 
+        //it should be 5 in all lines
+        try (ICsvListReader listReader = new CsvListReader(new FileReader(standardizedFile), 
+                Utils.TSVCOMMENTED)) {
+            int rowCount = 0;
+            while( (listReader.read()) != null ) {
+                rowCount++;
+                assertEquals("Incorrect number of columns at line " + listReader.getLineNumber(), 
+                        5, listReader.length());
+            }
+            //a comment in the original file should have been skipped, so that we have 
+            //6 lines instead of 7.
+            assertEquals("Incorrect number of lines in standardized file", 6, rowCount);
+        }
     }
     
     /**

@@ -165,24 +165,6 @@ public class SimilarityAnnotationTest extends TestAncestor {
         log.exit();
     }
     
-    //@Test
-    public void test() throws FileNotFoundException, IllegalArgumentException, IOException {
-        List<CuratorAnnotationBean> test = 
-                SimilarityAnnotation.extractCuratorAnnotations("/Users/admin/Desktop/bgee_trans_similarity_annotations_edit.tsv");
-                //SimilarityAnnotation.extractCuratorAnnotations("/Users/admin/Documents/workspace/similarity_annotations/edit/bgee_trans_similarity_annotations_edit.tsv");
-        CuratorAnnotationBean annot = test.iterator().next();
-        log.info(annot.getEntityIds() + " - " + annot.getCurationDate());
-        test.iterator().next();
-        test.iterator().next();
-        test.iterator().next();
-        test.iterator().next();
-        test.iterator().next();
-        test.iterator().next();
-        annot = test.iterator().next();
-        log.info(annot.getEntityIds() + " - " + annot.getCurationDate());
-        
-    }
-    
     /**
      * Test {@link SimilarityAnnotation#writeAnnotations(List, String, Class)} 
      * for {@code RawAnnotationBean} type.

@@ -60,15 +60,10 @@ import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.exception.SuperCsvException;
 import org.supercsv.io.CsvBeanReader;
 import org.supercsv.io.CsvBeanWriter;
-import org.supercsv.io.CsvListReader;
-import org.supercsv.io.CsvListWriter;
 import org.supercsv.io.CsvMapWriter;
 import org.supercsv.io.ICsvBeanReader;
 import org.supercsv.io.ICsvBeanWriter;
-import org.supercsv.io.ICsvListReader;
-import org.supercsv.io.ICsvListWriter;
 import org.supercsv.io.ICsvMapWriter;
-import org.supercsv.prefs.CsvPreference;
 
 import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
@@ -562,92 +557,47 @@ public class SimilarityAnnotation {
      * @throws IllegalArgumentException If {@code similarityFile} did not allow to retrieve 
      *                                  any annotation or could not be properly parsed.
      */
-    //TODO: in java 8 we could use a functional interface to provide the method 
-    //generating the mapping from header to CellProcessors (this is the only difference 
-    //between the code for curator file or processed files).
     public static List<CuratorAnnotationBean> extractCuratorAnnotations(String similarityFile) 
             throws FileNotFoundException, IOException, IllegalArgumentException {
         log.entry(similarityFile);
         
-        //FIXME: doesn't work!
-        //curator file has variable number of columns on each line. We cannot use a CsvBeanReader 
-        //for such files, so, we modify the file to have same number of columns on all lines.
-        //First, we need to have maximum number of columns
-        int maxColCount = 0;
-        try (ICsvListReader listReader = new CsvListReader(new FileReader(similarityFile), 
-                CsvPreference.STANDARD_PREFERENCE)) {
-            listReader.getHeader(true); // skip the header (can't be used with CsvListReader)
-            while( (listReader.read()) != null ) {
-                if (listReader.length() > maxColCount) {
-                    maxColCount = listReader.length();
-                }
-            }
-        }
-        log.debug("Max number of columns in curator file: {}", maxColCount);
-        assert maxColCount > 0;
-        //and now we create the new file with equal number of columns on all lines
+        //curator file has variable number of columns in different lines. We cannot use a CsvBeanReader 
+        //for such files, so, we modify the file to have same number of columns in all lines.
+        File originalFile = new File(similarityFile);
         File tmpFile = File.createTempFile("curator_generated_", "_tmp");
-        try (ICsvListReader listReader = new CsvListReader(new FileReader(similarityFile), 
-                CsvPreference.STANDARD_PREFERENCE)) {
-            try (ICsvListWriter listWriter = new CsvListWriter(new FileWriter(tmpFile), 
-                    CsvPreference.STANDARD_PREFERENCE)) {
+        //try clause to delete the temp file in a finally clause.
+        try {
+            Utils.standardizeCSVFileColumnCount(originalFile, tmpFile, Utils.TSVCOMMENTED);
+            
+            //now, we can properly use a BeanReader on the temporary file.
+            try (ICsvBeanReader annotReader = new CsvBeanReader(new FileReader(tmpFile), 
+                    SimilarityAnnotationUtils.TSV_COMMENTED)) {
                 
-                List<String> newLine;
-                while( (newLine = listReader.read()) != null ) {
-                    log.trace("Number of columns in row before treatment: {}", newLine.size());
-                    for (int i = newLine.size(); i < maxColCount; i++) {
-                        newLine.add("");
-                    }
-                    log.trace("Number of columns in row after treatment: {}", newLine.size());
-                    listWriter.write(newLine);
+                List<CuratorAnnotationBean> annots = new ArrayList<CuratorAnnotationBean>();
+                final String[] header = annotReader.getHeader(true);
+                
+                String[] attributeMapping = mapCuratorHeaderToAttributes(header);
+                CellProcessor[] cellProcessorMapping = mapCuratorHeaderToCellProcessors(header);
+                CuratorAnnotationBean annot;
+                
+                while((annot = annotReader.read(CuratorAnnotationBean.class, attributeMapping, 
+                        cellProcessorMapping)) != null ) {
+                    annots.add(annot);
                 }
-            }
-        }
-        
-        try (ICsvBeanReader annotReader = new CsvBeanReader(new FileReader(tmpFile), 
-                SimilarityAnnotationUtils.TSV_COMMENTED)) {
-            
-            List<CuratorAnnotationBean> annots = new ArrayList<CuratorAnnotationBean>();
-            final String[] header = annotReader.getHeader(true);
-            log.trace("Number of column in heaer line: {}", header.length);
-//            final String[] tempHeader = annotReader.getHeader(true);
-//            if (tempHeader.length == 0) {
-//                throw log.throwing(new IllegalArgumentException("No columns defined in file " 
-//                        + similarityFile));
-//            }
-//            //filter the header, there can be "empty" columns at the end of lines.
-//            //iterate the array backward, and note the first index with not null column
-//            int copyRange = -1;
-//            for (int i = tempHeader.length - 1; i >= 0; i--) {
-//                log.info("YEE " + i);
-//                if (tempHeader[i] != null) {
-//                    copyRange = i;
-//                    log.info("YEE2 " + i);
-//                    break;
-//                }
-//            }
-//            assert copyRange >= 0; //at least one column
-//            final String[] header = Arrays.copyOfRange(tempHeader, 0, 100);
-            
-            String[] attributeMapping = mapCuratorHeaderToAttributes(header);
-            CellProcessor[] cellProcessorMapping = mapCuratorHeaderToCellProcessors(header);
-            CuratorAnnotationBean annot;
-            while((annot = annotReader.read(CuratorAnnotationBean.class, attributeMapping, 
-                    cellProcessorMapping)) != null ) {
-                annots.add(annot);
-            }
-            if (annots.isEmpty()) {
+                if (annots.isEmpty()) {
+                    throw log.throwing(new IllegalArgumentException("The provided file " 
+                            + similarityFile + " did not allow to retrieve any annotation"));
+                }
+                return log.exit(annots);
+                
+            } catch (SuperCsvException e) {
+                //hide implementation details
                 throw log.throwing(new IllegalArgumentException("The provided file " 
-                        + similarityFile + " did not allow to retrieve any annotation"));
+                        + similarityFile + " could not be properly parsed", e));
             }
-            return log.exit(annots);
-            
-        } catch (SuperCsvException e) {
-            //hide implementation details
-            throw log.throwing(new IllegalArgumentException("The provided file " 
-                    + similarityFile + " could not be properly parsed", e));
+        } finally {
+            tmpFile.delete();
         }
-        //TODO: remove tmp file in a finally clause?
     }
 
     /**
@@ -795,15 +745,15 @@ public class SimilarityAnnotation {
             throw log.throwing(new IllegalArgumentException("Unsupported "
                     + "AnnotationBean type: " + beanType));
         }
+
+        final String[] header = getHeader(beanType);
+        String[] attributeMapping = 
+                SimilarityAnnotationUtils.mapHeaderToAttributes(header, beanType);
+        final CellProcessor[] processors = mapHeaderToWriteCellProcessors(header, beanType);
+        final boolean[] quoteModes = mapHeaderToQuoteModes(header);
         
         try (ICsvBeanWriter beanWriter = new CsvBeanWriter(new FileWriter(outputFile), 
-                Utils.TSVCOMMENTED)) {
-            
-            final String[] header = getHeader(beanType);
-            String[] attributeMapping = 
-                    SimilarityAnnotationUtils.mapHeaderToAttributes(header, beanType);
-            final CellProcessor[] processors = mapHeaderToWriteCellProcessors(header, beanType);
-            
+                Utils.getCsvPreferenceWithQuote(quoteModes))) {
             // write the header
             beanWriter.writeHeader(header);
             
@@ -1019,6 +969,44 @@ public class SimilarityAnnotation {
             }
         }
         return log.exit(processors);
+        
+    }
+
+    /**
+     * Map the column names of a CSV file to an {@code Array} of {@code boolean}s 
+     * (one per CSV column) indicating whether the quoting of the corresponding column 
+     * should be forced. Note that this method does not perform any check 
+     * on the validity of columns in {@code header}.
+     * 
+     * @param header    An {@code Array} of {@code String}s representing the names 
+     *                  of the columns of a similarity annotation file.
+     * @return          An {@code Array} of {@code boolean}s (one per CSV column) indicating 
+     *                  whether quoting of the corresponding column should be forced.
+     */
+    private static boolean[] mapHeaderToQuoteModes(String[] header) {
+        log.entry((Object[]) header);
+        
+        boolean[] quoteModes = new boolean[header.length];
+        for (int i = 0; i < header.length; i++) {
+            switch (header[i]) {
+                //it seems that simple quotes (') are problematic for import in R, 
+                //while not quoted by default by SuperCSV. So we only have to identify 
+                //the columns for which we want to "force" the quoting.
+                case SimilarityAnnotationUtils.ENTITY_NAME_COL_NAME: 
+                case SimilarityAnnotationUtils.CONF_NAME_COL_NAME: 
+                case SimilarityAnnotationUtils.TAXON_NAME_COL_NAME: 
+                case SimilarityAnnotationUtils.HOM_NAME_COL_NAME: 
+                case SimilarityAnnotationUtils.SUPPORT_TEXT_COL_NAME: 
+                case SimilarityAnnotationUtils.ECO_NAME_COL_NAME: 
+                case SimilarityAnnotationUtils.REF_TITLE_COL_NAME:
+                    quoteModes[i] = true;
+                    break;
+                default: 
+                    quoteModes[i] = false;
+                    break;
+            }
+        }
+        return log.exit(quoteModes);
         
     }
 

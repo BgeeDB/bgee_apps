@@ -753,7 +753,7 @@ public class SimilarityAnnotation {
         final boolean[] quoteModes = mapHeaderToQuoteModes(header);
         
         try (ICsvBeanWriter beanWriter = new CsvBeanWriter(new FileWriter(outputFile), 
-                Utils.getCsvPreferenceWithQuote(quoteModes))) {
+                Utils.TSVCOMMENTED)) {
             // write the header
             beanWriter.writeHeader(header);
             

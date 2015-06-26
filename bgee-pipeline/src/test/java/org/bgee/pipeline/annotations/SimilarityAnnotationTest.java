@@ -165,6 +165,12 @@ public class SimilarityAnnotationTest extends TestAncestor {
         log.exit();
     }
     
+//    @Test
+//    public void test() throws FileNotFoundException, IllegalArgumentException, IOException {
+//        SimilarityAnnotation.extractCuratorAnnotations(
+//                "/Users/admin/Desktop/bgee_trans_similarity_annotations_edit2.tsv");
+//    }
+    
     /**
      * Test {@link SimilarityAnnotation#writeAnnotations(List, String, Class)} 
      * for {@code RawAnnotationBean} type.

@@ -52,6 +52,10 @@ public class UtilsTest extends TestAncestor {
         return log;
     }
     
+    /**
+     * Test {@link Utils#standardizeCSVFileColumnCount(File, File, CsvPreference)}.
+     * @throws IOException
+     */
     @Test
     public void shouldStandardizeCSVFileColumnCount() throws IOException {
         File originalFile = new File(

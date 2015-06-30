@@ -676,7 +676,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
         // Right = left + 2 * number of children + 1;
         int right = nestedSetBoundSeed + 2 * nbChild + 1;
         this.hierarchicalGroupTOs.add(
-                new HierarchicalGroupTO(omaNodeId, omaXrefId, left, right, 
+                new HierarchicalGroupTO(String.valueOf(this.omaNodeId), omaXrefId, left, right, 
                         (taxId == null ? 0: Integer.valueOf(taxId)))); 
         log.exit();
     }

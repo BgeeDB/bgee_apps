@@ -129,7 +129,7 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
          * All of these parameters are optional, so they can be {@code null} when not used.
          * If a bound is not {@code null}, it should be positive.
          * 
-         * @param id            An {@code Integer} that is the ID of a node in the tree of
+         * @param id            A {@code String} that is the ID of a node in the tree of
          *                      hierarchical groups
          * @param OMAGroupId    A {@code String} that is the ID for a particular OMA
          *                      group of orthologous genes
@@ -140,8 +140,7 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
          * @throws IllegalArgumentException If {@code id} is empty, or if any of {code leftBound} or
          *                                  {code rightBound} is not {@code null} and less than 0.
          */
-        //TODO: I think we decided that all IDs should be Strings?
-        public HierarchicalGroupTO(Integer id, String OMAGroupId, Integer leftBound,
+        public HierarchicalGroupTO(String id, String OMAGroupId, Integer leftBound,
                 Integer rightBound) throws IllegalArgumentException {
             this(id, OMAGroupId, leftBound, rightBound, null);
         }
@@ -153,7 +152,7 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
          * All of these parameters are optional, so they can be {@code null} when not used.
          * If a bound is not {@code null}, it should be positive.
          * 
-         * @param id            An {@code Integer} that is the ID of a node in the tree of
+         * @param id            A {@code String} that is the ID of a node in the tree of
          *                      hierarchical groups.
          * @param OMAGroupId    A {@code String} that is the ID for a particular OMA
          *                      group of orthologous genes
@@ -166,9 +165,9 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
          * @throws IllegalArgumentException If {@code id} is empty, or if any of {code leftBound} or
          *                                  {code rightBound} is not {@code null} and less than 0.
          */
-        public HierarchicalGroupTO(Integer id, String OMAGroupId, Integer leftBound,
+        public HierarchicalGroupTO(String id, String OMAGroupId, Integer leftBound,
                 Integer rightBound, Integer taxonId) throws IllegalArgumentException {
-            super(String.valueOf(id), null, null, leftBound, rightBound, null);
+            super(id, null, null, leftBound, rightBound, null);
             this.OMAGroupId = OMAGroupId;
             this.taxonId = taxonId;
         }

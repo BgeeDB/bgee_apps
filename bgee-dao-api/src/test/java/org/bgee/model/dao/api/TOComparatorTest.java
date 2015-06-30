@@ -138,15 +138,15 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreHierarchicalGroupTOEqual() {
-        HierarchicalGroupTO to1 = new HierarchicalGroupTO(1, "ID1", 1, 2, 10);
-        HierarchicalGroupTO to2 = new HierarchicalGroupTO(1, "ID1", 1, 2, 10);
+        HierarchicalGroupTO to1 = new HierarchicalGroupTO("1", "ID1", 1, 2, 10);
+        HierarchicalGroupTO to2 = new HierarchicalGroupTO("1", "ID1", 1, 2, 10);
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
-        to2 = new HierarchicalGroupTO(1, "ID1", 1, 2, 5);
+        to2 = new HierarchicalGroupTO("1", "ID1", 1, 2, 5);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
         
-        to2 = new HierarchicalGroupTO(2, "ID1", 1, 2, 10);
+        to2 = new HierarchicalGroupTO("2", "ID1", 1, 2, 10);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
     }

@@ -96,20 +96,20 @@ public class ParseOrthoXMLTest extends TestAncestor {
         // Generate the expected List of HierarchicalGroupTOs to verify the calls made 
         // to the DAO.
         List<HierarchicalGroupTO> expectedHGroupTOs = Arrays.asList(
-                new HierarchicalGroupTO(1, "HOG:SVYPSSI", 1, 4, 117571),
-                new HierarchicalGroupTO(2, "HOG:SVYPSSI", 2, 3, 0),
-                new HierarchicalGroupTO(3, "HOG:HADISHS", 5, 6, 9604),
-                new HierarchicalGroupTO(4, "HOG:AFFEFGG", 7, 18, 117571),
-                new HierarchicalGroupTO(5, "HOG:AFFEFGG", 8, 11, 0),
-                new HierarchicalGroupTO(6, "HOG:AFFEFGG", 9, 10, 186625),
-                new HierarchicalGroupTO(7, "HOG:AFFEFGG", 12, 17, 32523),
-                new HierarchicalGroupTO(8, "HOG:AFFEFGG", 13, 16, 32524),
-                new HierarchicalGroupTO(9 , "HOG:AFFEFGG", 14, 15, 32525),
-                new HierarchicalGroupTO(10, "HOG:RIQLVEE", 19, 28, 33213),
-                new HierarchicalGroupTO(11, "HOG:RIQLVEE", 20, 21, 0),
-                new HierarchicalGroupTO(12, "HOG:RIQLVEE", 22, 23, 1206794),
-                new HierarchicalGroupTO(13, "HOG:RIQLVEE", 24, 25, 1206794),
-                new HierarchicalGroupTO(14, "HOG:RIQLVEE", 26, 27, 1206794));
+                new HierarchicalGroupTO("1", "HOG:SVYPSSI", 1, 4, 117571),
+                new HierarchicalGroupTO("2", "HOG:SVYPSSI", 2, 3, 0),
+                new HierarchicalGroupTO("3", "HOG:HADISHS", 5, 6, 9604),
+                new HierarchicalGroupTO("4", "HOG:AFFEFGG", 7, 18, 117571),
+                new HierarchicalGroupTO("5", "HOG:AFFEFGG", 8, 11, 0),
+                new HierarchicalGroupTO("6", "HOG:AFFEFGG", 9, 10, 186625),
+                new HierarchicalGroupTO("7", "HOG:AFFEFGG", 12, 17, 32523),
+                new HierarchicalGroupTO("8", "HOG:AFFEFGG", 13, 16, 32524),
+                new HierarchicalGroupTO("9" , "HOG:AFFEFGG", 14, 15, 32525),
+                new HierarchicalGroupTO("10", "HOG:RIQLVEE", 19, 28, 33213),
+                new HierarchicalGroupTO("11", "HOG:RIQLVEE", 20, 21, 0),
+                new HierarchicalGroupTO("12", "HOG:RIQLVEE", 22, 23, 1206794),
+                new HierarchicalGroupTO("13", "HOG:RIQLVEE", 24, 25, 1206794),
+                new HierarchicalGroupTO("14", "HOG:RIQLVEE", 26, 27, 1206794));
 
         ArgumentCaptor<Set> hGroupsTOsArg = ArgumentCaptor.forClass(Set.class);
         verify(mockManager.mockHierarchicalGroupDAO).insertHierarchicalGroups(
@@ -188,20 +188,20 @@ public class ParseOrthoXMLTest extends TestAncestor {
         // Generate the expected List of HierarchicalGroupTOs to verify the calls made 
         // to the DAO.
         List<HierarchicalGroupTO> expectedHGroupTOs = Arrays.asList(
-                new HierarchicalGroupTO(1, "HOG:SVYPSSI", 1, 4, 117571),
-                new HierarchicalGroupTO(2, "HOG:SVYPSSI", 2, 3, 0),
-                new HierarchicalGroupTO(3, "HOG:HADISHS", 5, 6, 9604),
-                new HierarchicalGroupTO(4, "HOG:AFFEFGG", 7, 18, 117571),
-                new HierarchicalGroupTO(5, "HOG:AFFEFGG", 8, 11, 0),
-                new HierarchicalGroupTO(6, "HOG:AFFEFGG", 9, 10, 186625),
-                new HierarchicalGroupTO(7, "HOG:AFFEFGG", 12, 17, 32523),
-                new HierarchicalGroupTO(8, "HOG:AFFEFGG", 13, 16, 32524),
-                new HierarchicalGroupTO(9 , "HOG:AFFEFGG", 14, 15, 32525),
-                new HierarchicalGroupTO(10, "HOG:RIQLVEE", 19, 28, 33213),
-                new HierarchicalGroupTO(11, "HOG:RIQLVEE", 20, 21, 0),
-                new HierarchicalGroupTO(12, "HOG:RIQLVEE", 22, 23, 1206794),
-                new HierarchicalGroupTO(13, "HOG:RIQLVEE", 24, 25, 1206794),
-                new HierarchicalGroupTO(14, "HOG:RIQLVEE", 26, 27, 1206794));
+                new HierarchicalGroupTO("1", "HOG:SVYPSSI", 1, 4, 117571),
+                new HierarchicalGroupTO("2", "HOG:SVYPSSI", 2, 3, 0),
+                new HierarchicalGroupTO("3", "HOG:HADISHS", 5, 6, 9604),
+                new HierarchicalGroupTO("4", "HOG:AFFEFGG", 7, 18, 117571),
+                new HierarchicalGroupTO("5", "HOG:AFFEFGG", 8, 11, 0),
+                new HierarchicalGroupTO("6", "HOG:AFFEFGG", 9, 10, 186625),
+                new HierarchicalGroupTO("7", "HOG:AFFEFGG", 12, 17, 32523),
+                new HierarchicalGroupTO("8", "HOG:AFFEFGG", 13, 16, 32524),
+                new HierarchicalGroupTO("9" , "HOG:AFFEFGG", 14, 15, 32525),
+                new HierarchicalGroupTO("10", "HOG:RIQLVEE", 19, 28, 33213),
+                new HierarchicalGroupTO("11", "HOG:RIQLVEE", 20, 21, 0),
+                new HierarchicalGroupTO("12", "HOG:RIQLVEE", 22, 23, 1206794),
+                new HierarchicalGroupTO("13", "HOG:RIQLVEE", 24, 25, 1206794),
+                new HierarchicalGroupTO("14", "HOG:RIQLVEE", 26, 27, 1206794));
 
         ArgumentCaptor<Set> hGroupsTOsArg = ArgumentCaptor.forClass(Set.class);
         verify(mockManager.mockHierarchicalGroupDAO).insertHierarchicalGroups(

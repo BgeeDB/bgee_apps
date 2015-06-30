@@ -53,9 +53,9 @@ public class MySQLHierarchicalGroupDAOIT extends MySQLITAncestor {
         //create a Collection of HierarchicalGroupTOs to be inserted
         Collection<HierarchicalGroupTO> hgTOs = new ArrayList<HierarchicalGroupTO>();
 
-        hgTOs.add(new HierarchicalGroupTO(1, "HOG:TOTO1", 1, 6, 10));
-        hgTOs.add(new HierarchicalGroupTO(2, "HOG:TOTO2", 2, 3, 10));
-        hgTOs.add(new HierarchicalGroupTO(3, "HOG:TOTO3", 4, 5, 0));
+        hgTOs.add(new HierarchicalGroupTO("1", "HOG:TOTO1", 1, 6, 10));
+        hgTOs.add(new HierarchicalGroupTO("2", "HOG:TOTO2", 2, 3, 10));
+        hgTOs.add(new HierarchicalGroupTO("3", "HOG:TOTO3", 4, 5, 0));
         try {
             MySQLHierarchicalGroupDAO dao = new MySQLHierarchicalGroupDAO(this.getMySQLDAOManager());
             assertEquals("Incorrect number of rows inserted", 3, 

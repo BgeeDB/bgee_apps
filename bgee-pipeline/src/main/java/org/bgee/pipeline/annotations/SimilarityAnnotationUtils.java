@@ -1456,14 +1456,6 @@ public class SimilarityAnnotationUtils {
                     + super.toString() + "]";
         }
     }
-
-    /**
-     * A {@code CsvPreference} used to parse TSV files allowing commented line, 
-     * starting with "//".
-     */
-    public final static CsvPreference TSV_COMMENTED = 
-            new CsvPreference.Builder(CsvPreference.TAB_PREFERENCE).
-            skipComments(new CommentStartsWith("//")).build();
     
     /**
      * A {@code Comparator} allowing to sort {@code AnnotationBean}s.
@@ -1899,7 +1891,7 @@ public class SimilarityAnnotationUtils {
         log.entry(similarityFile, beanType);
         
         try (ICsvBeanReader annotReader = new CsvBeanReader(new FileReader(similarityFile), 
-                TSV_COMMENTED)) {
+                Utils.TSVCOMMENTED)) {
             
             List<T> annots = new ArrayList<T>();
             final String[] header = annotReader.getHeader(true);

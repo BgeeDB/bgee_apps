@@ -571,7 +571,7 @@ public class SimilarityAnnotation {
             
             //now, we can properly use a BeanReader on the temporary file.
             try (ICsvBeanReader annotReader = new CsvBeanReader(new FileReader(tmpFile), 
-                    SimilarityAnnotationUtils.TSV_COMMENTED)) {
+                    Utils.TSVCOMMENTED)) {
                 
                 List<CuratorAnnotationBean> annots = new ArrayList<CuratorAnnotationBean>();
                 final String[] header = annotReader.getHeader(true);
@@ -753,7 +753,7 @@ public class SimilarityAnnotation {
         final boolean[] quoteModes = mapHeaderToQuoteModes(header);
         
         try (ICsvBeanWriter beanWriter = new CsvBeanWriter(new FileWriter(outputFile), 
-                Utils.TSVCOMMENTED)) {
+                Utils.getCsvPreferenceWithQuote(quoteModes))) {
             // write the header
             beanWriter.writeHeader(header);
             

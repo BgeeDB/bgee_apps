@@ -9,7 +9,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,9 +21,12 @@ import org.junit.rules.TemporaryFolder;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.supercsv.cellprocessor.ParseInt;
+import org.supercsv.cellprocessor.constraint.StrNotNullOrEmpty;
 import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.io.CsvListReader;
+import org.supercsv.io.CsvMapReader;
 import org.supercsv.io.ICsvListReader;
+import org.supercsv.io.ICsvMapReader;
 import org.supercsv.util.CsvContext;
 
 /**
@@ -50,6 +55,43 @@ public class UtilsTest extends TestAncestor {
     @Override
     protected Logger getLogger() {
         return log;
+    }
+    
+    /**
+     * Test {@link Utils.BgeeCommentMatches} that is a custom supercsv {@code CommentMatcher}.
+     * 
+     * @throws FileNotFoundException
+     * @throws IOException
+     */
+    @Test
+    public void shouldMatchComments() throws FileNotFoundException, IOException {
+        List<Map<String, Object>> expectedAnnots = new ArrayList<Map<String, Object>>();
+        Map<String, Object> annot = new HashMap<String, Object>();
+        annot.put("col1", "v//al1_1");
+        annot.put("col2", "val1_2");
+        expectedAnnots.add(annot);
+        annot = new HashMap<String, Object>();
+        annot.put("col1", "val2_1");
+        annot.put("col2", "val2_2");
+        expectedAnnots.add(annot);
+        annot = new HashMap<String, Object>();
+        annot.put("col1", "val3_1");
+        annot.put("col2", "val3_2");
+        expectedAnnots.add(annot);
+        
+        List<Map<String, Object>> actualAnnots = new ArrayList<Map<String, Object>>();
+        try (ICsvMapReader mapReader = 
+                new CsvMapReader(new FileReader(
+                        this.getClass().getResource("/utils/matchComment.tsv").getFile()), 
+                        Utils.TSVCOMMENTED)) {
+            String[] header = mapReader.getHeader(true);
+            CellProcessor[] processors = {new StrNotNullOrEmpty(), new StrNotNullOrEmpty()};
+            Map<String, Object> row;
+            while( (row = mapReader.read(header, processors)) != null ) {
+                actualAnnots.add(row);
+            }
+        }
+        assertEquals("Incorrect comments parsed", expectedAnnots, actualAnnots);
     }
     
     /**

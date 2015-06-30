@@ -16,7 +16,7 @@ import org.apache.logging.log4j.Logger;
 import org.supercsv.cellprocessor.CellProcessorAdaptor;
 import org.supercsv.cellprocessor.Optional;
 import org.supercsv.cellprocessor.ift.CellProcessor;
-import org.supercsv.comment.CommentStartsWith;
+import org.supercsv.comment.CommentMatcher;
 import org.supercsv.exception.SuperCsvCellProcessorException;
 import org.supercsv.io.CsvListReader;
 import org.supercsv.io.CsvListWriter;
@@ -152,6 +152,38 @@ public class Utils {
     }
 
 
+    /**
+     * A custom comment matcher for Bgee TSV files to be used with {@code supercsv}. 
+     * This is because when curators used TSV files in openoffice or microsoft excel, 
+     * comment lines can be quoted. 
+     * 
+     * @author Frederic Bastian
+     * @version Bgee 13 June 2015
+     * @since Bgee 13
+     */
+    public static class BgeeCommentMatches implements CommentMatcher {
+        @Override
+        public boolean isComment(String line) {
+            log.entry(line);
+            if (line.startsWith("//")) {
+                return log.exit(true);
+            }
+            //in case quotes were added by a spreadsheet software. 
+            //we check whether it could be a comment line before trimming the line, 
+            //for more efficiency. I do not use a regex because I feel that it would be 
+            //more costly, but maybe I'm wrong...
+            if (line.startsWith("//", 1)) {
+                //trim line to discard trailing spaces (we do not want to discard leading spaces).
+                //check that the line was quoted.
+                String trimLine = line.trim();
+                if ((line.startsWith("\"") && trimLine.endsWith("\"")) || 
+                        (line.startsWith("'") && trimLine.endsWith("'"))) {
+                    return log.exit(true);
+                }
+            }
+            return log.exit(false);
+        }
+    }
 
     /**
      * A {@code CsvPreference} used to parse TSV files allowing commented line, 
@@ -159,7 +191,7 @@ public class Utils {
      */
     public final static CsvPreference TSVCOMMENTED = 
             new CsvPreference.Builder(CsvPreference.TAB_PREFERENCE).
-            skipComments(new CommentStartsWith("//")).build();
+            skipComments(new BgeeCommentMatches()).build();
 
     /**
      * A {@code String} corresponding to {@code System.getProperty("line.separator")}.
@@ -200,7 +232,7 @@ public class Utils {
         log.entry(columnsToQuote);
         return log.exit(new CsvPreference.Builder(CsvPreference.TAB_PREFERENCE).
                 useQuoteMode(new ColumnQuoteMode(columnsToQuote)).
-                skipComments(new CommentStartsWith("//")).build());
+                skipComments(new BgeeCommentMatches()).build());
     }
     
     /**

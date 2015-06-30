@@ -60,12 +60,6 @@ public class GenerateExprFile extends GenerateDownloadFile {
     private final static Logger log = LogManager.getLogger(GenerateExprFile.class.getName());
 
     /**
-     * A {@code boolean} defining whether the filter for simple file keeps observed data only 
-     * if {@code true} or organ observed data only (propagated stages are allowed) if {@code false}.
-     */
-    protected final static boolean OBSERVED_DATA_ONLY = true;
-
-    /**
      * A {@code String} that is the name of the column containing expression/no-expression found
      * with EST experiment, in the download file.
      */
@@ -311,6 +305,12 @@ public class GenerateExprFile extends GenerateDownloadFile {
     }
 
     /**
+     * A {@code boolean} defining whether the filter for simple file keeps observed data only 
+     * if {@code true} or organ observed data only (propagated stages are allowed) if {@code false}.
+     */
+    protected final boolean observedDataOnly;
+
+    /**
      * Default constructor.
      */
     // suppress warning as this default constructor should not be used.
@@ -351,9 +351,32 @@ public class GenerateExprFile extends GenerateDownloadFile {
      */
     public GenerateExprFile(MySQLDAOManager manager, List<String> speciesIds,
         Set<SingleSpExprFileType> fileTypes, String directory) throws IllegalArgumentException {
-        super(manager, speciesIds, fileTypes, directory);
+        this(manager, speciesIds, fileTypes, directory, false);
     }
 
+    /**
+     * Constructor providing the {@code MySQLDAOManager} that will be used by this object
+     * to perform queries to the database. This is useful for unit testing.
+     * 
+     * @param manager           the {@code MySQLDAOManager} to use.
+     * @param speciesIds        A {@code List} of {@code String}s that are the IDs of species we want 
+     *                          to generate data for. If {@code null} or empty, all species are used.
+     * @param fileTypes         A {@code Set} of {@code ExprFileType}s that are the types of files
+     *                          we want to generate. If {@code null} or empty, 
+     *                          all {@code ExprFileType}s are generated.
+     * @param directory         A {@code String} that is the directory where to store files.
+     * @param observedDataOnly  A {@code boolean} defining whether the filter for simple file keeps 
+     *                          observed data only if {@code true} or organ observed data only 
+     *                          (propagated stages are allowed) if {@code false}..
+     * @throws IllegalArgumentException If {@code directory} is {@code null} or blank.
+     */
+    public GenerateExprFile(MySQLDAOManager manager, List<String> speciesIds,
+        Set<SingleSpExprFileType> fileTypes, String directory, boolean observedDataOnly) 
+                throws IllegalArgumentException {
+        super(manager, speciesIds, fileTypes, directory);
+        this.observedDataOnly = observedDataOnly;
+    }
+    
     /**
      * Generate expression files, for the types defined by {@code fileTypes}, for species
      * defined by {@code speciesIds}, in the directory {@code directory}.
@@ -855,7 +878,10 @@ public class GenerateExprFile extends GenerateDownloadFile {
             Map<String, Set<String>> stageParentsFromChildren,
             Map<String, Set<String>> anatEntityParentsFromChildren) {
         log.entry(conditions, stageParentsFromChildren, anatEntityParentsFromChildren);
-        
+        log.debug("conditions= {}", conditions);
+        log.debug("stageParentsFromChildren= {}", stageParentsFromChildren);
+        log.debug("anatEntityParentsFromChildren= {}", anatEntityParentsFromChildren);
+
         Set<SingleSpeciesCondition> propagatedConditions = new HashSet<SingleSpeciesCondition>();
         
         for (SingleSpeciesCondition currentCondition : conditions) {
@@ -1226,7 +1252,7 @@ public class GenerateExprFile extends GenerateDownloadFile {
         //                                   (stage and organ not observed)
         // - if OBSERVED_DATA_ONLY is false: NOT_OBSERVED calls without observed organ are not written.
         if (fileType.isSimpleFileType() && observedData.equals(ObservedData.NOT_OBSERVED)) {
-            if (OBSERVED_DATA_ONLY) {
+            if (this.observedDataOnly) {
                 return log.exit(null);                
             } else if ((globalExpressionTO != null && 
                             globalExpressionTO.getAnatOriginOfLine().equals(OriginOfLine.DESCENT)) ||

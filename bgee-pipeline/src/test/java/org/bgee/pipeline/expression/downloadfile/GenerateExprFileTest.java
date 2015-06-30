@@ -1,6 +1,7 @@
 package org.bgee.pipeline.expression.downloadfile;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -29,9 +30,11 @@ import org.bgee.model.dao.api.anatdev.StageDAO.StageTOResultSet;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
+import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTOResultSet;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallParams;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
+import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTOResultSet;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallParams;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
@@ -39,13 +42,17 @@ import org.bgee.model.dao.api.gene.GeneDAO.GeneTOResultSet;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTOResultSet;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
+import org.bgee.model.dao.mysql.anatdev.MySQLAnatEntityDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLAnatEntityDAO.MySQLAnatEntityTOResultSet;
 import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO.MySQLStageTOResultSet;
+import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO.MySQLExpressionCallTOResultSet;
 import org.bgee.model.dao.mysql.expressiondata.MySQLNoExpressionCallDAO.MySQLNoExpressionCallTOResultSet;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO.MySQLGeneTOResultSet;
+import org.bgee.model.dao.mysql.ontologycommon.MySQLRelationDAO;
 import org.bgee.model.dao.mysql.ontologycommon.MySQLRelationDAO.MySQLRelationTOResultSet;
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO.MySQLSpeciesTOResultSet;
 import org.bgee.pipeline.TestAncestor;
@@ -145,6 +152,23 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
      */
     @Test
     public void shouldGenerateBasicExprFiles() throws IOException {
+        // Filter keeps observed data only (stage and organ are observed)
+        this.shouldGenerateBasicExprFilesIsObservedDataOnly(true);
+        
+        // Filter keeps observed organ data only (organ is observed)
+        this.shouldGenerateBasicExprFilesIsObservedDataOnly(false);
+    }
+
+    /**
+     * Test {@link GenerateExprFile#generateExprFiles()}, with two possible option for 
+     * {@code isObservedDataOnly}.
+     *
+     * @param isObservedDataOnly    A {@code boolean} defining whether the filter for simple file 
+     *                              keeps observed data only if {@code true} or organ observed data
+     *                              only (propagated stages are allowed) if {@code false}.
+     */
+    private void shouldGenerateBasicExprFilesIsObservedDataOnly(boolean isObservedDataOnly) 
+            throws IOException {
 
         Set<String> speciesIds = new HashSet<String>(Arrays.asList("11", "22")); 
         
@@ -163,384 +187,54 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
         speciesIds = new HashSet<String>(Arrays.asList("11")); 
 
         // Non informative anatomical entities
-        MySQLAnatEntityTOResultSet mockAnatEntityRsSp11 = createMockDAOResultSet(
-                Arrays.asList(
-                        new AnatEntityTO("NonInfoAnatEnt1", null, null, null, null, null)),
-                        MySQLAnatEntityTOResultSet.class);
-        when(mockManager.mockAnatEntityDAO.getNonInformativeAnatEntitiesBySpeciesIds(speciesIds)).
-                thenReturn(mockAnatEntityRsSp11);
+        AnatEntityTOResultSet mockAnatEntityRsSp11 = this.mockGetNonInformativeAnatEntities(mockManager, speciesIds);
         
-        //stage relations
-        MySQLRelationTOResultSet mockStageRelationRsSp11 = createMockDAOResultSet(
-                Arrays.asList(
-                        new RelationTO("Stage_id1", "ParentStage_id1"), 
-                        new RelationTO("Stage_id2", "ParentStage_id2"), 
-                        new RelationTO("ParentStage_id1", "ParentStage_id1"), 
-                        new RelationTO("ParentStage_id2", "ParentStage_id2"), 
-                        new RelationTO("Stage_id1", "Stage_id1"), 
-                        new RelationTO("Stage_id2", "Stage_id2")),
-                        MySQLRelationTOResultSet.class);
-        when(mockManager.mockRelationDAO.getStageRelationsBySpeciesIds(speciesIds, null)).
-                thenReturn(mockStageRelationRsSp11);
+        // Stage relations
+        RelationTOResultSet mockStageRelationRsSp11 = this.mockGetStageRelations(mockManager, speciesIds);
 
         // Anatomical entity relations
-        MySQLRelationTOResultSet mockOrganRelationRsSp11 = createMockDAOResultSet(
-                Arrays.asList(
-                        new RelationTO("Anat_id1", "Anat_id1"),
-                        new RelationTO("Anat_id2", "Anat_id2"),
-                        new RelationTO("Anat_id2", "Anat_id1"),
-                        new RelationTO("Anat_id3", "Anat_id3"),
-                        new RelationTO("Anat_id3", "Anat_id2"),
-                        new RelationTO("NonInfoAnatEnt1", "NonInfoAnatEnt1")),
-                        MySQLRelationTOResultSet.class);
-        when(mockManager.mockRelationDAO.getAnatEntityRelationsBySpeciesIds(speciesIds, 
-                EnumSet.of(RelationType.ISA_PARTOF), null)).thenReturn(mockOrganRelationRsSp11);
+        RelationTOResultSet mockOrganRelationRsSp11 = this.mockGetAnatEntityRelations(mockManager, speciesIds);
 
         // Basic expression calls
-        MySQLExpressionCallTOResultSet mockBasicExprRsSp11 = createMockDAOResultSet(
-                // Attributes to fill: all except ID.
-                Arrays.asList(
-                        new ExpressionCallTO(null, "ID1", "Anat_id1", "Stage_id1", 
-                                DataState.NODATA, DataState.LOWQUALITY, DataState.LOWQUALITY, 
-                                DataState.LOWQUALITY, false, false, 
-                                ExpressionCallTO.OriginOfLine.SELF, null, null),
-                        new ExpressionCallTO(null, "ID1", "Anat_id1", "ParentStage_id2", 
-                                DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY,
-                                DataState.NODATA, false, false, 
-                                ExpressionCallTO.OriginOfLine.SELF, null, null),
-                        new ExpressionCallTO(null, "ID1", "Anat_id1", "Stage_id2", 
-                                DataState.HIGHQUALITY, DataState.LOWQUALITY, 
-                                DataState.LOWQUALITY, DataState.NODATA, false, false, 
-                                ExpressionCallTO.OriginOfLine.SELF, null, null),
-
-                        new ExpressionCallTO(null, "ID2", "Anat_id1", "Stage_id2", 
-                                DataState.NODATA, DataState.LOWQUALITY, DataState.NODATA, 
-                                DataState.NODATA, false, false, 
-                                ExpressionCallTO.OriginOfLine.SELF, null, null),
-                        new ExpressionCallTO(null, "ID2", "Anat_id3", "ParentStage_id2", 
-                                DataState.HIGHQUALITY, DataState.NODATA, 
-                                DataState.HIGHQUALITY, DataState.NODATA, false, false, 
-                                ExpressionCallTO.OriginOfLine.SELF, null, null),
-                        new ExpressionCallTO(null, "ID2", "NonInfoAnatEnt1", "ParentStage_id2", 
-                                DataState.HIGHQUALITY, DataState.NODATA, 
-                                DataState.HIGHQUALITY, DataState.NODATA, false, false, 
-                                ExpressionCallTO.OriginOfLine.SELF, null, null)),
-                        MySQLExpressionCallTOResultSet.class);
-        ExpressionCallParams basicExprParams11 = new ExpressionCallParams();
-        basicExprParams11.addAllSpeciesIds(speciesIds);
-        basicExprParams11.setIncludeSubstructures(false);
-        basicExprParams11.setIncludeSubStages(false);
-        when(mockManager.mockExpressionCallDAO.getExpressionCalls(
-                (ExpressionCallParams) TestAncestor.valueCallParamEq(basicExprParams11))).
-                thenReturn(mockBasicExprRsSp11);
+        ExpressionCallTOResultSet mockBasicExprRsSp11 = this.mockBasicExpressionCalls(mockManager, speciesIds);
         
         // Global expression calls
-        MySQLExpressionCallTOResultSet mockGlobalExprRsSp11 = createMockDAOResultSet(
-                // Attributes to fill: all except ID.
-                Arrays.asList(
-                        new ExpressionCallTO(null, "ID1", "Anat_id1", "Stage_id1", 
-                                DataState.NODATA, DataState.LOWQUALITY, 
-                                DataState.LOWQUALITY, DataState.LOWQUALITY, true, false, 
-                                ExpressionCallTO.OriginOfLine.SELF, 
-                                null/*ExpressionCallTO.OriginOfLine.SELF*/, null/*true*/),
-//                        Call will be propagated by GenerateDownloadFile
-//                        new ExpressionCallTO(null, "ID1", "Anat_id1", "ParentStage_id1", 
-//                                DataState.NODATA, DataState.LOWQUALITY, 
-//                                DataState.LOWQUALITY, DataState.LOWQUALITY, true, true, 
-//                                null/*ExpressionCallTO.OriginOfLine.SELF*/, 
-//                                null/*ExpressionCallTO.OriginOfLine.DESCENT*/, false),
-                          //this call had a BOTH stage OriginOfLine, it was decomposed into 
-                          //two SELF calls in sub-stage and parent stage.
-//                        new ExpressionCallTO(null, "ID1", "Anat_id1", "ParentStage_id2", 
-//                                DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
-//                                DataState.LOWQUALITY, DataState.NODATA, true, true, 
-//                                null/*ExpressionCallTO.OriginOfLine.SELF*/, 
-//                                null/*ExpressionCallTO.OriginOfLine.BOTH*/, true),
-                        new ExpressionCallTO(null, "ID1", "Anat_id1", "ParentStage_id2", 
-                                DataState.LOWQUALITY, DataState.HIGHQUALITY, 
-                                DataState.LOWQUALITY, DataState.NODATA, true, false, 
-                                ExpressionCallTO.OriginOfLine.SELF, 
-                                null/*ExpressionCallTO.OriginOfLine.SELF*/, null/*true*/),
-                        new ExpressionCallTO(null, "ID1", "Anat_id1", "Stage_id2", 
-                                DataState.HIGHQUALITY, DataState.LOWQUALITY, 
-                                DataState.LOWQUALITY, DataState.NODATA, true, false, 
-                                ExpressionCallTO.OriginOfLine.SELF, 
-                                null/*ExpressionCallTO.OriginOfLine.SELF*/, null/*true*/),
-                                
-                        new ExpressionCallTO(null, "ID2", "Anat_id1", "Stage_id2", 
-                                DataState.NODATA, DataState.LOWQUALITY, 
-                                DataState.NODATA, DataState.NODATA, true, false,
-                                ExpressionCallTO.OriginOfLine.SELF, 
-                                null/*ExpressionCallTO.OriginOfLine.SELF*/, null/*true*/),                                
-                        new ExpressionCallTO(null, "ID2", "Anat_id1", "ParentStage_id2", 
-                                DataState.HIGHQUALITY, DataState.LOWQUALITY, 
-                                DataState.HIGHQUALITY, DataState.NODATA, true, false, 
-                                ExpressionCallTO.OriginOfLine.BOTH,
-                                null/*ExpressionCallTO.OriginOfLine.DESCENT*/, null/*false*/),
-                        new ExpressionCallTO(null, "ID2", "Anat_id2", "ParentStage_id2", 
-                                DataState.HIGHQUALITY, DataState.NODATA, 
-                                DataState.HIGHQUALITY, DataState.NODATA, true, false, 
-                                ExpressionCallTO.OriginOfLine.DESCENT,
-                                null/*ExpressionCallTO.OriginOfLine.SELF*/, null/*false*/),
-                        new ExpressionCallTO(null, "ID2", "Anat_id3", "ParentStage_id2", 
-                                DataState.HIGHQUALITY, DataState.NODATA, 
-                                DataState.HIGHQUALITY, DataState.NODATA, true, false, 
-                                ExpressionCallTO.OriginOfLine.SELF, 
-                                null/*ExpressionCallTO.OriginOfLine.SELF*/, null/*true*/),
-                        new ExpressionCallTO(null, "ID2", "NonInfoAnatEnt1", "ParentStage_id2", 
-                                DataState.HIGHQUALITY, DataState.NODATA, 
-                                DataState.HIGHQUALITY, DataState.NODATA, true, false, 
-                                ExpressionCallTO.OriginOfLine.SELF, 
-                                null/*ExpressionCallTO.OriginOfLine.SELF*/, null/*true*/)),
-                        MySQLExpressionCallTOResultSet.class);
-        ExpressionCallParams globalExprParams11 = new ExpressionCallParams();
-        globalExprParams11.addAllSpeciesIds(speciesIds);
-        globalExprParams11.setIncludeSubstructures(true);
-        globalExprParams11.setIncludeSubStages(false);
-        when(mockManager.mockExpressionCallDAO.getExpressionCalls(
-                (ExpressionCallParams) TestAncestor.valueCallParamEq(globalExprParams11))).
-                thenReturn(mockGlobalExprRsSp11);
+        ExpressionCallTOResultSet mockGlobalExprRsSp11 = this.mockGlobalExpressionCalls(mockManager, speciesIds);
 
         // No-expression calls
-        MySQLNoExpressionCallTOResultSet mockNoExprRsSp11 = createMockDAOResultSet(
-                // Attributes to fill: all except ID.
-                Arrays.asList(
-                        new NoExpressionCallTO(null, "ID1", "Anat_id1", "Stage_id1", 
-                                DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
-                                DataState.NODATA, false, NoExpressionCallTO.OriginOfLine.SELF),
-                                
-                        new NoExpressionCallTO(null, "ID2", "Anat_id1", "Stage_id2", 
-                                DataState.NODATA, DataState.NODATA, DataState.NODATA, 
-                                DataState.HIGHQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF),
-                        new NoExpressionCallTO(null, "ID2", "Anat_id3", "ParentStage_id2", 
-                                DataState.NODATA, DataState.NODATA, DataState.HIGHQUALITY, 
-                                DataState.HIGHQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF)),
-                        MySQLNoExpressionCallTOResultSet.class);
-        NoExpressionCallParams noExprParams11 = new NoExpressionCallParams();
-        noExprParams11.addAllSpeciesIds(speciesIds);
-        noExprParams11.setIncludeParentStructures(false);
-        when(mockManager.mockNoExpressionCallDAO.getNoExpressionCalls(
-                (NoExpressionCallParams) TestAncestor.valueCallParamEq(noExprParams11))).
-                thenReturn(mockNoExprRsSp11);
+        NoExpressionCallTOResultSet mockBasicNoExprRsSp11 = this.mockBasicNoExpressionCalls(mockManager, speciesIds);
 
         // Global no-expression calls
-        MySQLNoExpressionCallTOResultSet mockGlobalNoExprRsSp11 = createMockDAOResultSet(
-                // Attributes to fill: all except ID.
-                Arrays.asList(
-                        new NoExpressionCallTO(null, "ID1", "Anat_id1", "Stage_id1", 
-                                DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
-                                DataState.NODATA, true, NoExpressionCallTO.OriginOfLine.SELF),
-                        new NoExpressionCallTO(null, "ID1", "Anat_id2", "Stage_id1", 
-                                DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
-                                DataState.NODATA, true, NoExpressionCallTO.OriginOfLine.PARENT),
-                                
-                        new NoExpressionCallTO(null, "ID2", "Anat_id1", "Stage_id2", 
-                                DataState.NODATA, DataState.NODATA, DataState.NODATA, 
-                                DataState.HIGHQUALITY, true, NoExpressionCallTO.OriginOfLine.SELF),
-                        new NoExpressionCallTO(null, "ID2", "Anat_id2", "Stage_id2", 
-                                DataState.NODATA, DataState.NODATA, DataState.NODATA, 
-                                DataState.HIGHQUALITY, true, NoExpressionCallTO.OriginOfLine.PARENT),
-                        new NoExpressionCallTO(null, "ID2", "Anat_id3", "ParentStage_id2", 
-                                DataState.NODATA, DataState.NODATA, DataState.HIGHQUALITY, 
-                                DataState.HIGHQUALITY, true, NoExpressionCallTO.OriginOfLine.SELF),
-                        new NoExpressionCallTO(null, "ID2", "Anat_id3", "Stage_id2", 
-                                DataState.NODATA, DataState.NODATA, DataState.NODATA, 
-                                DataState.HIGHQUALITY, true, NoExpressionCallTO.OriginOfLine.PARENT)),
-                        MySQLNoExpressionCallTOResultSet.class);
-        NoExpressionCallParams globalNoExprParams11 = new NoExpressionCallParams();
-        globalNoExprParams11.addAllSpeciesIds(speciesIds);
-        globalNoExprParams11.setIncludeParentStructures(true);
-        when(mockManager.mockNoExpressionCallDAO.getNoExpressionCalls(
-                (NoExpressionCallParams) TestAncestor.valueCallParamEq(globalNoExprParams11))).
-                thenReturn(mockGlobalNoExprRsSp11);
+        NoExpressionCallTOResultSet mockGlobalNoExprRsSp11 = this.mockGlobalNoExpressionCalls(mockManager, speciesIds);
 
         //// Species 22
         speciesIds = new HashSet<String>(Arrays.asList("22")); 
 
         // Non informative anatomical entities
-        MySQLAnatEntityTOResultSet mockAnatEntityRsSp22 = createMockDAOResultSet(
-                Arrays.asList(
-                        new AnatEntityTO("NonInfoAnatEnt2", null, null, null, null, null)),
-                        MySQLAnatEntityTOResultSet.class);
-        when(mockManager.mockAnatEntityDAO.getNonInformativeAnatEntitiesBySpeciesIds(speciesIds)).
-                thenReturn(mockAnatEntityRsSp22);
-
-        //stage relations
-        MySQLRelationTOResultSet mockStageRelationRsSp22 = createMockDAOResultSet(
-                Arrays.asList(
-                        new RelationTO("Stage_id5", "ParentStage_id5"), 
-                        new RelationTO("ParentStage_id5", "ParentStage_id5"),
-                        new RelationTO("Stage_id2", "Stage_id2"), 
-                        new RelationTO("Stage_id5", "Stage_id5"),
-                        new RelationTO("Stage_id7", "Stage_id7"),
-                        new RelationTO("Stage_id7", "Stage_id6"),
-                        new RelationTO("Stage_id6", "Stage_id6")),
-                        MySQLRelationTOResultSet.class);
-        when(mockManager.mockRelationDAO.getStageRelationsBySpeciesIds(speciesIds, null)).
-                thenReturn(mockStageRelationRsSp22);
+        AnatEntityTOResultSet mockAnatEntityRsSp22 = this.mockGetNonInformativeAnatEntities(mockManager, speciesIds);
+        
+        // Stage relations
+        RelationTOResultSet mockStageRelationRsSp22 = this.mockGetStageRelations(mockManager, speciesIds);
 
         // Anatomical entity relations
-        MySQLRelationTOResultSet mockOrganRelationRsSp22 = createMockDAOResultSet(
-                Arrays.asList(
-                        new RelationTO("Anat_id1", "Anat_id1"),
-                        new RelationTO("Anat_id4", "Anat_id4"),
-                        new RelationTO("Anat_id4", "Anat_id1"),
-                        new RelationTO("Anat_id5", "Anat_id5"),
-                        new RelationTO("Anat_id5", "Anat_id4"),
-                        new RelationTO("Anat_id8", "Anat_id8"),
-                        new RelationTO("Anat_id9", "Anat_id9"),
-                        new RelationTO("Anat_id9", "Anat_id8")),
-                        MySQLRelationTOResultSet.class);
-        when(mockManager.mockRelationDAO.getAnatEntityRelationsBySpeciesIds(speciesIds, 
-                EnumSet.of(RelationType.ISA_PARTOF), null)).thenReturn(mockOrganRelationRsSp22);
+        RelationTOResultSet mockOrganRelationRsSp22 = this.mockGetAnatEntityRelations(mockManager, speciesIds);
 
-        // Expression calls
-        MySQLExpressionCallTOResultSet mockBasicExprRsSp22 = createMockDAOResultSet(
-                Arrays.asList(
-                        new ExpressionCallTO(null, "ID3", "Anat_id1", "Stage_id2", 
-                                DataState.NODATA, DataState.LOWQUALITY, DataState.LOWQUALITY, 
-                                DataState.HIGHQUALITY, false, false, 
-                                ExpressionCallTO.OriginOfLine.SELF, null, null),
-                        new ExpressionCallTO(null, "ID3", "Anat_id5", "Stage_id2", 
-                                DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
-                                DataState.LOWQUALITY, false, false, 
-                                ExpressionCallTO.OriginOfLine.SELF, null, null),
-                                
-                        new ExpressionCallTO(null, "ID5", "Anat_id4", "Stage_id5", 
-                                DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
-                                DataState.NODATA, false, false, 
-                                ExpressionCallTO.OriginOfLine.SELF, null, null)),
-                        MySQLExpressionCallTOResultSet.class);
-        ExpressionCallParams basicExprParams22 = new ExpressionCallParams();
-        basicExprParams22.addAllSpeciesIds(speciesIds);
-        basicExprParams22.setIncludeSubstructures(false);
-        basicExprParams22.setIncludeSubStages(false);
-        when(mockManager.mockExpressionCallDAO.getExpressionCalls(
-                (ExpressionCallParams) TestAncestor.valueCallParamEq(basicExprParams22))).
-                thenReturn(mockBasicExprRsSp22);
-
+        // Basic expression calls
+        ExpressionCallTOResultSet mockBasicExprRsSp22 = this.mockBasicExpressionCalls(mockManager, speciesIds);
+        
         // Global expression calls
-        MySQLExpressionCallTOResultSet mockGlobalExprRsSp22 = createMockDAOResultSet(
-                // Attributes to fill: all except ID.
-                Arrays.asList(
-                        new ExpressionCallTO(null, "ID3", "Anat_id1", "Stage_id2", 
-                                DataState.LOWQUALITY, DataState.LOWQUALITY, 
-                                DataState.HIGHQUALITY, DataState.HIGHQUALITY, true, false,
-                                ExpressionCallTO.OriginOfLine.BOTH,  
-                                null/*ExpressionCallTO.OriginOfLine.SELF*/, null/*true*/),
-                        new ExpressionCallTO(null, "ID3", "Anat_id4", "Stage_id2", 
-                                DataState.LOWQUALITY, DataState.LOWQUALITY, 
-                                DataState.HIGHQUALITY, DataState.LOWQUALITY, true, false, 
-                                ExpressionCallTO.OriginOfLine.DESCENT,  
-                                null/*ExpressionCallTO.OriginOfLine.SELF*/, null/*false*/),
-                        new ExpressionCallTO(null, "ID3", "Anat_id5", "Stage_id2", 
-                                DataState.LOWQUALITY, DataState.LOWQUALITY, 
-                                DataState.HIGHQUALITY, DataState.LOWQUALITY, true, false, 
-                                ExpressionCallTO.OriginOfLine.SELF,  
-                                null/*ExpressionCallTO.OriginOfLine.SELF*/, null/*true*/),
-                        new ExpressionCallTO(null, "ID5", "Anat_id1", "Stage_id5", 
-                                DataState.HIGHQUALITY, DataState.LOWQUALITY, 
-                                DataState.LOWQUALITY, DataState.NODATA, true, false, 
-                                ExpressionCallTO.OriginOfLine.DESCENT,  
-                                null/*ExpressionCallTO.OriginOfLine.SELF*/, null/*false*/),
-                          //this call will be obtained by propagation of the previous one
-//                        new ExpressionCallTO(null, "ID5", "Anat_id1", "ParentStage_id5", 
-//                                DataState.HIGHQUALITY, DataState.LOWQUALITY, 
-//                                DataState.LOWQUALITY, DataState.NODATA, true, false, 
-//                                ExpressionCallTO.OriginOfLine.DESCENT,  
-//                                null/*ExpressionCallTO.OriginOfLine.DESCENT*/, null/*false*/),
-                        new ExpressionCallTO(null, "ID5", "Anat_id4", "Stage_id5", 
-                                DataState.HIGHQUALITY, DataState.LOWQUALITY, 
-                                DataState.LOWQUALITY, DataState.NODATA, true, false, 
-                                ExpressionCallTO.OriginOfLine.SELF,  
-                                null/*ExpressionCallTO.OriginOfLine.SELF*/, null/*true*/)
-                          //this call will be obtained by propagation of the previous one
-//                        , new ExpressionCallTO(null, "ID5", "Anat_id4", "ParentStage_id5", 
-//                                DataState.HIGHQUALITY, DataState.LOWQUALITY, 
-//                                DataState.LOWQUALITY, DataState.NODATA, true, false, 
-//                                ExpressionCallTO.OriginOfLine.SELF,  
-//                                null/*ExpressionCallTO.OriginOfLine.DESCENT*/, null/*false*/)
-                        ),
-                        MySQLExpressionCallTOResultSet.class);
-        ExpressionCallParams globalExprParams22 = new ExpressionCallParams();
-        globalExprParams22.addAllSpeciesIds(speciesIds);
-        globalExprParams22.setIncludeSubstructures(true);
-        globalExprParams22.setIncludeSubStages(false);
-        when(mockManager.mockExpressionCallDAO.getExpressionCalls(
-                (ExpressionCallParams) TestAncestor.valueCallParamEq(globalExprParams22))).
-                thenReturn(mockGlobalExprRsSp22);
+        ExpressionCallTOResultSet mockGlobalExprRsSp22 = this.mockGlobalExpressionCalls(mockManager, speciesIds);
 
         // No-expression calls
-        MySQLNoExpressionCallTOResultSet mockBasicNoExprRsSp22 = createMockDAOResultSet(
-                // Attributes to fill: all except ID.
-                Arrays.asList(
-                        new NoExpressionCallTO(null, "ID4", "Anat_id1", "Stage_id5", 
-                                DataState.NODATA, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
-                                DataState.HIGHQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF),
-                        new NoExpressionCallTO(null, "ID4", "Anat_id4", "Stage_id5", 
-                                DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
-                                DataState.NODATA, false, NoExpressionCallTO.OriginOfLine.SELF),
-                                
-                        new NoExpressionCallTO(null, "ID5", "Anat_id4", "Stage_id5", 
-                                DataState.NODATA, DataState.NODATA, DataState.NODATA, 
-                                DataState.HIGHQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF),
-                                
-                        new NoExpressionCallTO(null, "ID6", "Anat_id9", "Stage_id7", 
-                                DataState.NODATA, DataState.NODATA, DataState.NODATA, 
-                                DataState.HIGHQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF)),
-                        MySQLNoExpressionCallTOResultSet.class);
-        NoExpressionCallParams basicNoExprParams22 = new NoExpressionCallParams();
-        basicNoExprParams22.addAllSpeciesIds(speciesIds);
-        basicNoExprParams22.setIncludeParentStructures(false);
-        when(mockManager.mockNoExpressionCallDAO.getNoExpressionCalls(
-                (NoExpressionCallParams) TestAncestor.valueCallParamEq(basicNoExprParams22))).
-                thenReturn(mockBasicNoExprRsSp22);
+        NoExpressionCallTOResultSet mockBasicNoExprRsSp22 = this.mockBasicNoExpressionCalls(mockManager, speciesIds);
 
         // Global no-expression calls
-        MySQLNoExpressionCallTOResultSet mockGlobalNoExprRsSp22 = createMockDAOResultSet(
-                // Attributes to fill: all except ID.
-                Arrays.asList(
-                        new NoExpressionCallTO(null, "ID4", "Anat_id1", "Stage_id5", 
-                                DataState.NODATA, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
-                                DataState.HIGHQUALITY, true, NoExpressionCallTO.OriginOfLine.SELF),
-                        new NoExpressionCallTO(null, "ID4", "Anat_id4", "Stage_id5", 
-                                DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
-                                DataState.HIGHQUALITY, true, NoExpressionCallTO.OriginOfLine.BOTH),
-                        new NoExpressionCallTO(null, "ID4", "Anat_id5", "Stage_id5", 
-                                DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
-                                DataState.HIGHQUALITY, true, NoExpressionCallTO.OriginOfLine.PARENT),
-                                
-                        new NoExpressionCallTO(null, "ID5", "Anat_id4", "Stage_id5", 
-                                DataState.NODATA, DataState.NODATA, DataState.NODATA, 
-                                DataState.HIGHQUALITY, true, NoExpressionCallTO.OriginOfLine.SELF),
-                        new NoExpressionCallTO(null, "ID5", "Anat_id5", "Stage_id5", 
-                                DataState.NODATA, DataState.NODATA, DataState.NODATA, 
-                                DataState.HIGHQUALITY, true, NoExpressionCallTO.OriginOfLine.PARENT),
-                                
-                        new NoExpressionCallTO(null, "ID6", "Anat_id9", "Stage_id7", 
-                                DataState.NODATA, DataState.NODATA, DataState.NODATA, 
-                                DataState.HIGHQUALITY, true, NoExpressionCallTO.OriginOfLine.SELF),
-                        // This global call is not derived from propagation of the previous call, 
-                        // it's a fake call to be able to test no-expression condition propagation. 
-                        new NoExpressionCallTO(null, "ID6", "Anat_id8", "Stage_id6", 
-                                DataState.NODATA, DataState.NODATA, DataState.NODATA, 
-                                DataState.HIGHQUALITY, true, NoExpressionCallTO.OriginOfLine.PARENT)),
-                        MySQLNoExpressionCallTOResultSet.class);
-        NoExpressionCallParams globalNoExprParams22 = new NoExpressionCallParams();
-        globalNoExprParams22.addAllSpeciesIds(speciesIds);
-        globalNoExprParams22.setIncludeParentStructures(true);
-        when(mockManager.mockNoExpressionCallDAO.getNoExpressionCalls(
-                (NoExpressionCallParams) TestAncestor.valueCallParamEq(globalNoExprParams22))).
-                thenReturn(mockGlobalNoExprRsSp22);
+        NoExpressionCallTOResultSet mockGlobalNoExprRsSp22 = this.mockGlobalNoExpressionCalls(mockManager, speciesIds);
 
-        String directory = testFolder.newFolder("tmpFolder").getPath();
-        
         Set<SingleSpExprFileType> fileTypes = new HashSet<SingleSpExprFileType>(
                 Arrays.asList(SingleSpExprFileType.EXPR_SIMPLE, SingleSpExprFileType.EXPR_COMPLETE)); 
-        GenerateExprFile generate = new GenerateExprFile(mockManager, 
-                Arrays.asList("11", "22"), fileTypes, directory);
-        
-        generate.generateExprFiles();
+                
+        String directory = testFolder.newFolder("folder_isObservedDataOnly_" + isObservedDataOnly).getPath();
         
         String outputSimpleFile11 = new File(directory, "Genus11_species11_" + 
                 SingleSpExprFileType.EXPR_SIMPLE + GenerateDownloadFile.EXTENSION).getAbsolutePath();
@@ -551,15 +245,22 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
         String outputAdvancedFile22 = new File(directory, "Genus22_species22_" + 
                 SingleSpExprFileType.EXPR_COMPLETE + GenerateDownloadFile.EXTENSION).getAbsolutePath();
 
-        if (GenerateExprFile.OBSERVED_DATA_ONLY) {
-            assertExpressionFile(outputSimpleFile11, "11", true, 6);
-            assertExpressionFile(outputSimpleFile22, "22", true, 6);
+        GenerateExprFile generate = new GenerateExprFile(mockManager, 
+                Arrays.asList("11", "22"), fileTypes, directory, isObservedDataOnly);
+        generate.generateExprFiles();
+        
+        if (isObservedDataOnly) {
+            // Filter keeps observed data only (stage and organ are observed)
+            assertExpressionFile(outputSimpleFile11, "11", true, 6, isObservedDataOnly);
+            assertExpressionFile(outputSimpleFile22, "22", true, 6, isObservedDataOnly);
+            assertExpressionFile(outputAdvancedFile11, "11", false, 8, isObservedDataOnly);
+            assertExpressionFile(outputAdvancedFile22, "22", false, 11, isObservedDataOnly);
         } else {
-            assertExpressionFile(outputSimpleFile11, "11", true, 7);
-            assertExpressionFile(outputSimpleFile22, "22", true, 7);
+            assertExpressionFile(outputSimpleFile11, "11", true, 7, isObservedDataOnly);
+            assertExpressionFile(outputSimpleFile22, "22", true, 7, isObservedDataOnly);
+            assertExpressionFile(outputAdvancedFile11, "11", false, 8, isObservedDataOnly);
+            assertExpressionFile(outputAdvancedFile22, "22", false, 11, isObservedDataOnly);
         }
-        assertExpressionFile(outputAdvancedFile11, "11", false, 8);
-        assertExpressionFile(outputAdvancedFile22, "22", false, 11);
 
         // Verify that all ResultSet are closed.
         verify(mockSpeciesTORs).close();
@@ -569,12 +270,18 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
 
         verify(mockAnatEntityRsSp11).close();
         verify(mockStageRelationRsSp11).close();
+        verify(mockOrganRelationRsSp11).close();
+        verify(mockBasicExprRsSp11).close();
         verify(mockGlobalExprRsSp11).close();
+        verify(mockBasicNoExprRsSp11).close();
         verify(mockGlobalNoExprRsSp11).close();
         
         verify(mockAnatEntityRsSp22).close();
         verify(mockStageRelationRsSp22).close();
+        verify(mockOrganRelationRsSp22).close();
+        verify(mockBasicExprRsSp22).close();
         verify(mockGlobalExprRsSp22).close();
+        verify(mockBasicNoExprRsSp22).close();
         verify(mockGlobalNoExprRsSp22).close();
         
         //check that the connection was closed at each species iteration
@@ -600,6 +307,434 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                 GeneDAO.Attribute.ID, GeneDAO.Attribute.NAME);
         verify(mockManager.mockStageDAO, times(1)).setAttributes(
                 StageDAO.Attribute.ID, StageDAO.Attribute.NAME);
+    }
+
+    /**
+     * Define a mock MySQLAnatEntityTOResultSet to mock the return of 
+     * {@link MySQLAnatEntityDAO#getNonInformativeAnatEntitiesBySpeciesIds()}.
+     * 
+     * @param mockManager   A {@code MySQLDAOManager} to for the class to acquire mock DAOs.
+     * @param speciesIds    A {@code List} of {@code String}s that are the IDs of species we want 
+     *                      to generate data for.
+     */
+    private AnatEntityTOResultSet mockGetNonInformativeAnatEntities(MockDAOManager mockManager, Set<String> speciesIds) {
+        List<String> allPotentialSpecies = Arrays.asList("11", "22");
+        assertTrue("All species is to not ", allPotentialSpecies.containsAll(speciesIds));
+        
+        List<AnatEntityTO> anatEntities = new ArrayList<AnatEntityTO>(); 
+        if (speciesIds.contains("11")) {
+            anatEntities.add(new AnatEntityTO("NonInfoAnatEnt1", null, null, null, null, null));
+        }
+        if (speciesIds.contains("22")) {
+            anatEntities.add(new AnatEntityTO("NonInfoAnatEnt2", null, null, null, null, null));
+        }
+        
+        MySQLAnatEntityTOResultSet mockAnatEntityRs = 
+                createMockDAOResultSet(anatEntities, MySQLAnatEntityTOResultSet.class);
+        when(mockManager.mockAnatEntityDAO.getNonInformativeAnatEntitiesBySpeciesIds(speciesIds)).
+                thenReturn(mockAnatEntityRs);
+        
+        return mockAnatEntityRs;
+    }
+
+    /**
+     * Define a mock MySQLRelationTOResultSet to mock the return of 
+     * {@link MySQLRelationDAO#getStageRelationsBySpeciesIds()}.
+     * 
+     * @param mockManager A {@code MySQLDAOManager} to for the class to acquire mock DAOs.
+     * @param speciesIds    A {@code List} of {@code String}s that are the IDs of species we want 
+     *                      to generate data for.
+     */
+    private RelationTOResultSet mockGetStageRelations(MockDAOManager mockManager, Set<String> speciesIds) {
+        List<RelationTO> stageRelations = new ArrayList<RelationTO>(); 
+        if (speciesIds.contains("11")) {
+            stageRelations.addAll(Arrays.asList(
+                    new RelationTO("Stage_id1", "ParentStage_id1"), 
+                    new RelationTO("Stage_id2", "ParentStage_id2"), 
+                    new RelationTO("ParentStage_id1", "ParentStage_id1"), 
+                    new RelationTO("ParentStage_id2", "ParentStage_id2"), 
+                    new RelationTO("Stage_id1", "Stage_id1"), 
+                    new RelationTO("Stage_id2", "Stage_id2")));
+        }
+        if (speciesIds.contains("22")) {
+            stageRelations.addAll(Arrays.asList(
+                    new RelationTO("Stage_id5", "ParentStage_id5"), 
+                    new RelationTO("ParentStage_id5", "ParentStage_id5"),
+                    new RelationTO("Stage_id2", "Stage_id2"), 
+                    new RelationTO("Stage_id5", "Stage_id5"),
+                    new RelationTO("Stage_id7", "Stage_id7"),
+                    new RelationTO("Stage_id7", "Stage_id6"),
+                    new RelationTO("Stage_id6", "Stage_id6")));
+        }
+        
+        MySQLRelationTOResultSet mockStageRelationRs = 
+                createMockDAOResultSet(stageRelations, MySQLRelationTOResultSet.class);
+        when(mockManager.mockRelationDAO.getStageRelationsBySpeciesIds(speciesIds, null)).
+                thenReturn(mockStageRelationRs);
+        
+        return mockStageRelationRs;
+    }
+
+    /**
+     * Define a mock MySQLRelationTOResultSet to mock the return of 
+     * {@link MySQLRelationDAO#getAnatEntityRelationsBySpeciesIds()}.
+     * 
+     * @param mockManager A {@code MySQLDAOManager} to for the class to acquire mock DAOs.
+     * @param speciesIds    A {@code List} of {@code String}s that are the IDs of species we want 
+     *                      to generate data for.
+     */
+    private RelationTOResultSet mockGetAnatEntityRelations(MockDAOManager mockManager, Set<String> speciesIds) {
+        List<RelationTO> organRelations = new ArrayList<RelationTO>(); 
+        if (speciesIds.contains("11")) {
+            organRelations.addAll(Arrays.asList(
+                    new RelationTO("Anat_id1", "Anat_id1"),
+                    new RelationTO("Anat_id2", "Anat_id2"),
+                    new RelationTO("Anat_id2", "Anat_id1"),
+                    new RelationTO("Anat_id3", "Anat_id3"),
+                    new RelationTO("Anat_id3", "Anat_id2"),
+                    new RelationTO("NonInfoAnatEnt1", "NonInfoAnatEnt1")));
+        }
+        if (speciesIds.contains("22")) {
+            organRelations.addAll(Arrays.asList(
+                        new RelationTO("Anat_id1", "Anat_id1"),
+                        new RelationTO("Anat_id4", "Anat_id4"),
+                        new RelationTO("Anat_id4", "Anat_id1"),
+                        new RelationTO("Anat_id5", "Anat_id5"),
+                        new RelationTO("Anat_id5", "Anat_id4"),
+                        new RelationTO("Anat_id8", "Anat_id8"),
+                        new RelationTO("Anat_id9", "Anat_id9"),
+                        new RelationTO("Anat_id9", "Anat_id8")));
+        }
+        
+        MySQLRelationTOResultSet mockOrganRelationRs = 
+                createMockDAOResultSet(organRelations, MySQLRelationTOResultSet.class);
+        when(mockManager.mockRelationDAO.getAnatEntityRelationsBySpeciesIds(speciesIds, 
+                EnumSet.of(RelationType.ISA_PARTOF), null)).thenReturn(mockOrganRelationRs);
+    
+        return mockOrganRelationRs;
+    }
+
+    /**
+     * Define a mock MySQLExpressionCallTOResultSet to mock the return of 
+     * {@link MySQLExpressionCallDAO#getExpressionCalls()}.
+     * 
+     * @param mockManager A {@code MySQLDAOManager} to for the class to acquire mock DAOs.
+     * @param speciesIds    A {@code List} of {@code String}s that are the IDs of species we want 
+     *                      to generate data for.
+     */
+    private ExpressionCallTOResultSet mockBasicExpressionCalls(MockDAOManager mockManager, Set<String> speciesIds) {
+        List<ExpressionCallTO> calls = new ArrayList<ExpressionCallTO>(); 
+        // Attributes to fill: all except ID.
+        if (speciesIds.contains("11")) {
+            calls.addAll(Arrays.asList(
+                    new ExpressionCallTO(null, "ID1", "Anat_id1", "Stage_id1", 
+                            DataState.NODATA, DataState.LOWQUALITY, DataState.LOWQUALITY, 
+                            DataState.LOWQUALITY, false, false, 
+                            ExpressionCallTO.OriginOfLine.SELF, null, null),
+                    new ExpressionCallTO(null, "ID1", "Anat_id1", "ParentStage_id2", 
+                            DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY,
+                            DataState.NODATA, false, false, 
+                            ExpressionCallTO.OriginOfLine.SELF, null, null),
+                    new ExpressionCallTO(null, "ID1", "Anat_id1", "Stage_id2", 
+                            DataState.HIGHQUALITY, DataState.LOWQUALITY, 
+                            DataState.LOWQUALITY, DataState.NODATA, false, false, 
+                            ExpressionCallTO.OriginOfLine.SELF, null, null),
+    
+                    new ExpressionCallTO(null, "ID2", "Anat_id1", "Stage_id2", 
+                            DataState.NODATA, DataState.LOWQUALITY, DataState.NODATA, 
+                            DataState.NODATA, false, false, 
+                            ExpressionCallTO.OriginOfLine.SELF, null, null),
+                    new ExpressionCallTO(null, "ID2", "Anat_id3", "ParentStage_id2", 
+                            DataState.HIGHQUALITY, DataState.NODATA, 
+                            DataState.HIGHQUALITY, DataState.NODATA, false, false, 
+                            ExpressionCallTO.OriginOfLine.SELF, null, null),
+                    new ExpressionCallTO(null, "ID2", "NonInfoAnatEnt1", "ParentStage_id2", 
+                            DataState.HIGHQUALITY, DataState.NODATA, 
+                            DataState.HIGHQUALITY, DataState.NODATA, false, false, 
+                            ExpressionCallTO.OriginOfLine.SELF, null, null)));
+        }
+        if (speciesIds.contains("22")) {
+            calls.addAll(Arrays.asList(
+                    new ExpressionCallTO(null, "ID3", "Anat_id1", "Stage_id2", 
+                            DataState.NODATA, DataState.LOWQUALITY, DataState.LOWQUALITY, 
+                            DataState.HIGHQUALITY, false, false, 
+                            ExpressionCallTO.OriginOfLine.SELF, null, null),
+                    new ExpressionCallTO(null, "ID3", "Anat_id5", "Stage_id2", 
+                            DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
+                            DataState.LOWQUALITY, false, false, 
+                            ExpressionCallTO.OriginOfLine.SELF, null, null),
+                            
+                    new ExpressionCallTO(null, "ID5", "Anat_id4", "Stage_id5", 
+                            DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
+                            DataState.NODATA, false, false, 
+                            ExpressionCallTO.OriginOfLine.SELF, null, null)));
+        }
+    
+        MySQLExpressionCallTOResultSet mockBasicExprRs = 
+                createMockDAOResultSet(calls, MySQLExpressionCallTOResultSet.class);
+        ExpressionCallParams basicExprParams = new ExpressionCallParams();
+        basicExprParams.addAllSpeciesIds(speciesIds);
+        basicExprParams.setIncludeSubstructures(false);
+        basicExprParams.setIncludeSubStages(false);
+        when(mockManager.mockExpressionCallDAO.getExpressionCalls(
+                (ExpressionCallParams) TestAncestor.valueCallParamEq(basicExprParams))).
+                thenReturn(mockBasicExprRs);
+        return mockBasicExprRs;
+    }
+
+    /**
+     * Define a mock MySQLExpressionCallTOResultSet to mock the return of 
+     * {@link MySQLExpressionCallDAO#getExpressionCalls()}.
+     * 
+     * @param mockManager A {@code MySQLDAOManager} to for the class to acquire mock DAOs.
+     * @param speciesIds    A {@code List} of {@code String}s that are the IDs of species we want 
+     *                      to generate data for.
+     */
+    private ExpressionCallTOResultSet mockGlobalExpressionCalls(
+            MockDAOManager mockManager, Set<String> speciesIds) {
+
+        List<ExpressionCallTO> calls = new ArrayList<ExpressionCallTO>(); 
+        // Attributes to fill: all except ID.
+        if (speciesIds.contains("11")) {
+            calls.addAll(Arrays.asList(
+                    new ExpressionCallTO(null, "ID1", "Anat_id1", "Stage_id1", 
+                            DataState.NODATA, DataState.LOWQUALITY, 
+                            DataState.LOWQUALITY, DataState.LOWQUALITY, true, false, 
+                            ExpressionCallTO.OriginOfLine.SELF, 
+                            null/*ExpressionCallTO.OriginOfLine.SELF*/, null/*true*/),
+    //                Call will be propagated by GenerateDownloadFile
+    //                new ExpressionCallTO(null, "ID1", "Anat_id1", "ParentStage_id1", 
+    //                        DataState.NODATA, DataState.LOWQUALITY, 
+    //                        DataState.LOWQUALITY, DataState.LOWQUALITY, true, true, 
+    //                        null/*ExpressionCallTO.OriginOfLine.SELF*/, 
+    //                        null/*ExpressionCallTO.OriginOfLine.DESCENT*/, false),
+                  //this call had a BOTH stage OriginOfLine, it was decomposed into 
+                  //two SELF calls in sub-stage and parent stage.
+    //                new ExpressionCallTO(null, "ID1", "Anat_id1", "ParentStage_id2", 
+    //                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+    //                        DataState.LOWQUALITY, DataState.NODATA, true, true, 
+    //                        null/*ExpressionCallTO.OriginOfLine.SELF*/, 
+    //                        null/*ExpressionCallTO.OriginOfLine.BOTH*/, true),
+                    new ExpressionCallTO(null, "ID1", "Anat_id1", "ParentStage_id2", 
+                            DataState.LOWQUALITY, DataState.HIGHQUALITY, 
+                            DataState.LOWQUALITY, DataState.NODATA, true, false, 
+                            ExpressionCallTO.OriginOfLine.SELF, 
+                            null/*ExpressionCallTO.OriginOfLine.SELF*/, null/*true*/),
+                    new ExpressionCallTO(null, "ID1", "Anat_id1", "Stage_id2", 
+                            DataState.HIGHQUALITY, DataState.LOWQUALITY, 
+                            DataState.LOWQUALITY, DataState.NODATA, true, false, 
+                            ExpressionCallTO.OriginOfLine.SELF, 
+                            null/*ExpressionCallTO.OriginOfLine.SELF*/, null/*true*/),
+                        
+                    new ExpressionCallTO(null, "ID2", "Anat_id1", "Stage_id2", 
+                            DataState.NODATA, DataState.LOWQUALITY, 
+                            DataState.NODATA, DataState.NODATA, true, false,
+                            ExpressionCallTO.OriginOfLine.SELF, 
+                            null/*ExpressionCallTO.OriginOfLine.SELF*/, null/*true*/),                                
+                    new ExpressionCallTO(null, "ID2", "Anat_id1", "ParentStage_id2", 
+                            DataState.HIGHQUALITY, DataState.LOWQUALITY, 
+                            DataState.HIGHQUALITY, DataState.NODATA, true, false, 
+                            ExpressionCallTO.OriginOfLine.BOTH,
+                            null/*ExpressionCallTO.OriginOfLine.DESCENT*/, null/*false*/),
+                    new ExpressionCallTO(null, "ID2", "Anat_id2", "ParentStage_id2", 
+                            DataState.HIGHQUALITY, DataState.NODATA, 
+                            DataState.HIGHQUALITY, DataState.NODATA, true, false, 
+                            ExpressionCallTO.OriginOfLine.DESCENT,
+                            null/*ExpressionCallTO.OriginOfLine.SELF*/, null/*false*/),
+                    new ExpressionCallTO(null, "ID2", "Anat_id3", "ParentStage_id2", 
+                            DataState.HIGHQUALITY, DataState.NODATA, 
+                            DataState.HIGHQUALITY, DataState.NODATA, true, false, 
+                            ExpressionCallTO.OriginOfLine.SELF, 
+                            null/*ExpressionCallTO.OriginOfLine.SELF*/, null/*true*/),
+                    new ExpressionCallTO(null, "ID2", "NonInfoAnatEnt1", "ParentStage_id2", 
+                            DataState.HIGHQUALITY, DataState.NODATA, 
+                            DataState.HIGHQUALITY, DataState.NODATA, true, false, 
+                            ExpressionCallTO.OriginOfLine.SELF, 
+                            null/*ExpressionCallTO.OriginOfLine.SELF*/, null/*true*/)));
+        }
+        if (speciesIds.contains("22")) {
+            calls.addAll(Arrays.asList(
+                    new ExpressionCallTO(null, "ID3", "Anat_id1", "Stage_id2", 
+                            DataState.LOWQUALITY, DataState.LOWQUALITY, 
+                            DataState.HIGHQUALITY, DataState.HIGHQUALITY, true, false,
+                            ExpressionCallTO.OriginOfLine.BOTH,  
+                            null/*ExpressionCallTO.OriginOfLine.SELF*/, null/*true*/),
+                    new ExpressionCallTO(null, "ID3", "Anat_id4", "Stage_id2", 
+                            DataState.LOWQUALITY, DataState.LOWQUALITY, 
+                            DataState.HIGHQUALITY, DataState.LOWQUALITY, true, false, 
+                            ExpressionCallTO.OriginOfLine.DESCENT,  
+                            null/*ExpressionCallTO.OriginOfLine.SELF*/, null/*false*/),
+                    new ExpressionCallTO(null, "ID3", "Anat_id5", "Stage_id2", 
+                            DataState.LOWQUALITY, DataState.LOWQUALITY, 
+                            DataState.HIGHQUALITY, DataState.LOWQUALITY, true, false, 
+                            ExpressionCallTO.OriginOfLine.SELF,  
+                            null/*ExpressionCallTO.OriginOfLine.SELF*/, null/*true*/),
+                    new ExpressionCallTO(null, "ID5", "Anat_id1", "Stage_id5", 
+                            DataState.HIGHQUALITY, DataState.LOWQUALITY, 
+                            DataState.LOWQUALITY, DataState.NODATA, true, false, 
+                            ExpressionCallTO.OriginOfLine.DESCENT,  
+                            null/*ExpressionCallTO.OriginOfLine.SELF*/, null/*false*/),
+                          //this call will be obtained by propagation of the previous one
+    //                new ExpressionCallTO(null, "ID5", "Anat_id1", "ParentStage_id5", 
+    //                        DataState.HIGHQUALITY, DataState.LOWQUALITY, 
+    //                        DataState.LOWQUALITY, DataState.NODATA, true, false, 
+    //                        ExpressionCallTO.OriginOfLine.DESCENT,  
+    //                        null/*ExpressionCallTO.OriginOfLine.DESCENT*/, null/*false*/),
+                    new ExpressionCallTO(null, "ID5", "Anat_id4", "Stage_id5", 
+                            DataState.HIGHQUALITY, DataState.LOWQUALITY, 
+                            DataState.LOWQUALITY, DataState.NODATA, true, false, 
+                            ExpressionCallTO.OriginOfLine.SELF,  
+                            null/*ExpressionCallTO.OriginOfLine.SELF*/, null/*true*/)
+                      //this call will be obtained by propagation of the previous one
+    //                , new ExpressionCallTO(null, "ID5", "Anat_id4", "ParentStage_id5", 
+    //                        DataState.HIGHQUALITY, DataState.LOWQUALITY, 
+    //                        DataState.LOWQUALITY, DataState.NODATA, true, false, 
+    //                        ExpressionCallTO.OriginOfLine.SELF,  
+    //                        null/*ExpressionCallTO.OriginOfLine.DESCENT*/, null/*false*/)
+                    ));
+        }
+
+        MySQLExpressionCallTOResultSet mockGlobalExprRs = 
+                createMockDAOResultSet(calls, MySQLExpressionCallTOResultSet.class);
+        ExpressionCallParams globalExprParams = new ExpressionCallParams();
+        globalExprParams.addAllSpeciesIds(speciesIds);
+        globalExprParams.setIncludeSubstructures(true);
+        globalExprParams.setIncludeSubStages(false);
+        when(mockManager.mockExpressionCallDAO.getExpressionCalls(
+                (ExpressionCallParams) TestAncestor.valueCallParamEq(globalExprParams))).
+                thenReturn(mockGlobalExprRs);
+
+        return mockGlobalExprRs;
+    }
+
+    /**
+     * Define a mock MySQLNoExpressionCallTOResultSet to mock the return of 
+     * {@link MySQLNoExpressionCallDAO#getNoExpressionCalls()}.
+     * 
+     * @param mockManager A {@code MySQLDAOManager} to for the class to acquire mock DAOs.
+     * @param speciesIds    A {@code List} of {@code String}s that are the IDs of species we want 
+     *                      to generate data for.
+     */
+    private NoExpressionCallTOResultSet mockBasicNoExpressionCalls(MockDAOManager mockManager, Set<String> speciesIds) {
+        List<NoExpressionCallTO> calls = new ArrayList<NoExpressionCallTO>(); 
+        // Attributes to fill: all except ID.
+        if (speciesIds.contains("11")) {
+            calls.addAll(Arrays.asList(
+                    new NoExpressionCallTO(null, "ID1", "Anat_id1", "Stage_id1", 
+                            DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
+                            DataState.NODATA, false, NoExpressionCallTO.OriginOfLine.SELF),
+                            
+                    new NoExpressionCallTO(null, "ID2", "Anat_id1", "Stage_id2", 
+                            DataState.NODATA, DataState.NODATA, DataState.NODATA, 
+                            DataState.HIGHQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF),
+                    new NoExpressionCallTO(null, "ID2", "Anat_id3", "ParentStage_id2", 
+                            DataState.NODATA, DataState.NODATA, DataState.HIGHQUALITY, 
+                            DataState.HIGHQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF)));
+        }
+        if (speciesIds.contains("22")) {
+            calls.addAll(Arrays.asList(
+                    new NoExpressionCallTO(null, "ID4", "Anat_id1", "Stage_id5", 
+                            DataState.NODATA, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                            DataState.HIGHQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF),
+                    new NoExpressionCallTO(null, "ID4", "Anat_id4", "Stage_id5", 
+                            DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
+                            DataState.NODATA, false, NoExpressionCallTO.OriginOfLine.SELF),
+                            
+                    new NoExpressionCallTO(null, "ID5", "Anat_id4", "Stage_id5", 
+                            DataState.NODATA, DataState.NODATA, DataState.NODATA, 
+                            DataState.HIGHQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF),
+                            
+                    new NoExpressionCallTO(null, "ID6", "Anat_id9", "Stage_id7", 
+                            DataState.NODATA, DataState.NODATA, DataState.NODATA, 
+                            DataState.HIGHQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF)));  
+        }
+    
+        MySQLNoExpressionCallTOResultSet mockNoExprRs = 
+                createMockDAOResultSet(calls, MySQLNoExpressionCallTOResultSet.class);                        
+        NoExpressionCallParams noExprParams = new NoExpressionCallParams();
+        noExprParams.addAllSpeciesIds(speciesIds);
+        noExprParams.setIncludeParentStructures(false);
+        when(mockManager.mockNoExpressionCallDAO.getNoExpressionCalls(
+                (NoExpressionCallParams) TestAncestor.valueCallParamEq(noExprParams))).
+                thenReturn(mockNoExprRs);
+    
+        return mockNoExprRs;
+    }
+
+    /**
+     * Define a mock MySQLNoExpressionCallTOResultSet to mock the return of 
+     * {@link MySQLNoExpressionCallDAO#getNoExpressionCalls()}.
+     * 
+     * @param mockManager A {@code MySQLDAOManager} to for the class to acquire mock DAOs.
+     * @param speciesIds    A {@code List} of {@code String}s that are the IDs of species we want 
+     *                      to generate data for.
+     */
+    private NoExpressionCallTOResultSet mockGlobalNoExpressionCalls(
+            MockDAOManager mockManager, Set<String> speciesIds) {
+        
+        List<NoExpressionCallTO> calls = new ArrayList<NoExpressionCallTO>(); 
+        // Attributes to fill: all except ID.
+        if (speciesIds.contains("11")) {
+            calls.addAll(Arrays.asList(
+                    new NoExpressionCallTO(null, "ID1", "Anat_id1", "Stage_id1", 
+                            DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
+                            DataState.NODATA, true, NoExpressionCallTO.OriginOfLine.SELF),
+                    new NoExpressionCallTO(null, "ID1", "Anat_id2", "Stage_id1", 
+                            DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
+                            DataState.NODATA, true, NoExpressionCallTO.OriginOfLine.PARENT),
+                            
+                    new NoExpressionCallTO(null, "ID2", "Anat_id1", "Stage_id2", 
+                            DataState.NODATA, DataState.NODATA, DataState.NODATA, 
+                            DataState.HIGHQUALITY, true, NoExpressionCallTO.OriginOfLine.SELF),
+                    new NoExpressionCallTO(null, "ID2", "Anat_id2", "Stage_id2", 
+                            DataState.NODATA, DataState.NODATA, DataState.NODATA, 
+                            DataState.HIGHQUALITY, true, NoExpressionCallTO.OriginOfLine.PARENT),
+                    new NoExpressionCallTO(null, "ID2", "Anat_id3", "ParentStage_id2", 
+                            DataState.NODATA, DataState.NODATA, DataState.HIGHQUALITY, 
+                            DataState.HIGHQUALITY, true, NoExpressionCallTO.OriginOfLine.SELF),
+                    new NoExpressionCallTO(null, "ID2", "Anat_id3", "Stage_id2", 
+                            DataState.NODATA, DataState.NODATA, DataState.NODATA, 
+                            DataState.HIGHQUALITY, true, NoExpressionCallTO.OriginOfLine.PARENT)));
+        }
+        if (speciesIds.contains("22")) {
+            calls.addAll(Arrays.asList(
+                    new NoExpressionCallTO(null, "ID4", "Anat_id1", "Stage_id5", 
+                            DataState.NODATA, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                            DataState.HIGHQUALITY, true, NoExpressionCallTO.OriginOfLine.SELF),
+                    new NoExpressionCallTO(null, "ID4", "Anat_id4", "Stage_id5", 
+                            DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                            DataState.HIGHQUALITY, true, NoExpressionCallTO.OriginOfLine.BOTH),
+                    new NoExpressionCallTO(null, "ID4", "Anat_id5", "Stage_id5", 
+                            DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                            DataState.HIGHQUALITY, true, NoExpressionCallTO.OriginOfLine.PARENT),
+                            
+                    new NoExpressionCallTO(null, "ID5", "Anat_id4", "Stage_id5", 
+                            DataState.NODATA, DataState.NODATA, DataState.NODATA, 
+                            DataState.HIGHQUALITY, true, NoExpressionCallTO.OriginOfLine.SELF),
+                    new NoExpressionCallTO(null, "ID5", "Anat_id5", "Stage_id5", 
+                            DataState.NODATA, DataState.NODATA, DataState.NODATA, 
+                            DataState.HIGHQUALITY, true, NoExpressionCallTO.OriginOfLine.PARENT),
+                            
+                    new NoExpressionCallTO(null, "ID6", "Anat_id9", "Stage_id7", 
+                            DataState.NODATA, DataState.NODATA, DataState.NODATA, 
+                            DataState.HIGHQUALITY, true, NoExpressionCallTO.OriginOfLine.SELF),
+                    // This global call is not derived from propagation of the previous call, 
+                    // it's a fake call to be able to test no-expression condition propagation. 
+                    new NoExpressionCallTO(null, "ID6", "Anat_id8", "Stage_id6", 
+                            DataState.NODATA, DataState.NODATA, DataState.NODATA, 
+                            DataState.HIGHQUALITY, true, NoExpressionCallTO.OriginOfLine.PARENT)));  
+        }
+    
+        MySQLNoExpressionCallTOResultSet mockGlobalNoExprRs = 
+                createMockDAOResultSet(calls, MySQLNoExpressionCallTOResultSet.class);
+        NoExpressionCallParams globalNoExprParams = new NoExpressionCallParams();
+        globalNoExprParams.addAllSpeciesIds(speciesIds);
+        globalNoExprParams.setIncludeParentStructures(true);
+        when(mockManager.mockNoExpressionCallDAO.getNoExpressionCalls(
+                (NoExpressionCallParams) TestAncestor.valueCallParamEq(globalNoExprParams))).
+                thenReturn(mockGlobalNoExprRs);
+    
+        return mockGlobalNoExprRs;
     }
 
     /**
@@ -963,10 +1098,13 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
      * @param isSimplified      A {@code String} defining the species ID.
      * @param expNbLines        An {@code Integer} defining the expected number of lines in 
      *                          {@code file}.
+     * @param observedDataOnly  A {@code boolean} defining whether the filter for simple file keeps 
+     *                          observed data only if {@code true} or organ observed data only 
+     *                          (propagated stages are allowed) if {@code false}.
      * @throws IOException      If the file could not be used.
      */
     private void assertExpressionFile(String file, String speciesId, boolean isSimplified, 
-            int expNbLines) throws IOException {
+            int expNbLines, boolean observedDataOnly) throws IOException {
         log.entry(file, speciesId, isSimplified, expNbLines);
         
         // We use '$' as character used to escape columns containing the delimiter to be able 
@@ -1137,7 +1275,7 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                                 "\"parentstageN1\"", stageName, "\"anatName1\"", anatEntityName, 
                                 ExpressionData.EXPRESSION.getStringRepresentation(), resume,
                                 DataState.LOWQUALITY.getStringRepresentation(), quality);
-                        if (isSimplified && GenerateExprFile.OBSERVED_DATA_ONLY) {
+                        if (isSimplified && observedDataOnly) {
                             throw new IllegalStateException("This triplet should not be present in the simple file");
                         } else if (!isSimplified) {
                             this.assertCompleteExprColumnRowEqual(geneId,
@@ -1531,7 +1669,7 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                                 "\"parentstageN5\"", stageName, "\"anatName4\"", anatEntityName,
                                 ExpressionData.EXPRESSION.getStringRepresentation(), resume,
                                 DataState.HIGHQUALITY.getStringRepresentation(), quality);
-                        if (isSimplified && GenerateExprFile.OBSERVED_DATA_ONLY) {
+                        if (isSimplified && observedDataOnly) {
                             throw new IllegalStateException("This triplet should not be present in the simple file");
                         } else if (!isSimplified) {
                             this.assertCompleteExprColumnRowEqual(geneId,

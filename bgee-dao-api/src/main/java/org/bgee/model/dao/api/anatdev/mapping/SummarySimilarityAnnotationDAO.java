@@ -490,7 +490,6 @@ public interface SummarySimilarityAnnotationDAO extends
         public String toString() {
             return "Summary similarity annotation ID: " + summarySimilarityAnnotationId + 
                     " - Anat. entity ID: " + anatEntityId;
-        }
-        //TODO: hashCode - equals
+        }        
     }
 }

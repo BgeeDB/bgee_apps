@@ -75,6 +75,7 @@ import org.supercsv.io.dozer.ICsvDozerBeanWriter;
 //FIXME: And what should we do with that? When should we decide to not display mouth|anus, 
 //to only display mouth on the one hand, anus on the other hand? Should we display 
 //both the multiple-entities condition, AND the single-entity conditions?
+//FIXME: use "low quality" instead of "poor quality"
 public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile 
                                                 implements GenerateMultiSpeciesDownloadFile {
 
@@ -2525,7 +2526,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                     case GENE_ID_LIST_COLUMN_NAME: 
                         processors[i] = new Utils.FmtMultipleStringValues(new Trim()); 
                         break;
-                    //TODO: regresssion test with some blank gene names
+                    //TODO: regression test with some blank gene names
                     case GENE_NAME_LIST_COLUMN_NAME: 
                         //gene names can be blank
                         processors[i] = new Utils.FmtMultipleStringValues(new Trim(), true); 

@@ -449,7 +449,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
             // Presence/absence expression files
             banner.append("<div class='bgee_download_file_buttons'>");
-            banner.append("<h2>Presence/absence of expression</h2>");
+            banner.append("<h2>Presence/Absence of expression</h2>");
             banner.append(this.getHelpLink("expr_help"));
             banner.append("<p id='expr_coming_soon' class='no_data'>Coming soon</p>");
             banner.append("<p id='expr_no_data' class='no_data'>Not enough data</p>");
@@ -1046,10 +1046,14 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         }
         
 //        String beginExprFilePath = this.prop.getDownloadMultiExprFilesRootDirectory() + filePrefix + "_";
+        // TODO: remove hardcoded "_" in file names. 
+        // Use BgeeProperties... or RequestParameters ? or static variables?
         String beginDiffExprFilePath = this.prop.getDownloadMultiDiffExprFilesRootDirectory() + filePrefix + "_";
         String extension = ".tsv.zip";
         
         String data = "";
+        // TODO: remove hardcoded "_orthologs" in file names. 
+        // Use BgeeProperties... or RequestParameters ? or static variables?
         data += " data-bgeeorthologfileurl='" + this.prop.getDownloadOrthologFilesRootDirectory() + 
                 filePrefix + "_orthologs" + extension +
                 "' data-bgeeorthologfilesize='" + orthologFileSize + "'";
@@ -1303,6 +1307,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         StringBuffer data = new StringBuffer();
         if (pageType.equals(DownloadPageType.EXPR_CALLS)) {
             String extension = ".tsv.zip";
+            // TODO: remove hardcoded "_" in file names. 
+            // Use BgeeProperties... or RequestParameters ? or static variables?
             String beginExprFilePath = this.prop.getDownloadExprFilesRootDirectory() + latinName + "_";
             String beginDiffExprFilePath = this.prop.getDownloadDiffExprFilesRootDirectory() + latinName + "_";
             data.append(" data-bgeeexprsimplefileurl='" + beginExprFilePath + "expr-simple" + extension + 

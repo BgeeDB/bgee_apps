@@ -450,6 +450,9 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         
         // We check that all file types have the same comparison factor and retrieve informations: 
         // comparison factor and if there is an advanced file to be generated.
+        //TODO: accept more than one comparison factor over all possible file types, 
+        //if we generate multi-species diff expression files over DEVELOPMENT.
+        //the expression query should be performed once per comparison factor
         boolean generateCompleteFile = false; 
         ComparisonFactor factor = null;
         for (SingleSpDiffExprFileType fileType: fileTypes) {

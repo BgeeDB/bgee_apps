@@ -52,6 +52,7 @@ import org.supercsv.io.ICsvMapWriter;
  */
 //TODO: stop using these awful Maps, use a BeanReader/BeanWriter instead,
 //see org.bgee.pipeline.annotations.SimilarityAnnotationUtils
+//FIXME: use "low quality" instead of "poor quality"
 public class GenerateExprFile extends GenerateDownloadFile {
 
     /**

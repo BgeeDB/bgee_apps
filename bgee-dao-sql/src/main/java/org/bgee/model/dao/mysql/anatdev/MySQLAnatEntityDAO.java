@@ -2,10 +2,9 @@ package org.bgee.model.dao.mysql.anatdev;
 
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -86,8 +85,7 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
          try {
              BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
              if (speciesIds != null && speciesIds.size() != 0) {
-                 List<Integer> orderedSpeciesIds = MySQLDAO.convertToIntList(speciesIds);
-                 Collections.sort(orderedSpeciesIds);
+                 List<Integer> orderedSpeciesIds = MySQLDAO.convertToOrderedIntList(speciesIds);
                  stmt.setIntegers(1, orderedSpeciesIds);
              }             
              return log.exit(new MySQLAnatEntityTOResultSet(stmt));
@@ -154,8 +152,7 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             if (isSpeciesFilter) {
-                List<Integer> orderedSpeciesIds = MySQLDAO.convertToIntList(speciesIds);
-                Collections.sort(orderedSpeciesIds);
+                List<Integer> orderedSpeciesIds = MySQLDAO.convertToOrderedIntList(speciesIds);
                 stmt.setIntegers(1, orderedSpeciesIds);
             }             
             return log.exit(new MySQLAnatEntityTOResultSet(stmt));

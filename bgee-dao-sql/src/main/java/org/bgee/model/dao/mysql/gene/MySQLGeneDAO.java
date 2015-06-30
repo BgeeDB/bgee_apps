@@ -96,8 +96,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             if (speciesIds != null && speciesIds.size() > 0) {
-                List<Integer> orderedSpeciesIds = MySQLDAO.convertToIntList(speciesIds);
-                Collections.sort(orderedSpeciesIds);
+                List<Integer> orderedSpeciesIds = MySQLDAO.convertToOrderedIntList(speciesIds);
                 stmt.setIntegers(1, orderedSpeciesIds);
             }             
             return log.exit(new MySQLGeneTOResultSet(stmt));

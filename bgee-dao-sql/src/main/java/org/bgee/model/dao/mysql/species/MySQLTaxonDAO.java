@@ -153,8 +153,7 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             if (speciesIds != null && !speciesIds.isEmpty()) {
-                List<Integer> orderedSpeciesIds = MySQLDAO.convertToIntList(speciesIds);
-                Collections.sort(orderedSpeciesIds);
+                List<Integer> orderedSpeciesIds = MySQLDAO.convertToOrderedIntList(speciesIds);
                 stmt.setIntegers(1, orderedSpeciesIds);
             }
             

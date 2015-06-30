@@ -119,8 +119,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
              BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
              int startIndex = 1;
              if (isSpeciesFilter) {
-                 List<Integer> orderedSpeciesIds = MySQLDAO.convertToIntList(speciesIds);
-                 Collections.sort(orderedSpeciesIds);
+                 List<Integer> orderedSpeciesIds = MySQLDAO.convertToOrderedIntList(speciesIds);
                  stmt.setIntegers(startIndex, orderedSpeciesIds);
                  startIndex += orderedSpeciesIds.size();
              }
@@ -226,8 +225,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
              BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
              int startIndex = 1;
              if (isSpeciesFilter) {
-                 List<Integer> orderedSpeciesIds = MySQLDAO.convertToIntList(speciesIds);
-                 Collections.sort(orderedSpeciesIds);
+                 List<Integer> orderedSpeciesIds = MySQLDAO.convertToOrderedIntList(speciesIds);
                  stmt.setIntegers(startIndex, orderedSpeciesIds);
                  startIndex += orderedSpeciesIds.size();
                  //we set the species IDs twice, once for the parent stages, 

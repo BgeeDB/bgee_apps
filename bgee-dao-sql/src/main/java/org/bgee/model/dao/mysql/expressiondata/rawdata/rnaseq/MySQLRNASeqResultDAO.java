@@ -2,15 +2,12 @@ package org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq;
 
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.rawdata.CallSourceRawDataDAO.CallSourceRawDataTO;
-import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultDAO;
 import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
@@ -54,7 +51,7 @@ implements RNASeqResultDAO {
             stmt.setNull(1, Types.INTEGER);
             stmt.setString(2, CallSourceRawDataTO.ExclusionReason.NOEXPRESSIONCONFLICT.
                     getStringRepresentation());
-            stmt.setIntegers(3, MySQLDAO.convertToIntList(noExprIds));
+            stmt.setIntegers(3, MySQLDAO.convertToOrderedIntList(noExprIds));
             
             return log.exit(stmt.executeUpdate());
         } catch (SQLException e) {

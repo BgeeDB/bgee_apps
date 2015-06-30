@@ -2,6 +2,7 @@ package org.bgee.model.dao.mysql;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -125,23 +126,19 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
     }
     
     /**
-     * Convert a {@code Collection} of {@code String}s into a {@code List} of {@code Integer}s. 
-     * Order in the returned {@code List} is the same as the iteration order of {@code strings}. 
+     * Convert a {@code Collection} of {@code String}s into a {@code List} of {@code Integer}s, 
+     * order in the returned {@code List} is the natural ordering of {@code Integer}s.
      * Each element will be converted into an {@code int}, and a {@code NumberFormatException} 
      * is thrown if an element does not contain a parsable integer.
      * 
      * @param strings   A {@code Collection} of {@code String}s to be converted 
-     *                  into a {@code List} of {@code Integer}s.
+     *                  into an ordered {@code List} of {@code Integer}s.
      * @return          A {@code List} of {@code Integer}s corresponding to {@code strings}, 
-     *                  with order provided by the iteration order of the iterator 
-     *                  of {@code strings}.
+     *                  with the natural ordering of {@code Integer}s.
      * @throws NumberFormatException    if an element of {@code strings} is not parsable 
-     *                                  into an {@code int}.
+     *                                  into an {@code Integer}.
      */
-    //TODO: rename to 'convertToOrderedIntList', and add ordering to this method 
-    //(it seems that we always order the List after retrieval, to increase chances 
-    //of cache hit). Modify all places where this method is called to remove ordering.
-    protected static List<Integer> convertToIntList(Collection<String> strings) 
+    protected static List<Integer> convertToOrderedIntList(Collection<String> strings) 
             throws NumberFormatException {
         log.entry(strings);
         if (strings == null) {
@@ -151,6 +148,7 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
         for (String val: strings) {
             intList.add(Integer.parseInt(val));
         }
+        Collections.sort(intList);
         return log.exit(intList);
     }
 }

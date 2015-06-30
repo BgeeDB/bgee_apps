@@ -81,8 +81,7 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             stmt.setString(1, taxonId);
             if (hasSpecies) {
-                List<Integer> orderedSpeciesIds = MySQLDAO.convertToIntList(speciesIds);
-                Collections.sort(orderedSpeciesIds);
+                List<Integer> orderedSpeciesIds = MySQLDAO.convertToOrderedIntList(speciesIds);
                 stmt.setIntegers(2, orderedSpeciesIds);
             }  
             return log.exit(new MySQLHierarchicalGroupToGeneTOResultSet(stmt));

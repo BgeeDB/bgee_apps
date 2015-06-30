@@ -2,8 +2,6 @@ package org.bgee.model.dao.mysql.expressiondata.rawdata.affymetrix;
 
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -52,7 +50,7 @@ public class MySQLAffymetrixProbesetDAO extends MySQLDAO<AffymetrixProbesetDAO.A
             stmt.setNull(1, Types.INTEGER);
             stmt.setString(2, CallSourceRawDataTO.ExclusionReason.NOEXPRESSIONCONFLICT.
                     getStringRepresentation());
-            stmt.setIntegers(3, MySQLDAO.convertToIntList(noExprIds));
+            stmt.setIntegers(3, MySQLDAO.convertToOrderedIntList(noExprIds));
 
             return log.exit(stmt.executeUpdate());
         } catch (SQLException e) {

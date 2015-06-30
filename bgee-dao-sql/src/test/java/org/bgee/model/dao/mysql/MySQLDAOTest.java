@@ -34,11 +34,14 @@ public class MySQLDAOTest extends TestAncestor
     @Test
     public void shouldConvertToIntList() {
         assertEquals("Incorrect convertion to List of Integers", Arrays.asList(10, 24, 32), 
-                MySQLDAO.convertToIntList(Arrays.asList("10", "24", "32")));
-        
+                MySQLDAO.convertToOrderedIntList(Arrays.asList("10", "24", "32")));
+
+        assertEquals("Incorrect convertion to List of Integers", Arrays.asList(10, 24, 32), 
+                MySQLDAO.convertToOrderedIntList(Arrays.asList("24", "32", "10")));
+
         //test throwing of NumberFormatException
         try {
-            MySQLDAO.convertToIntList(Arrays.asList("10", "24a", "32"));
+            MySQLDAO.convertToOrderedIntList(Arrays.asList("10", "24a", "32"));
             //should have thrown an exception, test failed
             throw new AssertionError("No exception was thrown when converting " +
             		"unparsable String into Integer");

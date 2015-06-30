@@ -3,18 +3,18 @@ package org.bgee.model.dao.mysql.expressiondata;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
-import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO.OriginOfLine;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO;
+import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO.OriginOfLine;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallParams;
 import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
@@ -181,8 +181,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         try {
             stmt = this.getManager().getConnection().prepareStatement(sql.toString());
             if (speciesIds != null && speciesIds.size() > 0) {
-                List<Integer> orderedSpeciesIds = MySQLDAO.convertToIntList(speciesIds);
-                Collections.sort(orderedSpeciesIds);
+                List<Integer> orderedSpeciesIds = MySQLDAO.convertToOrderedIntList(speciesIds);
                 stmt.setIntegers(1, orderedSpeciesIds);
             }             
             return log.exit(new MySQLNoExpressionCallTOResultSet(stmt));
@@ -232,6 +231,8 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
      * @throws IllegalArgumentException if the {@code attribute} is unknown.
      */
     //TODO: see note about MySQLExpressionCallDAO#attributeToString(Attribute, boolean)
+    //actually, we don't need a method converting Attributes to Strings, we just need 
+    //a method generating all the SELECT clause. 
     private String attributeToString(NoExpressionCallDAO.Attribute attribute,
             boolean isIncludeParentStructures) throws IllegalArgumentException {
         log.entry(attribute, isIncludeParentStructures);
@@ -415,8 +416,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         }
         boolean removedFromLinkTable = false;
         try (BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sqlRelation)) {
-            List<Integer> orderedNoExprIds = MySQLDAO.convertToIntList(noExprIds);
-            Collections.sort(orderedNoExprIds);
+            List<Integer> orderedNoExprIds = MySQLDAO.convertToOrderedIntList(noExprIds);
             stmt.setIntegers(1, orderedNoExprIds);
             removedFromLinkTable = (stmt.executeUpdate() > 0);
         } catch (SQLException e) {
@@ -446,8 +446,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
 
         }
         try (BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql)) {
-                List<Integer> orderedNoExprIds = MySQLDAO.convertToIntList(noExprIds);
-                Collections.sort(orderedNoExprIds);
+                List<Integer> orderedNoExprIds = MySQLDAO.convertToOrderedIntList(noExprIds);
                 stmt.setIntegers(1, orderedNoExprIds);
                 return log.exit(stmt.executeUpdate());
         } catch (SQLException e) {

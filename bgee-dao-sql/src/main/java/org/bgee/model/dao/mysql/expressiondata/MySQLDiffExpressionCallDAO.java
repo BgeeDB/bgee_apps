@@ -255,8 +255,7 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
                 stmtIndex = 2;
             }
             if (hasSpecies) {
-                List<Integer> orderedSpeciesIds = MySQLDAO.convertToIntList(speciesIds);
-                Collections.sort(orderedSpeciesIds);
+                List<Integer> orderedSpeciesIds = MySQLDAO.convertToOrderedIntList(speciesIds);
                 stmt.setIntegers(stmtIndex, orderedSpeciesIds);
                 stmtIndex += speciesIds.size();
             }             

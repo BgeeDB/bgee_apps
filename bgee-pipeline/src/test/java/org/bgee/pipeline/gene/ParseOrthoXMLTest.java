@@ -145,8 +145,6 @@ public class ParseOrthoXMLTest extends TestAncestor {
         verify(mockManager.getConnection(), times(1)).startTransaction();
         verify(mockManager.getConnection(), times(1)).commit();
 
-        //TODO check that the DAO was closed
-
         // Verify that setAttributes are correctly called.
         verify(mockManager.mockSpeciesDAO, times(1)).setAttributes(
                 SpeciesDAO.Attribute.ID, SpeciesDAO.Attribute.COMMON_NAME, 
@@ -240,8 +238,6 @@ public class ParseOrthoXMLTest extends TestAncestor {
         // Verify that startTransaction() and commit()
         verify(mockManager.getConnection(), times(1)).startTransaction();
         verify(mockManager.getConnection(), times(1)).commit();
-
-        //TODO check that the DAO was closed
         
         // Verify that setAttributes are correctly called.
         verify(mockManager.mockSpeciesDAO, times(1)).setAttributes(
@@ -308,8 +304,6 @@ public class ParseOrthoXMLTest extends TestAncestor {
         // Verify that startTransaction() and commit() never called
         verify(mockManager.getConnection(), times(0)).startTransaction();
         verify(mockManager.getConnection(), times(0)).commit();
-
-        //TODO check that the DAO was closed
         
         // Verify that setAttributes are correctly called.
         verify(mockManager.mockSpeciesDAO, times(1)).setAttributes(

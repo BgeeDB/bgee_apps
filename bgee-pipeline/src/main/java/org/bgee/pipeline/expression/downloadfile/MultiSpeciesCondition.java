@@ -1,7 +1,8 @@
 package org.bgee.pipeline.expression.downloadfile;
 
 /**
- * TODO Javadoc
+ * Class used by classes that generate multi-species expression TSV download files 
+ * to store conditions. 
  *
  * @author 	Valentine Rech de Laval
  * @version Bgee 13

@@ -794,7 +794,10 @@ public class RequestParameters {
     private boolean isUrlTooLong() {
 
         log.entry();
-
+        if (log.isTraceEnabled()) {
+            log.trace("length of query: {} - max URL length: {}", 
+                    this.parametersQuery.length(), prop.getUrlMaxLength());
+        }
         if (this.parametersQuery.length() > prop.getUrlMaxLength()) {
             return log.exit(true);
         }
@@ -1204,6 +1207,18 @@ public class RequestParameters {
      */
     public void setPage(String page) {
         this.addValue(this.getUrlParametersInstance().getParamPage(), page);
+    }
+
+    /**
+     * Convenient method to retrieve value of the parameter returned by 
+     * {@link URLParameters#getParamData()}. Equivalent to calling 
+     * {@link #getFirstValue(Parameter)} for this parameter.
+     * 
+     * @return  A {@code String} that is the value of the {@code data} URL parameter. 
+     *          Can be {@code null}. 
+     */
+    public String getDataKey() {
+        return this.getFirstValue(this.getUrlParametersInstance().getParamData());
     }
     
     /**

@@ -34,8 +34,8 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
-        ID, NAME, DESCRIPTION, SPECIES_ID, GENE_BIO_TYPE_ID, OMA_PARENT_NODE_ID, ENSEMBL_GENE,
-        ANCESTRAL_OMA_NODE_ID, ANCESTRAL_OMA_TAXON_ID;
+        ID, NAME, DESCRIPTION, SPECIES_ID, GENE_BIO_TYPE_ID, OMA_PARENT_NODE_ID, ENSEMBL_GENE;
+//        ANCESTRAL_OMA_NODE_ID, ANCESTRAL_OMA_TAXON_ID;
     }
     
     /**

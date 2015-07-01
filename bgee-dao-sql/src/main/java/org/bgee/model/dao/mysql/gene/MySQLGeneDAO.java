@@ -119,11 +119,11 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
             throw log.throwing(new IllegalArgumentException(
                     "No attribute is given, then no gene is updated"));
         }
-        if (attributesToUpdate.contains(GeneDAO.Attribute.ANCESTRAL_OMA_NODE_ID) ||
-                attributesToUpdate.contains(GeneDAO.Attribute.ANCESTRAL_OMA_TAXON_ID)) {
-            throw log.throwing(new IllegalArgumentException(
-                    "'Ancestral OMA' attributes are not store in database, then no gene is updated"));
-        }
+//        if (attributesToUpdate.contains(GeneDAO.Attribute.ANCESTRAL_OMA_NODE_ID) ||
+//                attributesToUpdate.contains(GeneDAO.Attribute.ANCESTRAL_OMA_TAXON_ID)) {
+//            throw log.throwing(new IllegalArgumentException(
+//                    "'Ancestral OMA' attributes are not store in database, then no gene is updated"));
+//        }
         
         int geneUpdatedCount = 0;
         //Construct sql query according to currents attributes
@@ -184,21 +184,22 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         
         Set<GeneDAO.Attribute> attributesToUse = new HashSet<GeneDAO.Attribute>(attributes);
         if (attributes == null || attributes.isEmpty()) {
-            // we exclude ANCESTRAL_OMA_NODE_ID and ANCESTRAL_OMA_TAXON_ID
-            // TODO remove when retrieving 'Ancestral OMA' data will be implemented and tested 
-            attributesToUse = EnumSet.complementOf(EnumSet.of(
-                    GeneDAO.Attribute.ANCESTRAL_OMA_NODE_ID, 
-                    GeneDAO.Attribute.ANCESTRAL_OMA_TAXON_ID));
+//            // we exclude ANCESTRAL_OMA_NODE_ID and ANCESTRAL_OMA_TAXON_ID
+//            // TODO remove when retrieving 'Ancestral OMA' data will be implemented and tested 
+//            attributesToUse = EnumSet.complementOf(EnumSet.of(
+//                    GeneDAO.Attribute.ANCESTRAL_OMA_NODE_ID, 
+//                    GeneDAO.Attribute.ANCESTRAL_OMA_TAXON_ID));
+            attributesToUse = EnumSet.allOf(GeneDAO.Attribute.class);
             //return log.exit("SELECT " + geneTableName + ".* ");
         }
 
         String sql = "";
         for (GeneDAO.Attribute attribute: attributesToUse) {
-            if (attribute.equals(GeneDAO.Attribute.ANCESTRAL_OMA_NODE_ID) ||
-                    attribute.equals(GeneDAO.Attribute.ANCESTRAL_OMA_TAXON_ID)) {
-                // TODO remove when retrieving 'Ancestral OMA' data will be implemented and tested
-                continue;
-            }
+//            if (attribute.equals(GeneDAO.Attribute.ANCESTRAL_OMA_NODE_ID) ||
+//                    attribute.equals(GeneDAO.Attribute.ANCESTRAL_OMA_TAXON_ID)) {
+//                // TODO remove when retrieving 'Ancestral OMA' data will be implemented and tested
+//                continue;
+//            }
                 
             if (sql.isEmpty()) {
                 sql += "SELECT ";
@@ -221,7 +222,10 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
      *                    convert into a {@code String}.
      * @return            A {@code String} that corresponds to the given {@code GeneDAO.Attribute}
      * @throws IllegalArgumentException If the {@code attribute} is unknown.
-     * */
+     */
+    /*
+     * We kept this method, as opposed other DAOs, because is redundantly used in this class
+     */
     private String attributeToString(GeneDAO.Attribute attribute) throws IllegalArgumentException {
         log.entry(attribute);
         
@@ -240,10 +244,10 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
             label = "OMAParentNodeId";
         } else if (attribute.equals(GeneDAO.Attribute.ENSEMBL_GENE)) {
             label = "ensemblGene";
-        } else if (attribute.equals(GeneDAO.Attribute.ANCESTRAL_OMA_NODE_ID)) {
-            label = "ancestralOMANodeId";
-        } else if (attribute.equals(GeneDAO.Attribute.ANCESTRAL_OMA_TAXON_ID)) {
-            label = "ancestralOMATaxonId";
+//        } else if (attribute.equals(GeneDAO.Attribute.ANCESTRAL_OMA_NODE_ID)) {
+//            label = "ancestralOMANodeId";
+//        } else if (attribute.equals(GeneDAO.Attribute.ANCESTRAL_OMA_TAXON_ID)) {
+//            label = "ancestralOMATaxonId";
         } else {
             throw log.throwing(new IllegalArgumentException("The attribute provided (" + 
                     attribute.toString() + ") is unknown for " + GeneDAO.class.getName()));

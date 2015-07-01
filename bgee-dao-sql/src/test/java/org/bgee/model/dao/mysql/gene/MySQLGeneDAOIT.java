@@ -201,15 +201,15 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
                 // test passed, do nothing
             }
             
-            try {
-                dao.updateGenes(new HashSet<GeneTO>(), 
-                        Arrays.asList(GeneDAO.Attribute.ANCESTRAL_OMA_NODE_ID));
-                //test failed
-                throw new AssertionError(
-                        "updateGenes did not throw an IllegalArgumentException as expected");
-            } catch (IllegalArgumentException e) {
-                // test passed, do nothing
-            }
+//            try {
+//                dao.updateGenes(new HashSet<GeneTO>(), 
+//                        Arrays.asList(GeneDAO.Attribute.ANCESTRAL_OMA_NODE_ID));
+//                //test failed
+//                throw new AssertionError(
+//                        "updateGenes did not throw an IllegalArgumentException as expected");
+//            } catch (IllegalArgumentException e) {
+//                // test passed, do nothing
+//            }
         } finally {
             this.emptyAndUseDefaultDB();
         }

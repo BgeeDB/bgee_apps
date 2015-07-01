@@ -72,10 +72,6 @@ public class MySQLSummarySimilarityAnnotationDAO
     }
 
     @Override
-    //A warning is issued because we do not close the BgeePreparedStatement we use, 
-    //but if we closed the PreparedStatement, it would close the ResultSet returned. 
-    //The BgeePreparedStatement will be closed when the ResultSet will be closed. 
-    @SuppressWarnings("resource")
     //TODO: integration test
     public SummarySimilarityAnnotationTOResultSet getSummarySimilarityAnnotations(
             String taxonId) throws DAOException {
@@ -101,10 +97,6 @@ public class MySQLSummarySimilarityAnnotationDAO
     }
 
     @Override
-    //A warning is issued because we do not close the BgeePreparedStatement we use, 
-    //but if we closed the PreparedStatement, it would close the ResultSet returned. 
-    //The BgeePreparedStatement will be closed when the ResultSet will be closed. 
-    @SuppressWarnings("resource")
     //TODO: integration test
     public SimAnnotToAnatEntityTOResultSet getSimAnnotToAnatEntity(String taxonId, 
             Set<String> speciesIds) throws DAOException {
@@ -142,10 +134,6 @@ public class MySQLSummarySimilarityAnnotationDAO
     }
 
     @Override
-    //A warning is issued because we do not close the BgeePreparedStatement we use, 
-    //but if we closed the PreparedStatement, it would close the ResultSet returned. 
-    //The BgeePreparedStatement will be closed when the ResultSet will be closed. 
-    @SuppressWarnings("resource")
     //TODO: integration test
     public SimAnnotToAnatEntityTOResultSet getSimAnnotToLostAnatEntity(String taxonId, 
             Set<String> speciesIds) throws DAOException, IllegalArgumentException {

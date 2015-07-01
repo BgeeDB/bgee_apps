@@ -3,7 +3,6 @@ package org.bgee.model.dao.mysql.gene;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.Map.Entry;
@@ -52,10 +51,6 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
     }
     
     @Override
-    //A warning is issued because we do not close the BgeePreparedStatement we use, 
-    //but if we closed the PreparedStatement, it would close the ResultSet returned. 
-    //The BgeePreparedStatement will be closed when the ResultSet will be closed. 
-    @SuppressWarnings("resource")
     //TODO: integration test
     public HierarchicalGroupToGeneTOResultSet getGroupToGene(String taxonId, 
             Set<String> speciesIds) throws DAOException {

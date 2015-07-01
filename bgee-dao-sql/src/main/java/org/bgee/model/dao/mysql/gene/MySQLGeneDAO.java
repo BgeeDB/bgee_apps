@@ -2,7 +2,6 @@ package org.bgee.model.dao.mysql.gene;
 
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -71,10 +70,6 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
     }
     
     @Override
-    //A warning is issued because we do not close the BgeePreparedStatement we use, 
-    //but if we closed the PreparedStatement, it would close the ResultSet returned. 
-    //The BgeePreparedStatement will be closed when the ResultSet will be closed. 
-    @SuppressWarnings("resource")
     public GeneTOResultSet getGenesBySpeciesIds(Set<String> speciesIds) throws DAOException {
         log.entry();      
 

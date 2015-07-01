@@ -129,8 +129,6 @@ public class BgeeConnection implements AutoCloseable {
      * @throws  SQLException if a database access error occurs or this method is called 
      *          on a closed connection.
      */
-    //we return an open PreparedStatement on purpose, this is not a resource leak
-    @SuppressWarnings("resource")
     public BgeePreparedStatement prepareStatement(String sql) throws SQLException {
         log.entry(sql);
         BgeePreparedStatement bgeeStmt = new BgeePreparedStatement(this, 
@@ -151,8 +149,6 @@ public class BgeeConnection implements AutoCloseable {
      * @throws      SQLException if a database access error occurs or this method is 
      *              called on a closed connection.
      */
-    //we return an open CallableStatement on purpose, this is not a resource leak
-    @SuppressWarnings("resource")
     public BgeeCallableStatement prepareCall(String sql) throws SQLException {
         log.entry(sql);
         BgeeCallableStatement bgeeCallStmt = new BgeeCallableStatement(this, 

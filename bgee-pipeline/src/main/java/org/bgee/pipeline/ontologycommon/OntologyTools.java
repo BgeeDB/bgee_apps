@@ -167,18 +167,20 @@ public class OntologyTools {
      *              'GO:0000005').
      * @throws UnknownOWLOntologyException  If the ontology could not be loaded.
      */
-    public Set<String> getObsoleteIds(OWLOntology ont) throws UnknownOWLOntologyException {
+    public Set<String> getObsoleteIds(OWLOntology ont) 
+            throws UnknownOWLOntologyException, IOException {
         log.entry(ont);
         Set<String> obsoleteIds = new HashSet<String>();
         
-        OWLGraphWrapper goWrapper = new OWLGraphWrapper(ont);
-        for (OWLOntology myOnt: goWrapper.getAllOntologies()) {
-            //we do not use goWrapper.getAllOWLClasses(), because it does not return 
-            //deprecated classes
-            for (OWLClass goTerm: myOnt.getClassesInSignature()) {
-                if (goWrapper.isObsolete(goTerm) || goWrapper.getIsObsolete(goTerm)) {
-                    obsoleteIds.add(goWrapper.getIdentifier(goTerm));
-                    obsoleteIds.addAll(goWrapper.getAltIds(goTerm));
+        try (OWLGraphWrapper goWrapper = new OWLGraphWrapper(ont)) {
+            for (OWLOntology myOnt: goWrapper.getAllOntologies()) {
+                //we do not use goWrapper.getAllOWLClasses(), because it does not return 
+                //deprecated classes
+                for (OWLClass goTerm: myOnt.getClassesInSignature()) {
+                    if (goWrapper.isObsolete(goTerm) || goWrapper.getIsObsolete(goTerm)) {
+                        obsoleteIds.add(goWrapper.getIdentifier(goTerm));
+                        obsoleteIds.addAll(goWrapper.getAltIds(goTerm));
+                    }
                 }
             }
         }

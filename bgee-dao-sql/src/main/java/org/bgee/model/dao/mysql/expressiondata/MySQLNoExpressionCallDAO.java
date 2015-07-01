@@ -11,7 +11,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO.OriginOfLine;
@@ -78,10 +77,6 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
      * @throws DAOException             If a {@code SQLException} occurred while trying to get 
      *                                  no-expression calls.   
      */
-    //A warning is issued because we do not close the BgeePreparedStatement we use, 
-    //but if we closed the PreparedStatement, it would close the ResultSet returned. 
-    //The BgeePreparedStatement will be closed when the ResultSet will be closed. 
-    @SuppressWarnings("resource")
     private NoExpressionCallTOResultSet getNoExpressionCalls(Set<String> speciesIds,
             boolean isIncludeParentStructures) throws DAOException {
         log.entry(speciesIds, isIncludeParentStructures);        

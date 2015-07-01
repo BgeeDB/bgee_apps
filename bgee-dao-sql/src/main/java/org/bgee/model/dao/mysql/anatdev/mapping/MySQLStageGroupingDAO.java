@@ -35,11 +35,6 @@ public class MySQLStageGroupingDAO extends MySQLDAO implements StageGroupingDAO 
     }
 
     @Override
-    //TODO: integration test
-    //A warning is issued because we do not close the BgeePreparedStatement we use, 
-    //but if we closed the PreparedStatement, it would close the ResultSet returned. 
-    //The BgeePreparedStatement will be closed when the ResultSet will be closed. 
-    @SuppressWarnings("resource")
     public GroupToStageTOResultSet getGroupToStage(String ancestralTaxonId, 
             Set<String> speciesIds) throws DAOException {
         log.entry(ancestralTaxonId, speciesIds);

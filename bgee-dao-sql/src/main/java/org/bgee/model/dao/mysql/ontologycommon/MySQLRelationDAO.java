@@ -50,10 +50,6 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
     }
 
     @Override
-    //A warning is issued because we do not close the BgeePreparedStatement we use, 
-    //but if we closed the PreparedStatement, it would close the ResultSet returned. 
-    //The BgeePreparedStatement will be closed when the ResultSet will be closed. 
-    @SuppressWarnings("resource")
     public RelationTOResultSet getAnatEntityRelationsBySpeciesIds(Set<String> speciesIds, 
             Set<RelationType> relationTypes, Set<RelationStatus> relationStatus) {
         log.entry(speciesIds, relationTypes, relationStatus);    
@@ -143,10 +139,6 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
     }
      
     @Override
-    //A warning is issued because we do not close the BgeePreparedStatement we use, 
-    //but if we closed the PreparedStatement, it would close the ResultSet returned. 
-    //The BgeePreparedStatement will be closed when the ResultSet will be closed. 
-    @SuppressWarnings("resource")
     public RelationTOResultSet getStageRelationsBySpeciesIds(Set<String> speciesIds, 
             Set<RelationStatus> relationStatus) {
         //NOTE: there is no relation table for stages, as they are represented 

@@ -45,10 +45,6 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
     }
 
     @Override
-    //A warning is issued because we do not close the BgeePreparedStatement we use, 
-    //but if we closed the PreparedStatement, it would close the ResultSet returned. 
-    //The BgeePreparedStatement will be closed when the ResultSet will be closed. 
-    @SuppressWarnings("resource")
     public AnatEntityTOResultSet getAnatEntitiesBySpeciesIds(Set<String> speciesIds) 
             throws DAOException {
         log.entry(speciesIds);      
@@ -95,10 +91,6 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
     }
     
     @Override
-    //A warning is issued because we do not close the BgeePreparedStatement we use, 
-    //but if we closed the PreparedStatement, it would close the ResultSet returned. 
-    //The BgeePreparedStatement will be closed when the ResultSet will be closed. 
-    @SuppressWarnings("resource")
     public AnatEntityTOResultSet getNonInformativeAnatEntitiesBySpeciesIds(Set<String> speciesIds) 
             throws DAOException {
         log.entry(speciesIds);      

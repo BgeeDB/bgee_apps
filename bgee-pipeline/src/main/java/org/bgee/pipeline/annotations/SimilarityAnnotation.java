@@ -188,6 +188,10 @@ public class SimilarityAnnotation {
          * {@link #setRefId(String)} in {@code CuratorAnnotationBean}.
          */
         @Override
+        //In this CuratorAnnotationBean, the title is actually set when calling setRefId. 
+        //This method does nothing and is defined only for overriding 
+        //the RawAnnotationBean default method. 
+        @SuppressWarnings("unused")
         public void setRefTitle(String refTitle) {
             //nothing here, the title is set when calling setRefId
         }

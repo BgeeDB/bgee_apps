@@ -273,23 +273,23 @@ public class UberonSocketTool {
         if (params.size() != 2) {
             throw log.throwing(new IllegalArgumentException("Incorrect number " +
             		"of stage IDs provided."));
-        } else {
-            log.debug("Start stage retrieved: {} - End stage retrieved: {}", 
-                    params.get(0), params.get(1));
-
-            List<String> stageIds = this.uberonDevStage.getStageIdsBetween(params.get(0), 
-                    params.get(1), this.devStageSpeciesId);
-            for (String stageId: stageIds) {
-                if (StringUtils.isNotBlank(output)) {
-                    output += CommandRunner.SOCKET_RESPONSE_SEPARATOR;
-                }
-                output += stageId;
+        } 
+        
+        log.debug("Start stage retrieved: {} - End stage retrieved: {}", 
+                params.get(0), params.get(1));
+        
+        List<String> stageIds = this.uberonDevStage.getStageIdsBetween(params.get(0), 
+                params.get(1), this.devStageSpeciesId);
+        for (String stageId: stageIds) {
+            if (StringUtils.isNotBlank(output)) {
+                output += CommandRunner.SOCKET_RESPONSE_SEPARATOR;
             }
-
-            if (StringUtils.isBlank(output)) {
-                throw log.throwing(new IllegalArgumentException("No results for provided " +
-                		"start and end stages (" + params.get(0) + " - " + params.get(1) + ")"));
-            }
+            output += stageId;
+        }
+        
+        if (StringUtils.isBlank(output)) {
+            throw log.throwing(new IllegalArgumentException("No results for provided " +
+                    "start and end stages (" + params.get(0) + " - " + params.get(1) + ")"));
         }
         
         return log.exit(output);

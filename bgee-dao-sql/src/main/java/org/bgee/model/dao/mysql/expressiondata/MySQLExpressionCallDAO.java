@@ -12,7 +12,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO.OriginOfLine;
@@ -157,10 +156,6 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
     //- Speaking of duplication event... would it be possible to target a specific 
     //  duplication event? They don't have any taxonId...
     //
-    //A warning is issued because we do not close the BgeePreparedStatement we use, 
-    //but if we closed the PreparedStatement, it would close the ResultSet returned. 
-    //The BgeePreparedStatement will be closed when the ResultSet will be closed. 
-    @SuppressWarnings("resource")
     private ExpressionCallTOResultSet getExpressionCalls(Set<String> speciesIds, 
             boolean isIncludeSubstructures, boolean isIncludeSubStages, 
             String commonAncestralTaxonId) throws DAOException {

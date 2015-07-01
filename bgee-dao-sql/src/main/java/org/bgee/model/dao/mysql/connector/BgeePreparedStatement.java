@@ -156,6 +156,7 @@ public class BgeePreparedStatement implements AutoCloseable {
      *                          SQL statement; if a database access error occurs or this method is 
      *                          called on a closed {@code PreparedStatement}.
      */
+    //TODO: Add a boolean argument, specifying whether the list should be ordered before performing query
     public void setStrings(int startIndex, List<String> values) throws SQLException {
         log.entry(startIndex, values);
         for (String value: values) {
@@ -196,6 +197,7 @@ public class BgeePreparedStatement implements AutoCloseable {
      *                          SQL statement; if a database access error occurs or this method is 
      *                          called on a closed {@code PreparedStatement}.
      */
+    //TODO: Add a boolean argument, specifying whether the list should be ordered before performing query
     public void setIntegers(int startIndex, List<Integer> values) throws SQLException {
         log.entry(startIndex, values);
         for (Integer value: values) {
@@ -235,6 +237,7 @@ public class BgeePreparedStatement implements AutoCloseable {
      *                          SQL statement; if a database access error occurs or this method is 
      *                          called on a closed {@code PreparedStatement}.
      */
+    //TODO: Add a boolean argument, specifying whether the list should be ordered before performing query
     public void setBooleans(int startIndex, List<Boolean> values) throws SQLException {
         log.entry(startIndex, values);
         for (Boolean value: values) {
@@ -322,6 +325,7 @@ public class BgeePreparedStatement implements AutoCloseable {
      *                          SQL statement; if a database access error occurs or this method is 
      *                          called on a closed {@code PreparedStatement}.
      */
+    //TODO: Add a boolean argument, specifying whether the list should be ordered before performing query
     public void setFloats(int startIndex, List<Float> values) throws SQLException {
         log.entry(startIndex, values);
         for (Float value: values) {

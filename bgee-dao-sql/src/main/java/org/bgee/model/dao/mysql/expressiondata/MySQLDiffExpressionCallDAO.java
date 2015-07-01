@@ -166,7 +166,7 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
             //the MySQL optimizer sucks and do the join in the wrong order, 
             //when species are requested. So we use the STRAIGHT_JOIN clause, and order 
             //the tables appropriately (gene table first).
-            //TODO: this order might not be optimal if other filtering options are added 
+            //XXX: this order might not be optimal if other filtering options are added 
             //in the future (not based only on speciesIds)
             sql += " STRAIGHT_JOIN " + diffExprTableName + 
                     " ON " + geneInfoTable + ".geneId = " + diffExprTableName + ".geneId ";

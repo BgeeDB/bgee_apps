@@ -163,7 +163,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
      * 
      * @see #getTO()
      */
-    //TODO: move this mechanism to the generic DAOResultSet?
+    //XXX: move this mechanism to the generic DAOResultSet?
     private T lastTOGenerated;
     
     /**

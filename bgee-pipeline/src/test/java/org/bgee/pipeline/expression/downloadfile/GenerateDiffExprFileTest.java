@@ -684,7 +684,7 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
             }
 
             Map<String, Object> rowMap;
-            //TODO: add assertion tests to check correct order of the lines
+            //FIXME: add assertion tests to check correct order of the lines
             int i = 0;
             while ((rowMap = mapReader.read(headers, processors)) != null ) {
                 log.trace("Row: {}", rowMap);

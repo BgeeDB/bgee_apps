@@ -14,6 +14,7 @@ import java.util.Set;
  *              to define what attributes should be populated in the {@code TransferObject}s 
  *              obtained from this {@code DAO}.
  */
+//TODO implement a same mechanism as DAO#setAttributes for setting ORDER BY clause
 public interface DAO<T extends Enum<?> & DAO.Attribute> {
     /**
      * Interface implemented by {@code Enum} classes allowing to select 

@@ -179,6 +179,7 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
                 stmt.setString(paramIndex, speciesTO.getGenomeFilePath());
                 paramIndex++;
                 //TODO: handles default values in a better way
+                //We should create setter methods in BgeePreparedStatement, accepting a third argument, being the default value
                 if (speciesTO.getGenomeSpeciesId() != null) {
                     stmt.setInt(paramIndex, Integer.parseInt(speciesTO.getGenomeSpeciesId()));
                 } else {
@@ -186,6 +187,7 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
                 }
                 paramIndex++;
                 //TODO: handles default values in a better way
+                //We should create setter methods in BgeePreparedStatement, accepting a third argument, being the default value
                 if (speciesTO.getFakeGeneIdPrefix() != null) {
                     stmt.setString(paramIndex, speciesTO.getFakeGeneIdPrefix());
                 } else {

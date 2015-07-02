@@ -29,4 +29,10 @@ package org.bgee.model.anatdev;
  */
 public class BaseAnatDevElement implements AnatDevElement {
 
+    @Override
+    public void registerWithId(String id) {
+        // TODO Auto-generated method stub
+        
+    }
+
 }

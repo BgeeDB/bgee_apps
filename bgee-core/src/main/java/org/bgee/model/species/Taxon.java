@@ -23,13 +23,12 @@ public class Taxon extends Entity implements OntologyElement {
     
 	/**
      * Constructor providing the {@code id} of this {@code Taxon}. 
-     * This {@code id} cannot be {@code null}, or empty (""), 
-     * or whitespace only, otherwise an {@code IllegalArgumentException} 
-     * will be thrown. The ID will also be immutable, see {@link #getId()}.
+     * This {@code id} cannot be {@code null}, or blank, 
+     * otherwise an {@code IllegalArgumentException} will be thrown. 
      * 
      * @param id	A {@code String} representing the ID of this object.
      * @throws IllegalArgumentException 	if {@code id} is {@code null},  
-     * 										empty, or whitespace only. 
+     * 										or blank. 
      */
 	public Taxon(String id) throws IllegalArgumentException {
 		super(id);

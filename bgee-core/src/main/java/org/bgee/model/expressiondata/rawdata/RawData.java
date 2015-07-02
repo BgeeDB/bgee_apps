@@ -119,12 +119,13 @@ public abstract class RawData extends Entity
 	 */
 	public void loadSource()
 	{
-		if (this.getSource() == null && StringUtils.isNotBlank(this.getSourceId())) {
-		
-			SourceFactory loader = new SourceFactory();
-			this.setSource(
-					loader.getSourceById(this.getSourceId()));
-		}
+	    //TODO
+//		if (this.getSource() == null && StringUtils.isNotBlank(this.getSourceId())) {
+//		
+//			SourceFactory loader = new SourceFactory();
+//			this.setSource(
+//					loader.getSourceById(this.getSourceId()));
+//		}
 	}
 	
 	/**

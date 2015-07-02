@@ -102,55 +102,55 @@ public class AffymetrixChip extends SampleAssay implements DataAnnotated
     	this.setChipType(null);
     	this.setDetectionType(null);
     }
-	
-	/**
-	 * Try to obtain the {@code DataSource} object where these expression data come from, 
-	 * from the {@code AffymetrixExp} container of this {@code AffymetrixChip}, 
-	 * and eventually from its own container, etc.
-	 * See {@code getDataSource()} for more details.
-	 * 
-	 * @return 	a {@code DataSource} object where these expression data come from, 
-	 * 			obtained from the {@code AffymetrixExp} container of this {@code AffymetrixChip}. 
-	 * 			{@code null} if it was not possible to retrieve a {@code DataSource} object  
-	 * 			from the {@code AffymetrixExp} container.
-	 * @see #affymetrixExp
-	 * @see #getDataSource()
-	 */
-	@Override
-	public Source getSourceFromContainer()
-	{
-		if (this.getMicroarrayExperiment() != null) {
-	        return this.getMicroarrayExperiment().getSource();
-		}
-		return null;
-	}
-	
-	/**
-	 * Try to obtain the ID of the data source where these expression data come from, 
-	 * from the {@code AffymetrixExp} "container". 
-	 * 
-	 * @return 	a {@code String} corresponding to the ID of the data source 
-	 * 			where these expression data come from, 
-	 * 			obtained from the {@code AffymetrixExp} "container". 
-	 * 			Empty {@code String} if it was not possible to retrieve the ID 
-	 * 			from the container.
-	 * @see #affymetrixExp
-	 * @see #getDataSourceId()
-	 */
-	@Override
-	public String getSourceIdFromContainer()
-	{
-		if (this.getMicroarrayExperiment() != null) { 
-			return this.getMicroarrayExperiment().getSourceId();
-		}
-		return "";
-	}
-
-	public void loadMicroarrayExperiment() 
-	{
-		AffymetrixExpFactory loader = new AffymetrixExpFactory();
-		this.setMicroarrayExperiment(loader.getExperimentById(this.getMicroarrayExperimentId()));
-	}
+//	
+//	/**
+//	 * Try to obtain the {@code DataSource} object where these expression data come from, 
+//	 * from the {@code AffymetrixExp} container of this {@code AffymetrixChip}, 
+//	 * and eventually from its own container, etc.
+//	 * See {@code getDataSource()} for more details.
+//	 * 
+//	 * @return 	a {@code DataSource} object where these expression data come from, 
+//	 * 			obtained from the {@code AffymetrixExp} container of this {@code AffymetrixChip}. 
+//	 * 			{@code null} if it was not possible to retrieve a {@code DataSource} object  
+//	 * 			from the {@code AffymetrixExp} container.
+//	 * @see #affymetrixExp
+//	 * @see #getDataSource()
+//	 */
+//	@Override
+//	public Source getSourceFromContainer()
+//	{
+//		if (this.getMicroarrayExperiment() != null) {
+//	        return this.getMicroarrayExperiment().getSource();
+//		}
+//		return null;
+//	}
+//	
+//	/**
+//	 * Try to obtain the ID of the data source where these expression data come from, 
+//	 * from the {@code AffymetrixExp} "container". 
+//	 * 
+//	 * @return 	a {@code String} corresponding to the ID of the data source 
+//	 * 			where these expression data come from, 
+//	 * 			obtained from the {@code AffymetrixExp} "container". 
+//	 * 			Empty {@code String} if it was not possible to retrieve the ID 
+//	 * 			from the container.
+//	 * @see #affymetrixExp
+//	 * @see #getDataSourceId()
+//	 */
+//	@Override
+//	public String getSourceIdFromContainer()
+//	{
+//		if (this.getMicroarrayExperiment() != null) { 
+//			return this.getMicroarrayExperiment().getSourceId();
+//		}
+//		return "";
+//	}
+//
+//	public void loadMicroarrayExperiment() 
+//	{
+//		AffymetrixExpFactory loader = new AffymetrixExpFactory();
+//		this.setMicroarrayExperiment(loader.getExperimentById(this.getMicroarrayExperimentId()));
+//	}
 	
 	
 	public void setMicroarrayExperiment(AffymetrixExp exp)
@@ -221,5 +221,11 @@ public class AffymetrixChip extends SampleAssay implements DataAnnotated
 	{
 		return this.detectionType;
 	}
+
+    @Override
+    public void loadExperiment() {
+        // TODO Auto-generated method stub
+        
+    }
 
 }

@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.Set;
 
 import org.bgee.model.Factory;
+import org.bgee.model.dao.api.species.TaxonDAO;
 
 /**
  * A {@code Factory} to obtain {@link Taxon} objects.
@@ -38,6 +39,8 @@ public class TaxonFactory extends Factory {
      *                  {@code species} all derived from.
      */
     public Taxon getMostRecentCommonTaxon(Collection<Species> species) {
+        //TODO: auto-generated code
+        return null;
         
     }
     

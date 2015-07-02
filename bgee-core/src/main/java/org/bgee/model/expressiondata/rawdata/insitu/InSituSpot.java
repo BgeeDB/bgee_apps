@@ -40,70 +40,70 @@ public class InSituSpot extends CallSource implements DataAnnotated
     private String inSituEvidenceId;
     
     private String organId;
-	private Organ organ;
+	//private Organ organ;
 	private String stageId;
-	private DevStage devStage;
+	//private DevStage devStage;
 	private String detectionFlag;
 	
 	public InSituSpot()
-    {
-    	super();
+    {//TODO
+    	super(null);
     	this.setDetectionFlag("undefined");
     }
-	
-	/**
-	 * Try to obtain the {@code DataSource} object where these expression data come from, 
-	 * from the {@code InSituEvidence} container of this {@code InSituSpot}, 
-	 * and eventually from its own container, etc.
-	 * See {@code getDataSource()} for more details.
-	 * 
-	 * @return 	a {@code DataSource} object where these expression data come from, 
-	 * 			obtained from the {@code InSituEvidence} container of this {@code InSituSpot}. 
-	 * 			{@code null} if it was not possible to retrieve a {@code DataSource} object  
-	 * 			from the {@code InSituEvidence} container.
-	 * @see #inSituEvidence
-	 * @see #getDataSource()
-	 */
-	@Override
-	public DataSource getDataSourceFromContainer()
-	{
-		if (this.getInSituEvidence() != null) { 
-			return this.getInSituEvidence().getDataSource();
-		}
-		return null;
-	}
-	
-	/**
-	 * Try to obtain the ID of the data source where these expression data come from, 
-	 * from the {@code InSituEvidence} "container". 
-	 * 
-	 * @return 	a {@code String} corresponding to the ID of the data source 
-	 * 			where these expression data come from, 
-	 * 			obtained from the {@code InSituEvidence} "container". 
-	 * 			Empty {@code String} if it was not possible to retrieve the ID 
-	 * 			from the container.
-	 * @see #inSituEvidence
-	 * @see #getDataSourceId()
-	 */
-	@Override
-	public String getDataSourceIdFromContainer()
-	{
-		if (this.getInSituEvidence() != null) { 
-			return this.getInSituEvidence().getDataSourceId();
-		}
-		return "";
-	}
-
-	/**
-     * Retrieve the {@code InSituEvidence} this {@code InSituSpot} belongs to, 
-     * by using the ID provided by {@code #getInSituEvidenceId()}, 
-     * and store it by using <code>#setInSituEvidence(InSituEvidence)<code>.
-     */
-	public void loadInSituEvidence() 
-	{
-		InSituEvidenceFactory loader = new InSituEvidenceFactory();
-		this.setInSituEvidence(loader.getEvidenceById(this.getInSituEvidenceId()));
-	}
+//	
+//	/**
+//	 * Try to obtain the {@code DataSource} object where these expression data come from, 
+//	 * from the {@code InSituEvidence} container of this {@code InSituSpot}, 
+//	 * and eventually from its own container, etc.
+//	 * See {@code getDataSource()} for more details.
+//	 * 
+//	 * @return 	a {@code DataSource} object where these expression data come from, 
+//	 * 			obtained from the {@code InSituEvidence} container of this {@code InSituSpot}. 
+//	 * 			{@code null} if it was not possible to retrieve a {@code DataSource} object  
+//	 * 			from the {@code InSituEvidence} container.
+//	 * @see #inSituEvidence
+//	 * @see #getDataSource()
+//	 */
+//	@Override
+//	public DataSource getDataSourceFromContainer()
+//	{
+//		if (this.getInSituEvidence() != null) { 
+//			return this.getInSituEvidence().getDataSource();
+//		}
+//		return null;
+//	}
+//	
+//	/**
+//	 * Try to obtain the ID of the data source where these expression data come from, 
+//	 * from the {@code InSituEvidence} "container". 
+//	 * 
+//	 * @return 	a {@code String} corresponding to the ID of the data source 
+//	 * 			where these expression data come from, 
+//	 * 			obtained from the {@code InSituEvidence} "container". 
+//	 * 			Empty {@code String} if it was not possible to retrieve the ID 
+//	 * 			from the container.
+//	 * @see #inSituEvidence
+//	 * @see #getDataSourceId()
+//	 */
+//	@Override
+//	public String getDataSourceIdFromContainer()
+//	{
+//		if (this.getInSituEvidence() != null) { 
+//			return this.getInSituEvidence().getDataSourceId();
+//		}
+//		return "";
+//	}
+//
+//	/**
+//     * Retrieve the {@code InSituEvidence} this {@code InSituSpot} belongs to, 
+//     * by using the ID provided by {@code #getInSituEvidenceId()}, 
+//     * and store it by using <code>#setInSituEvidence(InSituEvidence)<code>.
+//     */
+//	public void loadInSituEvidence() 
+//	{
+//		InSituEvidenceFactory loader = new InSituEvidenceFactory();
+//		this.setInSituEvidence(loader.getEvidenceById(this.getInSituEvidenceId()));
+//	}
 	
 	public void setInSituEvidence(InSituEvidence evidence)
 	{
@@ -117,74 +117,74 @@ public class InSituSpot extends CallSource implements DataAnnotated
 	{
 		this.inSituEvidenceId = evidenceId;
 	}
-	/**
-	 * Returns either the value of {@code inSituEvidenceId}, 
-	 * or the of the {@code id} of the {@code InSituEvidence} 
-	 * stored in {@code inSituEvidence}, depending on which one is set. 
-	 * 
-	 * @return 	the ID of the in situ experiment this evidence belongs to. 
-	 * @see 	#inSituEvidenceId
-	 * @see 	#inSituEvidence
-	 * @see 	#getIdByEntityOrId(Entity, String)
-	 */
-	public String getInSituEvidenceId()
-	{
-		return this.getIdByEntityOrId(this.getInSituEvidence(), this.inSituEvidenceId);
-	}
-	
-	public void setOrgan(Organ org)
-	{
-		this.organ = org;
-	}
-	public Organ getOrgan()
-	{
-		return this.organ;
-	}
+//	/**
+//	 * Returns either the value of {@code inSituEvidenceId}, 
+//	 * or the of the {@code id} of the {@code InSituEvidence} 
+//	 * stored in {@code inSituEvidence}, depending on which one is set. 
+//	 * 
+//	 * @return 	the ID of the in situ experiment this evidence belongs to. 
+//	 * @see 	#inSituEvidenceId
+//	 * @see 	#inSituEvidence
+//	 * @see 	#getIdByEntityOrId(Entity, String)
+//	 */
+//	public String getInSituEvidenceId()
+//	{
+//		return this.getIdByEntityOrId(this.getInSituEvidence(), this.inSituEvidenceId);
+//	}
+//	
+//	public void setOrgan(Organ org)
+//	{
+//		this.organ = org;
+//	}
+//	public Organ getOrgan()
+//	{
+//		return this.organ;
+//	}
 	public void setOrganId(String orgId)
 	{
 		this.organId = orgId;
 	}
-	/**
-	 * Returns either the value of {@code organId}, 
-	 * or the of the {@code id} of the {@code Organ} 
-	 * stored in {@code organ}, depending on which one is set. 
-	 * 
-	 * @return 	the ID of the organ for which this spot reports expression. 
-	 * @see 	#organId
-	 * @see 	#organ
-	 * @see 	#getIdByEntityOrId(Entity, String)
-	 */
-	public String getOrganId()
-	{
-		return this.getIdByEntityOrId(this.getOrgan(), this.organId);
-	}
-	
-	public void setStage(DevStage sta)
-	{
-		this.devStage = sta;
-	}
-	public DevStage getStage()
-	{
-		return this.devStage;
-	}
-	public void setStageId(String staId)
-	{
-		this.stageId = staId;
-	}
-	/**
-	 * Returns either the value of {@code stageId}, 
-	 * or the of the {@code id} of the {@code DevStage} 
-	 * stored in {@code devStage}, depending on which one is set. 
-	 * 
-	 * @return 	the ID of the devStage for which this spot reports expression. 
-	 * @see 	#stageId
-	 * @see 	#devStage
-	 * @see 	#getIdByEntityOrId(Entity, String)
-	 */
-	public String getStageId()
-	{
-		return this.getIdByEntityOrId(this.getStage(), this.stageId);
-	}
+//	/**
+//	 * Returns either the value of {@code organId}, 
+//	 * or the of the {@code id} of the {@code Organ} 
+//	 * stored in {@code organ}, depending on which one is set. 
+//	 * 
+//	 * @return 	the ID of the organ for which this spot reports expression. 
+//	 * @see 	#organId
+//	 * @see 	#organ
+//	 * @see 	#getIdByEntityOrId(Entity, String)
+//	 */
+//	public String getOrganId()
+//	{
+//		return this.getIdByEntityOrId(this.getOrgan(), this.organId);
+//	}
+//	
+//	public void setStage(DevStage sta)
+//	{
+//		this.devStage = sta;
+//	}
+//	public DevStage getStage()
+//	{
+//		return this.devStage;
+//	}
+//	public void setStageId(String staId)
+//	{
+//		this.stageId = staId;
+//	}
+//	/**
+//	 * Returns either the value of {@code stageId}, 
+//	 * or the of the {@code id} of the {@code DevStage} 
+//	 * stored in {@code devStage}, depending on which one is set. 
+//	 * 
+//	 * @return 	the ID of the devStage for which this spot reports expression. 
+//	 * @see 	#stageId
+//	 * @see 	#devStage
+//	 * @see 	#getIdByEntityOrId(Entity, String)
+//	 */
+//	public String getStageId()
+//	{
+//		return this.getIdByEntityOrId(this.getStage(), this.stageId);
+//	}
 
 
 	public void setDetectionFlag(String detectFlag) 
@@ -202,4 +202,10 @@ public class InSituSpot extends CallSource implements DataAnnotated
 		}
 		return "not expressed";
 	}
+
+    @Override
+    public void loadSampleAssay() {
+        // TODO Auto-generated method stub
+        
+    }
 }

@@ -136,8 +136,8 @@ public class RNASeqLibrary extends SampleAssay implements DataAnnotated
 	 * Default constructor. 
 	 */
     public RNASeqLibrary()
-    {
-    	super();
+    {//TODO
+    	super(null);
     	this.setRnaSeqExperiment(null);
     	this.setRnaSeqExperimentId(null);
     	this.setSecondaryLibraryId(null);
@@ -156,61 +156,61 @@ public class RNASeqLibrary extends SampleAssay implements DataAnnotated
     }
     
     
-    
-    /**
-	 * Try to obtain the {@code DataSource} object where these expression data come from, 
-	 * from the {@code RNASeqExp} container of this {@code RNASeqLibrary}, 
-	 * and eventually from its own container, etc.
-	 * See {@code getDataSource()} for more details.
-	 * 
-	 * @return 	a {@code DataSource} object where these expression data come from, 
-	 * 			obtained from the {@code RNASeqExp} container of this {@code RNASeqLibrary}. 
-	 * 			{@code null} if it was not possible to retrieve a {@code DataSource} object  
-	 * 			from the {@code RNASeqExp} container.
-	 * @see #rNASeqExp
-	 * @see #getDataSource()
-	 */
-	@Override
-	public DataSource getDataSourceFromContainer()
-	{
-		if (this.getRnaSeqExperiment() != null) {
-	        return this.getRnaSeqExperiment().getDataSource();
-		}
-		return null;
-	}
-	
-	/**
-	 * Try to obtain the ID of the data source where these expression data come from, 
-	 * from the {@code RNASeqExp} "container". 
-	 * 
-	 * @return 	a {@code String} corresponding to the ID of the data source 
-	 * 			where these expression data come from, 
-	 * 			obtained from the {@code RNASeqExp} "container". 
-	 * 			Empty {@code String} if it was not possible to retrieve the ID 
-	 * 			from the container.
-	 * @see #rNASeqExp
-	 * @see #getDataSourceId()
-	 */
-	@Override
-	public String getDataSourceIdFromContainer()
-	{
-		if (this.getRnaSeqExperiment() != null) { 
-			return this.getRnaSeqExperiment().getDataSourceId();
-		}
-		return "";
-	}
-	
-	
-	/**
-     * Retrieve the {@code RNASeqExp} this {@code RNASeqLibrary} belongs to, 
-     * by using the ID provided by {@code #getRnaSeqExperimentId()}, 
-     * and store it by using <code>#setRnaSeqExperiment(RNASeqExp)<code>.
-     */
-	public void loadRnaSeqExperiment() 
-	{
-		RNASeqExpFactory loader = new RNASeqExpFactory();
-		this.setRnaSeqExperiment(loader.getExperimentById(this.getRnaSeqExperimentId()));
-	}
+//    
+//    /**
+//	 * Try to obtain the {@code DataSource} object where these expression data come from, 
+//	 * from the {@code RNASeqExp} container of this {@code RNASeqLibrary}, 
+//	 * and eventually from its own container, etc.
+//	 * See {@code getDataSource()} for more details.
+//	 * 
+//	 * @return 	a {@code DataSource} object where these expression data come from, 
+//	 * 			obtained from the {@code RNASeqExp} container of this {@code RNASeqLibrary}. 
+//	 * 			{@code null} if it was not possible to retrieve a {@code DataSource} object  
+//	 * 			from the {@code RNASeqExp} container.
+//	 * @see #rNASeqExp
+//	 * @see #getDataSource()
+//	 */
+//	@Override
+//	public DataSource getDataSourceFromContainer()
+//	{
+//		if (this.getRnaSeqExperiment() != null) {
+//	        return this.getRnaSeqExperiment().getDataSource();
+//		}
+//		return null;
+//	}
+//	
+//	/**
+//	 * Try to obtain the ID of the data source where these expression data come from, 
+//	 * from the {@code RNASeqExp} "container". 
+//	 * 
+//	 * @return 	a {@code String} corresponding to the ID of the data source 
+//	 * 			where these expression data come from, 
+//	 * 			obtained from the {@code RNASeqExp} "container". 
+//	 * 			Empty {@code String} if it was not possible to retrieve the ID 
+//	 * 			from the container.
+//	 * @see #rNASeqExp
+//	 * @see #getDataSourceId()
+//	 */
+//	@Override
+//	public String getDataSourceIdFromContainer()
+//	{
+//		if (this.getRnaSeqExperiment() != null) { 
+//			return this.getRnaSeqExperiment().getDataSourceId();
+//		}
+//		return "";
+//	}
+//	
+//	
+//	/**
+//     * Retrieve the {@code RNASeqExp} this {@code RNASeqLibrary} belongs to, 
+//     * by using the ID provided by {@code #getRnaSeqExperimentId()}, 
+//     * and store it by using <code>#setRnaSeqExperiment(RNASeqExp)<code>.
+//     */
+//	public void loadRnaSeqExperiment() 
+//	{
+//		RNASeqExpFactory loader = new RNASeqExpFactory();
+//		this.setRnaSeqExperiment(loader.getExperimentById(this.getRnaSeqExperimentId()));
+//	}
     
     
     
@@ -228,19 +228,19 @@ public class RNASeqLibrary extends SampleAssay implements DataAnnotated
 	public void setRnaSeqExperiment(RNASeqExp rNASeqExp) {
 		this.rNASeqExp = rNASeqExp;
 	}
-	/**
-	 * Returns either the value of {@code rnaSeqExperimentId}, 
-	 * or the of the {@code id} of the {@code RNASeqExp} 
-	 * stored in {@code rNASeqExp}, depending on which one is set. 
-	 * 
-	 * @return 	the ID of the RNA-Seq experiment this library belongs to. 
-	 * @see 	#rnaSeqExperimentId
-	 * @see 	#rNASeqExp
-	 * @see 	#getIdByEntityOrId(Entity, String)
-	 */
-	public String getRnaSeqExperimentId() {
-		return this.getIdByEntityOrId(this.getRnaSeqExperiment(), this.rnaSeqExperimentId);
-	}
+//	/**
+//	 * Returns either the value of {@code rnaSeqExperimentId}, 
+//	 * or the of the {@code id} of the {@code RNASeqExp} 
+//	 * stored in {@code rNASeqExp}, depending on which one is set. 
+//	 * 
+//	 * @return 	the ID of the RNA-Seq experiment this library belongs to. 
+//	 * @see 	#rnaSeqExperimentId
+//	 * @see 	#rNASeqExp
+//	 * @see 	#getIdByEntityOrId(Entity, String)
+//	 */
+//	public String getRnaSeqExperimentId() {
+//		return this.getIdByEntityOrId(this.getRnaSeqExperiment(), this.rnaSeqExperimentId);
+//	}
 	/**
 	 * @param 	rnaSeqExperimentId the rnaSeqExperimentId to set
 	 * @see 	#rnaSeqExperimentId
@@ -446,4 +446,12 @@ public class RNASeqLibrary extends SampleAssay implements DataAnnotated
 	public void setLibraryType(LibraryType libraryType) {
 		this.libraryType = libraryType;
 	}
+
+
+
+    @Override
+    public void loadExperiment() {
+        // TODO Auto-generated method stub
+        
+    }
 }

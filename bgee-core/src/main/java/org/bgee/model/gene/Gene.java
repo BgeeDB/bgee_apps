@@ -24,11 +24,16 @@ public class Gene extends Entity
 	 */
 	private String speciesId;
 	/**
-	 * Default constructor. 
-	 */
-    public Gene()
-    {
-    	super();
+     * Constructor providing the {@code id} of this {@code Gene}. 
+     * This {@code id} cannot be {@code null}, or blank, 
+     * otherwise an {@code IllegalArgumentException} will be thrown. 
+     * 
+     * @param id    A {@code String} representing the ID of this object.
+     * @throws IllegalArgumentException     if {@code id} is {@code null},  
+     *                                      or blank. 
+     */
+    public Gene (String id) throws IllegalArgumentException {
+    	super(id);
     	this.setSpecies(null);
     	this.setSpeciesId(null);
     }

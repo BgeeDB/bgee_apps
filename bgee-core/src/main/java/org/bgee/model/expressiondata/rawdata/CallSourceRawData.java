@@ -33,7 +33,7 @@ public class CallSourceRawData extends RawData
 	 */
 	public CallSourceRawData()
     {
-    	super();
+    	super("");
 
 		this.setGeneId("");
 		this.setGene(null);
@@ -93,6 +93,8 @@ public class CallSourceRawData extends RawData
 	 */
 	public String getGeneId()
 	{
-		return this.getIdByEntityOrId(this.getGene(), this.geneId);
+//		return this.getIdByEntityOrId(this.getGene(), this.geneId);
+	    //TODO
+	    return null;
 	}
 }

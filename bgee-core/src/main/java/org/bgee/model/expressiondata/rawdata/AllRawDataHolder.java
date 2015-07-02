@@ -18,11 +18,13 @@ import org.bgee.model.expressiondata.rawdata.rnaseq.RNASeqDataHolder;
  * @since Bgee 13
  */
 public class AllRawDataHolder implements RawDataHolder {
-    
-    also, parameters "with mean expression level by experiment", probably useful for all query tools
-    this could be compute for each gene for an organ query, or for each organ on a gene query
-    this could be a last view, after data count, raw data: mean expression compared from raw data
-    and maybe we can compute a rank for all organs for each experiment independently, something like that
+    /*
+     * XXX
+    *also, parameters "with mean expression level by experiment", probably useful for all query tools
+    *this could be compute for each gene for an organ query, or for each organ on a gene query
+    *this could be a last view, after data count, raw data: mean expression compared from raw data
+    *and maybe we can compute a rank for all organs for each experiment independently, something like that
+    */
     
 	/**
 	 * {@code ESTDataHolder} to hold EST-related data.

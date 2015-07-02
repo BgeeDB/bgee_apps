@@ -12,10 +12,15 @@ import org.bgee.model.Entity;
 public class Species extends Entity
 {
 	/**
-	 * Default constructor.
+	 * Constructor providing the {@code id} of this {@code Species}. 
+     * This {@code id} cannot be {@code null}, or blank, 
+     * otherwise an {@code IllegalArgumentException} will be thrown. 
+     * 
+     * @param id    A {@code String} representing the ID of this object.
+     * @throws IllegalArgumentException     if {@code id} is {@code null},  
+     *                                      or blank. 
 	 */
-    public Species ()
-    {
-    	super();
+    public Species (String id) throws IllegalArgumentException {
+    	super(id);
     }
 }

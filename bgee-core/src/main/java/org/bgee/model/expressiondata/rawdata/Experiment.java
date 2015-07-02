@@ -61,15 +61,16 @@ public abstract class Experiment extends Entity {
 	 */
 	public void loadSource()
 	{
-		log.entry();
-		if (this.getSource() == null && StringUtils.isNotBlank(this.getSourceId())) {
-		    log.debug("Load Source of Experiment {} with ID {}", this.getId(), 
-		    		this.getSourceId());
-			SourceFactory loader = new SourceFactory();
-			this.setSource(
-					loader.getSourceById(this.getSourceId()));
-		}
-		log.exit();
+	    //TODO
+//		log.entry();
+//		if (this.getSource() == null && StringUtils.isNotBlank(this.getSourceId())) {
+//		    log.debug("Load Source of Experiment {} with ID {}", this.getId(), 
+//		    		this.getSourceId());
+//			SourceFactory loader = new SourceFactory();
+//			this.setSource(
+//					loader.getSourceById(this.getSourceId()));
+//		}
+//		log.exit();
 	}
 	
 	/**

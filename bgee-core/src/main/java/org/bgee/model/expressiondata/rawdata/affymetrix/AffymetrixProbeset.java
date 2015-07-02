@@ -53,56 +53,56 @@ public class AffymetrixProbeset extends CallSourceRawData
     	this.setNormalizedSignalIntensity(0);
     	this.setDetectionFlag("undefined");
     }
-	
-	/**
-	 * Try to obtain the {@code DataSource} object where these expression data come from, 
-	 * from the {@code AffymetrixChip} container of this {@code AffymetrixProbeset}, 
-	 * and eventually from its own container, etc.
-	 * See {@code getDataSource()} for more details.
-	 * 
-	 * @return 	a {@code DataSource} object where these expression data come from, 
-	 * 			obtained from the {@code AffymetrixChip} container of this {@code AffymetrixProbeset}. 
-	 * 			{@code null} if it was not possible to retrieve a {@code DataSource} object  
-	 * 			from the {@code AffymetrixChip} container.
-	 * @see #affymetrixChip
-	 * @see #getDataSource()
-	 */
-	@Override
-	public DataSource getDataSourceFromContainer()
-	{
-		if (this.getAffymetrixChip() != null) { 
-			return this.getAffymetrixChip().getDataSource();
-		}
-		return null;
-	}
-	
-	/**
-	 * Try to obtain the ID of the data source where these expression data come from, 
-	 * from the {@code AffymetrixChip} "container". 
-	 * 
-	 * @return 	a {@code String} corresponding to the ID of the data source 
-	 * 			where these expression data come from, 
-	 * 			obtained from the {@code AffymetrixChip} "container". 
-	 * 			Empty {@code String} if it was not possible to retrieve the ID 
-	 * 			from the container.
-	 * @see #affymetrixChip
-	 * @see #getDataSourceId()
-	 */
-	@Override
-	public String getDataSourceIdFromContainer()
-	{
-		if (this.getAffymetrixChip() != null) { 
-			return this.getAffymetrixChip().getDataSourceId();
-		}
-		return "";
-	}
-	
-
-	public void loadChip() 
-	{
-		AffymetrixChipFactory chipLoader = new AffymetrixChipFactory();
-		this.setAffymetrixChip(chipLoader.getAffymetrixChipById(this.getBgeeAffymetrixChipId()));
-	}
+//	
+//	/**
+//	 * Try to obtain the {@code DataSource} object where these expression data come from, 
+//	 * from the {@code AffymetrixChip} container of this {@code AffymetrixProbeset}, 
+//	 * and eventually from its own container, etc.
+//	 * See {@code getDataSource()} for more details.
+//	 * 
+//	 * @return 	a {@code DataSource} object where these expression data come from, 
+//	 * 			obtained from the {@code AffymetrixChip} container of this {@code AffymetrixProbeset}. 
+//	 * 			{@code null} if it was not possible to retrieve a {@code DataSource} object  
+//	 * 			from the {@code AffymetrixChip} container.
+//	 * @see #affymetrixChip
+//	 * @see #getDataSource()
+//	 */
+//	@Override
+//	public DataSource getDataSourceFromContainer()
+//	{
+//		if (this.getAffymetrixChip() != null) { 
+//			return this.getAffymetrixChip().getDataSource();
+//		}
+//		return null;
+//	}
+//	
+//	/**
+//	 * Try to obtain the ID of the data source where these expression data come from, 
+//	 * from the {@code AffymetrixChip} "container". 
+//	 * 
+//	 * @return 	a {@code String} corresponding to the ID of the data source 
+//	 * 			where these expression data come from, 
+//	 * 			obtained from the {@code AffymetrixChip} "container". 
+//	 * 			Empty {@code String} if it was not possible to retrieve the ID 
+//	 * 			from the container.
+//	 * @see #affymetrixChip
+//	 * @see #getDataSourceId()
+//	 */
+//	@Override
+//	public String getDataSourceIdFromContainer()
+//	{
+//		if (this.getAffymetrixChip() != null) { 
+//			return this.getAffymetrixChip().getDataSourceId();
+//		}
+//		return "";
+//	}
+//	
+//
+//	public void loadChip() 
+//	{
+//		AffymetrixChipFactory chipLoader = new AffymetrixChipFactory();
+//		this.setAffymetrixChip(chipLoader.getAffymetrixChipById(this.getBgeeAffymetrixChipId()));
+//	}
 	
 	
 	
@@ -122,20 +122,20 @@ public class AffymetrixProbeset extends CallSourceRawData
 	{
 		this.bgeeAffymetrixChipId = bgeeAffyChipId;
 	}
-	/**
-	 * Returns either the value of {@code bgeeAffymetrixChipId}, 
-	 * or the of the {@code id} of the {@code AffymetrixChip} 
-	 * stored in {@code affymetrixChip}, depending on which one is set. 
-	 * 
-	 * @return 	the ID of the affymetrix chip this probeset belongs to. 
-	 * @see 	#bgeeAffymetrixChipId
-	 * @see 	#affymetrixChip
-	 * @see 	#getIdByEntityOrId(Entity, String)
-	 */
-	public String getBgeeAffymetrixChipId()
-	{
-		return this.getIdByEntityOrId(this.getAffymetrixChip(), this.bgeeAffymetrixChipId);
-	}
+//	/**
+//	 * Returns either the value of {@code bgeeAffymetrixChipId}, 
+//	 * or the of the {@code id} of the {@code AffymetrixChip} 
+//	 * stored in {@code affymetrixChip}, depending on which one is set. 
+//	 * 
+//	 * @return 	the ID of the affymetrix chip this probeset belongs to. 
+//	 * @see 	#bgeeAffymetrixChipId
+//	 * @see 	#affymetrixChip
+//	 * @see 	#getIdByEntityOrId(Entity, String)
+//	 */
+//	public String getBgeeAffymetrixChipId()
+//	{
+//		return this.getIdByEntityOrId(this.getAffymetrixChip(), this.bgeeAffymetrixChipId);
+//	}
 	
 	public void setNormalizedSignalIntensity(float nsi)
 	{

@@ -63,61 +63,61 @@ public class RNASeqResult extends CallSourceRawData
     }
     
     
-    
-    /**
-	 * Try to obtain the {@code DataSource} object where these expression data come from, 
-	 * from the {@code RNASeqLibrary} container of this {@code RNASeqResult}, 
-	 * and eventually from its own container, etc.
-	 * See {@code getDataSource()} for more details.
-	 * 
-	 * @return 	a {@code DataSource} object where these expression data come from, 
-	 * 			obtained from the {@code RNASeqLibrary} container of this {@code RNASeqResult}. 
-	 * 			{@code null} if it was not possible to retrieve a {@code DataSource} object  
-	 * 			from the {@code RNASeqLibrary} container.
-	 * @see #rNASeqLibrary
-	 * @see #getDataSource()
-	 */
-	@Override
-	public DataSource getDataSourceFromContainer()
-	{
-		if (this.getRnaSeqLibrary() != null) {
-	        return this.getRnaSeqLibrary().getDataSource();
-		}
-		return null;
-	}
-	
-	/**
-	 * Try to obtain the ID of the data source where these expression data come from, 
-	 * from the {@code RNASeqLibrary} "container". 
-	 * 
-	 * @return 	a {@code String} corresponding to the ID of the data source 
-	 * 			where these expression data come from, 
-	 * 			obtained from the {@code RNASeqLibrary} "container". 
-	 * 			Empty {@code String} if it was not possible to retrieve the ID 
-	 * 			from the container.
-	 * @see #rNASeqLibrary
-	 * @see #getDataSourceId()
-	 */
-	@Override
-	public String getDataSourceIdFromContainer()
-	{
-		if (this.getRnaSeqLibrary() != null) { 
-			return this.getRnaSeqLibrary().getDataSourceId();
-		}
-		return "";
-	}
-    
-	
-    /**
-     * Retrieve the {@code RNASeqLibrary} this {@code RNASeqResult} belongs to, 
-     * by using the ID provided by {@code #getRnaSeqLibraryId()}, 
-     * and store it by using <code>#setRnaSeqLibrary(RNASeqLibrary)<code>.
-     */
-	public void loadRnaSeqLibrary() 
-	{
-		RNASeqLibraryFactory loader = new RNASeqLibraryFactory();
-		this.setRnaSeqLibrary(loader.getRnaSeqLibraryById(this.getRnaSeqLibraryId()));
-	}
+//    
+//    /**
+//	 * Try to obtain the {@code DataSource} object where these expression data come from, 
+//	 * from the {@code RNASeqLibrary} container of this {@code RNASeqResult}, 
+//	 * and eventually from its own container, etc.
+//	 * See {@code getDataSource()} for more details.
+//	 * 
+//	 * @return 	a {@code DataSource} object where these expression data come from, 
+//	 * 			obtained from the {@code RNASeqLibrary} container of this {@code RNASeqResult}. 
+//	 * 			{@code null} if it was not possible to retrieve a {@code DataSource} object  
+//	 * 			from the {@code RNASeqLibrary} container.
+//	 * @see #rNASeqLibrary
+//	 * @see #getDataSource()
+//	 */
+//	@Override
+//	public DataSource getDataSourceFromContainer()
+//	{
+//		if (this.getRnaSeqLibrary() != null) {
+//	        return this.getRnaSeqLibrary().getDataSource();
+//		}
+//		return null;
+//	}
+//	
+//	/**
+//	 * Try to obtain the ID of the data source where these expression data come from, 
+//	 * from the {@code RNASeqLibrary} "container". 
+//	 * 
+//	 * @return 	a {@code String} corresponding to the ID of the data source 
+//	 * 			where these expression data come from, 
+//	 * 			obtained from the {@code RNASeqLibrary} "container". 
+//	 * 			Empty {@code String} if it was not possible to retrieve the ID 
+//	 * 			from the container.
+//	 * @see #rNASeqLibrary
+//	 * @see #getDataSourceId()
+//	 */
+//	@Override
+//	public String getDataSourceIdFromContainer()
+//	{
+//		if (this.getRnaSeqLibrary() != null) { 
+//			return this.getRnaSeqLibrary().getDataSourceId();
+//		}
+//		return "";
+//	}
+//    
+//	
+//    /**
+//     * Retrieve the {@code RNASeqLibrary} this {@code RNASeqResult} belongs to, 
+//     * by using the ID provided by {@code #getRnaSeqLibraryId()}, 
+//     * and store it by using <code>#setRnaSeqLibrary(RNASeqLibrary)<code>.
+//     */
+//	public void loadRnaSeqLibrary() 
+//	{
+//		RNASeqLibraryFactory loader = new RNASeqLibraryFactory();
+//		this.setRnaSeqLibrary(loader.getRnaSeqLibraryById(this.getRnaSeqLibraryId()));
+//	}
     
 
 	/**
@@ -135,19 +135,19 @@ public class RNASeqResult extends CallSourceRawData
 		this.rNASeqLibrary = rNASeqLibrary;
 	}
 
-	/**
-	 * Returns either the value of {@code rnaSeqLibraryId}, 
-	 * or the of the {@code id} of the {@code RNASeqLibrary} 
-	 * stored in {@code rNASeqLibrary}, depending on which one is set. 
-	 * 
-	 * @return 	the ID of the RNA-Seq library this result belongs to. 
-	 * @see 	#rnaSeqLibraryId
-	 * @see 	#rNASeqLibrary
-	 * @see 	#getIdByEntityOrId(Entity, String)
-	 */
-	public String getRnaSeqLibraryId() {
-		return this.getIdByEntityOrId(this.getRnaSeqLibrary(), this.rnaSeqLibraryId);
-	}
+//	/**
+//	 * Returns either the value of {@code rnaSeqLibraryId}, 
+//	 * or the of the {@code id} of the {@code RNASeqLibrary} 
+//	 * stored in {@code rNASeqLibrary}, depending on which one is set. 
+//	 * 
+//	 * @return 	the ID of the RNA-Seq library this result belongs to. 
+//	 * @see 	#rnaSeqLibraryId
+//	 * @see 	#rNASeqLibrary
+//	 * @see 	#getIdByEntityOrId(Entity, String)
+//	 */
+//	public String getRnaSeqLibraryId() {
+//		return this.getIdByEntityOrId(this.getRnaSeqLibrary(), this.rnaSeqLibraryId);
+//	}
 	/**
 	 * @param 	rnaSeqLibraryId the rnaSeqLibraryId to set
 	 * @see 	#rnaSeqLibraryId

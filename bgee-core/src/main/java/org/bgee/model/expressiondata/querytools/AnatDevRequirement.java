@@ -156,7 +156,8 @@ public class AnatDevRequirement {
      * @see #filteringElements
      * @see #filterAccepted
      */
-    private boolean filterWithDescendants;change javadoc, no more possibility to "reject" elements
+    //TODO: change javadoc, no more possibility to "reject" elements
+    private boolean filterWithDescendants;
 	
 	//***********************************
     // METHODS
@@ -454,45 +455,47 @@ public class AnatDevRequirement {
         this.filterWithDescendants = filterWithDescendants;
     }
     
-    /**
-     * Returns the {@code boolean} used when filtering elements are provided 
-     * (returned by {@link #getFilteringElements()}), to define whether these 
-     * filtering elements (and their descendants, if {@link #isFilterWithDescendants()} 
-     * returns {@code true}) should be accepted when validated, or systematically 
-     * rejected. If {@code true}, they will be accepted. See {@link 
-     * #getFilteringElements()} for more details. 
-     * <p>
-     * Default value is {@code true}.
-     * 
-     * @return  the {@code boolean} defining whether filtering elements should be 
-     *          accepted when validated, or systematically rejected. 
-     * @see #getFilteringElements()
-     * @see #isFilterWithDescendants()
-     * 
-     */
-    public boolean isFilterAccepted() {
-        return filterAccepted;
-    }
-    /**
-     * Sets the {@code boolean} used when filtering elements are provided 
-     * (returned by {@link #getFilteringElements()}), to define whether these 
-     * filtering elements (and their descendants, if {@link #isFilterWithDescendants()} 
-     * returns {@code true}) should be accepted when validated, or systematically 
-     * rejected. If {@code true}, they will be accepted. See {@link 
-     * #getFilteringElements()} for more details. 
-     * <p>
-     * Default value is {@code true}. If set to {@code false}, {@code AnatDevElement}s  
-     * part of the filter will be systematically rejected. 
-     * 
-     * @param filterAccepted    the {@code boolean} defining whether filtering elements 
-     *                          should be accepted when validated, or systematically 
-     *                          rejected. 
-     * @see #addFilteringElement(AnatDevElement)
-     * @see #setFilterWithDescendants(boolean)
-     */
-    public void setFilterAccepted(boolean filterAccepted) {
-        this.filterAccepted = filterAccepted;
-    }
+    //TODO: check comment on filterWithDescendants. No more possibilities 
+    // to "reject" elements? (therefore, no need for "filterAccepted"?)
+//    /**
+//     * Returns the {@code boolean} used when filtering elements are provided 
+//     * (returned by {@link #getFilteringElements()}), to define whether these 
+//     * filtering elements (and their descendants, if {@link #isFilterWithDescendants()} 
+//     * returns {@code true}) should be accepted when validated, or systematically 
+//     * rejected. If {@code true}, they will be accepted. See {@link 
+//     * #getFilteringElements()} for more details. 
+//     * <p>
+//     * Default value is {@code true}.
+//     * 
+//     * @return  the {@code boolean} defining whether filtering elements should be 
+//     *          accepted when validated, or systematically rejected. 
+//     * @see #getFilteringElements()
+//     * @see #isFilterWithDescendants()
+//     * 
+//     */
+//    public boolean isFilterAccepted() {
+//        return filterAccepted;
+//    }
+//    /**
+//     * Sets the {@code boolean} used when filtering elements are provided 
+//     * (returned by {@link #getFilteringElements()}), to define whether these 
+//     * filtering elements (and their descendants, if {@link #isFilterWithDescendants()} 
+//     * returns {@code true}) should be accepted when validated, or systematically 
+//     * rejected. If {@code true}, they will be accepted. See {@link 
+//     * #getFilteringElements()} for more details. 
+//     * <p>
+//     * Default value is {@code true}. If set to {@code false}, {@code AnatDevElement}s  
+//     * part of the filter will be systematically rejected. 
+//     * 
+//     * @param filterAccepted    the {@code boolean} defining whether filtering elements 
+//     *                          should be accepted when validated, or systematically 
+//     *                          rejected. 
+//     * @see #addFilteringElement(AnatDevElement)
+//     * @see #setFilterWithDescendants(boolean)
+//     */
+//    public void setFilterAccepted(boolean filterAccepted) {
+//        this.filterAccepted = filterAccepted;
+//    }
 	
 	
 	//***********************************

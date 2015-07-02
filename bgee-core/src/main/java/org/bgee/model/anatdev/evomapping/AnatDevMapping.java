@@ -5,6 +5,7 @@ import java.util.Set;
 
 import org.bgee.model.anatdev.AnatDevElement;
 import org.bgee.model.anatdev.core.AnatDevEntity;
+import org.bgee.model.anatdev.evomapping.EvoMappingSelector.TransRelationType;
 import org.bgee.model.species.Taxon;
 
 /**
@@ -135,5 +136,10 @@ public class AnatDevMapping<T extends AnatDevEntity> implements AnatDevElement {
      * an assertion).
      */
     private Collection<AssertionSupport> supportingInformation;
+    @Override
+    public void registerWithId(String id) {
+        // TODO Auto-generated method stub
+        
+    }
     
 }

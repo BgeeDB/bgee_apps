@@ -16,4 +16,16 @@ import org.bgee.model.expressiondata.rawdata.RawDataHolder;
  */
 public class DiffRNASeqDataHolder implements RawDataHolder {
 
+    @Override
+    public boolean hasData() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public boolean hasDataCount() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
 }

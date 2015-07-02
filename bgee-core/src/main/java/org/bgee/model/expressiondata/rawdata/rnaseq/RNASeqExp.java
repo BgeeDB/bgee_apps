@@ -17,7 +17,7 @@ public class RNASeqExp extends RawData
 	 * Default constructor. 
 	 */
     public RNASeqExp()
-    {
-    	super();
+    {//TODO
+    	super(null);
     }
 }

@@ -13,4 +13,10 @@ package org.bgee.model.ontologycommon;
  */
 public class BaseOntologyElement implements OntologyElement {
 
+    @Override
+    public void registerWithId(String id) {
+        // TODO Auto-generated method stub
+        
+    }
+
 }

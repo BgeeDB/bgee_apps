@@ -368,6 +368,7 @@
                 </executions>
                 <configuration>
                     <executable>${basedir}/m2_local_repository/mvn-install-file.sh</executable>
+                    <workingDirectory>${basedir}/m2_local_repository/</workingDirectory>
                 </configuration>
             </plugin>
 

@@ -38,6 +38,8 @@ nbproject
 .buildpath
 .idea
 
+###############################
+
 # We ignore Eclipse .project and .classpath files, all their configuration 
 # can be auto-generated thanks to m2e using the pom.xml configuration
 .project
@@ -48,3 +50,5 @@ nbproject
 # to share the compiler errors/warnings settings
 #.settings
 
+/target/
+/m2_local_repository/repository/

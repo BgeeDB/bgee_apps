@@ -36,69 +36,191 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
     /**
      * A {@code String} that is the value taken by the {@code page} parameter 
      * (see {@link urlParameters#getParamPage()}) when a download page is requested.
+     * This parameter will then be provided outside of this class through the method 
+     * {@link #PAGE_DOWNLOAD()} (to get the behavior of a public fina parameter).
      */
-    this.PAGE_DOWNLOAD = 'download';
+    var pageDownload = 'download';
+    /**
+     * A method to obtain the value taken by the {@code page} parameter 
+     * (see {@link urlParameters#getParamPage()}) when a download page is requested.
+     */
+    this.PAGE_DOWNLOAD = function() {
+    	return pageDownload;
+    }
     /**
      * A {@code String} that is the value taken by the {@code page} parameter 
      * (see {@link #getParamPage()}) when a documentation page is requested.
+     * This parameter will then be provided outside of this class through the method 
+     * {@link #PAGE_DOCUMENTATION()} (to get the behavior of a public fina parameter).
      */
-    this.PAGE_DOCUMENTATION = 'doc';
+    var pageDocumentation = 'doc';
+    /**
+     * A method to obtain the value taken by the {@code page} parameter 
+     * (see {@link #getParamPage()}) when a documentation page is requested.
+     */
+    this.PAGE_DOCUMENTATION = function() {
+    	return pageDocumentation;
+    }
     /**
      * A {@code String} that is the value taken by the {@code page} parameter  
      * (see {@link #getParamPage()}) when an about page is requested.
+     * This parameter will then be provided outside of this class through the method 
+     * {@link #PAGE_ABOUT()} (to get the behavior of a public fina parameter).
      */
-    this.PAGE_ABOUT = 'about';
+    var pageAbout = 'about';
+    /**
+     * A method to obtain the value taken by the {@code page} parameter  
+     * (see {@link #getParamPage()}) when an about page is requested.
+     */
+    this.PAGE_ABOUT = function() {
+    	return pageAbout;
+    }
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
      * (see {@link #getParamAction()}) when download page about files providing calls of 
      * expression is requested.
+     * This parameter will then be provided outside of this class through the method 
+     * {@link #ACTION_DOWLOAD_CALL_FILES()} (to get the behavior 
+     * of a public fina parameter).
      */
-    this.ACTION_DOWLOAD_CALL_FILES = 'expr_calls';
+    var actionDownloadCallFiles = 'expr_calls';
+    /**
+     * A method to obtain the value taken by the {@code action} parameter 
+     * (see {@link #getParamAction()}) when download page about files providing calls of 
+     * expression is requested.
+     */
+    this.ACTION_DOWLOAD_CALL_FILES = function() {
+    	return actionDownloadCallFiles;
+    }
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
      * (see {@link #getParamAction()}) when download page about files providing processed 
      * expression values is requested.
+     * This parameter will then be provided outside of this class through the method 
+     * {@link #ACTION_DOWLOAD_PROC_VALUE_FILES()} (to get the behavior 
+     * of a public fina parameter).
      */
-    this.ACTION_DOWLOAD_PROC_VALUE_FILES = 'proc_values';
+    var actionDownloadProcValueFiles = 'proc_values';
+    /**
+     * A method to obtain the value taken by the {@code action} parameter 
+     * (see {@link #getParamAction()}) when download page about files providing processed 
+     * expression values is requested.
+     */
+    this.ACTION_DOWLOAD_PROC_VALUE_FILES = function() {
+    	return actionDownloadProcValueFiles;
+    }
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
      * (see {@link #getParamAction()}) when documentation about download files providing calls of
      * expression is requested.
+     * This parameter will then be provided outside of this class through the method 
+     * {@link #ACTION_DOC_CALL_DOWLOAD_FILES()} (to get the behavior 
+     * of a public fina parameter).
      */
-    this.ACTION_DOC_CALL_DOWLOAD_FILES = 'call_files';
+    var actionDocCallDownloadFiles = 'call_files';
+    /**
+     * A method to obtain the value taken by the {@code action} parameter 
+     * (see {@link #getParamAction()}) when documentation about download files providing calls of
+     * expression is requested.
+     */
+    this.ACTION_DOC_CALL_DOWLOAD_FILES = function() {
+    	return actionDocCallDownloadFiles;
+    }
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
      * (see {@link #getParamAction()}) when documentation about download files providing processed 
      * expression values is requested.
+     * This parameter will then be provided outside of this class through the method 
+     * {@link #ACTION_DOC_PROC_EXPR_VALUE_DOWLOAD_FILES()} (to get the behavior 
+     * of a public fina parameter).
      */
-    this.ACTION_DOC_PROC_EXPR_VALUE_DOWLOAD_FILES = 'proc_value_files';
+    var actionDocProcExprValueDownloadFiles = 'proc_value_files';
+    /**
+     * A method to obtain the value taken by the {@code action} parameter 
+     * (see {@link #getParamAction()}) when documentation about download files providing processed 
+     * expression values is requested.
+     */
+    this.ACTION_DOC_PROC_EXPR_VALUE_DOWLOAD_FILES = function() {
+    	return actionDocProcExprValueDownloadFiles;
+    }
     /**
      * A {@code String} that is the value taken by the {@code action} parameter
      * (see {@link #getParamAction()}) when documentation about how to access to 
      * Bgee data is requested.
+     * This parameter will then be provided outside of this class through the method 
+     * {@link #ACTION_DOC_HOW_TO_ACCESS()} (to get the behavior 
+     * of a public fina parameter).
      */
-    this.ACTION_DOC_HOW_TO_ACCESS = 'access';
+    var actionDocHowToAccess = 'access';
+    /**
+     * A method to obtain the value taken by the {@code action} parameter
+     * (see {@link #getParamAction()}) when documentation about how to access to 
+     * Bgee data is requested.
+     */
+    this.ACTION_DOC_HOW_TO_ACCESS = function() {
+    	return actionDocHowToAccess;
+    }
     
     /**
      * A {@code String} that is the value taken by the {@code displayType} parameter 
      * (see {@link URLParameters#getParamDisplayType()}) to obtain a XML view.
+     * This parameter will then be provided outside of this class through the method 
+     * {@link #DISPLAY_TYPE_XML()} (to get the behavior 
+     * of a public fina parameter).
      */
-    this.DISPLAY_TYPE_XML = "xml";
+    var displayTypeXml = "xml";
+    /**
+     * A method to obtain the value taken by the {@code displayType} parameter 
+     * (see {@link URLParameters#getParamDisplayType()}) to obtain a XML view.
+     */
+    this.DISPLAY_TYPE_XML = function() {
+    	return displayTypeXml;
+    }
     /**
      * A {@code String} that is the value taken by the {@code displayType} parameter 
      * (see {@link URLParameters#getParamDisplayType()}) to obtain a CSV view.
+     * This parameter will then be provided outside of this class through the method 
+     * {@link #DISPLAY_TYPE_CSV()} (to get the behavior 
+     * of a public fina parameter).
      */
-    this.DISPLAY_TYPE_CSV = "csv";
+    var displayTypeCsv = "csv";
+    /**
+     * A method to obtain the value taken by the {@code displayType} parameter 
+     * (see {@link URLParameters#getParamDisplayType()}) to obtain a CSV view.
+     */
+    this.DISPLAY_TYPE_CSV = function() {
+    	return displayTypeCsv;
+    }
     /**
      * A {@code String} that is the value taken by the {@code displayType} parameter 
      * (see {@link URLParameters#getParamDisplayType()}) to obtain a TSV view.
+     * This parameter will then be provided outside of this class through the method 
+     * {@link #DISPLAY_TYPE_TSV()} (to get the behavior 
+     * of a public fina parameter).
      */
-    this.DISPLAY_TYPE_TSV = "tsv";
+    var displayTypeTsv = "tsv";
+    /**
+     * A method to obtain the value taken by the {@code displayType} parameter 
+     * (see {@link URLParameters#getParamDisplayType()}) to obtain a TSV view.
+     */
+    this.DISPLAY_TYPE_TSV = function() {
+    	return displayTypeTsv;
+    }
     /**
      * A {@code String} that is the value taken by the {@code displayType} parameter 
      * (see {@link URLParameters#getParamDisplayType()}) to obtain a JSON view.
+     * This parameter will then be provided outside of this class through the method 
+     * {@link #DISPLAY_TYPE_JSON()} (to get the behavior 
+     * of a public fina parameter).
      */
-    this.DISPLAY_TYPE_JSON = "json";
+    var displayTypeJson = "json";
+    /**
+     * A method to obtain the value taken by the {@code displayType} parameter 
+     * (see {@link URLParameters#getParamDisplayType()}) to obtain a JSON view.
+     */
+    this.DISPLAY_TYPE_JSON = function() {
+    	return displayTypeJson;
+    }
 
     /**
      * Initialization
@@ -190,21 +312,34 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
         }
     };
     /**
-     * Generate the URL from the current state of the parameters
+     * Generate the URL from the current state of the parameters. 
+     * This method generates the 'search' part and the 'hash' part of the URL, 
+     * and append it to the URL start to query the Bgee web-app (either {@code urlStart} 
+     * if provided, or {@code bgeeProperties.getWebAppURLStart()} by default).
      * 
-     * @param parametersSeparator   A {@code String} that is used as custom parameters separator
-     *                              in the URL. If let empty, the parameter provided to the constructor
-     *                              or set afterwards with {@code setParametersSeparator} is used
      * @param addAjaxParam			A {@code boolean} defining whether the parameter 
      * 								allowing to specify that a request is an AJAX query 
      * 								should be added. 
-     *                              
-     * @return  A {@code String} that is the generated query
+     * @param parametersSeparator   A {@code String} that is used as custom parameters separator
+     *                              in the URL. If let empty, the parameter provided to the constructor
+     *                              or set afterwards with {@code setParametersSeparator} is used
+     * @param urlStart			 	A {@code String} that is the beginning of the URL 
+     * 								to used to query the Bgee web-app, before the search part, 
+     * 								e.g. 'http://bgee.org/bgee_v13/'.  
+     * 								If this parameter is not provided, by default 
+     * 								{@code bgeeProperties.getWebAppURLStart()} is used.
+     * 								It can be used, e.g., to perform a cross-domain query 
+     * 								to a different Bgee server (useful for testing).
+     * 
+     * @return  A {@code String} that is the generated URL.
      */
-    this.getRequestURL = function(parametersSeparator, addAjaxParam){
+    this.getRequestURL = function(addAjaxParam, parametersSeparator, urlStart){
         urlFragment = "";
         if(! parametersSeparator){
             parametersSeparator = this.parametersSeparator;
+        }
+        if (!urlStart) {
+        	urlStart = bgeeProperties.getWebAppURLStart();
         }
         
         //If requested, add the parameter allowing to specify that a query is an AJAX query.
@@ -229,9 +364,10 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
                 }
             }
         }
-        // Append the '?' and remove the extra separator at the end
+        // Append the URL start, the '?', and remove the extra separator at the end
         if(urlFragment){
-            urlFragment = '?' + urlFragment.substring(0, urlFragment.length - parametersSeparator.length);
+            urlFragment = urlStart + '?' 
+                + urlFragment.substring(0, urlFragment.length - parametersSeparator.length);
         }
         return urlFragment;
     };
@@ -402,7 +538,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      *          Can be {@code null}. 
      */
     this.getPage = function() {
-        return this.getFirstValue(this.getUrlParametersInstance().getParamPage());
+        return this.getFirstValue(urlParameters.getParamPage());
     };
     /**
      * Convenient method to set value of the parameter returned by 
@@ -413,7 +549,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      *                  to set.
      */
     this.setPage = function(page) {
-        this.addValue(this.getUrlParametersInstance().getParamPage(), page);
+        this.addValue(urlParameters.getParamPage(), page);
     };
     /**
      * Convenient method to retrieve value of the parameter returned by 
@@ -424,7 +560,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      *          Can be {@code null}. 
      */
     this.getAction = function() {
-        return this.getFirstValue(this.getUrlParametersInstance().getParamAction());
+        return this.getFirstValue(urlParameters.getParamAction());
     };
     /**
      * Convenient method to set value of the parameter returned by 
@@ -435,7 +571,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      *                  to set.
      */
     this.setAction = function(action) {
-        this.addValue(this.getUrlParametersInstance().getParamAction(), action);
+        this.addValue(urlParameters.getParamAction(), action);
     };
     /**
      * Convenient method to retrieve value of the parameter returned by 
@@ -446,7 +582,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      *          Can be {@code null}. 
      */
     this.getDataKey = function() {
-        return this.getFirstValue(this.getUrlParametersInstance().getParamData());
+        return this.getFirstValue(urlParameters.getParamData());
     };
     
     /**

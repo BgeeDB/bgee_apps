@@ -489,7 +489,6 @@ var download = {
             
             // Reset all header details to plus image
             $( "a.show-header img.details" ).each(function() {
-            	//TODO: manage image scr to be not hardcoded            
             	$( this ).attr( "src" , bgeeProperties.getImgURLStart() + "plus.png" );
             });
 

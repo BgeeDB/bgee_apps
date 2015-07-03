@@ -88,77 +88,6 @@ public class URLParameters {
     // *************************************
 
     /**
-     * A {@code Parameter<String>} that contains the value used
-     * as key to store parameters on the disk. It does not allow multiple value
-     * and has to be reset before adding a value.
-     */
-    private static final Parameter<String> DATA = new Parameter<String>("data",
-            false, false , DEFAULT_IS_SECURE, 
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
-
-    /**
-     * A {@code Parameter<String>} defining what action should take the selected controller.
-     * Category of the parameter: controller parameter. Corresponds to the URL 
-     * parameter "action".
-     */
-    private static final Parameter<String> ACTION = new Parameter<String>("action",
-            DEFAULT_ALLOWS_MULTIPLE_VALUES, false, DEFAULT_IS_SECURE, 
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
-
-    /**
-     * A {@code Parameter<Boolean>} to determine whether all anatomical structures of 
-     * an ontology should be displayed. (and not only structures with the parent manually
-     * expanded by the user). Category of the parameter: ontology display parameter.
-     * Corresponds to the URL parameter "all_organs".
-     */
-    private static final Parameter<Boolean> ALL_ORGANS = new Parameter<Boolean>(
-            "all_organs",
-            DEFAULT_ALLOWS_MULTIPLE_VALUES, DEFAULT_IS_STORABLE, DEFAULT_IS_SECURE, 
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Boolean.class);
-
-    /**
-    * A {@code Parameter<Integer>} defining for which data types 
-    * (i.e., EST, Affy, in situ, RNA-Seq) expression data should be computed. 
-    * It is used when we need to focus on a specific data types (e.g., 
-    * when following a link to display only EST raw data), 
-    * without modifying the data type originally requested by the user. 
-    * Basically, it allows to override model.data.expressionData.DataTypeTO#dataType, 
-    * without needing to eventually regenerate a key because it is a storable parameter.
-    * Values correspond to values defined for 
-    * {@code model.data.expressionData.DataTypeTO#dataType}
-    * Category of the parameter: query engines parameters. 
-    * Corresponds to the URL parameter "chosen_data_type".
-    */
-    private static final Parameter<Integer> CHOSEN_DATA_TYPE = new Parameter<Integer>(
-            "chosen_data_type",
-            DEFAULT_ALLOWS_MULTIPLE_VALUES, DEFAULT_IS_STORABLE, DEFAULT_IS_SECURE, 
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Integer.class);
-
-
-    /**
-     * A {@code Parameter<String>} defining the type of output: html, xml, csv, tsv.
-     * Category of the parameter: controller parameter.
-     * Corresponds to the URL parameter "display_type".
-     */
-    private static final Parameter<String> DISPLAY_TYPE = new Parameter<String>("display_type",
-            false, false, DEFAULT_IS_SECURE, 
-            DEFAULT_MAX_SIZE, 
-            DEFAULT_FORMAT,String.class);
-
-    /**
-     * A {@code Parameter<String>} defining the email of a user, 
-     * used at registration time.
-     * Category of the parameter: user registration.
-     * Corresponds to the URL parameter "email".
-     */
-    private static final Parameter<String> EMAIL = new Parameter<String>("email",
-            DEFAULT_ALLOWS_MULTIPLE_VALUES, DEFAULT_IS_STORABLE, DEFAULT_IS_SECURE, 
-            DEFAULT_MAX_SIZE, 
-            "^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$",
-            String.class);
-
-
-    /**
      * A {@code Parameter<String>} defining which controller should take care of the 
      * request.
      * Category of the parameter: controller parameter.
@@ -170,16 +99,94 @@ public class URLParameters {
             DEFAULT_FORMAT,String.class);
 
     /**
-     * A {@code Parameter<Boolean>} most of the time used to define whether algorithms
-     * should include substages of a developmental stage, when computing its 
-     * expression data. Used for ontology display, but also for expression search engines.
-     * Category of the parameter: ontology display parameter and query engines parameters. 
-     * Corresponds to the URL parameter "stage_children".
+     * A {@code Parameter<String>} defining what action should take the selected controller.
+     * Category of the parameter: controller parameter. Corresponds to the URL 
+     * parameter "action".
      */
-    private static final Parameter<Boolean> STAGE_CHILDREN = new Parameter<Boolean>(
-            "stage_children",
-            DEFAULT_ALLOWS_MULTIPLE_VALUES, DEFAULT_IS_STORABLE, DEFAULT_IS_SECURE, 
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT,Boolean.class);
+    private static final Parameter<String> ACTION = new Parameter<String>("action",
+            DEFAULT_ALLOWS_MULTIPLE_VALUES, false, DEFAULT_IS_SECURE, 
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+
+    /**
+     * A {@code Parameter<String>} that contains the value used
+     * as key to store parameters on the disk. It does not allow multiple value
+     * and has to be reset before adding a value.
+     */
+    private static final Parameter<String> DATA = new Parameter<String>("data",
+            false, false , DEFAULT_IS_SECURE, 
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+
+    /**
+     * A {@code Parameter<String>} defining the type of output: html, xml, csv, tsv.
+     * Category of the parameter: controller parameter.
+     * Corresponds to the URL parameter "display_type".
+     */
+    private static final Parameter<String> DISPLAY_TYPE = new Parameter<String>("display_type",
+            false, false, DEFAULT_IS_SECURE, 
+            DEFAULT_MAX_SIZE, 
+            DEFAULT_FORMAT,String.class);
+    
+    /**
+     * A {@code Parameter<String>} appended to all AJAX queries to detect them.
+     * Category of the parameter: controller parameter.
+     * Corresponds to the URL parameter "ajax".
+     */
+    private static final Parameter<Boolean> AJAX = new Parameter<Boolean>("ajax",
+            false, false, false, 5, DEFAULT_FORMAT, Boolean.class);
+    
+//    /**
+//     * A {@code Parameter<Boolean>} to determine whether all anatomical structures of 
+//     * an ontology should be displayed. (and not only structures with the parent manually
+//     * expanded by the user). Category of the parameter: ontology display parameter.
+//     * Corresponds to the URL parameter "all_organs".
+//     */
+//    private static final Parameter<Boolean> ALL_ORGANS = new Parameter<Boolean>(
+//            "all_organs",
+//            DEFAULT_ALLOWS_MULTIPLE_VALUES, DEFAULT_IS_STORABLE, DEFAULT_IS_SECURE, 
+//            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Boolean.class);
+//
+//    /**
+//    * A {@code Parameter<Integer>} defining for which data types 
+//    * (i.e., EST, Affy, in situ, RNA-Seq) expression data should be computed. 
+//    * It is used when we need to focus on a specific data types (e.g., 
+//    * when following a link to display only EST raw data), 
+//    * without modifying the data type originally requested by the user. 
+//    * Basically, it allows to override model.data.expressionData.DataTypeTO#dataType, 
+//    * without needing to eventually regenerate a key because it is a storable parameter.
+//    * Values correspond to values defined for 
+//    * {@code model.data.expressionData.DataTypeTO#dataType}
+//    * Category of the parameter: query engines parameters. 
+//    * Corresponds to the URL parameter "chosen_data_type".
+//    */
+//    private static final Parameter<Integer> CHOSEN_DATA_TYPE = new Parameter<Integer>(
+//            "chosen_data_type",
+//            DEFAULT_ALLOWS_MULTIPLE_VALUES, DEFAULT_IS_STORABLE, DEFAULT_IS_SECURE, 
+//            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Integer.class);
+//
+//    /**
+//     * A {@code Parameter<String>} defining the email of a user, 
+//     * used at registration time.
+//     * Category of the parameter: user registration.
+//     * Corresponds to the URL parameter "email".
+//     */
+//    private static final Parameter<String> EMAIL = new Parameter<String>("email",
+//            DEFAULT_ALLOWS_MULTIPLE_VALUES, DEFAULT_IS_STORABLE, DEFAULT_IS_SECURE, 
+//            DEFAULT_MAX_SIZE, 
+//            "^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$",
+//            String.class);
+//
+//
+//    /**
+//     * A {@code Parameter<Boolean>} most of the time used to define whether algorithms
+//     * should include substages of a developmental stage, when computing its 
+//     * expression data. Used for ontology display, but also for expression search engines.
+//     * Category of the parameter: ontology display parameter and query engines parameters. 
+//     * Corresponds to the URL parameter "stage_children".
+//     */
+//    private static final Parameter<Boolean> STAGE_CHILDREN = new Parameter<Boolean>(
+//            "stage_children",
+//            DEFAULT_ALLOWS_MULTIPLE_VALUES, DEFAULT_IS_STORABLE, DEFAULT_IS_SECURE, 
+//            DEFAULT_MAX_SIZE, DEFAULT_FORMAT,Boolean.class);
 
     /**
      * An {@code List<Parameter<T>>} to list all declared {@code Parameter<T>}
@@ -188,12 +195,13 @@ public class URLParameters {
     private final List<Parameter<?>> list = Arrays.<Parameter<?>>asList(
             PAGE,
             ACTION,
-            ALL_ORGANS,
-            CHOSEN_DATA_TYPE,
-            EMAIL,
-            STAGE_CHILDREN,
+//            ALL_ORGANS,
+//            CHOSEN_DATA_TYPE,
+//            EMAIL,
+//            STAGE_CHILDREN,
             DISPLAY_TYPE,
-            DATA
+            DATA, 
+            AJAX
             );
 
     /**
@@ -208,61 +216,16 @@ public class URLParameters {
         return list;
     }
 
-    /**
-     * @return  A {@code Parameter<String>} defining what action should take the selected controller.
-     *          Category of the parameter: controller parameter. Corresponds to the URL 
-     *          parameter "action".
-     */
-    public Parameter<String> getParamAction(){
-        return ACTION;
-    }
-
-    /**
-     * @return  A {@code Parameter<Boolean>} to determine whether all anatomical structures of 
-     *          an ontology should be displayed. (and not only structures with the parent manually
-     *          expanded by the user). Category of the parameter: ontology display parameter.
-     *          Corresponds to the URL parameter "all_organs".
-     */
-    public Parameter<Boolean> getParamAllOrgans(){
-        return ALL_ORGANS;
-    }
-
-    /**
-     * @return  A {@code Parameter<Integer>} defining for which data types 
-     *          (i.e., EST, Affy, in situ, RNA-Seq) expression data should be computed. 
-     *          It is used when we need to focus on a specific data types (e.g., 
-     *          when following a link to display only EST raw data), 
-     *          without modifying the data type originally requested by the user. 
-     *          Basically, it allows to override model.data.expressionData.DataTypeTO#dataType, 
-     *          without needing to eventually regenerate a key because it is a storable parameter.
-     *          Values correspond to values defined for 
-     *          {@code model.data.expressionData.DataTypeTO#dataType}
-     *          Category of the parameter: query engines parameters. 
-     *          Corresponds to the URL parameter "chosen_data_type".
-     */
-    public Parameter<Integer> getParamChosenDataType(){
-        return CHOSEN_DATA_TYPE;
-    }
-
-    /**
-     *  @return A {@code Parameter<String>} defining the type of output: html, xml, csv, tsv.
-     *          Category of the parameter: controller parameter.
-     *          Corresponds to the URL parameter "display_type".
-     */
-    public Parameter<String> getParamDisplayType(){
-        return DISPLAY_TYPE;
-    }
-
-    /**
-     * @return  A {@code Parameter<String>} defining the email of a user, 
-     *          used at registration time.
-     *          Category of the parameter: user registration.
-     *          Corresponds to the URL parameter "email".
-     */
-    public Parameter<String> getParamEmail(){
-        return EMAIL;
-    }
-
+    //    /**
+    //     * @return  A {@code Parameter<String>} defining the email of a user, 
+    //     *          used at registration time.
+    //     *          Category of the parameter: user registration.
+    //     *          Corresponds to the URL parameter "email".
+    //     */
+    //    public Parameter<String> getParamEmail(){
+    //        return EMAIL;
+    //    }
+    
     /**
      * @return  A {@code Parameter<String>} defining which controller should take care of the 
      *          request.
@@ -274,15 +237,72 @@ public class URLParameters {
     }
 
     /**
-     * @return  A {@code Parameter<Boolean>} most of the time used to define whether algorithms
-     *          should include substages of a developmental stage, when computing its 
-     *          expression data. Used for ontology display, but also for expression search engines.
-     *          Category of the parameter: ontology display parameter and query engines parameters. 
-     *          Corresponds to the URL parameter "stage_children".
+     * @return  A {@code Parameter<String>} defining what action should take the selected controller.
+     *          Category of the parameter: controller parameter. Corresponds to the URL 
+     *          parameter "action".
      */
-    public Parameter<Boolean> getParamStageChildren(){
-        return STAGE_CHILDREN;
+    public Parameter<String> getParamAction(){
+        return ACTION;
     }
+
+//    /**
+//     * @return  A {@code Parameter<Boolean>} to determine whether all anatomical structures of 
+//     *          an ontology should be displayed. (and not only structures with the parent manually
+//     *          expanded by the user). Category of the parameter: ontology display parameter.
+//     *          Corresponds to the URL parameter "all_organs".
+//     */
+//    public Parameter<Boolean> getParamAllOrgans(){
+//        return ALL_ORGANS;
+//    }
+
+//    /**
+//     * @return  A {@code Parameter<Integer>} defining for which data types 
+//     *          (i.e., EST, Affy, in situ, RNA-Seq) expression data should be computed. 
+//     *          It is used when we need to focus on a specific data types (e.g., 
+//     *          when following a link to display only EST raw data), 
+//     *          without modifying the data type originally requested by the user. 
+//     *          Basically, it allows to override model.data.expressionData.DataTypeTO#dataType, 
+//     *          without needing to eventually regenerate a key because it is a storable parameter.
+//     *          Values correspond to values defined for 
+//     *          {@code model.data.expressionData.DataTypeTO#dataType}
+//     *          Category of the parameter: query engines parameters. 
+//     *          Corresponds to the URL parameter "chosen_data_type".
+//     */
+//    public Parameter<Integer> getParamChosenDataType(){
+//        return CHOSEN_DATA_TYPE;
+//    }
+
+    /**
+     *  @return A {@code Parameter<String>} defining the type of output: html, xml, csv, tsv.
+     *          Category of the parameter: controller parameter.
+     *          Corresponds to the URL parameter "display_type".
+     */
+    public Parameter<String> getParamDisplayType(){
+        return DISPLAY_TYPE;
+    }
+
+//    /**
+//     * @return  A {@code Parameter<String>} defining the email of a user, 
+//     *          used at registration time.
+//     *          Category of the parameter: user registration.
+//     *          Corresponds to the URL parameter "email".
+//     */
+//    public Parameter<String> getParamEmail(){
+//        return EMAIL;
+//    }
+
+    
+
+//    /**
+//     * @return  A {@code Parameter<Boolean>} most of the time used to define whether algorithms
+//     *          should include substages of a developmental stage, when computing its 
+//     *          expression data. Used for ontology display, but also for expression search engines.
+//     *          Category of the parameter: ontology display parameter and query engines parameters. 
+//     *          Corresponds to the URL parameter "stage_children".
+//     */
+//    public Parameter<Boolean> getParamStageChildren(){
+//        return STAGE_CHILDREN;
+//    }
 
     /**
      * @return  A {@code Parameter<String>} that contains the value used
@@ -291,6 +311,14 @@ public class URLParameters {
      */
     public Parameter<String> getParamData(){
         return DATA;
+    }
+
+    /**
+     * @return  A {@code Parameter<Boolean>} defining whether the request is made 
+     *          through an AJAX call. 
+     */
+    public Parameter<Boolean> getParamAjax(){
+        return AJAX;
     }
 
     /**

@@ -37,7 +37,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      * A {@code String} that is the value taken by the {@code page} parameter 
      * (see {@link urlParameters#getParamPage()}) when a download page is requested.
      * This parameter will then be provided outside of this class through the method 
-     * {@link #PAGE_DOWNLOAD()} (to get the behavior of a public fina parameter).
+     * {@link #PAGE_DOWNLOAD()} (to get the behavior of a public final parameter).
      */
     var pageDownload = 'download';
     /**
@@ -51,7 +51,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      * A {@code String} that is the value taken by the {@code page} parameter 
      * (see {@link #getParamPage()}) when a documentation page is requested.
      * This parameter will then be provided outside of this class through the method 
-     * {@link #PAGE_DOCUMENTATION()} (to get the behavior of a public fina parameter).
+     * {@link #PAGE_DOCUMENTATION()} (to get the behavior of a public final parameter).
      */
     var pageDocumentation = 'doc';
     /**
@@ -65,7 +65,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      * A {@code String} that is the value taken by the {@code page} parameter  
      * (see {@link #getParamPage()}) when an about page is requested.
      * This parameter will then be provided outside of this class through the method 
-     * {@link #PAGE_ABOUT()} (to get the behavior of a public fina parameter).
+     * {@link #PAGE_ABOUT()} (to get the behavior of a public final parameter).
      */
     var pageAbout = 'about';
     /**
@@ -81,7 +81,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      * expression is requested.
      * This parameter will then be provided outside of this class through the method 
      * {@link #ACTION_DOWLOAD_CALL_FILES()} (to get the behavior 
-     * of a public fina parameter).
+     * of a public final parameter).
      */
     var actionDownloadCallFiles = 'expr_calls';
     /**
@@ -98,7 +98,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      * expression values is requested.
      * This parameter will then be provided outside of this class through the method 
      * {@link #ACTION_DOWLOAD_PROC_VALUE_FILES()} (to get the behavior 
-     * of a public fina parameter).
+     * of a public final parameter).
      */
     var actionDownloadProcValueFiles = 'proc_values';
     /**
@@ -115,7 +115,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      * expression is requested.
      * This parameter will then be provided outside of this class through the method 
      * {@link #ACTION_DOC_CALL_DOWLOAD_FILES()} (to get the behavior 
-     * of a public fina parameter).
+     * of a public final parameter).
      */
     var actionDocCallDownloadFiles = 'call_files';
     /**
@@ -132,7 +132,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      * expression values is requested.
      * This parameter will then be provided outside of this class through the method 
      * {@link #ACTION_DOC_PROC_EXPR_VALUE_DOWLOAD_FILES()} (to get the behavior 
-     * of a public fina parameter).
+     * of a public final parameter).
      */
     var actionDocProcExprValueDownloadFiles = 'proc_value_files';
     /**
@@ -149,7 +149,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      * Bgee data is requested.
      * This parameter will then be provided outside of this class through the method 
      * {@link #ACTION_DOC_HOW_TO_ACCESS()} (to get the behavior 
-     * of a public fina parameter).
+     * of a public final parameter).
      */
     var actionDocHowToAccess = 'access';
     /**
@@ -166,7 +166,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      * (see {@link URLParameters#getParamDisplayType()}) to obtain a XML view.
      * This parameter will then be provided outside of this class through the method 
      * {@link #DISPLAY_TYPE_XML()} (to get the behavior 
-     * of a public fina parameter).
+     * of a public final parameter).
      */
     var displayTypeXml = "xml";
     /**
@@ -181,7 +181,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      * (see {@link URLParameters#getParamDisplayType()}) to obtain a CSV view.
      * This parameter will then be provided outside of this class through the method 
      * {@link #DISPLAY_TYPE_CSV()} (to get the behavior 
-     * of a public fina parameter).
+     * of a public final parameter).
      */
     var displayTypeCsv = "csv";
     /**
@@ -196,7 +196,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      * (see {@link URLParameters#getParamDisplayType()}) to obtain a TSV view.
      * This parameter will then be provided outside of this class through the method 
      * {@link #DISPLAY_TYPE_TSV()} (to get the behavior 
-     * of a public fina parameter).
+     * of a public final parameter).
      */
     var displayTypeTsv = "tsv";
     /**
@@ -211,7 +211,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      * (see {@link URLParameters#getParamDisplayType()}) to obtain a JSON view.
      * This parameter will then be provided outside of this class through the method 
      * {@link #DISPLAY_TYPE_JSON()} (to get the behavior 
-     * of a public fina parameter).
+     * of a public final parameter).
      */
     var displayTypeJson = "json";
     /**

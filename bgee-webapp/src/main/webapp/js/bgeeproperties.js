@@ -7,11 +7,12 @@
  * @version Bgee 13 Jul 2015
  * @since   Bgee 13
  **/
-var bgeeProperties = {
+function bgeeProperties() {
            
     //*************************************
 	// BGEE PROPERTIES USED BY JAVASCRIPT
 	//*************************************
+    var bgeeHost = location.host;
     /**
      * @return  A {@code String} that defines the host to use for generating 
      * 			URLs to Bgee, for instance, 'bgee.org:8080'. By default, 
@@ -21,9 +22,17 @@ var bgeeProperties = {
      * 			You must not include a trailing '/' in this property.
      * 			For definitions of URL parts, see http://bl.ocks.org/abernier/3070589 
      */
-    getBgeeHost: function() {
-        return location.host;
-    },
+    this.getBgeeHost = function() {
+        return bgeeHost;
+    };
+    /**
+     * See {@link #getBgeeHost()}.
+     */
+    this.setBgeeHost = function(host) {
+        bgeeHost = host;
+    };
+    
+    var webAppPath = location.pathname;
     /**
      * @return  A {@code String} that defines the path to query the Bgee web-app, 
      * 			to be added to the host used (see {@link #getBgeeHost()}), 
@@ -34,9 +43,17 @@ var bgeeProperties = {
      * 			This property must start and end with '/'.
      * 			For definitions of URL parts, see http://bl.ocks.org/abernier/3070589.
      */
-    getWebAppPath: function() {
-        return location.pathname;
-    },
+    this.getWebAppPath = function() {
+        return webAppPath;
+    };
+    /**
+     * See {@link #getWebAppPath()}.
+     */
+    this.setWebAppPath = function(path) {
+        webAppPath = path;
+    };
+    
+    var imgPath = '/img/';
     /**
      * @return  A {@code String} that defines the path to retrieve Bgee images, 
      * 			to be added to the host used (see {@link #getBgeeHost()}), 
@@ -44,9 +61,15 @@ var bgeeProperties = {
      * 			This property must start and end with '/'.
      * 			For definitions of URL parts, see http://bl.ocks.org/abernier/3070589.
      */
-    getImgPath: function() {
-        return '/img/';
-    }, 
+    this.getImgPath = function() {
+        return imgPath;
+    };
+    /**
+     * See {@link #getImgPath()}.
+     */
+    this.setImgPath = function(path) {
+        imgPath = path;
+    };
     
     
     //**********************************
@@ -59,9 +82,10 @@ var bgeeProperties = {
      * 			{@code 'http://' + getBgeeHost() + getWebAppPath()}.
      * 			For definitions of URL parts, see http://bl.ocks.org/abernier/3070589.
      */
-    getWebAppURLStart: function() {
-        return 'http://' + bgeeProperties.getBgeeHost() + bgeeProperties.getWebAppPath();
-    }, 
+    this.getWebAppURLStart = function() {
+        return 'http://' + this.getBgeeHost() + this.getWebAppPath();
+    };
+    
     /**
      * @return  A {@code String} that defines the beginning of the URL to used to retrieve 
      * 			Bgee images, be.g. 'http://bgee.org/bgee/img/'.
@@ -69,7 +93,7 @@ var bgeeProperties = {
      * 			{@code 'http://' + getBgeeHost() + getImgPath()}.
      * 			For definitions of URL parts, see http://bl.ocks.org/abernier/3070589.
      */
-    getImgURLStart: function() {
-        return 'http://' + bgeeProperties.getBgeeHost() + bgeeProperties.getImgPath();
-    }
+    this.getImgURLStart = function() {
+        return 'http://' + this.getBgeeHost() + this.getImgPath();
+    };
 };

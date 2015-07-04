@@ -489,7 +489,7 @@ var download = {
             
             // Reset all header details to plus image
             $( "a.show-header img.details" ).each(function() {
-            	$( this ).attr( "src" , bgeeProperties.getImgURLStart() + "plus.png" );
+            	$( this ).attr( "src" , GLOBAL_PROPS.getImgURLStart() + "plus.png" );
             });
 
             // Update the values of the download links and size files

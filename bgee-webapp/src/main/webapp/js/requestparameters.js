@@ -315,7 +315,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      * Generate the URL from the current state of the parameters. 
      * This method generates the 'search' part and the 'hash' part of the URL, 
      * and append it to the URL start to query the Bgee web-app (either {@code urlStart} 
-     * if provided, or {@code bgeeProperties.getWebAppURLStart()} by default).
+     * if provided, or {@code GLOBAL_PROPS.getWebAppURLStart()} by default).
      * 
      * @param addAjaxParam			A {@code boolean} defining whether the parameter 
      * 								allowing to specify that a request is an AJAX query 
@@ -327,7 +327,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      * 								to used to query the Bgee web-app, before the search part, 
      * 								e.g. 'http://bgee.org/bgee_v13/'.  
      * 								If this parameter is not provided, by default 
-     * 								{@code bgeeProperties.getWebAppURLStart()} is used.
+     * 								{@code GLOBAL_PROPS.getWebAppURLStart()} is used.
      * 								It can be used, e.g., to perform a cross-domain query 
      * 								to a different Bgee server (useful for testing).
      * 
@@ -339,7 +339,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
             parametersSeparator = this.parametersSeparator;
         }
         if (!urlStart) {
-        	urlStart = bgeeProperties.getWebAppURLStart();
+        	urlStart = GLOBAL_PROPS.getWebAppURLStart();
         }
         
         //If requested, add the parameter allowing to specify that a query is an AJAX query.

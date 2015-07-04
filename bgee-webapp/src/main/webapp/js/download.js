@@ -341,15 +341,15 @@ var download = {
             var requestSwitchPage = new requestParameters("", true, "&");
         	if ( this.$exprCalls.length > 0 ) {
         		requestSwitchPage.addValue(urlParameters.getParamPage(), 
-        				requestSwitchPage.PAGE_DOWNLOAD);
+        				requestSwitchPage.PAGE_DOWNLOAD());
         		requestSwitchPage.addValue(urlParameters.getParamAction(), 
-        				requestSwitchPage.ACTION_DOWLOAD_PROC_VALUE_FILES);
+        				requestSwitchPage.ACTION_DOWLOAD_PROC_VALUE_FILES());
         		this.$switchPageLink.text( "See processed expression values" );
         	} else {
         		requestSwitchPage.addValue(urlParameters.getParamPage(), 
-        				requestSwitchPage.PAGE_DOWNLOAD);
+        				requestSwitchPage.PAGE_DOWNLOAD());
         		requestSwitchPage.addValue(urlParameters.getParamAction(), 
-        				requestSwitchPage.ACTION_DOWLOAD_CALL_FILES);
+        				requestSwitchPage.ACTION_DOWLOAD_CALL_FILES());
         		this.$switchPageLink.text( "See gene expression calls" );    
         	}
         	this.$switchPageLink.attr( "href", 
@@ -452,9 +452,9 @@ var download = {
                 if ( this.$exprCalls.length > 0 ) {
                     var urlDoc = new requestParameters("", true, "&");
                     urlDoc.addValue(urlParameters.getParamPage(), 
-                    		urlDoc.PAGE_DOCUMENTATION);
+                    		urlDoc.PAGE_DOCUMENTATION());
                     urlDoc.addValue(urlParameters.getParamAction(), 
-                    		urlDoc.ACTION_DOC_CALL_DOWLOAD_FILES);
+                    		urlDoc.ACTION_DOC_CALL_DOWLOAD_FILES());
                     //TODO: manage anchor as a parameter
                 	this.$exprHelp.attr( "href", urlDoc.getRequestURL() + "#multi");
                 	this.$diffDevHelp.attr( "href", urlDoc.getRequestURL() + "#multi");
@@ -472,9 +472,9 @@ var download = {
                 if ( this.$exprCalls.length > 0 ) {
                 	var urlDoc = new requestParameters("", true, "&");
                     urlDoc.addValue(urlParameters.getParamPage(), 
-                    		urlDoc.PAGE_DOCUMENTATION);
+                    		urlDoc.PAGE_DOCUMENTATION());
                     urlDoc.addValue(urlParameters.getParamAction(), 
-                    		urlDoc.ACTION_DOC_CALL_DOWLOAD_FILES);
+                    		urlDoc.ACTION_DOC_CALL_DOWLOAD_FILES());
                     //TODO: manage anchor as a parameter
                 	this.$exprHelp.attr( "href", urlDoc.getRequestURL() + "#single_expr");
                 	this.$diffDevHelp.attr( "href", urlDoc.getRequestURL() + "#single_diff");
@@ -489,8 +489,7 @@ var download = {
             
             // Reset all header details to plus image
             $( "a.show-header img.details" ).each(function() {
-            	//TODO: manage image scr to be not hardcoded            
-            	$( this ).attr( "src" , "img/plus.png" );
+            	$( this ).attr( "src" , bgeeProperties.getImgURLStart() + "plus.png" );
             });
 
             // Update the values of the download links and size files

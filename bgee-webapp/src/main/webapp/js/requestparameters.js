@@ -36,48 +36,191 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
     /**
      * A {@code String} that is the value taken by the {@code page} parameter 
      * (see {@link urlParameters#getParamPage()}) when a download page is requested.
+     * This parameter will then be provided outside of this class through the method 
+     * {@link #PAGE_DOWNLOAD()} (to get the behavior of a public final parameter).
      */
-    this.PAGE_DOWNLOAD = 'download';
+    var pageDownload = 'download';
+    /**
+     * A method to obtain the value taken by the {@code page} parameter 
+     * (see {@link urlParameters#getParamPage()}) when a download page is requested.
+     */
+    this.PAGE_DOWNLOAD = function() {
+    	return pageDownload;
+    }
     /**
      * A {@code String} that is the value taken by the {@code page} parameter 
      * (see {@link #getParamPage()}) when a documentation page is requested.
+     * This parameter will then be provided outside of this class through the method 
+     * {@link #PAGE_DOCUMENTATION()} (to get the behavior of a public final parameter).
      */
-    this.PAGE_DOCUMENTATION = 'doc';
+    var pageDocumentation = 'doc';
+    /**
+     * A method to obtain the value taken by the {@code page} parameter 
+     * (see {@link #getParamPage()}) when a documentation page is requested.
+     */
+    this.PAGE_DOCUMENTATION = function() {
+    	return pageDocumentation;
+    }
     /**
      * A {@code String} that is the value taken by the {@code page} parameter  
      * (see {@link #getParamPage()}) when an about page is requested.
+     * This parameter will then be provided outside of this class through the method 
+     * {@link #PAGE_ABOUT()} (to get the behavior of a public final parameter).
      */
-    this.PAGE_ABOUT = 'about';
+    var pageAbout = 'about';
+    /**
+     * A method to obtain the value taken by the {@code page} parameter  
+     * (see {@link #getParamPage()}) when an about page is requested.
+     */
+    this.PAGE_ABOUT = function() {
+    	return pageAbout;
+    }
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
      * (see {@link #getParamAction()}) when download page about files providing calls of 
      * expression is requested.
+     * This parameter will then be provided outside of this class through the method 
+     * {@link #ACTION_DOWLOAD_CALL_FILES()} (to get the behavior 
+     * of a public final parameter).
      */
-    this.ACTION_DOWLOAD_CALL_FILES = 'expr_calls';
+    var actionDownloadCallFiles = 'expr_calls';
+    /**
+     * A method to obtain the value taken by the {@code action} parameter 
+     * (see {@link #getParamAction()}) when download page about files providing calls of 
+     * expression is requested.
+     */
+    this.ACTION_DOWLOAD_CALL_FILES = function() {
+    	return actionDownloadCallFiles;
+    }
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
      * (see {@link #getParamAction()}) when download page about files providing processed 
      * expression values is requested.
+     * This parameter will then be provided outside of this class through the method 
+     * {@link #ACTION_DOWLOAD_PROC_VALUE_FILES()} (to get the behavior 
+     * of a public final parameter).
      */
-    this.ACTION_DOWLOAD_PROC_VALUE_FILES = 'proc_values';
+    var actionDownloadProcValueFiles = 'proc_values';
+    /**
+     * A method to obtain the value taken by the {@code action} parameter 
+     * (see {@link #getParamAction()}) when download page about files providing processed 
+     * expression values is requested.
+     */
+    this.ACTION_DOWLOAD_PROC_VALUE_FILES = function() {
+    	return actionDownloadProcValueFiles;
+    }
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
      * (see {@link #getParamAction()}) when documentation about download files providing calls of
      * expression is requested.
+     * This parameter will then be provided outside of this class through the method 
+     * {@link #ACTION_DOC_CALL_DOWLOAD_FILES()} (to get the behavior 
+     * of a public final parameter).
      */
-    this.ACTION_DOC_CALL_DOWLOAD_FILES = 'call_files';
+    var actionDocCallDownloadFiles = 'call_files';
+    /**
+     * A method to obtain the value taken by the {@code action} parameter 
+     * (see {@link #getParamAction()}) when documentation about download files providing calls of
+     * expression is requested.
+     */
+    this.ACTION_DOC_CALL_DOWLOAD_FILES = function() {
+    	return actionDocCallDownloadFiles;
+    }
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
      * (see {@link #getParamAction()}) when documentation about download files providing processed 
      * expression values is requested.
+     * This parameter will then be provided outside of this class through the method 
+     * {@link #ACTION_DOC_PROC_EXPR_VALUE_DOWLOAD_FILES()} (to get the behavior 
+     * of a public final parameter).
      */
-    this.ACTION_DOC_PROC_EXPR_VALUE_DOWLOAD_FILES = 'proc_value_files';
+    var actionDocProcExprValueDownloadFiles = 'proc_value_files';
+    /**
+     * A method to obtain the value taken by the {@code action} parameter 
+     * (see {@link #getParamAction()}) when documentation about download files providing processed 
+     * expression values is requested.
+     */
+    this.ACTION_DOC_PROC_EXPR_VALUE_DOWLOAD_FILES = function() {
+    	return actionDocProcExprValueDownloadFiles;
+    }
     /**
      * A {@code String} that is the value taken by the {@code action} parameter
      * (see {@link #getParamAction()}) when documentation about how to access to 
      * Bgee data is requested.
+     * This parameter will then be provided outside of this class through the method 
+     * {@link #ACTION_DOC_HOW_TO_ACCESS()} (to get the behavior 
+     * of a public final parameter).
      */
-    this.ACTION_DOC_HOW_TO_ACCESS = 'access';
+    var actionDocHowToAccess = 'access';
+    /**
+     * A method to obtain the value taken by the {@code action} parameter
+     * (see {@link #getParamAction()}) when documentation about how to access to 
+     * Bgee data is requested.
+     */
+    this.ACTION_DOC_HOW_TO_ACCESS = function() {
+    	return actionDocHowToAccess;
+    }
+    
+    /**
+     * A {@code String} that is the value taken by the {@code displayType} parameter 
+     * (see {@link URLParameters#getParamDisplayType()}) to obtain a XML view.
+     * This parameter will then be provided outside of this class through the method 
+     * {@link #DISPLAY_TYPE_XML()} (to get the behavior 
+     * of a public final parameter).
+     */
+    var displayTypeXml = "xml";
+    /**
+     * A method to obtain the value taken by the {@code displayType} parameter 
+     * (see {@link URLParameters#getParamDisplayType()}) to obtain a XML view.
+     */
+    this.DISPLAY_TYPE_XML = function() {
+    	return displayTypeXml;
+    }
+    /**
+     * A {@code String} that is the value taken by the {@code displayType} parameter 
+     * (see {@link URLParameters#getParamDisplayType()}) to obtain a CSV view.
+     * This parameter will then be provided outside of this class through the method 
+     * {@link #DISPLAY_TYPE_CSV()} (to get the behavior 
+     * of a public final parameter).
+     */
+    var displayTypeCsv = "csv";
+    /**
+     * A method to obtain the value taken by the {@code displayType} parameter 
+     * (see {@link URLParameters#getParamDisplayType()}) to obtain a CSV view.
+     */
+    this.DISPLAY_TYPE_CSV = function() {
+    	return displayTypeCsv;
+    }
+    /**
+     * A {@code String} that is the value taken by the {@code displayType} parameter 
+     * (see {@link URLParameters#getParamDisplayType()}) to obtain a TSV view.
+     * This parameter will then be provided outside of this class through the method 
+     * {@link #DISPLAY_TYPE_TSV()} (to get the behavior 
+     * of a public final parameter).
+     */
+    var displayTypeTsv = "tsv";
+    /**
+     * A method to obtain the value taken by the {@code displayType} parameter 
+     * (see {@link URLParameters#getParamDisplayType()}) to obtain a TSV view.
+     */
+    this.DISPLAY_TYPE_TSV = function() {
+    	return displayTypeTsv;
+    }
+    /**
+     * A {@code String} that is the value taken by the {@code displayType} parameter 
+     * (see {@link URLParameters#getParamDisplayType()}) to obtain a JSON view.
+     * This parameter will then be provided outside of this class through the method 
+     * {@link #DISPLAY_TYPE_JSON()} (to get the behavior 
+     * of a public final parameter).
+     */
+    var displayTypeJson = "json";
+    /**
+     * A method to obtain the value taken by the {@code displayType} parameter 
+     * (see {@link URLParameters#getParamDisplayType()}) to obtain a JSON view.
+     */
+    this.DISPLAY_TYPE_JSON = function() {
+    	return displayTypeJson;
+    }
 
     /**
      * Initialization
@@ -169,19 +312,42 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
         }
     };
     /**
-     * Generate the URL from the current state of the parameters
+     * Generate the URL from the current state of the parameters. 
+     * This method generates the 'search' part and the 'hash' part of the URL, 
+     * and append it to the URL start to query the Bgee web-app (either {@code urlStart} 
+     * if provided, or {@code bgeeProperties.getWebAppURLStart()} by default).
      * 
+     * @param addAjaxParam			A {@code boolean} defining whether the parameter 
+     * 								allowing to specify that a request is an AJAX query 
+     * 								should be added. 
      * @param parametersSeparator   A {@code String} that is used as custom parameters separator
      *                              in the URL. If let empty, the parameter provided to the constructor
      *                              or set afterwards with {@code setParametersSeparator} is used
-     *                              
-     * @return  A {@code String} that is the generated query
+     * @param urlStart			 	A {@code String} that is the beginning of the URL 
+     * 								to used to query the Bgee web-app, before the search part, 
+     * 								e.g. 'http://bgee.org/bgee_v13/'.  
+     * 								If this parameter is not provided, by default 
+     * 								{@code bgeeProperties.getWebAppURLStart()} is used.
+     * 								It can be used, e.g., to perform a cross-domain query 
+     * 								to a different Bgee server (useful for testing).
+     * 
+     * @return  A {@code String} that is the generated URL.
      */
-    this.getRequestURL = function(parametersSeparator){
+    this.getRequestURL = function(addAjaxParam, parametersSeparator, urlStart){
         urlFragment = "";
         if(! parametersSeparator){
             parametersSeparator = this.parametersSeparator;
         }
+        if (!urlStart) {
+        	urlStart = bgeeProperties.getWebAppURLStart();
+        }
+        
+        //If requested, add the parameter allowing to specify that a query is an AJAX query.
+        if (addAjaxParam) {
+            this.resetValues(urlParameters.getParamAjax());
+            this.addValue(urlParameters.getParamAjax(), "1");
+        }
+        
         // Browse all available parameters
         for (i in urlParameters.getList()){           
             // Fetch the values of this param and generate a query with all
@@ -198,9 +364,10 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
                 }
             }
         }
-        // Append the '?' and remove the extra separator at the end
+        // Append the URL start, the '?', and remove the extra separator at the end
         if(urlFragment){
-            urlFragment = '?' + urlFragment.substring(0, urlFragment.length - parametersSeparator.length);
+            urlFragment = urlStart + '?' 
+                + urlFragment.substring(0, urlFragment.length - parametersSeparator.length);
         }
         return urlFragment;
     };
@@ -346,11 +513,84 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
         return encodeString;
     };
     /**
+     * Determine whether {@code paramValue} is a {@code String} corresponding to 
+     * the {@code boolean} value {@code true} in the Bgee web-app. 
+     * 
+     * @param paramValue    A {@code String} corresponding to the value of a parameter 
+     *                      in a request, to be converted into a {@code boolean}.
+     * @return  a {@code boolean} corresponding to {@code paramValue}. 
+     *          Return {@code true} if {@code paramValue} is equal to "on", "true", or "1".
+     */
+    this.castToBoolean = function(paramValue){
+        if (paramValue == "on" || paramValue == "true" || paramValue == "1") {
+        	return true;
+        }
+        return false;
+    };
+
+    
+    /**
+     * Convenient method to retrieve value of the parameter returned by 
+     * {@link URLParameters#getParamPage()}. Equivalent to calling 
+     * {@link #getFirstValue(Parameter)} for this parameter.
+     * 
+     * @return  A {@code String} that is the value of the {@code page} URL parameter. 
+     *          Can be {@code null}. 
+     */
+    this.getPage = function() {
+        return this.getFirstValue(urlParameters.getParamPage());
+    };
+    /**
+     * Convenient method to set value of the parameter returned by 
+     * {@link URLParameters#getParamPage()}. Equivalent to calling 
+     * {@link #addValue(Parameter, Object)} for this parameter.
+     * 
+     * @param action    A {@code String} that is the value of the {@code page} URL parameter 
+     *                  to set.
+     */
+    this.setPage = function(page) {
+        this.addValue(urlParameters.getParamPage(), page);
+    };
+    /**
+     * Convenient method to retrieve value of the parameter returned by 
+     * {@link URLParameters#getParamAction()}. Equivalent to calling 
+     * {@link #getFirstValue(Parameter)} for this parameter.
+     * 
+     * @return  A {@code String} that is the value of the {@code action} URL parameter. 
+     *          Can be {@code null}. 
+     */
+    this.getAction = function() {
+        return this.getFirstValue(urlParameters.getParamAction());
+    };
+    /**
+     * Convenient method to set value of the parameter returned by 
+     * {@link URLParameters#getParamAction()}. Equivalent to calling 
+     * {@link #addValue(Parameter, Object)} for this parameter.
+     * 
+     * @param action    A {@code String} that is the value of the {@code action} URL parameter 
+     *                  to set.
+     */
+    this.setAction = function(action) {
+        this.addValue(urlParameters.getParamAction(), action);
+    };
+    /**
+     * Convenient method to retrieve value of the parameter returned by 
+     * {@link URLParameters#getParamData()}. Equivalent to calling 
+     * {@link #getFirstValue(Parameter)} for this parameter.
+     * 
+     * @return  A {@code String} that is the value of the {@code data} URL parameter. 
+     *          Can be {@code null}. 
+     */
+    this.getDataKey = function() {
+        return this.getFirstValue(urlParameters.getParamData());
+    };
+    
+    /**
      * @return  A {@code boolean} to tell whether the display is Xml or not
      */
     this.isXmlDisplayType = function() {
         if(this.getFirstValue(urlParameters.getParamDisplayType()) != null &&
-                this.getFirstValue(urlParameters.getParamDisplayType()) == "xml"){
+                this.getFirstValue(urlParameters.getParamDisplayType()) == this.DISPLAY_TYPE_XML){
             return true;
         }
         return false;
@@ -360,7 +600,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      */
     this.isCsvDisplayType = function() {
         if(this.getFirstValue(urlParameters.getParamDisplayType()) != null &&
-                this.getFirstValue(urlParameters.getParamDisplayType()) == "csv"){
+                this.getFirstValue(urlParameters.getParamDisplayType()) == this.DISPLAY_TYPE_CSV){
             return true;
         }
         return false;
@@ -370,24 +610,30 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      */
     this.isTsvDisplayType = function() {
         if(this.getFirstValue(urlParameters.getParamDisplayType()) != null &&
-                this.getFirstValue(urlParameters.getParamDisplayType()) == "tsv"){
+                this.getFirstValue(urlParameters.getParamDisplayType()) == this.DISPLAY_TYPE_TSV){
+            return true;
+        }
+        return false;
+    };
+    /**
+     * @return  A {@code boolean} to tell whether the display is JSON or not
+     */
+    this.isJsonDisplayType = function() {
+        if(this.getFirstValue(urlParameters.getParamDisplayType()) != null &&
+                this.getFirstValue(urlParameters.getParamDisplayType()) == this.DISPLAY_TYPE_JSON){
             return true;
         }
         return false;
     };
     /**
      * Allow to know if this request has been performed through AJAX. 
-     * It is currently simply based on the fact that, in Bgee, all AJAX actions 
-     * starts by "ajax_". It should be kept that way ;)
      * 
      * @return  {@code true} if this request was performed through AJAX
      */
-    this.isAnAjaxRequest = function()
-    {
-        if (this.getFirstValue(urlParameters.getParamAction()) != null &&
-                this.getFirstValue(urlParameters.getParamAction()).toLowerCase()
-                .startsWith("ajax_")) {
-            return true;
+    this.isAnAjaxRequest = function() {
+    	if (this.getFirstValue(urlParameters.getParamAjax()) != null) {
+            return this.castToBoolean(
+            		this.getFirstValue(urlParameters.getParamAjax()).toLowerCase());
         }
         return false;
     };
@@ -407,23 +653,23 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
     this.isAnAboutPageCategory = function()
     {
         if (this.getFirstValue(urlParameters.getParamPage()) != null && 
-                this.getFirstValue(urlParameters.getParamPage()) == "about") {
+                this.getFirstValue(urlParameters.getParamPage()) == this.PAGE_ABOUT) {
             return true;
         }
         return false;
     };
-    /**
-     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
-     * category "anatomy"
-     */
-    this.isAnAnatomyPageCategory = function()
-    {
-        if (this.getFirstValue(urlParameters.getParamPage()) != null && 
-                this.getFirstValue(urlParameters.getParamPage()) == "anatomy") {
-            return true;
-        }
-        return false;
-    };
+//    /**
+//     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+//     * category "anatomy"
+//     */
+//    this.isAnAnatomyPageCategory = function()
+//    {
+//        if (this.getFirstValue(urlParameters.getParamPage()) != null && 
+//                this.getFirstValue(urlParameters.getParamPage()) == "anatomy") {
+//            return true;
+//        }
+//        return false;
+//    };
     /**
      * @return  A {@code boolean} to tell whether the request corresponds to a page of the
      * category "documentation"
@@ -431,7 +677,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
     this.isADocumentationPageCategory = function()
     {
         if (this.getFirstValue(urlParameters.getParamPage()) != null && 
-                this.getFirstValue(urlParameters.getParamPage()) == "documentation") {
+                this.getFirstValue(urlParameters.getParamPage()) == this.PAGE_DOCUMENTATION) {
             return true;
         }
         return false;
@@ -442,108 +688,108 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      */
     this.isADownloadPageCategory = function(){
         if(this.getFirstValue(urlParameters.getParamPage()) != null &&
-                this.getFirstValue(urlParameters.getParamPage()) == "download"){
+                this.getFirstValue(urlParameters.getParamPage()) == this.PAGE_DOWNLOAD){
             return true;
         }
         return false;
     };    
-    /**
-     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
-     * category "expression"
-     */
-    this.isAnExpressionPageCategory = function()
-    {
-        if (this.getFirstValue(urlParameters.getParamPage()) != null && 
-                this.getFirstValue(urlParameters.getParamPage()) == "expression"){
-            return true;
-        }
-        return false;
-    };
-    /**
-     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
-     * category "gene"
-     */
-    this.isAGenePageCategory = function()
-    {
-        if (this.getFirstValue(urlParameters.getParamPage()) != null && 
-                this.getFirstValue(urlParameters.getParamPage()) == "gene"){
-            return true;
-        }
-        return false;
-    };
-    /**
-     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
-     * category "gene_family"
-     */
-    this.isAGeneFamilyPageCategory = function()
-    {
-        if (this.getFirstValue(urlParameters.getParamPage()) != null && 
-                this.getFirstValue(urlParameters.getParamPage()) == "gene_family"){
-            return true;
-        }
-        return false;
-    };
-    /**
-     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
-     * category "log"
-     */
-    this.isALogPageCategory = function()
-    {
-        if (this.getFirstValue(urlParameters.getParamPage()) != null &&
-                this.getFirstValue(urlParameters.getParamPage()) == "log"){
-            return true;
-        }
-        return false;
-    };
-    /**
-     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
-     * category "news"
-     */
-    this.isANewsPageCategory = function()
-    {
-        if (this.getFirstValue(urlParameters.getParamPage()) != null && 
-                this.getFirstValue(urlParameters.getParamPage()) == "news"){
-            return true;
-        }
-        return false;
-    };
-    /**
-     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
-     * category "registration"
-     */
-    this.isARegistrationPageCategory = function()
-    {
-
-        if (this.getFirstValue(urlParameters.getParamPage()) != null &&
-                this.getFirstValue(urlParameters.getParamPage()) == "registration"){
-            return true;
-        }
-        return false;
-    };
-    /**
-     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
-     * category "search"
-     */
-    this.isASearchPageCategory = function()
-    {
-        if (this.getFirstValue(urlParameters.getParamPage()) != null && 
-                this.getFirstValue(urlParameters.getParamPage()) == "search"){
-            return true;
-        }
-        return false;
-    };
-    /**
-     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
-     * category "top_anat"
-     */
-    this.isATopOBOPageCategory = function()
-    {
-        if (this.getFirstValue(urlParameters.getParamPage()) != null && 
-                this.getFirstValue(urlParameters.getParamPage()) == "top_anat"){
-            return true;
-        }
-        return false;
-    };
+//    /**
+//     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+//     * category "expression"
+//     */
+//    this.isAnExpressionPageCategory = function()
+//    {
+//        if (this.getFirstValue(urlParameters.getParamPage()) != null && 
+//                this.getFirstValue(urlParameters.getParamPage()) == "expression"){
+//            return true;
+//        }
+//        return false;
+//    };
+//    /**
+//     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+//     * category "gene"
+//     */
+//    this.isAGenePageCategory = function()
+//    {
+//        if (this.getFirstValue(urlParameters.getParamPage()) != null && 
+//                this.getFirstValue(urlParameters.getParamPage()) == "gene"){
+//            return true;
+//        }
+//        return false;
+//    };
+//    /**
+//     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+//     * category "gene_family"
+//     */
+//    this.isAGeneFamilyPageCategory = function()
+//    {
+//        if (this.getFirstValue(urlParameters.getParamPage()) != null && 
+//                this.getFirstValue(urlParameters.getParamPage()) == "gene_family"){
+//            return true;
+//        }
+//        return false;
+//    };
+//    /**
+//     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+//     * category "log"
+//     */
+//    this.isALogPageCategory = function()
+//    {
+//        if (this.getFirstValue(urlParameters.getParamPage()) != null &&
+//                this.getFirstValue(urlParameters.getParamPage()) == "log"){
+//            return true;
+//        }
+//        return false;
+//    };
+//    /**
+//     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+//     * category "news"
+//     */
+//    this.isANewsPageCategory = function()
+//    {
+//        if (this.getFirstValue(urlParameters.getParamPage()) != null && 
+//                this.getFirstValue(urlParameters.getParamPage()) == "news"){
+//            return true;
+//        }
+//        return false;
+//    };
+//    /**
+//     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+//     * category "registration"
+//     */
+//    this.isARegistrationPageCategory = function()
+//    {
+//
+//        if (this.getFirstValue(urlParameters.getParamPage()) != null &&
+//                this.getFirstValue(urlParameters.getParamPage()) == "registration"){
+//            return true;
+//        }
+//        return false;
+//    };
+//    /**
+//     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+//     * category "search"
+//     */
+//    this.isASearchPageCategory = function()
+//    {
+//        if (this.getFirstValue(urlParameters.getParamPage()) != null && 
+//                this.getFirstValue(urlParameters.getParamPage()) == "search"){
+//            return true;
+//        }
+//        return false;
+//    };
+//    /**
+//     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+//     * category "top_anat"
+//     */
+//    this.isATopOBOPageCategory = function()
+//    {
+//        if (this.getFirstValue(urlParameters.getParamPage()) != null && 
+//                this.getFirstValue(urlParameters.getParamPage()) == "top_anat"){
+//            return true;
+//        }
+//        return false;
+//    };
     /**
      * Determine whether the requested page contains sensitive information, 
      * such as passwords.
@@ -551,11 +797,8 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      * 
      * @return  {@code true} if the page contains sensitive information, {@code false} otherwise.
      */
-    this.isASecuredPage = function() 
-    {
-        if (this.isALogPageCategory() || this.isARegistrationPageCategory()) {
-            return true;
-        }
+    this.isASecuredPage = function() {
+    	//TODO: implement when necessary (logging page, registration page, ...)
         return false;
     };
 

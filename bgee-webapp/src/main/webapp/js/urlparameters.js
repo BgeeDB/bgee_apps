@@ -55,18 +55,12 @@ var urlParameters = {
             this.list.push(this.PAGE);
             this.ACTION = new urlParameters.Parameter('action',false,false,false,128,null,'string');
             this.list.push(this.ACTION);
-            this.ALL_ORGANS = new urlParameters.Parameter('all_organs',false,true,false,128,null,'boolean');
-            this.list.push(this.ALL_ORGANS);
-            this.CHOSEN_DATA_TYPE = new urlParameters.Parameter('chosen_data_type',false,true,false,128,null,'number');
-            this.list.push(this.CHOSEN_DATA_TYPE);
-            this.EMAIL = new urlParameters.Parameter('email',false,true,false,128,/^[_A-Za-z0-9-]+(\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*(\.[A-Za-z]{2,})$/,'string');
-            this.list.push(this.EMAIL);
-            this.STAGE_CHILDREN = new urlParameters.Parameter('stage_children',false,true,false,128,null,'boolean');
-            this.list.push(this.STAGE_CHILDREN);
             this.DISPLAY_TYPE = new urlParameters.Parameter('display_type',false,false,false,128,null,'string');
             this.list.push(this.DISPLAY_TYPE);
             this.DATA = new urlParameters.Parameter('data',false,false,false,128,null,'string');
             this.list.push(this.DATA);
+            this.AJAX = new urlParameters.Parameter('ajax',false,false,false,5,null,'boolean');
+            this.list.push(this.AJAX);
         },
 
         /**
@@ -82,30 +76,6 @@ var urlParameters = {
             return this.ACTION;
         },
         /**
-         * @return    The parameter all_organs
-         */
-        getParamAllOrgans: function(){
-            return this.ALL_ORGANS;
-        },
-        /**
-         * @return    The parameter chosen_data_type
-         */
-        getParamChosenDataType: function(){
-            return this.CHOSEN_DATA_TYPE;
-        },
-        /**
-         * @return    The parameter email
-         */
-        getParamEmail: function(){
-            return this.EMAIL;
-        },
-        /**
-         * @return    The parameter stage_children
-         */
-        getParamStageChildren: function(){
-            return this.STAGE_CHILDREN;
-        },
-        /**
          * @return    The parameter display_type
          */
         getParamDisplayType: function(){
@@ -116,6 +86,12 @@ var urlParameters = {
          */
         getParamData: function(){
             return this.DATA;
+        },
+        /**
+         * @return    The parameter ajax
+         */
+        getParamAjax: function(){
+            return this.AJAX;
         },
         /**
          * @return An {@code Array} that lists all declared {@code Parameter}

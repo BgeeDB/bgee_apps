@@ -277,7 +277,7 @@ public class RequestParametersTest extends TestAncestor {
                 + "1234&test_integer=2345&test_boolean=true&test_boolean="
                 + "false", this.requestParametersWithNoKey.getRequestURL(
                         params, false));
-        assertEquals("Incorrect query returned ","?" + RequestParameters.JS_HASH_SEPARATOR 
+        assertEquals("Incorrect query returned ", RequestParameters.JS_HASH_SEPARATOR 
                 + "test_string=string1&test_integer=1234&test_integer=2345"
                 + "&test_boolean=true&test_boolean=false", 
                 this.requestParametersWithNoKey.getRequestURL(
@@ -303,7 +303,7 @@ public class RequestParametersTest extends TestAncestor {
                 + "1234+test_integer=2345+test_boolean=true+test_boolean="
                 + "false", this.requestParametersWithNoKey.getRequestURL("+", 
                         params, false));
-        assertEquals("Incorrect query returned ","?" + RequestParameters.JS_HASH_SEPARATOR 
+        assertEquals("Incorrect query returned ", RequestParameters.JS_HASH_SEPARATOR 
                 + "test_string=string1+test_integer=1234+test_integer=2345"
                 + "+test_boolean=true+test_boolean=false", 
                 this.requestParametersWithNoKey.getRequestURL("+", 

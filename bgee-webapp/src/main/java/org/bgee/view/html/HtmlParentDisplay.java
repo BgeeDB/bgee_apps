@@ -48,14 +48,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     		return log.exit("");
     	}
     }
-    /**
-     * The {@code RequestParameters} holding the parameters of the current query 
-     * being treated.
-     */
-    protected final RequestParameters requestParameters;
 
     /**
-     * Constructor 
+     * Constructor providing the necessary dependencies.
      * 
      * @param response          A {@code HttpServletResponse} that will be used to display the 
      *                          page to the client
@@ -71,10 +66,15 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     public HtmlParentDisplay(HttpServletResponse response, RequestParameters requestParameters, 
             BgeeProperties prop, HtmlFactory factory) throws IllegalArgumentException, IOException {
-        super(response, prop, factory);
-        this.requestParameters = requestParameters;
+        super(response, requestParameters, prop, factory);
     }
     
+    @Override
+    protected String getContentType() {
+        log.entry();
+        return log.exit("text/html");
+    }
+
     /**
      * Get the single feature logo with a description as a HTML 'div' element.
      *
@@ -112,7 +112,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 
     public void emptyDisplay() {
         log.entry();
-        this.sendHeaders(true);
+        this.sendHeaders();
         this.writeln("");
         log.exit();
     }
@@ -124,7 +124,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected void startDisplay(String title) {
         log.entry(title);
-        this.sendHeaders(false);
+        this.sendHeaders();
         this.writeln("<!DOCTYPE html>");
         this.writeln("<html lang='en'>");
         this.writeln("<head>");
@@ -434,91 +434,6 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         
         return log.exit(logos.toString());
     }
-
-//    @Override
-	protected void sendHeaders(boolean ajax) {
-	    log.entry(ajax);
-		if (this.response == null) {
-			log.exit(); return;
-		}
-		if (!this.headersAlreadySent) {
-			this.response.setContentType("text/html");
-			log.trace("Set content type text/html");
-			if (ajax) {
-				this.response.setDateHeader("Expires", 1);
-				this.response.setHeader("Cache-Control", 
-						"no-store, no-cache, must-revalidate, proxy-revalidate");
-				this.response.addHeader("Cache-Control", "post-check=0, pre-check=0");
-				this.response.setHeader("Pragma", "No-cache");
-			}
-			this.headersAlreadySent = true;
-		}
-		log.exit();
-	}
-
-    /**
-     * Send the header in case of HTTP 503 error
-     */
-    public void sendServiceUnavailableHeaders() {
-        log.entry();
-        if (this.response == null) {
-            return;
-        }
-        if (!this.headersAlreadySent) {
-            this.response.setContentType("text/html");
-            this.response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
-            this.headersAlreadySent = true;
-        }
-        log.exit();
-    }
-    
-    /**
-     * Send the header in case of HTTP 400 error
-     */
-    protected void sendBadRequestHeaders() {
-        log.entry();
-        if (this.response == null) {
-            return;
-        }
-        if (!this.headersAlreadySent) {
-            this.response.setContentType("text/html");
-            this.response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            this.headersAlreadySent = true;
-        }
-        log.exit();
-    }
-    
-    /**
-     * Send the header in case of HTTP 404 error
-     */
-    protected void sendPageNotFoundHeaders() {
-        log.entry();
-        if (this.response == null) {
-            return;
-        }
-        if (!this.headersAlreadySent) {
-            this.response.setContentType("text/html");
-            this.response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            this.headersAlreadySent = true;
-        }
-        log.exit();
-    }
-    
-    /**
-     * Send the header in case of HTTP 500 error
-     */
-    protected void sendInternalErrorHeaders() {
-        log.entry();
-        if (this.response == null) {
-            return;
-        }
-        if (!this.headersAlreadySent) {
-            this.response.setContentType("text/html");
-            this.response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            this.headersAlreadySent = true;
-        }
-        log.exit();
-    }
     
     /**
      * TODO comment
@@ -679,23 +594,25 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     /**
      * Return a new {@code RequestParameters} object to be used to generate URLs. 
      * This new {@code RequestParameters} will use the same {@code URLParameters} 
-     * as those returned by {@link #requestParameters} when calling 
-     * {@link #getUrlParametersInstance()}, and the {@code BgeeProperties} {@link #prop}. 
+     * as those returned by {@link #getRequestParameters()} when calling 
+     * {@link RequestParameters#getUrlParametersInstance()}, 
+     * and the {@code BgeeProperties} {@link #prop}. 
      * Also, parameters will be URL encoded, and parameter separator will be {@code &amp;}.
      * 
      * @return  A newly created RequestParameters object.
      */
     protected RequestParameters getNewRequestParameters() {
         log.entry();
-        return log.exit(new RequestParameters(this.requestParameters.getUrlParametersInstance(), 
+        return log.exit(new RequestParameters(
+                this.getRequestParameters().getUrlParametersInstance(), 
                 this.prop, true, "&amp;"));
     }
 
     /**
      * @return  The {@code HtmlFactory} that instantiated this object. This method is provided 
-     *          only to avoid having to cast the {@code Viewfactory} returned by {@link #getFactory()}.
+     *          only for convenience to avoid having to cast the {@code Viewfactory} returned by 
+     *          {@link #getFactory()}.
      */
-    //method overridden only to provide more accurate javadoc
     protected HtmlFactory getHtmlFactory() {
         return (HtmlFactory) super.getFactory();
     }

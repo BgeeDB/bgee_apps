@@ -13,6 +13,7 @@ import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.controller.exception.RequestParametersNotFoundException;
 import org.bgee.controller.exception.RequestParametersNotStorableException;
 import org.bgee.controller.exception.WrongFormatException;
+import org.bgee.view.ErrorDisplay;
 import org.bgee.view.GeneralDisplay;
 import org.bgee.view.ViewFactory;
 import org.bgee.view.ViewFactoryProvider;
@@ -151,7 +152,7 @@ public class FrontController extends HttpServlet {
                 this.urlParameters, this.prop, true, "&");
         //need the default factory here in case an exception is thrown 
         // before we get the correct display type
-        GeneralDisplay generalDisplay = null;
+        ErrorDisplay errorDisplay = null;
 
         //then let's start the real job!
         try {
@@ -160,7 +161,7 @@ public class FrontController extends HttpServlet {
             //so here we get the default view from the default factory before any exception 
             //can be thrown.
             ViewFactory factory = this.viewFactoryProvider.getFactory(response, requestParameters);
-            generalDisplay = factory.getGeneralDisplay();
+            errorDisplay = factory.getErrorDisplay();
             request.setCharacterEncoding("UTF-8");
             requestParameters = new RequestParameters(request, this.urlParameters, this.prop,
                     true, "&");
@@ -187,24 +188,24 @@ public class FrontController extends HttpServlet {
             
         //=== process errors ===
         } catch(RequestParametersNotFoundException e) {
-            generalDisplay.displayRequestParametersNotFound(requestParameters.getFirstValue(
+            errorDisplay.displayRequestParametersNotFound(requestParameters.getFirstValue(
                     this.urlParameters.getParamData()));
             log.error("RequestParametersNotFoundException", e);
         } catch(PageNotFoundException e) {
-            generalDisplay.displayPageNotFound(e.getMessage());
+            errorDisplay.displayPageNotFound(e.getMessage());
             log.error("PageNotFoundException", e);
         } catch(RequestParametersNotStorableException e) {
-            generalDisplay.displayRequestParametersNotStorable(e.getMessage());
+            errorDisplay.displayRequestParametersNotStorable(e.getMessage());
             log.error("RequestParametersNotStorableException", e);
         } catch(MultipleValuesNotAllowedException e) {
-            generalDisplay.displayMultipleParametersNotAllowed(e.getMessage());
+            errorDisplay.displayMultipleParametersNotAllowed(e.getMessage());
             log.error("MultipleValuesNotAllowedException", e);
         } catch(WrongFormatException e) {
-            generalDisplay.displayWrongFormat(e.getMessage());
+            errorDisplay.displayWrongFormat(e.getMessage());
             log.error("WrongFormatException", e);
         } catch(Exception e) {
-            if (generalDisplay != null) {
-                generalDisplay.displayUnexpectedError();
+            if (errorDisplay != null) {
+                errorDisplay.displayUnexpectedError();
             }
             log.error("Other Exception", e);
         } finally {

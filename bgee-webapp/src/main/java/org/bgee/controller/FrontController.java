@@ -13,7 +13,7 @@ import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.controller.exception.RequestParametersNotFoundException;
 import org.bgee.controller.exception.RequestParametersNotStorableException;
 import org.bgee.controller.exception.WrongFormatException;
-import org.bgee.view.GeneralDisplay;
+import org.bgee.view.ErrorDisplay;
 import org.bgee.view.ViewFactory;
 import org.bgee.view.ViewFactoryProvider;
 
@@ -149,27 +149,30 @@ public class FrontController extends HttpServlet {
         //we get  "fake" RequestParameters so that no exception is thrown already.
         RequestParameters requestParameters = new RequestParameters(
                 this.urlParameters, this.prop, true, "&");
-        //need the default factory here in case an exception is thrown 
-        // before we get the correct display type
-        GeneralDisplay generalDisplay = null;
+        //in this variable, we will first store the default HTML ErrorDisplay, 
+        //in case we cannot acquire an ErrorDisplay for the requested view, 
+        //then we will try to acquire the appropriate ErrorDisplay. 
+        ErrorDisplay errorDisplay = null;
 
-        //then let's start the real job!
         try {
             //in order to display error message in catch clauses. 
             //we do it in the try clause, because getting a view can throw an IOException.
             //so here we get the default view from the default factory before any exception 
             //can be thrown.
             ViewFactory factory = this.viewFactoryProvider.getFactory(response, requestParameters);
-            generalDisplay = factory.getGeneralDisplay();
-            request.setCharacterEncoding("UTF-8");
+            errorDisplay = factory.getErrorDisplay();
+            
+            //OK, now we try to get the view requested. If an error occurred, 
+            //the HTML view will allow to display an error message anyway
             requestParameters = new RequestParameters(request, this.urlParameters, this.prop,
                     true, "&");
-            log.info("Analyzed URL: " + requestParameters.getRequestURL("&"));
-            
-            //in order to display error message in catch clauses. 
-            //we redo it here to get the correct display type and correct user, 
-            // if no exception was thrown yet
+            log.info("Analyzed URL: " + requestParameters.getRequestURL());
             factory = this.viewFactoryProvider.getFactory(response, requestParameters);
+            errorDisplay = factory.getErrorDisplay();
+            
+            //Set character encoding after acquiring an ErrorDisplay, 
+            //this can thrown an Exception.
+            request.setCharacterEncoding("UTF-8");
             
             CommandParent controller = null;
             if (requestParameters.isTheHomePage()) {
@@ -187,24 +190,27 @@ public class FrontController extends HttpServlet {
             
         //=== process errors ===
         } catch(RequestParametersNotFoundException e) {
-            generalDisplay.displayRequestParametersNotFound(requestParameters.getFirstValue(
+            errorDisplay.displayRequestParametersNotFound(requestParameters.getFirstValue(
                     this.urlParameters.getParamData()));
             log.error("RequestParametersNotFoundException", e);
         } catch(PageNotFoundException e) {
-            generalDisplay.displayPageNotFound(e.getMessage());
+            errorDisplay.displayPageNotFound(e.getMessage());
             log.error("PageNotFoundException", e);
         } catch(RequestParametersNotStorableException e) {
-            generalDisplay.displayRequestParametersNotStorable(e.getMessage());
+            errorDisplay.displayRequestParametersNotStorable(e.getMessage());
             log.error("RequestParametersNotStorableException", e);
         } catch(MultipleValuesNotAllowedException e) {
-            generalDisplay.displayMultipleParametersNotAllowed(e.getMessage());
+            errorDisplay.displayMultipleParametersNotAllowed(e.getMessage());
             log.error("MultipleValuesNotAllowedException", e);
         } catch(WrongFormatException e) {
-            generalDisplay.displayWrongFormat(e.getMessage());
+            errorDisplay.displayWrongFormat(e.getMessage());
             log.error("WrongFormatException", e);
+        } catch(UnsupportedOperationException e) {
+            errorDisplay.displayUnsupportedOperationException(e.getMessage());
+            log.error("UnsupportedOperationException", e);
         } catch(Exception e) {
-            if (generalDisplay != null) {
-                generalDisplay.displayUnexpectedError();
+            if (errorDisplay != null) {
+                errorDisplay.displayUnexpectedError();
             }
             log.error("Other Exception", e);
         } finally {

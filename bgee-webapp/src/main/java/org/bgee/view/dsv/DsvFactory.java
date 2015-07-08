@@ -11,6 +11,7 @@ import org.bgee.controller.RequestParameters;
 import org.bgee.view.AboutDisplay;
 import org.bgee.view.DocumentationDisplay;
 import org.bgee.view.DownloadDisplay;
+import org.bgee.view.ErrorDisplay;
 import org.bgee.view.GeneralDisplay;
 import org.bgee.view.ViewFactory;
 
@@ -32,6 +33,11 @@ public class DsvFactory extends ViewFactory {
 	public GeneralDisplay getGeneralDisplay() {
 	    throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
 	}
+
+    @Override
+    public ErrorDisplay getErrorDisplay() {
+        throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
+    }
 
     @Override
     public DocumentationDisplay getDocumentationDisplay() throws IOException {

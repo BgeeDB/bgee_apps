@@ -11,17 +11,22 @@ import org.bgee.controller.RequestParameters;
  * This class exists only to be the parent of {@code TestDownloadDisplay}
  * 
  * @author Mathieu Seppey
- * @version Bgee 13 Aug 2014
+ * @author Frederic Bastian
+ * @version Bgee 13 Jul 2015
  * @since   Bgee 13
  */
 // None of these classes launch test
 public class TestParentDisplay extends ConcreteDisplayParent {
 
-	@SuppressWarnings("unused")
     public TestParentDisplay(HttpServletResponse response, RequestParameters requestParameters, 
 	        BgeeProperties prop, ViewFactory factory) throws IOException {
-		super(response, prop, factory);
+		super(response, requestParameters, prop, factory);
 	}
+
+    @Override
+    protected String getContentType() {
+        return "text/html";
+    }
 
 //    @SuppressWarnings("unused")
 //    @Override

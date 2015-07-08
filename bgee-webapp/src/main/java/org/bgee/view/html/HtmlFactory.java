@@ -11,6 +11,7 @@ import org.bgee.controller.RequestParameters;
 import org.bgee.view.AboutDisplay;
 import org.bgee.view.DocumentationDisplay;
 import org.bgee.view.DownloadDisplay;
+import org.bgee.view.ErrorDisplay;
 import org.bgee.view.GeneralDisplay;
 import org.bgee.view.ViewFactory;
 
@@ -54,6 +55,13 @@ public class HtmlFactory extends ViewFactory {
 		return log.exit(new HtmlGeneralDisplay(this.response, this.requestParameters,
 		        this.prop, this));
 	}
+
+    @Override
+    public ErrorDisplay getErrorDisplay() throws IOException {
+        log.entry();
+        return log.exit(new HtmlErrorDisplay(this.response, this.requestParameters,
+                this.prop, this));
+    }
 
     @Override
     public DocumentationDisplay getDocumentationDisplay() throws IOException {

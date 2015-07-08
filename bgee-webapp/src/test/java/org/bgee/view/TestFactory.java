@@ -51,6 +51,16 @@ public class TestFactory extends ViewFactory {
     }
 
     @Override
+    /**
+     * This method should not be called if the code is error free.
+     * @param prop  A {@code BgeeProperties}
+     * @return  {@code null}
+     */
+    public ErrorDisplay getErrorDisplay() {
+        return null;
+    }
+
+    @Override
     public DocumentationDisplay getDocumentationDisplay() throws IOException {
         if(prop.getUrlMaxLength() == 9999 && this.requestParameters.getFirstValue(
                 ((TestURLParameters)this.requestParameters.getUrlParametersInstance())

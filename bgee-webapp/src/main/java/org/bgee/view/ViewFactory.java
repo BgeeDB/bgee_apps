@@ -73,6 +73,15 @@ public abstract class ViewFactory {
      *                      response output.
      */
     public abstract GeneralDisplay getGeneralDisplay() throws IOException;
+    
+    /**                             
+     * @return  An {@code ErrorDisplay} used to display error messages when a request 
+     *          has failed.
+     * 
+     * @throws IOException  If an error occurs with the {@code PrintWriter} when writing the
+     *                      response output.
+     */
+    public abstract ErrorDisplay getErrorDisplay() throws IOException;
 
     /**
      *                              

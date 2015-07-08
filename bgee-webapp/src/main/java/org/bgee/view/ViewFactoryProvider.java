@@ -8,6 +8,7 @@ import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.dsv.DsvFactory;
 import org.bgee.view.html.HtmlFactory;
+import org.bgee.view.json.JsonFactory;
 import org.bgee.view.xml.XmlFactory;
 
 /**
@@ -25,7 +26,7 @@ public class ViewFactoryProvider {
      * An {@code enum} of the different display types
      */
     public static enum DisplayType {
-        HTML, XML, CSV, TSV;
+        HTML, XML, JSON, CSV, TSV;
     }
     
     /**
@@ -69,8 +70,11 @@ public class ViewFactoryProvider {
     public ViewFactory getFactory(HttpServletResponse response, RequestParameters requestParameters) {        
         log.entry(response, requestParameters);
         DisplayType displayType = DEFAULT;
+        
         if (requestParameters.isXmlDisplayType()) {
             displayType = DisplayType.XML;
+        } else if (requestParameters.isJsonDisplayType()) {
+            displayType = DisplayType.JSON;
         } else if (requestParameters.isCsvDisplayType()) {
             displayType = DisplayType.CSV;
         } else if (requestParameters.isTsvDisplayType()) {
@@ -100,6 +104,9 @@ public class ViewFactoryProvider {
     protected synchronized ViewFactory getFactory(HttpServletResponse response, 
             DisplayType displayType, RequestParameters requestParameters) {
         log.entry(response, displayType, requestParameters);
+        if (displayType == DisplayType.JSON) {
+            return new JsonFactory(response, requestParameters, this.prop);
+        }
         if (displayType == DisplayType.XML) {
             return new XmlFactory(response, requestParameters, this.prop);
         }

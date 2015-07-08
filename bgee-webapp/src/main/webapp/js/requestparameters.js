@@ -7,33 +7,39 @@
  * a new instance for every request you have to manage. All arguments are optional: 
  * <ul>
  * <li>if {@code queryString} is null or empty, then no parameters of the object will be set 
- * ("blank" requestParameters object, that you could use to generate URLs after setting 
+ * (= "blank" requestParameters object, that you can use to generate URLs after setting 
  * parameters); if it is defined, then all parameter values will be extracted from the URL, 
  * and will be accessible through the getters of this class (this is usually used 
  * to retrieve parameters from the browser URL at page loading). 
  * <strong>Note that the values can be retrieved indifferently from the search part 
- * and the hash part of the URL</strong>.
+ * (window.location.search) and the hash part of the URL (window.location.hash)</strong>.
  * <li>if {@code encodeUrl} is undefined, the default value {@code true} is used; 
- * <li>if {@code parametersSeparator} is null or empty, then '&' is used.
+ * <li>if {@code parametersSeparator} is null or empty, the default value '&' is used.
  * </ul>
  * <p>
- * Example :
+ * Examples :
+ * 
+ * <pre>
+ * {@code 
  * 
  * # for current URL
  * var currentRequest = new requestParameters(window.location.search + window.location.hash); 
+ * # get value of the "page" parameter
  * currentRequest.getPage();
- * # equivalent to
+ * # getPage() is just a helper method, this is equivalent to: 
  * currentRequest.getFirstValue(urlParameters.getParamPage());
- * 
- * # for manual query content
- * var currentRequest = new requestParameters(urlParameters.getParamPage()"=test",false);
  *     
- * # for "blank" request parameters, then used to generate URLs, with parameters URL encoded 
+ * # To generate URLs, use a "blank" request parameters. Here, with parameters URL encoded, 
  * # and '&amp;' as parameter separator. 
  * var urlGenerator = new requestParameters(null, true, '&amp;'); 
+ * # PAGE_DOWNLOAD() emulates a static final variable (here, to link to a download page)
  * urlGenerator.setPage(currentRequest.PAGE_DOWNLOAD());
+ * # generate the URL from the parameters set
  * urlGenerator.getRequestURL();
  * 
+ * 
+ * }
+ * </pre>
  * 
  * @author Mathieu Seppey
  * @author Frederic Bastian
@@ -55,6 +61,15 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      * to link to an element with corresponding ID on the page (see {@link setURLHash(String)}).
      */
 	var jsHashSeparator = "#";
+
+    /**
+     * A {@code String} that is the 'hash' part of the URL to add 
+     * when methods {@code getRequestURL} are called. This is used to actually link 
+     * to an element with this ID (the 'classical' use of hash), this must not be used 
+     * to store parameter values (the javascript use, allowing js to change an URL 
+     * with no redirection). For this latter use, see the {@code #getRequestURL} methods.
+     */
+    var urlHash;
 	
     /**
      * Associative array that contains the values for all parameters present in the query
@@ -283,6 +298,8 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
         if (!parametersSeparator) {
         	this.parametersSeparator = '&';
         }
+        
+        urlHash = null;
 
         this.loadParametersFromRequest(queryString);
     };
@@ -416,6 +433,21 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
             urlFragment = urlStart + '?' 
                 + urlFragment.substring(0, urlFragment.length - parametersSeparator.length);
         }
+        //if hash needs to be added, set through setURLHash (to really link to an element 
+        //with corresponding ID on a page, not to provide parameters readable/writable 
+        //with javascript),
+        if (this.getURLHash()) {
+            //check whether the hash is already used to store data parameters, 
+        	//we look for the hash separator when used for storing data parameters.
+            if (urlFragment.indexOf(jsHashSeparator) > -1) {
+                throw log.throwing(new IllegalStateException("It is not possible "
+                        + "to store data parameters in the hash part of URLs "
+                        + "while also trying to use a classical anchor (you previously called "
+                        + "the method setURLHash on this object)."));
+            }
+            urlFragment += "#" + this.getURLHash();
+        }
+        
         return urlFragment;
     };
     /**
@@ -607,6 +639,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      *                  to set.
      */
     this.setPage = function(page) {
+    	this.resetValues(urlParameters.getParamPage());
         this.addValue(urlParameters.getParamPage(), page);
     };
     /**
@@ -629,6 +662,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      *                  to set.
      */
     this.setAction = function(action) {
+    	this.resetValues(urlParameters.getParamAction());
         this.addValue(urlParameters.getParamAction(), action);
     };
     /**
@@ -643,6 +677,44 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
         return this.getFirstValue(urlParameters.getParamData());
     };
     
+    /**
+     * @return A {@code String} that will be used as the hash part of URLs returned by 
+     *         the  {@code getRequestURL} methods. See {@link #setURLHash(String)} 
+     *         for more details.
+     * @see #setURLHash(String)
+     */
+    this.getURLHash = function() {
+        return urlHash;
+    }
+    /**
+     * Set the 'hash' to be added at the end of the URLs generated by the {@code getRequestURL} 
+     * methods. This method should be used only to actually link to an element 
+     * with the corresponding ID in a page. It should not be used to use the hash 
+     * to store data parameters (for instance, to link to pages where the hash part 
+     * is used by javascript to read/write data parameters). For this latter use, 
+     * see the {@code #getRequestURL} methods.
+     * <p>
+     * Note that {@code urlHash} must not include the hash separator ('#').
+     * 
+     * @param hash      A {@code String} that will be used as the hash part of URLs returned by 
+     *                  the  {@code getRequestURL} methods.
+     */
+    this.setURLHash = function(hash) {
+        urlHash = hash;
+    };
+
+    /**
+     * Convenient method to set value of the parameter returned by 
+     * {@link URLParameters#getParamAction()}. Equivalent to calling 
+     * {@link #addValue(Parameter, Object)} for this parameter.
+     * 
+     * @param action    A {@code String} that is the value of the {@code action} URL parameter 
+     *                  to set.
+     */
+    this.setDisplayType = function(display) {
+    	this.resetValues(urlParameters.getParamDisplayType());
+        this.addValue(urlParameters.getParamDisplayType(), display);
+    };
     /**
      * @return  A {@code boolean} to tell whether the display is Xml or not
      */

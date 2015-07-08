@@ -142,6 +142,94 @@ public class RequestParameters {
      * {@link #PAGE_DOCUMENTATION}.
      */
     public static final String ACTION_DOC_PROC_EXPR_VALUE_DOWLOAD_FILES = "proc_value_files";
+
+    /**
+     * A {@code String} that is the anchor to use in the hash part of an URL 
+     * to link to the single-species part, in the documentation about gene expression calls.
+     */
+    public static final String HASH_DOC_CALL_SINGLE = "single";
+    /**
+     * A {@code String} that is the anchor to use in the hash part of an URL 
+     * to link to the multi-species part, in the documentation about gene expression calls.
+     */
+    public static final String HASH_DOC_CALL_MULTI = "multi";
+    /**
+     * A {@code String} that is the anchor to use in the hash part of an URL 
+     * to link to the OMA HOG part, in the documentation about gene expression calls.
+     */
+    public static final String HASH_DOC_CALL_OMA = "oma_hog";
+    /**
+     * A {@code String} that is the anchor to use in the hash part of an URL 
+     * to link to the single species expression part, in the documentation 
+     * about gene expression calls.
+     */
+    public static final String HASH_DOC_CALL_SINGLE_EXPR = "single_expr";
+    /**
+     * A {@code String} that is the anchor to use in the hash part of an URL 
+     * to link to the single species simple expression part, in the documentation 
+     * about gene expression calls.
+     */
+    public static final String HASH_DOC_CALL_SINGLE_EXPR_SIMPLE = "single_expr_simple";
+    /**
+     * A {@code String} that is the anchor to use in the hash part of an URL 
+     * to link to the single species complete expression part, in the documentation 
+     * about gene expression calls.
+     */
+    public static final String HASH_DOC_CALL_SINGLE_EXPR_COMPLETE = "single_expr_complete";
+    /**
+     * A {@code String} that is the anchor to use in the hash part of an URL 
+     * to link to the multi species expression part, in the documentation 
+     * about gene expression calls.
+     */
+    public static final String HASH_DOC_CALL_MULTI_EXPR = "multi_expr";
+    /**
+     * A {@code String} that is the anchor to use in the hash part of an URL 
+     * to link to the multi species simple expression part, in the documentation 
+     * about gene expression calls.
+     */
+    public static final String HASH_DOC_CALL_MULTI_EXPR_SIMPLE = "multi_expr_simple";
+    /**
+     * A {@code String} that is the anchor to use in the hash part of an URL 
+     * to link to the multi species complete expression part, in the documentation 
+     * about gene expression calls.
+     */
+    public static final String HASH_DOC_CALL_MULTI_EXPR_COMPLETE = "multi_expr_complete";
+    /**
+     * A {@code String} that is the anchor to use in the hash part of an URL 
+     * to link to the single species diff. expression part, in the documentation about 
+     * gene expression calls.
+     */
+    public static final String HASH_DOC_CALL_SINGLE_DIFF = "single_diff";
+    /**
+     * A {@code String} that is the anchor to use in the hash part of an URL 
+     * to link to the single species simple diff. expression part, in the documentation about 
+     * gene expression calls.
+     */
+    public static final String HASH_DOC_CALL_SINGLE_DIFF_SIMPLE = "single_diff_simple";
+    /**
+     * A {@code String} that is the anchor to use in the hash part of an URL 
+     * to link to the single species complete diff. expression part, in the documentation about 
+     * gene expression calls.
+     */
+    public static final String HASH_DOC_CALL_SINGLE_DIFF_COMPLETE = "single_diff_complete";
+    /**
+     * A {@code String} that is the anchor to use in the hash part of an URL 
+     * to link to the multi species diff. expression part, in the documentation about 
+     * gene expression calls.
+     */
+    public static final String HASH_DOC_CALL_MULTI_DIFF = "multi_diff";
+    /**
+     * A {@code String} that is the anchor to use in the hash part of an URL 
+     * to link to the multi species simple diff. expression part, in the documentation about 
+     * gene expression calls.
+     */
+    public static final String HASH_DOC_CALL_MULTI_DIFF_SIMPLE = "multi_diff_simple";
+    /**
+     * A {@code String} that is the anchor to use in the hash part of an URL 
+     * to link to the multi species complete diff. expression part, in the documentation about 
+     * gene expression calls.
+     */
+    public static final String HASH_DOC_CALL_MULTI_DIFF_COMPLETE = "multi_diff_complete";
     
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
@@ -1135,7 +1223,7 @@ public class RequestParameters {
     /**
      * Return the URL corresponding to this {@code RequestParameters} instance using 
      * a custom parameters separator instead of the one provided to the constructor or set 
-     * afterwards using {@link #setParametersSeparator}.
+     * afterwards using {@link #setParametersSeparator(String)}.
      * <p>
      * It is possible to distinguish parameters to be stored in the search part of the URL, 
      * or the hash part of the URL. This is useful for linking to pages reading/writing 
@@ -1428,6 +1516,7 @@ public class RequestParameters {
      *                  to set.
      */
     public void setPage(String page) {
+        this.resetValues(this.getUrlParametersInstance().getParamPage());
         this.addValue(this.getUrlParametersInstance().getParamPage(), page);
     }
     /**
@@ -1450,6 +1539,7 @@ public class RequestParameters {
      *                  to set.
      */
     public void setAction(String action) {
+        this.resetValues(this.getUrlParametersInstance().getParamAction());
         this.addValue(this.getUrlParametersInstance().getParamAction(), action);
     }
     /**
@@ -1490,6 +1580,18 @@ public class RequestParameters {
         this.urlHash = urlHash;
     }
 
+    /**
+     * Convenient method to set value of the parameter returned by 
+     * {@link URLParameters#getParamDisplayType()}. Equivalent to calling 
+     * {@link #addValue(Parameter, Object)} for this parameter.
+     * 
+     * @param action    A {@code String} that is the value of the {@code display_type} URL parameter 
+     *                  to set.
+     */
+    public void setDisplayType(String displayType) {
+        this.resetValues(this.getUrlParametersInstance().getParamDisplayType());
+        this.addValue(this.getUrlParametersInstance().getParamDisplayType(), displayType);
+    }
     /**
      * This method has a js counterpart in {@code requestparameters.js} that should be kept 
      * consistent as much as possible if the method evolves.

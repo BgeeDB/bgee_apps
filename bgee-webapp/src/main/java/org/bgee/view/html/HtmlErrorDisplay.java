@@ -126,6 +126,18 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
     }
 
     @Override
+    public void displayUnsupportedOperationException(String message) {
+        log.entry(message);
+        this.sendBadRequestHeaders();
+        this.startDisplay("Wrong format for a parameter");
+        this.writeln("<p class='alert'>Woops, something wrong happened</p>");
+        this.writeln("<p>The following operation is not supported: "+ message
+                + "</p>");
+        this.endDisplay();  
+        log.exit();
+    }
+
+    @Override
     protected void includeCss() {
         log.entry();
         super.includeCss();

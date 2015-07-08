@@ -39,7 +39,7 @@ public class JsonErrorDisplay extends JsonParentDisplay implements ErrorDisplay 
 
         this.write(
                 "{'error': {"
-                    + "'code': 503"
+                    + "'code': 503, "
                     + "'message': 'Due to technical problems, Bgee is currently unavailable. " +
                     "We are working to restore Bgee as soon as possible. " +
                     "We apologize for any inconvenience.'"
@@ -55,7 +55,7 @@ public class JsonErrorDisplay extends JsonParentDisplay implements ErrorDisplay 
 
         this.write(
                 "{'error': {"
-                    + "'code': 400"
+                    + "'code': 400, "
                     + "'message': 'You tried to use in your query some parameters "
                     + "supposed to be stored on our server, " +
                     "but we could not find them. Either the key you used was wrong, " +
@@ -74,7 +74,7 @@ public class JsonErrorDisplay extends JsonParentDisplay implements ErrorDisplay 
 
         this.write(
                 "{'error': {"
-                    + "'code': 404"
+                    + "'code': 404, "
                     + "'message': 'We could not understand your query, "
                     + "see details : " + message + "'"
                 + "}}");
@@ -89,7 +89,7 @@ public class JsonErrorDisplay extends JsonParentDisplay implements ErrorDisplay 
 
         this.write(
                 "{'error': {"
-                    + "'code': 500"
+                    + "'code': 500, "
                     + "'message': 'An error occurred on our side. This error was logged "
                     + "and will be investigated. We apologize for any inconvenience.'"
                 + "}}");
@@ -104,7 +104,7 @@ public class JsonErrorDisplay extends JsonParentDisplay implements ErrorDisplay 
         
         this.write(
                 "{'error': {"
-                    + "'code': 400"
+                    + "'code': 400, "
                     + "'message': '" + message + " Please check the URL and retry.'"
                 + "}}");
         
@@ -118,7 +118,7 @@ public class JsonErrorDisplay extends JsonParentDisplay implements ErrorDisplay 
         
         this.write(
                 "{'error': {"
-                    + "'code': 400"
+                    + "'code': 400, "
                     + "'message': 'A parameter is not storable or the key is missing: "
                     + message + "'"
                 + "}}");
@@ -133,8 +133,23 @@ public class JsonErrorDisplay extends JsonParentDisplay implements ErrorDisplay 
         
         this.write(
                 "{'error': {"
-                    + "'code': 400"
+                    + "'code': 400, "
                     + "'message': 'Wrong format for a parameter: "
+                    + message + "'"
+                + "}}");
+        
+        log.exit();
+    }
+
+    @Override
+    public void displayUnsupportedOperationException(String message) {
+        log.entry(message);
+        this.sendBadRequestHeaders();
+        
+        this.write(
+                "{'error': {"
+                    + "'code': 400, "
+                    + "'message': 'The following operation is not supported: "
                     + message + "'"
                 + "}}");
         

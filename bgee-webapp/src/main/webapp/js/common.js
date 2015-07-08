@@ -26,6 +26,24 @@
  * 
  */
 
+//prototype extensions
+
+//add indexOf to Array prototype, only for browsers not supporting ECMAScript 5th edition.
+if (!Array.indexOf)
+{
+  Array.indexOf = [].indexOf ?
+      function (arr, obj, from) { return arr.indexOf(obj, from); }:
+      function (arr, obj, from) { // (for IE6)
+        var l = arr.length,
+            i = from ? parseInt( (1*from) + (from<0 ? l:0), 10) : 0;
+        i = i<0 ? 0 : i;
+        for (; i<l; i++) {
+          if (i in arr  &&  arr[i] === obj) { return i; }
+        }
+        return -1;
+      };
+}
+
 //global vars 
 var CURRENT_REQUEST;
 var GLOBAL_PROPS;
@@ -34,7 +52,7 @@ $(document).ready(function() {
     // Init object urlParameters, which provides the list of all parameters allowed in an URL.
     urlParameters.init();
     // Create a requestParameters for the current URL
-    CURRENT_REQUEST = new requestParameters(null, true, "&");
+    CURRENT_REQUEST = new requestParameters(window.location.search + window.location.hash);
     //create a BgeeProperties object to be accessed by all scripts
     GLOBAL_PROPS = new bgeeProperties();
     

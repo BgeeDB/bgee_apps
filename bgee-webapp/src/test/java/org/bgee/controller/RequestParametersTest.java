@@ -7,6 +7,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -183,7 +185,9 @@ public class RequestParametersTest extends TestAncestor {
     }
 
     /**
-     * Test of the method getRequestURL()
+     * Test the methods {@link RequestParameters#getRequestURL()} and 
+     * {@link RequestParameters#getRequestURL(String)}.
+     * 
      * @throws MultipleValuesNotAllowedException 
      * @throws RequestParametersNotStorableException 
      * @throws RequestParametersNotFoundException 
@@ -232,6 +236,135 @@ public class RequestParametersTest extends TestAncestor {
                         + "+data=" + this.generatedKey, 
                         this.requestParametersHavingAKey.getRequestURL("+"));
 
+    }
+    
+    /**
+     * Test the methods {@link RequestParameters#getRequestURL(Collection, boolean)} and 
+     * {@link RequestParameters#getRequestURL(String, Collection, boolean)}.
+     * 
+     * @throws MultipleValuesNotAllowedException 
+     * @throws RequestParametersNotStorableException 
+     * @throws RequestParametersNotFoundException 
+     * @throws WrongFormatException 
+     */
+    @Test
+    public void testGetRequestURLWithHash() throws RequestParametersNotStorableException,
+    MultipleValuesNotAllowedException, WrongFormatException{
+        // Check that the query returned corresponds to the parameters declared in
+        // the mockHttpServletRequest, but by requesting some to be in the hash, 
+        // in different ways. Do it with the default parameters separator and with
+        // a custom one.
+        Collection<URLParameters.Parameter> params = new HashSet<URLParameters.Parameter>();
+        params.add(RequestParametersTest.testURLParameters.getParamTestString());
+        params.add(RequestParametersTest.testURLParameters.getParamTestBoolean());
+        
+        assertEquals("Incorrect query returned ","?test_string=string1"
+                + "&test_boolean=true&test_boolean=false" 
+                + RequestParameters.JS_HASH_SEPARATOR + "test_integer=1234"
+                + "&test_integer=2345",this.requestParametersWithNoKey.getRequestURL(
+                        params, true));
+        assertEquals("Incorrect query returned ","?test_integer=1234"
+                + "&test_integer=2345" + RequestParameters.JS_HASH_SEPARATOR 
+                + "test_string=string1&test_boolean=true&test_boolean=false",
+                this.requestParametersWithNoKey.getRequestURL(
+                        params, false));
+        
+        //if we provide an empty Collection, we should be able to get either 
+        //all params in the search part, or all params in the hash part
+        params.clear();
+        
+        assertEquals("Incorrect query returned ","?test_string=string1&test_integer="
+                + "1234&test_integer=2345&test_boolean=true&test_boolean="
+                + "false", this.requestParametersWithNoKey.getRequestURL(
+                        params, false));
+        assertEquals("Incorrect query returned ", RequestParameters.JS_HASH_SEPARATOR 
+                + "test_string=string1&test_integer=1234&test_integer=2345"
+                + "&test_boolean=true&test_boolean=false", 
+                this.requestParametersWithNoKey.getRequestURL(
+                        params, true));
+        
+        //same tests, but with custom separator
+        params = new HashSet<URLParameters.Parameter>();
+        params.add(RequestParametersTest.testURLParameters.getParamTestString());
+        params.add(RequestParametersTest.testURLParameters.getParamTestBoolean());
+        assertEquals("Incorrect query returned ","?test_string=string1"
+                + "+test_boolean=true+test_boolean=false" 
+                + RequestParameters.JS_HASH_SEPARATOR + "test_integer=1234"
+                + "+test_integer=2345",this.requestParametersWithNoKey.getRequestURL("+", 
+                        params, true));
+        assertEquals("Incorrect query returned ","?test_integer=1234"
+                + "+test_integer=2345" + RequestParameters.JS_HASH_SEPARATOR 
+                + "test_string=string1+test_boolean=true+test_boolean=false",
+                this.requestParametersWithNoKey.getRequestURL("+", 
+                        params, false));
+        
+        params.clear();
+        assertEquals("Incorrect query returned ","?test_string=string1+test_integer="
+                + "1234+test_integer=2345+test_boolean=true+test_boolean="
+                + "false", this.requestParametersWithNoKey.getRequestURL("+", 
+                        params, false));
+        assertEquals("Incorrect query returned ", RequestParameters.JS_HASH_SEPARATOR 
+                + "test_string=string1+test_integer=1234+test_integer=2345"
+                + "+test_boolean=true+test_boolean=false", 
+                this.requestParametersWithNoKey.getRequestURL("+", 
+                        params, true));
+        
+
+        // Add a parameter value to exceed the threshold over which a key is used
+        // (120 for this test, see method loadParameters()),
+        // and check that indeed, a key is present after a new call of 
+        // getRequestURL(), with still test_string written because
+        // it is non storable, and with parameters attributed to search or hash part
+        this.addParamsToExceedThreshold(this.requestParametersWithNoKey);
+
+        params = new HashSet<URLParameters.Parameter>();
+        params.add(RequestParametersTest.testURLParameters.getParamData());
+        assertEquals("Incorrect query returned ", 
+                "?test_string=string1" + RequestParameters.JS_HASH_SEPARATOR 
+                + "data=" + this.generatedKey, 
+                this.requestParametersWithNoKey.getRequestURL("+", params, false));
+        assertEquals("Incorrect query returned ", 
+                "?data=" + this.generatedKey + RequestParameters.JS_HASH_SEPARATOR 
+                + "test_string=string1", 
+                this.requestParametersWithNoKey.getRequestURL("+", params, true));
+
+        //check that an exception is thrown if setURLHash is used along with setting 
+        //data parameters in hash
+        this.requestParametersWithNoKey.setURLHash("myHash");
+        try {
+            this.requestParametersWithNoKey.getRequestURL("+", params, true);
+            //test failed
+            throw log.throwing(new AssertionError("An exception should have been thrown."));
+        } catch (IllegalStateException e) {
+            //test passed.
+        }
+    }
+    
+    /**
+     * Check appropriate behavior of {@code getRequestURL} methods 
+     * following a call to {@link RequestParameters#setURLHash(String)}.
+     */
+    @Test
+    public void testSetURLHash() {
+        this.requestParametersWithNoKey.setURLHash("myHash1");
+        
+        assertEquals("Incorrect query returned ","?test_string=string1&test_integer="
+                + "1234&test_integer=2345&test_boolean=true&test_boolean="
+                + "false#myHash1",this.requestParametersWithNoKey.getRequestURL());
+        assertEquals("Incorrect query returned ","?test_string=string1+test_integer="
+                + "1234+test_integer=2345+test_boolean=true+test_boolean="
+                + "false#myHash1",this.requestParametersWithNoKey.getRequestURL("+"));
+        
+       // Add a parameter value to exceed the threshold over which a key is used
+        // (120 for this test, see method loadParameters()),
+        // and check that indeed, a key is present after a new call of 
+        // getRequestURL(), with still test_string written because
+        // it is non storable
+        this.addParamsToExceedThreshold(this.requestParametersWithNoKey);
+
+        assertEquals("Incorrect query returned ", 
+                "?test_string=string1+data=" + this.generatedKey + "#myHash1", 
+                        this.requestParametersWithNoKey.getRequestURL("+"));
     }
 
     /**

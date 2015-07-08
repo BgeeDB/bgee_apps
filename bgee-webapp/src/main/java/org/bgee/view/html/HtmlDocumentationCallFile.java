@@ -403,7 +403,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "from orthologous genes belonging to a same orthology group. "
                 + "Genes member of a OMA gene orthology group can be retrieved "
                 + "through the associated "
-                + "<a href='#oma_hog' title='Jump to hierarchical orthologous groups "
+                + "<a href='#" + RequestParameters.HASH_DOC_CALL_OMA 
+                + "' title='Jump to hierarchical orthologous groups "
                 + "file documentation'>hierarchical orthologous groups file</a>.</p>");
     }
 
@@ -1498,7 +1499,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
     protected void writeDocumentation() {
         log.entry();
         
-        this.writeln("<h1 id='sectionname'>Expression call download file documentation</h1>");
+        this.writeln("<h1>Expression call download file documentation</h1>");
         RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
         urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
         urlDownloadGenerator.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
@@ -1514,13 +1515,16 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         
         //Single species documentation
         this.writeln("<div>");
-        this.writeln("<h2 id='single'>Single-species download files</h2>");
+        this.writeln("<h2 id='" + RequestParameters.HASH_DOC_CALL_SINGLE 
+                + "'>Single-species download files</h2>");
         this.writeln("<div class='doc_content'>");
         this.writeln("<p>Jump to: </p>"
                 + "<ul>"
-                + "<li><a href='#single_expr' title='Quick jump to presence/absence of expression'>"
+                + "<li><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR 
+                + "' title='Quick jump to presence/absence of expression'>"
                 + "Presence/absence of expression</a></li>"
-                + "<li><a href='#single_diff' title='Quick jump to differential expression'>"
+                + "<li><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF
+                + "' title='Quick jump to differential expression'>"
                 + "Over-/under-expression across anatomy or life stages</a></li>"
                 + "</ul>");
         //presence/absence
@@ -1533,7 +1537,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         
         //multi-species documentation
         this.writeln("<div>");
-        this.writeln("<h2 id='multi'>Multi-species download files</h2>");
+        this.writeln("<h2 id='" + RequestParameters.HASH_DOC_CALL_MULTI 
+                + "'>Multi-species download files</h2>");
         this.writeln("<div class='doc_content'>");
         this.writeln("<p>Bgee provides the ability to compare expression data between species, "
                 + "with great anatomical detail, using formal concepts of homology: "
@@ -1570,16 +1575,20 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "Bgee identifies their Least Common Ancestor (LCA), and retrieve genes "
                 + "that have descended from a single common ancestral gene in that LCA. "
                 + "Relations of orthology between genes are provided in Bgee through "
-                + "<a href='#oma_hog' title='Jump to hierarchical orthologous groups "
+                + "<a href='#" + RequestParameters.HASH_DOC_CALL_OMA 
+                + "' title='Jump to hierarchical orthologous groups "
                 + "file documentation'>hierarchical orthologous groups files</a>.</li>"
                 + "</ul>");
         this.writeln("<p>Jump to: </p>"
                 + "<ul>"
-                + "<li><a href='#oma_hog' title='Quick jump to OMA HOG file'>"
+                + "<li><a href='#" + RequestParameters.HASH_DOC_CALL_OMA 
+                + "' title='Quick jump to OMA HOG file'>"
                 + "OMA Hierarchical orthologous groups</a></li>"
-//                + "<li><a href='#multi_expr' title='Quick jump to presence/absence of expression'>"
+//                + "<li><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_EXPR 
+//                + "' title='Quick jump to presence/absence of expression'>"
 //                + "Presence/absence of expression</a></li>"
-                + "<li><a href='#multi_diff' title='Quick jump to differential expression'>"
+                + "<li><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF
+                + "' title='Quick jump to differential expression'>"
                 + "Over-/under-expression across anatomy or life stages</a></li>"
                 + "</ul>");
 
@@ -1613,50 +1622,62 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         
         this.writeln("<div class='documentationmenu'><ul>");
         //Single-species
-        this.writeln("<li><a href='#single' title='Quick jump to this section'>" + 
+        this.writeln("<li><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE
+                + "' title='Quick jump to this section'>" + 
                 "Single-species download files</a>");
         //presence/absence
         this.writeln("<ul>");           
-        this.writeln("<li><a href='#single_expr' title='Quick jump to this section'>" + 
+        this.writeln("<li><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR 
+                + "' title='Quick jump to this section'>" + 
                 "Presence/absence of expression</a>");
         //Actually there explanations common to simple and complete files, so we don't provide
         //direct links to simple/common files, that would skip the common explanations.
 //        this.writeln("<ul>");
-//        this.writeln("<li><a href='#single_expr_simple' title='Quick jump to this section'>" + 
+//        this.writeln("<li><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_SIMPLE 
+//                + "' title='Quick jump to this section'>" + 
 //                "Simple file</a></li>");
-//        this.writeln("<li><a href='#single_expr_complete' title='Quick jump to this section'>" + 
+//        this.writeln("<li><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+//                + "' title='Quick jump to this section'>" + 
 //                "Complete file</a></li>");
 //        this.writeln("</ul>");   
         this.writeln("</li>");              //end of presence/absence
         //diff expression
-        this.writeln("<li><a href='#single_diff' title='Quick jump to this section'>" + 
+        this.writeln("<li><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF
+                + "' title='Quick jump to this section'>" + 
                 "Over-/under-expression across anatomy or life stages</a>");
         //Actually there explanations common to simple and complete files, so we don't provide
         //direct links to simple/common files, that would skip the common explanations.
 //        this.writeln("<ul>");
-//        this.writeln("<li><a href='#single_diff_simple' title='Quick jump to this section'>" + 
+//        this.writeln("<li><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_SIMPLE 
+//                + "' title='Quick jump to this section'>" + 
 //                "Simple file</a></li>");
-//        this.writeln("<li><a href='#single_diff_complete' title='Quick jump to this section'>" + 
+//        this.writeln("<li><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+//                + "' title='Quick jump to this section'>" + 
 //                "Complete file</a></li>");
 //        this.writeln("</ul>"); 
         this.writeln("</li>");              //end of diff expression 
         this.writeln("</ul></li>");     // end of single-species section
         
         //multi-species
-        this.writeln("<li><a href='#multi' title='Quick jump to this section'>" + 
+        this.writeln("<li><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI
+                + "' title='Quick jump to this section'>" + 
                 "Multi-species download files</a>");
         //diff expression
         this.writeln("<ul>");    
-        this.writeln("<li><a href='#oma_hog' title='Quick jump to OMA HOG file'>"
+        this.writeln("<li><a href='#" + RequestParameters.HASH_DOC_CALL_OMA 
+                + "' title='Quick jump to OMA HOG file'>"
                 + "OMA Hierarchical orthologous groups</a></li>");
-        this.writeln("<li><a href='#multi_diff' title='Quick jump to this section'>" + 
+        this.writeln("<li><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF
+                + "' title='Quick jump to this section'>" + 
                 "Over-/under-expression across anatomy or life stages</a>");
         //Actually there explanations common to simple and complete files, so we don't provide
         //direct links to simple/common files, that would skip the common explanations.
 //        this.writeln("<ul>");
-//        this.writeln("<li><a href='#multi_diff_simple' title='Quick jump to this section'>" + 
+//        this.writeln("<li><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_SIMPLE 
+//                + "' title='Quick jump to this section'>" + 
 //                "Simple file</a></li>");
-//        this.writeln("<li><a href='#multi_diff_complete' title='Quick jump to this section'>" + 
+//        this.writeln("<li><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+//                + "' title='Quick jump to this section'>" + 
 //                "Complete file</a></li>");
 //        this.writeln("</ul>");         
         this.writeln("</li>");              //end of diff expression        
@@ -1683,7 +1704,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         log.entry();
         
         //presence/absence of expression
-        this.writeln("<h3 id='single_expr'>Presence/absence of expression</h3>");
+        this.writeln("<h3 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR 
+                + "'>Presence/absence of expression</h3>");
         //TODO: add link to data analyses documentation
         this.writeln(HtmlDocumentationDisplay.getExprCallExplanation());
         this.writeln("<p>After presence/absence calls are generated from the raw data, "
@@ -1723,9 +1745,11 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "in all possible anatomical entities and developmental stages.</p>");
         this.writeln("<p>Jump to format description for: </p>"
                 + "<ul>"
-                + "<li><a href='#single_expr_simple' title='Quick jump to simple file description'>"
+                + "<li><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_SIMPLE 
+                + "' title='Quick jump to simple file description'>"
                 + "simple file</a></li>"
-                + "<li><a href='#single_expr_complete' title='Quick jump to complete file description'>"
+                + "<li><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "' title='Quick jump to complete file description'>"
                 + "complete file</a></li>"
                 + "</ul>");
         
@@ -1751,7 +1775,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
     private void writeSingleSpeciesSimpleExprCallFileDoc() {
         log.entry();
         
-        this.writeln("<h4 id='single_expr_simple'>Simple file</h4>");
+        this.writeln("<h4 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_SIMPLE 
+                + "'>Simple file</h4>");
         this.writeln("<p>In simple files, propagated presence/absence expression calls "
                 + "are provided, but only calls in conditions of anatomical entity/developmental stage "
                 + "actually used in experimental data are displayed (no calls generated "
@@ -1762,51 +1787,68 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeln("<tr><th>Column</th><th>Content</th><th>Example</th></tr>");
         this.writeln("</thead>");
         this.writeln("<tbody>");
-        this.writeln("<tr><td>1</td><td><a href='#single_expr_simple_col1' title='" 
+        this.writeln("<tr><td>1</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_SIMPLE 
+                + "_col1' title='" 
                 + GENE_ID_LINK_TITLE + "'>" + GENE_ID_COL_NAME 
                 + "</a></td><td>FBgn0005427</td></tr>");
-        this.writeln("<tr><td>2</td><td><a href='#single_expr_simple_col2' title='" 
+        this.writeln("<tr><td>2</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_SIMPLE 
+                + "_col2' title='" 
                 + GENE_NAME_LINK_TITLE + "'>" + GENE_NAME_COL_NAME 
                 + "</a></td><td>ewg</td></tr>");
-        this.writeln("<tr><td>3</td><td><a href='#single_expr_simple_col3' title='" 
+        this.writeln("<tr><td>3</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_SIMPLE 
+                + "_col3' title='" 
                 + ANAT_ENTITY_ID_LINK_TITLE + "'>" + ANAT_ENTITY_ID_COL_NAME 
                 + "</a></td><td>FBbt:00003404</td></tr>");
-        this.writeln("<tr><td>4</td><td><a href='#single_expr_simple_col4' title='" 
+        this.writeln("<tr><td>4</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_SIMPLE 
+                + "_col4' title='" 
                 + ANAT_ENTITY_NAME_LINK_TITLE + "'>" + ANAT_ENTITY_NAME_COL_NAME 
                 + "</a></td><td>mesothoracic extracoxal depressor muscle 66 (Drosophila)</td></tr>");
-        this.writeln("<tr><td>5</td><td><a href='#single_expr_simple_col5' title='" 
+        this.writeln("<tr><td>5</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_SIMPLE 
+                + "_col5' title='" 
                 + STAGE_ID_LINK_TITLE + "'>" + STAGE_ID_COL_NAME 
                 + "</a></td><td>FBdv:00005348</td></tr>");
-        this.writeln("<tr><td>6</td><td><a href='#single_expr_simple_col6' title='" 
+        this.writeln("<tr><td>6</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_SIMPLE 
+                + "_col6' title='" 
                 + STAGE_NAME_LINK_TITLE + "'>" + STAGE_NAME_COL_NAME 
                 + "</a></td><td>prepupal stage P4(ii) (Drosophila)</td></tr>");
-        this.writeln("<tr><td>7</td><td><a href='#single_expr_simple_col7' title='" 
+        this.writeln("<tr><td>7</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_SIMPLE 
+                + "_col7' title='" 
                 + EXPR_STATE_LINK_TITLE + "'>" + EXPR_STATE_COL_NAME 
                 + "</a></td><td>present</td></tr>");
-        this.writeln("<tr><td>8</td><td><a href='#single_expr_simple_col8' title='" 
+        this.writeln("<tr><td>8</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_SIMPLE 
+                + "_col8' title='" 
                 + EXPR_QUAL_LINK_TITLE + "'>" + EXPR_QUAL_COL_NAME 
                 + "</a></td><td>high quality</td></tr>");
         this.writeln("</tbody>");
         this.writeln("</table>");
         this.writeln(getSingleSpeciesSimpleExprFileExample());
         
-        this.writeln("<h5 id='single_expr_simple_col1'>" + GENE_ID_COL_NAME + " (column 1)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_SIMPLE 
+                + "_col1'>" + GENE_ID_COL_NAME + " (column 1)</h5>");
         this.writeln(getGeneIdColDescription());
-        this.writeln("<h5 id='single_expr_simple_col2'>" + GENE_NAME_COL_NAME + " (column 2)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_SIMPLE 
+                + "_col2'>" + GENE_NAME_COL_NAME + " (column 2)</h5>");
         this.writeln(getGeneNameColDescription(1));
-        this.writeln("<h5 id='single_expr_simple_col3'>" + ANAT_ENTITY_ID_COL_NAME + " (column 3)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_SIMPLE 
+                + "_col3'>" + ANAT_ENTITY_ID_COL_NAME + " (column 3)</h5>");
         this.writeln(getAnatEntityIdColDescription());
-        this.writeln("<h5 id='single_expr_simple_col4'>" + ANAT_ENTITY_NAME_COL_NAME + " (column 4)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_SIMPLE 
+                + "_col4'>" + ANAT_ENTITY_NAME_COL_NAME + " (column 4)</h5>");
         this.writeln(getAnatEntityNameColDescription(3));
-        this.writeln("<h5 id='single_expr_simple_col5'>" + STAGE_ID_COL_NAME + " (column 5)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_SIMPLE 
+                + "_col5'>" + STAGE_ID_COL_NAME + " (column 5)</h5>");
         this.writeln(getStageIdColDescription());
-        this.writeln("<h5 id='single_expr_simple_col6'>" + STAGE_NAME_COL_NAME + " (column 6)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_SIMPLE 
+                + "_col6'>" + STAGE_NAME_COL_NAME + " (column 6)</h5>");
         this.writeln(getStageNameColDescription(4));
-        this.writeln("<h5 id='single_expr_simple_col7'>" + EXPR_STATE_COL_NAME + " (column 7)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_SIMPLE 
+                + "_col7'>" + EXPR_STATE_COL_NAME + " (column 7)</h5>");
         this.writeln(getExprStateColDescription(1, 5, 3, 8, true)); 
-        this.writeln("<h5 id='single_expr_simple_col8'>" + EXPR_QUAL_COL_NAME + " (column 8)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_SIMPLE 
+                + "_col8'>" + EXPR_QUAL_COL_NAME + " (column 8)</h5>");
         this.writeln(getExprQualColDescription(7)); 
-        this.writeln("<p><a href='#single_expr'>Back to presence/absence of expression menu</a></p>");
+        this.writeln("<p><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR 
+                + "'>Back to presence/absence of expression menu</a></p>");
         
         log.exit();
     }
@@ -1824,7 +1866,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
     private void writeSingleSpeciesCompleteExprCallFileDoc() {
         log.entry();
         
-        this.writeln("<h4 id='single_expr_complete'>Complete file</h4>");
+        this.writeln("<h4 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "'>Complete file</h4>");
         this.writeln("<p>The differences between simple and complete files are that, "
                 + "in complete files: </p>"
                 + "<ul class='doc_content'>"
@@ -1843,92 +1886,123 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeln("<tr><th>Column</th><th>Content</th><th>Example</th></tr>");
         this.writeln("</thead>");
         this.writeln("<tbody>");
-        this.writeln("<tr><td>1</td><td><a href='#single_expr_complete_col1' title='" 
+        this.writeln("<tr><td>1</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col1' title='" 
                 + GENE_ID_LINK_TITLE + "'>" + GENE_ID_COL_NAME 
                 + "</a></td><td>ENSDARG00000070769</td></tr>");
-        this.writeln("<tr><td>2</td><td><a href='#single_expr_complete_col2' title='" 
+        this.writeln("<tr><td>2</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col2' title='" 
                 + GENE_NAME_LINK_TITLE + "'>" + GENE_NAME_COL_NAME 
                 + "</a></td><td>foxg1a</td></tr>");
-        this.writeln("<tr><td>3</td><td><a href='#single_expr_complete_col3' title='" 
+        this.writeln("<tr><td>3</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col3' title='" 
                 + ANAT_ENTITY_ID_LINK_TITLE + "'>" + ANAT_ENTITY_ID_COL_NAME 
                 + "</a></td><td>UBERON:0000955</td></tr>");
-        this.writeln("<tr><td>4</td><td><a href='#single_expr_complete_col4' title='" 
+        this.writeln("<tr><td>4</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col4' title='" 
                 + ANAT_ENTITY_NAME_LINK_TITLE + "'>" + ANAT_ENTITY_NAME_COL_NAME 
                 + "</a></td><td>brain</td></tr>");
-        this.writeln("<tr><td>5</td><td><a href='#single_expr_complete_col5' title='" 
+        this.writeln("<tr><td>5</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col5' title='" 
                 + STAGE_ID_LINK_TITLE + "'>" + STAGE_ID_COL_NAME 
                 + "</a></td><td>UBERON:0000113</td></tr>");
-        this.writeln("<tr><td>6</td><td><a href='#single_expr_complete_col6' title='" 
+        this.writeln("<tr><td>6</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col6' title='" 
                 + STAGE_NAME_LINK_TITLE + "'>" + STAGE_NAME_COL_NAME 
                 + "</a></td><td>post-juvenile adult stage</td></tr>");
-        this.writeln("<tr><td>7</td><td><a href='#single_expr_complete_col7' title='" 
+        this.writeln("<tr><td>7</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col7' title='" 
                 + EXPR_STATE_LINK_TITLE + "'>" + EXPR_STATE_COL_NAME 
                 + "</a></td><td>present</td></tr>");
-        this.writeln("<tr><td>8</td><td><a href='#single_expr_complete_col8' title='" 
+        this.writeln("<tr><td>8</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col8' title='" 
                 + EXPR_QUAL_LINK_TITLE + "'>" + EXPR_QUAL_COL_NAME 
                 + "</a></td><td>high quality</td></tr>");
-        this.writeln("<tr><td>9</td><td><a href='#single_expr_complete_col9' title='" 
+        this.writeln("<tr><td>9</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col9' title='" 
                 + OBSERVED_DATA_LINK_TITLE + "'>" + OBSERVED_DATA_COL_NAME 
                 + "</a></td><td>yes</td></tr>");
-        this.writeln("<tr><td>10</td><td><a href='#single_expr_complete_col10' title='" 
+        this.writeln("<tr><td>10</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col10' title='" 
                 + AFFY_EXPR_STATE_LINK_TITLE + "'>" + AFFY_EXPR_STATE_COL_NAME 
                 + "</a></td><td>present</td></tr>");
-        this.writeln("<tr><td>11</td><td><a href='#single_expr_complete_col11' title='" 
+        this.writeln("<tr><td>11</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col11' title='" 
                 + AFFY_EXPR_QUAL_LINK_TITLE + "'>" + AFFY_EXPR_QUAL_COL_NAME 
                 + "</a></td><td>high quality</td></tr>");
-        this.writeln("<tr><td>12</td><td><a href='#single_expr_complete_col12' title='" 
+        this.writeln("<tr><td>12</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col12' title='" 
                 + AFFY_OBSERVED_DATA_LINK_TITLE + "'>" + AFFY_OBSERVED_DATA_COL_NAME 
                 + "</a></td><td>yes</td></tr>");
-        this.writeln("<tr><td>13</td><td><a href='#single_expr_complete_col13' title='" 
+        this.writeln("<tr><td>13</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col13' title='" 
                 + EST_EXPR_STATE_LINK_TITLE + "'>" + EST_EXPR_STATE_COL_NAME 
                 + "</a></td><td>present</td></tr>");
-        this.writeln("<tr><td>14</td><td><a href='#single_expr_complete_col14' title='" 
+        this.writeln("<tr><td>14</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col14' title='" 
                 + EST_EXPR_QUAL_LINK_TITLE + "'>" + EST_EXPR_QUAL_COL_NAME 
                 + "</a></td><td>poor quality</td></tr>");
-        this.writeln("<tr><td>15</td><td><a href='#single_expr_complete_col15' title='" 
+        this.writeln("<tr><td>15</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col15' title='" 
                 + EST_OBSERVED_DATA_LINK_TITLE + "'>" + EST_OBSERVED_DATA_COL_NAME 
                 + "</a></td><td>yes</td></tr>");
-        this.writeln("<tr><td>16</td><td><a href='#single_expr_complete_col16' title='" 
+        this.writeln("<tr><td>16</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col16' title='" 
                 + IN_SITU_EXPR_STATE_LINK_TITLE + "'>" + IN_SITU_EXPR_STATE_COL_NAME 
                 + "</a></td><td>present</td></tr>");
-        this.writeln("<tr><td>17</td><td><a href='#single_expr_complete_col17' title='" 
+        this.writeln("<tr><td>17</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col17' title='" 
                 + IN_SITU_EXPR_QUAL_LINK_TITLE + "'>" + IN_SITU_EXPR_QUAL_COL_NAME 
                 + "</a></td><td>high quality</td></tr>");
-        this.writeln("<tr><td>18</td><td><a href='#single_expr_complete_col18' title='" 
+        this.writeln("<tr><td>18</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col18' title='" 
                 + IN_SITU_OBSERVED_DATA_LINK_TITLE + "'>" + IN_SITU_OBSERVED_DATA_COL_NAME 
                 + "</a></td><td>yes</td></tr>");
-        this.writeln("<tr><td>19</td><td><a href='#single_expr_complete_col19' title='" 
+        this.writeln("<tr><td>19</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col19' title='" 
                 + RNA_SEQ_EXPR_STATE_LINK_TITLE + "'>" + RNA_SEQ_EXPR_STATE_COL_NAME 
                 + "</a></td><td>no data</td></tr>");
-        this.writeln("<tr><td>20</td><td><a href='#single_expr_complete_col20' title='" 
+        this.writeln("<tr><td>20</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col20' title='" 
                 + RNA_SEQ_EXPR_QUAL_LINK_TITLE + "'>" + RNA_SEQ_EXPR_QUAL_COL_NAME 
                 + "</a></td><td>no data</td></tr>");
-        this.writeln("<tr><td>21</td><td><a href='#single_expr_complete_col21' title='" 
+        this.writeln("<tr><td>21</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col21' title='" 
                 + RNA_SEQ_OBSERVED_DATA_LINK_TITLE + "'>" + RNA_SEQ_OBSERVED_DATA_COL_NAME 
                 + "</a></td><td>no</td></tr>");
         this.writeln("</tbody>");
         this.writeln("</table>");
         this.writeln(getSingleSpeciesCompleteExprFileExample());
         
-        this.writeln("<h5 id='single_expr_complete_col1'>" + GENE_ID_COL_NAME + " (column 1)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col1'>" + GENE_ID_COL_NAME + " (column 1)</h5>");
         this.writeln(getGeneIdColDescription());
-        this.writeln("<h5 id='single_expr_complete_col2'>" + GENE_NAME_COL_NAME + " (column 2)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col2'>" + GENE_NAME_COL_NAME + " (column 2)</h5>");
         this.writeln(getGeneNameColDescription(1));
-        this.writeln("<h5 id='single_expr_complete_col3'>" + ANAT_ENTITY_ID_COL_NAME + " (column 3)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col3'>" + ANAT_ENTITY_ID_COL_NAME + " (column 3)</h5>");
         this.writeln(getAnatEntityIdColDescription());
-        this.writeln("<h5 id='single_expr_complete_col4'>" + ANAT_ENTITY_NAME_COL_NAME + " (column 4)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col4'>" + ANAT_ENTITY_NAME_COL_NAME + " (column 4)</h5>");
         this.writeln(getAnatEntityNameColDescription(3));
-        this.writeln("<h5 id='single_expr_complete_col5'>" + STAGE_ID_COL_NAME + " (column 5)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col5'>" + STAGE_ID_COL_NAME + " (column 5)</h5>");
         this.writeln(getStageIdColDescription());
-        this.writeln("<h5 id='single_expr_complete_col6'>" + STAGE_NAME_COL_NAME + " (column 6)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col6'>" + STAGE_NAME_COL_NAME + " (column 6)</h5>");
         this.writeln(getStageNameColDescription(5));
-        this.writeln("<h5 id='single_expr_complete_col7'>" + EXPR_STATE_COL_NAME + " (column 7)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col7'>" + EXPR_STATE_COL_NAME + " (column 7)</h5>");
         this.writeln(getExprStateColDescription(1, 5, 3, 8, true)); 
-        this.writeln("<h5 id='single_expr_complete_col8'>" + EXPR_QUAL_COL_NAME + " (column 8)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col8'>" + EXPR_QUAL_COL_NAME + " (column 8)</h5>");
         this.writeln(getExprQualColDescription(7));
-        this.writeln("<h5 id='single_expr_complete_col9'>" + OBSERVED_DATA_COL_NAME + " (column 9)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col9'>" + OBSERVED_DATA_COL_NAME + " (column 9)</h5>");
         this.writeln(getObservedDataColDescription(OBSERVED_DATA_COL_NAME));
-        this.writeln("<h5 id='single_expr_complete_col10'>" + AFFY_EXPR_STATE_COL_NAME + " (column 10)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col10'>" + AFFY_EXPR_STATE_COL_NAME + " (column 10)</h5>");
         //TODO: add links to data analyses documentation
         this.writeln("<p>Call generated by Affymetrix data for " 
                 + getColumnListForCall(1, 5, 3, true) + ". One of: </p>"
@@ -1946,7 +2020,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "available for this gene/anatomical entity/developmental stage (data either "
                 + "not available, or discarded by Bgee quality controls).</li>"
                 + "</ul>");
-        this.writeln("<h5 id='single_expr_complete_col11'>" + AFFY_EXPR_QUAL_COL_NAME + " (column 11)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col11'>" + AFFY_EXPR_QUAL_COL_NAME + " (column 11)</h5>");
         //TODO: add links to data analyses documentation
         this.writeln("<p>Quality associated to the call in column <code>" +  AFFY_EXPR_STATE_COL_NAME
                 + "</code> (column 10). One of: </p>"
@@ -1977,9 +2052,11 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "available for this gene/anatomical entity/developmental stage (data either "
                 + "not available, or discarded by Bgee quality controls).</li>"
                 + "</ul>");
-        this.writeln("<h5 id='single_expr_complete_col12'>" + AFFY_OBSERVED_DATA_COL_NAME + " (column 12)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col12'>" + AFFY_OBSERVED_DATA_COL_NAME + " (column 12)</h5>");
         this.writeln(getObservedDataColDescription(AFFY_OBSERVED_DATA_COL_NAME));
-        this.writeln("<h5 id='single_expr_complete_col13'>" + EST_EXPR_STATE_COL_NAME + " (column 13)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col13'>" + EST_EXPR_STATE_COL_NAME + " (column 13)</h5>");
         //TODO: add links to data analyses documentation
         this.writeln("<p>Call generated by EST data for " 
                 + getColumnListForCall(1, 5, 3, true) + ". Note that EST data are not used "
@@ -1993,7 +2070,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "available for this gene/anatomical entity/developmental stage (data either "
                 + "not available, or discarded by Bgee quality controls).</li>"
                 + "</ul>");
-        this.writeln("<h5 id='single_expr_complete_col14'>" + EST_EXPR_QUAL_COL_NAME + " (column 14)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col14'>" + EST_EXPR_QUAL_COL_NAME + " (column 14)</h5>");
         //TODO: add links to data analyses documentation
         this.writeln("<p>Quality associated to the call in column <code>" +  EST_EXPR_STATE_COL_NAME
                 + "</code> (column 13). One of: </p>"
@@ -2006,9 +2084,11 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "available for this gene/anatomical entity/developmental stage (data either "
                 + "not available, or discarded by Bgee quality controls).</li>"
                 + "</ul>");
-        this.writeln("<h5 id='single_expr_complete_col15'>" + EST_OBSERVED_DATA_COL_NAME + " (column 15)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col15'>" + EST_OBSERVED_DATA_COL_NAME + " (column 15)</h5>");
         this.writeln(getObservedDataColDescription(EST_OBSERVED_DATA_COL_NAME));
-        this.writeln("<h5 id='single_expr_complete_col16'>" + IN_SITU_EXPR_STATE_COL_NAME + " (column 16)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col16'>" + IN_SITU_EXPR_STATE_COL_NAME + " (column 16)</h5>");
         //TODO: add links to data analyses documentation
         this.writeln("<p>Call generated by <i>in situ</i> data for " 
                 + getColumnListForCall(1, 5, 3, true) + ". One of: </p>"
@@ -2027,7 +2107,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "available for this gene/anatomical entity/developmental stage (data either "
                 + "not available, or discarded by Bgee quality controls).</li>"
                 + "</ul>");
-        this.writeln("<h5 id='single_expr_complete_col17'>" + IN_SITU_EXPR_QUAL_COL_NAME + " (column 17)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col17'>" + IN_SITU_EXPR_QUAL_COL_NAME + " (column 17)</h5>");
         //TODO: add links to data analyses documentation
         this.writeln("<p>Quality associated to the call in column <code>" + IN_SITU_EXPR_STATE_COL_NAME
                 + "</code> (column 16). One of: </p>"
@@ -2058,10 +2139,12 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "available for this gene/anatomical entity/developmental stage (data either "
                 + "not available, or discarded by Bgee quality controls).</li>"
                 + "</ul>");
-        this.writeln("<h5 id='single_expr_complete_col18'>" + IN_SITU_OBSERVED_DATA_COL_NAME 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col18'>" + IN_SITU_OBSERVED_DATA_COL_NAME 
                 + " (column 18)</h5>");
         this.writeln(getObservedDataColDescription(IN_SITU_OBSERVED_DATA_COL_NAME));
-        this.writeln("<h5 id='single_expr_complete_col19'>" + RNA_SEQ_EXPR_STATE_COL_NAME + " (column 19)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col19'>" + RNA_SEQ_EXPR_STATE_COL_NAME + " (column 19)</h5>");
         //TODO: add links to data analyses documentation
         this.writeln("<p>Call generated by RNA-Seq data for " 
                 + getColumnListForCall(1, 5, 3, true) + ". One of: </p>"
@@ -2079,7 +2162,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "available for this gene/anatomical entity/developmental stage (data either "
                 + "not available, or discarded by Bgee quality controls).</li>"
                 + "</ul>");
-        this.writeln("<h5 id='single_expr_complete_col20'>" + RNA_SEQ_EXPR_QUAL_COL_NAME + " (column 20)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col20'>" + RNA_SEQ_EXPR_QUAL_COL_NAME + " (column 20)</h5>");
         //TODO: add links to data analyses documentation
         this.writeln("<p>Quality associated to the call in column <code>" +  RNA_SEQ_EXPR_STATE_COL_NAME
                 + "</code> (column 19). One of: </p>"
@@ -2110,10 +2194,12 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "available for this gene/anatomical entity/developmental stage (data either "
                 + "not available, or discarded by Bgee quality controls).</li>"
                 + "</ul>");
-        this.writeln("<h5 id='single_expr_complete_col21'>" + RNA_SEQ_OBSERVED_DATA_COL_NAME 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_COMPLETE 
+                + "_col21'>" + RNA_SEQ_OBSERVED_DATA_COL_NAME 
                 + " (column 21)</h5>");
         this.writeln(getObservedDataColDescription(RNA_SEQ_OBSERVED_DATA_COL_NAME));
-        this.writeln("<p><a href='#single_expr'>Back to presence/absence of expression menu</a></p>");
+        this.writeln("<p><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR 
+                + "'>Back to presence/absence of expression menu</a></p>");
         this.writeln("<p>This corresponds to the same expression state summary column "
                 + "as in simple files (column 7 of presence/absence simple file)</p>");
         
@@ -2134,7 +2220,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         log.entry();
         
         //presence/absence of expression
-        this.writeln("<h3 id='single_diff'>Over-/under-expression across anatomy or life stages</h3>");
+        this.writeln("<h3 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF 
+                + "'>Over-/under-expression across anatomy or life stages</h3>");
         //TODO: add link to data analyses documentation
         this.writeln(HtmlDocumentationDisplay.getDiffExprCallExplanation());
         this.writeln("<p>Note that, as opposed to calls of presence/absence of expression, "
@@ -2150,9 +2237,11 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "having no differential expression in these conditions.</p>");
         this.writeln("<p>Jump to format description for: </p>"
                 + "<ul>"
-                + "<li><a href='#single_diff_simple' title='Quick jump to simple file description'>"
+                + "<li><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_SIMPLE 
+                + "' title='Quick jump to simple file description'>"
                 + "simple file</a></li>"
-                + "<li><a href='#single_diff_complete' title='Quick jump to complete file description'>"
+                + "<li><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "' title='Quick jump to complete file description'>"
                 + "complete file</a></li>"
                 + "</ul>");
         
@@ -2179,7 +2268,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
     private void writeSingleSpeciesSimpleDiffExprCallFileDoc() {
         log.entry();
         
-        this.writeln("<h4 id='single_diff_simple'>Simple file</h4>");
+        this.writeln("<h4 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_SIMPLE 
+                + "'>Simple file</h4>");
         this.writeln("<p>In simple files, only calls of over-expression and under-expression "
                 + "are provided, summarizing the contribution "
                 + "of each data type to the call.</p>");
@@ -2189,51 +2279,68 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeln("<tr><th>Column</th><th>Content</th><th>Example</th></tr>");
         this.writeln("</thead>");
         this.writeln("<tbody>");
-        this.writeln("<tr><td>1</td><td><a href='#single_diff_simple_col1' title='" 
+        this.writeln("<tr><td>1</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_SIMPLE 
+                + "_col1' title='" 
                 + GENE_ID_LINK_TITLE + "'>" + GENE_ID_COL_NAME 
                 + "</a></td><td>ENSG00000000419</td></tr>");
-        this.writeln("<tr><td>2</td><td><a href='#single_diff_simple_col2' title='" 
+        this.writeln("<tr><td>2</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_SIMPLE 
+                + "_col2' title='" 
                 + GENE_NAME_LINK_TITLE + "'>" + GENE_NAME_COL_NAME 
                 + "</a></td><td>DPM1</td></tr>");
-        this.writeln("<tr><td>3</td><td><a href='#single_diff_simple_col3' title='" 
+        this.writeln("<tr><td>3</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_SIMPLE 
+                + "_col3' title='" 
                 + ANAT_ENTITY_ID_LINK_TITLE + "'>" + ANAT_ENTITY_ID_COL_NAME 
                 + "</a></td><td>UBERON:0009834</td></tr>");
-        this.writeln("<tr><td>4</td><td><a href='#single_diff_simple_col4' title='" 
+        this.writeln("<tr><td>4</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_SIMPLE 
+                + "_col4' title='" 
                 + ANAT_ENTITY_NAME_LINK_TITLE + "'>" + ANAT_ENTITY_NAME_COL_NAME 
                 + "</a></td><td>dorsolateral prefrontal cortex</td></tr>");
-        this.writeln("<tr><td>5</td><td><a href='#single_diff_simple_col5' title='" 
+        this.writeln("<tr><td>5</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_SIMPLE 
+                + "_col5' title='" 
                 + STAGE_ID_LINK_TITLE + "'>" + STAGE_ID_COL_NAME 
                 + "</a></td><td>HsapDv:0000083</td></tr>");
-        this.writeln("<tr><td>6</td><td><a href='#single_diff_simple_col6' title='" 
+        this.writeln("<tr><td>6</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_SIMPLE 
+                + "_col6' title='" 
                 + STAGE_NAME_LINK_TITLE + "'>" + STAGE_NAME_COL_NAME 
                 + "</a></td><td>infant stage (human)</td></tr>");
-        this.writeln("<tr><td>7</td><td><a href='#single_diff_simple_col7' title='" 
+        this.writeln("<tr><td>7</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_SIMPLE 
+                + "_col7' title='" 
                 + DIFF_EXPR_STATE_LINK_TITLE + "'>" + DIFF_EXPR_STATE_COL_NAME 
                 + "</a></td><td>under-expression</td></tr>");
-        this.writeln("<tr><td>8</td><td><a href='#single_diff_simple_col8' title='" 
+        this.writeln("<tr><td>8</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_SIMPLE 
+                + "_col8' title='" 
                 + EXPR_QUAL_LINK_TITLE + "'>" + EXPR_QUAL_COL_NAME 
                 + "</a></td><td>high quality</td></tr>");
         this.writeln("</tbody>");
         this.writeln("</table>");
         this.writeln(getSingleSpeciesSimpleDiffExprFileExample());
         
-        this.writeln("<h5 id='single_diff_simple_col1'>" + GENE_ID_COL_NAME + " (column 1)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_SIMPLE 
+                + "_col1'>" + GENE_ID_COL_NAME + " (column 1)</h5>");
         this.writeln(getGeneIdColDescription());
-        this.writeln("<h5 id='single_diff_simple_col2'>" + GENE_NAME_COL_NAME + " (column 2)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_SIMPLE 
+                + "_col2'>" + GENE_NAME_COL_NAME + " (column 2)</h5>");
         this.writeln(getGeneNameColDescription(1));
-        this.writeln("<h5 id='single_diff_simple_col3'>" + ANAT_ENTITY_ID_COL_NAME + " (column 3)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_SIMPLE 
+                + "_col3'>" + ANAT_ENTITY_ID_COL_NAME + " (column 3)</h5>");
         this.writeln(getAnatEntityIdColDescription());
-        this.writeln("<h5 id='single_diff_simple_col4'>" + ANAT_ENTITY_NAME_COL_NAME + " (column 4)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_SIMPLE 
+                + "_col4'>" + ANAT_ENTITY_NAME_COL_NAME + " (column 4)</h5>");
         this.writeln(getAnatEntityNameColDescription(3));
-        this.writeln("<h5 id='single_diff_simple_col5'>" + STAGE_ID_COL_NAME + " (column 5)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_SIMPLE 
+                + "_col5'>" + STAGE_ID_COL_NAME + " (column 5)</h5>");
         this.writeln(getStageIdColDescription());
-        this.writeln("<h5 id='single_diff_simple_col6'>" + STAGE_NAME_COL_NAME + " (column 6)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_SIMPLE 
+                + "_col6'>" + STAGE_NAME_COL_NAME + " (column 6)</h5>");
         this.writeln(getStageNameColDescription(5));
-        this.writeln("<h5 id='single_diff_simple_col7'>" + DIFF_EXPR_STATE_COL_NAME + " (column 7)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_SIMPLE 
+                + "_col7'>" + DIFF_EXPR_STATE_COL_NAME + " (column 7)</h5>");
         this.writeln(getDiffExprStateColDescription(1, 5, 3, true, false, true, false, "all data types")); 
-        this.writeln("<h5 id='single_diff_simple_col8'>" + EXPR_QUAL_COL_NAME + " (column 8)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_SIMPLE 
+                + "_col8'>" + EXPR_QUAL_COL_NAME + " (column 8)</h5>");
         this.writeln(getDiffExprQualColDescription(DIFF_EXPR_STATE_COL_NAME, 7, true, false)); 
-        this.writeln("<p><a href='#single_diff'>Back to over-/under-expression menu</a></p>");
+        this.writeln("<p><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF
+                + "'>Back to over-/under-expression menu</a></p>");
         
         log.exit();
     }
@@ -2251,7 +2358,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
     private void writeSingleSpeciesCompleteDiffExprCallFileDoc() {
         log.entry();
         
-        this.writeln("<h4 id='single_diff_complete'>Complete file</h4>");
+        this.writeln("<h4 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "'>Complete file</h4>");
         this.writeln("<p>The differences between simple and complete files are that, "
                 + "in complete files: </p>"
                 + "<ul class='doc_content'>"
@@ -2268,68 +2376,86 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeln("<tr><th>Column</th><th>Content</th><th>Example</th></tr>");
         this.writeln("</thead>");
         this.writeln("<tbody>");
-        this.writeln("<tr><td>1</td><td><a href='#single_diff_complete_col1' title='" 
+        this.writeln("<tr><td>1</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "_col1' title='" 
                 + GENE_ID_LINK_TITLE + "'>" + GENE_ID_COL_NAME 
                 + "</a></td><td>ENSMUSG00000093930</td></tr>");
-        this.writeln("<tr><td>2</td><td><a href='#single_diff_complete_col2' title='" 
+        this.writeln("<tr><td>2</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "_col2' title='" 
                 + GENE_NAME_LINK_TITLE + "'>" + GENE_NAME_COL_NAME 
                 + "</a></td><td>Hmgcs1</td></tr>");
-        this.writeln("<tr><td>3</td><td><a href='#single_diff_complete_col3' title='" 
+        this.writeln("<tr><td>3</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "_col3' title='" 
                 + ANAT_ENTITY_ID_LINK_TITLE + "'>" + ANAT_ENTITY_ID_COL_NAME 
                 + "</a></td><td>UBERON:0002107</td></tr>");
-        this.writeln("<tr><td>4</td><td><a href='#single_diff_complete_col4' title='" 
+        this.writeln("<tr><td>4</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "_col4' title='" 
                 + ANAT_ENTITY_NAME_LINK_TITLE + "'>" + ANAT_ENTITY_NAME_COL_NAME 
                 + "</a></td><td>liver</td></tr>");
-        this.writeln("<tr><td>5</td><td><a href='#single_diff_complete_col5' title='" 
+        this.writeln("<tr><td>5</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "_col5' title='" 
                 + STAGE_ID_LINK_TITLE + "'>" + STAGE_ID_COL_NAME 
                 + "</a></td><td>UBERON:0000113</td></tr>");
-        this.writeln("<tr><td>6</td><td><a href='#single_diff_complete_col6' title='" 
+        this.writeln("<tr><td>6</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "_col6' title='" 
                 + STAGE_NAME_LINK_TITLE + "'>" + STAGE_NAME_COL_NAME 
                 + "</a></td><td>post-juvenile adult stage</td></tr>");
-        this.writeln("<tr><td>7</td><td><a href='#single_diff_complete_col7' title='" 
+        this.writeln("<tr><td>7</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "_col7' title='" 
                 + DIFF_EXPR_STATE_LINK_TITLE + "'>" + DIFF_EXPR_STATE_COL_NAME 
                 + "</a></td><td>over-expression</td></tr>");
-        this.writeln("<tr><td>8</td><td><a href='#single_diff_complete_col8' title='" 
+        this.writeln("<tr><td>8</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "_col8' title='" 
                 + EXPR_QUAL_LINK_TITLE + "'>" + EXPR_QUAL_COL_NAME 
                 + "</a></td><td>high quality</td></tr>");
-        this.writeln("<tr><td>9</td><td><a href='#single_diff_complete_col9' title='" 
+        this.writeln("<tr><td>9</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "_col9' title='" 
                 + "See " + AFFY_DIFF_EXPR_STATE_COL_NAME + " column description'>" 
                 + AFFY_DIFF_EXPR_STATE_COL_NAME 
                 + "</a></td><td>over-expression</td></tr>");
-        this.writeln("<tr><td>10</td><td><a href='#single_diff_complete_col10' title='" 
+        this.writeln("<tr><td>10</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "_col10' title='" 
                 + "See " + AFFY_EXPR_QUAL_COL_NAME + " column description'>" 
                 + AFFY_EXPR_QUAL_COL_NAME
         //TODO: change 'poor' to 'low'
                 + "</a></td><td>poor quality</td></tr>");
-        this.writeln("<tr><td>11</td><td><a href='#single_diff_complete_col11' title='" 
+        this.writeln("<tr><td>11</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "_col11' title='" 
                 + "See " + AFFY_DIFF_EXPR_P_VAL_COL_NAME + " column description'>" 
                 + AFFY_DIFF_EXPR_P_VAL_COL_NAME 
                 + "</a></td><td>0.0035659347</td></tr>");
-        this.writeln("<tr><td>12</td><td><a href='#single_diff_complete_col12' title='" 
+        this.writeln("<tr><td>12</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "_col12' title='" 
                 + "See " + AFFY_DIFF_EXPR_SUPPORT_COUNT_COL_NAME + " column description'>" 
                 + AFFY_DIFF_EXPR_SUPPORT_COUNT_COL_NAME 
                 + "</a></td><td>1</td></tr>");
-        this.writeln("<tr><td>13</td><td><a href='#single_diff_complete_col13' title='" 
+        this.writeln("<tr><td>13</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "_col13' title='" 
                 + "See " + AFFY_DIFF_EXPR_CONFLICT_COUNT_COL_NAME + " column description'>" 
                 + AFFY_DIFF_EXPR_CONFLICT_COUNT_COL_NAME 
                 + "</a></td><td>1</td></tr>");
-        this.writeln("<tr><td>14</td><td><a href='#single_diff_complete_col14' title='" 
+        this.writeln("<tr><td>14</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "_col14' title='" 
                 + "See " + RNA_SEQ_DIFF_EXPR_STATE_COL_NAME + " column description'>" 
                 + RNA_SEQ_DIFF_EXPR_STATE_COL_NAME 
                 + "</a></td><td>over-expression</td></tr>");
-        this.writeln("<tr><td>15</td><td><a href='#single_diff_complete_col15' title='" 
+        this.writeln("<tr><td>15</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "_col15' title='" 
                 + "See " + RNA_SEQ_EXPR_QUAL_COL_NAME + " column description'>" 
                 + RNA_SEQ_EXPR_QUAL_COL_NAME 
                 + "</a></td><td>high quality</td></tr>");
-        this.writeln("<tr><td>16</td><td><a href='#single_diff_complete_col16' title='" 
+        this.writeln("<tr><td>16</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "_col16' title='" 
                 + "See " + RNA_SEQ_DIFF_EXPR_P_VAL_COL_NAME + " column description'>" 
                 + RNA_SEQ_DIFF_EXPR_P_VAL_COL_NAME 
                 + "</a></td><td>2.96E-8</td></tr>");
-        this.writeln("<tr><td>17</td><td><a href='#single_diff_complete_col17' title='" 
+        this.writeln("<tr><td>17</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "_col17' title='" 
                 + "See " + RNA_SEQ_DIFF_EXPR_SUPPORT_COUNT_COL_NAME + " column description'>" 
                 + RNA_SEQ_DIFF_EXPR_SUPPORT_COUNT_COL_NAME 
                 + "</a></td><td>2</td></tr>");
-        this.writeln("<tr><td>18</td><td><a href='#single_diff_complete_col18' title='" 
+        this.writeln("<tr><td>18</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "_col18' title='" 
                 + "See " + RNA_SEQ_DIFF_EXPR_CONFLICT_COUNT_COL_NAME + " column description'>" 
                 + RNA_SEQ_DIFF_EXPR_CONFLICT_COUNT_COL_NAME 
                 + "</a></td><td>0</td></tr>");
@@ -2337,62 +2463,81 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeln("</table>");
         this.writeln(getSingleSpeciesCompleteDiffExprFileExample());
         
-        this.writeln("<h5 id='single_diff_complete_col1'>" + GENE_ID_COL_NAME + " (column 1)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "_col1'>" + GENE_ID_COL_NAME + " (column 1)</h5>");
         this.writeln(getGeneIdColDescription());
-        this.writeln("<h5 id='single_diff_complete_col2'>" + GENE_NAME_COL_NAME + " (column 2)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "_col2'>" + GENE_NAME_COL_NAME + " (column 2)</h5>");
         this.writeln(getGeneNameColDescription(1));
-        this.writeln("<h5 id='single_diff_complete_col3'>" + ANAT_ENTITY_ID_COL_NAME + " (column 3)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "_col3'>" + ANAT_ENTITY_ID_COL_NAME + " (column 3)</h5>");
         this.writeln(getAnatEntityIdColDescription());
-        this.writeln("<h5 id='single_diff_complete_col4'>" + ANAT_ENTITY_NAME_COL_NAME + " (column 4)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "_col4'>" + ANAT_ENTITY_NAME_COL_NAME + " (column 4)</h5>");
         this.writeln(getAnatEntityNameColDescription(3));
-        this.writeln("<h5 id='single_diff_complete_col5'>" + STAGE_ID_COL_NAME + " (column 5)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "_col5'>" + STAGE_ID_COL_NAME + " (column 5)</h5>");
         this.writeln(getStageIdColDescription());
-        this.writeln("<h5 id='single_diff_complete_col6'>" + STAGE_NAME_COL_NAME + " (column 6)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "_col6'>" + STAGE_NAME_COL_NAME + " (column 6)</h5>");
         this.writeln(getStageNameColDescription(5));
-        this.writeln("<h5 id='single_diff_complete_col7'>" + DIFF_EXPR_STATE_COL_NAME + " (column 7)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "_col7'>" + DIFF_EXPR_STATE_COL_NAME + " (column 7)</h5>");
         this.writeln(getDiffExprStateColDescription(1, 3, 5, true, true, true, false, "all data types")); 
         this.writeln("<p>This corresponds to the same differential expression state summary column "
                 + "as in simple files (column 7 of over-/under-expression simple file)</p>");
-        this.writeln("<h5 id='single_diff_complete_col8'>" + EXPR_QUAL_COL_NAME + " (column 8)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "_col8'>" + EXPR_QUAL_COL_NAME + " (column 8)</h5>");
         this.writeln(getDiffExprQualColDescription(DIFF_EXPR_STATE_COL_NAME, 7, true, false)); 
         this.writeln("<p>This corresponds to the same differential expression quality column "
                 + "as in simple files (column 8 of over-/under-expression simple file)</p>");
-        this.writeln("<h5 id='single_diff_complete_col9'>" + AFFY_DIFF_EXPR_STATE_COL_NAME + " (column 9)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "_col9'>" + AFFY_DIFF_EXPR_STATE_COL_NAME + " (column 9)</h5>");
         this.writeln(getDiffExprStateColDescription(1, 3, 5, true, true, false, true, "Affymetrix data")); 
-        this.writeln("<h5 id='single_diff_complete_col10'>" + AFFY_EXPR_QUAL_COL_NAME + " (column 10)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "_col10'>" + AFFY_EXPR_QUAL_COL_NAME + " (column 10)</h5>");
         this.writeln(getDiffExprQualColDescription(AFFY_DIFF_EXPR_STATE_COL_NAME, 9, false, true)); 
-        this.writeln("<h5 id='single_diff_complete_col11'>" + AFFY_DIFF_EXPR_P_VAL_COL_NAME 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "_col11'>" + AFFY_DIFF_EXPR_P_VAL_COL_NAME 
                 + " (column 11)</h5>");
         this.writeln(getDiffExprPvalColDescription(
                 "Affymetrix", AFFY_DIFF_EXPR_STATE_COL_NAME, 9));
-        this.writeln("<h5 id='single_diff_complete_col12'>" + AFFY_DIFF_EXPR_SUPPORT_COUNT_COL_NAME 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "_col12'>" + AFFY_DIFF_EXPR_SUPPORT_COUNT_COL_NAME 
                 + " (column 12)</h5>");
         this.writeln(getDiffSupportCountColDescription(
                 "Affymetrix", AFFY_DIFF_EXPR_STATE_COL_NAME, 9));
-        this.writeln("<h5 id='single_diff_complete_col13'>" + AFFY_DIFF_EXPR_CONFLICT_COUNT_COL_NAME 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "_col13'>" + AFFY_DIFF_EXPR_CONFLICT_COUNT_COL_NAME 
                 + " (column 13)</h5>");
         this.writeln(getDiffConflictCountColDescription(
                 "Affymetrix", AFFY_DIFF_EXPR_STATE_COL_NAME, 9));
-        this.writeln("<h5 id='single_diff_complete_col14'>" + RNA_SEQ_DIFF_EXPR_STATE_COL_NAME 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "_col14'>" + RNA_SEQ_DIFF_EXPR_STATE_COL_NAME 
                 + " (column 14)</h5>");
         this.writeln(getDiffExprStateColDescription(1, 3, 5, true, true, false, true, "RNA-Seq data")); 
-        this.writeln("<h5 id='single_diff_complete_col15'>" + RNA_SEQ_EXPR_QUAL_COL_NAME 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "_col15'>" + RNA_SEQ_EXPR_QUAL_COL_NAME 
                 + " (column 15)</h5>");
         this.writeln(getDiffExprQualColDescription(RNA_SEQ_DIFF_EXPR_STATE_COL_NAME, 14, false, true)); 
-        this.writeln("<h5 id='single_diff_complete_col16'>" + RNA_SEQ_DIFF_EXPR_P_VAL_COL_NAME 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "_col16'>" + RNA_SEQ_DIFF_EXPR_P_VAL_COL_NAME 
                 + " (column 16)</h5>");
         this.writeln(getDiffExprPvalColDescription(
                 "RNA-Seq", RNA_SEQ_DIFF_EXPR_STATE_COL_NAME, 14));
-        this.writeln("<h5 id='single_diff_complete_col17'>" + RNA_SEQ_DIFF_EXPR_SUPPORT_COUNT_COL_NAME 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "_col17'>" + RNA_SEQ_DIFF_EXPR_SUPPORT_COUNT_COL_NAME 
                 + " (column 17)</h5>");
         this.writeln(getDiffSupportCountColDescription(
                 "RNA-Seq", RNA_SEQ_DIFF_EXPR_STATE_COL_NAME, 14));
-        this.writeln("<h5 id='single_diff_complete_col18'>" + RNA_SEQ_DIFF_EXPR_CONFLICT_COUNT_COL_NAME 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
+                + "_col18'>" + RNA_SEQ_DIFF_EXPR_CONFLICT_COUNT_COL_NAME 
                 + " (column 18)</h5>");
         this.writeln(getDiffConflictCountColDescription(
                 "RNA-Seq", RNA_SEQ_DIFF_EXPR_STATE_COL_NAME, 14));
         
-        this.writeln("<p><a href='#single_diff'>Back to over-/under-expression menu</a></p>");
+        this.writeln("<p><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF
+                + "'>Back to over-/under-expression menu</a></p>");
         
         log.exit();
     }
@@ -2411,7 +2556,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         log.entry();
         
         //presence/absence of expression
-        this.writeln("<h3 id='multi_diff'>Over-/under-expression across anatomy or life stages in multiple species</h3>");
+        this.writeln("<h3 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF
+                + "'>Over-/under-expression across anatomy or life stages in multiple species</h3>");
         //TODO: add link to data analyses documentation
         this.writeln(HtmlDocumentationDisplay.getDiffExprCallExplanation());
         this.writeln("<p>In multi-species files, results are made comparable "
@@ -2420,7 +2566,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "in the least common ancestor of the species compared are studied, "
                 + "and only in anatomical entities sharing a homology relation between "
                 + "all species compared, with data mapped to broad developmental stages "
-                + "shared across animal kingdom (see <a href='#multi' "
+                + "shared across animal kingdom (see <a href='#" 
+                + RequestParameters.HASH_DOC_CALL_MULTI              + "' "
                 + "title='Quick jump to multi-species file description'>"
                 + "use of homology in multi-species files</a>).</p>");
         this.writeln("<p>Note that, as opposed to calls of presence/absence of expression, "
@@ -2439,9 +2586,11 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "including genes having no differential expression in these conditions.</p>");
         this.writeln("<p>Jump to format description for: </p>"
                 + "<ul>"
-                + "<li><a href='#multi_diff_simple' title='Quick jump to simple file description'>"
+                + "<li><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_SIMPLE 
+                + "' title='Quick jump to simple file description'>"
                 + "simple file</a></li>"
-                + "<li><a href='#multi_diff_complete' title='Quick jump to complete file description'>"
+                + "<li><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "' title='Quick jump to complete file description'>"
                 + "complete file</a></li>"
                 + "</ul>");
         
@@ -2467,7 +2616,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
     private void writeOMAGroupFileDoc() {
         log.entry();
         
-        this.writeln("<h3 id='oma_hog'>OMA Hierarchical orthologous groups file</h3>");
+        this.writeln("<h3 id='" + RequestParameters.HASH_DOC_CALL_OMA 
+                + "'>OMA Hierarchical orthologous groups file</h3>");
         this.writeln("<p>OMA Hierarchical orthologous groups files provide "
                 + "gene orthology relations, by grouping genes that have descended "
                 + "from a single common ancestral gene in the taxon of interest. The targeted "
@@ -2480,27 +2630,34 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeln("<tr><th>Column</th><th>Content</th><th>Example</th></tr>");
         this.writeln("</thead>");
         this.writeln("<tbody>");
-        this.writeln("<tr><td>1</td><td><a href='#oma_hog_col1' title='" 
+        this.writeln("<tr><td>1</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_OMA 
+                + "_col1' title='" 
                 + "See " + OMA_ID_COL_NAME + " column description'>" + OMA_ID_COL_NAME 
                 + "</a></td><td>10</td></tr>");
-        this.writeln("<tr><td>2</td><td><a href='#oma_hog_col2' title='" 
+        this.writeln("<tr><td>2</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_OMA 
+                + "_col2' title='" 
                 + GENE_ID_LINK_TITLE + "'>" + GENE_ID_COL_NAME 
                 + "</a></td><td>ENSG00000105298</td></tr>");
-        this.writeln("<tr><td>3</td><td><a href='#oma_hog_col3' title='" 
+        this.writeln("<tr><td>3</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_OMA 
+                + "_col3' title='" 
                 + GENE_NAME_LINK_TITLE + "'>" + GENE_NAME_COL_NAME 
                 + "</a></td><td>CACTIN</td></tr>");
         this.writeln("</tbody>");
         this.writeln("</table>");
         this.writeln(getOMAGroupFileExample());
 
-        this.writeln("<h5 id='oma_hog_col1'>" + OMA_ID_COL_NAME + " (column 1)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_OMA 
+                + "_col1'>" + OMA_ID_COL_NAME + " (column 1)</h5>");
         this.writeln(getOMAIdColDescription());
-        this.writeln("<h5 id='oma_hog_col2'>" + GENE_ID_COL_NAME + " (column 2)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_OMA 
+                + "_col2'>" + GENE_ID_COL_NAME + " (column 2)</h5>");
         this.writeln(getGeneIdColDescription());
-        this.writeln("<h5 id='oma_hog_col3'>" + GENE_NAME_COL_NAME + " (column 3)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_OMA 
+                + "_col3'>" + GENE_NAME_COL_NAME + " (column 3)</h5>");
         this.writeln(getGeneNameColDescription(2));
 
-        this.writeln("<p><a href='#multi'>Back to multi-species download files menu</a></p>");
+        this.writeln("<p><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI
+                + "'>Back to multi-species download files menu</a></p>");
         
         log.exit();
     }
@@ -2517,7 +2674,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
     private void writeMultiSpeciesSimpleDiffExprCallFileDoc() {
         log.entry();
         
-        this.writeln("<h4 id='multi_diff_simple'>Simple file</h4>");
+        this.writeln("<h4 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_SIMPLE 
+                + "'>Simple file</h4>");
         this.writeln("<p>In simple files, each line provides information for a gene orthology group, "
                 + "in a condition (homologous anatomical entity/comparable developmental stage); "
                 + "columns then provide, for each species, the number of genes over-expressed, "
@@ -2530,7 +2688,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "with a good level of confidence.</p>");
         this.writeln("<p>Relations of orthology between genes member of a same orthology "
                 + "gene group are provided through the associated "
-                + "<a href='#oma_hog' title='Jump to hierarchical orthologous groups "
+                + "<a href='#" + RequestParameters.HASH_DOC_CALL_OMA 
+                + "' title='Jump to hierarchical orthologous groups "
                 + "file documentation'>hierarchical orthologous groups file</a>.</p>");
         this.writeln("<table class='call_download_file_desc'>");
         this.writeln("<caption>Format description for multi-species simple differential expression file</caption>");
@@ -2538,61 +2697,74 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeln("<tr><th>Column</th><th>Content</th><th>Cardinality</th><th>Example</th></tr>");
         this.writeln("</thead>");
         this.writeln("<tbody>");
-        this.writeln("<tr><td>1</td><td><a href='#multi_diff_simple_col1' title='" 
+        this.writeln("<tr><td>1</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_SIMPLE 
+                + "_col1' title='" 
                 + "See " + OMA_ID_COL_NAME + " column description'>" 
                 + OMA_ID_COL_NAME 
                 + "</a></td><td>1</td><td>80</td></tr>");
         //TODO: change order of columns anat entity/stage once we re-generate the files.
-        this.writeln("<tr><td>2</td><td><a href='#multi_diff_simple_col2' title='" 
+        this.writeln("<tr><td>2</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_SIMPLE 
+                + "_col2' title='" 
                 + "See " + MULTI_ANAT_ENTITY_IDS_COL_NAME + " column description'>" 
                 + MULTI_ANAT_ENTITY_IDS_COL_NAME 
                 + "</a></td><td>1 or greater</td><td>UBERON:0001898</td></tr>");
-        this.writeln("<tr><td>3</td><td><a href='#multi_diff_simple_col3' title='" 
+        this.writeln("<tr><td>3</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_SIMPLE 
+                + "_col3' title='" 
                 + "See " + MULTI_ANAT_ENTITY_NAMES_COL_NAME + " column description'>" 
                 + MULTI_ANAT_ENTITY_NAMES_COL_NAME 
                 + "</a></td><td>1 or greater</td><td>hypothalamus</td></tr>");
-        this.writeln("<tr><td>4</td><td><a href='#multi_diff_simple_col4' title='" 
+        this.writeln("<tr><td>4</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_SIMPLE 
+                + "_col4' title='" 
                 + STAGE_ID_LINK_TITLE + "'>" + STAGE_ID_COL_NAME 
                 + "</a></td><td>1</td><td>UBERON:0000113</td></tr>");
-        this.writeln("<tr><td>5</td><td><a href='#multi_diff_simple_col5' title='" 
+        this.writeln("<tr><td>5</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_SIMPLE 
+                + "_col5' title='" 
                 + STAGE_NAME_LINK_TITLE + "'>" + STAGE_NAME_COL_NAME 
                 + "</a></td><td>1</td><td>post-juvenile adult stage</td></tr>");
-        this.writeln("<tr><td>6</td><td><a href='#multi_diff_simple_col6' title='" 
+        this.writeln("<tr><td>6</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_SIMPLE 
+                + "_col6' title='" 
                 + "See " + OVER_EXPRESSED_FOR_SPECIES_COL_NAME + " species1 column description'>" 
                 + OVER_EXPRESSED_FOR_SPECIES_COL_NAME + " species1</a> (e.g., <code>"
                 + OVER_EXPRESSED_FOR_SPECIES_COL_NAME + " Homo sapiens</code>)"
                 + "</td><td>1</td><td>1</td></tr>");
-        this.writeln("<tr><td>7</td><td><a href='#multi_diff_simple_col7' title='" 
+        this.writeln("<tr><td>7</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_SIMPLE 
+                + "_col7' title='" 
                 + "See " + UNDER_EXPRESSED_FOR_SPECIES_COL_NAME + " species1 column description'>" 
                 + UNDER_EXPRESSED_FOR_SPECIES_COL_NAME + " species1</a> (e.g., <code>"
                 + UNDER_EXPRESSED_FOR_SPECIES_COL_NAME + " Homo sapiens</code>)"
                 + "</td><td>1</td><td>0</td></tr>");
-        this.writeln("<tr><td>8</td><td><a href='#multi_diff_simple_col8' title='" 
+        this.writeln("<tr><td>8</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_SIMPLE 
+                + "_col8' title='" 
                 + "See " + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME + " species1 column description'>" 
                 + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME + " species1</a> (e.g., <code>"
                 + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME + " Homo sapiens</code>)"
                 + "</td><td>1</td><td>0</td></tr>");
-        this.writeln("<tr><td>9</td><td><a href='#multi_diff_simple_col9' title='" 
+        this.writeln("<tr><td>9</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_SIMPLE 
+                + "_col9' title='" 
                 + "See " + NA_FOR_SPECIES_COL_NAME + " species1 column description'>" 
                 + NA_FOR_SPECIES_COL_NAME + " species1</a> (e.g., <code>"
                 + NA_FOR_SPECIES_COL_NAME + " Homo sapiens</code>)"
                 + "</td><td>1</td><td>0</td></tr>");
-        this.writeln("<tr><td>10</td><td><a href='#multi_diff_simple_col6' title='" 
+        this.writeln("<tr><td>10</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_SIMPLE 
+                + "_col6' title='" 
                 + "See " + OVER_EXPRESSED_FOR_SPECIES_COL_NAME + " species2 column description'>" 
                 + OVER_EXPRESSED_FOR_SPECIES_COL_NAME + " species2</a> (e.g., <code>"
                 + OVER_EXPRESSED_FOR_SPECIES_COL_NAME + " Mus musculus</code>)"
                 + "</td><td>1</td><td>1</td></tr>");
-        this.writeln("<tr><td>11</td><td><a href='#multi_diff_simple_col7' title='" 
+        this.writeln("<tr><td>11</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_SIMPLE 
+                + "_col7' title='" 
                 + "See " + UNDER_EXPRESSED_FOR_SPECIES_COL_NAME + " species2 column description'>" 
                 + UNDER_EXPRESSED_FOR_SPECIES_COL_NAME + " species2</a> (e.g., <code>"
                 + UNDER_EXPRESSED_FOR_SPECIES_COL_NAME + " Mus musculus</code>)"
                 + "</td><td>1</td><td>0</td></tr>");
-        this.writeln("<tr><td>12</td><td><a href='#multi_diff_simple_col8' title='" 
+        this.writeln("<tr><td>12</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_SIMPLE 
+                + "_col8' title='" 
                 + "See " + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME + " species2 column description'>" 
                 + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME + " species2</a> (e.g., <code>"
                 + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME + " Mus musculus</code>)"
                 + "</td><td>1</td><td>0</td></tr>");
-        this.writeln("<tr><td>13</td><td><a href='#multi_diff_simple_col9' title='" 
+        this.writeln("<tr><td>13</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_SIMPLE 
+                + "_col9' title='" 
                 + "See " + NA_FOR_SPECIES_COL_NAME + " species2 column description'>" 
                 + NA_FOR_SPECIES_COL_NAME + " species2</a> (e.g., <code>"
                 + NA_FOR_SPECIES_COL_NAME + " Mus musculus</code>)"
@@ -2601,43 +2773,54 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + OVER_EXPRESSED_FOR_SPECIES_COL_NAME + " speciesXX "
                 + "</td><td>1</td><td>...</td></tr>");
         this.writeln("<tr><td>...</td><td>...</td><td></td><td></td></tr>");
-        this.writeln("<tr><td>(species*4 + 6)</td><td><a href='#multi_diff_simple_col_gene_ids' title='" 
+        this.writeln("<tr><td>(species*4 + 6)</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_SIMPLE 
+                + "_col_gene_ids' title='" 
                 + "See " + GENE_IDS_COL_NAME + " column description'>"+ GENE_IDS_COL_NAME + "</a></td>"
                 + "<td>2 or greater</td><td>ENSG00000169057|ENSMUSG00000031393</td></tr>");
-        this.writeln("<tr><td>(species*4 + 7)</td><td><a href='#multi_diff_simple_col_gene_names' title='" 
+        this.writeln("<tr><td>(species*4 + 7)</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_SIMPLE 
+                + "_col_gene_names' title='" 
                 + "See " + GENE_NAMES_COL_NAME + " column description'>"+ GENE_NAMES_COL_NAME + "</a></td>"
                 + "<td>2 or greater</td><td>MECP2|Mecp2</td></tr>");
         this.writeln("</tbody>");
         this.writeln("</table>");
         this.writeln(getMultiSpeciesSimpleDiffExprFileExample());
         
-        this.writeln("<h5 id='multi_diff_simple_col1'>" + OMA_ID_COL_NAME + " (column 1)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_SIMPLE 
+                + "_col1'>" + OMA_ID_COL_NAME + " (column 1)</h5>");
         this.writeln(getOMAIdColDescription());
-        this.writeln("<h5 id='multi_diff_simple_col2'>" + MULTI_ANAT_ENTITY_IDS_COL_NAME 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_SIMPLE 
+                + "_col2'>" + MULTI_ANAT_ENTITY_IDS_COL_NAME 
                 + " (column 2)</h5>");
         this.writeln(getMultiAnatEntityIdsColDescription());
-        this.writeln("<h5 id='multi_diff_simple_col3'>" + MULTI_ANAT_ENTITY_NAMES_COL_NAME 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_SIMPLE 
+                + "_col3'>" + MULTI_ANAT_ENTITY_NAMES_COL_NAME 
                 + " (column 3)</h5>");
         this.writeln(getMultiAnatEntityNamesColDescription(2));
-        this.writeln("<h5 id='multi_diff_simple_col4'>" + STAGE_ID_COL_NAME + " (column 4)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_SIMPLE 
+                + "_col4'>" + STAGE_ID_COL_NAME + " (column 4)</h5>");
         this.writeln(getMultiSpeciesStageIdColDescription());
-        this.writeln("<h5 id='multi_diff_simple_col5'>" + STAGE_NAME_COL_NAME + " (column 5)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_SIMPLE 
+                + "_col5'>" + STAGE_NAME_COL_NAME + " (column 5)</h5>");
         this.writeln(getStageNameColDescription(4));
         
         String totalNumberOfGenes = "<p>Please note that the list of all genes member of "
                 + "the OMA orthologous gene group with ID provided in <code>" 
                 + OMA_ID_COL_NAME + "</code> (column 1) is provided through "
-                + "the <a href='#oma_hog' title='Jump to hierarchical orthologous groups "
+                + "the <a href='#" + RequestParameters.HASH_DOC_CALL_OMA 
+                + "' title='Jump to hierarchical orthologous groups "
                 + "file documentation'>hierarchical orthologous groups file</a>.</p>";
-        this.writeln("<h5 id='multi_diff_simple_col6'>" + OVER_EXPRESSED_FOR_SPECIES_COL_NAME 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_SIMPLE 
+                + "_col6'>" + OVER_EXPRESSED_FOR_SPECIES_COL_NAME 
                 + " speciesXX</h5>");
         this.writeln(getOverUnderExprForSpeciesColDescription(1, 4, 2, true));
         this.writeln(totalNumberOfGenes);
-        this.writeln("<h5 id='multi_diff_simple_col7'>" + UNDER_EXPRESSED_FOR_SPECIES_COL_NAME 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_SIMPLE 
+                + "_col7'>" + UNDER_EXPRESSED_FOR_SPECIES_COL_NAME 
                 + " speciesXX</h5>");
         this.writeln(getOverUnderExprForSpeciesColDescription(1, 4, 2, false));
         this.writeln(totalNumberOfGenes);
-        this.writeln("<h5 id='multi_diff_simple_col8'>" + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_SIMPLE 
+                + "_col8'>" + NOT_DIFF_EXPRESSED_FOR_SPECIES_COL_NAME 
                 + " speciesXX</h5>");
         this.writeln("<p>Number of genes, members of the OMA orthologous gene group "
                 + "with ID provided in <code>" + OMA_ID_COL_NAME + "</code> (column 1), "
@@ -2649,7 +2832,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "of the analyses, or for which conflicting results were generated "
                 + "from different data types.</p>");
         this.writeln(totalNumberOfGenes);
-        this.writeln("<h5 id='multi_diff_simple_col9'>" + NA_FOR_SPECIES_COL_NAME 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_SIMPLE 
+                + "_col9'>" + NA_FOR_SPECIES_COL_NAME 
                 + " speciesXX</h5>");
         this.writeln("<p>Number of genes, members of the OMA orthologous gene group "
                 + "with ID provided in <code>" + OMA_ID_COL_NAME + "</code> (column 1), "
@@ -2657,24 +2841,29 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + MULTI_ANAT_ENTITY_IDS_COL_NAME + "</code> (column 2), at <code>" 
                 + STAGE_ID_COL_NAME + "</code> (column 4)).</p>");
         this.writeln(totalNumberOfGenes);
-        this.writeln("<h5 id='multi_diff_simple_col_gene_ids'>" + GENE_IDS_COL_NAME + "</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_SIMPLE 
+                + "_col_gene_ids'>" + GENE_IDS_COL_NAME + "</h5>");
         this.writeln("<p>IDs of the genes member of the OMA orthologous gene group "
                 + "with ID provided in <code>" + OMA_ID_COL_NAME + "</code> (column 1). "
                 + "Cardinality 2 or greater. IDs are separated with the character |.</p>"
                 + "<p>This column is provided as additional information, members "
                 + "of OMA orthologous gene groups can be retrieved through the use "
-                + "of the <a href='#oma_hog' title='Jump to hierarchical orthologous groups "
+                + "of the <a href='#" + RequestParameters.HASH_DOC_CALL_OMA 
+                + "' title='Jump to hierarchical orthologous groups "
                 + "file documentation'>hierarchical orthologous groups file</a>.</p>");
-        this.writeln("<h5 id='multi_diff_simple_col_gene_names'>" + GENE_NAMES_COL_NAME + "</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_SIMPLE 
+                + "_col_gene_names'>" + GENE_NAMES_COL_NAME + "</h5>");
         this.writeln("<p>Name of the genes member of the OMA orthologous gene group "
                 + "with ID provided in <code>" + OMA_ID_COL_NAME + "</code> (column 1). "
                 + "Cardinality 2 or greater. Names are separated with the character |.</p>"
                 + "<p>This column is provided as additional information, members "
                 + "of OMA orthologous gene groups can be retrieved through the use "
-                + "of the <a href='#oma_hog' title='Jump to hierarchical orthologous groups "
+                + "of the <a href='#" + RequestParameters.HASH_DOC_CALL_OMA 
+                + "' title='Jump to hierarchical orthologous groups "
                 + "file documentation'>hierarchical orthologous groups file</a>.</p>");
 
-        this.writeln("<p><a href='#multi_diff'>Back to over-/under-expression menu</a></p>");
+        this.writeln("<p><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF
+                + "'>Back to over-/under-expression menu</a></p>");
         
         log.exit();
     }
@@ -2692,7 +2881,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
     private void writeMultiSpeciesCompleteDiffExprCallFileDoc() {
         log.entry();
         
-        this.writeln("<h4 id='multi_diff_complete'>Complete file</h4>");
+        this.writeln("<h4 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "'>Complete file</h4>");
         this.writeln("<p>In complete files, information for all genes are provided, "
                 + "in all conditions tested, for anatomical entities homologous between "
                 + "all species compared, and comparable broad developmental stages. "
@@ -2702,7 +2892,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "in the homology hypothesis used. Also, the number of columns in complete files "
                 + "is not variable, whatever the number of species compared is.</p>");
         this.writeln("<p>Relations of orthology between genes can be retrieved through the use "
-                + "of the <a href='#oma_hog' title='Jump to hierarchical orthologous groups "
+                + "of the <a href='#" + RequestParameters.HASH_DOC_CALL_OMA 
+                + "' title='Jump to hierarchical orthologous groups "
                 + "file documentation'>hierarchical orthologous groups file</a>. "
                 + "This allows notably to detect genes with no data "
                 + "for a condition: if a gene is listed as a member of an orthology group, "
@@ -2715,85 +2906,107 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeln("<tr><th>Column</th><th>Content</th><th>Cardinality</th><th>Example</th></tr>");
         this.writeln("</thead>");
         this.writeln("<tbody>");
-        this.writeln("<tr><td>1</td><td><a href='#multi_diff_complete_col1' title='" 
+        this.writeln("<tr><td>1</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col1' title='" 
                 + "See " + OMA_ID_COL_NAME + " column description'>" + OMA_ID_COL_NAME 
                 + "</a></td><td>1</td><td>42865</td></tr>");
-        this.writeln("<tr><td>2</td><td><a href='#multi_diff_complete_col2' title='" 
+        this.writeln("<tr><td>2</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col2' title='" 
                 + GENE_ID_LINK_TITLE + "'>" + GENE_ID_COL_NAME 
                 + "</a></td><td>1</td><td>ENSMMUG00000012094</td></tr>");
-        this.writeln("<tr><td>3</td><td><a href='#multi_diff_complete_col3' title='" 
+        this.writeln("<tr><td>3</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col3' title='" 
                 + GENE_NAME_LINK_TITLE + "'>" + GENE_NAME_COL_NAME 
                 + "</a></td><td>1</td><td>RAB17</td></tr>");
-        this.writeln("<tr><td>4</td><td><a href='#multi_diff_complete_col4' title='" 
+        this.writeln("<tr><td>4</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col4' title='" 
                 + "See " + MULTI_ANAT_ENTITY_IDS_COL_NAME + " column description'>" 
                 + MULTI_ANAT_ENTITY_IDS_COL_NAME 
                 + "</a></td><td>1 or greater</td><td>UBERON:0002037</td></tr>");
-        this.writeln("<tr><td>5</td><td><a href='#multi_diff_complete_col5' title='" 
+        this.writeln("<tr><td>5</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col5' title='" 
                 + "See " + MULTI_ANAT_ENTITY_NAMES_COL_NAME + " column description'>" 
                 + MULTI_ANAT_ENTITY_NAMES_COL_NAME 
                 + "</a></td><td>1 or greater</td><td>cerebellum</td></tr>");
-        this.writeln("<tr><td>6</td><td><a href='#multi_diff_complete_col6' title='" 
+        this.writeln("<tr><td>6</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col6' title='" 
                 + STAGE_ID_LINK_TITLE + "'>" + STAGE_ID_COL_NAME 
                 + "</a></td><td>1</td><td>UBERON:0018241</td></tr>");
-        this.writeln("<tr><td>7</td><td><a href='#multi_diff_complete_col7' title='" 
+        this.writeln("<tr><td>7</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col7' title='" 
                 + STAGE_NAME_LINK_TITLE + "'>" + STAGE_NAME_COL_NAME 
                 + "</a></td><td>1</td><td>prime adult stage</td></tr>");
-        this.writeln("<tr><td>8</td><td><a href='#multi_diff_complete_col8' title='" 
+        this.writeln("<tr><td>8</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col8' title='" 
                 + "See " + SPECIES_LATIN_NAME_COL_NAME + " column description'>" 
                 + SPECIES_LATIN_NAME_COL_NAME 
                 + "</a></td><td>1</td><td>Macaca_mulatta</td></tr>");
-        this.writeln("<tr><td>9</td><td><a href='#multi_diff_complete_col9' title='" 
+        this.writeln("<tr><td>9</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col9' title='" 
                 + DIFF_EXPR_STATE_LINK_TITLE + "'>" + DIFF_EXPR_STATE_COL_NAME 
                 + "</a></td><td>1</td><td>under-expression</td></tr>");
-        this.writeln("<tr><td>10</td><td><a href='#multi_diff_complete_col10' title='" 
+        this.writeln("<tr><td>10</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col10' title='" 
                 + EXPR_QUAL_LINK_TITLE + "'>" + EXPR_QUAL_COL_NAME 
                 + "</a></td><td>1</td><td>high quality</td></tr>");
-        this.writeln("<tr><td>11</td><td><a href='#multi_diff_complete_col11' title='" 
+        this.writeln("<tr><td>11</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col11' title='" 
                 + "See " + AFFY_DIFF_EXPR_STATE_COL_NAME + " column description'>" 
                 + AFFY_DIFF_EXPR_STATE_COL_NAME 
                 + "</a></td><td>1</td><td>no data</td></tr>");
-        this.writeln("<tr><td>12</td><td><a href='#multi_diff_complete_col12' title='" 
+        this.writeln("<tr><td>12</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col12' title='" 
                 + "See " + AFFY_EXPR_QUAL_COL_NAME + " column description'>" 
                 + AFFY_EXPR_QUAL_COL_NAME
         //TODO: change 'poor' to 'low'
                 + "</a></td><td>1</td><td>no data</td></tr>");
-        this.writeln("<tr><td>13</td><td><a href='#multi_diff_complete_col13' title='" 
+        this.writeln("<tr><td>13</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col13' title='" 
                 + "See " + AFFY_DIFF_EXPR_P_VAL_COL_NAME + " column description'>" 
                 + AFFY_DIFF_EXPR_P_VAL_COL_NAME 
                 + "</a></td><td>1</td><td>1.0</td></tr>");
-        this.writeln("<tr><td>14</td><td><a href='#multi_diff_complete_col14' title='" 
+        this.writeln("<tr><td>14</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col14' title='" 
                 + "See " + AFFY_DIFF_EXPR_SUPPORT_COUNT_COL_NAME + " column description'>" 
                 + AFFY_DIFF_EXPR_SUPPORT_COUNT_COL_NAME 
                 + "</a></td><td>1</td><td>0</td></tr>");
-        this.writeln("<tr><td>15</td><td><a href='#multi_diff_complete_col15' title='" 
+        this.writeln("<tr><td>15</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col15' title='" 
                 + "See " + AFFY_DIFF_EXPR_CONFLICT_COUNT_COL_NAME + " column description'>" 
                 + AFFY_DIFF_EXPR_CONFLICT_COUNT_COL_NAME 
                 + "</a></td><td>1</td><td>0</td></tr>");
-        this.writeln("<tr><td>16</td><td><a href='#multi_diff_complete_col16' title='" 
+        this.writeln("<tr><td>16</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col16' title='" 
                 + "See " + RNA_SEQ_DIFF_EXPR_STATE_COL_NAME + " column description'>" 
                 + RNA_SEQ_DIFF_EXPR_STATE_COL_NAME 
                 + "</a></td><td>1</td><td>under-expression</td></tr>");
-        this.writeln("<tr><td>17</td><td><a href='#multi_diff_complete_col17' title='" 
+        this.writeln("<tr><td>17</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col17' title='" 
                 + "See " + RNA_SEQ_EXPR_QUAL_COL_NAME + " column description'>" 
                 + RNA_SEQ_EXPR_QUAL_COL_NAME 
                 + "</a></td><td>1</td><td>high quality</td></tr>");
-        this.writeln("<tr><td>18</td><td><a href='#multi_diff_complete_col18' title='" 
+        this.writeln("<tr><td>18</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col18' title='" 
                 + "See " + RNA_SEQ_DIFF_EXPR_P_VAL_COL_NAME + " column description'>" 
                 + RNA_SEQ_DIFF_EXPR_P_VAL_COL_NAME 
                 + "</a></td><td>1</td><td>8.82E-7</td></tr>");
-        this.writeln("<tr><td>19</td><td><a href='#multi_diff_complete_col19' title='" 
+        this.writeln("<tr><td>19</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col19' title='" 
                 + "See " + RNA_SEQ_DIFF_EXPR_SUPPORT_COUNT_COL_NAME + " column description'>" 
                 + RNA_SEQ_DIFF_EXPR_SUPPORT_COUNT_COL_NAME 
                 + "</a></td><td>1</td><td>1</td></tr>");
-        this.writeln("<tr><td>20</td><td><a href='#multi_diff_complete_col20' title='" 
+        this.writeln("<tr><td>20</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col20' title='" 
                 + "See " + RNA_SEQ_DIFF_EXPR_CONFLICT_COUNT_COL_NAME + " column description'>" 
                 + RNA_SEQ_DIFF_EXPR_CONFLICT_COUNT_COL_NAME 
                 + "</a></td><td>1</td><td>0</td></tr>");
-        this.writeln("<tr><td>21</td><td><a href='#multi_diff_complete_col21' title='" 
+        this.writeln("<tr><td>21</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col21' title='" 
                 + "See " + ANAT_HOMOLOGY_CIO_ID_COL_NAME + " column description'>" 
                 + ANAT_HOMOLOGY_CIO_ID_COL_NAME 
                 + "</a></td><td>1</td><td>CIO:0000003</td></tr>");
-        this.writeln("<tr><td>22</td><td><a href='#multi_diff_complete_col22' title='" 
+        this.writeln("<tr><td>22</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col22' title='" 
                 + "See " + ANAT_HOMOLOGY_CIO_NAME_COL_NAME + " column description'>" 
                 + ANAT_HOMOLOGY_CIO_NAME_COL_NAME 
                 + "</a></td><td>1</td><td>high confidence from single evidence</td></tr>");
@@ -2801,80 +3014,102 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeln("</table>");
         this.writeln(getMultiSpeciesCompleteDiffExprFileExample());
         
-        this.writeln("<h5 id='multi_diff_complete_col1'>" + OMA_ID_COL_NAME + " (column 1)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col1'>" + OMA_ID_COL_NAME + " (column 1)</h5>");
         this.writeln(getOMAIdColDescription());
-        this.writeln("<h5 id='multi_diff_complete_col2'>" + GENE_ID_COL_NAME + " (column 2)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col2'>" + GENE_ID_COL_NAME + " (column 2)</h5>");
         this.writeln(getGeneIdColDescription());
         this.writeln("<p>Please note that the list of all genes member of "
                 + "the OMA ortholoogous gene group with ID provided in <code>" 
                 + OMA_ID_COL_NAME + "</code> (column 1) is provided through the "
-                + "<a href='#oma_hog' title='Jump to hierarchical orthologous groups "
+                + "<a href='#" + RequestParameters.HASH_DOC_CALL_OMA 
+                + "' title='Jump to hierarchical orthologous groups "
                 + "file documentation'>hierarchical orthologous groups file</a>. "
                 + "If a gene listed in this file has no call for the condition "
                 + "<code>" + MULTI_ANAT_ENTITY_IDS_COL_NAME + "</code> (column 4), at <code>" 
                 + STAGE_ID_COL_NAME + "</code> (column 6), it means "
                 + "that there is no data available for this gene in this condition.</p>");
-        this.writeln("<h5 id='multi_diff_complete_col3'>" + GENE_NAME_COL_NAME + " (column 3)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col3'>" + GENE_NAME_COL_NAME + " (column 3)</h5>");
         this.writeln(getGeneNameColDescription(2));
-        this.writeln("<h5 id='multi_diff_complete_col4'>" + MULTI_ANAT_ENTITY_IDS_COL_NAME 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col4'>" + MULTI_ANAT_ENTITY_IDS_COL_NAME 
                 + " (column 4)</h5>");
         this.writeln(getMultiAnatEntityIdsColDescription());
-        this.writeln("<h5 id='multi_diff_complete_col5'>" + MULTI_ANAT_ENTITY_NAMES_COL_NAME 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col5'>" + MULTI_ANAT_ENTITY_NAMES_COL_NAME 
                 + " (column 5)</h5>");
         this.writeln(getMultiAnatEntityNamesColDescription(4));
-        this.writeln("<h5 id='multi_diff_complete_col6'>" + STAGE_ID_COL_NAME + " (column 6)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col6'>" + STAGE_ID_COL_NAME + " (column 6)</h5>");
         this.writeln(getMultiSpeciesStageIdColDescription());
-        this.writeln("<h5 id='multi_diff_complete_col7'>" + STAGE_NAME_COL_NAME + " (column 7)</h5>");
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col7'>" + STAGE_NAME_COL_NAME + " (column 7)</h5>");
         this.writeln(getStageNameColDescription(6));
-        this.writeln("<h5 id='multi_diff_complete_col8'>" + SPECIES_LATIN_NAME_COL_NAME 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col8'>" + SPECIES_LATIN_NAME_COL_NAME 
                 + " (column 8)</h5>");
         this.writeln("<p>The latin name of the species which the gene in " + GENE_ID_COL_NAME 
                 + " (column 2) belongs to.</p>");
-        this.writeln("<h5 id='multi_diff_complete_col9'>" + DIFF_EXPR_STATE_COL_NAME 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col9'>" + DIFF_EXPR_STATE_COL_NAME 
                 + " (column 9)</h5>");
         this.writeln(getDiffExprStateColDescription(2, 6, 4, false, true, true, false, 
                 "all data types")); 
-        this.writeln("<h5 id='multi_diff_complete_col10'>" + EXPR_QUAL_COL_NAME 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col10'>" + EXPR_QUAL_COL_NAME 
                 + " (column 10)</h5>");
         this.writeln(getDiffExprQualColDescription(DIFF_EXPR_STATE_COL_NAME, 2, true, false)); 
-        this.writeln("<h5 id='multi_diff_complete_col11'>" + AFFY_DIFF_EXPR_STATE_COL_NAME 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col11'>" + AFFY_DIFF_EXPR_STATE_COL_NAME 
                 + " (column 11)</h5>");
         this.writeln(getDiffExprStateColDescription(2, 6, 4, false, true, false, true, 
                 "Affymetrix data")); 
-        this.writeln("<h5 id='multi_diff_complete_col12'>" + AFFY_EXPR_QUAL_COL_NAME 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col12'>" + AFFY_EXPR_QUAL_COL_NAME 
                 + " (column 12)</h5>");
         this.writeln(getDiffExprQualColDescription(AFFY_DIFF_EXPR_STATE_COL_NAME, 9, false, true)); 
-        this.writeln("<h5 id='multi_diff_complete_col13'>" + AFFY_DIFF_EXPR_P_VAL_COL_NAME 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col13'>" + AFFY_DIFF_EXPR_P_VAL_COL_NAME 
                 + " (column 13)</h5>");
         this.writeln(getDiffExprPvalColDescription(
                 "Affymetrix", AFFY_DIFF_EXPR_STATE_COL_NAME, 11));
-        this.writeln("<h5 id='multi_diff_complete_col14'>" + AFFY_DIFF_EXPR_SUPPORT_COUNT_COL_NAME 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col14'>" + AFFY_DIFF_EXPR_SUPPORT_COUNT_COL_NAME 
                 + " (column 14)</h5>");
         this.writeln(getDiffSupportCountColDescription(
                 "Affymetrix", AFFY_DIFF_EXPR_STATE_COL_NAME, 11));
-        this.writeln("<h5 id='multi_diff_complete_col15'>" + AFFY_DIFF_EXPR_CONFLICT_COUNT_COL_NAME 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col15'>" + AFFY_DIFF_EXPR_CONFLICT_COUNT_COL_NAME 
                 + " (column 15)</h5>");
         this.writeln(getDiffConflictCountColDescription(
                 "Affymetrix", AFFY_DIFF_EXPR_STATE_COL_NAME, 11));
-        this.writeln("<h5 id='multi_diff_complete_col16'>" + RNA_SEQ_DIFF_EXPR_STATE_COL_NAME 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col16'>" + RNA_SEQ_DIFF_EXPR_STATE_COL_NAME 
                 + " (column 16)</h5>");
         this.writeln(getDiffExprStateColDescription(2, 6, 4, false, true, false, true, "RNA-Seq data")); 
-        this.writeln("<h5 id='multi_diff_complete_col17'>" + RNA_SEQ_EXPR_QUAL_COL_NAME 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col17'>" + RNA_SEQ_EXPR_QUAL_COL_NAME 
                 + " (column 17)</h5>");
         this.writeln(getDiffExprQualColDescription(RNA_SEQ_DIFF_EXPR_STATE_COL_NAME, 16, false, true)); 
-        this.writeln("<h5 id='multi_diff_complete_col18'>" + RNA_SEQ_DIFF_EXPR_P_VAL_COL_NAME 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col18'>" + RNA_SEQ_DIFF_EXPR_P_VAL_COL_NAME 
                 + " (column 18)</h5>");
         this.writeln(getDiffExprPvalColDescription(
                 "RNA-Seq", RNA_SEQ_DIFF_EXPR_STATE_COL_NAME, 16));
-        this.writeln("<h5 id='multi_diff_complete_col19'>" + RNA_SEQ_DIFF_EXPR_SUPPORT_COUNT_COL_NAME 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col19'>" + RNA_SEQ_DIFF_EXPR_SUPPORT_COUNT_COL_NAME 
                 + " (column 19)</h5>");
         this.writeln(getDiffSupportCountColDescription(
                 "RNA-Seq", RNA_SEQ_DIFF_EXPR_STATE_COL_NAME, 16));
-        this.writeln("<h5 id='multi_diff_complete_col20'>" + RNA_SEQ_DIFF_EXPR_CONFLICT_COUNT_COL_NAME 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col20'>" + RNA_SEQ_DIFF_EXPR_CONFLICT_COUNT_COL_NAME 
                 + " (column 20)</h5>");
         this.writeln(getDiffConflictCountColDescription(
                 "RNA-Seq", RNA_SEQ_DIFF_EXPR_STATE_COL_NAME, 16));
-        this.writeln("<h5 id='multi_diff_complete_col21'>" + ANAT_HOMOLOGY_CIO_ID_COL_NAME 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col21'>" + ANAT_HOMOLOGY_CIO_ID_COL_NAME 
                 + " (column 21)</h5>");
         this.writeln("<p>Unique identifier from the "
                 + "<a target='_blank' title='External link to CIO in OBO' "
@@ -2886,12 +3121,14 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "See <a target='_blank' title='External link to CIO project' "
                 + "href='https://github.com/BgeeDB/confidence-information-ontology'>"
                 + "project home</a> for more details.</p>");
-        this.writeln("<h5 id='multi_diff_complete_col22'>" + ANAT_HOMOLOGY_CIO_NAME_COL_NAME 
+        this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
+                + "_col22'>" + ANAT_HOMOLOGY_CIO_NAME_COL_NAME 
                 + " (column 22)</h5>");
         this.writeln("<p>Name of the CIO term defined by <code>" 
                 + ANAT_HOMOLOGY_CIO_ID_COL_NAME + "</code> (column 21)</p>");
         
-        this.writeln("<p><a href='#multi_diff'>Back to over-/under-expression menu</a></p>");
+        this.writeln("<p><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF
+                + "'>Back to over-/under-expression menu</a></p>");
         
         log.exit();
     }

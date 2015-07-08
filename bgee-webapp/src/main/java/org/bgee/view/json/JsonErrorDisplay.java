@@ -33,39 +33,112 @@ public class JsonErrorDisplay extends JsonParentDisplay implements ErrorDisplay 
     }
 
     @Override
+    public void displayServiceUnavailable() {
+        log.entry();
+        this.sendServiceUnavailableHeaders();
+
+        this.write(
+                "{'error': {"
+                    + "'code': 503"
+                    + "'message': 'Due to technical problems, Bgee is currently unavailable. " +
+                    "We are working to restore Bgee as soon as possible. " +
+                    "We apologize for any inconvenience.'"
+                + "}}");
+
+        log.exit();
+    }
+
+    @Override
     public void displayRequestParametersNotFound(String key) {
-        // TODO Auto-generated method stub
+        log.entry(key);
+        this.sendBadRequestHeaders();
+
+        this.write(
+                "{'error': {"
+                    + "'code': 400"
+                    + "'message': 'You tried to use in your query some parameters "
+                    + "supposed to be stored on our server, " +
+                    "but we could not find them. Either the key you used was wrong, " +
+                    "or we were not able to save these parameters. " +
+                    "Your query should be rebuilt by setting all the parameters from scratch. " +
+                    "We apologize for any inconvenience.'"
+                + "}}");
         
+        log.exit();
     }
 
     @Override
     public void displayPageNotFound(String message) {
-        // TODO Auto-generated method stub
+        log.entry(message);
+        this.sendPageNotFoundHeaders();
+
+        this.write(
+                "{'error': {"
+                    + "'code': 404"
+                    + "'message': 'We could not understand your query, "
+                    + "see details : " + message + "'"
+                + "}}");
         
+        log.exit();
     }
 
     @Override
     public void displayUnexpectedError() {
-        // TODO Auto-generated method stub
+        log.entry();
+        this.sendInternalErrorHeaders();
+
+        this.write(
+                "{'error': {"
+                    + "'code': 500"
+                    + "'message': 'An error occurred on our side. This error was logged "
+                    + "and will be investigated. We apologize for any inconvenience.'"
+                + "}}");
         
+        log.exit();
     }
 
     @Override
     public void displayMultipleParametersNotAllowed(String message) {
-        // TODO Auto-generated method stub
+        log.entry(message);
+        this.sendBadRequestHeaders();
         
+        this.write(
+                "{'error': {"
+                    + "'code': 400"
+                    + "'message': '" + message + " Please check the URL and retry.'"
+                + "}}");
+        
+        log.exit();
     }
 
     @Override
     public void displayRequestParametersNotStorable(String message) {
-        // TODO Auto-generated method stub
+        log.entry(message);
+        this.sendBadRequestHeaders();
         
+        this.write(
+                "{'error': {"
+                    + "'code': 400"
+                    + "'message': 'A parameter is not storable or the key is missing: "
+                    + message + "'"
+                + "}}");
+        
+        log.exit();
     }
 
     @Override
     public void displayWrongFormat(String message) {
-        // TODO Auto-generated method stub
+        log.entry(message);
+        this.sendBadRequestHeaders();
         
+        this.write(
+                "{'error': {"
+                    + "'code': 400"
+                    + "'message': 'Wrong format for a parameter: "
+                    + message + "'"
+                + "}}");
+        
+        log.exit();
     }
     
 }

@@ -32,11 +32,8 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
         super(response, requestParameters, prop, factory);
     }
 
-
-    /**
-     * Display the output expected in the case of a HTTP error 503
-     */
-    public void serviceUnavailable() {
+    @Override
+    public void displayServiceUnavailable() {
         log.entry();
         this.sendServiceUnavailableHeaders();
 

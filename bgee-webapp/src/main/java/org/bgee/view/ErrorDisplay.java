@@ -21,6 +21,10 @@ public interface ErrorDisplay {
      */
     public void displayRequestParametersNotFound(String key);
     /**
+     * Display the output expected in the case of a HTTP error 503.
+     */
+    public void displayServiceUnavailable();
+    /**
      * Display an error message when a <code>PageNotFoundException</code> is thrown 
      * (basically, a "404 not found"), most likely by a controller that could not understand a query.
      * 

@@ -52,8 +52,7 @@ $(document).ready(function() {
     // Init object urlParameters, which provides the list of all parameters allowed in an URL.
     urlParameters.init();
     // Create a requestParameters for the current URL
-    CURRENT_REQUEST = new requestParameters(window.location.search + window.location.hash, 
-    		true, "&");
+    CURRENT_REQUEST = new requestParameters(window.location.search + window.location.hash);
     //create a BgeeProperties object to be accessed by all scripts
     GLOBAL_PROPS = new bgeeProperties();
     

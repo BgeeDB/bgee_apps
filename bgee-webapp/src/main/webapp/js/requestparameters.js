@@ -37,6 +37,10 @@
  * # generate the URL from the parameters set
  * urlGenerator.getRequestURL();
  * 
+ * # generate only hash part of URL (useful to update {@code window.location.hash})
+ * var hashGenerator = new requestParameter();
+ * hashGenerator.setDataKey('hash_key_whatever'); //again, just a helper method
+ * window.location.hash = hashGenerator.getRequestHash();
  * 
  * }
  * </pre>
@@ -225,6 +229,57 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      */
     this.ACTION_DOC_HOW_TO_ACCESS = function() {
     	return actionDocHowToAccess;
+    }
+    
+
+    /**
+     * A {@code String} that is the anchor to use in the hash part of an URL 
+     * to link to the multi-species part, in the documentation about gene expression calls.
+     * This parameter will then be provided outside of this class through the method 
+     * {@link #HASH_DOC_CALL_MULTI()} (to get the behavior 
+     * of a public final parameter).
+     */
+    var hashDocCallMulti = 'multi';
+    /**
+     * A method to obtain the value of the anchor to use in the hash part of an URL 
+     * to link to the multi-species part, in the documentation about gene expression calls.
+     */
+    this.HASH_DOC_CALL_MULTI = function() {
+    	return hashDocCallMulti;
+    }
+    /**
+     * A {@code String} that is the anchor to use in the hash part of an URL 
+     * to link to the single species expression part, in the documentation 
+     * about gene expression calls.
+     * This parameter will then be provided outside of this class through the method 
+     * {@link #HASH_DOC_CALL_SINGLE_EXPR()} (to get the behavior 
+     * of a public final parameter).
+     */
+    var hashDocCallSingleExpr = 'single_expr';
+    /**
+     * A method to obtain the value of the anchor to use in the hash part of an URL 
+     * to link to the single species expression part, in the documentation about 
+     * gene expression calls.
+     */
+    this.HASH_DOC_CALL_SINGLE_EXPR = function() {
+    	return hashDocCallSingleExpr;
+    }
+    /**
+     * A {@code String} that is the anchor to use in the hash part of an URL 
+     * to link to the single species diff. expression part, in the documentation 
+     * about gene expression calls.
+     * This parameter will then be provided outside of this class through the method 
+     * {@link #HASH_DOC_CALL_SINGLE_DIFF()} (to get the behavior 
+     * of a public final parameter).
+     */
+    var hashDocCallSingleDiff = 'single_diff';
+    /**
+     * A method to obtain the value of the anchor to use in the hash part of an URL 
+     * to link to the single species diff. expression part, in the documentation about 
+     * gene expression calls.
+     */
+    this.HASH_DOC_CALL_SINGLE_DIFF = function() {
+    	return hashDocCallSingleDiff;
     }
     
     /**
@@ -888,6 +943,18 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      */
     this.getDataKey = function() {
         return this.getFirstValue(urlParameters.getParamData());
+    };
+    /**
+     * Convenient method to set value of the parameter returned by 
+     * {@link URLParameters#getParamData()}. Equivalent to calling 
+     * {@link #addValue(Parameter, Object)} for this parameter.
+     * 
+     * @param getParamData	A {@code String} that is the value of the {@code data} URL parameter 
+     *                  	to set.
+     */
+    this.setDataKey = function(data) {
+    	this.resetValues(urlParameters.getParamData());
+        this.addValue(urlParameters.getParamData(), data);
     };
     
     /**

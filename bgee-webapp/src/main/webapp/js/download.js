@@ -334,11 +334,16 @@ var download = {
             // Fetch all DOM elements and values needed to update the display
             var id = $currentSpecies.attr( "id" );
             // Generate value for the hash.
-            // Add "id" in front to avoid the automatic anchor behavior that would mess up the scroll
-            var hashToUse = "#id"+id; 
+            // Add "id" in front to avoid the automatic anchor behavior 
+            //that would mess up the scroll
+            //TODO: this should be a proper data parameter stored in hash, 
+            //like, e.g., species_id=id
+            var hashToUse = "id"+id
             
             //manage link to processed vaulues/gene expression calls
-            var requestSwitchPage = new requestParameters("", true, "&");
+            var requestSwitchPage = new requestParameters();
+            requestSwitchPage.setURLHash(hashToUse);
+            
         	if ( this.$exprCalls.length > 0 ) {
         		requestSwitchPage.addValue(urlParameters.getParamPage(), 
         				requestSwitchPage.PAGE_DOWNLOAD());
@@ -355,7 +360,7 @@ var download = {
         	this.$switchPageLink.attr( "href", 
         			//TODO: handle the hash exactly as another parameter (see TODO 
         			//in RequestParameters.java)
-        			requestSwitchPage.getRequestURL() + hashToUse);
+        			requestSwitchPage.getRequestURL());
             
             
             // The images contain the data fields related to the species
@@ -450,15 +455,15 @@ var download = {
                 this.$showSingleSimpleDiffexprAnatomyHeaders.hide();
                 this.$showSingleCompleteDiffexprAnatomyHeaders.hide();
                 if ( this.$exprCalls.length > 0 ) {
-                    var urlDoc = new requestParameters("", true, "&");
+                    var urlDoc = new requestParameters();
                     urlDoc.addValue(urlParameters.getParamPage(), 
                     		urlDoc.PAGE_DOCUMENTATION());
                     urlDoc.addValue(urlParameters.getParamAction(), 
                     		urlDoc.ACTION_DOC_CALL_DOWLOAD_FILES());
-                    //TODO: manage anchor as a parameter
-                	this.$exprHelp.attr( "href", urlDoc.getRequestURL() + "#multi");
-                	this.$diffDevHelp.attr( "href", urlDoc.getRequestURL() + "#multi");
-                	this.$diffAnatHelp.attr( "href", urlDoc.getRequestURL() + "#multi");
+                    urlDoc.setURLHash(urlDoc.HASH_DOC_CALL_MULTI());
+                	this.$exprHelp.attr( "href", urlDoc.getRequestURL());
+                	this.$diffDevHelp.attr( "href", urlDoc.getRequestURL());
+                	this.$diffAnatHelp.attr( "href", urlDoc.getRequestURL());
                 } 
             } else {
             	this.$switchPageLink.show();
@@ -475,10 +480,12 @@ var download = {
                     		urlDoc.PAGE_DOCUMENTATION());
                     urlDoc.addValue(urlParameters.getParamAction(), 
                     		urlDoc.ACTION_DOC_CALL_DOWLOAD_FILES());
-                    //TODO: manage anchor as a parameter
-                	this.$exprHelp.attr( "href", urlDoc.getRequestURL() + "#single_expr");
-                	this.$diffDevHelp.attr( "href", urlDoc.getRequestURL() + "#single_diff");
-                	this.$diffAnatHelp.attr( "href", urlDoc.getRequestURL() + "#single_diff");
+                    
+                    urlDoc.setURLHash(urlDoc.HASH_DOC_CALL_SINGLE_EXPR());
+                	this.$exprHelp.attr( "href", urlDoc.getRequestURL());
+                	urlDoc.setURLHash(urlDoc.HASH_DOC_CALL_SINGLE_DIFF());
+                	this.$diffDevHelp.attr( "href", urlDoc.getRequestURL());
+                	this.$diffAnatHelp.attr( "href", urlDoc.getRequestURL());
                 }
             }
             
@@ -668,7 +675,7 @@ var download = {
 
             // Update the URL with the id, to allow the link to be copied and sent
             // Add "id" in front to avoid the automatic anchor behavior that would mess up the scroll
-            window.location.hash = hashToUse; 
+            window.location.hash = '#' + hashToUse; 
         },
 
         /**

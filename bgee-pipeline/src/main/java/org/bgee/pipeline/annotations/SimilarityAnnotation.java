@@ -542,8 +542,8 @@ public class SimilarityAnnotation {
     
     /**
      * Extracts annotations from the provided curator annotation file containing information 
-     * capable of populating {@code RawAnnotationBean}s. 
-     * It returns a {@code List} of {@code RawAnnotationBean}s, where each 
+     * capable of populating {@code CuratorAnnotationBean}s. 
+     * It returns a {@code List} of {@code CuratorAnnotationBean}s, where each 
      * {@code AnnotationBean} represents a row in the file. The elements 
      * in the {@code List} are ordered as they were read from the file. 
      * <p>
@@ -553,7 +553,7 @@ public class SimilarityAnnotation {
      * 
      * @param similarityFile    A {@code String} that is the path to an annotation file
      *                          from curators. 
-     * @return                  A {@code List} of {@code RawAnnotationBean}s where each 
+     * @return                  A {@code List} of {@code CuratorAnnotationBean}s where each 
      *                          element represents a row in the file, ordered as 
      *                          they were read from the file.
      * @throws FileNotFoundException    If {@code similarityFile} could not be found.
@@ -565,11 +565,12 @@ public class SimilarityAnnotation {
             throws FileNotFoundException, IOException, IllegalArgumentException {
         log.entry(similarityFile);
         
-        //curator file has variable number of columns in different lines. We cannot use a CsvBeanReader 
-        //for such files, so, we modify the file to have same number of columns in all lines.
+        //curator file has variable number of columns in different lines. 
+        //We cannot use a CsvBeanReader for such files, 
+        //so, first, we modify the file to have same number of columns in all lines.
         File originalFile = new File(similarityFile);
         File tmpFile = File.createTempFile("curator_generated_", "_tmp");
-        //try clause to delete the temp file in a finally clause.
+        //try clause to delete the tmp file in a finally clause.
         try {
             Utils.standardizeCSVFileColumnCount(originalFile, tmpFile, Utils.TSVCOMMENTED);
             
@@ -3980,7 +3981,7 @@ public class SimilarityAnnotation {
                 evidenceConcordance = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
                         CIOWrapper.STRONGLY_CONFLICTING_CONCORDANCE_ID);
                 //for strongly conflicting evidence lines, there is no confidence level associated.
-                confidenceLevel = null;
+                //confidenceLevel = null;
             } else {
                 evidenceConcordance = cioWrapper.getOWLGraphWrapper().getOWLClassByIdentifier(
                         CIOWrapper.WEAKLY_CONFLICTING_CONCORDANCE_ID);

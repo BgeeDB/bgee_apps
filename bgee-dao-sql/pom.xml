@@ -38,10 +38,10 @@
 
         <!-- Properties used to skip the creation and populating of the database 
             ${bgee.database.test.select.name}. See this property documentation for more 
-            details. We make it default to ${skipTests}, so that this execution will 
+            details. We make it default to ${skipITs}, so that this execution will 
             be skipped if requested, as the other pre- and post-integration-test executions 
             . -->
-        <bgee.database.test.skip.populate>${skipTests}</bgee.database.test.skip.populate>
+        <bgee.database.test.skip.populate>${skipITs}</bgee.database.test.skip.populate>
 
         <!-- here, we provide the name of the empty test Bgee database, used 
             to proceed to INSERT/UPDATE integration tests. This test database will be 
@@ -287,7 +287,7 @@
                            <goal>execute</goal>
                        </goals>
                        <configuration>
-                           <skip>${skipTests}</skip>
+                           <skip>${skipITs}</skip>
                            <!-- we use the test database here, as we 
                                need to attach our procedure to drop all test databases to an existing database -->
                            <url>${bgee.jdbc.connectionURL}test</url>
@@ -308,7 +308,7 @@
                            <goal>execute</goal>
                        </goals>
                        <configuration>
-                           <skip>${skipTests}</skip>
+                           <skip>${skipITs}</skip>
                            <autocommit>true</autocommit>
                            <sqlCommand>
                                CREATE DATABASE
@@ -326,7 +326,7 @@
                            <goal>execute</goal>
                        </goals>
                        <configuration>
-                           <skip>${skipTests}</skip>
+                           <skip>${skipITs}</skip>
                            <!-- change the URL to use the database -->
                            <url>${bgee.jdbc.connectionURL}${bgee.database.test.insert.name}</url>
                            <autocommit>true</autocommit>
@@ -346,7 +346,7 @@
                            <goal>execute</goal>
                        </goals>
                        <configuration>
-                           <skip>${skipTests}</skip>
+                           <skip>${skipITs}</skip>
                            <!-- change the URL to use the database -->
                            <url>${bgee.jdbc.connectionURL}${bgee.database.test.insert.name}</url>
                            <autocommit>true</autocommit>
@@ -442,7 +442,7 @@
                            <goal>execute</goal>
                        </goals>
                        <configuration>
-                           <skip>${skipTests}</skip>
+                           <skip>${skipITs}</skip>
                            <!-- we use the test database here, as we 
                                need to attach our procedure to drop all test databases to an existing database -->
                            <url>${bgee.jdbc.connectionURL}test</url>

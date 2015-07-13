@@ -77,6 +77,9 @@
         <!-- properties used to rename css and js files with version number, 
              to avoid caching issues with proxis/web browers. Corresponds by default 
              to the project version number, but we might have additional updates of these files. -->
+        <!-- WARNING: never removes these properties, otherwise your files will be named, e.g., 
+             *${css.version}.css. If you want to disable versioning of CSS and JS files, 
+             just leave the css.version and js.version empty. -->
         <css.version>${project.version}c</css.version>
         <js.version>${project.version}c</js.version>
         <!-- We will rename css and javascript files with version number using 
@@ -147,13 +150,13 @@
                                      <fileset dir="${basedir}/src/main/webapp/css/">
                                          <include name="**/*.css" />
                                      </fileset>
-                                     <mapper type="glob" from="*.css" to="*-${css.version}.css"/>
+                                     <mapper type="glob" from="*.css" to="*${css.version}.css"/>
                                  </copy>
                                  <copy todir="${rename.tmp.directory}/js/">
                                      <fileset dir="${basedir}/src/main/webapp/js/">
                                          <include name="**/*.js" />
                                      </fileset>
-                                     <mapper type="glob" from="*.js" to="*-${js.version}.js"/>
+                                     <mapper type="glob" from="*.js" to="*${js.version}.js"/>
                                  </copy>
                              </target>
                         </configuration>

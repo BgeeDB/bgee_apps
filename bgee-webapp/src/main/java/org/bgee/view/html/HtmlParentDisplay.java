@@ -5,6 +5,7 @@ import java.io.IOException;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
@@ -523,6 +524,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             throw log.throwing(new IllegalArgumentException("The provided file name "
                     + "must end with an extension '.js'."));
         }
+        if (StringUtils.isBlank(this.prop.getJavascriptVersionExtension())) {
+            return log.exit(originalFileName);
+        }
         return log.exit(originalFileName.replaceAll("(.+?)\\.js", 
                 "$1" + this.prop.getJavascriptVersionExtension() + ".js"));
     }
@@ -586,6 +590,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         if (!originalFileName.endsWith(".css")) {
             throw log.throwing(new IllegalArgumentException("The provided file name "
                     + "must end with an extension '.css'."));
+        }
+        if (StringUtils.isBlank(this.prop.getCssVersionExtension())) {
+            return log.exit(originalFileName);
         }
         return log.exit(originalFileName.replaceAll("(.+?)\\.css", 
                 "$1" + this.prop.getCssVersionExtension() + ".css"));

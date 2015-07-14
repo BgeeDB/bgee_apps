@@ -321,13 +321,18 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.2</version>
+                <version>3.3</version>
                 <configuration>
-                    <!-- in order to compile with JDK 7, until we move to JDK 8 -->
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                    
+                    
+                    <!-- Code not used anymore, was necessary to compile with JDK 7, 
+                         we moved to Java 8 -->
+                    <!-- 
                     <compilerVersion>1.7</compilerVersion>
                     <fork>true</fork>
+                    -->
                     <!-- 
                     You need to set up the path to a JDK 7 in the Maven settings.xml file, 
                     as explained here: https://maven.apache.org/plugins/maven-compiler-plugin/examples/compile-using-different-jdk.html
@@ -344,8 +349,13 @@
                          <activeProfile>compiler</activeProfile>
                        </activeProfiles>
                      -->
+                    <!-- 
                     <executable>${JAVA_1_7_HOME}/bin/javac</executable>
                     <bootclasspath>${JAVA_1_7_BOOTCLASSPATH}</bootclasspath>
+                    -->
+                    <!-- End of unused code -->
+                    
+                    
                 </configuration>
             </plugin>
 

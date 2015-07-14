@@ -806,9 +806,6 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
             // {@code CallTO#getAnatEntityId()}, and {@code CallTO#getStageId()}. 
             // we do not copy the List to save memory, so the provided argument will be modified.
             // We do not order in the same way depending on the comparison factor.
-            //XXX: we could optimize by sorting only once for a given comparison factor, 
-            //and without duplicating the List. But it is not a big deal for now, execution 
-            //time is small.
             Boolean orderByAnatomy = null;
             if (writerFileType.getKey().getComparisonFactor().equals(ComparisonFactor.ANATOMY)) {
                 //ComparisonFactor = anatomy means that we compared different organs 

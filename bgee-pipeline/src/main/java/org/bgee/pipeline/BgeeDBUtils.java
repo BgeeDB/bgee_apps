@@ -314,88 +314,88 @@ public class BgeeDBUtils {
     }
     
     /**
-	 * Retrieve a mapping from IDs to {@code TransferObject}s using the {@code DAOResultSet} 
-	 * {@code rs}, supposed to return an {@code EntityTO} when calling the method 
-	 * {@code DAOResultSet#getTO()}.
-	 * <p>
-	 * {@code rs} is closed by this method before exiting.
-	 * 
-	 * @param rs    A {@code DAOResultSet} returning an {@code EntityTO} when calling 
-	 *              the method {@code DAOResultSet#getTO()}. It should not have been closed, 
-	 *              and the method {@code next} should not have been already called.
-	 * @return      A {@code Map} where keys are {@code String}s corresponding to 
-	 *              entity IDs, the associated values being {@code EntityTO}s 
-	 *              corresponding to entity names. 
-	 */
+     * Retrieve a mapping from IDs to {@code TransferObject}s using the {@code DAOResultSet} 
+     * {@code rs}, supposed to return an {@code EntityTO} when calling the method 
+     * {@code DAOResultSet#getTO()}.
+     * <p>
+     * {@code rs} is closed by this method before exiting.
+     * 
+     * @param rs    A {@code DAOResultSet} returning an {@code EntityTO} when calling 
+     *              the method {@code DAOResultSet#getTO()}. It should not have been closed, 
+     *              and the method {@code next} should not have been already called.
+     * @return      A {@code Map} where keys are {@code String}s corresponding to 
+     *              entity IDs, the associated values being {@code EntityTO}s 
+     *              corresponding to entity names. 
+     */
     //TODO Add @SuppressWarning?
     //TODO Modify when NamedEntityTO implemented 
-	private static <T extends TransferObject> Map<String, T> generateTOsByIdsMap(DAOResultSet<T> rs) {
-	    log.entry(rs);
-	    
-	    Map<String, T> tosByIds = new HashMap<String, T>();
-	    try {
-	        while (rs.next()) {
-	            EntityTO entityTO = null;
-	            try {
-	                entityTO = (EntityTO) rs.getTO();
-	            } catch (ClassCastException e) {
-	                throw log.throwing(new IllegalArgumentException("The provided DAOResultSet " +
-	                        "does not allow to retrieve EntityTOs"));
-	            }
-	            T previousValue = tosByIds.put(entityTO.getId(), (T)entityTO);
-	            if (previousValue != null && !TOComparator.areTOsEqual(previousValue, entityTO)) {
-	                throw log.throwing(new IllegalStateException("Several TOs associated to " +
-	                        "a same ID: " + entityTO.getId() + " - " + previousValue + 
-	                        " - " + entityTO));
-	            }
-	        }
-	    } finally {
-	        rs.close();
-	    }
-	    return log.exit(tosByIds);
-	}
+    private static <T extends TransferObject> Map<String, T> generateTOsByIdsMap(DAOResultSet<T> rs) {
+        log.entry(rs);
+        
+        Map<String, T> tosByIds = new HashMap<String, T>();
+        try {
+            while (rs.next()) {
+                EntityTO entityTO = null;
+                try {
+                    entityTO = (EntityTO) rs.getTO();
+                } catch (ClassCastException e) {
+                    throw log.throwing(new IllegalArgumentException("The provided DAOResultSet " +
+                            "does not allow to retrieve EntityTOs"));
+                }
+                T previousValue = tosByIds.put(entityTO.getId(), (T)entityTO);
+                if (previousValue != null && !TOComparator.areTOsEqual(previousValue, entityTO)) {
+                    throw log.throwing(new IllegalStateException("Several TOs associated to " +
+                            "a same ID: " + entityTO.getId() + " - " + previousValue + 
+                            " - " + entityTO));
+                }
+            }
+        } finally {
+            rs.close();
+        }
+        return log.exit(tosByIds);
+    }
 
-	/**
-	 * Retrieve a mapping from IDs to names using the {@code DAOResultSet} {@code rs}, 
-	 * supposed to return an {@code EntityTO} when calling the method 
-	 * {@code DAOResultSet#getTO()}.
-	 * <p>
-	 * {@code rs} is closed by this method before exiting.
-	 * 
-	 * @param rs    A {@code DAOResultSet} returning an {@code EntityTO} when calling 
-	 *              the method {@code DAOResultSet#getTO()}. It should not have been closed, 
-	 *              and the method {@code next} should not have been already called.
-	 * @return      A {@code Map} where keys are {@code String}s corresponding to 
-	 *              entity IDs, the associated values being {@code String}s 
-	 *              corresponding to entity names. 
-	 */
-	private static Map<String, String> generateNamesByIdsMap(
-	        DAOResultSet<? extends TransferObject> rs) {
-	    log.entry(rs);
-	    Map<String, String> namesByIds = new HashMap<String, String>();
-	    try {
-	        while (rs.next()) {
-	            EntityTO entityTO = null;
-	            try {
-	                entityTO = (EntityTO) rs.getTO();
-	            } catch (ClassCastException e) {
-	                throw log.throwing(new IllegalArgumentException("The provided DAOResultSet " +
-	                        "does not allow to retrieve EntityTOs"));
-	            }
-	            String previousValue = namesByIds.put(entityTO.getId(), entityTO.getName());
-	            if (previousValue != null && !previousValue.equals(entityTO.getName())) {
-	                throw log.throwing(new IllegalStateException("Several names associated to " +
-	                        "a same ID: " + entityTO.getId() + " - " + previousValue + 
-	                        " - " + entityTO.getName()));
-	            }
-	        }
-	    } finally {
-	        rs.close();
-	    }
-	    return log.exit(namesByIds);
-	}
+    /**
+     * Retrieve a mapping from IDs to names using the {@code DAOResultSet} {@code rs}, 
+     * supposed to return an {@code EntityTO} when calling the method 
+     * {@code DAOResultSet#getTO()}.
+     * <p>
+     * {@code rs} is closed by this method before exiting.
+     * 
+     * @param rs    A {@code DAOResultSet} returning an {@code EntityTO} when calling 
+     *              the method {@code DAOResultSet#getTO()}. It should not have been closed, 
+     *              and the method {@code next} should not have been already called.
+     * @return      A {@code Map} where keys are {@code String}s corresponding to 
+     *              entity IDs, the associated values being {@code String}s 
+     *              corresponding to entity names. 
+     */
+    private static Map<String, String> generateNamesByIdsMap(
+            DAOResultSet<? extends TransferObject> rs) {
+        log.entry(rs);
+        Map<String, String> namesByIds = new HashMap<String, String>();
+        try {
+            while (rs.next()) {
+                EntityTO entityTO = null;
+                try {
+                    entityTO = (EntityTO) rs.getTO();
+                } catch (ClassCastException e) {
+                    throw log.throwing(new IllegalArgumentException("The provided DAOResultSet " +
+                            "does not allow to retrieve EntityTOs"));
+                }
+                String previousValue = namesByIds.put(entityTO.getId(), entityTO.getName());
+                if (previousValue != null && !previousValue.equals(entityTO.getName())) {
+                    throw log.throwing(new IllegalStateException("Several names associated to " +
+                            "a same ID: " + entityTO.getId() + " - " + previousValue + 
+                            " - " + entityTO.getName()));
+                }
+            }
+        } finally {
+            rs.close();
+        }
+        return log.exit(namesByIds);
+    }
 
-	/**
+    /**
      * Retrieve from the data source a mapping from gene IDs to gene names for genes 
      * belonging to the requested species. 
      * 
@@ -523,7 +523,7 @@ public class BgeeDBUtils {
      * @return                  A {@code Map} where keys are {@code String}s corresponding to 
      *                          CIO IDs, the associated values being {@code CIOStatementTO}s 
      *                          corresponding to CIO TOs. 
-     * @throws DAOException   	If an error occurred while getting the data from the Bgee data source.
+     * @throws DAOException     If an error occurred while getting the data from the Bgee data source.
      */
     public static Map<String, CIOStatementTO> getCIOStatementTOsByIds(CIOStatementDAO cioStatementDAO) 
             throws DAOException {

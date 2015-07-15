@@ -40,6 +40,7 @@ import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTOResultSet;
+import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO;
 import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTO;
 import org.bgee.model.dao.api.species.TaxonDAO;
 import org.bgee.model.dao.api.species.TaxonDAO.TaxonTOResultSet;
@@ -65,7 +66,7 @@ import org.supercsv.io.dozer.ICsvDozerBeanWriter;
  * (simple and advanced files) from the Bgee database. 
  *
  * @author 	Valentine Rech de Laval
- * @version Bgee 13
+ * @version Bgee 13 july
  * @since 	Bgee 13
  */
 //FIXME: there will definitely be cases where a homology group include organs 
@@ -1229,8 +1230,10 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         }
         
         // We retrieve all CIO so it's common to all groups
+        this.getCIOStatementDAO().setAttributes(CIOStatementDAO.Attribute.ID, 
+        		CIOStatementDAO.Attribute.NAME, CIOStatementDAO.Attribute.TRUSTED);
         Map<String, CIOStatementTO> cioNamesByIds = 
-                BgeeDBUtils.getCIOStatementsByIds(this.getCIOStatementDAO());
+                BgeeDBUtils.getCIOStatementTOsByIds(this.getCIOStatementDAO());
         
         for (Entry<String, Set<String>> currentGroup : this.providedGroups.entrySet()) {
             Set<String> setSpecies = currentGroup.getValue();

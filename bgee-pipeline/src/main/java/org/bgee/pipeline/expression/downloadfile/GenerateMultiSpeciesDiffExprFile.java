@@ -69,12 +69,34 @@ import org.supercsv.io.dozer.ICsvDozerBeanWriter;
  * @since 	Bgee 13
  */
 //FIXME: there will definitely be cases where a homology group include organs 
-//existing in a same species, such as the homology mouth|anus, or the homology 
-//lung|swim bladder in lungfish. So we need to have a mechanism to merge calls 
-//of a same gene in a same MultiSpeciesCondition. 
+//existing in a same species, such as the homology mouth|anus if we were 
+//to compare species with 'bilateria' as common ancestor, or the homology 
+//endoderm|mesoderm if we were to compare species with 'Eumetazoa' as common ancestor. 
+//So we need to have a mechanism to merge calls of a same gene in a same MultiSpeciesCondition. 
+
 //FIXME: And what should we do with that? When should we decide to not display mouth|anus, 
 //to only display mouth on the one hand, anus on the other hand? Should we display 
 //both the multiple-entities condition, AND the single-entity conditions?
+//
+// => actually, I guess this would be handled by the query to the datasource. 
+//The current policy is to always have 'single-entity' annotations for each entity 
+//part of a 'multiple entities' annotation. So, based on the taxon, we should always 
+//be able to retrieve the 'single entity' annotations when appropriate. 
+//
+// => remaining problem: what about the homology 'lung|swim bladder' for taxon 'Gnathostomata', 
+// and the homology 'lung' for the same taxon?
+// - a solution could simply be: if there is both a 'multiple entities' and a 'single entity' 
+// annotation for the same valid taxon, always get the 'multiple entities' from the data source; 
+// then, only display the entities in which there are gene data (so, 
+// in the 'lung|swim bladder' example, if we only had tetrapoda species, 
+// we would not display 'swim bladder', only 'lung')
+// - another solution would be, if we had 100% perfect taxon constraints, 
+// the data source could only returns anatomical entities existing in all requested species. 
+// This would be "cleaner", but will we ever get this level of quality for taxon constraints?
+//
+// => Anyway, we can implement the first solution in any case. 
+// I think it is already implemented, right?
+
 //FIXME: use "low quality" instead of "poor quality"
 public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile 
                                                 implements GenerateMultiSpeciesDownloadFile {

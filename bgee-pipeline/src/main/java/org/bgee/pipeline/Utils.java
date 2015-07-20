@@ -55,7 +55,6 @@ public class Utils {
      * @version Bgee 13 Apr. 2015
      * @since Bgee 13
      */
-    //TODO: unit test with 'blankValuesAllowed' set to true
     public static class FmtMultipleStringValues extends CellProcessorAdaptor {
         
         /**

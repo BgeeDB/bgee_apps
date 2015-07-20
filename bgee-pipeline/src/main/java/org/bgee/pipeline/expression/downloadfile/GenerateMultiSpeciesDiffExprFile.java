@@ -13,18 +13,16 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeSet;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO;
+import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO.GroupToStageTO;
-import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO.GroupToStageTOResultSet;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SimAnnotToAnatEntityTO;
-import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SimAnnotToAnatEntityTOResultSet;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTOResultSet;
 import org.bgee.model.dao.api.exception.DAOException;
@@ -65,9 +63,9 @@ import org.supercsv.io.dozer.ICsvDozerBeanWriter;
  * Class used to generate multi-species differential expression TSV download files 
  * (simple and advanced files) from the Bgee database. 
  *
- * @author 	Valentine Rech de Laval
+ * @author  Valentine Rech de Laval
  * @version Bgee 13 july
- * @since 	Bgee 13
+ * @since   Bgee 13
  */
 //FIXME: there will definitely be cases where a homology group include organs 
 //existing in a same species, such as the homology mouth|anus if we were 
@@ -1253,7 +1251,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         
         // We retrieve all CIO so it's common to all groups
         this.getCIOStatementDAO().setAttributes(CIOStatementDAO.Attribute.ID, 
-        		CIOStatementDAO.Attribute.NAME, CIOStatementDAO.Attribute.TRUSTED);
+                CIOStatementDAO.Attribute.NAME, CIOStatementDAO.Attribute.TRUSTED);
         Map<String, CIOStatementTO> cioNamesByIds = 
                 BgeeDBUtils.getCIOStatementTOsByIds(this.getCIOStatementDAO());
         
@@ -1455,19 +1453,23 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             this.writeOMAFile(mapOMANodeGene, geneTOsByIds, omaBeanWriter, omaHeaders);
             
             // Get comparable stages: Stage ID -> Stage group and Stage group -> Stage IDs
-            List<Map<String, List<String>>> mapStageGroup = this.getComparableStages(taxonId);
-            Map<String, List<String>> mapStageIdToStageGroup = mapStageGroup.get(0);
-            Map<String, List<String>> mapStageGroupToStageId = mapStageGroup.get(1);
+            List<GroupToStageTO> groupToStageTOs = this.getComparableStages(taxonId);
+            Map<String, List<String>> mapStageIdToStageGroup = 
+                    this.generateMappingStageIdToStageGroup(groupToStageTOs);
+            Map<String, List<String>> mapStageGroupToStageId = 
+                    this.generateMappingStageGroupToStageId(groupToStageTOs);
 
             // Get summary similarity annotations with CIO IDs: Summary annotation ID -> CIO ID
             Map<String, String> mapSumSimCIO = this.getSummarySimilarityAnnotations(taxonId);
 
             // Get relations between similarity annotations and anatomical entities:
             // Summary annotation ID -> Anat. entities and Anat. entity -> Summary annotation ID 
-            List<Map<String, List<String>>> simAnnotToAnatEntity = 
+            List<SimAnnotToAnatEntityTO> simAnnotToAnatEntityTOs = 
                     this.getSimAnnotToAnatEntities(taxonId);
-            Map<String, List<String>> mapSimAnnotToAnatEntities = simAnnotToAnatEntity.get(0);
-            Map<String, List<String>> mapAnatEntityToSimAnnot = simAnnotToAnatEntity.get(1);
+            Map<String, List<String>> mapSimAnnotToAnatEntities = 
+                    this.generateMappingSimAnnotToAnatEntity(simAnnotToAnatEntityTOs);
+            Map<String, List<String>> mapAnatEntityToSimAnnot = 
+                    this.generateMappingAnatEntityToSimAnnot(simAnnotToAnatEntityTOs);
                     
             log.trace("Done retrieving secondary data.");
             
@@ -1689,57 +1691,83 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * Retrieves comparable stages for the requested species in the requested taxon,
      * present into the Bgee database.
      *
-     * @param taxonId       A {@code String} that is the ID of the common ancestor taxon 
-     *                      we want to into account. 
-     * @return              the {@code List} of {@code Map}s. The first {@code Map} is the 
-     *                      {@code Map} where keys are {@code String}s that are stage IDs, the 
-     *                      associated values being {@code Set} of {@code String}s corresponding to 
-     *                      stage group IDs. And the second {@code Map} is the {@code Map} where 
-     *                      keys are {@code String}s that are stage group IDs, the associated values
-     *                      being {@code Set} of {@code String}s corresponding to stage IDs.
-     * @throws DAOException If an error occurred while getting the data from the Bgee data source.
-     * @throws IllegalStateException IF an error is detected in data source.
+     * @param taxonId        A {@code String} that is the ID of the common ancestor taxon 
+     *                       we want to into account. 
+     * @return               the {@code List} of {@code GroupToStageTO}s that are all 
+     *                       comparable stages for the requested species.
+     * @throws DAOException  If an error occurred while getting the data from the Bgee data source.
      */
-    //TODO: this is really an ugly design :p 
-    //Implements a first method retrieving information from database, then two other methods 
-    //to generate the proper mappings you need. 
-    private List<Map<String, List<String>>> getComparableStages(String taxonId) 
+    private List<GroupToStageTO> getComparableStages(String taxonId) 
             throws DAOException, IllegalStateException {
         log.entry(taxonId);
         
         log.debug("Start retrieving comparable stages for the taxon ID {}...", taxonId);
-        
-       StageGroupingDAO dao = this.getStageGroupingDAO();
-       // setAttributes methods has no effect on attributes retrieved  
-        
-       Map<String, List<String>> mappingStageIdToStageGroup = new HashMap<String, List<String>>();
-       Map<String, List<String>> mappingStageGroupToStageId = new HashMap<String, List<String>>();
-       
-        try (GroupToStageTOResultSet rs = dao.getGroupToStage(taxonId, null)) {
-            while (rs.next()) {
-                GroupToStageTO to = rs.getTO();
+
+        // setAttributes methods has no effect on attributes retrieved          
+        List<GroupToStageTO> allTOs = this.getStageGroupingDAO().
+                getGroupToStage(taxonId, null).getAllTOs();
+
+        log.debug("Done retrieving comparable stages, {} found", allTOs.size());
+
+        return log.exit(allTOs);
+    }
     
-                if (mappingStageIdToStageGroup.containsKey(to.getStageId())) {
-                    throw log.throwing(new IllegalStateException(
-                            "One stage ID souldn't be reported to severals stage groups"));
-                }
-                mappingStageIdToStageGroup.put(to.getStageId(), Arrays.asList(to.getGroupId()));
-    
-                List<String> stageIds = mappingStageGroupToStageId.get(to.getGroupId());
-                if (stageIds == null) {
-                    stageIds = new ArrayList<String>();
-                    mappingStageGroupToStageId.put(to.getGroupId(), stageIds);
-                }
-                stageIds.add(to.getStageId());
+    /**
+     * Retrieves mapping from stage ID to stage group for the provided 
+     * comparable stages {@code groupToStageTOs}.
+     *
+     * @param groupToStageTOs           A {@code List} of {@code GroupToStageTO}s that are 
+     *                                  comparable stages. 
+     * @return                          The {@code Map} where keys are {@code String}s that are 
+     *                                  stage IDs, the associated values being {@code Set} of 
+     *                                  {@code String}s corresponding to stage group IDs.
+     * @throws IllegalArgumentException If an error is detected in {@code groupToStageTOs}.
+     */
+    private Map<String, List<String>> generateMappingStageIdToStageGroup(
+            List<GroupToStageTO> groupToStageTOs) throws IllegalArgumentException {
+        log.entry(groupToStageTOs);
+        
+        Map<String, List<String>> mappingStageIdToStageGroup = new HashMap<String, List<String>>();
+        for (GroupToStageTO to : groupToStageTOs) {
+            if (mappingStageIdToStageGroup.containsKey(to.getStageId())) {
+                throw log.throwing(new IllegalArgumentException(
+                        "One stage ID souldn't be reported to severals stage groups"));
             }
+            mappingStageIdToStageGroup.put(to.getStageId(), Arrays.asList(to.getGroupId()));
         }
-    
-        log.debug("Done retrieving relation from stage ID to " + 
-                "stage group, {} found", mappingStageIdToStageGroup.size());
-        log.debug("Done retrieving relation from stage group to " + 
-                "stage IDs, {} found", mappingStageGroupToStageId.size());
-    
-        return log.exit(Arrays.asList(mappingStageIdToStageGroup, mappingStageGroupToStageId));
+        log.debug("Done retrieving relation from stage ID to stage group, {} found", 
+                mappingStageIdToStageGroup.size());
+
+        return log.exit(mappingStageIdToStageGroup);
+    }
+
+    /** 
+     * Retrieves mapping from stage group to stage IDs for the provided 
+     * comparable stages {@code groupToStageTOs}.
+     *
+     * @param groupToStageTOs           A {@code List} of {@code GroupToStageTO}s that are 
+     *                                  comparable stages. 
+     * @return                          The {@code Map} where keys are {@code String}s that are 
+     *                                  stage group IDs, the associated values being {@code Set} 
+     *                                  of {@code String}s corresponding to stage IDs.
+     */
+    private Map<String, List<String>> generateMappingStageGroupToStageId(
+            List<GroupToStageTO> groupToStageTOs) {
+        log.entry(groupToStageTOs);
+        
+        Map<String, List<String>> mappingStageGroupToStageId = new HashMap<String, List<String>>();
+        for (GroupToStageTO to : groupToStageTOs) {
+            List<String> stageIds = mappingStageGroupToStageId.get(to.getGroupId());
+            if (stageIds == null) {
+                stageIds = new ArrayList<String>();
+                mappingStageGroupToStageId.put(to.getGroupId(), stageIds);
+            }
+            stageIds.add(to.getStageId());
+        }
+        log.debug("Done retrieving relation from stage group to stage IDs, {} found", 
+                mappingStageGroupToStageId.size());
+
+        return log.exit(mappingStageGroupToStageId);
     }
 
     /**
@@ -1776,65 +1804,96 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     }
 
     /**
-     * Retrieves relation between summary similarity annotation and anatomical entity 
+     * Retrieve relations between summary similarity annotation and anatomical entity 
      * for the provided taxon ID and species IDs. 
      *
      * @param taxonId       A {@code String} that is the ID of the common ancestor taxon 
      *                      we want to into account. 
-     * @return              the {@code List} of {@code Map}s. The first {@code Map} is the 
-     *                      {@code Map} where keys are {@code String}s that are summary similarity 
-     *                      annotation IDs, the associated values being {@code Set} of 
-     *                      {@code String}s corresponding to anat. entity IDs. And the second 
-     *                      {@code Map} is the {@code Map} where keys are {@code String}s that are 
-     *                      anat. entity IDs, the associated values being {@code Set} of 
-     *                      {@code String}s corresponding to summary similarity annotation IDs.  
+     * @return              the {@code List} of {@code SimAnnotToAnatEntityTO}s that are relations
+     *                      between summary similarity annotation and anatomical entity 
+     *                      for the provided taxon ID and species IDs.
      * @throws DAOException If an error occurred while getting the data from the Bgee data source.
      */
-    //TODO: same ugliness than for getComparableStages, to fix.
-    private List<Map<String, List<String>>> getSimAnnotToAnatEntities(String taxonId) 
-            throws DAOException {
+    private List<SimAnnotToAnatEntityTO> getSimAnnotToAnatEntities(String taxonId) throws DAOException {
         log.entry(taxonId);
     
         log.debug("Start retrieving relation between summary similarity annotation and " + 
                 "anatomical entity for the taxon ID {}...", taxonId);
     
-        SummarySimilarityAnnotationDAO dao = this.getSummarySimilarityAnnotationDAO();
-        // setAttributes methods has no effect on attributes retrieved  
+        // setAttributes methods has no effect on attributes retrieved        
+        List<SimAnnotToAnatEntityTO> allTOs = this.getSummarySimilarityAnnotationDAO().
+                getSimAnnotToAnatEntity(taxonId, null).getAllTOs();
     
+        log.debug("Done retrieving relation between summary similarity annotation and " + 
+                "anatomical entity for the taxon ID {}, {} found", allTOs.size());
+    
+        return log.exit(allTOs);
+    }
+    
+    /** 
+     * Retrieves mapping from summary similarity annotation IDs to anat. entity IDs for the  
+     * provided relations {@code simAnnotToAnatEntityTOs}.
+     *
+     * @param simAnnotToAnatEntityTOs   A {@code List} of {@code SimAnnotToAnatEntityTO}s that are 
+     *                                  are relations between summary similarity annotation and 
+     *                                  anatomical entity.
+     * @return                          The {@code Map} where keys are {@code String}s that are 
+     *                                  summary similarity annotation IDs, the associated values 
+     *                                  being {@code Set} of {@code String}s corresponding to 
+     *                                  anat. entity IDs.
+     */
+    private Map<String, List<String>> generateMappingSimAnnotToAnatEntity(
+            List<SimAnnotToAnatEntityTO> simAnnotToAnatEntityTOs) {
+        log.entry(simAnnotToAnatEntityTOs);
+        
         Map<String, List<String>> mappingSimAnnotToAnatEntity = new HashMap<String, List<String>>();
-        Map<String, List<String>> mappingAnatEntityToSimAnnot = new HashMap<String, List<String>>();
-
-        //note that we retrieve all organs, even those not existing in all species
-        try (SimAnnotToAnatEntityTOResultSet rs = dao.getSimAnnotToAnatEntity(taxonId, null)) {
-            while (rs.next()) {
-                SimAnnotToAnatEntityTO to = rs.getTO();
-                
-                List<String> anatEntIds = mappingSimAnnotToAnatEntity.get(
-                        to.getSummarySimilarityAnnotationId());
-                if (anatEntIds == null) {
-                    anatEntIds = new ArrayList<String>();
-                    mappingSimAnnotToAnatEntity.put(to.getSummarySimilarityAnnotationId(), 
-                            anatEntIds);
-                }
-                anatEntIds.add(to.getAnatEntityId());
-                
-                List<String> simAnnotIds = mappingAnatEntityToSimAnnot.get(to.getAnatEntityId());
-                if (simAnnotIds == null) {
-                    simAnnotIds = new ArrayList<String>();
-                    mappingAnatEntityToSimAnnot.put(to.getAnatEntityId(), simAnnotIds);
-                }
-                simAnnotIds.add(to.getSummarySimilarityAnnotationId());
+        for (SimAnnotToAnatEntityTO to : simAnnotToAnatEntityTOs) {
+            List<String> anatEntIds = mappingSimAnnotToAnatEntity.get(
+                    to.getSummarySimilarityAnnotationId());
+            if (anatEntIds == null) {
+                anatEntIds = new ArrayList<String>();
+                mappingSimAnnotToAnatEntity.put(to.getSummarySimilarityAnnotationId(), 
+                        anatEntIds);
             }
+            anatEntIds.add(to.getAnatEntityId());
         }
-    
-        log.debug("Done retrieving relation from summary similarity annotation to " + 
+        log.debug("Done retrieving relations from summary similarity annotation to " + 
                 "anatomical entities, {} found", mappingSimAnnotToAnatEntity.size());
-        log.debug("Done retrieving relation from anatomical entity to " + 
-                "summary similarity annotations, {} found", mappingAnatEntityToSimAnnot.size());
-    
-        return log.exit(Arrays.asList(mappingSimAnnotToAnatEntity, mappingAnatEntityToSimAnnot));
+
+        return log.exit(mappingSimAnnotToAnatEntity);
     }
 
+    /** 
+     * Retrieves mapping from anat. entity IDs to summary similarity annotation IDs for the  
+     * provided relations {@code simAnnotToAnatEntityTOs}.
+     *
+     * @param simAnnotToAnatEntityTOs   A {@code List} of {@code SimAnnotToAnatEntityTO}s that are 
+     *                                  are relations between summary similarity annotation and 
+     *                                  anatomical entity.
+     * @return                          The {@code Map} where keys are {@code String}s that are 
+     *                                  anat. entity IDs, the associated values being  
+     *                                  {@code Set} of {@code String}s corresponding to 
+     *                                  summary similarity annotation IDs.
+     */
+    private Map<String, List<String>> generateMappingAnatEntityToSimAnnot(
+            List<SimAnnotToAnatEntityTO> simAnnotToAnatEntityTOs) {
+        log.entry(simAnnotToAnatEntityTOs);
+
+        Map<String, List<String>> mappingAnatEntityToSimAnnot = new HashMap<String, List<String>>();
+        for (SimAnnotToAnatEntityTO to : simAnnotToAnatEntityTOs) {
+            List<String> simAnnotIds = mappingAnatEntityToSimAnnot.get(to.getAnatEntityId());
+            if (simAnnotIds == null) {
+                simAnnotIds = new ArrayList<String>();
+                mappingAnatEntityToSimAnnot.put(to.getAnatEntityId(), simAnnotIds);
+            }
+            simAnnotIds.add(to.getSummarySimilarityAnnotationId());
+        }
+        log.debug("Done retrieving relations from anatomical entity to " + 
+                "summary similarity annotations, {} found", mappingAnatEntityToSimAnnot.size());
+
+        return log.exit(mappingAnatEntityToSimAnnot);
+    }
+    
     /**
      * Retrieve differential expression calls for genes homologous in the provided taxon ID, 
      * order by groups of homologous genes.

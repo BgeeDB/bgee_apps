@@ -311,6 +311,31 @@ public class BgeeDBUtilsTest extends TestAncestor {
         try (MockDAOManager mockManager = new MockDAOManager()) {
             List<GeneTO> returnedGeneTOs = Arrays.asList(
                     new GeneTO("1", "gene A", null), 
+                    new GeneTO(null, "gene B", null));
+            
+            GeneTOResultSet mockRS = this.createMockDAOResultSet(
+                    returnedGeneTOs, MySQLGeneTOResultSet.class);
+            when(mockManager.getGeneDAO().getGenesBySpeciesIds(
+                    new HashSet<String>(Arrays.asList("1", "2")))).thenReturn(
+                            mockRS);
+            
+            try {
+                //an IllegalArgumentException should be thrown, because no ID for a TO
+                BgeeDBUtils.getGeneNamesByIds(
+                        new HashSet<String>(Arrays.asList("1", "2")), 
+                        mockManager.getGeneDAO());
+                //test failed
+                throw log.throwing(new AssertionError("No IllegalArgumentException was thrown " + 
+                		"with no ID for a TO"));
+            } catch (IllegalArgumentException e) {
+                //test passed
+            }
+            verify(mockRS).close();
+        }
+
+        try (MockDAOManager mockManager = new MockDAOManager()) {
+            List<GeneTO> returnedGeneTOs = Arrays.asList(
+                    new GeneTO("1", "gene A", null), 
                     new GeneTO("1", "gene B", null));
             
             GeneTOResultSet mockRS = this.createMockDAOResultSet(
@@ -345,9 +370,8 @@ public class BgeeDBUtilsTest extends TestAncestor {
             GeneTO gene1 = new GeneTO("1", "gene A", "desc A", 1, 1, 1, true); 
             GeneTO gene2 = new GeneTO("2", "gene B", "desc B", 2, 1, 1, true); 
             GeneTO gene3 = new GeneTO("3", "gene C", "desc C", 1, 2, 2, true); 
-            GeneTO gene3b = new GeneTO("3", "gene C", "desc C", 1, 2, 2, true);
 
-            List<GeneTO> returnedGeneTOs = Arrays.asList(gene1, gene2, gene3, gene3b);
+            List<GeneTO> returnedGeneTOs = Arrays.asList(gene1, gene2, gene3);
             
             GeneTOResultSet mockRS = this.createMockDAOResultSet(
                     returnedGeneTOs, MySQLGeneTOResultSet.class);
@@ -367,6 +391,31 @@ public class BgeeDBUtilsTest extends TestAncestor {
             verify(mockRS).close();
         }
         
+        try (MockDAOManager mockManager = new MockDAOManager()) {
+            List<GeneTO> returnedGeneTOs = Arrays.asList(
+                    new GeneTO("1", "gene A", null), 
+                    new GeneTO(null, "gene B", null));
+            
+            GeneTOResultSet mockRS = this.createMockDAOResultSet(
+                    returnedGeneTOs, MySQLGeneTOResultSet.class);
+            when(mockManager.getGeneDAO().getGenesBySpeciesIds(
+                    new HashSet<String>(Arrays.asList("1", "2")))).thenReturn(
+                            mockRS);
+            
+            try {
+                //an IllegalStateException should be thrown, because several names are mapped 
+                //to a same ID
+                BgeeDBUtils.getGeneNamesByIds(
+                        new HashSet<String>(Arrays.asList("1", "2")), 
+                        mockManager.getGeneDAO());
+                //test failed
+                fail("No IllegalArgumentException was thrown, TO doesn't allow to retrieve ID");
+            } catch (IllegalArgumentException e) {
+                //test passed
+            }
+            verify(mockRS).close();
+        }
+
         try (MockDAOManager mockManager = new MockDAOManager()) {
             List<GeneTO> returnedGeneTOs = Arrays.asList(
                     new GeneTO("1", "gene A", "desc A", 1, 1, 1, true), 
@@ -422,6 +471,31 @@ public class BgeeDBUtilsTest extends TestAncestor {
                             mockManager.getStageDAO()));
             verify(mockManager.getStageDAO()).setAttributes(StageDAO.Attribute.ID, 
                     StageDAO.Attribute.NAME);
+            verify(mockRS).close();
+        }
+        
+        try (MockDAOManager mockManager = new MockDAOManager()) {
+            List<StageTO> returnedStageTOs = Arrays.asList(
+                    new StageTO("1", null, null, null, null, null, null, null), 
+                    new StageTO("1", "stage B", null, null, null, null, null, null));
+            
+            StageTOResultSet mockRS = this.createMockDAOResultSet(
+                    returnedStageTOs, MySQLStageTOResultSet.class);
+            when(mockManager.getStageDAO().getStagesBySpeciesIds(
+                    new HashSet<String>(Arrays.asList("1", "2")))).thenReturn(
+                            mockRS);
+            
+            try {
+                //an IllegalArgumentException should be thrown, because no name for the first TO
+                BgeeDBUtils.getStageNamesByIds(
+                        new HashSet<String>(Arrays.asList("1", "2")), 
+                        mockManager.getStageDAO());
+                //test failed
+                throw log.throwing(new AssertionError("No IllegalArgumentException was thrown " +
+                        "with no name for the TO"));
+            } catch (IllegalArgumentException e) {
+                //test passed
+            }
             verify(mockRS).close();
         }
         
@@ -486,6 +560,31 @@ public class BgeeDBUtilsTest extends TestAncestor {
         
         try (MockDAOManager mockManager = new MockDAOManager()) {
             List<AnatEntityTO> returnedAnatEntityTOs = Arrays.asList(
+                    new AnatEntityTO(null, null, null, null, null, null), 
+                    new AnatEntityTO("1", "anatEntity B", null, null, null, null));
+            
+            AnatEntityTOResultSet mockRS = this.createMockDAOResultSet(
+                    returnedAnatEntityTOs, MySQLAnatEntityTOResultSet.class);
+            when(mockManager.getAnatEntityDAO().getAnatEntitiesBySpeciesIds(
+                    new HashSet<String>(Arrays.asList("1", "2")))).thenReturn(
+                            mockRS);
+            
+            try {
+                //an IllegalArgumentException should be thrown, because no name and ID for a TO
+                BgeeDBUtils.getAnatEntityNamesByIds(
+                        new HashSet<String>(Arrays.asList("1", "2")), 
+                        mockManager.getAnatEntityDAO());
+                //test failed
+                throw log.throwing(new AssertionError("No IllegalArgumentException was thrown " +
+                        "with no name for the TO"));
+            } catch (IllegalArgumentException e) {
+                //test passed
+            }
+            verify(mockRS).close();
+        }
+        
+        try (MockDAOManager mockManager = new MockDAOManager()) {
+            List<AnatEntityTO> returnedAnatEntityTOs = Arrays.asList(
                     new AnatEntityTO("1", "anatEntity A", null, null, null, null), 
                     new AnatEntityTO("1", "anatEntity B", null, null, null, null));
             
@@ -525,11 +624,8 @@ public class BgeeDBUtilsTest extends TestAncestor {
             CIOStatementTO cio3 = new CIOStatementTO("CIO:3", "name3", null, true, 
                     ConfidenceLevel.MEDIUM_CONFIDENCE, EvidenceConcordance.STRONGLY_CONFLICTING, 
                     EvidenceTypeConcordance.DIFFERENT_TYPE); 
-            CIOStatementTO cio3b = new CIOStatementTO("CIO:3", "name3", null, true, 
-                    ConfidenceLevel.MEDIUM_CONFIDENCE, EvidenceConcordance.STRONGLY_CONFLICTING, 
-                    EvidenceTypeConcordance.DIFFERENT_TYPE);
 
-            List<CIOStatementTO> returnedCIOTOs = Arrays.asList(cio1, cio2, cio3, cio3b);
+            List<CIOStatementTO> returnedCIOTOs = Arrays.asList(cio1, cio2, cio3);
             
             CIOStatementTOResultSet mockRS = this.createMockDAOResultSet(
                     returnedCIOTOs, MySQLCIOStatementTOResultSet.class);
@@ -550,7 +646,32 @@ public class BgeeDBUtilsTest extends TestAncestor {
                     new CIOStatementTO("CIO:1", "name1", "desc1", true, 
                             ConfidenceLevel.HIGH_CONFIDENCE, EvidenceConcordance.CONGRUENT, 
                             EvidenceTypeConcordance.SAME_TYPE), 
+                    new CIOStatementTO(null, "name2", "desc1", true, 
+                            ConfidenceLevel.HIGH_CONFIDENCE, EvidenceConcordance.SINGLE_EVIDENCE, 
+                            EvidenceTypeConcordance.SAME_TYPE));
+            
+            CIOStatementTOResultSet mockRS = this.createMockDAOResultSet(
+                    returnedCIOTOs, MySQLCIOStatementTOResultSet.class);
+            when(mockManager.getCIOStatementDAO().getAllCIOStatements()).thenReturn(mockRS);
+            
+            try {
+                // an IllegalArgumentException should be thrown, because a TO 
+            	// does not allow to retrieve EntityTO IDs
+                BgeeDBUtils.getCIOStatementTOsByIds(mockManager.getCIOStatementDAO());
+                // test failed
+                fail("No IllegalArgumentException was thrown, TO doesn't allow to retrieve ID");
+            } catch (IllegalArgumentException e) {
+                // test passed
+            }
+            verify(mockRS).close();
+        }
+        
+        try (MockDAOManager mockManager = new MockDAOManager()) {
+            List<CIOStatementTO> returnedCIOTOs = Arrays.asList(
                     new CIOStatementTO("CIO:1", "name1", "desc1", true, 
+                            ConfidenceLevel.HIGH_CONFIDENCE, EvidenceConcordance.CONGRUENT, 
+                            EvidenceTypeConcordance.SAME_TYPE), 
+                    new CIOStatementTO("CIO:1", "name2", "desc1", true, 
                             ConfidenceLevel.HIGH_CONFIDENCE, EvidenceConcordance.SINGLE_EVIDENCE, 
                             EvidenceTypeConcordance.SAME_TYPE));
             
@@ -563,11 +684,12 @@ public class BgeeDBUtilsTest extends TestAncestor {
                 //to a same ID
                 BgeeDBUtils.getCIOStatementTOsByIds(mockManager.getCIOStatementDAO());
                 //test failed
-                fail("No IllegalStateException was thrown with several TOs mapped to a same ID");
+                fail("No IllegalStateException was thrown, several TOs mapped to a same ID");
             } catch (IllegalStateException e) {
                 //test passed
             }
             verify(mockRS).close();
         }
+
     }
 }

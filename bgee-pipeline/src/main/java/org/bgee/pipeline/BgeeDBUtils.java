@@ -13,8 +13,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.EntityTO;
-import org.bgee.model.dao.api.TOComparator;
-import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
 import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.exception.DAOException;
@@ -326,24 +324,24 @@ public class BgeeDBUtils {
      * @return      A {@code Map} where keys are {@code String}s corresponding to 
      *              entity IDs, the associated values being {@code EntityTO}s 
      *              corresponding to entity names. 
+     * @throws IllegalArgumentException If {@code rs} does not allow to retrieve EntityTO ID or name.
+     * @throws IllegalStateException	If several TOs associated to a same ID.
      */
-    //TODO Add @SuppressWarning?
     //TODO Modify when NamedEntityTO implemented 
-    private static <T extends TransferObject> Map<String, T> generateTOsByIdsMap(DAOResultSet<T> rs) {
+    private static <T extends EntityTO> Map<String, T> generateTOsByIdsMap(DAOResultSet<T> rs) {
         log.entry(rs);
         
         Map<String, T> tosByIds = new HashMap<String, T>();
         try {
             while (rs.next()) {
-                EntityTO entityTO = null;
-                try {
-                    entityTO = (EntityTO) rs.getTO();
-                } catch (ClassCastException e) {
+                T entityTO = rs.getTO();
+                if (entityTO.getId() == null) {
                     throw log.throwing(new IllegalArgumentException("The provided DAOResultSet " +
-                            "does not allow to retrieve EntityTOs"));
+                            "does not allow to retrieve EntityTO IDs"));                	
                 }
-                T previousValue = tosByIds.put(entityTO.getId(), (T)entityTO);
-                if (previousValue != null && !TOComparator.areTOsEqual(previousValue, entityTO)) {
+
+                T previousValue = tosByIds.put(entityTO.getId(), entityTO);
+                if (previousValue != null) {
                     throw log.throwing(new IllegalStateException("Several TOs associated to " +
                             "a same ID: " + entityTO.getId() + " - " + previousValue + 
                             " - " + entityTO));
@@ -368,20 +366,21 @@ public class BgeeDBUtils {
      * @return      A {@code Map} where keys are {@code String}s corresponding to 
      *              entity IDs, the associated values being {@code String}s 
      *              corresponding to entity names. 
+     * @throws IllegalArgumentException If {@code rs} does not allow to retrieve EntityTO ID or name.
+     * @throws IllegalStateException	If several names associated to a same ID.
      */
-    private static Map<String, String> generateNamesByIdsMap(
-            DAOResultSet<? extends TransferObject> rs) {
+    private static Map<String, String> generateNamesByIdsMap(DAOResultSet<? extends EntityTO> rs) 
+    		throws IllegalArgumentException, IllegalStateException {
         log.entry(rs);
         Map<String, String> namesByIds = new HashMap<String, String>();
         try {
             while (rs.next()) {
-                EntityTO entityTO = null;
-                try {
-                    entityTO = (EntityTO) rs.getTO();
-                } catch (ClassCastException e) {
+                EntityTO entityTO = (EntityTO) rs.getTO();
+                if (entityTO.getId() == null || entityTO.getName() == null ) {
                     throw log.throwing(new IllegalArgumentException("The provided DAOResultSet " +
-                            "does not allow to retrieve EntityTOs"));
+                            "does not allow to retrieve EntityTO IDs or names"));                	
                 }
+            
                 String previousValue = namesByIds.put(entityTO.getId(), entityTO.getName());
                 if (previousValue != null && !previousValue.equals(entityTO.getName())) {
                     throw log.throwing(new IllegalStateException("Several names associated to " +

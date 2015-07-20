@@ -13,17 +13,16 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeSet;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO;
+import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO.GroupToStageTO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SimAnnotToAnatEntityTO;
-import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SimAnnotToAnatEntityTOResultSet;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTOResultSet;
 import org.bgee.model.dao.api.exception.DAOException;
@@ -1468,9 +1467,9 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             List<SimAnnotToAnatEntityTO> simAnnotToAnatEntityTOs = 
                     this.getSimAnnotToAnatEntities(taxonId);
             Map<String, List<String>> mapSimAnnotToAnatEntities = 
-            		this.generateMappingSimAnnotToAnatEntity(simAnnotToAnatEntityTOs);
+                    this.generateMappingSimAnnotToAnatEntity(simAnnotToAnatEntityTOs);
             Map<String, List<String>> mapAnatEntityToSimAnnot = 
-            		this.generateMappingAnatEntityToSimAnnot(simAnnotToAnatEntityTOs);
+                    this.generateMappingAnatEntityToSimAnnot(simAnnotToAnatEntityTOs);
                     
             log.trace("Done retrieving secondary data.");
             
@@ -1706,7 +1705,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 
         // setAttributes methods has no effect on attributes retrieved          
         List<GroupToStageTO> allTOs = this.getStageGroupingDAO().
-        		getGroupToStage(taxonId, null).getAllTOs();
+                getGroupToStage(taxonId, null).getAllTOs();
 
         log.debug("Done retrieving comparable stages, {} found", allTOs.size());
 
@@ -1725,9 +1724,9 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * @throws IllegalArgumentException If an error is detected in {@code groupToStageTOs}.
      */
     private Map<String, List<String>> generateMappingStageIdToStageGroup(
-    		List<GroupToStageTO> groupToStageTOs) throws IllegalArgumentException {
-    	log.entry(groupToStageTOs);
-    	
+            List<GroupToStageTO> groupToStageTOs) throws IllegalArgumentException {
+        log.entry(groupToStageTOs);
+        
         Map<String, List<String>> mappingStageIdToStageGroup = new HashMap<String, List<String>>();
         for (GroupToStageTO to : groupToStageTOs) {
             if (mappingStageIdToStageGroup.containsKey(to.getStageId())) {
@@ -1735,9 +1734,9 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                         "One stage ID souldn't be reported to severals stage groups"));
             }
             mappingStageIdToStageGroup.put(to.getStageId(), Arrays.asList(to.getGroupId()));
-		}
+        }
         log.debug("Done retrieving relation from stage ID to stage group, {} found", 
-        		mappingStageIdToStageGroup.size());
+                mappingStageIdToStageGroup.size());
 
         return log.exit(mappingStageIdToStageGroup);
     }
@@ -1753,9 +1752,9 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      *                                  of {@code String}s corresponding to stage IDs.
      */
     private Map<String, List<String>> generateMappingStageGroupToStageId(
-    		List<GroupToStageTO> groupToStageTOs) {
-    	log.entry(groupToStageTOs);
-    	
+            List<GroupToStageTO> groupToStageTOs) {
+        log.entry(groupToStageTOs);
+        
         Map<String, List<String>> mappingStageGroupToStageId = new HashMap<String, List<String>>();
         for (GroupToStageTO to : groupToStageTOs) {
             List<String> stageIds = mappingStageGroupToStageId.get(to.getGroupId());
@@ -1764,9 +1763,9 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 mappingStageGroupToStageId.put(to.getGroupId(), stageIds);
             }
             stageIds.add(to.getStageId());
-		}
+        }
         log.debug("Done retrieving relation from stage group to stage IDs, {} found", 
-        		mappingStageGroupToStageId.size());
+                mappingStageGroupToStageId.size());
 
         return log.exit(mappingStageGroupToStageId);
     }
@@ -1823,7 +1822,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     
         // setAttributes methods has no effect on attributes retrieved        
         List<SimAnnotToAnatEntityTO> allTOs = this.getSummarySimilarityAnnotationDAO().
-        		getSimAnnotToAnatEntity(taxonId, null).getAllTOs();
+                getSimAnnotToAnatEntity(taxonId, null).getAllTOs();
     
         log.debug("Done retrieving relation between summary similarity annotation and " + 
                 "anatomical entity for the taxon ID {}, {} found", allTOs.size());
@@ -1844,9 +1843,9 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      *                                  anat. entity IDs.
      */
     private Map<String, List<String>> generateMappingSimAnnotToAnatEntity(
-    		List<SimAnnotToAnatEntityTO> simAnnotToAnatEntityTOs) {
-    	log.entry(simAnnotToAnatEntityTOs);
-    	
+            List<SimAnnotToAnatEntityTO> simAnnotToAnatEntityTOs) {
+        log.entry(simAnnotToAnatEntityTOs);
+        
         Map<String, List<String>> mappingSimAnnotToAnatEntity = new HashMap<String, List<String>>();
         for (SimAnnotToAnatEntityTO to : simAnnotToAnatEntityTOs) {
             List<String> anatEntIds = mappingSimAnnotToAnatEntity.get(
@@ -1857,7 +1856,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                         anatEntIds);
             }
             anatEntIds.add(to.getAnatEntityId());
-		}
+        }
         log.debug("Done retrieving relations from summary similarity annotation to " + 
                 "anatomical entities, {} found", mappingSimAnnotToAnatEntity.size());
 
@@ -1877,22 +1876,22 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      *                                  summary similarity annotation IDs.
      */
     private Map<String, List<String>> generateMappingAnatEntityToSimAnnot(
-    		List<SimAnnotToAnatEntityTO> simAnnotToAnatEntityTOs) {
-    	log.entry(simAnnotToAnatEntityTOs);
+            List<SimAnnotToAnatEntityTO> simAnnotToAnatEntityTOs) {
+        log.entry(simAnnotToAnatEntityTOs);
 
-    	Map<String, List<String>> mappingAnatEntityToSimAnnot = new HashMap<String, List<String>>();
-    	for (SimAnnotToAnatEntityTO to : simAnnotToAnatEntityTOs) {
-    		List<String> simAnnotIds = mappingAnatEntityToSimAnnot.get(to.getAnatEntityId());
-    		if (simAnnotIds == null) {
-    			simAnnotIds = new ArrayList<String>();
-    			mappingAnatEntityToSimAnnot.put(to.getAnatEntityId(), simAnnotIds);
-    		}
-    		simAnnotIds.add(to.getSummarySimilarityAnnotationId());
-    	}
-    	log.debug("Done retrieving relations from anatomical entity to " + 
-    			"summary similarity annotations, {} found", mappingAnatEntityToSimAnnot.size());
+        Map<String, List<String>> mappingAnatEntityToSimAnnot = new HashMap<String, List<String>>();
+        for (SimAnnotToAnatEntityTO to : simAnnotToAnatEntityTOs) {
+            List<String> simAnnotIds = mappingAnatEntityToSimAnnot.get(to.getAnatEntityId());
+            if (simAnnotIds == null) {
+                simAnnotIds = new ArrayList<String>();
+                mappingAnatEntityToSimAnnot.put(to.getAnatEntityId(), simAnnotIds);
+            }
+            simAnnotIds.add(to.getSummarySimilarityAnnotationId());
+        }
+        log.debug("Done retrieving relations from anatomical entity to " + 
+                "summary similarity annotations, {} found", mappingAnatEntityToSimAnnot.size());
 
-    	return log.exit(mappingAnatEntityToSimAnnot);
+        return log.exit(mappingAnatEntityToSimAnnot);
     }
     
     /**

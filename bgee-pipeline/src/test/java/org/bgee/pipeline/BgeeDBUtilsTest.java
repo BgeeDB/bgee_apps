@@ -611,6 +611,88 @@ public class BgeeDBUtilsTest extends TestAncestor {
     }
     
     /**
+     * Test {@link BgeeDBUtils#getCIOStatementNamesByIds(CIOStatementDAO)}.
+     */
+    @Test
+    public void shouldGetCIOStatementNamesByIds() {
+        try (MockDAOManager mockManager = new MockDAOManager()) {
+            CIOStatementTO cio1 = new CIOStatementTO("CIO:1", "name1", "desc1", true, 
+                    ConfidenceLevel.HIGH_CONFIDENCE, EvidenceConcordance.CONGRUENT, 
+                    EvidenceTypeConcordance.SAME_TYPE); 
+            CIOStatementTO cio2 = new CIOStatementTO("CIO:2", "name2", "desc2", false, 
+                    ConfidenceLevel.LOW_CONFIDENCE, EvidenceConcordance.SINGLE_EVIDENCE, null); 
+            CIOStatementTO cio3 = new CIOStatementTO("CIO:3", "name3", null, true, 
+                    ConfidenceLevel.MEDIUM_CONFIDENCE, EvidenceConcordance.STRONGLY_CONFLICTING, 
+                    EvidenceTypeConcordance.DIFFERENT_TYPE); 
+
+            List<CIOStatementTO> returnedCIOTOs = Arrays.asList(cio1, cio2, cio3);
+            
+            CIOStatementTOResultSet mockRS = this.createMockDAOResultSet(
+                    returnedCIOTOs, MySQLCIOStatementTOResultSet.class);
+            when(mockManager.getCIOStatementDAO().getAllCIOStatements()).thenReturn(mockRS);
+            
+            Map<String, String> expectedReturnedVal = new HashMap<String, String>();
+            expectedReturnedVal.put("CIO:1", "name1");
+            expectedReturnedVal.put("CIO:2", "name2");
+            expectedReturnedVal.put("CIO:3", "name3");
+            
+            assertEquals("Incorrect ID-name mapping", expectedReturnedVal, 
+                    BgeeDBUtils.getCIOStatementNamesByIds(mockManager.getCIOStatementDAO()));
+            verify(mockRS).close();
+        }
+        
+        try (MockDAOManager mockManager = new MockDAOManager()) {
+            List<CIOStatementTO> returnedCIOTOs = Arrays.asList(
+                    new CIOStatementTO("CIO:1", "name1", "desc1", true, 
+                            ConfidenceLevel.HIGH_CONFIDENCE, EvidenceConcordance.CONGRUENT, 
+                            EvidenceTypeConcordance.SAME_TYPE), 
+                    new CIOStatementTO(null, "name2", "desc1", true, 
+                            ConfidenceLevel.HIGH_CONFIDENCE, EvidenceConcordance.SINGLE_EVIDENCE, 
+                            EvidenceTypeConcordance.SAME_TYPE));
+            
+            CIOStatementTOResultSet mockRS = this.createMockDAOResultSet(
+                    returnedCIOTOs, MySQLCIOStatementTOResultSet.class);
+            when(mockManager.getCIOStatementDAO().getAllCIOStatements()).thenReturn(mockRS);
+                        
+            try {
+                // an IllegalArgumentException should be thrown, because a TO 
+            	// does not allow to retrieve EntityTO IDs
+                BgeeDBUtils.getCIOStatementNamesByIds(mockManager.getCIOStatementDAO());
+                // test failed
+                fail("No IllegalArgumentException was thrown, TO doesn't allow to retrieve ID or name");
+            } catch (IllegalArgumentException e) {
+                // test passed
+            }
+            verify(mockRS).close();
+        }
+        
+        try (MockDAOManager mockManager = new MockDAOManager()) {
+            List<CIOStatementTO> returnedCIOTOs = Arrays.asList(
+                    new CIOStatementTO("CIO:1", "name1", "desc1", true, 
+                            ConfidenceLevel.HIGH_CONFIDENCE, EvidenceConcordance.CONGRUENT, 
+                            EvidenceTypeConcordance.SAME_TYPE), 
+                    new CIOStatementTO("CIO:1", "name2", "desc1", true, 
+                            ConfidenceLevel.HIGH_CONFIDENCE, EvidenceConcordance.SINGLE_EVIDENCE, 
+                            EvidenceTypeConcordance.SAME_TYPE));
+            
+            CIOStatementTOResultSet mockRS = this.createMockDAOResultSet(
+                    returnedCIOTOs, MySQLCIOStatementTOResultSet.class);
+            when(mockManager.getCIOStatementDAO().getAllCIOStatements()).thenReturn(mockRS);
+            
+            try {
+                //an IllegalStateException should be thrown, because several TOs are mapped 
+                //to a same ID
+                BgeeDBUtils.getCIOStatementNamesByIds(mockManager.getCIOStatementDAO());
+                //test failed
+                fail("No IllegalStateException was thrown with several names mapped to a same ID");
+            } catch (IllegalStateException e) {
+                //test passed
+            }
+            verify(mockRS).close();
+        }
+
+    }
+    /**
      * Test {@link BgeeDBUtils#getCIOStatementTOsByIds(Set, CIOStatementDAO)}.
      */
     @Test

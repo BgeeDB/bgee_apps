@@ -512,7 +512,39 @@ public class BgeeDBUtils {
                 speciesIds, anatEntityNamesByIds.size());
         return log.exit(anatEntityNamesByIds);
     }
-    
+
+    /**
+     * Retrieve from the data source a mapping from CIO IDs to names.
+     * 
+     * @param cioStatementDAO	A {@code CIOStatementDAO} to use to retrieve information about 
+     *                          CIO statements from the data source.
+     * @return                  A {@code Map} where keys are {@code String}s corresponding to 
+     *                          CIO IDs, the associated values being {@code String}s 
+     *                          corresponding to CIO names. 
+     * @throws DAOException     If an error occurred while getting the data from 
+     * 							the Bgee data source.
+     */
+    public static Map<String, String> getCIOStatementNamesByIds(CIOStatementDAO cioStatementDAO) 
+    		throws DAOException {
+        log.entry(cioStatementDAO);
+        
+        log.debug("Start retrieving all CIO names");
+        
+        //store original attributes to restore cioStatementDAO in proper state afterwards.
+        Collection<CIOStatementDAO.Attribute> attributes = cioStatementDAO.getAttributes();
+        cioStatementDAO.setAttributes(CIOStatementDAO.Attribute.ID, CIOStatementDAO.Attribute.NAME);
+
+        Map<String, String> cioByNames = 
+                generateNamesByIdsMap(cioStatementDAO.getAllCIOStatements());
+        
+        //restore anatEntityDAO in proper state
+        cioStatementDAO.setAttributes(attributes);
+
+        log.debug("Done retrieving CIO names, {} names retrieved", cioByNames.size());
+        
+        return log.exit(cioByNames);
+    }
+
     /**
      * Retrieve from the data source a mapping from CIO IDs to CIO TOs, 
      * using attributes stored in {@code cioStatementDAO}.

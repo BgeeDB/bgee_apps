@@ -21,7 +21,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO;
 import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO.GroupToStageTO;
-import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO.GroupToStageTOResultSet;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SimAnnotToAnatEntityTO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SimAnnotToAnatEntityTOResultSet;
@@ -65,9 +64,9 @@ import org.supercsv.io.dozer.ICsvDozerBeanWriter;
  * Class used to generate multi-species differential expression TSV download files 
  * (simple and advanced files) from the Bgee database. 
  *
- * @author 	Valentine Rech de Laval
+ * @author  Valentine Rech de Laval
  * @version Bgee 13 july
- * @since 	Bgee 13
+ * @since   Bgee 13
  */
 //FIXME: there will definitely be cases where a homology group include organs 
 //existing in a same species, such as the homology mouth|anus if we were 
@@ -1253,7 +1252,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         
         // We retrieve all CIO so it's common to all groups
         this.getCIOStatementDAO().setAttributes(CIOStatementDAO.Attribute.ID, 
-        		CIOStatementDAO.Attribute.NAME, CIOStatementDAO.Attribute.TRUSTED);
+                CIOStatementDAO.Attribute.NAME, CIOStatementDAO.Attribute.TRUSTED);
         Map<String, CIOStatementTO> cioNamesByIds = 
                 BgeeDBUtils.getCIOStatementTOsByIds(this.getCIOStatementDAO());
         
@@ -1455,9 +1454,11 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             this.writeOMAFile(mapOMANodeGene, geneTOsByIds, omaBeanWriter, omaHeaders);
             
             // Get comparable stages: Stage ID -> Stage group and Stage group -> Stage IDs
-            List<Map<String, List<String>>> mapStageGroup = this.getComparableStages(taxonId);
-            Map<String, List<String>> mapStageIdToStageGroup = mapStageGroup.get(0);
-            Map<String, List<String>> mapStageGroupToStageId = mapStageGroup.get(1);
+            List<GroupToStageTO> groupToStageTOs = this.getComparableStages(taxonId);
+            Map<String, List<String>> mapStageIdToStageGroup = 
+                    this.generateStageIdToStageGroup(groupToStageTOs);
+            Map<String, List<String>> mapStageGroupToStageId = 
+                    this.generateStageGroupToStageId(groupToStageTOs);
 
             // Get summary similarity annotations with CIO IDs: Summary annotation ID -> CIO ID
             Map<String, String> mapSumSimCIO = this.getSummarySimilarityAnnotations(taxonId);
@@ -1689,57 +1690,82 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * Retrieves comparable stages for the requested species in the requested taxon,
      * present into the Bgee database.
      *
-     * @param taxonId       A {@code String} that is the ID of the common ancestor taxon 
-     *                      we want to into account. 
-     * @return              the {@code List} of {@code Map}s. The first {@code Map} is the 
-     *                      {@code Map} where keys are {@code String}s that are stage IDs, the 
-     *                      associated values being {@code Set} of {@code String}s corresponding to 
-     *                      stage group IDs. And the second {@code Map} is the {@code Map} where 
-     *                      keys are {@code String}s that are stage group IDs, the associated values
-     *                      being {@code Set} of {@code String}s corresponding to stage IDs.
-     * @throws DAOException If an error occurred while getting the data from the Bgee data source.
-     * @throws IllegalStateException IF an error is detected in data source.
+     * @param taxonId        A {@code String} that is the ID of the common ancestor taxon 
+     *                       we want to into account. 
+     * @return               the {@code List} of {@code GroupToStageTO}s that are all 
+     *                       comparable stages for the requested species.
+     * @throws DAOException  If an error occurred while getting the data from the Bgee data source.
      */
-    //TODO: this is really an ugly design :p 
-    //Implements a first method retrieving information from database, then two other methods 
-    //to generate the proper mappings you need. 
-    private List<Map<String, List<String>>> getComparableStages(String taxonId) 
+    private List<GroupToStageTO> getComparableStages(String taxonId) 
             throws DAOException, IllegalStateException {
         log.entry(taxonId);
         
         log.debug("Start retrieving comparable stages for the taxon ID {}...", taxonId);
+
+        StageGroupingDAO dao = this.getStageGroupingDAO();
+        // setAttributes methods has no effect on attributes retrieved  
         
-       StageGroupingDAO dao = this.getStageGroupingDAO();
-       // setAttributes methods has no effect on attributes retrieved  
-        
-       Map<String, List<String>> mappingStageIdToStageGroup = new HashMap<String, List<String>>();
-       Map<String, List<String>> mappingStageGroupToStageId = new HashMap<String, List<String>>();
-       
-        try (GroupToStageTOResultSet rs = dao.getGroupToStage(taxonId, null)) {
-            while (rs.next()) {
-                GroupToStageTO to = rs.getTO();
+        List<GroupToStageTO> allTOs = dao.getGroupToStage(taxonId, null).getAllTOs();
+
+        log.debug("Done retrieving comparable stages, {} found", allTOs.size());
+
+        return log.exit(allTOs);
+    }
     
-                if (mappingStageIdToStageGroup.containsKey(to.getStageId())) {
-                    throw log.throwing(new IllegalStateException(
-                            "One stage ID souldn't be reported to severals stage groups"));
-                }
-                mappingStageIdToStageGroup.put(to.getStageId(), Arrays.asList(to.getGroupId()));
-    
-                List<String> stageIds = mappingStageGroupToStageId.get(to.getGroupId());
-                if (stageIds == null) {
-                    stageIds = new ArrayList<String>();
-                    mappingStageGroupToStageId.put(to.getGroupId(), stageIds);
-                }
-                stageIds.add(to.getStageId());
+    /**
+     * Retrieves mapping from stage ID to stage group for the provided 
+     * comparable stages {@code groupToStageTOs}.
+     *
+     * @param groupToStageTOs           A {@code List} of {@code GroupToStageTO}s that are 
+     *                                  comparable stages. 
+     * @return                          The {@code Map} where keys are {@code String}s that are 
+     *                                  stage IDs, the associated values being {@code Set} of 
+     *                                  {@code String}s corresponding to stage group IDs.
+     * @throws IllegalArgumentException If an error is detected in {@code groupToStageTOs}.
+     */
+    private Map<String, List<String>> generateStageIdToStageGroup(List<GroupToStageTO> groupToStageTOs) {
+    	log.entry(groupToStageTOs);
+    	
+        Map<String, List<String>> mappingStageIdToStageGroup = new HashMap<String, List<String>>();
+        for (GroupToStageTO to : groupToStageTOs) {
+            if (mappingStageIdToStageGroup.containsKey(to.getStageId())) {
+                throw log.throwing(new IllegalArgumentException(
+                        "One stage ID souldn't be reported to severals stage groups"));
             }
-        }
-    
-        log.debug("Done retrieving relation from stage ID to " + 
-                "stage group, {} found", mappingStageIdToStageGroup.size());
-        log.debug("Done retrieving relation from stage group to " + 
-                "stage IDs, {} found", mappingStageGroupToStageId.size());
-    
-        return log.exit(Arrays.asList(mappingStageIdToStageGroup, mappingStageGroupToStageId));
+            mappingStageIdToStageGroup.put(to.getStageId(), Arrays.asList(to.getGroupId()));
+		}
+        log.debug("Done retrieving relation from stage ID to stage group, {} found", 
+        		mappingStageIdToStageGroup.size());
+
+        return log.exit(mappingStageIdToStageGroup);
+    }
+
+    /** 
+     * Retrieves mapping from stage group to stage IDs for the provided 
+     * comparable stages {@code groupToStageTOs}.
+     *
+     * @param groupToStageTOs           A {@code List} of {@code GroupToStageTO}s that are 
+     *                                  comparable stages. 
+     * @return                          The {@code Map} where keys are {@code String}s that are 
+     *                                  stage group IDs, the associated values being {@code Set} 
+     *                                  of {@code String}s corresponding to stage IDs.
+     */
+    private Map<String, List<String>> generateStageGroupToStageId(List<GroupToStageTO> groupToStageTOs) {
+    	log.entry(groupToStageTOs);
+    	
+        Map<String, List<String>> mappingStageGroupToStageId = new HashMap<String, List<String>>();
+        for (GroupToStageTO to : groupToStageTOs) {
+            List<String> stageIds = mappingStageGroupToStageId.get(to.getGroupId());
+            if (stageIds == null) {
+                stageIds = new ArrayList<String>();
+                mappingStageGroupToStageId.put(to.getGroupId(), stageIds);
+            }
+            stageIds.add(to.getStageId());
+		}
+        log.debug("Done retrieving relation from stage group to stage IDs, {} found", 
+        		mappingStageGroupToStageId.size());
+
+        return log.exit(mappingStageGroupToStageId);
     }
 
     /**

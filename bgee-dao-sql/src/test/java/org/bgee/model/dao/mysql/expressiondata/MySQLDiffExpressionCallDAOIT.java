@@ -257,10 +257,12 @@ public class MySQLDiffExpressionCallDAOIT extends MySQLITAncestor {
 
         DiffExpressionCallParams params = new DiffExpressionCallParams();
         params.addAllSpeciesIds(Arrays.asList("21", "41"));
-        dao.getOrderedHomologousGenesDiffExpressionCalls("311", params);
+        dao.setOrderingAttributes(DiffExpressionCallDAO.OrderingAttribute.OMA_GROUP);
+        dao.getHomologousGenesDiffExpressionCalls("311", params);
         
         params.clearSpeciesIds();
-        dao.getOrderedHomologousGenesDiffExpressionCalls("311", params);
+        dao.setOrderingAttributes(DiffExpressionCallDAO.OrderingAttribute.OMA_GROUP);
+        dao.getHomologousGenesDiffExpressionCalls("311", params);
 
     }
 }

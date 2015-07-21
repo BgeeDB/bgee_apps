@@ -17,6 +17,7 @@ import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressio
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.DiffExprCallType;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallParams;
 import org.bgee.model.dao.mysql.MySQLDAO;
+import org.bgee.model.dao.mysql.MySQLOrderingDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
@@ -31,7 +32,8 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
  * @see org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO
  * @since Bgee 13
  */
-public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.Attribute>
+public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionCallDAO.Attribute, 
+                                                            DiffExpressionCallDAO.OrderingAttribute>
                                         implements DiffExpressionCallDAO {
 
     /**
@@ -66,7 +68,7 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
 
     @Override
     //TODO: integration test
-    public DiffExpressionCallTOResultSet getOrderedHomologousGenesDiffExpressionCalls(
+    public DiffExpressionCallTOResultSet getHomologousGenesDiffExpressionCalls(
             String taxonId, DiffExpressionCallParams params) throws DAOException {
         log.entry(taxonId, params);
         return log.exit(getDiffExpressionCalls(taxonId, params.getSpeciesIds(), 
@@ -84,6 +86,8 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
      * {@code DiffExpressionCallTOResultSet}. It is the responsibility of the caller to close this 
      * {@code DAOResultSet} once results are retrieved.
      * 
+     * @param omaTaxonId                    A {@code String} that is the taxon id to be used to 
+     *                                      retrieve calls for homologous genes. 
      * @param speciesIds                    A {@code Set} of {@code String}s that are the IDs of 
      *                                      species allowing to filter the calls to use.
      * @param factor                        A {@code ComparisonFactor} that is the comparison factor
@@ -109,11 +113,11 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
      *                                      expression calls.                      
      */
     private DiffExpressionCallTOResultSet getDiffExpressionCalls(
-            String OMATaxonId, Set<String> speciesIds,
+            String omaTaxonId, Set<String> speciesIds,
             ComparisonFactor factor, Set<DiffExprCallType> diffExprCallTypeAffymetrix,
             boolean includeAffymetrixTypes, Set<DiffExprCallType> diffExprCallTypeRNASeq, 
             boolean includeRnaSeqTypes, boolean isSatisfyAllCallTypeCondition) {
-        log.entry(OMATaxonId, speciesIds, factor, diffExprCallTypeAffymetrix, includeAffymetrixTypes, 
+        log.entry(omaTaxonId, speciesIds, factor, diffExprCallTypeAffymetrix, includeAffymetrixTypes, 
                 diffExprCallTypeRNASeq, includeRnaSeqTypes, isSatisfyAllCallTypeCondition);
 
         // Construct sql query
@@ -128,7 +132,15 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
         String sql = this.generateSelectClause(this.getAttributes(), diffExprTableName, distinct);
 
         boolean hasSpecies  = speciesIds != null && !speciesIds.isEmpty();
-        boolean hasOMATaxon = StringUtils.isNotBlank(OMATaxonId);
+        boolean hasOMATaxon = StringUtils.isNotBlank(omaTaxonId);
+        boolean orderTOs    = this.getOrderingAttributes().containsKey(
+                DiffExpressionCallDAO.OrderingAttribute.OMA_GROUP);
+        
+        if (orderTOs && !hasOMATaxon) {
+            throw log.throwing(new UnsupportedOperationException("Operation not yet implemented, "
+                    + "we need a taxon ID toorder TransfertObjects."));
+        }
+            
         String geneInfoTable = null;
         
         //either because we want to limit the results retrieved to some species, 
@@ -236,7 +248,7 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
             sql += ")";
         }
         
-        if (hasOMATaxon) {
+        if (orderTOs) {
             sql += " ORDER BY " + geneInfoTable + ".OMANodeId";
         }
         
@@ -247,7 +259,7 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
             stmt = this.getManager().getConnection().prepareStatement(sql);
             int stmtIndex = 1;
             if (hasOMATaxon) {
-                stmt.setString(1, OMATaxonId);
+                stmt.setString(1, omaTaxonId);
                 stmtIndex = 2;
             }
             if (hasSpecies) {

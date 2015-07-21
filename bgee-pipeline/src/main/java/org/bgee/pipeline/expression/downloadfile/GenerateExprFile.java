@@ -1040,35 +1040,49 @@ public class GenerateExprFile extends GenerateDownloadFile {
      * 
      * @param fileType The {@code ExprFileType} of the file to be generated.
      * @return An {@code Array} of {@code String}s used to produce the header.
-     * @throw IllegalArgumentException If {@code fileType} is not managed by this method.
      */
-    private String[] generateExprFileHeader(SingleSpExprFileType fileType)
-        throws IllegalArgumentException {
+    private String[] generateExprFileHeader(SingleSpExprFileType fileType) {
         log.entry(fileType);
+        
+        String[] headers = null; 
+        int nbColumns = 8;
+        if (!fileType.isSimpleFileType()) {
+            nbColumns = 21;
+        }
+        headers = new String[nbColumns];
 
-        if (fileType.isSimpleFileType()) {
-            return log.exit(new String[] { 
-                    GENE_ID_COLUMN_NAME, GENE_NAME_COLUMN_NAME,
-                    ANATENTITY_ID_COLUMN_NAME, ANATENTITY_NAME_COLUMN_NAME,
-                    STAGE_ID_COLUMN_NAME, STAGE_NAME_COLUMN_NAME,
-                    EXPRESSION_COLUMN_NAME, QUALITY_COLUMN_NAME });
+        // *** Headers common to all file types ***
+        headers[0] = GENE_ID_COLUMN_NAME;
+        headers[1] = GENE_NAME_COLUMN_NAME;
+        headers[2] = ANATENTITY_ID_COLUMN_NAME;
+        headers[3] = ANATENTITY_NAME_COLUMN_NAME;
+        headers[4] = STAGE_ID_COLUMN_NAME;
+        headers[5] = STAGE_NAME_COLUMN_NAME;
+        headers[6] = EXPRESSION_COLUMN_NAME;
+        headers[7] = QUALITY_COLUMN_NAME;
+
+
+        if (!fileType.isSimpleFileType()) {
+            // *** Headers specific to complete file ***
+            headers[8] = INCLUDING_OBSERVED_DATA_COLUMN_NAME;
+            headers[9] = AFFYMETRIX_DATA_COLUMN_NAME;
+            headers[10] = AFFYMETRIX_CALL_QUALITY_COLUMN_NAME;
+            headers[11] = AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME;
+            headers[12] = EST_DATA_COLUMN_NAME;
+            headers[13] = EST_CALL_QUALITY_COLUMN_NAME;
+            headers[14] = EST_OBSERVED_DATA_COLUMN_NAME;
+            headers[15] = INSITU_DATA_COLUMN_NAME;
+            headers[16] = INSITU_CALL_QUALITY_COLUMN_NAME;
+            headers[17] = INSITU_OBSERVED_DATA_COLUMN_NAME;
+//            headers[] = RELAXED_INSITU_DATA_COLUMN_NAME;
+//            headers[] = RELAXED_INSITU_DATA_COLUMN_NAME;
+//            headers[] = RELAXED_INSITU_OBSERVED_DATA_COLUMN_NAME;
+            headers[18] = RNASEQ_DATA_COLUMN_NAME;
+            headers[19] = RNASEQ_CALL_QUALITY_COLUMN_NAME;
+            headers[20] = RNASEQ_OBSERVED_DATA_COLUMN_NAME;
         }
 
-        return log.exit(new String[] { 
-                GENE_ID_COLUMN_NAME, GENE_NAME_COLUMN_NAME,
-                ANATENTITY_ID_COLUMN_NAME, ANATENTITY_NAME_COLUMN_NAME,
-                STAGE_ID_COLUMN_NAME, STAGE_NAME_COLUMN_NAME, 
-                EXPRESSION_COLUMN_NAME, QUALITY_COLUMN_NAME, INCLUDING_OBSERVED_DATA_COLUMN_NAME, 
-                AFFYMETRIX_DATA_COLUMN_NAME, AFFYMETRIX_CALL_QUALITY_COLUMN_NAME, 
-                AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME,
-                EST_DATA_COLUMN_NAME, EST_CALL_QUALITY_COLUMN_NAME, EST_OBSERVED_DATA_COLUMN_NAME,
-                INSITU_DATA_COLUMN_NAME, INSITU_CALL_QUALITY_COLUMN_NAME, 
-                INSITU_OBSERVED_DATA_COLUMN_NAME,
-                // TODO: when relaxed in situ will be in the database, uncomment following line
-                // RELAXED_INSITU_DATA_COLUMN_NAME, RELAXED_INSITU_DATA_COLUMN_NAME,
-                // RELAXED_INSITU_OBSERVED_DATA_COLUMN_NAME,
-                RNASEQ_DATA_COLUMN_NAME, RNASEQ_CALL_QUALITY_COLUMN_NAME, 
-                RNASEQ_OBSERVED_DATA_COLUMN_NAME });
+        return log.exit(headers);
     }
     
     /**

@@ -725,24 +725,38 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
     private String[] generateDiffExprFileHeader(SingleSpDiffExprFileType fileType) {
         log.entry(fileType);
         
-        if (fileType.isSimpleFileType()) {
-            return log.exit(new String[] { 
-                    GENE_ID_COLUMN_NAME, GENE_NAME_COLUMN_NAME, 
-                    ANATENTITY_ID_COLUMN_NAME, ANATENTITY_NAME_COLUMN_NAME,
-                    STAGE_ID_COLUMN_NAME, STAGE_NAME_COLUMN_NAME,
-                    DIFFEXPRESSION_COLUMN_NAME, QUALITY_COLUMN_NAME});
-        } 
-        return log.exit(new String[] {
-                GENE_ID_COLUMN_NAME, GENE_NAME_COLUMN_NAME, 
-                ANATENTITY_ID_COLUMN_NAME, ANATENTITY_NAME_COLUMN_NAME,
-                STAGE_ID_COLUMN_NAME, STAGE_NAME_COLUMN_NAME,   
-                DIFFEXPRESSION_COLUMN_NAME, QUALITY_COLUMN_NAME, 
-                AFFYMETRIX_DATA_COLUMN_NAME, AFFYMETRIX_CALL_QUALITY_COLUMN_NAME,
-                AFFYMETRIX_P_VALUE_COLUMN_NAME, AFFYMETRIX_CONSISTENT_DEA_COUNT_COLUMN_NAME, 
-                AFFYMETRIX_INCONSISTENT_DEA_COUNT_COLUMN_NAME,
-                RNASEQ_DATA_COLUMN_NAME, RNASEQ_CALL_QUALITY_COLUMN_NAME,
-                RNASEQ_P_VALUE_COLUMN_NAME, RNASEQ_CONSISTENT_DEA_COUNT_COLUMN_NAME, 
-                RNASEQ_INCONSISTENT_DEA_COUNT_COLUMN_NAME});
+        String[] headers = null; 
+        int nbColumns = 8;
+        if (!fileType.isSimpleFileType()) {
+            nbColumns = 18;
+        }
+        headers = new String[nbColumns];
+
+        // *** Headers common to all file types ***
+        headers[0] = GENE_ID_COLUMN_NAME;
+        headers[1] = GENE_NAME_COLUMN_NAME;
+        headers[2] = ANATENTITY_ID_COLUMN_NAME;
+        headers[3] = ANATENTITY_NAME_COLUMN_NAME;
+        headers[4] = STAGE_ID_COLUMN_NAME;
+        headers[5] = STAGE_NAME_COLUMN_NAME;
+        headers[6] = DIFFEXPRESSION_COLUMN_NAME;
+        headers[7] = QUALITY_COLUMN_NAME;
+        
+        if (!fileType.isSimpleFileType()) {
+            // *** Headers specific to complete file ***
+            headers[8] = AFFYMETRIX_DATA_COLUMN_NAME;
+            headers[9] = AFFYMETRIX_CALL_QUALITY_COLUMN_NAME;
+            headers[10] = AFFYMETRIX_P_VALUE_COLUMN_NAME;
+            headers[11] = AFFYMETRIX_CONSISTENT_DEA_COUNT_COLUMN_NAME;
+            headers[12] = AFFYMETRIX_INCONSISTENT_DEA_COUNT_COLUMN_NAME;
+            headers[13] = RNASEQ_DATA_COLUMN_NAME;
+            headers[14] = RNASEQ_CALL_QUALITY_COLUMN_NAME;
+            headers[15] = RNASEQ_P_VALUE_COLUMN_NAME;
+            headers[16] = RNASEQ_CONSISTENT_DEA_COUNT_COLUMN_NAME;
+            headers[17] = RNASEQ_INCONSISTENT_DEA_COUNT_COLUMN_NAME;
+        }
+        
+        return log.exit(headers);
     }
 
     /**

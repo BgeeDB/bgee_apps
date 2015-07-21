@@ -751,11 +751,10 @@ public class GenerateExprFile extends GenerateDownloadFile {
                 CellProcessor[] fileTypeProcessors = null;
                 String[] fileTypeHeaders = null;
 
-                fileTypeProcessors = 
-                        this.generateExprFileCellProcessors((SingleSpExprFileType) fileType);
+                fileTypeHeaders = this.generateExprFileHeader((SingleSpExprFileType) fileType);
+                fileTypeProcessors = this.generateExprFileCellProcessors(
+                		(SingleSpExprFileType) fileType, fileTypeHeaders);
                 processors.put(fileType, fileTypeProcessors);
-                fileTypeHeaders = 
-                        this.generateExprFileHeader((SingleSpExprFileType) fileType);
                 headers.put(fileType, fileTypeHeaders);
 
                 // Create file name
@@ -940,13 +939,15 @@ public class GenerateExprFile extends GenerateDownloadFile {
      * TSV file of type {@code fileType}.
      * 
      * @param fileType  The {@code ExprFileType} of the file to be generated.
+     * @param header    An {@code Array} of {@code String}s representing the names 
+     *                  of the columns of an expression file.
      * @return          An {@code Array} of {@code CellProcessor}s used to process 
      *                  an expression file.
      * @throw IllegalArgumentException If {@code fileType} is not managed by this method.
      */
-    private CellProcessor[] generateExprFileCellProcessors(SingleSpExprFileType fileType) 
-            throws IllegalArgumentException {
-        log.entry(fileType);
+    private CellProcessor[] generateExprFileCellProcessors(
+    		SingleSpExprFileType fileType, String[] header) throws IllegalArgumentException {
+        log.entry(fileType, header);
 
         List<Object> expressionValues = new ArrayList<Object>();
         for (ExpressionData data : ExpressionData.values()) {
@@ -967,45 +968,70 @@ public class GenerateExprFile extends GenerateDownloadFile {
         for (ObservedData data : ObservedData.values()) {
             originValues.add(data.getStringRepresentation());
         }
+        
+        //Then, we build the CellProcessor
+        CellProcessor[] processors = new CellProcessor[header.length];
+        for (int i = 0; i < header.length; i++) {
+            switch (header[i]) {
+            // *** CellProcessors common to all file types ***
+                case GENE_ID_COLUMN_NAME:
+                case ANATENTITY_ID_COLUMN_NAME:
+                case ANATENTITY_NAME_COLUMN_NAME:
+                case STAGE_ID_COLUMN_NAME:
+                case STAGE_NAME_COLUMN_NAME:
+                	processors[i] = new StrNotNullOrEmpty();
+                	break;
+                case GENE_NAME_COLUMN_NAME:
+                	processors[i] = new NotNull();
+                    break;
+                case EXPRESSION_COLUMN_NAME:
+                	processors[i] = new IsElementOf(expressionValues);
+                    break;
+                case QUALITY_COLUMN_NAME:
+                	processors[i] = new IsElementOf(resumeQualities);
+                    break;
+            }
 
-        if (fileType.isSimpleFileType()) {
-            return log.exit(new CellProcessor[] { 
-                    new StrNotNullOrEmpty(),    // gene ID
-                    new NotNull(),              // gene Name
-                    new StrNotNullOrEmpty(),    // anatomical entity ID
-                    new StrNotNullOrEmpty(),    // anatomical entity name
-                    new StrNotNullOrEmpty(),    // developmental stage ID
-                    new StrNotNullOrEmpty(),    // developmental stage name
-                    new IsElementOf(expressionValues),   // Expression
-                    new IsElementOf(resumeQualities) }); // Call quality
+            // If it was one of the column common to all file types, 
+            // iterate next column name
+            if (processors[i] != null) {
+                continue;
+            }
+
+            if (!fileType.isSimpleFileType()) {
+            	// *** Attributes specific to complete file ***
+                // TODO: when relaxed in situ will be in the database, uncomment commented lines
+            	switch (header[i]) {
+            	    case AFFYMETRIX_DATA_COLUMN_NAME:
+            	    case EST_DATA_COLUMN_NAME:
+            	    case INSITU_DATA_COLUMN_NAME:
+            	    case RNASEQ_DATA_COLUMN_NAME:
+//            	    case RELAXED_INSITU_DATA_COLUMN_NAME:
+            	        processors[i] = new IsElementOf(expressionValues);
+            	        break;
+            	    case AFFYMETRIX_CALL_QUALITY_COLUMN_NAME:
+            	    case EST_CALL_QUALITY_COLUMN_NAME:
+            	    case INSITU_CALL_QUALITY_COLUMN_NAME:
+            	    case RNASEQ_CALL_QUALITY_COLUMN_NAME:
+//            	    case RELAXED_INSITU_CALL_QUALITY_COLUMN_NAME:
+            	        processors[i] = new IsElementOf(specificTypeQualities);
+            	        break;
+            	    case AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME:
+            	    case EST_OBSERVED_DATA_COLUMN_NAME:
+            	    case INSITU_OBSERVED_DATA_COLUMN_NAME:
+            	    case RNASEQ_OBSERVED_DATA_COLUMN_NAME:
+//            	    case RELAXED_INSITU_OBSERVED_DATA_COLUMN_NAME:
+            	    case INCLUDING_OBSERVED_DATA_COLUMN_NAME:
+            	        processors[i] = new IsElementOf(originValues);
+            	        break;
+            	}
+            }
+            if (processors[i] == null) {
+                throw log.throwing(new IllegalArgumentException("Unrecognized header: " 
+                        + header[i] + " for file type: " + fileType.getStringRepresentation()));
+            }
         }
-
-        return log.exit(new CellProcessor[] {
-                new StrNotNullOrEmpty(),                // gene ID
-                new NotNull(),                          // gene Name
-                new StrNotNullOrEmpty(),                // anatomical entity ID
-                new StrNotNullOrEmpty(),                // anatomical entity name
-                new StrNotNullOrEmpty(),                // developmental stage ID
-                new StrNotNullOrEmpty(),                // developmental stage name
-                new IsElementOf(expressionValues),      // Expression
-                new IsElementOf(resumeQualities),       // Call quality
-                new IsElementOf(originValues),          // Including observed data
-                new IsElementOf(expressionValues),      // Affymetrix data
-                new IsElementOf(specificTypeQualities), // Affymetrix quality
-                new IsElementOf(originValues),          // Including Affymetrix data
-                new IsElementOf(expressionValues),      // EST data
-                new IsElementOf(specificTypeQualities), // EST quality
-                new IsElementOf(originValues),          // Including EST data
-                new IsElementOf(expressionValues),      // In Situ data
-                new IsElementOf(specificTypeQualities), // In Situ quality
-                new IsElementOf(originValues),          // Including in Situ data
-                // TODO: when relaxed in situ will be in the database, uncomment following line
-                // new IsElementOf(dataElements),        // Relaxed in Situ data
-                // new IsElementOf(qualityValues),       // Relaxed in Situ quality
-                // new IsElementOf(originValues),        // Including relaxed in Situ data
-                new IsElementOf(expressionValues),      // RNA-seq data
-                new IsElementOf(specificTypeQualities), // RNA-seq quality
-                new IsElementOf(originValues)});        // Including RNA-seq data
+        return log.exit(processors);
     }
 
     /**

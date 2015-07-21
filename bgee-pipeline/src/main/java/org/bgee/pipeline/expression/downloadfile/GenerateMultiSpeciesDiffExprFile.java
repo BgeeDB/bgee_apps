@@ -2686,10 +2686,9 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * @param speciesNames  A {@code List} of {@code String}s that are the names of species 
      *                      we want to generate data for.
      * @return              An {@code Array} of {@code String}s used to produce the header.
-     * @throw IllegalArgumentException If {@code fileType} is not managed by this method.
      */
-    private String[] generateHeader(MultiSpeciesDiffExprFileType fileType, List<String> speciesNames)
-        throws IllegalArgumentException {
+    private String[] generateHeader(
+            MultiSpeciesDiffExprFileType fileType, List<String> speciesNames) {
         log.entry(fileType, speciesNames);
 
         String[] headers = null; 

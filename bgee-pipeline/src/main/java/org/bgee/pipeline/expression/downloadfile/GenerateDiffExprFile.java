@@ -99,19 +99,19 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
      * An {@code Enum} used to define the possible differential expression file types to be 
      * generated, as class arguments.
      * <ul>
-     * <li>{@code DIFF_EXPR_ANATOMY_SIMPLE}:    differential expression based on comparison 
+     * <li>{@code DIFF_EXPR_ANATOMY_SIMPLE}:        differential expression based on comparison 
      *                                              of several anatomical entities at a same 
      *                                              (broad) developmental stage, 
      *                                              in a simple download file.
-     * <li>{@code DIFF_EXPR_ANATOMY_COMPLETE}:  differential expression based on comparison 
+     * <li>{@code DIFF_EXPR_ANATOMY_COMPLETE}:      differential expression based on comparison 
      *                                              of several anatomical entities at a same 
      *                                              (broad) developmental stage, 
      *                                              in an advanced download file.
-     * <li>{@code DIFF_EXPR_DEVELOPMENT_SIMPLE}:          differential expression based on comparison 
+     * <li>{@code DIFF_EXPR_DEVELOPMENT_SIMPLE}:    differential expression based on comparison 
      *                                              of a same anatomical entity at different 
      *                                              developmental stages, 
      *                                              in a simple download file.
-     * <li>{@code DIFF_EXPR_DEVELOPMENT_COMPLETE}:        differential expression based on comparison 
+     * <li>{@code DIFF_EXPR_DEVELOPMENT_COMPLETE}:  differential expression based on comparison 
      *                                              of a same anatomical entity at different 
      *                                              developmental stages, 
      *                                              in an advanced download file.
@@ -257,10 +257,11 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
      * contained in database will be used.
      * <li> a list of files types that will be generated ('diffexpr-anatomy-simple' for 
      * {@link SingleSpDiffExprFileType DIFF_EXPR_ANATOMY_SIMPLE}, 'diffexpr-anatomy-complete' for 
-     * {@link SingleSpDiffExprFileType DIFF_EXPR_ANATOMY_COMPLETE}, 'diffexpr-development-simple' for 
-     * {@link SingleSpDiffExprFileType DIFF_EXPR_DEVELOPMENT_SIMPLE}, and 'diffexpr-development-complete' for 
-     * {@link SingleSpDiffExprFileType DIFF_EXPR_DEVELOPMENT_COMPLETE}), separated by the {@code String} 
-     * {@link CommandRunner#LIST_SEPARATOR}. If an empty list is provided 
+     * {@link SingleSpDiffExprFileType DIFF_EXPR_ANATOMY_COMPLETE}, 'diffexpr-development-simple' 
+     * for {@link SingleSpDiffExprFileType DIFF_EXPR_DEVELOPMENT_SIMPLE}, and 
+     * 'diffexpr-development-complete' for 
+     * {@link SingleSpDiffExprFileType DIFF_EXPR_DEVELOPMENT_COMPLETE}), separated by the 
+     * {@code String} {@link CommandRunner#LIST_SEPARATOR}. If an empty list is provided 
      * (see {@link CommandRunner#EMPTY_LIST}), all possible file types will be generated.
      * <li>the directory path that will be used to generate download files. 
      * </ol>
@@ -373,7 +374,8 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
                     ((SingleSpDiffExprFileType) fileType).getComparisonFactor());
             if (types == null) {
                 types = EnumSet.noneOf(SingleSpDiffExprFileType.class);
-                factorsToFileTypes.put(((SingleSpDiffExprFileType) fileType).getComparisonFactor(), types);
+                factorsToFileTypes.put(
+                        ((SingleSpDiffExprFileType) fileType).getComparisonFactor(), types);
             }
             types.add((SingleSpDiffExprFileType) fileType);
         }
@@ -435,9 +437,9 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
      * @throws IllegalArgumentException If incorrect {@code DiffExprFileType}s provided.
      */
     private void generateDiffExprFiles(String fileNamePrefix, 
-            Set<SingleSpDiffExprFileType> fileTypes, String speciesId, Map<String, String> geneNamesByIds, 
-            Map<String, String> stageNamesByIds, Map<String, String> anatEntityNamesByIds)
-                    throws IOException, IllegalArgumentException {
+            Set<SingleSpDiffExprFileType> fileTypes, String speciesId, 
+            Map<String, String> geneNamesByIds, Map<String, String> stageNamesByIds, 
+            Map<String, String> anatEntityNamesByIds) throws IOException, IllegalArgumentException {
         log.entry(this.directory, fileNamePrefix, fileTypes, speciesId, 
                 geneNamesByIds, stageNamesByIds, anatEntityNamesByIds);
         
@@ -519,20 +521,21 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
             //**************************
             Map<SingleSpDiffExprFileType, CellProcessor[]> processors = 
                     new HashMap<SingleSpDiffExprFileType, CellProcessor[]>();
-            Map<SingleSpDiffExprFileType, String[]> headers = new HashMap<SingleSpDiffExprFileType, String[]>();
+            Map<SingleSpDiffExprFileType, String[]> headers = 
+                    new HashMap<SingleSpDiffExprFileType, String[]>();
             
             for (SingleSpDiffExprFileType fileType: fileTypes) {
                 assert fileType.getComparisonFactor().equals(factor);
                 
-                CellProcessor[] fileTypeProcessors = 
-                        this.generateDiffExprFileCellProcessors(fileType);
-                processors.put(fileType, fileTypeProcessors);
                 String[] fileTypeHeaders = this.generateDiffExprFileHeader(fileType);
                 headers.put(fileType, fileTypeHeaders);
+                CellProcessor[] fileTypeProcessors = 
+                        this.generateDiffExprFileCellProcessors(fileType, fileTypeHeaders);
+                processors.put(fileType, fileTypeProcessors);
 
                 //Create file name
-                String fileName = this.formatString(fileNamePrefix + "_" + fileType.getStringRepresentation() 
-                        + EXTENSION);
+                String fileName = this.formatString(fileNamePrefix + "_" + 
+                        fileType.getStringRepresentation() + EXTENSION);
                 generatedFileNames.put(fileType, fileName);
                 
                 //write in temp file
@@ -624,13 +627,15 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
      * a differential expression TSV file of type {@code DiffExprFileType}.
      * 
      * @param fileType  The {@code DiffExprFileType} of the file to be generated.
+     * @param header    An {@code Array} of {@code String}s representing the names 
+     *                  of the columns of a differential expression file.
      * @return          An {@code Array} of {@code CellProcessor}s used to process 
      *                  a differential expression file.
+     * @throw IllegalArgumentException If {@code fileType} is not managed by this method.
      */
-    //TODO: this should be adapted to the system used elsewhere: providing a String[] 
-    //to determine the columns
-    private CellProcessor[] generateDiffExprFileCellProcessors(SingleSpDiffExprFileType fileType) {
-        log.entry(fileType);
+    private CellProcessor[] generateDiffExprFileCellProcessors(
+            SingleSpDiffExprFileType fileType, String[] header) {
+        log.entry(fileType, header);
         
         List<Object> data = new ArrayList<Object>();
         for (DiffExpressionData diffExprData: DiffExpressionData.values()) {
@@ -647,37 +652,67 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         resumeQualities.add(this.convertDataStateToString(DataState.LOWQUALITY));
         resumeQualities.add(this.convertDataStateToString(DataState.NODATA));
         
-        if (fileType.isSimpleFileType()) {
-            return log.exit(new CellProcessor[] { 
-                    new StrNotNullOrEmpty(),            // gene ID
-                    new NotNull(),                      // gene Name
-                    new StrNotNullOrEmpty(),            // anatomical entity ID
-                    new StrNotNullOrEmpty(),            // anatomical entity name
-                    new StrNotNullOrEmpty(),            // developmental stage ID
-                    new StrNotNullOrEmpty(),            // developmental stage name
-                    new IsElementOf(data),              // Differential expression
-                    new IsElementOf(resumeQualities)}); // Quality
-        } 
-        
-        return log.exit(new CellProcessor[] { 
-                new StrNotNullOrEmpty(),                // gene ID
-                new NotNull(),                          // gene Name
-                new StrNotNullOrEmpty(),                // anatomical entity ID
-                new StrNotNullOrEmpty(),                // anatomical entity name
-                new StrNotNullOrEmpty(),                // developmental stage ID
-                new StrNotNullOrEmpty(),                // developmental stage name
-                new IsElementOf(data),                  // Differential expression
-                new IsElementOf(resumeQualities),       // Quality
-                new IsElementOf(data),                  // Affymetrix data
-                new IsElementOf(specificTypeQualities), // Affymetrix call quality
-                new DMinMax(0, 1),                      // Best p-value using Affymetrix
-                new LMinMax(0, Long.MAX_VALUE),         // Consistent DEA count using Affymetrix
-                new LMinMax(0, Long.MAX_VALUE),         // Inconsistent DEA count using Affymetrix
-                new IsElementOf(data),                  // RNA-seq data
-                new IsElementOf(specificTypeQualities), // RNA-seq call quality
-                new DMinMax(0, 1),                      // Best p-value using RNA-Seq
-                new LMinMax(0, Long.MAX_VALUE),         // Consistent DEA count using RNA-Seq
-                new LMinMax(0, Long.MAX_VALUE)});       // Inconsistent DEA count using RNA-Seq
+        //Then, we build the CellProcessor
+        CellProcessor[] processors = new CellProcessor[header.length];
+        for (int i = 0; i < header.length; i++) {
+            switch (header[i]) {
+            // *** CellProcessors common to all file types ***
+                case GENE_ID_COLUMN_NAME:
+                case ANATENTITY_ID_COLUMN_NAME:
+                case ANATENTITY_NAME_COLUMN_NAME:
+                case STAGE_ID_COLUMN_NAME:
+                case STAGE_NAME_COLUMN_NAME:
+                    processors[i] = new StrNotNullOrEmpty();
+                    break;
+                case GENE_NAME_COLUMN_NAME:
+                    processors[i] = new NotNull();
+                    break;
+                case DIFFEXPRESSION_COLUMN_NAME:
+                    processors[i] = new IsElementOf(data);
+                    break;
+                case QUALITY_COLUMN_NAME:
+                    processors[i] = new IsElementOf(resumeQualities);
+                    break;
+            }
+            
+            // If it was one of the column common to all file types, 
+            // iterate next column name
+            if (processors[i] != null) {
+                continue;
+            }
+            
+            if (!fileType.isSimpleFileType()) {
+                // *** Attributes specific to complete file ***
+                // TODO: when relaxed in situ will be in the database, uncomment commented lines
+                switch (header[i]) {
+                
+                case AFFYMETRIX_DATA_COLUMN_NAME:
+                case RNASEQ_DATA_COLUMN_NAME:
+                    processors[i] = new IsElementOf(data);
+                    break;
+                case AFFYMETRIX_CALL_QUALITY_COLUMN_NAME:
+                case RNASEQ_CALL_QUALITY_COLUMN_NAME:
+                    processors[i] = new IsElementOf(specificTypeQualities);
+                    break;
+                case AFFYMETRIX_P_VALUE_COLUMN_NAME:
+                case RNASEQ_P_VALUE_COLUMN_NAME:
+                    processors[i] = new DMinMax(0, 1);
+                    break;
+                case AFFYMETRIX_CONSISTENT_DEA_COUNT_COLUMN_NAME:
+                case AFFYMETRIX_INCONSISTENT_DEA_COUNT_COLUMN_NAME:
+                case RNASEQ_CONSISTENT_DEA_COUNT_COLUMN_NAME:
+                case RNASEQ_INCONSISTENT_DEA_COUNT_COLUMN_NAME:
+                    processors[i] = new LMinMax(0, Long.MAX_VALUE);
+                    break;
+                }
+            }
+
+            if (processors[i] == null) {
+                throw log.throwing(new IllegalArgumentException("Unrecognized header: " 
+                        + header[i] + " for file type: " + fileType.getStringRepresentation()));
+            }
+        }
+        return log.exit(processors);
     }
     
     /**
@@ -690,24 +725,38 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
     private String[] generateDiffExprFileHeader(SingleSpDiffExprFileType fileType) {
         log.entry(fileType);
         
-        if (fileType.isSimpleFileType()) {
-            return log.exit(new String[] { 
-                    GENE_ID_COLUMN_NAME, GENE_NAME_COLUMN_NAME, 
-                    ANATENTITY_ID_COLUMN_NAME, ANATENTITY_NAME_COLUMN_NAME,
-                    STAGE_ID_COLUMN_NAME, STAGE_NAME_COLUMN_NAME,
-                    DIFFEXPRESSION_COLUMN_NAME, QUALITY_COLUMN_NAME});
-        } 
-        return log.exit(new String[] {
-                GENE_ID_COLUMN_NAME, GENE_NAME_COLUMN_NAME, 
-                ANATENTITY_ID_COLUMN_NAME, ANATENTITY_NAME_COLUMN_NAME,
-                STAGE_ID_COLUMN_NAME, STAGE_NAME_COLUMN_NAME,   
-                DIFFEXPRESSION_COLUMN_NAME, QUALITY_COLUMN_NAME, 
-                AFFYMETRIX_DATA_COLUMN_NAME, AFFYMETRIX_CALL_QUALITY_COLUMN_NAME,
-                AFFYMETRIX_P_VALUE_COLUMN_NAME, AFFYMETRIX_CONSISTENT_DEA_COUNT_COLUMN_NAME, 
-                AFFYMETRIX_INCONSISTENT_DEA_COUNT_COLUMN_NAME,
-                RNASEQ_DATA_COLUMN_NAME, RNASEQ_CALL_QUALITY_COLUMN_NAME,
-                RNASEQ_P_VALUE_COLUMN_NAME, RNASEQ_CONSISTENT_DEA_COUNT_COLUMN_NAME, 
-                RNASEQ_INCONSISTENT_DEA_COUNT_COLUMN_NAME});
+        String[] headers = null; 
+        int nbColumns = 8;
+        if (!fileType.isSimpleFileType()) {
+            nbColumns = 18;
+        }
+        headers = new String[nbColumns];
+
+        // *** Headers common to all file types ***
+        headers[0] = GENE_ID_COLUMN_NAME;
+        headers[1] = GENE_NAME_COLUMN_NAME;
+        headers[2] = ANATENTITY_ID_COLUMN_NAME;
+        headers[3] = ANATENTITY_NAME_COLUMN_NAME;
+        headers[4] = STAGE_ID_COLUMN_NAME;
+        headers[5] = STAGE_NAME_COLUMN_NAME;
+        headers[6] = DIFFEXPRESSION_COLUMN_NAME;
+        headers[7] = QUALITY_COLUMN_NAME;
+        
+        if (!fileType.isSimpleFileType()) {
+            // *** Headers specific to complete file ***
+            headers[8] = AFFYMETRIX_DATA_COLUMN_NAME;
+            headers[9] = AFFYMETRIX_CALL_QUALITY_COLUMN_NAME;
+            headers[10] = AFFYMETRIX_P_VALUE_COLUMN_NAME;
+            headers[11] = AFFYMETRIX_CONSISTENT_DEA_COUNT_COLUMN_NAME;
+            headers[12] = AFFYMETRIX_INCONSISTENT_DEA_COUNT_COLUMN_NAME;
+            headers[13] = RNASEQ_DATA_COLUMN_NAME;
+            headers[14] = RNASEQ_CALL_QUALITY_COLUMN_NAME;
+            headers[15] = RNASEQ_P_VALUE_COLUMN_NAME;
+            headers[16] = RNASEQ_CONSISTENT_DEA_COUNT_COLUMN_NAME;
+            headers[17] = RNASEQ_INCONSISTENT_DEA_COUNT_COLUMN_NAME;
+        }
+        
+        return log.exit(headers);
     }
 
     /**
@@ -853,8 +902,8 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
      * Generate a row to be written in a differential expression download file. This methods will 
      * notably use {@code to} to produce differential expression information, that is different 
      * depending on {@code fileType}. The results are returned as a {@code Map}; it can be 
-     * {@code null} if the {@code DiffExpressionCallTO} provided do not allow to generate information 
-     * to be included in the file of the given {@code DiffExprFileType}.
+     * {@code null} if the {@code DiffExpressionCallTO} provided do not allow to generate  
+     * information to be included in the file of the given {@code DiffExprFileType}.
      * <p>
      * <ul>
      * <li>information that will be generated in any case: entries with keys equal to 
@@ -894,7 +943,8 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
      */
     private Map<String, String> generateDiffExprRow(Map<String, String> geneNamesByIds, 
             Map<String, String> stageNamesByIds, Map<String, String> anatEntityNamesByIds, 
-            DiffExpressionCallTO to, SingleSpDiffExprFileType fileType) throws IllegalArgumentException {
+            DiffExpressionCallTO to, SingleSpDiffExprFileType fileType) 
+                    throws IllegalArgumentException {
         log.entry(geneNamesByIds, stageNamesByIds, anatEntityNamesByIds, to, fileType);
         
         Map<String, String> row = new HashMap<String, String>();

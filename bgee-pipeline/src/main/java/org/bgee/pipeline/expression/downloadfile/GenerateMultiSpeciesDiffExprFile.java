@@ -1427,10 +1427,12 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 // configure the mapping from the fields to the CSV columns
                 if (currentFileType.isSimpleFileType()) {
                     beanWriter.configureBeanMapping(MultiSpeciesSimpleDiffExprFileBean.class, 
-                            this.generateFieldMapping(currentFileType, fileTypeHeaders));
+                            this.generateFieldMapping(
+                                    currentFileType, fileTypeHeaders, orderedSpeciesNames));
                 } else {
                     beanWriter.configureBeanMapping(MultiSpeciesCompleteDiffExprFileBean.class, 
-                            this.generateFieldMapping(currentFileType, fileTypeHeaders));
+                            this.generateFieldMapping(
+                                    currentFileType, fileTypeHeaders, orderedSpeciesNames));
                 }
                 //  Write header
                 beanWriter.writeHeader(fileTypeHeaders);
@@ -2819,20 +2821,24 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * Generate the field mapping for each column of the header of a multi-species
      * differential expression TSV file of type {@code fileType}.
      *
-     * @param fileType  A {@code MultiSpDiffExprFileType} defining the type of file 
-     *                  that will be written.
-     * @param header    An {@code Array} of {@code String}s representing the names 
-     *                  of the columns of a multi-species differential expression file.
-     * @return          The {@code Array} of {@code String}s that is the field mapping, put in 
-     *                  the {@code Array} at the same index as the column they are supposed 
-     *                  to process.
+     * @param fileType              A {@code MultiSpDiffExprFileType} defining the type of file 
+     *                              that will be written.
+     * @param header                An {@code Array} of {@code String}s representing the names 
+     *                              of the columns of a multi-species differential expression file.
+     * @param orderedSpeciesNames   An {@code Array} of {@code String}s representing the names 
+     *                              of the columns of a multi-species differential expression file.
+     *                              Species names should start with a capital.
+     * @return                      The {@code Array} of {@code String}s that is the field mapping, 
+     *                              put in the {@code Array} at the same index as the column they 
+     *                              are supposed to process.
      */
-    private String[] generateFieldMapping(MultiSpeciesDiffExprFileType fileType, String[] header) {
-        log.entry(fileType, header);
+    private String[] generateFieldMapping(
+            MultiSpeciesDiffExprFileType fileType, String[] header, List<String> orderedSpeciesNames) {
+        log.entry(fileType, header, orderedSpeciesNames);
 
         String[] fieldMapping = new String[header.length];
 
-        int speciesIndex = -1;
+//        int speciesIndex = -1;
         for (int i = 0; i < header.length; i++) {
             switch (header[i]) {
             // *** attributes common to all file types ***
@@ -2875,31 +2881,32 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                     continue;
                 }
 
-                //FIXME: this correction assumes that OVER_EXPR_GENE_COUNT_COLUMN_NAME is always 
-                //the first column in the group of columns of a given species. A real correction 
-                //would be to extract the species name from the column names, store the species names 
-                //in a Set, and detect when we change species.
-                //See for instance org.bgee.pipeline.annotations.SimilarityAnnotation.REF_COL_PATTERN
-                //to see a way of coding this. The generation of the names of the columns 
-                //should be modified to ensure that they are in sync with the Pattern used to retrieve 
-                //species names.
-                if (header[i].startsWith(OVER_EXPR_GENE_COUNT_COLUMN_NAME)) {
-                    speciesIndex++;
+                for (int speciesIndex = 0; speciesIndex < orderedSpeciesNames.size(); speciesIndex++) {
+                    // We are sure to select the good species name in the column name.
+                    // If we use sub-species, the species name could not match to column name
+                    // because of the presence of the uppercase at the first position of the name.
+                    // For instance, column names for the subspecies 'Gorilla gorilla gorilla' 
+                    // (such as 'Over-expressed gene count for Gorilla gorilla gorilla') do not  
+                    // end with the species name 'Gorilla gorilla'.
+                    if (header[i].endsWith(orderedSpeciesNames.get(speciesIndex))) {
+                        if (header[i].startsWith(OVER_EXPR_GENE_COUNT_COLUMN_NAME)) {
+                            fieldMapping[i] = 
+                                    "speciesDiffExprCounts[" + speciesIndex + "].overExprGeneCount";
+                            
+                        } else if (header[i].startsWith(UNDER_EXPR_GENE_COUNT_COLUMN_NAME)) {
+                            fieldMapping[i] = 
+                                    "speciesDiffExprCounts[" + speciesIndex + "].underExprGeneCount";
+                            
+                        } else if (header[i].startsWith(NO_DIFF_EXPR_GENE_COUNT_COLUMN_NAME)) {
+                            fieldMapping[i] = 
+                                    "speciesDiffExprCounts[" + speciesIndex + "].notDiffExprGeneCount";
+                            
+                        } else if (header[i].startsWith(NA_GENES_COUNT_COLUMN_NAME)) {
+                            fieldMapping[i] = 
+                                    "speciesDiffExprCounts[" + speciesIndex + "].naGeneCount";
+                        } 
+                    }
                 }
-                
-                if (header[i].startsWith(OVER_EXPR_GENE_COUNT_COLUMN_NAME)) {
-                    fieldMapping[i] = "speciesDiffExprCounts[" + speciesIndex + "].overExprGeneCount";
-                    
-                } else if (header[i].startsWith(UNDER_EXPR_GENE_COUNT_COLUMN_NAME)) {
-                    fieldMapping[i] = "speciesDiffExprCounts[" + speciesIndex + "].underExprGeneCount";
-                    
-                } else if (header[i].startsWith(NO_DIFF_EXPR_GENE_COUNT_COLUMN_NAME)) {
-                    fieldMapping[i] = "speciesDiffExprCounts[" + speciesIndex + "].notDiffExprGeneCount";
-                    
-                } else if (header[i].startsWith(NA_GENES_COUNT_COLUMN_NAME)) {
-                    fieldMapping[i] = "speciesDiffExprCounts[" + speciesIndex + "].naGeneCount";
-                } 
-
             } else {
                 // *** Attributes specific to complete file ***
                 switch (header[i]) {

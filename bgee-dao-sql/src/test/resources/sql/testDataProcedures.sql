@@ -31,7 +31,7 @@ BEGIN
                (3,'HOG:NAILDQY',4,7,311),
                (4,'HOG:NAILDQY',5,6,411),
                (5,'HOG:VALEWID',9,14,111),
-               (6,'HOG:VALEWID',10,13,211),
+               (6,'HOG:VALEWID',10,13,311),
                (7,'HOG:VALEWID',11,12,511);
 
         INSERT INTO species (speciesId,genus,species,speciesCommonName,taxonId,genomeFilePath,genomeSpeciesId,fakeGeneIdPrefix) 
@@ -40,7 +40,7 @@ BEGIN
                (31,'gen31','sp31','spCName31',311,'path/genome31',0,'');
 
         INSERT INTO gene (geneId,geneName,geneDescription,speciesId,geneBioTypeId,OMAParentNodeId,ensemblGene) 
-        VALUES ('ID1','genN1','genDesc1',11,12,2,true),
+        VALUES ('ID1','genN1','genDesc1',11,12,5,true),
                ('ID2','genN2','genDesc2',21,null,null,true),
                ('ID3','genN3','genDesc3',31,null,3,false);
                

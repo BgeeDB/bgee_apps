@@ -299,7 +299,7 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                 MySQLDiffExpressionCallTOResultSet.class);
         DiffExpressionCallParams anatDiffExprParams = 
                 this.getDiffExpressionCallParams(speciesIds1, ComparisonFactor.ANATOMY);
-        when(mockManager.mockDiffExpressionCallDAO.getOrderedHomologousGenesDiffExpressionCalls(
+        when(mockManager.mockDiffExpressionCallDAO.getHomologousGenesDiffExpressionCalls(
                 eq(taxonId1),
                 (DiffExpressionCallParams) TestAncestor.valueCallParamEq(anatDiffExprParams))).
                 thenReturn(mockAnatDiffExprRsGroup1);
@@ -365,6 +365,8 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
         verify(mockManager.mockDiffExpressionCallDAO, times(1)).setAttributes(
                 // All Attributes except ID
                 EnumSet.complementOf(EnumSet.of(DiffExpressionCallDAO.Attribute.ID)));
+        verify(mockManager.mockDiffExpressionCallDAO, times(1)).setOrderingAttributes(
+                DiffExpressionCallDAO.OrderingAttribute.OMA_GROUP);
 
         // Verify that all ResultSet are closed.
         verify(mockSpeciesTORs).close();

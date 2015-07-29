@@ -1921,14 +1921,15 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         DiffExpressionCallDAO dao = this.getDiffExpressionCallDAO();
         // do not retrieve the internal diff. expression IDs
         dao.setAttributes(EnumSet.complementOf(EnumSet.of(DiffExpressionCallDAO.Attribute.ID)));
+        dao.setOrderingAttributes(DiffExpressionCallDAO.OrderingAttribute.OMA_GROUP);
     
         DiffExpressionCallParams params = new DiffExpressionCallParams();
         params.addAllSpeciesIds(speciesIds);
         params.setComparisonFactor(factor);
     
         DiffExpressionCallTOResultSet rs = 
-                dao.getOrderedHomologousGenesDiffExpressionCalls(taxonId, params);
-    
+                dao.getHomologousGenesDiffExpressionCalls(taxonId, params);
+
         log.debug("Done retrieving differential expression calls");
     
         return log.exit(rs);

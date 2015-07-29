@@ -61,9 +61,9 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
         // Generate manually expected result
         List<GeneTO> expectedGenes = Arrays.asList(
                 new GeneTO("ID1", "genN1", "genDesc1", 11, 12, 5, true), 
-                new GeneTO("ID2", "genN2", "genDesc2", 21, 0, 0, true), 
+                new GeneTO("ID2", "genN2", "genDesc2", 21, 0, 2, true), 
                 new GeneTO("ID3", "genN3", "genDesc3", 31, 0, 3, false), 
-                new GeneTO("ID4", "genN4", "genDesc4", 21, 0, 2, true)); 
+                new GeneTO("ID4", "genN4", "genDesc4", 21, 0, 0, true)); 
         //Compare
         assertTrue("GeneTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));

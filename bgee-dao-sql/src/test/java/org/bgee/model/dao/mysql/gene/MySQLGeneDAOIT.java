@@ -62,7 +62,8 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
         List<GeneTO> expectedGenes = Arrays.asList(
                 new GeneTO("ID1", "genN1", "genDesc1", 11, 12, 5, true), 
                 new GeneTO("ID2", "genN2", "genDesc2", 21, 0, 0, true), 
-                new GeneTO("ID3", "genN3", "genDesc3", 31, 0, 3, false)); 
+                new GeneTO("ID3", "genN3", "genDesc3", 31, 0, 3, false), 
+                new GeneTO("ID4", "genN4", "genDesc4", 21, 0, 2, true)); 
         //Compare
         assertTrue("GeneTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
@@ -80,7 +81,8 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
         expectedGenes = Arrays.asList(
                 new GeneTO("ID1", null, null, null, null, null, null), 
                 new GeneTO("ID2", null, null, null, null, null, null), 
-                new GeneTO("ID3", null, null, null, null, null, null));
+                new GeneTO("ID3", null, null, null, null, null, null),
+                new GeneTO("ID4", null, null, null, null, null, null));
         //Compare
         assertTrue("GeneTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
@@ -102,7 +104,8 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
         List<GeneTO> expectedGenes = Arrays.asList(
                 new GeneTO("ID1", null, null, null, null, null, null), 
                 new GeneTO("ID2", null, null, null, null, null, null), 
-                new GeneTO("ID3", null, null, null, null, null, null));
+                new GeneTO("ID3", null, null, null, null, null, null),
+                new GeneTO("ID4", null, null, null, null, null, null));
         //Compare
         assertTrue("GeneTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));

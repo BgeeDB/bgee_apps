@@ -42,7 +42,8 @@ BEGIN
         INSERT INTO gene (geneId,geneName,geneDescription,speciesId,geneBioTypeId,OMAParentNodeId,ensemblGene) 
         VALUES ('ID1','genN1','genDesc1',11,12,5,true),
                ('ID2','genN2','genDesc2',21,null,null,true),
-               ('ID3','genN3','genDesc3',31,null,3,false);
+               ('ID3','genN3','genDesc3',31,null,3,false),
+               ('ID4','genN4','genDesc4',21,null,2,true);
                
 --               --1 Stage_id1 36 ----------------------------------------------------------------------------------------------------
 --              /            |                                                         \                                              \

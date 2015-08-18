@@ -5,6 +5,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -61,10 +62,14 @@ public abstract class TestAncestor
 	/**
 	 * Default Constructor. 
 	 */
-	public TestAncestor()
-	{
-		
+	public TestAncestor() {
+		try {
+            CommandRunner.loadLogConfig();
+        } catch (SecurityException | IOException e) {
+            getLogger().catching(e);
+        }
 	}
+	
 	/**
 	 * A {@code TestWatcher} to log starting, succeeded and failed tests. 
 	 */

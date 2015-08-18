@@ -1,5 +1,6 @@
 package org.bgee.pipeline;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -55,6 +56,12 @@ public class CommandRunner {
             LogManager.getLogger(CommandRunner.class.getName());
 
     /**
+     * A {@code String} that is the path to a property file allowing to configure 
+     * log messages using the package {@code java.util.logging}. Path relative to 
+     * classpath root, starting with "/".
+     */
+    public static final String JDK_LOG_CONFIG_FILE = "/jdkLogConfig.properties";
+    /**
      * A {@code String} that is used to separate elements from a list when providing 
      * a response to a socket client (see {@link #socketUberonStagesBetween(Uberon, 
      * int)}).
@@ -104,6 +111,38 @@ public class CommandRunner {
      */
     public static final String EMPTY_ARG = "-";
 
+    /**
+     * Force configuration of loggers used by dependencies. 
+     * This method forces {@code java.util.logging.LogManager} to re-initialize 
+     * its configuration by reading the property file {@link #JDK_LOG_CONFIG_FILE}, 
+     * if the system property {@code java.util.logging.config.file} was not defined. 
+     * It also configures the property {@code org.slf4j.simpleLogger.defaultLogLevel} 
+     * to {@code error}, for the SLF4J {@code SimpleLogger}, if this property 
+     * was not defined.
+     * <p>
+     * Note that log4j and log4j2 properties are defined in configuration files stored 
+     * in classpath root. This method is used solely because of dependencies using 
+     * {@code java.util.logging} and {@code SimpleLogger}.
+     */
+    public static final void loadLogConfig() throws SecurityException, IOException {
+        log.entry();
+        if (System.getProperty("java.util.logging.config.file") == null) {
+            log.trace("Reset java.util.logging configuration from property file {}", 
+                    JDK_LOG_CONFIG_FILE);
+            //we need to reload the configuration, not only change the path 
+            //to the configuration file, because the logging config is read 
+            //at JVM initialization.
+            java.util.logging.LogManager.getLogManager().readConfiguration(
+                    CommandRunner.class.getResourceAsStream(JDK_LOG_CONFIG_FILE));
+        }
+        if (System.getProperty("org.slf4j.simpleLogger.defaultLogLevel") == null) {
+            String logLevel = "error";
+            log.trace("Setting property org.slf4j.simpleLogger.defaultLogLevel to {}", 
+                    logLevel);
+            System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", logLevel);
+        }
+        log.exit();
+    }
 
     /**
      * Entry point method of the Bgee pipeline. The first element in {@code args} 
@@ -131,6 +170,11 @@ public class CommandRunner {
      */
     public static void main(String[] args) throws IllegalArgumentException, Exception {
         log.entry((Object[]) args);
+        
+        loadLogConfig();
+        
+        //force use of custom JDK logging property file
+        System.setProperty("java.util.logging.config.file", "/jdkLogConfig.properties");
 
         if (args.length < 1) {
             throw log.throwing(new IllegalArgumentException("At least one argument " +

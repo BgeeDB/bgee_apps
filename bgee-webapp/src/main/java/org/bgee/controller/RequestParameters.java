@@ -1266,6 +1266,13 @@ public class RequestParameters {
         this.generateParametersQuery(parametersSeparator, searchOrHashParams, areSearchParams);
         
         String url = "";
+        if (StringUtils.isNotBlank(this.prop.getBgeeRootDirectory())) {
+            url += this.prop.getBgeeRootDirectory();
+        } else {
+            log.warn("No root folder for URL set, using '/'");
+            url += "/";
+        }
+        
         if (StringUtils.isNotBlank(this.parametersQuery)) {
             //if the query stores the parameters only in the hash part of the URL, 
             //we do not prepend '?', it will start with the hash separator

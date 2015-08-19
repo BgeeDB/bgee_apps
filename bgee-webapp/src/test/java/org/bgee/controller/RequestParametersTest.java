@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Properties;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -37,6 +38,12 @@ public class RequestParametersTest extends TestAncestor {
     
     private final static Logger log = 
             LogManager.getLogger(RequestParametersTest.class.getName());
+    
+    /**
+     * A {@code String} that will be used to define the value of the property with name 
+     * {@link BgeeProperties#BGEE_ROOT_DIRECTORY_KEY}.
+     */
+    private static final String TEST_ROOT_DIR = "testRootDir/";
     
     /**
      * The instance of {@code URLParameters} that provides the parameters
@@ -75,32 +82,32 @@ public class RequestParametersTest extends TestAncestor {
     protected Logger getLogger() {
         return log;
     }
-
+    
     /**
      * Load the object that will provide the parameters
      */
     @BeforeClass
     public static void loadParameters(){
 
-        System.getProperties().setProperty(
-                BgeeProperties.REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY,
-                System.getProperty("java.io.tmpdir"));
-        System.getProperties().setProperty(
-                BgeeProperties.URL_MAX_LENGTH_KEY, "120");
+//        System.getProperties().setProperty(
+//                BgeeProperties.REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY,
+//                System.getProperty("java.io.tmpdir"));
+//        System.getProperties().setProperty(
+//                BgeeProperties.URL_MAX_LENGTH_KEY, "120");
 
-        testURLParameters = new TestURLParameters();	
+        testURLParameters = new TestURLParameters();    
 
     }
 
-    /**
-     * Reset the properties to avoid to disturb other tests
-     */
-    @AfterClass
-    public static void resetProperties(){
-        System.clearProperty(BgeeProperties.PROPERTIES_FILE_NAME_KEY);
-        System.clearProperty(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY);
-        System.clearProperty(BgeeProperties.URL_MAX_LENGTH_KEY);
-    }
+//    /**
+//     * Reset the properties to avoid to disturb other tests
+//     */
+//    @AfterClass
+//    public static void resetProperties(){
+//        System.clearProperty(BgeeProperties.PROPERTIES_FILE_NAME_KEY);
+//        System.clearProperty(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY);
+//        System.clearProperty(BgeeProperties.URL_MAX_LENGTH_KEY);
+//    }
 
     /**
      * To do before each test, (re)set the mock 
@@ -138,15 +145,24 @@ public class RequestParametersTest extends TestAncestor {
                                                   // wrong values, should not be used if
                                                   // the key is used as expected
         
+        Properties props = new Properties();
+        props.setProperty(BgeeProperties.REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY,
+                System.getProperty("java.io.tmpdir"));
+        props.setProperty(BgeeProperties.URL_MAX_LENGTH_KEY, "120");
+        //in order to test that generated URLs include the Bgee root directory
+        props.setProperty(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY, TEST_ROOT_DIR);
+        
+        BgeeProperties bgeeProps = BgeeProperties.getBgeeProperties(props);
+        
         // To ensure that the key is generated and written on the disk before the tests start,
-        // generate a request parameter with an URL exceeding max length 
-        // (defined in loadParameters()), and call getRequestURL on it.
+        // generate a request parameter with an URL exceeding max length, 
+        // and call getRequestURL on it.
         // The separator used in the tests is not the default separator "&", but the key 
         // still corresponds to the hash of the value with "&" between parameters.
         // This checks that the key is always generated with "&", no matter which separator
         // is provided
         RequestParameters rp = new RequestParameters(this.mockHttpServletRequest,
-                RequestParametersTest.testURLParameters,BgeeProperties.getBgeeProperties(),true,"&");
+                RequestParametersTest.testURLParameters, bgeeProps, true, "&");
         this.addParamsToExceedThreshold(rp);
         rp.getRequestURL("+"); 
         this.generatedKey = rp.getDataKey();
@@ -157,14 +173,12 @@ public class RequestParametersTest extends TestAncestor {
         .thenReturn(this.generatedKey); //for requestParametersHavingAKey
         
         this.requestParametersWithNoKey = new RequestParameters(
-                this.mockHttpServletRequest,
-                RequestParametersTest.testURLParameters,BgeeProperties.getBgeeProperties(),
-                true,"&");
+                this.mockHttpServletRequest, RequestParametersTest.testURLParameters, 
+                bgeeProps, true, "&");
 
         this.requestParametersHavingAKey= new RequestParameters(
-                this.mockHttpServletRequest,
-                RequestParametersTest.testURLParameters,BgeeProperties.getBgeeProperties(),
-                true,"&");
+                this.mockHttpServletRequest, RequestParametersTest.testURLParameters, 
+                bgeeProps, true, "&");
     }
     
     /**
@@ -201,23 +215,23 @@ public class RequestParametersTest extends TestAncestor {
         // the mockHttpServletRequest. Do it with the default parameters separator and with
         // a custom one
 
-        assertEquals("Incorrect query returned ","?test_string=string1&test_integer="
+        assertEquals("Incorrect query returned ", TEST_ROOT_DIR + "?test_string=string1&test_integer="
                 + "1234&test_integer=2345&test_boolean=true&test_boolean="
                 + "false",this.requestParametersWithNoKey.getRequestURL());
 
-        assertEquals("Incorrect query returned ","?test_string=string1+test_integer="
+        assertEquals("Incorrect query returned ", TEST_ROOT_DIR + "?test_string=string1+test_integer="
                 + "1234+test_integer=2345+test_boolean=true+test_boolean="
                 + "false",this.requestParametersWithNoKey.getRequestURL("+"));
 
         // Add a parameter value to exceed the threshold over which a key is used
-        // (120 for this test, see method loadParameters()),
+        // (120 for this test, see method loadMockRequest()),
         // and check that indeed, a key is present after a new call of 
         // getRequestURL(), with still test_string written because
         // it is non storable
         this.addParamsToExceedThreshold(this.requestParametersWithNoKey);
 
-        assertEquals("Incorrect query returned ", 
-                "?test_string=string1"
+        assertEquals("Incorrect query returned ", TEST_ROOT_DIR 
+                + "?test_string=string1"
                         + "+data=" + this.generatedKey, 
                         this.requestParametersWithNoKey.getRequestURL("+"));
 
@@ -231,8 +245,7 @@ public class RequestParametersTest extends TestAncestor {
                 Arrays.asList(1234, 2345, 987654321, 987654322), 
                 this.requestParametersHavingAKey.getValues(
                         testURLParameters.getParamTestInteger()));
-        assertEquals("Incorrect query returned ", 
-                "?test_string=string1"
+        assertEquals("Incorrect query returned ", TEST_ROOT_DIR + "?test_string=string1"
                         + "+data=" + this.generatedKey, 
                         this.requestParametersHavingAKey.getRequestURL("+"));
 
@@ -254,16 +267,17 @@ public class RequestParametersTest extends TestAncestor {
         // the mockHttpServletRequest, but by requesting some to be in the hash, 
         // in different ways. Do it with the default parameters separator and with
         // a custom one.
+        // The URL root directory to use to generate URLs is defined in loadMockRequest().
         Collection<URLParameters.Parameter> params = new HashSet<URLParameters.Parameter>();
         params.add(RequestParametersTest.testURLParameters.getParamTestString());
         params.add(RequestParametersTest.testURLParameters.getParamTestBoolean());
         
-        assertEquals("Incorrect query returned ","?test_string=string1"
+        assertEquals("Incorrect query returned ", TEST_ROOT_DIR + "?test_string=string1"
                 + "&test_boolean=true&test_boolean=false" 
                 + RequestParameters.JS_HASH_SEPARATOR + "test_integer=1234"
                 + "&test_integer=2345",this.requestParametersWithNoKey.getRequestURL(
                         params, true));
-        assertEquals("Incorrect query returned ","?test_integer=1234"
+        assertEquals("Incorrect query returned ", TEST_ROOT_DIR + "?test_integer=1234"
                 + "&test_integer=2345" + RequestParameters.JS_HASH_SEPARATOR 
                 + "test_string=string1&test_boolean=true&test_boolean=false",
                 this.requestParametersWithNoKey.getRequestURL(
@@ -273,11 +287,11 @@ public class RequestParametersTest extends TestAncestor {
         //all params in the search part, or all params in the hash part
         params.clear();
         
-        assertEquals("Incorrect query returned ","?test_string=string1&test_integer="
+        assertEquals("Incorrect query returned ", TEST_ROOT_DIR + "?test_string=string1&test_integer="
                 + "1234&test_integer=2345&test_boolean=true&test_boolean="
                 + "false", this.requestParametersWithNoKey.getRequestURL(
                         params, false));
-        assertEquals("Incorrect query returned ", RequestParameters.JS_HASH_SEPARATOR 
+        assertEquals("Incorrect query returned ", TEST_ROOT_DIR + RequestParameters.JS_HASH_SEPARATOR 
                 + "test_string=string1&test_integer=1234&test_integer=2345"
                 + "&test_boolean=true&test_boolean=false", 
                 this.requestParametersWithNoKey.getRequestURL(
@@ -287,23 +301,23 @@ public class RequestParametersTest extends TestAncestor {
         params = new HashSet<URLParameters.Parameter>();
         params.add(RequestParametersTest.testURLParameters.getParamTestString());
         params.add(RequestParametersTest.testURLParameters.getParamTestBoolean());
-        assertEquals("Incorrect query returned ","?test_string=string1"
+        assertEquals("Incorrect query returned ", TEST_ROOT_DIR + "?test_string=string1"
                 + "+test_boolean=true+test_boolean=false" 
                 + RequestParameters.JS_HASH_SEPARATOR + "test_integer=1234"
                 + "+test_integer=2345",this.requestParametersWithNoKey.getRequestURL("+", 
                         params, true));
-        assertEquals("Incorrect query returned ","?test_integer=1234"
+        assertEquals("Incorrect query returned ", TEST_ROOT_DIR + "?test_integer=1234"
                 + "+test_integer=2345" + RequestParameters.JS_HASH_SEPARATOR 
                 + "test_string=string1+test_boolean=true+test_boolean=false",
                 this.requestParametersWithNoKey.getRequestURL("+", 
                         params, false));
         
         params.clear();
-        assertEquals("Incorrect query returned ","?test_string=string1+test_integer="
+        assertEquals("Incorrect query returned ", TEST_ROOT_DIR + "?test_string=string1+test_integer="
                 + "1234+test_integer=2345+test_boolean=true+test_boolean="
                 + "false", this.requestParametersWithNoKey.getRequestURL("+", 
                         params, false));
-        assertEquals("Incorrect query returned ", RequestParameters.JS_HASH_SEPARATOR 
+        assertEquals("Incorrect query returned ", TEST_ROOT_DIR + RequestParameters.JS_HASH_SEPARATOR 
                 + "test_string=string1+test_integer=1234+test_integer=2345"
                 + "+test_boolean=true+test_boolean=false", 
                 this.requestParametersWithNoKey.getRequestURL("+", 
@@ -311,7 +325,7 @@ public class RequestParametersTest extends TestAncestor {
         
 
         // Add a parameter value to exceed the threshold over which a key is used
-        // (120 for this test, see method loadParameters()),
+        // (120 for this test, see method loadMockRequest()),
         // and check that indeed, a key is present after a new call of 
         // getRequestURL(), with still test_string written because
         // it is non storable, and with parameters attributed to search or hash part
@@ -319,11 +333,11 @@ public class RequestParametersTest extends TestAncestor {
 
         params = new HashSet<URLParameters.Parameter>();
         params.add(RequestParametersTest.testURLParameters.getParamData());
-        assertEquals("Incorrect query returned ", 
+        assertEquals("Incorrect query returned ", TEST_ROOT_DIR + 
                 "?test_string=string1" + RequestParameters.JS_HASH_SEPARATOR 
                 + "data=" + this.generatedKey, 
                 this.requestParametersWithNoKey.getRequestURL("+", params, false));
-        assertEquals("Incorrect query returned ", 
+        assertEquals("Incorrect query returned ", TEST_ROOT_DIR + 
                 "?data=" + this.generatedKey + RequestParameters.JS_HASH_SEPARATOR 
                 + "test_string=string1", 
                 this.requestParametersWithNoKey.getRequestURL("+", params, true));
@@ -348,22 +362,26 @@ public class RequestParametersTest extends TestAncestor {
     public void testSetURLHash() {
         this.requestParametersWithNoKey.setURLHash("myHash1");
         
-        assertEquals("Incorrect query returned ","?test_string=string1&test_integer="
+        assertEquals("Incorrect query returned ", 
+                TEST_ROOT_DIR + "?test_string=string1&test_integer="
                 + "1234&test_integer=2345&test_boolean=true&test_boolean="
-                + "false#myHash1",this.requestParametersWithNoKey.getRequestURL());
-        assertEquals("Incorrect query returned ","?test_string=string1+test_integer="
+                + "false#myHash1", 
+                this.requestParametersWithNoKey.getRequestURL());
+        assertEquals("Incorrect query returned ", 
+                TEST_ROOT_DIR + "?test_string=string1+test_integer="
                 + "1234+test_integer=2345+test_boolean=true+test_boolean="
-                + "false#myHash1",this.requestParametersWithNoKey.getRequestURL("+"));
+                + "false#myHash1", 
+                this.requestParametersWithNoKey.getRequestURL("+"));
         
        // Add a parameter value to exceed the threshold over which a key is used
-        // (120 for this test, see method loadParameters()),
+        // (120 for this test, see method loadMockRequest()),
         // and check that indeed, a key is present after a new call of 
         // getRequestURL(), with still test_string written because
         // it is non storable
         this.addParamsToExceedThreshold(this.requestParametersWithNoKey);
 
-        assertEquals("Incorrect query returned ", 
-                "?test_string=string1+data=" + this.generatedKey + "#myHash1", 
+        assertEquals("Incorrect query returned ", TEST_ROOT_DIR 
+                + "?test_string=string1+data=" + this.generatedKey + "#myHash1", 
                         this.requestParametersWithNoKey.getRequestURL("+"));
     }
 

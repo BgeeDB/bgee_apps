@@ -780,23 +780,24 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
                         }
                     }
                 }
-
-                //if this is the first parameter stored in the search or hash part, 
-                // we add the '?' or the hash separator.
-                if (firstParam) {
-                	if (!searchDone) {
-                        urlFragment += '?';
-                	} else {
-                		urlFragment += jsHashSeparator;
-                	}
-                }
-                firstParam = false;
                 
         		// Fetch the values of this param and generate a query with all
         		// its values
         		var paramString = parameterValuesToQueryString(
         				parameter, parametersSeparator);
         		if (paramString.length > 0) {
+                    //if this is the first parameter stored in the search or hash part, 
+                    // we add the '?' or the hash separator.
+                    if (firstParam) {
+                    	if (!searchDone) {
+                            urlFragment += '?';
+                    	} else {
+                    		urlFragment += jsHashSeparator;
+                    	}
+                    }
+                    firstParam = false;
+                    
+                    //store param and value in URL
         		    urlFragment += paramString;
                     paramAdded = true;
         		}
@@ -817,9 +818,9 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
             searchDone = true;
         }
         
-        var url = "";
-        if(urlFragment){
-            url = urlStart + urlFragment;
+        var url = urlStart;
+        if (urlFragment){
+            url += urlFragment;
         }
         //if hash needs to be added, set through setURLHash (to really link to an element 
         //with corresponding ID on a page, not to provide parameters readable/writable 

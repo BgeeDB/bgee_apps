@@ -203,7 +203,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("<header>");
         
         // Bgee logo
-        this.writeln("<a href='" + this.prop.getBgeeRootDirectory() + "' title='Go to Bgee home page'>");
+        this.writeln("<a href='" + this.getNewRequestParameters().getRequestURL() 
+                + "' title='Go to Bgee home page'>");
         this.writeln("<img id='sib_other_logo' src='" + 
                 this.prop.getLogoImagesRootDirectory() + "bgee13_logo.png' alt='Bgee logo' />");
         this.writeln("</a>");

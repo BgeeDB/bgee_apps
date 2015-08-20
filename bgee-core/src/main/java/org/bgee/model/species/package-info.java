@@ -1,9 +1,8 @@
 /**
- * This package provides the classes to describe species, 
- * their anatomy and development.
+ * This package provides the classes to describe species and taxonomy.
  * 
  * @author Frederic Bastian
- * @version Bgee 13, Mar 2013
+ * @version Bgee 13.1
  * @since Bgee 01
  */
 package org.bgee.model.species;

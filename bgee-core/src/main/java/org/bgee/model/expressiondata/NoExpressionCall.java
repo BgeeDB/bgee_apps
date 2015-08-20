@@ -1,9 +1,6 @@
 package org.bgee.model.expressiondata;
 
 import org.bgee.model.expressiondata.DataParameters.CallType;
-import org.bgee.model.expressiondata.rawdata.affymetrix.AffymetrixDataHolder;
-import org.bgee.model.expressiondata.rawdata.insitu.InSituDataHolder;
-import org.bgee.model.expressiondata.rawdata.rnaseq.RNASeqDataHolder;
 
 /**
  * A {@link Call} reporting an explicit absence of expression. 
@@ -84,51 +81,4 @@ public class NoExpressionCall extends Call {
         this.includeParentStructures = includeParents;
     }
 
-    //*****************************************
-    // RawDataHolder METHODS EXPOSED
-    //*****************************************
-    /**
-     * @return  the {@code AffymetrixDataHolder} holding the Affymetrix data 
-     *          related to this {@code ExpressionCall}.
-     */
-    public AffymetrixDataHolder getAffymetrixDataHolder() {
-        return super.getRawDataHolder().getAffymetrixDataHolder();
-    }
-    /**
-     * @param holder    the {@code AffymetrixDataHolder} holding the Affymetrix data 
-     *                  related to this {@code ExpressionCall}.
-     */
-    public void setAffymetrixDataHolder(AffymetrixDataHolder affyDataHolder) {
-        super.getRawDataHolder().setAffymetrixDataHolder(affyDataHolder);
-    }
-    
-    /**
-     * @return  the {@code InSituDataHolder} holding the in situ data 
-     *          related to this {@code ExpressionCall}.
-     */
-    public InSituDataHolder getInSituDataHolder() {
-        return super.getRawDataHolder().getInSituDataHolder();
-    }
-    /**
-     * @param holder    the {@code InSituDataHolder} holding the in situ data 
-     *                  related to this {@code ExpressionCall}.
-     */
-    public void setInSituDataHolder(InSituDataHolder inSituDataHolder) {
-        super.getRawDataHolder().setInSituDataHolder(inSituDataHolder);
-    }
-    
-    /**
-     * @return  the {@code RNASeqDataHolder} holding the RNA-Seq data 
-     *          related to this {@code ExpressionCall}.
-     */
-    public RNASeqDataHolder getRNASeqDataHolder() {
-        return super.getRawDataHolder().getRNASeqDataHolder();
-    }
-    /**
-     * @param holder    the {@code RNASeqDataHolder} holding the RNA-Seq data 
-     *                  related to this {@code ExpressionCall}.
-     */
-    public void setRNASeqDataHolder(RNASeqDataHolder rnaSeqDataHolder) {
-        super.getRawDataHolder().setRNASeqDataHolder(rnaSeqDataHolder);
-    }
 }

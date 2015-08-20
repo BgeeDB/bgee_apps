@@ -2,8 +2,6 @@ package org.bgee.model.expressiondata;
 
 import org.bgee.model.expressiondata.DataParameters.CallType;
 import org.bgee.model.expressiondata.DataParameters.DiffExpressionFactor;
-import org.bgee.model.expressiondata.rawdata.diffexpression.affymetrix.DiffAffyDataHolder;
-import org.bgee.model.expressiondata.rawdata.diffexpression.rnaseq.DiffRNASeqDataHolder;
 
 /**
  * A {@link Call} that is a differential expression call obtained from differential 
@@ -93,41 +91,5 @@ public class DiffExpressionCall extends Call {
      */
     public DiffExpressionFactor getFactor() {
         return factor;
-    }
-    
-
-    //*****************************************
-    // RawDataHolder METHODS EXPOSED
-    //*****************************************
-    /**
-     * @return  the {@code DiffAffyDataHolder} holding the Affymetrix differential 
-     *          expression data related to this {@code DiffExpressionCall}.
-     */
-    public DiffAffyDataHolder getDiffAffyDataHolder() {
-        return super.getRawDataHolder().getDiffAffyDataHolder();
-    }
-    /**
-     * @param holder    the {@code DiffAffyDataHolder} holding the Affymetrix 
-     *                  differential expression data related to this 
-     *                  {@code DiffExpressionCall}.
-     */
-    public void setDiffAffyDataHolder(DiffAffyDataHolder holder) {
-        super.getRawDataHolder().setDiffAffyDataHolder(holder);
-    }
-    
-    /**
-     * @return  the {@code DiffRNASeqDataHolder} holding the RNA-Seq differential 
-     *          expression data related to this {@code DiffExpressionCall}.
-     */
-    public DiffRNASeqDataHolder getDiffRNASeqDataHolder() {
-        return super.getRawDataHolder().getDiffRNASeqDataHolder();
-    }
-    /**
-     * @param holder    the {@code DiffRNASeqDataHolder} holding the RNA-Seq 
-     *                  differential expression data related to this 
-     *                  {@code DiffExpressionCall}.
-     */
-    public void setDiffRNASeqDataHolder(DiffRNASeqDataHolder holder) {
-        super.getRawDataHolder().setDiffRNASeqDataHolder(holder);
     }
 }

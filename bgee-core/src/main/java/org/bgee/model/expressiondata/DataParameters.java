@@ -11,7 +11,16 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class DataParameters {
+/**
+ * Abstract class only used to group {@code Enum}s and static methods 
+ * defining the allowed parameters related to expression data.
+ * 
+ * @author Frederic Bastian
+ * @version Bgee 13
+ * @since Bgee 13
+ *
+ */
+public abstract class DataParameters {
 	//**********************************************
   	//   INNER ENUM CLASSES
   	//**********************************************

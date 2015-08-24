@@ -345,14 +345,13 @@ public class UtilsTest extends TestAncestor {
         //to have returned a value
         verify(next).execute(expectedValue, mockContext);
 
-        try {
-            new Utils.FmtMultipleStringValues(true).execute(Arrays.asList("fsdfdfs", null, "fdfds"), 
-                    mockContext);
-            throw log.throwing(new AssertionError("An exception should have been thrown "
-                    + "when using null elements"));
-        } catch (Exception e) {
-            //test successful
-        }
+        expectedValue = "fsdfdfs" + Utils.VALUE_SEPARATORS.get(0) + "" 
+                + Utils.VALUE_SEPARATORS.get(0) + "fdfds";
+        when(next.execute(expectedValue, mockContext)).thenReturn(expectedValue);
+        assertEquals("Incorrect separated-value string generated.", 
+                expectedValue, 
+                new Utils.FmtMultipleStringValues(true).execute(Arrays.asList("fsdfdfs", null, "fdfds"), 
+                        mockContext));
 
         try {
             new Utils.FmtMultipleStringValues(true).execute(Arrays.asList(1, 2, 3), 

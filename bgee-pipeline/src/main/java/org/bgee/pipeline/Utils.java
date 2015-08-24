@@ -122,7 +122,7 @@ public class Utils {
             List<?> valueList = (List<?>) value;
             List<String> stringList = new ArrayList<String>();
             for (Object valueElement: valueList) {
-                if (!(valueElement instanceof String)) {
+                if (valueElement != null && !(valueElement instanceof String)) {
                     throw log.throwing(new SuperCsvCellProcessorException(
                             "A List of Strings must be provided, incorrect value element: " 
                             + valueElement + " of type " + valueElement.getClass().getSimpleName(), 
@@ -133,12 +133,13 @@ public class Utils {
                             "The provided List cannot contain blank values. List provided: "
                             + value, context, this));
                 }
-                stringList.add((String) valueElement);
+                stringList.add(valueElement != null ? (String) valueElement : "");
             }
             
             try {
                 //passes result to next processor in the chain
-                return log.exit(next.execute(formatMultipleValuesToString(stringList), context));
+                return log.exit(next.execute(formatMultipleValuesToString(stringList, 
+                        this.blankValuesAllowed), context));
             } catch (IllegalArgumentException e) {
                 //we have already checked that elements in the List were non-null Strings, 
                 //so the only reason why multipleValuesToString would throw an Exception here 
@@ -301,10 +302,31 @@ public class Utils {
      *                  by the first separator in {@link #VALUE_SEPARATORS}.
      * @throws IllegalArgumentException If {@code values} is {@code null} or empty, 
      *                                  or contains a {@code null} element.
+     * @see #formatMultipleValuesToString(List, boolean)
      */
     public static String formatMultipleValuesToString(List<String> values) 
             throws IllegalArgumentException {
         log.entry(values);
+        return log.exit(formatMultipleValuesToString(values, false));
+    }
+    /**
+     * Transform a {@code List} of {@code String}s into a {@code String} where each element 
+     * is separated by the first separator in {@link #VALUE_SEPARATORS}.
+     * 
+     * @param values                A {@code List} of {@code String}s to be transformed into 
+     *                              a single {@code String}.
+     * @param blankValuesAllowed    A {@code boolean} defining whether list elements 
+     *                              can be blank. If {@code true}, blank values are allowed.
+     * @return          A {@code String} where each element in {@code values} is separated 
+     *                  by the first separator in {@link #VALUE_SEPARATORS}.
+     * @throws IllegalArgumentException If {@code values} is {@code null} or empty, 
+     *                                  or contains a blank element while blank values 
+     *                                  are not allowed.
+     * @see #formatMultipleValuesToString(List)
+     */
+    public static String formatMultipleValuesToString(List<String> values, boolean blankValuesAllowed) 
+            throws IllegalArgumentException {
+        log.entry(values, blankValuesAllowed);
         if (values == null || values.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("The provided values cannot be "
                     + "null or empty"));
@@ -312,9 +334,9 @@ public class Utils {
         
         String valuesToString = "";
         for (String value: values) {
-            if (value == null) {
+            if (!blankValuesAllowed && StringUtils.isBlank(value)) {
                 throw log.throwing(new IllegalArgumentException("The provided List cannot "
-                        + "contains null elements"));
+                        + "contain blank elements"));
             }
             if (!valuesToString.isEmpty()) {
                 valuesToString += VALUE_SEPARATORS.get(0);

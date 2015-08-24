@@ -285,7 +285,6 @@ public class BgeeDBUtilsTest extends TestAncestor {
             List<GeneTO> returnedGeneTOs = Arrays.asList(
                     new GeneTO("1", "gene A", null), 
                     new GeneTO("2", "gene B", null), 
-                    new GeneTO("3", "gene C", null), 
                     new GeneTO("3", "gene C", null));
             
             GeneTOResultSet mockRS = this.createMockDAOResultSet(
@@ -451,7 +450,6 @@ public class BgeeDBUtilsTest extends TestAncestor {
             List<StageTO> returnedStageTOs = Arrays.asList(
                     new StageTO("1", "stage A", null, null, null, null, null, null), 
                     new StageTO("2", "stage B", null, null, null, null, null, null), 
-                    new StageTO("3", "stage C", null, null, null, null, null, null), 
                     new StageTO("3", "stage C", null, null, null, null, null, null));
             
             StageTOResultSet mockRS = this.createMockDAOResultSet(
@@ -477,7 +475,7 @@ public class BgeeDBUtilsTest extends TestAncestor {
         try (MockDAOManager mockManager = new MockDAOManager()) {
             List<StageTO> returnedStageTOs = Arrays.asList(
                     new StageTO("1", null, null, null, null, null, null, null), 
-                    new StageTO("1", "stage B", null, null, null, null, null, null));
+                    new StageTO("2", "stage B", null, null, null, null, null, null));
             
             StageTOResultSet mockRS = this.createMockDAOResultSet(
                     returnedStageTOs, MySQLStageTOResultSet.class);
@@ -535,7 +533,6 @@ public class BgeeDBUtilsTest extends TestAncestor {
             List<AnatEntityTO> returnedAnatEntityTOs = Arrays.asList(
                     new AnatEntityTO("1", "anatEntity A", null, null, null, null), 
                     new AnatEntityTO("2", "anatEntity B", null, null, null, null), 
-                    new AnatEntityTO("3", "anatEntity C", null, null, null, null), 
                     new AnatEntityTO("3", "anatEntity C", null, null, null, null));
             
             AnatEntityTOResultSet mockRS = this.createMockDAOResultSet(

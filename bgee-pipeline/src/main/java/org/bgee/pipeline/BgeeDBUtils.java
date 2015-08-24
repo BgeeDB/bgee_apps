@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -313,18 +314,18 @@ public class BgeeDBUtils {
     
     /**
      * Retrieve a mapping from IDs to {@code TransferObject}s using the {@code DAOResultSet} 
-     * {@code rs}, supposed to return an {@code EntityTO} when calling the method 
-     * {@code DAOResultSet#getTO()}.
+     * {@code rs}.
      * <p>
      * {@code rs} is closed by this method before exiting.
      * 
-     * @param rs    A {@code DAOResultSet} returning an {@code EntityTO} when calling 
+     * @param rs    A {@code DAOResultSet} returning an {@code T} when calling 
      *              the method {@code DAOResultSet#getTO()}. It should not have been closed, 
      *              and the method {@code next} should not have been already called.
+     * @param <T>   The type of {@code EntityTO} in {@code rs}.
      * @return      A {@code Map} where keys are {@code String}s corresponding to 
-     *              entity IDs, the associated values being {@code EntityTO}s 
-     *              corresponding to entity names. 
-     * @throws IllegalArgumentException If {@code rs} does not allow to retrieve EntityTO ID or name.
+     *              entity IDs, the associated values being {@code T}s 
+     *              corresponding to entity TOs. 
+     * @throws IllegalArgumentException If {@code rs} does not allow to retrieve EntityTO IDs.
      * @throws IllegalStateException	If several TOs associated to a same ID.
      */
     //TODO Modify when NamedEntityTO implemented 
@@ -354,43 +355,36 @@ public class BgeeDBUtils {
     }
 
     /**
-     * Retrieve a mapping from IDs to names using the {@code DAOResultSet} {@code rs}, 
-     * supposed to return an {@code EntityTO} when calling the method 
-     * {@code DAOResultSet#getTO()}.
+     * Retrieve a mapping from IDs to names using the {@code DAOResultSet} {@code rs}.
      * <p>
      * {@code rs} is closed by this method before exiting.
      * 
-     * @param rs    A {@code DAOResultSet} returning an {@code EntityTO} when calling 
+     * @param rs    A {@code DAOResultSet} returning an {@code T} when calling 
      *              the method {@code DAOResultSet#getTO()}. It should not have been closed, 
      *              and the method {@code next} should not have been already called.
+     * @param <T>   The type of {@code EntityTO} in {@code rs}.
      * @return      A {@code Map} where keys are {@code String}s corresponding to 
      *              entity IDs, the associated values being {@code String}s 
      *              corresponding to entity names. 
      * @throws IllegalArgumentException If {@code rs} does not allow to retrieve EntityTO ID or name.
-     * @throws IllegalStateException	If several names associated to a same ID.
+     * @throws IllegalStateException    If several TOs associated to a same ID.
      */
-    private static Map<String, String> generateNamesByIdsMap(DAOResultSet<? extends EntityTO> rs) 
+    private static <T extends EntityTO> Map<String, String> generateNamesByIdsMap(DAOResultSet<T> rs) 
     		throws IllegalArgumentException, IllegalStateException {
         log.entry(rs);
+        
         Map<String, String> namesByIds = new HashMap<String, String>();
-        try {
-            while (rs.next()) {
-                EntityTO entityTO = (EntityTO) rs.getTO();
-                if (entityTO.getId() == null || entityTO.getName() == null ) {
-                    throw log.throwing(new IllegalArgumentException("The provided DAOResultSet " +
-                            "does not allow to retrieve EntityTO IDs or names"));                	
-                }
-            
-                String previousValue = namesByIds.put(entityTO.getId(), entityTO.getName());
-                if (previousValue != null && !previousValue.equals(entityTO.getName())) {
-                    throw log.throwing(new IllegalStateException("Several names associated to " +
-                            "a same ID: " + entityTO.getId() + " - " + previousValue + 
-                            " - " + entityTO.getName()));
-                }
+        for (Entry<String, T> entry: generateTOsByIdsMap(rs).entrySet()) {
+            if (entry.getValue().getName() == null) {
+                throw log.throwing(new IllegalArgumentException("The provided DAOResultSet " +
+                        "does not allow to retrieve EntityTO names"));                   
             }
-        } finally {
-            rs.close();
+            
+            String previousName = namesByIds.put(entry.getKey(), entry.getValue().getName());
+            // Keys are unique in a Map, so the previous value should be always null
+            assert(previousName == null);
         }
+            
         return log.exit(namesByIds);
     }
 

@@ -369,6 +369,9 @@ public class BgeeDBUtils {
      * @throws IllegalArgumentException If {@code rs} does not allow to retrieve EntityTO ID or name.
      * @throws IllegalStateException    If several TOs associated to a same ID.
      */
+    //TODO: Currently, we keep specific methods to be able to store and restore specific attributes.
+    //      This could be generic using Java 8, but we are just lazy to implement it now.
+
     private static <T extends EntityTO> Map<String, String> generateNamesByIdsMap(DAOResultSet<T> rs) 
     		throws IllegalArgumentException, IllegalStateException {
         log.entry(rs);
@@ -400,6 +403,9 @@ public class BgeeDBUtils {
      *                      gene IDs, the associated values being {@code String}s 
      *                      corresponding to gene names. 
      */
+    //XXX: Currently, we keep this specific method to be able to store and restore 
+    //     specific attributes. This could be generic in generateNamesByIdsMap using Java 8, 
+    //     but we are just lazy to implement it now. 
     public static Map<String, String> getGeneNamesByIds(Set<String> speciesIds, GeneDAO geneDAO) {
         log.entry(speciesIds, geneDAO);
         log.debug("Start retrieving gene names for species: {}", speciesIds);
@@ -456,6 +462,9 @@ public class BgeeDBUtils {
      *                      stage IDs, the associated values being {@code String}s 
      *                      corresponding to stage names. 
      */
+    //XXX: Currently, we keep this specific method to be able to store and restore 
+    //     specific attributes. This could be generic in generateNamesByIdsMap using Java 8, 
+    //     but we are just lazy to implement it now. 
     public static Map<String, String> getStageNamesByIds(Set<String> speciesIds, 
             StageDAO stageDAO) {
         log.entry(speciesIds, stageDAO);
@@ -488,6 +497,9 @@ public class BgeeDBUtils {
      *                      anatomical entity IDs, the associated values being {@code String}s 
      *                      corresponding to anatomical entity names. 
      */
+    //XXX: Currently, we keep this specific method to be able to store and restore 
+    //     specific attributes. This could be generic in generateNamesByIdsMap using Java 8, 
+    //     but we are just lazy to implement it now. 
     public static Map<String, String> getAnatEntityNamesByIds(Set<String> speciesIds, 
             AnatEntityDAO anatEntityDAO) {
         log.entry(speciesIds, anatEntityDAO);
@@ -518,6 +530,9 @@ public class BgeeDBUtils {
      * @throws DAOException     If an error occurred while getting the data from 
      * 							the Bgee data source.
      */
+    //XXX: Currently, we keep this specific method to be able to store and restore 
+    //     specific attributes. This could be generic in generateNamesByIdsMap using Java 8, 
+    //     but we are just lazy to implement it now. 
     public static Map<String, String> getCIOStatementNamesByIds(CIOStatementDAO cioStatementDAO) 
     		throws DAOException {
         log.entry(cioStatementDAO);

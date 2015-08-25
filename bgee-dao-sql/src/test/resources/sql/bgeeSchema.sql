@@ -127,6 +127,13 @@ create table species (
     fakeGeneIdPrefix varchar(10) not null default ''
 ) engine = innodb;
 
+-- represent mainly alternative common names (for instance, 'rhesus monkey', 'roundworm'), 
+-- or alternative taxon names related to a species.
+create table speciesToKeyword (
+    speciesId mediumint unsigned not null, 
+    keywordId int unsigned not null
+) engine = innodb;
+
 --  ****************************************************
 --  CONFIDENCE AND EVIDENCE ONTOLOGIES
 --  ****************************************************

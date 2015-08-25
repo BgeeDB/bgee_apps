@@ -39,6 +39,11 @@ add unique(species, genus),
 add unique(speciesCommonName);
 /*!40000 ALTER TABLE `species` ENABLE KEYS */;
 
+/*!40000 ALTER TABLE `speciesToKeyword` DISABLE KEYS */;
+alter table speciesToKeyword 
+add primary key (speciesId, keywordId);
+/*!40000 ALTER TABLE `speciesToKeyword` ENABLE KEYS */;
+
 --  ****************************************************
 --  CONFIDENCE AND EVIDENCE ONTOLOGIES
 --  ****************************************************

@@ -1456,7 +1456,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             
             // Get comparable stages: Stage ID -> Stage group and Stage group -> Stage IDs
             List<GroupToStageTO> groupToStageTOs = this.getComparableStages(taxonId);
-            Map<String, List<String>> mapStageIdToStageGroup = 
+            Map<String, String> mapStageIdToStageGroup = 
                     this.generateMappingStageIdToStageGroup(groupToStageTOs);
             Map<String, List<String>> mapStageGroupToStageId = 
                     this.generateMappingStageGroupToStageId(groupToStageTOs);
@@ -1470,7 +1470,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                     this.getSimAnnotToAnatEntities(taxonId);
             Map<String, List<String>> mapSimAnnotToAnatEntities = 
                     this.generateMappingSimAnnotToAnatEntity(simAnnotToAnatEntityTOs);
-            Map<String, List<String>> mapAnatEntityToSimAnnot = 
+            Map<String, String> mapAnatEntityToSimAnnot = 
                     this.generateMappingAnatEntityToSimAnnot(simAnnotToAnatEntityTOs);
                     
             log.trace("Done retrieving secondary data.");
@@ -1721,21 +1721,21 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * @param groupToStageTOs           A {@code List} of {@code GroupToStageTO}s that are 
      *                                  comparable stages. 
      * @return                          The {@code Map} where keys are {@code String}s that are 
-     *                                  stage IDs, the associated values being {@code Set} of 
-     *                                  {@code String}s corresponding to stage group IDs.
+     *                                  stage IDs, the associated values being {@code String}  
+     *                                  corresponding to stage group IDs.
      * @throws IllegalArgumentException If an error is detected in {@code groupToStageTOs}.
      */
-    private Map<String, List<String>> generateMappingStageIdToStageGroup(
+    private Map<String, String> generateMappingStageIdToStageGroup(
             List<GroupToStageTO> groupToStageTOs) throws IllegalArgumentException {
         log.entry(groupToStageTOs);
         
-        Map<String, List<String>> mappingStageIdToStageGroup = new HashMap<String, List<String>>();
+        Map<String, String> mappingStageIdToStageGroup = new HashMap<String, String>();
         for (GroupToStageTO to : groupToStageTOs) {
             if (mappingStageIdToStageGroup.containsKey(to.getStageId())) {
                 throw log.throwing(new IllegalArgumentException(
                         "One stage ID souldn't be reported to severals stage groups"));
             }
-            mappingStageIdToStageGroup.put(to.getStageId(), Arrays.asList(to.getGroupId()));
+            mappingStageIdToStageGroup.put(to.getStageId(), to.getGroupId());
         }
         log.debug("Done retrieving relation from stage ID to stage group, {} found", 
                 mappingStageIdToStageGroup.size());
@@ -1873,22 +1873,23 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      *                                  are relations between summary similarity annotation and 
      *                                  anatomical entity.
      * @return                          The {@code Map} where keys are {@code String}s that are 
-     *                                  anat. entity IDs, the associated values being  
-     *                                  {@code Set} of {@code String}s corresponding to 
-     *                                  summary similarity annotation IDs.
+     *                                  anat. entity IDs, the associated values being {@code String}s   
+     *                                  corresponding to summary similarity annotation IDs.
      */
-    private Map<String, List<String>> generateMappingAnatEntityToSimAnnot(
+    private Map<String, String> generateMappingAnatEntityToSimAnnot(
             List<SimAnnotToAnatEntityTO> simAnnotToAnatEntityTOs) {
         log.entry(simAnnotToAnatEntityTOs);
 
-        Map<String, List<String>> mappingAnatEntityToSimAnnot = new HashMap<String, List<String>>();
-        for (SimAnnotToAnatEntityTO to : simAnnotToAnatEntityTOs) {
-            List<String> simAnnotIds = mappingAnatEntityToSimAnnot.get(to.getAnatEntityId());
-            if (simAnnotIds == null) {
-                simAnnotIds = new ArrayList<String>();
-                mappingAnatEntityToSimAnnot.put(to.getAnatEntityId(), simAnnotIds);
+        Map<String, String> mappingAnatEntityToSimAnnot = new HashMap<String, String>();
+        for (SimAnnotToAnatEntityTO to : simAnnotToAnatEntityTOs) { 
+            if (mappingAnatEntityToSimAnnot.containsKey(to.getAnatEntityId())) {
+                throw log.throwing(new IllegalArgumentException(
+                        "One anat. entity ID souldn't be reported to summary similarity annotation IDs " +
+                                to.getAnatEntityId() + " is reported at least to " + 
+                                mappingAnatEntityToSimAnnot.get(to.getAnatEntityId()) + 
+                                " and " + to.getSummarySimilarityAnnotationId()));
             }
-            simAnnotIds.add(to.getSummarySimilarityAnnotationId());
+            mappingAnatEntityToSimAnnot.put(to.getAnatEntityId(), to.getSummarySimilarityAnnotationId());
         }
         log.debug("Done retrieving relations from anatomical entity to " + 
                 "summary similarity annotations, {} found", mappingAnatEntityToSimAnnot.size());
@@ -1976,12 +1977,11 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * @param callTOs                   A {@code Set} of {@code DiffExpressionCallTO}s that are 
      *                                  the calls to be grouped.
      * @param mapAnatEntityToSimAnnot   A {@code Map} where keys are {@code String}s that are 
-     *                                  anat. entity IDs, the associated values being {@code Set} of 
-     *                                  {@code String}s corresponding to summary similarity 
-     *                                  annotation IDs. 
+     *                                  anat. entity IDs, the associated values being {@code String}s
+     *                                  corresponding to summary similarity annotation IDs.
      * @param mapStageIdToStageGroup    A {@code Map} where keys are {@code String}s that are stage 
-     *                                  IDs, the associated values being {@code Set} of 
-     *                                  {@code String}s corresponding to stage group IDs. 
+     *                                  IDs, the associated values being {@code String}s
+     *                                  corresponding to stage group IDs. 
      * @return                          the Map of where keys are {@code MultiSpeciesCondition}s 
      *                                  that are condition, the associated values being 
      *                                  {@code Collection} of {@code DiffExpressionCallTO}s 
@@ -1991,8 +1991,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     //to check that all calls are from a same OMA group ID?
     private Map<MultiSpeciesCondition, Collection<DiffExpressionCallTO>>
             groupByMultiSpeciesCondition(Collection<DiffExpressionCallTO> groupedCallTOs, 
-                    Map<String, List<String>> mapAnatEntityToSimAnnot, 
-                    Map<String, List<String>> mapStageIdToStageGroup) {
+                    Map<String, String> mapAnatEntityToSimAnnot, 
+                    Map<String, String> mapStageIdToStageGroup) {
         log.entry(groupedCallTOs, mapAnatEntityToSimAnnot, mapStageIdToStageGroup);
         
         Map<MultiSpeciesCondition, Collection<DiffExpressionCallTO>> groupedCalls = 
@@ -2006,48 +2006,37 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         for (DiffExpressionCallTO diffExpressionCallTO : groupedCallTOs) {
             log.trace("Iteration diff. expr call {}", diffExpressionCallTO);
             
-            //each stage is supposed to be mapped to one and only one group.
-            assert mapStageIdToStageGroup.get(diffExpressionCallTO.getStageId()) == null ||
-                    mapStageIdToStageGroup.get(diffExpressionCallTO.getStageId()).size() <= 1;
-            
-            List<String> sumSimAnnotIds = 
+            String sumSimAnnotId = 
                     mapAnatEntityToSimAnnot.get(diffExpressionCallTO.getAnatEntityId());
             
-            String stageGroupId = null;
-            List<String> stageGroupIds = mapStageIdToStageGroup.get(diffExpressionCallTO.getStageId());
-            if (stageGroupIds != null && !stageGroupIds.isEmpty()) {
-                stageGroupId = 
-                        mapStageIdToStageGroup.get(diffExpressionCallTO.getStageId()).get(0);
-            }
+            String stageGroupId = mapStageIdToStageGroup.get(diffExpressionCallTO.getStageId());
             
             //OK, both the anat entity and the stage have a multi-species mapping
-            if (sumSimAnnotIds != null && !sumSimAnnotIds.isEmpty() && stageGroupId != null) {
-                for (String sumSimAnnotId: sumSimAnnotIds) {
-                    MultiSpeciesCondition condition = 
-                            new MultiSpeciesCondition(sumSimAnnotId, stageGroupId);
-                    //sanity check, only one call per gene per condition. 
-                    //this might change in the future.
-                    Set<String> associatedGeneIds = condToGeneIds.get(condition);
-                    if (associatedGeneIds == null) {
-                        associatedGeneIds = new HashSet<String>();
-                        condToGeneIds.put(condition, associatedGeneIds);
-                    } else if (associatedGeneIds.contains(diffExpressionCallTO.getGeneId())) {
-                        throw log.throwing(new IllegalStateException("Several calls were retrieved "
-                                + "for a same gene in a same multi-species condition. "
-                                + "Condition: " + condition 
-                                + " - Gene: " + diffExpressionCallTO.getGeneId() 
-                                + " - Iterated call: " + diffExpressionCallTO));
-                    }
-                    associatedGeneIds.add(diffExpressionCallTO.getGeneId());
-                    
-                    Collection<DiffExpressionCallTO> calls = groupedCalls.get(condition);
-                    if (calls == null) {
-                        log.trace("Create new map key: {}", condition);
-                        calls = new HashSet<DiffExpressionCallTO>();
-                        groupedCalls.put(condition, calls);
-                    }
-                    calls.add(diffExpressionCallTO);
+            if (sumSimAnnotId != null && stageGroupId != null) {
+                MultiSpeciesCondition condition = 
+                        new MultiSpeciesCondition(sumSimAnnotId, stageGroupId);
+                //sanity check, only one call per gene per condition. 
+                //this might change in the future.
+                Set<String> associatedGeneIds = condToGeneIds.get(condition);
+                if (associatedGeneIds == null) {
+                    associatedGeneIds = new HashSet<String>();
+                    condToGeneIds.put(condition, associatedGeneIds);
+                } else if (associatedGeneIds.contains(diffExpressionCallTO.getGeneId())) {
+                    throw log.throwing(new IllegalStateException("Several calls were retrieved "
+                            + "for a same gene in a same multi-species condition. "
+                            + "Condition: " + condition 
+                            + " - Gene: " + diffExpressionCallTO.getGeneId() 
+                            + " - Iterated call: " + diffExpressionCallTO));
                 }
+                associatedGeneIds.add(diffExpressionCallTO.getGeneId());
+
+                Collection<DiffExpressionCallTO> calls = groupedCalls.get(condition);
+                if (calls == null) {
+                    log.trace("Create new map key: {}", condition);
+                    calls = new HashSet<DiffExpressionCallTO>();
+                    groupedCalls.put(condition, calls);
+                }
+                calls.add(diffExpressionCallTO);
             }
         }
         return log.exit(groupedCalls);
@@ -2101,12 +2090,11 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      *                                  values being {@code Set} of {@code String}s corresponding 
      *                                  to stage IDs.
      * @param mapAnatEntityToSimAnnot   A {@code Map} where keys are {@code String}s that are 
-     *                                  anat. entity IDs, the associated values being {@code Set} of 
-     *                                  {@code String}s corresponding to summary similarity 
-     *                                  annotation IDs. 
+     *                                  anat. entity IDs, the associated values being {@code String}s 
+     *                                  corresponding to summary similarity annotation IDs. 
      * @param mapStageIdToStageGroup    A {@code Map} where keys are {@code String}s that are stage 
-     *                                  IDs, the associated values being {@code Set} of 
-     *                                  {@code String}s corresponding to stage group IDs. 
+     *                                  IDs, the associated values being {@code String}s 
+     *                                  corresponding to stage group IDs.
      * @throws IllegalArgumentException If call data are inconsistent (for instance, without any data).
      * @throws IOException              If an error occurred while trying to write generated files.
      */
@@ -2124,8 +2112,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             Collection<DiffExpressionCallTO> calls,
             Map<String, String> mapSumSimCIO, Map<String, List<String>> mapSimAnnotToAnatEntities,
             Map<String, List<String>> mapStageGroupToStageId,
-            Map<String, List<String>> mapAnatEntityToSimAnnot, 
-            Map<String, List<String>> mapStageIdToStageGroup)
+            Map<String, String> mapAnatEntityToSimAnnot, 
+            Map<String, String> mapStageIdToStageGroup)
                     throws IllegalArgumentException, IOException {
         log.entry(geneTOsByIds, stageNamesByIds, anatEntityNamesByIds, cioStatementByIds, 
                 speciesNamesByIds, writersUsed, processors, omaNodeId, omaGeneIds, mapGeneOMANode,  

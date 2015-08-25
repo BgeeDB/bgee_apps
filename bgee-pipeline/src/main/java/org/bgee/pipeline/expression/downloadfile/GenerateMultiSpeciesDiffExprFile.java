@@ -2839,7 +2839,10 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 
         String[] fieldMapping = new String[header.length];
 
-//        int speciesIndex = -1;
+        // We sort species names by name lengths from the longest to the shortest.
+        List<String> speciesNamesOrderedByLength = new ArrayList<String>(orderedSpeciesNames);
+        speciesNamesOrderedByLength.sort((s1, s2)-> (s2.length() - s1.length()));
+        
         for (int i = 0; i < header.length; i++) {
             switch (header[i]) {
             // *** attributes common to all file types ***
@@ -2882,30 +2885,37 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                     continue;
                 }
 
-                for (int speciesIndex = 0; speciesIndex < orderedSpeciesNames.size(); speciesIndex++) {
-                    // We are sure to select the good species name in the column name.
-                    // If we use sub-species, the species name could not match to column name
-                    // because of the presence of the uppercase at the first position of the name.
-                    // For instance, column names for the subspecies 'Gorilla gorilla gorilla' 
-                    // (such as 'Over-expressed gene count for Gorilla gorilla gorilla') do not  
-                    // end with the species name 'Gorilla gorilla'.
-                    if (header[i].endsWith(orderedSpeciesNames.get(speciesIndex))) {
-                        if (header[i].startsWith(OVER_EXPR_GENE_COUNT_COLUMN_NAME)) {
+                // We need to find the species contains in the header to be able to 
+                // assign the good index to speciesDiffExprCounts.
+                // For that, we iterate all species names from the longest to the shortest to  
+                // retrieve the good species even if a species name matches to a subspecies name 
+                // (for instance, the subspecies name 'Gorilla gorilla gorilla' and 
+                // the species name 'Gorilla gorilla').
+                for (String species: speciesNamesOrderedByLength) {
+                    int index = orderedSpeciesNames.indexOf(species);
+                    if (header[i].toLowerCase().contains(species.toLowerCase())) {
+                        if (header[i].contains(OVER_EXPR_GENE_COUNT_COLUMN_NAME)) {
                             fieldMapping[i] = 
-                                    "speciesDiffExprCounts[" + speciesIndex + "].overExprGeneCount";
+                                    "speciesDiffExprCounts[" + index + "].overExprGeneCount";
                             
-                        } else if (header[i].startsWith(UNDER_EXPR_GENE_COUNT_COLUMN_NAME)) {
+                        } else if (header[i].contains(UNDER_EXPR_GENE_COUNT_COLUMN_NAME)) {
                             fieldMapping[i] = 
-                                    "speciesDiffExprCounts[" + speciesIndex + "].underExprGeneCount";
+                                    "speciesDiffExprCounts[" + index + "].underExprGeneCount";
                             
-                        } else if (header[i].startsWith(NO_DIFF_EXPR_GENE_COUNT_COLUMN_NAME)) {
+                        } else if (header[i].contains(NO_DIFF_EXPR_GENE_COUNT_COLUMN_NAME)) {
                             fieldMapping[i] = 
-                                    "speciesDiffExprCounts[" + speciesIndex + "].notDiffExprGeneCount";
+                                    "speciesDiffExprCounts[" + index + "].notDiffExprGeneCount";
                             
-                        } else if (header[i].startsWith(NA_GENES_COUNT_COLUMN_NAME)) {
+                        } else if (header[i].contains(NA_GENES_COUNT_COLUMN_NAME)) {
                             fieldMapping[i] = 
-                                    "speciesDiffExprCounts[" + speciesIndex + "].naGeneCount";
-                        } 
+                                    "speciesDiffExprCounts[" + index + "].naGeneCount";
+                        } else {
+                            throw log.throwing(new IllegalArgumentException("Unrecognized header: " 
+                                    + header[i] + " for file type: " + 
+                                    fileType.getStringRepresentation()));
+                        }
+                        assert(fieldMapping[i] != null);
+                        break;
                     }
                 }
             } else {

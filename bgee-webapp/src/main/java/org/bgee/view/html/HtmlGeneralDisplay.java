@@ -1,9 +1,12 @@
 package org.bgee.view.html;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
@@ -49,6 +52,11 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         //TODO: manage the version either from database, or from bgee-webapp.properties file.
         this.writeln("<h1>Welcome on the latest release of Bgee, Bgee release 13.1</h1>");
         
+        this.writeln(this.displayHomePageSpecies());
+
+        this.writeln("<h2>Other access to data</h2>");
+        this.writeln("<div class='bgee_section'>");
+
         RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
         urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
         
@@ -69,12 +77,11 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         
 
         this.writeln("<div id='feature_list'>");
-
         this.writeln(this.getFeatureDownloadLogos());
-
         this.writeln(this.getMainDocumentationLogo());
-
         this.writeln("</div>");
+
+        this.writeln("</div>"); //end of Other access to data
 
         this.writeln("<h2>News</h2>" +
                      "<span class='header_details'>(features are being added incrementally)</span>");
@@ -128,8 +135,569 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 this.prop.getLogoImagesRootDirectory() + "bgee12_logo.png", null));
         this.writeln("</div>");
 
+        this.writeln(this.getImageSources());
+
         this.endDisplay();
         log.exit();
+    }
+
+    private String displayHomePageSpecies() {
+        log.entry();
+        
+        // Single species part
+        String homePageSpeciesSection = this.getSingleSpeciesSection();
+
+        // Black banner when a species or a group is selected.
+        homePageSpeciesSection += this.getDownloadBanner();
+
+        return log.exit(homePageSpeciesSection);
+    }
+
+    /**
+     * Get the single species section of a download page as a HTML 'div' element,
+     * according the provided page type.
+     *
+     * @return  the {@code String} that is the single species section as HTML 'div' element,
+     *          according {@code pageType}.
+     */
+    // TODO: DRY: copy from HtmlDownloadDisplay  
+    private String getSingleSpeciesSection() {
+        log.entry();
+
+        StringBuffer s = new StringBuffer(); 
+        s.append("<div id='bgee_uniq_species'> ");
+        s.append("<h2>Species</h2>");            
+        s.append("<div class='bgee_section bgee_download_section'>");
+        s.append(generateSpeciesFigure(9606));
+        s.append(generateSpeciesFigure(10090));
+        s.append(generateSpeciesFigure(7955));
+        s.append(generateSpeciesFigure(7227));
+        s.append(generateSpeciesFigure(6239));
+        s.append(generateSpeciesFigure(9597));
+        s.append(generateSpeciesFigure(9598));
+        s.append(generateSpeciesFigure(9593));
+//        s.append(generateSpeciesFigure(9600)); // no more data for Pongo pygmaeus
+        s.append(generateSpeciesFigure(9544));
+        s.append(generateSpeciesFigure(10116));
+        s.append(generateSpeciesFigure(9913));
+        s.append(generateSpeciesFigure(9823));
+        s.append(generateSpeciesFigure(13616));
+        s.append(generateSpeciesFigure(9258));
+        s.append(generateSpeciesFigure(9031));
+        s.append(generateSpeciesFigure(28377));
+        s.append(generateSpeciesFigure(8364));
+//        s.append(generateSpeciesFigure(99883)); // no more data for Tetraodon nigroviridis
+        s.append("</div>");
+        s.append("</div>");
+        
+        return log.exit(s.toString());
+    }
+
+    /**
+     * Generate the HTML figure tag with a figcaption tag from a {@code int} that is a 
+     * species ID.
+     * 
+     * @param speciesId An {@code int} that is the species ID of the species to be displayed.
+     * @return          A {@code String} that is the  HTML figure tag generated from the 
+     *                  provided {@code int} of a species ID.
+     */
+    // TODO: DRY: copy from HtmlDownloadDisplay  
+    private String generateSpeciesFigure(int speciesId) {
+        log.entry(speciesId);
+        return log.exit(this.generateSpeciesFigure(Arrays.asList(speciesId), null));
+    }
+
+    /**
+     * Generate the HTML figure tag from a {@code List} of species IDs.
+     * 
+     * @param speciesIds   A {@code List} of {@code Integer} containing the species IDs to
+     *                     be diplayed.
+     * @param figcaption   A {@code String} that is the fieldcaption of the figure. If empty 
+     *                     or {@code null}, it's generated with the last species of the 
+     *                     {@code List}.
+     * @return             A {@code String} that is the  HTML figure tag generated from the 
+     *                     provided {@code List} of species IDs.
+     */
+    // TODO: DRY: copy from HtmlDownloadDisplay  
+    private String generateSpeciesFigure(List<Integer> speciesIds, String figcaption) {
+        log.entry(speciesIds, figcaption);
+        
+        StringBuilder images = new StringBuilder();
+        if (speciesIds == null || speciesIds.size() == 0) {
+            return ("");
+        }
+        
+        String name = null, commonName = null, shortName = null, alternateNames = null;
+
+        // Hidden info, to improve the jQuery search, allow to look for any of the name, short,
+        // or common name, even if not displayed... for example droso.
+        String hiddenInfo = "";
+        for (Integer speciesId: speciesIds) {
+            switch(speciesId) {
+                case 9606: 
+                    name = "Homo sapiens";
+                    shortName = "H. sapiens";
+                    commonName = "human";
+                    alternateNames = "";
+                    break;
+                case 10090: 
+                    name = "Mus musculus";
+                    shortName="M. musculus";
+                    commonName = "mouse";
+                    alternateNames = "house mouse, mice";
+                    break;
+                case 7955: 
+                    name = "Danio rerio";
+                    shortName = "D. rerio";
+                    commonName = "zebrafish";
+                    alternateNames = "leopard danio, zebra danio";
+                    break;
+                case 7227: 
+                    name = "Drosophila melanogaster";
+                    shortName = "D. melanogaster";
+                    commonName = "fruit fly";
+                    alternateNames = "vinegar fly";
+                    break;
+                case 6239: 
+                    name = "Caenorhabditis elegans";
+                    shortName = "C. elegans";
+                    commonName = "nematode";
+                    alternateNames = "worm, roundworm";
+                    break;
+                case 9597: 
+                    name = "Pan paniscus";
+                    shortName = "P. paniscus";
+                    commonName = "bonobo";
+                    alternateNames = "pygmy chimpanzee";
+                    break;
+                case 9598: 
+                    name = "Pan troglodytes";
+                    shortName = "P. troglodytes";
+                    commonName = "chimpanzee";
+                    alternateNames = "";
+                    break;
+                case 9593: 
+                    name = "Gorilla gorilla";
+                    shortName = "G. gorilla";
+                    commonName = "gorilla";
+                    alternateNames = "western gorilla";
+                    break;
+                case 9600: 
+                    name = "Pongo pygmaeus";
+                    shortName = "P. pygmaeus";
+                    commonName = "orangutan";
+                    alternateNames = "orang utan, orang-utan";
+                    break;
+                case 9544: 
+                    name = "Macaca mulatta";
+                    shortName = "M. mulatta";
+                    commonName = "macaque";
+                    alternateNames = "rhesus monkey";
+                    break;
+                case 10116: 
+                    name = "Rattus norvegicus";
+                    shortName = "R. norvegicus";
+                    commonName = "rat";
+                    alternateNames = "brown rat";
+                    break;
+                case 9913: 
+                    name = "Bos taurus";
+                    shortName = "B. taurus";
+                    commonName = "cattle";
+                    alternateNames = "cow, domestic cow, domestic cattle, bovine cow";
+                    break;
+                case 9823: 
+                    name = "Sus scrofa";
+                    shortName = "S. scrofa";
+                    commonName = "pig";
+                    alternateNames = "domestic pig, swine";
+                    break;
+                case 13616: 
+                    name = "Monodelphis domestica";
+                    shortName = "M. domestica";
+                    commonName = "opossum";
+                    alternateNames = "gray short-tailed opossum, gray short tailed opossum";
+                    break;
+                case 9258: 
+                    name = "Ornithorhynchus anatinus";
+                    shortName = "O. anatinus";
+                    commonName = "platypus";
+                    alternateNames = "duckbill platypus, duck-billed platypus";
+                    break;
+                case 9031: 
+                    name = "Gallus gallus";
+                    shortName = "G. gallus";
+                    commonName = "chicken";
+                    alternateNames = "bantam, red junglefowl, red jungle fowl";
+                    break;
+                case 28377: 
+                    name = "Anolis carolinensis";
+                    shortName = "A. carolinensis";
+                    commonName = "green anole";
+                    alternateNames = "anolis, carolina anole";
+                    break;
+                case 8364: 
+                    name = "Xenopus tropicalis";
+                    shortName = "X. tropicalis";
+                    commonName = "western clawed frog";
+                    alternateNames = "xenopus";
+                    break;
+                case 99883: 
+                    name = "Tetraodon nigroviridis";
+                    shortName = "T. nigroviridis";
+                    commonName = "tetraodon";
+                    alternateNames = "spotted green pufferfish";
+                    break;
+                default:
+                    return ("");
+            }
+            
+            hiddenInfo = name;
+            
+            images.append(this.generateSpeciesImg(
+                    speciesId, name, shortName, commonName, alternateNames, true));
+        }
+        if (StringUtils.isBlank(figcaption)) {
+            // If empty or null, it's generated with the last species ID of the given List. 
+            figcaption = "<p><i>" + shortName + "</i></p><p>" + commonName + "</p>";   
+        }
+
+        String figure = "<figure " + this.getSingleSpeciesFileData(speciesIds.get(0)) + ">";
+
+        figure += "<div>" + images + "</div>" + 
+                  "<figcaption>" + figcaption + 
+                  " <span class='invisible'>" + hiddenInfo + "</span>" + 
+                  "</figcaption>" + 
+                  "</figure>";
+        return log.exit(figure);
+    }
+
+    /**
+     * Generate the HTML img tag of one species.
+     * 
+     * @return             A {@code String} that is the  HTML figure tag generated from the 
+     *                     provided {@code List} of species IDs
+     * @param id           An {@code int} of the species IDs to be diplayed.
+     * @param name         A {@code String} that is the species name.
+     * @param commonName   A {@code String} that is the species common name.
+     * @param lightImg     A {@code boolean} that is {@code true} if the image to use is 
+     *                     the light one.
+     * @return             A {@code String} that is the  HTML img tag of the provided species 
+     *                     data.
+     */
+    // TODO: DRY: exact copy from HtmlDownloadDisplay  
+    private String generateSpeciesImg(int id, String name, String shortName, 
+            String commonName, String alternateNames, boolean lightImg) {
+        log.entry(id, name, shortName, commonName, alternateNames, lightImg);
+        StringBuilder image = new StringBuilder();
+        image.append("<img class='species_img' src='");
+        image.append(this.prop.getSpeciesImagesRootDirectory());
+        image.append(id);
+        if (lightImg) {
+            image.append("_light");
+        }
+        image.append(".jpg' alt='");
+        image.append(name);
+        image.append("' data-bgeespeciesid='");
+        image.append(id);
+        image.append("' data-bgeespeciesname='");
+        image.append(name);
+        image.append("' data-bgeespeciesshortname='");
+        image.append(shortName);
+        image.append("' data-bgeespeciescommonname='");
+        image.append(commonName);
+        image.append("' data-bgeespeciesalternatenames='");
+        image.append(alternateNames);
+        image.append("' />");
+                
+        return log.exit(image.toString());
+    }
+
+    /**
+     * Get custom data for a single species.
+     * 
+     * @param speciesId A {@code String} that is the ID of the species.
+     * @return          A {@code String} that is data according to the given species ID.
+     */
+    // TODO: DRY: copy from HtmlDownloadDisplay  
+    private String getSingleSpeciesFileData(int speciesId) {
+        log.entry(speciesId);
+        
+        String  rnaSeqDataFileSize = null, affyDataFileSize = null,
+                rnaSeqAnnotFileSize = null, affyAnnotFileSize = null, 
+                latinName = null;
+
+        switch (speciesId) {
+            case 9606: 
+                rnaSeqDataFileSize = "32 MB";
+                rnaSeqAnnotFileSize = "6 KB";
+                affyDataFileSize = "1.4 GB";
+                affyAnnotFileSize = "0.3 MB";
+                //estDataFileSize = "xx MB";
+                //estAnnotFileSize = "xx MB";
+                latinName = "Homo_sapiens";
+                break;
+            case 10090: 
+                rnaSeqDataFileSize = "32 MB";
+                rnaSeqAnnotFileSize = "9 KB";
+                affyDataFileSize = "1.2 GB";
+                affyAnnotFileSize = "0.5 MB";
+                //inSituDataFileSize = "xx MB";
+                //inSituAnnotFileSize = "xx MB";
+                //estDataFileSize = "xx MB";
+                //estAnnotFileSize = "xx MB";
+                latinName = "Mus_musculus";
+                break;
+            case 7955: 
+                affyDataFileSize = "20 MB";
+                affyAnnotFileSize = "22 KB";
+                //inSituDataFileSize = "xx MB";
+                //inSituAnnotFileSize = "xx MB";
+                //estDataFileSize = "xx MB";
+                //estAnnotFileSize = "xx MB";
+                latinName = "Danio_rerio";
+                break;
+            case 7227: 
+                affyDataFileSize = "115 MB";
+                affyAnnotFileSize = "69 KB";
+                //inSituDataFileSize = "xx MB";
+                //inSituAnnotFileSize = "xx MB";
+                //estDataFileSize = "xx MB";
+                //estAnnotFileSize = "xx MB";
+                latinName = "Drosophila_melanogaster";
+                break;
+            case 6239: 
+                affyDataFileSize = "13 MB";
+                affyAnnotFileSize = "4 KB";
+                rnaSeqDataFileSize = "11 MB";
+                rnaSeqAnnotFileSize = "4 KB";
+                //inSituDataFileSize = "xx MB";
+                //inSituAnnotFileSize = "xx MB";
+                latinName = "Caenorhabditis_elegans";
+                break;
+            case 9597: 
+                rnaSeqDataFileSize = "3 MB";
+                rnaSeqAnnotFileSize = "2 KB";
+                latinName = "Pan_paniscus";
+                break;
+            case 9598: 
+                rnaSeqDataFileSize = "3 MB";
+                rnaSeqAnnotFileSize = "3 KB";
+                latinName = "Pan_troglodytes";
+                break;
+            case 9593: 
+                rnaSeqDataFileSize = "3 MB";
+                rnaSeqAnnotFileSize = "3 KB";
+                latinName = "Gorilla_gorilla";
+                break;
+            case 9600: 
+                latinName = "Pongo_pygmaeus";
+                break;
+            case 9544: 
+                rnaSeqDataFileSize = "10 MB";
+                rnaSeqAnnotFileSize = "5 KB";
+                latinName = "Macaca_mulatta";
+                break;
+            case 10116: 
+                rnaSeqDataFileSize = "6.2 MB";
+                rnaSeqAnnotFileSize = "3 KB";
+                latinName = "Rattus_norvegicus";
+                break;
+            case 9913: 
+                rnaSeqDataFileSize = "6 MB";
+                rnaSeqAnnotFileSize = "3 KB";
+                latinName = "Bos_taurus";
+                break;
+            case 9823: 
+                rnaSeqDataFileSize = "0.8 MB";
+                rnaSeqAnnotFileSize = "1 KB";
+                latinName = "Sus_scrofa";
+                break;
+            case 13616: 
+                rnaSeqDataFileSize = "4 MB";
+                rnaSeqAnnotFileSize = "3 KB";
+                latinName = "Monodelphis_domestica";
+                break;
+            case 9258: 
+                rnaSeqDataFileSize = "4 MB";
+                rnaSeqAnnotFileSize = "3 KB";
+                latinName = "Ornithorhynchus_anatinus";
+                break;
+            case 9031: 
+                rnaSeqDataFileSize = "7 MB";
+                rnaSeqAnnotFileSize = "5 KB";
+                latinName = "Gallus_gallus";
+                break;
+            case 28377: 
+                rnaSeqDataFileSize = "0.8 MB";
+                rnaSeqAnnotFileSize = "2 KB";
+                latinName = "Anolis_carolinensis";
+                break;
+            case 8364: 
+                rnaSeqDataFileSize = "12 MB";
+                rnaSeqAnnotFileSize = "6 KB";
+                latinName = "Xenopus_tropicalis";
+                break;
+            case 99883: 
+                latinName = "Tetraodon_nigroviridis";
+                break;
+            default:
+                return ("");
+        }
+        
+        
+        StringBuffer data = new StringBuffer();
+        String extension = ".tsv.zip";
+        if (rnaSeqDataFileSize != null) {
+            String rnaSeqProcValueDir = this.prop.getDownloadRNASeqProcExprValueFilesRootDirectory()
+                    + latinName + "/";
+            String filePrefix = latinName + "_RNA-Seq_";
+            data.append(" data-bgeernaseqdatafileurl='" + rnaSeqProcValueDir + filePrefix + 
+                    "read_counts_RPKM" + extension +
+                    "' data-bgeernaseqdatafilesize='" + rnaSeqDataFileSize + "'"); 
+            data.append(" data-bgeernaseqannotfileurl='" + rnaSeqProcValueDir + filePrefix + 
+                    "experiments_libraries" + extension +
+                    "' data-bgeernaseqannotfilesize='" + rnaSeqAnnotFileSize + "'"); 
+            data.append(" data-bgeernaseqdatarooturl='" + rnaSeqProcValueDir + "' ");
+        }
+        if (affyDataFileSize != null) {
+            String affyProcValueDir = this.prop.getDownloadAffyProcExprValueFilesRootDirectory()
+                    + latinName + "/";
+            String filePrefix = latinName + "_Affymetrix_";
+            data.append(" data-bgeeaffydatafileurl='" + affyProcValueDir + filePrefix
+                    + "probesets" + extension 
+                    + "' data-bgeeaffydatafilesize='" + affyDataFileSize + "'"); 
+            data.append(" data-bgeeaffyannotfileurl='" + affyProcValueDir + filePrefix 
+                    + "experiments_chips" + extension +
+                    "' data-bgeeaffyannotfilesize='" + affyAnnotFileSize + "'"); 
+            data.append(" data-bgeeaffydatarooturl='" + affyProcValueDir + "' ");
+        }
+
+
+        return log.exit(data.toString());
+    }
+
+    /**
+     * Get the banner of a download page as a HTML 'div' element, 
+     * according the provided page type.
+     *
+     * @return  the {@code String} that is the black banner of a download page 
+     *          as a HTML 'div' element according {@code pageType}.
+     */
+    // TODO: DRY: copy from HtmlDownloadDisplay  
+    private String getDownloadBanner() {
+        log.entry();
+    
+        StringBuffer banner = new StringBuffer();
+        // This section is empty, it will be filled by JavaScript.
+        banner.append("<div id='bgee_data_selection'>");
+        
+        // Cross to close the banner
+        banner.append("<div id='bgee_data_selection_cross'>");
+        banner.append("<a id='switch_page_link' href=''></a>");
+        banner.append("<img src='" + this.prop.getImagesRootDirectory() + "cross.png' " +
+                "title='Close banner' alt='Cross' />");
+        banner.append("</div>");
+        
+        // Section on the left of the black banner: image for single species or patchwork for group
+        banner.append("<div id='bgee_data_selection_img'></div>");
+    
+        // Section on the right of the black banner
+        banner.append("<div id='bgee_data_selection_text'>");
+        banner.append("<h1 class='scientificname'></h1><h1 class='commonname'></h1>");
+        banner.append("<p class='groupdescription'></p>");
+        
+        // RNA-Seq data
+        banner.append("<div class='bgee_download_file_buttons'>");
+
+        banner.append("<h2>RNA-Seq data</h2>");
+        banner.append("<p id='rnaseq_no_data' class='no_data'>No data</p>");
+
+        //data section
+        banner.append("<div id='rnaseq_data'>");
+        banner.append("<a id='rnaseq_annot_csv' class='download_link' href='' download></a>" +
+                "<a id='rnaseq_data_csv' class='download_link' href='' download></a>");
+        banner.append("<p class='file_info'>Files can also be retrieved per experiment, "
+                //href will be filed by the javascript.
+                + "see <a id='rna_seq_data_root_link' title='Retrieve RNA-Seq data "
+                + "per experiment for this species'>RNA-Seq data directory</a>.</p>");
+        banner.append("</div>"); //end data section
+
+        banner.append("</div>"); // end RNA-Seq data
+
+        // Affymetrix data
+        banner.append("<div class='bgee_download_file_buttons'>");
+        banner.append("<h2>Affymetrix data</h2>");
+        banner.append("<p id='affy_no_data' class='no_data'>No data</p>");
+
+        //data section
+        banner.append("<div id='affy_data'>"); 
+        banner.append("<a id='affy_annot_csv' class='download_link' href='' download></a>" +
+                "<a id='affy_data_csv' class='download_link' href='' download></a>");
+        banner.append("<p class='file_info'>Files can also be retrieved per experiment, "
+                //href will be filed by the javascript.
+                + "see <a id='affy_data_root_link' title='Retrieve Affymetrix data "
+                + "per experiment for this species'>Affymetrix data directory</a>.</p>");
+        banner.append("</div>"); // end of data section
+
+        banner.append("</div>"); // end of Affy data
+
+        // Gene expression calls
+        banner.append("<div class='bgee_download_file_buttons'>");
+        banner.append("<h2>Gene expression calls</h2>");            
+        //data section
+        banner.append("<div id='gene_expression_calls_data'>"); 
+        RequestParameters urlGenerator = this.getNewRequestParameters();
+        urlGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlGenerator.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
+        banner.append("<a id='gene_expression_calls_link' class='download_link' href='" + 
+                urlGenerator.getRequestURL() + 
+                "' title='See Bgee gene expression calls'>See gene expression calls</a>");
+        banner.append("</div>"); // end of data section
+
+        banner.append("</div>"); // end of Gene expression calls
+
+
+        banner.append("</div>");
+        banner.append("</div>");
+
+        return log.exit(banner.toString());
+    }
+
+    /**
+     * Get the images sources of a download page as a HTML 'div' element. 
+     *
+     * @return  the {@code String} that is the images sources as HTML 'div' element.
+     */
+    //XXX: DRY: exact copy from HtmlDownloadDisplay 
+    private String getImageSources() {
+        log.entry();
+        
+        StringBuffer sources = new StringBuffer();
+        sources.append("<p id='creativecommons_title'>Images from Wikimedia Commons. In most cases, pictures corresponds to the sequenced strains. <a>Show information about original images.</a></p>");
+        sources.append("<div id='creativecommons'>");
+        sources.append("<p><i>Homo sapiens</i> picture by Leonardo da Vinci (Life time: 1519) [Public domain]. <a target='_blank' href='http://commons.wikimedia.org/wiki/File:Da_Vinci%27s_Anatomical_Man.jpg#mediaviewer/File:Da_Vinci%27s_Anatomical_Man.jpg'>See <i>H. sapiens</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Mus musculus</i> picture by Rasbak [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AApodemus_sylvaticus_bosmuis.jpg'>See <i>M. musculus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Danio rerio</i> picture by Azul (Own work) [see page for license], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AZebrafisch.jpg'>See <i>D. rerio</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Drosophila melanogaster</i> picture by Andr&eacute; Karwath aka Aka (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/2.5'>CC-BY-SA-2.5</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ADrosophila_melanogaster_-_side_(aka).jpg'>See <i>D. melanogaster</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Caenorhabditis elegans</i> picture by Bob Goldstein, UNC Chapel Hill http://bio.unc.edu/people/faculty/goldstein/ (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ACelegansGoldsteinLabUNC.jpg'>See <i>C. elegans</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Pan paniscus</i> picture by Ltshears (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a> or <a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ABonobo1_CincinnatiZoo.jpg'>See <i>P. paniscus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Pan troglodytes</i> picture by Thomas Lersch (Own work) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a>, <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a> or <a target='_blank' href='http://creativecommons.org/licenses/by/2.5'>CC-BY-2.5</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ASchimpanse_Zoo_Leipzig.jpg'>See <i>P. troglodytes</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Gorilla gorilla</i> picture by Brocken Inaglory (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a> or <a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AMale_gorilla_in_SF_zoo.jpg'>See <i>G. gorilla</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Pongo pygmaeus</i> picture by Greg Hume (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ASUMATRAN_ORANGUTAN.jpg'>See <i>P. pygmaeus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Macaca mulatta</i> picture by Aiwok (Own work) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0-2.5-2.0-1.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AMacaca_mulatta_3.JPG'>See <i>M. mulatta</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Rattus norvegicus</i> picture by Reg Mckenna (originally posted to Flickr as Wild Rat) [<a target='_blank' href='http://creativecommons.org/licenses/by/2.0'>CC-BY-2.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AWildRat.jpg'>See <i>R. norvegicus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Bos taurus</i> picture by User Robert Merkel on en.wikipedia (US Department of Agriculture) [Public domain], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AHereford_bull_large.jpg'>See <i>B. taurus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Sus scrofa</i> picture by Joshua Lutz (Own work) [Public domain], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ASus_scrofa_scrofa.jpg'>See <i>S. scrofa</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Monodelphis domestica</i> picture by <i>Marsupial Genome Sheds Light on the Evolution of Immunity.</i> Hill E, PLoS Biology Vol. 4/3/2006, e75 <a rel='nofollow' href='http://dx.doi.org/10.1371/journal.pbio.0040075'>http://dx.doi.org/10.1371/journal.pbio.0040075</a> [<a target='_blank' href='http://creativecommons.org/licenses/by/2.5'>CC-BY-2.5</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AOpossum_with_young.png'>See <i>M. domestica</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Ornithorhynchus anatinus</i> picture by Dr. Philip Bethge (private) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0-2.5-2.0-1.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AOrnithorhynchus.jpg'>See <i>O. anatinus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Gallus gallus</i> picture by Subramanya C K (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ARed_jungle_fowl.png'>See <i>G. gallus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Anolis carolinensis</i> picture by PiccoloNamek (Moved from Image:P1010027.jpg) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AAnolis_carolinensis.jpg'>See <i>A. carolinensis</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Xenopus tropicalis</i> picture by V&aacute;clav Gvo&zcaron;d&iacute;k (http://calphotos.berkeley.edu) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/2.5'>CC-BY-SA-2.5</a>, <a target='_blank' href='http://creativecommons.org/licenses/by-sa/2.5'>CC-BY-SA-2.5</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AXenopus_tropicalis01.jpeg'>See <i>X. tropicalis</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Tetraodon nigroviridis</i> picture by Starseed (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/de/deed.en'>CC-BY-SA-3.0-de</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ATetraodon_nigroviridis_1.jpg'>See <i>T. nigroviridis</i> picture via Wikimedia Commons</a></p>");
+        sources.append("</div>");
+    
+        return log.exit(sources.toString());
     }
 
     @Override
@@ -142,12 +710,21 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         this.endDisplay();
         log.exit();
     }
+    
+    @Override
+    protected void includeJs() {
+        log.entry();
+        super.includeJs();
+        this.includeJs("download.js");
+        log.exit();
+    }
 
     @Override
     protected void includeCss() {
         log.entry();
         super.includeCss();
         this.includeCss("general.css");
+        this.includeCss("download.css");
         log.exit();
     }
 }

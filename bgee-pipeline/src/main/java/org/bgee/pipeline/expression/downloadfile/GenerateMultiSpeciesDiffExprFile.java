@@ -2891,9 +2891,12 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 // retrieve the good species even if a species name matches to a subspecies name 
                 // (for instance, the subspecies name 'Gorilla gorilla gorilla' and 
                 // the species name 'Gorilla gorilla').
+                Set<String> speciesFound = new HashSet<String>();
                 for (String species: speciesNamesOrderedByLength) {
                     int index = orderedSpeciesNames.indexOf(species);
                     if (header[i].toLowerCase().contains(species.toLowerCase())) {
+                        speciesFound.add(species);
+                        
                         if (header[i].contains(OVER_EXPR_GENE_COUNT_COLUMN_NAME)) {
                             fieldMapping[i] = 
                                     "speciesDiffExprCounts[" + index + "].overExprGeneCount";
@@ -2918,6 +2921,11 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                         break;
                     }
                 }
+                //verify that we found all species
+                assert speciesNamesOrderedByLength.removeAll(speciesFound);
+                assert speciesNamesOrderedByLength.isEmpty(): 
+                    "Some of the provided species were  not found in the header: " 
+                    + speciesNamesOrderedByLength;
             } else {
                 // *** Attributes specific to complete file ***
                 switch (header[i]) {

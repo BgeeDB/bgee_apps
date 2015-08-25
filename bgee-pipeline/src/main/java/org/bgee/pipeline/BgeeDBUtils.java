@@ -369,8 +369,8 @@ public class BgeeDBUtils {
      * @throws IllegalArgumentException If {@code rs} does not allow to retrieve EntityTO ID or name.
      * @throws IllegalStateException    If several TOs associated to a same ID.
      */
-    //TODO: Currently, we keep specific methods to be able to store and restore specific attributes.
-    //      This could be generic using Java 8, but we are just lazy to implement it now.
+    //XXX: Currently, we keep specific methods to be able to store and restore specific attributes.
+    //     This could be generic using Java 8, but we are just lazy to implement it now.
 
     private static <T extends EntityTO> Map<String, String> generateNamesByIdsMap(DAOResultSet<T> rs) 
     		throws IllegalArgumentException, IllegalStateException {

@@ -164,7 +164,7 @@ public interface KeywordDAO extends DAO<KeywordDAO.Attribute> {
          */
         private final String keywordId;
         
-        protected EntityToKeywordTO(String entityId, String keywordId) {
+        public EntityToKeywordTO(String entityId, String keywordId) {
             this.entityId = entityId;
             this.keywordId = keywordId;
         }

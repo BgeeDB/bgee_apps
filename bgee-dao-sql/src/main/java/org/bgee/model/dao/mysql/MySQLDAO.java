@@ -16,6 +16,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
+import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 
 /**
  * Parent class of all MySQL DAOs of this module.
@@ -135,9 +136,12 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
     /**
      * Get the {@code Attribute} corresponding to the column name of a result set. 
      * The mapping is retrieved from {@code colNamesToAttributes}. This helper method  
-     * is most likely used in methods implementing 
+     * should be used used in methods implementing 
      * {@link org.bgee.model.dao.mysql.connector.MySQLDAOResultSet#getNewTO() MySQLDAOResultSet#getNewTO()}, 
-     * to determine how to populate a {@code TransferObject} from a row in a result set.
+     * to determine how to populate a {@code TransferObject} from a row in a result set. 
+     * This is why this method directly throws an {@code UnrecognizedColumnException} 
+     * if no {@code Attribute} corresponding to {@code colName} could be found: this is 
+     * the expected behavior of the {@code getNewTO} methods.
      * <p>
      * See {@link #getSelectExprFromAttribute(T, Map)} for the opposite helper method, 
      * that can be used to generate the 'select_expr's in the SELECT clause of a query. 
@@ -152,16 +156,16 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
      *                              supported column names, associated to their corresponding 
      *                              {@code Attribute} as values.
      * @return                      An {@code Attribute} {@code T} corresponding to {@code colName}.
-     * @throws IllegalArgumentException If {@code colName} does not correspond to any {@code Attribute} 
-     *                                  in {@code colNamesToAttributes}.
+     * @throws UnrecognizedColumnException  If {@code colName} does not correspond to 
+     *                                      any {@code Attribute} in {@code colNamesToAttributes}.
      * @see #getSelectExprFromAttribute(T, Map)
      */
     protected T getAttributeFromColName(String colName, Map<String, T> colNamesToAttributes) 
-            throws IllegalArgumentException {
+            throws UnrecognizedColumnException {
         log.entry(colName, colNamesToAttributes);
         T attribute = colNamesToAttributes.get(colName);
         if (attribute == null) {
-            throw log.throwing(new IllegalArgumentException("Unknown column name: " + colName));
+            throw log.throwing(new UnrecognizedColumnException(colName));
         } 
         return log.exit(attribute);
     }

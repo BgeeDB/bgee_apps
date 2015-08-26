@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
@@ -20,7 +21,6 @@ import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
-import org.bgee.model.dao.mysql.gene.MySQLGeneDAO.MySQLGeneTOResultSet;
 
 /**
  * A {@code KeywordDAO} for MySQL. 
@@ -79,7 +79,7 @@ public class MySQLKeywordDAO extends MySQLDAO<KeywordDAO.Attribute> implements K
         //not the actual results, so we should not close this BgeePreparedStatement.
         try {
             Set<String> filteredSpeciesIds = 
-                    new HashSet<String>(speciesIds != null ? speciesIds : Arrays.asList());
+                    new HashSet<String>(speciesIds != null ? speciesIds: Arrays.asList());
             
             String sql = this.generateSelectClause(keywordTable, 
                     this.reverseColNameMap(colNamesToAttributes), true);
@@ -130,15 +130,27 @@ public class MySQLKeywordDAO extends MySQLDAO<KeywordDAO.Attribute> implements K
                 List<Integer> orderedSpeciesIds = MySQLDAO.convertToOrderedIntList(filteredSpeciesIds);
                 stmt.setIntegers(1, orderedSpeciesIds);
             }             
-            return log.exit(new MySQLEntityToKeywordTOResultSet(stmt));
+            return log.exit(new MySQLEntityToKeywordTOResultSet(stmt, "speciesId"));
             
         } catch (SQLException|IllegalArgumentException e) {
             throw log.throwing(new DAOException(e));
         }
     }
     
-    class MySQLKeywordTOResultSet extends MySQLDAOResultSet<KeywordTO> implements KeywordTOResultSet {
-        protected MySQLKeywordTOResultSet(BgeePreparedStatement statement) {
+    /**
+     * A {@code MySQLDAOResultSet} specific to {@code KeywordTO}, allowing to fetch results 
+     * of queries performed by this {@code MySQLKeywordDAO}, to populate {@code KeywordTO}s.
+     * 
+     * @author Frederic Bastian
+     * @version Bgee 13 August 2015
+     * @since Bgee 13
+     */
+    class MySQLKeywordTOResultSet extends MySQLDAOResultSet<KeywordTO> 
+            implements KeywordTOResultSet {
+        /**
+         * @param statement The {@code BgeePreparedStatement} to be executed.
+         */
+        private MySQLKeywordTOResultSet(BgeePreparedStatement statement) {
             super(statement);
         }
 
@@ -150,14 +162,14 @@ public class MySQLKeywordDAO extends MySQLDAO<KeywordDAO.Attribute> implements K
 
                 for (Map.Entry<Integer, String> col : this.getColumnLabels().entrySet()) {
                     String columnName = col.getValue();
-                    String currentValue = currentResultSet.getString(columnName);
-                    KeywordDAO.Attribute attr = this.getAttributeFromColName(columnName, colNamesToAttributes);
+                    KeywordDAO.Attribute attr = MySQLKeywordDAO.this.getAttributeFromColName(
+                            columnName, colNamesToAttributes);
                     switch (attr) {
                     case ID:
-                        id = currentValue;
+                        id = currentResultSet.getString(col.getKey());
                         break;
                     case NAME:
-                        name = currentValue;
+                        name = currentResultSet.getString(col.getKey());
                         break;
                     default:
                         log.throwing(new UnrecognizedColumnException(columnName));
@@ -168,6 +180,65 @@ public class MySQLKeywordDAO extends MySQLDAO<KeywordDAO.Attribute> implements K
                 throw log.throwing(new DAOException(e));
             }
         }
-}
+    }
+    
+    /**
+     * A {@code MySQLDAOResultSet} specific to {@code EntityToKeywordTO}, allowing to fetch results 
+     * of queries performed by this {@code MySQLKeywordDAO}, to populate {@code EntityToKeywordTO}s.
+     * 
+     * @author Frederic Bastian
+     * @version Bgee 13 August 2015
+     * @since Bgee 13
+     */
+    class MySQLEntityToKeywordTOResultSet extends MySQLDAOResultSet<EntityToKeywordTO> 
+            implements EntityToKeywordTOResultSet {
+        
+        /**
+         * A {@code String} that is the name of the column containing the entity IDs 
+         * in the MySQL query currently executed (for instance, 'speciesId').
+         */
+        private final String entityIdColName;
+        /**
+         * Delegates to {@link MySQLDAOResultSet#MySQLDAOResultSet(BgeePreparedStatement)}
+         * super constructor.
+         * 
+         * @param statement         The {@code BgeePreparedStatement} to be executed.
+         * @param entityIdColName   A {@code String} that is the name of the column 
+         *                          containing the entity IDs in the MySQL query 
+         *                          currently executed (for instance, 'speciesId').
+         */
+        private MySQLEntityToKeywordTOResultSet(BgeePreparedStatement statement, 
+                String entityIdColName) {
+            super(statement);
+            //acceptable to use assert for sanity check on private method; 
+            //plus, an UnrecognizedColumnException will be later thrown if the value is incorrect
+            assert StringUtils.isNotBlank(entityIdColName);
+            
+            this.entityIdColName = entityIdColName;
+        }
+
+        @Override
+        protected EntityToKeywordTO getNewTO() throws DAOException {
+            try {
+                final ResultSet currentResultSet = this.getCurrentResultSet();
+                String keywordId = null, entityId = null;
+
+                for (Map.Entry<Integer, String> col : this.getColumnLabels().entrySet()) {
+                    String columnName = col.getValue();
+                    
+                    if (columnName.equals("keywordId")) {
+                        keywordId = currentResultSet.getString(col.getKey());
+                    } else if (columnName.equals(this.entityIdColName)) {
+                        entityId = currentResultSet.getString(col.getKey());
+                    } else {
+                        log.throwing(new UnrecognizedColumnException(columnName));
+                    }
+                }
+                return log.exit(new EntityToKeywordTO(entityId, keywordId));
+            } catch (SQLException e) {
+                throw log.throwing(new DAOException(e));
+            }
+        }
+    }
 
 }

@@ -19,6 +19,7 @@ import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
+import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 
 /**
  * A {@code DAOResultSet} implementation for MySQL. This implementation can notably 
@@ -455,9 +456,10 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
      * 
      * @return  The {@code TransferObject} {@code T} corresponding to the result 
      *          at the current cursor position of this {@code DAOResultSet}.
-     * @throws DAOException             If an error occurs while retrieving the result.
+     * @throws DAOException                 If an error occurs while retrieving the result.
+     * @throws UnrecognizedColumnException  If a column name in a result set is not recognized.
      */
-    protected abstract T getNewTO() throws DAOException;
+    protected abstract T getNewTO() throws DAOException, UnrecognizedColumnException;
     
     @Override
     public List<T> getAllTOs() throws DAOException {

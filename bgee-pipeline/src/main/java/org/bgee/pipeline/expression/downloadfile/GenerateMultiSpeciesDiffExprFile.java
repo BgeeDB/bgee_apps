@@ -64,7 +64,7 @@ import org.supercsv.io.dozer.ICsvDozerBeanWriter;
  * (simple and advanced files) from the Bgee database. 
  *
  * @author  Valentine Rech de Laval
- * @version Bgee 13 july
+ * @version Bgee 13, August 2015
  * @since   Bgee 13
  */
 //FIXME: there will definitely be cases where a homology group include organs 
@@ -2830,7 +2830,9 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         // We sort species names by name lengths from the longest to the shortest.
         List<String> speciesNamesOrderedByLength = new ArrayList<String>(orderedSpeciesNames);
         speciesNamesOrderedByLength.sort((s1, s2)-> (s2.length() - s1.length()));
+        assert speciesNamesOrderedByLength.size() == orderedSpeciesNames.size();
         
+        Set<String> speciesFound = new HashSet<String>();
         for (int i = 0; i < header.length; i++) {
             switch (header[i]) {
             // *** attributes common to all file types ***
@@ -2879,7 +2881,6 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 // retrieve the good species even if a species name matches to a subspecies name 
                 // (for instance, the subspecies name 'Gorilla gorilla gorilla' and 
                 // the species name 'Gorilla gorilla').
-                Set<String> speciesFound = new HashSet<String>();
                 for (String species: speciesNamesOrderedByLength) {
                     int index = orderedSpeciesNames.indexOf(species);
                     if (header[i].toLowerCase().contains(species.toLowerCase())) {
@@ -2909,11 +2910,6 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                         break;
                     }
                 }
-                //verify that we found all species
-                assert speciesNamesOrderedByLength.removeAll(speciesFound);
-                assert speciesNamesOrderedByLength.isEmpty(): 
-                    "Some of the provided species were  not found in the header: " 
-                    + speciesNamesOrderedByLength;
             } else {
                 // *** Attributes specific to complete file ***
                 switch (header[i]) {
@@ -2976,7 +2972,13 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                         + header[i] + " for file type: " + fileType.getStringRepresentation()));
             }
         }
-        
+        // Verify that we found all species
+        if (fileType.isSimpleFileType()) {
+            assert speciesNamesOrderedByLength.removeAll(speciesFound);
+            assert speciesNamesOrderedByLength.isEmpty(): 
+                "Some of the provided species were  not found in the header: " 
+                + speciesNamesOrderedByLength;
+        }
         return log.exit(fieldMapping);
     }
     

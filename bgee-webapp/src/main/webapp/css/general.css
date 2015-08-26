@@ -19,13 +19,6 @@ div#bgee_news.bgee_section {
              quickly species in the home page.
              These properties should be removed after the recoding of the home page **/
              
-#sib_body img.page_img {
-    height: 25px;
-    width: 25px;
-    margin: 0 0 0 -25px;
-    z-index: 10;
-}
-
 div.bgee_download_section figcaption p {
     text-align: center;
     color: #515151;
@@ -61,22 +54,6 @@ img {
 /**** BGEE DATASELECTION (banner) ****/
 label {
     color: #920209;
-}
-
-p:not(.file_info) {
-    margin: 0 2%;
-}
-
-p.file_info {
-    margin-top: 1% 0 0 0;
-}
-
-p.file_info a, p.file_info a:visited {
-    color: #717171;
-}
-
-p.file_info a:hover {
-    color: #DBDBDB;
 }
 
 #bgee_data_selection {
@@ -132,21 +109,6 @@ p.file_info a:hover {
     z-index: 2;
 }
 
-#bgee_data_selection_img {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 60px;
-    margin: 10px 0px 0px 60px;
-}
-
-#bgee_data_selection_img img {
-    position: relative;
-    float: left;
-    width: 90px;
-    height: 90px;
-}
-
 #bgee_data_selection_text {
     padding-left: 40px;
     display: inline-block;
@@ -160,12 +122,6 @@ p.file_info a:hover {
 	margin-right: 5px;
 	border-radius: 0;
 	color: #AAA;
-}
-
-#bgee_data_selection img.details {
-    margin: 0 1.2em 0 0;
-    width: 1em;
-    height: 1em;
 }
 
 #bgee_uniq_species figure.selected {

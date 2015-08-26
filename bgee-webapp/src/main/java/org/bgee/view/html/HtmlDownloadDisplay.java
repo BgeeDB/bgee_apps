@@ -129,7 +129,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
         this.writeln("<h1>Bgee download page</h1>");
 
-        this.writeln("<div id='feature_list'>");
+        this.writeln("<div class='feature_list'>");
         this.writeln(this.getFeatureDownloadLogos());
         this.writeln("</div>");
         

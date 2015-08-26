@@ -76,7 +76,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         urlCallDocGenerator.setAction(RequestParameters.ACTION_DOC_CALL_DOWLOAD_FILES);
         
 
-        this.writeln("<div id='feature_list'>");
+        this.writeln("<div class='feature_list'>");
         this.writeln(this.getFeatureDownloadLogos());
         this.writeln(this.getMainDocumentationLogo());
         this.writeln("</div>");
@@ -131,7 +131,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
         this.writeln("<p id='bgee_more_info'>" +
                        "The complete website remains available for the previous release of Bgee:</p>");
-        this.writeln("<div id='feature_list'>");
+        this.writeln("<div class='feature_list'>");
         this.writeln(HtmlParentDisplay.getSingleFeatureLogo("http://bgee.org/bgee/bgee", 
                 true, "Bgee 12 home page", "Bgee 12", 
                 this.prop.getLogoImagesRootDirectory() + "bgee12_logo.png", null));

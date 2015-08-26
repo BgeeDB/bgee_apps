@@ -41,7 +41,7 @@ public interface KeywordDAO extends DAO<KeywordDAO.Attribute> {
      * If {@code speciesIds} is {@code null} or empty, then keywords associated to any species 
      * are retrieved. 
      * <p>
-     * The keywords are returned using an {@code KeywordTOResultSet}. 
+     * The keywords are returned using a {@code KeywordTOResultSet}. 
      * It is the responsibility of the caller to close this {@code DAOResultSet} once 
      * results are retrieved.
      * 
@@ -56,7 +56,7 @@ public interface KeywordDAO extends DAO<KeywordDAO.Attribute> {
             throws DAOException;
     
     /**
-     * Retrieve from the data source the relations between keyword ID and species ID. 
+     * Retrieve from the data source the relations between keyword IDs and species IDs. 
      * Keywords in that case represent mainly alternative common names (see 
      * {@link #getKeywordsRelatedToSpecies(Collection)}).
      * <p>
@@ -125,7 +125,7 @@ public interface KeywordDAO extends DAO<KeywordDAO.Attribute> {
         
         @Override
         public String toString() {
-            return "KeywordTO[ID: " + this.getId() + " - keyword: " + this.getName() + "]";
+            return "KeywordTO[ID: " + this.getId() + " - name: " + this.getName() + "]";
         }
     }
     
@@ -183,6 +183,11 @@ public interface KeywordDAO extends DAO<KeywordDAO.Attribute> {
         public String getKeywordId() {
             return keywordId;
         }
-        
+
+        @Override
+        public String toString() {
+            return "EntityToKeywordTO[entityID: " + this.getEntityId() 
+                    + " - keywordID: " + this.getKeywordId() + "]";
+        }
     }
 }

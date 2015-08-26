@@ -110,7 +110,7 @@ public interface KeywordDAO extends DAO<KeywordDAO.Attribute> {
          * @param id    A {@code String} that is the ID of the keyword.
          * @param name  A {@code String} representing the keyword. 
          */
-        protected KeywordTO(String id, String name) {
+        public KeywordTO(String id, String name) {
             super(id, name, null);
         }
         

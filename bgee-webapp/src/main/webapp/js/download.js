@@ -4,6 +4,7 @@
  * It is run when the document is fully loaded by using the jQuery method ready()
  * 
  * @author Mathieu Seppey
+ * @author Valentine Rech de Laval
  * @version Bgee 13, Jul 2014
  */
 //Declaration of an object literal to contain the download page specific code.
@@ -27,7 +28,6 @@ var download = {
         $bgeeDataSelectionTextScientific: null,
         $bgeeDataSelectionTextCommon: null,
         $switchPageLink: null,
-        $geneExpressionCallsPageLink: null,
         $bgeeGroupDescription: null,
         $orthologButtons: null,
         $orthologCvs: null,
@@ -110,7 +110,6 @@ var download = {
             this.$bgeeDataSelectionTextCommon = 
                 $( "#bgee_data_selection_text h1.commonname" );
             this.$switchPageLink = $( "#switch_page_link" );
-            this.$geneExpressionCallsPageLink = $( "#gene_expression_calls_link" );
             this.$bgeeGroupDescription = $( "#bgee_data_selection_text p.groupdescription" );
             // Data
             this.$orthologButtons = $( "#ortholog_file_buttons" );
@@ -342,20 +341,7 @@ var download = {
             //like, e.g., species_id=id
             var hashToUse = "id"+id
             
-            //manage link to gene expression calls from home page
-            var requestGeneExprCallsPage = new requestParameters();
-            requestGeneExprCallsPage.setURLHash(hashToUse);
-            requestGeneExprCallsPage.addValue(urlParameters.getParamPage(), 
-            		requestGeneExprCallsPage.PAGE_DOWNLOAD());
-            requestGeneExprCallsPage.addValue(urlParameters.getParamAction(), 
-            		requestGeneExprCallsPage.ACTION_DOWLOAD_PROC_VALUE_FILES());
-    		this.$geneExpressionCallsPageLink.text( "See gene expression calls" );
-        	this.$geneExpressionCallsPageLink.attr( "href", 
-        			//TODO: handle the hash exactly as another parameter (see TODO 
-        			//in RequestParameters.java)
-        			requestGeneExprCallsPage.getRequestURL());
-
-            //manage link to processed values/gene expression calls
+            //manage link to processed vaulues/gene expression calls
             var requestSwitchPage = new requestParameters();
             requestSwitchPage.setURLHash(hashToUse);
             

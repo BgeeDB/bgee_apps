@@ -13,3 +13,187 @@ div#bgee_news.bgee_section {
 #bgee_more_info {
 	margin: 1% 2% 0;
 }
+
+
+/** WARNING: All following properties (copied and modified from download.css) added to insert 
+             quickly species in the home page.
+             These properties should be removed after the recoding of the home page **/
+             
+#sib_body img.page_img {
+    height: 25px;
+    width: 25px;
+    margin: 0 0 0 -25px;
+    z-index: 10;
+}
+
+div.bgee_download_section figcaption p {
+    text-align: center;
+    color: #515151;
+    font-size: 0.75em;
+    margin: 0;
+}
+
+div.bgee_download_section figure {
+    cursor: pointer;
+    float: left;
+}
+
+div.bgee_download_section figure.selected {
+    border: 4px #282828 solid;
+    background: #282828;
+    border-radius: 12px 12px 0 0;
+    padding: 0px;
+}
+
+img {
+    border-radius: 8px;
+}
+
+#bgee_uniq_species img {
+    width: 113px;
+}
+
+#bgee_uniq_species figure {
+    margin: 0;
+    padding: 4px;
+}
+
+/**** BGEE DATASELECTION (banner) ****/
+label {
+    color: #920209;
+}
+
+p:not(.file_info) {
+    margin: 0 2%;
+}
+
+p.file_info {
+    margin-top: 1% 0 0 0;
+}
+
+p.file_info a, p.file_info a:visited {
+    color: #717171;
+}
+
+p.file_info a:hover {
+    color: #DBDBDB;
+}
+
+#bgee_data_selection {
+    position: relative;
+    background-color: #282828;
+    padding: 20px;
+    left: -4%;
+    width: 106%;
+    clear: left;
+    display: none;
+}
+
+#bgee_data_selection h1 {
+    white-space: nowrap;
+    color: #DBDBDB;
+    display: inline;
+    font-weight: normal;
+    margin: 0;
+    line-height: 35px;
+}
+
+#bgee_data_selection h1.scientificname {
+    font-style: italic;
+    margin-right: 0.3em;
+}
+
+#bgee_data_selection ul {
+    height: 15px;
+    width: 25px;
+    white-space: nowrap;
+    list-style-image: url(../img/arrow.png);
+    display: inline;
+}
+
+#bgee_data_selection li {
+    display: inline;
+}
+
+#bgee_data_selection li img.bullet_point {
+    width: 25px;
+    height: 15px;
+    margin: 0px 5px 5px 15px;
+    vertical-align: middle;
+}
+
+#bgee_data_selection_cross img {
+    position: absolute;
+    cursor: pointer;
+    top: 27px;
+    right: 30px;
+    height: 20px;
+    width: 20px;
+    z-index: 2;
+}
+
+#bgee_data_selection_img {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 60px;
+    margin: 10px 0px 0px 60px;
+}
+
+#bgee_data_selection_img img {
+    position: relative;
+    float: left;
+    width: 90px;
+    height: 90px;
+}
+
+#bgee_data_selection_text {
+    padding-left: 40px;
+    display: inline-block;
+    vertical-align:middle;
+    height: 35px;
+}
+
+#bgee_uniq_species a.data_page_link {
+	height: 18px;
+	width: 15px;
+	margin-right: 5px;
+	border-radius: 0;
+	color: #AAA;
+}
+
+#bgee_data_selection img.details {
+    margin: 0 1.2em 0 0;
+    width: 1em;
+    height: 1em;
+}
+
+#bgee_uniq_species figure.selected {
+    padding: 0px;
+}
+
+#bgee_uniq_species figure.selected p {
+    color: #282828;
+}
+
+.invisible {
+    display: none;
+}
+
+/**** BGEE CREATIVE COMMONS ****/
+#creativecommons_title {
+    color: #515151;
+    font-weight: bold;
+    font-size: 0.6em;
+}
+
+#creativecommons {
+    display: none;
+}
+
+#creativecommons p {
+    font-size: 0.6em;
+    margin: 2px 2%;
+    color: #515151;
+}
+

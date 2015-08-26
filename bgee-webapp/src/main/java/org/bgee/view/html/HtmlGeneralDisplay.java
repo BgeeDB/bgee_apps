@@ -19,7 +19,7 @@ import org.bgee.view.GeneralDisplay;
  * @author Mathieu Seppey
  * @author Frederic Bastian
  * @author Valentine Rech de Laval
- * @version Bgee 13, June 2015
+ * @version Bgee 13, August 2015
  * @since Bgee 13
  */
 public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisplay {
@@ -47,14 +47,14 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     @Override
     public void displayHomePage() {
         log.entry();
-        this.startDisplay("Welcome on Bgee: a dataBase for Gene Expression Evolution");
+        this.startDisplay("Welcome to Bgee: a dataBase for Gene Expression Evolution");
 
         //TODO: manage the version either from database, or from bgee-webapp.properties file.
-        this.writeln("<h1>Welcome on the latest release of Bgee, Bgee release 13.1</h1>");
+        this.writeln("<h1>Welcome to Bgee release 13.1</h1>");
         
         this.writeln(this.displayHomePageSpecies());
 
-        this.writeln("<h2>Other access to data</h2>");
+        this.writeln("<h2>Browse Bgee content</h2>");
         this.writeln("<div class='bgee_section'>");
 
         RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
@@ -81,12 +81,14 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         this.writeln(this.getMainDocumentationLogo());
         this.writeln("</div>");
 
-        this.writeln("</div>"); //end of Other access to data
+        this.writeln("</div>"); // close Browse Bgee content
 
         this.writeln("<h2>News</h2>" +
                      "<span class='header_details'>(features are being added incrementally)</span>");
         this.writeln("<div id='bgee_news' class='bgee_section'>");
-        this.writeln("<ul><li>2015-06-08: release of Bgee release 13.1: "
+        this.writeln("<ul>");
+        this.writeln("<li>2015-08-26: update of the home page.</li>");
+        this.writeln("<li>2015-06-08: release of Bgee release 13.1: "
                 + "<ul>"
                 + "<li>Update of the website interfaces.</li>"
                 + "<li><a href='" + urlDownloadProcValuesGenerator.getRequestURL() 
@@ -166,7 +168,8 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
         StringBuffer s = new StringBuffer(); 
         s.append("<div id='bgee_uniq_species'> ");
-        s.append("<h2>Species</h2>");            
+        s.append("<h2>Species with data in Bgee</h2>");
+        s.append("<span class='header_details'>(click on one species to see more details)</span>");
         s.append("<div class='bgee_section bgee_download_section'>");
         s.append(generateSpeciesFigure(9606));
         s.append(generateSpeciesFigure(10090));
@@ -594,72 +597,34 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         
         // Cross to close the banner
         banner.append("<div id='bgee_data_selection_cross'>");
-        banner.append("<a id='switch_page_link' href=''></a>");
         banner.append("<img src='" + this.prop.getImagesRootDirectory() + "cross.png' " +
                 "title='Close banner' alt='Cross' />");
         banner.append("</div>");
-        
-        // Section on the left of the black banner: image for single species or patchwork for group
-        banner.append("<div id='bgee_data_selection_img'></div>");
     
         // Section on the right of the black banner
         banner.append("<div id='bgee_data_selection_text'>");
         banner.append("<h1 class='scientificname'></h1><h1 class='commonname'></h1>");
-        banner.append("<p class='groupdescription'></p>");
+
+        RequestParameters urlProcExprValues = this.getNewRequestParameters();
+        urlProcExprValues.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlProcExprValues.setAction(RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES);
+        RequestParameters urlGeneExprCalls = this.getNewRequestParameters();
+        urlGeneExprCalls.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlGeneExprCalls.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
+
+        banner.append("<ul>");
+        banner.append("<li><img class='bullet_point' src='" + this.prop.getImagesRootDirectory() + "arrow.png' alt='Arrow' />" +
+                "<a id='processed_expression_values_link' class='data_page_link' href='" +
+                urlProcExprValues.getRequestURL() + "' title='Bgee processed expression values'>" +
+                "Browse to RNA-Seq and Affymetrix data</a></li>");
+        banner.append("<li><img class='bullet_point' src='" + this.prop.getImagesRootDirectory() + "arrow.png' alt='Arrow' />" +
+                "<a id='gene_expression_calls_link' class='data_page_link' href='" +
+                urlGeneExprCalls.getRequestURL() +
+                "' title='Bgee gene expression calls'>Browse to gene expression calls</a></li>");
+        banner.append("</ul>");
         
-        // RNA-Seq data
-        banner.append("<div class='bgee_download_file_buttons'>");
-
-        banner.append("<h2>RNA-Seq data</h2>");
-        banner.append("<p id='rnaseq_no_data' class='no_data'>No data</p>");
-
-        //data section
-        banner.append("<div id='rnaseq_data'>");
-        banner.append("<a id='rnaseq_annot_csv' class='download_link' href='' download></a>" +
-                "<a id='rnaseq_data_csv' class='download_link' href='' download></a>");
-        banner.append("<p class='file_info'>Files can also be retrieved per experiment, "
-                //href will be filed by the javascript.
-                + "see <a id='rna_seq_data_root_link' title='Retrieve RNA-Seq data "
-                + "per experiment for this species'>RNA-Seq data directory</a>.</p>");
-        banner.append("</div>"); //end data section
-
-        banner.append("</div>"); // end RNA-Seq data
-
-        // Affymetrix data
-        banner.append("<div class='bgee_download_file_buttons'>");
-        banner.append("<h2>Affymetrix data</h2>");
-        banner.append("<p id='affy_no_data' class='no_data'>No data</p>");
-
-        //data section
-        banner.append("<div id='affy_data'>"); 
-        banner.append("<a id='affy_annot_csv' class='download_link' href='' download></a>" +
-                "<a id='affy_data_csv' class='download_link' href='' download></a>");
-        banner.append("<p class='file_info'>Files can also be retrieved per experiment, "
-                //href will be filed by the javascript.
-                + "see <a id='affy_data_root_link' title='Retrieve Affymetrix data "
-                + "per experiment for this species'>Affymetrix data directory</a>.</p>");
-        banner.append("</div>"); // end of data section
-
-        banner.append("</div>"); // end of Affy data
-
-        // Gene expression calls
-        banner.append("<div class='bgee_download_file_buttons'>");
-        banner.append("<h2>Gene expression calls</h2>");            
-        //data section
-        banner.append("<div id='gene_expression_calls_data'>"); 
-        RequestParameters urlGenerator = this.getNewRequestParameters();
-        urlGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
-        urlGenerator.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
-        banner.append("<a id='gene_expression_calls_link' class='download_link' href='" + 
-                urlGenerator.getRequestURL() + 
-                "' title='See Bgee gene expression calls'>See gene expression calls</a>");
-        banner.append("</div>"); // end of data section
-
-        banner.append("</div>"); // end of Gene expression calls
-
-
-        banner.append("</div>");
-        banner.append("</div>");
+        banner.append("</div>"); // close bgee_data_selection_text
+        banner.append("</div>"); // close 
 
         return log.exit(banner.toString());
     }
@@ -715,7 +680,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     protected void includeJs() {
         log.entry();
         super.includeJs();
-        this.includeJs("download.js");
+        this.includeJs("general.js");
         log.exit();
     }
 
@@ -724,7 +689,6 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         log.entry();
         super.includeCss();
         this.includeCss("general.css");
-        this.includeCss("download.css");
         log.exit();
     }
 }

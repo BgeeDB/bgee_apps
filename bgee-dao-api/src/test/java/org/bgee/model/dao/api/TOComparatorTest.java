@@ -22,6 +22,8 @@ import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO.Domain;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
+import org.bgee.model.dao.api.keyword.KeywordDAO.EntityToKeywordTO;
+import org.bgee.model.dao.api.keyword.KeywordDAO.KeywordTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType;
@@ -440,5 +442,44 @@ public class TOComparatorTest extends TestAncestor {
                 DataState.HIGHQUALITY, 0.05f, 2, 0, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                 DataState.LOWQUALITY, 0.05f, 1, 0);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+    }
+
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * using {@code KeywordTO}s.
+     */
+    @Test
+    public void testAreKeywordTOEqual() {
+        KeywordTO to1 = new KeywordTO("ID:1", "name1");
+        KeywordTO to2 = new KeywordTO("ID:1", "name1");
+        assertTrue(TOComparator.areTOsEqual(to1, to2, true));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+
+        to2 = new KeywordTO("ID:2", "name1");
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+
+        to2 = new KeywordTO("ID:1", "name2");
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        
+        to2 = new KeywordTO("ID:2", "name1");
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+    }
+
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * using {@code EntityToKeywordTO}s.
+     */
+    @Test
+    public void testAreEntityToKeywordTOEqual() {
+        EntityToKeywordTO to1 = new EntityToKeywordTO("ID:1", "SP:1");
+        EntityToKeywordTO to2 = new EntityToKeywordTO("ID:1", "SP:1");
+        assertTrue(TOComparator.areTOsEqual(to1, to2));
+
+        to2 = new EntityToKeywordTO("ID:2", "SP:1");
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+
+        to2 = new EntityToKeywordTO("ID:1", "SP:2");
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
     }
 }

@@ -21,6 +21,8 @@ import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCal
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
+import org.bgee.model.dao.api.keyword.KeywordDAO.EntityToKeywordTO;
+import org.bgee.model.dao.api.keyword.KeywordDAO.KeywordTO;
 import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTO;
 import org.bgee.model.dao.api.ontologycommon.EvidenceOntologyDAO.ECOTermTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
@@ -141,6 +143,10 @@ public class TOComparator {
             return log.exit(areTOsEqual(
                     (SummarySimilarityAnnotationTO) to1, 
                     (SummarySimilarityAnnotationTO) to2));
+        } else if (to1 instanceof KeywordTO) {
+            return log.exit(areTOsEqual((KeywordTO) to1, (KeywordTO) to2, compareId));
+        } else if (to1 instanceof EntityToKeywordTO) {
+            return log.exit(areTOsEqual((EntityToKeywordTO) to1, (EntityToKeywordTO) to2));
         }
         throw log.throwing(new IllegalArgumentException("There is no comparison method " +
                 "implemented for TransferObject " + to1.getClass() + ", you must implement one"));
@@ -704,7 +710,7 @@ public class TOComparator {
      */
     private static boolean areTOsEqual(ECOTermTO to1, ECOTermTO to2, 
             boolean compareId) {
-        log.entry(to1, to2);
+        log.entry(to1, to2, compareId);
         return log.exit(TOComparator.areEntityTOsEqual(to1, to2, compareId));
     }
 
@@ -748,6 +754,37 @@ public class TOComparator {
             StringUtils.equals(to1.getTaxonId(), to2.getTaxonId()) &&
             to1.isNegated() == to2.isNegated() &&
             StringUtils.equals(to1.getCIOId(), to2.getCIOId())) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
+     * Method to compare two {@code KeywordTO}s, to check for complete 
+     * equality of each attribute. 
+     * 
+     * @param to1       A {@code KeywordTO} to be compared to {@code to2}.
+     * @param to2       A {@code KeywordTO} to be compared to {@code to1}.
+     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be 
+     *                  used for comparisons. 
+     * @return      {@code true} if {@code to1} and {@code to2} have all attributes equal.
+     */
+    private static boolean areTOsEqual(KeywordTO to1, KeywordTO to2, boolean compareId) {
+        log.entry(to1, to2, compareId);
+        return log.exit(TOComparator.areEntityTOsEqual(to1, to2, compareId));
+    }
+    /**
+     * Method to compare two {@code EntityToKeywordTO}s, to check for complete 
+     * equality of each attribute. 
+     * 
+     * @param to1       A {@code EntityToKeywordTO} to be compared to {@code to2}.
+     * @param to2       A {@code EntityToKeywordTO} to be compared to {@code to1}.
+     * @return      {@code true} if {@code to1} and {@code to2} have all attributes equal.
+     */
+    private static boolean areTOsEqual(EntityToKeywordTO to1, EntityToKeywordTO to2) {
+        log.entry(to1, to2);
+        if (StringUtils.equals(to1.getEntityId(), to2.getEntityId()) &&
+                StringUtils.equals(to1.getKeywordId(), to2.getKeywordId())) {
             return log.exit(true);
         }
         return log.exit(false);

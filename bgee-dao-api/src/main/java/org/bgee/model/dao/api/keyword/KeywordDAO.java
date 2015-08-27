@@ -189,5 +189,45 @@ public interface KeywordDAO extends DAO<KeywordDAO.Attribute> {
             return "EntityToKeywordTO[entityID: " + this.getEntityId() 
                     + " - keywordID: " + this.getKeywordId() + "]";
         }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result
+                    + ((entityId == null) ? 0 : entityId.hashCode());
+            result = prime * result
+                    + ((keywordId == null) ? 0 : keywordId.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            EntityToKeywordTO other = (EntityToKeywordTO) obj;
+            if (entityId == null) {
+                if (other.entityId != null) {
+                    return false;
+                }
+            } else if (!entityId.equals(other.entityId)) {
+                return false;
+            }
+            if (keywordId == null) {
+                if (other.keywordId != null) {
+                    return false;
+                }
+            } else if (!keywordId.equals(other.keywordId)) {
+                return false;
+            }
+            return true;
+        }
     }
 }

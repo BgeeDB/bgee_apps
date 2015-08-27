@@ -2830,9 +2830,10 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         // We sort species names by name lengths from the longest to the shortest.
         List<String> speciesNamesOrderedByLength = new ArrayList<String>(orderedSpeciesNames);
         speciesNamesOrderedByLength.sort((s1, s2)-> (s2.length() - s1.length()));
-        assert speciesNamesOrderedByLength.size() == orderedSpeciesNames.size();
         
+        //to do a sanity check on species columns in simple files
         Set<String> speciesFound = new HashSet<String>();
+        
         for (int i = 0; i < header.length; i++) {
             switch (header[i]) {
             // *** attributes common to all file types ***
@@ -2974,10 +2975,10 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         }
         // Verify that we found all species
         if (fileType.isSimpleFileType()) {
-            assert speciesNamesOrderedByLength.removeAll(speciesFound);
-            assert speciesNamesOrderedByLength.isEmpty(): 
-                "Some of the provided species were  not found in the header: " 
-                + speciesNamesOrderedByLength;
+            assert speciesFound.containsAll(speciesNamesOrderedByLength) && 
+                   speciesNamesOrderedByLength.containsAll(speciesFound): 
+                "Some of the provided species were not found in the header: expected: " 
+                + speciesNamesOrderedByLength + " - found: " + speciesFound;
         }
         return log.exit(fieldMapping);
     }

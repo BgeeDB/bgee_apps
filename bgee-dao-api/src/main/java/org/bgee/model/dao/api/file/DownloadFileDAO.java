@@ -19,7 +19,7 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
      * <ul>
      *     <li>{@code ID} corresponds to {@link DownloadFileTO#getId()}</li>
      *     <li>{@code NAME} corresponds to {@link DownloadFileTO#getName()}}</li>
-     *     <li>{@code DESCRIPTION} corresponds to {@link DownloadFileTO#getId()}</li>
+     *     <li>{@code DESCRIPTION} corresponds to {@link DownloadFileTO#getDescription()}</li>
      *     <li>{@code PATH} corresponds to {@link DownloadFileTO#getPath()}}</li>
      *     <li>{@code FILE_SIZE} corresponds to {@link DownloadFileTO#getSize()}}</li>
      *     <li>{@code CATEGORY} corresponds to {@link DownloadFileTO#getCategory()}</li>
@@ -130,12 +130,12 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
         @Override
         public String toString() {
             return "DownloadFile[id="+getId()
-                    +",name="+getName()
-                    +",description=" +getDescription()
-                    +",category="+category+""
-                    +",path="+path
-                    +",size="+size
-                    +",speciesDataGroupId="+speciesDataGroupId;
+                    +", name="+getName()
+                    +", description=" +getDescription()
+                    +", category="+category+""
+                    +", path="+path
+                    +", size="+size
+                    +", speciesDataGroupId="+speciesDataGroupId;
         }
 
         /**

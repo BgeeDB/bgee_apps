@@ -30,7 +30,6 @@ public class MySQLSpeciesDataGroupDAO extends MySQLDAO<SpeciesDataGroupDAO.Attri
      */
     private static final String SPECIES_DATAGROUP_TABLE = "speciesDataGroup";
 
-    //XXX: This map could be part of the MySQLDAO class in the future.
     private static final Map<String, SpeciesDataGroupDAO.Attribute> columnToAttributesMap;
 
     static {
@@ -52,9 +51,8 @@ public class MySQLSpeciesDataGroupDAO extends MySQLDAO<SpeciesDataGroupDAO.Attri
         SpeciesDataGroupDAO.Attribute attribute = columnToAttributesMap.get(columnName);
         if (attribute == null) {
             throw log.throwing(new IllegalArgumentException("Unknown column name : " + columnName));
-        } else {
-            return attribute;
-        }
+        } 
+        return attribute;
     }
 
     /**
@@ -121,7 +119,7 @@ public class MySQLSpeciesDataGroupDAO extends MySQLDAO<SpeciesDataGroupDAO.Attri
     /**
      * The MySQL implementation of the {@code DAOResultSet} interfacte for {@code SpeciesToDataGroupMemberTO}
      */
-    class MySQLSpeciesToDataGroupTOResultSet extends MySQLDAOResultSet<SpeciesToDataGroupMemberTO>
+    class MySQLSpeciesToDataGroupTOResultSet extends MySQLDAOResultSet<SpeciesToDataGroupTO>
             implements SpeciesToDataGroupTOResultSet {
 
         /**
@@ -134,7 +132,7 @@ public class MySQLSpeciesDataGroupDAO extends MySQLDAO<SpeciesDataGroupDAO.Attri
         }
 
         @Override
-        protected SpeciesToDataGroupMemberTO getNewTO() throws DAOException {
+        protected SpeciesToDataGroupTO getNewTO() throws DAOException {
             log.entry();
             try {
                 final ResultSet currentResultSet = this.getCurrentResultSet();
@@ -154,7 +152,7 @@ public class MySQLSpeciesDataGroupDAO extends MySQLDAO<SpeciesDataGroupDAO.Attri
                             log.throwing(new UnrecognizedColumnException(columnName));
                     }
                 }
-                return log.exit(new SpeciesToDataGroupMemberTO(groupId, speciesId));
+                return log.exit(new SpeciesToDataGroupTO(groupId, speciesId));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }

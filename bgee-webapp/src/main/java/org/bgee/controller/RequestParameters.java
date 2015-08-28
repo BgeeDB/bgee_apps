@@ -651,7 +651,7 @@ public class RequestParameters {
                 lock.readLock().lock();
             }
             try (BufferedReader br = new BufferedReader(new FileReader(
-                    prop.getRequestParametersStorageDirectory() + File.separator + key))) {
+                    prop.getRequestParametersStorageDirectory() + key))) {
                 String retrievedQueryString;
                 //just one line in the file, a query string including storable parameters, 
                 //that will be used to recover storable parameters
@@ -699,7 +699,7 @@ public class RequestParameters {
                     + "RequestParameters object");
         }
         //first check whether these parameters have already been serialized
-        File storageFile = new File(prop.getRequestParametersStorageDirectory() + File.separator 
+        File storageFile = new File(prop.getRequestParametersStorageDirectory() 
                 + this.getFirstValue(this.getKeyParam()));
         if (storageFile.exists()) {
             //file already exists, no need to continue
@@ -715,7 +715,7 @@ public class RequestParameters {
                 lock.writeLock().lock();
             }
             try (BufferedWriter bufferedWriter = new BufferedWriter(
-                    new FileWriter(prop.getRequestParametersStorageDirectory() + File.separator
+                    new FileWriter(prop.getRequestParametersStorageDirectory() 
                             + this.getFirstValue(this.getKeyParam())))) {
                 // decode the parameters, so the value written is the real encoding independent
                 // value.
@@ -724,7 +724,7 @@ public class RequestParameters {
             }
         } catch (IOException e) {
             //delete the file if something went wrong
-            storageFile = new File(prop.getRequestParametersStorageDirectory() + File.separator
+            storageFile = new File(prop.getRequestParametersStorageDirectory() 
                     + this.getFirstValue(this.getKeyParam()));
             if (storageFile.exists()) {
                 storageFile.delete();

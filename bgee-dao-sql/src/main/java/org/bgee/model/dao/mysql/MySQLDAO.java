@@ -175,7 +175,7 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
      * Get the 'select_expr' of a SELECT clause corresponding to the {@code Attribute} {@code attr}.
      * The mapping is retrieved from {@code selectExprsToAttributes}. This helper method  
      * is most likely used when writing a SQL query. See also the simple helper method 
-     * {@link #generateSelectClause()}.
+     * {@link #generateSelectClause(String, Map)}.
      * <p>
      * See {@link #getAttributeFromColName(String, Map)} for the opposite helper method, 
      * that can be used to retrieve the {@code Attribute} corresponding to the column name of a result set. 

@@ -14,8 +14,8 @@ import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.GlobalExpressionToExpressionTO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.GlobalNoExpressionToNoExpressionTO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
-import org.bgee.model.dao.api.file.DownloadFileDAO;
-import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
+import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO;
+import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesDataGroupTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
@@ -149,13 +149,13 @@ public class TOComparator {
             return log.exit(areTOsEqual((KeywordTO) to1, (KeywordTO) to2, compareId));
         } else if (to1 instanceof EntityToKeywordTO) {
             return log.exit(areTOsEqual((EntityToKeywordTO) to1, (EntityToKeywordTO) to2));
-        } else if (to1 instanceof DownloadFileDAO.DownloadFileTO) {
-            return log.exit(areTOsEqual( (DownloadFileDAO.DownloadFileTO)to1, (DownloadFileDAO.DownloadFileTO) to2));
-        } else if (to2 instanceof SpeciesDataGroupDAO.SpeciesDataGroupTO) {
-            return log.exit(areTOsEqual((SpeciesDataGroupDAO.SpeciesDataGroupTO) to1,(SpeciesDataGroupDAO.SpeciesDataGroupTO) to2));
+        } else if (to1 instanceof DownloadFileTO) {
+            return log.exit(areTOsEqual( (DownloadFileTO)to1, (DownloadFileTO) to2, compareId));
+        } else if (to2 instanceof SpeciesDataGroupTO) {
+            return log.exit(areTOsEqual((SpeciesDataGroupTO) to1,(SpeciesDataGroupTO) to2, compareId));
         }
 
-    throw log.throwing(new IllegalArgumentException("There is no comparison method " +
+        throw log.throwing(new IllegalArgumentException("There is no comparison method " +
                 "implemented for TransferObject " + to1.getClass() + ", you must implement one"));
     }
     /**
@@ -451,24 +451,20 @@ public class TOComparator {
         return log.exit(false);
     }
 
-    private static boolean areTOsEqual(DownloadFileDAO.DownloadFileTO to1, DownloadFileDAO.DownloadFileTO to2){
-        log.entry();
-        return log.exit(to1.getCategory() == to2.getCategory()
+    private static boolean areTOsEqual(DownloadFileTO to1, DownloadFileTO to2, boolean compareId){
+        log.entry(to1, to2, compareId);
+        return log.exit(TOComparator.areEntityTOsEqual(to1, to2, compareId) && 
+                to1.getCategory() == to2.getCategory()
                 && StringUtils.equals(to1.getPath(), to2.getPath())
-                && StringUtils.equals(to1.getDescription(), to2.getDescription())
-                && StringUtils.equals(to1.getName(), to2.getName())
-                && StringUtils.equals(to1.getId(), to2.getId())
                 && to1.getSize() == to2.getSize()
                 && StringUtils.equals(to1.getSpeciesDataGroupId(), to2.getSpeciesDataGroupId())
         );
     }
 
-    private static boolean areTOsEqual(SpeciesDataGroupDAO.SpeciesDataGroupTO to1, SpeciesDataGroupDAO.SpeciesDataGroupTO to2){
-        log.entry();
-        return log.exit(StringUtils.equals(to1.getId(),to2.getId())
-                        && StringUtils.equals(to1.getName(), to2.getName())
-                        && StringUtils.equals(to1.getDescription(), to2.getDescription())
-        );
+    private static boolean areTOsEqual(SpeciesDataGroupTO to1, SpeciesDataGroupTO to2, 
+            boolean compareId){
+        log.entry(to1, to2, compareId);
+        return log.exit(TOComparator.areEntityTOsEqual(to1, to2, compareId));
     }
     /**
      * Method to compare two {@code StageTO}s, to check for complete equality of each

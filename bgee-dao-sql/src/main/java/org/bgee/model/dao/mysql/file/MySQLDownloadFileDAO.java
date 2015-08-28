@@ -27,7 +27,6 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
      */
     private static final Logger log = LogManager.getLogger(MySQLDownloadFileDAO.class.getName());
 
-    //XXX: This map could be part of the MySQLDAO class in the future.
     private static final Map<String, DownloadFileDAO.Attribute> colToAttributesMap;
 
     /**
@@ -57,9 +56,8 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
         DownloadFileDAO.Attribute attribute = colToAttributesMap.get(columnName);
         if (attribute == null) {
             throw log.throwing(new IllegalArgumentException("Unknown column name : " + columnName));
-        } else {
-            return attribute;
-        }
+        } 
+        return attribute;
     }
 
     /**

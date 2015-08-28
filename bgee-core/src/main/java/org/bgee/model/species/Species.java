@@ -1,7 +1,6 @@
 package org.bgee.model.species;
 
 import org.bgee.model.Entity;
-import org.bgee.model.dao.api.species.SpeciesDAO;
 
 /**
  * Class allowing to describe species used in Bgee.

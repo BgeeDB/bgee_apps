@@ -37,8 +37,10 @@ public class MySQLDownloadFileDAOIT extends MySQLITAncestor {
 
         List<DownloadFileDAO.DownloadFileTO> allDownloadFiles = dao.getAllDownloadFiles().getAllTOs();
         List<DownloadFileDAO.DownloadFileTO> expectedDownloadFiles = Arrays.asList(
-                new DownloadFileDAO.DownloadFileTO("1","file1.zip","this is file1", "/dir/to/file1","0", DownloadFileDAO.DownloadFileTO.CategoryEnum.EXPR_CALLS,"1"),
-                new DownloadFileDAO.DownloadFileTO("2","file2.zip","this is file2", "/dir/to/file2","0", DownloadFileDAO.DownloadFileTO.CategoryEnum.EXPR_CALLS,"2")
+                new DownloadFileDAO.DownloadFileTO("1", "file1.zip", "this is file1", "/dir/to/file1", "0", 
+                        DownloadFileDAO.DownloadFileTO.CategoryEnum.EXPR_CALLS,"1"),
+                new DownloadFileDAO.DownloadFileTO("2", "file2.zip", "this is file2", "/dir/to/file2", "0", 
+                        DownloadFileDAO.DownloadFileTO.CategoryEnum.EXPR_CALLS,"2")
         );
 
         assertTrue("DownloadFileTOs are incorrectly retrieved\nGOT\n"+allDownloadFiles+"\nEXPECTED\n"+expectedDownloadFiles,

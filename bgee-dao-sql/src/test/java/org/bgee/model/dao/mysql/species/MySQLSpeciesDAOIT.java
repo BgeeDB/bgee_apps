@@ -142,7 +142,7 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
     }
     
     /**
-     * Test the select method {@link MySQLSpeciesDAO#getSpeciesByIds(Set)}}.
+     * Test the select method {@link MySQLSpeciesDAO#getSpeciesByIds(Set)}.
      */
     @Test
     public void shouldGetSpeciesByIds() throws SQLException {

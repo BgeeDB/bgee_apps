@@ -58,14 +58,14 @@ public interface SpeciesDataGroupDAO extends DAO<SpeciesDataGroupDAO.Attribute> 
     /**
      * The {@code DAOResultSet} specific to {@code SpeciesToDataGroupMemberTO}
      */
-    interface SpeciesToDataGroupTOResultSet extends DAOResultSet<SpeciesToDataGroupMemberTO> {
+    interface SpeciesToDataGroupTOResultSet extends DAOResultSet<SpeciesToDataGroupTO> {
 
     }
 
     /**
      * The {@code TransferObject} representing the species to datagroup mapping.
      */
-    class SpeciesToDataGroupMemberTO extends TransferObject {
+    class SpeciesToDataGroupTO extends TransferObject {
 
         private static final long serialVersionUID = -2919214324L;
 
@@ -81,10 +81,10 @@ public interface SpeciesDataGroupDAO extends DAO<SpeciesDataGroupDAO.Attribute> 
 
         /**
          * Default constructor.
-         * @param groupId The id of the species data group
          * @param speciesId The id of the species
+         * @param groupId The id of the species data group
          */
-        public SpeciesToDataGroupMemberTO(String groupId, String speciesId) {
+        public SpeciesToDataGroupTO(String speciesId, String groupId) {
             this.groupId = groupId;
             this.speciesId = speciesId;
         }

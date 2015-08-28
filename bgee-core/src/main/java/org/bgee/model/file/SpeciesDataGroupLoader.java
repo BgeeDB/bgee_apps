@@ -53,10 +53,10 @@ public class SpeciesDataGroupLoader {
      * @return
      */
     private static Map<String, List<Species>> buildGroupToSpeciesMap(
-            List<SpeciesDataGroupDAO.SpeciesToDataGroupMemberTO> list, Map<String, Species> speciesMap) {
+            List<SpeciesDataGroupDAO.SpeciesToDataGroupTO> list, Map<String, Species> speciesMap) {
         Map<String, List<Species>> result = new HashMap<>();
 
-        for (SpeciesDataGroupDAO.SpeciesToDataGroupMemberTO e : list) {
+        for (SpeciesDataGroupDAO.SpeciesToDataGroupTO e : list) {
             String group = e.getGroupId();
             Species species = speciesMap.get(e.getSpeciesId());
             List<Species> members = result.get(group);

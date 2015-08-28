@@ -375,6 +375,22 @@ BEGIN
         VALUES ('ECO:1', 'name1', 'desc1'),
                ('ECO:2', 'name2', null),
                ('ECO:3', 'name3', 'desc3');
+               
+-- KEYWORD
+        INSERT INTO keyword(keywordId, keyword) 
+        VALUES (1, 'keywordRelatedToNothing'), 
+               (2, 'keywordRelatedToSpecies11'), 
+               (3, 'keywordRelatedToSpecies11_2'), 
+               (4, 'keywordRelatedToSpecies21'), 
+               (5, 'keywordRelatedToSpecies11And21');
+        
+        INSERT INTO speciesToKeyword(speciesId, keywordId) 
+        VALUES (11, 2), 
+               (11, 3), 
+               (21, 4), 
+               (11, 5), 
+               (21, 5);
+                
     END IF; 
 END
 ;
@@ -460,12 +476,14 @@ DELETE FROM stage;
 
 -- TAXONOMY
 DELETE FROM species;
+DELETE FROM speciesToKeyword;
 DELETE FROM taxon;
 
 -- GENERAL
-DELETE FROM keyword;
 DELETE FROM author;
 DELETE FROM dataSource;
+DELETE FROM keyword;
+
 
 END
 ;

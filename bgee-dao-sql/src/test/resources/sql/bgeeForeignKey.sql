@@ -9,6 +9,12 @@ alter table species
 add foreign key (taxonId) references taxon(taxonId) on delete cascade;
 /*!40000 ALTER TABLE `species` ENABLE KEYS */;
 
+/*!40000 ALTER TABLE `speciesToKeyword` DISABLE KEYS */;
+alter table speciesToKeyword 
+add foreign key (speciesId) references species(speciesId) on delete cascade, 
+add foreign key (keywordId) references keyword(keywordId) on delete cascade;
+/*!40000 ALTER TABLE `speciesToKeyword` ENABLE KEYS */;
+
 --  ****************************************************
 --  CONFIDENCE AND EVIDENCE ONTOLOGIES
 --  ****************************************************

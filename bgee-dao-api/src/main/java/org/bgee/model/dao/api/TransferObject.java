@@ -18,6 +18,10 @@ import org.apache.logging.log4j.Logger;
  * @version Bgee 13
  * @since Bgee 01
  */
+//XXX: if you add non-static attributes to this class, you will need 
+//to implement hashCode and equals methods. In that case, you must also 
+//update all classes extending TransferObject, in order to make them call 
+//super.hashCode and super.equals.
 public abstract class TransferObject implements Serializable {
     
     private static final long serialVersionUID = 3679182128027053390L;

@@ -190,7 +190,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
 
         this.writeln("<h1>Bgee release 13 documentation pages</h1>");
 
-        this.writeln("<div id='feature_list'>");
+        this.writeln("<div class='feature_list'>");
 
         this.writeln(this.getFeatureDocumentationLogos());
 
@@ -247,7 +247,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         urlDownloadCallsGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
         urlDownloadCallsGenerator.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
         
-        this.writeln("<div id='feature_list'>");
+        this.writeln("<div class='feature_list'>");
         
         this.writeln(this.getFeatureDownloadLogos());
 

@@ -252,7 +252,7 @@ span.header_details {
     margin-left: 0.5em;
 }
 
-#feature_list {
+.feature_list {
 	display: table;
 	width: 100%;
 	text-align: center;
@@ -260,17 +260,17 @@ span.header_details {
 	margin-bottom: 30px;
 }
 
-#feature_list figure {
+.feature_list figure {
     vertical-align: top; 
 }
 
-#feature_list figcaption {
+.feature_list figcaption {
     margin-top: 10px;
     text-align: center;
     font-weight: bold;
 }
 
-#feature_list img {
+.feature_list img {
     border-radius: 8px;
     height: 120px;
     width: 120px;
@@ -278,27 +278,27 @@ span.header_details {
     box-shadow: 4px 4px 6px 0px #555;
 }
 
-#feature_list img:hover {
+.feature_list img:hover {
     box-shadow: 0px 0px 10px 4px #920209;
 }
 
 /* TODO: how to make sure that, when one of the figcaption is too long 
 and uses 2 lines, but not the others, all the p elements below the figcaptions 
 have the same vertical alignment?*/
-#feature_list p {
+.feature_list p {
     margin-left: auto;
     margin-right: auto;
     width: 90%;
 }
 
-#feature_list .single_feature {
+.feature_list .single_feature {
     display: table-cell;
     text-align: center;
     vertical-align: top;
     table-layout: fixed;
 }
 
-#feature_list a {
+.feature_list a {
 	text-decoration: none;
 }
 

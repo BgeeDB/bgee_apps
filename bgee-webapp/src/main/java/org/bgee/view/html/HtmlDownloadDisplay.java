@@ -129,7 +129,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
         this.writeln("<h1>Bgee download page</h1>");
 
-        this.writeln("<div id='feature_list'>");
+        this.writeln("<div class='feature_list'>");
         this.writeln(this.getFeatureDownloadLogos());
         this.writeln("</div>");
         
@@ -228,7 +228,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      * Return the introduction text for pages providing download files in HTML. 
      * This HTML contains only 'p' elements, and text.
      * 
-     * @param pageType  A {@code DownloadPageType} defining for which type od download page 
+     * @param pageType  A {@code DownloadPageType} defining for which type of download page 
      *                  the introduction text should be generated.
      * @return          A {@code String} that is an introduction text for {@code pageType}, 
      *                  in HTML.
@@ -360,7 +360,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      *                  according {@code pageType}.
      */
     private String getMultiSpeciesSection(DownloadPageType pageType) {
-        log.entry();
+        log.entry(pageType);
 
         StringBuffer s = new StringBuffer(); 
         s.append("<div id='bgee_multi_species'>");
@@ -504,7 +504,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             banner.append("<div id='single_complete_diffexpr_development_headers' class='header_table'>" + 
                     HtmlDocumentationCallFile.getSingleSpeciesCompleteDiffExprFileHeaderDesc() + "</div>");
             banner.append("</div>");            
-        } else {
+        } else if (pageType.equals(DownloadPageType.PROC_EXPR_VALUES)) {
             // RNA-Seq data
             banner.append("<div class='bgee_download_file_buttons'>");
             
@@ -574,6 +574,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                     this.getShowHeaderLink("show_est_data_headers") +
                     "</div>");
             banner.append("</div>");            
+        } else {
+            assert false: "Unknown DownloadPageType";
         }
         
         banner.append("</div>");
@@ -658,7 +660,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      *                      provided {@code int} of a species ID.
      */
     private String generateSpeciesFigure(int speciesId, DownloadPageType pageType) {
-        log.entry(speciesId);
+        log.entry(speciesId, pageType);
         return log.exit(generateSpeciesFigure(Arrays.asList(speciesId), null, false, pageType));
     }
 
@@ -1100,7 +1102,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      * @return          A {@code String} that is data according to the given species ID.
      */
     private String getSingleSpeciesFileData(int speciesId, DownloadPageType pageType) {
-        log.entry(speciesId);
+        log.entry(speciesId, pageType);
         
         String exprSimpleFileSize = null, exprCompleteFileSize = null, 
                 diffExprAnatSimpleFileSize = null, diffExprAnatCompleteFileSize = null, 
@@ -1379,7 +1381,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 //                        "' data-bgeeestannotfilesize='" + estAnnotFileSize + "'"); 
 //            }
         } else {
-            //TODO what to do?  
+            assert false: "Unknown DownloadPageType";
         }
         
         return log.exit(data.toString());

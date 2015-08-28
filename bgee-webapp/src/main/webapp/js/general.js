@@ -41,7 +41,7 @@ var general = {
         init: function() {
             // Fetch all needed elements from the DOM
             this.$container = $( "html, body" );
-            this.$species = $( "figure" );
+            this.$species = $( "#bgee_uniq_species figure" );
             // bgee_data_selection
             this.$bgeeDataSelection = $( "#bgee_data_selection" );
             this.$bgeeDataSelectionCross = $( "#bgee_data_selection_cross" );

@@ -1307,8 +1307,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         
         
         StringBuffer data = new StringBuffer();
-        String extension = ".tsv.zip";
         if (pageType.equals(DownloadPageType.EXPR_CALLS)) {
+            String extension = ".tsv.zip";
             // TODO: remove hardcoded "_" in file names. 
             // Use BgeeProperties... or RequestParameters ? or static variables?
             String beginExprFilePath = this.prop.getDownloadExprFilesRootDirectory() + latinName + "_";
@@ -1339,6 +1339,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             }
 
         } else if (pageType.equals(DownloadPageType.PROC_EXPR_VALUES)) {
+            String extension = ".zip";
             if (rnaSeqDataFileSize != null) {
                 String rnaSeqProcValueDir = this.prop.getDownloadRNASeqProcExprValueFilesRootDirectory()
                         + latinName + "/";

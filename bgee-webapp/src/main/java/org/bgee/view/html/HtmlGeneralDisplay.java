@@ -169,7 +169,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         StringBuffer s = new StringBuffer(); 
         s.append("<div id='bgee_uniq_species'> ");
         s.append("<h2>Species with data in Bgee</h2>");
-        s.append("<span class='header_details'>(click on one species to see more details)</span>");
+        s.append("<span class='header_details'>(click on species to see more details)</span>");
         s.append("<div class='bgee_section bgee_download_section'>");
         s.append(generateSpeciesFigure(9606));
         s.append(generateSpeciesFigure(10090));
@@ -616,11 +616,11 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         banner.append("<li><img class='bullet_point' src='" + this.prop.getImagesRootDirectory() + "arrow.png' alt='Arrow' />" +
                 "<a id='processed_expression_values_link' class='data_page_link' href='" +
                 urlProcExprValues.getRequestURL() + "' title='Bgee processed expression values'>" +
-                "Browse to RNA-Seq and Affymetrix data</a></li>");
+                "See RNA-Seq and Affymetrix data</a></li>");
         banner.append("<li><img class='bullet_point' src='" + this.prop.getImagesRootDirectory() + "arrow.png' alt='Arrow' />" +
                 "<a id='gene_expression_calls_link' class='data_page_link' href='" +
                 urlGeneExprCalls.getRequestURL() +
-                "' title='Bgee gene expression calls'>Browse to gene expression calls</a></li>");
+                "' title='Bgee gene expression calls'>See gene expression calls</a></li>");
         banner.append("</ul>");
         
         banner.append("</div>"); // close bgee_data_selection_text

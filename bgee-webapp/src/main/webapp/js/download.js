@@ -4,6 +4,7 @@
  * It is run when the document is fully loaded by using the jQuery method ready()
  * 
  * @author Mathieu Seppey
+ * @author Valentine Rech de Laval
  * @version Bgee 13, Jul 2014
  */
 //Declaration of an object literal to contain the download page specific code.
@@ -350,7 +351,7 @@ var download = {
         		requestSwitchPage.addValue(urlParameters.getParamAction(), 
         				requestSwitchPage.ACTION_DOWLOAD_PROC_VALUE_FILES());
         		this.$switchPageLink.text( "See processed expression values" );
-        	} else {
+        	} else if ( this.$refExpr.length > 0 ) {
         		requestSwitchPage.addValue(urlParameters.getParamPage(), 
         				requestSwitchPage.PAGE_DOWNLOAD());
         		requestSwitchPage.addValue(urlParameters.getParamAction(), 

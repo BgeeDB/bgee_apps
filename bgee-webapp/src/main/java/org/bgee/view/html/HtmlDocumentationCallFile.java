@@ -1683,8 +1683,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeln("</li>");              //end of diff expression        
         this.writeln("</ul></li>");     // end of multi-species section
 
-        this.writeln("<li><a href='#troubleshooting' title='Quick jump to this section'>" + 
-                "Troubleshooting</a>");
+//        this.writeln("<li><a href='#troubleshooting' title='Quick jump to this section'>" + 
+//                "Troubleshooting</a>");
         this.writeln("</ul></div>");// end of documentationmenu
         
         log.exit();

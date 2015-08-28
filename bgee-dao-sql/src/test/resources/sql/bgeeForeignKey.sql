@@ -364,3 +364,21 @@ add foreign key (deaSampleGroupId) references deaSampleGroup(deaSampleGroupId) o
 add foreign key (differentialExpressionId) references differentialExpression(differentialExpressionId) on delete set null;
 /*!40000 ALTER TABLE `deaRNASeqSummary` ENABLE KEYS */;
 
+/*!40000 ALTER TABLE `downloadFile` DISABLE KEYS */;
+alter table downloadFile
+add foreign key (speciesDataGroupId) references speciesDataGroup(speciesDataGroupId) on delete cascade;
+/*!40000 ALTER TABLE `downloadFile` ENABLE KEYS */;
+
+/*!40000 ALTER TABLE `speciesToKeyword` DISABLE KEYS */;
+alter table speciesToKeyword
+add foreign key (speciesId) references species(speciesId) on delete cascade,
+add foreign key (keywordId) references keyword(keywordId) on delete cascade;
+/*!40000 ALTER TABLE `speciesToKeyword` ENABLE KEYS */;
+
+/*!40000 ALTER TABLE `speciesToDataGroup` DISABLE KEYS */;
+alter table speciesToDataGroup
+add foreign key (speciesId) references species(speciesId) on delete cascade,
+add foreign key (speciesDataGroupId) references speciesDataGroup(speciesDataGroupId) on delete cascade;
+/*!40000 ALTER TABLE `speciesToDataGroup` ENABLE KEYS */;
+
+

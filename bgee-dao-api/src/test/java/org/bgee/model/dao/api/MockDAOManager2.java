@@ -15,6 +15,8 @@ import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixProbesetDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultDAO;
+import org.bgee.model.dao.api.file.DownloadFileDAO;
+import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
@@ -33,7 +35,7 @@ import static org.mockito.Mockito.mock;
  * {@code META-INF/services/org.bgee.model.dao.api.DAOManager}. 
  * <p>
  * All methods delegate to the mocked {@code DAOManager} stored 
- * in the public attribute {@link mockManager}, which should thus be used to specify 
+ * in the public attribute {@code mockManager}, which should thus be used to specify
  * the expected behaviors to mock. 
  * <p>
  * This class is the same than {@link MockDAOManager}, but is used to test the behavior 
@@ -55,7 +57,7 @@ public class MockDAOManager2 extends DAOManager {
 	/**
 	 * This static mocked {@code DAOManager} is needed because we sometimes 
 	 * need to specify mocked behavior before acquiring a instance 
-	 * (notably to test {@link DAOManager#gtDAOManager()}).
+	 * (notably to test {@link DAOManager#getDAOManager()}).
 	 */
 	public static final DAOManager mockManager = mock(DAOManager.class);
 	/**
@@ -179,6 +181,18 @@ public class MockDAOManager2 extends DAOManager {
     protected StageGroupingDAO getNewStageGroupingDAO() {
         return this.instanceMockManager.getNewStageGroupingDAO();
     }
+
+    @Override
+    protected DownloadFileDAO getNewDownloadFileDAO() {
+        return instanceMockManager.getNewDownloadFileDAO();
+    }
+
+    @Override
+    protected SpeciesDataGroupDAO getNewSpeciesDataGroupDAO() {
+        return instanceMockManager.getNewSpeciesDataGroupDAO();
+    }
+
+
 
     @Override
     public void releaseResources() {

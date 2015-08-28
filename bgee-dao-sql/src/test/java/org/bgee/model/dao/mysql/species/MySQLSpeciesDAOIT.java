@@ -3,11 +3,7 @@ package org.bgee.model.dao.mysql.species;
 import static org.junit.Assert.*;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -141,12 +137,12 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
                 new SpeciesTO(null, "spCName21",null, null,  null, null, null, null), 
                 new SpeciesTO(null, "spCName31", null, null, null, null, null, null)); 
         // Compare
-        assertTrue("SpeciesTOs incorrectly retrieved", 
+        assertTrue("SpeciesTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(methSpecies, expectedSpecies));
     }
     
     /**
-     * Test the select method {@link MySQLSpeciesDAO#getSpeciesByIds(Set)}.
+     * Test the select method {@link MySQLSpeciesDAO#getSpeciesByIds(Set)}}.
      */
     @Test
     public void shouldGetSpeciesByIds() throws SQLException {
@@ -183,5 +179,40 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
         assertTrue("SpeciesTOs incorrectly retrieved, expected: " + expectedSpeciesTOs + 
                 ", but was: " + speciesTOs, 
                 TOComparator.areTOCollectionsEqual(speciesTOs, expectedSpeciesTOs));
+    }
+
+    @Test
+    public void testGetSpeciesInDataGroup() throws SQLException {
+        this.useSelectDB();
+
+        // Generate result with the method
+        MySQLSpeciesDAO dao = new MySQLSpeciesDAO(this.getMySQLDAOManager());
+        List<SpeciesTO> methSpecies = dao.getSpeciesFromDataGroups().getAllTOs();
+
+        // Generate manually expected result
+        List<SpeciesTO> expectedSpecies = Arrays.asList(
+                new SpeciesTO("11", "spCName11", "gen11", "sp11", "111", "path/genome11",
+                        "0", ""),
+                new SpeciesTO("21", "spCName21", "gen21", "sp21", "211", "path/genome21",
+                        "52", "FAKEPREFIX"),
+                new SpeciesTO("31", "spCName31", "gen31", "sp31", "311", "path/genome31",
+                        "0", ""));
+        // Compare
+        assertTrue("SpeciesTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(methSpecies, expectedSpecies));
+
+        dao.clearAttributes();
+        dao.setAttributes(SpeciesDAO.Attribute.COMMON_NAME);
+        methSpecies = dao.getAllSpecies().getAllTOs();
+
+        // Generate manually expected result
+        expectedSpecies = Arrays.asList(
+                new SpeciesTO(null, "spCName11", null, null, null, null, null, null),
+                new SpeciesTO(null, "spCName21",null, null,  null, null, null, null),
+                new SpeciesTO(null, "spCName31", null, null, null, null, null, null));
+        // Compare
+        assertTrue("SpeciesTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(methSpecies, expectedSpecies));
+
     }
 }

@@ -1,5 +1,6 @@
 package org.bgee.model.dao.api.species;
 
+import java.util.Collection;
 import java.util.Set;
 
 import org.bgee.model.dao.api.DAO;
@@ -67,6 +68,13 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
      */
     public SpeciesTOResultSet getSpeciesByIds(Set<String> speciesIds) throws DAOException;
 
+    /**
+     * Retrieve all the species that are part of any data group.
+     * @return A {@link org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet} containing all the species
+     * that are part of at least one species data group.
+     * @throws DAOException
+     */
+    public SpeciesTOResultSet getSpeciesFromDataGroups() throws DAOException;
     /**
      * {@code DAOResultSet} specifics to {@code SpeciesTO}s
      * 

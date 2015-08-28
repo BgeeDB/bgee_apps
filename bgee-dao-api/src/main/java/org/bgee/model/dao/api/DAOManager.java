@@ -31,6 +31,8 @@ import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixProbesetDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultDAO;
+import org.bgee.model.dao.api.file.DownloadFileDAO;
+import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
@@ -793,7 +795,7 @@ public abstract class DAOManager implements AutoCloseable
     /**
      * Atomic operation to set {@link #closed} to {@code true}, 
      * {@link #killed} to {@code true} if the parameter is {@code true},
-     * and to call {@link #removePromPool()}. 
+     * and to remove from the managers pool.
      * This method returns {@code true} if the operations were actually performed, 
      * and {@code false} if this {@code DAOManager} was actually 
      * already closed. 
@@ -1391,4 +1393,18 @@ public abstract class DAOManager implements AutoCloseable
      * @return  A new {@code StageGroupingDAO}
      */
     protected abstract StageGroupingDAO getNewStageGroupingDAO();
+
+	/**
+	 * Service provider must return a new {@link DownloadFileDAO} instance when this method is called
+	 * @return A new {@link DownloadFileDAO}
+	 */
+	protected abstract DownloadFileDAO getNewDownloadFileDAO();
+
+	/**
+	 * Service provider must return a new {@link SpeciesDataGroupDAO} instance when this method is called
+	 * @return A new {@link SpeciesDataGroupDAO}
+	 */
+	protected abstract SpeciesDataGroupDAO getNewSpeciesDataGroupDAO();
+
+
 }

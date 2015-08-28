@@ -1,9 +1,5 @@
 package org.bgee.model.dao.api;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,6 +14,8 @@ import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.GlobalExpressionToExpressionTO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.GlobalNoExpressionToNoExpressionTO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
+import org.bgee.model.dao.api.file.DownloadFileDAO;
+import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
@@ -28,6 +26,10 @@ import org.bgee.model.dao.api.ontologycommon.EvidenceOntologyDAO.ECOTermTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 
 /**
@@ -54,12 +56,12 @@ public class TOComparator {
     private final static Logger log = LogManager.getLogger(TOComparator.class.getName());
 
     /**
-     * Delegates to {@link #areTOsEqual(Object, Object, boolean)}, 
+     * Delegates to {@link #areTOsEqual(T, T, boolean)},
      * with the {@code boolean} argument set to {@code true}.
      * 
-     * @param to1   See {@link #areTOsEqual(Object, Object, boolean)}.
-     * @param to2   See {@link #areTOsEqual(Object, Object, boolean)}.
-     * @return      See {@link #areTOsEqual(Object, Object, boolean)}.
+     * @param to1   See {@link #areTOsEqual(T, T, boolean)}.
+     * @param to2   See {@link #areTOsEqual(T, T, boolean)}.
+     * @return      See {@link #areTOsEqual(T, T, boolean)}.
      * @param <T>   A {@code TransferObject} type parameter.
      */
     public static <T extends TransferObject> boolean areTOsEqual(T to1, T to2) {
@@ -147,8 +149,13 @@ public class TOComparator {
             return log.exit(areTOsEqual((KeywordTO) to1, (KeywordTO) to2, compareId));
         } else if (to1 instanceof EntityToKeywordTO) {
             return log.exit(areTOsEqual((EntityToKeywordTO) to1, (EntityToKeywordTO) to2));
+        } else if (to1 instanceof DownloadFileDAO.DownloadFileTO) {
+            return log.exit(areTOsEqual( (DownloadFileDAO.DownloadFileTO)to1, (DownloadFileDAO.DownloadFileTO) to2));
+        } else if (to2 instanceof SpeciesDataGroupDAO.SpeciesDataGroupTO) {
+            return log.exit(areTOsEqual((SpeciesDataGroupDAO.SpeciesDataGroupTO) to1,(SpeciesDataGroupDAO.SpeciesDataGroupTO) to2));
         }
-        throw log.throwing(new IllegalArgumentException("There is no comparison method " +
+
+    throw log.throwing(new IllegalArgumentException("There is no comparison method " +
                 "implemented for TransferObject " + to1.getClass() + ", you must implement one"));
     }
     /**
@@ -444,6 +451,25 @@ public class TOComparator {
         return log.exit(false);
     }
 
+    private static boolean areTOsEqual(DownloadFileDAO.DownloadFileTO to1, DownloadFileDAO.DownloadFileTO to2){
+        log.entry();
+        return log.exit(to1.getCategory() == to2.getCategory()
+                && StringUtils.equals(to1.getPath(), to2.getPath())
+                && StringUtils.equals(to1.getDescription(), to2.getDescription())
+                && StringUtils.equals(to1.getName(), to2.getName())
+                && StringUtils.equals(to1.getId(), to2.getId())
+                && to1.getSize() == to2.getSize()
+                && StringUtils.equals(to1.getSpeciesDataGroupId(), to2.getSpeciesDataGroupId())
+        );
+    }
+
+    private static boolean areTOsEqual(SpeciesDataGroupDAO.SpeciesDataGroupTO to1, SpeciesDataGroupDAO.SpeciesDataGroupTO to2){
+        log.entry();
+        return log.exit(StringUtils.equals(to1.getId(),to2.getId())
+                        && StringUtils.equals(to1.getName(), to2.getName())
+                        && StringUtils.equals(to1.getDescription(), to2.getDescription())
+        );
+    }
     /**
      * Method to compare two {@code StageTO}s, to check for complete equality of each
      * attribute. This is because the {@code equals} method of {@code StageTO}s is solely

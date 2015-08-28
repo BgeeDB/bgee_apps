@@ -51,14 +51,24 @@ public abstract class Entity
      * 										empty, or whitespaces only. 
      */
     public Entity(String id) throws IllegalArgumentException {
-    	if (StringUtils.isBlank(id)) {
-    		throw new IllegalArgumentException("id cannot be null, or empty (\"\"), " +
-    				"or whitespaces only");
-    	}
-    	this.id = id;
-    	this.setName(null);
-    	this.setDescription(null);
+    	this(id, null, null);
     }
+
+	/**
+	 * This {@code id} cannot be {@code null}, or empty (""),
+	 * @param id A {@code String} representing the ID of this {@code Entity}.
+	 * @param name The name of the entity
+	 * @param description The description
+	 */
+	protected Entity(String id, String name, String description) {
+		if (StringUtils.isBlank(id)) {
+			throw new IllegalArgumentException("id cannot be null, or empty (\"\"), " +
+					"or whitespaces only");
+		}
+		this.id = id;
+		this.name = name;
+		this.description = description;
+	}
     
     
 	/**

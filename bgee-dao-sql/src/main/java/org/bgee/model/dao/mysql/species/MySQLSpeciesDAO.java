@@ -76,6 +76,21 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
         }
     }
 
+    @Override
+    public SpeciesTOResultSet getSpeciesFromDataGroups() throws DAOException {
+        String sql = this.generateSelectClause(this.getAttributes(), "species");
+        sql += "FROM species WHERE EXISTS (SELECT 1 FROM speciesToDataGroup WHERE speciesToDataGroup.speciesId = species.speciesId)";
+
+        //we don't use a try-with-resource, because we return a pointer to the results,
+        //not the actual results, so we should not close this BgeePreparedStatement.
+        try {
+            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
+            return log.exit(new MySQLSpeciesTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+
     /**
      * Generates the SELECT clause of a MySQL query used to retrieve {@code SpeciesTO}s.
      * 

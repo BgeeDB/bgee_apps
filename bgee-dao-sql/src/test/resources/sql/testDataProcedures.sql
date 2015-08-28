@@ -375,8 +375,7 @@ BEGIN
         VALUES ('ECO:1', 'name1', 'desc1'),
                ('ECO:2', 'name2', null),
                ('ECO:3', 'name3', 'desc3');
-               
--- KEYWORD
+
         INSERT INTO keyword(keywordId, keyword) 
         VALUES (1, 'keywordRelatedToNothing'), 
                (2, 'keywordRelatedToSpecies11'), 
@@ -390,8 +389,21 @@ BEGIN
                (21, 4), 
                (11, 5), 
                (21, 5);
-                
-    END IF; 
+
+        INSERT INTO speciesDataGroup(speciesDataGroupId, name, description)
+        VALUES (1, 'SingleSpecies1', 'SS1 is a ...'),
+               (2, 'MultiSpecies2', 'A multi species group...');
+
+        INSERT INTO speciesToDataGroup(speciesId, speciesDataGroupId)
+        VALUES (11, 1),
+               (21 ,2),
+               (31, 2);
+
+        INSERT INTO downloadFile(downloadFileId, name, path, description, category, speciesDataGroupId, fileSize)
+        VALUES (1, 'file1.zip', '/dir/to/file1', 'this is file1', 'expr_calls',1, 0),
+               (2, 'file2.zip', '/dir/to/file2', 'this is file2', 'expr_calls',2, 0);
+
+    END IF;
 END
 ;
 

@@ -175,7 +175,7 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
      * Get the 'select_expr' of a SELECT clause corresponding to the {@code Attribute} {@code attr}.
      * The mapping is retrieved from {@code selectExprsToAttributes}. This helper method  
      * is most likely used when writing a SQL query. See also the simple helper method 
-     * {@link #generateSelectClause(String, Map)}.
+     * {@link #generateSelectClause()}.
      * <p>
      * See {@link #getAttributeFromColName(String, Map)} for the opposite helper method, 
      * that can be used to retrieve the {@code Attribute} corresponding to the column name of a result set. 
@@ -308,5 +308,55 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
         }
         Collections.sort(intList);
         return log.exit(intList);
+    }
+
+    /**
+     * Find a column name from an attribute
+     * @param columnToAttributesMap the map of column to attributes
+     * @param attribute the attribute to find
+     * @param <E> the type of attribute
+     * @return the name of the column (never returns null)
+     * @throws IllegalArgumentException if the attribute is not found in the given map
+     */
+    private static <E extends Attribute> String getColumnNameFromAttribute(
+            Map<String, E> columnToAttributesMap, E attribute){
+        log.entry();
+       String columnName = null;
+        for (Map.Entry<String, E> entry: columnToAttributesMap.entrySet()) {
+            if (entry.getValue().equals(attribute)) {
+                return log.exit(entry.getKey());
+            }
+        }
+        throw log.throwing(new IllegalArgumentException("Unknown column name : "+ columnName));
+    }
+
+    /**
+     * Helper method to generate a SELECT statement from a set of attributes for a given type.
+     * This method helps in simple cases, more complex statement should be hand-written.
+     * @param tableName the name of the table
+     * @param attributes the attributes to retrieve (in case it is null or empty we use a '*' in the select clause)
+     * @param columnToAttributesMap a map columnName -> attribute
+     * @param <E> the type of attributes
+     * @return The generated SELECT statement
+     */
+    protected static <E extends Attribute> String generateSelectAllStatement(String tableName, Collection<E> attributes,
+                                                                             Map<String, E> columnToAttributesMap) {
+        log.entry();
+        StringBuilder sb = new StringBuilder("SELECT ");
+        if (attributes == null || attributes.size() < 1) {
+            sb.append(tableName).append(".* ");
+        } else {
+            int attrCount = 0;
+            for (E attribute : attributes) {
+                if (attrCount++ > 0) {
+                    sb.append(", ");
+                }
+                String col =  getColumnNameFromAttribute(columnToAttributesMap, attribute);
+                sb.append(tableName+"."+  col);
+            }
+        }
+
+        sb.append(" FROM " + tableName);
+        return log.exit(sb.toString());
     }
 }

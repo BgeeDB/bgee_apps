@@ -391,3 +391,9 @@ alter table deaRNASeqSummary
 add primary key (geneSummaryId, deaSampleGroupId);
 /*!40000 ALTER TABLE `deaRNASeqSummary` ENABLE KEYS */;
 
+alter table downloadFile
+modify downloadFileId mediumint unsigned auto_increment primary key ;
+
+alter table speciesDataGroup
+modify speciesDataGroupId mediumint unsigned  auto_increment primary key ;
+

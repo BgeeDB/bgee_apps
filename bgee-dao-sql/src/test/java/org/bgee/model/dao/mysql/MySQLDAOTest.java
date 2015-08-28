@@ -60,10 +60,10 @@ public class MySQLDAOTest extends TestAncestor
         TestDAO dao = new TestDAO(mock(MySQLDAOManager.class));
         String tableName = "mytable";
         //create the mapping Attribute -> select_expr
-        Map<Attribute, String> map = new HashMap<Attribute, String>();
-        map.put(Attribute.ATTR1, "my_attr1");
-        map.put(Attribute.ATTR2, "my_attr2");
-        map.put(Attribute.ATTR3, "my_attr3");
+        Map<String, Attribute> map = new HashMap<String, Attribute>();
+        map.put("my_attr1", Attribute.ATTR1);
+        map.put("my_attr2", Attribute.ATTR2);
+        map.put("my_attr3", Attribute.ATTR3);
         
         //generate select clause will all data requested
         String selectAll = "SELECT " + tableName + ".* ";
@@ -106,7 +106,7 @@ public class MySQLDAOTest extends TestAncestor
                 dao.generateSelectClause(tableName, map, true));
         
         //now, test exception that should be thrown if a mapping is absent
-        map.remove(Attribute.ATTR3);
+        map.remove("my_attr3");
         try {
             dao.generateSelectClause(tableName, map, false);
             //test failed, an exception should have been thrown
@@ -118,38 +118,6 @@ public class MySQLDAOTest extends TestAncestor
             dao.generateSelectClause(tableName, map, true);
             //test failed, an exception should have been thrown
             throw new AssertionError("An exception should be thrown when a mapping is missing");
-        } catch (IllegalArgumentException e) {
-            //test passed, nothing here. 
-        }
-    }
-    
-    /**
-     * Test method {@link MySQLDAO#reverseColNameMap(Map)}.
-     */
-    @Test
-    public void shouldReverseColNameMap() {
-        //use a test DAO
-        TestDAO dao = new TestDAO(mock(MySQLDAOManager.class));
-        //create a mapping col name -> attributes
-        Map<String, Attribute> map = new HashMap<String, Attribute>();
-        map.put("my_attr1", Attribute.ATTR1);
-        map.put("my_attr2", Attribute.ATTR2);
-        map.put("my_attr3", Attribute.ATTR3);
-        
-        //reverse expected
-        Map<Attribute, String> reverseMap = new HashMap<Attribute, String>();
-        reverseMap.put(Attribute.ATTR1, "my_attr1");
-        reverseMap.put(Attribute.ATTR2, "my_attr2");
-        reverseMap.put(Attribute.ATTR3, "my_attr3");
-        
-        assertEquals("Incorrect reverse of Map", reverseMap, dao.reverseColNameMap(map));
-        
-        //test exception thrown in case of equal values
-        map.put("my_attr3", Attribute.ATTR2);
-        try {
-            dao.reverseColNameMap(map);
-            //test failed, an exception should have been thrown
-            throw new AssertionError("An exception should be thrown in case of equal values");
         } catch (IllegalArgumentException e) {
             //test passed, nothing here. 
         }

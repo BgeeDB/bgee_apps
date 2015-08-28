@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -150,6 +151,7 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
      * and the method {@code getSelectExprFromAttribute} should use different mappings: 
      * this method should be provided with a mapping between aliases and {@code Attribute}s, 
      * {@code getSelectExprFromAttribute} with a mapping between 'select_expr's and {@code Attribute}s.
+     * In the former case, they can be provided with the exact same mapping.
      * 
      * @param colName               A {@code String} representing a column name in a result set.
      * @param colNamesToAttributes  A {@code Map} where keys are {@code String}s corresponding to 
@@ -171,7 +173,7 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
     }
     /**
      * Get the 'select_expr' of a SELECT clause corresponding to the {@code Attribute} {@code attr}. 
-     * The mapping is retrieved from {@code attributesToSelectExprs}. This helper method  
+     * The mapping is retrieved from {@code selectExprsToAttributes}. This helper method  
      * is most likely used when writing a SQL query. See also the simple helper method 
      * {@link #generateSelectClause(String, Map)}.
      * <p>
@@ -182,24 +184,39 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
      * and the method {@code getAttributeFromColName} should use different mappings: 
      * this method should be provided with a mapping between 'select_expr's and {@code Attribute}s, 
      * {@code getAttributeFromColName} with a mapping between aliases and {@code Attribute}s.
-     * <p>
-     * If column names and 'select_expr's correspond exactly, and you only have a {@code Map} 
-     * with column names as keys and {@code Attribute}s as values, use {@link #reverseColNameMap(Map)}.
+     * In the former case, they can be provided with the exact same mapping.
      * 
      * @param attr                      An {@code Attribute} {@code T} to be mapped to a 'select_expr'.
-     * @param attributesToSelectExprs   A {@code Map} where keys are {@code T}s and values are 
-     *                                  their associated 'select_expr'.
+     * @param selectExprsToAttributes   A {@code Map} where keys are {@code String}s corresponding to 
+     *                                  'select_expr's, associated to their corresponding 
+     *                                  {@code Attribute} as values. This {@code Map} does not have  
+     *                                  {@code Attribute}s as keys for coherence with the method 
+     *                                  {@code getAttributeFromColName}.
      * @return                          A {@code String} that is a 'select_expr' corresponding to {@code attr}.
      * @throws IllegalArgumentException If {@code attr} does not correspond to any 'select_expr' 
-     *                                  in {@code attributesToSelectExprs}.
+     *                                  in {@code selectExprsToAttributes}, or if several 'select_expr's 
+     *                                  are mapped to a same {@code Attribute}.
      * @see #getAttributeFromColName(String, Map)
      * @see #reverseColNameMap(Map)
      * @see #generateSelectClause(String, Map)
      */
-    protected String getSelectExprFromAttribute(T attr, Map<T, String> attributesToSelectExprs) 
+    protected String getSelectExprFromAttribute(T attr, Map<String, T> selectExprsToAttributes) 
             throws IllegalArgumentException {
-        log.entry(attr, attributesToSelectExprs);
-        String selectExpr = attributesToSelectExprs.get(attr);
+        log.entry(attr, selectExprsToAttributes);
+        
+        //we reverse the provided Map, because anyway we want to check all Entries 
+        //to make sure there is not several 'select_expr's mapped to a same Attribute
+        Map<T, String> reverseMap = new HashMap<T, String>();
+        try {
+            reverseMap = selectExprsToAttributes.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
+        } catch (IllegalStateException e) {
+            //wrap the IllegalStateException thrown by Collectors.toMap into an IllegalArgumentException
+            throw log.throwing(new IllegalArgumentException(
+                    "An Attribute is mapped to several 'select_expr's", e));
+        }
+        
+        String selectExpr = reverseMap.get(attr);
         if (StringUtils.isBlank(selectExpr)) {
             throw log.throwing(new IllegalArgumentException(
                     "Attribute not mapped to any valid 'select_expr': " + attr));
@@ -207,61 +224,32 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
         return log.exit(selectExpr);
     }
     /**
-     * Return a {@code Map} where keys and values are inverted as compared to the provided {@code Map}.
-     * This is useful when calling {@link #getSelectExprFromAttribute(T, Map)}, if you only had 
-     * a mapping from column names to {@code Attribute}s, and not from {@code Attribute}s 
-     * to 'select_expr's.
-     * 
-     * @param colNamesToAttributes  A {@code Map} where keys are {@code String}s and values are 
-     *                              their corresponding {@code Attribute}.
-     * @return                      A {@code Map} where keys are {@code Attribute}s and values are 
-     *                              their corresponding {@code String}s, reverted from 
-     *                              {@code colNamesToAttributes}.
-     * @throws IllegalArgumentException If {@code colNamesToAttributes} contained equal values.
-     * @see #getSelectExprFromAttribute(T, Map)
-     * @see #getAttributeFromColName(String, Map)
-     */
-    protected Map<T, String> reverseColNameMap(Map<String, T> colNamesToAttributes) throws IllegalArgumentException {
-        log.entry(colNamesToAttributes);
-        try {
-            Map<T, String> reverseMap = colNamesToAttributes.entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
-            return log.exit(reverseMap);
-        } catch (IllegalStateException e) {
-            //wrap the IllegalStateException thrown by Collectors.toMap into an IllegalArgumentException
-            throw log.throwing(new IllegalArgumentException(
-                    "The provided Map contained equal values", e));
-        }
-    }
-    /**
      * Helper method to generate the SELECT clause of a query, from the {@code Attribute}s 
-     * returned by {@link #getAttributes()}. This method helps only in simple cases, 
+     * returned by {@link #getAttributes()}, using the method 
+     * {@link #getSelectExprFromAttribute(T, Map)}. This method helps only in simple cases, 
      * more complex statements should be hand-written (for instance, when {@code Attribute}s 
      * correspond to columns in different tables, or to a sub-query). 
-     * <p>
-     * If you only have a mapping from column names of result sets to {@code Attribute}s 
-     * (a {@code Map<String, T>} instead of a {@code Map<T, String>}), 
-     * and the 'select_expr's in the SELECT clause correspond exactly to these column names, 
-     * you can use {@link #reverseColNameMap(Map)}.
      * 
      * @param tableName                 A {@code String} that is the name of the table 
      *                                  to retrieve data from, or its alias defined in the query.
-     * @param attributesToSelectExprs   A {@code Map} where keys are {@code Attribute}s used by 
-     *                                  this {@code MySQLDAO}, and values their corresponding 'select_expr' 
-     *                                  to generate the SELECT clause 
-     *                                  (see {@link #getSelectExprFromAttribute(T, Map)}).
+     * @param selectExprsToAttributes   A {@code Map} where keys are {@code String}s corresponding to 
+     *                                  'select_expr's, associated to their corresponding 
+     *                                  {@code Attribute} as values. This {@code Map} does not have  
+     *                                  {@code Attribute}s as keys for coherence with the method 
+     *                                  {@link getAttributeFromColName(T, Map)}.
      * @param distinct                  A {@code boolean} defining whether the DISTINCT keyword 
      *                                  is needed in the SELECT clause.
      * @return                          A {@code String} that is the generated SELECT clause.
-     * @throws IllegalArgumentException If {@code attributesToSelectExprs} is missing a key corresponding 
-     *                                  to an {@code Attribute} returned by {@link #getAttributes()}.
+     * @throws IllegalArgumentException If {@code selectExprsToAttributes} is missing a key corresponding 
+     *                                  to an {@code Attribute} returned by {@link #getAttributes()}, 
+     *                                  or if several 'select_expr's are mapped to a same {@code Attribute}.
      * @see #getAttributes()
      * @see #getSelectExprFromAttribute(T, Map)
      * @see #reverseColNameMap(Map)
      */
-    protected String generateSelectClause(String tableName, Map<T, String> attributesToSelectExprs, 
+    protected String generateSelectClause(String tableName, Map<String, T> selectExprsToAttributes, 
             boolean distinct) throws IllegalArgumentException {
-        log.entry(tableName, attributesToSelectExprs);
+        log.entry(tableName, selectExprsToAttributes);
         
         StringBuilder sb = new StringBuilder("SELECT ");
         if (distinct) {
@@ -286,7 +274,7 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
                     sb.append(", ");
                 }
                 sb.append(tableName).append(".")
-                    .append(getSelectExprFromAttribute(attribute, attributesToSelectExprs));
+                    .append(getSelectExprFromAttribute(attribute, selectExprsToAttributes));
             }
             sb.append(" ");
         }

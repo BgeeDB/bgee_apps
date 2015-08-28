@@ -81,8 +81,7 @@ public class MySQLKeywordDAO extends MySQLDAO<KeywordDAO.Attribute> implements K
             Set<String> filteredSpeciesIds = 
                     new HashSet<String>(speciesIds != null ? speciesIds: Arrays.asList());
             
-            String sql = this.generateSelectClause(keywordTable, 
-                    this.reverseColNameMap(colNamesToAttributes), true);
+            String sql = this.generateSelectClause(keywordTable, colNamesToAttributes, true);
             
             sql += "FROM " + keywordTable 
                  + " INNER JOIN " + keywordToSpeciesTable + " ON "

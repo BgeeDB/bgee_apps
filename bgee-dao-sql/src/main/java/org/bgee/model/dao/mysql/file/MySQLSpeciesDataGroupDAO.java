@@ -35,8 +35,8 @@ public class MySQLSpeciesDataGroupDAO extends MySQLDAO<SpeciesDataGroupDAO.Attri
     static {
         columnToAttributesMap = new HashMap<>();
         columnToAttributesMap.put("speciesDataGroupId", SpeciesDataGroupDAO.Attribute.ID);
-        columnToAttributesMap.put("name", SpeciesDataGroupDAO.Attribute.NAME);
-        columnToAttributesMap.put("description", SpeciesDataGroupDAO.Attribute.DESCRIPTION);
+        columnToAttributesMap.put("speciesDataGroupName", SpeciesDataGroupDAO.Attribute.NAME);
+        columnToAttributesMap.put("speciesDataGroupDescription", SpeciesDataGroupDAO.Attribute.DESCRIPTION);
     }
 
     /**
@@ -70,8 +70,7 @@ public class MySQLSpeciesDataGroupDAO extends MySQLDAO<SpeciesDataGroupDAO.Attri
     @Override
     public SpeciesDataGroupTOResultSet getAllSpeciesDataGroup() throws DAOException {
         log.entry();
-        Collection<SpeciesDataGroupDAO.Attribute> attrs = getAttributes();
-        String sql = generateSelectAllStatement(SPECIES_DATAGROUP_TABLE, attrs, columnToAttributesMap);
+        String sql = generateSelectAllStatement(SPECIES_DATAGROUP_TABLE, columnToAttributesMap, false);
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             return log.exit(new MySQLSpeciesDataGroupTOResultSet(stmt));

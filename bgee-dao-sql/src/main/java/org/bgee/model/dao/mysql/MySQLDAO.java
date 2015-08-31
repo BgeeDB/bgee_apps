@@ -311,51 +311,17 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
     }
 
     /**
-     * Find a column name from an attribute
-     * @param columnToAttributesMap the map of column to attributes
-     * @param attribute the attribute to find
-     * @param <E> the type of attribute
-     * @return the name of the column (never returns null)
-     * @throws IllegalArgumentException if the attribute is not found in the given map
+     * Generate a select statement using the table name in the {@code FROM} clause.
+     * @param tableName The table name as a {@code String}
+     * @param columnToAttributesMap A map from column name (as {@code String}) to {@code Attributes}
+     * @param distinct A {@code boolean} defining whether the DISTINCT keyword is needed in the SELECT clause.
+     * @return The generated statement as a {@code String}
      */
-    private static <E extends Attribute> String getColumnNameFromAttribute(
-            Map<String, E> columnToAttributesMap, E attribute){
+    protected  String generateSelectAllStatement(String tableName,
+                                                 Map<String, T> columnToAttributesMap, boolean distinct) {
         log.entry();
-       String columnName = null;
-        for (Map.Entry<String, E> entry: columnToAttributesMap.entrySet()) {
-            if (entry.getValue().equals(attribute)) {
-                return log.exit(entry.getKey());
-            }
-        }
-        throw log.throwing(new IllegalArgumentException("Unknown column name : "+ columnName));
-    }
-
-    /**
-     * Helper method to generate a SELECT statement from a set of attributes for a given type.
-     * This method helps in simple cases, more complex statement should be hand-written.
-     * @param tableName the name of the table
-     * @param attributes the attributes to retrieve (in case it is null or empty we use a '*' in the select clause)
-     * @param columnToAttributesMap a map columnName -> attribute
-     * @param <E> the type of attributes
-     * @return The generated SELECT statement
-     */
-    protected static <E extends Attribute> String generateSelectAllStatement(String tableName, Collection<E> attributes,
-                                                                             Map<String, E> columnToAttributesMap) {
-        log.entry();
-        StringBuilder sb = new StringBuilder("SELECT ");
-        if (attributes == null || attributes.size() < 1) {
-            sb.append(tableName).append(".* ");
-        } else {
-            int attrCount = 0;
-            for (E attribute : attributes) {
-                if (attrCount++ > 0) {
-                    sb.append(", ");
-                }
-                String col =  getColumnNameFromAttribute(columnToAttributesMap, attribute);
-                sb.append(tableName+"."+  col);
-            }
-        }
-
+        StringBuilder sb = new StringBuilder();
+        sb.append(generateSelectClause(tableName, columnToAttributesMap, distinct));
         sb.append(" FROM " + tableName);
         return log.exit(sb.toString());
     }

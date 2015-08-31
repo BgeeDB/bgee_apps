@@ -1120,11 +1120,11 @@ create table differentialExpression (
 create table downloadFile (
   downloadFileId mediumint unsigned not null,
   path varchar(255) not null,
-  name varchar(255) not null,
-  description text,
-  category enum("expr_calls", "diff_expr_calls_stages", "diff_expr_calls_anatomy"),
+  downloadFileName varchar(255) not null,
+  downloadFileDescription text,
+  downloadFileCategory enum("expr_calls", "diff_expr_calls_stages", "diff_expr_calls_anatomy"),
   speciesDataGroupId mediumint unsigned not null,
-  fileSize int unsigned not null
+  downloadFileSize int unsigned not null
 ) engine = innodb;
 
 -- *****************************************
@@ -1134,8 +1134,8 @@ create table downloadFile (
 
 create table speciesDataGroup(
   speciesDataGroupId mediumint unsigned not null,
-  name varchar(255) not null,
-  description text
+  speciesDataGroupName varchar(255) not null,
+  speciesDataGroupDescription text
 ) engine = innodb;
 
 create table speciesToDataGroup(

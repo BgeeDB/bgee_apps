@@ -37,11 +37,11 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
     static {
         colToAttributesMap = new HashMap<>();
         colToAttributesMap.put("downloadFileId", DownloadFileDAO.Attribute.ID);
-        colToAttributesMap.put("name", DownloadFileDAO.Attribute.NAME);
-        colToAttributesMap.put("description", DownloadFileDAO.Attribute.DESCRIPTION);
+        colToAttributesMap.put("downloadFileName", DownloadFileDAO.Attribute.NAME);
+        colToAttributesMap.put("downloadFileDescription", DownloadFileDAO.Attribute.DESCRIPTION);
         colToAttributesMap.put("path", DownloadFileDAO.Attribute.PATH);
-        colToAttributesMap.put("fileSize", DownloadFileDAO.Attribute.FILE_SIZE);
-        colToAttributesMap.put("category", DownloadFileDAO.Attribute.CATEGORY);
+        colToAttributesMap.put("downloadFileSize", DownloadFileDAO.Attribute.FILE_SIZE);
+        colToAttributesMap.put("downloadFileCategory", DownloadFileDAO.Attribute.CATEGORY);
         colToAttributesMap.put("speciesDataGroupId", DownloadFileDAO.Attribute.SPECIES_DATA_GROUP_ID);
     }
 
@@ -74,11 +74,7 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
     @Override
     public DownloadFileTOResultSet getAllDownloadFiles() throws DAOException {
         log.entry();
-
-        Collection<DownloadFileDAO.Attribute> attrs = getAttributes();
-
-        final String sql = generateSelectAllStatement(DOWNLOAD_FILE_TABLE, attrs, colToAttributesMap);
-
+        final String sql = generateSelectAllStatement(DOWNLOAD_FILE_TABLE, colToAttributesMap, false);
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             return log.exit(new MySQLDownloadFileTOResultSet(stmt));

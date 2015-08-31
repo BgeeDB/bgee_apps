@@ -47,6 +47,7 @@ import org.semanticweb.owlapi.model.OWLObjectIntersectionOf;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLPropertyExpression;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
 import org.supercsv.cellprocessor.FmtBool;
 import org.supercsv.cellprocessor.FmtDate;
@@ -1507,13 +1508,15 @@ public class SimilarityAnnotation {
         log.entry(annots, checkWarn);
         log.debug("Start checking {} annotations (with warnings? {})", annots.size(), checkWarn);
         
-        //We will store taxa associated to positive and negative annotations, 
+        //* We will store taxa associated to positive and negative annotations, 
         //to verify NOT annotations in RAW and curator annotations (if there is a NOT annotation 
         //in a taxon for a structure, most likely there should be also a NOT annotation 
         //for all parent taxa annotated with positive annotations for the same structure). 
-        //Also, if there are positive annotations using multiple Uberon IDs, most likely 
+        //* Also, if there are positive annotations using multiple Uberon IDs, most likely 
         //there should be positive annotations for the individual Uberon IDs as well.
         //We will use a RawAnnotationBean as key to store HOM ID - Uberon IDs.
+        //* Also, if there is a negative annotation about a structure in a taxon, 
+        //most likely there should be positive annotations for the same structure in sub-taxa.
         boolean checkPosNegAnnots = false;
         Map<RawAnnotationBean, Set<Integer>> positiveAnnotsToTaxa = 
                 new HashMap<RawAnnotationBean, Set<Integer>>();
@@ -1704,6 +1707,9 @@ public class SimilarityAnnotation {
                     }
                 }
             }
+            
+            //* Also, if there is a negative annotation about a structure in a taxon, 
+            //most likely there should be positive annotations for the same structure in sub-taxa.
         }
 
         log.debug("Done checking {} annotations", annots.size());
@@ -2228,6 +2234,109 @@ public class SimilarityAnnotation {
         }
         
         return log.exit(missingNegativeAnnots);
+    }
+
+
+    /**
+     * Identify negative annotation with potentially missing positive annotations: 
+     * if there is a negative annotation in a taxon, 
+     * most likely there should be positive annotations in some sub-taxa 
+     * (if it was worth providing the NOT annotation, it means some structures in some sub-taxa 
+     * have a similarity relation, some of them being true homology). Or, a NOT annotation 
+     * could be used to capture a controversy, in which case there should be a corresponding 
+     * positive annotation for the same taxon.
+     * 
+     * @param positiveAnnotsToTaxa  A {@code Map} where keys are {@code RawAnnotationBean}s
+     *                              capturing HOM ID and Uberon IDs, 
+     *                              the associated values being {@code Set}s of {@code Integer}s, 
+     *                              representing the ID of the taxa which the annotation 
+     *                              is valid in.
+     * @param negativeAnnotsToTaxa  A {@code Map} where keys are {@code RawAnnotationBean}s
+     *                              capturing HOM ID and Uberon IDs, 
+     *                              the associated values being {@code Set}s of {@code Integer}s, 
+     *                              representing the ID of the taxa which the annotation 
+     *                              is negated in.
+     * @return                      A {@code Map} where keys are {@code RawAnnotationBean}s
+     *                              capturing HOM ID and Uberon IDs, 
+     *                              the associated values being {@code Set}s of {@code Integer}s, 
+     *                              representing the ID of taxa of negative annotations, 
+     *                              with potentially missing positive annotations in the same taxon 
+     *                              or in some sub-taxa.
+     */
+    //suppress warning because the getAncestors method of owltools uses unparameterized 
+    //generic OWLPropertyExpression, so we need to do the same.
+    @SuppressWarnings("rawtypes")
+    private Map<RawAnnotationBean, Set<Integer>> checkNegativeAnnotsSubTaxa(
+            Map<RawAnnotationBean, Set<Integer>> positiveAnnotsToTaxa, 
+            Map<RawAnnotationBean, Set<Integer>> negativeAnnotsToTaxa, boolean warnIfUnique) {
+        log.entry(positiveAnnotsToTaxa, negativeAnnotsToTaxa, warnIfUnique);
+    
+        Map<RawAnnotationBean, Set<Integer>> negAnnotsWithMissingPosAnnots = 
+                new HashMap<RawAnnotationBean, Set<Integer>>();
+        
+        
+        for (Entry<RawAnnotationBean, Set<Integer>> negativeAnnot: 
+            negativeAnnotsToTaxa.entrySet()) {
+            //the key should represent the concatenation of HOM ID and Uberon IDs, 
+            //that were associated to a negative annotation
+            RawAnnotationBean key = negativeAnnot.getKey();
+            //if there are positive annotations for the same structure, check that it corresponds 
+            //to same taxon of to some sub-taxa. 
+            //First, we retrieve taxa associated to corresponding positive annotations.
+            //store in a new HashSet, as we will modify it
+            Set<Integer> positiveTaxIds = new HashSet<Integer>(positiveAnnotsToTaxa.get(key));
+
+            //check each taxon of the negative annot
+            for (int negativeTaxonId: negativeAnnot.getValue()) {
+                //First, we get the descendants of the taxon used in the neg. annot., 
+                //and the taxon annotated itself.
+                Set<Integer> negativeTaxa = new HashSet<Integer>();
+                OWLClass taxCls = taxOntWrapper.getOWLClassByIdentifier(
+                        OntologyUtils.getTaxOntologyId(negativeTaxonId), true);
+                if (taxCls != null) {
+                    negativeTaxa.add(OntologyUtils.getTaxNcbiId(
+                                taxOntWrapper.getIdentifier(taxCls)));
+                    for (OWLClass descTaxon: taxOntWrapper.getDescendantsThroughIsA(taxCls)) {
+                        negativeTaxa.add(OntologyUtils.getTaxNcbiId(
+                                taxOntWrapper.getIdentifier(descTaxon)));
+                    }
+                }
+                //Now, check if we have positive annotations in same taxon or in some sub-taxa.
+                if (Collections.disjoint(positiveTaxIds, negativeTaxa)) {
+                    //no taxa in common, the negative annotation is missing a positive annot 
+                    //in same taxon or in some sub-taxa. 
+                    Set<Integer> storeTaxa = negAnnotsWithMissingPosAnnots.get(key);
+                    if (storeTaxa == null) {
+                        storeTaxa = new HashSet<Integer>();
+                        negAnnotsWithMissingPosAnnots.put(key, storeTaxa);
+                    }
+                    
+                    storeTaxa.add(negativeTaxonId);
+                }
+            }
+        }
+        
+        //we keep only leaf taxa, NOT annotations to parent taxa 
+        //would generate redundant warnings
+        OntologyUtils utils = new OntologyUtils(this.taxOntWrapper);
+        Map<RawAnnotationBean, Set<Integer>> annotsWithFilteredTaxa = 
+                new HashMap<RawAnnotationBean, Set<Integer>>();
+        for (Entry<RawAnnotationBean, Set<Integer>> annotEntry: negAnnotsWithMissingPosAnnots.entrySet()) {
+            Set<OWLClass> classes = new HashSet<OWLClass>();
+            for (int taxId: annotEntry.getValue()) {
+                classes.add(taxOntWrapper.getOWLClassByIdentifier(
+                        OntologyUtils.getTaxOntologyId(taxId), true));
+            }
+            utils.retainLeafClasses(classes, new HashSet<OWLPropertyExpression>());
+            
+            Set<Integer> ids = new HashSet<Integer>();
+            for (OWLClass cls: classes) {
+                ids.add(OntologyUtils.getTaxNcbiId(taxOntWrapper.getIdentifier(cls)));
+            }
+            annotsWithFilteredTaxa.put(annotEntry.getKey(), ids);
+        }
+        
+        return log.exit(annotsWithFilteredTaxa);
     }
 
     /**

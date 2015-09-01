@@ -44,11 +44,6 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         super(manager);
     }
 
-    //***************************************************************************
-    // METHODS NOT PART OF THE bgee-dao-api, USED BY THE PIPELINE AND NOT MEANT 
-    // TO BE EXPOSED TO THE PUBLIC API.
-    //***************************************************************************
-
     @Override
     public GeneTOResultSet getAllGenes() throws DAOException {
         log.entry();
@@ -80,7 +75,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         
         sql += " FROM " + geneTableName;
         
-        if (speciesIds != null && speciesIds.size() > 0) {
+        if (speciesIds != null && !speciesIds.isEmpty()) {
             sql += " WHERE gene.speciesId IN (" + 
                        BgeePreparedStatement.generateParameterizedQueryString(
                                speciesIds.size()) + ")";
@@ -90,7 +85,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         //not the actual results, so we should not close this BgeePreparedStatement.
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
-            if (speciesIds != null && speciesIds.size() > 0) {
+            if (speciesIds != null && !speciesIds.isEmpty()) {
                 List<Integer> orderedSpeciesIds = MySQLDAO.convertToOrderedIntList(speciesIds);
                 stmt.setIntegers(1, orderedSpeciesIds);
             }             
@@ -100,6 +95,12 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         }
     }
 
+
+    //***************************************************************************
+    // METHODS NOT PART OF THE bgee-dao-api, USED BY THE PIPELINE AND NOT MEANT 
+    // TO BE EXPOSED TO THE PUBLIC API.
+    //***************************************************************************
+    
     @Override
     public int updateGenes(Collection<GeneTO> genes, 
             Collection<GeneDAO.Attribute> attributesToUpdate) 

@@ -1735,9 +1735,6 @@ public class SimilarityAnnotation {
                     }
                 }
             }
-            
-            //* Also, if there is a negative annotation about a structure in a taxon, 
-            //most likely there should be positive annotations for the same structure in sub-taxa.
         }
 
         log.debug("Done checking {} annotations", annots.size());

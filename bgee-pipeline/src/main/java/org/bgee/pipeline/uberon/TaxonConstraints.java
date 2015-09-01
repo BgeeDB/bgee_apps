@@ -572,6 +572,10 @@ public class TaxonConstraints {
             IllegalArgumentException, OWLOntologyStorageException  {
         log.entry(ontWrapper, taxonId, storeOntologyDir);
         log.info("Generating constraints for taxon {}...", taxonId);
+        log.debug("Before reasoning - Total memory: {} Go - Memory free: {} Go - Memory used: {} Go", 
+                Runtime.getRuntime().totalMemory()/(1024*1024*1024), 
+                Runtime.getRuntime().freeMemory()/(1024*1024*1024), 
+                (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory())/(1024*1024*1024));
         
         //Get the OWLClass corresponding to the requested taxon
         String ontTaxonId = OntologyUtils.getTaxOntologyId(taxonId);
@@ -588,6 +592,15 @@ public class TaxonConstraints {
         subSetter.taxClass = taxClass;
         subSetter.reasoner = this.createReasoner(ontWrapper.getSourceOntology());
         subSetter.removeOtherSpecies();
+        log.debug("After reasoning before dispose - Total memory: {} Go - Memory free: {} Go - Memory used: {} Go", 
+                Runtime.getRuntime().totalMemory()/(1024*1024*1024), 
+                Runtime.getRuntime().freeMemory()/(1024*1024*1024), 
+                (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory())/(1024*1024*1024));
+        subSetter.reasoner.dispose();
+        log.debug("After reasoning after dispose - Total memory: {} Go - Memory free: {} Go - Memory used: {} Go", 
+                Runtime.getRuntime().totalMemory()/(1024*1024*1024), 
+                Runtime.getRuntime().freeMemory()/(1024*1024*1024), 
+                (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory())/(1024*1024*1024));
         
         //if we want to store the intermediate ontology
         if (storeOntologyDir != null) {
@@ -596,7 +609,7 @@ public class TaxonConstraints {
                     "uberon_subset" + taxonId + ".owl").getPath();
             new OntologyUtils(ontWrapper).saveAsOWL(outputFilePath);
         }
-        
+
         log.info("Done generating constraints for taxon {}.", taxonId);
         return log.exit(ontWrapper.getAllOWLClassesFromSource());
     }

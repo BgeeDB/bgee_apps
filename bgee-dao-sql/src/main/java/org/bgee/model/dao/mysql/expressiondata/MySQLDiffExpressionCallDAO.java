@@ -67,7 +67,6 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
     }
 
     @Override
-    //TODO: integration test
     public DiffExpressionCallTOResultSet getHomologousGenesDiffExpressionCalls(
             String taxonId, DiffExpressionCallParams params) throws DAOException {
         log.entry(taxonId, params);
@@ -140,7 +139,7 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
         // because there is no other OrderingAttributes. But if we add an OrderingAttributes and 
         // forget to implement the feature, an exception will be thrown.
         if ((this.getOrderingAttributes().keySet().size() == 1 && !orderTOsByOmaGroup) ||
-                this.getOrderingAttributes().keySet().size() > 2) {
+                this.getOrderingAttributes().keySet().size() > 1) {
             throw log.throwing(new UnsupportedOperationException("Operation not yet implemented, " +
                     "ordering is possible only by " + DiffExpressionCallDAO.OrderingAttribute.OMA_GROUP +
                     ". Provided set contains: " + this.getOrderingAttributes().keySet()));
@@ -154,36 +153,21 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
         sql += "FROM ";
         
         if (hasSpecies || hasOMATaxon || orderTOsByOmaGroup) {
-            log.debug("hasOMATaxon = "+hasOMATaxon+" //// omaTaxonId="+omaTaxonId);
-            if (hasOMATaxon || orderTOsByOmaGroup) {
-                //we want to order results by groups of homologous genes, so we recover 
+            if (hasOMATaxon) {
+                //we want to retrieve calls for homologous genes, so we recover 
                 //the correct OMA node IDs for the requested taxon
                 geneInfoTable = "tempGene";
                 // If taxon ID is not provided, we retrieve the OMAParentNodeId of the gene,
                 // else we retrieve all OMA node IDs above each gene.
-                String leftBoundComparison = "=";
-                String rightBoundComparison = "=";
-                if (hasOMATaxon) {
-                    leftBoundComparison = ">=";
-                    rightBoundComparison = "<=";
-                }
                 sql += "(SELECT DISTINCT t10.OMANodeId, t30.geneId "
                     + "FROM OMAHierarchicalGroup AS t10 "
                     + "INNER JOIN OMAHierarchicalGroup AS t20 ON "
-                    + "t20.OMANodeLeftBound " + leftBoundComparison + " t10.OMANodeLeftBound AND " 
-                    + "t20.OMANodeRightBound " + rightBoundComparison + " t10.OMANodeRightBound "
-                    + "INNER JOIN gene AS t30 ON t20.OMANodeId = t30.OMAParentNodeId ";
-                if (hasOMATaxon || hasSpecies) {
-                    sql += "WHERE ";
-                }
-                if (hasOMATaxon) {
-                    sql += "t10.taxonId = ? ";
-                }
-                if (hasOMATaxon && hasSpecies) {
-                    sql += "AND ";
-                }
+                    + "t20.OMANodeLeftBound >= t10.OMANodeLeftBound AND " 
+                    + "t20.OMANodeRightBound <= t10.OMANodeRightBound "
+                    + "INNER JOIN gene AS t30 ON t20.OMANodeId = t30.OMAParentNodeId "
+                    + "WHERE t10.taxonId = ? ";
                 if (hasSpecies) {
-                    sql += "t30.speciesId IN (" +
+                    sql += "AND t30.speciesId IN (" +
                             BgeePreparedStatement.generateParameterizedQueryString(
                                     speciesIds.size()) + ")";
                 }
@@ -202,9 +186,9 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
             sql += " STRAIGHT_JOIN " + diffExprTableName + 
                     " ON " + geneInfoTable + ".geneId = " + diffExprTableName + ".geneId ";
             
-            //if we want to retrieve or order results by groups of homologous genes, 
+            //if we want to retrieve groups of homologous genes, 
             //we have already filtered the species considered in the sub-query.
-            if (!hasOMATaxon && !orderTOsByOmaGroup) {
+            if (hasSpecies && !hasOMATaxon) {
                 sql += " WHERE " + geneInfoTable + ".speciesId IN (" +
                         BgeePreparedStatement.generateParameterizedQueryString(
                                 speciesIds.size()) + ")";
@@ -271,7 +255,13 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
         }
         
         if (orderTOsByOmaGroup) {
-            sql += " ORDER BY " + geneInfoTable + ".OMANodeId ";
+            // If we don't have the taxon id, the geneInfoTable is gene else 
+            // it is the temporary table tempGene
+            if (!hasOMATaxon) {
+                sql += " ORDER BY " + geneInfoTable + ".OMAParentNodeId ";
+            } else {
+                sql += " ORDER BY " + geneInfoTable + ".OMANodeId ";
+            }
             // The default sort order is ascending, so if Direction of OMA_GROUP is DESC, 
             // we need to specified it.
             if (this.getOrderingAttributes().get(DiffExpressionCallDAO.OrderingAttribute.OMA_GROUP).

@@ -2,6 +2,7 @@ package org.bgee.model.file;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.helper.DAOResultSetHelper;
 import org.bgee.model.dao.api.file.DownloadFileDAO;
 
 import java.util.List;
@@ -19,13 +20,12 @@ public class DownloadFileLoader {
     private DownloadFileDAO downloadFileDAO;
 
     /**
-     * Gets all available   {@code DownloadFile}
+     * Gets all available {@code DownloadFile}
      *
      * @return a {@code List} of {@code DownloadFile}
      */
     public List<DownloadFile> getAllDownloadFiles() {
-        List<DownloadFileDAO.DownloadFileTO> downloadFilesTOs = downloadFileDAO.getAllDownloadFiles().getAllTOs();
-        return downloadFilesTOs.stream().map(DownloadFileLoader::mapFromTO).collect(Collectors.toList());
+        return  DAOResultSetHelper.mapToList(downloadFileDAO.getAllDownloadFiles(), DownloadFileLoader::mapFromTO);
     }
 
 

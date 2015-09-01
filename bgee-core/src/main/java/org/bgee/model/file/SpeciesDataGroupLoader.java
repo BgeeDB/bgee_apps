@@ -2,6 +2,7 @@ package org.bgee.model.file;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesLoader;
@@ -28,20 +29,20 @@ public class SpeciesDataGroupLoader {
      * @return the {@code Set} containing all {@code SpeciesDataGroup}
      */
     public Set<SpeciesDataGroup> loadAllSpeciesDataGroup() {
-        List<SpeciesDataGroupDAO.SpeciesDataGroupTO> speciesGroups = speciesGroupDao.getAllSpeciesDataGroup()
-                .getAllTOs();
+        DAOResultSet<SpeciesDataGroupDAO.SpeciesDataGroupTO> speciesGroups = speciesGroupDao.getAllSpeciesDataGroup();
         Map<String, List<DownloadFile>> downloadFiles = buildDownloadFileMap(downloadFileLoader.getAllDownloadFiles());
         Map<String, Species> species = buildSpeciesIdMap(speciesLoader.loadSpeciesInDataGroups());
         Map<String, List<Species>> groupToSpeciesMap = buildGroupToSpeciesMap(
-                speciesGroupDao.getAllSpeciesToDataGroup().getAllTOs(), species);
+                speciesGroupDao.getAllSpeciesToDataGroup(), species);
 
         Set<SpeciesDataGroup> result = new HashSet<SpeciesDataGroup>();
 
-        for (SpeciesDataGroupDAO.SpeciesDataGroupTO to : speciesGroups) {
+        SpeciesDataGroupDAO.SpeciesDataGroupTO to;
+        while (speciesGroups.next()) {
+            to = speciesGroups.getTO();
             result.add(newSpeciesDataGroup(to,
                     groupToSpeciesMap.get(to.getId()), downloadFiles.get(to.getId())));
         }
-
 
         return result;
     }
@@ -53,10 +54,11 @@ public class SpeciesDataGroupLoader {
      * @return
      */
     private static Map<String, List<Species>> buildGroupToSpeciesMap(
-            List<SpeciesDataGroupDAO.SpeciesToDataGroupTO> list, Map<String, Species> speciesMap) {
+            DAOResultSet<SpeciesDataGroupDAO.SpeciesToDataGroupTO> speciesToDataGroups, Map<String, Species> speciesMap) {
         Map<String, List<Species>> result = new HashMap<>();
 
-        for (SpeciesDataGroupDAO.SpeciesToDataGroupTO e : list) {
+        while(speciesToDataGroups.next()) {
+            SpeciesDataGroupDAO.SpeciesToDataGroupTO e = speciesToDataGroups.getTO();
             String group = e.getGroupId();
             Species species = speciesMap.get(e.getSpeciesId());
             List<Species> members = result.get(group);

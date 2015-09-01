@@ -45,6 +45,18 @@ public class MySQLSpeciesDataGroupDAOIT extends MySQLITAncestor {
         assertTrue("DownloadFileTOs are incorrectly retrieved\nGOT\n"+list+"\nEXPECTED\n"+expected,
                 TOComparator.areTOCollectionsEqual(list, expected));
         assertEquals(list, expected);
+
+        dao.setAttributes(new SpeciesDataGroupDAO.Attribute[]{SpeciesDataGroupDAO.Attribute.ID, SpeciesDataGroupDAO
+                .Attribute.DESCRIPTION});
+        List<SpeciesDataGroupDAO.SpeciesDataGroupTO> list2 = dao.getAllSpeciesDataGroup().getAllTOs();
+        List<SpeciesDataGroupDAO.SpeciesDataGroupTO> expected2 = Arrays.asList(
+                new SpeciesDataGroupDAO.SpeciesDataGroupTO("1", null , "SS1 is a ..."),
+                new SpeciesDataGroupDAO.SpeciesDataGroupTO("2", null, "A multi species group...")
+        );
+
+        assertTrue("DownloadFileTOs are incorrectly retrieved\nGOT\n"+list+"\nEXPECTED\n"+expected,
+                TOComparator.areTOCollectionsEqual(list2, expected2));
+        assertEquals(list, expected);
     }
 
 

@@ -47,6 +47,28 @@ public class MySQLDownloadFileDAOIT extends MySQLITAncestor {
                 TOComparator.areTOCollectionsEqual(allDownloadFiles, expectedDownloadFiles));
     }
 
+    /**
+     * Tests the {@link MySQLDownloadFileDAO#getAllDownloadFiles()} methods
+     * @throws SQLException if an error happens with the MySQL database
+     */
+    @Test
+    public void testGetAllDownloadFiles2() throws SQLException {
+        this.useSelectDB();
+
+        DownloadFileDAO dao = new MySQLDownloadFileDAO(this.getMySQLDAOManager());
+        dao.setAttributes(new DownloadFileDAO.Attribute[]{DownloadFileDAO.Attribute.DESCRIPTION, DownloadFileDAO
+                .Attribute.FILE_SIZE, DownloadFileDAO.Attribute.SPECIES_DATA_GROUP_ID});
+        List<DownloadFileDAO.DownloadFileTO> allDownloadFiles = dao.getAllDownloadFiles().getAllTOs();
+        List<DownloadFileDAO.DownloadFileTO> expectedDownloadFiles = Arrays.asList(
+                new DownloadFileDAO.DownloadFileTO(null, null, "this is file1", null, "0",
+                        null,"1"),
+                new DownloadFileDAO.DownloadFileTO(null, null, "this is file2", null,  "0", null,"2")
+        );
+
+        assertTrue("DownloadFileTOs are incorrectly retrieved\nGOT\n"+allDownloadFiles+"\nEXPECTED\n"
+                        +expectedDownloadFiles, TOComparator.areTOCollectionsEqual(allDownloadFiles,
+                expectedDownloadFiles));
+    }
 
 
 

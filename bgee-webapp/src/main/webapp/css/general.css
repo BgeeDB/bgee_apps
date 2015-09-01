@@ -14,7 +14,6 @@ div#bgee_news.bgee_section {
 	margin: 1% 2% 0;
 }
 
-
 /** WARNING: All following properties (copied and modified from download.css) added to insert 
              quickly species in the home page.
              These properties should be removed after the recoding of the home page **/
@@ -49,6 +48,14 @@ img {
 #bgee_uniq_species figure {
     margin: 0;
     padding: 4px;
+}
+
+#bgee_uniq_species figure:not(.selected) img.species_img {
+    box-shadow: 4px 4px 6px 0px #555;
+}
+
+#bgee_uniq_species figure:not(.selected) img.species_img:hover {
+    box-shadow: 0px 0px 10px 4px #920209;
 }
 
 /**** BGEE DATASELECTION (banner) ****/

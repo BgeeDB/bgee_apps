@@ -231,7 +231,7 @@ a:visited, a:hover {
 }
 
 figure img {
-    margin: 0 auto;
+    margin: 0px auto 3px auto;
 }
 
 div.bgee_section {

@@ -1691,6 +1691,33 @@ public class SimilarityAnnotation {
                         + missingNegativeAnnots.getValue());
             }
             
+            for (Entry<RawAnnotationBean, Set<Integer>> missingNegativeAnnots: 
+                this.checkNegativeAnnotsSubTaxa(positiveAnnotsToTaxa, negativeAnnotsToTaxa, false).
+                entrySet()) {
+                log.warn("Potentially missing annotation(s)! There exist negative annotation(s) "
+                        + "with no associated positive annotations "
+                        + "in same taxon or in sub-taxa. Negative annotation(s) "
+                        + "for HOM ID - Uberon ID: "
+                        + missingNegativeAnnots.getKey().getHomId() + " - " 
+                        + missingNegativeAnnots.getKey().getEntityIds()
+                        + " in taxon IDs: " 
+                        + negativeAnnotsToTaxa.get(missingNegativeAnnots.getKey()) 
+                        + " - There is no corresponding positive annotation "
+                        + "for the same taxon, or for any sub-taxon.");
+            }
+            for (Entry<RawAnnotationBean, Set<Integer>> missingNegativeAnnots: 
+                this.checkNegativeAnnotsSubTaxa(positiveAnnotsToTaxa, negativeAnnotsToTaxa, true).
+                entrySet()) {
+                log.warn("Potentially missing annotation(s)! There exist negative annotation(s) "
+                        + "with corresponding positive annotations in only ONE sub-taxon "
+                        + "(most likely, there should be several). Negative annotation(s) "
+                        + "for HOM ID - Uberon ID: "
+                        + missingNegativeAnnots.getKey().getHomId() + " - " 
+                        + missingNegativeAnnots.getKey().getEntityIds()
+                        + " in taxon IDs: " 
+                        + negativeAnnotsToTaxa.get(missingNegativeAnnots.getKey()));
+            }
+            
             //Also, if there are positive annotations using multiple Uberon IDs, most likely 
             //there should be positive annotations for the individual Uberon IDs as well.
             for (RawAnnotationBean posAnnot: positiveAnnotsToTaxa.keySet()) {

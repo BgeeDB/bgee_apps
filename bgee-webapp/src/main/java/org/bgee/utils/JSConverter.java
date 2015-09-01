@@ -6,7 +6,7 @@ import java.io.IOException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.controller.BgeeProperties;
+import org.bgee.controller.BgeeWebappProperties;
 import org.bgee.controller.URLParameters;
 
 /**
@@ -84,7 +84,7 @@ public abstract class JSConverter {
         targetFile.createNewFile();
         if(className.equals("bgeeproperties")){
             new BgeePropertiesJsConverter(new FileWriter(targetFile),
-                    BgeeProperties.getBgeeProperties()).writeFile();
+                    BgeeWebappProperties.getBgeeProperties()).writeFile();
         }
         else if(className.equals("urlparameters")){
             new URLParametersJsConverter(new FileWriter(targetFile),

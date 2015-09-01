@@ -16,8 +16,10 @@
     <dependencies>
 
         <!-- Remove these dependencies as long as the webapp does not use 
-            the actual Bgee API <dependency> <groupId>${project.groupId}</groupId> <artifactId>bgee-core</artifactId> 
+            the actual Bgee API -->
+            <dependency> <groupId>${project.groupId}</groupId> <artifactId>bgee-core</artifactId> 
             <version>${project.version}</version> <scope>compile</scope> </dependency> 
+        <!--
             <dependency> <groupId>${project.groupId}</groupId> <artifactId>bgee-dao-api</artifactId> 
             <version>${project.version}</version> <scope>compile</scope> </dependency> -->
         <!-- as long as bgee-dao-sql is the only service provider for bgee-dao-api, 
@@ -182,13 +184,13 @@
                                 <include>**/*</include>
                             </includes>
                         </resource>
-                        <!-- We filter bgee-webapp.properties so that css version number 
+                        <!-- We filter bgee.properties so that css version number 
                              and javacript version number are configured. -->
                         <resource>
                             <!-- this is relative to the pom.xml directory -->
                             <directory>src/main/resources/</directory>
                             <includes>
-                                <include>bgee-webapp.properties</include>
+                                <include>bgee.properties</include>
                             </includes>
                             <!-- Activates filtering -->
                             <filtering>true</filtering>
@@ -257,13 +259,13 @@
         </pluginManagement>
         
         
-        <!-- In order to correctly filter bgee-webapp.properties even outside of the WAR file -->
+        <!-- In order to correctly filter bgee.properties even outside of the WAR file -->
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
                 <includes>
-                    <include>bgee-webapp.properties</include>
+                    <include>bgee.properties</include>
                 </includes>
             </resource>  
         </resources>

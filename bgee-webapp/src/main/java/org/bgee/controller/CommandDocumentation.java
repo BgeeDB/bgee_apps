@@ -38,7 +38,7 @@ public class CommandDocumentation extends CommandParent {
      * @param viewFactory       A {@code ViewFactory} that provides the display type to be used.
      */
     public CommandDocumentation(HttpServletResponse response, RequestParameters requestParameters, 
-            BgeeProperties prop, ViewFactory viewFactory) {
+            BgeeWebappProperties prop, ViewFactory viewFactory) {
         super(response, requestParameters, prop, viewFactory);
     }
 

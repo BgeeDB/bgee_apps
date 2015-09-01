@@ -51,7 +51,7 @@ abstract class CommandParent {
      * A {@code BgeeProperties} instance that contains the properties
      * to use.
      */
-    protected BgeeProperties prop;
+    protected BgeeWebappProperties prop;
 
     /**
      * Constructor
@@ -65,7 +65,7 @@ abstract class CommandParent {
      * @param viewFactory       A {@code ViewFactory} that provides the display type to be used.
      */
     public CommandParent(HttpServletResponse response, 
-            RequestParameters requestParameters, BgeeProperties prop, ViewFactory viewFactory) {
+            RequestParameters requestParameters, BgeeWebappProperties prop, ViewFactory viewFactory) {
         log.entry(response, requestParameters, prop, viewFactory);
         this.response = response;
         this.requestParameters = requestParameters;

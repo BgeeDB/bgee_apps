@@ -44,7 +44,7 @@ public class CommandHome extends CommandParent
      * @param viewFactory       A {@code ViewFactory} that provides the display type to be used.
      */
     public CommandHome(HttpServletResponse response, 
-            RequestParameters requestParameters, BgeeProperties prop, ViewFactory viewFactory) {
+            RequestParameters requestParameters, BgeeWebappProperties prop, ViewFactory viewFactory) {
         super(response, requestParameters, prop, viewFactory);
     }
 

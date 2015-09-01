@@ -5,10 +5,10 @@ import java.io.IOException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.controller.BgeeProperties;
+import org.bgee.controller.BgeeWebappProperties;
 
 /**
- * Class that generates a javascript equivalent of the provided {@link BgeeProperties} class.
+ * Class that generates a javascript equivalent of the provided {@link BgeeWebappProperties} class.
  * The aim should be to use an instance similar to the one injected to the {@link FrontController}
  * of bgee-webapp. Note that it is only a subset of the properties that are useful to the
  * javascript. Be careful never to make available a property that should not be publicly available
@@ -28,14 +28,14 @@ public class BgeePropertiesJsConverter extends JSConverter {
     /**
      * The {@code} BgeeProperties instance to use as source
      */
-    private final BgeeProperties prop;
+    private final BgeeWebappProperties prop;
 
     /**
      * Constructor
      * @param writer   A {@code FileWriter} to produce the output file
      * @param prop     The {@code} BgeeProperties instance to use as source 
      */
-    public BgeePropertiesJsConverter(FileWriter writer, BgeeProperties prop){
+    public BgeePropertiesJsConverter(FileWriter writer, BgeeWebappProperties prop){
         super(writer);
         this.prop = prop;
     }

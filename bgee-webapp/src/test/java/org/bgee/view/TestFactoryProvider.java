@@ -7,7 +7,7 @@ import java.io.IOException;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.bgee.controller.BgeeProperties;
+import org.bgee.controller.BgeeWebappProperties;
 import org.bgee.controller.RequestParameters;
 
 /**
@@ -25,7 +25,7 @@ public class TestFactoryProvider extends ViewFactoryProvider
     /**
      * Constructor
      */
-    public TestFactoryProvider(BgeeProperties prop)
+    public TestFactoryProvider(BgeeWebappProperties prop)
     {
         super(prop);
     }

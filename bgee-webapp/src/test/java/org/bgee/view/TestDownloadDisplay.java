@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.bgee.controller.BgeeProperties;
+import org.bgee.controller.BgeeWebappProperties;
 import org.bgee.controller.RequestParameters;
 
 /**
@@ -19,7 +19,7 @@ import org.bgee.controller.RequestParameters;
 public class TestDownloadDisplay extends TestParentDisplay implements DownloadDisplay {
     
     public TestDownloadDisplay(HttpServletResponse response, RequestParameters requestParameters,
-            BgeeProperties prop, ViewFactory factory) throws IOException {
+            BgeeWebappProperties prop, ViewFactory factory) throws IOException {
         super(response, requestParameters, prop, factory);
     }
 

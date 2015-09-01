@@ -5,7 +5,7 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 /**
- * Unit tests for {@link BgeeProperties}.
+ * Unit tests for {@link BgeeWebappProperties}.
  * It checks that the properties are loaded from the correct source
  * These tests are split in several test classes to avoid conflicts between tests due to
  * the per-thread singleton behavior.
@@ -29,10 +29,10 @@ public class BgeePropertiesSecondTest extends BgeePropertiesParentTest {
     @Test
     public void testLoadPropertiesFromFile(){
         //set the file to use
-        System.setProperty(BgeeProperties.PROPERTIES_FILE_NAME_KEY, "/test.properties");
+        System.setProperty(BgeeWebappProperties.PROPERTIES_FILE_NAME_KEY, "/test.properties");
 
         // get the instance of bgeeproperties and check the values
-        this.bgeeProp = BgeeProperties.getBgeeProperties();
+        this.bgeeProp = BgeeWebappProperties.getBgeeProperties();
         assertEquals("Wrong property value retrieved", "/file", bgeeProp.getBgeeRootDirectory());
         assertEquals("Wrong property value retrieved", 20, bgeeProp.getUrlMaxLength());
         assertEquals("Wrong property value retrieved",
@@ -67,8 +67,6 @@ public class BgeePropertiesSecondTest extends BgeePropertiesParentTest {
                 "/logoImagesRootDirectory", bgeeProp.getLogoImagesRootDirectory());
         assertEquals("Wrong property value retrieved",
                 "/speciesImagesRootDirectory", bgeeProp.getSpeciesImagesRootDirectory());
-        assertEquals("Wrong property value retrieved",
-                "/topOBOResultsUrlRootDirectory", bgeeProp.getTopOBOResultsUrlRootDirectory());
         assertEquals("Wrong property value retrieved",
                 "webpagescachefile", bgeeProp.getWebpagesCacheConfigFileName());
     }

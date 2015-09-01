@@ -9,7 +9,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.controller.BgeeProperties;
+import org.bgee.controller.BgeeWebappProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.GeneralDisplay;
 
@@ -40,7 +40,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
      *                          {@code PrintWriter} 
      */
     public HtmlGeneralDisplay(HttpServletResponse response, RequestParameters requestParameters,
-            BgeeProperties prop, HtmlFactory factory) throws IOException {
+            BgeeWebappProperties prop, HtmlFactory factory) throws IOException {
         super(response, requestParameters, prop, factory);
     }
 

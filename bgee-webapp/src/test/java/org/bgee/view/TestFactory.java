@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.bgee.controller.BgeeProperties;
+import org.bgee.controller.BgeeWebappProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.controller.TestURLParameters;
 
@@ -19,7 +19,7 @@ import org.bgee.controller.TestURLParameters;
 public class TestFactory extends ViewFactory {
     
     public TestFactory(HttpServletResponse response, RequestParameters requestParameters,
-            BgeeProperties prop) {
+            BgeeWebappProperties prop) {
         super(response, requestParameters, prop);
     }
     

@@ -6,7 +6,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.controller.BgeeProperties;
+import org.bgee.controller.BgeeWebappProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.AboutDisplay;
 
@@ -38,7 +38,7 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
      *                          {@code PrintWriter}.
      */
     public HtmlAboutDisplay(HttpServletResponse response,
-            RequestParameters requestParameters, BgeeProperties prop, HtmlFactory factory) throws IOException {
+            RequestParameters requestParameters, BgeeWebappProperties prop, HtmlFactory factory) throws IOException {
         super(response, requestParameters, prop, factory);
     }
 

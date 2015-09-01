@@ -52,7 +52,7 @@ img {
 
 #bgee_multi_species img {
     width: 60px;
-    margin: 0px 1px;ç
+    margin: 0px 1px;
 }
 
 #bgee_uniq_species figure {
@@ -318,7 +318,7 @@ p.file_info a:hover {
 
 #bgee_data_selection_text div.bgee_download_file_buttons {
     margin: 0px 0px 0px 30px;
-ç}
+}
 
 .download_link, #bgee_data_selection p.no_data {
 	padding: 5px;

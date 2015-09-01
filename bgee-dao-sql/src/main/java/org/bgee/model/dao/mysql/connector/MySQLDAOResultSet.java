@@ -390,7 +390,9 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
             //if we get at the end of the current ResultSet, try to execute the next 
             //BgeePreparedStatement in order
             if (!this.currentResultSet.next()) {
+                //this method will notably close the current resultset before moving to the next query. 
                 this.executeNextStatementQuery();
+                
                 //we use recursivity here: maybe the next statement did not return 
                 //any result, but another one  afterwards might. This should be invisible 
                 //to the user.

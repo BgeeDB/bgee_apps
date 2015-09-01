@@ -18,7 +18,7 @@ public class SpeciesDataGroupLoader {
 
     private final static Logger log = LogManager.getLogger(SpeciesDataGroupLoader.class.getName());
 
-    private SpeciesDataGroupDAO speciesGroupDao;
+    private SpeciesDataGroupDAO speciesGroupDAO;
 
     private DownloadFileLoader downloadFileLoader;
 
@@ -29,11 +29,13 @@ public class SpeciesDataGroupLoader {
      * @return the {@code Set} containing all {@code SpeciesDataGroup}
      */
     public Set<SpeciesDataGroup> loadAllSpeciesDataGroup() {
-        DAOResultSet<SpeciesDataGroupDAO.SpeciesDataGroupTO> speciesGroups = speciesGroupDao.getAllSpeciesDataGroup();
+        log.entry();
+        
+        DAOResultSet<SpeciesDataGroupDAO.SpeciesDataGroupTO> speciesGroups = speciesGroupDAO.getAllSpeciesDataGroup();
         Map<String, List<DownloadFile>> downloadFiles = buildDownloadFileMap(downloadFileLoader.getAllDownloadFiles());
         Map<String, Species> species = buildSpeciesIdMap(speciesLoader.loadSpeciesInDataGroups());
         Map<String, List<Species>> groupToSpeciesMap = buildGroupToSpeciesMap(
-                speciesGroupDao.getAllSpeciesToDataGroup(), species);
+                speciesGroupDAO.getAllSpeciesToDataGroup(), species);
 
         Set<SpeciesDataGroup> result = new HashSet<SpeciesDataGroup>();
 
@@ -44,7 +46,7 @@ public class SpeciesDataGroupLoader {
                     groupToSpeciesMap.get(to.getId()), downloadFiles.get(to.getId())));
         }
 
-        return result;
+        return log.exit(result);
     }
 
     /**
@@ -54,11 +56,13 @@ public class SpeciesDataGroupLoader {
      * @return
      */
     private static Map<String, List<Species>> buildGroupToSpeciesMap(
-            DAOResultSet<SpeciesDataGroupDAO.SpeciesToDataGroupTO> speciesToDataGroups, Map<String, Species> speciesMap) {
+            DAOResultSet<SpeciesDataGroupDAO.SpeciesToDataGroupTO> speciesToDataGroupRs, Map<String, Species> speciesMap) {
+        log.entry(speciesToDataGroupRs, speciesMap);
+        
         Map<String, List<Species>> result = new HashMap<>();
 
-        while(speciesToDataGroups.next()) {
-            SpeciesDataGroupDAO.SpeciesToDataGroupTO e = speciesToDataGroups.getTO();
+        while(speciesToDataGroupRs.next()) {
+            SpeciesDataGroupDAO.SpeciesToDataGroupTO e = speciesToDataGroupRs.getTO();
             String group = e.getGroupId();
             Species species = speciesMap.get(e.getSpeciesId());
             List<Species> members = result.get(group);
@@ -68,7 +72,7 @@ public class SpeciesDataGroupLoader {
             }
             members.add(species);
         }
-        return result;
+        return log.exit(result);
     }
 
     /**
@@ -77,19 +81,23 @@ public class SpeciesDataGroupLoader {
      * @return the map
      */
     private static Map<String, Species> buildSpeciesIdMap(Collection<Species> species) {
+        log.entry(species);
         Map<String, Species> speciesMap = new HashMap<>();
         for (Species s : species) {
             speciesMap.put(s.getId(), s);
         }
-        return speciesMap;
+        return log.exit(speciesMap);
     }
 
     /**
-     * Build a map from species data group ids (as {@code String} to the {@code List} of {@code DownloadFile} available for that data group.
+     * Build a map from species data group ids (as {@code String} to the {@code List} of {@code DownloadFile} 
+     * available for that data group.
+     * 
      * @param downloadFileList the source list of {@code DownloadFile}
      * @return the map
      */
     private static Map<String, List<DownloadFile>> buildDownloadFileMap(List<DownloadFile> downloadFileList) {
+        log.entry(downloadFileList);
         Map<String, List<DownloadFile>> downloadFiles = new HashMap<>();
         for (DownloadFile file : downloadFileList) {
             String group = file.getSpeciesDataGroupId();
@@ -100,7 +108,7 @@ public class SpeciesDataGroupLoader {
             }
             list.add(file);
         }
-        return downloadFiles;
+        return log.exit(downloadFiles);
     }
 
     /**
@@ -111,14 +119,17 @@ public class SpeciesDataGroupLoader {
      * @param files the {@code List} of associated {@code DownloadFile}
      * @return a (newly allocated) {@code SpeciesDataGroup}
      */
-    private static SpeciesDataGroup newSpeciesDataGroup(SpeciesDataGroupDAO.SpeciesDataGroupTO groupTO, List<Species>
-            species, List<DownloadFile> files) {
-        return newSpeciesDataGroup(groupTO.getId(), groupTO.getName(), groupTO.getDescription(), species, files);
+    private static SpeciesDataGroup newSpeciesDataGroup(SpeciesDataGroupDAO.SpeciesDataGroupTO groupTO, 
+            List<Species> species, List<DownloadFile> files) {
+        log.entry(groupTO, species, files);
+        return log.exit(newSpeciesDataGroup(groupTO.getId(), groupTO.getName(), groupTO.getDescription(), 
+                species, files));
     }
 
     /**
      * Helper method to build a {@link SpeciesDataGroup} from its id, name and description
-     * and the the {@code List} of associated {@code Species} and {@code DownloadFile}
+     * and the the {@code List} of associated {@code Species} and {@code DownloadFile}. 
+     * 
      * @param id the id of the {@code SpeciesDataGroup}
      * @param name the name of the {@code SpeciesDataGroup}
      * @param description the description of the {@code SpeciesDataGroup}
@@ -128,7 +139,8 @@ public class SpeciesDataGroupLoader {
      */
     private static SpeciesDataGroup newSpeciesDataGroup(String id, String name, String description, List<Species>
             species, List<DownloadFile> files) {
-        return new SpeciesDataGroup(id, name, description, species, files);
+        log.entry(id, name, description, species, files);
+        return log.exit(new SpeciesDataGroup(id, name, description, species, files));
     }
 
 

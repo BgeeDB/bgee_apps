@@ -282,6 +282,25 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
         return log.exit(sb.toString());
     }
     
+    /**
+     * Generate a select statement using the table name in the {@code FROM} clause. 
+     * This method is similar to {@link #generateSelectClause(String, Map, boolean)}, 
+     * except that it also appends a 'FROM tableName' to the generated SQL. 
+     * 
+     * @param tableName             A {@code String} that is the table name.
+     * @param columnToAttributesMap A {@code Map} from column name (as {@code String}) to {@code Attributes}
+     * @param distinct              A {@code boolean} defining whether the DISTINCT keyword 
+     *                              is needed in the SELECT clause.
+     * @return A {@code String} corresponding to the generated statement.
+     */
+    protected  String generateSelectAllStatement(String tableName,
+                                                 Map<String, T> columnToAttributesMap, boolean distinct) {
+        log.entry();
+        StringBuilder sb = new StringBuilder();
+        sb.append(generateSelectClause(tableName, columnToAttributesMap, distinct));
+        sb.append(" FROM " + tableName);
+        return log.exit(sb.toString());
+    }
     
     /**
      * Convert a {@code Collection} of {@code String}s into a {@code List} of {@code Integer}s, 
@@ -308,21 +327,5 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
         }
         Collections.sort(intList);
         return log.exit(intList);
-    }
-
-    /**
-     * Generate a select statement using the table name in the {@code FROM} clause.
-     * @param tableName The table name as a {@code String}
-     * @param columnToAttributesMap A map from column name (as {@code String}) to {@code Attributes}
-     * @param distinct A {@code boolean} defining whether the DISTINCT keyword is needed in the SELECT clause.
-     * @return The generated statement as a {@code String}
-     */
-    protected  String generateSelectAllStatement(String tableName,
-                                                 Map<String, T> columnToAttributesMap, boolean distinct) {
-        log.entry();
-        StringBuilder sb = new StringBuilder();
-        sb.append(generateSelectClause(tableName, columnToAttributesMap, distinct));
-        sb.append(" FROM " + tableName);
-        return log.exit(sb.toString());
     }
 }

@@ -31,18 +31,18 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
  * <p>
  * Note that the method {@code executeQuery} should not have been called 
  * on the {@code BgeePreparedStatement}s provided to this {@code MySQLDAOResultSet}. 
- * This is the responsibility of this {@code MySQLDAOResultSet} to do it. It will 
- * do it right away on the first {@code BgeePreparedStatement} provided, 
- * at instantiation, so that the first call to the {@code next} method could 
- * return immediately. But afterwards, if several {@code BgeePreparedStatement}s 
- * were provided, a call to the {@code next} method could generate a freeze, 
+ * This is the responsibility of this {@code MySQLDAOResultSet} to do it. 
+ * The first {@code BgeePreparedStatement} provided will not be executed immediately,
+ * but only at the first call to {@code next} (late-binding behavior), so this method 
+ * might not return immediately on first call. Afterwards, if several {@code BgeePreparedStatement}s 
+ * were provided, a call to the {@code next} method could again generate a freeze, 
  * when this {@code MySQLDAOResultSet} gets to the end of the currently iterated 
  * {@code ResultSet}, and needs to call {@code executeQuery} on the following 
  * {@code BgeePreparedStatement}s in the list.
  * 
  * @author Frederic Bastian
  * @author Valentine Rech de Laval
- * @version Bgee 13
+ * @version Bgee 13 Sept. 2015
  * @since Bgee 13
  *
  * @param <T>   The type of {@code TransferObject} that can be obtained 
@@ -166,6 +166,12 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
      */
     //XXX: move this mechanism to the generic DAOResultSet?
     private T lastTOGenerated;
+    
+    /**
+     * A {@code boolean} that is {@code false} at instantiation, and becomes {@code true} 
+     * once the first {@code BgeePreparedStatement} has been executed. 
+     */
+    private boolean firstStmtExecuted;
     
     /**
      * Default constructor private, at least one {@code BgeePreparedStatement} 
@@ -371,7 +377,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
         this.currentResultSetIterationCount = 0;
         this.currentStatement = null;
         
-        this.executeNextStatementQuery();
+        this.firstStmtExecuted = false;
         log.exit();
     }
 
@@ -379,6 +385,13 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
     public boolean next() throws DAOException, QueryInterruptedException {
         log.entry();
         this.lastTOGenerated = null;
+        
+        //execute the first statement only at the first call to next (late-binding behavior)
+        if (!this.firstStmtExecuted) {
+            this.firstStmtExecuted = true;
+            this.executeNextStatementQuery();
+        }
+        
         //If currentResultSet is null, it means that there are no more 
         //BgeePreparedStatement to obtain results from. 
         if (this.currentResultSet == null) {

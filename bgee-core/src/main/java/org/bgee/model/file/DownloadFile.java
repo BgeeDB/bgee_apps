@@ -1,13 +1,14 @@
 package org.bgee.model.file;
 
 /**
- * Describes a file (available for download), providing information such as size, category.
+ * A file (available for download), providing information such as size, category.
  * @author Philippe Moret
- *
+ * @version Bgee 13
+ * @since Bgee 13
  */
 public class DownloadFile {
 
-    enum CategoryEnum {
+    public enum CategoryEnum {
         EXPR_CALLS("expr_calls", false),
         DIFF_EXPR_CALLS_STAGES("diff_expr_call_stages", true),
         DIFF_EXPR_CALLS_ANAT("diff_expr_calls_anatonmy", true),

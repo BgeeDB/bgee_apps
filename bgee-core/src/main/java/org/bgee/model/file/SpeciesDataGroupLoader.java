@@ -26,9 +26,9 @@ public class SpeciesDataGroupLoader {
 
     /**
      * Load all {@code SpeciesDataGroup}
-     * @return the {@code Set} containing all {@code SpeciesDataGroup}
+     * @return the {@code List} containing all {@code SpeciesDataGroup}
      */
-    public Set<SpeciesDataGroup> loadAllSpeciesDataGroup() {
+    public List<SpeciesDataGroup> loadAllSpeciesDataGroup() {
         log.entry();
         
         DAOResultSet<SpeciesDataGroupDAO.SpeciesDataGroupTO> speciesGroups = speciesGroupDAO.getAllSpeciesDataGroup();
@@ -37,7 +37,7 @@ public class SpeciesDataGroupLoader {
         Map<String, List<Species>> groupToSpeciesMap = buildGroupToSpeciesMap(
                 speciesGroupDAO.getAllSpeciesToDataGroup(), species);
 
-        Set<SpeciesDataGroup> result = new HashSet<SpeciesDataGroup>();
+        List<SpeciesDataGroup> result = new ArrayList<SpeciesDataGroup>();
 
         SpeciesDataGroupDAO.SpeciesDataGroupTO to;
         while (speciesGroups.next()) {

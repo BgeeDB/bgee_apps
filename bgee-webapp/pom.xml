@@ -15,6 +15,12 @@
 
     <dependencies>
 
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>bgee-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- Remove these dependencies as long as the webapp does not use 
             the actual Bgee API <dependency> <groupId>${project.groupId}</groupId> <artifactId>bgee-core</artifactId> 
             <version>${project.version}</version> <scope>compile</scope> </dependency> 

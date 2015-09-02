@@ -19,6 +19,8 @@ import java.util.Map;
 /**
  * The MySQL implementation of {@link MySQLDownloadFileDAO}.
  * @author Philippe Moret
+ * @version Bgee 13
+ * @since Bgee 13
  */
 public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> implements DownloadFileDAO {
 
@@ -27,12 +29,15 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
      */
     private static final Logger log = LogManager.getLogger(MySQLDownloadFileDAO.class.getName());
 
+    /**
+     * A {@code Map} of column name to their corresponding {@code Attribute}.
+     */
     private static final Map<String, DownloadFileDAO.Attribute> colToAttributesMap;
 
     /**
      * The underlying table name.
      */
-    public static final String DOWNLOAD_FILE_TABLE = "downloadFile";
+    private static final String DOWNLOAD_FILE_TABLE = "downloadFile";
 
     static {
         colToAttributesMap = new HashMap<>();
@@ -47,7 +52,7 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
 
     /**
      * Finds the {@link DownloadFileDAO.Attribute} from a column name.
-     * @param columnName
+     * @param columnName A string representing the column name.
      * @return The {@link DownloadFileDAO.Attribute} corresponding to the column name
      * @throws IllegalArgumentException If the columnName doesn't match any attributes.
      */
@@ -85,13 +90,16 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
 
     /**
      * Implementation of the {@code DownloadFileTOResultSet}
+     * @author Philippe Moret
+     * @version Bgee 13
+     * @since Bgee 13
      */
     class MySQLDownloadFileTOResultSet extends MySQLDAOResultSet<DownloadFileDAO.DownloadFileTO>
             implements DownloadFileTOResultSet {
 
         /**
          * Constructor passing a {@code BgeePreparedStatement} .
-         * @param statement The {@link BgeePreparedStatement}
+         * @param statement The {@code BgeePreparedStatement}
          */
         private MySQLDownloadFileTOResultSet(BgeePreparedStatement statement) {
             super(statement);
@@ -100,6 +108,7 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
         @Override
         protected DownloadFileDAO.DownloadFileTO getNewTO() throws DAOException {
             try {
+                log.entry();
                 final ResultSet currentResultSet = this.getCurrentResultSet();
                 String id = null, path = null, name = null, size = null,
                         description = null, speciesDataGroupId = null;

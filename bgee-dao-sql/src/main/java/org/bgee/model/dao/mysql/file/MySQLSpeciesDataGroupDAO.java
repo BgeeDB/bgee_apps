@@ -12,7 +12,6 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,9 +19,14 @@ import java.util.Map;
  * The MySQL implementation of the {@link SpeciesDataGroupDAO} interface.
  *
  * @author Philippe Moret
+ * @version Bgee 13
+ * @since Bgee 13
  */
 public class MySQLSpeciesDataGroupDAO extends MySQLDAO<SpeciesDataGroupDAO.Attribute> implements SpeciesDataGroupDAO {
 
+    /**
+     * The {@code Logger} of this class
+     */
     private static final Logger log = LogManager.getLogger(MySQLSpeciesDataGroupDAO.class.getName());
 
     /**
@@ -30,6 +34,9 @@ public class MySQLSpeciesDataGroupDAO extends MySQLDAO<SpeciesDataGroupDAO.Attri
      */
     private static final String SPECIES_DATAGROUP_TABLE = "speciesDataGroup";
 
+    /**
+     * A {@code Map} of column name to their corresponding {@code Attribute}.
+     */
     private static final Map<String, SpeciesDataGroupDAO.Attribute> columnToAttributesMap;
 
     static {
@@ -79,7 +86,13 @@ public class MySQLSpeciesDataGroupDAO extends MySQLDAO<SpeciesDataGroupDAO.Attri
         }
     }
 
-    public class MySQLSpeciesDataGroupTOResultSet extends MySQLDAOResultSet<SpeciesDataGroupTO> implements
+    /**
+     * The MySQL implementation of {@code SpeciesDataGroupTOResultSet}
+     * @author Philippe Moret
+     * @version Bgee 13
+     * @since Bgee 13
+     */
+    class MySQLSpeciesDataGroupTOResultSet extends MySQLDAOResultSet<SpeciesDataGroupTO> implements
             SpeciesDataGroupTOResultSet {
 
         private MySQLSpeciesDataGroupTOResultSet(BgeePreparedStatement statement) {
@@ -116,7 +129,10 @@ public class MySQLSpeciesDataGroupDAO extends MySQLDAO<SpeciesDataGroupDAO.Attri
     }
 
     /**
-     * The MySQL implementation of the {@code DAOResultSet} interfacte for {@code SpeciesToDataGroupMemberTO}
+     * The MySQL implementation of the {@code DAOResultSet} interface for {@code SpeciesToDataGroupTO}
+     * @author Philippe Moret
+     * @version Bgee 13
+     * @since Bgee 13
      */
     class MySQLSpeciesToDataGroupTOResultSet extends MySQLDAOResultSet<SpeciesToDataGroupTO>
             implements SpeciesToDataGroupTOResultSet {

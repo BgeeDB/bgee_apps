@@ -295,7 +295,7 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
      */
     protected  String generateSelectAllStatement(String tableName,
                                                  Map<String, T> columnToAttributesMap, boolean distinct) {
-        log.entry();
+        log.entry(tableName, columnToAttributesMap, distinct);
         StringBuilder sb = new StringBuilder();
         sb.append(generateSelectClause(tableName, columnToAttributesMap, distinct));
         sb.append(" FROM " + tableName);

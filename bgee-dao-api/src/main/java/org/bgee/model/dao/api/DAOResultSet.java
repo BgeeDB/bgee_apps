@@ -1,7 +1,13 @@
 package org.bgee.model.dao.api;
 
 import java.util.List;
+import java.util.Spliterator;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
 
@@ -21,6 +27,9 @@ import org.bgee.model.dao.api.exception.QueryInterruptedException;
  * on a result, the method {@link #getTO()} can be called to obtain the result 
  * as a {@code TransferObject}.
  * <p>
+ * It is also possible to obtain a {@code Stream} to traverse the results by calling 
+ * {@link #stream()}.
+ * <p>
  * When a call to the {@code next} method returns {@code false}, this 
  * {@code DAOResultSet} is closed, and all underlying resources used 
  * to generate it are released. Calling {@link #getTO()} would throw 
@@ -30,6 +39,9 @@ import org.bgee.model.dao.api.exception.QueryInterruptedException;
  * {@code next} returns {@code false}). But the could be accomplished at end 
  * of the applicative code, by calling {@link DAOManager#close()}, that would 
  * close all resources, including {@code DAOResultSet}.
+ * <p>
+ * A {@code DAOResultSet} is also closed when a {@code Stream} obtained from the {@link #stream()} 
+ * method is closed.
  * <p>
  * As an example, if the {@code DAO} used is using a SQL database, then each result 
  * of a {@code DAOResultSet} would correspond to one row in the database. 
@@ -43,13 +55,142 @@ import org.bgee.model.dao.api.exception.QueryInterruptedException;
  * all results in memory. In any case, this is none of the business of the caller.
  * 
  * @author Frederic Bastian
- * @version Bgee 13
+ * @version Bgee 13 Sept. 2015
  * @since Bgee 13
  *
  * @param <T>   The type of {@code TransferObject} that can be obtained 
  *              from this {@code DAOResultSet}.
  */
 public interface DAOResultSet<T extends TransferObject> extends AutoCloseable {
+    /**
+     * A {@code Spliterator} allowing to stream over {@code TransferObject}s 
+     * obtained from a {@code DAOResultSet}. 
+     * This {@code Spliterator} is finite, sequential, ordered, and unsized, and it does not override 
+     * the {@code Spliterator#forEachRemaining(Consumer)} default method. 
+     * It is not sized, as we have no guarantee that implementations can determine 
+     * the total number of results before traversal. 
+     * Service provider should override this class and the {@link DAOResultSet#stream()} 
+     * default method if they want to change these behaviors .
+     * 
+     * @author Frederic Bastian
+     * @version Bgee 13 Sept. 2015
+     * @see DAOResultSet#stream()
+     * @since Bgee 13 Sept 2015
+     *
+     * @param <T>   The type of {@code TransferObject} processed by this {@code Spliterator}.
+     */
+    class DAOResultSetSpliterator<T extends TransferObject> implements Spliterator<T> {
+        
+        private final static Logger log = LogManager.getLogger(DAOResultSetSpliterator.class.getName());
+        
+        /**
+         * The {@code DAOResultSet} to use to traverse the results. It would have been simpler 
+         * to just be able to call methods of an outer {@code DAOResultSet} instance, 
+         * but interfaces cannot have non-static inner classes, so we need to store it.
+         */
+        private final DAOResultSet<T> daoRs;
+        
+        /**
+         * 0-arg constructor, mainly in case a service provider needs to extend this class, 
+         * and does not need to be provided with a {@code DAOResultSet} instance 
+         * (see {@link #DAOResultSetSpliterator(DAOResultSet)}).
+         */
+        public DAOResultSetSpliterator() {
+            this(null);
+        }
+        /**
+         * Constructor providing the {@code DAOResultSet} used to traverse results. 
+         * This is because members of an interface can only be static, so we cannot call 
+         * methods from an outer {@code DAOResultSet} class, so we need to be provided 
+         * with one. It is recommended that the provided {@code DAOResultSet} has a late-binding 
+         * behavior (doesn't bind to the data source until method {@code next} is called).
+         * 
+         * @param rs    The {@code DAOResultSet} to use to traverse the results. 
+         */
+        public DAOResultSetSpliterator(DAOResultSet<T> rs) {
+            this.daoRs = rs;
+        }
+
+        @Override
+        public boolean tryAdvance(Consumer<? super T> action) {
+            log.entry(action);
+            if (this.daoRs.next()) {
+                action.accept(this.daoRs.getTO());
+                return log.exit(true);
+            }
+            return log.exit(false);
+        }
+
+        /**
+         * Return {@code null}, because by default a {@code DAOResultSet} does not have 
+         * to provide the capability of being accessed in parallel. Service providers 
+         * should extend this class and override this method if their implementation 
+         * can be accessed in parallel.
+         * 
+         * @return  A {@code Spliterator} that is {@code null}.
+         */
+        @Override
+        public Spliterator<T> trySplit() {
+            return null;
+        }
+
+        /**
+         * Returns {@code Long.MAX_VALUE}, meaning that we have no idea of the size 
+         * of the result set to traverse. Service providers should extend this class 
+         * and override this method if the number of results is known before traversal. 
+         * 
+         * @return  A {@code long} equal to Long.MAX_VALUE. 
+         */
+        @Override
+        public long estimateSize() {
+            return Long.MAX_VALUE;
+        }
+
+        /**
+         * This {@code DAOResultSetSpliterator} has only the following characteristics: 
+         * {@code NONNULL} and {@code ORDERED}. Service providers should extend this class 
+         * and override this method if their implementation of {@code DAOResultSet} 
+         * can be traversed differently (thus, having for instance the characteristics 
+         * {@code SIZED}, or {@code CONCURRENT}).
+         * 
+         * @return  An {@code int} representing the ORed values from the characteristics 
+         *          of this {@code DAOResultSetSpliterator}.
+         */
+        @Override
+        public int characteristics() {
+            return Spliterator.NONNULL | Spliterator.ORDERED;
+        }
+        
+    }
+    
+    /**
+     * Returns a {@code Stream} with this {@code DAOResultSet} as source. 
+     * It allows to traverse all the {@code T}s that can be obtained from this {@code DAOResultSet}. 
+     * When the {@code Stream} is consumed, this {@code DAOResultSet} is closed, and it is thus 
+     * not possible to call methods such as {@code getTO} anymore (would throw an exception).
+     * Also, when the {@code close} method is called on the {@code Stream}, {@code close} is also called 
+     * on this {@code DAOResultSet}. 
+     * <p>
+     * The default implementation traverse the {@code T}s exactly as if the methods 
+     * {@link #next()} and {@link #getTO()} were called sequentially on this {@code DAOResultSet}, 
+     * until the {@code next} method returns {@code false}. The default implementation 
+     * is based on a {@code Spliterator} that is finite, sequential, ordered, unsized 
+     * (see {@link DAOResultSetSpliterator}).
+     * <p>
+     * Implementations should make sure that the returned {@code Stream} has a close handler 
+     * that closes this {@code DAOResultSet} (see method {@code BaseStream#onClose(Runnable)}).
+     * 
+     * @return  A {@code Stream} over the {@code T}s obtained from this {@code DAOResultSet}. 
+     *          When it is closed, this {@code DAOResultSet} is also closed.
+     */
+    default Stream<T> stream() {
+        //no Logger used, because either we need to make a DAOResultSet Logger public, 
+        //or we need to instantiate it each time this method is called.
+        //We add a close handler to the Stream, to close this DAOResultSet when the Stream is closed
+        return StreamSupport.stream(new DAOResultSetSpliterator<T>(this), false)
+                .onClose(() -> this.close());
+    }
+    
     /**
      * Moves the cursor forward from its current position to the next result. 
      * A {@code DAOResultSet} cursor is initially positioned before the first result; 

@@ -87,8 +87,11 @@ public class MySQLDAOResultSetTest extends TestAncestor
     
     /**
      * Test that the first {@code BgeePreparedStatement} provided at instantiation 
-     * of a {@code MySQLDAOResultSet} is immediately executed.
+     * of a {@code MySQLDAOResultSet} is not immediately executed. Also verify pre-condition checks.
      */
+    //supress warnings because the constructor of MySQLDAOResultSet used to have side-effects, 
+    //we were testing the side-effects and not using the instantiated MySQLDAOResultSet object.
+    @SuppressWarnings("unused")
     @Test
     public void shouldInstantiate() throws SQLException {
         BgeePreparedStatement mockStatement = mock(BgeePreparedStatement.class);
@@ -103,8 +106,10 @@ public class MySQLDAOResultSetTest extends TestAncestor
         when(mockStatement2.executeQuery()).thenReturn(realRs);
         when(mockStatement3.executeQuery()).thenReturn(realRs);
         
+        //the first statement used to be executed at instantiation of MySQLDAOResultSet, 
+        //it is not the case anymore (late-binding, executed when next is called)
         new FakeDAOResultSet(Arrays.asList(mockStatement, mockStatement2, mockStatement3));
-        verify(mockStatement).executeQuery();
+        verify(mockStatement, never()).executeQuery();
         verify(mockStatement2, never()).executeQuery();
         verify(mockStatement3, never()).executeQuery();
         
@@ -146,7 +151,12 @@ public class MySQLDAOResultSetTest extends TestAncestor
         
         MySQLDAOResultSet<TransferObject> rs = new FakeDAOResultSet(
                 Arrays.asList(mockStatement, mockStatement2));
-        //first mockStatement should have been executed right away.
+        //first mockStatement is executed only when next is called, 
+        //which call executeNextStatementQuery.
+        Method method = MySQLDAOResultSet.class.getDeclaredMethod(
+                "executeNextStatementQuery");
+        method.setAccessible(true);
+        method.invoke(rs);
         //check column labels
         Map<Integer, String> expectedColumnLabels = new HashMap<Integer, String>();
         expectedColumnLabels.put(1, "column1");
@@ -157,9 +167,6 @@ public class MySQLDAOResultSetTest extends TestAncestor
         verify(mockStatement2, never()).executeQuery();
         verify(mockStatement, never()).close();
         
-        Method method = MySQLDAOResultSet.class.getDeclaredMethod(
-                "executeNextStatementQuery");
-        method.setAccessible(true);
         method.invoke(rs);
         
         verify(mockStatement).close();
@@ -177,11 +184,12 @@ public class MySQLDAOResultSetTest extends TestAncestor
     /**
      * Test the behavior of {@link MySQLDAOResultSet#executeNextStatementQuery()} 
      * when the query is interrupted.
+     * @throws InvocationTargetException 
      */
     @Test
-    public void interruptdExecuteNextStatementQuery() throws SQLException, 
+    public void interruptedExecuteNextStatementQuery() throws SQLException, 
         NoSuchMethodException, SecurityException, IllegalAccessException, 
-        IllegalArgumentException {
+        IllegalArgumentException, InvocationTargetException {
         
         BgeePreparedStatement mockStatement = mock(BgeePreparedStatement.class);
         BgeePreparedStatement mockStatement2 = mock(BgeePreparedStatement.class);
@@ -196,15 +204,15 @@ public class MySQLDAOResultSetTest extends TestAncestor
         
         MySQLDAOResultSet<TransferObject> rs = new FakeDAOResultSet(
                 Arrays.asList(mockStatement, mockStatement2));
-        //first mockStatement should have been executed right away.
-        //the call to executeNextStatementQuery should lose the first one and 
-        //execute the second one
-        verify(mockStatement2, never()).executeQuery();
-        verify(mockStatement, never()).close();
-        
+        //Invoke executeNextStatementQuery a first time for the first statement, 
+        //the second call to executeNextStatementQuery should execute the second one
         Method method = MySQLDAOResultSet.class.getDeclaredMethod(
                 "executeNextStatementQuery");
         method.setAccessible(true);
+        method.invoke(rs);
+        
+        verify(mockStatement2, never()).executeQuery();
+        verify(mockStatement, never()).close();
         try {
             //the method should throw a QueryInterruptedException
             method.invoke(rs);
@@ -252,6 +260,9 @@ public class MySQLDAOResultSetTest extends TestAncestor
         
         MySQLDAOResultSet<TransferObject> myRs = new FakeDAOResultSet(Arrays.asList(
                 mockStatement, mockStatement2, mockStatement3, mockStatement4, mockStatement5));
+        //execution of the first statement is only triggered when next is called
+        when(mockRs.next()).thenReturn(true);
+        assertTrue("Incorrect value returend by next", myRs.next());
         verify(mockStatement).executeQuery();
         verify(mockStatement2, never()).executeQuery();
         verify(mockStatement3, never()).executeQuery();
@@ -261,8 +272,6 @@ public class MySQLDAOResultSetTest extends TestAncestor
         assertFalse("Incorrect use of limit feature", myRs.isUsingLimitFeature());
         
 
-        when(mockRs.next()).thenReturn(true);
-        assertTrue("Incorrect value returend by next", myRs.next());
         //check that only the first ResultSet was used
         verify(mockRs).next();
         verify(mockRs2, never()).next();
@@ -369,13 +378,14 @@ public class MySQLDAOResultSetTest extends TestAncestor
         
         MySQLDAOResultSet<TransferObject> myRs = new FakeDAOResultSet(Arrays.asList(
                 mockStatement, mockStatement2, mockStatement3), true);
+        //execution of the first statement is only triggered when next is called
+        assertTrue("Incorrect value returend by next", myRs.next());
         verify(mockStatement).executeQuery();
         verify(mockStatement2, never()).executeQuery();
         verify(mockStatement3, never()).executeQuery();
         assertTrue("Incorrect use of duplicate filtering", myRs.isFilterDuplicates());
         assertFalse("Incorrect use of limit feature", myRs.isUsingLimitFeature());
         
-        assertTrue("Incorrect value returend by next", myRs.next());
         assertEquals("Incorrect TO returned", fakeTO1, myRs.getTO());
         verify(mockRs, times(1)).next();
         verify(mockStatement2, never()).executeQuery();
@@ -475,13 +485,13 @@ public class MySQLDAOResultSetTest extends TestAncestor
         
         MySQLDAOResultSet<TransferObject> myRs = new FakeDAOResultSet(Arrays.asList(
                 mockStatement, mockStatement2, mockStatement3), false);
+        assertTrue("Incorrect value returend by next", myRs.next());
         verify(mockStatement).executeQuery();
         verify(mockStatement2, never()).executeQuery();
         verify(mockStatement3, never()).executeQuery();
         assertFalse("Incorrect use of duplicate filtering", myRs.isFilterDuplicates());
         assertFalse("Incorrect use of limit feature", myRs.isUsingLimitFeature());
         
-        assertTrue("Incorrect value returend by next", myRs.next());
         assertEquals("Incorrect TO returned", fakeTO1, myRs.getTO());
         verify(mockRs, times(1)).next();
         verify(mockStatement2, never()).executeQuery();
@@ -588,6 +598,8 @@ public class MySQLDAOResultSetTest extends TestAncestor
         
         MySQLDAOResultSet<TransferObject> myRs = new FakeDAOResultSet(mockStatement, 
                 2, 3, 20, true);
+        //execution of the first statement is only triggered when next is called
+        assertTrue("Incorrect value returend by next", myRs.next());
         verify(mockStatement).setInt(2, 0);
         verify(mockStatement).setInt(3, 20);
         verify(mockStatement, times(2)).setInt(anyInt(), anyInt());
@@ -595,7 +607,6 @@ public class MySQLDAOResultSetTest extends TestAncestor
         assertTrue("Incorrect use of duplicate filtering", myRs.isFilterDuplicates());
         assertTrue("Incorrect use of limit feature", myRs.isUsingLimitFeature());
         
-        assertTrue("Incorrect value returend by next", myRs.next());
         assertEquals("Incorrect TO returned", fakeTO1, myRs.getTO());
         verify(mockRs, times(1)).next();
         //the statement should not have been queried again
@@ -666,6 +677,7 @@ public class MySQLDAOResultSetTest extends TestAncestor
         
         MySQLDAOResultSet<TransferObject> myRs = new FakeDAOResultSet(mockStatement, 
                 2, 3, 20, false);
+        assertTrue("Incorrect value returend by next", myRs.next());
         verify(mockStatement).setInt(2, 0);
         verify(mockStatement).setInt(3, 20);
         verify(mockStatement, times(2)).setInt(anyInt(), anyInt());
@@ -673,7 +685,6 @@ public class MySQLDAOResultSetTest extends TestAncestor
         assertFalse("Incorrect use of duplicate filtering", myRs.isFilterDuplicates());
         assertTrue("Incorrect use of limit feature", myRs.isUsingLimitFeature());
         
-        assertTrue("Incorrect value returend by next", myRs.next());
         assertEquals("Incorrect TO returned", fakeTO1, myRs.getTO());
         verify(mockRs, times(1)).next();
         //the statement should not have been queried again
@@ -745,6 +756,8 @@ public class MySQLDAOResultSetTest extends TestAncestor
         
         MySQLDAOResultSet<TransferObject> myRs = new FakeDAOResultSet(mockStatement, 
                 2, 3, 20, false);
+        when(mockRs.next()).thenReturn(true);
+        assertTrue("Incorrect value returend by next", myRs.next());
         verify(mockStatement).setInt(2, 0);
         verify(mockStatement).setInt(3, 20);
         verify(mockStatement, times(2)).setInt(anyInt(), anyInt());
@@ -752,8 +765,6 @@ public class MySQLDAOResultSetTest extends TestAncestor
         assertFalse("Incorrect use of duplicate filtering", myRs.isFilterDuplicates());
         assertTrue("Incorrect use of limit feature", myRs.isUsingLimitFeature());
         
-        when(mockRs.next()).thenReturn(true);
-        assertTrue("Incorrect value returend by next", myRs.next());
         verify(mockRs, times(1)).next();
         //the statement should not have been queried again
         verify(mockStatement, times(2)).setInt(anyInt(), anyInt());
@@ -828,6 +839,10 @@ public class MySQLDAOResultSetTest extends TestAncestor
         
         MySQLDAOResultSet<TransferObject> myRs = new FakeDAOResultSet(mockStatement, 
                 2, 3, 20, 2, false);
+        //execution of the first statement is only triggered when next is called
+        when(mockRs.next()).thenReturn(true);
+        assertTrue("Incorrect value returned by next", myRs.next());
+        verify(mockRs, times(1)).next();
         verify(mockStatement).setInt(2, 0);
         verify(mockStatement).setInt(3, 20);
         verify(mockStatement, times(2)).setInt(anyInt(), anyInt());
@@ -835,9 +850,6 @@ public class MySQLDAOResultSetTest extends TestAncestor
         assertFalse("Incorrect use of duplicate filtering", myRs.isFilterDuplicates());
         assertTrue("Incorrect use of limit feature", myRs.isUsingLimitFeature());
         
-        when(mockRs.next()).thenReturn(true);
-        assertTrue("Incorrect value returned by next", myRs.next());
-        verify(mockRs, times(1)).next();
         //the statement should not have been queried again
         verify(mockStatement, times(2)).setInt(anyInt(), anyInt());
         verify(mockStatement, times(1)).executeQuery();

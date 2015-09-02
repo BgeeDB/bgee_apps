@@ -847,6 +847,15 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         return log.exit(figure);
     }
 
+    private String getDataGroupScriptTag() {
+        StringBuffer sb = new StringBuffer("<script>");
+        sb.append("var speciesData = {");
+
+        sb.append("}");
+        sb.append("</script>");
+        return sb.toString();
+    }
+
     /**
      * Get custom data for a group.
      * 

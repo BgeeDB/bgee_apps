@@ -1,67 +1,39 @@
 package org.bgee.utils;
 
+import com.google.gson.*;
 import org.bgee.model.file.DownloadFile;
 import org.bgee.model.file.SpeciesDataGroup;
 import org.bgee.model.species.Species;
 
-import java.util.List;
+import java.lang.annotation.Inherited;
+import java.lang.reflect.Type;
 
 /**
+ * This class handles the serialization of objects to JSON.
+ * Current implementation rely on the google gson library.
  * @author Philippe Moret
  */
 public class JSHelper {
 
-    public static class JSONBuilder {
 
-        private final StringBuffer sb = new StringBuffer("");
+    private static GsonBuilder builder;
 
-        JSONBuilder() {
+    static {
+        builder = new GsonBuilder();
+        builder.registerTypeAdapter(DownloadFile.CategoryEnum.class, new CategoryEnumSerializer());
+        builder.setPrettyPrinting();
+    }
 
-        }
+    public static <E> String toJson(E object) {
+        return builder.create().toJson(object);
+    }
 
-
+     static final class CategoryEnumSerializer implements JsonSerializer<DownloadFile.CategoryEnum> {
 
         @Override
-        public String toString() {
-            return sb.toString();
+        public JsonElement serialize(DownloadFile.CategoryEnum categoryEnum, Type type, JsonSerializationContext jsonSerializationContext) {
+            String val = categoryEnum.getStringRepresentation();
+            return new JsonPrimitive(val);
         }
     }
-
-    private static StringBuffer appendKeyValue(StringBuffer sb, String key, String value) {
-        return sb.append("\"").append(key).append("\" : \"").append(value).append("\"");
-    }
-
-    public static String toJson(Species species) {
-        StringBuffer sb = new StringBuffer("{ ");
-        appendKeyValue(sb, "id", species.getId()).append(",\n");
-        appendKeyValue(sb, "name", species.getName()).append(",\n");
-        appendKeyValue(sb, "description", species.getDescription());
-        sb.append(" }");
-        return sb.toString();
-    }
-
-    public static String toJson(DownloadFile downloadFile) {
-        StringBuffer sb = new StringBuffer("{ ");
-        appendKeyValue(sb, "filename", downloadFile.getName()).append(",\n");
-        appendKeyValue(sb, "path", downloadFile.getPath()).append(",\n");
-        appendKeyValue(sb, "category", Long.toString(downloadFile.getSize())).append(",\n");
-        appendKeyValue(sb, "size", Long.toString(downloadFile.getSize()));
-        sb.append(" }");
-        return sb.toString();
-    }
-
-    public static String toJson(SpeciesDataGroup speciesDataGroup) {
-        StringBuffer sb = new StringBuffer("{");
-
-        sb.append("\"");
-        List<Species> members = speciesDataGroup.getMembers();
-
-
-
-        sb.append(" }");
-        return sb.toString();
-    }
-
-
-
 }

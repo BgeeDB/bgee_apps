@@ -3,6 +3,7 @@ package org.bgee.view.html;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -11,6 +12,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
+import org.bgee.model.file.SpeciesDataGroup;
+import org.bgee.model.file.SpeciesDataGroupLoader;
+import org.bgee.model.species.Species;
+import org.bgee.utils.JSHelper;
 import org.bgee.view.DownloadDisplay;
 
 /**
@@ -847,11 +852,10 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         return log.exit(figure);
     }
 
-    private String getDataGroupScriptTag() {
+    private String getDataGroupScriptTag(List<SpeciesDataGroup> dataGroups) {
         StringBuffer sb = new StringBuffer("<script>");
-        sb.append("var speciesData = {");
-
-        sb.append("}");
+        sb.append("var speciesData = ");
+        sb.append(JSHelper.toJson(dataGroups));
         sb.append("</script>");
         return sb.toString();
     }
@@ -1441,6 +1445,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         log.entry();
         super.includeJs();
         this.includeJs("download.js");
+        this.writeln(getDataGroupScriptTag(new SpeciesDataGroupLoader().loadAllSpeciesDataGroup()));
         log.exit();
     }
 

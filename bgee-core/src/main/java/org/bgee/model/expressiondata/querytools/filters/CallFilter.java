@@ -1,85 +1,43 @@
 package org.bgee.model.expressiondata.querytools.filters;
 
-import org.bgee.model.expressiondata.DataParameters.CallType;
+import java.util.Set;
 
-/**
- * A {@link Filter} to filter or retrieve expression data 
- * {@link org.bgee.model.expressiondata.Call Call}s. 
- * 
- * @author Frederic Bastian
- * @version Bgee 13
- * @since Bgee 13
- */
-public interface CallFilter extends Filter {
-    /**
-     * Returns the {@code CallType} defining the type of call of the expression 
-     * data to retrieve.
-     * 
-     * @return the {@code CallType} defining the type of call to use.
-     */
-    public CallType getCallType();
+import org.bgee.model.expressiondata.CallData;
+import org.bgee.model.expressiondata.Condition;
+
+public class CallFilter {
+    private final Set<String> geneIds;
     
-	/**
-	 * Tries to merge this {@code CallFilter} with {@code filterToMerge}, 
-	 * by considering that they both define conditions on expression data 
-	 * for a same {@code Entity} (for instance, a same {@code Gene}).
-	 * <p>
-	 * For instance, if this {@code CallFilter} defines a minimum quality 
-	 * threshold for a given data type, and if {@code filterToMerge} defines  
-	 * for the same data type the quality threshold just below, then it is possible  
-	 * to keep only the lowest threshold and merge the two {@code CallFilter}s. 
-	 * As they are related to the same {@code Entity}, we would retrieve the exact 
-	 * same data whether we use the two {@code CallFilter}s, or the merged one. 
-	 * Note that this is only an example, and that each {@code CallFiler} implementation 
-	 * defines its own rules for merging. 
-	 * <p>
-	 * This method returns {@code null} if the {@code CallFilter}s could not 
-	 * be merged. Otherwise, it returns the newly merged {@code CallFilter}. 
-	 * This method is reflexive, so that it is equivalent to call this method 
-	 * on this {@code CallFilter} with {@code filterToMerge} as parameter, 
-	 * or on {@code filterToMerge} with this {@code CallFilter} as parameter. 
-	 *  
-	 * @param filterToMerge	The {@code CallFilter} to be merged with this one.
-	 * @return				The newly instantiated merged {@code CallFilter}, 
-	 * 						or {@code null} if no merging could be done. 
-	 * @see #mergeDiffEntitiesCallFilter(CallFilter)
-	 */
-    public CallFilter mergeSameEntityCallFilter(CallFilter filterToMerge);
-    /**
-     * Tries to merge this {@code CallFilter} with {@code filterToMerge}, 
-     * by considering that they define conditions on expression data for different 
-     * {@code Entity}s (for instance, different {@code Gene}s).
-     * <p>
-     * As for {@link #mergeSameEntityCallFilter(CallFilter)}, the principle is that 
-     * it should be possible to retrieve the exact same data whether we use 
-     * the two {@code CallFilter}s, or the merged one. But as they are 
-     * related to different {@code Entity}s, the conditions to accept 
-     * to perform the merging are much more stringent. 
-     * <p>
-     * For instance, if two {@code CallFilter}s were requesting expression 
-     * for a same {@code Gene}, but accepting different {@code DataType}s 
-     * as parameters, they could be merged: it is equivalent to request expression 
-     * of a {@code Gene} by one {@code DataType} in a {@code CallFilter}, 
-     * and by another {@code DataType} in another {@code CallFilter}, 
-     * to requesting both {@code DataType}s in one {@code CallFilter}. 
-     * But if these two {@code CallFilter}s were related to different 
-     * {@code Gene}s, then it would not be equivalent to request expression 
-     * of a {@code Gene} by one {@code DataType}, and expression of another 
-     * {@code Gene} by another {@code DataType}, to requesting expression 
-     * defined by both {@code DataType}s for both {@code Gene}s.
-     * <p>
-     * Note that this is only an example, and that each {@code CallFiler} 
-     * implementation defines its own rules for merging. 
-     * <p>
-     * This method returns {@code null} if the {@code CallFilter}s could not 
-     * be merged. Otherwise, it returns the newly merged {@code CallFilter}. 
-     * This method is reflexive, so that it is equivalent to call this method 
-     * on this {@code CallFilter} with {@code filterToMerge} as parameter, 
-     * or on {@code filterToMerge} with this {@code CallFilter} as parameter. 
-     *  
-     * @param filterToMerge   The {@code CallFilter} to be merged with this one.
-     * @return              The newly instantiated merged {@code CallFilter}, 
-     *                      or {@code null} if no merging could be done. 
-     */
-    public CallFilter mergeDiffEntitiesCallFilter(CallFilter filterToMerge);
+    //XXX: here, how are we going to say: 
+    //expression in (organA || organB || organC) && devStageA
+    //?
+    //With 4 different Condition objects, and using a way to manage and/or?
+    private final Set<Condition> conditions;
+    
+    //or simply one Set per conditon parameter?, e.g.: 
+    private final Set<AnatEntity> anatEntities;
+    private final Set<DevStage> devStages;
+    //and add new fields as the Condition class evolves?
+    
+    //XXX: Or we going to accept several CallFilters? E.g.: 
+    //genes expressed in organA or organB (1 CallFiter) and over-expressed in organ C (another CallFilter)
+    ///XXX: then maybe we should have a class only to associate a Set of Conditions to a Set of CallData?
+    //And accepting a Set of objects of this class in the CallFilter?
+    
+    //XXX: callDatas?
+    private Set<CallData<?>> callData;
+    
+    //XXX: here, it means that the DataType of CallData will be null. Is it valid? 
+    //Or should we remove the DataType attribute from CallData, and always use a Map 
+    //when we want to associate a CallData to a DataType?
+    public CallFilter(CallData<?> anyDataTypeCallData) {
+        
+    }
+    //XXX: Map<Datatype, CallData<?>> if we remove DataType field from CallData?
+    public CallFilter(Set<CallData<?>> callData) {
+        
+    }
+    public CallFilter(Set<String> geneIds, Set<CallData<?>> callData) {
+        
+    }
 }

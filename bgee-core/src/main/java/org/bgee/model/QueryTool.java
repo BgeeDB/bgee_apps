@@ -1,7 +1,6 @@
-package org.bgee.model.expressiondata.querytools;
+package org.bgee.model;
 
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.TaskManager;
 
 /**
  * Parent class of all query tools, notably performing tasks relative 
@@ -11,7 +10,8 @@ import org.bgee.model.TaskManager;
  * @version Bgee 13
  * @since Bgee 13
  */
-abstract class QueryTool {
+//XXX: rename "QueryEngine"?
+public abstract class QueryTool {
 	
 	/**
 	 * A {@code TaskManager} to be notified of the advancement of the query. 

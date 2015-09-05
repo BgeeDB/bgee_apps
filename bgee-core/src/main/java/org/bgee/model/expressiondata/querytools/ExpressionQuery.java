@@ -13,7 +13,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Entity;
 import org.bgee.model.QueryTool;
-import org.bgee.model.expressiondata.querytools.filters.CallFilter;
 
 /**
  * This class is extended by query tools, and is responsible for retrieving 

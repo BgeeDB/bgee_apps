@@ -61,7 +61,7 @@ public abstract class CallData<T extends CallType> {
     
     //XXX: should we remove the DataType attribute from CallData, and always use a Map 
     //when we want to associate a CallData to a DataType? Otherwise it could be null 
-    //when use with a CallFilter
+    //when use with a CallQueryFilter
     private final DataType dataType;
     
     private final CallType callType;
@@ -93,7 +93,7 @@ public abstract class CallData<T extends CallType> {
 	//and so, to have some "summary" CallTypes represented in the enums? 
 	//How would that work from a "query filter" perspective (how to just say, 
 	//"I want all genes seen as expressed by any data types"; it doesn't make sense 
-	//to accept here a "summary" CallFilter then)
+	//to accept here a "summary" CallQueryFilter then)
 	protected CallData(CallTypeAndQual<T> callTypeAndQual) {
 		this(callTypeAndQual, null);
 	}

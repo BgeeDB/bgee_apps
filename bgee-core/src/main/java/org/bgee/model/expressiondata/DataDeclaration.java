@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.expressiondata.DataDeclaration.DataPropagation.PropagationState;
 
 /**
  * Class only used to group basic inner classes and static methods 
@@ -19,6 +20,9 @@ import org.apache.logging.log4j.Logger;
  * @since Bgee 13
  *
  */
+//XXX: should we keep the inner classes here? Or dispatch them in existing classes? 
+//All these inner classes seem useful in lots of different places, so it can make sense 
+//of keeping it that way. 
 public final class DataDeclaration {
     /**
      * {@code Logger} of the class. 
@@ -39,12 +43,6 @@ public final class DataDeclaration {
      * @version Bgee 13
      * @since Bgee 13
 	 */
-    //XXX: should we define the "ambiguity" states as in download files?
-    // => why not, see the method isSummaryCallTypeOnly().
-    //Or should we keep the "ambiguity" states for another enum? 
-    // => why not, see SummaryCallType
-    // => then remove method isSummaryCallTypeOnly()
-    //XXX: do we really need to make 2 distinct enums for baseline expression and diff.expression?
 	public static interface CallType {
 	    
 	    
@@ -63,31 +61,61 @@ public final class DataDeclaration {
          * @since Bgee 13
 		 */
 		public static enum Expression implements CallType {
-            EXPRESSED(false, Collections.unmodifiableSet(EnumSet.allOf(DataType.class))), 
-            NOT_EXPRESSED(false, Collections.unmodifiableSet(
+            EXPRESSED(Collections.unmodifiableSet(EnumSet.allOf(DataType.class))), 
+            NOT_EXPRESSED(Collections.unmodifiableSet(
                     EnumSet.of(DataType.AFFYMETRIX, DataType.IN_SITU, 
                             DataType.RELAXED_IN_SITU, DataType.RNA_SEQ)));
             
-            /**
-             * @see #isSummaryCallTypeOnly()
-             */
-		    private final boolean isSummaryCallTypeOnly;
 		    /**
 		     * @see #getAllowedDataTypes()
 		     */
 		    private final Set<DataType> allowedDataTypes;
 		    
-		    private Expression(boolean isSummaryCallTypeOnly, Set<DataType> allowedDataTypes) {
-		        this.isSummaryCallTypeOnly = isSummaryCallTypeOnly;
+		    private Expression(Set<DataType> allowedDataTypes) {
 		        this.allowedDataTypes = allowedDataTypes;
 		    }
             @Override
-            public boolean isSummaryCallTypeOnly() {
-                return this.isSummaryCallTypeOnly;
-            }
-            @Override
             public Set<DataType> getAllowedDataTypes() {
                 return this.allowedDataTypes;
+            }
+            @Override
+            public void checkDataPropagation(DataPropagation propagation) {
+                log.entry(propagation);
+                PropagationState anatPropagation = propagation.getAnatEntityPropagationState();
+                PropagationState devStagePropagation = propagation.getDevStagePropagationState();
+                boolean incorrectPropagation = false;
+                
+                if (this.equals(EXPRESSED)) {
+                    //no propagation from parents allowed for expression calls, 
+                    //all other propagations allowed. 
+                    if (anatPropagation == PropagationState.PARENT || 
+                            anatPropagation == PropagationState.SELF_AND_PARENT || 
+                            anatPropagation == PropagationState.SELF_OR_PARENT || 
+                            devStagePropagation == PropagationState.PARENT || 
+                            devStagePropagation == PropagationState.SELF_AND_PARENT || 
+                            devStagePropagation == PropagationState.SELF_OR_PARENT) {
+                        incorrectPropagation = true;
+                    }
+                } else if (this.equals(NOT_EXPRESSED)) {
+                    //for no-expression calls, propagation from parents for anat. entities allowed, 
+                    //no propagation for dev. stage allowed. 
+                    if (anatPropagation == PropagationState.CHILD || 
+                            anatPropagation == PropagationState.SELF_AND_CHILD || 
+                            anatPropagation == PropagationState.SELF_OR_CHILD || 
+                            devStagePropagation != PropagationState.SELF) {
+                        incorrectPropagation = true;
+                    }
+                } else {
+                    throw log.throwing(new IllegalStateException("CallType not supported: " 
+                            + this.toString()));
+                }
+                
+                if (incorrectPropagation) {
+                    throw log.throwing(new IllegalArgumentException("The following propagation "
+                            + "is incorrect for the CallType " + this
+                            + ": " + propagation));
+                }
+                log.exit();
             }
 		}
 		/**
@@ -114,8 +142,8 @@ public final class DataDeclaration {
          * @since Bgee 13
 		 */
 		public static enum DiffExpression implements CallType {
-		    DIFF_EXPRESSED(false), OVER_EXPRESSED(false), 
-		    UNDER_EXPRESSED(false), NOT_DIFF_EXPRESSED(false);
+		    DIFF_EXPRESSED(), OVER_EXPRESSED(), 
+		    UNDER_EXPRESSED(), NOT_DIFF_EXPRESSED();
 		    
 		    /**
 		     * Allowed {@code DataType}s are the same for all {@code DiffExpression} {@code CallType}s.
@@ -124,21 +152,21 @@ public final class DataDeclaration {
 		    private static final Set<DataType> DIFF_EXPR_DATA_TYPES = 
 		            Collections.unmodifiableSet(EnumSet.of(DataType.AFFYMETRIX, DataType.RNA_SEQ));
             
-            /**
-             * @see #isSummaryCallTypeOnly()
-             */
-            private final boolean isSummaryCallTypeOnly;
-            
-            private DiffExpression(boolean isSummaryCallTypeOnly) {
-                this.isSummaryCallTypeOnly = isSummaryCallTypeOnly;
-            }
-            @Override
-            public boolean isSummaryCallTypeOnly() {
-                return this.isSummaryCallTypeOnly;
-            }
             @Override
             public Set<DataType> getAllowedDataTypes() {
                 return DIFF_EXPR_DATA_TYPES;
+            }
+            @Override
+            public void checkDataPropagation(DataPropagation propagation) {
+                log.entry(propagation);
+                //no propagation allowed for any diff. expression call type
+                if (propagation.getAnatEntityPropagationState() != PropagationState.SELF || 
+                        propagation.getDevStagePropagationState() != PropagationState.SELF) {
+                    throw log.throwing(new IllegalArgumentException("The following propagation "
+                            + "is incorrect for the CallType " + this
+                            + ": " + propagation));
+                }
+                log.exit();
             }
 		}
 
@@ -180,13 +208,13 @@ public final class DataDeclaration {
 	            throw log.throwing(new IllegalArgumentException("No data types provided."));
 	        }
 	        
-	        Set<DataType> notAllowedTypes = dataTypes.stream()
+	        Set<DataType> forbiddenTypes = dataTypes.stream()
 	                .filter(e -> !this.getAllowedDataTypes().contains(e))
 	                .collect(Collectors.toSet());
-	        if (!notAllowedTypes.isEmpty()) {
+	        if (!forbiddenTypes.isEmpty()) {
 	            throw log.throwing(new IllegalArgumentException("The following data types "
-	                    + "are incompatible with the call type " + this.toString() + ": " 
-	                    + notAllowedTypes.toString()));
+	                    + "are incompatible with the call type " + this + ": " 
+	                    + forbiddenTypes.toString()));
 	        }
 
 	        log.exit();
@@ -228,26 +256,6 @@ public final class DataDeclaration {
          *            capable of producing this {@code CallType}. 
          */
         public Set<DataType> getAllowedDataTypes();
-        
-		/**
-		 * Returns {@code true} if this {@code CallType} can only be produced 
-		 * by taking into account expression data from different data types 
-		 * all together, and thus cannot be produced by an individual data type alone. 
-		 * <p>
-		 * For instance, If a gene is considered expressed in a condition by Affymetrix data, 
-		 * but considered not-expressed in the same condition by RNA-Seq data, 
-		 * the resulting summary call type will be {@code HIGH_AMBIGUITY}. Such an ambiguous 
-		 * call type cannot be produced by examining Affymetrix data alone, or RNA-Seq data alone.
-		 * <p>
-		 * It means that a {@code CallType} for which this method returns {@code true} 
-		 * cannot be directly associated to a {@code DataType}.
-		 * 
-		 * @return    A {@code boolean} that is {@code true} if this {@code CallType} 
-		 *            can be produced only by summarizing data from different types, 
-		 *            {@code false} if it can be produced both by examining data 
-		 *            from one data type alone, or data from multiple types together. 
-		 */
-		public boolean isSummaryCallTypeOnly();
 	}
 	
 	/**
@@ -264,10 +272,9 @@ public final class DataDeclaration {
 	 *
 	 */
 	public static class DataPropagation {
-	    //XXX: or do the opposite? Have an enum "ANAT_ENTITY" - "DEV_STAGE", 
-	    //and then one attribute "self", one attribute "parent", and one attribute "child".
 	    public static enum PropagationState {
-	        SELF, PARENT, CHILD, SELF_AND_PARENT, SELF_AND_CHILD;
+	        SELF, PARENT, CHILD, SELF_AND_PARENT, SELF_AND_CHILD, 
+	        SELF_OR_PARENT, SELF_OR_CHILD;
 	    }
 	    
 	    private final PropagationState anatEntityPropagationState;
@@ -329,6 +336,14 @@ public final class DataDeclaration {
             }
             return true;
         }
+        @Override
+        public String toString() {
+            return "DataPropagation [anatEntity="
+                    + anatEntityPropagationState
+                    + ", devStage=" + devStagePropagationState
+                    + "]";
+        }
+        
 	}
 	
     /**
@@ -393,104 +408,6 @@ public final class DataDeclaration {
     public static enum DiffExpressionFactor {
         ANATOMY, DEVELOPMENT;
     }
-    
-    /**
-     * This class allows to group a {@link CallType} and a {@link DataQuality},  
-     * for convenience, as these two classes are used together in many methods. 
-     * 
-     * @param <T>   The type of {@code CallType} hold by this class.
-     * @author Frederic Bastian
-     * @version Bgee 13 Sept. 2015
-     * @since Bgee 13
-     */
-    //XXX: class actually useless to remove?
-    public static class CallTypeAndQual<T extends CallType> {
-        /**
-         * @see #getCallType()
-         */
-        private final T callType;
-        /**
-         * @see #getDataQual()
-         */
-        private final DataQuality dataQual;
-        
-        /**
-         * 0-arg constructor private, a {@code CallType} and a {@code DataQuality} 
-         * must be provided, see {@link #CallTypeAndQual(CallType, DataQuality)}
-         */
-        //constructor private on purpose, suppress warning. 
-        @SuppressWarnings("unused")
-        private CallTypeAndQual() {
-            this(null, null);
-        }
-        /**
-         * @param callType  A {@code CallType} associated to the quality {@code dataQual}.
-         * @param dataQual  A {@code DataQuality} associated to the call type {@code callType}.
-         */
-        public CallTypeAndQual(T callType, DataQuality dataQual) {
-            if (callType == null) {
-                throw log.throwing(new IllegalArgumentException(
-                        "The provided CallType cannot be null."));
-            }
-            if (dataQual == null) {
-                throw log.throwing(new IllegalArgumentException(
-                        "The provided DataQuality cannot be null."));
-            }
-            this.callType = callType;
-            this.dataQual = dataQual;
-        }
-        
-        /**
-         * @return  the {@code CallType} associated to the quality 
-         *          returned by {@link #getDataQual()}.
-         */
-        public T getCallType() {
-            return callType;
-        }
-        /**
-         * @return  the {@code DataQuality} associated to the call type 
-         *          returned by {@link #getCallType()}.
-         */
-        public DataQuality getDataQual() {
-            return dataQual;
-        }
-        
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result
-                    + ((callType == null) ? 0 : callType.hashCode());
-            result = prime * result
-                    + ((dataQual == null) ? 0 : dataQual.hashCode());
-            return result;
-        }
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null) {
-                return false;
-            }
-            if (!(obj instanceof CallTypeAndQual)) {
-                return false;
-            }
-            CallTypeAndQual<?> other = (CallTypeAndQual<?>) obj;
-            if (callType == null) {
-                if (other.callType != null) {
-                    return false;
-                }
-            } else if (!callType.equals(other.callType)) {
-                return false;
-            }
-            if (dataQual != other.dataQual) {
-                return false;
-            }
-            return true;
-        }
-    }
-    
   	
   	/**
   	 * Private constructor because this class is not meant to be instantiated. 

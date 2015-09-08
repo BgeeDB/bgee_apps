@@ -1,4 +1,4 @@
-package org.bgee.model.expressiondata.querytools;
+package org.bgee.model.expressiondata.querytool;
 
 import java.util.Set;
 

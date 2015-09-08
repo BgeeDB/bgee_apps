@@ -15,22 +15,15 @@ import org.bgee.model.anatdev.DevStage;
  * @version Bgee 13.1
  * @since Bgee 13.1
  */
-//XXX: should this class also be able of storing IDs rather than objects? 
-//(for use in, e.g., SummaryCalls). 
-//Or only IDs and no objects?
 //XXX: how to manage multi-species conditions? Should we have a class SingleSpeciesCondition 
 //and a class MultiSpeciesCondition? Or, only a Condition, using a "SingleSpeciesAnatEntity" 
 //or a "MultiSpeciesAnatEntity", etc?
 public class Condition {
     private final static Logger log = LogManager.getLogger(Condition.class.getName());
-    /**
-     * An {@code AnatEntity} representing the anatomical entity used in this gene expression condition.
-     */
-    private final AnatEntity anatEntity;
-    /**
-     * A {@code DevStage} representing the developmental stage used in this gene expression condition.
-     */
-    private final DevStage devStage;
+    
+    private final String anatEntityId;
+    
+    private final String devStageId;
     
     /**
      * Default constructor not public, at least an anat. entity and a dev. stage must be provided, 

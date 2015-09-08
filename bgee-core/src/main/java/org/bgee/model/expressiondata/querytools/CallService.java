@@ -36,7 +36,7 @@ class CallService extends QueryTool {
     private final static Logger log = 
     		LogManager.getLogger(CallService.class.getName());
     
-    //XXX: Enum class for fields of SummaryCall to populate? 
+    //XXX: Enum class for fields of Call to populate? 
     //(e.g., GENE, ANAT_ENTITY, STAGE, DATA). But this means that we once again 
     //"duplicate" the concepts in the Condition class. 
     

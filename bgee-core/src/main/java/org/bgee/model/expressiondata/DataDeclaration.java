@@ -23,6 +23,7 @@ import org.bgee.model.expressiondata.DataDeclaration.DataPropagation.Propagation
 //XXX: should we keep the inner classes here? Or dispatch them in existing classes? 
 //All these inner classes seem useful in lots of different places, so it can make sense 
 //of keeping it that way. 
+//=> no, this is not cool :p
 public final class DataDeclaration {
     /**
      * {@code Logger} of the class. 

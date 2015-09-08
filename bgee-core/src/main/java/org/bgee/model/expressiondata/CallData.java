@@ -43,7 +43,7 @@ public abstract class CallData<T extends CallType> {
     
 
     //XXX: attributes to be added in the future: min p-value, min/max fold change, ...
-    //XXX: where to manage the DiffExpressionFactor? Here, or only in a "SummaryCall" class? 
+    //XXX: where to manage the DiffExpressionFactor? Here, or only in a "Call" class? 
     //But then, we could not use this CallData in query filters to specify the factor to use.
     public class DiffExpressionCallData extends CallData<DiffExpression> {
         

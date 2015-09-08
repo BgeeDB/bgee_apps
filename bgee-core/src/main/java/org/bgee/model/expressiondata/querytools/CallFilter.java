@@ -4,15 +4,27 @@ import java.util.Set;
 
 import org.bgee.model.expressiondata.CallData;
 import org.bgee.model.expressiondata.Condition;
+import org.bgee.model.species.TaxonomyFilter;
 
+//XXX: 
+// - if both IDs and multiple species requested AND forceHomology is true 
+//   => find missing orthologous genes/homologous organs/comparable stages
 public class CallFilter {
-    //XXX: where to manage speciesIds? in a class GeneFilter? in a class ConditionFilter? in this class?
-    //It should not be valid to provide several speciesIds, this should be formally managed 
-    //by a multi-species filter, for managing organ homology and gene orthology.
     private final GeneFilter geneFilter;
     
     //XXX: each CallDataConditionFilter represents an AND condition.
     private final Set<CallDataConditionFilter> callDataConditionFilters;
+    
+    //XXX: impact both the gene filtering and the anat.entity and stage filtering.
+    //Species should be always explicitly targeted.
+    private final TaxonomyFilter taxonFilter;
+    
+    //XXX: with this boolean set to true, any multi-species query will search explicitly 
+    //for homology/orthology relations, and will complete ID list provided to potentially 
+    //add homolog/orthologs (i.e., impacting both ConditionFilters and GeneFilters).
+    //if false, then any query is possible, without caring about homology/orthology.
+    //XXX: If true, retrieve results only in homologous structure/comparable stages, always.
+    private final boolean forceHomology;
     
     //---------------------
     

@@ -31,7 +31,7 @@ public class BgeePropertiesFourthTest extends BgeePropertiesParentTest {
         // First clear the system properties that would be used if present.
         System.clearProperty(BgeeProperties.TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY);
         System.clearProperty(BgeeProperties.TOP_ANAT_RCALLER_WORKING_DIRECTORY_KEY);
-        System.clearProperty(BgeeProperties.TOP_ANAT_FUNCTIONS_FILE_KEY);
+        System.clearProperty(BgeeProperties.TOP_ANAT_FUNCTION_FILE_KEY);
         System.clearProperty(BgeeProperties.TOP_ANAT_RESULTS_WRITING_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.TOP_ANAT_RESULTS_URL_DIRECTORY_KEY);
         
@@ -49,8 +49,8 @@ public class BgeePropertiesFourthTest extends BgeePropertiesParentTest {
                 BgeeProperties.TOP_ANAT_RCALLER_WORKING_DIRECTORY_DEFAULT,
                 bgeeProp.getTopAnatRCallerWorkingDirectory());
         assertEquals("Wrong property value retrieved",
-                BgeeProperties.TOP_ANAT_FUNCTIONS_FILE_DEFAULT,
-                bgeeProp.getTopAnatFunctionsFile());
+                BgeeProperties.TOP_ANAT_FUNCTION_FILE_DEFAULT,
+                bgeeProp.getTopAnatFunctionFile());
         assertEquals("Wrong property value retrieved",
                 BgeeProperties.TOP_ANAT_RESULTS_WRITING_DIRECTORY_DEFAULT, 
                 bgeeProp.getTopAnatResultsWritingDirectory());

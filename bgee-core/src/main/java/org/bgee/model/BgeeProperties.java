@@ -96,26 +96,25 @@ public class BgeeProperties
      * @see #TOP_ANAT_RCALLER_WORKING_DIRECTORY_KEY
      */
     public final static String TOP_ANAT_RCALLER_WORKING_DIRECTORY_DEFAULT = 
-            "/home/bgee/webapps/TopAnatFiles/results";
+            "TopAnatFiles/results";
     
     /**
      * A {@code String} that is the key to access to the System property that contains the name of 
-     * the file which contains the additional modified topGO R functions used by topAnat 
-     * to perform the analyses.
+     * the file containing R functions used by topAnat.
      * 
-     * @see #TOP_ANAT_FUNCTIONS_FILE_DEFAULT
+     * @see #TOP_ANAT_FUNCTION_FILE_DEFAULT
      */
-    public final static String TOP_ANAT_FUNCTIONS_FILE_KEY = 
-            "org.bgee.core.topAnatFunctionsFile";
+    public final static String TOP_ANAT_FUNCTION_FILE_KEY = 
+            "org.bgee.core.topAnatFunctionFile";
 
     /**
      * A {@code String} that is the default value of the name of the file which contains the 
      * additional modified topGO R functions used by topAnat to perform the analyses.
      * 
-     * @see #TOP_ANAT_FUNCTIONS_FILE_KEY
+     * @see #TOP_ANAT_FUNCTION_FILE_KEY
      */
-    public final static String TOP_ANAT_FUNCTIONS_FILE_DEFAULT = 
-            "/home/bgee/webapps/TopAnatFiles/R_scripts/topAnat_functions.R";   
+    public final static String TOP_ANAT_FUNCTION_FILE_DEFAULT = 
+            "TopAnatFiles/R_scripts/topAnat_functions.R";   
 
     /**
      * A {@code String} that is the key to access to the System property that contains the name of 
@@ -135,7 +134,7 @@ public class BgeeProperties
      * @see #TOP_ANAT_RESULTS_WRITING_DIRECTORY_KEY
      */
     public final static String TOP_ANAT_RESULTS_WRITING_DIRECTORY_DEFAULT = 
-            "webapps/bgee/TopAnatFiles/results/";   
+            "TopAnatFiles/results/";   
 
     /**
      * A {@code String} that is the key to access to the System property that contains the name 
@@ -185,7 +184,7 @@ public class BgeeProperties
      * A {@code String} that is the name of the file which contains the additional modified
      * topGO R functions used by topAnat to perform the analyses.
      */
-    private final String topAnatFunctionsFile;  
+    private final String topAnatFunctionFile;  
     
     /**
      * A {@code String} that is the name of the directory to store outputs of the TopAnat analyses
@@ -270,9 +269,9 @@ public class BgeeProperties
         topAnatRCallerWorkingDirectory = getStringOption(prop, sysProps, fileProps, 
                 TOP_ANAT_RCALLER_WORKING_DIRECTORY_KEY,
                 TOP_ANAT_RCALLER_WORKING_DIRECTORY_DEFAULT);
-        topAnatFunctionsFile = getStringOption(prop, sysProps, fileProps, 
-                TOP_ANAT_FUNCTIONS_FILE_KEY,
-                TOP_ANAT_FUNCTIONS_FILE_DEFAULT);
+        topAnatFunctionFile = getStringOption(prop, sysProps, fileProps, 
+                TOP_ANAT_FUNCTION_FILE_KEY,
+                TOP_ANAT_FUNCTION_FILE_DEFAULT);
         topAnatResultsWritingDirectory = getStringOption(prop, sysProps, fileProps, 
                 TOP_ANAT_RESULTS_WRITING_DIRECTORY_KEY,
                 TOP_ANAT_RESULTS_WRITING_DIRECTORY_DEFAULT);
@@ -489,8 +488,8 @@ public class BgeeProperties
      * @return A {@code String} that is the name of the file which contains the additional modified 
      * topGO {@code R} functions used by topAnat to perform the analyses.
      */
-    public String getTopAnatFunctionsFile() {
-        return topAnatFunctionsFile;
+    public String getTopAnatFunctionFile() {
+        return topAnatFunctionFile;
     }
 
     /**

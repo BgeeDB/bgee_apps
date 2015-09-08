@@ -57,8 +57,8 @@ public abstract class BgeePropertiesParentTest {
         System.clearProperty(BgeeProperties.TOP_ANAT_R_SCRIPT_EXECUTABLE_DEFAULT);
         System.clearProperty(BgeeProperties.TOP_ANAT_RCALLER_WORKING_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.TOP_ANAT_RCALLER_WORKING_DIRECTORY_DEFAULT);
-        System.clearProperty(BgeeProperties.TOP_ANAT_FUNCTIONS_FILE_KEY);
-        System.clearProperty(BgeeProperties.TOP_ANAT_FUNCTIONS_FILE_DEFAULT);
+        System.clearProperty(BgeeProperties.TOP_ANAT_FUNCTION_FILE_KEY);
+        System.clearProperty(BgeeProperties.TOP_ANAT_FUNCTION_FILE_DEFAULT);
         System.clearProperty(BgeeProperties.TOP_ANAT_RESULTS_WRITING_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.TOP_ANAT_RESULTS_WRITING_DIRECTORY_DEFAULT);
         System.clearProperty(BgeeProperties.TOP_ANAT_RESULTS_URL_DIRECTORY_KEY);

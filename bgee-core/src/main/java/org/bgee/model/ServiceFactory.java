@@ -28,8 +28,8 @@ import org.apache.logging.log4j.Logger;
  * At middle term, the different implementations of {@code Service}s that are expected to be created are: 
  * <ul>
  * <li>{@code Service}s directly using {@code DAO}s to retrieve data.
- * <li>{@code Service}s retrieving data from a {@code DAO} and storing them into a cache, 
- * during their static initialization, then using these cached data rather than a {@code DAO}.
+ * <li>{@code Service}s retrieving data from {@code DAO}s and storing them into a cache, 
+ * during their static initialization, then using these cached data rather than {@code DAO}s.
  * <ul>
  * 
  * @author Frederic Bastian

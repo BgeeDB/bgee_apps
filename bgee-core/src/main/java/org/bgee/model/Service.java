@@ -10,8 +10,7 @@ import org.bgee.model.dao.api.DAOManager;
  * <p>
  * This parent class is responsible for obtaining 
  * a {@link org.bgee.model.dao.api.DAOManager DAOManager}, that will then be used 
- * by each factory to obtain an appropriate {@code DAO}. Each factory instance 
- * will use its own DAO instance. 
+ * by each factory to obtain appropriate {@code DAO}s. 
  * 
  * @author Frederic Bastian
  * @version Bgee 13 Sept. 2015
@@ -42,7 +41,7 @@ public abstract class Service {
      *                      to obtain {@code DAO}s.
      * @throws IllegalArgumentException If {@code daoManager} is {@code null}.
      */
-    public Service(DAOManager daoManager) {
+    protected Service(DAOManager daoManager) {
         if (daoManager == null) {
             throw log.throwing(new IllegalArgumentException("The provided DAOManager cannot be null"));
         }

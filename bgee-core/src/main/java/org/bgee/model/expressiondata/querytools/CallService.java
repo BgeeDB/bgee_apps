@@ -28,8 +28,8 @@ import org.bgee.model.QueryTool;
  * @version Bgee 13
  * @since Bgee 13
  */
-//XXX: A Service exposing SummaryCalls only?
-class CallService extends QueryTool {
+//XXX: A Service exposing Calls only?
+public class CallService extends QueryTool {
 	/**
      * <code>Logger/code> of this class.
      */
@@ -45,6 +45,11 @@ class CallService extends QueryTool {
 	 */
     protected CallService() {
     	super();
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return log;
     }
     
     

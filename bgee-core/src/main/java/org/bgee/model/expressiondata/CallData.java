@@ -1,22 +1,13 @@
 package org.bgee.model.expressiondata;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.EnumMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.expressiondata.DataDeclaration.CallType;
-import org.bgee.model.expressiondata.DataDeclaration.CallTypeAndQual;
-import org.bgee.model.expressiondata.DataDeclaration.DataPropagation;
-import org.bgee.model.expressiondata.DataDeclaration.DataQuality;
-import org.bgee.model.expressiondata.DataDeclaration.DataType;
-import org.bgee.model.expressiondata.DataDeclaration.CallType.DiffExpression;
-import org.bgee.model.expressiondata.DataDeclaration.CallType.Expression;
+import org.bgee.model.expressiondata.baseelements.CallType;
+import org.bgee.model.expressiondata.baseelements.DataPropagation;
+import org.bgee.model.expressiondata.baseelements.DataQuality;
+import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.CallType.DiffExpression;
+import org.bgee.model.expressiondata.baseelements.CallType.Expression;
 
 /**
  * A {@code CallData} represents the expression state of a {@link Gene}, in a {@link Condition}. 
@@ -25,6 +16,9 @@ import org.bgee.model.expressiondata.DataDeclaration.CallType.Expression;
  * or a differential expression call; a call represents an overall summary 
  * of the expression data contained in Bgee (for instance, the expression state of a gene 
  * summarized over all Affymetrix chips studied in a given organ at a given stage).
+ * <p>
+ * For a class also managing the gene and condition definitions, and managing 
+ * expression data from different data types for a given call, see the class {@link Call}. 
  * 
  * @author Frederic Bastian
  * @version Bgee 13 Sept. 2015
@@ -40,17 +34,20 @@ public abstract class CallData<T extends CallType> {
      * {@code Logger} of the class. 
      */
     private final static Logger log = LogManager.getLogger(CallData.class.getName());
-    
+
+    //**********************************************
+    //   INNER CLASSES
+    //**********************************************
 
     //XXX: attributes to be added in the future: min p-value, min/max fold change, ...
     //XXX: where to manage the DiffExpressionFactor? Here, or only in a "Call" class? 
     //But then, we could not use this CallData in query filters to specify the factor to use.
-    public class DiffExpressionCallData extends CallData<DiffExpression> {
+    public static class DiffExpressionCallData extends CallData<DiffExpression> {
         
     }
     //XXX: for now, there is nothing really special about expression calls.
     //But maybe it's good for typing the generic type, and for future evolutions?
-    public class ExpressionCallData extends CallData<Expression> {
+    public static class ExpressionCallData extends CallData<Expression> {
         
     }
 
@@ -64,6 +61,7 @@ public abstract class CallData<T extends CallType> {
     //when use with a CallFilter
     private final DataType dataType;
     
+    
     private final CallType callType;
     
     private final DataQuality dataQuality;
@@ -72,88 +70,64 @@ public abstract class CallData<T extends CallType> {
 	
 	
 	/**
-	 * Default constructor not public. At least a {@code CallTypeAndQual} 
-	 * should be provided, see {@link #CallData(CallTypeAndQual)}.
+	 * Default constructor not public. At least a {@code CallType}, a {@code DataQuality}, 
+	 * and a {@code DataPropagation} must be provided, 
+	 * see {@link #CallData(CallType, DataQuality, DataType, DataPropagation)}.
 	 */
-	//Default constructor not public on purpose, suppress warning
-	@SuppressWarnings("unused")
 	private CallData() {
-		this(null);
+		this(null, null, null, null);
 	}
 	/**
-	 * Instantiate a {@code CallData} for the type of call {@code callType}. This constructor 
-	 * accepts the most basic information, when you only want to say that a gene is "expressed", 
-	 * or "not expressed", without caring about the quality of the call, nor the data types 
-	 * that produced it.
+	 * Instantiate a {@code CallData}: for the type of call {@code callType}, representing 
+	 * the expression state of a gene; the quality {@code dataQual}, representing 
+	 * how confidence we are that the call is correct; the data type {@code dataType}, 
+	 * representing the type of data the allowed to generate the call; and the propagation 
+	 * {@code dataPropagation}, representing the origin of the data, relative to the condition 
+	 * in which the call was made: for instance, from an anatomical structure 
+	 * or any of its substructures, or only in the anatomical structure itself.
+	 * <p> 
+	 * Only {@code dataType} can be {@code null}, meaning that the call is requested 
+	 * to have been generated from any data type. If other arguments are {@code null}, 
+	 * an {@code IllegalArgumentException} is thrown. If {@code dataPropagation} is incompatible 
+	 * with {@code callType} (see {@link CallType#checkDataPropagation(DataPropagation)}), 
+	 * or if {@code dataType} is not {@code null} and incompatible with {@code callType} 
+	 * (see {@link CallType#checkDataType(DataType)}), an {@code IllegalArgumentException} is thrown.
 	 * 
-	 * @param callType The {@code CallType} representing the type of this {@code CallData}.
-	 * @throws IllegalArgumentException    If {@code callType} is {@code null}.
+	 * @param callType          The {@code CallType} of this {@code CallData}.
+     * @param dataQual          The {@code DataQuality} associated to the {@code CallType} 
+     *                          of this {@code CallData}.
+     * @param dataType          The {@code DataType} that allowed to generate the {@code CallType}, 
+     *                          with its associated {@code DataQuality}, for this {@code CallData}.
+     * @param dataPropagation   The {@code DataPropagation} representing the origin of the data, 
+     *                          relative to the condition in which the call was made.
+	 * @throws IllegalArgumentException    If any of {@code callType}, {@code dataQual}, 
+	 *                                     or {@code dataPropagation} is {@code null}, 
+	 *                                     or if {@code dataPropagation} is incompatible 
+     *                                     with {@code callType, or if {@code dataType} 
+     *                                     is not {@code null} and incompatible with 
+     *                                     {@code callType}.
 	 */
-	protected CallData(CallTypeAndQual<T> callTypeAndQual) {
-		this(callTypeAndQual, null);
-	}
-	protected CallData(CallTypeAndQual<T> callTypeAndQual, 
-	        Map<DataType, CallTypeAndQual<T>> callTypeQualByDataTypes) {
-        log.entry(callTypeAndQual, callTypeQualByDataTypes);
+	protected CallData(T callType, DataQuality dataQual, DataType dataType, 
+	        DataPropagation dataPropagation) {
+        log.entry(callType, dataQual, dataType, dataPropagation);
         
-        this.overallCallTypeAndQual = callTypeAndQual;
-        if (callTypeQualByDataTypes == null) {
-            this.callTypeQualByDataTypes = Collections.unmodifiableMap(
-                    new EnumMap<>(DataType.class));
-        } else {
-            this.callTypeQualByDataTypes = Collections.unmodifiableMap(
-                new EnumMap<>(callTypeQualByDataTypes));
+        if (callType == null || dataQual == null || dataPropagation == null) {
+            throw log.throwing(new IllegalArgumentException("A CallType, a DataQuality, "
+                    + "and a DataPropagation must be defined to instantiate a CallData."));
         }
+        callType.checkDataPropagation(dataPropagation);
+        if (dataType != null) {
+            callType.checkDataType(dataType);
+        }
+        
+        this.callType = callType;
+        this.dataQuality = dataQual;
+        this.dataType = dataType;
+        this.dataPropagation = dataPropagation;
 
         log.exit();
     }
-
-    /**
-     * Returns the overall call type and data quality associated to a call. 
-     * <p>
-     * The overall type and quality of a call is obtained by considering results produced 
-     * from all data types available, all together. They can thus be different from the call types 
-     * and qualities produced from individual data type separately. For instance, 
-     * if a gene is considered expressed with a low quality by Affymetrix data, 
-     * but expressed with high quality by RNA-Seq data, then the overall quality 
-     * will be high, and different from the Affymetrix quality. 
-     * <p>
-     * To retrieve call types and qualities associated to a call, produced from each data type  
-     * individually, see {@link #getCallTypeQualByDataTypes()}.
-     * 
-     * @return  The {@code CallTypeAndQual} storing the overall {@code CallType} and 
-     *          {@code DataQuality} associated to a call. 
-     */
-    public CallTypeAndQual<T> getOverallCallTypeAndQual() {
-        return overallCallTypeAndQual;
-    }
-	/**
-	 * Get the {@code CallType} defining the type of this {@code CallData}. 
-	 * This method is expected to be overridden by subclasses, to cast the returned {@code CallType} 
-	 * to the actual type (for instance, {@code Expression} call type). 
-	 * 
-	 * @return the {@code CallType} defining the type of this {@code CallData}.
-	 */
-	public T getOverallCallType() {
-		return this.overallCallTypeAndQual.getCallType();
-	}
-	public DataQuality getOverallDataQual() {
-	    return this.overallCallTypeAndQual.getDataQual();
-	}
 	
-    /**
-	 * Return the data types and qualities use to generate this {@code CallData}, 
-	 * as an unmodifiable {@code Map}. Keys are {@code DataType}s, 
-	 * defining the data types that allowed to generate this {@code CallData}, 
-	 * the associated value being a {@code DataQuality}, defining the confidence 
-	 * which this {@code CallData} was generated with, by this data type.
-	 * 
-	 * @return 	The {@code Map} of {@code DataType}s associated to 
-	 * 			a {@code DataQuality}, that allowed to generate this {@code CallData}.
-	 * @see #getDataTypes()
-	 */
-    public Map<DataType, CallTypeAndQual<T>> getCallTypeQualByDataTypes() {
-        return callTypeQualByDataTypes;
-    }
+	//TODO: implements equals/hashCode/toString
 	
 }

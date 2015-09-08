@@ -10,4 +10,10 @@ public class TaxonomyFilter {
     private final Set<String> speciesIds;
     
     private final boolean allSpeciesRequested;
+    
+    public TaxonomyFilter() {
+        this.taxonId = null;
+        this.speciesIds = null;
+        this.allSpeciesRequested = false;
+    }
 }

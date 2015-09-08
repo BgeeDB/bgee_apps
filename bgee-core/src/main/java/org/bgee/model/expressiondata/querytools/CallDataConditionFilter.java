@@ -3,7 +3,7 @@ package org.bgee.model.expressiondata.querytools;
 import java.util.Set;
 
 import org.bgee.model.expressiondata.CallData;
-import org.bgee.model.expressiondata.DataDeclaration.CallType;
+import org.bgee.model.expressiondata.baseelements.CallType;
 
 //XXX: all parameters are OR conditions
 public class CallDataConditionFilter {
@@ -16,4 +16,9 @@ public class CallDataConditionFilter {
     //to be either EXPRESSED or NOT_EXPRESSED. They are not in the same tables, so this would help...
     //XXX: again, where to accept the diffExpressionFactor
     private final Set<CallData<? extends CallType>> callDataFilters;
+    
+    public CallDataConditionFilter() {
+        this.conditionFilters = null;
+        this.callDataFilters = null;
+    }
 }

@@ -4,6 +4,7 @@ import java.util.Set;
 
 import org.bgee.model.expressiondata.CallData;
 import org.bgee.model.expressiondata.Condition;
+import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.species.TaxonomyFilter;
 
 //XXX: 
@@ -26,21 +27,25 @@ public class CallFilter {
     //XXX: If true, retrieve results only in homologous structure/comparable stages, always.
     private final boolean forceHomology;
     
-    //---------------------
-    
-    private Set<CallData<?>> callData;
     
     //XXX: here, it means that the DataType of CallData will be null. Is it valid? 
     //Or should we remove the DataType attribute from CallData, and always use a Map 
     //when we want to associate a CallData to a DataType?
-    public CallFilter(CallData<?> anyDataTypeCallData) {
-        
-    }
-    //XXX: Map<Datatype, CallData<?>> if we remove DataType field from CallData?
-    public CallFilter(Set<CallData<?>> callData) {
-        
-    }
-    public CallFilter(Set<String> geneIds, Set<CallData<?>> callData) {
-        
+//    public CallFilter(CallData<?> anyDataTypeCallData) {
+//        
+//    }
+//    //XXX: Map<Datatype, CallData<?>> if we remove DataType field from CallData?
+//    public CallFilter(Set<CallData<?>> callData) {
+//        
+//    }
+//    public CallFilter(Set<String> geneIds, Set<CallData<?>> callData) {
+//        
+//    }
+    
+    public CallFilter() {
+        this.geneFilter = null;
+        this.callDataConditionFilters = null;
+        this.taxonFilter = null;
+        this.forceHomology = true;
     }
 }

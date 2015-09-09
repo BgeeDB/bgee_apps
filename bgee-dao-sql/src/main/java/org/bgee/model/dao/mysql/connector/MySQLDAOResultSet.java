@@ -11,6 +11,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Spliterator;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -54,6 +58,84 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
      */
     private final static Logger log = 
             LogManager.getLogger(MySQLDAOResultSet.class.getName());
+    
+    /**
+     * A {@code Spliterator} allowing to stream over {@code TransferObject}s 
+     * obtained from this {@code MySQLDAOResultSet}. 
+     * This {@code Spliterator} is finite, sequential, ordered, and unsized, and it does not override 
+     * the {@code Spliterator#forEachRemaining(Consumer)} default method. 
+     * It is not sized, as a {@code MySQLDAOResultSet} can usually not determine 
+     * the total number of results before traversal. 
+     * <p>
+     * <strong>Implementation notes</strong>: it was needed to use this {@code Spliterator} 
+     * to create a {@code Stream}, rather than using an {@code Iterator} along with a method 
+     * such as {@code Spliterators#spliterator(Iterator, long, int)}, 
+     * because a {@code MySQLDAOResultSet} does not implement a {@code hasNext} method,  
+     * as this would be overly complicated and would impact the performances. 
+     * 
+     * @author Frederic Bastian
+     * @version Bgee 13 Sept. 2015
+     * @see MySQLDAOResultSet#stream()
+     * @since Bgee 13 Sept 2015
+     */
+    private class MySQLDAOResultSetSpliterator implements Spliterator<T> {
+        /**
+         * Default constructor private, can only be instantiated by a {@code MySQLDAOResultSet}.
+         */
+        private MySQLDAOResultSetSpliterator() {
+            //nothing here
+        }
+
+        @Override
+        public boolean tryAdvance(Consumer<? super T> action) {
+            log.entry(action);
+            if (MySQLDAOResultSet.this.next()) {
+                action.accept(MySQLDAOResultSet.this.getTO());
+                return log.exit(true);
+            }
+            return log.exit(false);
+        }
+
+        /**
+         * Return {@code null}, because a {@code MySQLDAOResultSet} does not have 
+         * the capability of being accessed in parallel. 
+         * 
+         * @return  A {@code Spliterator} that is {@code null}.
+         */
+        @Override
+        public Spliterator<T> trySplit() {
+            return null;
+        }
+        /**
+         * Returns {@code Long.MAX_VALUE}, meaning that we have no idea of the size 
+         * of the result set to traverse.  
+         * 
+         * @return  A {@code long} equal to Long.MAX_VALUE. 
+         */
+        @Override
+        public long estimateSize() {
+            return Long.MAX_VALUE;
+        }
+        /**
+         * This {@code MySQLDAOResultSetSpliterator} has only the following characteristics: 
+         * {@code NONNULL} and {@code ORDERED}. 
+         * 
+         * @return  An {@code int} representing the ORed values from the characteristics 
+         *          of this {@code MySQLDAOResultSetSpliterator}.
+         */
+        @Override
+        public int characteristics() {
+            return Spliterator.NONNULL | Spliterator.ORDERED;
+        }
+        
+        /**
+         * Closes the outer {@code MySQLDAOResultSet} instance.
+         */
+        public void close() {
+            MySQLDAOResultSet.this.close();
+        }
+        
+    }
     
     /**
      * A {@code List} of {@code BgeePreparedStatement}s that should be executed, 
@@ -172,6 +254,13 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
      * once the first {@code BgeePreparedStatement} has been executed. 
      */
     private boolean firstStmtExecuted;
+    /**
+     * A {@code boolean} defining whether this {@code MySQLDAOResultSet} has already been used 
+     * to create a {@code Stream} (see {@link #stream()}), whether the {@code Stream} has already 
+     * been traversed or not. This allows to make sure that there won't be several {@code Stream}s 
+     * iterating a same {@code MySQLDAOResultSet}.
+     */
+    private boolean usedInStream;
     
     /**
      * Default constructor private, at least one {@code BgeePreparedStatement} 
@@ -378,28 +467,65 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
         this.currentStatement = null;
         
         this.firstStmtExecuted = false;
+        this.usedInStream      = false;
         log.exit();
+    }
+    
+    /**
+     * {@inheritDoc}
+     * <p>
+     * <strong>Implementation notes</strong>: 
+     * <ul>
+     * <li>This implementation throws an {@code IllegalStateException} if it is called 
+     * more than once on this {@code MySQLDAOResultSet}, or if this {@code MySQLDAOResultSet} 
+     * was already started to be iterated. 
+     * <li>this implementation traverses the {@code T}s exactly as if the methods {@link #next()} 
+     * and {@link #getTO()} were called sequentially on this {@code MySQLDAOResultSet}, 
+     * until the {@code next} method returns {@code false}. This implementation is based 
+     * on a {@code Spliterator} that is finite, sequential, ordered, unsized.
+     * </ul>
+     * 
+     * @return {@inheritDoc}.
+     * @throws IllegalStateException {@inheritDoc}.
+     */
+    @Override
+    public Stream<T> stream() throws IllegalStateException {
+        log.entry();
+        if (this.firstStmtExecuted) {
+            throw log.throwing(new IllegalStateException("This DAOResultSet has already started "
+                    + "to be iterated, it is thus not possible to stream it anymore."));
+        }
+        if (this.usedInStream) {
+            throw log.throwing(new IllegalStateException("This DAOResultSet is already used "
+                    + "in a Stream, and cannot be used in several independent Streams."));
+        }
+        this.usedInStream = true;
+        
+        MySQLDAOResultSetSpliterator spliterator = new MySQLDAOResultSetSpliterator();
+        //We add a close handler to the Stream, to close this DAOResultSet when the Stream is closed
+        return log.exit(StreamSupport.stream(spliterator, false)
+                .onClose(() -> spliterator.close()));
     }
 
     @Override
     public boolean next() throws DAOException, QueryInterruptedException {
         log.entry();
         this.lastTOGenerated = null;
-        
-        //execute the first statement only at the first call to next (late-binding behavior)
-        if (!this.firstStmtExecuted) {
-            this.firstStmtExecuted = true;
-            this.executeNextStatementQuery();
-        }
-        
-        //If currentResultSet is null, it means that there are no more 
-        //BgeePreparedStatement to obtain results from. 
-        if (this.currentResultSet == null) {
-            return log.exit(false);
-        }
-        this.checkCurrentStatementCanceled();
-        
+
         try {
+            //execute the first statement only at the first call to next (late-binding behavior)
+            if (!this.firstStmtExecuted) {
+                this.firstStmtExecuted = true;
+                this.executeNextStatementQuery();
+            }
+
+            //If currentResultSet is null, it means that there are no more 
+            //BgeePreparedStatement to obtain results from. 
+            if (this.currentResultSet == null) {
+                return log.exit(false);
+            }
+            this.checkCurrentStatementCanceled();
+        
             //if we get at the end of the current ResultSet, try to execute the next 
             //BgeePreparedStatement in order
             if (!this.currentResultSet.next()) {
@@ -630,6 +756,8 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
             this.columnLabels.clear();
             this.returnedTOs.clear();
             this.lastTOGenerated = null;
+            //close this MySQLDAOResultSet when all TOs have been iterated
+            this.close();
             log.catching(Level.TRACE, e);
         } catch (SQLException e) {
             //here, this is bad ;)

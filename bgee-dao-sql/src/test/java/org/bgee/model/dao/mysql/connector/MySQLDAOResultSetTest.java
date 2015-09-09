@@ -8,15 +8,21 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.DAOResultSet;
+import org.bgee.model.dao.api.EntityTO;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
+import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.mysql.TestAncestor;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
+import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 import org.bgee.model.dao.mysql.ontologycommon.MySQLRelationDAO.MySQLRelationTOResultSet;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -27,6 +33,7 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
+import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 
 public class MySQLDAOResultSetTest extends TestAncestor
 {
@@ -46,15 +53,49 @@ public class MySQLDAOResultSetTest extends TestAncestor
     private class FakeTO extends TransferObject {
         private static final long serialVersionUID = 1L;
 
+        public final String id;
+        
         public FakeTO() {
+            this(null);
+        }
+        public FakeTO(String id) {
             super();
+            this.id = id;
+        }
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((id == null) ? 0 : id.hashCode());
+            return result;
+        }
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            FakeTO other = (FakeTO) obj;
+            //we use ID for comparison only if not null, 
+            //otherwise we consider these objects to be not equal
+            if (id == null || other.id == null) {
+                return false;
+            } else if (id != null && !id.equals(other.id)) {
+                return false;
+            }
+            return true;
         }
     }
     /**
      * Extends {@code MySQLDAOResultSet}, which is abstract, to perform 
      * unit tests using it.
      */
-    private class FakeDAOResultSet extends MySQLDAOResultSet<TransferObject> {
+    private class FakeDAOResultSet extends MySQLDAOResultSet<FakeTO> {
         public FakeDAOResultSet(BgeePreparedStatement statement) {
             super(statement);
         }
@@ -75,7 +116,7 @@ public class MySQLDAOResultSetTest extends TestAncestor
                     rowCount, stepCount, filterDuplicates);
         }
         @Override
-        public TransferObject getNewTO() throws DAOException {
+        public FakeTO getNewTO() throws DAOException {
             try {
                 //just a hack to use mocked ResultSet
                 return this.getCurrentResultSet().unwrap(FakeTO.class);
@@ -149,7 +190,7 @@ public class MySQLDAOResultSetTest extends TestAncestor
         when(metaData2.getColumnLabel(eq(1))).thenReturn("column2-1");
         when(metaData2.getColumnLabel(eq(2))).thenReturn("column2-2");
         
-        MySQLDAOResultSet<TransferObject> rs = new FakeDAOResultSet(
+        MySQLDAOResultSet<FakeTO> rs = new FakeDAOResultSet(
                 Arrays.asList(mockStatement, mockStatement2));
         //first mockStatement is executed only when next is called, 
         //which call executeNextStatementQuery.
@@ -202,7 +243,7 @@ public class MySQLDAOResultSetTest extends TestAncestor
         when(mockStatement.executeQuery()).thenReturn(realRs);
         when(mockStatement2.executeQuery()).thenReturn(realRs);
         
-        MySQLDAOResultSet<TransferObject> rs = new FakeDAOResultSet(
+        MySQLDAOResultSet<FakeTO> rs = new FakeDAOResultSet(
                 Arrays.asList(mockStatement, mockStatement2));
         //Invoke executeNextStatementQuery a first time for the first statement, 
         //the second call to executeNextStatementQuery should execute the second one
@@ -258,7 +299,7 @@ public class MySQLDAOResultSetTest extends TestAncestor
         when(mockRs5.getMetaData()).thenReturn(metaData);
         when(mockStatement5.executeQuery()).thenReturn(mockRs5);
         
-        MySQLDAOResultSet<TransferObject> myRs = new FakeDAOResultSet(Arrays.asList(
+        MySQLDAOResultSet<FakeTO> myRs = new FakeDAOResultSet(Arrays.asList(
                 mockStatement, mockStatement2, mockStatement3, mockStatement4, mockStatement5));
         //execution of the first statement is only triggered when next is called
         when(mockRs.next()).thenReturn(true);
@@ -376,7 +417,7 @@ public class MySQLDAOResultSetTest extends TestAncestor
             thenReturn(fakeTO4);
         when(mockRs3.unwrap(FakeTO.class)).thenReturn(fakeTO5);
         
-        MySQLDAOResultSet<TransferObject> myRs = new FakeDAOResultSet(Arrays.asList(
+        MySQLDAOResultSet<FakeTO> myRs = new FakeDAOResultSet(Arrays.asList(
                 mockStatement, mockStatement2, mockStatement3), true);
         //execution of the first statement is only triggered when next is called
         assertTrue("Incorrect value returend by next", myRs.next());
@@ -483,7 +524,7 @@ public class MySQLDAOResultSetTest extends TestAncestor
             thenReturn(fakeTO4);
         when(mockRs3.unwrap(FakeTO.class)).thenReturn(fakeTO5);
         
-        MySQLDAOResultSet<TransferObject> myRs = new FakeDAOResultSet(Arrays.asList(
+        MySQLDAOResultSet<FakeTO> myRs = new FakeDAOResultSet(Arrays.asList(
                 mockStatement, mockStatement2, mockStatement3), false);
         assertTrue("Incorrect value returend by next", myRs.next());
         verify(mockStatement).executeQuery();
@@ -596,7 +637,7 @@ public class MySQLDAOResultSetTest extends TestAncestor
         when(mockRs.unwrap(FakeTO.class)).thenReturn(fakeTO1).thenReturn(fakeTO1).
             thenReturn(fakeTO2).thenReturn(fakeTO2).thenReturn(fakeTO3);
         
-        MySQLDAOResultSet<TransferObject> myRs = new FakeDAOResultSet(mockStatement, 
+        MySQLDAOResultSet<FakeTO> myRs = new FakeDAOResultSet(mockStatement, 
                 2, 3, 20, true);
         //execution of the first statement is only triggered when next is called
         assertTrue("Incorrect value returend by next", myRs.next());
@@ -675,7 +716,7 @@ public class MySQLDAOResultSetTest extends TestAncestor
         when(mockRs.unwrap(FakeTO.class)).thenReturn(fakeTO1).thenReturn(fakeTO1).
             thenReturn(fakeTO2).thenReturn(fakeTO2).thenReturn(fakeTO3);
         
-        MySQLDAOResultSet<TransferObject> myRs = new FakeDAOResultSet(mockStatement, 
+        MySQLDAOResultSet<FakeTO> myRs = new FakeDAOResultSet(mockStatement, 
                 2, 3, 20, false);
         assertTrue("Incorrect value returend by next", myRs.next());
         verify(mockStatement).setInt(2, 0);
@@ -754,7 +795,7 @@ public class MySQLDAOResultSetTest extends TestAncestor
         when(mockRs.getMetaData()).thenReturn(metaData);
         when(mockStatement.executeQuery()).thenReturn(mockRs);
         
-        MySQLDAOResultSet<TransferObject> myRs = new FakeDAOResultSet(mockStatement, 
+        MySQLDAOResultSet<FakeTO> myRs = new FakeDAOResultSet(mockStatement, 
                 2, 3, 20, false);
         when(mockRs.next()).thenReturn(true);
         assertTrue("Incorrect value returend by next", myRs.next());
@@ -837,7 +878,7 @@ public class MySQLDAOResultSetTest extends TestAncestor
         when(mockRs.getMetaData()).thenReturn(metaData);
         when(mockStatement.executeQuery()).thenReturn(mockRs);
         
-        MySQLDAOResultSet<TransferObject> myRs = new FakeDAOResultSet(mockStatement, 
+        MySQLDAOResultSet<FakeTO> myRs = new FakeDAOResultSet(mockStatement, 
                 2, 3, 20, 2, false);
         //execution of the first statement is only triggered when next is called
         when(mockRs.next()).thenReturn(true);
@@ -966,7 +1007,7 @@ public class MySQLDAOResultSetTest extends TestAncestor
         when(metaData.getColumnCount()).thenReturn(0);
         when(mockStatement.executeQuery()).thenReturn(mockRs);
         
-        MySQLDAOResultSet<TransferObject> myRs = new FakeDAOResultSet(mockStatement);   
+        MySQLDAOResultSet<FakeTO> myRs = new FakeDAOResultSet(mockStatement);   
         assertFalse("Incorrect use of duplicate filtering", myRs.isFilterDuplicates());
         assertFalse("Incorrect use of limit feature", myRs.isUsingLimitFeature());     
 
@@ -1001,7 +1042,7 @@ public class MySQLDAOResultSetTest extends TestAncestor
         when(mockRs.getMetaData()).thenReturn(metaData);
         when(mockStatement.executeQuery()).thenReturn(mockRs);
         
-        MySQLDAOResultSet<TransferObject> myRs = new FakeDAOResultSet(
+        MySQLDAOResultSet<FakeTO> myRs = new FakeDAOResultSet(
                 Arrays.asList(mockStatement, mockStatement2, mockStatement3));
         assertFalse("Incorrect use of duplicate filtering", myRs.isFilterDuplicates());
         assertFalse("Incorrect use of limit feature", myRs.isUsingLimitFeature());
@@ -1010,6 +1051,110 @@ public class MySQLDAOResultSetTest extends TestAncestor
         verify(mockStatement2).close();
         verify(mockStatement3).close();
         assertEquals("Incorrect number of statements returned", 0, myRs.getStatementCount());
+    }
+    
+
+    /**
+     * Test the method {@link MySQLDAOResultSet#stream()}.
+     * @throws SQLException 
+     */
+    @Test
+    public void shouldStream() throws SQLException {
+        FakeTO fakeTO1 = new FakeTO("1");
+        FakeTO fakeTO2 = new FakeTO("2");
+        FakeTO fakeTO3 = new FakeTO("3");
+        
+        BgeePreparedStatement mockStatement = mock(BgeePreparedStatement.class);
+        ResultSet mockRs = mock(ResultSet.class);
+        when(mockStatement.executeQuery()).thenReturn(mockRs);
+        ResultSetMetaData metaData = mock(ResultSetMetaData.class);
+        when(metaData.getColumnCount()).thenReturn(1);
+        when(metaData.getColumnLabel(eq(1))).thenReturn("column1");
+        
+
+        
+
+        //check that the ResultSet is closed when the Stream is closed
+        MySQLDAOResultSet<FakeTO> rs = spy(new FakeDAOResultSet(mockStatement));
+        when(mockRs.getMetaData()).thenReturn(metaData);
+        when(mockRs.next()).thenReturn(true).thenReturn(true).thenReturn(true).thenReturn(false);
+        when(mockRs.unwrap(FakeTO.class)).thenReturn(fakeTO1).thenReturn(fakeTO2).thenReturn(fakeTO3);
+        rs.stream().close();
+        verify(rs).close();
+        
+        //Simply stream results into a List.
+        rs = spy(new FakeDAOResultSet(mockStatement));
+        reset(mockRs);
+        when(mockRs.getMetaData()).thenReturn(metaData);
+        when(mockRs.next()).thenReturn(true).thenReturn(true).thenReturn(true).thenReturn(false);
+        when(mockRs.unwrap(FakeTO.class)).thenReturn(fakeTO1).thenReturn(fakeTO2).thenReturn(fakeTO3);
+        assertEquals("Incorrect TO List retrieved from Stream", 
+                Arrays.asList(fakeTO1, fakeTO2, fakeTO3), 
+                rs.stream().collect(Collectors.toList()));
+        //check that the ResultSet was closed, as all results are supposed to have been traversed
+        verify(rs).close();
+        
+        //test with intermediate operations, for the fun. Here, we order TOs 
+        //in descending order of their ID, and we generate a List of Strings with IDs
+        rs = spy(new FakeDAOResultSet(mockStatement));
+        reset(mockRs);
+        when(mockRs.getMetaData()).thenReturn(metaData);
+        when(mockRs.next()).thenReturn(true).thenReturn(true).thenReturn(true).thenReturn(false);
+        when(mockRs.unwrap(FakeTO.class)).thenReturn(fakeTO1).thenReturn(fakeTO2).thenReturn(fakeTO3);
+        assertEquals("Incorrect TOs retrieved from Stream with intermediate operations", 
+                Arrays.asList(fakeTO3.id, fakeTO2.id, fakeTO1.id), 
+                rs.stream()
+                .sorted((g1, g2) -> g2.id.compareTo(g1.id))
+                .map(g -> g.id)
+                .collect(Collectors.toList()));
+        //check that the ResultSet was closed, as all results are supposed to have been traversed
+        verify(rs).close();
+        
+        //test with a limit operation, to verify that the traversal of the DAOResultSet 
+        //is correctly stopped, without closing it.
+        rs = spy(new FakeDAOResultSet(mockStatement));
+        reset(mockRs);
+        when(mockRs.getMetaData()).thenReturn(metaData);
+        when(mockRs.next()).thenReturn(true).thenReturn(true).thenReturn(true).thenReturn(false);
+        when(mockRs.unwrap(FakeTO.class)).thenReturn(fakeTO1).thenReturn(fakeTO2).thenReturn(fakeTO3);
+        Stream<FakeTO> st = rs.stream();
+        //we need to use a collector, otherwise the limit() method does not make the traversal to start.
+        st.limit(2).collect(Collectors.toList());
+        verify(rs, times(2)).next();
+        verify(rs, never()).close();
+        //check that the ResultSet is closed when the stream is closed
+        st.close();
+        verify(rs).close();
+        
+        //check exceptions that should be thrown by the stream() method
+        
+        //cannot call stream several times on a same MySQLDAOResultSet
+        rs = spy(new FakeDAOResultSet(mockStatement));
+        reset(mockRs);
+        when(mockRs.getMetaData()).thenReturn(metaData);
+        when(mockRs.next()).thenReturn(true).thenReturn(true).thenReturn(true).thenReturn(false);
+        when(mockRs.unwrap(FakeTO.class)).thenReturn(fakeTO1).thenReturn(fakeTO2).thenReturn(fakeTO3);
+        rs.stream();
+        try {
+            rs.stream();
+            throw new AssertionError("An IllegalStateExeption should have been thrown.");
+        } catch (IllegalStateException e) {
+            //test passed
+        }
+        
+        //cannot stream a MySQLDAOResultSet already iterated
+        rs = spy(new FakeDAOResultSet(mockStatement));
+        reset(mockRs);
+        when(mockRs.getMetaData()).thenReturn(metaData);
+        when(mockRs.next()).thenReturn(true).thenReturn(true).thenReturn(true).thenReturn(false);
+        when(mockRs.unwrap(FakeTO.class)).thenReturn(fakeTO1).thenReturn(fakeTO2).thenReturn(fakeTO3);
+        rs.next();
+        try {
+            rs.stream();
+            throw new AssertionError("An IllegalStateExeption should have been thrown.");
+        } catch (IllegalStateException e) {
+            //test passed
+        }
     }
     
 //    /**

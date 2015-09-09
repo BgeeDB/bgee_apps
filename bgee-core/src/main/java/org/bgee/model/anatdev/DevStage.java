@@ -1,6 +1,6 @@
 package org.bgee.model.anatdev;
 
-import org.bgee.model.Entity;
+import org.bgee.model.NamedEntity;
 
 /**
  * Class describing developmental stages.
@@ -9,7 +9,7 @@ import org.bgee.model.Entity;
  * @version Bgee 13.1
  *
  */
-public class DevStage extends Entity {
+public class DevStage extends NamedEntity {
 
     /**
      * Default constructor not public, an ID must always be provided, 

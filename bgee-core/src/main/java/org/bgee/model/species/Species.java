@@ -1,6 +1,6 @@
 package org.bgee.model.species;
 
-import org.bgee.model.Entity;
+import org.bgee.model.NamedEntity;
 
 /**
  * Class allowing to describe species used in Bgee.
@@ -9,7 +9,7 @@ import org.bgee.model.Entity;
  * @version Bgee 13, Mar 2013
  * @since Bgee 01
  */
-public class Species extends Entity {
+public class Species extends NamedEntity {
     /**
      * Constructor providing the {@code id} of this {@code Species}.
      * This {@code id} cannot be {@code null}, or blank,

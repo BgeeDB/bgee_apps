@@ -2,7 +2,7 @@ package org.bgee.model.file;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.Entity;
+import org.bgee.model.NamedEntity;
 import org.bgee.model.file.DownloadFile;
 import org.bgee.model.species.Species;
 
@@ -14,7 +14,7 @@ import java.util.*;
  * @see DownloadFile
  */
 
-public class SpeciesDataGroup extends Entity {
+public class SpeciesDataGroup extends NamedEntity {
 
     private static final Logger log = LogManager.getLogger(SpeciesDataGroup.class.getName());
 

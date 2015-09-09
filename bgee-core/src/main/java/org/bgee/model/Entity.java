@@ -5,32 +5,23 @@ import org.apache.commons.lang3.StringUtils;
 /**
  * Parent class of all classes corresponding to real entities in the Bgee database. 
  * For instance, a {@code Gene}, a {@code Species}, 
- * a {@code RNASeqExperiment}, ...
- * They almost always have an ID, a name, and a description.
+ * a {@code RNASeqExperiment}, ... Basically, anything that can have an ID.
+ * <p>
+ * Note that {@code equals} and {@code hashCode} methods of {@code Entity}s 
+ * should be solely based on their ID provided at instantiation.
  * 
  * @author Frederic Bastian
- * @version Bgee 13.1
+ * @version Bgee 13 Sept. 2015
  * @since Bgee 01
  */
 public abstract class Entity {
 	/**
-	 * A {@code String} representing the ID of this {@code Entity}. 
-	 * All {@code Entity}s have an {@code id} which is immutable 
-	 * and provided at instantiation. 
+	 * @see #getId()
 	 */
     private final String id;
-	/**
-	 * A {@code String} representing the name of this {@code Entity}.
-	 */
-    private final String name;
-    /**
-	 * A {@code String} that is a description of this {@code Entity}.
-	 */
-    private final String description;
-    
     
     /**
-     * Default constructor not public, an {@link #id} must always be provided, 
+     * Default constructor not public, at least an ID must always be provided, 
      * see {@link #Entity(String)}.
      */
     //Constructor not public on purpose, suppress warnings
@@ -46,48 +37,18 @@ public abstract class Entity {
      * @throws IllegalArgumentException 	if {@code id} is blank. 
      */
     public Entity(String id) throws IllegalArgumentException {
-    	this(id, null, null);
+        if (StringUtils.isBlank(id)) {
+            throw new IllegalArgumentException("the ID provided cannot be blank.");
+        }
+        this.id = id;
     }
-
-	/**
-	 * This {@code id} cannot be {@code null}, or empty (""),
-	 * @param id A {@code String} representing the ID of this {@code Entity}.
-	 * @param name The name of the entity
-	 * @param description The description
-	 */
-	protected Entity(String id, String name, String description) {
-		if (StringUtils.isBlank(id)) {
-			throw new IllegalArgumentException("id cannot be null, or empty (\"\"), " +
-					"or whitespaces only");
-		}
-		this.id = id;
-		this.name = name;
-		this.description = description;
-	}
     
     
 	/**
-	 * Gets the ID of this {@code Entity}.
-	 * All {@code Entity}s have an {@code id} which is immutable 
-	 * and provided at instantiation.
 	 * @return 	A {@code String} representing the ID of this {@code Entity}
 	 */
 	public String getId() {
 		return this.id;
-	}
-	/**
-	 * Gets the name of this {@code Entity}.
-	 * @return 	A {@code String} representing the name of this {@code Entity}
-	 */
-	public String getName() {
-		return name;
-	}
-	/**
-	 * Gets the description for this {@code Entity}.
-	 * @return 	A {@code String} that is a description of this {@code Entity}
-	 */
-	public String getDescription() {
-		return description;
 	}
 	
 	/**

@@ -5,7 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
 import org.bgee.model.species.Species;
-import org.bgee.model.species.SpeciesLoader;
+import org.bgee.model.species.SpeciesService;
 
 import java.util.*;
 
@@ -22,7 +22,7 @@ public class SpeciesDataGroupLoader {
 
     private DownloadFileLoader downloadFileLoader;
 
-    private SpeciesLoader speciesLoader;
+    private SpeciesService speciesService;
 
     /**
      * Load all {@code SpeciesDataGroup}
@@ -33,7 +33,7 @@ public class SpeciesDataGroupLoader {
         
         DAOResultSet<SpeciesDataGroupDAO.SpeciesDataGroupTO> speciesGroups = speciesGroupDAO.getAllSpeciesDataGroup();
         Map<String, List<DownloadFile>> downloadFiles = buildDownloadFileMap(downloadFileLoader.getAllDownloadFiles());
-        Map<String, Species> species = buildSpeciesIdMap(speciesLoader.loadSpeciesInDataGroups());
+        Map<String, Species> species = buildSpeciesIdMap(speciesService.loadSpeciesInDataGroups());
         Map<String, List<Species>> groupToSpeciesMap = buildGroupToSpeciesMap(
                 speciesGroupDAO.getAllSpeciesToDataGroup(), species);
 

@@ -2,6 +2,8 @@ package org.bgee.model;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.DAOManager;
+import org.bgee.model.species.SpeciesService;
 
 /**
  * Factory allowing to obtain {@link Service}s. 
@@ -41,8 +43,36 @@ public class ServiceFactory {
      * {@code Logger} of the class. 
      */
     private final static Logger log = LogManager.getLogger(ServiceFactory.class.getName());
+
+    /**
+     * @see #getDAOManager()
+     */
+    private final DAOManager daoManager;
     
-    //*********************************************
-    //   STATIC METHODS TO OBTAIN FACTORIES
-    //*********************************************
+    /**
+     * 0-arg constructor that will cause this {@code ServiceFactory} to use 
+     * the default {@code DAOManager} returned by {@link DAOManager#getDAOManager()}, 
+     * to be provided to the {@code Service}s it instantiates. 
+     * 
+     * @see #SpeciesService(DAOManager)
+     */
+    public ServiceFactory() {
+        this(DAOManager.getDAOManager());
+    }
+    /**
+     * @param daoManager    The {@code DAOManager} to be used by this {@code ServiceFactory},  
+     *                      to be provided to the {@code Service}s it instantiates. 
+     */
+    public ServiceFactory(DAOManager daoManager) {
+        this.daoManager = daoManager;
+    }
+    
+    /**
+     * @return  A newly instantiated {@code SpeciesService}, using the same {@code DAOManager} 
+     *          as the one selected by this {@code ServiceFactory}.
+     */
+    public SpeciesService getSpeciesFactory() {
+        log.entry();
+        return log.exit(new SpeciesService(this.daoManager));
+    }
 }

@@ -19,6 +19,7 @@ import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesDataGroupTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTO;
 import org.bgee.model.dao.api.keyword.KeywordDAO.EntityToKeywordTO;
 import org.bgee.model.dao.api.keyword.KeywordDAO.KeywordTO;
 import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTO;
@@ -113,6 +114,9 @@ public class TOComparator {
         } else if (to1 instanceof HierarchicalGroupTO) {
             return log.exit(areTOsEqual((HierarchicalGroupTO) to1, (HierarchicalGroupTO) to2, 
                     compareId));
+        } else if (to1 instanceof HierarchicalGroupToGeneTO) {
+            return log.exit(areTOsEqual(
+                    (HierarchicalGroupToGeneTO) to1, (HierarchicalGroupToGeneTO) to2));
         } else if (to1 instanceof TaxonConstraintTO) {
             return log.exit(areTOsEqual((TaxonConstraintTO) to1, (TaxonConstraintTO) to2));
         } else if (to1 instanceof RelationTO) {
@@ -419,6 +423,25 @@ public class TOComparator {
                 to1.getLeftBound() == to2.getLeftBound() && 
                 to1.getRightBound() == to2.getRightBound() && 
                 to1.getTaxonId() == to2.getTaxonId()) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    
+    /**
+     * Method to compare two {@code HierarchicalGroupToGeneTO}s, to check for complete equality 
+     * of each attribute. This is because the {@code equals} method of 
+     * {@code HierarchicalGroupToGeneTO}s is solely based on their ID, not on other attributes.
+     * 
+     * @param to1   A {@code HierarchicalGroupToGeneTO} to be compared to {@code to2}.
+     * @param to2   A {@code HierarchicalGroupToGeneTO} to be compared to {@code to1}.
+     * @return      {@code true} if {@code to1} and {@code to2} have all attributes equal.
+     */
+    private static boolean areTOsEqual(HierarchicalGroupToGeneTO to1, HierarchicalGroupToGeneTO to2) {
+        log.entry(to1, to2);
+
+        if (StringUtils.equals(to1.getGeneId(), to2.getGeneId()) && 
+                StringUtils.equals(to1.getGroupId(), to2.getGroupId())) {
             return log.exit(true);
         }
         return log.exit(false);

@@ -36,8 +36,11 @@ BEGIN
 
         INSERT INTO species (speciesId,genus,species,speciesCommonName,taxonId,genomeFilePath,genomeSpeciesId,fakeGeneIdPrefix) 
         VALUES (11,'gen11','sp11','spCName11',111,'path/genome11',0,''),
-               (21,'gen21','sp21','spCName21',211,'path/genome21',52,'FAKEPREFIX'),
-               (31,'gen31','sp31','spCName31',311,'path/genome31',0,'');
+               (21,'gen21','sp21','spCName21',211,'path/genome21',51,'PREFIX51'),
+               (31,'gen31','sp31','spCName31',311,'path/genome31',0,''),
+               (41,'gen41','sp41','spCName41',411,'path/genome41',0,''),
+               (42,'gen41','sp42','spCName42',411,'path/genome42',41,'PREFIX41'),
+               (51,'gen51','sp51','spCName51',511,'path/genome51',0,'');
 
         INSERT INTO gene (geneId,geneName,geneDescription,speciesId,geneBioTypeId,OMAParentNodeId,ensemblGene) 
         VALUES ('ID1','genN1','genDesc1',11,12,5,true),

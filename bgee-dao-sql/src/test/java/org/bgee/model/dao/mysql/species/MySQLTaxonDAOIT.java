@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -110,7 +111,7 @@ public class MySQLTaxonDAOIT extends MySQLITAncestor {
     }
     
     /**
-     * Test the select method {@link MySQLTaxonDAO#shouldGetAllTaxa()}.
+     * Test the select method {@link MySQLTaxonDAO#getAllTaxa()}.
      */
     @Test
     public void shouldGetAllTaxa() throws SQLException {
@@ -142,5 +143,81 @@ public class MySQLTaxonDAOIT extends MySQLITAncestor {
                 new TaxonTO(null, null, null, null, null, null, false)); 
         assertTrue("TaxonTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(methResults, expectedTaxa));
+    }
+    
+    /**
+     * Test the select method {@link MySQLTaxonDAO#getLeastCommonAncestor()}.
+     */
+    @Test
+    public void shouldGetLeastCommonAncestor() throws SQLException {
+        
+        this.useSelectDB();
+        
+        Set<String> speciesIds = new HashSet<String>();
+        boolean includeAncestors = false;
+        
+        MySQLTaxonDAO dao = new MySQLTaxonDAO(this.getMySQLDAOManager());
+        dao.setAttributes(Arrays.asList(TaxonDAO.Attribute.values()));
+
+        // No speciesIds - includeAncestors = false
+        // => find the LCA of all species in Bgee
+        List<TaxonTO> actualResults =
+                dao.getLeastCommonAncestor(speciesIds, includeAncestors).getAllTOs();
+        List<TaxonTO> expectedTaxa = Arrays.asList(
+                new TaxonTO("111", "taxCName111", "taxSName111", 1, 10, 1, true));
+        assertTrue("TaxonTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(actualResults, expectedTaxa));
+
+        // No speciesIds - includeAncestors = true
+        // => find the LCA of all species in Bgee and its ancestors
+        includeAncestors = true;
+        actualResults = dao.getLeastCommonAncestor(speciesIds, includeAncestors).getAllTOs();
+        // Her, it should be the same result because 111 is the older ancestor of test taxonomy
+        assertTrue("TaxonTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(actualResults, expectedTaxa));
+                
+        // One species ID - includeAncestors = false
+        // => find the LCA of the species
+        speciesIds.add("41");
+        includeAncestors = false;
+        actualResults = dao.getLeastCommonAncestor(speciesIds, includeAncestors).getAllTOs();
+        expectedTaxa = Arrays.asList(
+                new TaxonTO("411", "taxCName411", "taxSName411", 5, 6, 1, true));
+        assertTrue("TaxonTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(actualResults, expectedTaxa));
+
+        // One species ID - includeAncestors = true
+        // => find the LCA of the species and its ancestors
+        dao.setAttributes(Arrays.asList(TaxonDAO.Attribute.COMMON_NAME));
+        includeAncestors = true;
+        actualResults = dao.getLeastCommonAncestor(speciesIds, includeAncestors).getAllTOs();
+        expectedTaxa = Arrays.asList(
+                new TaxonTO(null, "taxCName111", null, null, null, null, null),
+                new TaxonTO(null, "taxCName311", null, null, null, null, null),
+                new TaxonTO(null, "taxCName411", null, null, null, null, null));
+        assertTrue("TaxonTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(actualResults, expectedTaxa));
+
+        // Severals species IDs (species are member of a same taxon leaf) - includeAncestors = true
+        // => find the LCA of the species and its ancestors
+        dao.setAttributes(Arrays.asList(TaxonDAO.Attribute.LCA, TaxonDAO.Attribute.LEVEL));
+        speciesIds.add("42");
+        actualResults = dao.getLeastCommonAncestor(speciesIds, includeAncestors).getAllTOs();
+        expectedTaxa = Arrays.asList(
+                new TaxonTO(null, null, null, null, null, 1, true),
+                new TaxonTO(null, null, null, null, null, 2, false));
+        assertTrue("TaxonTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(actualResults, expectedTaxa));
+
+        // Severals species IDs (species 31 is member of parent taxon) - includeAncestors = true
+        // => find the LCA of the species and its ancestors
+        dao.setAttributes(Arrays.asList(TaxonDAO.Attribute.ID));
+        speciesIds.add("31");
+        actualResults = dao.getLeastCommonAncestor(speciesIds, includeAncestors).getAllTOs();
+        expectedTaxa = Arrays.asList(
+                new TaxonTO("111", null, null, null, null, null, null),
+                new TaxonTO("311", null, null, null, null, null, null));
+        assertTrue("TaxonTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(actualResults, expectedTaxa));
     }
 }

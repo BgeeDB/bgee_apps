@@ -1123,7 +1123,33 @@ public abstract class DAOManager implements AutoCloseable
         return log.exit(this.getNewStageGroupingDAO());
     }
 
-    
+	/**
+	 * Get a new {@link DownloadFileDAO},
+	 * unless this {@code DAOManager} is already closed.
+	 *
+	 * @return  A new {@code DownloadFileDAO}.
+	 * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+	 * @see DownloadFileDAO
+	 */
+	public final DownloadFileDAO getDownloadFileDAO() {
+		log.entry();
+		this.checkClosed();
+		return log.exit(this.getNewDownloadFileDAO());
+	}
+
+	/**
+	 * Get a new {@link SpeciesDataGroupDAO},
+	 * unless this {@code DAOManager} is already closed.
+	 *
+	 * @return  A new {@code SpeciesDataGroupDAO}.
+	 * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+	 * @see SpeciesDataGroupDAO
+	 */
+	public final SpeciesDataGroupDAO getSpeciesDataGroupDAO() {
+		log.entry();
+		this.checkClosed();
+		return log.exit(this.getNewSpeciesDataGroupDAO());
+	}
     //*****************************************
     //  CORE ABSTRACT METHODS TO IMPLEMENT
     //*****************************************	

@@ -2,6 +2,9 @@ package org.bgee.model.file;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.Service;
+import org.bgee.model.ServiceFactory;
+import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
 import org.bgee.model.species.Species;
@@ -14,15 +17,27 @@ import java.util.*;
  *
  * @author Philippe Moret
  */
-public class SpeciesDataGroupLoader {
+public class SpeciesDataGroupService extends Service {
 
-    private final static Logger log = LogManager.getLogger(SpeciesDataGroupLoader.class.getName());
+    private final static Logger log = LogManager.getLogger(SpeciesDataGroupService.class.getName());
 
-    private SpeciesDataGroupDAO speciesGroupDAO;
 
-    private DownloadFileLoader downloadFileLoader;
+    private DownloadFileService downloadFileService;
 
     private SpeciesService speciesService;
+
+    /**
+     *
+     * @param downloadFileService The {@code DownloadFileService} used by this service
+     * @param speciesService      The {@code SpeciesService} used by this service
+     * @param daoManager          The {@code DAOManager} used by this service
+     */
+    public SpeciesDataGroupService(DownloadFileService downloadFileService, SpeciesService speciesService,
+                                   DAOManager daoManager) {
+        super(daoManager);
+        this.downloadFileService = downloadFileService;
+        this.speciesService = speciesService;
+    }
 
     /**
      * Load all {@code SpeciesDataGroup}
@@ -31,11 +46,11 @@ public class SpeciesDataGroupLoader {
     public List<SpeciesDataGroup> loadAllSpeciesDataGroup() {
         log.entry();
         
-        DAOResultSet<SpeciesDataGroupDAO.SpeciesDataGroupTO> speciesGroups = speciesGroupDAO.getAllSpeciesDataGroup();
-        Map<String, List<DownloadFile>> downloadFiles = buildDownloadFileMap(downloadFileLoader.getAllDownloadFiles());
+        DAOResultSet<SpeciesDataGroupDAO.SpeciesDataGroupTO> speciesGroups = getDaoManager().getSpeciesDataGroupDAO().getAllSpeciesDataGroup();
+        Map<String, List<DownloadFile>> downloadFiles = buildDownloadFileMap(downloadFileService.getAllDownloadFiles());
         Map<String, Species> species = buildSpeciesIdMap(speciesService.loadSpeciesInDataGroups());
         Map<String, List<Species>> groupToSpeciesMap = buildGroupToSpeciesMap(
-                speciesGroupDAO.getAllSpeciesToDataGroup(), species);
+                getDaoManager().getSpeciesDataGroupDAO().getAllSpeciesToDataGroup(), species);
 
         List<SpeciesDataGroup> result = new ArrayList<SpeciesDataGroup>();
 

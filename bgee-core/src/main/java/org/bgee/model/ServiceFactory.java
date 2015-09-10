@@ -3,6 +3,8 @@ package org.bgee.model;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOManager;
+import org.bgee.model.file.DownloadFileService;
+import org.bgee.model.file.SpeciesDataGroupService;
 import org.bgee.model.species.SpeciesService;
 
 /**
@@ -71,8 +73,26 @@ public class ServiceFactory {
      * @return  A newly instantiated {@code SpeciesService}, using the same {@code DAOManager} 
      *          as the one selected by this {@code ServiceFactory}.
      */
-    public SpeciesService getSpeciesFactory() {
+    public SpeciesService getSpeciesService() {
         log.entry();
         return log.exit(new SpeciesService(this.daoManager));
+    }
+
+    /**
+     * @return A newly instantiated {@code DownloadFileService}, using the same {@code DAOManager}
+     *         as the one selected by this {@code ServiceFactory}.
+     */
+    public DownloadFileService getDownloadFileService() {
+        log.entry();
+        return log.exit(new DownloadFileService(this.daoManager));
+    }
+
+    /**
+     * @return A newly instantiated {@code SpeciesDataGroupService}, using the same {@code DAOManager}
+     *         as the one selected by this {@code ServiceFactory}.
+     */
+    public SpeciesDataGroupService getSpeciesDataGroupSerice() {
+        log.entry();
+        return log.exit(new SpeciesDataGroupService(getDownloadFileService(), getSpeciesService(), this.daoManager));
     }
 }

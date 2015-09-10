@@ -2,6 +2,8 @@ package org.bgee.model.file;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.Service;
+import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.file.DownloadFileDAO;
 
 import java.util.List;
@@ -12,11 +14,27 @@ import java.util.stream.Collectors;
  *
  * @author Philippe Moret
  */
-public class DownloadFileLoader {
+public class DownloadFileService extends Service {
 
-    private static final Logger log = LogManager.getLogger(DownloadFileLoader.class.getName());
+    private static final Logger log = LogManager.getLogger(DownloadFileService.class.getName());
 
-    private DownloadFileDAO downloadFileDAO;
+    /**
+    * 0-arg constructor that will cause this {@code DownloadFileService} to use
+    * the default {@code DAOManager} returned by {@link DAOManager#getDAOManager()}.
+    *
+    * @see #DownloadFileService(DAOManager)
+    */
+    public DownloadFileService() {
+        this(DAOManager.getDAOManager());
+    }
+
+    /**
+     * @param daoManager    The {@code DAOManager} to be used by this {@code DownloadFileService}
+     *                      to obtain {@code DAO}s.
+     */
+    public DownloadFileService(DAOManager daoManager){
+        super(daoManager);
+    }
 
     /**
      * Gets all available {@code DownloadFile}
@@ -25,8 +43,8 @@ public class DownloadFileLoader {
      */
     public List<DownloadFile> getAllDownloadFiles() {
         log.entry();
-        return log.exit(downloadFileDAO.getAllDownloadFiles().stream()
-                .map(DownloadFileLoader::mapFromTO)
+        return log.exit(getDaoManager().getDownloadFileDAO().getAllDownloadFiles().stream()
+                .map(DownloadFileService::mapFromTO)
                 .collect(Collectors.toList()));
     }
 

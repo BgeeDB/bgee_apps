@@ -91,10 +91,8 @@ public interface EvidenceOntologyDAO extends DAO<EvidenceOntologyDAO.Attribute> 
          * @param id            A {@code String} that is the ID of this CIO term. 
          * @param name          A {@code String} that is the name of this CIO term.
          * @param description   A {@code String} that is the description of this CIO term.
-         * @throws IllegalArgumentException If {@code id} is empty.
          */
-        public ECOTermTO(String id, String name, String description) 
-                throws IllegalArgumentException {
+        public ECOTermTO(String id, String name, String description) {
             super(id, name, description);
         }
 

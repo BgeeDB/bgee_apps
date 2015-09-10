@@ -137,10 +137,8 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
          * @param geneId    A {@code String} that is the ID of this gene.
          * @param geneName  A {@code String} that is the name of this gene.
          * @param speciesId An {@code Integer} of the species which this gene belongs to.
-         * @throws IllegalArgumentException If {@code id} is empty, .
          */
-        public GeneTO(String geneId, String geneName, Integer speciesId) 
-                throws IllegalArgumentException {
+        public GeneTO(String geneId, String geneName, Integer speciesId) {
             this(geneId, geneName, null, speciesId, null, null, null);
         }
 
@@ -162,11 +160,9 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
          *                              Orthologous Group.
          * @param ensemblGene           A {code Boolean} defining whether this gene is present 
          *                              in Ensembl.
-         * @throws IllegalArgumentException If {@code id} is empty.
          */
         public GeneTO(String geneId, String geneName, String geneDescription, Integer speciesId,
-                Integer geneBioTypeId, Integer OMAParentNodeId, Boolean ensemblGene) 
-                        throws IllegalArgumentException {
+                Integer geneBioTypeId, Integer OMAParentNodeId, Boolean ensemblGene) {
             super(geneId, geneName, geneDescription);
             this.speciesId = speciesId;
             this.geneBioTypeId = geneBioTypeId;

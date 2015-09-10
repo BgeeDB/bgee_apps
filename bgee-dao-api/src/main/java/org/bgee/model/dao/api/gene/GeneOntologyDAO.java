@@ -111,9 +111,8 @@ public interface GeneOntologyDAO extends DAO<GeneOntologyDAO.Attribute> {
          * @param id        a {@code String} that is the ID of this GO term.
          * @param name      a {@code String} that is the name (or label) of this GO term.
          * @param domain    a {@code Domain} which this GO term belongs to.
-         * @throws IllegalArgumentException If {@code id} is empty.
          */
-        public GOTermTO(String id, String name, Domain domain) throws IllegalArgumentException {
+        public GOTermTO(String id, String name, Domain domain) {
             this(id, name, domain, null);
         }
         /**
@@ -132,8 +131,7 @@ public interface GeneOntologyDAO extends DAO<GeneOntologyDAO.Attribute> {
          *                  of this GO term.
          * @throws IllegalArgumentException If {@code id} is empty.
          */
-        public GOTermTO(String id, String name, Domain domain, Collection<String> altIds) 
-                throws IllegalArgumentException{
+        public GOTermTO(String id, String name, Domain domain, Collection<String> altIds) {
             super(id, name);
             this.domain = domain;
             Set<String> tempAltIds;

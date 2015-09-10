@@ -161,11 +161,10 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
          * @param parentTaxonId A {@code String} that is the NCBI ID of the parent taxon 
          *                      of this species (for instance, {@code 9605} for <i>homo</i>, 
          *                      the parent taxon of human).
-         * @throws IllegalArgumentException If {@code id} is empty.
          */
         public SpeciesTO(String id, String commonName, String genus, String speciesName, 
                 String parentTaxonId, String genomeFilePath, String genomeSpeciesId, 
-                String fakeGeneIdPrefix) throws IllegalArgumentException {
+                String fakeGeneIdPrefix) {
             super(id, commonName);
             
             this.genus = genus;

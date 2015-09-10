@@ -1,6 +1,6 @@
 package org.bgee.model.gene;
 
-import org.bgee.model.Entity;
+import org.bgee.model.NamedEntity;
 import org.bgee.model.species.Species;
 
 /**
@@ -10,7 +10,7 @@ import org.bgee.model.species.Species;
  * @version Bgee 13, Mar 2013
  * @since Bgee 01
  */
-public class Gene extends Entity
+public class Gene extends NamedEntity
 {
 	/**
 	 * The {@code Species} this {@code Gene} belongs to.

@@ -2,7 +2,6 @@ package org.bgee.model.file;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.helper.DAOResultSetHelper;
 import org.bgee.model.dao.api.file.DownloadFileDAO;
 
 import java.util.List;
@@ -25,7 +24,10 @@ public class DownloadFileLoader {
      * @return a {@code List} of {@code DownloadFile}
      */
     public List<DownloadFile> getAllDownloadFiles() {
-        return  DAOResultSetHelper.mapToList(downloadFileDAO.getAllDownloadFiles(), DownloadFileLoader::mapFromTO);
+        log.entry();
+        return log.exit(downloadFileDAO.getAllDownloadFiles().stream()
+                .map(DownloadFileLoader::mapFromTO)
+                .collect(Collectors.toList()));
     }
 
 
@@ -36,14 +38,15 @@ public class DownloadFileLoader {
      * @return The mapped  {@link DownloadFile}.
      */
     public static DownloadFile mapFromTO(DownloadFileDAO.DownloadFileTO downloadFileTO) {
+        log.entry(downloadFileTO);
         if (downloadFileTO == null) {
-            return null;
+            return log.exit(null);
         }
-        return new DownloadFile(downloadFileTO.getPath(),
+        return log.exit(new DownloadFile(downloadFileTO.getPath(),
                 downloadFileTO.getName(),
                 downloadFileTO.getCategory().getStringRepresentation(),
                 downloadFileTO.getSize(),
-                downloadFileTO.getSpeciesDataGroupId());
+                downloadFileTO.getSpeciesDataGroupId()));
     }
 
 

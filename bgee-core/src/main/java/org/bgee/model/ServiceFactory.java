@@ -91,7 +91,7 @@ public class ServiceFactory {
      * @return A newly instantiated {@code SpeciesDataGroupService}, using the same {@code DAOManager}
      *         as the one selected by this {@code ServiceFactory}.
      */
-    public SpeciesDataGroupService getSpeciesDataGroupSerice() {
+    public SpeciesDataGroupService getSpeciesDataGroupService() {
         log.entry();
         return log.exit(new SpeciesDataGroupService(getDownloadFileService(), getSpeciesService(), this.daoManager));
     }

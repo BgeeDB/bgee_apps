@@ -3,7 +3,6 @@ package org.bgee.view.html;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -12,9 +11,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
+import org.bgee.model.ServiceFactory;
 import org.bgee.model.file.SpeciesDataGroup;
-import org.bgee.model.file.SpeciesDataGroupLoader;
-import org.bgee.model.species.Species;
 import org.bgee.utils.JSHelper;
 import org.bgee.view.DownloadDisplay;
 
@@ -1445,7 +1443,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         log.entry();
         super.includeJs();
         this.includeJs("download.js");
-        this.writeln(getDataGroupScriptTag(new SpeciesDataGroupLoader().loadAllSpeciesDataGroup()));
+        ServiceFactory sf = new ServiceFactory();
+
+        this.writeln(getDataGroupScriptTag(sf.getSpeciesDataGroupService().loadAllSpeciesDataGroup()));
         log.exit();
     }
 

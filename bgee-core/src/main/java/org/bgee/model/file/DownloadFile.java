@@ -9,10 +9,19 @@ package org.bgee.model.file;
 public class DownloadFile {
 
     public enum CategoryEnum {
-        EXPR_CALLS("expr_calls", false),
-        DIFF_EXPR_CALLS_STAGES("diff_expr_call_stages", true),
-        DIFF_EXPR_CALLS_ANAT("diff_expr_calls_anatonmy", true),
-        ORTHOLOGS("orthologs",false);
+        EXPR_CALLS_SIMPLE("expr_simple",false),
+        EXPR_CALLS_COMPLETE("expr_complete",false),
+        DIFF_EXPR_ANAT_SIMPLE("diff_expr_anatomy_simple",true),
+        DIFF_EXPR_ANAT_COMPLETE("diff_expr_anatomy_complete",true),
+        DIFF_EXPR_DEV_COMPLETE("diff_expr_dev_complete",true),
+        DIFF_EXPR_DEV_SIMPLE("diff_expr_dev_simple",true),
+        ORTHOLOG("ortholog",false),
+        AFFY_ANNOT("affy_annot",false),
+        AFFY_DATA("affy_data",false),
+        AFFY_ROOT("affy_root",false),
+        RNASEQ_ANNOT("rnaseq_annot",false),
+        RNASEQ_DATA("rnaseq_data",false),
+        RNASEQ_ROOT("rnaseq_root",false);
 
 
         CategoryEnum(String stringRepresentation, boolean isDiffExpr) {

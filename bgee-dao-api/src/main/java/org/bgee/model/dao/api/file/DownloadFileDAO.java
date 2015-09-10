@@ -148,11 +148,19 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
          * </ul>
          */
         public enum CategoryEnum implements TransferObject.EnumDAOField {
-            EXPR_CALLS("expr_calls"),
-            DIFF_EXPR_CALLS_STAGES("diff_expr_call_stages"),
-            DIFF_EXPR_CALLS_ANAT("diff_expr_calls_anatonmy"),
-            ORTHOLOGS("orthologs");
-
+            EXPR_CALLS_SIMPLE("expr_simple"),
+            EXPR_CALLS_COMPLETE("expr_complete"),
+            DIFF_EXPR_ANAT_SIMPLE("diff_expr_anatomy_simple"),
+            DIFF_EXPR_ANAT_COMPLETE("diff_expr_anatomy_complete"),
+            DIFF_EXPR_DEV_COMPLETE("diff_expr_dev_complete"),
+            DIFF_EXPR_DEV_SIMPLE("diff_expr_dev_simple"),
+            ORTHOLOG("ortholog"),
+            AFFY_ANNOT("affy_annot"),
+            AFFY_DATA("affy_data"),
+            AFFY_ROOT("affy_root"),
+            RNASEQ_ANNOT("rnaseq_annot"),
+            RNASEQ_DATA("rnaseq_data"),
+            RNASEQ_ROOT("rnaseq_root");
 
             /**
              * Constructor

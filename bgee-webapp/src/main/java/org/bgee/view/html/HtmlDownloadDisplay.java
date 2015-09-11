@@ -1,8 +1,11 @@
 package org.bgee.view.html;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Properties;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -12,6 +15,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.ServiceFactory;
+import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.file.SpeciesDataGroup;
 import org.bgee.utils.JSHelper;
 import org.bgee.view.DownloadDisplay;
@@ -1438,16 +1442,29 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         return log.exit(image.toString());
     }
 
-    @Override
-    protected void includeJs() {
-        log.entry();
-        super.includeJs();
-        this.includeJs("download.js");
-        ServiceFactory sf = new ServiceFactory();
-
-        this.writeln(getDataGroupScriptTag(sf.getSpeciesDataGroupService().loadAllSpeciesDataGroup()));
-        log.exit();
-    }
+  //TODO: this ugly method is for testing and must disappear ASAP
+  	private List<SpeciesDataGroup> getAllSpeciesDataGroup() {
+  		try {
+  			InputStream in = this.getClass().getResourceAsStream("/bgee.dao.properties");
+  			Properties p = new Properties();
+  			p.load(in);
+  			DAOManager man = DAOManager.getDAOManager(p);
+  			ServiceFactory sf = new ServiceFactory(man);
+  			return log.exit(sf.getSpeciesDataGroupService().loadAllSpeciesDataGroup());
+  		} catch (IOException e) {
+  			log.error(e);
+  			return log.exit(new LinkedList<>());
+  		}
+  	}
+  	
+  	@Override
+  	protected void includeJs() {
+  		log.entry();
+  		super.includeJs();
+  		this.includeJs("download.js");
+  		this.writeln(getDataGroupScriptTag(getAllSpeciesDataGroup()));
+  		log.exit();
+  	}
 
     @Override
     protected void includeCss() {

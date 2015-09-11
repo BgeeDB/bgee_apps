@@ -328,7 +328,7 @@ var download = {
         loadDetailsFromId: function( speciesGroupId ) {
             //TODO: Read here the allSpecies var
 
-        }
+        },
 
         /**
          * This function update and display the detail box for the species or group provided

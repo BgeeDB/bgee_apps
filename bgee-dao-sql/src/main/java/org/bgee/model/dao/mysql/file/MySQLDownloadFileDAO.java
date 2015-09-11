@@ -139,6 +139,7 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
                             break;
                         case SPECIES_DATA_GROUP_ID:
                             speciesDataGroupId = currentValue;
+                            break;
                         default:
                             log.throwing(new UnrecognizedColumnException(columnName));
                     }

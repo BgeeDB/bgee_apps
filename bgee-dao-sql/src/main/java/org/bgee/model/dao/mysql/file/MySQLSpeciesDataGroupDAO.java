@@ -167,7 +167,7 @@ public class MySQLSpeciesDataGroupDAO extends MySQLDAO<SpeciesDataGroupDAO.Attri
                             log.throwing(new UnrecognizedColumnException(columnName));
                     }
                 }
-                return log.exit(new SpeciesToDataGroupTO(groupId, speciesId));
+                return log.exit(new SpeciesToDataGroupTO(speciesId,groupId));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }

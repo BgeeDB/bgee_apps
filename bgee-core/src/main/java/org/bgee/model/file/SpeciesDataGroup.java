@@ -22,7 +22,7 @@ public class SpeciesDataGroup extends NamedEntity {
 
     private final List<DownloadFile> downloadFiles;
 
-    public SpeciesDataGroup(String name, String description, String id, List<Species> members, List<DownloadFile> downloadFiles) {
+    public SpeciesDataGroup(String id, String name, String description, List<Species> members, List<DownloadFile> downloadFiles) {
         super(id,name,description);
         this.downloadFiles = Collections.unmodifiableList(new ArrayList<>(downloadFiles));
         log.entry();

@@ -20,6 +20,17 @@
             <artifactId>bgee-core</artifactId>
             <version>${project.version}</version>
         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>bgee-dao-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>bgee-dao-sql</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
@@ -199,6 +210,7 @@
                             <directory>src/main/resources/</directory>
                             <includes>
                                 <include>bgee-webapp.properties</include>
+                                <include>bgee.dao.properties</include>
                             </includes>
                             <!-- Activates filtering -->
                             <filtering>true</filtering>

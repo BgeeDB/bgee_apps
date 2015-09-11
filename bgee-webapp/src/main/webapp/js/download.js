@@ -327,7 +327,10 @@ var download = {
 
         loadDetailsFromId: function( speciesGroupId ) {
             //TODO: Read here the allSpecies var
-
+        	var sData = speciesData[speciesGroupId];
+        	
+        	
+        	
         },
 
         /**

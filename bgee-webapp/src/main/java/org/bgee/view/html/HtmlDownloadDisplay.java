@@ -3,8 +3,10 @@ package org.bgee.view.html;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import javax.servlet.http.HttpServletResponse;
@@ -857,7 +859,11 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     private String getDataGroupScriptTag(List<SpeciesDataGroup> dataGroups) {
         StringBuffer sb = new StringBuffer("<script>");
         sb.append("var speciesData = ");
-        sb.append(JSHelper.toJson(dataGroups));
+        Map<String, SpeciesDataGroup> map = new HashMap<>();
+        for (SpeciesDataGroup sdg: dataGroups) {
+        	map.put(sdg.getId(), sdg);
+        }
+        sb.append(JSHelper.toJson(map));
         sb.append("</script>");
         return sb.toString();
     }

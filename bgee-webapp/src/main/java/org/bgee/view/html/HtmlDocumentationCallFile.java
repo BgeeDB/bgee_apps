@@ -64,7 +64,6 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      * HTML escaped if necessary.
      * @see #EXPR_QUAL_LINK_TITLE
      */
-    //TODO: split into two columns once we regenerate the download files
     private static final String EXPR_QUAL_COL_NAME = "Call quality";
     /**
      * A {@code String} to be used in {@code title} attribute of {@code a} tag linking to 
@@ -92,7 +91,6 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      * in download files, HTML escaped if necessary.
      * @see #AFFY_EXPR_QUAL_LINK_TITLE
      */
-    //TODO: split into two columns once we regenerate the download files
     private static final String AFFY_EXPR_QUAL_COL_NAME = "Affymetrix call quality";
     /**
      * A {@code String} to be used in {@code title} attribute of {@code a} tag linking to 
@@ -119,7 +117,6 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      * in download files, HTML escaped if necessary.
      * @see #EST_EXPR_QUAL_LINK_TITLE
      */
-    //TODO: split into two columns once we regenerate the download files
     private static final String EST_EXPR_QUAL_COL_NAME = "EST call quality";
     /**
      * A {@code String} to be used in {@code title} attribute of {@code a} tag linking to 
@@ -146,7 +143,6 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      * in download files, HTML escaped if necessary.
      * @see #IN_SITU_EXPR_QUAL_LINK_TITLE
      */
-    //TODO: split into two columns once we regenerate the download files
     private static final String IN_SITU_EXPR_QUAL_COL_NAME = "In situ call quality";
     /**
      * A {@code String} to be used in {@code title} attribute of {@code a} tag linking to 
@@ -173,7 +169,6 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      * in download files, HTML escaped if necessary.
      * @see #RNA_SEQ_EXPR_QUAL_LINK_TITLE
      */
-    //TODO: split into two columns once we regenerate the download files
     private static final String RNA_SEQ_EXPR_QUAL_COL_NAME = "RNA-Seq call quality";
     /**
      * A {@code String} to be used in {@code title} attribute of {@code a} tag linking to 
@@ -1246,7 +1241,6 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      */
     public static String getOMAGroupFileHeaderDesc() {
         log.entry();
-        //TODO: change when we split the state and the qual
         return log.exit("<table class='download_file_header_desc'>"
                 + "<tbody>"
                 + "<tr><td>1</td><td>2</td><td>3</td></tr>" 
@@ -2702,7 +2696,6 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "See " + OMA_ID_COL_NAME + " column description'>" 
                 + OMA_ID_COL_NAME 
                 + "</a></td><td>1</td><td>80</td></tr>");
-        //TODO: change order of columns anat entity/stage once we re-generate the files.
         this.writeln("<tr><td>2</td><td><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_SIMPLE 
                 + "_col2' title='" 
                 + "See " + MULTI_ANAT_ENTITY_IDS_COL_NAME + " column description'>" 

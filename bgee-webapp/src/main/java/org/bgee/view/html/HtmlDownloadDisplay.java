@@ -8,6 +8,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -856,14 +858,13 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         return log.exit(figure);
     }
 
+    //XXX: does it work to have several "script" tags on a same page?
+    //If not, we shouldn't put the script tags, and we need to change the includeJs method
     private String getDataGroupScriptTag(List<SpeciesDataGroup> dataGroups) {
         StringBuffer sb = new StringBuffer("<script>");
         sb.append("var speciesData = ");
-        Map<String, SpeciesDataGroup> map = new HashMap<>();
-        for (SpeciesDataGroup sdg: dataGroups) {
-        	map.put(sdg.getId(), sdg);
-        }
-        sb.append(JSHelper.toJson(map));
+        sb.append(JSHelper.toJson(dataGroups.stream()
+                .collect(Collectors.toMap(SpeciesDataGroup::getId, Function.identity()))));
         sb.append("</script>");
         return sb.toString();
     }

@@ -2,128 +2,172 @@ package org.bgee.model.file;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.Entity;
 import org.bgee.model.Service;
-import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.DAOManager;
-import org.bgee.model.dao.api.DAOResultSet;
+import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.exception.QueryInterruptedException;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
+import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesToDataGroupTOResultSet;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
- * This is the loader for {@link SpeciesDataGroup}.
+ * A {@link Service} to obtain {@link SpeciesDataGroup} objects. 
+ * Users should use the {@link ServiceFactory} to obtain {@code SpeciesDataGroupService}s.
  *
  * @author Philippe Moret
+ * @author Frederic bastian
+ * @version Bgee 13 Sept. 2015
+ * @since Bgee 13
  */
+//TODO: unit tests, injecting a mock DAOManager, that will return mock DAOs, etc.
 public class SpeciesDataGroupService extends Service {
 
     private final static Logger log = LogManager.getLogger(SpeciesDataGroupService.class.getName());
 
-
-    private DownloadFileService downloadFileService;
-
-    private SpeciesService speciesService;
+    /**
+     * The {@code DownloadFileService} to obtain {@code DownloadFile}s 
+     * used in {@code SpeciesDataGroup}.
+     */
+    private final DownloadFileService downloadFileService;
+    /**
+     * The {@code SpeciesService} to obtain {@code Species} objects 
+     * used in {@code SpeciesDataGroup}.
+     */
+    private final SpeciesService speciesService;
 
     /**
+     * 0-arg constructor private, because it might be difficult to determine 
+     * the {@code Service}s and {@code DAOManager} to use by default, see 
+     * {@link #SpeciesDataGroupService(DownloadFileService, SpeciesService, DAOManager)}.
+     */
+    //constructor private on purpose, suppress warning
+    //XXX: actually, should we make this constructor public? It could instantiate its own ServiceFactory, 
+    //to obtain the DownloadFileService and SpeciesService, and we could create a method 
+    //ServiceFactory#getDAOMAnager() to be sure to obtain the same DAOManager.
+    @SuppressWarnings("unused")
+    private SpeciesDataGroupService() {
+        this(null, null, null);
+    }
+    /**
      *
-     * @param downloadFileService The {@code DownloadFileService} used by this service
-     * @param speciesService      The {@code SpeciesService} used by this service
-     * @param daoManager          The {@code DAOManager} used by this service
+     * @param downloadFileService   The {@code DownloadFileService} to obtain {@code DownloadFile}s 
+     *                              used in {@code SpeciesDataGroup}.
+     * @param speciesService        The {@code SpeciesService} to obtain {@code Species} objects 
+     *                              used in {@code SpeciesDataGroup}.
+     * @param daoManager            The {@code DAOManager} used by this service.
+     * @throws IllegalArgumentException If any of {@code downloadFileService}, {@code speciesService}, 
+     *                                  or {@code daoManager} is {@code null}.
      */
     public SpeciesDataGroupService(DownloadFileService downloadFileService, SpeciesService speciesService,
                                    DAOManager daoManager) {
         super(daoManager);
+        if (downloadFileService == null || speciesService == null) {
+            throw log.throwing(new IllegalArgumentException("The provided Services cannot be null"));
+        }
         this.downloadFileService = downloadFileService;
         this.speciesService = speciesService;
     }
 
     /**
-     * Load all {@code SpeciesDataGroup}
-     * @return the {@code List} containing all {@code SpeciesDataGroup}
+     * Loads all {@code SpeciesDataGroup}. 
+     * 
+     * @return A {@code List} containing all {@code SpeciesDataGroup}, in order of preference. 
+     * @throws DAOException                 If an error occurred while accessing a {@code DAO}.
+     * @throws QueryInterruptedException    If a query to a {@code DAO} was intentionally interrupted.
+     * @throws IllegalStateException        If the {@code DownloadFileService} and {@code SpeciesService} 
+     *                                      obtained at instantiation do not return consistent information 
+     *                                      related to {@code SpeciesDataGroup}s.
      */
-    public List<SpeciesDataGroup> loadAllSpeciesDataGroup() {
+    //TODO: we need to add a "speciesDataGroupOrder" field in the speciesDataGroup table, 
+    //and a "speciesToDataGroupOrder" field in the speciesToDataGroup table, and use it in the DAOs. 
+    public List<SpeciesDataGroup> loadAllSpeciesDataGroup() 
+            throws DAOException, QueryInterruptedException, IllegalStateException {
         log.entry();
         
-        DAOResultSet<SpeciesDataGroupDAO.SpeciesDataGroupTO> speciesGroups = getDaoManager().getSpeciesDataGroupDAO().getAllSpeciesDataGroup();
-        Map<String, List<DownloadFile>> downloadFiles = buildDownloadFileMap(downloadFileService.getAllDownloadFiles());
-        Map<String, Species> species = buildSpeciesIdMap(speciesService.loadSpeciesInDataGroups());
-        Map<String, List<Species>> groupToSpeciesMap = buildGroupToSpeciesMap(
-                getDaoManager().getSpeciesDataGroupDAO().getAllSpeciesToDataGroup(), species);
-
-        List<SpeciesDataGroup> result = new ArrayList<SpeciesDataGroup>();
-
-        SpeciesDataGroupDAO.SpeciesDataGroupTO to;
-        while (speciesGroups.next()) {
-            to = speciesGroups.getTO();
-            result.add(newSpeciesDataGroup(to,
-                    groupToSpeciesMap.get(to.getId()), downloadFiles.get(to.getId())));
-        }
-
-        return log.exit(result);
-    }
-
-    /**
-     * Build a map from datagroup to species
-     * @param list the list of {@code SpeciesToDataGroupMemberTO}
-     * @param speciesMap the map from data group id to {@code Species}
-     * @return
-     */
-    private static Map<String, List<Species>> buildGroupToSpeciesMap(
-            DAOResultSet<SpeciesDataGroupDAO.SpeciesToDataGroupTO> speciesToDataGroupRs, Map<String, Species> speciesMap) {
-        log.entry(speciesToDataGroupRs, speciesMap);
+        //TODO: this should be a Map<String, Set<DownloadFile>>, there is no concept of order for the files.
+        final Map<String, List<DownloadFile>> groupIdToDownloadFilesMap = 
+                buildDownloadFileMap(downloadFileService.getAllDownloadFiles());
         
-        Map<String, List<Species>> result = new HashMap<>();
-
-        while(speciesToDataGroupRs.next()) {
-            SpeciesDataGroupDAO.SpeciesToDataGroupTO e = speciesToDataGroupRs.getTO();
-            String group = e.getGroupId();
-            Species species = speciesMap.get(e.getSpeciesId());
-            List<Species> members = result.get(group);
-            if (members == null) {
-                members = new ArrayList<>();
-                result.put(group, members);
-            }
-            members.add(species);
+        final Map<String, List<Species>> groupIdToSpeciesMap = buildSpeciesMap(
+                getDaoManager().getSpeciesDataGroupDAO().getAllSpeciesToDataGroup(), 
+                speciesService.loadSpeciesInDataGroups());
+        
+        if (groupIdToSpeciesMap.size() != groupIdToDownloadFilesMap.size()) {
+            throw log.throwing(new IllegalStateException("The number of data groups "
+                    + "associated to download files is different from the number of groups "
+                    + "associated to species."));
         }
-        return log.exit(result);
+        
+        return log.exit(getDaoManager().getSpeciesDataGroupDAO().getAllSpeciesDataGroup().stream()
+                .map(e -> newSpeciesDataGroup(e, groupIdToSpeciesMap.get(e.getId()), 
+                        groupIdToDownloadFilesMap.get(e.getId())))
+                 .collect(Collectors.toList()));
     }
 
     /**
-     * Builds a map from speciesId (as {@code String} to {@link Species} from a collection of {@code Species}
-     * @param species the source collection of {@code Species}
-     * @return the map
-     */
-    private static Map<String, Species> buildSpeciesIdMap(Collection<Species> species) {
-        log.entry(species);
-        Map<String, Species> speciesMap = new HashMap<>();
-        for (Species s : species) {
-            speciesMap.put(s.getId(), s);
-        }
-        return log.exit(speciesMap);
-    }
-
-    /**
-     * Build a map from species data group ids (as {@code String} to the {@code List} of {@code DownloadFile} 
-     * available for that data group.
+     * Build a map from data group IDs to the species they contain, in preferred order.
      * 
-     * @param downloadFileList the source list of {@code DownloadFile}
-     * @return the map
+     * @param speciesToDataGroupRs  A {@code SpeciesToDataGroupTOResultSet} to acquire 
+     *                              {@code SpeciesToDataGroupMemberTO}s from.
+     * @param species               A {@code Collection} containing all {@code Species} part of 
+     *                              a data group.
+     * @return                      A {@code Map} where keys are {@code String}s corresponding to 
+     *                              data group IDs, associated to the {@code List} of {@code Species} 
+     *                              they contain, in preferred order, as value. 
      */
-    private static Map<String, List<DownloadFile>> buildDownloadFileMap(List<DownloadFile> downloadFileList) {
-        log.entry(downloadFileList);
-        Map<String, List<DownloadFile>> downloadFiles = new HashMap<>();
-        for (DownloadFile file : downloadFileList) {
-            String group = file.getSpeciesDataGroupId();
-            List<DownloadFile> list = downloadFiles.get(group);
-            if (list == null) {
-                list = new ArrayList<>();
-                downloadFiles.put(group, list);
-            }
-            list.add(file);
-        }
-        return log.exit(downloadFiles);
+    private static Map<String, List<Species>> buildSpeciesMap(
+            SpeciesToDataGroupTOResultSet speciesToDataGroupRs, Collection<Species> species) {
+        log.entry(speciesToDataGroupRs, species);
+        
+        final Map<String, Species> speciesMap = species.stream()
+                .collect(Collectors.toMap(Entity::getId, Function.identity()));
+        
+        return log.exit(speciesToDataGroupRs.stream().collect(Collectors.groupingBy(
+                //group the SpeciesToDataGroupTOs by groupId
+                SpeciesDataGroupDAO.SpeciesToDataGroupTO::getGroupId, 
+                //make the value associated to a groupId to be the all the Species associated to 
+                //this groupId (species retrieved from speciesMap, using the speciesId field 
+                //of the SpeciesToDataGroupTOs)
+                Collectors.mapping(e -> speciesMap.get(e.getSpeciesId()), Collectors.toList()))));
+        
+        
+        //XXX: It is debatable whether we should rather use the "java 7" code below for readability. 
+//        Map<String, List<Species>> result = new HashMap<>();
+//
+//        while(speciesToDataGroupRs.next()) {
+//            SpeciesDataGroupDAO.SpeciesToDataGroupTO e = speciesToDataGroupRs.getTO();
+//            String group = e.getGroupId();
+//            Species species = speciesMap.get(e.getSpeciesId());
+//            List<Species> members = result.get(group);
+//            if (members == null) {
+//                members = new ArrayList<>();
+//                result.put(group, members);
+//            }
+//            members.add(species);
+//        }
+//        return log.exit(result);
+    }
+
+    /**
+     * Build a map from species data group IDs to the {@code DownloadFile}s they contain, 
+     * in preferred order. 
+     * 
+     * @param downloadFiles A {@code Collection} containing the {@code DownloadFile}s  
+     *                      part of a data group.
+     * @return              A {@code Map} where keys are {@code String}s corresponding to data group IDs, 
+     *                      associated to the {@code Set} of {@code DownloadFile} they contain as value. 
+     */
+    private static Map<String, List<DownloadFile>> buildDownloadFileMap(
+            Collection<DownloadFile> downloadFiles) {
+        log.entry(downloadFiles);
+        return log.exit(downloadFiles.stream()
+                .collect(Collectors.groupingBy(DownloadFile::getSpeciesDataGroupId)));
     }
 
     /**
@@ -152,8 +196,8 @@ public class SpeciesDataGroupService extends Service {
      * @param files the {@code List} of associated {@code DownloadFile}
      * @return a (newly allocated) {@code SpeciesDataGroup}
      */
-    private static SpeciesDataGroup newSpeciesDataGroup(String id, String name, String description, List<Species>
-            species, List<DownloadFile> files) {
+    private static SpeciesDataGroup newSpeciesDataGroup(String id, String name, String description, 
+            List<Species> species, List<DownloadFile> files) {
         log.entry(id, name, description, species, files);
         return log.exit(new SpeciesDataGroup(id, name, description, species, files));
     }

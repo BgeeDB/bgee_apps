@@ -13,6 +13,10 @@ import java.lang.reflect.Type;
  * Current implementation rely on the google gson library.
  * @author Philippe Moret
  */
+//TODO: javadoc
+//XXX: actually, the other classes in this package are weird classes to be used in command line 
+//to generate some javascript files. Maybe we should move them to a different package, 
+//your class is a "real" util class for the webapp.
 public class JSHelper {
 
 

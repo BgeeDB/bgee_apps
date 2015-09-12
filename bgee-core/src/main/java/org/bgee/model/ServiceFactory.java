@@ -40,6 +40,10 @@ import org.bgee.model.species.SpeciesService;
  * @version Bgee 13 Sept. 2015
  * @since Bgee 13
  */
+//XXX: should we put all Services in a same package, so that the constructors are protected 
+//and can only be obtained through the ServiceFactory?
+//XXX: similarly, should we use protected constructors for all classes obtained through a Service, 
+//so that they can be obtained only through these Services? Obviously, we can't do both...
 public class ServiceFactory {
     /**
      * {@code Logger} of the class. 
@@ -89,10 +93,12 @@ public class ServiceFactory {
 
     /**
      * @return A newly instantiated {@code SpeciesDataGroupService}, using the same {@code DAOManager}
-     *         as the one selected by this {@code ServiceFactory}.
+     *         as the one selected by this {@code ServiceFactory}, and the {@code DownloadFileService} 
+     *         and {@code SpeciesService} obtained from this {@code ServiceFactory}.
      */
     public SpeciesDataGroupService getSpeciesDataGroupService() {
         log.entry();
-        return log.exit(new SpeciesDataGroupService(getDownloadFileService(), getSpeciesService(), this.daoManager));
+        return log.exit(new SpeciesDataGroupService(getDownloadFileService(), 
+                getSpeciesService(), this.daoManager));
     }
 }

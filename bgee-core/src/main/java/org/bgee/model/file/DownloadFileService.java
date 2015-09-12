@@ -4,16 +4,20 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
 import org.bgee.model.dao.api.DAOManager;
+import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.exception.QueryInterruptedException;
 import org.bgee.model.dao.api.file.DownloadFileDAO;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * The loader for {@link DownloadFile}
+ * A {@link Service} to obtain {@link DownloadFile}s. 
+ * Users should use the {@link ServiceFactory} to obtain {@code DownloadFileService}s.
  *
  * @author Philippe Moret
  */
+//TODO: unit tests, injecting a mock DAOManager, that will return mock DAOs, etc.
 public class DownloadFileService extends Service {
 
     private static final Logger log = LogManager.getLogger(DownloadFileService.class.getName());
@@ -31,17 +35,20 @@ public class DownloadFileService extends Service {
     /**
      * @param daoManager    The {@code DAOManager} to be used by this {@code DownloadFileService}
      *                      to obtain {@code DAO}s.
+     * @throws IllegalArgumentException If {@code daoManager} is {@code null}.
      */
     public DownloadFileService(DAOManager daoManager){
         super(daoManager);
     }
 
     /**
-     * Gets all available {@code DownloadFile}
+     * Gets all available {@code DownloadFile}.
      *
      * @return a {@code List} of {@code DownloadFile}
+     * @throws DAOException                 If an error occurred while accessing a {@code DAO}.
+     * @throws QueryInterruptedException    If a query to a {@code DAO} was intentionally interrupted.
      */
-    public List<DownloadFile> getAllDownloadFiles() {
+    public List<DownloadFile> getAllDownloadFiles() throws DAOException, QueryInterruptedException {
         log.entry();
         return log.exit(getDaoManager().getDownloadFileDAO().getAllDownloadFiles().stream()
                 .map(DownloadFileService::mapFromTO)
@@ -62,7 +69,10 @@ public class DownloadFileService extends Service {
         }
         return log.exit(new DownloadFile(downloadFileTO.getPath(),
                 downloadFileTO.getName(),
-                downloadFileTO.getCategory().getStringRepresentation(),
+                //currently, the IDs of DownloadFile.CategoryEnum correspond exactly to
+                //the DownloadFileTO.CategoryEnum#getStringRepresentation(), 
+                //this might change in the future.
+                DownloadFile.CategoryEnum.getById(downloadFileTO.getCategory().getStringRepresentation()),
                 downloadFileTO.getSize(),
                 downloadFileTO.getSpeciesDataGroupId()));
     }

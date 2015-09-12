@@ -6,6 +6,7 @@ package org.bgee.model.file;
  * @version Bgee 13
  * @since Bgee 13
  */
+//TODO: javadoc, private default constructor, sanity checks, equals/hashCode/toString
 public class DownloadFile {
 
     public enum CategoryEnum {
@@ -23,7 +24,9 @@ public class DownloadFile {
         RNASEQ_DATA("rnaseq_data",false),
         RNASEQ_ROOT("rnaseq_root",false);
 
-
+        private final String stringRepresentation;
+        private final boolean isDiffExpr;
+        
         CategoryEnum(String stringRepresentation, boolean isDiffExpr) {
             this.stringRepresentation = stringRepresentation;
             this.isDiffExpr = isDiffExpr;
@@ -32,35 +35,36 @@ public class DownloadFile {
         public String getStringRepresentation() {
             return stringRepresentation;
         }
-
-        private String stringRepresentation;
-
+        
         public static CategoryEnum getById(String rep){
             for (CategoryEnum e : values()){
                 if (e.getStringRepresentation().equals(rep))
                     return e;
             }
-            throw new IllegalArgumentException("Could not recognize representation:"+rep);
+            throw new IllegalArgumentException("Could not recognize representation: "+rep);
         }
-
-        private boolean isDiffExpr;
 
         public boolean isDiffExpr() {
             return isDiffExpr;
+        }
+        
+        @Override
+        public String toString() {
+            return getStringRepresentation();
         }
     }
 
     private final String path;
     private final String name;
     private final CategoryEnum category;
-    private String speciesDataGroupId;
-    public long size;
+    private final String speciesDataGroupId;
+    private final long size;
 
-    public DownloadFile(String path, String name, String category, long size, String speciesDataGroupId){
+    public DownloadFile(String path, String name, CategoryEnum category, long size, String speciesDataGroupId){
         this.path = path;
         this.name = name;
         this.size = size;
-        this.category = CategoryEnum.getById(category);
+        this.category = category;
         this.speciesDataGroupId = speciesDataGroupId;
     }
 

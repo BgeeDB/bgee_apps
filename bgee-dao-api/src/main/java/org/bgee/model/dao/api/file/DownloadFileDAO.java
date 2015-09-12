@@ -46,6 +46,7 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
     /**
      * The {@code TransferObject} representing a Download File.
      */
+    //TODO: standardize javadoc
     final class DownloadFileTO extends EntityTO {
 
         private static final long serialVersionUID = 19171223459721L;
@@ -63,7 +64,7 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
         /**
          * The size of the file (in bytes)
          */
-        private final long size;
+        private final Long size;
 
         /**
          * The category of the file, as a {@link CategoryEnum}.
@@ -86,11 +87,11 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
          * @param category The category of the download file
          * @param speciesDataGroupId The id of this file's species data group
          */
-        public DownloadFileTO(String id, String name, String description, String path, String size,
+        public DownloadFileTO(String id, String name, String description, String path, Long size,
                               CategoryEnum category, String speciesDataGroupId){
             super(id, name, description);
             this.category = category;
-            this.size = Long.parseLong(size);
+            this.size = size;
             this.path = path;
             this.speciesDataGroupId = speciesDataGroupId;
         }
@@ -107,7 +108,7 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
          * Gets the size of the file (in bytes).
          * @return The size of the file (in bytes).
          */
-        public long getSize() {
+        public Long getSize() {
             return size;
         }
 

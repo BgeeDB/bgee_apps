@@ -12,7 +12,6 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -110,41 +109,43 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
             try {
                 log.entry();
                 final ResultSet currentResultSet = this.getCurrentResultSet();
-                String id = null, path = null, name = null, size = null,
+                String id = null, path = null, name = null, 
                         description = null, speciesDataGroupId = null;
+                Long size = null;
                 DownloadFileTO.CategoryEnum category = null;
 
                 for (Map.Entry<Integer, String> col : this.getColumnLabels().entrySet()) {
                     String columnName = col.getValue();
-                    String currentValue = currentResultSet.getString(columnName);
                     DownloadFileDAO.Attribute attr = getAttributeByColumnName(columnName);
                     switch (attr) {
                         case ID:
-                            id = currentValue;
+                            id = currentResultSet.getString(columnName);
                             break;
                         case DESCRIPTION:
-                            description = currentValue;
+                            description = currentResultSet.getString(columnName);
                             break;
                         case PATH:
-                            path = currentValue;
+                            path = currentResultSet.getString(columnName);
                             break;
                         case NAME:
-                            name = currentValue;
+                            name = currentResultSet.getString(columnName);
                             break;
                         case FILE_SIZE:
-                            size = currentValue;
+                            size = currentResultSet.getLong(columnName);
                             break;
                         case CATEGORY:
-                            category = DownloadFileTO.CategoryEnum.convertToCategoryEnum(currentValue);
+                            category = DownloadFileTO.CategoryEnum.convertToCategoryEnum(
+                                    currentResultSet.getString(columnName));
                             break;
                         case SPECIES_DATA_GROUP_ID:
-                            speciesDataGroupId = currentValue;
+                            speciesDataGroupId = currentResultSet.getString(columnName);
                             break;
                         default:
                             log.throwing(new UnrecognizedColumnException(columnName));
                     }
                 }
-                return log.exit(new DownloadFileTO(id, name, description, path, size, category, speciesDataGroupId));
+                return log.exit(new DownloadFileTO(id, name, description, path, size, 
+                        category, speciesDataGroupId));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }

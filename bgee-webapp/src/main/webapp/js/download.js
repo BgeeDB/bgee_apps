@@ -149,6 +149,7 @@ var download = {
             this.$exprHelp = $( "#expr_help" );
             this.$diffAnatHelp = $( "#diffexpr_anatomy_help" );
             this.$diffDevHelp = $( "#diffexpr_development_help" );
+            this.$orthologsHelp = $( "#orthologs_help" );
             // Show headers
             this.$showSingleSimpleDiffexprAnatomyHeaders = $( "#show_single_simple_diffexpr_anatomy_headers" );
             this.$showSingleCompleteDiffexprAnatomyHeaders = $( "#show_single_complete_diffexpr_anatomy_headers" );
@@ -156,6 +157,7 @@ var download = {
             this.$showMultiCompleteDiffexprAnatomyHeaders = $( "#show_multi_complete_diffexpr_anatomy_headers" );
             this.$showSingleSimpleDiffexprDevelopmentHeaders = $( "#show_single_simple_diffexpr_development_headers" );
             this.$showSingleCompleteDiffexprDevelopmentHeaders = $( "#show_single_complete_diffexpr_development_headers" );
+            this.$showOrthologsHeaders = $( "#show_ortholog_headers" );
             // No data 
             this.$exprNoData = $( "#expr_no_data" );
             this.$diffExprAnatomyNoData = $( "#diffexpr_anatomy_no_data" );
@@ -465,6 +467,10 @@ var download = {
                 	this.$exprHelp.attr( "href", urlDoc.getRequestURL());
                 	this.$diffDevHelp.attr( "href", urlDoc.getRequestURL());
                 	this.$diffAnatHelp.attr( "href", urlDoc.getRequestURL());
+                	
+                	urlDoc.setURLHash(urlDoc.HASH_DOC_CALL_OMA());
+                	this.$orthologsHelp.attr( "href", urlDoc.getRequestURL());
+                	
                 } 
             } else {
             	this.$switchPageLink.show();

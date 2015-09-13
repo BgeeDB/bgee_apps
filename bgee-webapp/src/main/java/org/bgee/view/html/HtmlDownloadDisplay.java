@@ -433,18 +433,15 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             //Ortholog file (only in multi-species banner, manage by download.js)
             banner.append("<div id='ortholog_file_buttons' class='bgee_download_file_buttons'>");
             banner.append("<h2>Hierarchical orthologous groups</h2>");
-            //TODO: uncomment when documentation generated, add url management in JS
-//            banner.append("<a id='ortholog_help' href='" + urlDoc.getRequestURL() + "'>"+
-//                    this.getHelpImg() + "</a>");
+            banner.append(this.getHelpLink("orthologs_help"));
             banner.append("<div id='ortholog_data'>" +
                     "<a id='ortholog_csv' class='download_link' href='' download></a>" +
-//                    this.getShowHeaderLink("show_ortholog_headers") + 
+                    this.getShowHeaderLink("show_ortholog_headers") + 
                     "</div>");
+            banner.append("<div id='ortholog_headers' class='header_table'>" +
+                    HtmlDocumentationCallFile.getOMAGroupFileHeaderDesc() + "</div>");
             banner.append("<p class='file_info'>This file provides groups of genes orthologous "
                     + "between the selected taxa.</p>");
-            //TODO: uncomment when documentation generated, add url management in JS
-//            banner.append("<div id='ortholog_headers' class='header_table'>" +
-//                    HtmlDocumentationCallFile.getOrthologHeaderDesc() + "</div>");
             banner.append("</div>"); 
 
             // Presence/absence expression files
@@ -592,10 +589,6 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      */
     private String getHelpLink(String id) {
         log.entry(id);
-        
-        RequestParameters urlDoc = this.getNewRequestParameters();
-        urlDoc.setPage(RequestParameters.PAGE_DOCUMENTATION);
-        urlDoc.setAction(RequestParameters.ACTION_DOC_CALL_DOWLOAD_FILES);
 
         return log.exit("<a id='" + id + "' class='specific-help' href=''>"+
                         "<img class='details' src='" + this.prop.getImagesRootDirectory() +

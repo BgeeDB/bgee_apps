@@ -249,6 +249,21 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
     }
     /**
      * A {@code String} that is the anchor to use in the hash part of an URL 
+     * to link to the OMA orthologs file part, in the documentation about gene expression calls.
+     * This parameter will then be provided outside of this class through the method 
+     * {@link #HASH_DOC_CALL_OMA()} (to get the behavior 
+     * of a public final parameter).
+     */
+    var hashDocCallOMA = 'oma_hog';
+    /**
+     * A method to obtain the value of the anchor to use in the hash part of an URL 
+     * to link to the OMA orthologs file part, in the documentation about gene expression calls.
+     */
+    this.HASH_DOC_CALL_OMA = function() {
+    	return hashDocCallOMA;
+    }
+    /**
+     * A {@code String} that is the anchor to use in the hash part of an URL 
      * to link to the single species expression part, in the documentation 
      * about gene expression calls.
      * This parameter will then be provided outside of this class through the method 

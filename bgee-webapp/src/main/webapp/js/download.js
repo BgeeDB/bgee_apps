@@ -361,8 +361,6 @@ var download = {
         		this.$switchPageLink.text( "See gene expression calls" );    
         	}
         	this.$switchPageLink.attr( "href", 
-        			//TODO: handle the hash exactly as another parameter (see TODO 
-        			//in RequestParameters.java)
         			requestSwitchPage.getRequestURL());
             
             

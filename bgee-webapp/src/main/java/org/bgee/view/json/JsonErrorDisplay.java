@@ -6,7 +6,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.controller.BgeeWebappProperties;
+import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.ErrorDisplay;
 
@@ -28,7 +28,7 @@ public class JsonErrorDisplay extends JsonParentDisplay implements ErrorDisplay 
      *                          {@code PrintWriter} 
      */
     public JsonErrorDisplay(HttpServletResponse response, RequestParameters requestParameters,
-            BgeeWebappProperties prop, JsonFactory factory) throws IOException {
+            BgeeProperties prop, JsonFactory factory) throws IOException {
         super(response, requestParameters, prop, factory);
     }
 

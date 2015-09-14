@@ -7,7 +7,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.controller.BgeeWebappProperties;
+import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 
 /**
@@ -43,7 +43,7 @@ public abstract class ConcreteDisplayParent {
     /**
      * A {@code BgeeProperties} instance that contains the properties to use.
      */
-    protected final BgeeWebappProperties prop;
+    protected final BgeeProperties prop;
     /**
      * The {@code ViewFactory} that was responsible for instantiating this object.
      */
@@ -69,7 +69,7 @@ public abstract class ConcreteDisplayParent {
      *                          {@code PrintWriter} 
      */
     protected ConcreteDisplayParent(HttpServletResponse response, 
-            RequestParameters requestParameters, BgeeWebappProperties prop, 
+            RequestParameters requestParameters, BgeeProperties prop, 
             ViewFactory factory) throws IllegalArgumentException, IOException {
         log.entry(response, requestParameters, prop, factory);
         if (factory == null) {

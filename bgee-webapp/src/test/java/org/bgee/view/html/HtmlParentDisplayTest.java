@@ -6,7 +6,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 
-import org.bgee.controller.BgeeWebappProperties;
+import org.bgee.controller.BgeeProperties;
 import org.junit.Test;
 
 /**
@@ -20,7 +20,7 @@ public class HtmlParentDisplayTest {
     
     @Test
     public void shouldGetVersionedJsFileName() throws IOException {
-        BgeeWebappProperties props = mock(BgeeWebappProperties.class);
+        BgeeProperties props = mock(BgeeProperties.class);
         HtmlFactory factory = mock(HtmlFactory.class);
         when(props.getJavascriptVersionExtension()).thenReturn("-js13");
         HtmlParentDisplay display = new HtmlParentDisplay(null, null, props, factory);
@@ -30,7 +30,7 @@ public class HtmlParentDisplayTest {
     
     @Test
     public void shouldGetVersionedCssFileName() throws IOException {
-        BgeeWebappProperties props = mock(BgeeWebappProperties.class);
+        BgeeProperties props = mock(BgeeProperties.class);
         HtmlFactory factory = mock(HtmlFactory.class);
         when(props.getCssVersionExtension()).thenReturn("-css13");
         HtmlParentDisplay display = new HtmlParentDisplay(null, null, props, factory);

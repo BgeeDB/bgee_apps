@@ -6,7 +6,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.controller.BgeeWebappProperties;
+import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 
 /**
@@ -165,7 +165,7 @@ public abstract class HtmlDocumentationDownloadFile extends HtmlParentDisplay {
      *                                  {@code PrintWriter} 
      */
     protected HtmlDocumentationDownloadFile(HttpServletResponse response,
-            RequestParameters requestParameters, BgeeWebappProperties prop, HtmlFactory factory)
+            RequestParameters requestParameters, BgeeProperties prop, HtmlFactory factory)
             throws IllegalArgumentException, IOException {
         super(response, requestParameters, prop, factory);
     }

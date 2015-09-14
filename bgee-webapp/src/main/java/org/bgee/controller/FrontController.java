@@ -42,7 +42,7 @@ public class FrontController extends HttpServlet {
      * The {@code BgeeProperties} instance that will be used in the whole application
      * and re injected in all classes that will need it eventually.
      */
-    private final BgeeWebappProperties prop ;
+    private final BgeeProperties prop ;
 
     /**
      * The {@code URLParameters} instance that will provide the parameters list available 
@@ -60,7 +60,7 @@ public class FrontController extends HttpServlet {
      * Default constructor. It will use the default {@code BgeeProperties} class,
      * the default {@code URLParameters} class and the default {@code ViewFactoryProvider} class.
      * 
-     * @see BgeeWebappProperties
+     * @see BgeeProperties
      * @see URLParameters
      * @see ViewFactory
      */
@@ -77,11 +77,11 @@ public class FrontController extends HttpServlet {
      * @param prop  A {@code java.util.Properties} that will be use to get an instance of
      *              {@code BgeeProperties}
      *  
-     * @see BgeeWebappProperties
+     * @see BgeeProperties
      * @see URLParameters
      */
     public FrontController(Properties prop) {
-        this(BgeeWebappProperties.getBgeeProperties(prop), null, null);
+        this(BgeeProperties.getBgeeProperties(prop), null, null);
     }
 
     /**
@@ -101,15 +101,15 @@ public class FrontController extends HttpServlet {
      *                              display type
      *
      *
-     * @see BgeeWebappProperties
+     * @see BgeeProperties
      * @see URLParameters
      */
-    public FrontController(BgeeWebappProperties prop, URLParameters urlParameters, 
+    public FrontController(BgeeProperties prop, URLParameters urlParameters, 
             ViewFactoryProvider viewFactoryProvider) {
         log.entry(prop, urlParameters, viewFactoryProvider);
         if(prop == null){
             // If the bgee prop object is null, just get the default instance from BgeeProperties
-            this.prop = BgeeWebappProperties.getBgeeProperties();
+            this.prop = BgeeProperties.getBgeeProperties();
         }
         else{
             this.prop = prop;

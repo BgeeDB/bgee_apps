@@ -6,7 +6,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.controller.BgeeWebappProperties;
+import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.AboutDisplay;
 import org.bgee.view.DocumentationDisplay;
@@ -20,7 +20,7 @@ public class DsvFactory extends ViewFactory {
     private final static Logger log = LogManager.getLogger(DsvFactory.class.getName());
     
 	public DsvFactory(HttpServletResponse response, String localDelimiter,
-	        RequestParameters requestParameters, BgeeWebappProperties prop) {
+	        RequestParameters requestParameters, BgeeProperties prop) {
 		super(response, requestParameters, prop);
 	}
 

@@ -36,24 +36,21 @@ public class BgeePropertiesThirdTest extends BgeePropertiesParentTest {
         //Other properties are set in System properties, they should override properties 
         //from file
         System.setProperty(BgeeProperties.TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY, "/sysrexec");
-        System.setProperty(BgeeProperties.TOP_ANAT_RCALLER_WORKING_DIRECTORY_KEY, 
-                "/sysrcallerwd");
+        System.setProperty(BgeeProperties.TOP_ANAT_R_WORKING_DIRECTORY_KEY, 
+                "/sysrwd");
         System.setProperty(BgeeProperties.TOP_ANAT_FUNCTION_FILE_KEY, "/sysfunctionfile");
         System.setProperty(BgeeProperties.TOP_ANAT_RESULTS_WRITING_DIRECTORY_KEY, "/syswd");
-        System.setProperty(BgeeProperties.TOP_ANAT_RESULTS_URL_DIRECTORY_KEY, "/sysurldir");
         
         // get the instance of bgeeproperties and check the values
         this.bgeeProp = BgeeProperties.getBgeeProperties();
         assertEquals("Wrong property value retrieved","/sysrexec",
                 bgeeProp.getTopAnatRScriptExecutable());
-        assertEquals("Wrong property value retrieved","/sysrcallerwd",
-                bgeeProp.getTopAnatRCallerWorkingDirectory());
+        assertEquals("Wrong property value retrieved","/sysrwd",
+                bgeeProp.getTopAnatRWorkingDirectory());
         assertEquals("Wrong property value retrieved", 
                 "/sysfunctionfile", bgeeProp.getTopAnatFunctionFile());
         assertEquals("Wrong property value retrieved", 
                 "/syswd", bgeeProp.getTopAnatResultsWritingDirectory());
-        assertEquals("Wrong property value retrieved", 
-                "/sysurldir", bgeeProp.getTopAnatResultsUrlDirectory());
         
     }
 }

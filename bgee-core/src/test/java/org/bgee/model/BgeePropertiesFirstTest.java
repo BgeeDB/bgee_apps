@@ -41,23 +41,20 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
         // set the properties to inject
         Properties prop = new Properties();
         prop.put(BgeeProperties.TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY, "/injectedrexec");
-        prop.put(BgeeProperties.TOP_ANAT_RCALLER_WORKING_DIRECTORY_KEY, "/injectedrcallerwd");
+        prop.put(BgeeProperties.TOP_ANAT_R_WORKING_DIRECTORY_KEY, "/injectedrwd");
         prop.put(BgeeProperties.TOP_ANAT_FUNCTION_FILE_KEY, "/injectedfunctionfile");
         prop.put(BgeeProperties.TOP_ANAT_RESULTS_WRITING_DIRECTORY_KEY, "/injectedwd");
-        prop.put(BgeeProperties.TOP_ANAT_RESULTS_URL_DIRECTORY_KEY, "/injectedurldir");
 
         // get the instance of bgeeproperties and check the values
         this.bgeeProp = BgeeProperties.getBgeeProperties(prop);
         assertEquals("Wrong property value retrieved","/injectedrexec",
                 bgeeProp.getTopAnatRScriptExecutable());
-        assertEquals("Wrong property value retrieved","/injectedrcallerwd",
-                bgeeProp.getTopAnatRCallerWorkingDirectory());
+        assertEquals("Wrong property value retrieved","/injectedrwd",
+                bgeeProp.getTopAnatRWorkingDirectory());
         assertEquals("Wrong property value retrieved", 
                 "/injectedfunctionfile", bgeeProp.getTopAnatFunctionFile());
         assertEquals("Wrong property value retrieved", 
                 "/injectedwd", bgeeProp.getTopAnatResultsWritingDirectory());
-        assertEquals("Wrong property value retrieved", 
-                "/injectedurldir", bgeeProp.getTopAnatResultsUrlDirectory());
     }
 
     /**

@@ -37,12 +37,10 @@ public class BgeePropertiesSecondTest extends BgeePropertiesParentTest {
         assertEquals("Wrong property value retrieved","/filerexec",
                 bgeeProp.getTopAnatRScriptExecutable());
         assertEquals("Wrong property value retrieved","/filecallerwd",
-                bgeeProp.getTopAnatRCallerWorkingDirectory());
+                bgeeProp.getTopAnatRWorkingDirectory());
         assertEquals("Wrong property value retrieved", 
                 "/filefunctionfile", bgeeProp.getTopAnatFunctionFile());
         assertEquals("Wrong property value retrieved", 
                 "/filewd", bgeeProp.getTopAnatResultsWritingDirectory());
-        assertEquals("Wrong property value retrieved", 
-                "/fileurldir", bgeeProp.getTopAnatResultsUrlDirectory());
     }
 }

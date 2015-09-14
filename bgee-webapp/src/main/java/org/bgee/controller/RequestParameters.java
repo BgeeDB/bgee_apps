@@ -46,7 +46,7 @@ import org.bgee.controller.servletutils.BgeeHttpServletRequest;
  * {@code HashMap} 
  * <p>
  * When parameters are too long to be passed through URLs (because exceeding 
- * {@link BgeeWebappProperties#getUrlMaxLength}, 
+ * {@link BgeeProperties#getUrlMaxLength}, 
  * the query string is saved on disk for a later use. This mechanism is used,
  * rather than just putting parameters in session, so that parameters are 
  * indefinitely stored, and can be retrieved through an ID at any time.
@@ -277,7 +277,7 @@ public class RequestParameters {
     /**
      * A {@code BgeeProperties} instance to provide all the properties values
      */
-    private final BgeeWebappProperties prop ;
+    private final BgeeProperties prop ;
 
     /**
      * A {@code HashMap<URLParameters.Parameter<?>, Object} that store the
@@ -357,7 +357,7 @@ public class RequestParameters {
      *                                  used as parameters separator in the URL 
      *                                  
      */
-    public RequestParameters(URLParameters urlParametersInstance, BgeeWebappProperties prop,
+    public RequestParameters(URLParameters urlParametersInstance, BgeeProperties prop,
             boolean encodeUrl, String parametersSeparator)  {
         log.entry(urlParametersInstance,prop,encodeUrl, parametersSeparator);
 
@@ -425,7 +425,7 @@ public class RequestParameters {
      *                                                  {@link URLParameters.Parameter}
      */
     public RequestParameters(HttpServletRequest request, URLParameters urlParametersInstance,
-            BgeeWebappProperties prop,  boolean encodeUrl, String parametersSeparator)
+            BgeeProperties prop,  boolean encodeUrl, String parametersSeparator)
                     throws RequestParametersNotFoundException, 
                     MultipleValuesNotAllowedException, WrongFormatException {
         log.entry(request, urlParametersInstance, prop, encodeUrl, parametersSeparator);
@@ -467,8 +467,8 @@ public class RequestParameters {
      *                                                  fit the format requirement for related
      *                                                  {@link URLParameters.Parameter}
      *                                                  
-     * @see #RequestParameters(URLParameters, BgeeWebappProperties, boolean, String)
-     * @see #RequestParameters(HttpServletRequest, URLParameters, BgeeWebappProperties, boolean, String)
+     * @see #RequestParameters(URLParameters, BgeeProperties, boolean, String)
+     * @see #RequestParameters(HttpServletRequest, URLParameters, BgeeProperties, boolean, String)
      */
     private void constructor(HttpServletRequest request) throws RequestParametersNotFoundException,
     MultipleValuesNotAllowedException, WrongFormatException{
@@ -1018,7 +1018,7 @@ public class RequestParameters {
      * @return  {@code true} if the {@code String}, representing an URL, exceeds the max allowed
      *          URL length. {@code false} otherwise.
      *          
-     * @see BgeeWebappProperties#getUrlMaxLength
+     * @see BgeeProperties#getUrlMaxLength
      */
     private boolean isUrlTooLong() {
 

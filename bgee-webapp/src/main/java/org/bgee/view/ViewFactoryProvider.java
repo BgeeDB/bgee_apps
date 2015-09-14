@@ -4,7 +4,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.controller.BgeeWebappProperties;
+import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.dsv.DsvFactory;
 import org.bgee.view.html.HtmlFactory;
@@ -38,7 +38,7 @@ public class ViewFactoryProvider {
      * An instance of {@code BgeeProperties} to provide the all 
      * the properties values
      */
-    public final BgeeWebappProperties prop;
+    public final BgeeProperties prop;
    
     /**
      * Constructor
@@ -46,7 +46,7 @@ public class ViewFactoryProvider {
      * @param prop  An instance of {@code BgeeProperties} to provide the all 
      *              the properties values
      */
-    public ViewFactoryProvider(BgeeWebappProperties prop) {
+    public ViewFactoryProvider(BgeeProperties prop) {
         this.prop = prop;
     }
 

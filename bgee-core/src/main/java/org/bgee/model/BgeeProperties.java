@@ -64,7 +64,7 @@ public class BgeeProperties
     
     /**
      * A {@code String} that is the key to access to the System property that contains the value
-     * of the path of RScript Executable file which is used by {@code RCaller} to execute the R code.
+     * of the path of RScript Executable file which is used to execute the R code.
      * 
      * @see #TOP_ANAT_R_SCRIPT_EXECUTABLE_DEFAULT
      */
@@ -73,7 +73,7 @@ public class BgeeProperties
     
     /**
      * A {@code String} that is the default value of the path of RScript Executable file 
-     * which is used by {@code RCaller} to execute the R code.
+     * which is used to execute the R code.
      * 
      * @see #TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY
      */
@@ -84,18 +84,18 @@ public class BgeeProperties
      * the current working directory of {@code R}, where all the other files required 
      * for the processing of the topAnat analysis are kept.
      * 
-     * @see #TOP_ANAT_RCALLER_WORKING_DIRECTORY_DEFAULT
+     * @see #TOP_ANAT_R_WORKING_DIRECTORY_DEFAULT
      */
-    public final static String TOP_ANAT_RCALLER_WORKING_DIRECTORY_KEY = 
-            "org.bgee.core.topAnatRCallerWorkingDirectory";
+    public final static String TOP_ANAT_R_WORKING_DIRECTORY_KEY = 
+            "org.bgee.core.topAnatRWorkingDirectory";
 
     /**
      * A {@code String} that is the default value of the current working directory of {@code R}, 
      * where all the other files required for the processing of the topAnat analysis are kept.
      * 
-     * @see #TOP_ANAT_RCALLER_WORKING_DIRECTORY_KEY
+     * @see #TOP_ANAT_R_WORKING_DIRECTORY_KEY
      */
-    public final static String TOP_ANAT_RCALLER_WORKING_DIRECTORY_DEFAULT = 
+    public final static String TOP_ANAT_R_WORKING_DIRECTORY_DEFAULT = 
             "TopAnatFiles/results";
     
     /**
@@ -135,30 +135,10 @@ public class BgeeProperties
      */
     public final static String TOP_ANAT_RESULTS_WRITING_DIRECTORY_DEFAULT = 
             "TopAnatFiles/results/";   
-
-    /**
-     * A {@code String} that is the key to access to the System property that contains the name 
-     * of the path to be used in URL to link to a file stored in the TopAnat result directory 
-     * (see {@code #topAnatResultsWritingDirectory}).
-     * 
-     * @see #TOP_ANAT_RESULTS_URL_DIRECTORY_DEFAULT
-     */
-    public final static String TOP_ANAT_RESULTS_URL_DIRECTORY_KEY = 
-            "org.bgee.core.topAnatResultsUrlDirectory";
-
-    /**
-     * A {@code String} that is the default value of the name of the path to be used in URL 
-     * to link to a file stored in the TopAnat result directory
-     * (see {@code #topAnatResultsWritingDirectory}).
-     * 
-     * @see #TOP_ANAT_RESULTS_URL_DIRECTORY_KEY
-     */
-    public final static String TOP_ANAT_RESULTS_URL_DIRECTORY_DEFAULT = 
-            "bgee/TopAnatFiles/results/"; 
-    
+   
     /**
      * A {@code String} that is the path of RScript Executable file 
-     * which is used by {@code RCaller} to execute the R code.
+     * which is used to execute the R code.
      */
     private final String topAnatRScriptExecutable;
 
@@ -167,7 +147,7 @@ public class BgeeProperties
      * where all the other files required for the processing of the topAnat analysis
      * are kept.
      * <p>
-     * This directory should only be used with {@code RCaller}, to set the
+     * This directory should only be used with the library for calling R, to set the
      * working directory of the {@code R}. If you need to use the directory
      * to access a result file or get the directory to write TopAnat result
      * files, use {@code #topAnatResultsWritingDirectory}
@@ -178,7 +158,7 @@ public class BgeeProperties
      * @see #topAnatResultsWritingDirectory
      * @see #topAnatResultsUrlDirectory
      */
-    private final String topAnatRCallerWorkingDirectory;
+    private final String topAnatRWorkingDirectory;
     
     /**
      * A {@code String} that is the name of the file which contains the additional modified
@@ -195,29 +175,13 @@ public class BgeeProperties
      * {@code #topAnatResultsUrlDirectory}.
      * <p>
      * If you want to set the working directory for {@code R}, use
-     * {@code #topAnatRCallerWorkingDirectory}
+     * {@code #topAnatRWorkingDirectory}
      * 
      * @see #topAnatResultsUrlDirectory
      * @see #topAnatCallerWorkingDirectory
      */ 
     private final String topAnatResultsWritingDirectory;    
-    
-    /**
-     * A {@code String} that is the name of the path to be used in URL to link to a file stored
-     * in the TopAnat result directory (see {@code #topAnatResultsWritingDirectory}).
-     * <p>
-     * This path has to be used to link to a TopAnat result file. If you want to
-     * get the directory to write TopAnat result files, use
-     * {@code #topAnatResultsWritingDirectory}
-     * <p>
-     * If you want to set the working directory for {@code R}, use
-     * {@code #topOBORCallerWorkingDirectory}
-     * 
-     * @see #topOBOResultsWritingDirectory
-     * @see #topOBORCallerWorkingDirectory
-     */
-    private final String topAnatResultsUrlDirectory;  
-    
+     
     /**
      * A {@code ConcurrentMap} used to store {@code BgeeProperties}, 
      * associated to their ID as key (corresponding to the ID of the thread 
@@ -237,13 +201,13 @@ public class BgeeProperties
      * A {@code java.util.Properties} set used to load the values present in the Bgee property file
      * and where a {@code key} is searched
      */
-    protected static Properties fileProps = null;
+    protected final Properties fileProps;
 
     /**
      * A {@code java.util.Properties} set used to load the values set in System properties
      * and where a {@code key} is searched
      */
-    protected static Properties sysProps = null;
+    protected final Properties sysProps = new Properties(System.getProperties());
 
     /**
      * Protected constructor, can be only called through the use of one of the
@@ -259,25 +223,23 @@ public class BgeeProperties
     protected BgeeProperties(Properties prop) 
     {
         log.entry(prop);
-        loadProps();
+        log.info("Bgee-core properties initialization...");
+        this.fileProps = loadFileProps();
         // Initialize all properties using the injected prop first, alternatively the System
         // properties and then the file. The default value provided will be use if none of the
         // previous solutions contain the property
         topAnatRScriptExecutable = getStringOption(prop, sysProps, fileProps, 
                 TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY,  
                 TOP_ANAT_R_SCRIPT_EXECUTABLE_DEFAULT);
-        topAnatRCallerWorkingDirectory = getStringOption(prop, sysProps, fileProps, 
-                TOP_ANAT_RCALLER_WORKING_DIRECTORY_KEY,
-                TOP_ANAT_RCALLER_WORKING_DIRECTORY_DEFAULT);
+        topAnatRWorkingDirectory = getStringOption(prop, sysProps, fileProps, 
+                TOP_ANAT_R_WORKING_DIRECTORY_KEY,
+                TOP_ANAT_R_WORKING_DIRECTORY_DEFAULT);
         topAnatFunctionFile = getStringOption(prop, sysProps, fileProps, 
                 TOP_ANAT_FUNCTION_FILE_KEY,
                 TOP_ANAT_FUNCTION_FILE_DEFAULT);
         topAnatResultsWritingDirectory = getStringOption(prop, sysProps, fileProps, 
                 TOP_ANAT_RESULTS_WRITING_DIRECTORY_KEY,
                 TOP_ANAT_RESULTS_WRITING_DIRECTORY_DEFAULT);
-        topAnatResultsUrlDirectory = getStringOption(prop, sysProps, fileProps, 
-                TOP_ANAT_RESULTS_URL_DIRECTORY_KEY,
-                TOP_ANAT_RESULTS_URL_DIRECTORY_DEFAULT);
         log.info("Initialization done.");
         log.exit();
     }
@@ -294,27 +256,24 @@ public class BgeeProperties
     }
 
     /**
-     * This method loads the {@code java.util.Properties} from the System properties into 
-     * {@code sysProps} and the {@code java.util.Properties} present in the properties file
-     * in the classpath into {@code fileProps}
+     * This method loads and returns the {@code java.util.Properties} present in the properties file
+     * in the classpath
      */
-    protected void loadProps(){
-        log.info("Bgee-core properties initialization...");
-        // Fetch the existing system properties
-        sysProps = new Properties(System.getProperties());
+    private Properties loadFileProps(){
+        log.entry();
+        Properties filePropsToReturn = null;
         //try to get the properties file.
         //default name is bgee.properties
         //check first if an alternative name has been provided in the System properties
         String propertyFile = sysProps.getProperty(PROPERTIES_FILE_NAME_KEY, 
                 PROPERTIES_FILE_NAME_DEFAULT);
         log.debug("Trying to use properties file {}", propertyFile);
-        fileProps = null;
         InputStream propStream =
                 BgeeProperties.class.getResourceAsStream(propertyFile);
         if (propStream != null) {
             try {
-                fileProps = new Properties();
-                fileProps.load(propStream);
+                filePropsToReturn = new Properties();
+                filePropsToReturn.load(propStream);
                 log.debug("{} loaded from classpath", propertyFile);
             } catch (IOException e) {
                 log.error("Error when loading properties file from classpath", e);
@@ -328,6 +287,7 @@ public class BgeeProperties
         } else {
             log.debug("{} not found in classpath.", propertyFile);
         }        
+        return log.exit(filePropsToReturn);
     }
 
     /**
@@ -369,10 +329,10 @@ public class BgeeProperties
     }
 
     /**
-     * Remove the current instance of {@code BgeeProperties} from the {@code ConcurrentMap} 
-     * used to store {@code BgeeProperties}
+     * Remove the instance of {@code BgeeProperties} associated with the current thread
+     * from the {@code ConcurrentMap} used to store {@code BgeeProperties}
      */
-    public void removeFromBgeePropertiesPool(){
+    public static void removeFromBgeePropertiesPool(){
         bgeeProperties.remove(Thread.currentThread().getId());
     }
 
@@ -469,8 +429,8 @@ public class BgeeProperties
     }
 
     /**
-     * @return A {@code String} that is the path of RScript Executable file which is used by 
-     * {@code RCaller} to execute the {@code R} code.
+     * @return A {@code String} that is the path of RScript Executable file which is used 
+     * to execute the {@code R} code.
      */
     public String getTopAnatRScriptExecutable() {
         return topAnatRScriptExecutable;
@@ -480,8 +440,8 @@ public class BgeeProperties
      * @return A {@code String} that is the current working directory of {@code R}, where all
      * the other files required for the processing of the topAnat analysis are kept.
      */
-    public String getTopAnatRCallerWorkingDirectory() {
-        return topAnatRCallerWorkingDirectory;
+    public String getTopAnatRWorkingDirectory() {
+        return topAnatRWorkingDirectory;
     }
 
     /**
@@ -499,13 +459,4 @@ public class BgeeProperties
     public String getTopAnatResultsWritingDirectory() {
         return topAnatResultsWritingDirectory;
     }
-
-    /**
-     * @return A {@code String} that is the name of the path to be used in URL to link to a file stored 
-     * in the TopAnat result directory
-     */
-    public String getTopAnatResultsUrlDirectory() {
-        return topAnatResultsUrlDirectory;
-    }
-
 }

@@ -6,7 +6,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.controller.BgeeWebappProperties;
+import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.ConcreteDisplayParent;
 
@@ -30,7 +30,7 @@ public class JsonParentDisplay extends ConcreteDisplayParent {
      *                                  {@code PrintWriter} 
      */
     public JsonParentDisplay(HttpServletResponse response, RequestParameters requestParameters, 
-            BgeeWebappProperties prop, JsonFactory factory) throws IllegalArgumentException, IOException {
+            BgeeProperties prop, JsonFactory factory) throws IllegalArgumentException, IOException {
         super(response, requestParameters, prop, factory);
     }
 

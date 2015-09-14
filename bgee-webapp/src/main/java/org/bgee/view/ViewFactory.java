@@ -6,7 +6,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.controller.BgeeWebappProperties;
+import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 
 /**
@@ -44,7 +44,7 @@ public abstract class ViewFactory {
      * An instance of {@code BgeeProperties} to 
      * provide the all the properties values
      */
-    protected BgeeWebappProperties prop;
+    protected BgeeProperties prop;
 
     /**
      * Constructor with injected {@code RequestParameters}
@@ -58,7 +58,7 @@ public abstract class ViewFactory {
      *                          the properties values
      */
     public ViewFactory(HttpServletResponse response, RequestParameters requestParameters,
-            BgeeWebappProperties prop) {
+            BgeeProperties prop) {
         log.entry(response, requestParameters, prop);
         this.response = response;
         this.requestParameters = requestParameters;

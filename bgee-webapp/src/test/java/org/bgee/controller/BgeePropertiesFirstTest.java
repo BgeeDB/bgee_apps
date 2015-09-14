@@ -15,7 +15,7 @@ import java.util.concurrent.Future;
 import org.junit.Test;
 
 /**
- * Unit tests for {@link BgeeWebappProperties}.
+ * Unit tests for {@link BgeeProperties}.
  * It checks that the properties are loaded from the correct source
  * These tests are split in several test classes to avoid conflicts between tests due to
  * the per-thread singleton behavior.
@@ -40,31 +40,34 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
     public void testInjectedProperties(){
         // set the properties to inject
         Properties prop = new Properties();
-        prop.put(BgeeWebappProperties.BGEE_ROOT_DIRECTORY_KEY, "/injectedroot");
-        prop.put(BgeeWebappProperties.URL_MAX_LENGTH_KEY, "10");
-        prop.put(BgeeWebappProperties.CSS_FILES_ROOT_DIRECTORY_KEY, "/injectedcss");
-        prop.put(BgeeWebappProperties.CSS_VERSION_EXTENSION_KEY, "injectedCssVersion");
-        prop.put(BgeeWebappProperties.FTP_ROOT_DIRECTORY_KEY, "/injectedftp");
-        prop.put(BgeeWebappProperties.DOWNLOAD_ROOT_DIRECTORY_KEY, "/injecteddownload");
-        prop.put(BgeeWebappProperties.DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_KEY, "/injectedexprfiles");
-        prop.put(BgeeWebappProperties.DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY, "/injecteddiffexprfiles");
-        prop.put(BgeeWebappProperties.DOWNLOAD_MULTI_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY, 
+        prop.put(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY, "/injectedroot");
+        prop.put(BgeeProperties.URL_MAX_LENGTH_KEY, "10");
+        prop.put(BgeeProperties.CSS_FILES_ROOT_DIRECTORY_KEY, "/injectedcss");
+        prop.put(BgeeProperties.CSS_VERSION_EXTENSION_KEY, "injectedCssVersion");
+        prop.put(BgeeProperties.FTP_ROOT_DIRECTORY_KEY, "/injectedftp");
+        prop.put(BgeeProperties.DOWNLOAD_ROOT_DIRECTORY_KEY, "/injecteddownload");
+        prop.put(BgeeProperties.DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_KEY, "/injectedexprfiles");
+        prop.put(BgeeProperties.DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY, "/injecteddiffexprfiles");
+        prop.put(BgeeProperties.DOWNLOAD_MULTI_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY, 
                 "/injectedmultidiffexprfiles");
-        prop.put(BgeeWebappProperties.DOWNLOAD_ORTHOLOG_FILES_ROOT_DIRECTORY_KEY, "/injectedorthologfiles");
-        prop.put(BgeeWebappProperties.DOWNLOAD_AFFY_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY, 
+        prop.put(BgeeProperties.DOWNLOAD_ORTHOLOG_FILES_ROOT_DIRECTORY_KEY, "/injectedorthologfiles");
+        prop.put(BgeeProperties.DOWNLOAD_AFFY_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY, 
                 "/injectedaffyprocvaluefiles");
-        prop.put(BgeeWebappProperties.DOWNLOAD_RNA_SEQ_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY, 
+        prop.put(BgeeProperties.DOWNLOAD_RNA_SEQ_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY, 
                 "/injectedrnaseqprocvaluefiles");
-        prop.put(BgeeWebappProperties.IMAGES_ROOT_DIRECTORY_KEY, "/injectedimg");
-        prop.put(BgeeWebappProperties.LOGO_IMAGES_ROOT_DIRECTORY_KEY, "/injectedlogoimg");
-        prop.put(BgeeWebappProperties.SPECIES_IMAGES_ROOT_DIRECTORY_KEY, "/injectedspeciesimg");
-        prop.put(BgeeWebappProperties.JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY, "/injectedjs");
-        prop.put(BgeeWebappProperties.JAVASCRIPT_VERSION_EXTENSION_KEY, "injectedJsVersion");
-        prop.put(BgeeWebappProperties.REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY, "/injectedrequestparam");
-        prop.put(BgeeWebappProperties.WEBPAGES_CACHE_CONFIG_FILE_NAME_KEY, "cache");
+        prop.put(BgeeProperties.IMAGES_ROOT_DIRECTORY_KEY, "/injectedimg");
+        prop.put(BgeeProperties.LOGO_IMAGES_ROOT_DIRECTORY_KEY, "/injectedlogoimg");
+        prop.put(BgeeProperties.SPECIES_IMAGES_ROOT_DIRECTORY_KEY, "/injectedspeciesimg");
+        prop.put(BgeeProperties.JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY, "/injectedjs");
+        prop.put(BgeeProperties.JAVASCRIPT_VERSION_EXTENSION_KEY, "injectedJsVersion");
+        prop.put(BgeeProperties.REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY, "/injectedrequestparam");
+        prop.put(BgeeProperties.WEBPAGES_CACHE_CONFIG_FILE_NAME_KEY, "cache");
+        prop.put(BgeeProperties.TOP_ANAT_RESULTS_URL_DIRECTORY_KEY, "/injectedurldir");
+        // Test a superclass property
+        prop.put(BgeeProperties.TOP_ANAT_FUNCTION_FILE_KEY, "/injectedfunctionfile");
 
         // get the instance of bgeeproperties and check the values
-        this.bgeeProp = BgeeWebappProperties.getBgeeProperties(prop);
+        this.bgeeProp = BgeeProperties.getBgeeProperties(prop);
         assertEquals("Wrong property value retrieved","/injectedroot",bgeeProp.getBgeeRootDirectory());
         assertEquals("Wrong property value retrieved",10,bgeeProp.getUrlMaxLength());
         assertEquals("Wrong property value retrieved", 
@@ -101,6 +104,11 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
                 "/injectedrequestparam", bgeeProp.getRequestParametersStorageDirectory());
         assertEquals("Wrong property value retrieved", 
                 "cache", bgeeProp.getWebpagesCacheConfigFileName());
+        assertEquals("Wrong property value retrieved", 
+                "/injectedurldir", bgeeProp.getTopAnatResultsUrlDirectory());
+        // Test a superclass property
+        assertEquals("Wrong property value retrieved", 
+                "/injectedfunctionfile", bgeeProp.getTopAnatFunctionFile());
     }
 
     /**
@@ -119,7 +127,7 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
          */
         class ThreadTest implements Callable<Boolean> {
 
-            public BgeeWebappProperties bgeeProp3;
+            public BgeeProperties bgeeProp3;
             /**
              * An {@code Exchanger} that will be used to run threads alternatively. 
              */
@@ -127,7 +135,7 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
             @Override
             public Boolean call() throws InterruptedException{
                 try{
-                    bgeeProp3 = BgeeWebappProperties.getBgeeProperties();
+                    bgeeProp3 = BgeeProperties.getBgeeProperties();
                     return true;
                 } finally {
                     //whatever happens, make sure to re-launch the main thread, 
@@ -139,8 +147,8 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
         };
 
         // Get two BgeeProperties in the main thread and check that it is the same instance
-        BgeeWebappProperties bgeeProp1 = BgeeWebappProperties.getBgeeProperties();
-        BgeeWebappProperties bgeeProp2 = BgeeWebappProperties.getBgeeProperties();
+        BgeeProperties bgeeProp1 = BgeeProperties.getBgeeProperties();
+        BgeeProperties bgeeProp2 = BgeeProperties.getBgeeProperties();
         assertSame("The two objects are not the same but they should be",
                 bgeeProp1, bgeeProp2);
 

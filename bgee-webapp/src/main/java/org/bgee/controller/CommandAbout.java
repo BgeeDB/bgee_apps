@@ -37,7 +37,7 @@ public class CommandAbout extends CommandParent {
      * @param viewFactory       A {@code ViewFactory} that provides the display type to be used.
      */
     public CommandAbout(HttpServletResponse response, RequestParameters requestParameters, 
-            BgeeWebappProperties prop, ViewFactory viewFactory) {
+            BgeeProperties prop, ViewFactory viewFactory) {
         super(response, requestParameters, prop, viewFactory);
     }
 

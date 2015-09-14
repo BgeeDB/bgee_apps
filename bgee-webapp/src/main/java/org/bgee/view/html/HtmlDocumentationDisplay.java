@@ -6,7 +6,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.controller.BgeeWebappProperties;
+import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.DocumentationDisplay;
 
@@ -135,7 +135,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
      *                          {@code PrintWriter}.
      */
     public HtmlDocumentationDisplay(HttpServletResponse response,
-            RequestParameters requestParameters, BgeeWebappProperties prop, HtmlFactory factory) 
+            RequestParameters requestParameters, BgeeProperties prop, HtmlFactory factory) 
                     throws IOException {
         this(response, requestParameters, prop, factory, null, null);
     }
@@ -164,7 +164,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
      *                          {@code PrintWriter}.
      */
     public HtmlDocumentationDisplay(HttpServletResponse response,
-            RequestParameters requestParameters, BgeeWebappProperties prop, HtmlFactory factory,
+            RequestParameters requestParameters, BgeeProperties prop, HtmlFactory factory,
             HtmlDocumentationCallFile callFileDoc, HtmlDocumentationRefExprFile refExprFileDoc) 
                     throws IOException {
         super(response, requestParameters, prop, factory);

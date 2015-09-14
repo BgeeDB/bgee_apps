@@ -55,7 +55,7 @@ public class ControllerTest {
     /**
      * A {@code BgeeProperties} instance used for tests
      */
-    private BgeeWebappProperties testProperties;
+    private BgeeProperties testProperties;
 
     /**
      * Initialize all the mock and real objects involved in the {@code FrontController} 
@@ -70,8 +70,8 @@ public class ControllerTest {
         this.mockHttpServletResponse = mock(HttpServletResponse.class);
         this.mockPrintWriter = mock(PrintWriter.class);
         Properties prop = new Properties();
-        prop.put(BgeeWebappProperties.URL_MAX_LENGTH_KEY, "9999");
-        this.testProperties = BgeeWebappProperties.getBgeeProperties(prop);
+        prop.put(BgeeProperties.URL_MAX_LENGTH_KEY, "9999");
+        this.testProperties = BgeeProperties.getBgeeProperties(prop);
         this.testFactoryProvider = new TestFactoryProvider(this.testProperties);
         // The mock HttpServletResponse provides a mock PrintWriter
         when(this.mockHttpServletResponse.getWriter()).thenReturn(this.mockPrintWriter);

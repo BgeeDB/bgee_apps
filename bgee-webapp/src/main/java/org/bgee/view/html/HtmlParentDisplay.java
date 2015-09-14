@@ -8,7 +8,7 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.controller.BgeeWebappProperties;
+import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.ConcreteDisplayParent;
 import org.bgee.view.ViewFactory;
@@ -66,7 +66,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      *                                  {@code PrintWriter} 
      */
     public HtmlParentDisplay(HttpServletResponse response, RequestParameters requestParameters, 
-            BgeeWebappProperties prop, HtmlFactory factory) throws IllegalArgumentException, IOException {
+            BgeeProperties prop, HtmlFactory factory) throws IllegalArgumentException, IOException {
         super(response, requestParameters, prop, factory);
     }
     
@@ -473,7 +473,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * Transform the name of a javascript file into a name including version information, 
      * following the pattern used for javascript files hosted on the server. This is to avoid 
      * caching issues. The extension to use for version information is provided by 
-     * {@link BgeeWebappProperties#getJavascriptVersionExtension()}. 
+     * {@link BgeeProperties#getJavascriptVersionExtension()}. 
      * <p>
      * For instance, if {@code getJavascriptVersionExtension} returns "-13", 
      * and if {@code originalFileName} is equal to "common.js", the value returned 
@@ -486,7 +486,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      *                          ending with ".js", to transform into a versioned file name.
      * @return                  A {@code String} that is the versioned javascript file name, 
      *                          as used on the server, including the version extension 
-     *                          returned by {@link BgeeWebappProperties#getJavascriptVersionExtension()}.
+     *                          returned by {@link BgeeProperties#getJavascriptVersionExtension()}.
      */
     protected String getVersionedJsFileName(String originalFileName) {
         log.entry(originalFileName);
@@ -540,7 +540,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * Transform the name of a CSS file into a name including version information, 
      * following the pattern used for CSS files hosted on the server. This is to avoid 
      * caching issues. The extension to use for version information is provided by 
-     * {@link BgeeWebappProperties#getCssVersionExtension()}. 
+     * {@link BgeeProperties#getCssVersionExtension()}. 
      * <p>
      * For instance, if {@code getCssVersionExtension} returns "-13", 
      * and if {@code originalFileName} is equal to "bgee.css", the value returned 
@@ -553,7 +553,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      *                          ending with ".css", to transform into a versioned file name.
      * @return                  A {@code String} that is the versioned CSS file name, 
      *                          as used on the server, including the version extension 
-     *                          returned by {@link BgeeWebappProperties#getCssVersionExtension()}.
+     *                          returned by {@link BgeeProperties#getCssVersionExtension()}.
      */
     protected String getVersionedCssFileName(String originalFileName) {
         log.entry(originalFileName);

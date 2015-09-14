@@ -4,7 +4,6 @@ import java.util.Properties;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.BgeeProperties;
 
 /**
  * This class loads the properties for Bgee webapp and extends {@link BgeeProperties} from
@@ -32,13 +31,13 @@ import org.bgee.model.BgeeProperties;
  * @version Bgee 13, August 2015
  * @since Bgee 13
  */
-public class BgeeWebappProperties extends BgeeProperties
+public class BgeeProperties extends org.bgee.model.BgeeProperties
 {
 
     /**
      * {@code Logger} of the class. 
      */
-    private final static Logger log = LogManager.getLogger(BgeeWebappProperties.class.getName());
+    private final static Logger log = LogManager.getLogger(BgeeProperties.class.getName());
         
     /**
      * A {@code String} that is the key to access to the System property that is read at the 
@@ -381,6 +380,26 @@ public class BgeeWebappProperties extends BgeeProperties
      */
     public final static String WEBPAGES_CACHE_CONFIG_FILE_NAME_DEFAULT = 
             "/ehcache-webpages.xml";
+    
+    /**
+     * A {@code String} that is the key to access to the System property that contains the name 
+     * of the path to be used in URL to link to a file stored in the TopAnat result directory 
+     * (see {@code org.bgee.model.BgeeProperties#topAnatResultsWritingDirectory}).
+     * 
+     * @see #TOP_ANAT_RESULTS_URL_DIRECTORY_DEFAULT
+     */
+    public final static String TOP_ANAT_RESULTS_URL_DIRECTORY_KEY = 
+            "org.bgee.webapp.topAnatResultsUrlDirectory";
+
+    /**
+     * A {@code String} that is the default value of the name of the path to be used in URL 
+     * to link to a file stored in the TopAnat result directory
+     * (see {@code org.bgee.model.BgeeProperties##topAnatResultsWritingDirectory}).
+     * 
+     * @see #TOP_ANAT_RESULTS_URL_DIRECTORY_KEY
+     */
+    public final static String TOP_ANAT_RESULTS_URL_DIRECTORY_DEFAULT = 
+            "bgee/TopAnatFiles/results/";     
 
     /**
      * {@code String} that defines the directory where query strings holding storable parameters  
@@ -508,6 +527,23 @@ public class BgeeWebappProperties extends BgeeProperties
      * this properties. The default value is ehcache-webpages.xml
      */
     private final String webpagesCacheConfigFileName;
+    
+    /**
+     * A {@code String} that is the name of the path to be used in URL to link to a file stored
+     * in the TopAnat result directory
+     * (see {@code org.bgee.model.BgeeProperties#topAnatResultsWritingDirectory}).
+     * <p>
+     * This path has to be used to link to a TopAnat result file. If you want to
+     * get the directory to write TopAnat result files, use
+     * {@code org.bgee.model.BgeeProperties#topAnatResultsWritingDirectory}
+     * <p>
+     * If you want to set the working directory for {@code R}, use
+     * {@code org.bgee.model.BgeeProperties#topAnatRWorkingDirectory}
+     * 
+     * @see org.bgee.model.BgeeProperties#topAnatResultsWritingDirectory
+     * @see org.bgee.model.BgeeProperties#topAnatRWorkingDirectory
+     */
+    private final String topAnatResultsUrlDirectory; 
 
     /**
      * Private constructor, can be only called through the use of one of the
@@ -520,14 +556,13 @@ public class BgeeWebappProperties extends BgeeProperties
      * @param prop  A {@code java.util.Properties} instance that contains the system properties
      *              to use.
      */
-    private BgeeWebappProperties(Properties prop) 
+    private BgeeProperties(Properties prop) 
     {
         // First called the parent constructor, which loads the properties defined in bgee-core
         super(prop);
         log.entry(prop);
         log.info("Bgee-webapp properties initialization...");
         // load the properties from properties file, System and default values
-        loadProps();
         // Initialize all properties using the injected prop first, alternatively the System
         // properties and then the file. The default value provided will be use if none of the
         // previous solutions contain the property
@@ -575,6 +610,9 @@ public class BgeeWebappProperties extends BgeeProperties
                 URL_MAX_LENGTH_KEY, URL_MAX_LENGTH_DEFAULT);
         webpagesCacheConfigFileName = getStringOption(prop, sysProps, fileProps, 
                 WEBPAGES_CACHE_CONFIG_FILE_NAME_KEY, WEBPAGES_CACHE_CONFIG_FILE_NAME_DEFAULT);
+        topAnatResultsUrlDirectory = getStringOption(prop, sysProps, fileProps, 
+                TOP_ANAT_RESULTS_URL_DIRECTORY_KEY,
+                TOP_ANAT_RESULTS_URL_DIRECTORY_DEFAULT);
         log.info("Initialization done.");
         log.exit();
     }
@@ -689,7 +727,7 @@ public class BgeeWebappProperties extends BgeeProperties
      *          file names. For instance, if this attribute is equal to "-13", a javscript file 
      *          originally named "common.js" should be used with name "common-13.js".
      * @see #JAVASCRIPT_VERSION_EXTENSION_KEY
-     * @see #JAVSCRIPT_VERSION_EXTENSION_DEFAULT
+     * @see #JAVASCRIPT_VERSION_EXTENSION_DEFAULT
      */
     public String getJavascriptVersionExtension() {
         return javascriptVersionExtension;
@@ -757,39 +795,46 @@ public class BgeeWebappProperties extends BgeeProperties
     public String getWebpagesCacheConfigFileName() {
         return webpagesCacheConfigFileName;
     }
+  
+    /**
+     * @return A {@code String} that is the name of the path to be used in URL to link to a file stored 
+     * in the TopAnat result directory
+     */
+    public String getTopAnatResultsUrlDirectory() {
+        return topAnatResultsUrlDirectory;
+    }    
     
     /**
-     * @return  An instance of {@code BgeeWebappProperties} with values based on the System properties
+     * @return  An instance of {@code BgeeProperties} with values based on the System properties
      *          or the properties file present in the classpath or the default properties if 
      *          nothing else is available. The method will create an instance only once for 
      *          each thread and always return this instance when called. 
      *          ("per-thread singleton")
      */
-    public static BgeeWebappProperties getBgeeProperties(){
+    public static BgeeProperties getBgeeProperties(){
         return getBgeeProperties(null);
     }
 
     /**
-     * @param prop  A {@code java.util.BgeeWebappProperties} instance that contains the system properties
+     * @param prop  A {@code java.util.BgeeProperties} instance that contains the system properties
      *              to use.
      * @return  An instance of {@code BgeeProperties} with values based on the provided
      *          {@code Properties}. The method will create an instance only once for each
      *          thread and always return this instance when called. ("per-thread singleton")
      */
-    public static BgeeWebappProperties getBgeeProperties(Properties prop){
+    public static BgeeProperties getBgeeProperties(Properties prop){
         
         log.entry(prop);
-        BgeeWebappProperties bgeeProp;
+        BgeeProperties bgeeProp;
         long threadId = Thread.currentThread().getId();
         if (! hasBgeeProperties()) {
             // Create an instance
-            bgeeProp = new BgeeWebappProperties(prop);
+            bgeeProp = new BgeeProperties(prop);
             // Add it to the map
             bgeeProperties.put(threadId, bgeeProp);
         }
         else {
-            assert bgeeProperties.get(threadId) instanceof BgeeWebappProperties;
-            bgeeProp = (BgeeWebappProperties) bgeeProperties.get(threadId);
+            bgeeProp = (BgeeProperties) bgeeProperties.get(threadId);
         }
         return log.exit(bgeeProp);
 

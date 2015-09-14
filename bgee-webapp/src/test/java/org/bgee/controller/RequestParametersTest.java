@@ -89,10 +89,10 @@ public class RequestParametersTest extends TestAncestor {
     @BeforeClass
     public static void loadParameters() {
         System.getProperties().setProperty(
-                BgeeWebappProperties.REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY,
+                BgeeProperties.REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY,
                 System.getProperty("java.io.tmpdir"));
         System.getProperties().setProperty(
-                BgeeWebappProperties.URL_MAX_LENGTH_KEY, "120");
+                BgeeProperties.URL_MAX_LENGTH_KEY, "120");
 
         testURLParameters = new TestURLParameters();    
 
@@ -103,9 +103,9 @@ public class RequestParametersTest extends TestAncestor {
      */
     @AfterClass
     public static void resetProperties(){
-        System.clearProperty(BgeeWebappProperties.PROPERTIES_FILE_NAME_KEY);
-        System.clearProperty(BgeeWebappProperties.BGEE_ROOT_DIRECTORY_KEY);
-        System.clearProperty(BgeeWebappProperties.URL_MAX_LENGTH_KEY);
+        System.clearProperty(BgeeProperties.PROPERTIES_FILE_NAME_KEY);
+        System.clearProperty(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.URL_MAX_LENGTH_KEY);
     }
 
     /**
@@ -161,8 +161,8 @@ public class RequestParametersTest extends TestAncestor {
         // This checks that the key is always generated with "&", no matter which separator
         // is provided
         RequestParameters rp = new RequestParameters(this.mockHttpServletRequest,
-                RequestParametersTest.testURLParameters, BgeeWebappProperties.getBgeeProperties(), 
-                true, "&");
+                RequestParametersTest.testURLParameters, BgeeProperties.getBgeeProperties(), 
+                true, "&");	
         this.addParamsToExceedThreshold(rp);
         rp.getRequestURL("+"); 
         this.generatedKey = rp.getDataKey();
@@ -174,13 +174,13 @@ public class RequestParametersTest extends TestAncestor {
         
         this.requestParametersWithNoKey = new RequestParameters(
                 this.mockHttpServletRequest,
-                RequestParametersTest.testURLParameters, BgeeWebappProperties.getBgeeProperties(),
+                RequestParametersTest.testURLParameters, BgeeProperties.getBgeeProperties(),
                 true, "&");
 
         this.requestParametersHavingAKey= new RequestParameters(
                 this.mockHttpServletRequest,
-                RequestParametersTest.testURLParameters, BgeeWebappProperties.getBgeeProperties(),
-                true, "&");
+                RequestParametersTest.testURLParameters, BgeeProperties.getBgeeProperties(),
+                true, "&");	
     }
     
     /**
@@ -615,7 +615,7 @@ public class RequestParametersTest extends TestAncestor {
 
         new RequestParameters(
                 this.mockHttpServletRequest,
-                RequestParametersTest.testURLParameters,BgeeWebappProperties.getBgeeProperties(),true,"&");
+                RequestParametersTest.testURLParameters,BgeeProperties.getBgeeProperties(),true,"&");
     }
 
     /**
@@ -636,7 +636,7 @@ public class RequestParametersTest extends TestAncestor {
         try{
             new RequestParameters(
                     this.mockHttpServletRequest,
-                    RequestParametersTest.testURLParameters,BgeeWebappProperties.getBgeeProperties(),true,"&");
+                    RequestParametersTest.testURLParameters,BgeeProperties.getBgeeProperties(),true,"&");
         }
         catch(Exception e){
             // Do nothing
@@ -648,7 +648,7 @@ public class RequestParametersTest extends TestAncestor {
 
         new RequestParameters(
                 this.mockHttpServletRequest,
-                RequestParametersTest.testURLParameters,BgeeWebappProperties.getBgeeProperties(),
+                RequestParametersTest.testURLParameters,BgeeProperties.getBgeeProperties(),
                 true,"&");
 
     }

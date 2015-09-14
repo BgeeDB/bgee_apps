@@ -18,7 +18,7 @@ import net.sf.ehcache.constructs.web.filter.FilterNonReentrantException;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.controller.BgeeWebappProperties;
+import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.controller.URLParameters;
 import org.bgee.controller.exception.MultipleValuesNotAllowedException;
@@ -55,7 +55,7 @@ import org.bgee.controller.exception.WrongFormatException;
  * @see org.bgee.controller.RequestParameters
  * @see org.bgee.controller.FrontController
  * @see #calculateKey(HttpServletRequest)
- * @see BgeeWebappProperties#getWebpagesCacheConfigFileName()
+ * @see BgeeProperties#getWebpagesCacheConfigFileName()
  * @since Bgee 13
  */
 public class BgeeWebCache extends CachingFilter
@@ -98,7 +98,7 @@ public class BgeeWebCache extends CachingFilter
             LockTimeoutException, IOException, ServletException, Exception
     {
         log.entry(request, response, chain);
-        BgeeWebappProperties prop = BgeeWebappProperties.getBgeeProperties();
+        BgeeProperties prop = BgeeProperties.getBgeeProperties();
         try {
             if (new RequestParameters(request,
                     new URLParameters(),prop, true, "&")
@@ -134,7 +134,7 @@ public class BgeeWebCache extends CachingFilter
     protected CacheManager getCacheManager() {
         log.entry();
         return log.exit(CacheManager.create(BgeeWebCache.class
-                .getClassLoader().getResource(BgeeWebappProperties.getBgeeProperties()
+                .getClassLoader().getResource(BgeeProperties.getBgeeProperties()
                         .getWebpagesCacheConfigFileName())));
     }
 

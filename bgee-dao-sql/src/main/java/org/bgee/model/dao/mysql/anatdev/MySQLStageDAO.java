@@ -2,7 +2,6 @@ package org.bgee.model.dao.mysql.anatdev;
 
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -69,8 +68,7 @@ public class MySQLStageDAO extends MySQLDAO<StageDAO.Attribute> implements Stage
          try {
              BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
              if (speciesIds != null && speciesIds.size() > 0) {
-                 List<Integer> orderedSpeciesIds = MySQLDAO.convertToOrderedIntList(speciesIds);
-                 stmt.setIntegers(1, orderedSpeciesIds);
+                 stmt.setStringsToIntegers(1, speciesIds, true);
              }             
              return log.exit(new MySQLStageTOResultSet(stmt));
          } catch (SQLException e) {

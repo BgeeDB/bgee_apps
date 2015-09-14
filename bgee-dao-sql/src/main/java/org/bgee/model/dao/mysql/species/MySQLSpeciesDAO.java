@@ -2,7 +2,6 @@ package org.bgee.model.dao.mysql.species;
 
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -67,8 +66,7 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             if (speciesIds != null && speciesIds.size() > 0) {
-                List<Integer> orderedSpeciesIds = MySQLDAO.convertToOrderedIntList(speciesIds);
-                stmt.setIntegers(1, orderedSpeciesIds);
+                stmt.setStringsToIntegers(1, speciesIds, true);
             }  
             return log.exit(new MySQLSpeciesTOResultSet(stmt));
         } catch (SQLException e) {

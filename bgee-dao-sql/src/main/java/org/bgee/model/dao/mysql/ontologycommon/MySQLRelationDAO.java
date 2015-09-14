@@ -1,12 +1,12 @@
 package org.bgee.model.dao.mysql.ontologycommon;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -115,22 +115,16 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
              BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
              int startIndex = 1;
              if (isSpeciesFilter) {
-                 List<Integer> orderedSpeciesIds = MySQLDAO.convertToOrderedIntList(speciesIds);
-                 stmt.setIntegers(startIndex, orderedSpeciesIds);
-                 startIndex += orderedSpeciesIds.size();
+                 stmt.setStringsToIntegers(startIndex, speciesIds, true);
+                 startIndex += speciesIds.size();
              }
              if (isRelationTypeFilter) {
-                 List<RelationType> orderedTypes = new ArrayList<RelationType>(relationTypes);
-                 Collections.sort(orderedTypes);
-                 stmt.setEnumDAOFields(startIndex, orderedTypes);
-                 startIndex += orderedTypes.size();
+                 stmt.setEnumDAOFields(startIndex, relationTypes, true);
+                 startIndex += relationTypes.size();
              }
              if (isRelationStatusFilter) {
-                 List<RelationStatus> orderedStatus = 
-                         new ArrayList<RelationStatus>(relationStatus);
-                 Collections.sort(orderedStatus);
-                 stmt.setEnumDAOFields(startIndex, orderedStatus);
-                 startIndex += orderedStatus.size();
+                 stmt.setEnumDAOFields(startIndex, relationStatus, true);
+                 startIndex += relationStatus.size();
              }
              return log.exit(new MySQLRelationTOResultSet(stmt));
          } catch (SQLException e) {
@@ -217,20 +211,20 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
              BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
              int startIndex = 1;
              if (isSpeciesFilter) {
-                 List<Integer> orderedSpeciesIds = MySQLDAO.convertToOrderedIntList(speciesIds);
-                 stmt.setIntegers(startIndex, orderedSpeciesIds);
+                 List<Integer> orderedSpeciesIds = speciesIds.stream()
+                         .map(e -> e == null? null: Integer.parseInt(e))
+                         .collect(Collectors.toList());
+                 Collections.sort(orderedSpeciesIds);
+                 stmt.setIntegers(startIndex, orderedSpeciesIds, false);
                  startIndex += orderedSpeciesIds.size();
                  //we set the species IDs twice, once for the parent stages, 
                  //once for the child stages
-                 stmt.setIntegers(startIndex, orderedSpeciesIds);
+                 stmt.setIntegers(startIndex, orderedSpeciesIds, false);
                  startIndex += orderedSpeciesIds.size();
              }
              if (isRelationStatusFilter) {
-                 List<RelationStatus> orderedStatus = 
-                         new ArrayList<RelationStatus>(relationStatus);
-                 Collections.sort(orderedStatus);
-                 stmt.setEnumDAOFields(startIndex, orderedStatus);
-                 startIndex += orderedStatus.size();
+                 stmt.setEnumDAOFields(startIndex, relationStatus, true);
+                 startIndex += relationStatus.size();
              }
              return log.exit(new MySQLRelationTOResultSet(stmt));
          } catch (SQLException e) {

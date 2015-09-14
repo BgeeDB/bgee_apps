@@ -1,9 +1,6 @@
 package org.bgee.model.dao.mysql.expressiondata;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -16,7 +13,6 @@ import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.ComparisonFactor;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.DiffExprCallType;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallParams;
-import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.MySQLOrderingDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
@@ -281,8 +277,7 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
                 stmtIndex = 2;
             }
             if (hasSpecies) {
-                List<Integer> orderedSpeciesIds = MySQLDAO.convertToOrderedIntList(speciesIds);
-                stmt.setIntegers(stmtIndex, orderedSpeciesIds);
+                stmt.setStringsToIntegers(stmtIndex, speciesIds, true);
                 stmtIndex += speciesIds.size();
             }             
             
@@ -292,19 +287,13 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
             }
             
             if (filterAffymetrixTypes) {
-                List<DiffExprCallType> orderedAffymetrixTypes = 
-                        new ArrayList<DiffExprCallType>(diffExprCallTypeAffymetrix);
-                Collections.sort(orderedAffymetrixTypes);
-                stmt.setEnumDAOFields(stmtIndex, orderedAffymetrixTypes);
-                stmtIndex += orderedAffymetrixTypes.size();
+                stmt.setEnumDAOFields(stmtIndex, diffExprCallTypeAffymetrix, true);
+                stmtIndex += diffExprCallTypeAffymetrix.size();
             }             
             
             if (filterRNASeqTypes) {
-                List<DiffExprCallType> orderedRNASeqTypes = 
-                        new ArrayList<DiffExprCallType>(diffExprCallTypeRNASeq);
-                Collections.sort(orderedRNASeqTypes);
-                stmt.setEnumDAOFields(stmtIndex, orderedRNASeqTypes);
-                stmtIndex += orderedRNASeqTypes.size();
+                stmt.setEnumDAOFields(stmtIndex, diffExprCallTypeRNASeq, true);
+                stmtIndex += diffExprCallTypeRNASeq.size();
             }             
             
             return log.exit(new MySQLDiffExpressionCallTOResultSet(stmt));

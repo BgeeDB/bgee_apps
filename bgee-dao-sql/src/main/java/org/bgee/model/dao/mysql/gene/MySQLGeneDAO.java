@@ -4,7 +4,6 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -86,8 +85,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             if (speciesIds != null && !speciesIds.isEmpty()) {
-                List<Integer> orderedSpeciesIds = MySQLDAO.convertToOrderedIntList(speciesIds);
-                stmt.setIntegers(1, orderedSpeciesIds);
+                stmt.setStringsToIntegers(1, speciesIds, true);
             }             
             return log.exit(new MySQLGeneTOResultSet(stmt));
         } catch (SQLException e) {

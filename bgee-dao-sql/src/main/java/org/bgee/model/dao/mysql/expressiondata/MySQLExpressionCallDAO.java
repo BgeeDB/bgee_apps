@@ -4,7 +4,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -216,8 +215,7 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             if (speciesIds != null && !speciesIds.isEmpty()) {
-                List<Integer> orderedSpeciesIds = MySQLDAO.convertToOrderedIntList(speciesIds);
-                stmt.setIntegers(1, orderedSpeciesIds);
+                stmt.setStringsToIntegers(1, speciesIds, true);
             }
 
             if (!isIncludeSubStages) {

@@ -2,7 +2,6 @@ package org.bgee.model.dao.mysql.anatdev.mapping;
 
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -124,8 +123,7 @@ public class MySQLSummarySimilarityAnnotationDAO
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             stmt.setString(1, taxonId);
             if (speciesIds != null && !speciesIds.isEmpty()) {
-                List<Integer> orderedSpeciesIds = MySQLDAO.convertToOrderedIntList(speciesIds);
-                stmt.setIntegers(2, orderedSpeciesIds);
+                stmt.setStringsToIntegers(2, speciesIds, true);
             }
             return log.exit(new MySQLSimAnnotToAnatEntityTOResultSet(stmt));
         } catch (SQLException e) {
@@ -157,8 +155,7 @@ public class MySQLSummarySimilarityAnnotationDAO
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             stmt.setString(1, taxonId);
-            List<Integer> orderedSpeciesIds = MySQLDAO.convertToOrderedIntList(speciesIds);
-            stmt.setIntegers(2, orderedSpeciesIds);
+            stmt.setStringsToIntegers(2, speciesIds, true);
             return log.exit(new MySQLSimAnnotToAnatEntityTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

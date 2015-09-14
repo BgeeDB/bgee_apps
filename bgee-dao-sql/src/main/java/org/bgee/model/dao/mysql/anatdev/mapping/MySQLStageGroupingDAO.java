@@ -2,7 +2,6 @@ package org.bgee.model.dao.mysql.anatdev.mapping;
 
 import java.sql.SQLException;
 import java.util.Map.Entry;
-import java.util.List;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -70,8 +69,7 @@ public class MySQLStageGroupingDAO extends MySQLDAO implements StageGroupingDAO 
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             if (hasSpecies) {
-                List<Integer> orderedSpeciesIds = MySQLDAO.convertToOrderedIntList(speciesIds);
-                stmt.setIntegers(1, orderedSpeciesIds);
+                stmt.setStringsToIntegers(1, speciesIds, true);
                 stmt.setInt(1 + speciesIds.size(), speciesIds.size());
             }
             

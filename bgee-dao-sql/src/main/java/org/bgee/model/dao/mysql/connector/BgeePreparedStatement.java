@@ -5,7 +5,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -47,6 +51,51 @@ public class BgeePreparedStatement implements AutoCloseable {
      */
     private final static Logger log = 
             LogManager.getLogger(BgeePreparedStatement.class.getName());
+
+    /**
+     * An operation that accepts two input arguments and returns no result and that can throw 
+     * a {@code SQLException}. It is needed because the {@code accept} method 
+     * of a classical {@code BiConsumer} does not allow to throw any exception. 
+     * 
+     * @author Frederic Bastian
+     * @version Bgee 13 Sept. 2015
+     * @since Bgee 13
+     *
+     * @param T   the type of the first argument to the operation 
+     * @param U   the type of the second argument to the operation 
+     */
+    @FunctionalInterface
+    private interface BiConsumerWithSQLException<T, U> {
+        /**
+         * Performs this operation on the given arguments.
+         * 
+         * @param t A {@code T} that is the first input argument.
+         * @param u A {@code U} that is the second input argument.
+         * @throws SQLException If an error occurred while performing the operation. 
+         */
+        void accept(T t, U u) throws SQLException;
+    }
+    /**
+     * An operation that takes no arguments and returns a result of type {@code T} 
+     * and that can throw a {@code SQLException}. It is needed because the {@code get} method 
+     * of a classical {@code Supplier} does not allow to throw any exception. 
+     * 
+     * @author Frederic Bastian
+     * @version Bgee 13 Sept. 2015
+     * @since Bgee 13
+     *
+     * @param T   the type of results supplied by this supplier
+     */
+    @FunctionalInterface
+    private interface SupplierWithSQLException<T> {
+        /**
+         * Gets a result.
+         * 
+         * @return  A result of type {@code T}.
+         * @throws SQLException If an error occurred while performing the operation. 
+         */
+        T get() throws SQLException;
+    }
 
     /**
      * Returns a {@code String} to be used in a parameterized query with the number of parameters 
@@ -124,6 +173,56 @@ public class BgeePreparedStatement implements AutoCloseable {
     }  
     
     /**
+     * Sets the designated parameters of this {@code BgeePreparedStatement} to the values 
+     * given in {@code values}, starting at index {@code startIndex}. This corresponds to 
+     * SQL query parts written using {@link #generateParameterizedQueryString(int)}.
+     * 
+     * @param startIndex        An {@code int} that is the first index of the parameter to set.
+     *                          If these are the first parameters set for this 
+     *                          {@code BgeePreparedStatement}, the first parameter is 1.
+     * @param values            A {@code List} of {@code T}s that are values to be used 
+     *                          to set the parameters.
+     * @param setterFunction    A {@link SetterThrowingSQLException} that is the setter 
+     *                          of this {@code BgeePreparedStatement} to use, to set a value 
+     *                          in {@code values} at a given index (for instance, to use 
+     *                          {@link #setString(int, String)} or {@link #setInt(int, integer)}). 
+     * @param toOrder           A {@code boolean} defining whether {@code values} should be ordered 
+     *                          based on their natural ordering, to improve chances of cache hit. 
+     *                          {@code values} will not be modified.
+     * @throws SQLException     If parameterIndex does not correspond to a parameter marker in the 
+     *                          SQL statement; if a database access error occurs or this method is 
+     *                          called on a closed {@code PreparedStatement}.
+     */
+    private <T extends Comparable<T>> void setValues(int startIndex, Collection<T> values, 
+            BiConsumerWithSQLException<Integer, T> setterFunction, boolean toOrder) 
+                    throws SQLException {
+        log.entry(startIndex, values, setterFunction, toOrder);
+        
+        Collection<T> orderedVals = values;
+        if (toOrder) {
+            orderedVals = new ArrayList<>(values);
+            Collections.sort((List<T>) orderedVals, 
+                    (o1, o2) -> {
+                        if (o1 == null && o2 == null) {
+                            return 0;
+                        }
+                        if (o1 == null) {
+                            return 1;
+                        }
+                        if (o2 == null) {
+                            return -1;
+                        }
+                        return o1.compareTo(o2);}
+                    );
+        }
+            
+        for (T value: orderedVals) {
+            setterFunction.accept(startIndex, value);
+            startIndex++;
+        }
+    }
+    
+    /**
      * Delegated to {@link java.sql.PreparedStatement#setString(int, String)}.
      * <p>
      * If {@code x} is {@code null} delegated to {@link #setNull(int, Types.VARCHAR)}.
@@ -145,25 +244,53 @@ public class BgeePreparedStatement implements AutoCloseable {
     }
     /**
      * Sets the designated parameters of this {@code BgeePreparedStatement} to the values 
-     * given in {@code values}. 
+     * given in {@code values}, starting at index {@code startIndex}. This corresponds to 
+     * SQL query parts written using {@link #generateParameterizedQueryString(int)}.
+     * 
+     * @param startIndex        An {@code int} that is the first index of the parameter to set.
+     *                          If these are the first parameters set for this 
+     *                          {@code BgeePreparedStatement}, the first parameter is 1.
+     * @param values            A {@code Collection} of {@code String}s that are values to be used 
+     *                          to set the parameters.
+     * @param toOrder           A {@code boolean} defining whether {@code values} should be ordered 
+     *                          based on their natural ordering, to improve chances of cache hit. 
+     *                          {@code values} will not be modified.
+     * @throws SQLException     If parameterIndex does not correspond to a parameter marker in the 
+     *                          SQL statement; if a database access error occurs or this method is 
+     *                          called on a closed {@code PreparedStatement}.
+     */
+    public void setStrings(int startIndex, Collection<String> values, boolean toOrder) 
+            throws SQLException {
+        log.entry(startIndex, values, toOrder);
+        this.setValues(startIndex, values, (e, f) -> this.setString(e, f), toOrder);
+        log.exit();
+    }
+    /**
+     * Converts the {@code String}s provided in values into {@code Integer}s and use them 
+     * to set the designated parameters of this {@code BgeePreparedStatement}, 
+     * starting at index {@code startIndex}. {@code values} will not be modified. 
+     * This corresponds to SQL query parts written using {@link #generateParameterizedQueryString(int)}.
      * 
      * @param startIndex        An {@code int} that is the first index of the parameter to set.
      *                          If these are the first parameters set for this 
      *                          {@code BgeePreparedStatement}, the first parameter is 1.
      * @param values            A {@code List} of {@code String}s that are values to be used 
-     *                          to set the parameters.
+     *                          to set the parameters, after being converted to {@code Integer}s.
+     * @param toOrder           A {@code boolean} defining whether {@code values} should be ordered 
+     *                          based on their natural ordering after conversion, 
+     *                          to improve chances of cache hit. 
      * @throws SQLException     If parameterIndex does not correspond to a parameter marker in the 
      *                          SQL statement; if a database access error occurs or this method is 
      *                          called on a closed {@code PreparedStatement}.
      */
-    //TODO: Add a boolean argument, specifying whether the list should be ordered before performing query
-    public void setStrings(int startIndex, List<String> values) throws SQLException {
-        log.entry(startIndex, values);
-        for (String value: values) {
-            this.setString(startIndex, value);
-            startIndex++;
-        }
+    public void setStringsToIntegers(int startIndex, Collection<String> values, boolean toOrder) 
+            throws SQLException {
+        log.entry(startIndex, values, toOrder);
+        this.setIntegers(startIndex, values.stream().map(e -> e == null? null: Integer.parseInt(e))
+                .collect(Collectors.toList()), toOrder);
+        log.exit();
     }
+    
     /**
      * Delegated to {@link java.sql.PreparedStatement#setString(int, String)}.
      * <p>
@@ -186,24 +313,26 @@ public class BgeePreparedStatement implements AutoCloseable {
     
     /**
      * Sets the designated parameters of this {@code BgeePreparedStatement} to the values 
-     * given in {@code values}. 
+     * given in {@code values}, starting at index {@code startIndex}. This corresponds to 
+     * SQL query parts written using {@link #generateParameterizedQueryString(int)}.
      * 
      * @param startIndex        An {@code int} that is the first index of the parameter to set.
      *                          If these are the first parameters set for this 
      *                          {@code BgeePreparedStatement}, the first parameter is 1.
-     * @param values            A {@code List} of {@code Integer}s that are values to be used 
+     * @param values            A {@code Collection} of {@code Integer}s that are values to be used 
      *                          to set the parameters.
+     * @param toOrder           A {@code boolean} defining whether {@code values} should be ordered 
+     *                          based on their natural ordering, to improve chances of cache hit. 
+     *                          {@code values} will not be modified.
      * @throws SQLException     If parameterIndex does not correspond to a parameter marker in the 
      *                          SQL statement; if a database access error occurs or this method is 
      *                          called on a closed {@code PreparedStatement}.
      */
-    //TODO: Add a boolean argument, specifying whether the list should be ordered before performing query
-    public void setIntegers(int startIndex, List<Integer> values) throws SQLException {
-        log.entry(startIndex, values);
-        for (Integer value: values) {
-            this.setInt(startIndex, value);
-            startIndex++;
-        }
+    public void setIntegers(int startIndex, Collection<Integer> values, boolean toOrder) 
+            throws SQLException {
+        log.entry(startIndex, values, toOrder);
+        this.setValues(startIndex, values, (e, f) -> this.setInt(e, f), toOrder);
+        log.exit();
     }
     /**
      * Delegated to {@link java.sql.PreparedStatement#setBoolean(int, boolean)}.
@@ -226,24 +355,26 @@ public class BgeePreparedStatement implements AutoCloseable {
     }
     /**
      * Sets the designated parameters of this {@code BgeePreparedStatement} to the values 
-     * given in {@code values}. 
+     * given in {@code values}, starting at index {@code startIndex}. This corresponds to 
+     * SQL query parts written using {@link #generateParameterizedQueryString(int)}.
      * 
      * @param startIndex        An {@code int} that is the first index of the parameter to set.
      *                          If these are the first parameters set for this 
      *                          {@code BgeePreparedStatement}, the first parameter is 1.
-     * @param values            A {@code List} of {@code Boolean}s that are values to be used 
+     * @param values            A {@code Collection} of {@code Boolean}s that are values to be used 
      *                          to set the parameters.
+     * @param toOrder           A {@code boolean} defining whether {@code values} should be ordered 
+     *                          based on their natural ordering, to improve chances of cache hit. 
+     *                          {@code values} will not be modified.
      * @throws SQLException     If parameterIndex does not correspond to a parameter marker in the 
      *                          SQL statement; if a database access error occurs or this method is 
      *                          called on a closed {@code PreparedStatement}.
      */
-    //TODO: Add a boolean argument, specifying whether the list should be ordered before performing query
-    public void setBooleans(int startIndex, List<Boolean> values) throws SQLException {
-        log.entry(startIndex, values);
-        for (Boolean value: values) {
-            this.setBoolean(startIndex, value);
-            startIndex++;
-        }
+    public void setBooleans(int startIndex, Collection<Boolean> values, boolean toOrder) 
+            throws SQLException {
+        log.entry(startIndex, values, toOrder);
+        this.setValues(startIndex, values, (e, f) -> this.setBoolean(e, f), toOrder);
+        log.exit();
     }
     /**
      * Converts {@code x} into a {@code String} using the method {@code getStringRepresentation} 
@@ -267,28 +398,29 @@ public class BgeePreparedStatement implements AutoCloseable {
     }
     /**
      * Sets the designated parameters of this {@code BgeePreparedStatement} to the values 
-     * given in {@code values}. 
+     * given in {@code values}, starting at index {@code startIndex}. This corresponds to 
+     * SQL query parts written using {@link #generateParameterizedQueryString(int)}.
      * Generic method to avoid cast compilation errors (for instance, {@code cannot 
      * convert from List<RelationType> to List<EnumDAOField>}).
      * 
      * @param startIndex        An {@code int} that is the first index of the parameter to set.
      *                          If these are the first parameters set for this 
      *                          {@code BgeePreparedStatement}, the first parameter is 1.
-     * @param values            A {@code List} of {@code Boolean}s that are values to be used 
-     *                          to set the parameters.
+     * @param values            A {@code Collection} of {@code EnumDAOField}s that are values 
+     *                          to be used to set the parameters.
+     * @param toOrder           A {@code boolean} defining whether {@code values} should be ordered 
+     *                          based on their natural ordering, to improve chances of cache hit. 
+     *                          {@code values} will not be modified.
      * @throws SQLException     If parameterIndex does not correspond to a parameter marker in the 
      *                          SQL statement; if a database access error occurs or this method is 
      *                          called on a closed {@code PreparedStatement}.
      * @param <T>               The type of {@code EnumDAOField}
      */
     public <T extends Enum<T> & EnumDAOField> void setEnumDAOFields(int startIndex, 
-            List<T> values) 
-            throws SQLException {
-        log.entry(startIndex, values);
-        for (EnumDAOField value: values) {
-            this.setEnumDAOField(startIndex, value);
-            startIndex++;
-        }
+            Collection<T> values, boolean toOrder) throws SQLException {
+        log.entry(startIndex, values, toOrder);
+        this.setValues(startIndex, values, (e, f) -> this.setEnumDAOField(e, f), toOrder);
+        log.exit();
     }
     
     /**
@@ -314,24 +446,26 @@ public class BgeePreparedStatement implements AutoCloseable {
 
     /**
      * Sets the designated parameters of this {@code BgeePreparedStatement} to the values 
-     * given in {@code values}. 
+     * given in {@code values}, starting at index {@code startIndex}. This corresponds to 
+     * SQL query parts written using {@link #generateParameterizedQueryString(int)}.
      * 
      * @param startIndex        An {@code int} that is the first index of the parameter to set.
      *                          If these are the first parameters set for this 
      *                          {@code BgeePreparedStatement}, the first parameter is 1.
-     * @param values            A {@code List} of {@code float}s that are values to be used 
+     * @param values            A {@code Collection} of {@code float}s that are values to be used 
      *                          to set the parameters.
+     * @param toOrder           A {@code boolean} defining whether {@code values} should be ordered 
+     *                          based on their natural ordering, to improve chances of cache hit. 
+     *                          {@code values} will not be modified.
      * @throws SQLException     If parameterIndex does not correspond to a parameter marker in the 
      *                          SQL statement; if a database access error occurs or this method is 
      *                          called on a closed {@code PreparedStatement}.
      */
-    //TODO: Add a boolean argument, specifying whether the list should be ordered before performing query
-    public void setFloats(int startIndex, List<Float> values) throws SQLException {
-        log.entry(startIndex, values);
-        for (Float value: values) {
-            this.setFloat(startIndex, value);
-            startIndex++;
-        }
+    public void setFloats(int startIndex, Collection<Float> values, boolean toOrder) 
+            throws SQLException {
+        log.entry(startIndex, values, toOrder);
+        this.setValues(startIndex, values, (e, f) -> this.setFloat(e, f), toOrder);
+        log.exit();
     }
 
     /**
@@ -376,46 +510,45 @@ public class BgeePreparedStatement implements AutoCloseable {
      * 
      * @return  a {@code ResultSet} object that contains the data produced by the query; 
      *          never {@code null}
+     * @throws QueryInterruptedException    If the query was intentionally interrupted. 
      * @throws SQLException If a database access error occurs; this method is called 
-     *                      on a closed |@code BgeePreparedStatement}, or the SQL 
+     *                      on a closed {@code BgeePreparedStatement}, or the SQL 
      *                      statement does not return a {@code ResultSet} object.
      */
-    ResultSet executeQuery() throws SQLException {
+    ResultSet executeQuery() throws QueryInterruptedException, SQLException {
         log.entry();
-        
-        //before launching the query, we check the interruption flag, 
-        //maybe another thread used the method cancel and does not want 
-        //the query to be executed
-        if (this.isCanceled()) {
-            //we throw an exception even if the query was not "interrupted" as such, 
-            //to let know our thread that it should not pursue its execution.
-            throw log.throwing(new QueryInterruptedException());
-        }
-        
-        //now we launch the query. Maybe another thread is requesting cancellation 
-        //at this point, just before the query is launched, so that it will not 
-        //be actually cancelled. But we cannot do anything to ensure atomicity, 
-        //except having this thread to put a lock while launching the query in 
-        //another thread, to release the lock while the query is running. Without 
-        //such a mechanism, the cancel method would not be able to acquire the lock 
-        //before the end of the query...
-        try {
-            return log.exit(this.getRealPreparedStatement().executeQuery());
-        } finally {
-            this.setExecuted(true);
-            //check that we did not return from the executeQuery method because of 
-            //a cancellation
-            if (this.isCanceled()) {
-                throw log.throwing(new QueryInterruptedException());
-            }
-        }
+        return log.exit(this.execute(this.getRealPreparedStatement()::executeQuery));
     }
     
-    public int executeUpdate() throws SQLException {
+    /**
+     * See {@link PreparedStatement#executeUpdate()}. 
+     * 
+     * @return              See {@link PreparedStatement#executeUpdate()}. 
+     * @throws QueryInterruptedException    If the query was intentionally interrupted. 
+     * @throws SQLException See {@link PreparedStatement#executeUpdate()}. 
+     */
+    public int executeUpdate() throws QueryInterruptedException, SQLException {
         log.entry();
-        //TODO: DRY. We just copied pasted here, because this method is used 
-        //for insertion methods only, that are only used by the pipeline 
-        //(it's not a good reason, I know...)
+        return log.exit(this.execute(this.getRealPreparedStatement()::executeUpdate));
+    }
+    
+    /**
+     * Helper method to call either {@code executeQuery} or {@code executeUpdate} 
+     * on the {@code PreparedStatement} returned by {@link getRealPreparedStatement()}. 
+     * This method notably manages query interruption requests. 
+     * 
+     * @param executeFunction   The operation to execute, that should be either a call to 
+     *                          {@code executeQuery} or to {@code executeUpdate} 
+     *                          on the underlying {@code PreparedStatement}. 
+     * @return                  A {@code T} that is the value returned by executing the operation.
+     * @throws QueryInterruptedException    If the query was intentionally interrupted. 
+     * @throws SQLException If a database access error occurs; this method is called 
+     *                      on a closed {@code BgeePreparedStatement}, or the SQL 
+     *                      statement does not return a {@code ResultSet} object. 
+     */
+    private <T> T execute(SupplierWithSQLException<T> executeFunction) 
+            throws QueryInterruptedException, SQLException {
+        log.entry(executeFunction);
         
         //before launching the query, we check the interruption flag, 
         //maybe another thread used the method cancel and does not want 
@@ -434,7 +567,7 @@ public class BgeePreparedStatement implements AutoCloseable {
         //such a mechanism, the cancel method would not be able to acquire the lock 
         //before the end of the query...
         try {
-            return log.exit(this.getRealPreparedStatement().executeUpdate());
+            return log.exit(executeFunction.get());
         } finally {
             this.setExecuted(true);
             //check that we did not return from the executeQuery method because of 

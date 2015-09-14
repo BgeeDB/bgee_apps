@@ -7,7 +7,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -95,8 +94,7 @@ public class MySQLKeywordDAO extends MySQLDAO<KeywordDAO.Attribute> implements K
             
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             if (!filteredSpeciesIds.isEmpty()) {
-                List<Integer> orderedSpeciesIds = MySQLDAO.convertToOrderedIntList(filteredSpeciesIds);
-                stmt.setIntegers(1, orderedSpeciesIds);
+                stmt.setStringsToIntegers(1, filteredSpeciesIds, true);
             }             
             return log.exit(new MySQLKeywordTOResultSet(stmt));
             
@@ -126,8 +124,7 @@ public class MySQLKeywordDAO extends MySQLDAO<KeywordDAO.Attribute> implements K
             
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             if (!filteredSpeciesIds.isEmpty()) {
-                List<Integer> orderedSpeciesIds = MySQLDAO.convertToOrderedIntList(filteredSpeciesIds);
-                stmt.setIntegers(1, orderedSpeciesIds);
+                stmt.setStringsToIntegers(1, filteredSpeciesIds, true);
             }             
             return log.exit(new MySQLEntityToKeywordTOResultSet(stmt, "speciesId"));
             

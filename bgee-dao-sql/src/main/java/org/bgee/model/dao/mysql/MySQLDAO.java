@@ -301,31 +301,4 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
         sb.append(" FROM " + tableName);
         return log.exit(sb.toString());
     }
-    
-    /**
-     * Convert a {@code Collection} of {@code String}s into a {@code List} of {@code Integer}s, 
-     * order in the returned {@code List} is the natural ordering of {@code Integer}s.
-     * Each element will be converted into an {@code int}, and a {@code NumberFormatException} 
-     * is thrown if an element does not contain a parsable integer.
-     * 
-     * @param strings   A {@code Collection} of {@code String}s to be converted 
-     *                  into an ordered {@code List} of {@code Integer}s.
-     * @return          A {@code List} of {@code Integer}s corresponding to {@code strings}, 
-     *                  with the natural ordering of {@code Integer}s.
-     * @throws NumberFormatException    if an element of {@code strings} is not parsable 
-     *                                  into an {@code Integer}.
-     */
-    protected static List<Integer> convertToOrderedIntList(Collection<String> strings) 
-            throws NumberFormatException {
-        log.entry(strings);
-        if (strings == null) {
-            return log.exit(null);
-        }
-        List<Integer> intList = new ArrayList<Integer>(strings.size());
-        for (String val: strings) {
-            intList.add(Integer.parseInt(val));
-        }
-        Collections.sort(intList);
-        return log.exit(intList);
-    }
 }

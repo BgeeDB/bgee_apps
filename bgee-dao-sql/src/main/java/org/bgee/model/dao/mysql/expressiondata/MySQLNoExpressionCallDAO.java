@@ -3,7 +3,6 @@ package org.bgee.model.dao.mysql.expressiondata;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -176,8 +175,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         try {
             stmt = this.getManager().getConnection().prepareStatement(sql.toString());
             if (speciesIds != null && speciesIds.size() > 0) {
-                List<Integer> orderedSpeciesIds = MySQLDAO.convertToOrderedIntList(speciesIds);
-                stmt.setIntegers(1, orderedSpeciesIds);
+                stmt.setStringsToIntegers(1, speciesIds, true);
             }             
             return log.exit(new MySQLNoExpressionCallTOResultSet(stmt));
         } catch (SQLException e) {
@@ -411,8 +409,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         }
         boolean removedFromLinkTable = false;
         try (BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sqlRelation)) {
-            List<Integer> orderedNoExprIds = MySQLDAO.convertToOrderedIntList(noExprIds);
-            stmt.setIntegers(1, orderedNoExprIds);
+            stmt.setStringsToIntegers(1, noExprIds, true);
             removedFromLinkTable = (stmt.executeUpdate() > 0);
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
@@ -441,8 +438,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
 
         }
         try (BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql)) {
-                List<Integer> orderedNoExprIds = MySQLDAO.convertToOrderedIntList(noExprIds);
-                stmt.setIntegers(1, orderedNoExprIds);
+                stmt.setStringsToIntegers(1, noExprIds, true);
                 return log.exit(stmt.executeUpdate());
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

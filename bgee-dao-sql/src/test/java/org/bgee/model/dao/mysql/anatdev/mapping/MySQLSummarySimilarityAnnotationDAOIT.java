@@ -48,9 +48,43 @@ public class MySQLSummarySimilarityAnnotationDAOIT extends MySQLITAncestor {
     //TODO integration test
     @Test
     public void shouldGetAllSummarySimilarityAnnotations() throws SQLException {
-        
+        this.useSelectDB();
+
     }
-    
+
+    /**
+     * Test the select method 
+     * {@link MySQLSummarySimilarityAnnotationDAO#getSummarySimilarityAnnotations()}.
+     */
+    //TODO integration test
+    @Test
+    public void shouldGetSummarySimilarityAnnotations() throws SQLException {
+        this.useSelectDB();
+
+    }
+
+    /**
+     * Test the select method 
+     * {@link MySQLSummarySimilarityAnnotationDAO#getSimAnnotToAnatEntity()}.
+     */
+    //TODO integration test
+    @Test
+    public void shouldGetSimAnnotToAnatEntity() throws SQLException {
+        this.useSelectDB();
+
+    }
+
+    /**
+     * Test the select method 
+     * {@link MySQLSummarySimilarityAnnotationDAO#getSimAnnotToLostAnatEntity()}.
+     */
+    //TODO integration test
+    @Test
+    public void shouldGetSimAnnotToLostAnatEntity() throws SQLException {
+        this.useSelectDB();
+
+    }
+
     /**
      * Test the insert method 
      * {@link MySQLSummarySimilarityAnnotationDAO#insertSummarySimilarityAnnotations()}.

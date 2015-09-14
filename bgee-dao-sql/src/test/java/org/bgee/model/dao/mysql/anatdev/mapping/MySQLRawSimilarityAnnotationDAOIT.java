@@ -48,6 +48,8 @@ public class MySQLRawSimilarityAnnotationDAOIT  extends MySQLITAncestor {
     //TODO: integration test
     @Test
     public void shouldGetRawSimilarityAnnotations() throws SQLException {
+        this.useSelectDB();
+
     }
 
     /**

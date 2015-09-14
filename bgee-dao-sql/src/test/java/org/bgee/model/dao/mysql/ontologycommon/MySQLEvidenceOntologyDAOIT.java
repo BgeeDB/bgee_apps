@@ -60,7 +60,9 @@ public class MySQLEvidenceOntologyDAOIT  extends MySQLITAncestor {
         List<ECOTermTO> expectedECOTerms = Arrays.asList(
                 new ECOTermTO("ECO:1", "name1", "desc1"), 
                 new ECOTermTO("ECO:2", "name2", null), 
-                new ECOTermTO("ECO:3", "name3", "desc3")); 
+                new ECOTermTO("ECO:3", "name3", "desc3"), 
+                new ECOTermTO("ECO:4", "name4", null), 
+                new ECOTermTO("ECO:5", "name5", "desc5")); 
         //Compare
         assertTrue("ECOTermTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(methECOTerms, expectedECOTerms));
@@ -78,7 +80,9 @@ public class MySQLEvidenceOntologyDAOIT  extends MySQLITAncestor {
         expectedECOTerms = Arrays.asList(
                 new ECOTermTO(null, "name1", null), 
                 new ECOTermTO(null, "name2", null), 
-                new ECOTermTO(null, "name3", null)); 
+                new ECOTermTO(null, "name3", null), 
+                new ECOTermTO(null, "name4", null), 
+                new ECOTermTO(null, "name5", null)); 
         //Compare
         assertTrue("ECOTermTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(methECOTerms, expectedECOTerms));

@@ -64,13 +64,15 @@ public class MySQLCIOStatementDAOIT extends MySQLITAncestor {
                         EvidenceConcordance.CONGRUENT, EvidenceTypeConcordance.SAME_TYPE),
                 new CIOStatementTO("CIO:2", "name2", "desc2", false, ConfidenceLevel.LOW_CONFIDENCE, 
                         EvidenceConcordance.SINGLE_EVIDENCE, null),
-                new CIOStatementTO("CIO:3", "name3", null, true, ConfidenceLevel.MEDIUM_CONFIDENCE, 
+                new CIOStatementTO("CIO:3", "name3", null, true, null, 
                         EvidenceConcordance.STRONGLY_CONFLICTING, EvidenceTypeConcordance.DIFFERENT_TYPE),
                 new CIOStatementTO("CIO:4", "name4", "desc4", false, ConfidenceLevel.MEDIUM_CONFIDENCE, 
                         EvidenceConcordance.WEAKLY_CONFLICTING, EvidenceTypeConcordance.SAME_TYPE),
                 new CIOStatementTO("CIO:5", "name5", null, true, ConfidenceLevel.HIGH_CONFIDENCE, 
+                        EvidenceConcordance.SINGLE_EVIDENCE, null),
+                new CIOStatementTO("CIO:6", "name6", null, true, ConfidenceLevel.MEDIUM_CONFIDENCE, 
                         EvidenceConcordance.SINGLE_EVIDENCE, null));
-
+        
         //Compare
         assertTrue("CIOStatementTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(methCIOStmt, expectedCIOStmt));
@@ -90,6 +92,7 @@ public class MySQLCIOStatementDAOIT extends MySQLITAncestor {
         expectedCIOStmt = Arrays.asList(
                 new CIOStatementTO(null, null, null, true, ConfidenceLevel.HIGH_CONFIDENCE, null, null),
                 new CIOStatementTO(null, null, null, false, ConfidenceLevel.LOW_CONFIDENCE, null, null),
+                new CIOStatementTO(null, null, null, true, null, null, null),
                 new CIOStatementTO(null, null, null, true, ConfidenceLevel.MEDIUM_CONFIDENCE, null, null),
                 new CIOStatementTO(null, null, null, false, ConfidenceLevel.MEDIUM_CONFIDENCE, null, null));
         //Compare

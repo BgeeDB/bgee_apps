@@ -180,22 +180,11 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         
         Set<GeneDAO.Attribute> attributesToUse = new HashSet<GeneDAO.Attribute>(attributes);
         if (attributes == null || attributes.isEmpty()) {
-//            // we exclude ANCESTRAL_OMA_NODE_ID and ANCESTRAL_OMA_TAXON_ID
-//            // TODO remove when retrieving 'Ancestral OMA' data will be implemented and tested 
-//            attributesToUse = EnumSet.complementOf(EnumSet.of(
-//                    GeneDAO.Attribute.ANCESTRAL_OMA_NODE_ID, 
-//                    GeneDAO.Attribute.ANCESTRAL_OMA_TAXON_ID));
             attributesToUse = EnumSet.allOf(GeneDAO.Attribute.class);
-            //return log.exit("SELECT " + geneTableName + ".* ");
         }
 
         String sql = "";
         for (GeneDAO.Attribute attribute: attributesToUse) {
-//            if (attribute.equals(GeneDAO.Attribute.ANCESTRAL_OMA_NODE_ID) ||
-//                    attribute.equals(GeneDAO.Attribute.ANCESTRAL_OMA_TAXON_ID)) {
-//                // TODO remove when retrieving 'Ancestral OMA' data will be implemented and tested
-//                continue;
-//            }
                 
             if (sql.isEmpty()) {
                 sql += "SELECT ";

@@ -67,8 +67,8 @@ import org.bgee.model.dao.api.species.TaxonDAO;
  * what are the parameters needed. 
  * <p>
  * If a configuration file is used, it must be placed in the classpath. Its default 
- * name is {@link #DEFAULTCONFIGFILE}. This can be changed via System properties, 
- * using the key {@link #CONFIGFILEKEY}.
+ * name is {@link #DEFAULT_CONFIG_FILE}. This can be changed via System properties, 
+ * using the key {@link #CONFIG_FILE_KEY}.
  * <p>
  * See {@link #getDAOManager(Properties)} and {@link #getDAOManager()} for more details 
  * about the instantiation process of a {@code DAOManager}.
@@ -127,18 +127,18 @@ public abstract class DAOManager implements AutoCloseable
     /**
      * A {@code String} representing the default name of the configuration file 
      * to retrieve parameters from. The name of the file to use can be changed 
-     * via system properties, using the key {@link #CONFIGFILEKEY};
+     * via system properties, using the key {@link #CONFIG_FILE_KEY};
      */
-    public static final String DEFAULTCONFIGFILE = "bgee.dao.properties";
+    public static final String DEFAULT_CONFIG_FILE = "/bgee.dao.properties";
     /**
      * A {@code String} representing the key to use to retrieve from system properties 
      * an alternative name for the configuration file.
      */
-    public static final String CONFIGFILEKEY = "bgee.dao.properties.file";
+    public static final String CONFIG_FILE_KEY = "bgee.dao.properties.file";
     
     /**
      * The {@code Properties} obtained at class loading either from system properties, 
-     * or from a configuration file (see {@link #DEFAULTCONFIGFILE}). They will be used 
+     * or from a configuration file (see {@link #DEFAULT_CONFIG_FILE}). They will be used 
      * when {@link #getDAOManager()} is called, as default properties.
      */
     private static final Properties properties = DAOManager.loadProperties();
@@ -146,7 +146,7 @@ public abstract class DAOManager implements AutoCloseable
     /**
      * Get the default <code>java.util.Properties</code> either from the System properties, 
      * or from a configuration file. The name of the configuration file can be changed 
-     * via System properties (see {@link #CONFIGFILEKEY}). This default properties 
+     * via System properties (see {@link #CONFIG_FILE_KEY}). This default properties 
      * will be used when {@link #getDAOManager()} is called. 
      * @return      The <code>java.util.Properties</code> to get properties from.
      */
@@ -157,7 +157,7 @@ public abstract class DAOManager implements AutoCloseable
         //try to get the properties file.
         //default name is bgee.dao.properties
         //check first if an alternative name has been provided in the System properties
-        String propertyFile = props.getProperty(CONFIGFILEKEY, DEFAULTCONFIGFILE);
+        String propertyFile = props.getProperty(CONFIG_FILE_KEY, DEFAULT_CONFIG_FILE);
         log.debug("Trying to use properties file " + propertyFile);
         InputStream propStream = DAOManager.class.getResourceAsStream(propertyFile);
         if (propStream != null) {
@@ -186,7 +186,7 @@ public abstract class DAOManager implements AutoCloseable
     
     /**
      * Return the {@code Properties} obtained at class loading either from system properties, 
-     * or from a configuration file (see {@link #DEFAULTCONFIGFILE}). They will be used 
+     * or from a configuration file (see {@link #DEFAULT_CONFIG_FILE}). They will be used 
      * when {@link #getDAOManager()} is called, as default properties.
      * <p>
      * The {@code Properties} returned are a copy with the actual {@code Properties} 

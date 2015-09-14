@@ -201,6 +201,36 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         log.exit();
     }
 
+    /**
+     * Get the feature logos of the documentation page, as HTML 'div' elements.
+     *
+     * @return  A {@code String} that is the feature documentation logos as HTML 'div' elements,
+     *          formated in HTML and HTML escaped if necessary.
+     */
+    private String getFeatureDocumentationLogos() {
+        log.entry();
+
+        RequestParameters urlHowToAccessGenerator = this.getNewRequestParameters();
+        urlHowToAccessGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
+        urlHowToAccessGenerator.setAction(RequestParameters.ACTION_DOC_HOW_TO_ACCESS);
+        
+        RequestParameters urlCallFilesGenerator = this.getNewRequestParameters();
+        urlCallFilesGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
+        urlCallFilesGenerator.setAction(RequestParameters.ACTION_DOC_CALL_DOWLOAD_FILES);
+
+        StringBuffer logos = new StringBuffer(); 
+
+        logos.append(HtmlParentDisplay.getSingleFeatureLogo(urlHowToAccessGenerator.getRequestURL(), 
+                false, "How to access to Bgee data", "Access to Bgee data", 
+                this.prop.getLogoImagesRootDirectory() + "bgee_access_logo.png", null));
+
+        logos.append(HtmlParentDisplay.getSingleFeatureLogo(urlCallFilesGenerator.getRequestURL(), 
+                false, "Download file documentation page", "Download file documentation", 
+                this.prop.getLogoImagesRootDirectory() + "download_logo.png", null));
+
+        return log.exit(logos.toString());
+    }
+
     //*******************************************************
     // DOCUMENTATION FOR CALL DOWNLOAD FILES 
     //*******************************************************

@@ -14,6 +14,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import javax.servlet.AsyncContext;
 import javax.servlet.DispatcherType;
@@ -55,12 +56,11 @@ import org.apache.logging.log4j.Logger;
  * Other methods will be implemented in the future, to use this class for test purposes.
  * 
  * @author Frederic Bastian
- * @version Bgee 11 July 2012
+ * @version Bgee 13 Sept. 2015
  * @see org.bgee.controller.RequestParameters
  * @since Bgee 11
  */
-public class BgeeHttpServletRequest implements HttpServletRequest
-{
+public class BgeeHttpServletRequest implements HttpServletRequest {
     private final static Logger log = LogManager.getLogger(BgeeHttpServletRequest.class.getName());
     
     /**
@@ -99,8 +99,7 @@ public class BgeeHttpServletRequest implements HttpServletRequest
      * Default constructor, 
      * used to simulate a request with no parameters set (empty query string).
      */
-    public BgeeHttpServletRequest()
-    {
+    public BgeeHttpServletRequest() {
         this("");
     }
 
@@ -116,8 +115,7 @@ public class BgeeHttpServletRequest implements HttpServletRequest
      * 						to set the {@code queryString} attribute of this class, 
      * 						with values of parameters URL encoded in UTF-8.
      */
-    public BgeeHttpServletRequest(String queryString)
-    {
+    public BgeeHttpServletRequest(String queryString) {
         this(queryString, "UTF-8");
     }
 
@@ -160,8 +158,7 @@ public class BgeeHttpServletRequest implements HttpServletRequest
      * @see 	#queryString
      * @see 	#loadParameterMap()
      */
-    private void setQueryString(String queryString) 
-    {
+    private void setQueryString(String queryString) {
         log.entry(queryString);
         this.queryString = queryString;
         this.loadParameterMap();
@@ -207,7 +204,7 @@ public class BgeeHttpServletRequest implements HttpServletRequest
 
         //conversion to Map<String, String[]>
         for (String key : mapOfLists.keySet()) {
-            this.getParameterMap().put(key, mapOfLists.get(key).toArray(new String[] {}));
+            this.parameterMap.put(key, mapOfLists.get(key).toArray(new String[] {}));
         }
         log.exit();
     }
@@ -230,14 +227,12 @@ public class BgeeHttpServletRequest implements HttpServletRequest
     }
 
     @Override
-    public String getQueryString() 
-    {
+    public String getQueryString() {
         return this.queryString;
     }
 
     @Override
-    public String getParameter(String parameterName) 
-    {
+    public String getParameter(String parameterName) {
         log.entry(parameterName);
         String[] values = this.getParameterValues(parameterName);
         if (values != null && values.length > 0) {
@@ -247,35 +242,39 @@ public class BgeeHttpServletRequest implements HttpServletRequest
     }
 
     @Override
-    public String[] getParameterValues(String parameterName) 
-    {
-        return this.getParameterMap().get(parameterName);
+    public String[] getParameterValues(String parameterName) {
+        String[] vals = this.parameterMap.get(parameterName);
+        return vals == null? null: vals.clone();
     }
 
     @Override
-    //TODO: this public method should return a clone of the Map, not the actual Map
-    public Map<String, String[]> getParameterMap() 
-    {
-        return this.parameterMap;
+    public Map<String, String[]> getParameterMap() {
+        if (this.parameterMap == null) {
+            return null;
+        }
+        //deep cloning the map
+        return this.parameterMap.entrySet().stream()
+                .collect(Collectors.toMap(e -> e.getKey(), 
+                                          e -> e.getValue() == null ? null: e.getValue().clone()));
     }
 
     @Override
-    //TODO: Do a check on the character encoding to be able to throw a UnsupportedEncodingException
     public void setCharacterEncoding(String encoding)
-            throws UnsupportedEncodingException 
-    {
+            throws UnsupportedEncodingException {
+        //currently we only accept UTF-8
+        if (!"UTF-8".equals(encoding)) {
+            throw new UnsupportedEncodingException("Only UTF-8 is currenlty spported");
+        }
         this.characterEncoding = encoding;
     }
 
     @Override
-    public String getCharacterEncoding() 
-    {
+    public String getCharacterEncoding() {
         return this.characterEncoding;
     }
     //*******************************************
     //  NON-IMPLEMENTED OVERRIDEN METHODS
     //*******************************************
-    @SuppressWarnings("unused")
     @Override
     public Object getAttribute(String arg0) {
         return null;
@@ -296,7 +295,6 @@ public class BgeeHttpServletRequest implements HttpServletRequest
         return null;
     }
 
-    @SuppressWarnings("unused")
     @Override
     public ServletInputStream getInputStream() throws IOException {
         return null;
@@ -337,13 +335,11 @@ public class BgeeHttpServletRequest implements HttpServletRequest
         return null;
     }
 
-    @SuppressWarnings("unused")
     @Override
     public BufferedReader getReader() throws IOException {
         return null;
     }
 
-    @SuppressWarnings("unused")
     @Override
     public String getRealPath(String arg0) {
         return null;
@@ -364,7 +360,6 @@ public class BgeeHttpServletRequest implements HttpServletRequest
         return 0;
     }
 
-    @SuppressWarnings("unused")
     @Override
     public RequestDispatcher getRequestDispatcher(String arg0) {
         return null;
@@ -390,13 +385,11 @@ public class BgeeHttpServletRequest implements HttpServletRequest
         return false;
     }
 
-    @SuppressWarnings("unused")
     @Override
     public void removeAttribute(String arg0) {
 
     }
 
-    @SuppressWarnings("unused")
     @Override
     public void setAttribute(String arg0, Object arg1) {
 
@@ -417,13 +410,11 @@ public class BgeeHttpServletRequest implements HttpServletRequest
         return null;
     }
 
-    @SuppressWarnings("unused")
     @Override
     public long getDateHeader(String arg0) {
         return 0;
     }
 
-    @SuppressWarnings("unused")
     @Override
     public String getHeader(String arg0) {
         return null;
@@ -434,13 +425,11 @@ public class BgeeHttpServletRequest implements HttpServletRequest
         return null;
     }
 
-    @SuppressWarnings("unused")
     @Override
     public Enumeration<String> getHeaders(String arg0) {
         return null;
     }
 
-    @SuppressWarnings("unused")
     @Override
     public int getIntHeader(String arg0) {
         return 0;
@@ -486,7 +475,6 @@ public class BgeeHttpServletRequest implements HttpServletRequest
         return null;
     }
 
-    @SuppressWarnings("unused")
     @Override
     public HttpSession getSession(boolean arg0) {
         return null;
@@ -517,7 +505,6 @@ public class BgeeHttpServletRequest implements HttpServletRequest
         return false;
     }
 
-    @SuppressWarnings("unused")
     @Override
     public boolean isUserInRole(String arg0) {
         return false;
@@ -533,7 +520,6 @@ public class BgeeHttpServletRequest implements HttpServletRequest
         return null;
     }
 
-    @SuppressWarnings("unused")
     @Override
     public AsyncContext startAsync(ServletRequest servletRequest,
             ServletResponse servletResponse) {
@@ -560,33 +546,28 @@ public class BgeeHttpServletRequest implements HttpServletRequest
         return null;
     }
 
-    @SuppressWarnings("unused")
     @Override
     public boolean authenticate(HttpServletResponse response)
             throws IOException, ServletException {
         return false;
     }
 
-    @SuppressWarnings("unused")
     @Override
     public void login(String username, String password) throws ServletException {
 
     }
 
-    @SuppressWarnings("unused")
     @Override
     public void logout() throws ServletException {
 
     }
 
-    @SuppressWarnings("unused")
     @Override
     public Collection<Part> getParts() throws IOException,
     IllegalStateException, ServletException {
         return null;
     }
 
-    @SuppressWarnings("unused")
     @Override
     public Part getPart(String name) throws IOException, IllegalStateException,
     ServletException {

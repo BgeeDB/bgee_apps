@@ -66,9 +66,10 @@ public interface SummarySimilarityAnnotationDAO extends
      * @return                  A {@code SummarySimilarityAnnotationTOResultSet} allowing 
      *                          to retrieve the requested {@code SummarySimilarityAnnotationTO}s.
      * @throws DAOException     If an error occurred when accessing the data source.
+     * @throws IllegalArgumentException If {@code taxonId} is {@code null} or empty.
      */
     public SummarySimilarityAnnotationTOResultSet getSummarySimilarityAnnotations(
-            String taxonId) throws DAOException;
+            String taxonId) throws DAOException, IllegalArgumentException;
     
     /**
      * Retrieve <strong>positive</strong> transitive similarity annotations and 
@@ -114,11 +115,12 @@ public interface SummarySimilarityAnnotationDAO extends
      * @return                  A {@code SimAnnotToAnatEntityTOResultSet} allowing 
      *                          to retrieve the requested {@code SimAnnotToAnatEntityTO}s.
      * @throws DAOException     If an error occurred when accessing the data source. 
+     * @throws IllegalArgumentException If {@code ancestralTaxonId} is {@code null} or empty.
      */
     //Note that if someday we use other similarity concepts than 'historical homology' 
     //(HOM:0000007), then this method will need to accept the HOMId as argument.
     public SimAnnotToAnatEntityTOResultSet getSimAnnotToAnatEntity(String ancestralTaxonId, 
-            Set<String> speciesIds) throws DAOException;
+            Set<String> speciesIds) throws DAOException, IllegalArgumentException;
     
     /**
      * Retrieve <strong>positive</strong> transitive similarity annotations and 
@@ -145,7 +147,8 @@ public interface SummarySimilarityAnnotationDAO extends
      * @return                  A {@code SimAnnotToAnatEntityTOResultSet} allowing 
      *                          to retrieve the requested {@code SimAnnotToAnatEntityTO}s.
      * @throws DAOException     If an error occurred when accessing the data source.
-     * @throws IllegalArgumentException If {@code speciesIds} is {@code null} or empty.
+     * @throws IllegalArgumentException If {@code ancestralTaxonId} or {@code speciesIds} is 
+     *                                  {@code null} or empty.
      * @see #getSimAnnotToAnatEntity(String, Set)
      */
     //Note that if someday we use other similarity concepts than 'historical homology' 

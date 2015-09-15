@@ -19,11 +19,12 @@ BEGIN
         VALUES (1,'First DataSource','XRefUrl','experimentUrl','evidenceUrl','baseUrl',NOW(),'1.0','My custom data source',1,'Genomics database',1);
 
         INSERT INTO taxon (taxonId,taxonScientificName,taxonCommonName,taxonLeftBound,taxonRightBound,taxonLevel,bgeeSpeciesLCA) 
-        VALUES (111,'taxSName111','taxCName111',1,10,1,1),
+        VALUES (111,'taxSName111','taxCName111',1,12,1,1),
                (211,'taxSName211','taxCName211',2,3,2,0),
-               (311,'taxSName311','taxCName311',4,9,2,0),
+               (311,'taxSName311','taxCName311',4,11,2,0),
                (411,'taxSName411','taxCName411',5,6,1,1),
-               (511,'taxSName511','taxCName511',7,8,1,1);
+               (511,'taxSName511','taxCName511',7,10,1,1),
+               (611,'taxSName611','taxCName611',8,9,1,1);
 
         INSERT INTO OMAHierarchicalGroup (OMANodeId,OMAGroupId,OMANodeLeftBound,OMANodeRightBound,taxonId) 
         VALUES (1,'HOG:NAILDQY',1,8,111),
@@ -36,8 +37,11 @@ BEGIN
 
         INSERT INTO species (speciesId,genus,species,speciesCommonName,taxonId,genomeFilePath,genomeSpeciesId,fakeGeneIdPrefix) 
         VALUES (11,'gen11','sp11','spCName11',111,'path/genome11',0,''),
-               (21,'gen21','sp21','spCName21',211,'path/genome21',52,'FAKEPREFIX'),
-               (31,'gen31','sp31','spCName31',311,'path/genome31',0,'');
+               (21,'gen21','sp21','spCName21',211,'path/genome21',51,'PREFIX51'),
+               (31,'gen31','sp31','spCName31',311,'path/genome31',0,''),
+               (41,'gen41','sp41','spCName41',411,'path/genome41',0,''),
+               (42,'gen41','sp42','spCName42',411,'path/genome42',41,'PREFIX41'),
+               (51,'gen51','sp51','spCName51',511,'path/genome51',0,'');
 
         INSERT INTO gene (geneId,geneName,geneDescription,speciesId,geneBioTypeId,OMAParentNodeId,ensemblGene) 
         VALUES ('ID1','genN1','genDesc1',11,12,5,true),
@@ -111,7 +115,10 @@ BEGIN
                ('Anat_id11','cerebellum','cerebellum desc','Stage_id9','Stage_id13',false),
                ('Anat_id12','anat12','unused anatE 12','Stage_id1','Stage_id13',false),
                ('Anat_id13','anat13','unused anatE 13','Stage_id9','Stage_id10',true),
-               ('Anat_id14','anat14','anatE 14','Stage_id6','Stage_id13',true);
+               ('Anat_id14','anat14','anatE 14','Stage_id6','Stage_id13',true),
+               ('UBERON:0001687','stapes bone','stapes bone description','Stage_id1','Stage_id2',false),
+               ('UBERON:0001853','utricle of membranous labyrinth','utricle of membranous labyrinth description','Stage_id1','Stage_id2',false),
+               ('UBERON:0011606','hyomandibular bone','hyomandibular bone description','Stage_id1','Stage_id2',false);
 
         INSERT INTO anatEntityTaxonConstraint(anatEntityId,speciesId)
         VALUES ('Anat_id1',null),
@@ -129,7 +136,11 @@ BEGIN
                ('Anat_id11',null),
                ('Anat_id12',21),
                ('Anat_id13',null),
-               ('Anat_id14',11);
+               ('Anat_id14',11),
+               ('UBERON:0001853',11),
+               ('UBERON:0001853',41),
+               ('UBERON:0001687',51),
+               ('UBERON:0011606',null);
                
         INSERT INTO anatEntityRelation(anatEntityRelationId,anatEntitySourceId,anatEntityTargetId,relationType,relationStatus)
         VALUES (1,'Anat_id1','Anat_id1','is_a part_of','reflexive'),
@@ -367,14 +378,17 @@ BEGIN
         INSERT INTO CIOStatement(CIOId, CIOName, CIODescription, trusted, confidenceLevel, evidenceConcordance, evidenceTypeConcordance)
         VALUES ('CIO:1', 'name1', 'desc1', true, 'high confidence level', 'congruent', 'same type'),
                ('CIO:2', 'name2', 'desc2', false, 'low confidence level', 'single evidence', null),
-               ('CIO:3', 'name3', null, true, 'medium confidence level', 'strongly conflicting', 'different type'),
+               ('CIO:3', 'name3', null, true, null, 'strongly conflicting', 'different type'),
                ('CIO:4', 'name4', 'desc4', false, 'medium confidence level', 'weakly conflicting', 'same type'),
-               ('CIO:5', 'name5', null, true, 'high confidence level', 'single evidence', null);
+               ('CIO:5', 'name5', null, true, 'high confidence level', 'single evidence', null),
+               ('CIO:6', 'name6', null, true, 'medium confidence level', 'single evidence', null);
                
         INSERT INTO evidenceOntology(ECOId, ECOName, ECODescription)
         VALUES ('ECO:1', 'name1', 'desc1'),
                ('ECO:2', 'name2', null),
-               ('ECO:3', 'name3', 'desc3');
+               ('ECO:3', 'name3', 'desc3'),
+               ('ECO:4', 'name4', null),
+               ('ECO:5', 'name5', 'desc5');
 
         INSERT INTO keyword(keywordId, keyword) 
         VALUES (1, 'keywordRelatedToNothing'), 
@@ -403,6 +417,39 @@ BEGIN
         VALUES (1, 'file1.zip', '/dir/to/file1', 'this is file1', 'expr_calls',1, 0),
                (2, 'file2.zip', '/dir/to/file2', 'this is file2', 'expr_calls',2, 0);
 
+        -- Data for MySQLSummarySimilarityAnnotationDAOIT and MySQLRawSimilarityAnnotationDAOIT
+        INSERT INTO summarySimilarityAnnotation (summarySimilarityAnnotationId,taxonId,negated,CIOId)
+        VALUES (527, 111, 0, 'CIO:3'),
+               (528, 411, 0, 'CIO:6'),
+               (529, 511, 0, 'CIO:5'),
+               (530, 311, 1, 'CIO:6'),
+               (421, 611, 0, 'CIO:5'),
+               (422, 511, 0, 'CIO:1'),
+               (1870, 511, 0, 'CIO:5');
+
+        INSERT INTO rawSimilarityAnnotation (summarySimilarityAnnotationId,negated,ECOId,CIOId,referenceId,referenceTitle,supportingText,assignedBy,curator,annotationDate)
+        VALUES (527, 0, 'ECO:1', 'CIO:2', 'ISBN:978-0030223693', 'Liem KF', 'Text2', 'bgee', 'ANN', '2015-03-30'),
+               (527, 1, 'ECO:2', 'CIO:6', 'PMID:19786082', 'Manley GA', 'Text1', 'bgee', 'ANN', '2015-03-30'),
+               (528, 0, 'ECO:2', 'CIO:6', 'PMID:19786082', 'Manley GA', 'Text1', 'bgee', 'ANN', '2015-03-30'),
+               (529, 0, 'ECO:2', 'CIO:5', 'PMID:19786082', 'Manley GA', 'Text1', 'bgee', 'ANN', '2015-03-30'),
+               (530, 1, 'ECO:2', 'CIO:6', 'PMID:19786082', 'Manley GA', 'Text1', 'bgee', 'ANN', '2015-03-30'),
+               (421, 0, 'ECO:2', 'CIO:5', 'PMID:22686855', 'Anthwal N', 'Text3', 'bgee', 'ANN', '2015-04-01'),
+               (422, 0, 'ECO:3', 'CIO:5', 'DOI:10.1017/S0022215100009087', 'Gerrie J', 'Text4', 'bgee', 'ANN', '2013-07-04'),
+               (422, 0, 'ECO:4', 'CIO:5', 'PMID:19786082', 'Manley GA', 'Text5', 'bgee', 'ANN', '2013-07-04'),
+               (422, 0, 'ECO:5', 'CIO:5', 'PMID:19786082', 'Manley GA', 'Text5', 'bgee', 'ANN', '2013-07-04'),
+               (422, 0, 'ECO:2', 'CIO:5', 'PMID:19786082', 'Manley GA', 'Text5', 'bgee', 'ANN', '2013-07-04'),
+               (1870, 0, 'ECO:2', 'CIO:5', 'DOI:10.1017/S0022215100009087', 'Gerrie J', 'Text4', 'bgee', 'ANN', '2015-04-02');
+
+        INSERT INTO similarityAnnotationToAnatEntityId (summarySimilarityAnnotationId,anatEntityId)
+        VALUES (527, 'UBERON:0001853'),
+               (528, 'UBERON:0001853'),
+               (529,'UBERON:0001853'),
+               (530,'UBERON:0001853'),
+               (421,'UBERON:0001687'),
+               (422,'UBERON:0001687'),
+               (422,'UBERON:0011606'),
+               (1870,'UBERON:0011606');
+               
     END IF;
 END
 ;
@@ -414,6 +461,11 @@ DROP PROCEDURE IF EXISTS emptyTestDBs
 CREATE PROCEDURE emptyTestDBs()
 BEGIN
     
+-- AVAILABLE FILES FOR DOWNLOAD
+DELETE FROM speciesToDataGroup;
+DELETE FROM speciesDataGroup;
+DELETE FROM downloadFile;
+
 -- SUMMARY NO-EXPRESSION CALLS
 DELETE FROM differentialExpression;
 DELETE FROM globalNoExpressionToNoExpression;
@@ -474,6 +526,11 @@ DELETE FROM geneOntologyTermAltId;
 DELETE FROM geneOntologyTerm;
 DELETE FROM OMAHierarchicalGroup;
 
+-- SIMILARITY ANNOTATIONS
+DELETE FROM rawSimilarityAnnotation;
+DELETE FROM similarityAnnotationToAnatEntityId;
+DELETE FROM summarySimilarityAnnotation;
+
 -- ANATOMY AND DEVELOPMENT
 DELETE FROM anatEntityRelationTaxonConstraint;
 DELETE FROM anatEntityRelation;
@@ -486,6 +543,10 @@ DELETE FROM stageNameSynonym;
 DELETE FROM stageTaxonConstraint;
 DELETE FROM stage;
 
+-- CONFIDENCE AND EVIDENCE ONTOLOGIES
+DELETE FROM CIOStatement;
+DELETE FROM evidenceOntology;
+
 -- TAXONOMY
 DELETE FROM species;
 DELETE FROM speciesToKeyword;
@@ -495,7 +556,6 @@ DELETE FROM taxon;
 DELETE FROM author;
 DELETE FROM dataSource;
 DELETE FROM keyword;
-
 
 END
 ;

@@ -3,17 +3,21 @@ package org.bgee.model.dao.mysql.anatdev.mapping;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.sql.Date;
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.Month;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.TOComparator;
+import org.bgee.model.dao.api.anatdev.mapping.RawSimilarityAnnotationDAO;
 import org.bgee.model.dao.api.anatdev.mapping.RawSimilarityAnnotationDAO.RawSimilarityAnnotationTO;
 import org.bgee.model.dao.mysql.MySQLITAncestor;
-import org.bgee.model.dao.mysql.anatdev.mapping.MySQLRawSimilarityAnnotationDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.junit.Test;
 
@@ -45,11 +49,70 @@ public class MySQLRawSimilarityAnnotationDAOIT  extends MySQLITAncestor {
      * Test the select method 
      * {@link MySQLRawSimilarityAnnotationDAO#getAllRawSimilarityAnnotations()}.
      */
-    //TODO: integration test
     @Test
-    public void shouldGetRawSimilarityAnnotations() throws SQLException {
+    public void shouldGetAllRawSimilarityAnnotations() throws SQLException {
+        this.useSelectDB();
+        
+        MySQLRawSimilarityAnnotationDAO dao = 
+                new MySQLRawSimilarityAnnotationDAO(this.getMySQLDAOManager());
+        dao.setAttributes(Arrays.asList(RawSimilarityAnnotationDAO.Attribute.values()));
+        
+        List<RawSimilarityAnnotationTO> actualResults = 
+                dao.getAllRawSimilarityAnnotations().getAllTOs();
+        List<RawSimilarityAnnotationTO> expectedTaxa = Arrays.asList(
+                new RawSimilarityAnnotationTO("527", false, "ECO:1", "CIO:2", "ISBN:978-0030223693", 
+                        "Liem KF", "Text2", "bgee", "ANN", asDate(2015, Month.MARCH, 30)),
+                new RawSimilarityAnnotationTO("527", true, "ECO:2", "CIO:6", "PMID:19786082", 
+                        "Manley GA", "Text1", "bgee", "ANN", asDate(2015, Month.MARCH, 30)),
+                new RawSimilarityAnnotationTO("528", false, "ECO:2", "CIO:6", "PMID:19786082", 
+                        "Manley GA", "Text1", "bgee", "ANN", asDate(2015, Month.MARCH, 30)),
+                new RawSimilarityAnnotationTO("529", false, "ECO:2", "CIO:5", "PMID:19786082", 
+                        "Manley GA", "Text1", "bgee", "ANN", asDate(2015, Month.MARCH, 30)),
+                new RawSimilarityAnnotationTO("530", true, "ECO:2", "CIO:6", "PMID:19786082", 
+                        "Manley GA", "Text1", "bgee", "ANN", asDate(2015, Month.MARCH, 30)),
+                new RawSimilarityAnnotationTO("421", false, "ECO:2", "CIO:5", "PMID:22686855", 
+                        "Anthwal N", "Text3", "bgee", "ANN", asDate(2015, Month.APRIL, 01)),
+                new RawSimilarityAnnotationTO("422", false, "ECO:3", "CIO:5", "DOI:10.1017/S0022215100009087", 
+                        "Gerrie J", "Text4", "bgee", "ANN", asDate(2013, Month.JULY, 04)),
+                new RawSimilarityAnnotationTO("422", false, "ECO:4", "CIO:5", "PMID:19786082", 
+                        "Manley GA", "Text5", "bgee", "ANN", asDate(2013, Month.JULY, 04)),
+                new RawSimilarityAnnotationTO("422", false, "ECO:5", "CIO:5", "PMID:19786082", 
+                        "Manley GA", "Text5", "bgee", "ANN", asDate(2013, Month.JULY, 04)),
+                new RawSimilarityAnnotationTO("422", false, "ECO:2", "CIO:5", "PMID:19786082", 
+                        "Manley GA", "Text5", "bgee", "ANN", asDate(2013, Month.JULY, 04)),
+                new RawSimilarityAnnotationTO("1870", false, "ECO:2", "CIO:5", "DOI:10.1017/S0022215100009087", 
+                        "Gerrie J", "Text4", "bgee", "ANN", asDate(2015, Month.APRIL, 02)));
+        assertTrue("RawSimilarityAnnotationTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(actualResults, expectedTaxa));
+
+        dao.setAttributes(Arrays.asList(RawSimilarityAnnotationDAO.Attribute.ECO_ID, 
+                RawSimilarityAnnotationDAO.Attribute.CIO_ID));
+        actualResults = dao.getAllRawSimilarityAnnotations().getAllTOs();
+        expectedTaxa = Arrays.asList(
+                new RawSimilarityAnnotationTO(null, null, "ECO:1", "CIO:2", null, null, null, null, null, null),
+                new RawSimilarityAnnotationTO(null, null, "ECO:2", "CIO:6", null, null, null, null, null, null),
+                new RawSimilarityAnnotationTO(null, null, "ECO:2", "CIO:5", null, null, null, null, null, null),
+                new RawSimilarityAnnotationTO(null, null, "ECO:3", "CIO:5", null, null, null, null, null, null),
+                new RawSimilarityAnnotationTO(null, null, "ECO:4", "CIO:5", null, null, null, null, null, null),
+                new RawSimilarityAnnotationTO(null, null, "ECO:5", "CIO:5", null, null, null, null, null, null));
+        assertTrue("RawSimilarityAnnotationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(actualResults, expectedTaxa));
     }
 
+    /**
+     * Obtains an instance of Date from provided {@code year}, {@code month}, and {@code day}.
+     * 
+     * @param year  An {@code int} that is the year to be used.
+     * @param month A {@code Month} that is the month-of-year to be used.
+     * @param day   An {@code int} that is the day to be used.
+     * @return      the {@code java.util.Date} representing the date of provided {@code year}, 
+     *              {@code month}, and {@code day}.
+     */
+    private static java.util.Date asDate(int year, Month month, int day) {
+        LocalDate localDate = LocalDate.of(year, month, day);
+        return java.util.Date.from(localDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
+    }
+    
     /**
      * Test the insert method 
      * {@link MySQLRawSimilarityAnnotationDAO#insertRawSimilarityAnnotations()}.
@@ -59,10 +122,10 @@ public class MySQLRawSimilarityAnnotationDAOIT  extends MySQLITAncestor {
         
         this.useEmptyDB();
 
-        // Create a Collection of SummarySimilarityAnnotationTO to be inserted,
+        // Create a Collection of RawSimilarityAnnotationTO to be inserted,
         // no attribute could be null according database schema.
-        Date date1 = new java.sql.Date(12345);
-        Date date2 = new java.sql.Date(12349);
+        java.sql.Date date1 = new java.sql.Date(12345);
+        java.sql.Date date2 = new java.sql.Date(12349);
         Collection<RawSimilarityAnnotationTO> rawTOs = Arrays.asList(
                 new RawSimilarityAnnotationTO("1", true, 
                         "ecoId1", "cioId1", "referenceId1", "referenceTitle1", 

@@ -2,15 +2,20 @@ package org.bgee.model.dao.mysql.gene;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.TOComparator;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTO;
 import org.bgee.model.dao.mysql.MySQLITAncestor;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
-import org.bgee.model.dao.mysql.gene.MySQLHierarchicalGroupDAO;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -44,6 +49,64 @@ public class MySQLHierarchicalGroupDAOIT extends MySQLITAncestor {
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
+    /**
+     * Test the select method {@link MySQLHierarchicalGroupDAO#getGroupToGene()}.
+     */
+    @Test
+    public void shouldGetGroupToGene() throws SQLException {
+
+        this.useSelectDB();
+
+        MySQLHierarchicalGroupDAO dao = new MySQLHierarchicalGroupDAO(this.getMySQLDAOManager());
+        dao.setAttributes(Arrays.asList(HierarchicalGroupDAO.Attribute.values()));
+        String taxonId = null;
+        Set<String> speciesIds = new HashSet<String>();
+        
+        // No taxon ID
+        try {
+            dao.getGroupToGene(taxonId, speciesIds).getAllTOs();
+            fail("No IllegalArgumentException was thrown while taxon ID is null"); 
+        } catch (IllegalArgumentException e) {
+            // Test passed
+        }
+        
+        // Taxon ID without species ID (taxonId = 111)
+        taxonId = "111";
+        List<HierarchicalGroupToGeneTO> expectedGroupToGene = Arrays.asList(
+                new HierarchicalGroupToGeneTO("1", "ID2"),
+                new HierarchicalGroupToGeneTO("1", "ID3"), 
+                new HierarchicalGroupToGeneTO("5", "ID1"));
+        List<HierarchicalGroupToGeneTO> actualGroupToGene = 
+                dao.getGroupToGene(taxonId, speciesIds).getAllTOs();
+        assertTrue("HierarchicalGroupToGeneTOs incorrectly retrieved: actualGroupToGene=" +
+                actualGroupToGene + ", and expectedGroupToGene=" + expectedGroupToGene, 
+                TOComparator.areTOCollectionsEqual(actualGroupToGene, expectedGroupToGene));
+
+        // Taxon ID without species ID (taxonId = 211)
+        taxonId = "211";
+        expectedGroupToGene = Arrays.asList(new HierarchicalGroupToGeneTO("2", "ID2"));
+        actualGroupToGene = dao.getGroupToGene(taxonId, speciesIds).getAllTOs();
+        assertTrue("HierarchicalGroupToGeneTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(actualGroupToGene, expectedGroupToGene));
+        
+        // Taxon ID with one species ID (taxonId = 111 & species ID = 31)
+        taxonId = "111";
+        speciesIds.add("31");
+        expectedGroupToGene = Arrays.asList(new HierarchicalGroupToGeneTO("1", "ID3"));
+        actualGroupToGene = dao.getGroupToGene(taxonId, speciesIds).getAllTOs();
+        assertTrue("HierarchicalGroupToGeneTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(actualGroupToGene, expectedGroupToGene));
+        
+        // Taxon ID with two species IDs (taxonId = 111 & species ID = 31 + 11)
+        speciesIds.add("11");
+        expectedGroupToGene = Arrays.asList(
+                new HierarchicalGroupToGeneTO("1", "ID3"), 
+                new HierarchicalGroupToGeneTO("5", "ID1"));        
+        actualGroupToGene = dao.getGroupToGene(taxonId, speciesIds).getAllTOs();
+        assertTrue("HierarchicalGroupToGeneTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(actualGroupToGene, expectedGroupToGene));
+    }
+    
     /**
      * Test the select method {@link MySQLHierarchicalGroupDAO#insertHierarchicalGroups()}.
      */

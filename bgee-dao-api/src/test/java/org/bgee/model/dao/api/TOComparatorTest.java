@@ -22,6 +22,7 @@ import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO.Domain;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTO;
 import org.bgee.model.dao.api.keyword.KeywordDAO.EntityToKeywordTO;
 import org.bgee.model.dao.api.keyword.KeywordDAO.KeywordTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
@@ -151,6 +152,23 @@ public class TOComparatorTest extends TestAncestor {
         to2 = new HierarchicalGroupTO("2", "ID1", 1, 2, 10);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+    }
+    
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * using {@code HierarchicalGroupToGeneTO}s.
+     */
+    @Test
+    public void testAreHierarchicalGroupToGeneTOEqual() {
+        HierarchicalGroupToGeneTO to1 = new HierarchicalGroupToGeneTO("1", "ID1");
+        HierarchicalGroupToGeneTO to2 = new HierarchicalGroupToGeneTO("1", "ID1");
+        assertTrue(TOComparator.areTOsEqual(to1, to2));
+        
+        to2 = new HierarchicalGroupToGeneTO("1", "ID2");
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+        
+        to1 = new HierarchicalGroupToGeneTO("2", "ID2");
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
     }
     
     /**

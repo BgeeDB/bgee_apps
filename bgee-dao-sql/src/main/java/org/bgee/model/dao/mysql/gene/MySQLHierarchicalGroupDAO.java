@@ -50,9 +50,13 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
     }
     
     @Override
-    //TODO: integration test
     public HierarchicalGroupToGeneTOResultSet getGroupToGene(String taxonId, 
-            Set<String> speciesIds) throws DAOException {
+            Set<String> speciesIds) throws DAOException, IllegalArgumentException {
+        log.entry(taxonId, speciesIds);
+
+        if (taxonId == null) {
+            throw log.throwing(new IllegalArgumentException("No taxon ID is provided"));
+        }
         
         boolean hasSpecies  = speciesIds != null && !speciesIds.isEmpty();
         

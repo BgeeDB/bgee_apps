@@ -7,6 +7,8 @@ import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTO;
 import org.bgee.model.dao.api.anatdev.StageDAO.StageTO;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
 import org.bgee.model.dao.api.anatdev.mapping.RawSimilarityAnnotationDAO.RawSimilarityAnnotationTO;
+import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO.GroupToStageTO;
+import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SimAnnotToAnatEntityTO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO;
@@ -19,6 +21,7 @@ import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesDataGroupTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTO;
 import org.bgee.model.dao.api.keyword.KeywordDAO.EntityToKeywordTO;
 import org.bgee.model.dao.api.keyword.KeywordDAO.KeywordTO;
 import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTO;
@@ -113,6 +116,9 @@ public class TOComparator {
         } else if (to1 instanceof HierarchicalGroupTO) {
             return log.exit(areTOsEqual((HierarchicalGroupTO) to1, (HierarchicalGroupTO) to2, 
                     compareId));
+        } else if (to1 instanceof HierarchicalGroupToGeneTO) {
+            return log.exit(areTOsEqual(
+                    (HierarchicalGroupToGeneTO) to1, (HierarchicalGroupToGeneTO) to2));
         } else if (to1 instanceof TaxonConstraintTO) {
             return log.exit(areTOsEqual((TaxonConstraintTO) to1, (TaxonConstraintTO) to2));
         } else if (to1 instanceof RelationTO) {
@@ -145,6 +151,10 @@ public class TOComparator {
             return log.exit(areTOsEqual(
                     (SummarySimilarityAnnotationTO) to1, 
                     (SummarySimilarityAnnotationTO) to2));
+        } else if (to1 instanceof SimAnnotToAnatEntityTO) {
+            return log.exit(areTOsEqual((SimAnnotToAnatEntityTO) to1, (SimAnnotToAnatEntityTO) to2));
+        } else if (to1 instanceof GroupToStageTO) {
+            return log.exit(areTOsEqual((GroupToStageTO) to1, (GroupToStageTO) to2));
         } else if (to1 instanceof KeywordTO) {
             return log.exit(areTOsEqual((KeywordTO) to1, (KeywordTO) to2, compareId));
         } else if (to1 instanceof EntityToKeywordTO) {
@@ -419,6 +429,25 @@ public class TOComparator {
                 to1.getLeftBound() == to2.getLeftBound() && 
                 to1.getRightBound() == to2.getRightBound() && 
                 to1.getTaxonId() == to2.getTaxonId()) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    
+    /**
+     * Method to compare two {@code HierarchicalGroupToGeneTO}s, to check for complete equality 
+     * of each attribute. This is because the {@code equals} method of 
+     * {@code HierarchicalGroupToGeneTO}s is solely based on their ID, not on other attributes.
+     * 
+     * @param to1   A {@code HierarchicalGroupToGeneTO} to be compared to {@code to2}.
+     * @param to2   A {@code HierarchicalGroupToGeneTO} to be compared to {@code to1}.
+     * @return      {@code true} if {@code to1} and {@code to2} have all attributes equal.
+     */
+    private static boolean areTOsEqual(HierarchicalGroupToGeneTO to1, HierarchicalGroupToGeneTO to2) {
+        log.entry(to1, to2);
+
+        if (StringUtils.equals(to1.getGeneId(), to2.getGeneId()) && 
+                StringUtils.equals(to1.getGroupId(), to2.getGroupId())) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -746,6 +775,7 @@ public class TOComparator {
      */
     private static boolean areTOsEqual(RawSimilarityAnnotationTO to1, RawSimilarityAnnotationTO to2) {
         log.entry(to1, to2);
+        
         if (StringUtils.equals(to1.getSummarySimilarityAnnotationId(), to2.getSummarySimilarityAnnotationId()) &&
             to1.isNegated() == to2.isNegated() &&
             StringUtils.equals(to1.getECOId(), to2.getECOId()) &&
@@ -755,7 +785,9 @@ public class TOComparator {
             StringUtils.equals(to1.getSupportingText(), to2.getSupportingText()) &&
             StringUtils.equals(to1.getAssignedBy(), to2.getAssignedBy()) &&
             StringUtils.equals(to1.getCurator(), to2.getCurator()) &&
-            to1.getAnnotationDate().compareTo(to2.getAnnotationDate()) == 0) {
+            (to1.getAnnotationDate() == to2.getAnnotationDate() ||
+                (to1.getAnnotationDate() != null && to2.getAnnotationDate() != null &&
+                to1.getAnnotationDate().compareTo(to2.getAnnotationDate()) == 0))) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -776,6 +808,45 @@ public class TOComparator {
             StringUtils.equals(to1.getTaxonId(), to2.getTaxonId()) &&
             to1.isNegated() == to2.isNegated() &&
             StringUtils.equals(to1.getCIOId(), to2.getCIOId())) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    
+    /**
+     * Method to compare two {@code SimAnnotToAnatEntityTO}s, to check for complete 
+     * equality of each attribute. 
+     * 
+     * @param to1   A {@code SimAnnotToAnatEntityTO} to be compared to {@code to2}.
+     * @param to2   A {@code SimAnnotToAnatEntityTO} to be compared to {@code to1}.
+     * @return      {@code true} if {@code to1} and {@code to2} have all attributes equal.
+     */
+    private static boolean areTOsEqual(SimAnnotToAnatEntityTO to1, SimAnnotToAnatEntityTO to2) {
+        log.entry(to1, to2);
+        if (StringUtils.equals(
+                to1.getSummarySimilarityAnnotationId(), to2.getSummarySimilarityAnnotationId()) &&
+            StringUtils.equals(to1.getAnatEntityId(), to2.getAnatEntityId())) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    
+    /**
+     * Method to compare two {@code GroupToStageTO}s, to check for complete equality of each
+     * attribute. This is because the {@code equals} method of {@code GroupToStageTO}s is solely
+     * based on their ID, not on other attributes.
+     * 
+     * @param to1   An {@code GroupToStageTO} to be compared to {@code to2}.
+     * @param to2   An {@code GroupToStageTO} to be compared to {@code to1}.
+     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be 
+     *                  used for comparisons. 
+     * @return      {@code true} if {@code to1} and {@code to2} have all 
+     *              attributes equal.
+     */
+    private static boolean areTOsEqual(GroupToStageTO to1, GroupToStageTO to2) {
+        log.entry(to1, to2);
+        if (StringUtils.equals(to1.getGroupId(), to2.getGroupId()) &&
+                StringUtils.equals(to1.getStageId(), to2.getStageId())) {
             return log.exit(true);
         }
         return log.exit(false);

@@ -7,6 +7,7 @@ import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTO;
 import org.bgee.model.dao.api.anatdev.StageDAO.StageTO;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
 import org.bgee.model.dao.api.anatdev.mapping.RawSimilarityAnnotationDAO.RawSimilarityAnnotationTO;
+import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SimAnnotToAnatEntityTO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO;
@@ -149,6 +150,8 @@ public class TOComparator {
             return log.exit(areTOsEqual(
                     (SummarySimilarityAnnotationTO) to1, 
                     (SummarySimilarityAnnotationTO) to2));
+        } else if (to1 instanceof SimAnnotToAnatEntityTO) {
+            return log.exit(areTOsEqual((SimAnnotToAnatEntityTO) to1, (SimAnnotToAnatEntityTO) to2));
         } else if (to1 instanceof KeywordTO) {
             return log.exit(areTOsEqual((KeywordTO) to1, (KeywordTO) to2, compareId));
         } else if (to1 instanceof EntityToKeywordTO) {
@@ -769,6 +772,7 @@ public class TOComparator {
      */
     private static boolean areTOsEqual(RawSimilarityAnnotationTO to1, RawSimilarityAnnotationTO to2) {
         log.entry(to1, to2);
+        
         if (StringUtils.equals(to1.getSummarySimilarityAnnotationId(), to2.getSummarySimilarityAnnotationId()) &&
             to1.isNegated() == to2.isNegated() &&
             StringUtils.equals(to1.getECOId(), to2.getECOId()) &&
@@ -778,7 +782,9 @@ public class TOComparator {
             StringUtils.equals(to1.getSupportingText(), to2.getSupportingText()) &&
             StringUtils.equals(to1.getAssignedBy(), to2.getAssignedBy()) &&
             StringUtils.equals(to1.getCurator(), to2.getCurator()) &&
-            to1.getAnnotationDate().compareTo(to2.getAnnotationDate()) == 0) {
+            (to1.getAnnotationDate() == to2.getAnnotationDate() ||
+                (to1.getAnnotationDate() != null && to2.getAnnotationDate() != null &&
+                to1.getAnnotationDate().compareTo(to2.getAnnotationDate()) == 0))) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -803,6 +809,25 @@ public class TOComparator {
         }
         return log.exit(false);
     }
+    
+    /**
+     * Method to compare two {@code SimAnnotToAnatEntityTO}s, to check for complete 
+     * equality of each attribute. 
+     * 
+     * @param to1   A {@code SimAnnotToAnatEntityTO} to be compared to {@code to2}.
+     * @param to2   A {@code SimAnnotToAnatEntityTO} to be compared to {@code to1}.
+     * @return      {@code true} if {@code to1} and {@code to2} have all attributes equal.
+     */
+    private static boolean areTOsEqual(SimAnnotToAnatEntityTO to1, SimAnnotToAnatEntityTO to2) {
+        log.entry(to1, to2);
+        if (StringUtils.equals(
+                to1.getSummarySimilarityAnnotationId(), to2.getSummarySimilarityAnnotationId()) &&
+            StringUtils.equals(to1.getAnatEntityId(), to2.getAnatEntityId())) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
 
     /**
      * Method to compare two {@code KeywordTO}s, to check for complete 

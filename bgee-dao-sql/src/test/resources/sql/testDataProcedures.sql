@@ -137,8 +137,9 @@ BEGIN
                ('Anat_id12',21),
                ('Anat_id13',null),
                ('Anat_id14',11),
-               ('UBERON:0001853',null),
-               ('UBERON:0001687',null),
+               ('UBERON:0001853',11),
+               ('UBERON:0001853',41),
+               ('UBERON:0001687',51),
                ('UBERON:0011606',null);
                
         INSERT INTO anatEntityRelation(anatEntityRelationId,anatEntitySourceId,anatEntityTargetId,relationType,relationStatus)
@@ -421,7 +422,7 @@ BEGIN
         VALUES (527, 111, 0, 'CIO:3'),
                (528, 411, 0, 'CIO:6'),
                (529, 511, 0, 'CIO:5'),
-               (530, 211, 1, 'CIO:6'),
+               (530, 311, 1, 'CIO:6'),
                (421, 611, 0, 'CIO:5'),
                (422, 511, 0, 'CIO:1'),
                (1870, 511, 0, 'CIO:5');

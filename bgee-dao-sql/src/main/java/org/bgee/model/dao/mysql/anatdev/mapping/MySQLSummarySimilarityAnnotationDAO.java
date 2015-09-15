@@ -16,6 +16,8 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 
+import com.mysql.jdbc.StringUtils;
+
 /**
  * A {@code SummarySimilarityAnnotationDAO} for MySQL.
  *
@@ -48,7 +50,6 @@ public class MySQLSummarySimilarityAnnotationDAO
     }
 
     @Override
-    //TODO: integration test
     public SummarySimilarityAnnotationTOResultSet getAllSummarySimilarityAnnotations()
             throws DAOException {
         log.entry();
@@ -72,10 +73,13 @@ public class MySQLSummarySimilarityAnnotationDAO
     }
 
     @Override
-    //TODO: integration test
     public SummarySimilarityAnnotationTOResultSet getSummarySimilarityAnnotations(
-            String taxonId) throws DAOException {
+            String taxonId) throws DAOException, IllegalArgumentException {
         log.entry(taxonId);
+        
+        if (StringUtils.isNullOrEmpty(taxonId)) {
+            throw log.throwing(new IllegalArgumentException("Taxon ID must be provided"));
+        }
         
         String sql = this.generateSelectClause(this.getAttributes(), "t3", true);
         sql += " FROM taxon AS t1 INNER JOIN taxon AS t2 "
@@ -97,10 +101,12 @@ public class MySQLSummarySimilarityAnnotationDAO
     }
 
     @Override
-    //TODO: integration test
     public SimAnnotToAnatEntityTOResultSet getSimAnnotToAnatEntity(String taxonId, 
-            Set<String> speciesIds) throws DAOException {
+            Set<String> speciesIds) throws DAOException, IllegalArgumentException {
         log.entry(taxonId, speciesIds);
+        if (StringUtils.isNullOrEmpty(taxonId)) {
+            throw log.throwing(new IllegalArgumentException("Taxon ID must be provided"));
+        }
         
         String sql = this.getAnnotToAnatEntityQueryStart();
         
@@ -138,6 +144,9 @@ public class MySQLSummarySimilarityAnnotationDAO
     public SimAnnotToAnatEntityTOResultSet getSimAnnotToLostAnatEntity(String taxonId, 
             Set<String> speciesIds) throws DAOException, IllegalArgumentException {
         log.entry(taxonId, speciesIds);
+        if (StringUtils.isNullOrEmpty(taxonId)) {
+            throw log.throwing(new IllegalArgumentException("Taxon ID must be provided"));
+        }
         if (speciesIds == null || speciesIds.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Some species must be provided."));
         }

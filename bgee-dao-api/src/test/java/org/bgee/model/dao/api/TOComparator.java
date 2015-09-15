@@ -7,6 +7,7 @@ import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTO;
 import org.bgee.model.dao.api.anatdev.StageDAO.StageTO;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
 import org.bgee.model.dao.api.anatdev.mapping.RawSimilarityAnnotationDAO.RawSimilarityAnnotationTO;
+import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO.GroupToStageTO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SimAnnotToAnatEntityTO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
@@ -152,6 +153,8 @@ public class TOComparator {
                     (SummarySimilarityAnnotationTO) to2));
         } else if (to1 instanceof SimAnnotToAnatEntityTO) {
             return log.exit(areTOsEqual((SimAnnotToAnatEntityTO) to1, (SimAnnotToAnatEntityTO) to2));
+        } else if (to1 instanceof GroupToStageTO) {
+            return log.exit(areTOsEqual((GroupToStageTO) to1, (GroupToStageTO) to2));
         } else if (to1 instanceof KeywordTO) {
             return log.exit(areTOsEqual((KeywordTO) to1, (KeywordTO) to2, compareId));
         } else if (to1 instanceof EntityToKeywordTO) {
@@ -827,7 +830,27 @@ public class TOComparator {
         }
         return log.exit(false);
     }
-
+    
+    /**
+     * Method to compare two {@code GroupToStageTO}s, to check for complete equality of each
+     * attribute. This is because the {@code equals} method of {@code GroupToStageTO}s is solely
+     * based on their ID, not on other attributes.
+     * 
+     * @param to1   An {@code GroupToStageTO} to be compared to {@code to2}.
+     * @param to2   An {@code GroupToStageTO} to be compared to {@code to1}.
+     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be 
+     *                  used for comparisons. 
+     * @return      {@code true} if {@code to1} and {@code to2} have all 
+     *              attributes equal.
+     */
+    private static boolean areTOsEqual(GroupToStageTO to1, GroupToStageTO to2) {
+        log.entry(to1, to2);
+        if (StringUtils.equals(to1.getGroupId(), to2.getGroupId()) &&
+                StringUtils.equals(to1.getStageId(), to2.getStageId())) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
 
     /**
      * Method to compare two {@code KeywordTO}s, to check for complete 

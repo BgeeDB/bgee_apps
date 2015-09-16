@@ -144,7 +144,7 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
                     this.exchanger.exchange(null);
                 }
             }
-        };
+        }
 
         // Get two BgeeProperties in the main thread and check that it is the same instance
         BgeeProperties bgeeProp1 = BgeeProperties.getBgeeProperties();

@@ -341,25 +341,67 @@ public class BgeeProperties
     }
 
     /**
-     * @return  An instance of {@code BgeeProperties} with values based on the System properties
-     *          or the properties file present in the classpath or the default properties if 
-     *          nothing else is available. The method will create an instance only once for 
-     *          each thread and always return this instance when called. 
-     *          ("per-thread singleton")
+     * Gets the {@code BgeeProperties} object associated to the current thread. This method 
+     * creates a new instance only once for each thread, and always returns this instance 
+     * when called ("per-thread singleton").
+     * <p>
+     * To set the returned {@code BgeeProperties}, properties are read from, in order of preeminence:
+     * <ul>
+     * <li>The System properties, read only once at loading of this class. Modifying them afterwards 
+     * has no effect. 
+     * <li>The property file defined in System properties (see {@link #PROPERTIES_FILE_NAME_KEY}), 
+     * or from the default property file (see {@link #PROPERTIES_FILE_NAME_DEFAULT}).
+     * It is read only once at loading of this class.
+     * <li>The default values defined in this class. 
+     * </ul> 
+     * <p>
+     * These properties are read only once at class loading. Modifying the system properties 
+     * after class loading will have no effect on the {@code BgeeProperties} objects 
+     * returned by this method. If the method {@link #getBgeeProperties(Properties)} 
+     * was first call in a given thread, then the provided properties will be used 
+     * for all following calls, including calls to this method (it means that this method 
+     * might thus not use the System properties or the file properties).
+     * 
+     * @return  A {@code BgeeProperties} object with values already set. 
+     *          The method will create an instance only once for each thread 
+     *          and always return this instance when called ("per-thread singleton").
+     * @see #getBgeeProperties(Properties)
      */
     public static BgeeProperties getBgeeProperties(){
         return getBgeeProperties(null);
     }
 
     /**
+     * Gets a {@code BgeeProperties} object with properties also read from {@code prop}. 
+     * To set the returned {@code BgeeProperties}, properties are read from, 
+     * in order of preeminence:
+     * <ul>
+     * <li>The provided properties, {@code prop}.
+     * <li>The System properties, read only once at loading of this class. Modifying them afterwards 
+     * has no effect. 
+     * <li>The property file defined in {@code prop} or in System properties 
+     * (see {@link #PROPERTIES_FILE_NAME_KEY}), or from the default property file 
+     * (see {@link #PROPERTIES_FILE_NAME_DEFAULT}). It is read only when instantiating 
+     * a new {@code BgeeProperties} object, so, only at first call 
+     * to a {@code getBgeeProperties} method in a given thread.
+     * <li>The default values defined in this class. 
+     * </ul> 
+     * <p>
+     * Note that this method creates a new instance only once for each thread, 
+     * and always returns this instance when called ("per-thread singleton").  
+     * If this method or the method {@link #getBgeeProperties()} were already called 
+     * from this thread, calling this method again with different properties will have no effect. 
+     * The provided properties will be read only at first instantiation of 
+     * a {@code BgeeProperties} object in a given thread. 
+     * 
      * @param prop  A {@code java.util.Properties} instance that contains the system properties
      *              to use.
      * @return  An instance of {@code BgeeProperties} with values based on the provided
-     *          {@code Properties}. The method will create an instance only once for each
-     *          thread and always return this instance when called. ("per-thread singleton")
+     *          {@code Properties}. The method will create an instance only once for each thread 
+     *          and always return this instance when called ("per-thread singleton").
+     * @see #getBgeeProperties()
      */
-    public static BgeeProperties getBgeeProperties(Properties prop){
-
+    public static BgeeProperties getBgeeProperties(Properties prop) {
         log.entry(prop);
         BgeeProperties bgeeProp;
         long threadId = Thread.currentThread().getId();
@@ -373,7 +415,6 @@ public class BgeeProperties
             bgeeProp = bgeeProperties.get(threadId);
         }
         return log.exit(bgeeProp);
-
     }
 
     /**

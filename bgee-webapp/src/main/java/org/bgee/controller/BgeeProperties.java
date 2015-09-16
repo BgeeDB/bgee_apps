@@ -419,8 +419,7 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      *          {@code Properties}. The method will create an instance only once for each
      *          thread and always return this instance when called. ("per-thread singleton")
      */
-    public static BgeeProperties getBgeeProperties(Properties prop){
-        
+    public static BgeeProperties getBgeeProperties(Properties prop) {
         log.entry(prop);
         BgeeProperties bgeeProp;
         long threadId = Thread.currentThread().getId();
@@ -434,7 +433,6 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
             bgeeProp = (BgeeProperties) bgeeProperties.get(threadId);
         }
         return log.exit(bgeeProp);
-    
     }
 
     /**

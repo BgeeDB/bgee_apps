@@ -402,6 +402,42 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
             "bgee/TopAnatFiles/results/";     
 
     /**
+     * @return  An instance of {@code BgeeProperties} with values based on the System properties
+     *          or the properties file present in the classpath or the default properties if 
+     *          nothing else is available. The method will create an instance only once for 
+     *          each thread and always return this instance when called. 
+     *          ("per-thread singleton")
+     */
+    public static BgeeProperties getBgeeProperties(){
+        return getBgeeProperties(null);
+    }
+
+    /**
+     * @param prop  A {@code java.util.BgeeProperties} instance that contains the system properties
+     *              to use.
+     * @return  An instance of {@code BgeeProperties} with values based on the provided
+     *          {@code Properties}. The method will create an instance only once for each
+     *          thread and always return this instance when called. ("per-thread singleton")
+     */
+    public static BgeeProperties getBgeeProperties(Properties prop){
+        
+        log.entry(prop);
+        BgeeProperties bgeeProp;
+        long threadId = Thread.currentThread().getId();
+        if (! hasBgeeProperties()) {
+            // Create an instance
+            bgeeProp = new BgeeProperties(prop);
+            // Add it to the map
+            bgeeProperties.put(threadId, bgeeProp);
+        }
+        else {
+            bgeeProp = (BgeeProperties) bgeeProperties.get(threadId);
+        }
+        return log.exit(bgeeProp);
+    
+    }
+
+    /**
      * {@code String} that defines the directory where query strings holding storable parameters  
      * from previous large queries are stored. 
      */
@@ -556,64 +592,63 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      * @param prop  A {@code java.util.Properties} instance that contains the system properties
      *              to use.
      */
-    private BgeeProperties(Properties prop) 
-    {
+    private BgeeProperties(Properties prop) {
         // First called the parent constructor, which loads the properties defined in bgee-core
         super(prop);
         log.entry(prop);
-        log.info("Bgee-webapp properties initialization...");
+        log.debug("Bgee-webapp properties initialization...");
         // load the properties from properties file, System and default values
         // Initialize all properties using the injected prop first, alternatively the System
         // properties and then the file. The default value provided will be use if none of the
         // previous solutions contain the property
-        requestParametersStorageDirectory = getStringOption(prop, sysProps, fileProps, 
+        requestParametersStorageDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY,  
                 REQUEST_PARAMETERS_STORAGE_DIRECTORY_DEFAULT);
-        bgeeRootDirectory = getStringOption(prop, sysProps, fileProps, 
+        bgeeRootDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 BGEE_ROOT_DIRECTORY_KEY, BGEE_ROOT_DIRECTORY_DEFAULT);
-        ftpRootDirectory = getStringOption(prop, sysProps, fileProps, 
+        ftpRootDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 FTP_ROOT_DIRECTORY_KEY, FTP_ROOT_DIRECTORY_DEFAULT);
-        downloadRootDirectory = getStringOption(prop, sysProps, fileProps, 
+        downloadRootDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 DOWNLOAD_ROOT_DIRECTORY_KEY, DOWNLOAD_ROOT_DIRECTORY_DEFAULT);
-        downloadExprFilesRootDirectory = getStringOption(prop, sysProps, fileProps, 
+        downloadExprFilesRootDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_KEY, DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_DEFAULT);
-        downloadDiffExprFilesRootDirectory = getStringOption(prop, sysProps, fileProps, 
+        downloadDiffExprFilesRootDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY, 
                 DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_DEFAULT);
-        downloadMultiDiffExprFilesRootDirectory = getStringOption(prop, sysProps, fileProps, 
+        downloadMultiDiffExprFilesRootDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 DOWNLOAD_MULTI_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY, 
                 DOWNLOAD_MULTI_DIFF_EXPR_FILES_ROOT_DIRECTORY_DEFAULT);
-        downloadOrthologFilesRootDirectory = getStringOption(prop, sysProps, fileProps, 
+        downloadOrthologFilesRootDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 DOWNLOAD_ORTHOLOG_FILES_ROOT_DIRECTORY_KEY, 
                 DOWNLOAD_ORTHOLOG_FILES_ROOT_DIRECTORY_DEFAULT);
-        downloadAffyProcExprValueFilesRootDirectory = getStringOption(prop, sysProps, fileProps, 
+        downloadAffyProcExprValueFilesRootDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 DOWNLOAD_AFFY_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY, 
                 DOWNLOAD_AFFY_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT);
-        downloadRNASeqProcExprValueFilesRootDirectory = getStringOption(prop, sysProps, fileProps, 
+        downloadRNASeqProcExprValueFilesRootDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 DOWNLOAD_RNA_SEQ_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY, 
                 DOWNLOAD_RNA_SEQ_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT);
-        javascriptFilesRootDirectory = getStringOption(prop, sysProps, fileProps, 
+        javascriptFilesRootDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY, JAVASCRIPT_FILES_ROOT_DIRECTORY_DEFAULT);
-        javascriptVersionExtension = getStringOption(prop, sysProps, fileProps, 
+        javascriptVersionExtension = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 JAVASCRIPT_VERSION_EXTENSION_KEY, JAVASCRIPT_VERSION_EXTENSION_DEFAULT);
-        cssFilesRootDirectory = getStringOption(prop, sysProps, fileProps, 
+        cssFilesRootDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 CSS_FILES_ROOT_DIRECTORY_KEY, CSS_FILES_ROOT_DIRECTORY_DEFAULT);
-        cssVersionExtension = getStringOption(prop, sysProps, fileProps, 
+        cssVersionExtension = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 CSS_VERSION_EXTENSION_KEY, CSS_VERSION_EXTENSION_DEFAULT);
-        imagesRootDirectory = getStringOption(prop, sysProps, fileProps, 
+        imagesRootDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 IMAGES_ROOT_DIRECTORY_KEY, IMAGES_ROOT_DIRECTORY_DEFAULT);
-        logoImagesRootDirectory = getStringOption(prop, sysProps, fileProps, 
+        logoImagesRootDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 LOGO_IMAGES_ROOT_DIRECTORY_KEY, LOGO_IMAGES_ROOT_DIRECTORY_DEFAULT);
-        speciesImagesRootDirectory = getStringOption(prop, sysProps, fileProps, 
+        speciesImagesRootDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 SPECIES_IMAGES_ROOT_DIRECTORY_KEY, SPECIES_IMAGES_ROOT_DIRECTORY_DEFAULT);
-        urlMaxLength = getIntegerOption(prop, sysProps, fileProps, 
+        urlMaxLength = getIntegerOption(prop, SYS_PROPS, FILE_PROPS, 
                 URL_MAX_LENGTH_KEY, URL_MAX_LENGTH_DEFAULT);
-        webpagesCacheConfigFileName = getStringOption(prop, sysProps, fileProps, 
+        webpagesCacheConfigFileName = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 WEBPAGES_CACHE_CONFIG_FILE_NAME_KEY, WEBPAGES_CACHE_CONFIG_FILE_NAME_DEFAULT);
-        topAnatResultsUrlDirectory = getStringOption(prop, sysProps, fileProps, 
+        topAnatResultsUrlDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 TOP_ANAT_RESULTS_URL_DIRECTORY_KEY,
                 TOP_ANAT_RESULTS_URL_DIRECTORY_DEFAULT);
-        log.info("Initialization done.");
+        log.debug("Initialization done.");
         log.exit();
     }
 
@@ -802,41 +837,5 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      */
     public String getTopAnatResultsUrlDirectory() {
         return topAnatResultsUrlDirectory;
-    }    
-    
-    /**
-     * @return  An instance of {@code BgeeProperties} with values based on the System properties
-     *          or the properties file present in the classpath or the default properties if 
-     *          nothing else is available. The method will create an instance only once for 
-     *          each thread and always return this instance when called. 
-     *          ("per-thread singleton")
-     */
-    public static BgeeProperties getBgeeProperties(){
-        return getBgeeProperties(null);
-    }
-
-    /**
-     * @param prop  A {@code java.util.BgeeProperties} instance that contains the system properties
-     *              to use.
-     * @return  An instance of {@code BgeeProperties} with values based on the provided
-     *          {@code Properties}. The method will create an instance only once for each
-     *          thread and always return this instance when called. ("per-thread singleton")
-     */
-    public static BgeeProperties getBgeeProperties(Properties prop){
-        
-        log.entry(prop);
-        BgeeProperties bgeeProp;
-        long threadId = Thread.currentThread().getId();
-        if (! hasBgeeProperties()) {
-            // Create an instance
-            bgeeProp = new BgeeProperties(prop);
-            // Add it to the map
-            bgeeProperties.put(threadId, bgeeProp);
-        }
-        else {
-            bgeeProp = (BgeeProperties) bgeeProperties.get(threadId);
-        }
-        return log.exit(bgeeProp);
-
     }    
 }

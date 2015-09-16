@@ -198,75 +198,33 @@ public class BgeeProperties
             new ConcurrentHashMap<Long, BgeeProperties>(); 
 
     /**
-     * A {@code java.util.Properties} set used to load the values present in the Bgee property file
-     * and where a {@code key} is searched
+     * A {@code java.util.Properties} used to load the values present in the Bgee property file. 
+     * Either loaded from the default property file (see {@link #PROPERTIES_FILE_NAME_DEFAULT}), 
+     * or from a provided file (see {@link #PROPERTIES_FILE_NAME_KEY})
      */
-    protected final Properties fileProps;
+    protected static final Properties FILE_PROPS = loadFileProps();
 
     /**
      * A {@code java.util.Properties} set used to load the values set in System properties
      * and where a {@code key} is searched
      */
-    protected final Properties sysProps = new Properties(System.getProperties());
+    protected static final Properties SYS_PROPS = new Properties(System.getProperties());
 
     /**
-     * Protected constructor, can be only called through the use of one of the
-     * {@code getBgeeProperties} method, the only way for the user to obtain an instance of this
-     * class, unless it is called within a subclass constructor.
-     * Try to load the properties from the injected {@code Properties}, or a properties file, 
-     * or from the system properties. 
-     * Otherwise, set the default values.
-     * 
-     * @param prop  A {@code java.util.Properties} instance that contains the system properties
-     *              to use.
+     * This method loads and returns the {@code java.util.Properties} present in the property file
+     * in the classpath. Either use the default property file name 
+     * (see {@link #PROPERTIES_FILE_NAME_DEFAULT}), or a provided file name (see 
+     * {@link #PROPERTIES_FILE_NAME_KEY}).
      */
-    protected BgeeProperties(Properties prop) 
-    {
-        log.entry(prop);
-        log.info("Bgee-core properties initialization...");
-        this.fileProps = loadFileProps();
-        // Initialize all properties using the injected prop first, alternatively the System
-        // properties and then the file. The default value provided will be use if none of the
-        // previous solutions contain the property
-        topAnatRScriptExecutable = getStringOption(prop, sysProps, fileProps, 
-                TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY,  
-                TOP_ANAT_R_SCRIPT_EXECUTABLE_DEFAULT);
-        topAnatRWorkingDirectory = getStringOption(prop, sysProps, fileProps, 
-                TOP_ANAT_R_WORKING_DIRECTORY_KEY,
-                TOP_ANAT_R_WORKING_DIRECTORY_DEFAULT);
-        topAnatFunctionFile = getStringOption(prop, sysProps, fileProps, 
-                TOP_ANAT_FUNCTION_FILE_KEY,
-                TOP_ANAT_FUNCTION_FILE_DEFAULT);
-        topAnatResultsWritingDirectory = getStringOption(prop, sysProps, fileProps, 
-                TOP_ANAT_RESULTS_WRITING_DIRECTORY_KEY,
-                TOP_ANAT_RESULTS_WRITING_DIRECTORY_DEFAULT);
-        log.info("Initialization done.");
-        log.exit();
-    }
-
-    /**
-     * @return  An instance of {@code BgeeProperties} with values based on the System properties
-     *          or the properties file present in the classpath or the default properties if 
-     *          nothing else is available. The method will create an instance only once for 
-     *          each thread and always return this instance when called. 
-     *          ("per-thread singleton")
-     */
-    public static BgeeProperties getBgeeProperties(){
-        return getBgeeProperties(null);
-    }
-
-    /**
-     * This method loads and returns the {@code java.util.Properties} present in the properties file
-     * in the classpath
-     */
-    private Properties loadFileProps(){
+    private static Properties loadFileProps() {
         log.entry();
         Properties filePropsToReturn = null;
         //try to get the properties file.
         //default name is bgee.properties
         //check first if an alternative name has been provided in the System properties
-        String propertyFile = sysProps.getProperty(PROPERTIES_FILE_NAME_KEY, 
-                PROPERTIES_FILE_NAME_DEFAULT);
+        String propertyFile = (new Properties(System.getProperties()))
+                .getProperty(PROPERTIES_FILE_NAME_KEY, PROPERTIES_FILE_NAME_DEFAULT);
+        
         log.debug("Trying to use properties file {}", propertyFile);
         InputStream propStream =
                 BgeeProperties.class.getResourceAsStream(propertyFile);
@@ -288,6 +246,109 @@ public class BgeeProperties
             log.debug("{} not found in classpath.", propertyFile);
         }        
         return log.exit(filePropsToReturn);
+    }
+
+    /**
+     * Try to retrieve the property corresponding to {@code key}, 
+     * first from the injected {@code Properties} ({@code prop}), then from the System properties 
+     * ({@code SYS_PROPS}), then, if undefined or empty, from properties retrieved from the 
+     * Bgee property file ({@code FILE_PROPS}). If the property is still undefined or empty 
+     * return {@code defaultValue}.
+     *
+     * @param prop          A {@code java.util.Properties} instance that contains the system 
+     *                      properties to look for {@code key} first
+     * @param SYS_PROPS      {@code java.util.Properties} retrieved from System properties, 
+     *                      where {@code key} is searched in second
+     * @param FILE_PROPS     {@code java.util.Properties} retrieved from the Bgee properties file, 
+     *                      where {@code key} is searched in if {@code prop} and {@code SYS_PROPS}
+     *                      were undefined or empty for {@code key}. 
+     *                      Can be {@code null} if no properties file was found.
+     * @param defaultValue  default value that will be returned if the property 
+     *                      is undefined or empty in all {@code Properties}.
+     *
+     * @return              A {@code String} corresponding to the value
+     *                      for that property key. 
+     *                      Or {@code defaultValue} if not defined or empty.
+     */
+    protected static String getStringOption(Properties prop, Properties sysProps, 
+            Properties fileProps, String key, String defaultValue) {
+        log.entry(prop, sysProps, fileProps, key, defaultValue);
+    
+        String propValue = null;
+    
+        if (prop != null) {
+            propValue = prop.getProperty(key);
+        }
+    
+        if (StringUtils.isNotBlank(propValue)) {
+            log.debug("Retrieved from injected properties {}={}", key, propValue);
+        } else {
+            propValue = sysProps.getProperty(key);
+            if(StringUtils.isNotBlank(propValue)){
+                log.debug("Retrieved from System properties {}={}", key, propValue);
+            }
+            else{
+                if (fileProps != null) {
+                    propValue = fileProps.getProperty(key);
+                }
+                if (StringUtils.isNotBlank(propValue)) {
+                    log.debug("Retrieved from properties file {}={}", key, propValue);
+                } else {
+                    log.debug("Property {} not defined neither in injected properties nor in properties file nor in System properties, using default value {}", 
+                            key, defaultValue);
+                    propValue = defaultValue; 
+                }
+            }
+        }
+    
+        return log.exit(propValue);
+    }
+
+    /**
+     * Try to retrieve the property corresponding to {@code key}, 
+     * first from the injected {@code Properties} ({@code prop}), then from the System properties 
+     * ({@code SYS_PROPS}), then, if undefined or empty, from properties retrieved from the 
+     * Bgee property file ({@code FILE_PROPS}). If the property is still undefined or empty 
+     * return {@code defaultValue}.
+     *
+     * @param prop          A {@code java.util.Properties} instance that contains the system 
+     *                      properties to look for {@code key} first
+     * @param SYS_PROPS      {@code java.util.Properties} retrieved from System properties, 
+     *                      where {@code key} is searched in second
+     * @param FILE_PROPS     {@code java.util.Properties} retrieved 
+     *                      from the Bgee properties file, 
+     *                      where {@code key} is searched in if {@code prop} and {@code SYS_PROPS}
+     *                      were undefined or empty for {@code key}. 
+     *                      Can be {@code null} if no properties file was found.
+     * @param defaultValue  default value that will be returned if the property 
+     *                      is undefined or empty in all {@code Properties}.
+     *
+     * @return             An {@code int} corresponding to the value
+     *                     for that property key.
+     *                     Or {@code defaultValue} if not defined or empty.
+     */
+    protected static int getIntegerOption(Properties prop, Properties sysProps, 
+            Properties fileProps, String key, int defaultValue) {
+        log.entry(prop, fileProps, sysProps, key, defaultValue);
+    
+        String propValue = getStringOption(prop,sysProps, fileProps, key, null);
+        int val = defaultValue;
+        if (propValue != null) {
+            val= Integer.valueOf(propValue);
+        }
+    
+        return log.exit(val);
+    }
+
+    /**
+     * @return  An instance of {@code BgeeProperties} with values based on the System properties
+     *          or the properties file present in the classpath or the default properties if 
+     *          nothing else is available. The method will create an instance only once for 
+     *          each thread and always return this instance when called. 
+     *          ("per-thread singleton")
+     */
+    public static BgeeProperties getBgeeProperties(){
+        return getBgeeProperties(null);
     }
 
     /**
@@ -337,95 +398,36 @@ public class BgeeProperties
     }
 
     /**
-     * Try to retrieve the property corresponding to {@code key}, 
-     * first from the injected {@code Properties} ({@code prop}), then from the System properties 
-     * ({@code sysProps}), then, if undefined or empty, from properties retrieved from the 
-     * Bgee property file ({@code fileProps}). If the property is still undefined or empty 
-     * return {@code defaultValue}.
-     *
-     * @param prop          A {@code java.util.Properties} instance that contains the system 
-     *                      properties to look for {@code key} first
-     * @param sysProps      {@code java.util.Properties} retrieved from System properties, 
-     *                      where {@code key} is searched in second
-     * @param fileProps     {@code java.util.Properties} retrieved from the Bgee properties file, 
-     *                      where {@code key} is searched in if {@code prop} and {@code sysProps}
-     *                      were undefined or empty for {@code key}. 
-     *                      Can be {@code null} if no properties file was found.
-     * @param defaultValue  default value that will be returned if the property 
-     *                      is undefined or empty in all {@code Properties}.
-     *
-     * @return              A {@code String} corresponding to the value
-     *                      for that property key. 
-     *                      Or {@code defaultValue} if not defined or empty.
+     * Protected constructor, can be only called through the use of one of the
+     * {@code getBgeeProperties} method, the only way for the user to obtain an instance of this
+     * class, unless it is called within a subclass constructor.
+     * Try to load the properties from the injected {@code Properties}, or a properties file, 
+     * or from the system properties. 
+     * Otherwise, set the default values.
+     * 
+     * @param prop  A {@code java.util.Properties} instance that contains the system properties
+     *              to use.
      */
-    protected String getStringOption(Properties prop, Properties sysProps, 
-            Properties fileProps, String key, String defaultValue) {
-        log.entry(prop, sysProps, fileProps, key, defaultValue);
-
-        String propValue = null;
-
-        if (prop != null) {
-            propValue = prop.getProperty(key);
-        }
-
-        if (StringUtils.isNotBlank(propValue)) {
-            log.debug("Retrieved from injected properties {}={}", key, propValue);
-        } else {
-            propValue = sysProps.getProperty(key);
-            if(StringUtils.isNotBlank(propValue)){
-                log.debug("Retrieved from System properties {}={}", key, propValue);
-            }
-            else{
-                if (fileProps != null) {
-                    propValue = fileProps.getProperty(key);
-                }
-                if (StringUtils.isNotBlank(propValue)) {
-                    log.debug("Retrieved from properties file {}={}", key, propValue);
-                } else {
-                    log.debug("Property {} not defined neither in injected properties nor in properties file nor in System properties, using default value {}", 
-                            key, defaultValue);
-                    propValue = defaultValue; 
-                }
-            }
-        }
-
-        return log.exit(propValue);
-    }
-
-    /**
-     * Try to retrieve the property corresponding to {@code key}, 
-     * first from the injected {@code Properties} ({@code prop}), then from the System properties 
-     * ({@code sysProps}), then, if undefined or empty, from properties retrieved from the 
-     * Bgee property file ({@code fileProps}). If the property is still undefined or empty 
-     * return {@code defaultValue}.
-     *
-     * @param prop          A {@code java.util.Properties} instance that contains the system 
-     *                      properties to look for {@code key} first
-     * @param sysProps      {@code java.util.Properties} retrieved from System properties, 
-     *                      where {@code key} is searched in second
-     * @param fileProps     {@code java.util.Properties} retrieved 
-     *                      from the Bgee properties file, 
-     *                      where {@code key} is searched in if {@code prop} and {@code sysProps}
-     *                      were undefined or empty for {@code key}. 
-     *                      Can be {@code null} if no properties file was found.
-     * @param defaultValue  default value that will be returned if the property 
-     *                      is undefined or empty in all {@code Properties}.
-     *
-     * @return             An {@code int} corresponding to the value
-     *                     for that property key.
-     *                     Or {@code defaultValue} if not defined or empty.
-     */
-    protected int getIntegerOption(Properties prop, Properties sysProps, 
-            Properties fileProps, String key, int defaultValue) {
-        log.entry(prop, fileProps, sysProps, key, defaultValue);
-
-        String propValue = this.getStringOption(prop,sysProps, fileProps, key, null);
-        int val = defaultValue;
-        if (propValue != null) {
-            val= Integer.valueOf(propValue);
-        }
-
-        return log.exit(val);
+    protected BgeeProperties(Properties prop) {
+        log.entry(prop);
+        log.debug("Bgee-core properties initialization...");
+        // Initialize all properties using the injected prop first, alternatively the System
+        // properties and then the file. The default value provided will be use if none of the
+        // previous solutions contain the property
+        topAnatRScriptExecutable = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
+                TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY,  
+                TOP_ANAT_R_SCRIPT_EXECUTABLE_DEFAULT);
+        topAnatRWorkingDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
+                TOP_ANAT_R_WORKING_DIRECTORY_KEY,
+                TOP_ANAT_R_WORKING_DIRECTORY_DEFAULT);
+        topAnatFunctionFile = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
+                TOP_ANAT_FUNCTION_FILE_KEY,
+                TOP_ANAT_FUNCTION_FILE_DEFAULT);
+        topAnatResultsWritingDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
+                TOP_ANAT_RESULTS_WRITING_DIRECTORY_KEY,
+                TOP_ANAT_RESULTS_WRITING_DIRECTORY_DEFAULT);
+        log.debug("Initialization done.");
+        log.exit();
     }
 
     /**

@@ -2,18 +2,21 @@ package org.bgee.model;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * This class loads the properties for Bgee. 
- * The configuration is controlled via System properties, 
- * or via a file named {@code bgee.properties}, put in the classpath. 
+ * This class loads the properties for Bgee core.
+ * The configuration can be a {@code Properties} object injected through 
+ * {@link #getBgeeProperties(Properties)} 
+ * or loaded from the System properties or via a file named {@code bgee.properties}
+ * put in the classpath, by using {@link #getBgeeProperties()}.
+ * 
  * When this class is loaded (so only <b>once</b> for a given {@code ClassLoader}), 
  * it reads the properties from both the System properties and the property file, 
  * so that, for instance, a property can be provided in the file, 
@@ -23,290 +26,212 @@ import org.apache.logging.log4j.Logger;
  * Of note, an additional property allows to change the name of the property file 
  * to use (corresponds to the property {@code bgee.properties.file}).
  * <p>
- * The properties are: 
- * <ul>
- * <li>{@code bgee.jdbc.driver}: name of the JDBC {@code Driver} 
- * used to obtain connections. Optional.
- * <li>{@code bgee.jdbc.url}: JDBC URL to use to connect to the data source.
- * Mandatory.
- * <li>{@code bgee.jdbc.username}: default username to connect to the data source.
- * Mandatory.
- * <li>{@code bgee.jdbc.password}: default password to connect to the data source.
- * Mandatory.
- * <li>{@code bgee.jdbc.pool.DataSource.resourceName}: A {@code String}
- * containing the name of the resource to look up to get the dataSource. Optional.
- * <li>{@code bgee.jdbc.preparedStatementPoolSize}: An {@code int} containing
- * the maximum size allowed for a {@code PreparedStatement} Pool. Optional.
- * <li>{@code bgee.jdbc.preparedStatementPoolsMaxTotalSize}: An {@code int}
- * containing the maximum cumulated size allowed for all {@code PreparedStatement}
- *  Pools. Optional.
- * <li>{@code bgee.static.factories}: define whether static factories 
- * should be used when available.
- * <li>{@code bgee.properties.file}: path to the properties file to use, 
- * from the classpath. Optional.
- * </ul>
- * <p>
- * These properties are read from the properties file 
- * or the System properties only once at class loading. Modifying these properties 
- * after having made any call to this class would have no effect. 
- * To modify a property locally, a {@code Thread} must acquire an instance 
- * of this class (by calling the static method {@link #getBgeeProperties()}), 
- * and modify its instance attributes: the instance attributes are initialized 
- * at instantiation using the class attributes obtained from the {@code Properties}. 
- * These instance attributes can then be modified, but it will have no effect 
- * on the overall configuration, the modifications will only be seen inside 
- * the related {@code Thread}. 
- * <p>
- * Any call, <b>inside a thread</b>, to the method {@link #getBgeeProperties()}, 
- * will always return the same {@code BgeeProperties} instance ("per-thread singleton"). 
- * So any modification made to this {@code BgeeProperties} instance 
- * will affect the whole thread  (for instance, modifying in a thread the username 
- * to use to connect to a database at one place, will affect all consecutive attempts 
- * to connect to the database in this thread).
- * <p>
- * An exception is if you call this method 
- * after having called {@link #release()} or {@link #releaseAll()}.
- * In that case, {@code getBgeeProperties()} 
- * will return a new {@code BgeeProperties} instance, with the attributes re-initialized 
- * using the System or file properties.
- * <p>
- * You should always call {@code BgeeProperties.getBgeeProperties().release()} 
- * at the end of the execution of a thread, 
- * or {@link #releaseAll()} in multi-threads context (for instance, in a webapp context 
- * when the webapp is shutdown). 
- * <p>
- * This class has been inspired from {@code net.sf.log4jdbc.DriverSpy} 
+ * This class has been inspired from {@code net.sf.log4jdbc.DriverSpy}
  * developed by Arthur Blake.
  * 
  * @author Frederic Bastian
  * @author Mathieu Seppey
- * @version Bgee 13, May 2013
+ * @author Valentine Rech de Laval
+ * @version Bgee 13, August 2015
  * @since Bgee 13
  */
 public class BgeeProperties 
 {
-    //*********************************
-    // CLASS ATTRIBUTES
-    //*********************************
+
     /**
      * {@code Logger} of the class. 
      */
     private final static Logger log = LogManager.getLogger(BgeeProperties.class.getName());
 
     /**
-     * A {@code ConcurrentMap} used to store all {@code BgeeProperties} instances, 
-     * associated with the {@code Thread} object that requested it. 
+     * A {@code String} that is the key to access to the System property that contains the name
+     * of the file in the classpath that is read at the initialization 
+     * of {@code BgeeProperties}. The associated value must be provided related to the root 
+     * of the classpath (so, must start with {@code /}).
+     * 
+     * @see #PROPERTIES_FILE_NAME_DEFAULT
+     */
+    public final static String PROPERTIES_FILE_NAME_KEY = 
+            "org.bgee.core.properties.file";
+    /**
+     * A {@code String} that is the default value of the name
+     * of the file in the classpath that is read at the initialization 
+     * of {@code BgeeProperties}.
+     * 
+     * @see #PROPERTIES_FILE_NAME_KEY
+     */
+    public final static String PROPERTIES_FILE_NAME_DEFAULT = "/bgee.properties";
+    
+    /**
+     * A {@code String} that is the key to access to the System property that contains the value
+     * of the path of RScript Executable file which is used to execute the R code.
+     * 
+     * @see #TOP_ANAT_R_SCRIPT_EXECUTABLE_DEFAULT
+     */
+    public final static String TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY = 
+            "org.bgee.core.topAnatRScriptExecutable";
+    
+    /**
+     * A {@code String} that is the default value of the path of RScript Executable file 
+     * which is used to execute the R code.
+     * 
+     * @see #TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY
+     */
+    public final static String TOP_ANAT_R_SCRIPT_EXECUTABLE_DEFAULT = "/usr/bin/Rscript";
+
+    /**
+     * A {@code String} that is the key to access to the System property that contains 
+     * the current working directory of {@code R}, where all the other files required 
+     * for the processing of the topAnat analysis are kept.
+     * 
+     * @see #TOP_ANAT_R_WORKING_DIRECTORY_DEFAULT
+     */
+    public final static String TOP_ANAT_R_WORKING_DIRECTORY_KEY = 
+            "org.bgee.core.topAnatRWorkingDirectory";
+
+    /**
+     * A {@code String} that is the default value of the current working directory of {@code R}, 
+     * where all the other files required for the processing of the topAnat analysis are kept.
+     * 
+     * @see #TOP_ANAT_R_WORKING_DIRECTORY_KEY
+     */
+    public final static String TOP_ANAT_R_WORKING_DIRECTORY_DEFAULT = 
+            "TopAnatFiles/results";
+    
+    /**
+     * A {@code String} that is the key to access to the System property that contains the name of 
+     * the file containing R functions used by topAnat.
+     * 
+     * @see #TOP_ANAT_FUNCTION_FILE_DEFAULT
+     */
+    public final static String TOP_ANAT_FUNCTION_FILE_KEY = 
+            "org.bgee.core.topAnatFunctionFile";
+
+    /**
+     * A {@code String} that is the default value of the name of the file which contains the 
+     * additional modified topGO R functions used by topAnat to perform the analyses.
+     * 
+     * @see #TOP_ANAT_FUNCTION_FILE_KEY
+     */
+    public final static String TOP_ANAT_FUNCTION_FILE_DEFAULT = 
+            "TopAnatFiles/R_scripts/topAnat_functions.R";   
+
+    /**
+     * A {@code String} that is the key to access to the System property that contains the name of 
+     * the directory to store outputs of the TopAnat analyses that should be kept to be retrieved 
+     * in case the same TopAnat query is performed again.
+     * 
+     * @see #TOP_ANAT_RESULTS_WRITING_DIRECTORY_DEFAULT
+     */
+    public final static String TOP_ANAT_RESULTS_WRITING_DIRECTORY_KEY = 
+            "org.bgee.core.topAnatResultsWritingDirectory";
+
+    /**
+     * A {@code String} that is the default value of the name of the directory to store outputs of
+     * the TopAnat analyses that should be kept to be retrieved in case the same TopAnat query
+     * is performed again.
+     * 
+     * @see #TOP_ANAT_RESULTS_WRITING_DIRECTORY_KEY
+     */
+    public final static String TOP_ANAT_RESULTS_WRITING_DIRECTORY_DEFAULT = 
+            "TopAnatFiles/results/";   
+   
+    /**
+     * A {@code String} that is the path of RScript Executable file 
+     * which is used to execute the R code.
+     */
+    private final String topAnatRScriptExecutable;
+
+    /**
+     * A {@code String} that is the current working directory of {@code R}, 
+     * where all the other files required for the processing of the topAnat analysis
+     * are kept.
+     * <p>
+     * This directory should only be used with the library for calling R, to set the
+     * working directory of the {@code R}. If you need to use the directory
+     * to access a result file or get the directory to write TopAnat result
+     * files, use {@code #topAnatResultsWritingDirectory}
+     * <p>
+     * If you want to link to such a file using a URL, you must use
+     * {@code #topAnatResultsUrlDirectory}.
+     * 
+     * @see #topAnatResultsWritingDirectory
+     * @see #topAnatResultsUrlDirectory
+     */
+    private final String topAnatRWorkingDirectory;
+    
+    /**
+     * A {@code String} that is the name of the file which contains the additional modified
+     * topGO R functions used by topAnat to perform the analyses.
+     */
+    private final String topAnatFunctionFile;  
+    
+    /**
+     * A {@code String} that is the name of the directory to store outputs of the TopAnat analyses
+     * that should be kept to be retrieved in case the same TopAnat query is performed again.
+     * <p>
+     * This directory has to be used when writing files. If you want to link to
+     * such a file using a URL, you must use
+     * {@code #topAnatResultsUrlDirectory}.
+     * <p>
+     * If you want to set the working directory for {@code R}, use
+     * {@code #topAnatRWorkingDirectory}
+     * 
+     * @see #topAnatResultsUrlDirectory
+     * @see #topAnatCallerWorkingDirectory
+     */ 
+    private final String topAnatResultsWritingDirectory;    
+     
+    /**
+     * A {@code ConcurrentMap} used to store {@code BgeeProperties}, 
+     * associated to their ID as key (corresponding to the ID of the thread 
+     * who requested the {@code BgeeProperties}). 
      * <p>
      * This {@code Map} is used to provide a unique and independent 
-     * {@code BgeeProperties} instance to each thread: 
-     * a {@code BgeeProperties} is added to this {@code Map} 
-     * when {@link #getBgeeProperties()} is called, if the thread is not already 
-     * present in the {@code keySet} of the {@code Map}. 
-     * Otherwise, the already stored {@code BgeeProperties} is returned. 
-     * <p>
-     * If a {@code ThreadLocal} was not used, it is because 
-     * this {@code Map} is used by other treads, 
-     * for instance when a {@code ShutdownListener} 
-     * want to properly remove all {@code BgeeProperties}; 
-     * or when a thread performing monitoring of another thread want to modify a property.
-     * <p>
-     * A {@code BgeeProperties} is removed from this {@code Map} for a thread
-     * when the method {@link #release()} is called from this thread. 
-     * All {@code BgeeProperties} are removed when {@link #releaseAll()} is called.
+     * {@code BgeeProperties} instance to each thread: a {@code BgeeProperties} is added 
+     * to this {@code Map} when a {@code getBgeeProperties} method is called, 
+     * if the thread ID is not already present in the {@code keySet} 
+     * of the {@code Map}. Otherwise, the already stored {@code BgeeProperties} 
+     * is returned.
      */
-    private static final ConcurrentMap<Thread, BgeeProperties> bgeeProperties = 
-            new ConcurrentHashMap<Thread, BgeeProperties>();
-    /**
-     * An {@code AtomicBoolean} to define if {@code BgeeProperties}s 
-     * can still be acquired (using {@link #getBgeeProperties()}), 
-     * or if it is not possible anymore (meaning that the method {@link #releaseAll()} 
-     * has been called)
-     */
-    private static final AtomicBoolean bgeePropertiesClosed = new AtomicBoolean();
+    protected static final ConcurrentMap<Long, BgeeProperties> bgeeProperties = 
+            new ConcurrentHashMap<Long, BgeeProperties>(); 
 
     /**
-     * A {@code String} corresponding to the name of the JDBC {@code Driver} 
-     * used to obtain connections. 
-     * Examples are {@code com.mysql.jdbc.Driver}, 
-     * or {@code org.bgee.easycache4jdbc.sql.jdbcapi.Driver}. 
-     * <p>
-     * IMPORTANT: this property does not need to be provided. It is useful only 
-     * for some buggy JDBC {@code Driver}s, that fail to register themselves to the 
-     * {@code DriverManager}. In that case, it is needed to explicitly load 
-     * the {@code Driver}, using this class name.  
-     * <p>
-     * Corresponds to the property {@code bgee.jdbc.driver}. 
-     * If a {@code DataSource} was set (using JNDI), then this property is not used. 
+     * A {@code java.util.Properties} used to load the values present in the Bgee property file. 
+     * Either loaded from the default property file (see {@link #PROPERTIES_FILE_NAME_DEFAULT}), 
+     * or from a provided file (see {@link #PROPERTIES_FILE_NAME_KEY})
      */
-    private static final String jdbcDriver;
-    /**
-     * A {@code String} representing a database url of the form 
-     * {@code jdbc:subprotocol:subname}, to connect to the database 
-     * using the {@code DriverManager}. 
-     * An example is {@code jdbc:log4jdbc:mysql://127.0.0.1:3306/bgee_v12} 
-     * <p>
-     * IMPORTANT: Do NOT provide the username and password you want to use 
-     * by default in the URL. 
-     * You must set the properties {@link #jdbcUsername} and {@link #jdbcPassword} 
-     * to provide the default username and password. You will still be able to call 
-     * a method {@code getConnection(String, String)} to provide different 
-     * username and password.
-     * <p>
-     * Corresponds to the property {@code bgee.jdbc.url}. 
-     * If a DataSource was set (using JNDI), then this property is not used.
-     */
-    private static final String jdbcUrl;
-    /**
-     * A {@code String} representing the default username to use to connect 
-     * to the database using {@code jdbcUrl}. 
-     * <p>
-     * Corresponds to the property {@code bgee.jdbc.username}.
-     * If a DataSource was set (using JNDI), then this property is not used.
-     */
-    private static final String jdbcUsername;
-    /**
-     * A {@code String} representing the default password to use to connect 
-     * to the database using {@code jdbcUrl}. 
-     * <p>
-     * Corresponds to the property {@code bgee.jdbc.password}.
-     * If a DataSource was set (using JNDI), then this property is not used.
-     */
-    private static final String jdbcPassword;
-    /**
-     * A {@code String} containing the name of the resource to look up
-     * to get the dataSource
-     * <p>
-     * Default value is {@code java:comp/env/jdbc/bgeedatasource}
-     * 
-     * */
-    private static final String dataSourceResourceName;
-    /**
-     * An {@code int} containing the maximum size 
-     * allowed for a single {@code PreparedStatement} pool
-     * <p>
-     * Default value is 1000
-     * 
-     * @see org.bgee.model.data.sql.BgeeConnection
-     * 
-     * */
-    private static final int prepStatPoolMaxSize;  
-    /**
-     * An {@code int} containing the maximum cumulated size 
-     * allowed for a all {@code PreparedStatement} pools
-     * in the application
-     * <p>
-     * Default value is 10000
-     * 
-     * @see org.bgee.model.data.sql.BgeeConnection
-     * 
-     * */
-    private static final int prepStatPoolsMaxTotalSize;  
-    /**
-     * A {@code boolean} defining whether static factories should be used when available.
-     * See {@link org.bgee.model.EntityFactoryProvider EntityFactoryProvider} for more details.
-     * <p>
-     * If {@code true}, static factories will be used when available. 
-     * Corresponds to the property {@code bgee.static.factories}. 
-     * Default value is {@code false}.
-     * <p>
-     * Note that this property cannot be modified locally in a given thread 
-     * (no corresponding instance variable), 
-     * as it increases the memory load when used, thus impacting all threads.
-     * 
-     * @see org.bgee.model.EntityFactoryProvider
-     */
-    private static final boolean useStaticFactories;
-
-    //*********************************
-    // INSTANCE ATTRIBUTES
-    //*********************************
-    /**
-     * A {@code String} corresponding to the name of the JDBC {@code Driver} 
-     * used to obtain connections. Initialized at instantiation from 
-     * {@link #jdbcDriver}.
-     * @see #jdbcDriver
-     */
-    private String localJdbcDriver;
-    /**
-     * A {@code String} representing a database url of the form 
-     * {@code jdbc:subprotocol:subname}, to connect to the database 
-     * using the {@code DriverManager}. Initialized at instantiation 
-     * from {@link #jdbcUrl};
-     * @see #jdbcUrl;
-     */
-    private String localJdbcUrl;
-    /**
-     * A {@code String} representing the default username to use to connect 
-     * to the database using the JDBC URL. Initialized at instantiation 
-     * from {@link #jdbcUsername};
-     * @see #jdbcUsername;
-     */
-    private String localJdbcUsername;
-    /**
-     * A {@code String} representing the default password to use to connect 
-     * to the database using the JDBC URL. Initialized at instantiation 
-     * from {@link #jdbcPassword};
-     * @see #jdbcPassword;
-     */
-    private String localJdbcPassword;
-    /**
-     * A {@code String} containing the name of the resource to look up
-     * to get the dataSource. Initialized at instantiation 
-     * from {@link #dataSourceResourceName}
-     * @see #dataSourceResourceName
-     */
-    private String localDataSourceResourceName;
-    /**
-     * An {@code int} containing the maximum size 
-     * allowed for a {@code PreparedStatement} Pool. Initialized at instantiation 
-     * from {@link #prepStatPoolMaxSize}
-     * @see #prepStatPoolMaxSize
-     */
-    private int localPrepStatPoolMaxSize;
-    /**
-     * An {@code int} containing the maximum cumulated size 
-     * allowed for a all {@code PreparedStatement} pools in the application
-     * Initialized at instantiation
-     * from {@link #prepStatPoolsMaxTotalSize}
-     * @see #prepStatPoolsMaxTotalSize
-     * 
-     * */
-    private int localPrepStatPoolsMaxTotalSize;
-
-
-    //*********************************
-    // CLASS METHODS
-    //*********************************
+    protected static final Properties FILE_PROPS = loadFileProps();
 
     /**
-     * Static initializer. 
-     * 
-     * Try to load the properties from a properties file, 
-     * or from the system properties. 
-     * Otherwise, set the default values.
+     * A {@code java.util.Properties} set used to load the values set in System properties
+     * and where a {@code key} is searched
      */
-    static 
-    {
+    protected static final Properties SYS_PROPS = new Properties(System.getProperties());
+
+    /**
+     * This method loads and returns the {@code java.util.Properties} present in the property file
+     * in the classpath. Either use the default property file name 
+     * (see {@link #PROPERTIES_FILE_NAME_DEFAULT}), or a provided file name (see 
+     * {@link #PROPERTIES_FILE_NAME_KEY}).
+     */
+    private static Properties loadFileProps() {
         log.entry();
-        log.info("Bgee properties initialization...");
-
-        bgeePropertiesClosed.set(false);
-
-        java.util.Properties sysProps = new java.util.Properties(System.getProperties());
+        Properties filePropsToReturn = null;
         //try to get the properties file.
         //default name is bgee.properties
         //check first if an alternative name has been provided in the System properties
-        String propertyFile = sysProps.getProperty("bgee.properties.file", 
-                "/bgee.properties");
+        String propertyFile = (new Properties(System.getProperties()))
+                .getProperty(PROPERTIES_FILE_NAME_KEY, PROPERTIES_FILE_NAME_DEFAULT);
+        
         log.debug("Trying to use properties file {}", propertyFile);
-
-        java.util.Properties fileProps = null;
         InputStream propStream =
                 BgeeProperties.class.getResourceAsStream(propertyFile);
         if (propStream != null) {
             try {
-                fileProps = new java.util.Properties();
-                fileProps.load(propStream);
+                filePropsToReturn = new Properties();
+                filePropsToReturn.load(propStream);
                 log.debug("{} loaded from classpath", propertyFile);
             } catch (IOException e) {
                 log.error("Error when loading properties file from classpath", e);
@@ -318,427 +243,263 @@ public class BgeeProperties
                 }
             }
         } else {
-            log.debug("{} not found in classpath. Using System properties only.", propertyFile);
-        }
-
-        jdbcDriver   = getStringOption(sysProps, fileProps, "bgee.jdbc.driver", null);
-        jdbcUrl      = getStringOption(sysProps, fileProps, "bgee.jdbc.url", null);
-        jdbcUsername = getStringOption(sysProps, fileProps, "bgee.jdbc.username", null);
-        jdbcPassword = getStringOption(sysProps, fileProps, "bgee.jdbc.password", null);
-        useStaticFactories = getBooleanOption(sysProps, fileProps, "bgee.static.factories", 
-                false);
-        dataSourceResourceName   = getStringOption(sysProps, fileProps, 
-                "bgee.jdbc.pool.DataSource.resourceName","java:comp/env/jdbc/bgeedatasource");
-        
-        prepStatPoolMaxSize = Integer.valueOf(getStringOption(sysProps,
-                fileProps, "bgee.jdbc.preparedStatementPoolMaxSize","1000"));
-                
-        prepStatPoolsMaxTotalSize = getIntegerOption(sysProps,
-                fileProps, "bgee.jdbc.preparedStatementPoolsMaxTotalSize",10000);
-        
-        log.info("Initialization done.");
-        log.exit();
-        
+            log.debug("{} not found in classpath.", propertyFile);
+        }        
+        return log.exit(filePropsToReturn);
     }
 
     /**
      * Try to retrieve the property corresponding to {@code key}, 
-     * first from the System properties ({@code sysProps}), 
-     * then, if undefined or empty, from properties retrieved from the Bgee property file 
-     * ({@code fileProps}). If the property is undefined or empty 
-     * in both {@code fileProps} and {@code sysProps}, 
+     * first from the injected {@code Properties} ({@code prop}), then from the System properties 
+     * ({@code SYS_PROPS}), then, if undefined or empty, from properties retrieved from the 
+     * Bgee property file ({@code FILE_PROPS}). If the property is still undefined or empty 
      * return {@code defaultValue}.
      *
-     * @param sysProps 		{@code java.sql.Properties} retrieved from System properties, 
-     * 						where {@code key} is first searched in.
-     * @param fileProps	 	{@code java.sql.Properties} retrieved 
-     * 						from the Bgee properties file, 
-     * 						where {@code key} is searched in if the property 
-     * 						was undefined or empty in {@code sysProps}. 
-     * 						Can be {@code null} if no properties file was found.
-     * @param defaultValue	default value that will be returned if the property 
-     * 						is undefined or empty in both {@code Properties}.
+     * @param prop          A {@code java.util.Properties} instance that contains the system 
+     *                      properties to look for {@code key} first
+     * @param SYS_PROPS      {@code java.util.Properties} retrieved from System properties, 
+     *                      where {@code key} is searched in second
+     * @param FILE_PROPS     {@code java.util.Properties} retrieved from the Bgee properties file, 
+     *                      where {@code key} is searched in if {@code prop} and {@code SYS_PROPS}
+     *                      were undefined or empty for {@code key}. 
+     *                      Can be {@code null} if no properties file was found.
+     * @param defaultValue  default value that will be returned if the property 
+     *                      is undefined or empty in all {@code Properties}.
      *
-     * @return 			A {@code String} corresponding to the value
-     * 					for that property key. 
-     * 					Or {@code defaultValue} if not defined or empty.
+     * @return              A {@code String} corresponding to the value
+     *                      for that property key. 
+     *                      Or {@code defaultValue} if not defined or empty.
      */
-    private static String getStringOption(java.util.Properties sysProps, 
-            java.util.Properties fileProps, String key, 
-            String defaultValue)
-    {
-        log.entry(fileProps, sysProps, key, defaultValue);
-
-        String propValue = sysProps.getProperty(key);
-
+    protected static String getStringOption(Properties prop, Properties sysProps, 
+            Properties fileProps, String key, String defaultValue) {
+        log.entry(prop, sysProps, fileProps, key, defaultValue);
+    
+        String propValue = null;
+    
+        if (prop != null) {
+            propValue = prop.getProperty(key);
+        }
+    
         if (StringUtils.isNotBlank(propValue)) {
-            log.debug("Retrieved from System properties {}={}", key, propValue);
+            log.debug("Retrieved from injected properties {}={}", key, propValue);
         } else {
-            if (fileProps != null) {
-                propValue = fileProps.getProperty(key);
+            propValue = sysProps.getProperty(key);
+            if(StringUtils.isNotBlank(propValue)){
+                log.debug("Retrieved from System properties {}={}", key, propValue);
             }
-            if (StringUtils.isNotBlank(propValue)) {
-                log.debug("Retrieved from properties file {}={}", key, propValue);
-            } else {
-                log.debug("Property {} not defined neither in properties file nor in System properties, using default value {}", 
-                        key, defaultValue);
-                propValue = defaultValue; 
+            else{
+                if (fileProps != null) {
+                    propValue = fileProps.getProperty(key);
+                }
+                if (StringUtils.isNotBlank(propValue)) {
+                    log.debug("Retrieved from properties file {}={}", key, propValue);
+                } else {
+                    log.debug("Property {} not defined neither in injected properties nor in properties file nor in System properties, using default value {}", 
+                            key, defaultValue);
+                    propValue = defaultValue; 
+                }
             }
         }
-
+    
         return log.exit(propValue);
     }
 
-
-
     /**
      * Try to retrieve the property corresponding to {@code key}, 
-     * first from the System properties ({@code sysProps}), 
-     * then, if undefined or empty, from properties retrieved from the Bgee property file 
-     * ({@code fileProps}), and cast it into a {@code boolean} 
-     * (if the value of the property is set, and equal to "true", "yes", or "on", 
-     * the returned boolean will be {@code true}, {@code false} otherwise). 
-     * If the property is undefined or empty in both {@code fileProps} 
-     * and {@code sysProps}, return {@code defaultValue}.
+     * first from the injected {@code Properties} ({@code prop}), then from the System properties 
+     * ({@code SYS_PROPS}), then, if undefined or empty, from properties retrieved from the 
+     * Bgee property file ({@code FILE_PROPS}). If the property is still undefined or empty 
+     * return {@code defaultValue}.
      *
-     * @param sysProps 		{@code java.sql.Properties} retrieved from System properties, 
-     * 						where {@code key} is first searched in.
-     * @param fileProps	 	{@code java.sql.Properties} retrieved 
-     * 						from the Bgee properties file, 
-     * 						where {@code key} is searched in if the property 
-     * 						was undefined or empty in {@code sysProps}. 
-     * 						Can be {@code null} if no properties file was found.
-     * @param defaultValue	default value that will be returned if the property 
-     * 						is undefined or empty in both {@code Properties}.
+     * @param prop          A {@code java.util.Properties} instance that contains the system 
+     *                      properties to look for {@code key} first
+     * @param SYS_PROPS      {@code java.util.Properties} retrieved from System properties, 
+     *                      where {@code key} is searched in second
+     * @param FILE_PROPS     {@code java.util.Properties} retrieved 
+     *                      from the Bgee properties file, 
+     *                      where {@code key} is searched in if {@code prop} and {@code SYS_PROPS}
+     *                      were undefined or empty for {@code key}. 
+     *                      Can be {@code null} if no properties file was found.
+     * @param defaultValue  default value that will be returned if the property 
+     *                      is undefined or empty in all {@code Properties}.
      *
-     * @return 			A {@code boolean} corresponding to the value
-     * 					for that property key (if the value of the property is set and equal 
-     * 					to "true", "yes", or "on", the returned boolean 
-     * 					will be {@code true}, {@code false} otherwise). 
-     * 					Or {@code defaultValue} if not defined or empty.
+     * @return             An {@code int} corresponding to the value
+     *                     for that property key.
+     *                     Or {@code defaultValue} if not defined or empty.
      */
-    private static boolean getBooleanOption(java.util.Properties sysProps, 
-            java.util.Properties fileProps, String key, 
-            boolean defaultValue)
-    {
-        log.entry(fileProps, sysProps, key, defaultValue);
+    protected static int getIntegerOption(Properties prop, Properties sysProps, 
+            Properties fileProps, String key, int defaultValue) {
+        log.entry(prop, fileProps, sysProps, key, defaultValue);
     
-        String propValue = getStringOption(sysProps, fileProps, key, null);
-        boolean val = defaultValue;
-        if (propValue != null) {
-            val= "true".equals(propValue) ||
-                    "yes".equals(propValue) || 
-                    "on".equals(propValue);
-        }
-    
-        return log.exit(val);
-    }
-
-
-
-    /**
-     * Try to retrieve the property corresponding to {@code key}, 
-     * first from the System properties ({@code sysProps}), 
-     * then, if undefined or empty, from properties retrieved from the Bgee property file 
-     * ({@code fileProps}), and cast it into a {@code int} value.
-     * If the property is undefined or empty in both {@code fileProps} 
-     * and {@code sysProps}, return {@code defaultValue}.
-     *
-     * @param sysProps 		{@code java.sql.Properties} retrieved from System properties, 
-     * 						where {@code key} is first searched in.
-     * @param fileProps	 	{@code java.sql.Properties} retrieved 
-     * 						from the Bgee properties file, 
-     * 						where {@code key} is searched in if the property 
-     * 						was undefined or empty in {@code sysProps}. 
-     * 						Can be {@code null} if no properties file was found.
-     * @param defaultValue	default value that will be returned if the property 
-     * 						is undefined or empty in both {@code Properties}.
-     *
-     * @return 			An {@code int} corresponding to the value
-     * 					for that property key.
-     * 					Or {@code defaultValue} if not defined or empty.
-     */
-    private static int getIntegerOption(java.util.Properties sysProps, 
-            java.util.Properties fileProps, String key, 
-            int defaultValue)
-    {
-        log.entry(fileProps, sysProps, key, defaultValue);
-
-        String propValue = getStringOption(sysProps, fileProps, key, null);
+        String propValue = getStringOption(prop,sysProps, fileProps, key, null);
         int val = defaultValue;
         if (propValue != null) {
             val= Integer.valueOf(propValue);
         }
-
+    
         return log.exit(val);
     }
 
     /**
-     * Return a {@code BgeeProperties} object. At the first call of this method 
-     * inside a given thread, a new {@code BgeeProperties} will be instantiated 
-     * and returned. Then all subsequent calls to this method inside the same thread 
-     * will return the same {@code BgeeProperties} object. 
+     * Gets the {@code BgeeProperties} object associated to the current thread. This method 
+     * creates a new instance only once for each thread, and always returns this instance 
+     * when called ("per-thread singleton").
      * <p>
-     * This is to ensure that each thread uses one and only one 
-     * {@code BgeeProperties} instance, 
-     * independent from other threads ("per-thread singleton").
+     * To set the returned {@code BgeeProperties}, properties are read from, in order of preeminence:
+     * <ul>
+     * <li>The System properties, read only once at loading of this class. Modifying them afterwards 
+     * has no effect. 
+     * <li>The property file defined in System properties (see {@link #PROPERTIES_FILE_NAME_KEY}), 
+     * or from the default property file (see {@link #PROPERTIES_FILE_NAME_DEFAULT}).
+     * It is read only once at loading of this class.
+     * <li>The default values defined in this class. 
+     * </ul> 
      * <p>
-     * An exception is if you call this method from a thread
-     * after having called {@link #release()} from this thread.
-     * In that case, this method would return a new {@code BgeeProperties} instance 
-     * when called from this thread, 
-     * with attributes re-initialized using the {@code Properties} from 
-     * the properties file or the System properties. 
-     * <p>
-     * Note that after having called {@link #releaseAll()}, no {@code BgeeProperties} 
-     * can be obtained anymore. This method will throw an {@code IllegalStateException} 
-     * if {@code releaseAll()} has been previously called.
-     *  
-     * @return	A {@code BgeeProperties} object, instantiated at the first call 
-     * 			of this method. Subsequent calls in any given thread will return 
-     * 			the same object. 
-     * @throws IllegalStateException If no {@code BgeeProperties} could be obtained anymore. 
+     * These properties are read only once at class loading. Modifying the system properties 
+     * after class loading will have no effect on the {@code BgeeProperties} objects 
+     * returned by this method. If the method {@link #getBgeeProperties(Properties)} 
+     * was first call in a given thread, then the provided properties will be used 
+     * for all following calls, including calls to this method (it means that this method 
+     * might thus not use the System properties or the file properties).
+     * 
+     * @return  A {@code BgeeProperties} object with values already set. 
+     *          The method will create an instance only once for each thread 
+     *          and always return this instance when called ("per-thread singleton").
+     * @see #getBgeeProperties(Properties)
      */
-    public static BgeeProperties getBgeeProperties() throws IllegalStateException
-    {
-        log.entry();
+    public static BgeeProperties getBgeeProperties(){
+        return getBgeeProperties(null);
+    }
 
-        Thread currentThread = Thread.currentThread();
-        log.debug("Trying to obtain a BgeeProperties instance for Thread {}", 
-                currentThread.getId());
-
-        if (bgeePropertiesClosed.get()) {
-            throw new IllegalStateException("releaseAll() has been already called, " +
-                    "it is not possible to acquire a BgeeProperties anymore");
+    /**
+     * Gets a {@code BgeeProperties} object with properties also read from {@code prop}. 
+     * To set the returned {@code BgeeProperties}, properties are read from, 
+     * in order of preeminence:
+     * <ul>
+     * <li>The provided properties, {@code prop}.
+     * <li>The System properties, read only once at loading of this class. Modifying them afterwards 
+     * has no effect. 
+     * <li>The property file defined in {@code prop} or in System properties 
+     * (see {@link #PROPERTIES_FILE_NAME_KEY}), or from the default property file 
+     * (see {@link #PROPERTIES_FILE_NAME_DEFAULT}). It is read only when instantiating 
+     * a new {@code BgeeProperties} object, so, only at first call 
+     * to a {@code getBgeeProperties} method in a given thread.
+     * <li>The default values defined in this class. 
+     * </ul> 
+     * <p>
+     * Note that this method creates a new instance only once for each thread, 
+     * and always returns this instance when called ("per-thread singleton").  
+     * If this method or the method {@link #getBgeeProperties()} were already called 
+     * from this thread, calling this method again with different properties will have no effect. 
+     * The provided properties will be read only at first instantiation of 
+     * a {@code BgeeProperties} object in a given thread. 
+     * 
+     * @param prop  A {@code java.util.Properties} instance that contains the system properties
+     *              to use.
+     * @return  An instance of {@code BgeeProperties} with values based on the provided
+     *          {@code Properties}. The method will create an instance only once for each thread 
+     *          and always return this instance when called ("per-thread singleton").
+     * @see #getBgeeProperties()
+     */
+    public static BgeeProperties getBgeeProperties(Properties prop) {
+        log.entry(prop);
+        BgeeProperties bgeeProp;
+        long threadId = Thread.currentThread().getId();
+        if (! hasBgeeProperties()) {
+            // Create an instance
+            bgeeProp = new BgeeProperties(prop);
+            // Add it to the map
+            bgeeProperties.put(threadId, bgeeProp);
         }
-
-        BgeeProperties props = bgeeProperties.get(currentThread);
-        if (props == null) {
-            //instantiate the BgeeProperties only if needed
-            props = new BgeeProperties();
-            //we don't use putifAbsent, as the thread as key make sure 
-            //there won't be any multi-threading key collision
-            bgeeProperties.put(currentThread, props);
-            log.debug("Return a new BgeeProperties instance");
-        } else {
-            log.debug("Return an already existing BgeeProperties instance");
+        else {
+            bgeeProp = bgeeProperties.get(threadId);
         }
-        return log.exit(props);
+        return log.exit(bgeeProp);
     }
 
     /**
-     * Release all {@code BgeeProperties}s currently registered 
-     * and prevent any new 
-     * {@code BgeeProperties} to be obtained again (calling {@link #getBgeeProperties()} 
-     * after having called this method will throw a {@code IllegalStateException}). 
-     * <p>
-     * This method returns the number of {@code BgeeProperties}s that were released. 
-     * <p>
-     * This method is called for instance when a {@code ShutdownListener} 
-     * want to release all {@code BgeeProperties}s.
+     * Determine whether the {@code Thread} calling this method already 
+     * holds a {@code BgeeProperties}. 
      * 
-     * @return 	An {@code int} that is the number of {@code BgeeProperties}s 
-     * 			that were released
+     * @return  A {@code boolean} {@code true} if the {@code Thread} 
+     *          calling this method currently holds a {@code BgeeProperties}, 
+     *          {@code false} otherwise. 
      */
-    public static int releaseAll()
-    {
+    public static boolean hasBgeeProperties() {
         log.entry();
-
-        //this AtomicBoolean will act more or less like a lock 
-        //(no new BgeeProperties can be obtained after this AtomicBoolean is set to true).
-        //It's not totally true, but we don't except any major error if it doesn't act like a lock.
-        bgeePropertiesClosed.set(true);
-
-        int propCount = bgeeProperties.size();
-        bgeeProperties.clear();
-
-        return log.exit(propCount);
+        return log.exit(bgeeProperties.containsKey(Thread.currentThread().getId()));
     }
 
-    //*********************************
-    // INSTANCE METHODS
-    //*********************************
     /**
-     * Private constructor, instances can be obtained only through the use 
-     * of the static method {@link getBgeeProperties()}. 
-     * <p>
-     * Instance attributes are initialized using the corresponding 
-     * class attributes. 
+     * Remove the instance of {@code BgeeProperties} associated with the current thread
+     * from the {@code ConcurrentMap} used to store {@code BgeeProperties}
      */
-    private BgeeProperties()
-    {
-        this.setJdbcDriver(jdbcDriver);
-        this.setJdbcUrl(jdbcUrl);
-        this.setJdbcUsername(jdbcUsername);
-        this.setJdbcPassword(jdbcPassword);
-        this.setDataSourceResourceName(dataSourceResourceName);
-        this.setPrepStatPoolMaxSize(prepStatPoolMaxSize);
-        this.setPrepStatPoolsMaxTotalSize(prepStatPoolsMaxTotalSize);
-        
+    public static void removeFromBgeePropertiesPool(){
+        bgeeProperties.remove(Thread.currentThread().getId());
     }
 
     /**
-     * Releases this {@code BgeeProperties}. 
-     * A call to {@link #getBgeeProperties()} from the thread that was holding it 
-     * will return a new {@code BgeeProperties} instance. 
+     * Protected constructor, can be only called through the use of one of the
+     * {@code getBgeeProperties} method, the only way for the user to obtain an instance of this
+     * class, unless it is called within a subclass constructor.
+     * Try to load the properties from the injected {@code Properties}, or a properties file, 
+     * or from the system properties. 
+     * Otherwise, set the default values.
      * 
-     * @return 	{@code true} if this {@code BgeeProperties} was released, 
-     * 			{@code false} if it was already released.
+     * @param prop  A {@code java.util.Properties} instance that contains the system properties
+     *              to use.
      */
-    public boolean release()
-    {
-        log.entry();
-        return log.exit(
-                bgeeProperties.values().remove(this));
+    protected BgeeProperties(Properties prop) {
+        log.entry(prop);
+        log.debug("Bgee-core properties initialization...");
+        // Initialize all properties using the injected prop first, alternatively the System
+        // properties and then the file. The default value provided will be use if none of the
+        // previous solutions contain the property
+        topAnatRScriptExecutable = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
+                TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY,  
+                TOP_ANAT_R_SCRIPT_EXECUTABLE_DEFAULT);
+        topAnatRWorkingDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
+                TOP_ANAT_R_WORKING_DIRECTORY_KEY,
+                TOP_ANAT_R_WORKING_DIRECTORY_DEFAULT);
+        topAnatFunctionFile = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
+                TOP_ANAT_FUNCTION_FILE_KEY,
+                TOP_ANAT_FUNCTION_FILE_DEFAULT);
+        topAnatResultsWritingDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
+                TOP_ANAT_RESULTS_WRITING_DIRECTORY_KEY,
+                TOP_ANAT_RESULTS_WRITING_DIRECTORY_DEFAULT);
+        log.debug("Initialization done.");
+        log.exit();
     }
 
     /**
-     * Determines whether this {@code BgeeProperties} was released 
-     * (following a call to {@link #release()}).
-     * 
-     * @return	{@code true} if this {@code BgeeProperties} was released, 
-     * 			{@code false} otherwise.
+     * @return A {@code String} that is the path of RScript Executable file which is used 
+     * to execute the {@code R} code.
      */
-    public boolean isReleased()
-    {
-        log.entry();
-        return log.exit(
-                !bgeeProperties.containsValue(this));
+    public String getTopAnatRScriptExecutable() {
+        return topAnatRScriptExecutable;
     }
 
     /**
-     * Returns the name of the JDBC {@code Driver} to use 
-     * to connect to the data source.
-     * @return 	a {@code String} corresponding to the name 
-     * 			of the JDBC {@code Driver}
+     * @return A {@code String} that is the current working directory of {@code R}, where all
+     * the other files required for the processing of the topAnat analysis are kept.
      */
-    public String getJdbcDriver() {
-        return this.localJdbcDriver;
-    }
-    /**
-     * Sets the name of the JDBC {@code Driver} to use 
-     * to connect to the data source.
-     * @param jdbcDriver	a {@code String} corresponding to the name 
-     * 						of the JDBC {@code Driver}
-     */
-    public void setJdbcDriver(String jdbcDriver) {
-        this.localJdbcDriver = jdbcDriver;
+    public String getTopAnatRWorkingDirectory() {
+        return topAnatRWorkingDirectory;
     }
 
     /**
-     * Returns the database url of the form {@code jdbc:subprotocol:subname}, 
-     * to use to connect to the data source using the {@code DriverManager}. 
-     * @return 	a {@code String} representing the JDBC URL to use
+     * @return A {@code String} that is the name of the file which contains the additional modified 
+     * topGO {@code R} functions used by topAnat to perform the analyses.
      */
-    public String getJdbcUrl() {
-        return this.localJdbcUrl;
-    }
-    /**
-     * Sets the database url of the form {@code jdbc:subprotocol:subname}, 
-     * to use to connect to the data source using the {@code DriverManager}. 
-     * @param jdbcUrl 	a {@code String} representing the JDBC URL to use
-     */
-    public void setJdbcUrl(String jdbcUrl) {
-        this.localJdbcUrl = jdbcUrl;
+    public String getTopAnatFunctionFile() {
+        return topAnatFunctionFile;
     }
 
     /**
-     * Returns the default username to use to connect to the data source 
-     * using the JDBC URL.
-     * @return 	a {@code String} representing the default username.
+     * @return A {@code String} that is the name of the directory to store outputs of the TopAnat 
+     * analyses that should be kept to be retrieved in case the same TopAnat query is performed again.
      */
-    public String getJdbcUsername() {
-        return this.localJdbcUsername;
-    }
-    /**
-     * Sets the default username to use to connect to the data source 
-     * using the JDBC URL.
-     * @param jdbcUsername	a {@code String} representing the default username.
-     */
-    public void setJdbcUsername(String jdbcUsername) {
-        this.localJdbcUsername = jdbcUsername;
-    }
-
-    /**
-     * Returns the default password to use to connect to the data source 
-     * using the JDBC URL.
-     * @return 	a {@code String} representing the default password.
-     */
-    public String getJdbcPassword() {
-        return this.localJdbcPassword;
-    }
-    /**
-     * Sets the default password to use to connect to the data source 
-     * using the JDBC URL.
-     * @param jdbcPassword	a {@code String} representing the default password.
-     */
-    public void setJdbcPassword(String jdbcPassword) {
-        this.localJdbcPassword = jdbcPassword;
-    }
-    /**
-     * Returns the name of the resource to look up to get the dataSource
-     * @return a {@code String} representing the name of the resource
-     */
-    public String getDataSourceResourceName() {
-        return this.localDataSourceResourceName;
-    } 
-    /**
-     * Sets the name of the resource to look up to get the dataSource
-     * @param dataSourceResourceName a {@code String} representing
-     * the name of the resource
-     */
-    public void setDataSourceResourceName(String dataSourceResourceName) {
-        this.localDataSourceResourceName = dataSourceResourceName;
-    }
-    /**
-     * Returns the maximum allowed size for a single {@code PreparedStatement} pool.
-     * @return an {@code int} representing the maximum size of the pool.
-     */
-    public int getPrepStatPoolMaxSize() {
-        return this.localPrepStatPoolMaxSize;
-    } 
-    /**
-     * Returns the maximum allowed cumulated size for all {@code PreparedStatement} pools.
-     * @return an {@code int} representing the maximum cumulated size allowed for pools.
-     */
-    public int getPrepStatPoolsMaxTotalSize() {
-        return localPrepStatPoolsMaxTotalSize;
-    } 
-    /**
-     * Sets the maximum allowed size for a single {@code PreparedStatement} pool.
-     * @param prepStatPoolMaxSize an {@code int} representing
-     * the maximum size of the pool.
-     */
-    public void setPrepStatPoolMaxSize(int prepStatPoolMaxSize) {
-        this.localPrepStatPoolMaxSize = prepStatPoolMaxSize;
-    }   
-    /**
-     * Sets the maximum allowed cumulated size for all {@code PreparedStatement} pools.
-     * @param prepStatPoolsMaxTotalSize an {@code int} representing
-     * the maximum cumulated size allowed for pools.
-     */
-    public void setPrepStatPoolsMaxTotalSize(int prepStatPoolsMaxTotalSize) {
-        this.localPrepStatPoolsMaxTotalSize = prepStatPoolsMaxTotalSize;
-    }    
-
-    /**
-     * Returns a {@code boolean} defining whether static factories should be used 
-     * when available.
-     * See {@link org.bgee.model.EntityFactoryProvider EntityFactoryProvider} for more details.
-     * <p>
-     * If {@code true}, static factories will be used when available. 
-     * Corresponds to the property {@code bgee.static.factories}. 
-     * Default value is {@code false}.
-     * <p>
-     * Note that this property cannot be modified locally in a given thread, 
-     * as it increases the memory load when used, thus impacting all threads.
-     * 
-     * @return 	a {@code boolean} defining whether static factories should be used 
-     * 			when available.
-     * @see org.bgee.model.EntityFactoryProvider
-     * @see #setUseStaticFactory(boolean)
-     */
-    public boolean useStaticFactories() {
-        return useStaticFactories;
+    public String getTopAnatResultsWritingDirectory() {
+        return topAnatResultsWritingDirectory;
     }
 }

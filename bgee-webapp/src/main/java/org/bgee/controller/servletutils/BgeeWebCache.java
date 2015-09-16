@@ -119,7 +119,7 @@ public class BgeeWebCache extends CachingFilter
         }  
         finally{
             // Remove the bgee properties instance from the pool
-            prop.removeFromBgeePropertiesPool();
+            BgeeProperties.removeFromBgeePropertiesPool();
         }
         log.exit();
     }

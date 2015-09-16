@@ -68,8 +68,11 @@ public class BgeePropertiesSecondTest extends BgeePropertiesParentTest {
         assertEquals("Wrong property value retrieved",
                 "/speciesImagesRootDirectory", bgeeProp.getSpeciesImagesRootDirectory());
         assertEquals("Wrong property value retrieved",
-                "/topOBOResultsUrlRootDirectory", bgeeProp.getTopOBOResultsUrlRootDirectory());
-        assertEquals("Wrong property value retrieved",
                 "webpagescachefile", bgeeProp.getWebpagesCacheConfigFileName());
+        assertEquals("Wrong property value retrieved", 
+                "/fileurldir", bgeeProp.getTopAnatResultsUrlDirectory());
+        // Test a superclass property
+        assertEquals("Wrong property value retrieved", 
+                "/filetopanatfunction", bgeeProp.getTopAnatFunctionFile());
     }
 }

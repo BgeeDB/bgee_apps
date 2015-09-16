@@ -215,7 +215,7 @@ public class FrontController extends HttpServlet {
             log.error("Other Exception", e);
         } finally {
             // Remove the bgee properties instance from the pool
-            this.prop.removeFromBgeePropertiesPool();
+            BgeeProperties.removeFromBgeePropertiesPool();
         }
         log.exit();
     }

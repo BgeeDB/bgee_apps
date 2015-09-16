@@ -1,0 +1,118 @@
+package org.bgee.model;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
+
+import java.util.Properties;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Exchanger;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
+import org.junit.Test;
+
+/**
+ * Unit tests for {@link BgeeProperties}.
+ * It checks that the properties are loaded from the correct source
+ * These tests are split in several test classes to avoid conflicts between tests due to
+ * the per-thread singleton behavior.
+ * 
+ * @author Mathieu Seppey
+ * @author Valentine Rech de Laval
+ * @author Frederic Bastian
+ * @version Bgee 13, June 2015
+ * @since Bgee 13
+ * @see BgeePropertiesParentTest
+ * @see BgeePropertiesFirstTest
+ * @see BgeePropertiesSecondTest
+ * @see BgeePropertiesThirdTest
+ * @see BgeePropertiesFourthTest
+ */
+public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
+
+    /**
+     * Test that the injected {@code java.util.Properties} are used
+     */
+    @Test
+    public void testInjectedProperties(){
+        // set the properties to inject
+        Properties prop = new Properties();
+        prop.put(BgeeProperties.TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY, "/injectedrexec");
+        prop.put(BgeeProperties.TOP_ANAT_R_WORKING_DIRECTORY_KEY, "/injectedrwd");
+        prop.put(BgeeProperties.TOP_ANAT_FUNCTION_FILE_KEY, "/injectedfunctionfile");
+        prop.put(BgeeProperties.TOP_ANAT_RESULTS_WRITING_DIRECTORY_KEY, "/injectedwd");
+
+        // get the instance of bgeeproperties and check the values
+        this.bgeeProp = BgeeProperties.getBgeeProperties(prop);
+        assertEquals("Wrong property value retrieved","/injectedrexec",
+                bgeeProp.getTopAnatRScriptExecutable());
+        assertEquals("Wrong property value retrieved","/injectedrwd",
+                bgeeProp.getTopAnatRWorkingDirectory());
+        assertEquals("Wrong property value retrieved", 
+                "/injectedfunctionfile", bgeeProp.getTopAnatFunctionFile());
+        assertEquals("Wrong property value retrieved", 
+                "/injectedwd", bgeeProp.getTopAnatResultsWritingDirectory());
+    }
+
+    /**
+     * Test that the returned {@code BgeeProperties} instance is always the same within the
+     * same thread but different between two threads
+     * @throws InterruptedException 
+     * @throws ExecutionException 
+     */
+    @Test
+    public void testOnePropertiesPerThread() throws InterruptedException, ExecutionException{
+
+        /**
+         * An anonymous class to acquire {@code BgeeProperties}s 
+         * from a different thread than this one, 
+         * and to be run alternatively to the main thread.
+         */
+        class ThreadTest implements Callable<Boolean> {
+
+            public BgeeProperties bgeeProp3;
+            /**
+             * An {@code Exchanger} that will be used to run threads alternatively. 
+             */
+            public final Exchanger<Integer> exchanger = new Exchanger<Integer>();
+            @Override
+            public Boolean call() throws InterruptedException{
+                try{
+                    bgeeProp3 = BgeeProperties.getBgeeProperties();
+                    return true;
+                } finally {
+                    //whatever happens, make sure to re-launch the main thread, 
+                    //as we do not use an Executor that might catch the Exception 
+                    //and interrupt the other Thread. 
+                    this.exchanger.exchange(null);
+                }
+            }
+        };
+
+        // Get two BgeeProperties in the main thread and check that it is the same instance
+        BgeeProperties bgeeProp1 = BgeeProperties.getBgeeProperties();
+        BgeeProperties bgeeProp2 = BgeeProperties.getBgeeProperties();
+        assertSame("The two objects are not the same but they should be",
+                bgeeProp1, bgeeProp2);
+
+        //launch a second thread also acquiring BgeeProperties
+        ThreadTest test = new ThreadTest();
+        ExecutorService executorService = Executors.newFixedThreadPool(1);
+        Future<Boolean> future = executorService.submit(test);
+        //wait for this thread's turn
+        test.exchanger.exchange(null);
+        //check that no exception was thrown in the second thread.
+        //In that case, it would be completed and calling get would throw 
+        //the exception. 
+        if (future.isDone()) {
+            future.get();
+        }
+        assertNotSame("The two objects are the same but they should not be",
+                bgeeProp1, test.bgeeProp3);
+
+    }
+
+}

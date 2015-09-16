@@ -1,4 +1,4 @@
-package org.bgee.controller;
+package org.bgee.model;
 
 import org.junit.After;
 import org.junit.Before;
@@ -14,7 +14,7 @@ import org.junit.Before;
  * @author Mathieu Seppey
  * @author Valentine Rech de Laval
  * @author Frederic Bastian
- * @version Bgee 13, June 2015
+ * @version Bgee 13, August 2015
  * @since Bgee 13
  * @see BgeePropertiesParentTest
  * @see BgeePropertiesFirstTest
@@ -54,27 +54,9 @@ public abstract class BgeePropertiesParentTest {
      * Clear the common properties to be cleared before and after tests.
      */
     private void clearCommonProperties() {
-        System.clearProperty(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY);
-        System.clearProperty(BgeeProperties.URL_MAX_LENGTH_KEY);
-        System.clearProperty(BgeeProperties.REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY);
-        System.clearProperty(BgeeProperties.FTP_ROOT_DIRECTORY_KEY);
-        System.clearProperty(BgeeProperties.DOWNLOAD_ROOT_DIRECTORY_KEY);
-        System.clearProperty(BgeeProperties.DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_KEY);
-        System.clearProperty(BgeeProperties.DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY);
-        System.clearProperty(BgeeProperties.DOWNLOAD_MULTI_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY);
-        System.clearProperty(BgeeProperties.DOWNLOAD_ORTHOLOG_FILES_ROOT_DIRECTORY_KEY);
-        System.clearProperty(BgeeProperties.DOWNLOAD_AFFY_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY);
-        System.clearProperty(BgeeProperties.DOWNLOAD_RNA_SEQ_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY);
-        System.clearProperty(BgeeProperties.JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY);
-        System.clearProperty(BgeeProperties.JAVASCRIPT_VERSION_EXTENSION_KEY);
-        System.clearProperty(BgeeProperties.CSS_FILES_ROOT_DIRECTORY_KEY);
-        System.clearProperty(BgeeProperties.CSS_VERSION_EXTENSION_KEY);
-        System.clearProperty(BgeeProperties.IMAGES_ROOT_DIRECTORY_KEY);
-        System.clearProperty(BgeeProperties.LOGO_IMAGES_ROOT_DIRECTORY_KEY);
-        System.clearProperty(BgeeProperties.SPECIES_IMAGES_ROOT_DIRECTORY_KEY);
-        System.clearProperty(BgeeProperties.WEBPAGES_CACHE_CONFIG_FILE_NAME_KEY);
-        System.clearProperty(BgeeProperties.TOP_ANAT_RESULTS_URL_DIRECTORY_KEY);
-        // Superclass property
+        System.clearProperty(BgeeProperties.TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY);
+        System.clearProperty(BgeeProperties.TOP_ANAT_R_WORKING_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.TOP_ANAT_FUNCTION_FILE_KEY);
+        System.clearProperty(BgeeProperties.TOP_ANAT_RESULTS_WRITING_DIRECTORY_KEY);
     }
 }

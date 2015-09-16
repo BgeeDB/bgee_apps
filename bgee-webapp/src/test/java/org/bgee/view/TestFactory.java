@@ -79,5 +79,15 @@ public class TestFactory extends ViewFactory {
         }
         return null;
     }
+
+    @Override
+    public TopAnatDisplay getTopAnatDisplay() throws IOException {
+        if(prop.getUrlMaxLength() == 9999 && this.requestParameters.getFirstValue(
+                ((TestURLParameters)this.requestParameters.getUrlParametersInstance())
+                .getParamTestString()).equals("test")){
+            return new TestTopAnatDisplay(this.response, this.requestParameters, prop, this);
+        }
+        return null;
+    }
     
 }

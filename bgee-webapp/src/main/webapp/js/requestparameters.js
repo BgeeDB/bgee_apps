@@ -119,6 +119,20 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
     }
     /**
      * A {@code String} that is the value taken by the {@code page} parameter 
+     * (see {@link urlParameters#getParamPage()}) when a topAnat page is requested.
+     * This parameter will then be provided outside of this class through the method 
+     * {@link #PAGE_TOP_ANAT()} (to get the behavior of a public final parameter).
+     */
+    var pageTopAnat = 'top_anat';
+    /**
+     * A method to obtain the value taken by the {@code page} parameter 
+     * (see {@link urlParameters#getParamPage()}) when a topAnat page is requested.
+     */
+    this.PAGE_TOP_ANAT = function() {
+    	return pageTopAnat;
+    }
+    /**
+     * A {@code String} that is the value taken by the {@code page} parameter 
      * (see {@link #getParamPage()}) when a documentation page is requested.
      * This parameter will then be provided outside of this class through the method 
      * {@link #PAGE_DOCUMENTATION()} (to get the behavior of a public final parameter).
@@ -1118,7 +1132,18 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
             return true;
         }
         return false;
-    };    
+    };   
+    /**
+     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+     * 			category "topAnat"
+     */
+    this.isATopAnatPageCategory = function(){
+        if(this.getFirstValue(urlParameters.getParamPage()) != null &&
+                this.getFirstValue(urlParameters.getParamPage()) == this.PAGE_TOP_ANAT()){
+            return true;
+        }
+        return false;
+    };   
 //    /**
 //     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
 //     * category "expression"
@@ -1204,18 +1229,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
 //        }
 //        return false;
 //    };
-//    /**
-//     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
-//     * category "top_anat"
-//     */
-//    this.isATopOBOPageCategory = function()
-//    {
-//        if (this.getFirstValue(urlParameters.getParamPage()) != null && 
-//                this.getFirstValue(urlParameters.getParamPage()) == "top_anat"){
-//            return true;
-//        }
-//        return false;
-//    };
+
     /**
      * Determine whether the requested page contains sensitive information, 
      * such as passwords.

@@ -13,6 +13,7 @@ import org.bgee.view.DocumentationDisplay;
 import org.bgee.view.DownloadDisplay;
 import org.bgee.view.ErrorDisplay;
 import org.bgee.view.GeneralDisplay;
+import org.bgee.view.TopAnatDisplay;
 import org.bgee.view.ViewFactory;
 
 /**
@@ -45,6 +46,13 @@ public class JsonFactory extends ViewFactory {
     public ErrorDisplay getErrorDisplay() throws IOException {
         log.entry();
         return log.exit(new JsonErrorDisplay(this.response, this.requestParameters,
+            this.prop, this));
+    }
+
+    @Override
+    public TopAnatDisplay getTopAnatDisplay() throws IOException {
+        log.entry();
+        return log.exit(new JsonTopAnatDisplay(this.response, this.requestParameters,
             this.prop, this));
     }
 

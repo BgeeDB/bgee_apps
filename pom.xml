@@ -264,6 +264,13 @@
                 <version>1.8</version>
                 <scope>compile</scope>
             </dependency>
+            
+            <dependency>
+                <groupId>rcaller</groupId>
+                <artifactId>RCaller</artifactId>
+                <version>2.5</version>
+                <scope>compile</scope>
+            </dependency>
 
             <!-- End for the core layer -->
 

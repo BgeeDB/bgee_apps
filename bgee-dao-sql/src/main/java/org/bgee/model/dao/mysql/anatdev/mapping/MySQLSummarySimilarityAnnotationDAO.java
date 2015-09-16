@@ -76,7 +76,7 @@ public class MySQLSummarySimilarityAnnotationDAO
             String taxonId) throws DAOException, IllegalArgumentException {
         log.entry(taxonId);
         
-        if (StringUtils.isNullOrEmpty(taxonId)) {
+        if (StringUtils.isEmptyOrWhitespaceOnly(taxonId)) {
             throw log.throwing(new IllegalArgumentException("Taxon ID must be provided"));
         }
         
@@ -103,7 +103,7 @@ public class MySQLSummarySimilarityAnnotationDAO
     public SimAnnotToAnatEntityTOResultSet getSimAnnotToAnatEntity(String taxonId, 
             Set<String> speciesIds) throws DAOException, IllegalArgumentException {
         log.entry(taxonId, speciesIds);
-        if (StringUtils.isNullOrEmpty(taxonId)) {
+        if (StringUtils.isEmptyOrWhitespaceOnly(taxonId)) {
             throw log.throwing(new IllegalArgumentException("Taxon ID must be provided"));
         }
         
@@ -138,11 +138,10 @@ public class MySQLSummarySimilarityAnnotationDAO
     }
 
     @Override
-    //TODO: integration test
     public SimAnnotToAnatEntityTOResultSet getSimAnnotToLostAnatEntity(String taxonId, 
             Set<String> speciesIds) throws DAOException, IllegalArgumentException {
         log.entry(taxonId, speciesIds);
-        if (StringUtils.isNullOrEmpty(taxonId)) {
+        if (StringUtils.isEmptyOrWhitespaceOnly(taxonId)) {
             throw log.throwing(new IllegalArgumentException("Taxon ID must be provided"));
         }
         if (speciesIds == null || speciesIds.isEmpty()) {

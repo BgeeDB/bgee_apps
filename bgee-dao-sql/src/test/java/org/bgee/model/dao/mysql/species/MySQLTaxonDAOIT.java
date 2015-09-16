@@ -173,7 +173,7 @@ public class MySQLTaxonDAOIT extends MySQLITAncestor {
         // => find the LCA of all species in Bgee and its ancestors
         includeAncestors = true;
         actualResults = dao.getLeastCommonAncestor(speciesIds, includeAncestors).getAllTOs();
-        // Her, it should be the same result because 111 is the older ancestor of test taxonomy
+        // Here, it should be the same result because 111 is the older ancestor of test taxonomy
         assertTrue("TaxonTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(actualResults, expectedTaxa));
                 

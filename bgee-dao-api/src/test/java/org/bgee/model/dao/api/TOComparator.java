@@ -786,8 +786,8 @@ public class TOComparator {
             StringUtils.equals(to1.getAssignedBy(), to2.getAssignedBy()) &&
             StringUtils.equals(to1.getCurator(), to2.getCurator()) &&
             (to1.getAnnotationDate() == to2.getAnnotationDate() ||
-                (to1.getAnnotationDate() != null && to2.getAnnotationDate() != null &&
-                to1.getAnnotationDate().compareTo(to2.getAnnotationDate()) == 0))) {
+                (to1.getAnnotationDate() != null && 
+                to1.getAnnotationDate().equals(to2.getAnnotationDate())))) {
             return log.exit(true);
         }
         return log.exit(false);

@@ -20,6 +20,8 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 
+import com.mysql.jdbc.StringUtils;
+
 /**
  * A {@code HierarchicalGroupDAO} for MySQL. 
  * 
@@ -54,7 +56,7 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
             Set<String> speciesIds) throws DAOException, IllegalArgumentException {
         log.entry(taxonId, speciesIds);
 
-        if (taxonId == null) {
+        if (StringUtils.isEmptyOrWhitespaceOnly(taxonId)) {
             throw log.throwing(new IllegalArgumentException("No taxon ID is provided"));
         }
         

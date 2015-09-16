@@ -59,7 +59,7 @@ public class MySQLRawSimilarityAnnotationDAOIT  extends MySQLITAncestor {
         
         List<RawSimilarityAnnotationTO> actualResults = 
                 dao.getAllRawSimilarityAnnotations().getAllTOs();
-        List<RawSimilarityAnnotationTO> expectedTaxa = Arrays.asList(
+        List<RawSimilarityAnnotationTO> expectedResults = Arrays.asList(
                 new RawSimilarityAnnotationTO("527", false, "ECO:1", "CIO:2", "ISBN:978-0030223693", 
                         "Liem KF", "Text2", "bgee", "ANN", asDate(2015, Month.MARCH, 30)),
                 new RawSimilarityAnnotationTO("527", true, "ECO:2", "CIO:6", "PMID:19786082", 
@@ -83,12 +83,12 @@ public class MySQLRawSimilarityAnnotationDAOIT  extends MySQLITAncestor {
                 new RawSimilarityAnnotationTO("1870", false, "ECO:2", "CIO:5", "DOI:10.1017/S0022215100009087", 
                         "Gerrie J", "Text4", "bgee", "ANN", asDate(2015, Month.APRIL, 02)));
         assertTrue("RawSimilarityAnnotationTOs incorrectly retrieved", 
-                TOComparator.areTOCollectionsEqual(actualResults, expectedTaxa));
+                TOComparator.areTOCollectionsEqual(actualResults, expectedResults));
 
         dao.setAttributes(Arrays.asList(RawSimilarityAnnotationDAO.Attribute.ECO_ID, 
                 RawSimilarityAnnotationDAO.Attribute.CIO_ID));
         actualResults = dao.getAllRawSimilarityAnnotations().getAllTOs();
-        expectedTaxa = Arrays.asList(
+        expectedResults = Arrays.asList(
                 new RawSimilarityAnnotationTO(null, null, "ECO:1", "CIO:2", null, null, null, null, null, null),
                 new RawSimilarityAnnotationTO(null, null, "ECO:2", "CIO:6", null, null, null, null, null, null),
                 new RawSimilarityAnnotationTO(null, null, "ECO:2", "CIO:5", null, null, null, null, null, null),
@@ -96,7 +96,7 @@ public class MySQLRawSimilarityAnnotationDAOIT  extends MySQLITAncestor {
                 new RawSimilarityAnnotationTO(null, null, "ECO:4", "CIO:5", null, null, null, null, null, null),
                 new RawSimilarityAnnotationTO(null, null, "ECO:5", "CIO:5", null, null, null, null, null, null));
         assertTrue("RawSimilarityAnnotationTOs incorrectly retrieved",
-                TOComparator.areTOCollectionsEqual(actualResults, expectedTaxa));
+                TOComparator.areTOCollectionsEqual(actualResults, expectedResults));
     }
 
     /**

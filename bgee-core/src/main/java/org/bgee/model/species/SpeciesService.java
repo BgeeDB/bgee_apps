@@ -69,7 +69,7 @@ public class SpeciesService extends Service {
     private static Species mapFromTO(SpeciesDAO.SpeciesTO speciesTO) {
         log.entry(speciesTO);
         return log.exit(new Species(speciesTO.getId(), speciesTO.getName(), 
-                speciesTO.getDescription()));
+                speciesTO.getDescription(), speciesTO.getGenus(), speciesTO.getSpeciesName()));
     }
 
 }

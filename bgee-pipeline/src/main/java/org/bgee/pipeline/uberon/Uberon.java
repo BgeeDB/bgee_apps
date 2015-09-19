@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Matcher;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -196,7 +197,8 @@ public class Uberon extends UberonCommon {
             ub.setClassesRemovedFilePath(args[3]);
             ub.setClassIdsToRemove(CommandRunner.parseListArgument(args[4]));
             ub.setRelIds(CommandRunner.parseListArgument(args[5]));
-            ub.setRelsBetweenToRemove(CommandRunner.parseMapArgument(args[6]));
+            ub.setRelsBetweenToRemove(CommandRunner.parseMapArgument(args[6]).entrySet().stream()
+                    .collect(Collectors.toMap(Entry::getKey, e -> new HashSet<String>(e.getValue()))));
             ub.setToRemoveSubgraphRootIds(CommandRunner.parseListArgument(args[7]));
             ub.setToFilterSubgraphRootIds(CommandRunner.parseListArgument(args[8]));
             ub.setSubsetNames(CommandRunner.parseListArgument(args[9]));

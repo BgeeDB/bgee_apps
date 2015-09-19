@@ -6,8 +6,11 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -72,7 +75,8 @@ public class UberonSocketTool {
         
         if (args[0].equalsIgnoreCase("stageRange")) {
             UberonSocketTool tool = new UberonSocketTool(new UberonDevStage(args[1], args[2], 
-                    CommandRunner.parseMapArgumentAsInteger(args[3])), 
+                    CommandRunner.parseMapArgumentAsInteger(args[3]).entrySet().stream()
+                    .collect(Collectors.toMap(Entry::getKey, e -> new HashSet<Integer>(e.getValue())))), 
                     Integer.parseInt(args[4]), 
                     new ServerSocket(Integer.parseInt(args[5])));
             tool.startListening();

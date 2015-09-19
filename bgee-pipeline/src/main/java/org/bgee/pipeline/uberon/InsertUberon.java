@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -107,7 +108,8 @@ public class InsertUberon extends MySQLDAOUser {
             }
             
             UberonDevStage ub = new UberonDevStage(args[1], args[2], 
-                    CommandRunner.parseMapArgumentAsInteger(args[3]));
+                    CommandRunner.parseMapArgumentAsInteger(args[3]).entrySet().stream()
+                    .collect(Collectors.toMap(Entry::getKey, e -> new HashSet<Integer>(e.getValue()))));
             ub.setToIgnoreSubgraphRootIds(CommandRunner.parseListArgument(args[4]));
             
             InsertUberon insert = new InsertUberon();
@@ -126,7 +128,8 @@ public class InsertUberon extends MySQLDAOUser {
             }
             
             Uberon ub = new Uberon(args[1], args[2], 
-                    CommandRunner.parseMapArgumentAsInteger(args[3]));
+                    CommandRunner.parseMapArgumentAsInteger(args[3]).entrySet().stream()
+                    .collect(Collectors.toMap(Entry::getKey, e -> new HashSet<Integer>(e.getValue()))));
             ub.setToIgnoreSubgraphRootIds(CommandRunner.parseListArgument(args[4]));
             
             InsertUberon insert = new InsertUberon();

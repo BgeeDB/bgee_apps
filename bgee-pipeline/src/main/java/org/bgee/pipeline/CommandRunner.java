@@ -2,11 +2,8 @@ package org.bgee.pipeline;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -354,13 +351,13 @@ public class CommandRunner {
      * Parses a command line argument and returns a corresponding {@code Map}.
      * 
      * @param mapArg    A {@code String} corresponding to a map encoded as command-line argument.
-     * @return          A {@code Map} where keys are {@code String}s and values are 
-     *                  {@code Set}s of {@code String}s, corresponding to {code mapArg}.
+     * @return          A {@code LinkedHashMap} where keys are {@code String}s and values are 
+     *                  {@code List}s of {@code String}s, corresponding to {code mapArg}.
      * @see #LIST_SEPARATOR
      * @see #KEY_VALUE_SEPARATOR
      * @see #VALUE_SEPARATOR
      */
-    public static Map<String, Set<String>> parseMapArgument(String mapArg) {
+    public static LinkedHashMap<String, List<String>> parseMapArgument(String mapArg) {
         log.entry(mapArg);
         return log.exit(CommandRunner.parseMapArgument(mapArg, String.class, String.class));
     }
@@ -368,13 +365,13 @@ public class CommandRunner {
      * Parses a command line argument and returns a corresponding {@code Map}.
      * 
      * @param mapArg    A {@code String} corresponding to a map encoded as command-line argument.
-     * @return          A {@code Map} where keys are {@code String}s and values are 
-     *                  {@code Set}s of {@code Integer}s, corresponding to {code mapArg}.
+     * @return          A {@code LinkedHashMap} where keys are {@code String}s and values are 
+     *                  {@code List}s of {@code Integer}s, corresponding to {code mapArg}.
      * @see #LIST_SEPARATOR
      * @see #KEY_VALUE_SEPARATOR
      * @see #VALUE_SEPARATOR
      */
-    public static Map<String, Set<Integer>> parseMapArgumentAsInteger(String mapArg) {
+    public static LinkedHashMap<String, List<Integer>> parseMapArgumentAsInteger(String mapArg) {
         log.entry(mapArg);
         return log.exit(CommandRunner.parseMapArgument(mapArg, String.class, Integer.class));
     }
@@ -383,13 +380,13 @@ public class CommandRunner {
      * Parses a command line argument and returns a corresponding {@code Map}.
      * 
      * @param mapArg    A {@code String} corresponding to a map encoded as command-line argument.
-     * @return          A {@code Map} where keys are {@code Integer}s and values are 
-     *                  {@code Set}s of {@code Integer}s, corresponding to {code mapArg}.
+     * @return          A {@code LinkedHashMap} where keys are {@code Integer}s and values are 
+     *                  {@code List}s of {@code Integer}s, corresponding to {code mapArg}.
      * @see #LIST_SEPARATOR
      * @see #KEY_VALUE_SEPARATOR
      * @see #VALUE_SEPARATOR
      */
-    public static Map<Integer, Set<Integer>> parseMapArgumentAsAllInteger(String mapArg) {
+    public static LinkedHashMap<Integer, List<Integer>> parseMapArgumentAsAllInteger(String mapArg) {
         log.entry(mapArg);
         return log.exit(CommandRunner.parseMapArgument(mapArg, Integer.class, Integer.class));
     }
@@ -406,18 +403,18 @@ public class CommandRunner {
      * @param mapArg    A {@code String} corresponding to a map, see {@link #KEY_VALUE_SEPARATOR} 
      *                  for an example.
      * @param type      The desired returned type of values.
-     * @return          A {@code Map} resulting from the split of {@code mapArg}, where keys 
-     *                  are {@code String}s that are associated to a {@code Set} of {@code T}s.
+     * @return          A {@code LinkedHashMap} where keys are {@code T}s and values are 
+     *                  {@code List}s of {@code U}s, corresponding to {code mapArg}.
      * @see #KEY_VALUE_SEPARATOR
      * @param T The type of the keys in the returned {@code Map}
-     * @param U The type of the entries in the {@code Set}s stored as values 
+     * @param U The type of the entries in the {@code List}s stored as values 
      *          in the returned {@code Map}
      */
-    private static <T, U> Map<T, Set<U>> parseMapArgument(String mapArg, Class<T> keyType, 
+    private static <T, U> LinkedHashMap<T, List<U>> parseMapArgument(String mapArg, Class<T> keyType, 
             Class<U> valueType) {
         log.entry(mapArg, keyType, valueType);
 
-        Map<T, Set<U>> resultingMap = new HashMap<T, Set<U>>();
+        LinkedHashMap<T, List<U>> resultingMap = new LinkedHashMap<T, List<U>>();
         mapArg = mapArg.trim();
         if (!mapArg.equals(EMPTY_LIST)) {
             for (String arg: mapArg.split(LIST_SEPARATOR)) {
@@ -441,9 +438,9 @@ public class CommandRunner {
                     } else {
                         key = keyType.cast(keyValue);
                     }
-                    Set<U> existingValues = resultingMap.get(key);
+                    List<U> existingValues = resultingMap.get(key);
                     if (existingValues == null) {
-                        existingValues = new HashSet<U>();
+                        existingValues = new ArrayList<U>();
                         resultingMap.put(key, existingValues);
                     }
                     log.trace("Key: {} - values to parse: {}", key, keyValues[1]);

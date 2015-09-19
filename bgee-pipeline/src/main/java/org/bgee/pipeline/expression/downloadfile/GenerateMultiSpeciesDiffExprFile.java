@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -1158,7 +1159,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                     expectedArgLength + " arguments, " + args.length + " provided."));
         }
         GenerateMultiSpeciesDiffExprFile generator = new GenerateMultiSpeciesDiffExprFile(
-                CommandRunner.parseMapArgument(args[0]),
+                CommandRunner.parseMapArgument(args[0]).entrySet().stream()
+                .collect(Collectors.toMap(Entry::getKey, e -> new HashSet<String>(e.getValue()))),
                 GenerateDownloadFile.convertToFileTypes(
                     CommandRunner.parseListArgument(args[1]), MultiSpeciesDiffExprFileType.class),
                 args[2]);

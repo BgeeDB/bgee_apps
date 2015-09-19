@@ -18,6 +18,7 @@ import java.util.TreeMap;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -138,7 +139,8 @@ public class UberonDevStage extends UberonCommon {
             ub.setModifiedOntPath(args[2]);
             ub.setClassIdsToRemove(CommandRunner.parseListArgument(args[3]));
             ub.setChildrenOfToRemove(CommandRunner.parseListArgument(args[4]));
-            ub.setRelsBetweenToRemove(CommandRunner.parseMapArgument(args[5]));
+            ub.setRelsBetweenToRemove(CommandRunner.parseMapArgument(args[5]).entrySet().stream()
+                    .collect(Collectors.toMap(Entry::getKey, e -> new HashSet<String>(e.getValue()))));
             ub.setRelIds(CommandRunner.parseListArgument(args[6]));
             ub.setToFilterSubgraphRootIds(CommandRunner.parseListArgument(args[7]));
             

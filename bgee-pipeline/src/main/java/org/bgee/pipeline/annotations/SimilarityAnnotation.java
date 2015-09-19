@@ -193,7 +193,6 @@ public class SimilarityAnnotation {
         //In this CuratorAnnotationBean, the title is actually set when calling setRefId. 
         //This method does nothing and is defined only for overriding 
         //the RawAnnotationBean default method. 
-        @SuppressWarnings("unused")
         public void setRefTitle(String refTitle) {
             //nothing here, the title is set when calling setRefId
         }
@@ -531,7 +530,8 @@ public class SimilarityAnnotation {
                         "12 arguments, " + args.length + " provided."));
             }
             new SimilarityAnnotation(CommandRunner.parseArgument(args[1]), 
-                    CommandRunner.parseMapArgumentAsInteger(args[2]), 
+                    CommandRunner.parseMapArgumentAsInteger(args[2]).entrySet().stream()
+                    .collect(Collectors.toMap(Entry::getKey, e -> new HashSet<Integer>(e.getValue()))), 
                     args[3], args[4], args[5], args[6], args[7]).generateReleaseFiles(
                             args[8], args[9], args[10], args[11]);
         } else {

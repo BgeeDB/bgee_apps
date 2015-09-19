@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -232,28 +233,28 @@ public class TaxonConstraints {
      * {@code OWLOntology}, used to generate or retrieve taxon constraints.
      */
     private final OWLGraphWrapper taxOntWrapper;
+    /**
+     * A {@code Function} accepting an {@code OWLGraphWrapper} as input and returning 
+     * a {@code SpeciesSubsetterUtil} using it in return. This is useful for injecting 
+     * the {@code SpeciesSubsetterUtil}s to use. 
+     */
+    private final Function<OWLGraphWrapper, SpeciesSubsetterUtil> subsetterUtilSupplier;
 
     /**
-     * Constructor accepting the Uberon {@code OWLOntology} and the taxonomy 
-     * {@code OWLOntology}, allowing to generate or retrieve taxon constraints.
-     * 
-     * @param uberonOnt The Uberon {@code OWLOntology}.
-     * @param taxOnt    The taxonomy {@code OWLOntology}.
-     * @throws UnknownOWLOntologyException      if {@code uberonOnt} or {@code taxOnt} 
-     *                                          could not be used.
-     * @throws OWLOntologyCreationException     if {@code uberonOnt} or {@code taxOnt} 
-     *                                          could not be used.
+     * Constructor private, the Uberon and the taxonomy ontologies must be provided.
+     * @see #TaxonConstraints(OWLOntology, OWLOntology)
+     * @see #TaxonConstraints(String, String)
      */
-    public TaxonConstraints(OWLOntology uberonOnt, OWLOntology taxOnt) 
-            throws UnknownOWLOntologyException, OWLOntologyCreationException {
-        this.uberonOntWrapper = new OWLGraphWrapper(uberonOnt);
-        this.taxOntWrapper    = new OWLGraphWrapper(taxOnt);
-        
-        this.prepareUberon();
+    @SuppressWarnings("unused")
+    private TaxonConstraints() throws UnknownOWLOntologyException, OWLOntologyCreationException {
+        this((OWLGraphWrapper) null, (OWLGraphWrapper) null);
     }
     /**
      * Constructor accepting the path to the Uberon ontology and the path to the taxonomy 
-     * ontology, allowing to generate or retrieve taxon constraints.
+     * ontology, allowing to generate or retrieve taxon constraints. 
+     * If it is requested to generate constaints, a default {@code SpeciesSubsetterUtil} 
+     * will be used (see 
+     * {@link #TaxonConstraints(OWLGraphWrapper, OWLGraphWrapper, SpeciesSubsetterUtil)}).
      * 
      * @param uberonFile    A {@code String} that is the path to the Uberon ontology.
      * @param taxOntFile    A {@code String} that is the path to the taxonomy ontology.
@@ -261,19 +262,59 @@ public class TaxonConstraints {
      * @throws OWLOntologyCreationException If the provided ontologies could not be used.
      * @throws OBOFormatParserException     If the provided ontologies could not be used.
      * @throws IOException                  If the provided files could not be read.
+     * @see #TaxonConstraints(OWLGraphWrapper, OWLGraphWrapper)
      */
     public TaxonConstraints(String uberonFile, String taxOntFile) 
             throws UnknownOWLOntologyException, OWLOntologyCreationException, 
             OBOFormatParserException, IOException {
-        this(OntologyUtils.loadOntology(uberonFile), OntologyUtils.loadOntology(taxOntFile));
+        this(new OWLGraphWrapper(OntologyUtils.loadOntology(uberonFile)), 
+                new OWLGraphWrapper(OntologyUtils.loadOntology(taxOntFile)));
     }
     /**
-     * Constructor to be used when there is no need to use the Uberon or taxonomy 
-     * ontologies.
+     * Constructor accepting the Uberon {@code OWLGraphWrapper} and the taxonomy 
+     * {@code OWLGraphWrapper} allowing to generate or retrieve taxon constraints. 
+     * If it is requested to generate constraints, default {@code SpeciesSubsetterUtil} 
+     * class will be used (see 
+     * {@link #TaxonConstraints(OWLGraphWrapper, OWLGraphWrapper, Function)}).
+     * 
+     * @param uberonOntGraph    An {@code OWLGraphWrapper} containing the Uberon ontology.
+     * @param taxOntGraph       An {@code OWLGraphWrapper} containing the taxonomy ontology. 
+     * @throws UnknownOWLOntologyException      if {@code uberonOnt} or {@code taxOnt} 
+     *                                          could not be used.
+     * @throws OWLOntologyCreationException     if {@code uberonOnt} or {@code taxOnt} 
+     *                                          could not be used.
      */
-    public TaxonConstraints() {
-        this.uberonOntWrapper = null;
-        this.taxOntWrapper    = null;
+    public TaxonConstraints(OWLGraphWrapper uberonOntGraph, OWLGraphWrapper taxOntGraph) 
+            throws UnknownOWLOntologyException, OWLOntologyCreationException {
+        this(uberonOntGraph, taxOntGraph, SpeciesSubsetterUtil::new);
+    }
+    /**
+     * Constructor accepting the Uberon {@code OWLGraphWrapper} and the taxonomy 
+     * {@code OWLGraphWrapper} allowing to generate or retrieve taxon constraints, 
+     * as well as a {@code Function} that will act as a supplier of {@code SpeciesSubsetterUtil}s, 
+     * accepting an {@code OWLGraphWrapper} as input. This will be used if it is requested 
+     * to generate taxon constraints, to obtain a fresh {@code SpeciesSubsetterUtil} 
+     * for each taxon for which constraints must be generated. 
+     * 
+     * @param uberonOntGraph        An {@code OWLGraphWrapper} containing the Uberon ontology.
+     * @param taxOntGraph           An {@code OWLGraphWrapper} containing the taxonomy ontology.
+     * @param subsetterUtilSupplier A {@code Function} accepting an {@code OWLGraphWrapper} 
+     *                              as input and returning a fresh {@code SpeciesSubsetterUtil}, 
+     *                              used as supplier of new {@code SpeciesSubsetterUtil}s 
+     *                              for each taxon . 
+     * @throws UnknownOWLOntologyException      if {@code uberonOnt} or {@code taxOnt} 
+     *                                          could not be used.
+     * @throws OWLOntologyCreationException     if {@code uberonOnt} or {@code taxOnt} 
+     *                                          could not be used.
+     */
+    public TaxonConstraints(OWLGraphWrapper uberonOntGraph, OWLGraphWrapper taxOntGraph, 
+            Function<OWLGraphWrapper, SpeciesSubsetterUtil> subsetterUtilSupplier) 
+            throws UnknownOWLOntologyException, OWLOntologyCreationException {
+        this.uberonOntWrapper = uberonOntGraph;
+        this.taxOntWrapper = taxOntGraph;
+        this.subsetterUtilSupplier = subsetterUtilSupplier;
+        
+        this.prepareUberon();
     }
     
     /**

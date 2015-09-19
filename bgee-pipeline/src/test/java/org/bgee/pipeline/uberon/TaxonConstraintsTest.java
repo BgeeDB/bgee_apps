@@ -96,8 +96,8 @@ public class TaxonConstraintsTest extends TestAncestor {
         UnknownOWLOntologyException, OWLOntologyCreationException, 
         OBOFormatParserException, IllegalArgumentException, OWLOntologyStorageException {
         TaxonConstraints generate = new TaxonConstraints(
-                OntologyUtils.loadOntology(UBERONFILE), 
-                OntologyUtils.loadOntology(TAXONTFILE));
+                new OWLGraphWrapper(OntologyUtils.loadOntology(UBERONFILE)), 
+                new OWLGraphWrapper(OntologyUtils.loadOntology(TAXONTFILE)));
         
         File tempDir = testFolder.getRoot().getAbsoluteFile();
         Map<String, Set<Integer>> constraints = generate.generateTaxonConstraints(

@@ -159,4 +159,39 @@ public class CommandRunnerTest extends TestAncestor {
                 CommandRunner.parseMapArgumentAsInteger(
                         " key1 " + CommandRunner.KEY_VALUE_SEPARATOR + " 1 "));
     }
+
+    /**
+     * Test method {@link CommandRunner#parseMapArgumentAsAllInteger(String)}.
+     */
+    @Test
+    public void shouldParseMapArgumentAsAllInteger() {
+        Map<Integer, Set<Integer>> expectedMap = new HashMap<Integer, Set<Integer>>();
+        expectedMap.put(1, new HashSet<Integer>(Arrays.asList(1, 2)));
+        expectedMap.put(2, new HashSet<Integer>(Arrays.asList(2)));
+        expectedMap.put(11, new HashSet<Integer>(Arrays.asList(3)));
+        expectedMap.put(3, new HashSet<Integer>(Arrays.asList(4, 5, 6)));
+        assertEquals("Incorrect parsing of string as map", 
+                expectedMap, 
+                CommandRunner.parseMapArgumentAsAllInteger(
+                        " 1 " + CommandRunner.KEY_VALUE_SEPARATOR + " 1 " + 
+                            CommandRunner.LIST_SEPARATOR + 
+                        "2" + CommandRunner.KEY_VALUE_SEPARATOR + "2" + 
+                            CommandRunner.LIST_SEPARATOR + 
+                        "1" + CommandRunner.KEY_VALUE_SEPARATOR + " 1 " + 
+                            CommandRunner.LIST_SEPARATOR + 
+                        "1" + CommandRunner.KEY_VALUE_SEPARATOR + "2" + 
+                            CommandRunner.LIST_SEPARATOR + 
+                        "11" + CommandRunner.KEY_VALUE_SEPARATOR + "3" + 
+                            CommandRunner.LIST_SEPARATOR + 
+                        "3" + CommandRunner.KEY_VALUE_SEPARATOR + "4" + 
+                            CommandRunner.VALUE_SEPARATOR + "5" + 
+                            CommandRunner.VALUE_SEPARATOR + "6"));
+        
+        expectedMap.clear();
+        expectedMap.put(1, new HashSet<Integer>(Arrays.asList(1)));
+        assertEquals("Incorrect parsing of string as map", 
+                expectedMap, 
+                CommandRunner.parseMapArgumentAsAllInteger(
+                        " 1 " + CommandRunner.KEY_VALUE_SEPARATOR + " 1 "));
+    }
 }

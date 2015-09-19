@@ -351,26 +351,47 @@ public class CommandRunner {
     }
 
     /**
-     * Delegates to {@link #parseMapArgument(String, Class)} with {@code Class} argument 
-     * being {@code String.class}.
+     * Parses a command line argument and returns a corresponding {@code Map}.
      * 
-     * @param mapArg    See same name argument in {@link #parseMapArgument(String, Class)}.
-     * @return          See returned value in {@link #parseMapArgument(String, Class)}.
+     * @param mapArg    A {@code String} corresponding to a map encoded as command-line argument.
+     * @return          A {@code Map} where keys are {@code String}s and values are 
+     *                  {@code Set}s of {@code String}s, corresponding to {code mapArg}.
+     * @see #LIST_SEPARATOR
+     * @see #KEY_VALUE_SEPARATOR
+     * @see #VALUE_SEPARATOR
      */
     public static Map<String, Set<String>> parseMapArgument(String mapArg) {
         log.entry(mapArg);
-        return log.exit(CommandRunner.parseMapArgument(mapArg, String.class));
+        return log.exit(CommandRunner.parseMapArgument(mapArg, String.class, String.class));
     }
     /**
-     * Delegates to {@link #parseMapArgument(String, Class)} with {@code Class} argument 
-     * being {@code Integer.class}.
+     * Parses a command line argument and returns a corresponding {@code Map}.
      * 
-     * @param mapArg    See same name argument in {@link #parseMapArgument(String, Class)}.
-     * @return          See returned value in {@link #parseMapArgument(String, Class)}.
+     * @param mapArg    A {@code String} corresponding to a map encoded as command-line argument.
+     * @return          A {@code Map} where keys are {@code String}s and values are 
+     *                  {@code Set}s of {@code Integer}s, corresponding to {code mapArg}.
+     * @see #LIST_SEPARATOR
+     * @see #KEY_VALUE_SEPARATOR
+     * @see #VALUE_SEPARATOR
      */
     public static Map<String, Set<Integer>> parseMapArgumentAsInteger(String mapArg) {
         log.entry(mapArg);
-        return log.exit(CommandRunner.parseMapArgument(mapArg, Integer.class));
+        return log.exit(CommandRunner.parseMapArgument(mapArg, String.class, Integer.class));
+    }
+    
+    /**
+     * Parses a command line argument and returns a corresponding {@code Map}.
+     * 
+     * @param mapArg    A {@code String} corresponding to a map encoded as command-line argument.
+     * @return          A {@code Map} where keys are {@code Integer}s and values are 
+     *                  {@code Set}s of {@code Integer}s, corresponding to {code mapArg}.
+     * @see #LIST_SEPARATOR
+     * @see #KEY_VALUE_SEPARATOR
+     * @see #VALUE_SEPARATOR
+     */
+    public static Map<Integer, Set<Integer>> parseMapArgumentAsAllInteger(String mapArg) {
+        log.entry(mapArg);
+        return log.exit(CommandRunner.parseMapArgument(mapArg, Integer.class, Integer.class));
     }
 
     /**
@@ -388,41 +409,53 @@ public class CommandRunner {
      * @return          A {@code Map} resulting from the split of {@code mapArg}, where keys 
      *                  are {@code String}s that are associated to a {@code Set} of {@code T}s.
      * @see #KEY_VALUE_SEPARATOR
+     * @param T The type of the keys in the returned {@code Map}
+     * @param U The type of the entries in the {@code Set}s stored as values 
+     *          in the returned {@code Map}
      */
-    private static <T> Map<String, Set<T>> parseMapArgument(String mapArg, Class<T> type) {
-        log.entry(mapArg, type);
+    private static <T, U> Map<T, Set<U>> parseMapArgument(String mapArg, Class<T> keyType, 
+            Class<U> valueType) {
+        log.entry(mapArg, keyType, valueType);
 
-        Map<String, Set<T>> resultingMap = new HashMap<String, Set<T>>();
+        Map<T, Set<U>> resultingMap = new HashMap<T, Set<U>>();
         mapArg = mapArg.trim();
         if (!mapArg.equals(EMPTY_LIST)) {
             for (String arg: mapArg.split(LIST_SEPARATOR)) {
                 log.trace("Map entry parsed: {}", arg);
                 if (StringUtils.isNotBlank(arg)) {
-                    String[] keyValue = arg.split(KEY_VALUE_SEPARATOR);
+                    String[] keyValues = arg.split(KEY_VALUE_SEPARATOR);
 
-                    if (keyValue.length != 2 || StringUtils.isBlank(keyValue[0]) || 
-                            StringUtils.isBlank(keyValue[1])) {
+                    if (keyValues.length != 2 || StringUtils.isBlank(keyValues[0]) || 
+                            StringUtils.isBlank(keyValues[1])) {
                         throw log.throwing(new IllegalArgumentException("Incorrect format " +
                                 "for a key-value pair in a Map command line argument: " + 
                                 arg));
                     }
 
-                    String key = keyValue[0].trim();
-                    Set<T> existingValues = resultingMap.get(key);
+                    String keyValue = keyValues[0].trim();
+                    T key = null;
+                    if (keyType.equals(Integer.class)) {
+                        key = keyType.cast(Integer.parseInt(keyValue));
+                    } else if (keyType.equals(Boolean.class)) {
+                        key = keyType.cast(Boolean.parseBoolean(keyValue));
+                    } else {
+                        key = keyType.cast(keyValue);
+                    }
+                    Set<U> existingValues = resultingMap.get(key);
                     if (existingValues == null) {
-                        existingValues = new HashSet<T>();
+                        existingValues = new HashSet<U>();
                         resultingMap.put(key, existingValues);
                     }
-                    log.trace("Key: {} - values to parse: {}", key, keyValue[1]);
-                    if (!keyValue[1].trim().equals(EMPTY_LIST)) {
-                        for (String value: keyValue[1].trim().split(VALUE_SEPARATOR)) {
+                    log.trace("Key: {} - values to parse: {}", key, keyValues[1]);
+                    if (!keyValues[1].trim().equals(EMPTY_LIST)) {
+                        for (String value: keyValues[1].trim().split(VALUE_SEPARATOR)) {
                             log.trace("Value parsed: {}", value);
-                            if (type.equals(Integer.class)) {
-                                existingValues.add(type.cast(Integer.parseInt(value)));
-                            } else if (type.equals(Boolean.class)) {
-                                existingValues.add(type.cast(Boolean.parseBoolean(value)));
+                            if (valueType.equals(Integer.class)) {
+                                existingValues.add(valueType.cast(Integer.parseInt(value)));
+                            } else if (valueType.equals(Boolean.class)) {
+                                existingValues.add(valueType.cast(Boolean.parseBoolean(value)));
                             } else {
-                                existingValues.add(type.cast(value));
+                                existingValues.add(valueType.cast(value));
                             }
                         }
                     }

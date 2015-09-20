@@ -44,6 +44,17 @@ name: left antenna segment
 relationship: part_of U:23
 
 [Term]
+id: U:25
+name: left antenna2
+is_a: U:22
+relationship: in_taxon NCBITaxon:14
+
+[Term]
+id: U:26
+name: left antenna segment2
+relationship: part_of U:25
+
+[Term]
 id: U:5
 name: cell
 is_a: U:1
@@ -150,7 +161,6 @@ name: fly_subspecies
 is_a: NCBITaxon:8
 disjoint_from: NCBITaxon:14
 ! disjoint_from: in_taxon NCBITaxon:14
-
 
 [Typedef]
 id: part_of

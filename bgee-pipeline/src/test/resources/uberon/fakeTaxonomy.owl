@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns="http://purl.obolibrary.org/obo/uberon/ext.owl#"
+     xml:base="http://purl.obolibrary.org/obo/uberon/ext.owl"
+     xmlns:phenoscape-anatomy="http://purl.obolibrary.org/obo/uberon/phenoscape-anatomy#"
+     xmlns:dc="http://purl.org/dc/elements/1.1/"
+     xmlns:foaf="http://xmlns.com/foaf/0.1/"
+     xmlns:terms="http://purl.org/dc/terms/"
+     xmlns:uberon="http://purl.obolibrary.org/obo/uberon#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:obo="http://purl.obolibrary.org/obo/"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:core="http://purl.obolibrary.org/obo/uberon/core#"
+     xmlns:doap="http://usefulinc.com/ns/doap#"
+     xmlns:oboInOwl="http://www.geneontology.org/formats/oboInOwl#">
+    <owl:Ontology rdf:about="http://purl.obolibrary.org/obo/uberon/ext.owl">
+        <oboInOwl:hasOBOFormatVersion rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1.2</oboInOwl:hasOBOFormatVersion>
+        <oboInOwl:treat-xrefs-as-reverse-genus-differentia rdf:datatype="http://www.w3.org/2001/XMLSchema#string">AAO part_of NCBITaxon:1</oboInOwl:treat-xrefs-as-reverse-genus-differentia>
+    </owl:Ontology>
+
+
+
+    <!-- http://purl.obolibrary.org/obo/RO_0002162 -->
+
+    <owl:ObjectProperty rdf:about="http://purl.obolibrary.org/obo/RO_0002162">
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">in taxon</rdfs:label>
+        <oboInOwl:hasDbXref rdf:datatype="http://www.w3.org/2001/XMLSchema#string">RO:0002162</oboInOwl:hasDbXref>
+    </owl:ObjectProperty>
+
+
+    <!-- http://purl.obolibrary.org/obo/NCBITaxon_8 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/NCBITaxon_8">
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">coelocanth</rdfs:label>
+    </owl:Class>
+    
+    <!-- http://purl.obolibrary.org/obo/NCBITaxon_13 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/NCBITaxon_13">
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">fly</rdfs:label>
+    </owl:Class>
+    
+    <!-- http://purl.obolibrary.org/obo/NCBITaxon_14 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/NCBITaxon_14">
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">fly_subspecies</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/NCBITaxon_13"/>
+    </owl:Class>
+    
+    <!-- http://purl.obolibrary.org/obo/NCBITaxon_15 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/NCBITaxon_15">
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">whatever</rdfs:label>
+    </owl:Class>
+
+    
+    <rdf:Description>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#AllDisjointClasses"/>
+        <owl:members rdf:parseType="Collection">
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://purl.obolibrary.org/obo/RO_0002162"/>
+                <owl:someValuesFrom rdf:resource="http://purl.obolibrary.org/obo/NCBITaxon_8"/>
+            </owl:Restriction>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://purl.obolibrary.org/obo/RO_0002162"/>
+                <owl:someValuesFrom rdf:resource="http://purl.obolibrary.org/obo/NCBITaxon_13"/>
+            </owl:Restriction>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://purl.obolibrary.org/obo/RO_0002162"/>
+                <owl:someValuesFrom rdf:resource="http://purl.obolibrary.org/obo/NCBITaxon_15"/>
+            </owl:Restriction>
+        </owl:members>
+    </rdf:Description>
+</rdf:RDF>

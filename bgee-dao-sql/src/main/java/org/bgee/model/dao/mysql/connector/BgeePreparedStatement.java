@@ -37,7 +37,8 @@ import org.bgee.model.dao.api.exception.QueryInterruptedException;
  * a pointer to the results (for instance, an {@code INSERT} method). 
  * 
  * @author Frederic Bastian
- * @version Bgee 13
+ * @author Valentine Rech de Laval
+ * @version Bgee 13 Sept. 2015
  * @see MySQLDAOResultSet
  * @since Bgee 13
  */
@@ -202,6 +203,45 @@ public class BgeePreparedStatement implements AutoCloseable {
         log.entry(startIndex, values);
         for (Integer value: values) {
             this.setInt(startIndex, value);
+            startIndex++;
+        }
+    }
+    /**
+     * Delegated to {@link java.sql.PreparedStatement#setLong(int, Long)}.
+     * <p>
+     * If {@code x} is {@code null} delegated to {@link #setNull(int, Types.INTEGER)}.
+     * 
+     * @param parameterIndex    An {@code int} that is the index of the parameter to set.
+     * @param x                 A {@code Long} that is the value of the parameter to set.
+     * @throws SQLException     If {@code parameterIndex} does not correspond to a parameter
+     *                          marker in the SQL statement; if a database access error occurs
+     *                          or this method is called on a closed {@code PreparedStatement}.
+     */
+    public void setLong(int parameterIndex, Long x) throws SQLException {
+        if (x == null) {
+            this.setNull(parameterIndex, Types.INTEGER);
+        } else {
+            this.getRealPreparedStatement().setLong(parameterIndex, x);
+        }
+    }
+    /**
+     * Sets the designated parameters of this {@code BgeePreparedStatement} to the values
+     * given in {@code values}.
+     * 
+     * @param startIndex        An {@code int} that is the first index of the parameter to set.
+     *                          If these are the first parameters set for this
+     *                          {@code BgeePreparedStatement}, the first parameter is 1.
+     * @param values            A {@code List} of {@code Long}s that are values to be used
+     *                          to set the parameters.
+     * @throws SQLException     If {@code parameterIndex} does not correspond to a parameter marker
+     *                          in the SQL statement; if a database access error occurs or this
+     *                          method is called on a closed {@code PreparedStatement}.
+     */
+    //TODO: Add a boolean argument, specifying whether the list should be ordered before performing query
+    public void setLongs(int startIndex, List<Long> values) throws SQLException {
+        log.entry(startIndex, values);
+        for (Long value: values) {
+            this.setLong(startIndex, value);
             startIndex++;
         }
     }

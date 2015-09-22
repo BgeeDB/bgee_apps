@@ -12,13 +12,16 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * The MySQL implementation of {@link MySQLDownloadFileDAO}.
+ * 
  * @author Philippe Moret
- * @version Bgee 13
+ * @author Valentine Rech de Laval
+ * @version Bgee 13 Sept. 2015
  * @since Bgee 13
  */
 public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> implements DownloadFileDAO {
@@ -87,6 +90,53 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
         }
     }
 
+    @Override
+    public int insertDownloadFiles(Collection<DownloadFileTO> fileTOs)
+            throws DAOException, IllegalArgumentException {
+        log.entry(fileTOs);
+        
+        if (fileTOs == null || fileTOs.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "No file is given, then no file is inserted"));
+        }
+        
+        StringBuilder sql = new StringBuilder(); 
+        sql.append("INSERT INTO downloadFile" +  
+                   "(downloadFileId, downloadFileName, downloadFileDescription, path, "
+                   + "downloadFileCategory, speciesDataGroupId, downloadFileSize) "
+                   + "VALUES ");
+        for (int i = 0; i < fileTOs.size(); i++) {
+            if (i > 0) {
+                sql.append(", ");
+            }
+            sql.append("(?, ?, ?, ?, ?, ?, ?) ");
+        }
+        try (BgeePreparedStatement stmt = 
+                this.getManager().getConnection().prepareStatement(sql.toString())) {
+            int paramIndex = 1;
+            for (DownloadFileTO fileTO: fileTOs) {
+                stmt.setString(paramIndex, fileTO.getId());
+                paramIndex++;
+                stmt.setString(paramIndex, fileTO.getName());
+                paramIndex++;
+                stmt.setString(paramIndex, fileTO.getDescription());
+                paramIndex++;
+                stmt.setString(paramIndex, fileTO.getPath());
+                paramIndex++;
+                stmt.setEnumDAOField(paramIndex, fileTO.getCategory());
+                paramIndex++;
+                stmt.setString(paramIndex, fileTO.getSpeciesDataGroupId());
+                paramIndex++;
+                stmt.setLong(paramIndex, fileTO.getSize());
+                paramIndex++;
+            }
+            
+            return log.exit(stmt.executeUpdate());
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+    
     /**
      * Implementation of the {@code DownloadFileTOResultSet}
      * @author Philippe Moret

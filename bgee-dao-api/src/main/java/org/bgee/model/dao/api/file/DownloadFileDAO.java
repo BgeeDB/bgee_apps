@@ -1,5 +1,7 @@
 package org.bgee.model.dao.api.file;
 
+import java.util.Collection;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
@@ -10,7 +12,11 @@ import org.bgee.model.dao.api.exception.DAOException;
 
 /**
  * The DAO interface for DownloadFile objects.
+ * 
  * @author Philippe Moret
+ * @author Valentine Rech de Laval
+ * @version Bgee 13 Sept. 2015
+ * @since Bgee 13
  */
 public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
 
@@ -207,4 +213,18 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
      */
     DownloadFileTOResultSet getAllDownloadFiles() throws DAOException;
 
+    /**
+     * Insert the provided download files into the Bgee database, represented as
+     * a {@code Collection} of {@code DownloadFileTO}s.
+     * 
+     * @param files                     A {@code Collection} of {@code DownloadFileTO}s to be
+     *                                  inserted into the database.
+     * @throws IllegalArgumentException If {@code files} is empty or null.
+     * @throws DAOException             If a {@code SQLException} occurred while trying
+     *                                  to insert {@code files}. The {@code SQLException}
+     *                                  will be wrapped into a {@code DAOException} ({@code DAOs}
+     *                                  do not expose these kind of implementation details).
+     */
+    public int insertDownloadFiles(Collection<DownloadFileTO> files)
+            throws DAOException, IllegalArgumentException;
 }

@@ -1,5 +1,11 @@
 package org.bgee.model.dao.mysql.file;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
@@ -10,16 +16,12 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * The MySQL implementation of the {@link SpeciesDataGroupDAO} interface.
  *
  * @author Philippe Moret
- * @version Bgee 13
+ * @author Valentine Rech de Laval
+ * @version Bgee 13 Sept. 2015
  * @since Bgee 13
  */
 public class MySQLSpeciesDataGroupDAO extends MySQLDAO<SpeciesDataGroupDAO.Attribute> implements SpeciesDataGroupDAO {
@@ -81,6 +83,44 @@ public class MySQLSpeciesDataGroupDAO extends MySQLDAO<SpeciesDataGroupDAO.Attri
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             return log.exit(new MySQLSpeciesDataGroupTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+
+    @Override
+    public int insertSpeciesDataGroups(Collection<SpeciesDataGroupTO> groupTOs)
+            throws DAOException, IllegalArgumentException {
+        log.entry(groupTOs);
+        
+        if (groupTOs == null || groupTOs.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "No species data groups is given, then no group is inserted"));
+        }
+        
+        StringBuilder sql = new StringBuilder(); 
+        sql.append("INSERT INTO speciesDataGroup" +  
+                   "(speciesDataGroupId, speciesDataGroupName, speciesDataGroupDescription) " +
+                   "VALUES ");
+        for (int i = 0; i < groupTOs.size(); i++) {
+            if (i > 0) {
+                sql.append(", ");
+            }
+            sql.append("(?, ?, ?) ");
+        }
+        try (BgeePreparedStatement stmt = 
+                this.getManager().getConnection().prepareStatement(sql.toString())) {
+            int paramIndex = 1;
+            for (SpeciesDataGroupTO groupTO: groupTOs) {
+                stmt.setString(paramIndex, groupTO.getId());
+                paramIndex++;
+                stmt.setString(paramIndex, groupTO.getName());
+                paramIndex++;
+                stmt.setString(paramIndex, groupTO.getDescription());
+                paramIndex++;
+            }
+            
+            return log.exit(stmt.executeUpdate());
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -181,6 +221,40 @@ public class MySQLSpeciesDataGroupDAO extends MySQLDAO<SpeciesDataGroupDAO.Attri
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             return log.exit(new MySQLSpeciesToDataGroupTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+    
+    @Override
+    public int insertSpeciesToDataGroup(Collection<SpeciesToDataGroupTO> mappingTOs)
+            throws DAOException, IllegalArgumentException {
+        log.entry(mappingTOs);
+        
+        if (mappingTOs == null || mappingTOs.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "No species data groups to species mappings is given, then no mapping is inserted"));
+        }
+        
+        StringBuilder sql = new StringBuilder(); 
+        sql.append("INSERT INTO speciesToDataGroup(speciesDataGroupId, speciesId) VALUES ");
+        for (int i = 0; i < mappingTOs.size(); i++) {
+            if (i > 0) {
+                sql.append(", ");
+            }
+            sql.append("(?, ?) ");
+        }
+        try (BgeePreparedStatement stmt = 
+                this.getManager().getConnection().prepareStatement(sql.toString())) {
+            int paramIndex = 1;
+            for (SpeciesToDataGroupTO mappingTO: mappingTOs) {
+                stmt.setString(paramIndex, mappingTO.getGroupId());
+                paramIndex++;
+                stmt.setString(paramIndex, mappingTO.getSpeciesId());
+                paramIndex++;
+            }
+            
+            return log.exit(stmt.executeUpdate());
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }

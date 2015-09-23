@@ -1,13 +1,20 @@
 package org.bgee.model.dao.api.file;
 
+import java.util.Collection;
+
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.EntityTO;
 import org.bgee.model.dao.api.TransferObject;
+import org.bgee.model.dao.api.exception.DAOException;
 
 /**
  * The DAO interface for species data groups.
+ * 
  * @author Philippe Moret
+ * @author Valentine Rech de Laval
+ * @version Bgee 13 Sept. 2015
+ * @since Bgee 13
  */
 public interface SpeciesDataGroupDAO extends DAO<SpeciesDataGroupDAO.Attribute> {
 
@@ -54,6 +61,21 @@ public interface SpeciesDataGroupDAO extends DAO<SpeciesDataGroupDAO.Attribute> 
      * @return A {@code SpeciesDataGroupTOResultSet} containing all results as {@code SpeciesDataGroupTO}
      */
     SpeciesDataGroupTOResultSet getAllSpeciesDataGroup();
+
+    /**
+     * Insert the provided species data groups into the Bgee database, represented as
+     * a {@code Collection} of {@code SpeciesDataGroupTO}s.
+     * 
+     * @param groups                    A {@code Collection} of {@code SpeciesDataGroupTO}s to be
+     *                                  inserted into the database.
+     * @throws IllegalArgumentException If {@code groups} is empty or null.
+     * @throws DAOException             If a {@code SQLException} occurred while trying
+     *                                  to insert {@code groups}. The {@code SQLException}
+     *                                  will be wrapped into a {@code DAOException} ({@code DAOs}
+     *                                  do not expose these kind of implementation details).
+     */
+    public int insertSpeciesDataGroups(Collection<SpeciesDataGroupTO> groups)
+            throws DAOException, IllegalArgumentException;
 
     /**
      * The {@code DAOResultSet} specific to {@code SpeciesToDataGroupMemberTO}
@@ -112,4 +134,18 @@ public interface SpeciesDataGroupDAO extends DAO<SpeciesDataGroupDAO.Attribute> 
      */
     SpeciesToDataGroupTOResultSet getAllSpeciesToDataGroup();
 
+    /**
+     * Insert the provided species data groups to species mappings into the Bgee database,
+     * represented as a {@code Collection} of {@code SpeciesToDataGroupTO}s.
+     * 
+     * @param mappingTOs                A {@code Collection} of {@code SpeciesToDataGroupTO}s to be
+     *                                  inserted into the database.
+     * @throws IllegalArgumentException If {@code mappingTOs} is empty or null.
+     * @throws DAOException             If a {@code SQLException} occurred while trying
+     *                                  to insert {@code mappingTOs}. The {@code SQLException}
+     *                                  will be wrapped into a {@code DAOException} ({@code DAOs}
+     *                                  do not expose these kind of implementation details).
+     */
+    public int insertSpeciesToDataGroup(Collection<SpeciesToDataGroupTO> mappingTOs)
+            throws DAOException, IllegalArgumentException;
 }

@@ -1,11 +1,13 @@
 package org.bgee.view;
 
 import java.io.IOException;
+import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
+import org.bgee.model.file.SpeciesDataGroup;
 
 /**
  * This is a fake display used for tests. It should be called when the parameter 'page' provided
@@ -34,12 +36,12 @@ public class TestDownloadDisplay extends TestParentDisplay implements DownloadDi
     }
 
     @Override
-    public void displayProcessedExpressionValuesDownloadPage() {
+    public void displayProcessedExpressionValuesDownloadPage(List<SpeciesDataGroup> groups) {
         this.out.println("TestB");
     }
 
     @Override
-    public void displayGeneExpressionCallDownloadPage() {
+    public void displayGeneExpressionCallDownloadPage(List<SpeciesDataGroup> groups) {
         this.out.println("TestC");
     }
 }

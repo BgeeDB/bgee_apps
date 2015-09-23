@@ -97,7 +97,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln(this.getSearchBox());
         
         // Single species part
-        this.writeln(this.getSingleSpeciesFigures(DownloadPageType.EXPR_CALLS, groups));
+        this.writeln(this.getSingleSpeciesSection(DownloadPageType.EXPR_CALLS, groups));
 
         // Black banner when a species or a group is selected.
         this.writeln(this.getDownloadBanner(DownloadPageType.EXPR_CALLS));
@@ -142,7 +142,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln(this.getSearchBox());
         
         // Single species part
-        this.writeln(this.getSingleSpeciesFigures(DownloadPageType.PROC_EXPR_VALUES, groups));
+        this.writeln(this.getSingleSpeciesSection(DownloadPageType.PROC_EXPR_VALUES, groups));
 
         // Black banner when a species or a group is selected.
         this.writeln(this.getDownloadBanner(DownloadPageType.PROC_EXPR_VALUES));

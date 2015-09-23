@@ -2,7 +2,6 @@ package org.bgee.view.html;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -13,7 +12,6 @@ import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
@@ -37,82 +35,9 @@ import org.bgee.view.DownloadDisplay;
 public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDisplay {
  
     private final static Logger log = LogManager.getLogger(HtmlDownloadDisplay.class.getName());
-
-    /**
-     * A {@code String} that is the group name of the pairwise Human/Mouse.
-     */
-    private final static String GROUP_NAME_HUMAN_MOUSE= "Human/Mouse";
-    /**
-     * A {@code String} that is the group name of the pairwise Human/Zebrafish.
-     */
-    private final static String GROUP_NAME_HUMAN_ZEBRAFISH = "Human/Zebrafish";
-    /**
-     * A {@code String} that is the group name of the pairwise Human/Fruit fly.
-     */
-    private final static String GROUP_NAME_HUMAN_FRUITFLY = "Human/Fruit fly";
-    /**
-     * A {@code String} that is the group name of the pairwise Human/Nematode.
-     */
-    private final static String GROUP_NAME_HUMAN_NEMATODE = "Human/Nematode";
-    /**
-     * A {@code String} that is the group name of the pairwise Mouse/Zebrafish.
-     */
-    private final static String GROUP_NAME_MOUSE_ZEBRAFISH= "Mouse/Zebrafish";
-    /**
-     * A {@code String} that is the group name of the pairwise Mouse/Fruit fly.
-     */
-    private final static String GROUP_NAME_MOUSE_FRUITFLY = "Mouse/Fruit fly";
-    /**
-     * A {@code String} that is the group name of the pairwise Mouse/Nematode.
-     */
-    private final static String GROUP_NAME_MOUSE_NEMATODE = "Mouse/Nematode";
-    /**
-     * A {@code String} that is the group name of the pairwise Zebrafish/Fruit fly.
-     */
-    private final static String GROUP_NAME_ZEBRAFISH_FRUITFLY = "Zebrafish/Fruit fly";
-    /**
-     * A {@code String} that is the group name of the pairwise Zebrafish/Nematode.
-     */
-    private final static String GROUP_NAME_ZEBRAFISH_NEMATODE = "Zebrafish/Nematode";
-    /**
-     * A {@code String} that is the group name of the pairwise Fruit fly/Nematode.
-     */
-    private final static String GROUP_NAME_FRUITFLY_NEMATODE = "Fruit fly/Nematode";
-    /**
-     * A {@code String} that is the group name of the pairwise Fruit fly/Nematode.
-     */
-    private final static String GROUP_NAME_MACAQUE_CHIMP = "Macaque/Chimpanzee";
-    /**
-     * A {@code String} that is the group name of Catarrhini.
-     */
-    private final static String GROUP_NAME_CATARRHINI = "Catarrhini";
-    /**
-     * A {@code String} that is the group name of Rodentia.
-     */
-    private final static String GROUP_NAME_MURINAE = "Murinae";
-    /**
-     * A {@code String} that is the group name of Theria.
-     */
-   private final static String GROUP_NAME_THERIA = "Theria";
-   /**
-    * A {@code String} that is the group name of Mammalia.
-    */
-    private final static String GROUP_NAME_MAMMALIA = "Mammalia";
-    /**
-     * A {@code String} that is the group name of Amniota.
-     */
-    private final static String GROUP_NAME_AMNIOTA = "Amniota";
-    /**
-     * A {@code String} that is the group name of Tetrapoda.
-     */
-    private final static String GROUP_NAME_TETRAPODA = "Tetrapoda";
-    /**
-     * A {@code String} that is the group name of Bilateria.
-     */
-    private final static String GROUP_NAME_BILATERIA = "Bilateria";
         
     public enum DownloadPageType {
-        PROC_EXPR_VALUES, EXPR_CALLS;
+        PROC_EXPR_VALUES, EXPR_CALLS
     }
     /**
      * Constructor
@@ -334,7 +259,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     private String getSingleSpeciesSection(DownloadPageType pageType) {
         log.entry(pageType);
 
-        StringBuffer s = new StringBuffer(); 
+        StringBuilder s = new StringBuilder();
         s.append("<div id='bgee_uniq_species'> ");
         s.append("<h2>Single-species</h2>");
         s.append("<div class='bgee_section bgee_download_section'>");
@@ -352,16 +277,14 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      * @return A {@String} containing the html section 
      */
     private String getSingleSpeciesSection(DownloadPageType pageType, List<SpeciesDataGroup> groups) {
-    	StringBuffer sb = new StringBuffer();
-    	
-    	for (SpeciesDataGroup sdg: groups) {
-    		if (sdg.isSingleSpecies()) {
-    			Species species = sdg.getMembers().get(0);
-    			Map<String, String> attr = new HashMap<>();
-    			attr.put("id", sdg.getId());
-    			sb.append(getHTMLTag("figure", attr, getHTMLTag("div", getImage(species))+getCaption(species) ));
-    		}
-    	}
+        StringBuilder sb = new StringBuilder();
+
+        groups.stream().filter(sdg -> sdg.isSingleSpecies()).forEach(sdg -> {
+            Species species = sdg.getMembers().get(0);
+            Map<String, String> attr = new HashMap<>();
+            attr.put("id", sdg.getId());
+            sb.append(getHTMLTag("figure", attr, getHTMLTag("div", getImage(species)) + getCaption(species)));
+        });
     	return sb.toString();
     }
     
@@ -519,7 +442,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     private String getDownloadBanner(DownloadPageType pageType) {
         log.entry(pageType);
     
-        StringBuffer banner = new StringBuffer();
+        StringBuilder banner = new StringBuilder();
         // This section is empty, it will be filled by JavaScript.
         banner.append("<div id='bgee_data_selection'>");
         

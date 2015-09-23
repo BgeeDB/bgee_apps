@@ -20,6 +20,8 @@ import org.bgee.model.dao.mysql.expressiondata.MySQLNoExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.affymetrix.MySQLAffymetrixProbesetDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituSpotDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqResultDAO;
+import org.bgee.model.dao.mysql.file.MySQLDownloadFileDAO;
+import org.bgee.model.dao.mysql.file.MySQLSpeciesDataGroupDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneOntologyDAO;
 import org.bgee.model.dao.mysql.gene.MySQLHierarchicalGroupDAO;
@@ -186,6 +188,18 @@ public abstract class MySQLDAOUser {
      */
     protected MySQLAnatEntityDAO getAnatEntityDAO() {
         return (MySQLAnatEntityDAO) this.manager.getAnatEntityDAO();
+    }
+    /**
+     * @return  A {@code MySQLSpeciesDataGroupDAO}.
+     */
+    protected MySQLSpeciesDataGroupDAO getSpeciesDataGroupDAO() {
+        return (MySQLSpeciesDataGroupDAO) this.manager.getSpeciesDataGroupDAO();
+    }
+    /**
+     * @return  A {@code MySQLDownloadFileDAO}.
+     */
+    protected MySQLDownloadFileDAO getDownloadFileDAO() {
+        return (MySQLDownloadFileDAO) this.manager.getDownloadFileDAO();
     }
     /**
      * @return  A {@code MySQLAffymetrixProbesetDAO}.

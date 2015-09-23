@@ -25,6 +25,7 @@ public class Species extends NamedEntity {
     private Species() {
         this(null);
     }
+    
     /**
      * Constructor providing the {@code id} of this {@code Species}.
      * This {@code id} cannot be blank,
@@ -60,6 +61,19 @@ public class Species extends NamedEntity {
         super(id, name, description);
         this.genus = genus;
         this.speciesName = speciesName;
+    }
+    
+    public String getGenus() {
+    	return this.genus;
+    }
+    
+    public String getSpeciesName() {
+    	return this.speciesName;
+    }
+    
+    public String getShortName() {
+    	if (genus == null || speciesName == null) return "";
+    	return genus.toUpperCase().charAt(0) +". "+speciesName;
     }
 }
 

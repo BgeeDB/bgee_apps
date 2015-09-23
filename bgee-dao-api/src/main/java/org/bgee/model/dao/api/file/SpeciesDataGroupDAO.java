@@ -126,6 +126,11 @@ public interface SpeciesDataGroupDAO extends DAO<SpeciesDataGroupDAO.Attribute> 
         public String getSpeciesId() {
             return speciesId;
         }
+
+        @Override
+        public String toString() {
+            return "Group ID: " + this.getGroupId() + " - Species ID: " + this.getSpeciesId();
+        }
     }
 
     /**

@@ -54,17 +54,38 @@ public class MySQLSpeciesDataGroupDAOIT extends MySQLITAncestor {
                 TOComparator.areTOCollectionsEqual(list, expected));
         assertEquals(list, expected);
 
-        dao.setAttributes(new SpeciesDataGroupDAO.Attribute[]{SpeciesDataGroupDAO.Attribute.ID, SpeciesDataGroupDAO
-                .Attribute.DESCRIPTION});
+        dao.setAttributes(new SpeciesDataGroupDAO.Attribute[]{
+                SpeciesDataGroupDAO.Attribute.ID, SpeciesDataGroupDAO.Attribute.DESCRIPTION});
         List<SpeciesDataGroupDAO.SpeciesDataGroupTO> list2 = dao.getAllSpeciesDataGroup().getAllTOs();
         List<SpeciesDataGroupDAO.SpeciesDataGroupTO> expected2 = Arrays.asList(
                 new SpeciesDataGroupDAO.SpeciesDataGroupTO("1", null , "SS1 is a ..."),
                 new SpeciesDataGroupDAO.SpeciesDataGroupTO("2", null, "A multi species group...")
         );
 
-        assertTrue("SpeciesDataGroupTOs are incorrectly retrieved\nGOT\n"+list+"\nEXPECTED\n"+expected,
+        assertTrue("SpeciesDataGroupTOs are incorrectly retrieved\nGOT\n"+list2+"\nEXPECTED\n"+expected2,
                 TOComparator.areTOCollectionsEqual(list2, expected2));
-        assertEquals(list, expected);
+        assertEquals(list2, expected2);
+    }
+
+    /**
+     * Test the {@link MySQLSpeciesDataGroupDAO#getAllSpeciesToDataGroup()} method
+     * @throws SQLException
+     */
+    @Test
+    public void testGetAllSpeciesToDataGroup() throws SQLException {
+        super.useSelectDB();
+
+        MySQLSpeciesDataGroupDAO dao = new MySQLSpeciesDataGroupDAO(getMySQLDAOManager());
+
+        List<SpeciesToDataGroupTO> list = dao.getAllSpeciesToDataGroup().getAllTOs();
+        List<SpeciesToDataGroupTO> expected = Arrays.asList(
+                new SpeciesToDataGroupTO("11", "1"),
+                new SpeciesToDataGroupTO("21", "2"),
+                new SpeciesToDataGroupTO("31", "2")
+        );
+
+        assertTrue("SpeciesToDataGroupTOs are incorrectly retrieved\nGOT\n" + list + 
+                "\nEXPECTED\n" + expected, TOComparator.areTOCollectionsEqual(list, expected));
     }
 
     /**

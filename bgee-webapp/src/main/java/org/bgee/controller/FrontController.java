@@ -13,6 +13,7 @@ import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.controller.exception.RequestParametersNotFoundException;
 import org.bgee.controller.exception.RequestParametersNotStorableException;
 import org.bgee.controller.exception.WrongFormatException;
+import org.bgee.model.ServiceFactory;
 import org.bgee.view.ErrorDisplay;
 import org.bgee.view.ViewFactory;
 import org.bgee.view.ViewFactoryProvider;
@@ -55,6 +56,12 @@ public class FrontController extends HttpServlet {
      * {@code ViewFactory} depending on the display type
      */
     private final ViewFactoryProvider viewFactoryProvider ;
+    
+    /**
+     * The {@code ServiceFactory} this controller will rely on to get instances of {@code Service}s
+     */
+    private final ServiceFactory serviceFactory;
+    
 
     /**
      * Default constructor. It will use the default {@code BgeeProperties} class,
@@ -129,6 +136,7 @@ public class FrontController extends HttpServlet {
         else{
             this.viewFactoryProvider = viewFactoryProvider;
         }
+        this.serviceFactory = new ServiceFactory();
         log.exit();
     }
 

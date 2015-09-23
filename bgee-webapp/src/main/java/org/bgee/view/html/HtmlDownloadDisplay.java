@@ -1,12 +1,9 @@
 package org.bgee.view.html;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -17,7 +14,6 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.file.SpeciesDataGroup;
 import org.bgee.model.species.Species;
 import org.bgee.utils.JSHelper;
@@ -76,8 +72,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     }
     
     @Override
-    public void displayGeneExpressionCallDownloadPage() {
-        log.entry();
+    public void displayGeneExpressionCallDownloadPage(List<SpeciesDataGroup> groups) {
+        log.entry(groups);
         
         this.startDisplay("Bgee gene expression call download page");
 
@@ -101,13 +97,13 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln(this.getSearchBox());
         
         // Single species part
-        this.writeln(this.getSingleSpeciesSection(DownloadPageType.EXPR_CALLS));
+        this.writeln(this.getSingleSpeciesFigures(DownloadPageType.EXPR_CALLS, groups));
 
         // Black banner when a species or a group is selected.
         this.writeln(this.getDownloadBanner(DownloadPageType.EXPR_CALLS));
         
         // Multi-species part
-        this.writeln(this.getMultiSpeciesSection(DownloadPageType.EXPR_CALLS));
+        this.writeln(this.getMultiSpeciesSection(DownloadPageType.EXPR_CALLS, groups));
 
         this.writeln("</div>");
 
@@ -120,8 +116,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     }
 
     @Override
-    public void displayProcessedExpressionValuesDownloadPage() {
-        log.entry();
+    public void displayProcessedExpressionValuesDownloadPage(List<SpeciesDataGroup> groups) {
+        log.entry(groups);
         
         this.startDisplay("Bgee " + PROCESSED_EXPR_VALUES_PAGE_NAME.toLowerCase() + " download page");
         
@@ -146,7 +142,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln(this.getSearchBox());
         
         // Single species part
-        this.writeln(this.getSingleSpeciesSection(DownloadPageType.PROC_EXPR_VALUES));
+        this.writeln(this.getSingleSpeciesFigures(DownloadPageType.PROC_EXPR_VALUES, groups));
 
         // Black banner when a species or a group is selected.
         this.writeln(this.getDownloadBanner(DownloadPageType.PROC_EXPR_VALUES));
@@ -256,14 +252,14 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      * @return          the {@code String} that is the single species section as HTML 'div' element,
      *                  according {@code pageType}.
      */
-    private String getSingleSpeciesSection(DownloadPageType pageType) {
+    private String getSingleSpeciesSection(DownloadPageType pageType, List<SpeciesDataGroup> groups) {
         log.entry(pageType);
 
         StringBuilder s = new StringBuilder();
         s.append("<div id='bgee_uniq_species'> ");
         s.append("<h2>Single-species</h2>");
         s.append("<div class='bgee_section bgee_download_section'>");
-        s.append(getSingleSpeciesSection(pageType, getAllSpeciesDataGroup()));
+        s.append(getSingleSpeciesFigures(pageType, groups));
         s.append("</div>");
         s.append("</div>");
         
@@ -276,7 +272,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      * @param groups   the {@code List} of {@code SpeciesDataGroup} to display
      * @return A {@String} containing the html section 
      */
-    private String getSingleSpeciesSection(DownloadPageType pageType, List<SpeciesDataGroup> groups) {
+    private String getSingleSpeciesFigures(DownloadPageType pageType, List<SpeciesDataGroup> groups) {
         StringBuilder sb = new StringBuilder();
 
         groups.stream().filter(sdg -> sdg.isSingleSpecies()).forEach(sdg -> {
@@ -390,7 +386,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      * @return          the {@code String} that is the multi-species section as HTML 'div' element,
      *                  according {@code pageType}.
      */
-    private String getMultiSpeciesSection(DownloadPageType pageType,  List<SpeciesDataGroup> groups) {
+    private String getMultiSpeciesFigures(DownloadPageType pageType,  List<SpeciesDataGroup> groups) {
     	StringBuffer sb = new StringBuffer();
     	
     	for (SpeciesDataGroup sdg: groups) {
@@ -416,7 +412,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      * @return          the {@code String} that is the multi-species section as HTML 'div' element,
      *                  according {@code pageType}.
      */
-    private String getMultiSpeciesSection(DownloadPageType pageType) {
+    private String getMultiSpeciesSection(DownloadPageType pageType, List<SpeciesDataGroup> groups) {
         log.entry(pageType);
 
         StringBuffer s = new StringBuffer(); 
@@ -424,7 +420,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         s.append("<h2>Multi-species</h2>" +
                  "<span class='header_details'>(orthologous genes in homologous anatomical structures)</span>");
         s.append("<div class='bgee_section bgee_download_section'>");
-        s.append(getMultiSpeciesSection(pageType, getAllSpeciesDataGroup()));
+        s.append(getMultiSpeciesFigures(pageType, groups));
         s.append("</div>");
         s.append("</div>");
 
@@ -697,19 +693,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     }
 
   //TODO: this ugly method is for testing and must disappear ASAP
-  	private List<SpeciesDataGroup> getAllSpeciesDataGroup() {
-  		try {
-  			InputStream in = this.getClass().getResourceAsStream("/bgee.dao.properties");
-  			Properties p = new Properties();
-  			p.load(in);
-  			DAOManager man = DAOManager.getDAOManager(p);
-  			ServiceFactory sf = new ServiceFactory(man);
-  			return log.exit(sf.getSpeciesDataGroupService().loadAllSpeciesDataGroup());
-  		} catch (IOException e) {
-  			log.error(e);
-  			return log.exit(new LinkedList<>());
-  		}
-  	}
+
   	
   	@Override
   	protected void includeJs() {

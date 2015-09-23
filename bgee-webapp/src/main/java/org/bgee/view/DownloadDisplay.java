@@ -1,5 +1,9 @@
 package org.bgee.view;
 
+import org.bgee.model.file.SpeciesDataGroup;
+
+import java.util.List;
+
 /**
  * Interface that defines the methods a display for the download category, i.e. page=download
  * has to implements
@@ -13,16 +17,16 @@ public interface DownloadDisplay {
 	/**
 	 * Display the download page.
 	 */
-	public void displayDownloadHomePage();
+	 void displayDownloadHomePage();
 	
     /**
      * Display the download page of processed raw data files.
      */
-    public void displayProcessedExpressionValuesDownloadPage();
+     void displayProcessedExpressionValuesDownloadPage(List<SpeciesDataGroup> groups);
 
     /**
      * Display the download page of gene expression call files.
      */
-    public void displayGeneExpressionCallDownloadPage();
+     void displayGeneExpressionCallDownloadPage(List<SpeciesDataGroup> groups);
 
 }

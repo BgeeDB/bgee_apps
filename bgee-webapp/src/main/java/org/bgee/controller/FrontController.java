@@ -186,7 +186,7 @@ public class FrontController extends HttpServlet {
             if (requestParameters.isTheHomePage()) {
                 controller = new CommandHome(response, requestParameters, this.prop, factory);
             } else if (requestParameters.isADownloadPageCategory()) {
-                controller = new CommandDownload(response, requestParameters, this.prop, factory);
+                controller = new CommandDownload(response, requestParameters, this.prop, factory, serviceFactory);
             } else if (requestParameters.isADocumentationPageCategory()) {
                 controller = new CommandDocumentation(response, requestParameters, this.prop, factory);
             } else if (requestParameters.isAnAboutPageCategory()) {

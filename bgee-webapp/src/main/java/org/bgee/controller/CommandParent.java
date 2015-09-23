@@ -6,6 +6,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.ServiceFactory;
 import org.bgee.view.ViewFactory;
 
 /**
@@ -36,6 +37,7 @@ abstract class CommandParent {
      * This concrete factory implements the {@code ViewFactory} interface.
      */
     protected ViewFactory viewFactory;
+    protected ServiceFactory serviceFactory;
     protected Writer out;
     protected HttpServletResponse response;
     /**
@@ -63,18 +65,36 @@ abstract class CommandParent {
      * @param prop              A {@code BgeeProperties} instance that contains the properties
      *                          to use.
      * @param viewFactory       A {@code ViewFactory} that provides the display type to be used.
+     * @param serviceFactory    A {@code ServiceFactory} that provides the services (might be null)
      */
-    public CommandParent(HttpServletResponse response, 
-            RequestParameters requestParameters, BgeeProperties prop, ViewFactory viewFactory) {
+    public CommandParent(HttpServletResponse response, RequestParameters requestParameters,
+                         BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory) {
         log.entry(response, requestParameters, prop, viewFactory);
         this.response = response;
         this.requestParameters = requestParameters;
         this.prop = prop;
         this.viewFactory = viewFactory;
+        this.serviceFactory = serviceFactory;
         this.serverRoot = prop.getBgeeRootDirectory();
         this.homePage   = prop.getBgeeRootDirectory();
         this.bgeeRoot   = prop.getBgeeRootDirectory();
         log.exit();
+    }
+
+    /**
+     * Constructor. This constructor doesn't provide a {@code ServiceFactory}
+     *
+     * @param response          A {@code HttpServletResponse} that will be used to display the
+     *                          page to the client
+     * @param requestParameters The {@code RequestParameters} that handles the parameters of the
+     *                          current request.
+     * @param prop              A {@code BgeeProperties} instance that contains the properties
+     *                          to use.
+     * @param viewFactory       A {@code ViewFactory} that provides the display type to be used.
+     */
+    public CommandParent(HttpServletResponse response, RequestParameters requestParameters,
+                         BgeeProperties prop, ViewFactory viewFactory) {
+        this(response, requestParameters, prop, viewFactory, null);
     }
 
     /**

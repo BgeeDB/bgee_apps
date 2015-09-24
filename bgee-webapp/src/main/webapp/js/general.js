@@ -55,8 +55,6 @@ var general = {
             // Creative commons
             this.$creativeCommonsTitleLink =  $( "#creativecommons_title a");
             this.$creativeCommons = $( "#creativecommons" );
-            // Initialize the values that have to be dynamically set, i.e. ids  
-            this.generateIds();
 
             // Add the event listeners to all elements that have a dynamic behavior
 
@@ -165,34 +163,12 @@ var general = {
 
             // The images contain the data fields related to the species
             var $images = $currentSpecies.find( ".species_img" ); 
-            var bgeeSpeciesName = $images.data( "bgeespeciesname" ); // Only the last one is kept when 
+            var species = speciesData[id].members[0];
+            var bgeeSpeciesName = species.genus + " " + species.speciesName; // Only the last one is kept when 
             // there are multiple images, in the case of group, but the field is not used in this case,
             // so no need to care about 
-            var bgeeSpeciesCommonNames = $images.data( "bgeespeciescommonname" );
-
-            // Proceed to the update
-            var numberOfSpecies = $images.size() ;
-            var namesOfAllSpecies = "";
-            this.$bgeeDataSelectionImg.empty();
-            $images.each( function(){
-                // For each image, clone its DOM structure into the detail box, update its src
-                // to use the high resolution image and update its height and width depending on
-                // the number of images to display at the same time ( i.e. more than one for a group )
-                var $newElement = $( this ).clone();
-                var newUrl = $newElement.attr( "src" ).replace( "_light" , "" );
-                $newElement.attr( "src" , newUrl );
-                general.$bgeeDataSelectionImg.append( $newElement );
-                // Calculate the height so it would allow the images to fit into the space.
-                // Divide the height by 1 for 1 image, by 2 for 2,3,4 img, by 3 for 5,6,7,8,9 and etc.
-                var newHeight = $newElement.height() / ( Math.ceil( Math.sqrt( numberOfSpecies ) ) ); 
-                // Assume that the image is a square, so height and width are the same
-                $newElement.css( "height" , newHeight ).css( "width" , newHeight ); 
-                // Add the species short name to the name of all species field
-                namesOfAllSpecies = namesOfAllSpecies + $( this ).data( "bgeespeciesshortname" )
-                + ", ";
-            });
-            namesOfAllSpecies = namesOfAllSpecies.slice( 0, - 2 ); // Remove the extra ' ,'
-
+            var bgeeSpeciesCommonNames = species.name;
+            
             this.$bgeeDataSelectionTextScientific.text( bgeeSpeciesName );
             this.$bgeeDataSelectionTextCommon.text( "("+ bgeeSpeciesCommonNames +")" );
             
@@ -230,21 +206,6 @@ var general = {
             // Update the URL with the id, to allow the link to be copied and sent
             // Add "id" in front to avoid the automatic anchor behavior that would mess up the scroll
             window.location.hash = '#' + hashToUse; 
-        },
-
-        /**
-         * This function generates ids for species and groups based on the ids present in 
-         * the data field in the images.
-         */
-        generateIds: function(){
-            this.$species.each(function() {   
-                var id = "";
-                $( this ).find( ".species_img" ).each(function() {
-                    id = id + $( this ).data( "bgeespeciesid" ) + "_";
-                });
-                id = id.slice( 0, - 1 ); // Remove the extra _ at the end.
-                $( this ).attr( "id", id ); // set the attr id of the species/group
-            });
         },
 
 };

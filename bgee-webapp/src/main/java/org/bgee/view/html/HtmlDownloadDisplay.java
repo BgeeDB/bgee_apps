@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -16,7 +14,6 @@ import org.bgee.controller.RequestParameters;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.file.SpeciesDataGroup;
 import org.bgee.model.species.Species;
-import org.bgee.utils.JSHelper;
 import org.bgee.view.DownloadDisplay;
 
 /**
@@ -76,8 +73,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         log.entry(groups);
         
         this.startDisplay("Bgee gene expression call download page");
-
+        
         this.writeln(this.getMoreResultDivs());
+  		this.writeln(getDataGroupScriptTag(groups));
 
         this.writeln("<div id='expr_calls'>");
 
@@ -120,7 +118,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         log.entry(groups);
         
         this.startDisplay("Bgee " + PROCESSED_EXPR_VALUES_PAGE_NAME.toLowerCase() + " download page");
-        
+  		this.writeln(getDataGroupScriptTag(groups));
+
         this.writeln(this.getMoreResultDivs());
 
         this.writeln("<div id='proc_values'>");
@@ -244,139 +243,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 "</div>");
     }
 
-    /**
-     * Get the single species section of a download page as a HTML 'div' element,
-     * according the provided page type.
-     *
-     * @param pageType  A {@code DownloadPageType} that is the type of the page.
-     * @return          the {@code String} that is the single species section as HTML 'div' element,
-     *                  according {@code pageType}.
-     */
-    private String getSingleSpeciesSection(DownloadPageType pageType, List<SpeciesDataGroup> groups) {
-        log.entry(pageType);
 
-        StringBuilder s = new StringBuilder();
-        s.append("<div id='bgee_uniq_species'> ");
-        s.append("<h2>Single-species</h2>");
-        s.append("<div class='bgee_section bgee_download_section'>");
-        s.append(getSingleSpeciesFigures(pageType, groups));
-        s.append("</div>");
-        s.append("</div>");
-        
-        return log.exit(s.toString());
-    }
-    
-    /**
-     * Gets the single species section as a {@code String}
-     * @param pageType the {@code DownloadPageType} of this page
-     * @param groups   the {@code List} of {@code SpeciesDataGroup} to display
-     * @return A {@String} containing the html section 
-     */
-    private String getSingleSpeciesFigures(DownloadPageType pageType, List<SpeciesDataGroup> groups) {
-        StringBuilder sb = new StringBuilder();
-
-        groups.stream().filter(sdg -> sdg.isSingleSpecies()).forEach(sdg -> {
-            Species species = sdg.getMembers().get(0);
-            Map<String, String> attr = new HashMap<>();
-            attr.put("id", sdg.getId());
-            sb.append(getHTMLTag("figure", attr, getHTMLTag("div", getImage(species)) + getCaption(species)));
-        });
-    	return sb.toString();
-    }
-    
-    /**
-     * Gets the html code for a species image.
-     * @param species The {@code Species} for which to get the image
-     * @return A {@String} containing the html code for this image
-     */
-    private String getImage(Species species) {
-    	Map<String,String> attrs = new HashMap<>();
-    	attrs.put("src", "img/species/"+species.getId()+"_light.jpg");
-    	attrs.put("alt", species.getShortName());
-    	attrs.put("class", "species_img");
-    	//TODO: backward compat => should go
-    	/*attrs.put("data-bgeespeciesname", species.getName());
-    	attrs.put("data-bgeespeciesid", species.getId());
-    	attrs.put("data-bgeespeciesshortname", species.getShortName());
-    	attrs.put("data-bgeespeciescommonname", species.getShortName());
-    	attrs.put("data-bgeespeciesalternatenames", species.getShortName());*/
-
-    	return getHTMLTag("img", attrs);
-    }
-    
-    /**
-     * Gets the {@code figcaption} element for a given {@code Species}
-     * @param species A {@Species}
-     * @return A {@code String} containing the html code
-     */
-    private String getCaption(Species species) {
-    	return getHTMLTag("figcaption", getShortNameTag(species)
-    			+getHTMLTag("p", species.getName()));
-    }
-    
-    /**
-     * Gets the {@code figcaption} element for a given {@code SpeciesDataGroup}
-     * @param species A {SpeciesDataGroup}
-     * @return A {@code String} containing the html code
-     */
-    private String getCaption(SpeciesDataGroup speciesDataGroup) {
-    	return getHTMLTag("figcaption", speciesDataGroup.getName());
-    }
-    
-    /**
-     * Gets the short name element for a given {@Species}
-     * @param species A {@Species}
-     * @return A {@code String} containing the html code
-     */
-    private String getShortNameTag(Species species) {
-    	return getHTMLTag("p", getHTMLTag("i", species.getShortName()));
-    }
-    
-   /**
-    * Helper method to get an html tag
-    * @param name    A {@code String} representing the name of the element 
-    * @param content A {@code String} reprensenting the content of the element
-    * @return The HTML code as {@code String}
-    */
-    private static String getHTMLTag(String name, String content) {
-    	StringBuffer sb = new StringBuffer();
-    	sb.append("<").append(name).append(">\n")
-    	  .append(content)
-    	  .append("</").append(name).append(">\n");
-    	return sb.toString();
-    }
-    
-    /**
-     * Helper method to get an html tag
-     * @param name    A {@code String} representing the name of the element 
-     * @param content A {@code String} reprensenting the content of the element
-     * @return The HTML code as {@code String}
-     */
-    private static String getHTMLTag(String name, Map<String, String> attributes) {
-    	StringBuffer sb = new StringBuffer();
-    	sb.append("<").append(name); 
-    	for (Map.Entry<String, String> attr: attributes.entrySet()) {
-    		sb.append(" ").append(attr.getKey()).append("=\"").append(attr.getValue()).append("\"");
-    	}
-    	sb.append(" />\n");
-    	return sb.toString();
-    }
-    
-    /**
-     * Helper method to get an html tag
-     * @param name    A {@code String} representing the name of the element 
-     * @param content A {@code String} reprensenting the content of the element
-     * @return The HTML code as {@code String}
-     */
-    private static String getHTMLTag(String name, Map<String, String> attributes, String content) {
-    	StringBuffer sb = new StringBuffer();
-    	sb.append("<").append(name); 
-    	for (Map.Entry<String, String> attr: attributes.entrySet()) {
-    		sb.append(" ").append(attr.getKey()).append("='").append(attr.getValue()).append("'");
-    	}
-    	sb.append(">\n").append(content).append("</").append(name).append(">\n");
-    	return sb.toString();
-    }
     
     /**
      * Get the multi-species figure list for the given multi-species datagroups
@@ -386,7 +253,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      * @return          the {@code String} that is the multi-species section as HTML 'div' element,
      *                  according {@code pageType}.
      */
-    private String getMultiSpeciesFigures(DownloadPageType pageType,  List<SpeciesDataGroup> groups) {
+    protected String getMultiSpeciesFigures(DownloadPageType pageType,  List<SpeciesDataGroup> groups) {
     	StringBuffer sb = new StringBuffer();
     	
     	for (SpeciesDataGroup sdg: groups) {
@@ -412,7 +279,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      * @return          the {@code String} that is the multi-species section as HTML 'div' element,
      *                  according {@code pageType}.
      */
-    private String getMultiSpeciesSection(DownloadPageType pageType, List<SpeciesDataGroup> groups) {
+    protected String getMultiSpeciesSection(DownloadPageType pageType, List<SpeciesDataGroup> groups) {
         log.entry(pageType);
 
         StringBuffer s = new StringBuffer(); 
@@ -435,7 +302,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      * @return          the {@code String} that is the black banner of a download page 
      *                  as a HTML 'div' element according {@code pageType}.
      */
-    private String getDownloadBanner(DownloadPageType pageType) {
+    protected String getDownloadBanner(DownloadPageType pageType) {
         log.entry(pageType);
     
         StringBuilder banner = new StringBuilder();
@@ -641,66 +508,12 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 "<img class='details' src='" + this.prop.getImagesRootDirectory() +
                 "plus.png' title='Show headers' alt='Plus'/></a>");
     }
-
-    /**
-     * Get the images sources of a download page as a HTML 'div' element. 
-     *
-     * @return  the {@code String} that is the images sources as HTML 'div' element.
-     */
-    private String getImageSources() {
-        log.entry();
-        
-        StringBuffer sources = new StringBuffer();
-        sources.append("<p id='creativecommons_title'>Images from Wikimedia Commons. In most cases, pictures corresponds to the sequenced strains. <a>Show information about original images.</a></p>");
-        sources.append("<div id='creativecommons'>");
-        sources.append("<p><i>Homo sapiens</i> picture by Leonardo da Vinci (Life time: 1519) [Public domain]. <a target='_blank' href='http://commons.wikimedia.org/wiki/File:Da_Vinci%27s_Anatomical_Man.jpg#mediaviewer/File:Da_Vinci%27s_Anatomical_Man.jpg'>See <i>H. sapiens</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Mus musculus</i> picture by Rasbak [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AApodemus_sylvaticus_bosmuis.jpg'>See <i>M. musculus</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Danio rerio</i> picture by Azul (Own work) [see page for license], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AZebrafisch.jpg'>See <i>D. rerio</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Drosophila melanogaster</i> picture by Andr&eacute; Karwath aka Aka (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/2.5'>CC-BY-SA-2.5</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ADrosophila_melanogaster_-_side_(aka).jpg'>See <i>D. melanogaster</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Caenorhabditis elegans</i> picture by Bob Goldstein, UNC Chapel Hill http://bio.unc.edu/people/faculty/goldstein/ (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ACelegansGoldsteinLabUNC.jpg'>See <i>C. elegans</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Pan paniscus</i> picture by Ltshears (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a> or <a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ABonobo1_CincinnatiZoo.jpg'>See <i>P. paniscus</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Pan troglodytes</i> picture by Thomas Lersch (Own work) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a>, <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a> or <a target='_blank' href='http://creativecommons.org/licenses/by/2.5'>CC-BY-2.5</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ASchimpanse_Zoo_Leipzig.jpg'>See <i>P. troglodytes</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Gorilla gorilla</i> picture by Brocken Inaglory (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a> or <a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AMale_gorilla_in_SF_zoo.jpg'>See <i>G. gorilla</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Pongo pygmaeus</i> picture by Greg Hume (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ASUMATRAN_ORANGUTAN.jpg'>See <i>P. pygmaeus</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Macaca mulatta</i> picture by Aiwok (Own work) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0-2.5-2.0-1.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AMacaca_mulatta_3.JPG'>See <i>M. mulatta</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Rattus norvegicus</i> picture by Reg Mckenna (originally posted to Flickr as Wild Rat) [<a target='_blank' href='http://creativecommons.org/licenses/by/2.0'>CC-BY-2.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AWildRat.jpg'>See <i>R. norvegicus</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Bos taurus</i> picture by User Robert Merkel on en.wikipedia (US Department of Agriculture) [Public domain], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AHereford_bull_large.jpg'>See <i>B. taurus</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Sus scrofa</i> picture by Joshua Lutz (Own work) [Public domain], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ASus_scrofa_scrofa.jpg'>See <i>S. scrofa</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Monodelphis domestica</i> picture by <i>Marsupial Genome Sheds Light on the Evolution of Immunity.</i> Hill E, PLoS Biology Vol. 4/3/2006, e75 <a rel='nofollow' href='http://dx.doi.org/10.1371/journal.pbio.0040075'>http://dx.doi.org/10.1371/journal.pbio.0040075</a> [<a target='_blank' href='http://creativecommons.org/licenses/by/2.5'>CC-BY-2.5</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AOpossum_with_young.png'>See <i>M. domestica</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Ornithorhynchus anatinus</i> picture by Dr. Philip Bethge (private) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0-2.5-2.0-1.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AOrnithorhynchus.jpg'>See <i>O. anatinus</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Gallus gallus</i> picture by Subramanya C K (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ARed_jungle_fowl.png'>See <i>G. gallus</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Anolis carolinensis</i> picture by PiccoloNamek (Moved from Image:P1010027.jpg) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AAnolis_carolinensis.jpg'>See <i>A. carolinensis</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Xenopus tropicalis</i> picture by V&aacute;clav Gvo&zcaron;d&iacute;k (http://calphotos.berkeley.edu) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/2.5'>CC-BY-SA-2.5</a>, <a target='_blank' href='http://creativecommons.org/licenses/by-sa/2.5'>CC-BY-SA-2.5</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AXenopus_tropicalis01.jpeg'>See <i>X. tropicalis</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Tetraodon nigroviridis</i> picture by Starseed (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/de/deed.en'>CC-BY-SA-3.0-de</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ATetraodon_nigroviridis_1.jpg'>See <i>T. nigroviridis</i> picture via Wikimedia Commons</a></p>");
-        sources.append("</div>");
     
-        return log.exit(sources.toString());
-    }
-
-    /**
-     * Generates the script tag for the speciesData object that is accessible
-     * from the Javascript code of the page.
-     * @param dataGroups The {@code List} of {@code SpeciesDataGroup} for which download files are availables
-     * @return A {@String} containing the generated Javascript tag.
-     */
-    private String getDataGroupScriptTag(List<SpeciesDataGroup> dataGroups) {
-        StringBuffer sb = new StringBuffer("<script>");
-        sb.append("var speciesData = ");
-        sb.append(JSHelper.toJson(dataGroups.stream()
-                .collect(Collectors.toMap(SpeciesDataGroup::getId, Function.identity()))));
-        sb.append("</script>");
-        return sb.toString();
-    }
-
-  //TODO: this ugly method is for testing and must disappear ASAP
-
-  	
   	@Override
   	protected void includeJs() {
   		log.entry();
   		super.includeJs();
   		this.includeJs("download.js");
-  		this.writeln(getDataGroupScriptTag(new ServiceFactory().getSpeciesDataGroupService().loadAllSpeciesDataGroup()));
   		log.exit();
   	}
 

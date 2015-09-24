@@ -1,5 +1,9 @@
 package org.bgee.view;
 
+import java.util.List;
+
+import org.bgee.model.file.SpeciesDataGroup;
+
 /**
  * Interface that defines the methods a display for the general category (i.e. page= nothing 
  * that corresponds to another category) has to implements
@@ -19,6 +23,7 @@ public interface GeneralDisplay {
     /**
      * Launch the display of the home page, using the {@code HttpServletResponse} 
      * provided at instantiation.
+     * @param groups A {@code List} of single species datagroups displayed on the home page.
      */
-    public void displayHomePage();
+    public void displayHomePage(List<SpeciesDataGroup> groups);
 }

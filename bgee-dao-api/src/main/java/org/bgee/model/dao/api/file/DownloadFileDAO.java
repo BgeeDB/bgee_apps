@@ -146,14 +146,27 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
         }
 
         /**
-         * Represents the category of a downloadFile:
-         * <ul>
-         *     <li>{@code EXPR_CALLS} correponds to expression calls file (single species)</li>
-         *     <li>{@code DIFF_EXPR_CALLS_ANAT} corresponds to diff expression calls file across anatomy</li>
-         *     <li>{@code DIFF_EXPR_CALLS_STAGES} corresponds to diff expression calls across stages</li>
-         *     <li>{@code ORTHOLOGS} corresponds to orthologies file</li>
-         * </ul>
-         */
+    	 * This enum contains all the different categories of files:
+    	 * <ul>
+         *   <li>{@code EXPR_CALLS_SIMPLE} a simple expression calls file</li>
+         *   <li>{@code EXPR_CALLS_COMPLETE} a complete expression calls file</li>
+         *   <li>{@code DIFF_EXPR_ANAT_SIMPLE} a simple differential expression across anatomy file</li>
+         *   <li>{@code DIFF_EXPR_ANAT_COMPLETE} a complete differential expression across anatomy file</li>
+         *   <li>{@code DIFF_EXPR_DEV_COMPLETE} a complete differential expression across developmental stages file</li>
+         *   <li>{@code DIFF_EXPR_DEV_SIMPLE}a simple differential expression across developmental stages file</li>
+         *   <li>{@code ORTHOLOG} corresponds to an orthologies file</li>
+         *   <li>{@code AFFY_ANNOT} corresponds to an Affymetrix annoations file</li>
+         *   <li>{@code AFFY_DATA} corresponds to an Affymetrix signal intensities file</li>
+         *   <li>{@code AFFY_ROOT} corresponds to the root directory for Affymetrix files</li>
+         *   <li>{@code RNASEQ_ANNOT} corresponds to RNA-Seq annotations file</li>
+         *   <li>{@code RNASEQ_DATA} corresponds toRNA-Seq data file</li>
+         *   <li>{@code RNASEQ_ROOT} corresponds to the root directory of RNA-Seq file</li>
+    	 * </ul>
+    	 * @author Philippe Moret
+    	 * @version Bgee 13
+    	 * @since Bgee 13
+    	 *
+    	 */
         public enum CategoryEnum implements TransferObject.EnumDAOField {
             EXPR_CALLS_SIMPLE("expr_simple"),
             EXPR_CALLS_COMPLETE("expr_complete"),

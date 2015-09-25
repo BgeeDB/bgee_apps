@@ -14,6 +14,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.DAOResultSet;
+import org.bgee.model.dao.api.EntityTO;
 import org.bgee.model.dao.api.keyword.KeywordDAO;
 import org.bgee.model.dao.api.keyword.KeywordDAO.EntityToKeywordTO;
 import org.bgee.model.species.SpeciesService;
@@ -24,11 +25,14 @@ import org.bgee.model.species.SpeciesService;
  * @since Bgee 13
  */
 public class KeywordService extends Service {
-	
+
+	/** This class' logger */
     private final static Logger log = LogManager.getLogger(KeywordService.class.getName());
-	
+
+	/** The {@code DAOManager} for this service */
 	private final DAOManager daoManager;
-	
+
+	/** The {@code SpeciesService} for this service */
 	private final SpeciesService speciesService;
 	
 	/**
@@ -44,6 +48,7 @@ public class KeywordService extends Service {
 	 * Constructs a {@code KeywordService}, attempts to get a {@code DAOManager} 
 	 * through {@link DAOManager#getDAOManager()}.
 	 */
+	@SuppressWarnings("unused")
 	public KeywordService() {
 		this(DAOManager.getDAOManager(), null);
 	}
@@ -64,12 +69,12 @@ public class KeywordService extends Service {
 		log.entry();
 		KeywordDAO dao = daoManager.getKeywordDAO();
         Map<String, String> keywordMap = dao.getKeywordsRelatedToSpecies(speciesIds).stream()
-		                                    .collect(Collectors.toMap(to -> to.getId(), to -> to.getName()));
+		                                    .collect(Collectors.toMap(EntityTO::getId, KeywordDAO.KeywordTO::getName));
 		
 		DAOResultSet<EntityToKeywordTO> results = dao.getKeywordToSpecies(speciesIds);
 		
 		return log.exit(results.stream().collect(groupingBy(
-				t -> t.getEntityId(), 
+				EntityToKeywordTO::getEntityId,
 				mapping(t -> keywordMap.get(t.getKeywordId()), toSet()))));
 	
 	}

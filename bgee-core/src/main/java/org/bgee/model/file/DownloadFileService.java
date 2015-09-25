@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 /**
  * A {@link Service} to obtain {@link DownloadFile}s. 
- * Users should use the {@link ServiceFactory} to obtain {@code DownloadFileService}s.
+ * Users should use the {@link org.bgee.model.ServiceFactory} to obtain {@code DownloadFileService}s.
  *
  * @author Philippe Moret
  */
@@ -62,7 +62,7 @@ public class DownloadFileService extends Service {
      * @param downloadFileTO The {@link DownloadFileDAO.DownloadFileTO} to map.
      * @return The mapped  {@link DownloadFile}.
      */
-    public static DownloadFile mapFromTO(DownloadFileDAO.DownloadFileTO downloadFileTO) {
+    private static DownloadFile mapFromTO(DownloadFileDAO.DownloadFileTO downloadFileTO) {
         log.entry(downloadFileTO);
         if (downloadFileTO == null) {
             return log.exit(null);

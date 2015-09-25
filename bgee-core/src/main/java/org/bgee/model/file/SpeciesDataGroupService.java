@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 /**
  * A {@link Service} to obtain {@link SpeciesDataGroup} objects. 
- * Users should use the {@link ServiceFactory} to obtain {@code SpeciesDataGroupService}s.
+ * Users should use the {@link org.bgee.model.ServiceFactory} to obtain {@code SpeciesDataGroupService}s.
  *
  * @author Philippe Moret
  * @author Frederic bastian

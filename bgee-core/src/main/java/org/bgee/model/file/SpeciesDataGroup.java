@@ -26,6 +26,9 @@ public class SpeciesDataGroup extends NamedEntity {
      */
     private final List<Species> members;
 
+	/**
+	 * @see #getDownloadFiles()
+	 */
     private final Set<DownloadFile> downloadFiles;
 
     public SpeciesDataGroup(String id, String name, String description, List<Species> members, 

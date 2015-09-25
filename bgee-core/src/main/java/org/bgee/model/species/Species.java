@@ -12,10 +12,10 @@ import org.bgee.model.NamedEntity;
 //TODO: equals/hashCode/toString
 public class Species extends NamedEntity {
     
-	/** A {@String} representing the genus (e.g., "homo" for human) of the species */
+	/** A {@code String} representing the genus (e.g., "homo" for human) of the species */
 	private final String genus;
 	
-	/** A {@String} representing the "scientific" (e.g., "sapiens" for human) name of the species */
+	/** A {@code String} representing the "scientific" (e.g., "sapiens" for human) name of the species */
 	private final String speciesName;
 	
     /**
@@ -41,8 +41,8 @@ public class Species extends NamedEntity {
      * Constructor of {@code Species}.
      * @param id            A {@code String} representing the ID of this {@code Species}. 
      *                      Cannot be blank.
-     * @param name          A {@code String} representing the (common) name of this {@Species}.
-     * @param description   A {@code String} description of this {@Species}.
+     * @param name          A {@code String} representing the (common) name of this {@code Species}.
+     * @param description   A {@code String} description of this {@code Species}.
      */
     public Species(String id, String name, String description) throws IllegalArgumentException {
         this(id, name, description, null, null);
@@ -52,29 +52,40 @@ public class Species extends NamedEntity {
      * Constructor of {@code Species}.
      * @param id            A {@code String} representing the ID of this {@code Species}. 
      *                      Cannot be blank.
-     * @param name          A {@code String} representing the (common) name of this {@Species}.
-     * @param description   A {@code String} description of this {@Species}.
-     * @param genus			A {@code String} representing the genus of this {@Species} (e.g., "homo" for human).
-     * @param speciesName   A {@String} representing the "scientific" name of this {@Species} (e.g., "sapiens" for human)
+     * @param name          A {@code String} representing the (common) name of this {@code Species}.
+     * @param description   A {@code String} description of this {@code Species}.
+     * @param genus			A {@code String} representing the genus of this {@code Species} (e.g., "homo" for human).
+     * @param speciesName   A {@code String} representing the "scientific" name of this {@code Species} (e.g., "sapiens" for human)
      */
     public Species(String id, String name, String description, String genus, String speciesName) throws IllegalArgumentException {
         super(id, name, description);
         this.genus = genus;
         this.speciesName = speciesName;
     }
-    
 
+
+    /**
+     * @return A {@code String} representing the genus of the species (e.g., "homo" for human)
+     */
     public String getGenus() {
     	return this.genus;
     }
-    
+
+    /**
+     * @return A {@code String} representing the species common name (e.g., "human" for Homo sapiens)
+     */
     public String getSpeciesName() {
     	return this.speciesName;
     }
-    
+
+    /**
+     * @return A {@code String} containing a short representation of the name (e.g., "H. sapiens" for Homo sapiens).
+     */
     public String getShortName() {
     	if (genus == null || speciesName == null) return "";
     	return genus.toUpperCase().charAt(0) +". "+speciesName;
     }
+
+
 }
 

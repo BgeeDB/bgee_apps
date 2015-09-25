@@ -46,9 +46,18 @@ public class DownloadFile {
         RNASEQ_DATA("rnaseq_data",false),
         RNASEQ_ROOT("rnaseq_root",false);
 
+        /** The string representation */
         private final String stringRepresentation;
+
+        /** a boolean that is true is the category is that of a differential expression file */
         private final boolean isDiffExpr;
-        
+
+        /**
+         * Constructor with 2-params
+         * @param stringRepresentation The {@code String reprensation}
+         * @param isDiffExpr           A boolean whose value is true is the category
+         *                             is that of a differential expression file
+         */
         CategoryEnum(String stringRepresentation, boolean isDiffExpr) {
             this.stringRepresentation = stringRepresentation;
             this.isDiffExpr = isDiffExpr;
@@ -57,7 +66,12 @@ public class DownloadFile {
         public String getStringRepresentation() {
             return stringRepresentation;
         }
-        
+
+        /**
+         * Helper to get the enum value from a {@code String}
+         * @param rep {@code String}
+         * @return the matching {@code CategoryEnum}
+         */
         public static CategoryEnum getById(String rep){
             for (CategoryEnum e : values()){
                 if (e.getStringRepresentation().equals(rep))
@@ -66,6 +80,9 @@ public class DownloadFile {
             throw new IllegalArgumentException("Could not recognize representation: "+rep);
         }
 
+        /**
+         * @return true if the file category is a differential expression
+         */
         public boolean isDiffExpr() {
             return isDiffExpr;
         }
@@ -90,7 +107,7 @@ public class DownloadFile {
      * @param category             A {@code CategoryEnum} 
      * @param size                 A {@code long} representing the file size in bytes.
      * @param speciesDataGroupId   A {@code String} representing the species data group that owns this file.
-     * @throw {@link IllegalArgumentException} If any of the argument is {@code null}.
+     * @throws IllegalArgumentException If any of the argument is {@code null}.
      */
     public DownloadFile(String path, String name, CategoryEnum category, long size, String speciesDataGroupId){
         this.path = path;
@@ -100,26 +117,49 @@ public class DownloadFile {
         this.speciesDataGroupId = speciesDataGroupId;
     }
 
+    /**
+     * Get the path
+     * @return A {@code String} containing the path where the acutal file is found
+     */
     public String getPath() {
         return path;
     }
 
+    /**
+     * Gets the file name
+     * @return A {@code String} containing the file name
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * Gets the file category
+     * @return A {@code CategoryEnum} representing the file's category.
+     */
     public CategoryEnum getCategory() {
         return category;
     }
 
+    /**
+     * Gets the species data group id
+     * @return A {@code String} representation of the species data group id
+     */
     public String getSpeciesDataGroupId() {
         return speciesDataGroupId;
     }
 
+    /**
+     * Gets the size
+     * @return A long representing the size of the file bytes
+     */
     public long getSize() {
         return size;
     }
 
+    /**
+     * @return true if the file is a differential expression file
+     */
     public boolean isDiffExpr(){
         return category.isDiffExpr();
     }

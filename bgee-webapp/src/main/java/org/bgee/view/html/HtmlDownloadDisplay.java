@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -11,7 +12,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
-import org.bgee.model.ServiceFactory;
 import org.bgee.model.file.SpeciesDataGroup;
 import org.bgee.model.species.Species;
 import org.bgee.view.DownloadDisplay;
@@ -22,6 +22,7 @@ import org.bgee.view.DownloadDisplay;
  * 
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
+ * @author  Philippe Moret
  * @version Bgee 13, June 2015
  * @since   Bgee 13
  */
@@ -69,14 +70,14 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     }
     
     @Override
-    public void displayGeneExpressionCallDownloadPage(List<SpeciesDataGroup> groups) {
+    public void displayGeneExpressionCallDownloadPage(List<SpeciesDataGroup> groups, Map<String, Set<String>> keywords) {
         log.entry(groups);
         
         this.startDisplay("Bgee gene expression call download page");
         
         this.writeln(this.getMoreResultDivs());
   		this.writeln(getDataGroupScriptTag(groups));
-
+  		this.writeln(getKeywordScriptTag(keywords, groups));
         this.writeln("<div id='expr_calls'>");
 
         this.writeln("<div id='bgee_title'>");
@@ -114,11 +115,13 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     }
 
     @Override
-    public void displayProcessedExpressionValuesDownloadPage(List<SpeciesDataGroup> groups) {
+    public void displayProcessedExpressionValuesDownloadPage(List<SpeciesDataGroup> groups,
+    		                                                 Map<String, Set<String>> keywords) {
         log.entry(groups);
         
         this.startDisplay("Bgee " + PROCESSED_EXPR_VALUES_PAGE_NAME.toLowerCase() + " download page");
   		this.writeln(getDataGroupScriptTag(groups));
+  		this.writeln(getKeywordScriptTag(keywords, groups));
 
         this.writeln(this.getMoreResultDivs());
 

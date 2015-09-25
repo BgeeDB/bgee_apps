@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -28,6 +29,7 @@ import org.bgee.view.html.HtmlDownloadDisplay.DownloadPageType;
  * @author Mathieu Seppey
  * @author Frederic Bastian
  * @author Valentine Rech de Laval
+ * @author Philippe Moret
  * @version Bgee 13, June 2015
  * @since   Bgee 13
  */
@@ -134,12 +136,46 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * @return A {@String} containing the generated Javascript tag.
      */
     protected String getDataGroupScriptTag(List<SpeciesDataGroup> dataGroups) {
+    	log.entry(dataGroups);
         StringBuffer sb = new StringBuffer("<script>");
         sb.append("var speciesData = ");
         sb.append(JSHelper.toJson(dataGroups.stream()
                 .collect(Collectors.toMap(SpeciesDataGroup::getId, Function.identity()))));
-        sb.append("</script>");
-        return sb.toString();
+        sb.append(";</script>");
+        return log.exit(sb.toString());
+    }
+    
+    /**
+     * Generates the script tag for the species keywords (one entry is created per species group).
+     * from the Javascript code of the page.
+     * @param keywords The {@code Map} of species id to keywords
+     * @param groups   The {@code List} of species data groups
+     * @return A {@String} containing the generated Javascript tag.
+     */
+    protected String getKeywordScriptTag(Map<String, Set<String>> keywords, List<SpeciesDataGroup> groups) {
+    	log.entry(keywords, groups);
+        StringBuffer sb = new StringBuffer("<script>");
+        sb.append("var keywords = ");
+        Map<String, Set<String>> idToMembers = groups.stream()
+        		.collect(Collectors.toMap(g -> g.getId(), 
+        				g -> g.getMembers().stream().map(m -> m.getId()).collect(Collectors.toSet()))
+        				);
+        log.trace(idToMembers.size());
+        log.trace(keywords.size());
+        sb.append(JSHelper.toJson(idToMembers.entrySet()
+        		.stream()
+        		.collect(Collectors.toMap(e -> e.getKey(),
+        				e -> 	e.getValue().stream()
+        		// we get the keyword set for each group and then use reduce to concatenate the strings
+        		.flatMap(id -> keywords.get(id).stream()).reduce( (s0,s1) -> s0+" "+s1).get() 
+        				))));
+        sb.append(";\n");
+        sb.append("var autocomplete = ");
+        sb.append(JSHelper.toJson(keywords.values().stream()
+        		.flatMap(s -> s.stream())
+        		.collect(Collectors.toSet())));
+        sb.append(";</script>");
+        return log.exit(sb.toString());
     }
     
     /**

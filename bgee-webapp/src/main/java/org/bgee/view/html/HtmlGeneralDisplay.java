@@ -1,12 +1,10 @@
 package org.bgee.view.html;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
@@ -20,6 +18,7 @@ import org.bgee.view.GeneralDisplay;
  * @author Mathieu Seppey
  * @author Frederic Bastian
  * @author Valentine Rech de Laval
+ * @author Philippe Moret
  * @version Bgee 13, August 2015
  * @since Bgee 13
  */

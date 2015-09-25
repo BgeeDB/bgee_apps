@@ -2,6 +2,8 @@ package org.bgee.view;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -36,12 +38,14 @@ public class TestDownloadDisplay extends TestParentDisplay implements DownloadDi
     }
 
     @Override
-    public void displayProcessedExpressionValuesDownloadPage(List<SpeciesDataGroup> groups) {
+    public void displayProcessedExpressionValuesDownloadPage(List<SpeciesDataGroup> groups
+    		, Map<String, Set<String>> keywords) {
         this.out.println("TestB");
     }
 
     @Override
-    public void displayGeneExpressionCallDownloadPage(List<SpeciesDataGroup> groups) {
+    public void displayGeneExpressionCallDownloadPage(List<SpeciesDataGroup> groups
+    		, Map<String, Set<String>> keywords) {
         this.out.println("TestC");
     }
 }

@@ -1,10 +1,11 @@
 package org.bgee.controller;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Properties;
+import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -12,7 +13,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.file.SpeciesDataGroup;
 import org.bgee.view.DownloadDisplay;
 import org.bgee.view.ViewFactory;
@@ -23,6 +23,7 @@ import org.bgee.view.ViewFactory;
  * 
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
+ * @author  Philippe Moret
  * @version Bgee 13 Aug 2014
  * @since   Bgee 13
  */
@@ -59,12 +60,10 @@ public class CommandDownload extends CommandParent {
             display.displayDownloadHomePage();
         } else if (this.requestParameters.getAction().equals(
                 RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES)) {
-
-            display.displayProcessedExpressionValuesDownloadPage(getAllSpeciesDataGroup());
+            display.displayProcessedExpressionValuesDownloadPage(getAllSpeciesDataGroup(), getSpeciesKeywords());
         } else if (this.requestParameters.getAction().equals(
                 RequestParameters.ACTION_DOWLOAD_CALL_FILES)) {
-
-            display.displayGeneExpressionCallDownloadPage(getAllSpeciesDataGroup());
+            display.displayGeneExpressionCallDownloadPage(getAllSpeciesDataGroup(), getSpeciesKeywords());
         } else {
             throw log.throwing(new PageNotFoundException("Incorrect " + 
                 this.requestParameters.getUrlParametersInstance().getParamAction() + 
@@ -86,5 +85,19 @@ public class CommandDownload extends CommandParent {
             log.error(e);
             return log.exit(new LinkedList<>());
         }
+    }
+    
+    /**
+     * Gets a {@code Map} of keywords for species
+     * @return a {@code Map} of keywords for species
+     */
+    private Map<String, Set<String>> getSpeciesKeywords() {
+    	log.entry();
+    	try {
+    	return log.exit(serviceFactory.getKeywordService().getKeywordForAllSpecies());
+    	} catch (RuntimeException e) {
+    		log.error(e);
+    		return log.exit(new HashMap<>());
+    	}
     }
 }

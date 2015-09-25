@@ -176,7 +176,7 @@ var download = {
             this.$creativeCommonsTitleLink =  $( "#creativecommons_title a");
             this.$creativeCommons = $( "#creativecommons" );
             // Initialize the values that have to be dynamically set, i.e. ids and search content  
-            //this.generateSearchableContent();
+            this.generateSearchableContent();
             // Add the event listeners to all elements that have a dynamic behavior
 
             // Add a click listener to every species/group to load the corresponding details 
@@ -732,15 +732,14 @@ var download = {
             this.$bgeeMoreResultsDown.hide();
             if( text.length > 1 ){
                 // Add the class on all species where the text match the searchContent 
-            	//TODO: reimplement this
-                /*this.$species.each(function (){
+                this.$species.each(function (){
                     if( download.searchContent[$( this ).attr( "id" )]
                     .indexOf( text.toLowerCase() ) > -1){
                         $( this ).addClass( "highlight" );
                     }
                 });
                 // Update the number of results
-                this.$bgeeSearchResults.text( $( "figure.highlight" ).size()+ " result(s)" );*/
+                this.$bgeeSearchResults.text( $( "figure.highlight" ).size()+ " result(s)" );
             }
             else{
                 this.resetSearch( true ); // If the text is blank or one char, reset the search
@@ -776,68 +775,10 @@ var download = {
          * It also fill a list with all possible words that can be proposed to the user during
          * a search (autocompletion)
          */
-        //TODO: reimplement this with proper keyword dao.
         generateSearchableContent: function(){
-            // Proceed for all species or group...
-            this.$species.each(function() { 
-                // Initialize empty strings for every kind of data that are searchable
-                var names = "";
-                var shortNames = "";
-                var commonNames = "";
-                var alternateNames = "";
-                var groupName = $( this ).data( "bgeegroupname" ); // First, fetch the group name
-                if( ! groupName ){
-                    groupName = ""; // To avoid "null" or "undefined" as searchable strings
-                }
-                else{
-                    groupName = groupName.toLowerCase() + " "; // Add the value to the searchable
-                    // content, in lower case
-                    download.addToAutoCompletionList( groupName ); // Add the value to the
-                }                                                  // auto completion list
-                // Then, fetch the values of the data fields contained in images
-                $( this ).find( ".species_img" ).each(function() {
-                    var currentName = $( this ).data( "bgeespeciesname" ).toLowerCase();
-                    if( currentName ){
-                        names = names +  currentName + " "; // Concat the name of all images, 
-                    }                                       // several values only in the case of group
-                    download.addToAutoCompletionList( currentName ); // Add to the autocompl. list
-                    var currentShortName = $( this ).data( "bgeespeciesshortname" ).toLowerCase();
-                    if( currentShortName ){
-                        shortNames = shortNames +  currentShortName + " "; // Same for short name
-                    }
-                    download.addToAutoCompletionList( currentShortName );
-                    var currentCommonName = $( this ).data( "bgeespeciescommonname" ).toLowerCase();
-                    if( currentCommonName ){
-                        commonNames = commonNames + currentCommonName + " "; // Same for common name
-                    }
-                    download.addToAutoCompletionList( currentCommonName );
-                    var currentAlternateNames = 
-                        $( this ).data( "bgeespeciesalternatenames" ).toLowerCase();
-                    if( currentAlternateNames ){
-                        // Same for alternate name, except there are several alternate names in one 
-                        // image, separated by comma, => split the values first.
-                        currentAlternateNames.split( ", " ).forEach(function( element ) {
-                            alternateNames = alternateNames + element + " ";
-                            download.addToAutoCompletionList( element );
-                        });
-                    }
-                });
-
-                // Sort the autocompletion list alphabetically
-                download.autoCompletionList.sort();
-
-                // Generate search content for the current species by putting all fields together
-                // in the array with the id as key
-                var id = $( this ).attr( "id" );
-                download.searchContent[id] = id.replace(/_/g, " ") + " " // remove "_" that separate                                                 
-                + names                                                  // species ids to form the group id,
-                + shortNames                                             // to be able to search on the 
-                + commonNames                                            // individual id of a species
-                + groupName                                              // but not on the group id that 
-                + alternateNames ;                                       // has no biological significance.
-
-            });    
-
+        	//we use the server-side generate variables
+        	download.autoCompletionList = autocomplete;
+        	download.searchContent = keywords;
         },
 
         /**

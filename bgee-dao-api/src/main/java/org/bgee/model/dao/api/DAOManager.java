@@ -36,6 +36,7 @@ import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
+import org.bgee.model.dao.api.keyword.KeywordDAO;
 import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO;
 import org.bgee.model.dao.api.ontologycommon.EvidenceOntologyDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
@@ -1150,6 +1151,20 @@ public abstract class DAOManager implements AutoCloseable
 		this.checkClosed();
 		return log.exit(this.getNewSpeciesDataGroupDAO());
 	}
+	
+	/**
+	 * Get a new {@link KeywordDAO},
+	 * unless this {@code DAOManager} is already closed.
+	 *
+	 * @return  A new {@code KeywordDAO}.
+	 * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+	 * @see KeywordDAO
+	 */
+	public final KeywordDAO getKeywordDAO() {
+		log.entry();
+		this.checkClosed();
+		return log.exit(this.getNewKeywordDAO());
+	}
     //*****************************************
     //  CORE ABSTRACT METHODS TO IMPLEMENT
     //*****************************************	
@@ -1432,5 +1447,10 @@ public abstract class DAOManager implements AutoCloseable
 	 */
 	protected abstract SpeciesDataGroupDAO getNewSpeciesDataGroupDAO();
 
+	/**
+	 * Service provider must return a new {@link KeywordDAO} instance when this method is called
+	 * @return A new {@link KeywordDAO}
+	 */
+	protected abstract KeywordDAO getNewKeywordDAO();
 
 }

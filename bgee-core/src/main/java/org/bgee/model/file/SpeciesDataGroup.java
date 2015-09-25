@@ -13,7 +13,6 @@ import java.util.*;
  * @author Philippe Moret
  * @see DownloadFile
  */
-//TODO: javadoc, private default constructor(WTF?), equals/hashCode/toString
 public class SpeciesDataGroup extends NamedEntity {
 
 	/**

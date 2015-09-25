@@ -63,6 +63,7 @@ public class Species extends NamedEntity {
         this.speciesName = speciesName;
     }
     
+
     public String getGenus() {
     	return this.genus;
     }

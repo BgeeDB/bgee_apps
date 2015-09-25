@@ -59,6 +59,15 @@ public class SpeciesService extends Service {
                 .map(SpeciesService::mapFromTO)
                 .collect(Collectors.toSet()));
     }
+    
+    /**
+     * @return  all existing species IDs.
+     */
+    public Set<String> loadAllSpeciesId() {
+    	log.entry();
+    	return log.exit(this.getDaoManager().getSpeciesDAO().getAllSpecies()
+    			.stream().map(s -> s.getId()).collect(Collectors.toSet()));
+    }
 
     /**
      * Maps a {@code SpeciesTO} to a {@code Species} instance (Can be passed as a {@code Function}). 

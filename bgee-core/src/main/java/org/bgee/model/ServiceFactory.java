@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.file.DownloadFileService;
 import org.bgee.model.file.SpeciesDataGroupService;
+import org.bgee.model.keyword.KeywordService;
 import org.bgee.model.species.SpeciesService;
 
 /**
@@ -100,5 +101,13 @@ public class ServiceFactory {
         log.entry();
         return log.exit(new SpeciesDataGroupService(getDownloadFileService(), 
                 getSpeciesService(), this.daoManager));
+    }
+    
+    /**
+     * @return A newly instantiated {@code KeywordService}
+     */
+    public KeywordService getKeywordService() {
+    	log.entry();
+    	return log.exit(new KeywordService(this.daoManager, getSpeciesService()));
     }
 }

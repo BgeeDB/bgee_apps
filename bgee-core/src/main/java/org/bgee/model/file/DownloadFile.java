@@ -6,9 +6,31 @@ package org.bgee.model.file;
  * @version Bgee 13
  * @since Bgee 13
  */
-//TODO: javadoc, private default constructor, sanity checks, equals/hashCode/toString
+//TODO: javadoc, private default constructor (???), sanity checks, equals/hashCode/toString
 public class DownloadFile {
 
+	/**
+	 * This enum contains all the different categories of files:
+	 * <ul>
+     *   <li>{@code EXPR_CALLS_SIMPLE} a simple expression calls file</li>
+     *   <li>{@code EXPR_CALLS_COMPLETE} a complete expression calls file</li>
+     *   <li>{@code DIFF_EXPR_ANAT_SIMPLE} a simple differential expression across anatomy file</li>
+     *   <li>{@code DIFF_EXPR_ANAT_COMPLETE} a complete differential expression across anatomy file</li>
+     *   <li>{@code DIFF_EXPR_DEV_COMPLETE} a complete differential expression across developmental stages file</li>
+     *   <li>{@code DIFF_EXPR_DEV_SIMPLE}a simple differential expression across developmental stages file</li>
+     *   <li>{@code ORTHOLOG} corresponds to an orthologies file</li>
+     *   <li>{@code AFFY_ANNOT} corresponds to an Affymetrix annoations file</li>
+     *   <li>{@code AFFY_DATA} corresponds to an Affymetrix signal intensities file</li>
+     *   <li>{@code AFFY_ROOT} corresponds to the root directory for Affymetrix files</li>
+     *   <li>{@code RNASEQ_ANNOT} corresponds to RNA-Seq annotations file</li>
+     *   <li>{@code RNASEQ_DATA} corresponds toRNA-Seq data file</li>
+     *   <li>{@code RNASEQ_ROOT} corresponds to the root directory of RNA-Seq file</li>
+	 * </ul>
+	 * @author Philippe Moret
+	 * @version Bgee 13
+	 * @since Bgee 13
+	 *
+	 */
     public enum CategoryEnum {
         EXPR_CALLS_SIMPLE("expr_simple",false),
         EXPR_CALLS_COMPLETE("expr_complete",false),
@@ -60,6 +82,16 @@ public class DownloadFile {
     private final String speciesDataGroupId;
     private final long size;
 
+    /**
+     * The constructor provides all values to create a {@code Download}
+     * @param path                 A {@code String} representing the path of the containing the file, not null.
+     * @param name                 A {@code String} containing the file name. Might be {@code /} 
+     *                             by convention if the file represents a directory.
+     * @param category             A {@code CategoryEnum} 
+     * @param size                 A {@code long} representing the file size in bytes.
+     * @param speciesDataGroupId   A {@code String} representing the species data group that owns this file.
+     * @throw {@link IllegalArgumentException} If any of the argument is {@code null}.
+     */
     public DownloadFile(String path, String name, CategoryEnum category, long size, String speciesDataGroupId){
         this.path = path;
         this.name = name;
@@ -91,4 +123,66 @@ public class DownloadFile {
     public boolean isDiffExpr(){
         return category.isDiffExpr();
     }
+
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((category == null) ? 0 : category.hashCode());
+		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		result = prime * result + ((path == null) ? 0 : path.hashCode());
+		result = prime * result + (int) (size ^ (size >>> 32));
+		result = prime * result + ((speciesDataGroupId == null) ? 0 : speciesDataGroupId.hashCode());
+		return result;
+	}
+
+
+	@Override
+	public String toString() {
+		return "DownloadFile [path=" + path + ", name=" + name + ", category=" + category + ", speciesDataGroupId="
+		        + speciesDataGroupId + ", size=" + size + "]";
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		DownloadFile other = (DownloadFile) obj;
+		if (category != other.category) {
+			return false;
+		}
+		if (name == null) {
+			if (other.name != null) {
+				return false;
+			}
+		} else if (!name.equals(other.name)) {
+			return false;
+		}
+		if (path == null) {
+			if (other.path != null) {
+				return false;
+			}
+		} else if (!path.equals(other.path)) {
+			return false;
+		}
+		if (size != other.size) {
+			return false;
+		}
+		if (speciesDataGroupId == null) {
+			if (other.speciesDataGroupId != null) {
+				return false;
+			}
+		} else if (!speciesDataGroupId.equals(other.speciesDataGroupId)) {
+			return false;
+		}
+		return true;
+	}
 }

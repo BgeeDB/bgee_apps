@@ -13,9 +13,12 @@ import java.util.*;
  * @author Philippe Moret
  * @see DownloadFile
  */
-//TODO: javadoc, private default constructor, equals/hashCode/toString
+//TODO: javadoc, private default constructor(WTF?), equals/hashCode/toString
 public class SpeciesDataGroup extends NamedEntity {
 
+	/**
+	 * This class' Logger
+	 */
     private static final Logger log = LogManager.getLogger(SpeciesDataGroup.class.getName());
 
     /**
@@ -23,8 +26,7 @@ public class SpeciesDataGroup extends NamedEntity {
      */
     private final List<Species> members;
 
-    //TODO: should be a Set, there is no concept of order for DownloadFiles.
-    private final List<DownloadFile> downloadFiles;
+    private final Set<DownloadFile> downloadFiles;
 
     public SpeciesDataGroup(String id, String name, String description, List<Species> members, 
             List<DownloadFile> downloadFiles) {
@@ -35,7 +37,7 @@ public class SpeciesDataGroup extends NamedEntity {
             throw log.throwing(new IllegalArgumentException(
                     "SpeciesDataGroup must be provided with non-null DownloadFiles."));
         }
-        this.downloadFiles = Collections.unmodifiableList(new ArrayList<>(downloadFiles));
+        this.downloadFiles = Collections.unmodifiableSet(new HashSet<>(downloadFiles));
         
         if (members == null || members.isEmpty() || 
                 members.stream().anyMatch(Objects::isNull)) {
@@ -49,17 +51,74 @@ public class SpeciesDataGroup extends NamedEntity {
      * @return  A {@code List} containing the {@code Species} part of this {@code SpeciesDataGroup}, 
      *          in preferred order. 
      */
-    //TODO: rename to species and getSpecies(), it sounds clearer to me. 
     public List<Species> getMembers() {
         return members;
     }
 
+    /**
+     * @return true if the group contains less than 2 species, false otherwise
+     */
     public boolean isSingleSpecies() {
         return members.size() < 2;
     }
-
+    
+    /**
+     * @return true if the group contains more than 1 species, false otherwise
+     */
     public boolean isMultipleSpecies() {
         return members.size() > 1;
     }
+
+    /**
+     * @return The {@code Set} of {@link DownloadFile} associated to this group.
+     */
+	public Set<DownloadFile> getDownloadFiles() {
+		return downloadFiles;
+	}
+	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + ((downloadFiles == null) ? 0 : downloadFiles.hashCode());
+		result = prime * result + ((members == null) ? 0 : members.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (!super.equals(obj)) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		SpeciesDataGroup other = (SpeciesDataGroup) obj;
+		if (downloadFiles == null) {
+			if (other.downloadFiles != null) {
+				return false;
+			}
+		} else if (!downloadFiles.equals(other.downloadFiles)) {
+			return false;
+		}
+		if (members == null) {
+			if (other.members != null) {
+				return false;
+			}
+		} else if (!members.equals(other.members)) {
+			return false;
+		}
+		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "SpeciesDataGroup [members=" + members + ", downloadFiles=" + downloadFiles + "]";
+	}
+    
+	
 
 }

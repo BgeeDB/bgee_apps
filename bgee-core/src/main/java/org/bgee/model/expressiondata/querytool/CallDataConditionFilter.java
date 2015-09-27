@@ -7,7 +7,7 @@ import org.bgee.model.expressiondata.baseelements.CallType;
 
 //XXX: all parameters are OR conditions
 public class CallDataConditionFilter {
-    private final Set<ConditionFilter> conditionFilters;
+    private final ConditionFilter conditionFilter;
     //XXX: all CallData would be OR conditions.
     //The only type of query not easily doable would be: 
     //affymetrixData = expressed high && rnaSeqData = expressed high
@@ -17,8 +17,9 @@ public class CallDataConditionFilter {
     //XXX: again, where to accept the diffExpressionFactor
     private final Set<CallData<? extends CallType>> callDataFilters;
     
-    public CallDataConditionFilter() {
-        this.conditionFilters = null;
-        this.callDataFilters = null;
+    public CallDataConditionFilter(ConditionFilter conditionFilter,
+            Set<CallData<? extends CallType>> callDataFilters) {
+        this.conditionFilter = conditionFilter;
+        this.callDataFilters = callDataFilters;
     }
 }

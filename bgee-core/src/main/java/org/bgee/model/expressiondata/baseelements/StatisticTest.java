@@ -1,15 +1,17 @@
 package org.bgee.model.expressiondata.baseelements;
 
-public enum DecorelationType {
+public enum StatisticTest {
     
-    NONE ("classic"), 
-    ELIM ("elim"), 
-    WEIGTH ("weight"), 
-    PARENT_CHILD ("parentchild");
+    FISHER ("fisher"), 
+    KS ("ks"), 
+    T ("t"), 
+    GLOBALTEST ("globaltest"),
+    SUM ("sum"),
+    KS_TIE("ks.ties");
     
     private final String code;
     
-    DecorelationType(String code){
+    StatisticTest(String code){
         this.code = code;
     }
 

@@ -14,19 +14,14 @@ public class CallFilter {
     private final GeneFilter geneFilter;
     
     //XXX: each CallDataConditionFilter represents an AND condition.
-    private final Set<CallDataConditionFilter> callDataConditionFilters;
-    
-    //XXX: impact both the gene filtering and the anat.entity and stage filtering.
-    //Species should be always explicitly targeted.
-    private final TaxonomyFilter taxonFilter;
-    
+    private final CallDataConditionFilter callDataConditionFilter;
+        
     //XXX: with this boolean set to true, any multi-species query will search explicitly 
     //for homology/orthology relations, and will complete ID list provided to potentially 
     //add homolog/orthologs (i.e., impacting both ConditionFilters and GeneFilters).
     //if false, then any query is possible, without caring about homology/orthology.
     //XXX: If true, retrieve results only in homologous structure/comparable stages, always.
     private final boolean forceHomology;
-    
     
     //XXX: here, it means that the DataType of CallData will be null. Is it valid? 
     //Or should we remove the DataType attribute from CallData, and always use a Map 
@@ -42,10 +37,9 @@ public class CallFilter {
 //        
 //    }
     
-    public CallFilter() {
-        this.geneFilter = null;
-        this.callDataConditionFilters = null;
-        this.taxonFilter = null;
+    public CallFilter(GeneFilter geneFilter,CallDataConditionFilter callDataConditionFilter) {
+        this.geneFilter = geneFilter;
+        this.callDataConditionFilter = callDataConditionFilter;
         this.forceHomology = true;
     }
 }

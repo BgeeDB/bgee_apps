@@ -53,6 +53,12 @@
     <owl:Class rdf:about="http://purl.obolibrary.org/obo/NCBITaxon_15">
         <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">whatever</rdfs:label>
     </owl:Class>
+    
+    <!-- http://purl.obolibrary.org/obo/NCBITaxon_100 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/NCBITaxon_100">
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">whatever2</rdfs:label>
+    </owl:Class>
 
     
     <rdf:Description>

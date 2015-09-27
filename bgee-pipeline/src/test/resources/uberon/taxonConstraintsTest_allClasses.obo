@@ -1,5 +1,6 @@
 format-version: 1.2
 ontology: taxonConstraintsTest
+comment: this ontology mirrors taxonConstraintsTest.obo, but with class U:6 removed, and classes FAKE:1 and FAKE:2 added, and with incorrect taxon contraints
 
 [Term]
 id: UBERON:0001062
@@ -24,14 +25,13 @@ relationship: part_of U:2 ! brain
 [Term]
 id: U:4
 name: forebrain astrocyte
-intersection_of: U:6
-intersection_of: part_of U:3
+relationship: part_of U:3
 
 [Term]
 id: U:22
 name: antenna
 is_a: U:1
-relationship: never_in_taxon NCBITaxon:8
+relationship: never_in_taxon NCBITaxon:13
 
 [Term]
 id: U:23
@@ -58,11 +58,6 @@ relationship: part_of U:25
 id: U:5
 name: cell
 is_a: U:1
-
-[Term]
-id: U:6
-name: astrocyte
-is_a: U:5
 
 [Term]
 id: S:1
@@ -110,8 +105,7 @@ id: S:6
 name: Astrocyte
 def: "The astrocyte of S is known for expressing SG:3" [FOO:1]
 is_a: S:5
-intersection_of: U:6
-intersection_of: part_of NCBITaxon:8
+relationship: part_of NCBITaxon:8
 
 [Term]
 id: S:999
@@ -128,7 +122,7 @@ id: S:998
 name: Cephalus Obscurus
 relationship: part_of S:3
 comment: A made up structure in the forebrain of species S
-relationship: never_in_taxon NCBITaxon:13
+relationship: never_in_taxon NCBITaxon:8
 
 [Term]
 id: S:9
@@ -140,9 +134,14 @@ relationship: part_of S:998
 id: U:100
 name: structure x
 is_a: UBERON:0001062
-relationship: never_in_taxon NCBITaxon:8
-relationship: never_in_taxon NCBITaxon:13
-relationship: never_in_taxon NCBITaxon:15
+
+[Term]
+id: FAKE:1
+name: Fake 1
+
+[Term]
+id: FAKE:2
+name: Fake 2
 
 ! incorrect taxonomy on purpose
 [Term]

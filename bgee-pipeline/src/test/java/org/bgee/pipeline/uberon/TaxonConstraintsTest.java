@@ -90,13 +90,15 @@ public class TaxonConstraintsTest extends TestAncestor {
      * for which we want to generate taxon constraints. "U:6" is present in the ontology 
      * but not in this {@code Set}, so it will be discarded. "FAKE:1" and "FAKE:2" are not present 
      * in the ontology but present in this {@code Set}, they should be considered 
-     * as existing in all taxa. 
+     * as existing in all taxa. "FAKE:100" is present in an imported ontology, 
+     * this is a regression test to check that the imported ontologies are correctly merged 
+     * for the reasoner to "see" them; it exists in all taxa.
      */
     private final static Set<String> UBERON_IDS = new HashSet<>(Arrays.asList(
             "UBERON:0001062", "U:1", "U:2", "U:3", "U:4", "U:5", "U:100", 
             "U:22", "U:23", "U:24", "U:25", "U:26", 
             "S:1", "S:2", "S:3", "S:4", "S:5", "S:6", "S:9", "S:12", "S:998", "S:999", "S:1000", 
-            "FAKE:1", "FAKE:2"));
+            "FAKE:1", "FAKE:2", "FAKE:100"));
     /**
      * A {@code Map} where keys are {@code String}s representing prefixes of uberon terms 
      * to match, the associated value being a {@code Set} of {@code Integer}s 
@@ -292,7 +294,7 @@ public class TaxonConstraintsTest extends TestAncestor {
             throws OBOFormatParserException, OWLOntologyCreationException, AssertionError, 
             IOException {
 
-        assertEquals("Incorrect number of OWLClasses in taxon constraints", 25, 
+        assertEquals("Incorrect number of OWLClasses in taxon constraints", 26, 
                 constraints.keySet().size());
 
         //now iterate the Uberon OWLClass IDs
@@ -350,9 +352,12 @@ public class TaxonConstraintsTest extends TestAncestor {
                     classId.equals("U:2") || classId.equals("U:3") || classId.equals("U:4") || 
                     classId.equals("U:5") || classId.equals("S:1") || classId.equals("S:2") || 
                     classId.equals("S:3") || classId.equals("S:4") || classId.equals("S:5") || 
-                    classId.equals("S:6") || classId.equals("FAKE:1")) {
+                    classId.equals("S:6") || classId.equals("FAKE:1") || classId.equals("FAKE:100")) {
                 //FAKE:1 not present in Uberon ontology but requested anyway, constraints 
                 //not overridden => will be defined as existing in all taxa, with a warning log.
+                //FAKE:100 is present in an imported ontology, it is a regression test to check 
+                //that imported ontologies are correctly merged for the reasoner; it exists 
+                //in all taxa.
                 toCompare = TAXONIDS;
                 
             } else {
@@ -369,7 +374,7 @@ public class TaxonConstraintsTest extends TestAncestor {
         File tempDir = testFolder.getRoot().getAbsoluteFile();
         
         Set<String> expectedIdsInOntology = new HashSet<String>(UBERON_IDS);
-        //U:6 was discarded from the requeted classes, but is present in the ontology
+        //U:6 was discarded from the requested classes, but is present in the ontology
         expectedIdsInOntology.add("U:6");
         //FAKE:1 and FAKE:2 were requested, but are not present in the ontology
         expectedIdsInOntology.remove("FAKE:1");
@@ -554,6 +559,9 @@ public class TaxonConstraintsTest extends TestAncestor {
                 } else if (uberonId.equals("FAKE:2")) {
                     assertEquals("Incorrect name for FAKE:2", "Fake 2", 
                             uberonName);
+                } else if (uberonId.equals("FAKE:100")) {
+                    assertEquals("Incorrect name for FAKE:100", "Fake 100", 
+                            uberonName);
                 } else {
                     throw log.throwing(new AssertionError("Unrecognized class ID: " + uberonId));
                 }
@@ -605,7 +613,7 @@ public class TaxonConstraintsTest extends TestAncestor {
                         " and taxon 15", taxon15ExpectedValue, 
                         taxonConstraintMap.get(headers[5]));
             }
-            assertEquals("Incorrect number of lines in TSV output", 25, i);
+            assertEquals("Incorrect number of lines in TSV output", 26, i);
         }
       
     }
@@ -687,18 +695,5 @@ public class TaxonConstraintsTest extends TestAncestor {
         assertEquals(expectedConstraints, TaxonConstraints.extractTaxonConstraints(
                 this.getClass().getResource("/uberon/taxonConstraints.tsv").getPath(), 
                 replacementConstrains));
-    }
-    
-    //@Test
-    public void test() throws UnknownOWLOntologyException, OWLOntologyCreationException, OBOFormatParserException, IOException {
-        TaxonConstraints tc = new TaxonConstraints(
-                "/Users/admin/Desktop/composite-metazoan.owl", 
-                "/Users/admin/Desktop/bgee_ncbitaxon.owl");
-//        log.info(tc.explainTaxonExistence(Arrays.asList("FBdv:00005342", "FBdv:00005343"), 
-//                Arrays.asList(7227)));
-//        log.info(tc.explainTaxonExistence(Arrays.asList("HsapDv:0000009"), 
-//                Arrays.asList(9606)));
-        log.info(tc.explainTaxonExistence(Arrays.asList("HsapDv:0000011", "HsapDv:0000013"), 
-                Arrays.asList(9606)));
     }
 }

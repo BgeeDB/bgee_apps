@@ -367,6 +367,10 @@ public class TaxonConstraints {
         //to work properly, just importing them in a same OWLGraphWrapper woud not 
         //be enough
         this.uberonOntWrapper.mergeOntology(this.taxOntWrapper.getSourceOntology());
+        //we also need to merge the import closure, otherwise the classes in the imported ontologies 
+        //will be seen by the method #getAllOWLClasses(), but not by the reasoner.
+        this.uberonOntWrapper.mergeImportClosure(true);
+        
         this.uberonOntWrapper.clearCachedEdges();
         log.exit();
     }
@@ -708,6 +712,7 @@ public class TaxonConstraints {
         Set<String> existingClassIds = this.uberonOntWrapper.getAllOWLClasses().stream()
                 .filter(e ->!this.taxOntWrapper.getSourceOntology().containsClassInSignature(e.getIRI()))
                 .map(this.uberonOntWrapper::getIdentifier).collect(Collectors.toSet());
+        log.trace("Existing OWLClasses in source Uberon ontology: {}", existingClassIds);
         
         //OK, let's check each requested OWLClass
         for (String refClassId: refClassIds) {

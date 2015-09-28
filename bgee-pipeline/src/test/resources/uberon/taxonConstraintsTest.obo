@@ -1,5 +1,6 @@
 format-version: 1.2
 ontology: taxonConstraintsTest
+import: taxonConstraintsTest_import.obo
 
 [Term]
 id: UBERON:0001062

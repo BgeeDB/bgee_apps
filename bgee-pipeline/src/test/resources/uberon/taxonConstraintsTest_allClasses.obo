@@ -143,6 +143,10 @@ name: Fake 1
 id: FAKE:2
 name: Fake 2
 
+[Term]
+id: FAKE:100
+name: Fake 100
+
 ! incorrect taxonomy on purpose
 [Term]
 id: NCBITaxon:8

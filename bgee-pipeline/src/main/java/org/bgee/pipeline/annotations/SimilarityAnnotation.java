@@ -2319,6 +2319,8 @@ public class SimilarityAnnotation {
         
         for (Entry<RawAnnotationBean, Set<Integer>> negativeAnnot: 
             negAnnotsToFilteredTaxa.entrySet()) {
+            log.trace("Check negative annotation for presence of positive annotations in sub-taxa: {}", 
+                    negativeAnnot);
             //the key should represent the concatenation of HOM ID and Uberon IDs, 
             //that were associated to a negative annotation
             RawAnnotationBean key = negativeAnnot.getKey();
@@ -2326,8 +2328,9 @@ public class SimilarityAnnotation {
             //to same taxon or to some sub-taxa. 
             
             //First, we retrieve taxa associated to corresponding positive annotations.
-            //store in a new HashSet, as we will modify it
-            final Set<Integer> positiveTaxIds = positiveAnnotsToTaxa.get(key);
+            final Set<Integer> positiveTaxIds = positiveAnnotsToTaxa.containsKey(key)? 
+                    new HashSet<Integer>(positiveAnnotsToTaxa.get(key)): new HashSet<Integer>();
+            log.trace("Taxa with corresponding positive annotations: {}", positiveTaxIds);
 
             //check each taxon of the negative annot
             for (int negativeTaxonId: negativeAnnot.getValue()) {

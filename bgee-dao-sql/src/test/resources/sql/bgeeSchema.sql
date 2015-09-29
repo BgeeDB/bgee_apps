@@ -1119,7 +1119,9 @@ create table differentialExpression (
 -- see (https://gitlab.isb-sib.ch/Bgee/bgee_apps/issues/31)
 create table downloadFile (
   downloadFileId mediumint unsigned not null,
-  path varchar(255) not null,
+-- path relative to the root of the download file directory, including file name
+  downloadFileRelativePath varchar(255) not null,
+-- currently, just the name of the file
   downloadFileName varchar(255) not null,
   downloadFileDescription text,
   downloadFileCategory enum("expr_simple", "expr_complete", "diff_expr_anatomy_complete", "diff_expr_anatomy_simple"

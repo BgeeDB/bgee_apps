@@ -292,23 +292,50 @@ public class TaxonConstraintsTest extends TestAncestor {
      * @throws IllegalArgumentException 
      */
     @Test
-    //TODO: continue test, does not work with "never_in_taxon" from OBO, doesn't seem to be expanded to equivalent to OWL:Nothing
     public void shouldExplainTaxonExistence() throws OBOFormatParserException, UnknownOWLOntologyException, 
-        OWLOntologyCreationException, IOException, IllegalArgumentException, OWLOntologyStorageException {
+        OWLOntologyCreationException, IOException, IllegalArgumentException {
         TaxonConstraints explain = new TaxonConstraints(
                 new OWLGraphWrapper(OntologyUtils.loadOntology(UBERONFILE)), 
                 new OWLGraphWrapper(OntologyUtils.loadOntology(TAXONTFILE)));
-        explain.explainAndPrintTaxonExistence(Arrays.asList("U:23"), Arrays.asList(8), log::info);
         
-        Map<Integer, List<Integer>> taxIds = new HashMap<Integer, List<Integer>>();
-        taxIds.put(8, null);
+        StringBuilder sb = new StringBuilder();
+        explain.explainAndPrintTaxonExistence(Arrays.asList("U:22", "U:23", "U:26"), 
+                Arrays.asList(8, 14), sb::append);
+        String expectedPart1 = "U:26 \"left antenna segment2\" part_of U:25 \"left antenna2\" "
+                + "in taxon NCBITaxon:14 \"fly_subspecies\"";
+        String expectedPart2 = "U:23 \"left antenna\" is_a U:22 \"antenna\" never_in_taxon NCBITaxon:8 \"coelocanth\"";
+        String expectedPart3 = "U:26 \"left antenna segment2\" part_of U:25 \"left antenna2\" "
+                + "is_a U:22 \"antenna\" never_in_taxon NCBITaxon:8 \"coelocanth\"";
+        int indexOf1 = sb.indexOf(expectedPart1);
+        int indexOf2 = sb.indexOf(expectedPart2);
+        int indexOf3 = sb.indexOf(expectedPart3);
+        assertTrue("Incorrect explanation generated, expected to contain " + expectedPart1 
+                + " and " + expectedPart2 + " and " + expectedPart3 
+                + ", and was: " + sb.toString(), indexOf1 != -1 && indexOf2 != -1 && indexOf3 != -1);
+        //explanations are supposed to be ordered from the most to less precise taxa
+        assertTrue("Incorrect explanation order", indexOf1 < indexOf2 && indexOf1 < indexOf3);
         
-        explain.generateTaxonConstraints(taxIds, UBERON_IDS, null, testFolder.getRoot().getPath());
+        sb = new StringBuilder();
+        explain.explainAndPrintTaxonExistence(Arrays.asList("U:22"), Arrays.asList(8), 
+                sb::append);
+        expectedPart1 = "U:22 \"antenna\" never_in_taxon NCBITaxon:8 \"coelocanth\"";
+        assertTrue("Incorrect explanation generated, expected to contain " + expectedPart1 
+                + ", and was: " + sb.toString(), sb.toString().contains(expectedPart1));
         
-        explain = new TaxonConstraints(
-                new OWLGraphWrapper(OntologyUtils.loadOntology(testFolder.getRoot().getPath() + "/uberon_reasoning_source.owl")), 
-                new OWLGraphWrapper(OntologyUtils.loadOntology(TAXONTFILE)));
-        explain.explainAndPrintTaxonExistence(Arrays.asList("U:23"), Arrays.asList(8), log::info);
+        sb = new StringBuilder();
+        explain.explainAndPrintTaxonExistence(Arrays.asList("U:26"), Arrays.asList(8), 
+                sb::append);
+        expectedPart1 = "U:26 \"left antenna segment2\" part_of U:25 \"left antenna2\" "
+                + "in taxon NCBITaxon:14 \"fly_subspecies\"";
+        expectedPart2 = "U:26 \"left antenna segment2\" part_of U:25 \"left antenna2\" "
+                + "is_a U:22 \"antenna\" never_in_taxon NCBITaxon:8 \"coelocanth\"";
+        indexOf1 = sb.indexOf(expectedPart1);
+        indexOf2 = sb.indexOf(expectedPart2);
+        assertTrue("Incorrect explanation generated, expected to contain " + expectedPart1 
+                + " and " + expectedPart2 + ", and was: " + sb.toString(), 
+                indexOf1 != -1 && indexOf2 != -1);
+        //explanations are supposed to be ordered from the most to less precise taxa
+        assertTrue("Incorrect explanation order", indexOf1 < indexOf2);
     }
     
     /**

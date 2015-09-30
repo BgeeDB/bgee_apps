@@ -217,7 +217,7 @@ public class TaxonConstraints {
             new TaxonConstraints(args[1], args[2]).explainAndPrintTaxonExistence(
                             Arrays.asList(clsId), 
                             Arrays.asList(Integer.parseInt(taxId)), 
-                            log::info);
+                            System.out::println);
             
         } else if (args[0].equalsIgnoreCase("generateTaxonConstraints")) {
         
@@ -1124,9 +1124,11 @@ public class TaxonConstraints {
     }
     
     /**
-     * Explain and print taxon constraits. Constraits are explained using 
-     * {@link #explainTaxonExistence(Collection, Collection)}), and are printed using the {@code Consumer} 
-     * {@code printMethod}. {@code printMethod} is responsible for managing line return. 
+     * Explain and make a pretty print of the taxon constraits. Constraints are explained using 
+     * {@link #explainTaxonExistence(Collection, Collection)}), and are printed/captured 
+     * using the {@code Consumer} {@code printMethod}. Explanations are also ordered 
+     * from the most precise taxon to the less precise taxon.
+     * {@code printMethod} is responsible for managing line return. 
      * 
      * @param owlClassIds   A {@code Collection} of {@code String}s that are the OBO-like 
      *                      IDs of the {@code OWLClass}es for which we want explanations 
@@ -1134,7 +1136,7 @@ public class TaxonConstraints {
      * @param taxonIds      A {@code Collection} of {@code String}s that are the OBO-like 
      *                      IDs of the {@code OWLClass}es representing taxa, for which 
      *                      we want explanations of taxon constraints.
-     * @param printMethod   A {@code Consumer} allowing to display a {@code String}.
+     * @param printMethod   A {@code Consumer} allowing to display or capture a {@code String}.
      * @throws IllegalArgumentException    If some of the requested {@code OWLClass}es 
      *                                     or requested taxa could not be found in 
      *                                     the provided ontologies.
@@ -1147,13 +1149,12 @@ public class TaxonConstraints {
         Collection<List<OWLObject>> explanations = this.explainTaxonExistence(owlClassIds, taxonIds);
         
         if (explanations.isEmpty()) {
-            log.info("No specific explanation for existence of {} in taxon {}. " +
-                    "If it is defined as non-existing, then there is a problem...", 
-                    owlClassIds, taxonIds);
+            printMethod.accept("No specific explanation for existence of " + owlClassIds 
+                    + " in taxon " + taxonIds + ". " +
+                    "If it is defined as non-existing, then there is a problem...");
         } else {
-            log.info("------------------------");
-            log.info("Explanations for existence/nonexistence of {} in taxon {}: ", 
-                    owlClassIds, taxonIds);
+            printMethod.accept("Explanations for existence/nonexistence of " + owlClassIds 
+                    + " in taxon " + taxonIds + ": ");
         }
         //we try to order the explanations, to have first the explanations targeting 
         //the most precise taxa
@@ -1173,28 +1174,40 @@ public class TaxonConstraints {
         });
         
         for (List<OWLObject> explanation: sortedExplanations) {
+            StringBuilder sb = new StringBuilder();
             for (OWLObject explainPart: explanation) {
                 if (explainPart instanceof OWLClass) {
-                    printMethod.accept(this.uberonOntWrapper.getIdentifier(explainPart) 
-                            + " \"" + this.uberonOntWrapper.getLabelOrDisplayId(explainPart) + "\" ");
+                    log.trace("Pretty printing of OWLClass {}", explainPart);
+                    if (sb.length() != 0) {
+                        sb.append("is_a ");
+                    }
+                    sb.append(this.uberonOntWrapper.getIdentifier(explainPart)) 
+                            .append(" \"").append(this.uberonOntWrapper.getLabelOrDisplayId(explainPart))
+                            .append("\" ");
                 } else if (explainPart instanceof OWLObjectSomeValuesFrom) {
+                    log.trace("Pretty printing of OWLObjectSomeValuesFrom {}", explainPart);
                     OWLClassExpression filler = ((OWLObjectSomeValuesFrom) explainPart).getFiller();
                     OWLObjectPropertyExpression rel = ((OWLObjectSomeValuesFrom) explainPart).getProperty();
-                    printMethod.accept(this.uberonOntWrapper.getLabelOrDisplayId(rel) 
-                            + " " + this.uberonOntWrapper.getIdentifier(filler) 
-                            + " \"" + this.uberonOntWrapper.getLabelOrDisplayId(filler) + "\" ");
+                    sb.append(this.uberonOntWrapper.getLabelOrDisplayId(rel)) 
+                            .append(" ").append(this.uberonOntWrapper.getIdentifier(filler)) 
+                            .append(" \"").append(this.uberonOntWrapper.getLabelOrDisplayId(filler))
+                            .append("\" ");
                 } else if (explainPart instanceof OWLAnnotation) {
+                    log.trace("Pretty printing of OWLAnnotation {}", explainPart);
                     OWLClass filler = this.uberonOntWrapper.getOWLClass(
                             ((OWLAnnotation) explainPart).getValue());
                     OWLAnnotationProperty rel = ((OWLAnnotation) explainPart).getProperty();
-                    printMethod.accept(this.uberonOntWrapper.getLabelOrDisplayId(rel) 
-                            + " " + this.uberonOntWrapper.getIdentifier(filler) 
-                            + " \"" + this.uberonOntWrapper.getLabelOrDisplayId(filler) + "\" ");
+                    sb.append(this.uberonOntWrapper.getLabelOrDisplayId(rel)) 
+                            .append(" ").append(this.uberonOntWrapper.getIdentifier(filler)) 
+                            .append(" \"").append(this.uberonOntWrapper.getLabelOrDisplayId(filler))
+                            .append("\" ");
                 } else {
-                    printMethod.accept(explainPart.toString());
+                    log.trace("Pretty printing of other type {}", explainPart);
+                    sb.append(explainPart.toString()).append(" ");
                 }
             }
-            printMethod.accept("-----");
+            log.trace("Pretty printing of explanation: {}", sb); 
+            printMethod.accept(sb.toString());
         }
     }
     

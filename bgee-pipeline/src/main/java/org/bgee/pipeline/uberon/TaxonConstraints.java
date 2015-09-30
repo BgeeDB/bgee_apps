@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -33,11 +34,15 @@ import org.semanticweb.elk.owlapi.ElkReasonerFactory;
 import org.semanticweb.elk.reasoner.config.ReasonerConfiguration;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLAnnotation;
+import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLObject;
+import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
+import org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
@@ -209,22 +214,11 @@ public class TaxonConstraints {
             
             String clsId = args[3];
             String taxId = args[4];
-            Collection<List<OWLObject>> explanations = 
-                    new TaxonConstraints(args[1], args[2]).explainTaxonExistence(
+            new TaxonConstraints(args[1], args[2]).explainAndPrintTaxonExistence(
                             Arrays.asList(clsId), 
-                            Arrays.asList(Integer.parseInt(taxId)));
-            if (explanations.isEmpty()) {
-                log.info("No specific explanation for existence of {} in taxon {}. " +
-                		"If it is defined as non-existing, then there is a problem...", 
-                		clsId, taxId);
-            } else {
-                log.info("--------------------");
-                log.info("Explanations for existence/nonexistence of {} in taxon {}: ", 
-                        clsId, taxId);
-            }
-            for (List<OWLObject> explanation: explanations) {
-                log.info(explanation);
-            }
+                            Arrays.asList(Integer.parseInt(taxId)), 
+                            log::info);
+            
         } else if (args[0].equalsIgnoreCase("generateTaxonConstraints")) {
         
             if (args.length < 8 || args.length > 9) {
@@ -359,6 +353,10 @@ public class TaxonConstraints {
      */
     private void prepareUberon() throws OWLOntologyCreationException {
         log.entry();
+        //we need to merge the import closure, otherwise the classes in the imported ontologies 
+        //will be seen by the method #getAllOWLClasses(), but not by the reasoner.
+        this.uberonOntWrapper.mergeImportClosure(true);
+        
         //first, we remove any "is_a" relations and disjoint classes axioms between taxa 
         //that might be present in Uberon, they can be inconsistent with the taxonomy we use.
         this.filterUberonOntology();
@@ -367,9 +365,6 @@ public class TaxonConstraints {
         //to work properly, just importing them in a same OWLGraphWrapper woud not 
         //be enough
         this.uberonOntWrapper.mergeOntology(this.taxOntWrapper.getSourceOntology());
-        //we also need to merge the import closure, otherwise the classes in the imported ontologies 
-        //will be seen by the method #getAllOWLClasses(), but not by the reasoner.
-        this.uberonOntWrapper.mergeImportClosure(true);
         
         this.uberonOntWrapper.clearCachedEdges();
         log.exit();
@@ -817,8 +812,7 @@ public class TaxonConstraints {
         //we use a new OWLOntologyManager to be sure there is no memory leack.
         OWLOntology clonedUberon = OWLManager.createOWLOntologyManager().createOntology(
             IRI.create("Uberon_for_" + taxonId), 
-            new HashSet<OWLOntology>(Arrays.asList(
-                    this.uberonOntWrapper.getSourceOntology())));
+            new HashSet<OWLOntology>(this.uberonOntWrapper.getAllOntologies()));
         try (OWLGraphWrapper graph = new OWLGraphWrapper(clonedUberon)) {
             
             //Get the OWLClass corresponding to the requested taxon
@@ -1128,6 +1122,117 @@ public class TaxonConstraints {
         return log.exit(util.explainTaxonConstraint(owlClassIds, 
                 OntologyUtils.convertToTaxOntologyIds(taxonIds)));
     }
+    
+    /**
+     * Explain and print taxon constraits. Constraits are explained using 
+     * {@link #explainTaxonExistence(Collection, Collection)}), and are printed using the {@code Consumer} 
+     * {@code printMethod}. {@code printMethod} is responsible for managing line return. 
+     * 
+     * @param owlClassIds   A {@code Collection} of {@code String}s that are the OBO-like 
+     *                      IDs of the {@code OWLClass}es for which we want explanations 
+     *                      of taxon constraints.
+     * @param taxonIds      A {@code Collection} of {@code String}s that are the OBO-like 
+     *                      IDs of the {@code OWLClass}es representing taxa, for which 
+     *                      we want explanations of taxon constraints.
+     * @param printMethod   A {@code Consumer} allowing to display a {@code String}.
+     * @throws IllegalArgumentException    If some of the requested {@code OWLClass}es 
+     *                                     or requested taxa could not be found in 
+     *                                     the provided ontologies.
+     * @see #explainTaxonExistence(Collection, Collection)
+     */
+    public void explainAndPrintTaxonExistence(Collection<String> owlClassIds, 
+            Collection<Integer> taxonIds, Consumer<String> printMethod) throws IllegalArgumentException {
+        log.entry(owlClassIds, taxonIds, printMethod);
+        
+        Collection<List<OWLObject>> explanations = this.explainTaxonExistence(owlClassIds, taxonIds);
+        
+        if (explanations.isEmpty()) {
+            log.info("No specific explanation for existence of {} in taxon {}. " +
+                    "If it is defined as non-existing, then there is a problem...", 
+                    owlClassIds, taxonIds);
+        } else {
+            log.info("------------------------");
+            log.info("Explanations for existence/nonexistence of {} in taxon {}: ", 
+                    owlClassIds, taxonIds);
+        }
+        //we try to order the explanations, to have first the explanations targeting 
+        //the most precise taxa
+        List<List<OWLObject>> sortedExplanations = new ArrayList<>(explanations);
+        sortedExplanations.sort((e1, e2) -> {
+            //we take the last explanation of each list, and try to extract the taxon from it. 
+            OWLClass taxon1 = this.extractTargetedTaxonFromExplanation(e1);
+            OWLClass taxon2 = this.extractTargetedTaxonFromExplanation(e2);
+            //try to find which one is the more precise (more ancestors = deeper level)
+            int diff = this.taxOntWrapper.getAncestorsThroughIsA(taxon2).size() - 
+                    this.taxOntWrapper.getAncestorsThroughIsA(taxon1).size();
+            if (diff != 0) {
+                return diff;
+            }
+            //if same depth, we simply order by alphabetical order of the taxon ID
+            return taxon1.getIRI().toString().compareTo(taxon2.getIRI().toString());
+        });
+        
+        for (List<OWLObject> explanation: sortedExplanations) {
+            for (OWLObject explainPart: explanation) {
+                if (explainPart instanceof OWLClass) {
+                    printMethod.accept(this.uberonOntWrapper.getIdentifier(explainPart) 
+                            + " \"" + this.uberonOntWrapper.getLabelOrDisplayId(explainPart) + "\" ");
+                } else if (explainPart instanceof OWLObjectSomeValuesFrom) {
+                    OWLClassExpression filler = ((OWLObjectSomeValuesFrom) explainPart).getFiller();
+                    OWLObjectPropertyExpression rel = ((OWLObjectSomeValuesFrom) explainPart).getProperty();
+                    printMethod.accept(this.uberonOntWrapper.getLabelOrDisplayId(rel) 
+                            + " " + this.uberonOntWrapper.getIdentifier(filler) 
+                            + " \"" + this.uberonOntWrapper.getLabelOrDisplayId(filler) + "\" ");
+                } else if (explainPart instanceof OWLAnnotation) {
+                    OWLClass filler = this.uberonOntWrapper.getOWLClass(
+                            ((OWLAnnotation) explainPart).getValue());
+                    OWLAnnotationProperty rel = ((OWLAnnotation) explainPart).getProperty();
+                    printMethod.accept(this.uberonOntWrapper.getLabelOrDisplayId(rel) 
+                            + " " + this.uberonOntWrapper.getIdentifier(filler) 
+                            + " \"" + this.uberonOntWrapper.getLabelOrDisplayId(filler) + "\" ");
+                } else {
+                    printMethod.accept(explainPart.toString());
+                }
+            }
+            printMethod.accept("-----");
+        }
+    }
+    
+    /**
+     * Retrieve the targeted taxon from the last {@code OWLObject} in {@code explanation}. 
+     * Usually, the last {@code OWLObject} of an explanation of taxon contraints 
+     * is either an {@code AnnotationProperty} (using "never_in_taxon"), 
+     * or an {@code OWLObjectSomeValuesFrom} (using "only_in_taxon"), targeting a taxon. 
+     * 
+     * @param explanation   A {@code List} of {@code OWLObject}s that is an explanation 
+     *                      about a taxon constraint, as returned by 
+     *                      {@link #explainTaxonExistence(Collection, Collection)}.
+     * @return              An {@code OWLClass} that is the taxon targeted by the explanation.
+     * @throws IllegalArgumentException If no taxon could be retrieved from the last 
+     *                                  {@code OWLObject} in {@code explanation}.
+     */
+    private OWLClass extractTargetedTaxonFromExplanation(List<OWLObject> explanation) {
+        log.entry(explanation);
+        
+        //we take the last explanation of the list, and try to extract the taxon from it. 
+        //the last explanation should either be an AnnotationProperty ("never_in_taxon") 
+        //or an ObjectProperty ("only_in_taxon")
+        OWLObject last = explanation.get(explanation.size() - 1);
+        OWLClass taxon = null;
+        
+        if (last instanceof OWLObjectSomeValuesFrom) {
+            taxon = (OWLClass) ((OWLObjectSomeValuesFrom) last).getFiller();
+        } else if (last instanceof OWLAnnotation) {
+            taxon = this.taxOntWrapper.getOWLClass(((OWLAnnotation) last).getValue());
+        }
+        if (taxon == null) {
+            throw new IllegalArgumentException("Could not find taxon corresponding to last explanation: "
+                    + taxon);
+        }
+        
+        return log.exit(taxon);
+    }
+    
 
     /**
      * Expand the providing overriding taxon constraints to also include all parent taxa 
@@ -1152,6 +1257,9 @@ public class TaxonConstraints {
             Map<String, Set<Integer>> idStartsToOverridingTaxonIds) throws IllegalArgumentException {
         log.entry(taxOntWrapper, idStartsToOverridingTaxonIds);
         
+        if (idStartsToOverridingTaxonIds == null || idStartsToOverridingTaxonIds.isEmpty()) {
+            return log.exit(new HashMap<String, Set<Integer>>());
+        }
         //retrieve ancestors of all overriding taxa. 
         Map<Integer, Set<Integer>> taxonIdToAncestorIds = new HashMap<>();
         //Collect all tax IDs in all overridden constraints, and iterate them one by one, 

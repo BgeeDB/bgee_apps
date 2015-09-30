@@ -51,8 +51,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * @param stringToWrite A {@code String} that contains the HTML to escape
      * @return  The escaped HTML
      */
-    public static String htmlEntities(String stringToWrite)
-    {
+    protected static String htmlEntities(String stringToWrite) {
         log.entry(stringToWrite);
     	try {                            
     	    return log.exit(StringEscapeUtils.escapeHtml4(stringToWrite).replaceAll("'", "&apos;"));
@@ -60,6 +59,52 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     		return log.exit("");
     	}
     }
+
+    /**
+     * Helper method to get an html tag
+     * @param name    A {@code String} representing the name of the element 
+     * @param content A {@code String} reprensenting the content of the element
+     * @return The HTML code as {@code String}.
+     */
+     protected static String getHTMLTag(String name, String content) {
+         log.entry(name, content);
+         return log.exit(getHTMLTag(name, null, content));
+     }
+     /**
+      * Helper method to get an html tag with attributes set. 
+      * @param name          A {@code String} representing the name of the element 
+      * @param attributes    A {@code Map} where keys are attribute names and values are attribute values.
+      * @return The HTML code as {@code String}
+      */
+     protected static String getHTMLTag(String name, Map<String, String> attributes) {
+         log.entry(name, attributes);
+         return log.exit(getHTMLTag(name, attributes, null));
+     }
+     /**
+      * Helper method to get an html tag
+      * @param name          A {@code String} representing the name of the element 
+      * @param attributes    A {@code Map} where keys are attribute names and values are attribute values.
+      *                      Can be {@code null} or empty. 
+      * @param content       A {@code String} representing the content of the element
+      * @return The HTML code as {@code String}.
+      */
+     protected static String getHTMLTag(String name, Map<String, String> attributes, String content) {
+         log.entry(name, attributes, content);
+         
+         StringBuffer sb = new StringBuffer();
+         sb.append("<").append(name); 
+         if (attributes != null) {
+             for (Map.Entry<String, String> attr: attributes.entrySet()) {
+                 sb.append(" ").append(attr.getKey()).append("='").append(attr.getValue()).append("'");
+             }
+         }
+         sb.append(">\n");
+         if (StringUtils.isNotBlank(content)) {
+             sb.append(content);
+         }
+         sb.append("</").append(name).append(">\n");
+         return log.exit(sb.toString());
+     }
 
     /**
      * Constructor providing the necessary dependencies.
@@ -135,7 +180,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * @param dataGroups The {@code List} of {@code SpeciesDataGroup} for which download files are availables
      * @return A {@String} containing the generated Javascript tag.
      */
-    protected String getDataGroupScriptTag(List<SpeciesDataGroup> dataGroups) {
+    protected static String getDataGroupScriptTag(List<SpeciesDataGroup> dataGroups) {
     	log.entry(dataGroups);
         StringBuffer sb = new StringBuffer("<script>");
         sb.append("var speciesData = ");
@@ -152,7 +197,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * @param groups   The {@code List} of species data groups
      * @return A {@String} containing the generated Javascript tag.
      */
-    protected String getKeywordScriptTag(Map<String, Set<String>> keywords, List<SpeciesDataGroup> groups) {
+    protected static String getKeywordScriptTag(Map<String, Set<String>> keywords, List<SpeciesDataGroup> groups) {
     	log.entry(keywords, groups);
         StringBuffer sb = new StringBuffer("<script>");
         sb.append("var keywords = ");
@@ -703,7 +748,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * @return          the {@code String} that is the single species section as HTML 'div' element,
      *                  according {@code pageType}.
      */
-    protected String getSingleSpeciesSection(DownloadPageType pageType, List<SpeciesDataGroup> groups) {
+    protected static String getSingleSpeciesSection(DownloadPageType pageType, List<SpeciesDataGroup> groups) {
         log.entry(pageType);
 
         StringBuilder s = new StringBuilder();
@@ -723,13 +768,16 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * @param groups   the {@code List} of {@code SpeciesDataGroup} to display
      * @return A {@String} containing the html section 
      */
-    protected String getSingleSpeciesFigures(DownloadPageType pageType, List<SpeciesDataGroup> groups) {
+    //XXX: Could this method should take a List<Species>, the ID attr should be the species ID, 
+    //this way CommandHome would not need to call getSpeciesDataGroupService, 
+    //but simply SpeciesService#loadSpeciesInDataGroups()
+    protected static String getSingleSpeciesFigures(DownloadPageType pageType, List<SpeciesDataGroup> groups) {
         StringBuilder sb = new StringBuilder();
 
         groups.stream().filter(sdg -> sdg.isSingleSpecies()).forEach(sdg -> {
             Species species = sdg.getMembers().get(0);
             Map<String, String> attr = new HashMap<>();
-            attr.put("id", sdg.getId());
+            attr.put("id", htmlEntities(sdg.getId()));
             sb.append(getHTMLTag("figure", attr, getHTMLTag("div", getImage(species)) + getCaption(species)));
         });
     	return sb.toString();
@@ -740,10 +788,10 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * @param species The {@code Species} for which to get the image
      * @return A {@String} containing the html code for this image
      */
-    protected String getImage(Species species) {
+    protected static String getImage(Species species) {
     	Map<String,String> attrs = new HashMap<>();
-    	attrs.put("src", "img/species/"+species.getId()+"_light.jpg");
-    	attrs.put("alt", species.getShortName());
+    	attrs.put("src", "img/species/"+htmlEntities(species.getId())+"_light.jpg");
+    	attrs.put("alt", htmlEntities(species.getShortName()));
     	attrs.put("class", "species_img");
 
     	return getHTMLTag("img", attrs);
@@ -754,9 +802,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * @param species A {@Species}
      * @return A {@code String} containing the html code
      */
-    protected String getCaption(Species species) {
+    protected static String getCaption(Species species) {
     	return getHTMLTag("figcaption", getShortNameTag(species)
-    			+getHTMLTag("p", species.getName()));
+    			+getHTMLTag("p", htmlEntities(species.getName())));
     }
     
     /**
@@ -764,8 +812,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * @param species A {SpeciesDataGroup}
      * @return A {@code String} containing the html code
      */
-    protected String getCaption(SpeciesDataGroup speciesDataGroup) {
-    	return getHTMLTag("figcaption", speciesDataGroup.getName());
+    protected static String getCaption(SpeciesDataGroup speciesDataGroup) {
+    	return getHTMLTag("figcaption", htmlEntities(speciesDataGroup.getName()));
     }
     
     /**
@@ -773,54 +821,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * @param species A {@Species}
      * @return A {@code String} containing the html code
      */
-    protected String getShortNameTag(Species species) {
-    	return getHTMLTag("p", getHTMLTag("i", species.getShortName()));
-    }
-    
-   /**
-    * Helper method to get an html tag
-    * @param name    A {@code String} representing the name of the element 
-    * @param content A {@code String} reprensenting the content of the element
-    * @return The HTML code as {@code String}
-    */
-    protected String getHTMLTag(String name, String content) {
-    	StringBuffer sb = new StringBuffer();
-    	sb.append("<").append(name).append(">\n")
-    	  .append(content)
-    	  .append("</").append(name).append(">\n");
-    	return sb.toString();
-    }
-    
-    /**
-     * Helper method to get an html tag
-     * @param name    A {@code String} representing the name of the element 
-     * @param content A {@code String} reprensenting the content of the element
-     * @return The HTML code as {@code String}
-     */
-    protected String getHTMLTag(String name, Map<String, String> attributes) {
-    	StringBuffer sb = new StringBuffer();
-    	sb.append("<").append(name); 
-    	for (Map.Entry<String, String> attr: attributes.entrySet()) {
-    		sb.append(" ").append(attr.getKey()).append("=\"").append(attr.getValue()).append("\"");
-    	}
-    	sb.append(" />\n");
-    	return sb.toString();
-    }
-    
-    /**
-     * Helper method to get an html tag
-     * @param name    A {@code String} representing the name of the element 
-     * @param content A {@code String} reprensenting the content of the element
-     * @return The HTML code as {@code String}
-     */
-    protected String getHTMLTag(String name, Map<String, String> attributes, String content) {
-    	StringBuffer sb = new StringBuffer();
-    	sb.append("<").append(name); 
-    	for (Map.Entry<String, String> attr: attributes.entrySet()) {
-    		sb.append(" ").append(attr.getKey()).append("='").append(attr.getValue()).append("'");
-    	}
-    	sb.append(">\n").append(content).append("</").append(name).append(">\n");
-    	return sb.toString();
+    protected static String getShortNameTag(Species species) {
+    	return getHTMLTag("p", getHTMLTag("i", htmlEntities(species.getShortName())));
     }
     
     /**
@@ -828,7 +830,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      *
      * @return  the {@code String} that is the images sources as HTML 'div' element.
      */
-    protected String getImageSources() {
+    protected static String getImageSources() {
         log.entry();
         
         StringBuffer sources = new StringBuffer();

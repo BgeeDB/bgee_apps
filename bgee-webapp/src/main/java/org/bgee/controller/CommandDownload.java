@@ -1,8 +1,6 @@
 package org.bgee.controller;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -79,12 +77,7 @@ public class CommandDownload extends CommandParent {
      */
     private List<SpeciesDataGroup> getAllSpeciesDataGroup() {
         log.entry();
-        try {
-            return log.exit(serviceFactory.getSpeciesDataGroupService().loadAllSpeciesDataGroup());
-        } catch (RuntimeException e) {
-            log.error(e);
-            return log.exit(new LinkedList<>());
-        }
+        return log.exit(serviceFactory.getSpeciesDataGroupService().loadAllSpeciesDataGroup());
     }
     
     /**
@@ -93,11 +86,6 @@ public class CommandDownload extends CommandParent {
      */
     private Map<String, Set<String>> getSpeciesKeywords() {
     	log.entry();
-    	try {
     	return log.exit(serviceFactory.getKeywordService().getKeywordForAllSpecies());
-    	} catch (RuntimeException e) {
-    		log.error(e);
-    		return log.exit(new HashMap<>());
-    	}
     }
 }

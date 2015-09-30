@@ -1,5 +1,7 @@
 package org.bgee.model.file;
 
+import org.apache.commons.lang3.StringUtils;
+
 /**
  * A file (available for download), providing information such as size, category.
  * @author Philippe Moret
@@ -110,6 +112,10 @@ public class DownloadFile {
      * @throws IllegalArgumentException If any of the argument is {@code null}.
      */
     public DownloadFile(String path, String name, CategoryEnum category, long size, String speciesDataGroupId){
+        if (StringUtils.isBlank(path) || StringUtils.isBlank(name) || category == null || 
+                StringUtils.isBlank(speciesDataGroupId)) {
+            throw new IllegalArgumentException("No argument can be null or blank.");
+        }
         this.path = path;
         this.name = name;
         this.size = size;
@@ -118,8 +124,8 @@ public class DownloadFile {
     }
 
     /**
-     * Get the path
-     * @return A {@code String} containing the path where the acutal file is found
+     * Get the path, relative to download files root directory.
+     * @return A {@code String} containing the path where the actual file is found
      */
     public String getPath() {
         return path;
@@ -151,14 +157,14 @@ public class DownloadFile {
 
     /**
      * Gets the size
-     * @return A long representing the size of the file bytes
+     * @return A long representing the size of the file in bytes
      */
     public long getSize() {
         return size;
     }
 
     /**
-     * @return true if the file is a differential expression file
+     * @return {@code true} if the file is a differential expression file
      */
     public boolean isDiffExpr(){
         return category.isDiffExpr();

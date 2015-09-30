@@ -49,7 +49,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         log.entry();
         this.startDisplay("Welcome to Bgee: a dataBase for Gene Expression Evolution");
 
-        this.write(this.getDataGroupScriptTag(groups));
+        this.write(getDataGroupScriptTag(groups));
         
         //TODO: manage the version either from database, or from bgee-webapp.properties file.
         this.writeln("<h1>Welcome to Bgee release 13.1</h1>");
@@ -139,7 +139,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 this.prop.getLogoImagesRootDirectory() + "bgee12_logo.png", null));
         this.writeln("</div>");
 
-        this.writeln(this.getImageSources());
+        this.writeln(getImageSources());
 
         this.endDisplay();
         log.exit();
@@ -149,7 +149,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         log.entry();
         
         // Single species part
-        String homePageSpeciesSection = this.getSingleSpeciesSection(null, groups);
+        String homePageSpeciesSection = getSingleSpeciesSection(null, groups);
 
         // Black banner when a species or a group is selected.
         homePageSpeciesSection += this.getDownloadBanner();

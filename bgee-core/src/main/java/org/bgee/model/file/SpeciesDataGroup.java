@@ -31,7 +31,7 @@ public class SpeciesDataGroup extends NamedEntity {
     private final Set<DownloadFile> downloadFiles;
 
     public SpeciesDataGroup(String id, String name, String description, List<Species> members, 
-            List<DownloadFile> downloadFiles) {
+            Set<DownloadFile> downloadFiles) {
         super(id,name,description);
         
         if (downloadFiles == null || downloadFiles.isEmpty() || 

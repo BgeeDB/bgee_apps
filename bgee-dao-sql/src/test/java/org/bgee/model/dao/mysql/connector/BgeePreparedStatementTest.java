@@ -286,7 +286,7 @@ public class BgeePreparedStatementTest extends TestAncestor
         stmt = new BgeePreparedStatement(con, MockDriver.getMockStatement());
         stmt.setLong(2, null);
         
-        verify(MockDriver.getMockStatement()).setNull(2, Types.INTEGER);
+        verify(MockDriver.getMockStatement()).setNull(2, Types.BIGINT);
     }
     
     /**
@@ -307,7 +307,7 @@ public class BgeePreparedStatementTest extends TestAncestor
         stmt = new BgeePreparedStatement(con, MockDriver.getMockStatement());
         stmt.setLongs(2, Arrays.asList(null, 10L, 14L, 17L));
         
-        verify(MockDriver.getMockStatement()).setNull(2, Types.INTEGER);
+        verify(MockDriver.getMockStatement()).setNull(2, Types.BIGINT);
         verify(MockDriver.getMockStatement()).setLong(3, 10L);
         verify(MockDriver.getMockStatement()).setLong(4, 14L);
         verify(MockDriver.getMockStatement()).setLong(5, 17L);

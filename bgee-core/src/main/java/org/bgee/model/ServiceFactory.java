@@ -108,6 +108,6 @@ public class ServiceFactory {
      */
     public KeywordService getKeywordService() {
     	log.entry();
-    	return log.exit(new KeywordService(this.daoManager, getSpeciesService()));
+    	return log.exit(new KeywordService(this.daoManager));
     }
 }

@@ -1,7 +1,5 @@
 package org.bgee.controller;
 
-import java.io.Writer;
-
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.logging.log4j.LogManager;
@@ -36,18 +34,17 @@ abstract class CommandParent {
      * Concrete factory providing classes from the {@code view} package. 
      * This concrete factory implements the {@code ViewFactory} interface.
      */
-    protected ViewFactory viewFactory;
-    protected ServiceFactory serviceFactory;
-    protected Writer out;
-    protected HttpServletResponse response;
+    protected final ViewFactory viewFactory;
+    protected final ServiceFactory serviceFactory;
+    protected final HttpServletResponse response;
     /**
      * Stores the parameters of the current request.
      */
-    protected RequestParameters requestParameters;
+    protected final RequestParameters requestParameters;
 
-    protected String serverRoot;
-    protected String homePage;
-    protected String bgeeRoot;
+    protected final String serverRoot;
+    protected final String homePage;
+    protected final String bgeeRoot;
 
     /**
      * A {@code BgeeProperties} instance that contains the properties

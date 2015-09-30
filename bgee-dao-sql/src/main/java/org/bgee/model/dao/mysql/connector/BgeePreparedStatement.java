@@ -217,9 +217,10 @@ public class BgeePreparedStatement implements AutoCloseable {
      *                          marker in the SQL statement; if a database access error occurs
      *                          or this method is called on a closed {@code PreparedStatement}.
      */
+    //TODO: adapt to new system in 'develop' branch
     public void setLong(int parameterIndex, Long x) throws SQLException {
         if (x == null) {
-            this.setNull(parameterIndex, Types.INTEGER);
+            this.setNull(parameterIndex, Types.BIGINT);
         } else {
             this.getRealPreparedStatement().setLong(parameterIndex, x);
         }
@@ -237,7 +238,7 @@ public class BgeePreparedStatement implements AutoCloseable {
      *                          in the SQL statement; if a database access error occurs or this
      *                          method is called on a closed {@code PreparedStatement}.
      */
-    //TODO: Add a boolean argument, specifying whether the list should be ordered before performing query
+    //TODO: adapt to new system in 'develop' branch
     public void setLongs(int startIndex, List<Long> values) throws SQLException {
         log.entry(startIndex, values);
         for (Long value: values) {

@@ -90,7 +90,7 @@ public class MySQLDownloadFileDAOIT extends MySQLITAncestor {
     public void testInsertDownloadFiles() throws SQLException {
         this.useEmptyDB();
         
-        //create a Collection of TaxonTOs to be inserted
+        //create a Collection of DownloadFileTOs to be inserted
         Collection<DownloadFileTO> fileTOs = Arrays.asList(
                 new DownloadFileTO("1", "file name 1", "file desc 1", "path/file1", 6L,
                         CategoryEnum.EXPR_CALLS_SIMPLE, "11"),
@@ -109,7 +109,7 @@ public class MySQLDownloadFileDAOIT extends MySQLITAncestor {
             try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
                     prepareStatement("SELECT 1 FROM downloadFile WHERE downloadFileId = ? AND "
                             + "downloadFileName = ? AND downloadFileDescription = ? AND "
-                            + "path = ? AND downloadFileSize = ? AND downloadFileCategory = ? AND "
+                            + "downloadFileRelativePath = ? AND downloadFileSize = ? AND downloadFileCategory = ? AND "
                             + "speciesDataGroupId = ?")) {
                 
                 stmt.setInt(1, 1);

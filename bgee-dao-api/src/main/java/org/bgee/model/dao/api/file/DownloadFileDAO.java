@@ -103,7 +103,7 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
         }
 
         /**
-         * Gets the path of the download file
+         * Gets the path of the download file, relative to download files root directory. 
          * @return The path of the download file
          */
         public String getPath() {
@@ -233,10 +233,8 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
      * @param files                     A {@code Collection} of {@code DownloadFileTO}s to be
      *                                  inserted into the database.
      * @throws IllegalArgumentException If {@code files} is empty or null.
-     * @throws DAOException             If a {@code SQLException} occurred while trying
-     *                                  to insert {@code files}. The {@code SQLException}
-     *                                  will be wrapped into a {@code DAOException} ({@code DAOs}
-     *                                  do not expose these kind of implementation details).
+     * @throws DAOException             If an error occurred while trying
+     *                                  to insert {@code files}.
      */
     public int insertDownloadFiles(Collection<DownloadFileTO> files)
             throws DAOException, IllegalArgumentException;

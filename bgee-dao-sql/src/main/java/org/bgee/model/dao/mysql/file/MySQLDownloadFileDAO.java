@@ -15,6 +15,7 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * The MySQL implementation of {@link MySQLDownloadFileDAO}.
@@ -46,7 +47,7 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
         colToAttributesMap.put("downloadFileId", DownloadFileDAO.Attribute.ID);
         colToAttributesMap.put("downloadFileName", DownloadFileDAO.Attribute.NAME);
         colToAttributesMap.put("downloadFileDescription", DownloadFileDAO.Attribute.DESCRIPTION);
-        colToAttributesMap.put("path", DownloadFileDAO.Attribute.PATH);
+        colToAttributesMap.put("downloadFileRelativePath", DownloadFileDAO.Attribute.PATH);
         colToAttributesMap.put("downloadFileSize", DownloadFileDAO.Attribute.FILE_SIZE);
         colToAttributesMap.put("downloadFileCategory", DownloadFileDAO.Attribute.CATEGORY);
         colToAttributesMap.put("speciesDataGroupId", DownloadFileDAO.Attribute.SPECIES_DATA_GROUP_ID);
@@ -100,11 +101,19 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
                     "No file is given, then no file is inserted"));
         }
         
+        Map<DownloadFileDAO.Attribute, String> attrsToCols = colToAttributesMap.entrySet()
+                .stream()
+                .collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
         StringBuilder sql = new StringBuilder(); 
-        sql.append("INSERT INTO downloadFile" +  
-                   "(downloadFileId, downloadFileName, downloadFileDescription, path, "
-                   + "downloadFileCategory, speciesDataGroupId, downloadFileSize) "
-                   + "VALUES ");
+        sql.append("INSERT INTO downloadFile (")
+        .append(attrsToCols.get(DownloadFileDAO.Attribute.ID)).append(", ")
+        .append(attrsToCols.get(DownloadFileDAO.Attribute.NAME)).append(", ")
+        .append(attrsToCols.get(DownloadFileDAO.Attribute.DESCRIPTION)).append(", ")
+        .append(attrsToCols.get(DownloadFileDAO.Attribute.PATH)).append(", ")
+        .append(attrsToCols.get(DownloadFileDAO.Attribute.CATEGORY)).append(", ")
+        .append(attrsToCols.get(DownloadFileDAO.Attribute.SPECIES_DATA_GROUP_ID)).append(", ")
+        .append(attrsToCols.get(DownloadFileDAO.Attribute.FILE_SIZE))
+        .append(") VALUES ");
         for (int i = 0; i < fileTOs.size(); i++) {
             if (i > 0) {
                 sql.append(", ");

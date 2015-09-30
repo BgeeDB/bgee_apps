@@ -70,8 +70,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     }
     
     @Override
-    public void displayGeneExpressionCallDownloadPage(List<SpeciesDataGroup> groups, Map<String, Set<String>> keywords) {
-        log.entry(groups);
+    public void displayGeneExpressionCallDownloadPage(List<SpeciesDataGroup> groups, 
+            Map<String, Set<String>> keywords) {
+        log.entry(groups, keywords);
         
         this.startDisplay("Bgee gene expression call download page");
         
@@ -96,7 +97,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln(this.getSearchBox());
         
         // Single species part
-        this.writeln(this.getSingleSpeciesSection(DownloadPageType.EXPR_CALLS, groups));
+        this.writeln(getSingleSpeciesSection(DownloadPageType.EXPR_CALLS, groups));
 
         // Black banner when a species or a group is selected.
         this.writeln(this.getDownloadBanner(DownloadPageType.EXPR_CALLS));
@@ -107,7 +108,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("</div>");
 
         // Image sources
-        this.writeln(this.getImageSources());
+        this.writeln(getImageSources());
         
         this.endDisplay();
         
@@ -117,7 +118,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     @Override
     public void displayProcessedExpressionValuesDownloadPage(List<SpeciesDataGroup> groups,
     		                                                 Map<String, Set<String>> keywords) {
-        log.entry(groups);
+        log.entry(groups, keywords);
         
         this.startDisplay("Bgee " + PROCESSED_EXPR_VALUES_PAGE_NAME.toLowerCase() + " download page");
   		this.writeln(getDataGroupScriptTag(groups));
@@ -144,7 +145,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln(this.getSearchBox());
         
         // Single species part
-        this.writeln(this.getSingleSpeciesSection(DownloadPageType.PROC_EXPR_VALUES, groups));
+        this.writeln(getSingleSpeciesSection(DownloadPageType.PROC_EXPR_VALUES, groups));
 
         // Black banner when a species or a group is selected.
         this.writeln(this.getDownloadBanner(DownloadPageType.PROC_EXPR_VALUES));
@@ -152,7 +153,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("</div>"); // close proc_values div
 
         // Image sources
-        this.writeln(this.getImageSources());
+        this.writeln(getImageSources());
         
         this.endDisplay();
         
@@ -266,8 +267,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     				images.append(getImage(species));
     			}
     			Map<String, String> attr = new HashMap<>();
-    			attr.put("id", sdg.getId());
-    			attr.put("name", sdg.getName());
+    			attr.put("id", htmlEntities(sdg.getId()));
+    			attr.put("name", htmlEntities(sdg.getName()));
     			sb.append(getHTMLTag("figure", attr, getHTMLTag("div", images.toString()+getCaption(sdg))));
     		}
     	}

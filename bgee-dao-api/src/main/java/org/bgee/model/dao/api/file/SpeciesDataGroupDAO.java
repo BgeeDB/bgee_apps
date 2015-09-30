@@ -69,10 +69,8 @@ public interface SpeciesDataGroupDAO extends DAO<SpeciesDataGroupDAO.Attribute> 
      * @param groups                    A {@code Collection} of {@code SpeciesDataGroupTO}s to be
      *                                  inserted into the database.
      * @throws IllegalArgumentException If {@code groups} is empty or null.
-     * @throws DAOException             If a {@code SQLException} occurred while trying
-     *                                  to insert {@code groups}. The {@code SQLException}
-     *                                  will be wrapped into a {@code DAOException} ({@code DAOs}
-     *                                  do not expose these kind of implementation details).
+     * @throws DAOException             If an error occurred while trying
+     *                                  to insert {@code groups}. 
      */
     public int insertSpeciesDataGroups(Collection<SpeciesDataGroupTO> groups)
             throws DAOException, IllegalArgumentException;
@@ -146,10 +144,8 @@ public interface SpeciesDataGroupDAO extends DAO<SpeciesDataGroupDAO.Attribute> 
      * @param mappingTOs                A {@code Collection} of {@code SpeciesToDataGroupTO}s to be
      *                                  inserted into the database.
      * @throws IllegalArgumentException If {@code mappingTOs} is empty or null.
-     * @throws DAOException             If a {@code SQLException} occurred while trying
-     *                                  to insert {@code mappingTOs}. The {@code SQLException}
-     *                                  will be wrapped into a {@code DAOException} ({@code DAOs}
-     *                                  do not expose these kind of implementation details).
+     * @throws DAOException             If an error occurred while trying
+     *                                  to insert {@code mappingTOs}.
      */
     public int insertSpeciesToDataGroup(Collection<SpeciesToDataGroupTO> mappingTOs)
             throws DAOException, IllegalArgumentException;

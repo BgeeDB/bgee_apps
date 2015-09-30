@@ -12,10 +12,10 @@ import org.bgee.model.NamedEntity;
 //TODO: equals/hashCode/toString
 public class Species extends NamedEntity {
     
-	/** A {@code String} representing the genus (e.g., "homo" for human) of the species */
+	/** @see #getGenus() */
 	private final String genus;
 	
-	/** A {@code String} representing the "scientific" (e.g., "sapiens" for human) name of the species */
+	/** @see #getSpeciesName() */
 	private final String speciesName;
 	
     /**
@@ -54,8 +54,8 @@ public class Species extends NamedEntity {
      *                      Cannot be blank.
      * @param name          A {@code String} representing the (common) name of this {@code Species}.
      * @param description   A {@code String} description of this {@code Species}.
-     * @param genus			A {@code String} representing the genus of this {@code Species} (e.g., "homo" for human).
-     * @param speciesName   A {@code String} representing the "scientific" name of this {@code Species} (e.g., "sapiens" for human)
+     * @param genus			A {@code String} representing the genus of this {@code Species} (e.g., "Homo" for human).
+     * @param speciesName   A {@code String} representing the species name of this {@code Species} (e.g., "sapiens" for human)
      */
     public Species(String id, String name, String description, String genus, String speciesName) throws IllegalArgumentException {
         super(id, name, description);
@@ -65,17 +65,26 @@ public class Species extends NamedEntity {
 
 
     /**
-     * @return A {@code String} representing the genus of the species (e.g., "homo" for human)
+     * @return A {@code String} representing the genus of the species (e.g., "Homo" for human)
      */
     public String getGenus() {
     	return this.genus;
     }
 
     /**
-     * @return A {@code String} representing the species common name (e.g., "human" for Homo sapiens)
+     * @return A {@code String} representing the species name of this {@code Species} (e.g., "sapiens" for human)
      */
     public String getSpeciesName() {
     	return this.speciesName;
+    }
+    
+    /**
+     * @return  A {@code String} representing the species common name (e.g., "human" for Homo sapiens)
+     */
+    @Override
+    //method overridden to provide a more accurate javadoc
+    public String getName() {
+        return super.getName();
     }
 
     /**

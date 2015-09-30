@@ -97,7 +97,7 @@ public class MySQLSpeciesDataGroupDAOIT extends MySQLITAncestor {
     public void testInsertSpeciesDataGroups() throws SQLException {
         this.useEmptyDB();
         
-        //create a Collection of TaxonTOs to be inserted
+        //create a Collection of SpeciesDataGroupTOs to be inserted
         Collection<SpeciesDataGroupTO> groupTOs = Arrays.asList(
                 new SpeciesDataGroupTO("101", "sdg name 1", "sdg desc 1"),
                 new SpeciesDataGroupTO("102", "sdg name 2", "sdg desc 2"));
@@ -146,7 +146,7 @@ public class MySQLSpeciesDataGroupDAOIT extends MySQLITAncestor {
     public void testInsertSpeciesToDataGroup() throws SQLException {
         this.useEmptyDB();
         
-        //create a Collection of TaxonTOs to be inserted
+        //create a Collection of SpeciesToDataGroupTOs to be inserted
         Collection<SpeciesToDataGroupTO> mappingTOs = Arrays.asList(
                 new SpeciesToDataGroupTO("11", "101"),
                 new SpeciesToDataGroupTO("22", "101"),

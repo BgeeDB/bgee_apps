@@ -399,7 +399,7 @@ BEGIN
                (21 ,2),
                (31, 2);
 
-        INSERT INTO downloadFile(downloadFileId, downloadFileName, path, downloadFileDescription, downloadFileCategory, speciesDataGroupId, downloadFileSize)
+        INSERT INTO downloadFile(downloadFileId, downloadFileName, downloadFileRelativePath, downloadFileDescription, downloadFileCategory, speciesDataGroupId, downloadFileSize)
         VALUES (1, 'file1.zip', '/dir/to/file1', 'this is file1', 'expr_simple',1, 0),
                (2, 'file2.zip', '/dir/to/file2', 'this is file2', 'expr_simple',2, 0);
 

@@ -17,7 +17,6 @@ import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.EntityTO;
 import org.bgee.model.dao.api.keyword.KeywordDAO;
 import org.bgee.model.dao.api.keyword.KeywordDAO.EntityToKeywordTO;
-import org.bgee.model.species.SpeciesService;
 /**
  * The service for accessing keywords.
  * 
@@ -31,53 +30,53 @@ public class KeywordService extends Service {
 
 	/** The {@code DAOManager} for this service */
 	private final DAOManager daoManager;
-
-	/** The {@code SpeciesService} for this service */
-	private final SpeciesService speciesService;
 	
 	/**
 	 * Constructs a {@code KeywordService}.
 	 * @param manager The {@code DAOManager} to be used by this service.
 	 */
-	public KeywordService(DAOManager manager, SpeciesService speciesService) {
+	public KeywordService(DAOManager manager) {
 		this.daoManager = manager;
-		this.speciesService = speciesService;
 	}
 	
 	/**
-	 * Constructs a {@code KeywordService}, attempts to get a {@code DAOManager} 
-	 * through {@link DAOManager#getDAOManager()}.
+	 * Default constructor private on purpose, a {@code DAOManager} 
+	 * and a {@code SpeciesService} must be provided. 
 	 */
+	//XXX: see notes about SpeciesDataGroupService#SpeciesDataGroupService(). 
+	//Notably, if we call DAOManager#getDAOManager() here, we might not be using 
+	//the same DAOManager as the ServiceFactory
 	@SuppressWarnings("unused")
-	public KeywordService() {
-		this(DAOManager.getDAOManager(), null);
+	private KeywordService() {
+		this(null);
 	}
 	
 	/**
-	 * @return A {@code Map} of species Id to the {@code Set} of associated keywords
+	 * @return     A {@code Map} where keys are {@code String}s representing species Ids, 
+     *             and values are {@code Set}s of {@code String}s that are the associated keywords.
+	 * @see #getKeywordForAllSpecies(Collection)
 	 */
 	public Map<String, Set<String>> getKeywordForAllSpecies() {
 		log.entry();
-		return log.exit(getKeywordForSpecies(speciesService.loadAllSpeciesId()));
+		return log.exit(getKeywordForSpecies(null));
 	}
 	/**
 	 * Gets a {@code Map} of keywords for a given set of species
-	 * @param  speciesIds A {@code Collection} of species id for which to return the keywords.
-	 * @return A {@code Map} of species Id to the {@code Set} of associated keywords
+	 * @param speciesIds   A {@code Collection} of {@code String}s that are IDs of species 
+	 *                     for which to return the keywords.
+	 * @return             A {@code Map} where keys are {@code String}s representing species Ids, 
+	 *                     and values are {@code Set}s of {@code String}s that are the associated keywords.
 	 */
 	public Map<String, Set<String>> getKeywordForSpecies(Collection<String> speciesIds) {
 		log.entry();
 		KeywordDAO dao = daoManager.getKeywordDAO();
-        Map<String, String> keywordMap = dao.getKeywordsRelatedToSpecies(speciesIds).stream()
-		                                    .collect(Collectors.toMap(EntityTO::getId, KeywordDAO.KeywordTO::getName));
+        Map<String, String> keywordMap = dao.getKeywordsRelatedToSpecies(speciesIds)
+                .stream().collect(Collectors.toMap(EntityTO::getId, KeywordDAO.KeywordTO::getName));
 		
 		DAOResultSet<EntityToKeywordTO> results = dao.getKeywordToSpecies(speciesIds);
 		
 		return log.exit(results.stream().collect(groupingBy(
 				EntityToKeywordTO::getEntityId,
 				mapping(t -> keywordMap.get(t.getKeywordId()), toSet()))));
-	
 	}
-
-
 }

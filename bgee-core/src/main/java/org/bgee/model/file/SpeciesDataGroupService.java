@@ -90,8 +90,7 @@ public class SpeciesDataGroupService extends Service {
             throws DAOException, QueryInterruptedException, IllegalStateException {
         log.entry();
         
-        //TODO: this should be a Map<String, Set<DownloadFile>>, there is no concept of order for the files.
-        final Map<String, List<DownloadFile>> groupIdToDownloadFilesMap = 
+        final Map<String, Set<DownloadFile>> groupIdToDownloadFilesMap = 
                 buildDownloadFileMap(downloadFileService.getAllDownloadFiles());
         
         final Map<String, List<Species>> groupIdToSpeciesMap = buildSpeciesMap(
@@ -163,23 +162,23 @@ public class SpeciesDataGroupService extends Service {
      * @return              A {@code Map} where keys are {@code String}s corresponding to data group IDs, 
      *                      associated to the {@code Set} of {@code DownloadFile} they contain as value. 
      */
-    private static Map<String, List<DownloadFile>> buildDownloadFileMap(
+    private static Map<String, Set<DownloadFile>> buildDownloadFileMap(
             Collection<DownloadFile> downloadFiles) {
         log.entry(downloadFiles);
         return log.exit(downloadFiles.stream()
-                .collect(Collectors.groupingBy(DownloadFile::getSpeciesDataGroupId)));
+                .collect(Collectors.groupingBy(DownloadFile::getSpeciesDataGroupId, Collectors.toSet())));
     }
 
     /**
      * Helper method to build a {@link SpeciesDataGroup} from a {@code SpeciesDataGroupTO}
      * and the the {@code List} of associated {@code Species} and {@code DownloadFile}
-     * @param groupTO the {@code SpeciesDataGroupTO}
-     * @param species the {@code List} of associated {@code Species}
-     * @param files the {@code List} of associated {@code DownloadFile}
-     * @return a (newly allocated) {@code SpeciesDataGroup}
+     * @param groupTO   the {@code SpeciesDataGroupTO}
+     * @param species   the {@code List} of associated {@code Species}
+     * @param files     the {@code Set} of associated {@code DownloadFile}
+     * @return          a (newly allocated) {@code SpeciesDataGroup}
      */
     private static SpeciesDataGroup newSpeciesDataGroup(SpeciesDataGroupDAO.SpeciesDataGroupTO groupTO, 
-            List<Species> species, List<DownloadFile> files) {
+            List<Species> species, Set<DownloadFile> files) {
         log.entry(groupTO, species, files);
         return log.exit(newSpeciesDataGroup(groupTO.getId(), groupTO.getName(), groupTO.getDescription(), 
                 species, files));
@@ -187,17 +186,17 @@ public class SpeciesDataGroupService extends Service {
 
     /**
      * Helper method to build a {@link SpeciesDataGroup} from its id, name and description
-     * and the the {@code List} of associated {@code Species} and {@code DownloadFile}. 
+     * and associated {@code Species} and {@code DownloadFile}s. 
      * 
-     * @param id the id of the {@code SpeciesDataGroup}
-     * @param name the name of the {@code SpeciesDataGroup}
-     * @param description the description of the {@code SpeciesDataGroup}
-     * @param species the {@code List} of associated {@code Species}
-     * @param files the {@code List} of associated {@code DownloadFile}
+     * @param id            the id of the {@code SpeciesDataGroup}
+     * @param name          the name of the {@code SpeciesDataGroup}
+     * @param description   the description of the {@code SpeciesDataGroup}
+     * @param species       the {@code List} of associated {@code Species}
+     * @param files         the {@code Set} of associated {@code DownloadFile}s
      * @return a (newly allocated) {@code SpeciesDataGroup}
      */
     private static SpeciesDataGroup newSpeciesDataGroup(String id, String name, String description, 
-            List<Species> species, List<DownloadFile> files) {
+            List<Species> species, Set<DownloadFile> files) {
         log.entry(id, name, description, species, files);
         return log.exit(new SpeciesDataGroup(id, name, description, species, files));
     }

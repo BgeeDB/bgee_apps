@@ -330,7 +330,7 @@ var download = {
         	for (var idx = 0; idx < files.length; idx++) {
         		var file = files[idx];
         		if (file.category == category) {
-        			return file.path.concat(files[idx].name);
+        			return file.path.concat(file.name);
         		}
         	}
         },

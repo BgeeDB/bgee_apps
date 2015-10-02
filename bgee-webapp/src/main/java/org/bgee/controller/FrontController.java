@@ -153,6 +153,7 @@ public class FrontController extends HttpServlet {
     public void doRequest(HttpServletRequest request, HttpServletResponse response, 
             boolean postData) { 
         log.entry(request, response, postData);
+        
         //in order to display error message in catch clauses
         //we get  "fake" RequestParameters so that no exception is thrown already.
         RequestParameters requestParameters = new RequestParameters(

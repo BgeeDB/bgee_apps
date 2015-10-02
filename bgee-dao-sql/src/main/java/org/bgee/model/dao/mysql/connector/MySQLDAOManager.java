@@ -464,7 +464,7 @@ public class MySQLDAOManager extends DAOManager {
             }
         }
         if (!jdbcUrlAccepted) {
-            throw log.throwing(new IllegalStateException("No Drivers accepted the JDBC URL " +
+            throw log.throwing(new IllegalStateException("No Drivers accepting the JDBC URL " +
                 this.getJdbcUrl()));
         }
         log.exit();

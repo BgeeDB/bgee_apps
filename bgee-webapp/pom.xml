@@ -135,7 +135,7 @@
                 <!-- change path where maven-antrun-plugin renames static files -->
                 <rename.tmp.directory>${project.build.directory}/m2e-wtp/web-resources/</rename.tmp.directory>
                 <!-- In order to have no extension in URLs, change tomcat context root -->
-                <m2eclipse.wtp.contextRoot>/</m2eclipse.wtp.contextRoot>
+                <m2eclipse.wtp.contextRoot></m2eclipse.wtp.contextRoot>
             </properties>
         </profile>
     </profiles>
@@ -210,7 +210,8 @@
                             </includes>
                         </resource>
                         <!-- We filter bgee-webapp.properties so that css version number 
-                             and javacript version number are configured. -->
+                             and javacript version number are configured. 
+                             bgee.dao.properties is filtered to add database connection parameters -->
                         <resource>
                             <!-- this is relative to the pom.xml directory -->
                             <directory>src/main/resources/</directory>
@@ -292,6 +293,7 @@
                 <filtering>true</filtering>
                 <includes>
                     <include>bgee-webapp.properties</include>
+                    <include>bgee.dao.properties</include>
                 </includes>
             </resource>  
         </resources>

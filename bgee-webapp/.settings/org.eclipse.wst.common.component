@@ -3,6 +3,9 @@
         <wb-resource deploy-path="/" source-path="/target/m2e-wtp/web-resources"/>
         <wb-resource deploy-path="/" source-path="/src/main/webapp" tag="defaultRootSource"/>
         <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/main/java"/>
+        <!-- The order of the resources is important: if two files from two different source folders collide, 
+             WTP will deploy the first one it finds; we want the resources in the test folder to have precedence. -->
+        <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/test/resources"/>
         <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/main/resources"/>
         <property name="java-output-path" value="/bgee-webapp/target/classes"/>
         <property name="component.exclusion.patterns" value="css/,js/"/>

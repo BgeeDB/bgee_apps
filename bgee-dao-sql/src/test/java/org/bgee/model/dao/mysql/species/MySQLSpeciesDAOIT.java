@@ -117,11 +117,11 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
         
         // Generate manually expected result
         List<SpeciesTO> expectedSpecies = Arrays.asList(
-                new SpeciesTO("11", "spCName11", "gen11", "sp11", "111", "path/genome11",
+                new SpeciesTO("11", "spCName11", "gen11", "sp11", "411", "path/genome11",
                         "0", ""), 
                 new SpeciesTO("21", "spCName21", "gen21", "sp21", "211", "path/genome21", 
                         "52", "FAKEPREFIX"), 
-                new SpeciesTO("31", "spCName31", "gen31", "sp31", "311", "path/genome31", 
+                new SpeciesTO("31", "spCName31", "gen31", "sp31", "511", "path/genome31", 
                         "0", "")); 
         // Compare
         assertTrue("SpeciesTOs incorrectly retrieved", 
@@ -156,9 +156,9 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
         
         // expected result
         List<SpeciesTO> expectedSpeciesTOs = Arrays.asList(
-                new SpeciesTO("11", "spCName11", "gen11", "sp11", "111", "path/genome11",
+                new SpeciesTO("11", "spCName11", "gen11", "sp11", "411", "path/genome11",
                         "0", ""), 
-                new SpeciesTO("31", "spCName31", "gen31", "sp31", "311", "path/genome31", 
+                new SpeciesTO("31", "spCName31", "gen31", "sp31", "511", "path/genome31", 
                         "0", "")); 
         // Compare
         assertTrue("SpeciesTOs incorrectly retrieved, expected: " + expectedSpeciesTOs + 
@@ -191,11 +191,11 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
 
         // Generate manually expected result
         List<SpeciesTO> expectedSpecies = Arrays.asList(
-                new SpeciesTO("11", "spCName11", "gen11", "sp11", "111", "path/genome11",
+                new SpeciesTO("11", "spCName11", "gen11", "sp11", "411", "path/genome11",
                         "0", ""),
                 new SpeciesTO("21", "spCName21", "gen21", "sp21", "211", "path/genome21",
                         "52", "FAKEPREFIX"),
-                new SpeciesTO("31", "spCName31", "gen31", "sp31", "311", "path/genome31",
+                new SpeciesTO("31", "spCName31", "gen31", "sp31", "511", "path/genome31",
                         "0", ""));
         // Compare
         assertTrue("SpeciesTOs incorrectly retrieved",

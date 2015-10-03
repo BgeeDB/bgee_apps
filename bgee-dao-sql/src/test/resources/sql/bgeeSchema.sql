@@ -1139,7 +1139,9 @@ create table downloadFile (
 create table speciesDataGroup(
   speciesDataGroupId mediumint unsigned not null,
   speciesDataGroupName varchar(255) not null,
-  speciesDataGroupDescription text
+  speciesDataGroupDescription text, 
+-- preferred order to display speciesDataGroups
+  speciesDataGroupOrder tinyint unsigned not null default 255
 ) engine = innodb;
 
 create table speciesToDataGroup(

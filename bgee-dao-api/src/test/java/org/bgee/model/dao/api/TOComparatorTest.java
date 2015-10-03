@@ -211,19 +211,24 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreSpeciesDataGroupTOsEqual() {
-        SpeciesDataGroupTO to1 = new SpeciesDataGroupTO("ID1", "name1", "desc1");
+        SpeciesDataGroupTO to1 = new SpeciesDataGroupTO("ID1", "name1", "desc1", 1);
 
-        SpeciesDataGroupTO to2 = new SpeciesDataGroupTO("ID1", "name1", "desc1");
+        SpeciesDataGroupTO to2 = new SpeciesDataGroupTO("ID1", "name1", "desc1", 1);
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
-        to2 = new SpeciesDataGroupTO("ID1", "name1", "desc2");
+        to2 = new SpeciesDataGroupTO("ID1", "name1", "desc2", 1);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         
-        to2 = new SpeciesDataGroupTO("ID2", "name1", "desc1");
+        to2 = new SpeciesDataGroupTO("ID2", "name1", "desc1", 1);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+        
+        to1 = new SpeciesDataGroupTO("ID1", "name1", "desc1", null);
+        to2 = new SpeciesDataGroupTO("ID1", "name1", "desc1", 1);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        assertFalse(TOComparator.areTOsEqual(to1, to2, false));
     }
 
     /**

@@ -390,9 +390,9 @@ BEGIN
                (11, 5), 
                (21, 5);
 
-        INSERT INTO speciesDataGroup(speciesDataGroupId, speciesDataGroupName, speciesDataGroupDescription)
-        VALUES (1, 'SingleSpecies1', 'SS1 is a ...'),
-               (2, 'MultiSpecies2', 'A multi species group...');
+        INSERT INTO speciesDataGroup(speciesDataGroupId, speciesDataGroupName, speciesDataGroupDescription, speciesDataGroupOrder)
+        VALUES (1, 'SingleSpecies1', 'SS1 is a ...', 1),
+               (2, 'MultiSpecies2', 'A multi species group...', 2);
 
         INSERT INTO speciesToDataGroup(speciesId, speciesDataGroupId)
         VALUES (11, 1),

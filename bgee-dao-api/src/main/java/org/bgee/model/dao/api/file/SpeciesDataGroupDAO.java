@@ -1,10 +1,12 @@
 package org.bgee.model.dao.api.file;
 
 import java.util.Collection;
+import java.util.LinkedHashMap;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.EntityTO;
+import org.bgee.model.dao.api.OrderingDAO;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 
@@ -16,18 +18,29 @@ import org.bgee.model.dao.api.exception.DAOException;
  * @version Bgee 13 Sept. 2015
  * @since Bgee 13
  */
-public interface SpeciesDataGroupDAO extends DAO<SpeciesDataGroupDAO.Attribute> {
+public interface SpeciesDataGroupDAO 
+extends OrderingDAO<SpeciesDataGroupDAO.Attribute, SpeciesDataGroupDAO.OrderingAttribute> {
 
     /**
-     * The attributes availabe for {@code SpeciesDataGroupTO}
+     * The attributes available for {@code SpeciesDataGroupTO}
      * <ul>
-     *     <li>@{code ID} corresponds to {@link SpeciesDataGroupTO#getId()}</li>
-     *     <li>@{code NAME} corresponds to {@link SpeciesDataGroupTO#getName()}}</li>
-     *     <li>@{code DESCRIPTION} corresponds to {@link SpeciesDataGroupTO#getDescription()}</li>
+     *   <li>@{code ID} corresponds to {@link SpeciesDataGroupTO#getId()}
+     *   <li>@{code NAME} corresponds to {@link SpeciesDataGroupTO#getName()}}
+     *   <li>@{code DESCRIPTION} corresponds to {@link SpeciesDataGroupTO#getDescription()}
+     *   <li>@{code PREFERRED_ORDER} corresponds to {@link SpeciesDataGroupTO#getPreferredOrder()}
      * </ul>
      */
     enum Attribute implements DAO.Attribute {
-        ID, NAME, DESCRIPTION
+        ID, NAME, DESCRIPTION, PREFERRED_ORDER
+    }
+    /**
+     * The attributes available to order retrieved {@code SpeciesDataGroupTO}s
+     * <ul>
+     *   <li>@{code PREFERRED_ORDER} uses {@link SpeciesDataGroupTO#getPreferredOrder()}
+     * </ul>
+     */
+    enum OrderingAttribute implements OrderingDAO.OrderingAttribute {
+        PREFERRED_ORDER
     }
 
     /**
@@ -43,24 +56,52 @@ public interface SpeciesDataGroupDAO extends DAO<SpeciesDataGroupDAO.Attribute> 
     class SpeciesDataGroupTO extends EntityTO {
 
         private static final long serialVersionUID = 2341412341214324L;
+        /**
+         * @see #getPreferredOrder()
+         */
+        private final Integer preferredOrder;
 
         /**
-         * The constructor providing all fieldss
-         * @param id the id of the species data group
-         * @param name the name of the species data group
-         * @param description the description of the species data groups
+         * The constructor providing all fields.
+         * @param id                A {@code String} that is the ID of the species data group.
+         * @param name              A {@code String} that is the name of the species data group.
+         * @param description       A {@code String} that is the description of the species data group.
+         * @param preferredOrder    An {@code int} allowing to order {@code SpeciesDataGroupTO}s 
+         *                          in preferred order.
          */
-        public SpeciesDataGroupTO(String id, String name, String description) {
+        public SpeciesDataGroupTO(String id, String name, String description, Integer preferredOrder) {
             super(id, name, description);
+            this.preferredOrder = preferredOrder;
+        }
+
+        /**
+         * @return  An {@code int} allowing to order {@code SpeciesDataGroupTO}s 
+         *          in preferred order. 
+         */
+        public Integer getPreferredOrder() {
+            return preferredOrder;
         }
 
     }
 
     /**
-     * Get all the species data groups
-     * @return A {@code SpeciesDataGroupTOResultSet} containing all results as {@code SpeciesDataGroupTO}
+     * Get all the species data groups. 
+     * @param attributes            A {@code Collection} of {@code SpeciesDataGroupDAO.Attribute}s 
+     *                              defining the attributes to populate in the returned 
+     *                              {@code SpeciesDataGroupTO}s. If {@code null} or empty, 
+     *                              all attributes are populated. 
+     * @param orderingAttributes    A {@code LinkedHashMap} where keys are 
+     *                              {@code SpeciesDataGroupDAO.OrderingAttribute}s defining 
+     *                              the attributes used to order the returned {@code SpeciesDataGroupTO}s, 
+     *                              the associated value being a {@code OrderingDAO.Direction} 
+     *                              defining whether the ordering should be ascendant or descendant.
+     *                              If {@code null} or empty, then no ordering is performed. 
+     * @return                      A {@code SpeciesDataGroupTOResultSet} allowing to obtain 
+     *                              all results as {@code SpeciesDataGroupTO}s. 
+     * @throws DAOException         If an error occurred while accessing the data source. 
      */
-    SpeciesDataGroupTOResultSet getAllSpeciesDataGroup();
+    SpeciesDataGroupTOResultSet getAllSpeciesDataGroup(Collection<Attribute> attributes, 
+        LinkedHashMap<OrderingAttribute, OrderingDAO.Direction> orderingAttributes) throws DAOException;
 
     /**
      * Insert the provided species data groups into the Bgee database, represented as

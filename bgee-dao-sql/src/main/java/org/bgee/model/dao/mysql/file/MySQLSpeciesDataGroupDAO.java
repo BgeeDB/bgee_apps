@@ -4,13 +4,19 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.OrderingDAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
-import org.bgee.model.dao.mysql.MySQLDAO;
+import org.bgee.model.dao.mysql.MySQLOrderingDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
@@ -21,10 +27,13 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
  *
  * @author Philippe Moret
  * @author Valentine Rech de Laval
- * @version Bgee 13 Sept. 2015
+ * @author Frederic Bastian
+ * @version Bgee 13 Oct. 2015
  * @since Bgee 13
  */
-public class MySQLSpeciesDataGroupDAO extends MySQLDAO<SpeciesDataGroupDAO.Attribute> implements SpeciesDataGroupDAO {
+public class MySQLSpeciesDataGroupDAO 
+extends MySQLOrderingDAO<SpeciesDataGroupDAO.Attribute, SpeciesDataGroupDAO.OrderingAttribute> 
+implements SpeciesDataGroupDAO {
 
     /**
      * The {@code Logger} of this class
@@ -46,6 +55,7 @@ public class MySQLSpeciesDataGroupDAO extends MySQLDAO<SpeciesDataGroupDAO.Attri
         columnToAttributesMap.put("speciesDataGroupId", SpeciesDataGroupDAO.Attribute.ID);
         columnToAttributesMap.put("speciesDataGroupName", SpeciesDataGroupDAO.Attribute.NAME);
         columnToAttributesMap.put("speciesDataGroupDescription", SpeciesDataGroupDAO.Attribute.DESCRIPTION);
+        columnToAttributesMap.put("speciesDataGroupOrder", SpeciesDataGroupDAO.Attribute.PREFERRED_ORDER);
     }
 
     /**
@@ -77,9 +87,43 @@ public class MySQLSpeciesDataGroupDAO extends MySQLDAO<SpeciesDataGroupDAO.Attri
 
 
     @Override
-    public SpeciesDataGroupTOResultSet getAllSpeciesDataGroup() throws DAOException {
-        log.entry();
+    public SpeciesDataGroupTOResultSet getAllSpeciesDataGroup(
+        Collection<SpeciesDataGroupDAO.Attribute> attributes, 
+        LinkedHashMap<SpeciesDataGroupDAO.OrderingAttribute, OrderingDAO.Direction> orderingAttributes) 
+                throws DAOException {
+        log.entry(attributes, orderingAttributes);
+        
+        final Set<SpeciesDataGroupDAO.Attribute> clonedAttrs = attributes == null? null: new HashSet<>(attributes);
+        final LinkedHashMap<SpeciesDataGroupDAO.OrderingAttribute, OrderingDAO.Direction> clonedOrderingAttrs = 
+                orderingAttributes == null? null: new LinkedHashMap<>(orderingAttributes);
+        
+        //for now we still use the setAttributes method to be able to use generateSelectAllStatement, 
+        //but this method will soon disappear, signature of generateSelectAllStatement should change.
+        this.setAttributes(clonedAttrs);
+        
         String sql = generateSelectAllStatement(SPECIES_DATAGROUP_TABLE, columnToAttributesMap, false);
+        
+        if (clonedOrderingAttrs != null && !clonedOrderingAttrs.isEmpty()) {
+            //TODO: for now, there is only one OrderingAttribute in this DAO, 
+            //so we manage it in a quick and dirty way, but we should create methods 
+            //similar to generateSelectAllStatement, for ordering results. 
+            
+            //Check that we still have only one OrderingAttribute
+            if (clonedOrderingAttrs.size() > 1 || 
+                    !clonedOrderingAttrs.containsKey(SpeciesDataGroupDAO.OrderingAttribute.PREFERRED_ORDER)) {
+                throw new UnrecognizedColumnException("Unsupported OrderingAttributes: " 
+                        + clonedOrderingAttrs);
+            }
+            
+            //The OrderingAttribute uses a field defines in Attributes, 
+            //so we can use columnToAttributesMap. 
+            sql += " ORDER BY " + columnToAttributesMap.entrySet().stream()
+                    .filter(e -> e.getValue() == SpeciesDataGroupDAO.Attribute.PREFERRED_ORDER)
+                    .map(e -> e.getKey()).findFirst().get();
+            if (clonedOrderingAttrs.values().iterator().next() == OrderingDAO.Direction.DESC) {
+                sql += " DESC";
+            }
+        }
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             return log.exit(new MySQLSpeciesDataGroupTOResultSet(stmt));
@@ -99,14 +143,14 @@ public class MySQLSpeciesDataGroupDAO extends MySQLDAO<SpeciesDataGroupDAO.Attri
         }
         
         StringBuilder sql = new StringBuilder(); 
-        sql.append("INSERT INTO speciesDataGroup" +  
-                   "(speciesDataGroupId, speciesDataGroupName, speciesDataGroupDescription) " +
-                   "VALUES ");
+        sql.append("INSERT INTO speciesDataGroup")  
+           .append("(speciesDataGroupId, speciesDataGroupName, speciesDataGroupDescription, ")
+           .append("speciesDataGroupOrder) VALUES ");
         for (int i = 0; i < groupTOs.size(); i++) {
             if (i > 0) {
                 sql.append(", ");
             }
-            sql.append("(?, ?, ?) ");
+            sql.append("(?, ?, ?, ?) ");
         }
         try (BgeePreparedStatement stmt = 
                 this.getManager().getConnection().prepareStatement(sql.toString())) {
@@ -117,6 +161,8 @@ public class MySQLSpeciesDataGroupDAO extends MySQLDAO<SpeciesDataGroupDAO.Attri
                 stmt.setString(paramIndex, groupTO.getName());
                 paramIndex++;
                 stmt.setString(paramIndex, groupTO.getDescription());
+                paramIndex++;
+                stmt.setInt(paramIndex, groupTO.getPreferredOrder());
                 paramIndex++;
             }
             
@@ -145,6 +191,7 @@ public class MySQLSpeciesDataGroupDAO extends MySQLDAO<SpeciesDataGroupDAO.Attri
             final ResultSet currentResultSet = this.getCurrentResultSet();
             try {
                 String id = null, name = null, description = null;
+                Integer preferredOrder = null;
                 for (String colName : getColumnLabels().values()) {
                     SpeciesDataGroupDAO.Attribute attr = getAttributeByColumnName(colName);
                     switch (attr) {
@@ -157,11 +204,14 @@ public class MySQLSpeciesDataGroupDAO extends MySQLDAO<SpeciesDataGroupDAO.Attri
                         case NAME:
                             name = currentResultSet.getString(colName);
                             break;
+                        case PREFERRED_ORDER:
+                            preferredOrder = currentResultSet.getInt(colName);
+                            break;
                         default:
                             throw log.throwing(new UnrecognizedColumnException(colName));
                     }
                 }
-                return log.exit(new SpeciesDataGroupTO(id, name, description));
+                return log.exit(new SpeciesDataGroupTO(id, name, description, preferredOrder));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }

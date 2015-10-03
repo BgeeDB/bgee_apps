@@ -481,7 +481,9 @@ public class TOComparator {
     private static boolean areTOsEqual(SpeciesDataGroupTO to1, SpeciesDataGroupTO to2, 
             boolean compareId){
         log.entry(to1, to2, compareId);
-        return log.exit(TOComparator.areEntityTOsEqual(to1, to2, compareId));
+        return log.exit(TOComparator.areEntityTOsEqual(to1, to2, compareId) && 
+                (to1.getPreferredOrder() == null && to2.getPreferredOrder() == null || 
+                 to1.getPreferredOrder() != null && to1.getPreferredOrder().equals(to2.getPreferredOrder())));
     }
     
     /**

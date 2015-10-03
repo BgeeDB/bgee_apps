@@ -8,10 +8,12 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.OrderingDAO;
 import org.bgee.model.dao.api.TOComparator;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesDataGroupTO;
@@ -44,27 +46,40 @@ public class MySQLSpeciesDataGroupDAOIT extends MySQLITAncestor {
         super.useSelectDB();
         MySQLSpeciesDataGroupDAO dao = new MySQLSpeciesDataGroupDAO(getMySQLDAOManager());
 
-        List<SpeciesDataGroupDAO.SpeciesDataGroupTO> list = dao.getAllSpeciesDataGroup().getAllTOs();
-        List<SpeciesDataGroupDAO.SpeciesDataGroupTO> expected = Arrays.asList(
-                new SpeciesDataGroupDAO.SpeciesDataGroupTO("1", "SingleSpecies1", "SS1 is a ..."),
-                new SpeciesDataGroupDAO.SpeciesDataGroupTO("2", "MultiSpecies2", "A multi species group...")
+        //no atributes nor ordering attributes
+        Collection<SpeciesDataGroupDAO.SpeciesDataGroupTO> actual = dao.getAllSpeciesDataGroup(null, null).getAllTOs();
+        Collection<SpeciesDataGroupDAO.SpeciesDataGroupTO> expected = Arrays.asList(
+                new SpeciesDataGroupDAO.SpeciesDataGroupTO("1", "SingleSpecies1", "SS1 is a ...", 1),
+                new SpeciesDataGroupDAO.SpeciesDataGroupTO("2", "MultiSpecies2", "A multi species group...", 2)
         );
+        assertTrue("SpeciesDataGroupTOs are incorrectly retrieved\nGOT\n"+actual+"\nEXPECTED\n"+expected,
+                TOComparator.areTOCollectionsEqual(actual, expected));
 
-        assertTrue("SpeciesDataGroupTOs are incorrectly retrieved\nGOT\n"+list+"\nEXPECTED\n"+expected,
-                TOComparator.areTOCollectionsEqual(list, expected));
-        assertEquals(list, expected);
-
-        dao.setAttributes(new SpeciesDataGroupDAO.Attribute[]{
-                SpeciesDataGroupDAO.Attribute.ID, SpeciesDataGroupDAO.Attribute.DESCRIPTION});
-        List<SpeciesDataGroupDAO.SpeciesDataGroupTO> list2 = dao.getAllSpeciesDataGroup().getAllTOs();
-        List<SpeciesDataGroupDAO.SpeciesDataGroupTO> expected2 = Arrays.asList(
-                new SpeciesDataGroupDAO.SpeciesDataGroupTO("1", null , "SS1 is a ..."),
-                new SpeciesDataGroupDAO.SpeciesDataGroupTO("2", null, "A multi species group...")
+        //some attributes, no ordering
+        actual = dao.getAllSpeciesDataGroup(
+                Arrays.asList(SpeciesDataGroupDAO.Attribute.ID, SpeciesDataGroupDAO.Attribute.DESCRIPTION), 
+                null).getAllTOs();
+        expected = Arrays.asList(
+                new SpeciesDataGroupDAO.SpeciesDataGroupTO("1", null , "SS1 is a ...", null),
+                new SpeciesDataGroupDAO.SpeciesDataGroupTO("2", null, "A multi species group...", null)
         );
+        assertTrue("SpeciesDataGroupTOs are incorrectly retrieved\nGOT\n"+actual+"\nEXPECTED\n"+expected,
+                TOComparator.areTOCollectionsEqual(actual, expected));
 
-        assertTrue("SpeciesDataGroupTOs are incorrectly retrieved\nGOT\n"+list2+"\nEXPECTED\n"+expected2,
-                TOComparator.areTOCollectionsEqual(list2, expected2));
-        assertEquals(list2, expected2);
+        //some attributes, some ordering
+        LinkedHashMap<SpeciesDataGroupDAO.OrderingAttribute, OrderingDAO.Direction> orderAttrs = 
+                new LinkedHashMap<>();
+        orderAttrs.put(SpeciesDataGroupDAO.OrderingAttribute.PREFERRED_ORDER, OrderingDAO.Direction.DESC);
+        List<SpeciesDataGroupDAO.SpeciesDataGroupTO> actualList = dao.getAllSpeciesDataGroup(
+                Arrays.asList(SpeciesDataGroupDAO.Attribute.NAME, SpeciesDataGroupDAO.Attribute.PREFERRED_ORDER), 
+                orderAttrs).getAllTOs();
+        List<SpeciesDataGroupDAO.SpeciesDataGroupTO> expectedList = Arrays.asList(
+                new SpeciesDataGroupDAO.SpeciesDataGroupTO(null, "MultiSpecies2", null, 2), 
+                new SpeciesDataGroupDAO.SpeciesDataGroupTO(null, "SingleSpecies1" , null, 1)
+        );
+        assertTrue("SpeciesDataGroupTOs are incorrectly retrieved\nGOT\n"+actualList+"\nEXPECTED\n"+expectedList,
+                TOComparator.areTOCollectionsEqual(actualList, expectedList));
+        assertEquals("Incorrect ordering of results", expectedList, actualList);
     }
 
     /**
@@ -99,8 +114,8 @@ public class MySQLSpeciesDataGroupDAOIT extends MySQLITAncestor {
         
         //create a Collection of SpeciesDataGroupTOs to be inserted
         Collection<SpeciesDataGroupTO> groupTOs = Arrays.asList(
-                new SpeciesDataGroupTO("101", "sdg name 1", "sdg desc 1"),
-                new SpeciesDataGroupTO("102", "sdg name 2", "sdg desc 2"));
+                new SpeciesDataGroupTO("101", "sdg name 1", "sdg desc 1", 1),
+                new SpeciesDataGroupTO("102", "sdg name 2", "sdg desc 2", 2));
         try {
             MySQLSpeciesDataGroupDAO dao = new MySQLSpeciesDataGroupDAO(this.getMySQLDAOManager());
             assertEquals("Incorrect number of rows inserted", 2, 
@@ -111,17 +126,20 @@ public class MySQLSpeciesDataGroupDAOIT extends MySQLITAncestor {
             //This test method could be better written (DRY, ...)
             try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
                     prepareStatement("SELECT 1 FROM speciesDataGroup WHERE speciesDataGroupId = ? "
-                            + "AND speciesDataGroupName = ? AND speciesDataGroupDescription = ?")) {
+                            + "AND speciesDataGroupName = ? AND speciesDataGroupDescription = ? "
+                            + "AND speciesDataGroupOrder = ?")) {
                 
                 stmt.setInt(1, 101);
                 stmt.setString(2, "sdg name 1");
                 stmt.setString(3, "sdg desc 1");
+                stmt.setInt(4, 1);
                 assertTrue("SpeciesDataGroupTO incorrectly inserted", 
                         stmt.getRealPreparedStatement().executeQuery().next());
                 
                 stmt.setInt(1, 102);
                 stmt.setString(2, "sdg name 2");
                 stmt.setString(3, "sdg desc 2");
+                stmt.setInt(4, 2);
                 assertTrue("SpeciesDataGroupTO incorrectly inserted", 
                         stmt.getRealPreparedStatement().executeQuery().next());
             }

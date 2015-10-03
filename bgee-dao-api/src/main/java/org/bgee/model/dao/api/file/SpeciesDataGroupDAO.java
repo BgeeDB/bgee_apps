@@ -122,7 +122,24 @@ extends OrderingDAO<SpeciesDataGroupDAO.Attribute, SpeciesDataGroupDAO.OrderingA
     interface SpeciesToDataGroupTOResultSet extends DAOResultSet<SpeciesToDataGroupTO> {
 
     }
-
+    /**
+     * The attributes available to order retrieved {@code SpeciesToDataGroupTO}s
+     * <ul>
+     *   <li>{@code DATA_GROUP_ID} corresponds to the ID of the data group referenced 
+     *   (see {@link SpeciesToDataGroupTO#getGroupId()}).
+     *   <li>{@code DISTANCE_TO_SPECIES} corresponds to the taxonomic distance 
+     *   to a specified species. For instance, if the specified species is "human", 
+     *   then the returned {@code SpeciesToDataGroupTO}s, in ascending order of this attribute,  
+     *   will correspond to the mappings for, in order: human, mouse, zebrafish; 
+     *   in descending order: zebrafish, mouse, human. 
+     *   {@code SpeciesDataGroupDAO} implementations should provide a way to specify 
+     *   the species ID to target (for instance, at instantiation), or should target 
+     *   a default species ID. 
+     * </ul>
+     */
+    enum SpeciesToGroupOrderingAttribute implements OrderingDAO.OrderingAttribute {
+        DATA_GROUP_ID, DISTANCE_TO_SPECIES
+    }
     /**
      * The {@code TransferObject} representing the species to datagroup mapping.
      */
@@ -167,6 +184,44 @@ extends OrderingDAO<SpeciesDataGroupDAO.Attribute, SpeciesDataGroupDAO.OrderingA
         }
 
         @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((groupId == null) ? 0 : groupId.hashCode());
+            result = prime * result + ((speciesId == null) ? 0 : speciesId.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            SpeciesToDataGroupTO other = (SpeciesToDataGroupTO) obj;
+            if (groupId == null) {
+                if (other.groupId != null) {
+                    return false;
+                }
+            } else if (!groupId.equals(other.groupId)) {
+                return false;
+            }
+            if (speciesId == null) {
+                if (other.speciesId != null) {
+                    return false;
+                }
+            } else if (!speciesId.equals(other.speciesId)) {
+                return false;
+            }
+            return true;
+        }
+
+        @Override
         public String toString() {
             return "Group ID: " + this.getGroupId() + " - Species ID: " + this.getSpeciesId();
         }
@@ -174,9 +229,16 @@ extends OrderingDAO<SpeciesDataGroupDAO.Attribute, SpeciesDataGroupDAO.OrderingA
 
     /**
      * Gets all species data groups to species mappings.
-     * @return the results as a {@code SpeciesToDataGroupTOResultSet}
+     * @param orderingAttributes    A {@code LinkedHashMap} where keys are 
+     *                              {@code SpeciesOrderingAttribute}s defining 
+     *                              the attributes used to order the returned {@code SpeciesToDataGroupTO}s, 
+     *                              the associated value being a {@code OrderingDAO.Direction} 
+     *                              defining whether the ordering should be ascendant or descendant.
+     *                              If {@code null} or empty, then no ordering is performed.
+     * @return                      The results as a {@code SpeciesToDataGroupTOResultSet}.
      */
-    SpeciesToDataGroupTOResultSet getAllSpeciesToDataGroup();
+    SpeciesToDataGroupTOResultSet getAllSpeciesToDataGroup(
+            LinkedHashMap<SpeciesToGroupOrderingAttribute, OrderingDAO.Direction> orderingAttributes);
 
     /**
      * Insert the provided species data groups to species mappings into the Bgee database,

@@ -39,6 +39,11 @@ implements SpeciesDataGroupDAO {
      * The {@code Logger} of this class
      */
     private static final Logger log = LogManager.getLogger(MySQLSpeciesDataGroupDAO.class.getName());
+    
+    /**
+     * A {@code String} that is the ID of the human species in the database. 
+     */
+    private static final String HUMAN_SPECIES_ID = "9606";
 
     /**
      * The underlying MySQL table name
@@ -75,14 +80,48 @@ implements SpeciesDataGroupDAO {
     }
 
     /**
-     * Default constructor providing the {@code MySQLDAOManager} that this {@code MySQLDAO}
-     * will use to obtain {@code BgeeConnection}s.
+     * A {@code String} that is the ID of the species that the ordering 
+     * of the {@code SpeciesToDatGroupTO}s will be based on, 
+     * when {@link SpeciesToGroupOrderingAttribute DISTANCE_TO_SPECIES} is used.
+     * @see SpeciesToGroupOrderingAttribute DISTANCE_TO_SPECIES
+     */
+    private final String speciesId;
+    
+    /**
+     * Default constructor providing the {@code MySQLDAOManager} to use, 
+     * and targeting by default the human species, when ordering of {@code SpeciesToDataGroupTO}s 
+     * is requested, based on the taxonomic distance to a species (see 
+     * {@link #MySQLSpeciesDataGroupDAO(MySQLDAOManager, String)}).
      *
-     * @param manager the {@code MySQLDAOManager} to use.
+     * @param manager   The {@code MySQLDAOManager} to use.
      * @throws IllegalArgumentException If {@code manager} is {@code null}.
+     * @see #MySQLSpeciesDataGroupDAO(MySQLDAOManager, String)
      */
     public MySQLSpeciesDataGroupDAO(MySQLDAOManager manager) throws IllegalArgumentException {
+        this(manager, HUMAN_SPECIES_ID);
+    }
+
+    /**
+     * Constructor providing the {@code MySQLDAOManager} to use and the ID of the species 
+     * to target, when ordering of {@code SpeciesToDataGroupTO}s is requested, using 
+     * {@link SpeciesToGroupOrderingAttribute DISTANCE_TO_SPECIES}.
+     *
+     * @param manager   The {@code MySQLDAOManager} to use.
+     * @param speciesId A {@code String} that is the ID of the species that the ordering
+     *                  of the {@code SpeciesToDataGroupTO}s will be based on, 
+     *                  when {@link SpeciesToGroupOrderingAttribute DISTANCE_TO_SPECIES} 
+     *                  is used. 
+     * @throws IllegalArgumentException If {@code manager} is {@code null}, or {@code speciesId} 
+     *                                  is blank.
+     * @see SpeciesToGroupOrderingAttribute DISTANCE_TO_SPECIES
+     */
+    public MySQLSpeciesDataGroupDAO(MySQLDAOManager manager, String speciesId) throws IllegalArgumentException {
         super(manager);
+        if (StringUtils.isBlank(speciesId)) {
+            throw log.throwing(
+                    new IllegalArgumentException("The provided species ID cannot be blank"));
+        }
+        this.speciesId = speciesId;
     }
 
 
@@ -265,11 +304,80 @@ implements SpeciesDataGroupDAO {
     }
 
     @Override
-    public SpeciesToDataGroupTOResultSet getAllSpeciesToDataGroup() {
-        log.entry();
-        String sql = "SELECT speciesId, speciesDataGroupId FROM speciesToDataGroup";
+    public SpeciesToDataGroupTOResultSet getAllSpeciesToDataGroup(
+            LinkedHashMap<SpeciesToGroupOrderingAttribute, OrderingDAO.Direction> orderingAttributes) {
+        log.entry(orderingAttributes);
+        
+        final LinkedHashMap<SpeciesToGroupOrderingAttribute, OrderingDAO.Direction> clonedOrderingAttrs = 
+                orderingAttributes == null? null: new LinkedHashMap<>(orderingAttributes);
+        
+        StringBuilder sb = new StringBuilder("SELECT t1.* FROM speciesToDataGroup AS t1 ");
+        
+        if (clonedOrderingAttrs != null && !clonedOrderingAttrs.isEmpty()) {
+            //If DISTANCE_TO_SPECIES ordering requested, we make joins to get 
+            //the left and right bounds of the taxon which the species in data groups belong to.
+            //XXX: what would be good would be to rather use a stored procedure, 
+            //to have a first query checking that the targeted species exists, 
+            //to throw a SIGNAL if it doesn't. 
+            if (clonedOrderingAttrs.containsKey(SpeciesToGroupOrderingAttribute.DISTANCE_TO_SPECIES)) {
+                sb.append("INNER JOIN species AS t2 ON t1.speciesId = t2.speciesId ")
+                  .append("INNER JOIN taxon AS t3 ON t2.taxonId = t3.taxonId ");
+                //we also make a join to a fake table to directly have access 
+                //to the left and right bounds for the targeted taxon 
+                //(will avoid many subqueries in the ORDER BY clause)
+                sb.append("INNER JOIN ")
+                  .append("(SELECT taxonLeftBound AS tSpeciesLeftBound, taxonRightBound AS tSpeciesRightBound ")
+                  .append("FROM taxon AS t4 INNER JOIN species AS t5 ON t4.taxonId = t5.taxonId ")
+                  .append("WHERE t5.speciesId = ?) AS tSpeciesBounds ");
+            }
+            
+            sb.append("ORDER BY ");
+            int i = 0;
+            for (Entry<SpeciesToGroupOrderingAttribute, OrderingDAO.Direction> attr: clonedOrderingAttrs.entrySet()) {
+                if (i > 0) {
+                    sb.append(", "); 
+                }
+                switch(attr.getKey()) {
+                case DATA_GROUP_ID: 
+                    sb.append("t1.speciesDataGroupId ");
+                    if (attr.getValue() == Direction.DESC) {
+                        sb.append("DESC ");
+                    }
+                    break;
+                case DISTANCE_TO_SPECIES:
+                    //Here is a subquery to identify the level of the least common ancestor 
+                    //between the targeted species and the current species.
+                    sb.append("(SELECT t6.taxonLevel FROM taxon AS t6 "
+                            + "WHERE t6.taxonLeftBound <= LEAST(t3.taxonLeftBound, tSpeciesLeftBound) "
+                            + "AND t6.taxonRightBound >= GREATEST(t3.taxonRightBound, tSpeciesRightBound) "
+                            + "ORDER BY t6.taxonLevel DESC LIMIT 1) ");
+                    //the greatest the level of the common ancestor, the closest the species 
+                    //is from the targeted species. So, if it is requested to order in ascending 
+                    //taxonomic distance, then we need to order by descending taxon level.
+                    if (attr.getValue() == null || attr.getValue() == Direction.ASC) {
+                        sb.append("DESC ");
+                    }
+                    break;
+                default: 
+                    throw new UnrecognizedColumnException("Ordering attribute not supported: "
+                            + attr.getKey());
+                }
+                i++;
+            }
+
+            //for cases when several species have a same common ancestor, 
+            //we also order by speciesId, to have consistent ordering. We add it at the end, 
+            //so that other ordering attributes have precedence. 
+            if (clonedOrderingAttrs.containsKey(SpeciesToGroupOrderingAttribute.DISTANCE_TO_SPECIES)) {
+                sb.append(", t1.speciesId");
+            }
+        }
         try {
-            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
+            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString());
+            if (clonedOrderingAttrs != null && 
+                    clonedOrderingAttrs.containsKey(SpeciesToGroupOrderingAttribute.DISTANCE_TO_SPECIES)) {
+                stmt.setString(1, this.speciesId);
+            }
             return log.exit(new MySQLSpeciesToDataGroupTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

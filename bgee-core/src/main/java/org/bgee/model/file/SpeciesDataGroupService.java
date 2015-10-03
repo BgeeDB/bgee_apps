@@ -5,10 +5,13 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.Entity;
 import org.bgee.model.Service;
 import org.bgee.model.dao.api.DAOManager;
+import org.bgee.model.dao.api.OrderingDAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
+import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.OrderingAttribute;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesToDataGroupTOResultSet;
+import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesToGroupOrderingAttribute;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
 
@@ -75,17 +78,19 @@ public class SpeciesDataGroupService extends Service {
     }
 
     /**
-     * Loads all {@code SpeciesDataGroup}. 
+     * Loads all {@code SpeciesDataGroup}s. {@code SpeciesDataGroup}s are returned 
+     * in preferred order for display, and member {@code Species} are ordered 
+     * based on their taxonomic distance to the human lineage (from species closest to human, 
+     * to farthest from human, e.g.: human, chimpanzee, mouse, zebrafish).
      * 
-     * @return A {@code List} containing all {@code SpeciesDataGroup}, in order of preference. 
+     * @return  A {@code List} containing all {@code SpeciesDataGroup}s, in order of preference, 
+     *          with member {@code Species} ordered based on their taxonomic distance to human. 
      * @throws DAOException                 If an error occurred while accessing a {@code DAO}.
      * @throws QueryInterruptedException    If a query to a {@code DAO} was intentionally interrupted.
      * @throws IllegalStateException        If the {@code DownloadFileService} and {@code SpeciesService} 
      *                                      obtained at instantiation do not return consistent information 
      *                                      related to {@code SpeciesDataGroup}s.
-     */
-    //TODO: we need to add a "speciesDataGroupOrder" field in the speciesDataGroup table, 
-    //and a "speciesToDataGroupOrder" field in the speciesToDataGroup table, and use it in the DAOs. 
+     */ 
     public List<SpeciesDataGroup> loadAllSpeciesDataGroup() 
             throws DAOException, QueryInterruptedException, IllegalStateException {
         log.entry();
@@ -93,8 +98,11 @@ public class SpeciesDataGroupService extends Service {
         final Map<String, Set<DownloadFile>> groupIdToDownloadFilesMap = 
                 buildDownloadFileMap(downloadFileService.getAllDownloadFiles());
         
+        LinkedHashMap<SpeciesToGroupOrderingAttribute, OrderingDAO.Direction> orderAttrs = new LinkedHashMap<>();
+        orderAttrs.put(SpeciesToGroupOrderingAttribute.DATA_GROUP_ID, OrderingDAO.Direction.ASC);
+        orderAttrs.put(SpeciesToGroupOrderingAttribute.DISTANCE_TO_SPECIES, OrderingDAO.Direction.ASC);
         final Map<String, List<Species>> groupIdToSpeciesMap = buildSpeciesMap(
-                getDaoManager().getSpeciesDataGroupDAO().getAllSpeciesToDataGroup(), 
+                getDaoManager().getSpeciesDataGroupDAO().getAllSpeciesToDataGroup(orderAttrs), 
                 speciesService.loadSpeciesInDataGroups());
         
         if (groupIdToSpeciesMap.size() != groupIdToDownloadFilesMap.size()) {
@@ -103,7 +111,10 @@ public class SpeciesDataGroupService extends Service {
                     + "associated to species."));
         }
         
-        return log.exit(getDaoManager().getSpeciesDataGroupDAO().getAllSpeciesDataGroup().stream()
+        LinkedHashMap<OrderingAttribute, OrderingDAO.Direction> orderAttrs2 = new LinkedHashMap<>();
+        orderAttrs2.put(OrderingAttribute.PREFERRED_ORDER, OrderingDAO.Direction.ASC);
+        return log.exit(getDaoManager().getSpeciesDataGroupDAO()
+                .getAllSpeciesDataGroup(null, orderAttrs2).stream()
                 .map(e -> newSpeciesDataGroup(e, groupIdToSpeciesMap.get(e.getId()), 
                         groupIdToDownloadFilesMap.get(e.getId())))
                  .collect(Collectors.toList()));
@@ -113,7 +124,7 @@ public class SpeciesDataGroupService extends Service {
      * Build a map from data group IDs to the species they contain, in preferred order.
      * 
      * @param speciesToDataGroupRs  A {@code SpeciesToDataGroupTOResultSet} to acquire 
-     *                              {@code SpeciesToDataGroupMemberTO}s from.
+     *                              {@code SpeciesToDataGroupMemberTO}s from, in preferred order.
      * @param species               A {@code Collection} containing all {@code Species} part of 
      *                              a data group.
      * @return                      A {@code Map} where keys are {@code String}s corresponding to 
@@ -134,23 +145,6 @@ public class SpeciesDataGroupService extends Service {
                 //this groupId (species retrieved from speciesMap, using the speciesId field 
                 //of the SpeciesToDataGroupTOs)
                 Collectors.mapping(e -> speciesMap.get(e.getSpeciesId()), Collectors.toList()))));
-        
-        
-        //XXX: It is debatable whether we should rather use the "java 7" code below for readability. 
-//        Map<String, List<Species>> result = new HashMap<>();
-//
-//        while(speciesToDataGroupRs.next()) {
-//            SpeciesDataGroupDAO.SpeciesToDataGroupTO e = speciesToDataGroupRs.getTO();
-//            String group = e.getGroupId();
-//            Species species = speciesMap.get(e.getSpeciesId());
-//            List<Species> members = result.get(group);
-//            if (members == null) {
-//                members = new ArrayList<>();
-//                result.put(group, members);
-//            }
-//            members.add(species);
-//        }
-//        return log.exit(result);
     }
 
     /**

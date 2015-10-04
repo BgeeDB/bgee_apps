@@ -16,6 +16,7 @@ import org.bgee.pipeline.expression.InsertGlobalCalls;
 import org.bgee.pipeline.expression.downloadfile.GenerateExprFile;
 import org.bgee.pipeline.expression.downloadfile.GenerateDiffExprFile;
 import org.bgee.pipeline.expression.downloadfile.GenerateMultiSpeciesDiffExprFile;
+import org.bgee.pipeline.expression.downloadfile.InsertSpeciesDataGroups;
 import org.bgee.pipeline.gene.InsertGO;
 import org.bgee.pipeline.gene.ParseOrthoXML;
 import org.bgee.pipeline.ontologycommon.InsertCIO;
@@ -263,6 +264,9 @@ public class CommandRunner {
             break;
         case "GenerateMultiSpeciesDiffExprFile":
             GenerateMultiSpeciesDiffExprFile.main(newArgs);
+            break;
+        case "InsertSpeciesDataGroups":
+            InsertSpeciesDataGroups.main(newArgs);
             break;
             
         default: 

@@ -459,7 +459,10 @@ public class TOComparator {
         return log.exit(TOComparator.areEntityTOsEqual(to1, to2, compareId) && 
                 to1.getCategory() == to2.getCategory()
                 && StringUtils.equals(to1.getPath(), to2.getPath())
-                && to1.getSize() == to2.getSize()
+                //not possible to simply use to1.getSize() == to2.getSize() for Long value > 127, 
+                //see http://stackoverflow.com/a/20542511/1768736
+                && (to1.getSize() == null && to2.getSize() == null || 
+                    to1.getSize().equals(to2.getSize()))
                 && StringUtils.equals(to1.getSpeciesDataGroupId(), to2.getSpeciesDataGroupId())
         );
     }

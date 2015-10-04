@@ -188,7 +188,6 @@ public class TOComparatorTest extends TestAncestor {
     public void testAreDownloadFileTOsEqual() {
         DownloadFileTO to1 = new DownloadFileTO("ID1", "name1", "desc1", 
                 "path/", 10L, CategoryEnum.EXPR_CALLS_COMPLETE, "");
-
         DownloadFileTO to2 = new DownloadFileTO("ID1", "name1", "desc1", 
                 "path/", 10L, CategoryEnum.EXPR_CALLS_COMPLETE, "");
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
@@ -203,6 +202,19 @@ public class TOComparatorTest extends TestAncestor {
                 "path/", 10L, CategoryEnum.EXPR_CALLS_COMPLETE, "");
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+        
+        //regression test when using Long size value > 127, 
+        //see http://stackoverflow.com/a/20542511/1768736
+        to1 = new DownloadFileTO("ID1", "name1", "desc1", 
+                "path/", 3000L, CategoryEnum.EXPR_CALLS_COMPLETE, "");
+        to2 = new DownloadFileTO("ID1", "name1", "desc1", 
+                "path/", 3000L, CategoryEnum.EXPR_CALLS_COMPLETE, "");
+        assertTrue(TOComparator.areTOsEqual(to1, to2, true));
+        to1 = new DownloadFileTO("ID1", "name1", "desc1", 
+                "path/", null, CategoryEnum.EXPR_CALLS_COMPLETE, "");
+        to2 = new DownloadFileTO("ID1", "name1", "desc1", 
+                "path/", null, CategoryEnum.EXPR_CALLS_COMPLETE, "");
+        assertTrue(TOComparator.areTOsEqual(to1, to2, true));
     }
 
     /**

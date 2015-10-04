@@ -293,19 +293,29 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
         // Then, we create DownloadFileTOs
         Set<DownloadFileTO> downloadFileTOs = new HashSet<DownloadFileTO>();
         int downloadFileId = 1;
+        //We store the IDs of groups that actually have download files existing
+        Set<String> groupIdsWithData = new HashSet<String>();
         for (Entry<String, Set<String>> groupAndPaths : this.groupToFilePaths.entrySet()) {
             String groupId = speciesDataGroupTOs.get(groupAndPaths.getKey()).getId();
             for (String path: groupAndPaths.getValue()) {
                 String fileCategory = filePathToCategory.get(path);
                 File file = new File(this.directory, path);
-                if (!file.exists() || file.isDirectory()) {
+                //if the file doesn't exist, we just skip it, this is useful 
+                //if there were no data for a file type in a group, we don't have to change 
+                //the arguments
+                if (!file.exists()) {
+                    log.warn("File not existing, skipping: {}", file);
+                    continue;
+                }
+                if (file.isDirectory()) {
                     throw log.throwing(new IllegalArgumentException(
-                            "The file " + file.getAbsolutePath() + " doesn't exist or is a directory."));
+                            "The file " + file.getAbsolutePath() + " is a directory."));
                 }
                 // Currently, the file description is not use, so for the moment, we set it at null.
                 downloadFileTOs.add(new DownloadFileTO(
                         String.valueOf(downloadFileId), file.getName(), null, path.trim(), file.length(),
                         CategoryEnum.convertToCategoryEnum(fileCategory), groupId));
+                groupIdsWithData.add(groupId);
                 downloadFileId++;
             }
         }
@@ -315,16 +325,25 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
         try {
             this.startTransaction();
             
+            //we only insert groups with actual download files existing
+            
             // Insertion of SpeciesDataGroupTOs
             log.debug("Start inserting species data groups...");
-            this.getSpeciesDataGroupDAO().insertSpeciesDataGroups(speciesDataGroupTOs.values());
-            log.debug("Done inserting species data groups, {} groups inserted", speciesDataGroupTOs.size());
+            Set<SpeciesDataGroupTO> filteredSpeciesDataGroupTOs = speciesDataGroupTOs.values()
+                    .stream().filter(e -> groupIdsWithData.contains(e.getId()))
+                    .collect(Collectors.toSet());
+            this.getSpeciesDataGroupDAO().insertSpeciesDataGroups(filteredSpeciesDataGroupTOs);
+            log.debug("Done inserting species data groups, {} groups inserted", 
+                    filteredSpeciesDataGroupTOs.size());
 
             // Insertion of SpeciesToDataGroupTOs
             log.debug("Start inserting species data groups to species mappings...");
-            this.getSpeciesDataGroupDAO().insertSpeciesToDataGroup(speciesToDataGroupTOs);
+            Set<SpeciesToDataGroupTO> filteredSpeciesToDataGroupTOs = speciesToDataGroupTOs
+                    .stream().filter(e -> groupIdsWithData.contains(e.getGroupId()))
+                    .collect(Collectors.toSet());
+            this.getSpeciesDataGroupDAO().insertSpeciesToDataGroup(filteredSpeciesToDataGroupTOs);
             log.debug("Done inserting species data groups to species mappings, {} mappings inserted", 
-                    speciesToDataGroupTOs.size());
+                    filteredSpeciesToDataGroupTOs.size());
             
             // Insertion of DownloadFileTOs
             log.debug("Start inserting download files...");

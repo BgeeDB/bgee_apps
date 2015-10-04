@@ -102,7 +102,9 @@ public class InsertSpeciesDataGroupsTest extends TestAncestor {
         new RandomAccessFile(file8, "rw").setLength(800);
         
         File file9 = File.createTempFile("gp2_multi-diffexpr-development-simple", fileExtension, tmpFolder3);
-        new RandomAccessFile(file9, "rw").setLength(900);      
+        new RandomAccessFile(file9, "rw").setLength(900); 
+        
+        File missingFile = new File(testFolder.getRoot(), "missingFile");
 
         // Create constructor parameters 
         LinkedHashMap<String, Set<String>> groupToSpecies = new LinkedHashMap<>();
@@ -110,6 +112,7 @@ public class InsertSpeciesDataGroupsTest extends TestAncestor {
         groupToSpecies.put("groupOneSpecies2", new HashSet<String>(Arrays.asList("sp2")));
         groupToSpecies.put("groupSeveralSpecies1", new HashSet<String>(Arrays.asList("sp1", "sp2")));
         groupToSpecies.put("groupSeveralSpecies2", new HashSet<String>(Arrays.asList("sp3", "sp2")));
+        groupToSpecies.put("groupWithNoExistingFile", new HashSet<String>(Arrays.asList("sp3", "sp2")));
         
         Path tmpPath = testFolder.getRoot().toPath();
         LinkedHashMap<String, Set<String>> groupToFilePaths = new LinkedHashMap<>();
@@ -126,6 +129,8 @@ public class InsertSpeciesDataGroupsTest extends TestAncestor {
         groupToFilePaths.put("groupSeveralSpecies2", new HashSet<String>(Arrays.asList(
                 tmpPath.relativize(file8.toPath()).toString(), 
                 tmpPath.relativize(file9.toPath()).toString())));
+        groupToFilePaths.put("groupWithNoExistingFile", new HashSet<String>(Arrays.asList(
+                missingFile.toString())));
 
 
         Map<String, String> filePathToCategory = new HashMap<String, String>();
@@ -146,6 +151,8 @@ public class InsertSpeciesDataGroupsTest extends TestAncestor {
         filePathToCategory.put(tmpPath.relativize(file8.toPath()).toString(), 
                 CategoryEnum.ORTHOLOG.getStringRepresentation());
         filePathToCategory.put(tmpPath.relativize(file9.toPath()).toString(), 
+                CategoryEnum.DIFF_EXPR_DEV_SIMPLE.getStringRepresentation());
+        filePathToCategory.put(missingFile.toString(), 
                 CategoryEnum.DIFF_EXPR_DEV_SIMPLE.getStringRepresentation());
 
         // Insert data

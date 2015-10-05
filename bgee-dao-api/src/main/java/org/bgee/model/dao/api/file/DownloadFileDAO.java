@@ -157,10 +157,8 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
          *   <li>{@code ORTHOLOG} corresponds to an orthologies file</li>
          *   <li>{@code AFFY_ANNOT} corresponds to an Affymetrix annoations file</li>
          *   <li>{@code AFFY_DATA} corresponds to an Affymetrix signal intensities file</li>
-         *   <li>{@code AFFY_ROOT} corresponds to the root directory for Affymetrix files</li>
          *   <li>{@code RNASEQ_ANNOT} corresponds to RNA-Seq annotations file</li>
          *   <li>{@code RNASEQ_DATA} corresponds toRNA-Seq data file</li>
-         *   <li>{@code RNASEQ_ROOT} corresponds to the root directory of RNA-Seq file</li>
     	 * </ul>
     	 * @author Philippe Moret
     	 * @version Bgee 13
@@ -177,10 +175,8 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
             ORTHOLOG("ortholog"),
             AFFY_ANNOT("affy_annot"),
             AFFY_DATA("affy_data"),
-            AFFY_ROOT("affy_root"),
             RNASEQ_ANNOT("rnaseq_annot"),
-            RNASEQ_DATA("rnaseq_data"),
-            RNASEQ_ROOT("rnaseq_root");
+            RNASEQ_DATA("rnaseq_data");
 
             /**
              * Constructor

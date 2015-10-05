@@ -86,6 +86,14 @@ public class Species extends NamedEntity {
     public String getName() {
         return super.getName();
     }
+    
+    /**
+     * @return  A {@code String} that is the scientific name of this {@code Species}, 
+     *          for instance, "Homo sapiens" for human. 
+     */
+    public String getScientificName() {
+        return this.getGenus() + " " + this.getSpeciesName();
+    }
 
     /**
      * @return A {@code String} containing a short representation of the name (e.g., "H. sapiens" for Homo sapiens).

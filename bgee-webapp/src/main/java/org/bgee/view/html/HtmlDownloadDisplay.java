@@ -1,10 +1,12 @@
 package org.bgee.view.html;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -14,6 +16,7 @@ import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.file.SpeciesDataGroup;
 import org.bgee.model.species.Species;
+import org.bgee.utils.JSHelper;
 import org.bgee.view.DownloadDisplay;
 
 /**
@@ -123,6 +126,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.startDisplay("Bgee " + PROCESSED_EXPR_VALUES_PAGE_NAME.toLowerCase() + " download page");
   		this.writeln(getDataGroupScriptTag(groups));
   		this.writeln(getKeywordScriptTag(keywords, groups));
+  		this.writeln(this.getExprValuesDirectoryScriptTag(groups));
 
         this.writeln(this.getMoreResultDivs());
 
@@ -158,6 +162,49 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.endDisplay();
         
         log.exit();
+    }
+    
+    /**
+     * Generates a javascript tag defining variables providing mappings 
+     * from {@code SpeciesDataGroup} IDs to directories storing 
+     * all Affymetrix and RNA-Seq processed expression values download files, 
+     * for the corresponding group. 
+     * <p>
+     * The javascript maps created in the tag are named {@code rna_seq_expr_values_dirs} 
+     * and {@code affy_expr_values_dirs}. 
+     * 
+     * @param groups    A {@code Collection} of {@code SpeciesDataGroup}s for which 
+     *                  to generate mappings to directories. 
+     * @return          A {@code String} containing a javascript tag defining the mappings. 
+     */
+    private String getExprValuesDirectoryScriptTag(Collection<SpeciesDataGroup> groups) {
+        log.entry(groups);
+
+        StringBuffer sb = new StringBuffer("<script>");
+
+        String rnaSeqRootDir = this.prop.getFTPRootDirectory() 
+                + this.prop.getDownloadRNASeqProcExprValueFilesRootDirectory();
+        sb.append("var rna_seq_expr_values_dirs = ");
+        sb.append(JSHelper.toJson(groups.stream().filter(SpeciesDataGroup::isSingleSpecies)
+            .collect(Collectors.toMap(
+                SpeciesDataGroup::getId, 
+                g -> rnaSeqRootDir + g.getMembers().get(0).getScientificName().replace(" ", "_") + "/"
+            ))
+        ));
+        sb.append(";");
+
+        String affyRootDir = this.prop.getFTPRootDirectory() 
+                + this.prop.getDownloadAffyProcExprValueFilesRootDirectory();
+        sb.append("var affy_expr_values_dirs = ");
+        sb.append(JSHelper.toJson(groups.stream().filter(SpeciesDataGroup::isSingleSpecies)
+            .collect(Collectors.toMap(
+                SpeciesDataGroup::getId, 
+                g -> affyRootDir + g.getMembers().get(0).getScientificName().replace(" ", "_") + "/"
+            ))
+        ));
+        sb.append(";</script>");
+        
+        return log.exit(sb.toString());
     }
     
     /**

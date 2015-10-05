@@ -8,7 +8,7 @@ import org.apache.commons.lang3.StringUtils;
  * @version Bgee 13
  * @since Bgee 13
  */
-//TODO: javadoc, private default constructor (???), sanity checks, equals/hashCode/toString
+//TODO: javadoc, sanity checks
 public class DownloadFile {
 
 	/**
@@ -23,10 +23,8 @@ public class DownloadFile {
      *   <li>{@code ORTHOLOG} corresponds to an orthologies file</li>
      *   <li>{@code AFFY_ANNOT} corresponds to an Affymetrix annoations file</li>
      *   <li>{@code AFFY_DATA} corresponds to an Affymetrix signal intensities file</li>
-     *   <li>{@code AFFY_ROOT} corresponds to the root directory for Affymetrix files</li>
      *   <li>{@code RNASEQ_ANNOT} corresponds to RNA-Seq annotations file</li>
      *   <li>{@code RNASEQ_DATA} corresponds toRNA-Seq data file</li>
-     *   <li>{@code RNASEQ_ROOT} corresponds to the root directory of RNA-Seq file</li>
 	 * </ul>
 	 * @author Philippe Moret
 	 * @version Bgee 13
@@ -43,10 +41,8 @@ public class DownloadFile {
         ORTHOLOG("ortholog",false),
         AFFY_ANNOT("affy_annot",false),
         AFFY_DATA("affy_data",false),
-        AFFY_ROOT("affy_root",false),
         RNASEQ_ANNOT("rnaseq_annot",false),
-        RNASEQ_DATA("rnaseq_data",false),
-        RNASEQ_ROOT("rnaseq_root",false);
+        RNASEQ_DATA("rnaseq_data",false);
 
         /** The string representation */
         private final String stringRepresentation;

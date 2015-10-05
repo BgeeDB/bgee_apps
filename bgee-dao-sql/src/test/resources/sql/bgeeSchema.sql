@@ -1126,7 +1126,7 @@ create table downloadFile (
   downloadFileDescription text,
   downloadFileCategory enum("expr_simple", "expr_complete", "diff_expr_anatomy_complete", "diff_expr_anatomy_simple"
    , "diff_expr_dev_complete", "diff_expr_dev_simple", "ortholog",
-   "affy_annot","rnaseq_annot","affy_data","rnaseq_data","affy_root","rnaseq_root"),
+   "affy_annot","rnaseq_annot","affy_data","rnaseq_data"),
   speciesDataGroupId mediumint unsigned not null,
   downloadFileSize int unsigned not null
 ) engine = innodb;

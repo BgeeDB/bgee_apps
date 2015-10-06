@@ -66,5 +66,10 @@
         <servlet-name>FrontController</servlet-name>
     </filter-mapping>
     -->
+    
+    <!-- Startup/shutdown listener -->
+    <listener> 
+        <listener-class>org.bgee.controller.servletutils.BgeeServletContextListener</listener-class>
+    </listener>
 
 </web-app>  

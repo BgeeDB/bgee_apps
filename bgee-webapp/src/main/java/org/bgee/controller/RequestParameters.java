@@ -520,12 +520,12 @@ public class RequestParameters {
         //Get the key
         String key = request.getParameter(this.getKeyParam().getName());
         if (StringUtils.isBlank(key)) {
-            log.debug("The key is blank, load params from request");
+            log.trace("The key is blank, load params from request");
             //no key set, get the parameters from the URL
             this.loadParametersFromRequest(request, true);
         } else {
             //a key is set, get the storable parameters from a file
-            log.debug("The key is set, load params from the file");
+            log.trace("The key is set, load params from the file");
             try {
                 this.loadStorableParametersFromKey(key);
             } catch (IOException e) {

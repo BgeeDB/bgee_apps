@@ -46,7 +46,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
     @Override
     public void displayHomePage(List<SpeciesDataGroup> groups) {
-        log.entry();
+        log.entry(groups);
         this.startDisplay("Welcome to Bgee: a dataBase for Gene Expression Evolution");
 
         this.write(getDataGroupScriptTag(groups));
@@ -146,7 +146,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     }
 
     private String displayHomePageSpecies(List<SpeciesDataGroup> groups) {
-        log.entry();
+        log.entry(groups);
         
         // Single species part
         String homePageSpeciesSection = getSingleSpeciesSection(null, groups);

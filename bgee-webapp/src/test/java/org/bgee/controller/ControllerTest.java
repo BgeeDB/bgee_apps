@@ -1,5 +1,6 @@
 package org.bgee.controller;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -8,11 +9,15 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.bgee.model.ServiceFactory;
+import org.bgee.model.dao.api.DAOManager;
 import org.bgee.view.TestFactoryProvider;
 import org.bgee.view.ViewFactoryProvider;
 import org.junit.Before;
@@ -73,6 +78,7 @@ public class ControllerTest {
         prop.put(BgeeProperties.URL_MAX_LENGTH_KEY, "9999");
         this.testProperties = BgeeProperties.getBgeeProperties(prop);
         this.testFactoryProvider = new TestFactoryProvider(this.testProperties);
+        
         // The mock HttpServletResponse provides a mock PrintWriter
         when(this.mockHttpServletResponse.getWriter()).thenReturn(this.mockPrintWriter);
         // The mock HttpServletRequest provides values for three URL parameters
@@ -96,15 +102,30 @@ public class ControllerTest {
      */
     @Test
     public void testWithInjectedDependencies() {
-        // Call the constructor with three injected dependency that wil be tested by the view to
+        // Call the constructor with four injected dependency that will be tested by the view to
         // produce the correct output
         // 1) BgeeProperties : check that the url max length is 9999
         // 2) TestURLParameters : check that test_string parameter exists with "test_string"
+        // 4) A Supplier of ServiceFactories
         // 3) ViewFactoryProvider : only a TestFactoryProvider can lead to the correct output
-        new FrontController(this.testProperties,new TestURLParameters(),
-                this.testFactoryProvider).doRequest(mockHttpServletRequest, 
-                        mockHttpServletResponse, false);
+        final List<ServiceFactory> mockFactories = new ArrayList<ServiceFactory>();
+        FrontController front = new FrontController(this.testProperties, new TestURLParameters(), 
+                () -> {
+                    ServiceFactory mockFactory = mock(ServiceFactory.class); 
+                    mockFactories.add(mockFactory);
+                    return mockFactory;
+                }, 
+                this.testFactoryProvider);
+        
+        front.doRequest(mockHttpServletRequest, mockHttpServletResponse, false);
         verify(this.mockPrintWriter, times(1)).println(eq("Test page is good !"));
-
+        assertEquals("Incorrect use of ServiceFactory supplier", 1, mockFactories.size());
+        verify(mockFactories.get(0)).close();
+        
+        front.doRequest(mockHttpServletRequest, mockHttpServletResponse, false);
+        verify(this.mockPrintWriter, times(2)).println(eq("Test page is good !"));
+        assertEquals("Incorrect use of ServiceFactory supplier", 2, mockFactories.size());
+        verify(mockFactories.get(0)).close();
+        verify(mockFactories.get(1)).close();
     }
 }

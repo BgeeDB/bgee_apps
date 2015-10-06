@@ -1,6 +1,7 @@
 package org.bgee.controller;
 
 import java.util.Properties;
+import java.util.function.Supplier;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -20,13 +21,12 @@ import org.bgee.view.ViewFactoryProvider;
 
 /**
  * This is the entry point of bgee-webapp. It can be directly mapped as the main servlet in
- * {@code web.xml}
- * and thus responds to a call to the root "/" of the application
+ * {@code web.xml} and thus responds to a call to the root "/" of the application
  * 
  * @author Mathieu Seppey
  * @author Frederic Bastian
  *
- * @version Bgee 13, Aug 2014
+ * @version Bgee 13, Oct. 2015
  * @since Bgee 13
  */
 public class FrontController extends HttpServlet {
@@ -44,99 +44,81 @@ public class FrontController extends HttpServlet {
      * and re injected in all classes that will need it eventually.
      */
     private final BgeeProperties prop ;
-
     /**
      * The {@code URLParameters} instance that will provide the parameters list available 
      * within the application
      */
     private final URLParameters urlParameters ;
-
+    /**
+     * A {@code Supplier} of {@code ServiceFactory}s, allowing to obtain a new {@code ServiceFactory} 
+     * instance at each call to the {@code doRequest} method.
+     */
+    private final Supplier<ServiceFactory> serviceFactoryProvider;
     /**
      * The {@code ViewFactoryProvider} instance that will provide the appropriate 
      * {@code ViewFactory} depending on the display type
      */
     private final ViewFactoryProvider viewFactoryProvider ;
     
-    /**
-     * The {@code ServiceFactory} this controller will rely on to get instances of {@code Service}s
-     */
-    private final ServiceFactory serviceFactory;
-    
 
     /**
-     * Default constructor. It will use the default {@code BgeeProperties} class,
-     * the default {@code URLParameters} class and the default {@code ViewFactoryProvider} class.
-     * 
-     * @see BgeeProperties
-     * @see URLParameters
-     * @see ViewFactory
+     * Default constructor. It will use default implementations for all dependencies 
+     * (see {@link #FrontController(BgeeProperties, URLParameters, Supplier, ViewFactoryProvider)}).
      */
     public FrontController() {
-        this(null, null, null);
+        this(null);
     }
 
     /**
-     * Constructor that takes as parameter a {@code java.util.Properties} instance that
-     * will be used to create a custom {@code BgeeProperties} instance.
-     * It will use the default {@code URLParameters} class and
-     * the default {@code ViewFactoryProvider} class.
+     * Constructor that takes as parameter a {@code java.util.Properties} to create 
+     * a {@code BgeeProperties} instance. It will use default implementations for all dependencies 
+     * (see {@link #FrontController(BgeeProperties, URLParameters, Supplier, ViewFactoryProvider)}).
      * 
-     * @param prop  A {@code java.util.Properties} that will be use to get an instance of
+     * @param prop  A {@code java.util.Properties} that will be use to create an instance of
      *              {@code BgeeProperties}
-     *  
-     * @see BgeeProperties
-     * @see URLParameters
      */
     public FrontController(Properties prop) {
-        this(BgeeProperties.getBgeeProperties(prop), null, null);
+        this(BgeeProperties.getBgeeProperties(prop), null, null, null);
     }
 
     /**
-     * Constructor that takes as parameters a custom {@code BgeeProperties} instance, a custom 
-     * {@code URLParameters} instance and a custom {@code viewFactoryProvider} that will be 
-     * injected further in all classes that use them.
+     * Constructor allowing to inject all dependencies of {@code FrontController}. 
+     * Each of this parameter can be {@code null}, in which case the default implementation 
+     * is used. 
      * 
-     * @param prop                  A {@code BgeeProperties} instance to be used in the whole 
-     *                              application and injected in all classes that will need it
-     *                              eventually.
-     *                              
-     * @param urlParameters         A {@code urlParameters} instance to be used in the whole 
-     *                              application and injec
-     * 
-     * @param viewFactoryProvider   A {@code ViewFactoryProvider} instance to provide 
-     *                              the appropriate {@code ViewFactory} depending on the
-     *                              display type
-     *
-     *
-     * @see BgeeProperties
-     * @see URLParameters
+     * @param prop                      A {@code BgeeProperties} instance to be used in the whole 
+     *                                  application.
+     * @param urlParameters             A {@code urlParameters} instance to be used in the whole 
+     *                                  application, to be used by {@code RequestParameters} objects 
+     *                                  to read/write URLs. 
+     * @param serviceFactoryProvider    A {@code Supplier} of {@code ServiceFactory}s, allowing 
+     *                                  to obtain a new {@code ServiceFactory} instance 
+     *                                  at each call to the {@code doRequest} method. If {@code null}, 
+     *                                  the default constructor of {@code ServiceFactory} is used. 
+     * @param viewFactoryProvider       A {@code ViewFactoryProvider} instance to provide 
+     *                                  the appropriate {@code ViewFactory} depending on the
+     *                                  display type. 
      */
     public FrontController(BgeeProperties prop, URLParameters urlParameters, 
-            ViewFactoryProvider viewFactoryProvider) {
-        log.entry(prop, urlParameters, viewFactoryProvider);
-        if(prop == null){
-            // If the bgee prop object is null, just get the default instance from BgeeProperties
-            this.prop = BgeeProperties.getBgeeProperties();
-        }
-        else{
-            this.prop = prop;
+            Supplier<ServiceFactory> serviceFactoryProvider, ViewFactoryProvider viewFactoryProvider) {
+        log.entry(prop, urlParameters, serviceFactoryProvider, viewFactoryProvider);
 
-        }
-        if(urlParameters == null){
-            // If the URLParamters object is null, just use a new instance
-            this.urlParameters = new URLParameters();
-        }
-        else{
-            this.urlParameters = urlParameters;
-        }
-        if(viewFactoryProvider == null){
-            // If the viewFactoryProvider object is null, just use a new instance
-            this.viewFactoryProvider = new ViewFactoryProvider(this.prop);
-        }
-        else{
-            this.viewFactoryProvider = viewFactoryProvider;
-        }
-        this.serviceFactory = new ServiceFactory();
+        // If the URLParameters object is null, just use a new instance
+        this.urlParameters = urlParameters != null? urlParameters: new URLParameters();
+        
+        // If the bgee prop object is null, just get the default instance from BgeeProperties
+        this.prop = prop != null? prop: BgeeProperties.getBgeeProperties();
+        
+        // If the viewFactoryProvider object is null, just use a new instance, 
+        //injecting the properties obtained above. 
+        //XXX: if viewFactoryProvider is not null, we currently don't check that it uses 
+        //the same BgeeProperties instance. Maybe it's OK to allow to use different BgeeProperties instances? 
+        this.viewFactoryProvider = viewFactoryProvider != null? viewFactoryProvider: new ViewFactoryProvider(this.prop);
+        
+        //If serviceFactoryProvider is null, use default constructor of ServiceFactory
+        this.serviceFactoryProvider = serviceFactoryProvider != null? serviceFactoryProvider: 
+            ServiceFactory::new;
+        
         log.exit();
     }
 
@@ -163,7 +145,7 @@ public class FrontController extends HttpServlet {
         //then we will try to acquire the appropriate ErrorDisplay. 
         ErrorDisplay errorDisplay = null;
 
-        try {
+        try (ServiceFactory serviceFactory = this.serviceFactoryProvider.get()) {
             //in order to display error message in catch clauses. 
             //we do it in the try clause, because getting a view can throw an IOException.
             //so here we get the default view from the default factory before any exception 
@@ -180,7 +162,7 @@ public class FrontController extends HttpServlet {
             errorDisplay = factory.getErrorDisplay();
             
             //Set character encoding after acquiring an ErrorDisplay, 
-            //this can thrown an Exception.
+            //this can throw an Exception.
             request.setCharacterEncoding("UTF-8");
             
             CommandParent controller = null;
@@ -199,44 +181,47 @@ public class FrontController extends HttpServlet {
             
         //=== process errors ===
         } catch(RequestParametersNotFoundException e) {
+            log.catching(e);
             errorDisplay.displayRequestParametersNotFound(requestParameters.getFirstValue(
                     this.urlParameters.getParamData()));
-            log.error("RequestParametersNotFoundException", e);
         } catch(PageNotFoundException e) {
+            log.catching(e);
             errorDisplay.displayPageNotFound(e.getMessage());
-            log.error("PageNotFoundException", e);
         } catch(RequestParametersNotStorableException e) {
+            log.catching(e);
             errorDisplay.displayRequestParametersNotStorable(e.getMessage());
-            log.error("RequestParametersNotStorableException", e);
         } catch(MultipleValuesNotAllowedException e) {
+            log.catching(e);
             errorDisplay.displayMultipleParametersNotAllowed(e.getMessage());
-            log.error("MultipleValuesNotAllowedException", e);
         } catch(WrongFormatException e) {
+            log.catching(e);
             errorDisplay.displayWrongFormat(e.getMessage());
-            log.error("WrongFormatException", e);
         } catch(UnsupportedOperationException e) {
+            log.catching(e);
             errorDisplay.displayUnsupportedOperationException(e.getMessage());
-            log.error("UnsupportedOperationException", e);
         } catch(Exception e) {
+            log.catching(e);
             if (errorDisplay != null) {
                 errorDisplay.displayUnexpectedError();
+            } else {
+                log.error("Could not display error message to caller.");
             }
-            log.error("Other Exception", e);
-        } finally {
-            // Remove the bgee properties instance from the pool
-            this.prop.removeFromBgeePropertiesPool();
-        }
+        } 
         log.exit();
     }
 
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) {
+        log.entry(request, response);
         doRequest(request, response, false);
+        log.exit();
     }
 
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) {
+        log.entry(request, response);
         doRequest(request, response, true);
+        log.exit();
     }
 
 }

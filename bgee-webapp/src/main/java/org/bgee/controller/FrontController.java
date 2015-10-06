@@ -50,93 +50,83 @@ public class FrontController extends HttpServlet {
      * within the application
      */
     private final URLParameters urlParameters ;
-
+    /**
+     * The {@code ServiceFactory} this controller will rely on to get instances of {@code Service}s
+     */
+    private final ServiceFactory serviceFactory;
     /**
      * The {@code ViewFactoryProvider} instance that will provide the appropriate 
      * {@code ViewFactory} depending on the display type
      */
     private final ViewFactoryProvider viewFactoryProvider ;
     
-    /**
-     * The {@code ServiceFactory} this controller will rely on to get instances of {@code Service}s
-     */
-    private final ServiceFactory serviceFactory;
-    
 
     /**
-     * Default constructor. It will use the default {@code BgeeProperties} class,
-     * the default {@code URLParameters} class and the default {@code ViewFactoryProvider} class.
-     * 
-     * @see BgeeProperties
-     * @see URLParameters
-     * @see ViewFactory
+     * Default constructor. It will use default implementations for all dependencies 
+     * (see {@link #FrontController(BgeeProperties, URLParameters, ServiceFactory, ViewFactoryProvider)}).
      */
     public FrontController() {
-        this(null, null, null);
+        this(null);
     }
 
     /**
-     * Constructor that takes as parameter a {@code java.util.Properties} instance that
-     * will be used to create a custom {@code BgeeProperties} instance.
-     * It will use the default {@code URLParameters} class and
-     * the default {@code ViewFactoryProvider} class.
+     * Constructor that takes as parameter a {@code java.util.Properties} to create 
+     * a {@code BgeeProperties} instance. It will use default implementations for all dependencies 
+     * (see {@link #FrontController(BgeeProperties, URLParameters, ServiceFactory, ViewFactoryProvider)}).
      * 
-     * @param prop  A {@code java.util.Properties} that will be use to get an instance of
+     * @param prop  A {@code java.util.Properties} that will be use to create an instance of
      *              {@code BgeeProperties}
-     *  
-     * @see BgeeProperties
-     * @see URLParameters
      */
     public FrontController(Properties prop) {
-        this(BgeeProperties.getBgeeProperties(prop), null, null);
+        this(BgeeProperties.getBgeeProperties(prop), null, null, null);
     }
 
     /**
-     * Constructor that takes as parameters a custom {@code BgeeProperties} instance, a custom 
-     * {@code URLParameters} instance and a custom {@code viewFactoryProvider} that will be 
-     * injected further in all classes that use them.
+     * Constructor allowing to inject all dependencies of {@code FrontController}. 
+     * Each of this parameter can be {@code null}, in which case the default implementation 
+     * is used. 
      * 
      * @param prop                  A {@code BgeeProperties} instance to be used in the whole 
-     *                              application and injected in all classes that will need it
-     *                              eventually.
-     *                              
+     *                              application.
      * @param urlParameters         A {@code urlParameters} instance to be used in the whole 
-     *                              application and injec
-     * 
+     *                              application, to be used by {@code RequestParameters} objects 
+     *                              to read/write URLs. 
+     * @param serviceFactory        A {@code ServiceFactory} to obtain {@code Service}s from. 
+     *                              If not {@code null}, then the {@code DAOManager} returned by 
+     *                              {@code ServiceFactory#getDAOManager()} must be not {@code null} 
+     *                              and not closed, otherwise, an {@code IllegalArgumentException} 
+     *                              is thrown.
      * @param viewFactoryProvider   A {@code ViewFactoryProvider} instance to provide 
      *                              the appropriate {@code ViewFactory} depending on the
-     *                              display type
-     *
-     *
-     * @see BgeeProperties
-     * @see URLParameters
+     *                              display type. 
+     * @throws IllegalArgumentException If {@code serviceFactory} is not {@code null}, 
+     *                                  and its {@code DAOManager} is {@code null}, or already closed. 
      */
     public FrontController(BgeeProperties prop, URLParameters urlParameters, 
-            ViewFactoryProvider viewFactoryProvider) {
-        log.entry(prop, urlParameters, viewFactoryProvider);
-        if(prop == null){
-            // If the bgee prop object is null, just get the default instance from BgeeProperties
-            this.prop = BgeeProperties.getBgeeProperties();
-        }
-        else{
-            this.prop = prop;
+            ServiceFactory serviceFactory, ViewFactoryProvider viewFactoryProvider) 
+                    throws IllegalArgumentException {
+        log.entry(prop, urlParameters, serviceFactory, viewFactoryProvider);
 
+        // If the URLParamters object is null, just use a new instance
+        this.urlParameters = urlParameters != null? urlParameters: new URLParameters();
+        
+        // If the bgee prop object is null, just get the default instance from BgeeProperties
+        this.prop = prop != null? prop: BgeeProperties.getBgeeProperties();
+        // If the viewFactoryProvider object is null, just use a new instance, 
+        //injecting the properties obtained above. 
+        //XXX: if viewFactoryProvider is not null, we currently don't check that it uses 
+        //the same BgeeProperties instance. Maybe it's OK to allow to use different BgeeProperties instances? 
+        this.viewFactoryProvider = viewFactoryProvider != null? viewFactoryProvider: new ViewFactoryProvider(this.prop);
+        
+        //if a ServiceFactory was provided, we need to make sure it uses a valid DAOManager
+        if (serviceFactory != null && 
+                (serviceFactory.getDAOManager() == null || serviceFactory.getDAOManager().isClosed())) {
+            throw log.throwing(new IllegalArgumentException("Invalid DAOManager used in ServiceFactory."));
         }
-        if(urlParameters == null){
-            // If the URLParamters object is null, just use a new instance
-            this.urlParameters = new URLParameters();
-        }
-        else{
-            this.urlParameters = urlParameters;
-        }
-        if(viewFactoryProvider == null){
-            // If the viewFactoryProvider object is null, just use a new instance
-            this.viewFactoryProvider = new ViewFactoryProvider(this.prop);
-        }
-        else{
-            this.viewFactoryProvider = viewFactoryProvider;
-        }
-        this.serviceFactory = new ServiceFactory();
+        this.serviceFactory = serviceFactory != null? serviceFactory: new ServiceFactory();
+        
+        log.info("DAO closed1: {} - Thread ID: {}", this.serviceFactory.getDAOManager().isClosed(), Thread.currentThread().getId()); 
+        
         log.exit();
     }
 
@@ -153,6 +143,7 @@ public class FrontController extends HttpServlet {
     public void doRequest(HttpServletRequest request, HttpServletResponse response, 
             boolean postData) { 
         log.entry(request, response, postData);
+        log.info("DAO closed2: {} - Thread ID: {}", this.serviceFactory.getDAOManager().isClosed(), Thread.currentThread().getId()); 
         
         //in order to display error message in catch clauses
         //we get  "fake" RequestParameters so that no exception is thrown already.
@@ -223,6 +214,8 @@ public class FrontController extends HttpServlet {
             }
             log.error("Other Exception", e);
         } finally {
+            //release DAO connections used by Services
+            this.serviceFactory.getDAOManager().close();
             // Remove the bgee properties instance from the pool
             this.prop.removeFromBgeePropertiesPool();
         }

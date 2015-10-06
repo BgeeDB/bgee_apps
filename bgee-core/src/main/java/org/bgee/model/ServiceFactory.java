@@ -110,4 +110,12 @@ public class ServiceFactory {
     	log.entry();
     	return log.exit(new KeywordService(this.daoManager));
     }
+    
+    /**
+     * @return  The {@code DAOManager} used by this {@code ServiceFactory}, provided to 
+     *          all instantiated {@code Service}s. 
+     */
+    public DAOManager getDAOManager() {
+        return this.daoManager;
+    }
 }

@@ -45,7 +45,7 @@ import org.bgee.model.species.SpeciesService;
 //and can only be obtained through the ServiceFactory?
 //XXX: similarly, should we use protected constructors for all classes obtained through a Service, 
 //so that they can be obtained only through these Services? Obviously, we can't do both...
-public class ServiceFactory {
+public class ServiceFactory implements AutoCloseable {
     /**
      * {@code Logger} of the class. 
      */
@@ -68,10 +68,17 @@ public class ServiceFactory {
     }
     /**
      * @param daoManager    The {@code DAOManager} to be used by this {@code ServiceFactory},  
-     *                      to be provided to the {@code Service}s it instantiates. 
+     *                      to be provided to {@code Service}s it instantiates. 
+     * @throws IllegalArgumentException If {@code daoManager} is {@code null}, or if calling 
+     *                                  {@link DAOManager#isClosed()} on it returns {@code true}.
      */
-    public ServiceFactory(DAOManager daoManager) {
+    public ServiceFactory(DAOManager daoManager) throws IllegalArgumentException {
+        log.entry(daoManager);
+        if (daoManager == null || daoManager.isClosed()) {
+            throw log.throwing(new IllegalArgumentException("Invalid DAOManager"));
+        }
         this.daoManager = daoManager;
+        log.exit();
     }
     
     /**
@@ -112,10 +119,13 @@ public class ServiceFactory {
     }
     
     /**
-     * @return  The {@code DAOManager} used by this {@code ServiceFactory}, provided to 
-     *          all instantiated {@code Service}s. 
+     * Release all resources hold by this {@code ServiceFactory} (notably releasing 
+     * the {@link DAOManager} used).
      */
-    public DAOManager getDAOManager() {
-        return this.daoManager;
+    @Override
+    public void close() {
+        log.entry();
+        this.daoManager.close();
+        log.exit();
     }
 }

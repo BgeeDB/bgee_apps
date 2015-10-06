@@ -564,8 +564,7 @@ public abstract class DAOManager implements AutoCloseable
      * 
      * @throws DAOException If an error occurred while closing the managers.
      */
-    public static int closeAll() throws DAOException
-    {
+    public static int closeAll() throws DAOException {
         log.entry();
         
         //this volatile boolean will act more or less like a lock 

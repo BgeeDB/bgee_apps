@@ -179,6 +179,12 @@ var download = {
             this.generateSearchableContent();
             // Add the event listeners to all elements that have a dynamic behavior
 
+            //Google Analytics tracking
+            //(see https://developers.google.com/analytics/devguides/collection/analyticsjs/events)
+            $("a").click(function() {
+                ga ('send', 'event', 'link', 'click', $( this ).attr("href"));
+            });
+
             // Add a click listener to every species/group to load the corresponding details 
             // or to hide it if already displayed
             this.$species.click(function() {
@@ -300,6 +306,10 @@ var download = {
             else{
                 this.loadDetails( $species );
                 this.resetSearch( false );
+                //Google Analytics tracking
+                //(see https://developers.google.com/analytics/devguides/collection/analyticsjs/events)
+                var id = $species.attr("id");
+                ga ('send', 'event', 'detailbox', 'click', id);
             }        
         },
 

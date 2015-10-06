@@ -57,12 +57,12 @@ public class CommandHome extends CommandParent
     public void processRequest() throws IOException, PageNotFoundException {
         log.entry();
         GeneralDisplay display = this.viewFactory.getGeneralDisplay();
-        List<SpeciesDataGroup> singlesSpeciesGroup = serviceFactory.getSpeciesDataGroupService()
-        	    .loadAllSpeciesDataGroup()
-                .stream().filter(g -> g.isSingleSpecies())
-                .collect(Collectors.toList());
         
         if (requestParameters.isTheHomePage()) {
+            List<SpeciesDataGroup> singlesSpeciesGroup = serviceFactory.getSpeciesDataGroupService()
+                    .loadAllSpeciesDataGroup()
+                    .stream().filter(g -> g.isSingleSpecies())
+                    .collect(Collectors.toList());
             display.displayHomePage(singlesSpeciesGroup);
         } else {
             throw new PageNotFoundException("Wrong parameters");

@@ -43,7 +43,7 @@ public class TestFactoryProvider extends ViewFactoryProvider
      * @return     A {@code TestFactory} if the {@code displayType} is XML, else null
      */
     @Override
-    protected synchronized ViewFactory getFactory(HttpServletResponse response, 
+    public synchronized ViewFactory getFactory(HttpServletResponse response, 
             DisplayType displayType, 
             RequestParameters requestParameters)
     {

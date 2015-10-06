@@ -753,7 +753,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 
         StringBuilder s = new StringBuilder();
         s.append("<div id='bgee_uniq_species'> ");
-        s.append("<h2>Single-species</h2>");
+        s.append("<h2>Species with data in Bgee</h2>");
+        s.append("<span class='header_details'>(click on species to see more details)</span>");
         s.append("<div class='bgee_section bgee_download_section'>");
         s.append(getSingleSpeciesFigures(pageType, groups));
         s.append("</div>");

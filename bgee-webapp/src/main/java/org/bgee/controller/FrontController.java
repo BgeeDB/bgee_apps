@@ -1,6 +1,7 @@
 package org.bgee.controller;
 
 import java.util.Properties;
+import java.util.function.Supplier;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -20,13 +21,12 @@ import org.bgee.view.ViewFactoryProvider;
 
 /**
  * This is the entry point of bgee-webapp. It can be directly mapped as the main servlet in
- * {@code web.xml}
- * and thus responds to a call to the root "/" of the application
+ * {@code web.xml} and thus responds to a call to the root "/" of the application
  * 
  * @author Mathieu Seppey
  * @author Frederic Bastian
  *
- * @version Bgee 13, Aug 2014
+ * @version Bgee 13, Oct. 2015
  * @since Bgee 13
  */
 public class FrontController extends HttpServlet {
@@ -44,16 +44,16 @@ public class FrontController extends HttpServlet {
      * and re injected in all classes that will need it eventually.
      */
     private final BgeeProperties prop ;
-
     /**
      * The {@code URLParameters} instance that will provide the parameters list available 
      * within the application
      */
     private final URLParameters urlParameters ;
     /**
-     * The {@code ServiceFactory} this controller will rely on to get instances of {@code Service}s
+     * A {@code Supplier} of {@code ServiceFactory}s, allowing to obtain a new {@code ServiceFactory} 
+     * instance at each call to the {@code doRequest} method.
      */
-    private final ServiceFactory serviceFactory;
+    private final Supplier<ServiceFactory> serviceFactoryProvider;
     /**
      * The {@code ViewFactoryProvider} instance that will provide the appropriate 
      * {@code ViewFactory} depending on the display type
@@ -63,7 +63,7 @@ public class FrontController extends HttpServlet {
 
     /**
      * Default constructor. It will use default implementations for all dependencies 
-     * (see {@link #FrontController(BgeeProperties, URLParameters, ServiceFactory, ViewFactoryProvider)}).
+     * (see {@link #FrontController(BgeeProperties, URLParameters, Supplier, ViewFactoryProvider)}).
      */
     public FrontController() {
         this(null);
@@ -72,7 +72,7 @@ public class FrontController extends HttpServlet {
     /**
      * Constructor that takes as parameter a {@code java.util.Properties} to create 
      * a {@code BgeeProperties} instance. It will use default implementations for all dependencies 
-     * (see {@link #FrontController(BgeeProperties, URLParameters, ServiceFactory, ViewFactoryProvider)}).
+     * (see {@link #FrontController(BgeeProperties, URLParameters, Supplier, ViewFactoryProvider)}).
      * 
      * @param prop  A {@code java.util.Properties} that will be use to create an instance of
      *              {@code BgeeProperties}
@@ -86,46 +86,38 @@ public class FrontController extends HttpServlet {
      * Each of this parameter can be {@code null}, in which case the default implementation 
      * is used. 
      * 
-     * @param prop                  A {@code BgeeProperties} instance to be used in the whole 
-     *                              application.
-     * @param urlParameters         A {@code urlParameters} instance to be used in the whole 
-     *                              application, to be used by {@code RequestParameters} objects 
-     *                              to read/write URLs. 
-     * @param serviceFactory        A {@code ServiceFactory} to obtain {@code Service}s from. 
-     *                              If not {@code null}, then the {@code DAOManager} returned by 
-     *                              {@code ServiceFactory#getDAOManager()} must be not {@code null} 
-     *                              and not closed, otherwise, an {@code IllegalArgumentException} 
-     *                              is thrown.
-     * @param viewFactoryProvider   A {@code ViewFactoryProvider} instance to provide 
-     *                              the appropriate {@code ViewFactory} depending on the
-     *                              display type. 
-     * @throws IllegalArgumentException If {@code serviceFactory} is not {@code null}, 
-     *                                  and its {@code DAOManager} is {@code null}, or already closed. 
+     * @param prop                      A {@code BgeeProperties} instance to be used in the whole 
+     *                                  application.
+     * @param urlParameters             A {@code urlParameters} instance to be used in the whole 
+     *                                  application, to be used by {@code RequestParameters} objects 
+     *                                  to read/write URLs. 
+     * @param serviceFactoryProvider    A {@code Supplier} of {@code ServiceFactory}s, allowing 
+     *                                  to obtain a new {@code ServiceFactory} instance 
+     *                                  at each call to the {@code doRequest} method. If {@code null}, 
+     *                                  the default constructor of {@code ServiceFactory} is used. 
+     * @param viewFactoryProvider       A {@code ViewFactoryProvider} instance to provide 
+     *                                  the appropriate {@code ViewFactory} depending on the
+     *                                  display type. 
      */
     public FrontController(BgeeProperties prop, URLParameters urlParameters, 
-            ServiceFactory serviceFactory, ViewFactoryProvider viewFactoryProvider) 
-                    throws IllegalArgumentException {
-        log.entry(prop, urlParameters, serviceFactory, viewFactoryProvider);
+            Supplier<ServiceFactory> serviceFactoryProvider, ViewFactoryProvider viewFactoryProvider) {
+        log.entry(prop, urlParameters, serviceFactoryProvider, viewFactoryProvider);
 
-        // If the URLParamters object is null, just use a new instance
+        // If the URLParameters object is null, just use a new instance
         this.urlParameters = urlParameters != null? urlParameters: new URLParameters();
         
         // If the bgee prop object is null, just get the default instance from BgeeProperties
         this.prop = prop != null? prop: BgeeProperties.getBgeeProperties();
+        
         // If the viewFactoryProvider object is null, just use a new instance, 
         //injecting the properties obtained above. 
         //XXX: if viewFactoryProvider is not null, we currently don't check that it uses 
         //the same BgeeProperties instance. Maybe it's OK to allow to use different BgeeProperties instances? 
         this.viewFactoryProvider = viewFactoryProvider != null? viewFactoryProvider: new ViewFactoryProvider(this.prop);
         
-        //if a ServiceFactory was provided, we need to make sure it uses a valid DAOManager
-        if (serviceFactory != null && 
-                (serviceFactory.getDAOManager() == null || serviceFactory.getDAOManager().isClosed())) {
-            throw log.throwing(new IllegalArgumentException("Invalid DAOManager used in ServiceFactory."));
-        }
-        this.serviceFactory = serviceFactory != null? serviceFactory: new ServiceFactory();
-        
-        log.info("DAO closed1: {} - Thread ID: {}", this.serviceFactory.getDAOManager().isClosed(), Thread.currentThread().getId()); 
+        //If serviceFactoryProvider is null, use default constructor of ServiceFactory
+        this.serviceFactoryProvider = serviceFactoryProvider != null? serviceFactoryProvider: 
+            ServiceFactory::new;
         
         log.exit();
     }
@@ -143,7 +135,6 @@ public class FrontController extends HttpServlet {
     public void doRequest(HttpServletRequest request, HttpServletResponse response, 
             boolean postData) { 
         log.entry(request, response, postData);
-        log.info("DAO closed2: {} - Thread ID: {}", this.serviceFactory.getDAOManager().isClosed(), Thread.currentThread().getId()); 
         
         //in order to display error message in catch clauses
         //we get  "fake" RequestParameters so that no exception is thrown already.
@@ -154,7 +145,7 @@ public class FrontController extends HttpServlet {
         //then we will try to acquire the appropriate ErrorDisplay. 
         ErrorDisplay errorDisplay = null;
 
-        try {
+        try (ServiceFactory serviceFactory = this.serviceFactoryProvider.get()) {
             //in order to display error message in catch clauses. 
             //we do it in the try clause, because getting a view can throw an IOException.
             //so here we get the default view from the default factory before any exception 
@@ -171,7 +162,7 @@ public class FrontController extends HttpServlet {
             errorDisplay = factory.getErrorDisplay();
             
             //Set character encoding after acquiring an ErrorDisplay, 
-            //this can thrown an Exception.
+            //this can throw an Exception.
             request.setCharacterEncoding("UTF-8");
             
             CommandParent controller = null;
@@ -190,46 +181,47 @@ public class FrontController extends HttpServlet {
             
         //=== process errors ===
         } catch(RequestParametersNotFoundException e) {
+            log.catching(e);
             errorDisplay.displayRequestParametersNotFound(requestParameters.getFirstValue(
                     this.urlParameters.getParamData()));
-            log.error("RequestParametersNotFoundException", e);
         } catch(PageNotFoundException e) {
+            log.catching(e);
             errorDisplay.displayPageNotFound(e.getMessage());
-            log.error("PageNotFoundException", e);
         } catch(RequestParametersNotStorableException e) {
+            log.catching(e);
             errorDisplay.displayRequestParametersNotStorable(e.getMessage());
-            log.error("RequestParametersNotStorableException", e);
         } catch(MultipleValuesNotAllowedException e) {
+            log.catching(e);
             errorDisplay.displayMultipleParametersNotAllowed(e.getMessage());
-            log.error("MultipleValuesNotAllowedException", e);
         } catch(WrongFormatException e) {
+            log.catching(e);
             errorDisplay.displayWrongFormat(e.getMessage());
-            log.error("WrongFormatException", e);
         } catch(UnsupportedOperationException e) {
+            log.catching(e);
             errorDisplay.displayUnsupportedOperationException(e.getMessage());
-            log.error("UnsupportedOperationException", e);
         } catch(Exception e) {
+            log.catching(e);
             if (errorDisplay != null) {
                 errorDisplay.displayUnexpectedError();
+            } else {
+                log.error("Could not display error message to caller.");
             }
-            log.error("Other Exception", e);
-        } finally {
-            //release DAO connections used by Services
-            this.serviceFactory.getDAOManager().close();
-            // Remove the bgee properties instance from the pool
-            this.prop.removeFromBgeePropertiesPool();
-        }
+        } 
         log.exit();
     }
 
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) {
+        log.entry(request, response);
         doRequest(request, response, false);
+        log.exit();
     }
 
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) {
+        log.entry(request, response);
         doRequest(request, response, true);
+        log.exit();
     }
 
 }

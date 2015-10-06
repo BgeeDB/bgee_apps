@@ -50,7 +50,7 @@ public class CommandDownload extends CommandParent {
     }
 
     @Override
-    public void processRequest() throws IOException, PageNotFoundException {
+    public void processRequest() throws IllegalStateException, IOException, PageNotFoundException {
         log.entry();
 
         DownloadDisplay display = this.viewFactory.getDownloadDisplay();
@@ -74,10 +74,19 @@ public class CommandDownload extends CommandParent {
     /**
      * Gets the {@code SpeciesDataGroup} list that is used to generate the download file views.
      * @return A {@List} of {@code SpeciesDataGroup} to be displayed in the view.
+     * @throws IllegalStateException    If the {@code SpeciesDataGroupService} obtained 
+     *                                  from the {@code ServiceFactory} did not allow 
+     *                                  to obtain any {@code SpeciesDataGroup}.
      */
-    private List<SpeciesDataGroup> getAllSpeciesDataGroup() {
+    private List<SpeciesDataGroup> getAllSpeciesDataGroup() throws IllegalStateException {
         log.entry();
-        return log.exit(serviceFactory.getSpeciesDataGroupService().loadAllSpeciesDataGroup());
+        List<SpeciesDataGroup> groups = 
+                serviceFactory.getSpeciesDataGroupService().loadAllSpeciesDataGroup();
+        if (groups.isEmpty()) {
+            throw log.throwing(new IllegalStateException("A SpeciesDataGroupService did not allow "
+                    + "to obtain any SpeciesDataGroup."));
+        }
+        return log.exit(groups);
     }
     
     /**

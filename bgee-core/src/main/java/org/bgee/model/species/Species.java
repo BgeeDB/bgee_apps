@@ -103,6 +103,52 @@ public class Species extends NamedEntity {
     	return genus.toUpperCase().charAt(0) +". "+speciesName;
     }
 
+	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + ((genus == null) ? 0 : genus.hashCode());
+		result = prime * result + ((speciesName == null) ? 0 : speciesName.hashCode());
+		return result;
+	}
+
+	@Override
+	public String toString() {
+		return "Species [genus=" + genus + ", speciesName=" + speciesName + ", getDescription()=" + getDescription()
+		        + ", getId()=" + getId() + ", toString()=" + super.toString() + "]";
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (!super.equals(obj)) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		Species other = (Species) obj;
+		if (genus == null) {
+			if (other.genus != null) {
+				return false;
+			}
+		} else if (!genus.equals(other.genus)) {
+			return false;
+		}
+		if (speciesName == null) {
+			if (other.speciesName != null) {
+				return false;
+			}
+		} else if (!speciesName.equals(other.speciesName)) {
+			return false;
+		}
+		return true;
+	}
+
+    
 
 }
 

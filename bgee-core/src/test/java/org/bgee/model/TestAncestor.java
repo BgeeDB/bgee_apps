@@ -1,5 +1,6 @@
 package org.bgee.model;
 
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Rule;
 import org.junit.rules.TestWatcher;
@@ -47,5 +48,9 @@ public abstract class TestAncestor
 	 * Return the logger of the class. 
 	 * @return 	A {@code Logger}
 	 */
-	protected abstract Logger getLogger();
+	protected Logger getLogger() {
+		 return LogManager.getLogger(this.getClass().getName());
+	}
+	
+	
 }

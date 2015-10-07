@@ -33,6 +33,12 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>bgee-dao-sql</artifactId>
         </dependency>
+
+        <dependency>
+		    <groupId>${project.groupId}</groupId>
+            <artifactId>bgee-core</artifactId>
+        </dependency>
+        
         <dependency>
             <groupId>org.bgee.log4jdbc-log4j2</groupId>
             <artifactId>log4jdbc-log4j2-jdbc4.1</artifactId>

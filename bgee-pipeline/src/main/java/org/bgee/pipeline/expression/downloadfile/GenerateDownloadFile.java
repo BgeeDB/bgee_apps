@@ -17,6 +17,7 @@ import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
+import org.bgee.model.file.DownloadFile.CategoryEnum;
 import org.bgee.pipeline.expression.CallUser;
 
 
@@ -126,6 +127,11 @@ public abstract class GenerateDownloadFile extends CallUser {
          */
         public String getStringRepresentation();
     
+        /**
+         * @return   A {@code CategoryEnum} that is the category of files of this type.
+         */
+        public CategoryEnum getCategory();
+
         /**
          * @return   A {@code boolean} defining whether this {@code FileType} is a simple file type.
          */

@@ -44,6 +44,7 @@ import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTO;
 import org.bgee.model.dao.api.species.TaxonDAO;
 import org.bgee.model.dao.api.species.TaxonDAO.TaxonTOResultSet;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
+import org.bgee.model.file.DownloadFile.CategoryEnum;
 import org.bgee.pipeline.BgeeDBUtils;
 import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.Utils;
@@ -1055,19 +1056,19 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     //XXX: alternatively, if you use the Bean principle, you could simply use different bean types, 
     //so that you don't need this Enum
     public enum MultiSpeciesDiffExprFileType implements DiffExprFileType {
-        MULTI_DIFF_EXPR_ANATOMY_SIMPLE(
-                "multi-diffexpr-anatomy-simple", true, ComparisonFactor.ANATOMY), 
-        MULTI_DIFF_EXPR_ANATOMY_COMPLETE(
-                "multi-diffexpr-anatomy-complete", false, ComparisonFactor.ANATOMY),
-        MULTI_DIFF_EXPR_DEVELOPMENT_SIMPLE(
-                "multi-diffexpr-development-simple", true, ComparisonFactor.DEVELOPMENT), 
-        MULTI_DIFF_EXPR_DEVELOPMENT_COMPLETE(
-                "multi-diffexpr-development-complete", false, ComparisonFactor.DEVELOPMENT);
+        MULTI_DIFF_EXPR_ANATOMY_SIMPLE(CategoryEnum.DIFF_EXPR_ANAT_SIMPLE,
+                true, ComparisonFactor.ANATOMY),
+        MULTI_DIFF_EXPR_ANATOMY_COMPLETE(CategoryEnum.DIFF_EXPR_ANAT_COMPLETE,
+                false, ComparisonFactor.ANATOMY),
+        MULTI_DIFF_EXPR_DEVELOPMENT_SIMPLE(CategoryEnum.DIFF_EXPR_DEV_SIMPLE,
+                true, ComparisonFactor.DEVELOPMENT),
+        MULTI_DIFF_EXPR_DEVELOPMENT_COMPLETE(CategoryEnum.DIFF_EXPR_DEV_COMPLETE,
+                false, ComparisonFactor.DEVELOPMENT);
     
         /**
-         * A {@code String} that can be used to generate names of files of this type.
+         * A {@code CategoryEnum} that is the category of files of this type.
          */
-        private final String stringRepresentation;
+        private final CategoryEnum category;
         
         /**
          * A {@code boolean} defining whether this {@code MultiSpDiffExprFileType} is a simple 
@@ -1084,34 +1085,35 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         private final ComparisonFactor comparisonFactor;
     
         /**
-         * Constructor providing the {@code String} representation of this 
-         * {@code MultiSpDiffExprFileType}, a {@code boolean} defining whether this 
-         * {@code MultiSpDiffExprFileType} is a simple file type, and a 
-         * {@code ComparisonFactor} defining what is the experimental factor compared 
+         * Constructor providing the {@code CategoryEnum} of this {@code MultiSpDiffExprFileType},
+         * a {@code boolean} defining whether this {@code MultiSpDiffExprFileType} is a simple file type,
+         * and a {@code ComparisonFactor} defining what is the experimental factor compared
          * that generated the differential expression calls.
          */
-        private MultiSpeciesDiffExprFileType(String stringRepresentation, boolean simpleFileType,
+        private MultiSpeciesDiffExprFileType(CategoryEnum category, boolean simpleFileType,
                 ComparisonFactor comparisonFactor) {
-            this.stringRepresentation = stringRepresentation;
+            this.category = category;
             this.simpleFileType = simpleFileType;
             this.comparisonFactor = comparisonFactor;
         }
     
         @Override
         public String getStringRepresentation() {
-            return this.stringRepresentation;
+            return this.category.getStringRepresentation();
         }
     
         @Override
         public boolean isSimpleFileType() {
             return this.simpleFileType;
         }
-        
         @Override
         public ComparisonFactor getComparisonFactor() {
             return this.comparisonFactor;
         }
-    
+        @Override
+        public CategoryEnum getCategory() {
+            return this.category;
+        }
         @Override
         public String toString() {
             return this.getStringRepresentation();

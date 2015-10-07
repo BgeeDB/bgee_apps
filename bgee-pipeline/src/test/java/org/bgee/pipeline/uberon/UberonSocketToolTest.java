@@ -52,8 +52,12 @@ public class UberonSocketToolTest extends TestAncestor {
         final int port = 15556;
         final String host = "127.0.0.1";
         final UberonDevStage mockUberon = mock(UberonDevStage.class);
+        final OWLGraphWrapper mockWrapper = mock(OWLGraphWrapper.class);
+        final OntologyUtils mockUtils = mock(OntologyUtils.class);
         when(mockUberon.getStageIdsBetween(eq("ID1"), eq("ID3"), eq(0))).thenReturn(
                 Arrays.asList("ID1", "ID2", "ID3"));
+        when(mockUtils.getWrapper()).thenReturn(mockWrapper);
+        when(mockUberon.getOntologyUtils()).thenReturn(mockUtils);
         
         /**
          * An anonymous class to launch the Socket Server from another thread, 
@@ -74,7 +78,7 @@ public class UberonSocketToolTest extends TestAncestor {
                     this.socketTool = tool; //to be sure it is initialized before being set
                     this.socketTool.startListening();
                     getLogger().debug("ServerSocket launched: {}", this.socketTool);
-                } catch (IOException e) {
+                } catch (Exception e) {
                     exceptionThrown = e;
                 } finally {
                     if (server != null) {
@@ -169,7 +173,7 @@ public class UberonSocketToolTest extends TestAncestor {
                     UberonSocketTool tool = new UberonSocketTool(uberon, server);
                     this.socketTool = tool; //to be sure it is initialized before being set
                     this.socketTool.startListening();
-                } catch (IOException e) {
+                } catch (Exception e) {
                     exceptionThrown = e;
                 } finally {
                     if (server != null) {

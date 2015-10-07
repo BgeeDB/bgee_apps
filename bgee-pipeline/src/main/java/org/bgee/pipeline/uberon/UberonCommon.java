@@ -37,7 +37,7 @@ import owltools.graph.OWLGraphWrapper;
  * @version Bgee 13
  * @since Bgee 13
  */
-abstract class UberonCommon {
+public abstract class UberonCommon {
     /**
      * {@code Logger} of the class.
      */
@@ -176,14 +176,6 @@ abstract class UberonCommon {
     private final OntologyUtils ontUtils;
     
     /**
-     * Default constructor private in purpose, an ontology should always be provided somehow.
-     */
-    @SuppressWarnings("unused")
-    private UberonCommon() {
-        this((OntologyUtils) null);
-    }
-    
-    /**
      * Constructor providing the path to the Uberon ontology to used to perforn operations.
      * 
      * @param pathToUberon  A {@code String} that is the path to the Uberon ontology. 
@@ -201,9 +193,12 @@ abstract class UberonCommon {
      * to interract with the data source. 
      * 
      * @param ontUtils  the {@code OntologyUtils} that will be used. 
+     * @throws OWLOntologyCreationException If an error occurred while merging 
+     *                                      the import closure of the ontology.
      */
-    public UberonCommon(OntologyUtils ontUtils) {
+    public UberonCommon(OntologyUtils ontUtils) throws OWLOntologyCreationException {
         this.ontUtils = ontUtils;
+        this.ontUtils.getWrapper().mergeImportClosure();
         this.setPathToUberonOnt(ontUtils.getPathToOntology());
         this.classesRemoved = new HashMap<String, String>();
         this.setTaxonConstraints(null);

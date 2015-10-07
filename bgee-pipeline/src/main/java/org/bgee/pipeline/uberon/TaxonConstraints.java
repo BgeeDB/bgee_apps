@@ -357,7 +357,7 @@ public class TaxonConstraints {
         //will be seen by the method #getAllOWLClasses(), but not by the reasoner.
         this.uberonOntWrapper.mergeImportClosure(true);
         
-        //first, we remove any "is_a" relations and disjoint classes axioms between taxa 
+        //then, we remove any "is_a" relations and disjoint classes axioms between taxa 
         //that might be present in Uberon, they can be inconsistent with the taxonomy we use.
         this.filterUberonOntology();
         

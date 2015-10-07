@@ -120,15 +120,6 @@ public class UberonSocketTool {
     
     
     /**
-     * Default constructor private on purpose, parameters must always be provided 
-     * at instantiation.
-     */
-    @SuppressWarnings("unused")
-    private UberonSocketTool() {
-        this(null, 0, null, null);
-    }
-    
-    /**
      * Constructor to use a {@code ServerSocket} to perform stage range queries, as with 
      * the method {@link UberonDevStage#getStageIdsBetween(String, String, int)}. 
      * This method is written so that external applications can query for stage ranges, 
@@ -142,8 +133,11 @@ public class UberonSocketTool {
      * @param speciesId     An {@code int} that is the ID of the species to consider to retrieve 
      *                      stage ranges, see {@link UberonDevStage#getStageIdsBetween(String, String, int)}.
      * @param serverSocket  The {@code ServerSocket} to use to communicate.
+     * @throws OWLOntologyCreationException If an error occurred while merging 
+     *                                      the import closure of the ontology.
      */
-    public UberonSocketTool(UberonDevStage uberon, int speciesId, ServerSocket serverSocket) {
+    public UberonSocketTool(UberonDevStage uberon, int speciesId, ServerSocket serverSocket) 
+            throws OWLOntologyCreationException {
         this(uberon, speciesId, serverSocket, SocketAction.STAGES_BETWEEN);
     }
     /**
@@ -155,8 +149,11 @@ public class UberonSocketTool {
      * The method used to obtain mappings is {@link OntologyUtils#getOWLClass(String)}.
      * @param UberonCommon  The {@code UberonCommon} used to perform ID mappings.
      * @param serverSocket  The {@code ServerSocket} to use to communicate.
+     * @throws OWLOntologyCreationException If an error occurred while merging 
+     *                                      the import closure of the ontology.
      */
-    public UberonSocketTool(UberonCommon uberon, ServerSocket serverSocket) {
+    public UberonSocketTool(UberonCommon uberon, ServerSocket serverSocket) 
+            throws OWLOntologyCreationException {
         this(uberon, 0, serverSocket, SocketAction.ID_MAPPINGS);
     }
     
@@ -171,12 +168,15 @@ public class UberonSocketTool {
      *                      stage ranges, see {@link UberonDevStage#getStageIdsBetween(String, String, int)}.
      * @param serverSocket  The {@code ServerSocket} to use to communicate.
      * @param action        The {@code SocketAction} defining which query to perform.
+     * @throws OWLOntologyCreationException If an error occurred while merging 
+     *                                      the import closure of the ontology.
      */
     private UberonSocketTool(UberonCommon uberon, int speciesId, 
-            ServerSocket serverSocket, SocketAction action) {
+            ServerSocket serverSocket, SocketAction action) throws OWLOntologyCreationException {
         this.uberonCommon = uberon;
+        this.uberonCommon.getOntologyUtils().getWrapper().mergeImportClosure();
         if (uberon instanceof UberonDevStage) {
-            this.uberonDevStage = (UberonDevStage) uberon;
+            this.uberonDevStage = (UberonDevStage) this.uberonCommon;
         } else {
             this.uberonDevStage = null;
         }

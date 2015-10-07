@@ -182,14 +182,6 @@ public class UberonDevStage extends UberonCommon {
     
     
     /**
-     * Default constructor private in purpose, an ontology should always be provided somehow.
-     */
-    @SuppressWarnings("unused")
-    private UberonDevStage() {
-        this((OntologyUtils) null);
-    }
-    
-    /**
      * Constructor providing the path to the Uberon ontology to used to perform operations.
      * 
      * @param pathToUberon  A {@code String} that is the path to the Uberon ontology. 
@@ -233,8 +225,10 @@ public class UberonDevStage extends UberonCommon {
      * wrapping the Uberon ontology that will be used. 
      * 
      * @param ontUtils  the {@code OntologyUtils} that will be used. 
+     * @throws OWLOntologyCreationException If an error occurred while merging 
+     *                                      the import closure of the ontology.
      */
-    public UberonDevStage(OntologyUtils ontUtils) {
+    public UberonDevStage(OntologyUtils ontUtils) throws OWLOntologyCreationException {
         this(ontUtils, null);
     }
     /**
@@ -248,11 +242,14 @@ public class UberonDevStage extends UberonCommon {
      *                          {@code OWLClass}es, and values are {@code Set}s 
      *                          of {@code Integer}s containing the IDs of taxa 
      *                          in which the {@code OWLClass} exists.
+     * @throws OWLOntologyCreationException If an error occurred while merging 
+     *                                      the import closure of the ontology.
      */
     //suppress warning because OWLGraphWrapper uses non-parameterized generic types, 
     //so we need to do the same.
     @SuppressWarnings("rawtypes")
-    public UberonDevStage(OntologyUtils ontUtils, Map<String, Set<Integer>> taxonConstraints) {
+    public UberonDevStage(OntologyUtils ontUtils, Map<String, Set<Integer>> taxonConstraints) 
+            throws OWLOntologyCreationException {
         super(ontUtils);
         this.nestedSetModels = new HashMap<OWLClass, Map<OWLClass, Map<String, Integer>>>();
         this.overPartOf = Collections.unmodifiableSet(new HashSet<OWLPropertyExpression>(

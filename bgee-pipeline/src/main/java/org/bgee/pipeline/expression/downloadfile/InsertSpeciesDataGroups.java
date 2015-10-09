@@ -447,7 +447,7 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
                 } else if (file.isDirectory()) {
                     throw log.throwing(new IllegalArgumentException(
                             "The file " + file.getAbsolutePath() + " is a directory."));
-                } else if (!this.hasEnoughLines(file.getAbsolutePath())) {
+                } else if (!this.hasEnoughLines(file)) {
                     log.warn("File is empty, skipping: {}", file);
                     continue;
                 }
@@ -503,17 +503,21 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
     /**
      * Determines whether the provided files contains enough lines to be considered valid.
      * 
-     * @param filePath      A {@code String} that is the file path to be used.
+     * @param file          A {@code File} that is the file to check.
      * @return              A {@code boolean} that is {@code true} if the provided file is valid, 
      *                      {@code false} otherwise.
      * @throws IOException  If {@code filePath} could not be read.
      * @see #MIN_LINE_NUMBER
      */
-    private boolean hasEnoughLines(String filePath) throws IOException {
-        log.entry(filePath);
+    private boolean hasEnoughLines(File file) throws IOException {
+        log.entry(file);
         
-        try (Stream<String> lines = Files.lines(Paths.get(filePath)).limit(MIN_LINE_NUMBER)) {
-            return log.exit(lines.count() >= MIN_LINE_NUMBER);
-        }
+        //FIXME: disabling this feature until we actually use uncompressed files 
+        //to get more info about them see issue #69
+        //In the meantime, we define a threshold based on the size
+//        try (Stream<String> lines = Files.lines(Paths.get(filePath)).limit(MIN_LINE_NUMBER)) {
+//            return log.exit(lines.count() >= MIN_LINE_NUMBER);
+//        }
+        return log.exit(file.length() >= 1024L);
     }
 }

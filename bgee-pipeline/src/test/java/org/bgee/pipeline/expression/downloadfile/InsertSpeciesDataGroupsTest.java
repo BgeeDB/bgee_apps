@@ -103,7 +103,7 @@ public class InsertSpeciesDataGroupsTest extends TestAncestor {
         File file1 = new File(tmpFolder1, "sp1_diffexpr-anatomy-complete" + fileExtension);
         file1.createNewFile();
         this.writeSeveralLines(file1);
-        new RandomAccessFile(file1, "rw").setLength(100);
+        new RandomAccessFile(file1, "rw").setLength(10000);
 
         File file2 = new File(tmpFolder1, "sp1_diffexpr-anatomy-simple" + fileExtension);
         file2.createNewFile();
@@ -113,37 +113,37 @@ public class InsertSpeciesDataGroupsTest extends TestAncestor {
         File file3 = new File(tmpFolder2, "sp1_Affymetrix_experiments_chips" + fileExtension);
         file3.createNewFile();
         this.writeSeveralLines(file3);
-        new RandomAccessFile(file3, "rw").setLength(300);
+        new RandomAccessFile(file3, "rw").setLength(30000);
 
         File file4 = new File(tmpFolder4, "sp2_expr-complete" + fileExtension);
         file4.createNewFile();
         this.writeSeveralLines(file4);
-        new RandomAccessFile(file4, "rw").setLength(400);  
+        new RandomAccessFile(file4, "rw").setLength(40000);  
 
         File file5 = new File(tmpFolder4, "sp2_RNA-Seq_read_counts_RPKM_GSE41637" + fileExtension);
         file5.createNewFile();
         this.writeSeveralLines(file5);
-        new RandomAccessFile(file5, "rw").setLength(500);  
+        new RandomAccessFile(file5, "rw").setLength(50000);  
 
         File file6 = new File(tmpFolder3, "gp1_orthologs" + fileExtension);
         file6.createNewFile();
         this.writeSeveralLines(file6);
-        new RandomAccessFile(file6, "rw").setLength(600);
+        new RandomAccessFile(file6, "rw").setLength(60000);
 
         File file7 = new File(tmpFolder3, "gp1_multi-diffexpr-anatomy-complete" + fileExtension);
         file7.createNewFile();
         this.writeSeveralLines(file7);
-        new RandomAccessFile(file7, "rw").setLength(700);
+        new RandomAccessFile(file7, "rw").setLength(70000);
 
         File file8 = new File(tmpFolder3, "gp2_orthologs" + fileExtension);
         file8.createNewFile();
         this.writeSeveralLines(file8);
-        new RandomAccessFile(file8, "rw").setLength(800);
+        new RandomAccessFile(file8, "rw").setLength(80000);
 
         File file9 = new File(tmpFolder3, "gp2_multi-diffexpr-development-simple" + fileExtension);
         file9.createNewFile();
         this.writeSeveralLines(file9);
-        new RandomAccessFile(file9, "rw").setLength(900); 
+        new RandomAccessFile(file9, "rw").setLength(90000); 
 
         // Create constructor parameters 
         LinkedHashMap<String, Set<String>> groupToSpecies = new LinkedHashMap<>();

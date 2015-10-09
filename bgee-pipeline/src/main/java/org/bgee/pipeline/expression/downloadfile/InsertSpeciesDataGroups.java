@@ -45,46 +45,56 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
     /**
      * A {@code String} that is the pattern to be replace in provided file path patterns.
      */
-    private final static String STRING_TO_REPLACE = "\\{REPLACE\\}";
+    public final static String STRING_TO_REPLACE = "\\{REPLACE\\}";
     
     /**
-     * A {@code long} that is the minimal number of lines in a file to not be considered as empty.
+     * An {@code int} that is the minimal number of lines in a file to not be considered as empty.
      */
-    private final static long MIN_LINE_NUMBER = 3L;
+    private final static int MIN_LINE_NUMBER = 3;
     
     /**
      * Main method to trigger the insertion of the species data groups, species data groups 
-     * to species mappings, and download files into the Bgee database.
+     * to species mappings, and download files into the Bgee database. 
+     * Entries of the provided {@code Map}s must be separated by {@link CommandRunner#LIST_SEPARATOR}, 
+     * keys must be separated from their associated value by {@link CommandRunner#KEY_VALUE_SEPARATOR}, 
+     * values must be separated using {@link CommandRunner#VALUE_SEPARATOR}, 
+     * see {@link org.bgee.pipeline.CommandRunner#parseMapArgument(String)}
+     * <p>
      * Parameters that must be provided in order in {@code args} are: 
      * <ol>
-     * <li>a {@code Map} where keys are {@code String}s that are names given to the species data groups,   
-     *     the associated value being a {@code Set} of {@code String}s that are the  
-     *     IDs of the species composing the group. The order of the entries is important, 
+     * <li>groupsToSpecies: a {@code LinkedHashMap} where keys are {@code String}s that are names given 
+     *     to the species data groups,  the associated value being a {@code Set} of {@code String}s 
+     *     that are the IDs of the species composing the group. The order of the entries is important, 
      *     it is used to specify the preferred display order of the data groups. 
-     *     Entries of the {@code Map} must be separated by {@link CommandRunner#LIST_SEPARATOR}, 
-     *     keys must be separated from their associated value by {@link CommandRunner#KEY_VALUE_SEPARATOR}, 
-     *     values must be separated using {@link CommandRunner#VALUE_SEPARATOR}, 
-     *     see {@link org.bgee.pipeline.CommandRunner#parseMapArgument(String)}
-     * <li>a {@code Map} where keys are {@code String}s that are names given to species data groups,  
-     *     the associated value being a {@code Set} of {@code String}s that are 
-     *     the paths with file name composing the group. The order of the entries is important, 
-     *     it is used to specify the preferred display order of the data groups. 
-     *     The entry set should be identical to the entry set in the {@code Map} described above. 
-     *     The paths provided in values should be relative to the directory provided 
-     *     as last argument. They are the paths that will be inserted into the database, 
-     *     not the absolute ones using the provided directory. They should all be present in the 
-     *     key set of the {@code Map} descibed below. 
-     *     Entries of the {@code Map} must be separated by {@link CommandRunner#LIST_SEPARATOR}, 
-     *     keys must be separated from their associated value by {@link CommandRunner#KEY_VALUE_SEPARATOR}, 
-     *     values must be separated using {@link CommandRunner#VALUE_SEPARATOR}, 
-     *     see {@link org.bgee.pipeline.CommandRunner#parseMapArgument(String)}
-     * <li>a {@code Map} where keys are {@code String}s that are file paths, the associated value
-     *     being a {@code String} containing the category of the file. Entries of  
-     *     the {@code Map} must be separated by {@link CommandRunner#LIST_SEPARATOR}, keys must be 
-     *     separated from their associated value by {@link CommandRunner#KEY_VALUE_SEPARATOR}, 
-     *     see {@link org.bgee.pipeline.CommandRunner#parseMapArgument(String)}
+     * <li>groupsToCategories: A {@code LinkedHashMap} where keys are {@code String}s that are names given 
+     *     to the species data groups, the associated value being {@code Set}s of {@code String}s 
+     *     corresponding to categories for which download files are available for the group. 
+     *     The order of the entries is important, it is used to specify the preferred 
+     *     display order of the data groups. The key set should be identical to the key set 
+     *     in the {@code Map}s defined as first and third arguments. Categories should all be present
+     *     in the key set of the {@code Map} provided either as fourth or fifth argument. 
+     *     The {@code String}s provided as categories must be mappable using 
+     *     {@link DownloadFileTO.CategoryEnum.convertToCategoryEnum(String)}.
+     * <li>groupsToReplacement: A {@code LinkedHashMap} where keys are {@code String}s
+     *     that are names given to the species data groups, the associated value being 
+     *     a {@code String} to be used to replace {@link #STRING_TO_REPLACE} in the patterns provided 
+     *     as values of the {@code Map}s provided as fourth and fifth arguments. The key set 
+     *     should be identical to the key set in the two previous {@code Map}s.
+     * <li>singleSpCatToFilePattern: A {@code Map} where keys are {@code String}s that are
+     *     categories found in single species groups, the associated value being a {@code String} 
+     *     that is a pattern to get the path to the corresponding download file, 
+     *     after having replaced {@link #STRING_TO_REPLACE} with the appropriate value provided 
+     *     in the previous {@code Map}. All categories defined in the key set should be present
+     *     in the values of the previous {@code Map}.
+     * <li>multiSpCatToFilePattern: A {@code Map} where keys are {@code String}s that are
+     *     categories found in multi species groups, the associated value being a {@code String} 
+     *     that is a pattern to get the path to the corresponding download file, 
+     *     after having replaced {@link #STRING_TO_REPLACE} with the appropriate value provided 
+     *     in the {@code Map}. provided as third argument. All categories defined in the key set 
+     *     should be present in the values of this {@code Map}.
      * <li>a {@code String} that is directory to be used to retrieve files using 
-     *     the provided related paths.
+     *     the provided related paths provided as values of the {@code Map}s provided 
+     *     as fourth and fifth argument.
      * </ol>
      * 
      * @param args  An {@code Array} of {@code String}s containing the requested parameters.
@@ -124,7 +134,7 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
                                 new IllegalArgumentException("Key used more than once: " + k));},
                         LinkedHashMap::new)),
                 
-                //LinkedHashMap<String, Set<String>> groupToSpecies
+                //LinkedHashMap<String, String> groupToReplacements
                 CommandRunner.parseMapArgument(args[2]).entrySet().stream()
                 .collect(Collectors.toMap(e -> e.getKey(), e -> {
                     if (e.getValue().size() != 1) {
@@ -177,7 +187,7 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
      * to the group. The order of the entries is important, it is used to specify the preferred
      * display order of the data groups. The key set should be identical to the key set in
      * {@link #groupToSpecies} and {@link groupToReplacement}. Categories should all be present in
-     * the key set of {@link singleSpCategoryToFilePattern} or of {@link multiSpCategoryToFilePattern}.
+     * the key set of {@link singleSpCatToFilePattern} or of {@link multiSpCatToFilePattern}.
      */
     private final LinkedHashMap<String, Set<String>> groupToCaterories;
 
@@ -195,14 +205,14 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
      * the associated values being {@code String}s corresponding to file pattern.
      * All categories defined in the key set should be present in the values of {@link #groupToCategories}.
      */
-    private final Map<String, String> singleSpCategoryToFilePattern;
+    private final Map<String, String> singleSpCatToFilePattern;
 
     /**
      * A {@code Map} where keys are {@code String}s that are categories found in multi species groups,
      * the associated values being {@code String}s corresponding to file pattern.
      * All categories defined in the key set should be present in the values of {@link #groupToCategories}.
      */
-    private final Map<String, String> multiSpCategoryToFilePattern;
+    private final Map<String, String> multiSpCatToFilePattern;
 
     /**
      * A {@code String} that is the directory to be used to deduce relative paths.
@@ -210,59 +220,33 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
     private final String directory;
     
     /**
-     * Constructor requesting all mandatory parameters.
+     * Constructor requesting parameters related to download files, and using 
+     * the default {@code DAOManager}, see {@link #InsertSpeciesDataGroups(MySQLDAOManager, 
+     * LinkedHashMap, LinkedHashMap, LinkedHashMap, Map, Map, String) main constructor}.
      * 
-     * @param groupToSpecies                A {@code LinkedHashMap} where keys are {@code String}s
-     *                                      that are names given to groups of species, the associated
-     *                                      value being a {@code Set} of {@code String}s that are
-     *                                      the IDs of the species composing the group. The order of 
-     *                                      the entries is important, it is used to specify the
-     *                                      preferred display order of the data groups.
-     * @param groupToCaterories             A {@code LinkedHashMap} where keys are {@code String}s
-     *                                      that are names given to a group of species, the associated
-     *                                      values being {@code Set}s of {@code String}s corresponding
-     *                                      to categories belonging to the group. The order of the
-     *                                      entries is important, it is used to specify the preferred
-     *                                      display order of the data groups. The key set should be
-     *                                      identical to the key set in {@link #groupToSpecies} and
-     *                                      {@link groupToReplacement}. Categories should all be present
-     *                                      in the key set of {@link singleSpCategoryToFilePattern} or
-     *                                      of {@link multiSpCategoryToFilePattern}.
-     * @param groupToReplacement            A {@code LinkedHashMap} where keys are {@code String}s
-     *                                      that are names given to a group of species, the associated
-     *                                      values being {@code String}s corresponding to the string
-     *                                      to be substituted in patterns belonging to the group.
-     *                                      The order of the entries is important, it is used to
-     *                                      specify the preferred display order of the data groups.
-     *                                      The key set should be identical to the key set in 
-     *                                      {@link #groupToSpecies} and {@link groupToCategories}.
-     * @param singleSpCategoryToFilePattern A {@code Map} where keys are {@code String}s that are
-     *                                      categories found in single species groups, the associated
-     *                                      values being {@code String}s corresponding to file pattern.
-     *                                      All categories defined in the key set should be present
-     *                                      in the values of {@link #groupToCategories}.
-     * @param multiSpCategoryToFilePattern  A {@code Map} where keys are {@code String}s that are
-     *                                      categories found in multi species groups, the associated
-     *                                      values being {@code String}s corresponding to file pattern.
-     *                                      All categories defined in the key set should be present
-     *                                      in the values of {@link #groupToCategories}.
-     * @param directory                     A {@code String} that is the directory to be used to
-     *                                      deduce relative paths.
+     * @param groupToSpecies            See main constructor.  
+     * @param groupToCaterories         See main constructor. 
+     * @param groupToReplacement        See main constructor. 
+     * @param singleSpCatToFilePattern  See main constructor. 
+     * @param multiSpCatToFilePattern   See main constructor. 
+     * @param directory                 See main constructor. 
      * @throws IllegalArgumentException If some mandatory parameters are incorrectly provided.
+     * @see #InsertSpeciesDataGroups(MySQLDAOManager, LinkedHashMap, LinkedHashMap, LinkedHashMap, 
+     *      Map, Map, String) main constructor
      */
     public InsertSpeciesDataGroups(LinkedHashMap<String, Set<String>> groupToSpecies,
             LinkedHashMap<String, Set<String>> groupToCaterories,
             LinkedHashMap<String, String> groupToReplacement,
-            Map<String, String> singleSpCategoryToFilePattern,
-            Map<String, String> multiSpCategoryToFilePattern,
+            Map<String, String> singleSpCatToFilePattern,
+            Map<String, String> multiSpCatToFilePattern,
             String directory) {
         this(null, groupToSpecies, groupToCaterories, groupToReplacement, 
-                singleSpCategoryToFilePattern, multiSpCategoryToFilePattern, directory);
+                singleSpCatToFilePattern, multiSpCatToFilePattern, directory);
     }
 
     /**
      * Constructor providing the {@code MySQLDAOManager} that will be used by 
-     * this object to perform queries to the database. This is useful for unit testing.
+     * this object to perform queries to the database, and all parameters related to download files.
      * 
      * @param manager                       The {@code MySQLDAOManager} to use.
      * @param groupToSpecies                A {@code LinkedHashMap} where keys are {@code String}s
@@ -274,32 +258,40 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
      * @param groupToCaterories             A {@code LinkedHashMap} where keys are {@code String}s
      *                                      that are names given to a group of species, the associated
      *                                      values being {@code Set}s of {@code String}s corresponding
-     *                                      to categories belonging to the group. The order of the
-     *                                      entries is important, it is used to specify the preferred
-     *                                      display order of the data groups. The key set should be
-     *                                      identical to the key set in {@link #groupToSpecies} and
-     *                                      {@link groupToReplacement}. Categories should all be present
-     *                                      in the key set of {@link singleSpCategoryToFilePattern} or
-     *                                      of {@link multiSpCategoryToFilePattern}.
+     *                                      to categories for which download files are available for the group. 
+     *                                      The order of the entries is important, it is used to specify 
+     *                                      the preferred display order of the data groups. The key set 
+     *                                      should be identical to the key set in {@code groupToSpecies} and
+     *                                      {@code groupToReplacement}. Categories should all be present
+     *                                      either in the key set of {@code singleSpCatToFilePattern}, or
+     *                                      in the key set of {@code multiSpCatToFilePattern}. 
+     *                                      The {@code String}s provided as categories must be mappable 
+     *                                      using {@link DownloadFileTO.CategoryEnum.convertToCategoryEnum(String)}.
      * @param groupToReplacement            A {@code LinkedHashMap} where keys are {@code String}s
      *                                      that are names given to a group of species, the associated
-     *                                      values being {@code String}s corresponding to the string
-     *                                      to be substituted in patterns belonging to the group.
-     *                                      The order of the entries is important, it is used to
-     *                                      specify the preferred display order of the data groups.
+     *                                      values being a {@code String} to be used to replace 
+     *                                      {@link #STRING_TO_REPLACE} in the patterns provided 
+     *                                      as values of {@code singleSpCatToFilePattern} and 
+     *                                      {@code multiSpCatToFilePattern}.
      *                                      The key set should be identical to the key set in 
-     *                                      {@link #groupToSpecies} and {@link groupToCategories}.
-     * @param singleSpCategoryToFilePattern A {@code Map} where keys are {@code String}s that are
+     *                                      {@code groupToSpecies} and {@code groupToCategories}.
+     * @param singleSpCatToFilePattern      A {@code Map} where keys are {@code String}s that are
      *                                      categories found in single species groups, the associated
-     *                                      values being {@code String}s corresponding to file pattern.
+     *                                      value being a {@code String} that is a pattern 
+     *                                      to get the path to the corresponding download file, 
+     *                                      after having replaced {@link #STRING_TO_REPLACE} with 
+     *                                      the appropriate value provided in {@code groupToReplacement}.
      *                                      All categories defined in the key set should be present
-     *                                      in the values of {@link #groupToCategories}.
-     * @param multiSpCategoryToFilePattern  A {@code Map} where keys are {@code String}s that are
+     *                                      in the values of {@code groupToCategories}.
+     * @param multiSpCatToFilePattern       A {@code Map} where keys are {@code String}s that are
      *                                      categories found in multi species groups, the associated
-     *                                      values being {@code String}s corresponding to file pattern.
+     *                                      value being a {@code String} that is a pattern 
+     *                                      to get the path to the corresponding download file, 
+     *                                      after having replaced {@link #STRING_TO_REPLACE} with 
+     *                                      the appropriate value provided in {@code groupToReplacement}.
      *                                      All categories defined in the key set should be present
-     *                                      in the values of {@link #groupToCategories}.
-     * @param directory                     A {@code String} that is the directory to be used to 
+     *                                      in the values of {@code groupToCategories}.
+     * @param directory                     A {@code String} that is the directory to be used to
      *                                      deduce relative paths.
      * @throws IllegalArgumentException If some mandatory parameters are incorrectly provided.
      */
@@ -307,12 +299,12 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
             LinkedHashMap<String, Set<String>> groupToSpecies,
             LinkedHashMap<String, Set<String>> groupToCaterories,
             LinkedHashMap<String, String> groupToReplacement,
-            Map<String, String> singleSpCategoryToFilePattern,
-            Map<String, String> multiSpCategoryToFilePattern,
+            Map<String, String> singleSpCatToFilePattern,
+            Map<String, String> multiSpCatToFilePattern,
             String directory) {
         super(manager);
-        log.entry(groupToSpecies, groupToCaterories, groupToReplacement, singleSpCategoryToFilePattern,
-                multiSpCategoryToFilePattern, directory);
+        log.entry(groupToSpecies, groupToCaterories, groupToReplacement, singleSpCatToFilePattern,
+                multiSpCatToFilePattern, directory);
         if (groupToSpecies == null || groupToSpecies.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("No group-species mapping is provided"));
         }
@@ -328,15 +320,15 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
         }
         this.groupToReplacement = new LinkedHashMap<>(groupToReplacement);
         
-        if (singleSpCategoryToFilePattern == null || singleSpCategoryToFilePattern.isEmpty()) {
+        if (singleSpCatToFilePattern == null || singleSpCatToFilePattern.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("No simpleCategory-pattern mapping is provided"));
         }
-        this.singleSpCategoryToFilePattern = new HashMap<>(singleSpCategoryToFilePattern);
+        this.singleSpCatToFilePattern = new HashMap<>(singleSpCatToFilePattern);
 
-        if (multiSpCategoryToFilePattern == null || multiSpCategoryToFilePattern.isEmpty()) {
+        if (multiSpCatToFilePattern == null || multiSpCatToFilePattern.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("No multiCategory-pattern mapping is provided"));
         }
-        this.multiSpCategoryToFilePattern = new HashMap<>(multiSpCategoryToFilePattern);
+        this.multiSpCatToFilePattern = new HashMap<>(multiSpCatToFilePattern);
 
         if (StringUtils.isEmpty(directory)) {
             throw log.throwing(new IllegalArgumentException("No directory is provided"));
@@ -353,26 +345,26 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
                     "group-replacement don't have the same group names and/or store them in different orders."));
         }
         
-        if (!this.singleSpCategoryToFilePattern.keySet().equals(
+        if (!this.singleSpCatToFilePattern.keySet().equals(
                 this.groupToCaterories.entrySet().stream()
-                .filter(e -> this.getSingleSpeciesGroups(this.groupToSpecies).contains(e.getKey()))
+                .filter(e -> this.groupToSpecies.get(e.getKey()).size() == 1)
                 .flatMap(e -> e.getValue().stream())
                 .collect(Collectors.toSet()))) {
             throw log.throwing(new IllegalArgumentException("Different categories between "
-                    + "mappings singleSpCategory-filePattern [" + this.singleSpCategoryToFilePattern.keySet()
+                    + "mappings singleSpCategory-filePattern [" + this.singleSpCatToFilePattern.keySet()
                     + "] and group-category with one species ["
                     + this.groupToCaterories.values().stream().filter(e -> e.size() == 1)
                     .flatMap(e -> e.stream())
                     .collect(Collectors.toSet()) + "]"));
         }
 
-        if (!this.multiSpCategoryToFilePattern.keySet().equals(
+        if (!this.multiSpCatToFilePattern.keySet().equals(
                 this.groupToCaterories.entrySet().stream()
-                .filter(e -> this.getMultiSpeciesGroups(this.groupToSpecies).contains(e.getKey()))
+                .filter(e -> this.groupToSpecies.get(e.getKey()).size() > 1)
                 .flatMap(e -> e.getValue().stream())
                 .collect(Collectors.toSet()))) {
             throw log.throwing(new IllegalArgumentException("Different categories between "
-                    + "mappings multiSpCategory-filePattern [" + this.multiSpCategoryToFilePattern.keySet()
+                    + "mappings multiSpCategory-filePattern [" + this.multiSpCatToFilePattern.keySet()
                     + "] and group-category with several species ["
                     + this.groupToCaterories.values().stream().filter(e -> e.size() > 1)
                     .flatMap(e -> e.stream())
@@ -414,7 +406,7 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
             final String groupName = groupToSpecies.getKey().trim();
             final String groupId = String.valueOf(i);
             speciesDataGroupTOs.put(groupName, 
-                    //we use the dataGroupId also as preferred order
+                    //we also use i to generate the preferred order
                     new SpeciesDataGroupTO(groupId, groupName, null, i));
             speciesToDataGroupTOs.addAll(groupToSpecies.getValue().stream()
                     .map(e -> new SpeciesToDataGroupTO(e, groupId))
@@ -424,24 +416,27 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
 
         // Then, we create DownloadFileTOs
         Set<DownloadFileTO> downloadFileTOs = new HashSet<DownloadFileTO>();
-        Set<String> singleSpGroups = this.getSingleSpeciesGroups(this.groupToSpecies);
-        Set<String> multiSpGroups = this.getMultiSpeciesGroups(this.groupToSpecies);
         int downloadFileId = 1;
-        //We store the IDs of groups that actually have download files existing
+        //We store the IDs of groups that actually have valid download files existing
         Set<String> groupIdsWithData = new HashSet<String>();
         for (Entry<String, Set<String>> groupAndCategories : this.groupToCaterories.entrySet()) {
-            String groupId = speciesDataGroupTOs.get(groupAndCategories.getKey()).getId();
+
+            String groupName = groupAndCategories.getKey();
+            String groupId = speciesDataGroupTOs.get(groupName).getId();
+            int speciesCount = this.groupToSpecies.get(groupName).size();
+            
             for (String category: groupAndCategories.getValue()) {
                 String pattern = null;
-                if (multiSpGroups.contains(groupAndCategories.getKey())) {
-                    pattern = this.multiSpCategoryToFilePattern.get(category);
-                } else if (singleSpGroups.contains(groupAndCategories.getKey())) {
-                    pattern = this.singleSpCategoryToFilePattern.get(category);
+                if (speciesCount > 1) {
+                    pattern = this.multiSpCatToFilePattern.get(category);
+                } else if (speciesCount == 1) {
+                    pattern = this.singleSpCatToFilePattern.get(category);
                 } else {
                     throw log.throwing(new IllegalArgumentException(
-                            "The group [" + groupAndCategories.getKey() + "] have no species"));
+                            "The group [" + groupName + "] have no species"));
                 }
-                String path = pattern.replaceAll(STRING_TO_REPLACE, this.groupToReplacement.get(groupAndCategories.getKey()));
+                String path = pattern.replaceAll(STRING_TO_REPLACE, 
+                        this.groupToReplacement.get(groupName)).trim();
                 File file = new File(this.directory, path);
                 //if the file doesn't exist or is empty, we just skip it, this is useful
                 //if there were no data for a file type in a group, we don't have to change 
@@ -449,25 +444,21 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
                 if (!file.exists()) {
                     log.warn("File not existing, skipping: {}", file);
                     continue;
-                }
-                
-                if (this.countFileLines(file.getAbsolutePath()) < MIN_LINE_NUMBER) {
+                } else if (file.isDirectory()) {
+                    throw log.throwing(new IllegalArgumentException(
+                            "The file " + file.getAbsolutePath() + " is a directory."));
+                } else if (!this.hasEnoughLines(file)) {
                     log.warn("File is empty, skipping: {}", file);
                     continue;
                 }
 
-                if (file.isDirectory()) {
-                    throw log.throwing(new IllegalArgumentException(
-                            "The file " + file.getAbsolutePath() + " is a directory."));
-                }
-                // Currently, the file description is not use, so for the moment, we set it at null.
+                // Currently, the file description is not use, so for the moment, we set it to null.
                 downloadFileTOs.add(new DownloadFileTO(
-                        String.valueOf(downloadFileId), file.getName(), null, path.trim(), file.length(),
+                        String.valueOf(downloadFileId), file.getName(), null, path, file.length(),
                         CategoryEnum.convertToCategoryEnum(category), groupId));
                 groupIdsWithData.add(groupId);
                 downloadFileId++;
             }
-
         }
 
         log.info("Start inserting species data groups...");
@@ -508,53 +499,25 @@ public class InsertSpeciesDataGroups extends MySQLDAOUser {
         log.info("Done inserting species data groups.");
         log.exit();
     }
-    
-    /**
-     * Retrieve group names composed by only one species.
-     * 
-     * @param groupToSpecies    A {@code LinkedHashMap} where keys are {@code String}s that are names
-     *                          given to groups of species, the associated value being a {@code Set}
-     *                          of {@code String}s that are the IDs of the species composing the group.
-     * @return                  The {@code Set} of {@code String}s that are the group names
-     *                          composed by one species.
-     */
-    private Set<String> getMultiSpeciesGroups(LinkedHashMap<String, Set<String>> groupToSpecies) {
-        log.entry(groupToSpecies);
-        return log.exit(groupToSpecies.entrySet().stream()
-                .filter(e -> e.getValue().size() > 1)
-                .map(e -> e.getKey())
-                .collect(Collectors.toSet()));
-    }
 
     /**
-     * Retrieve group names composed by more than one species.
+     * Determines whether the provided files contains enough lines to be considered valid.
      * 
-     * @param groupToSpecies    A {@code LinkedHashMap} where keys are {@code String}s that are names
-     *                          given to groups of species, the associated value being a {@code Set}
-     *                          of {@code String}s that are the IDs of the species composing the group.
-     * @return                  The {@code Set} of {@code String}s that are the group names
-     *                          composed by more than one species.
-     */
-    private Set<String> getSingleSpeciesGroups(LinkedHashMap<String, Set<String>> groupToSpecies) {
-        log.entry(groupToSpecies);
-        return log.exit(groupToSpecies.entrySet().stream()
-                .filter(e -> e.getValue().size() == 1)
-                .map(e -> e.getKey())
-                .collect(Collectors.toSet()));
-    }
-
-    /**
-     * Count the number of lines in the provided file.
-     * 
-     * @param filePath      A {@code String} that is the file path to be used.
-     * @return              The {@code long} that is the number of lines in the provided file.
+     * @param file          A {@code File} that is the file to check.
+     * @return              A {@code boolean} that is {@code true} if the provided file is valid, 
+     *                      {@code false} otherwise.
      * @throws IOException  If {@code filePath} could not be read.
+     * @see #MIN_LINE_NUMBER
      */
-    private long countFileLines(String filePath) throws IOException {
-        log.entry(filePath);
+    private boolean hasEnoughLines(File file) throws IOException {
+        log.entry(file);
         
-        try (Stream<String> lines = Files.lines(Paths.get(filePath)).limit(MIN_LINE_NUMBER)) {
-            return log.exit(lines.count());
-        }
+        //FIXME: disabling this feature until we actually use uncompressed files 
+        //to get more info about them see issue #69
+        //In the meantime, we define a threshold based on the size
+//        try (Stream<String> lines = Files.lines(Paths.get(filePath)).limit(MIN_LINE_NUMBER)) {
+//            return log.exit(lines.count() >= MIN_LINE_NUMBER);
+//        }
+        return log.exit(file.length() >= 1024L);
     }
 }

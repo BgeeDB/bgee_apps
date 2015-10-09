@@ -18,6 +18,7 @@ import org.bgee.model.file.SpeciesDataGroup;
 import org.bgee.model.species.Species;
 import org.bgee.utils.JSHelper;
 import org.bgee.view.DownloadDisplay;
+import org.bgee.view.html.HtmlDownloadDisplay.DownloadPageType;
 
 /**
  * This class displays the page having the category "download", i.e. with the parameter
@@ -559,6 +560,93 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 "<img class='details' src='" + this.prop.getImagesRootDirectory() +
                 "plus.png' title='Show headers' alt='Plus'/></a>");
     }
+    
+    /**
+     * Get the single species section of a download page as a HTML 'div' element,
+     * according the provided page type.
+     *
+     * @param pageType  A {@code DownloadPageType} that is the type of the page.
+     * @return          the {@code String} that is the single species section as HTML 'div' element,
+     *                  according {@code pageType}.
+     */
+    protected static String getSingleSpeciesSection(DownloadPageType pageType, List<SpeciesDataGroup> groups) {
+        log.entry(pageType);
+
+        StringBuilder s = new StringBuilder();
+        s.append("<div id='bgee_uniq_species'> ");
+        s.append("<h2>Species with data in Bgee</h2>");
+        s.append("<span class='header_details'>(click on species to see more details)</span>");
+        s.append("<div class='bgee_section bgee_download_section'>");
+        s.append(getSingleSpeciesFigures(pageType, groups));
+        s.append("</div>");
+        s.append("</div>");
+        
+        return log.exit(s.toString());
+    }
+    
+    /**
+     * Gets the single species section as a {@code String}
+     * @param pageType the {@code DownloadPageType} of this page
+     * @param groups   the {@code List} of {@code SpeciesDataGroup} to display
+     * @return A {@String} containing the html section 
+     */
+    //XXX: Could this method should take a List<Species>, the ID attr should be the species ID, 
+    //this way CommandHome would not need to call getSpeciesDataGroupService, 
+    //but simply SpeciesService#loadSpeciesInDataGroups()
+    protected static String getSingleSpeciesFigures(DownloadPageType pageType, List<SpeciesDataGroup> groups) {
+        StringBuilder sb = new StringBuilder();
+
+        groups.stream().filter(sdg -> sdg.isSingleSpecies()).forEach(sdg -> {
+            Species species = sdg.getMembers().get(0);
+            Map<String, String> attr = new HashMap<>();
+            attr.put("id", htmlEntities(sdg.getId()));
+            sb.append(getHTMLTag("figure", attr, getHTMLTag("div", getImage(species)) + getCaption(species)));
+        });
+    	return sb.toString();
+    }
+    
+    /**
+     * Gets the html code for a species image.
+     * @param species The {@code Species} for which to get the image
+     * @return A {@String} containing the html code for this image
+     */
+    protected static String getImage(Species species) {
+    	Map<String,String> attrs = new HashMap<>();
+    	attrs.put("src", "img/species/"+htmlEntities(species.getId())+"_light.jpg");
+    	attrs.put("alt", htmlEntities(species.getShortName()));
+    	attrs.put("class", "species_img");
+
+    	return getHTMLTag("img", attrs);
+    }
+    
+    /**
+     * Gets the {@code figcaption} element for a given {@code Species}
+     * @param species A {@Species}
+     * @return A {@code String} containing the html code
+     */
+    protected static String getCaption(Species species) {
+    	return getHTMLTag("figcaption", getShortNameTag(species)
+    			+getHTMLTag("p", htmlEntities(species.getName())));
+    }
+    
+    /**
+     * Gets the {@code figcaption} element for a given {@code SpeciesDataGroup}
+     * @param species A {SpeciesDataGroup}
+     * @return A {@code String} containing the html code
+     */
+    protected static String getCaption(SpeciesDataGroup speciesDataGroup) {
+    	return getHTMLTag("figcaption", htmlEntities(speciesDataGroup.getName()));
+    }
+    
+    /**
+     * Gets the short name element for a given {@Species}
+     * @param species A {@Species}
+     * @return A {@code String} containing the html code
+     */
+    protected static String getShortNameTag(Species species) {
+    	return getHTMLTag("p", getHTMLTag("i", htmlEntities(species.getShortName())));
+    }
+    
     
   	@Override
   	protected void includeJs() {

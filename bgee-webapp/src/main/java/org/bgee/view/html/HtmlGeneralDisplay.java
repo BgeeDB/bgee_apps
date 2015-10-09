@@ -149,7 +149,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         log.entry(groups);
         
         // Single species part
-        String homePageSpeciesSection = getSingleSpeciesSection(null, groups);
+        String homePageSpeciesSection = HtmlDownloadDisplay.getSingleSpeciesSection(null, groups);
 
         // Black banner when a species or a group is selected.
         homePageSpeciesSection += this.getDownloadBanner();

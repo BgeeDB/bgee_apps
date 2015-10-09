@@ -31,6 +31,16 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentCaptor;
+
+/**
+ * Unit tests for {@link InsertSpeciesDataGroups}.
+ * 
+ * @author Valentine Rech de Laval
+ * @author Frederic Bastian
+ * @version Bgee 13 Oct. 2015
+ * @since Bgee 13 Oct. 2015
+ *
+ */
 public class InsertSpeciesDataGroupsTest extends TestAncestor {
 
     /**
@@ -76,15 +86,20 @@ public class InsertSpeciesDataGroupsTest extends TestAncestor {
 
         // Create temporary folders and files. 
         File tmpFolder1 = testFolder.newFolder("folder1");
+        tmpFolder1.deleteOnExit();
         File tmpFolder2 = testFolder.newFolder("folder2");
+        tmpFolder2.deleteOnExit();
         File tmpFolder3 = testFolder.newFolder("folder3");
+        tmpFolder3.deleteOnExit();
         File tmpFolder4 = testFolder.newFolder("sp2");
+        tmpFolder4.deleteOnExit();
         
         String fileExtension = ".tsv.zip";
 
         // We create test files. We do not use createTempFile() because we cannot have 2 files
         // having the same category because of random number added in file name. Files will be
-        // deleted because they are in a temporary folder.
+        // deleted because they are in a temporary folder, and we also called deleteOnExist 
+        //on the directories used.
         File file1 = new File(tmpFolder1, "sp1_diffexpr-anatomy-complete" + fileExtension);
         file1.createNewFile();
         this.writeSeveralLines(file1);
@@ -130,16 +145,6 @@ public class InsertSpeciesDataGroupsTest extends TestAncestor {
         this.writeSeveralLines(file9);
         new RandomAccessFile(file9, "rw").setLength(900); 
 
-        // XXX : find how to mock line numbers instead of write in files
-//        Stream<String> mockStream = mock(Stream.class);
-//        when(mockStream.count()).thenAnswer(new Answer<Integer>() {
-//            int counter = 1;
-//            public Integer answer(InvocationOnMock invocationOnMock) throws Throwable {
-//                System.err.println("toto");
-//                return counter++;
-//            }
-//        });
-
         // Create constructor parameters 
         LinkedHashMap<String, Set<String>> groupToSpecies = new LinkedHashMap<>();
         groupToSpecies.put("groupOneSpecies1", new HashSet<String>(Arrays.asList("sp1")));
@@ -175,23 +180,31 @@ public class InsertSpeciesDataGroupsTest extends TestAncestor {
 
         Map<String, String> singleSpCategoryToFilePathPattern = new HashMap<String, String>();
         singleSpCategoryToFilePathPattern.put(CategoryEnum.DIFF_EXPR_ANAT_COMPLETE.getStringRepresentation(),
-                tmpPath.relativize(file1.toPath()).toString().replaceAll("sp1", "{REPLACE}"));
+                tmpPath.relativize(file1.toPath()).toString()
+                .replaceAll("sp1", InsertSpeciesDataGroups.STRING_TO_REPLACE));
         singleSpCategoryToFilePathPattern.put(CategoryEnum.DIFF_EXPR_ANAT_SIMPLE.getStringRepresentation(),
-                tmpPath.relativize(file2.toPath()).toString().replaceAll("sp1", "{REPLACE}"));
+                tmpPath.relativize(file2.toPath()).toString()
+                .replaceAll("sp1", InsertSpeciesDataGroups.STRING_TO_REPLACE));
         singleSpCategoryToFilePathPattern.put(CategoryEnum.AFFY_ANNOT.getStringRepresentation(),
-                tmpPath.relativize(file3.toPath()).toString().replaceAll("sp1", "{REPLACE}"));
+                tmpPath.relativize(file3.toPath()).toString()
+                .replaceAll("sp1", InsertSpeciesDataGroups.STRING_TO_REPLACE));
         singleSpCategoryToFilePathPattern.put(CategoryEnum.EXPR_CALLS_COMPLETE.getStringRepresentation(),
-                tmpPath.relativize(file4.toPath()).toString().replaceAll("sp2", "{REPLACE}"));
+                tmpPath.relativize(file4.toPath()).toString()
+                .replaceAll("sp2", InsertSpeciesDataGroups.STRING_TO_REPLACE));
         singleSpCategoryToFilePathPattern.put(CategoryEnum.RNASEQ_DATA.getStringRepresentation(),
-                tmpPath.relativize(file5.toPath()).toString().replaceAll("sp2", "{REPLACE}"));
+                tmpPath.relativize(file5.toPath()).toString()
+                .replaceAll("sp2", InsertSpeciesDataGroups.STRING_TO_REPLACE));
 
         Map<String, String> multiSpCategoryToFilePathPattern = new HashMap<String, String>();
         multiSpCategoryToFilePathPattern.put(CategoryEnum.ORTHOLOG.getStringRepresentation(),
-                tmpPath.relativize(file6.toPath()).toString().replaceAll("gp1", "{REPLACE}"));
+                tmpPath.relativize(file6.toPath()).toString()
+                .replaceAll("gp1", InsertSpeciesDataGroups.STRING_TO_REPLACE));
         multiSpCategoryToFilePathPattern.put(CategoryEnum.DIFF_EXPR_ANAT_COMPLETE.getStringRepresentation(),
-                tmpPath.relativize(file7.toPath()).toString().replaceAll("gp1", "{REPLACE}"));
+                tmpPath.relativize(file7.toPath()).toString()
+                .replaceAll("gp1", InsertSpeciesDataGroups.STRING_TO_REPLACE));
         multiSpCategoryToFilePathPattern.put(CategoryEnum.DIFF_EXPR_DEV_SIMPLE.getStringRepresentation(),
-                tmpPath.relativize(file9.toPath()).toString().replaceAll("gp2", "{REPLACE}"));
+                tmpPath.relativize(file9.toPath()).toString()
+                .replaceAll("gp2", InsertSpeciesDataGroups.STRING_TO_REPLACE));
 
         // Insert data
         InsertSpeciesDataGroups insert = new InsertSpeciesDataGroups(mockManager, 
@@ -276,7 +289,7 @@ public class InsertSpeciesDataGroupsTest extends TestAncestor {
                     expectedDownloadFileTOs + ", but was " + downloadFileTOsArg.getValue());
         }
         
-        // Insert data
+        // Tests with incorrect arguments provided
         Set<String> groupOneSpecies2 = null;
         try {
             // Store element to restore in proper state afterwards.

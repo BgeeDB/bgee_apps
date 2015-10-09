@@ -1,22 +1,22 @@
 package org.bgee.model.file;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import java.util.*;
-
 import org.bgee.model.TestAncestor;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
-import org.bgee.model.dao.api.species.SpeciesDAO;
-import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
-import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
 import org.bgee.model.file.DownloadFile.CategoryEnum;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Matchers;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * This class holds the unit tests for {@code SpeciesDataGroup}

@@ -658,7 +658,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         sb.append("var autocomplete = ");
         sb.append(JSHelper.toJson(keywords.values().stream()
                 .flatMap(s -> s.stream())
-                .collect(Collectors.toSet())));
+                .distinct() // filter potential duplicates 
+                .sorted()   // sort the autocompletion list alphabetically
+                .collect(Collectors.toList())));
         sb.append(";</script>");
         return log.exit(sb.toString());
     }

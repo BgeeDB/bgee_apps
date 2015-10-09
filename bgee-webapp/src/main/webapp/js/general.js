@@ -105,6 +105,10 @@ var general = {
             }
             else{
                 this.loadDetails( $species );
+                //Google Analytics tracking
+                //(see https://developers.google.com/analytics/devguides/collection/analyticsjs/events)
+                var id = $species.attr("id");
+                ga ('send', 'event', 'detailbox_'+CURRENT_REQUEST.getPage()+'_'+CURRENT_REQUEST.getAction(), 'click', id);	
             }        
         },
 

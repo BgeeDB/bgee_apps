@@ -1,12 +1,7 @@
 package org.bgee.view.html;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -16,12 +11,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
-import org.bgee.model.file.SpeciesDataGroup;
-import org.bgee.model.species.Species;
-import org.bgee.utils.JSHelper;
 import org.bgee.view.ConcreteDisplayParent;
 import org.bgee.view.ViewFactory;
-import org.bgee.view.html.HtmlDownloadDisplay.DownloadPageType;
 
 /**
  * Parent of all display for the HTML view.
@@ -174,55 +165,6 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.sendHeaders();
         this.writeln("");
         log.exit();
-    }
-
-    /**
-     * Generates the script tag for the speciesData object that is accessible
-     * from the Javascript code of the page.
-     * @param dataGroups The {@code List} of {@code SpeciesDataGroup} for which download files are availables
-     * @return A {@String} containing the generated Javascript tag.
-     */
-    protected static String getDataGroupScriptTag(List<SpeciesDataGroup> dataGroups) {
-    	log.entry(dataGroups);
-        StringBuffer sb = new StringBuffer("<script>");
-        sb.append("var speciesData = ");
-        sb.append(JSHelper.toJson(dataGroups.stream()
-                .collect(Collectors.toMap(SpeciesDataGroup::getId, Function.identity()))));
-        sb.append(";</script>");
-        return log.exit(sb.toString());
-    }
-    
-    /**
-     * Generates the script tag for the species keywords (one entry is created per species group).
-     * from the Javascript code of the page.
-     * @param keywords The {@code Map} of species id to keywords
-     * @param groups   The {@code List} of species data groups
-     * @return A {@String} containing the generated Javascript tag.
-     */
-    protected static String getKeywordScriptTag(Map<String, Set<String>> keywords, List<SpeciesDataGroup> groups) {
-    	log.entry(keywords, groups);
-        StringBuffer sb = new StringBuffer("<script>");
-        sb.append("var keywords = ");
-        Map<String, Set<String>> idToMembers = groups.stream()
-        		.collect(Collectors.toMap(g -> g.getId(), 
-        				g -> g.getMembers().stream().map(m -> m.getId()).collect(Collectors.toSet()))
-        				);
-        log.trace(idToMembers.size());
-        log.trace(keywords.size());
-        sb.append(JSHelper.toJson(idToMembers.entrySet()
-        		.stream()
-        		.collect(Collectors.toMap(e -> e.getKey(),
-        				e -> 	e.getValue().stream()
-        		// we get the keyword set for each group and then use reduce to concatenate the strings
-        		.flatMap(id -> keywords.get(id).stream()).reduce( (s0,s1) -> s0+" "+s1).get() 
-        				))));
-        sb.append(";\n");
-        sb.append("var autocomplete = ");
-        sb.append(JSHelper.toJson(keywords.values().stream()
-        		.flatMap(s -> s.stream())
-        		.collect(Collectors.toSet())));
-        sb.append(";</script>");
-        return log.exit(sb.toString());
     }
     
     /**

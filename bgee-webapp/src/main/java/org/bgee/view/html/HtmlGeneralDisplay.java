@@ -11,6 +11,7 @@ import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.file.SpeciesDataGroup;
 import org.bgee.view.GeneralDisplay;
+import org.bgee.view.html.HtmlDownloadDisplay.DownloadPageType;
 
 /**
  * HTML View for the general category display
@@ -48,8 +49,6 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     public void displayHomePage(List<SpeciesDataGroup> groups) {
         log.entry(groups);
         this.startDisplay("Welcome to Bgee: a dataBase for Gene Expression Evolution");
-
-        this.write(getDataGroupScriptTag(groups));
         
         //TODO: manage the version either from database, or from bgee-webapp.properties file.
         this.writeln("<h1>Welcome to Bgee release 13.1</h1>");
@@ -149,7 +148,8 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         log.entry(groups);
         
         // Single species part
-        String homePageSpeciesSection = HtmlDownloadDisplay.getSingleSpeciesSection(null, groups);
+        String homePageSpeciesSection = HtmlDownloadDisplay.getSingleSpeciesSection(
+                DownloadPageType.HOME_PAGE, groups, true);
 
         // Black banner when a species or a group is selected.
         homePageSpeciesSection += this.getDownloadBanner();

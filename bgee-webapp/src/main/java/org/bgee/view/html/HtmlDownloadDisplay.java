@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
@@ -18,7 +19,6 @@ import org.bgee.model.file.SpeciesDataGroup;
 import org.bgee.model.species.Species;
 import org.bgee.utils.JSHelper;
 import org.bgee.view.DownloadDisplay;
-import org.bgee.view.html.HtmlDownloadDisplay.DownloadPageType;
 
 /**
  * This class displays the page having the category "download", i.e. with the parameter
@@ -33,9 +33,19 @@ import org.bgee.view.html.HtmlDownloadDisplay.DownloadPageType;
 public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDisplay {
  
     private final static Logger log = LogManager.getLogger(HtmlDownloadDisplay.class.getName());
-        
+    
+    /**
+     * An {@code enum defining} for which type of page some {@code SpeciesDataGroup}s 
+     * are being displayed. 
+     * <ul>
+     * <li>{@code PROC_EXPR_VALUES}: processed expression values page.
+     * <li>{@code EXPR_CALLS}: expression/diff. expression calls page.
+     * <li>{@code HOME_PAGE}: summary of data for the home page.
+     * </ul>
+     *
+     */
     public enum DownloadPageType {
-        PROC_EXPR_VALUES, EXPR_CALLS
+        PROC_EXPR_VALUES, EXPR_CALLS, HOME_PAGE
     }
     /**
      * Constructor
@@ -101,7 +111,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln(this.getSearchBox());
         
         // Single species part
-        this.writeln(getSingleSpeciesSection(DownloadPageType.EXPR_CALLS, groups));
+        this.writeln(getSingleSpeciesSection(DownloadPageType.EXPR_CALLS, groups, false));
 
         // Black banner when a species or a group is selected.
         this.writeln(this.getDownloadBanner(DownloadPageType.EXPR_CALLS));
@@ -150,7 +160,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln(this.getSearchBox());
         
         // Single species part
-        this.writeln(getSingleSpeciesSection(DownloadPageType.PROC_EXPR_VALUES, groups));
+        this.writeln(getSingleSpeciesSection(DownloadPageType.PROC_EXPR_VALUES, groups, false));
 
         // Black banner when a species or a group is selected.
         this.writeln(this.getDownloadBanner(DownloadPageType.PROC_EXPR_VALUES));
@@ -238,6 +248,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                     + "probeset normalized signal intensities). Click on a species "
                     + "to browse files available for download. ";
         } else {
+            //pre-condition check in private method, use of assert allowed
             assert false: "Unknown DownloadPageType";
         }
         intro += "See also ";
@@ -305,7 +316,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      * @return          the {@code String} that is the multi-species section as HTML 'div' element,
      *                  according {@code pageType}.
      */
-    protected String getMultiSpeciesFigures(DownloadPageType pageType,  List<SpeciesDataGroup> groups) {
+    private String getMultiSpeciesFigures(DownloadPageType pageType,  List<SpeciesDataGroup> groups) {
     	StringBuffer sb = new StringBuffer();
     	
     	for (SpeciesDataGroup sdg: groups) {
@@ -331,7 +342,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      * @return          the {@code String} that is the multi-species section as HTML 'div' element,
      *                  according {@code pageType}.
      */
-    protected String getMultiSpeciesSection(DownloadPageType pageType, List<SpeciesDataGroup> groups) {
+    private String getMultiSpeciesSection(DownloadPageType pageType, List<SpeciesDataGroup> groups) {
         log.entry(pageType);
 
         StringBuffer s = new StringBuffer(); 
@@ -354,7 +365,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      * @return          the {@code String} that is the black banner of a download page 
      *                  as a HTML 'div' element according {@code pageType}.
      */
-    protected String getDownloadBanner(DownloadPageType pageType) {
+    private String getDownloadBanner(DownloadPageType pageType) {
         log.entry(pageType);
     
         StringBuilder banner = new StringBuilder();
@@ -563,16 +574,25 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     
     /**
      * Get the single species section of a download page as a HTML 'div' element,
-     * according the provided page type.
+     * according to the provided page type and data groups.
      *
-     * @param pageType  A {@code DownloadPageType} that is the type of the page.
-     * @return          the {@code String} that is the single species section as HTML 'div' element,
-     *                  according {@code pageType}.
+     * @param pageType                  A {@code DownloadPageType} that is the type of the page.
+     * @param groups                    A {@code List} of {@code SpeciesDataGroup}s 
+     *                                  containing the information to be displayed.
+     * @param includeDataGroupScriptTag A {@code boolean} defining whether this method 
+     *                                  should be responsible for including the javascript tag 
+     *                                  containing the species data groups information as JSON. 
+     *                                  If not already included, should be {@code true}.
+     * @return                          A {@code String} that is the single species section in HTML.
      */
-    protected static String getSingleSpeciesSection(DownloadPageType pageType, List<SpeciesDataGroup> groups) {
-        log.entry(pageType);
+    protected static String getSingleSpeciesSection(DownloadPageType pageType, 
+            List<SpeciesDataGroup> groups, boolean includeDataGroupScriptTag) {
+        log.entry(pageType, groups, includeDataGroupScriptTag);
 
         StringBuilder s = new StringBuilder();
+        if (includeDataGroupScriptTag) {
+            s.append(getDataGroupScriptTag(groups));
+        }
         s.append("<div id='bgee_uniq_species'> ");
         s.append("<h2>Species with data in Bgee</h2>");
         s.append("<span class='header_details'>(click on species to see more details)</span>");
@@ -583,6 +603,55 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         
         return log.exit(s.toString());
     }
+
+    /**
+     * Generates the script tag for the speciesData object that is accessible
+     * from the Javascript code of the page.
+     * @param dataGroups The {@code List} of {@code SpeciesDataGroup} for which download files are availables
+     * @return A {@String} containing the generated Javascript tag.
+     */
+    private static String getDataGroupScriptTag(List<SpeciesDataGroup> dataGroups) {
+        log.entry(dataGroups);
+        StringBuffer sb = new StringBuffer("<script>");
+        sb.append("var speciesData = ");
+        sb.append(JSHelper.toJson(dataGroups.stream()
+                .collect(Collectors.toMap(SpeciesDataGroup::getId, Function.identity()))));
+        sb.append(";</script>");
+        return log.exit(sb.toString());
+    }
+    
+    /**
+     * Generates the script tag for the species keywords (one entry is created per species group).
+     * from the Javascript code of the page.
+     * @param keywords The {@code Map} of species id to keywords
+     * @param groups   The {@code List} of species data groups
+     * @return A {@String} containing the generated Javascript tag.
+     */
+    private static String getKeywordScriptTag(Map<String, Set<String>> keywords, List<SpeciesDataGroup> groups) {
+        log.entry(keywords, groups);
+        StringBuffer sb = new StringBuffer("<script>");
+        sb.append("var keywords = ");
+        Map<String, Set<String>> idToMembers = groups.stream()
+                .collect(Collectors.toMap(g -> g.getId(), 
+                        g -> g.getMembers().stream().map(m -> m.getId()).collect(Collectors.toSet()))
+                        );
+        log.trace(idToMembers.size());
+        log.trace(keywords.size());
+        sb.append(JSHelper.toJson(idToMembers.entrySet()
+                .stream()
+                .collect(Collectors.toMap(e -> e.getKey(),
+                        e ->    e.getValue().stream()
+                // we get the keyword set for each group and then use reduce to concatenate the strings
+                .flatMap(id -> keywords.get(id).stream()).reduce( (s0,s1) -> s0+" "+s1).get() 
+                        ))));
+        sb.append(";\n");
+        sb.append("var autocomplete = ");
+        sb.append(JSHelper.toJson(keywords.values().stream()
+                .flatMap(s -> s.stream())
+                .collect(Collectors.toSet())));
+        sb.append(";</script>");
+        return log.exit(sb.toString());
+    }
     
     /**
      * Gets the single species section as a {@code String}
@@ -590,10 +659,10 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      * @param groups   the {@code List} of {@code SpeciesDataGroup} to display
      * @return A {@String} containing the html section 
      */
-    //XXX: Could this method should take a List<Species>, the ID attr should be the species ID, 
+    //XXX: Could this method take a List<Species>, the ID attr should be the species ID, 
     //this way CommandHome would not need to call getSpeciesDataGroupService, 
     //but simply SpeciesService#loadSpeciesInDataGroups()
-    protected static String getSingleSpeciesFigures(DownloadPageType pageType, List<SpeciesDataGroup> groups) {
+    private static String getSingleSpeciesFigures(DownloadPageType pageType, List<SpeciesDataGroup> groups) {
         StringBuilder sb = new StringBuilder();
 
         groups.stream().filter(sdg -> sdg.isSingleSpecies()).forEach(sdg -> {
@@ -610,7 +679,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      * @param species The {@code Species} for which to get the image
      * @return A {@String} containing the html code for this image
      */
-    protected static String getImage(Species species) {
+    private static String getImage(Species species) {
     	Map<String,String> attrs = new HashMap<>();
     	attrs.put("src", "img/species/"+htmlEntities(species.getId())+"_light.jpg");
     	attrs.put("alt", htmlEntities(species.getShortName()));
@@ -624,7 +693,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      * @param species A {@Species}
      * @return A {@code String} containing the html code
      */
-    protected static String getCaption(Species species) {
+    private static String getCaption(Species species) {
     	return getHTMLTag("figcaption", getShortNameTag(species)
     			+getHTMLTag("p", htmlEntities(species.getName())));
     }
@@ -634,7 +703,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      * @param species A {SpeciesDataGroup}
      * @return A {@code String} containing the html code
      */
-    protected static String getCaption(SpeciesDataGroup speciesDataGroup) {
+    private static String getCaption(SpeciesDataGroup speciesDataGroup) {
     	return getHTMLTag("figcaption", htmlEntities(speciesDataGroup.getName()));
     }
     
@@ -643,7 +712,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      * @param species A {@Species}
      * @return A {@code String} containing the html code
      */
-    protected static String getShortNameTag(Species species) {
+    private static String getShortNameTag(Species species) {
     	return getHTMLTag("p", getHTMLTag("i", htmlEntities(species.getShortName())));
     }
     

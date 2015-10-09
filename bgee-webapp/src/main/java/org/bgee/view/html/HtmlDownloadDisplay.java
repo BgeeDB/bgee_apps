@@ -594,7 +594,17 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             s.append(getDataGroupScriptTag(groups));
         }
         s.append("<div id='bgee_uniq_species'> ");
-        s.append("<h2>Species with data in Bgee</h2>");
+        switch (pageType) {
+        case HOME_PAGE: 
+        case PROC_EXPR_VALUES:
+            s.append("<h2>Species with data in Bgee</h2>");
+            break;
+        case EXPR_CALLS: 
+            s.append("<h2>Single-species</h2>");
+            break; 
+        default: 
+            throw log.throwing(new IllegalArgumentException("DownloadPageType not supported: " + pageType));
+        }
         s.append("<span class='header_details'>(click on species to see more details)</span>");
         s.append("<div class='bgee_section bgee_download_section'>");
         s.append(getSingleSpeciesFigures(pageType, groups));

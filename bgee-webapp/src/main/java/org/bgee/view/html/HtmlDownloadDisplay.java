@@ -3,6 +3,7 @@ package org.bgee.view.html;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -92,7 +93,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         
         this.writeln(this.getMoreResultDivs());
   		this.writeln(getDataGroupScriptTag(groups));
-  		this.writeln(getKeywordScriptTag(keywords, groups));
+        this.writeln(getKeywordScriptTag(keywords, groups, DownloadPageType.EXPR_CALLS));
         this.writeln("<div id='expr_calls'>");
 
         this.writeln("<div id='bgee_title'>");
@@ -136,7 +137,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         
         this.startDisplay("Bgee " + PROCESSED_EXPR_VALUES_PAGE_NAME.toLowerCase() + " download page");
   		this.writeln(getDataGroupScriptTag(groups));
-  		this.writeln(getKeywordScriptTag(keywords, groups));
+        this.writeln(getKeywordScriptTag(keywords, groups, DownloadPageType.PROC_EXPR_VALUES));
   		this.writeln(this.getExprValuesDirectoryScriptTag(groups));
 
         this.writeln(this.getMoreResultDivs());
@@ -632,36 +633,61 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     
     /**
      * Generates the script tag for the species keywords (one entry is created per species group).
-     * from the Javascript code of the page.
-     * @param keywords The {@code Map} of species id to keywords
-     * @param groups   The {@code List} of species data groups
-     * @return A {@String} containing the generated Javascript tag.
+     * 
+     * @param keywords  The {@code Map} of species id to keywords
+     * @param groups    The {@code List} of species data groups
+     * @param pageType  The {@code DownloadPageType} to generate the script tag for.
+     * @return          A {@String} containing the generated Javascript tag.
+     * @throws IllegalArgumentException If {@code keywords} is missing a mapping 
+     *                                  for a {@code Species} member of a {@code SpeciesDataGroup}.
      */
-    private static String getKeywordScriptTag(Map<String, Set<String>> keywords, List<SpeciesDataGroup> groups) {
-        log.entry(keywords, groups);
+    private static String getKeywordScriptTag(Map<String, Set<String>> keywords, 
+            List<SpeciesDataGroup> groups, DownloadPageType pageType) throws IllegalArgumentException {
+        log.entry(keywords, groups, pageType);
+
+        //check that we have keywords for all species (we should at least have their names, etc)
+        //(not all species had keywords in a previous version, and the stream operations below 
+        //were throwing a null pointer exception)
+        if (!groups.stream().flatMap(e -> e.getMembers().stream()).map(spe -> spe.getId())
+                .collect(Collectors.toSet()).equals(keywords.keySet())) {
+            throw log.throwing(new IllegalArgumentException("Some species are missing associated keywords."));
+        }
+        
+        //Map group ID -> associated search terms
+        Map<String, Set<String>> groupIdsToTerms = groups.stream()
+                //skip multi-species groups for processed expression values pages, 
+                //to avoid proposing completion for multi-species group names (e.g., "macaque/chimpanzee")
+                .filter(e -> pageType == DownloadPageType.EXPR_CALLS || e.isSingleSpecies())
+                .collect(Collectors.toMap(e -> e.getId(), e -> {
+                    Set<String> terms = new HashSet<>();
+                    //first, store the group name to allow search by group name
+                    terms.add(e.getName());
+                    //then, add keywords associated to all species members of the group
+                    terms.addAll(e.getMembers().stream()
+                            .flatMap(spe -> keywords.get(spe.getId()).stream())
+                            .collect(Collectors.toSet()));
+                    return terms;
+                }));
+        log.trace("Group IDs to terms: {}", groupIdsToTerms);
+        
         StringBuffer sb = new StringBuffer("<script>");
         sb.append("var keywords = ");
-        Map<String, Set<String>> idToMembers = groups.stream()
-                .collect(Collectors.toMap(g -> g.getId(), 
-                        g -> g.getMembers().stream().map(m -> m.getId()).collect(Collectors.toSet()))
-                        );
-        log.trace(idToMembers.size());
-        log.trace(keywords.size());
-        sb.append(JSHelper.toJson(idToMembers.entrySet()
-                .stream()
-                .collect(Collectors.toMap(e -> e.getKey(),
-                        e ->    e.getValue().stream()
-                // we get the keyword set for each group and then use reduce to concatenate the strings
-                .flatMap(id -> keywords.get(id).stream()).reduce( (s0,s1) -> s0+" "+s1).get() 
-                        ))));
+        sb.append(JSHelper.toJson(groupIdsToTerms.entrySet().stream()
+                .collect(Collectors.toMap(
+                        e -> e.getKey(), 
+                        //concatenate all terms in a string, separated with spaces
+                        e -> e.getValue().stream().reduce((s0, s1) -> s0 + " " + s1).get()))
+        ));
         sb.append(";\n");
+        
         sb.append("var autocomplete = ");
-        sb.append(JSHelper.toJson(keywords.values().stream()
-                .flatMap(s -> s.stream())
+        sb.append(JSHelper.toJson(groupIdsToTerms.values().stream()
+                .flatMap(e -> e.stream())
                 .distinct() // filter potential duplicates 
                 .sorted()   // sort the autocompletion list alphabetically
                 .collect(Collectors.toList())));
         sb.append(";</script>");
+        
         return log.exit(sb.toString());
     }
     

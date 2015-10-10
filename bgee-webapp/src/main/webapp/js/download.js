@@ -408,15 +408,14 @@ var download = {
         			//in RequestParameters.java)
         			requestSwitchPage.getRequestURL());
             
-        	var bgeeGroupName = null, species = null, bgeeSpeciesCommonNames =null, bgeeSpeciesName = null;
+            var species = null, bgeeSpeciesCommonNames =null, bgeeSpeciesName = null;
         	var groupData = speciesData[id];	
         	// Get files urls for the current species/group
             var files = groupData.downloadFiles;
             var bgeeIsGroup = groupData.members.length > 1;
-
-        	if (bgeeIsGroup) {
-                 bgeeGroupName = groupData.name;
-            } else {
+            var bgeeGroupName = groupData.name;
+            
+            if (!bgeeIsGroup) {
             	 species = groupData.members[0]
             	 bgeeSpeciesCommonNames = species.name;
             	 bgeeSpeciesName = species.genus +" " +species.speciesName;
@@ -498,7 +497,7 @@ var download = {
             });
             namesOfAllSpecies = namesOfAllSpecies.slice( 0, - 2 ); // Remove the extra ' ,'
             // if it is a group, use the group name as label, else the species name
-            if( bgeeGroupName ){
+            if( bgeeIsGroup ){
             	this.$switchPageLink.hide();
                 this.$bgeeDataSelectionTextScientific.text( "" );
                 this.$bgeeDataSelectionTextCommon.text( bgeeGroupName );
@@ -522,7 +521,10 @@ var download = {
             } else {
             	this.$switchPageLink.show();
                 this.$bgeeDataSelectionTextScientific.text( bgeeSpeciesName );
-                this.$bgeeDataSelectionTextCommon.text( "("+ bgeeSpeciesCommonNames +")" );
+                //we display the group name as subtitle rather than the species common name, 
+                //because we used to have incorrect common names at some point, 
+                //and because this allows more flexibility (e.g. "human including GTEx data")
+                this.$bgeeDataSelectionTextCommon.text( "("+ bgeeGroupName +")" );
                 this.$bgeeGroupDescription.text( "" );
                 this.$showMultiSimpleDiffexprAnatomyHeaders.hide();
                 this.$showMultiCompleteDiffexprAnatomyHeaders.hide();
@@ -567,7 +569,7 @@ var download = {
             if (bgeeExprSimpleFileUrl === undefined) {
             	this.$exprSimpleData.hide();
             	//TODO remove when multi-species expression files are computed
-            	if( bgeeGroupName ){
+            	if( bgeeIsGroup ){
             		this.$exprNoData.hide();
             		this.$exprComingSoon.show();
             		this.$exprHelp.hide();
@@ -608,7 +610,7 @@ var download = {
             if( bgeeDiffExprDevelopmentSimpleFileUrl === undefined ) {
             	this.$diffExprDevelopmentData.hide();
             	//TODO remove when multi-species developmental diff. expression files are computed
-                if( bgeeGroupName ){
+                if( bgeeIsGroup ){
                 	this.$diffExprDevelopmentNoData.hide();
                 	this.$diffExprDevelopmentComingSoon.show();
                 	this.$diffDevHelp.hide();

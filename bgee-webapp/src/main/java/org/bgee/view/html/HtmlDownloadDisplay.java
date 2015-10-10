@@ -707,7 +707,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             Species species = sdg.getMembers().get(0);
             Map<String, String> attr = new HashMap<>();
             attr.put("id", htmlEntities(sdg.getId()));
-            sb.append(getHTMLTag("figure", attr, getHTMLTag("div", getImage(species)) + getCaption(species)));
+            sb.append(getHTMLTag("figure", attr, getHTMLTag("div", getImage(species)) + getCaption(species, sdg)));
         });
     	return sb.toString();
     }
@@ -727,13 +727,18 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     }
     
     /**
-     * Gets the {@code figcaption} element for a given {@code Species}
-     * @param species A {@Species}
-     * @return A {@code String} containing the html code
+     * Gets the {@code figcaption} element for a given {@code Species} belonging to {@code group}.
+     * @param species   A {@Species}
+     * @param group     The {@code SpeciesDataGroup} which {@code species} belongs to.
+     * @return A {@code String} containing the html code.
      */
-    private static String getCaption(Species species) {
-    	return getHTMLTag("figcaption", getShortNameTag(species)
-    			+getHTMLTag("p", htmlEntities(species.getName())));
+    private static String getCaption(Species species, SpeciesDataGroup group) {
+        log.entry(species, group);
+        return log.exit(getHTMLTag("figcaption", getShortNameTag(species)
+                //we display the group name as subtitle rather than the species common name, 
+                //because we used to have incorrect common names at some point, 
+                //and because this allows more flexibility (e.g. "human including GTEx data")
+                +getHTMLTag("p", htmlEntities(group.getName()))));
     }
     
     /**

@@ -743,7 +743,7 @@ var download = {
             if( text.length > 1 ){
                 // Add the class on all species where the text match the searchContent 
                 this.$species.each(function (){
-                    if( download.searchContent[$( this ).attr( "id" )]
+                    if( download.searchContent[$( this ).attr( "id" )].toLowerCase()
                     .indexOf( text.toLowerCase() ) > -1){
                         $( this ).addClass( "highlight" );
                     }

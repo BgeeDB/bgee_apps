@@ -320,14 +320,11 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     	
     	for (SpeciesDataGroup sdg: groups) {
     		if (sdg.isMultipleSpecies()) {
-    			StringBuffer images = new StringBuffer();
-    			for (Species species : sdg.getMembers()) {
-    				images.append(getImage(species));
-    			}
     			Map<String, String> attr = new HashMap<>();
     			attr.put("id", htmlEntities(sdg.getId()));
     			attr.put("name", htmlEntities(sdg.getName()));
-    			sb.append(getHTMLTag("figure", attr, getHTMLTag("div", images.toString()+getCaption(sdg))));
+    			sb.append(getHTMLTag("figure", attr, getHTMLTag("div", 
+    			        getSpeciesImages(sdg.getMembers(), pageType) + getCaption(sdg))));
     		}
     	}
     	return sb.toString();
@@ -572,6 +569,38 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     }
     
     /**
+     * Gets the html code to display images of species in figures.
+     * 
+     * @param species   A {@code List} of {@code Species} to be displayed in a figure.
+     * @param pageType  A {@code DownloadPageType} for which to generate img tags.
+     * @return          A {@String} containing the html code to display species images.
+     */
+    private String getSpeciesImages(List<Species> species, DownloadPageType pageType) {
+        log.entry(species, pageType);
+        
+        //sanity check in private method, assert acceptable
+        assert !species.isEmpty();
+        
+        StringBuilder images = new StringBuilder();
+        for (Species spe : species) {
+            Map<String,String> attrs = new HashMap<>();
+            attrs.put("src", this.prop.getSpeciesImagesRootDirectory() + htmlEntities(spe.getId())+"_light.jpg");
+            attrs.put("alt", htmlEntities(spe.getShortName()));
+            attrs.put("class", "species_img");
+            images.append(getHTMLTag("img", attrs));
+        }
+        if (pageType == DownloadPageType.PROC_EXPR_VALUES) {
+            Map<String,String> attrs = new HashMap<>();
+            attrs.put("src", this.prop.getLogoImagesRootDirectory() + "proc_values_zoom_logo.png");
+            attrs.put("alt", htmlEntities(PROCESSED_EXPR_VALUES_PAGE_NAME));
+            attrs.put("class", "page_img");
+            images.append(getHTMLTag("img", attrs));
+        }
+        
+        return log.exit(images.toString());
+    }
+
+    /**
      * Get the single species section of a download page as a HTML 'div' element,
      * according to the provided page type and data groups.
      *
@@ -584,7 +613,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      *                                  If not already included, should be {@code true}.
      * @return                          A {@code String} that is the single species section in HTML.
      */
-    protected static String getSingleSpeciesSection(DownloadPageType pageType, 
+    protected String getSingleSpeciesSection(DownloadPageType pageType, 
             List<SpeciesDataGroup> groups, boolean includeDataGroupScriptTag) {
         log.entry(pageType, groups, includeDataGroupScriptTag);
 
@@ -611,6 +640,28 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         s.append("</div>");
         
         return log.exit(s.toString());
+    }
+
+    /**
+     * Gets the single species section as a {@code String}
+     * @param pageType the {@code DownloadPageType} of this page
+     * @param groups   the {@code List} of {@code SpeciesDataGroup} to display
+     * @return A {@String} containing the html section 
+     */
+    //XXX: Could this method take a List<Species>, the ID attr should be the species ID, 
+    //this way CommandHome would not need to call getSpeciesDataGroupService, 
+    //but simply SpeciesService#loadSpeciesInDataGroups()
+    private String getSingleSpeciesFigures(DownloadPageType pageType, List<SpeciesDataGroup> groups) {
+        StringBuilder sb = new StringBuilder();
+
+        groups.stream().filter(sdg -> sdg.isSingleSpecies()).forEach(sdg -> {
+            Species species = sdg.getMembers().get(0);
+            Map<String, String> attr = new HashMap<>();
+            attr.put("id", htmlEntities(sdg.getId()));
+            sb.append(getHTMLTag("figure", attr, getHTMLTag("div", 
+                    getSpeciesImages(sdg.getMembers(), pageType)) + getCaption(species, sdg)));
+        });
+        return sb.toString();
     }
 
     /**
@@ -682,41 +733,6 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         sb.append(";</script>");
         
         return log.exit(sb.toString());
-    }
-    
-    /**
-     * Gets the single species section as a {@code String}
-     * @param pageType the {@code DownloadPageType} of this page
-     * @param groups   the {@code List} of {@code SpeciesDataGroup} to display
-     * @return A {@String} containing the html section 
-     */
-    //XXX: Could this method take a List<Species>, the ID attr should be the species ID, 
-    //this way CommandHome would not need to call getSpeciesDataGroupService, 
-    //but simply SpeciesService#loadSpeciesInDataGroups()
-    private static String getSingleSpeciesFigures(DownloadPageType pageType, List<SpeciesDataGroup> groups) {
-        StringBuilder sb = new StringBuilder();
-
-        groups.stream().filter(sdg -> sdg.isSingleSpecies()).forEach(sdg -> {
-            Species species = sdg.getMembers().get(0);
-            Map<String, String> attr = new HashMap<>();
-            attr.put("id", htmlEntities(sdg.getId()));
-            sb.append(getHTMLTag("figure", attr, getHTMLTag("div", getImage(species)) + getCaption(species, sdg)));
-        });
-    	return sb.toString();
-    }
-    
-    /**
-     * Gets the html code for a species image.
-     * @param species The {@code Species} for which to get the image
-     * @return A {@String} containing the html code for this image
-     */
-    private static String getImage(Species species) {
-    	Map<String,String> attrs = new HashMap<>();
-    	attrs.put("src", "img/species/"+htmlEntities(species.getId())+"_light.jpg");
-    	attrs.put("alt", htmlEntities(species.getShortName()));
-    	attrs.put("class", "species_img");
-
-    	return getHTMLTag("img", attrs);
     }
     
     /**

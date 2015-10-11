@@ -53,6 +53,10 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         //TODO: manage the version either from database, or from bgee-webapp.properties file.
         this.writeln("<h1>Welcome to Bgee release 13.1</h1>");
         
+        if (groups.stream().anyMatch(SpeciesDataGroup::isMultipleSpecies)) {
+            throw log.throwing(new IllegalArgumentException(
+                    "Only single-species groups should be displayed on the home page."));
+        }
         this.writeln(this.displayHomePageSpecies(groups));
 
         this.writeln("<h2>Browse Bgee content</h2>");

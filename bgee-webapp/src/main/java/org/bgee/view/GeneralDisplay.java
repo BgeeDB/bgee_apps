@@ -24,6 +24,7 @@ public interface GeneralDisplay {
      * Launch the display of the home page, using the {@code HttpServletResponse} 
      * provided at instantiation.
      * @param groups A {@code List} of single species datagroups displayed on the home page.
+     * @throws IllegalArgumentException If {@code groups} contains multi-species data groups.
      */
-    public void displayHomePage(List<SpeciesDataGroup> groups);
+    public void displayHomePage(List<SpeciesDataGroup> groups) throws IllegalArgumentException;
 }

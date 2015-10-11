@@ -341,6 +341,16 @@ public class RequestParameters {
     private final String httpMethod;
 
     /**
+     * 0-arg constructor defining default implementations and values to use to call 
+     * {@link #RequestParameters(URLParameters, BgeeProperties, boolean, String)}. It uses 
+     * the {@code BgeeProperties} returned by {@link BgeeProperties#getBgeeProperties()}, 
+     * the default implementation of {@code URLParameters}, value {@code true} for 
+     * {@code encodeUrl}, value "&" for {@code parametersSeparator}.
+     */
+    public RequestParameters() {
+        this(new URLParameters(), BgeeProperties.getBgeeProperties(), true, "&");
+    }
+    /**
      * Default constructor. 
      * 
      * @param urlParametersInstance     A instance of {@code URLParameters} that 

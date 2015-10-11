@@ -18,8 +18,8 @@ import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.file.SpeciesDataGroup;
 import org.bgee.model.species.Species;
-import org.bgee.utils.JSHelper;
 import org.bgee.view.DownloadDisplay;
+import org.bgee.view.JsonHelper;
 
 /**
  * This class displays the page having the category "download", i.e. with the parameter
@@ -58,13 +58,14 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      *                          and for display purposes.
      * @param prop              A {@code BgeeProperties} instance that contains the properties
      *                          to use.
+     * @param jsonHelper        A {@code JsonHelper} used to read/write variables into JSON.
      * @param factory           The {@code HtmlFactory} that instantiated this object.
      * @throws IOException      If there is an issue when trying to get or to use the
      *                          {@code PrintWriter} 
      */
     public HtmlDownloadDisplay(HttpServletResponse response, RequestParameters requestParameters, 
-            BgeeProperties prop, HtmlFactory factory) throws IOException {
-        super(response, requestParameters, prop, factory);
+            BgeeProperties prop, JsonHelper jsonHelper, HtmlFactory factory) throws IOException {
+        super(response, requestParameters, prop, jsonHelper, factory);
     }
 
     @Override
@@ -196,7 +197,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
         String rnaSeqRootDir = this.prop.getDownloadRNASeqProcExprValueFilesRootDirectory();
         sb.append("var rnaSeqExprValuesDirs = ");
-        sb.append(JSHelper.toJson(groups.stream().filter(SpeciesDataGroup::isSingleSpecies)
+        sb.append(this.getJsonHelper().toJson(groups.stream().filter(SpeciesDataGroup::isSingleSpecies)
             .collect(Collectors.toMap(
                 SpeciesDataGroup::getId, 
                 g -> rnaSeqRootDir + g.getMembers().get(0).getScientificName().replace(" ", "_") + "/"
@@ -206,7 +207,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
         String affyRootDir = this.prop.getDownloadAffyProcExprValueFilesRootDirectory();
         sb.append("var affyExprValuesDirs = ");
-        sb.append(JSHelper.toJson(groups.stream().filter(SpeciesDataGroup::isSingleSpecies)
+        sb.append(this.getJsonHelper().toJson(groups.stream().filter(SpeciesDataGroup::isSingleSpecies)
             .collect(Collectors.toMap(
                 SpeciesDataGroup::getId, 
                 g -> affyRootDir + g.getMembers().get(0).getScientificName().replace(" ", "_") + "/"
@@ -670,11 +671,11 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      * @param dataGroups The {@code List} of {@code SpeciesDataGroup} for which download files are availables
      * @return A {@String} containing the generated Javascript tag.
      */
-    private static String getDataGroupScriptTag(List<SpeciesDataGroup> dataGroups) {
+    private String getDataGroupScriptTag(List<SpeciesDataGroup> dataGroups) {
         log.entry(dataGroups);
         StringBuilder sb = new StringBuilder("<script>");
         sb.append("var speciesData = ");
-        sb.append(JSHelper.toJson(dataGroups.stream()
+        sb.append(this.getJsonHelper().toJson(dataGroups.stream()
                 .collect(Collectors.toMap(SpeciesDataGroup::getId, Function.identity()))));
         sb.append(";</script>");
         return log.exit(sb.toString());
@@ -690,7 +691,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      * @throws IllegalArgumentException If {@code keywords} is missing a mapping 
      *                                  for a {@code Species} member of a {@code SpeciesDataGroup}.
      */
-    private static String getKeywordScriptTag(Map<String, Set<String>> keywords, 
+    private String getKeywordScriptTag(Map<String, Set<String>> keywords, 
             List<SpeciesDataGroup> groups, DownloadPageType pageType) throws IllegalArgumentException {
         log.entry(keywords, groups, pageType);
 
@@ -721,11 +722,11 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         
         StringBuilder sb = new StringBuilder("<script>");
         sb.append("var keywords = ");
-        sb.append(JSHelper.toJson(groupIdsToTerms));
+        sb.append(this.getJsonHelper().toJson(groupIdsToTerms));
         sb.append(";\n");
         
         sb.append("var autocomplete = ");
-        sb.append(JSHelper.toJson(groupIdsToTerms.values().stream()
+        sb.append(this.getJsonHelper().toJson(groupIdsToTerms.values().stream()
                 .flatMap(e -> e.stream())
                 .distinct() // filter potential duplicates 
                 .sorted()   // sort the autocompletion list alphabetically

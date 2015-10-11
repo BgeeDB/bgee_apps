@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.ConcreteDisplayParent;
+import org.bgee.view.JsonHelper;
 import org.bgee.view.ViewFactory;
 
 /**
@@ -99,6 +100,33 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
          return log.exit(sb.toString());
      }
 
+     /**
+      * The {@code JsonHelper} used to read/write variables into JSON.
+      */
+     private final JsonHelper jsonHelper;
+
+     
+     /**
+      * Constructor providing the necessary dependencies, except the {@code JsonHelper}, 
+      * that will thus be based on the default implementation.
+      * 
+      * @param response          A {@code HttpServletResponse} that will be used to display the 
+      *                          page to the client
+      * @param requestParameters The {@code RequestParameters} that handles the parameters of the 
+      *                          current request.
+      * @param prop              A {@code BgeeProperties} instance that contains the properties
+      *                          to use.
+      * @param factory           The {@code HtmlFactory} that was used to instantiate this object.
+      * 
+      * @throws IllegalArgumentException If {@code factory} is {@code null}.
+      * @throws IOException              If there is an issue when trying to get or to use the
+      *                                  {@code PrintWriter} 
+      * @see #HtmlParentDisplay(HttpServletResponse, RequestParameters, BgeeProperties, JsonHelper, HtmlFactory)
+      */
+     public HtmlParentDisplay(HttpServletResponse response, RequestParameters requestParameters, 
+             BgeeProperties prop, HtmlFactory factory) throws IllegalArgumentException, IOException {
+         this(response, requestParameters, prop, null, factory);
+     }
     /**
      * Constructor providing the necessary dependencies.
      * 
@@ -108,6 +136,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      *                          current request.
      * @param prop              A {@code BgeeProperties} instance that contains the properties
      *                          to use.
+     * @param jsonHelper        A {@code JsonHelper} used to read/write variables into JSON. 
      * @param factory           The {@code HtmlFactory} that was used to instantiate this object.
      * 
      * @throws IllegalArgumentException If {@code factory} is {@code null}.
@@ -115,8 +144,10 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      *                                  {@code PrintWriter} 
      */
     public HtmlParentDisplay(HttpServletResponse response, RequestParameters requestParameters, 
-            BgeeProperties prop, HtmlFactory factory) throws IllegalArgumentException, IOException {
+            BgeeProperties prop, JsonHelper jsonHelper, HtmlFactory factory) 
+                    throws IllegalArgumentException, IOException {
         super(response, requestParameters, prop, factory);
+        this.jsonHelper = jsonHelper;
     }
     
     @Override
@@ -682,6 +713,13 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     //method overridden only to provide more accurate javadoc
     protected ViewFactory getFactory() {
         return super.getFactory();
+    }
+    
+    /**
+     * @return  The {@code JsonHelper} used to read/write variables into JSON.
+     */
+    protected JsonHelper getJsonHelper() {
+        return jsonHelper;
     }
     
     /**

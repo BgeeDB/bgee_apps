@@ -15,6 +15,8 @@ import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.CommandDownloadTest;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.file.SpeciesDataGroup;
+import org.bgee.view.JsonHelper;
+import org.bgee.view.html.HtmlDownloadDisplay.DownloadPageType;
 import org.junit.Test;
 
 /**
@@ -39,41 +41,54 @@ public class HtmlDownloadDisplayTest extends TestAncestor {
      */
     @Test
     public void shouldDisplayGeneExpressionCallDownloadPage() throws IOException {
-        List<SpeciesDataGroup> groups = CommandDownloadTest.getTestGroups();
-        HtmlDownloadDisplay display = new HtmlDownloadDisplay(getMockHttpServletResponse(), 
-                new RequestParameters(), mock(BgeeProperties.class), mock(HtmlFactory.class));
-        display.displayGeneExpressionCallDownloadPage(groups, 
-                CommandDownloadTest.getTestSpeciesToTerms());
-        
-        //test that an Exception is thrown if not all species have associated terms
-        try {
-            Map<String, Set<String>> speToTerms = CommandDownloadTest.getTestSpeciesToTerms();
-            speToTerms.remove("9606");
-            display.displayGeneExpressionCallDownloadPage(groups, speToTerms);
-            fail("An exception should be thrown when a species is missing related terms");
-        } catch (IllegalArgumentException e) {
-            //test passed
-        }
+        this.shouldDisplayDownloadPage(DownloadPageType.EXPR_CALLS);
     }
     /**
      * Test {@link HtmlDownloadDisplay#displayProcessedExpressionValuesDownloadPage(List, Map)}.
      */
     @Test
     public void shouldDisplayProcessedExpressionValuesDownloadPage() throws IOException {
+        this.shouldDisplayDownloadPage(DownloadPageType.PROC_EXPR_VALUES);
+    }
+    
+    /**
+     * Test {@link HtmlDownloadDisplay#displayGeneExpressionCallDownloadPage(List, Map)} 
+     * if {@code pageType} is equal to {@code EXPR_CALLS}, otherwise test 
+     * {@link HtmlDownloadDisplay#displayProcessedExpressionValuesDownloadPage(List, Map)}. 
+     * 
+     * @param pageType      The {@code DownloadPageType} for which to launch tests. 
+     * @throws IOException
+     */
+    private void shouldDisplayDownloadPage(DownloadPageType pageType) throws IOException {
+        log.entry(pageType);
+        
         List<SpeciesDataGroup> groups = CommandDownloadTest.getTestGroups();
+        BgeeProperties props = mock(BgeeProperties.class);
+        JsonHelper jsonHelper = new JsonHelper(props);
         HtmlDownloadDisplay display = new HtmlDownloadDisplay(getMockHttpServletResponse(), 
-                new RequestParameters(), mock(BgeeProperties.class), mock(HtmlFactory.class));
-        display.displayProcessedExpressionValuesDownloadPage(CommandDownloadTest.getTestGroups(), 
-                CommandDownloadTest.getTestSpeciesToTerms());
+                new RequestParameters(), props, jsonHelper, mock(HtmlFactory.class));
+        
+        if (pageType == DownloadPageType.EXPR_CALLS) {
+            display.displayGeneExpressionCallDownloadPage(groups, 
+                    CommandDownloadTest.getTestSpeciesToTerms());
+        } else {
+            display.displayProcessedExpressionValuesDownloadPage(groups, 
+                    CommandDownloadTest.getTestSpeciesToTerms());
+        }
         
         //test that an Exception is thrown if not all species have associated terms
         try {
             Map<String, Set<String>> speToTerms = CommandDownloadTest.getTestSpeciesToTerms();
             speToTerms.remove("9606");
-            display.displayProcessedExpressionValuesDownloadPage(groups, speToTerms);
+            if (pageType == DownloadPageType.EXPR_CALLS) {
+                display.displayGeneExpressionCallDownloadPage(groups, speToTerms);
+            } else {
+                display.displayProcessedExpressionValuesDownloadPage(groups, speToTerms);
+            }
             fail("An exception should be thrown when a species is missing related terms");
         } catch (IllegalArgumentException e) {
             //test passed
         }
+        log.exit();
     }
 }

@@ -19,6 +19,7 @@ import org.bgee.controller.CommandDownloadTest;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.file.SpeciesDataGroup;
 import org.bgee.view.GeneralDisplay;
+import org.bgee.view.JsonHelper;
 import org.junit.Test;
 
 /**
@@ -46,7 +47,8 @@ public class HtmlGeneralDisplayTest extends TestAncestor {
         HttpServletResponse mockResponse = getMockHttpServletResponse();
         RequestParameters params = new RequestParameters();
         BgeeProperties props = mock(BgeeProperties.class);
-        HtmlFactory factory = spy(new HtmlFactory(mockResponse, params, props));
+        JsonHelper jsonHelper = new JsonHelper(props);
+        HtmlFactory factory = spy(new HtmlFactory(mockResponse, params, props, jsonHelper));
         
         List<SpeciesDataGroup> groups = CommandDownloadTest.getTestGroups();
         GeneralDisplay display = factory.getGeneralDisplay();

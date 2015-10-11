@@ -194,9 +194,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
         StringBuffer sb = new StringBuffer("<script>");
 
-        String rnaSeqRootDir = this.prop.getFTPRootDirectory() 
-                + this.prop.getDownloadRNASeqProcExprValueFilesRootDirectory();
-        sb.append("var rna_seq_expr_values_dirs = ");
+        String rnaSeqRootDir = this.prop.getDownloadRNASeqProcExprValueFilesRootDirectory();
+        sb.append("var rnaSeqExprValuesDirs = ");
         sb.append(JSHelper.toJson(groups.stream().filter(SpeciesDataGroup::isSingleSpecies)
             .collect(Collectors.toMap(
                 SpeciesDataGroup::getId, 
@@ -205,9 +204,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         ));
         sb.append(";");
 
-        String affyRootDir = this.prop.getFTPRootDirectory() 
-                + this.prop.getDownloadAffyProcExprValueFilesRootDirectory();
-        sb.append("var affy_expr_values_dirs = ");
+        String affyRootDir = this.prop.getDownloadAffyProcExprValueFilesRootDirectory();
+        sb.append("var affyExprValuesDirs = ");
         sb.append(JSHelper.toJson(groups.stream().filter(SpeciesDataGroup::isSingleSpecies)
             .collect(Collectors.toMap(
                 SpeciesDataGroup::getId, 

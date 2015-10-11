@@ -448,7 +448,7 @@ var download = {
             var bgeeDiffExprDevelopmentSimpleFileSize = getSizeForFileCategory(files, "diff_expr_dev_simple");
             var bgeeDiffExprDevelopmentCompleteFileSize = getSizeForFileCategory(files, "diff_expr_dev_complete");
             
-         // RNA-Seq processed expression values
+           // RNA-Seq processed expression values
             var bgeeRnaSeqDataFileUrl = getUrlForFileCategory(files, "rnaseq_data");
             var bgeeRnaSeqAnnotFileUrl = getUrlForFileCategory(files, "rnaseq_annot");
             var bgeeRNASeqDataRootURL = getUrlForFileCategory(files, "rnaseq_root");
@@ -633,7 +633,7 @@ var download = {
             }
             
             // RNA-Seq processed expression values
-            if (bgeeRnaSeqDataFileUrl === undefined) {
+            if (!this.$refExpr.length || bgeeRnaSeqDataFileUrl === undefined) {
             	this.$rnaSeqData.hide(); 
             	this.$rnaSeqNoData.show();
             } else {
@@ -643,11 +643,11 @@ var download = {
             	this.$rnaSeqAnnotCsv.attr( "href", bgeeRnaSeqAnnotFileUrl );
             	this.$rnaSeqAnnotCsv.text( "Download experiments/libraries info (" + bgeeRnaSeqAnnotFileSize + ")" );
             	this.$rnaSeqDataCsv.text( "Download read counts and RPKMs (" + bgeeRnaSeqDataFileSize + ")" );
-            	this.$rnaSeqDataRoot.attr("href", bgeeRNASeqDataRootURL);
+            	this.$rnaSeqDataRoot.attr("href", rnaSeqExprValuesDirs[id]);
             }
 
             // Affymetrix processed expression values
-            if (bgeeAffyDataFileUrl === undefined) {
+            if (!this.$refExpr.length || bgeeAffyDataFileUrl === undefined) {
             	this.$affyData.hide(); 
             	this.$affyNoData.show();
             } else {
@@ -657,11 +657,11 @@ var download = {
             	this.$affyAnnotCsv.attr( "href", bgeeAffyAnnotFileUrl );
             	this.$affyAnnotCsv.text( "Download experiments/chips info (" + bgeeAffyAnnotFileSize + ")" );
             	this.$affyDataCsv.text( "Download signal intensities (" + bgeeAffyDataFileSize + ")" );
-            	this.$affyDataRoot.attr("href", bgeeAffyDataRootURL);
+            	this.$affyDataRoot.attr("href", affyExprValuesDirs[id]);
             }
 
             // In situ processed expression values
-            if (bgeeInSituDataFileUrl === undefined) {
+            if (!this.$refExpr.length || bgeeInSituDataFileUrl === undefined) {
             	this.$inSituData.hide(); 
             	this.$inSituNoData.hide();
             	//TODO remove when in situ data files are computed
@@ -676,7 +676,7 @@ var download = {
             }
 
             // EST processed expression values
-            if (bgeeEstDataFileUrl === undefined) {
+            if (!this.$refExpr.length || bgeeEstDataFileUrl === undefined) {
             	this.$estData.hide(); 
             	this.$estNoData.hide();
             	//TODO remove when EST data files are computed

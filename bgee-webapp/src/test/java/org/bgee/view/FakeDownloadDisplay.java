@@ -20,9 +20,9 @@ import org.bgee.model.file.SpeciesDataGroup;
  * @version Bgee 13 May 2015
  * @since   Bgee 13
  */
-public class TestDownloadDisplay extends TestParentDisplay implements DownloadDisplay {
+public class FakeDownloadDisplay extends FakeParentDisplay implements DownloadDisplay {
     
-    public TestDownloadDisplay(HttpServletResponse response, RequestParameters requestParameters,
+    public FakeDownloadDisplay(HttpServletResponse response, RequestParameters requestParameters,
             BgeeProperties prop, ViewFactory factory) throws IOException {
         super(response, requestParameters, prop, factory);
     }

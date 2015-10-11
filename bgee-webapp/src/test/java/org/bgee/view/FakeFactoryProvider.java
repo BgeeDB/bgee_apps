@@ -11,7 +11,7 @@ import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 
 /**
- * This test class extends {@code ViewFactoryProvider} and returns a {@code TestFactory} only 
+ * This test class extends {@code ViewFactoryProvider} and returns a {@code FakeFactory} only 
  * if the XML display type is requested (Arbitrary chosen to be used in tests). Return null in
  * all other cases. This is useful to assess that the display type is correctly handled by
  * controllers.
@@ -20,12 +20,12 @@ import org.bgee.controller.RequestParameters;
  * @version Bgee 13 Aug 2014
  * @since   Bgee 13
  */
-public class TestFactoryProvider extends ViewFactoryProvider
+public class FakeFactoryProvider extends ViewFactoryProvider
 {    
     /**
      * Constructor
      */
-    public TestFactoryProvider(BgeeProperties prop)
+    public FakeFactoryProvider(BgeeProperties prop)
     {
         super(prop);
     }
@@ -40,7 +40,7 @@ public class TestFactoryProvider extends ViewFactoryProvider
      *                          {@code HTML}, {@code XML}, {@code TSV}, or {@code CSV}.
      * @param requestParameters the {@code RequestParameters} handling the parameters of the 
      *                          current request, for display purposes.
-     * @return     A {@code TestFactory} if the {@code displayType} is XML, else null
+     * @return     A {@code FakeFactory} if the {@code displayType} is XML, else null
      */
     @Override
     public synchronized ViewFactory getFactory(HttpServletResponse response, 
@@ -49,7 +49,7 @@ public class TestFactoryProvider extends ViewFactoryProvider
     {
                        
         if (displayType == DisplayType.XML) {
-            return new TestFactory(response, requestParameters, this.prop);
+            return new FakeFactory(response, requestParameters, this.prop);
         }
         ViewFactory mockFactory = mock(ViewFactory.class);
         try {

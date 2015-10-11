@@ -17,8 +17,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.dao.api.DAOManager;
-import org.bgee.view.TestFactoryProvider;
+import org.bgee.view.FakeFactoryProvider;
 import org.bgee.view.ViewFactoryProvider;
 import org.junit.Before;
 import org.junit.Test;
@@ -77,7 +76,7 @@ public class ControllerTest {
         Properties prop = new Properties();
         prop.put(BgeeProperties.URL_MAX_LENGTH_KEY, "9999");
         this.testProperties = BgeeProperties.getBgeeProperties(prop);
-        this.testFactoryProvider = new TestFactoryProvider(this.testProperties);
+        this.testFactoryProvider = new FakeFactoryProvider(this.testProperties);
         
         // The mock HttpServletResponse provides a mock PrintWriter
         when(this.mockHttpServletResponse.getWriter()).thenReturn(this.mockPrintWriter);
@@ -107,7 +106,7 @@ public class ControllerTest {
         // 1) BgeeProperties : check that the url max length is 9999
         // 2) TestURLParameters : check that test_string parameter exists with "test_string"
         // 4) A Supplier of ServiceFactories
-        // 3) ViewFactoryProvider : only a TestFactoryProvider can lead to the correct output
+        // 3) ViewFactoryProvider : only a FakeFactoryProvider can lead to the correct output
         final List<ServiceFactory> mockFactories = new ArrayList<ServiceFactory>();
         FrontController front = new FrontController(this.testProperties, new TestURLParameters(), 
                 () -> {

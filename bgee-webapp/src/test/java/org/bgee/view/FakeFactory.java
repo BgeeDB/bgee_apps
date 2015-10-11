@@ -9,16 +9,16 @@ import org.bgee.controller.RequestParameters;
 import org.bgee.controller.TestURLParameters;
 
 /**
- * This class is a fake {@code ViewFactory} used for tests. It return a {@code TestDownloadDisplay}
+ * This class is a fake {@code ViewFactory} used for tests. It return a {@code FakeDownloadDisplay}
  * when a {@code DownloadDisplay} is requested. It returns a mock {@code GeneralDisplay} in other
  * cases.
  * @author Mathieu Seppey
  * @version Bgee 13 Aug 2014
  * @since   Bgee 13
  */
-public class TestFactory extends ViewFactory {
+public class FakeFactory extends ViewFactory {
     
-    public TestFactory(HttpServletResponse response, RequestParameters requestParameters,
+    public FakeFactory(HttpServletResponse response, RequestParameters requestParameters,
             BgeeProperties prop) {
         super(response, requestParameters, prop);
     }
@@ -35,7 +35,7 @@ public class TestFactory extends ViewFactory {
         if(prop.getUrlMaxLength() == 9999 && this.requestParameters.getFirstValue(
                 ((TestURLParameters)this.requestParameters.getUrlParametersInstance())
                 .getParamTestString()).equals("test")){
-            return new TestDownloadDisplay(this.response, this.requestParameters, this.prop, this);
+            return new FakeDownloadDisplay(this.response, this.requestParameters, this.prop, this);
         }
         return null;
     }
@@ -65,7 +65,7 @@ public class TestFactory extends ViewFactory {
         if(prop.getUrlMaxLength() == 9999 && this.requestParameters.getFirstValue(
                 ((TestURLParameters)this.requestParameters.getUrlParametersInstance())
                 .getParamTestString()).equals("test")){
-            return new TestDocumentationDisplay(this.response, this.requestParameters, prop, this);
+            return new FakeDocumentationDisplay(this.response, this.requestParameters, prop, this);
         }
         return null;
     }
@@ -75,7 +75,7 @@ public class TestFactory extends ViewFactory {
         if(prop.getUrlMaxLength() == 9999 && this.requestParameters.getFirstValue(
                 ((TestURLParameters)this.requestParameters.getUrlParametersInstance())
                 .getParamTestString()).equals("test")){
-            return new TestAboutDisplay(this.response, this.requestParameters, prop, this);
+            return new FakeAboutDisplay(this.response, this.requestParameters, prop, this);
         }
         return null;
     }

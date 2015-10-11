@@ -192,7 +192,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     private String getExprValuesDirectoryScriptTag(Collection<SpeciesDataGroup> groups) {
         log.entry(groups);
 
-        StringBuffer sb = new StringBuffer("<script>");
+        StringBuilder sb = new StringBuilder("<script>");
 
         String rnaSeqRootDir = this.prop.getDownloadRNASeqProcExprValueFilesRootDirectory();
         sb.append("var rnaSeqExprValuesDirs = ");
@@ -316,7 +316,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      *                  according {@code pageType}.
      */
     private String getMultiSpeciesFigures(DownloadPageType pageType,  List<SpeciesDataGroup> groups) {
-    	StringBuffer sb = new StringBuffer();
+    	StringBuilder sb = new StringBuilder();
     	
     	for (SpeciesDataGroup sdg: groups) {
     		if (sdg.isMultipleSpecies()) {
@@ -341,7 +341,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     private String getMultiSpeciesSection(DownloadPageType pageType, List<SpeciesDataGroup> groups) {
         log.entry(pageType);
 
-        StringBuffer s = new StringBuffer(); 
+        StringBuilder s = new StringBuilder(); 
         s.append("<div id='bgee_multi_species'>");
         s.append("<h2>Multi-species</h2>" +
                  "<span class='header_details'>(orthologous genes in homologous anatomical structures)</span>");
@@ -672,7 +672,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      */
     private static String getDataGroupScriptTag(List<SpeciesDataGroup> dataGroups) {
         log.entry(dataGroups);
-        StringBuffer sb = new StringBuffer("<script>");
+        StringBuilder sb = new StringBuilder("<script>");
         sb.append("var speciesData = ");
         sb.append(JSHelper.toJson(dataGroups.stream()
                 .collect(Collectors.toMap(SpeciesDataGroup::getId, Function.identity()))));
@@ -719,7 +719,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 }));
         log.trace("Group IDs to terms: {}", groupIdsToTerms);
         
-        StringBuffer sb = new StringBuffer("<script>");
+        StringBuilder sb = new StringBuilder("<script>");
         sb.append("var keywords = ");
         sb.append(JSHelper.toJson(groupIdsToTerms));
         sb.append(";\n");

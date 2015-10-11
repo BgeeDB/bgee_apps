@@ -175,7 +175,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     private String getDownloadBanner() {
         log.entry();
     
-        StringBuffer banner = new StringBuffer();
+        StringBuilder banner = new StringBuilder();
         // This section is empty, it will be filled by JavaScript.
         banner.append("<div id='bgee_data_selection'>");
         

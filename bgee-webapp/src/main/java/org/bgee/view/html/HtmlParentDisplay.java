@@ -84,7 +84,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      protected static String getHTMLTag(String name, Map<String, String> attributes, String content) {
          log.entry(name, attributes, content);
          
-         StringBuffer sb = new StringBuffer();
+         StringBuilder sb = new StringBuilder();
          sb.append("<").append(name); 
          if (attributes != null) {
              for (Map.Entry<String, String> attr: attributes.entrySet()) {
@@ -145,7 +145,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             String imgPath, String desc) {
         log.entry(url, externalLink, title, figcaption, imgPath, desc);
         
-        StringBuffer feature = new StringBuffer();
+        StringBuilder feature = new StringBuilder();
         feature.append("<div class='single_feature'>");
         feature.append("<a href='" + url + "' title='" + title + "'"
                 + (externalLink ? " target='_blank'" : "") + ">" +
@@ -307,7 +307,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 
 
         // Navigation bar
-        StringBuffer navbar = new StringBuffer();
+        StringBuilder navbar = new StringBuilder();
 
         navbar.append("<div id='nav'>");
         
@@ -417,7 +417,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         urlCallFilesGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
         urlCallFilesGenerator.setAction(RequestParameters.ACTION_DOC_CALL_DOWLOAD_FILES);
 
-        StringBuffer logos = new StringBuffer(); 
+        StringBuilder logos = new StringBuilder(); 
 
         logos.append(HtmlParentDisplay.getSingleFeatureLogo(urlHowToAccessGenerator.getRequestURL(), 
                 false, "How to access to Bgee data", "Access to Bgee data", 
@@ -466,7 +466,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         urlDownloadCallsGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
         urlDownloadCallsGenerator.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
         
-        StringBuffer logos = new StringBuffer(); 
+        StringBuilder logos = new StringBuilder(); 
         
         logos.append(HtmlParentDisplay.getSingleFeatureLogo(
                 urlDownloadCallsGenerator.getRequestURL(), false, 
@@ -692,7 +692,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     protected static String getImageSources() {
         log.entry();
         
-        StringBuffer sources = new StringBuffer();
+        StringBuilder sources = new StringBuilder();
         sources.append("<p id='creativecommons_title'>Images from Wikimedia Commons. In most cases, pictures corresponds to the sequenced strains. <a>Show information about original images.</a></p>");
         sources.append("<div id='creativecommons'>");
         sources.append("<p><i>Homo sapiens</i> picture by Leonardo da Vinci (Life time: 1519) [Public domain]. <a target='_blank' href='http://commons.wikimedia.org/wiki/File:Da_Vinci%27s_Anatomical_Man.jpg#mediaviewer/File:Da_Vinci%27s_Anatomical_Man.jpg'>See <i>H. sapiens</i> picture via Wikimedia Commons</a></p>");

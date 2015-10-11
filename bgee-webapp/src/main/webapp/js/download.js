@@ -745,9 +745,12 @@ var download = {
             if( text.length > 1 ){
                 // Add the class on all species where the text match the searchContent 
                 this.$species.each(function (){
-                    if( download.searchContent[$( this ).attr( "id" )].toLowerCase()
-                    .indexOf( text.toLowerCase() ) > -1){
-                        $( this ).addClass( "highlight" );
+                    for (var i = 0; i < download.searchContent[$( this ).attr( "id" )].length; i++) {
+                        if (download.searchContent[$( this ).attr( "id" )][i].toLowerCase()
+                                .indexOf( text.toLowerCase() ) > -1){
+                            $( this ).addClass( "highlight" );
+                            break;
+                        }
                     }
                 });
                 // Update the number of results

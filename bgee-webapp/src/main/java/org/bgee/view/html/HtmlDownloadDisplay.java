@@ -672,12 +672,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         
         StringBuffer sb = new StringBuffer("<script>");
         sb.append("var keywords = ");
-        sb.append(JSHelper.toJson(groupIdsToTerms.entrySet().stream()
-                .collect(Collectors.toMap(
-                        e -> e.getKey(), 
-                        //concatenate all terms in a string, separated with spaces
-                        e -> e.getValue().stream().reduce((s0, s1) -> s0 + " " + s1).get()))
-        ));
+        sb.append(JSHelper.toJson(groupIdsToTerms));
         sb.append(";\n");
         
         sb.append("var autocomplete = ");

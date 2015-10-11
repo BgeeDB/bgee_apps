@@ -92,15 +92,50 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                  sb.append(" ").append(attr.getKey()).append("='").append(attr.getValue()).append("'");
              }
          }
-         sb.append(">\n");
+         sb.append(">");
          if (StringUtils.isNotBlank(content)) {
              sb.append(content);
          }
-         sb.append("</").append(name).append(">\n");
+         sb.append("</").append(name).append(">");
          return log.exit(sb.toString());
      }
 
      /**
+     * Get the single feature logo with a description as a HTML 'div' element.
+     *
+     * @param url           A {@code String} that is the URL of the link.
+     * @param externalLink  A {@code boolean} defining whether the link points to a Bgee 
+     *                      internal URL, or an external resource (in which case a 'target' 
+     *                      attribute with the '_blank' value will be append to the link). 
+     *                      If {@code true}, the link points to an external resource.
+     * @param title         A {@code String} that is the title and the alternate text of the image.
+     * @param figcaption    A {@code String} that is the caption of the 'figure' element.
+     * @param imgPath       A {@code String} that is the path of the image.
+     * @param desc          A {@code String} that is the description of this feature.
+     * @return              A {@code String} that is the single feature logo as a HTML 'div' element,
+     *                      formated in HTML and HTML escaped if necessary.
+     */
+    protected static String getSingleFeatureLogo(
+            String url, boolean externalLink, String title, String figcaption, 
+            String imgPath, String desc) {
+        log.entry(url, externalLink, title, figcaption, imgPath, desc);
+        
+        StringBuilder feature = new StringBuilder();
+        feature.append("<div class='single_feature'>");
+        feature.append("<a href='" + url + "' title='" + title + "'"
+                + (externalLink ? " target='_blank'" : "") + ">" +
+                "<figure><img src='" + imgPath + "' alt='" + title + " logo' />" +
+                "<figcaption>" + figcaption + "</figcaption>" +
+                "</figure></a>");
+        if (desc != null && !desc.isEmpty()) {
+            feature.append("<p>" + desc + "</p>");
+        }
+        feature.append("</div>");
+        
+        return log.exit(feature.toString());
+    }
+
+    /**
       * The {@code JsonHelper} used to read/write variables into JSON.
       */
      private final JsonHelper jsonHelper;
@@ -154,41 +189,6 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     protected String getContentType() {
         log.entry();
         return log.exit("text/html");
-    }
-
-    /**
-     * Get the single feature logo with a description as a HTML 'div' element.
-     *
-     * @param url           A {@code String} that is the URL of the link.
-     * @param externalLink  A {@code boolean} defining whether the link points to a Bgee 
-     *                      internal URL, or an external resource (in which case a 'target' 
-     *                      attribute with the '_blank' value will be append to the link). 
-     *                      If {@code true}, the link points to an external resource.
-     * @param title         A {@code String} that is the title and the alternate text of the image.
-     * @param figcaption    A {@code String} that is the caption of the 'figure' element.
-     * @param imgPath       A {@code String} that is the path of the image.
-     * @param desc          A {@code String} that is the description of this feature.
-     * @return              A {@code String} that is the single feature logo as a HTML 'div' element,
-     *                      formated in HTML and HTML escaped if necessary.
-     */
-    protected static String getSingleFeatureLogo(
-            String url, boolean externalLink, String title, String figcaption, 
-            String imgPath, String desc) {
-        log.entry(url, externalLink, title, figcaption, imgPath, desc);
-        
-        StringBuilder feature = new StringBuilder();
-        feature.append("<div class='single_feature'>");
-        feature.append("<a href='" + url + "' title='" + title + "'"
-                + (externalLink ? " target='_blank'" : "") + ">" +
-                "<figure><img src='" + imgPath + "' alt='" + title + " logo' />" +
-                "<figcaption>" + figcaption + "</figcaption>" +
-                "</figure></a>");
-        if (desc != null && !desc.isEmpty()) {
-            feature.append("<p>" + desc + "</p>");
-        }
-        feature.append("</div>");
-        
-        return log.exit(feature.toString());
     }
 
     public void emptyDisplay() {

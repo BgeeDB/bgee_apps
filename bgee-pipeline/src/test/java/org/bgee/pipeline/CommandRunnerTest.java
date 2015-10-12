@@ -42,8 +42,7 @@ public class CommandRunnerTest extends TestAncestor {
     @Test
     public void shouldParseArgument() {
         assertEquals("Incorrect argument parsing", "abc", CommandRunner.parseArgument(" abc "));
-        assertEquals("Incorrect argument parsing", "ab c", 
-                CommandRunner.parseArgument("ab" + CommandRunner.SPACE_IN_ARG + "c "));
+        assertEquals("Incorrect argument parsing", "ab c", CommandRunner.parseArgument("ab c "));
         assertEquals("Incorrect argument parsing", "", CommandRunner.parseArgument(" "));
         assertEquals("Incorrect argument parsing", null, CommandRunner.parseArgument(null));
         assertEquals("Incorrect argument parsing", null, CommandRunner.parseArgument(
@@ -59,7 +58,7 @@ public class CommandRunnerTest extends TestAncestor {
                 Arrays.asList("ID1", "ID 2", "ID3"), 
                 CommandRunner.parseListArgument(
                         " ID1" + CommandRunner.LIST_SEPARATOR + 
-                        "ID" + CommandRunner.SPACE_IN_ARG + "2" + CommandRunner.LIST_SEPARATOR + 
+                        "ID 2" + CommandRunner.LIST_SEPARATOR + 
                         "ID3" + CommandRunner.LIST_SEPARATOR));
         
 
@@ -103,9 +102,7 @@ public class CommandRunnerTest extends TestAncestor {
                 CommandRunner.parseMapArgument(
                         " key1 " + CommandRunner.KEY_VALUE_SEPARATOR + " value1 " + 
                             CommandRunner.LIST_SEPARATOR + 
-                        "key" + CommandRunner.SPACE_IN_ARG + "2" 
-                            + CommandRunner.KEY_VALUE_SEPARATOR 
-                            + "value" + CommandRunner.SPACE_IN_ARG + "2" + 
+                        "key 2" + CommandRunner.KEY_VALUE_SEPARATOR + "value 2" + 
                             CommandRunner.LIST_SEPARATOR + 
                         "key1" + CommandRunner.KEY_VALUE_SEPARATOR + " value1 " + 
                             CommandRunner.LIST_SEPARATOR + 
@@ -143,8 +140,7 @@ public class CommandRunnerTest extends TestAncestor {
                 CommandRunner.parseMapArgumentAsInteger(
                         " key1 " + CommandRunner.KEY_VALUE_SEPARATOR + " 1 " + 
                             CommandRunner.LIST_SEPARATOR + 
-                        "key" + CommandRunner.SPACE_IN_ARG + "2" 
-                            + CommandRunner.KEY_VALUE_SEPARATOR + "2" + 
+                        "key 2" + CommandRunner.KEY_VALUE_SEPARATOR + "2" + 
                             CommandRunner.LIST_SEPARATOR + 
                         "key1" + CommandRunner.KEY_VALUE_SEPARATOR + " 1 " + 
                             CommandRunner.LIST_SEPARATOR + 

@@ -108,12 +108,6 @@ public class CommandRunner {
      * @see #parseListArgument(String)
      */
     public static final String EMPTY_ARG = "-";
-    /**
-     * A {@code String} that is to replace by a space in provided arguments.
-     * 
-     * @see #parseArgument(String)
-     */
-    public static final String SPACE_IN_ARG = "__";
 
     /**
      * Force configuration of loggers used by dependencies. 
@@ -297,7 +291,7 @@ public class CommandRunner {
         if (arg == null || arg.trim().equals(EMPTY_ARG)) {
             return log.exit(null);
         }
-        return log.exit(arg.trim().replace(SPACE_IN_ARG, " "));
+        return log.exit(arg.trim());
     }
 
     /**

@@ -3,6 +3,8 @@ package org.bgee.model.file;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
+import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesDataGroupTOResultSet;
+import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesToDataGroupTOResultSet;
 import org.bgee.model.file.DownloadFile.CategoryEnum;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
@@ -32,10 +34,6 @@ public class SpeciesDataGroupServiceTest extends TestAncestor {
 		// initialize mocks
 		DAOManager managerMock = mock(DAOManager.class);
 		SpeciesDataGroupDAO dao = mock(SpeciesDataGroupDAO.class);
-        SpeciesDataGroupDAO.SpeciesDataGroupTOResultSet sdgResultSet =
-                mock(SpeciesDataGroupDAO.SpeciesDataGroupTOResultSet.class);
-        SpeciesDataGroupDAO.SpeciesToDataGroupTOResultSet stdgResultSet =
-                mock(SpeciesDataGroupDAO.SpeciesToDataGroupTOResultSet.class);
         SpeciesService speciesService = mock(SpeciesService.class);
 		DownloadFileService downloadFileService = mock(DownloadFileService.class);
 
@@ -67,8 +65,10 @@ public class SpeciesDataGroupServiceTest extends TestAncestor {
 
 
         // mock behavior
-        when(sdgResultSet.stream()).thenReturn(Arrays.asList(to1,to2).stream());
-        when(stdgResultSet.stream()).thenReturn(Arrays.asList(mto1,mto2,mto3).stream());
+        SpeciesDataGroupTOResultSet sdgResultSet = getMockResultSet(
+                SpeciesDataGroupTOResultSet.class, Arrays.asList(to1,to2));
+        SpeciesToDataGroupTOResultSet stdgResultSet = getMockResultSet(
+                SpeciesToDataGroupTOResultSet.class,Arrays.asList(mto1,mto2,mto3));
         when(dao.getAllSpeciesToDataGroup(Matchers.anyObject())).thenReturn(stdgResultSet);
         when(dao.getAllSpeciesDataGroup(Matchers.anyCollection(), Matchers.anyObject())).thenReturn(sdgResultSet);
         when(managerMock.getSpeciesDataGroupDAO()).thenReturn(dao);
@@ -87,7 +87,7 @@ public class SpeciesDataGroupServiceTest extends TestAncestor {
 		SpeciesDataGroupService service = new SpeciesDataGroupService(downloadFileService, speciesService, managerMock);
         List<SpeciesDataGroup> dataGroups = service.loadAllSpeciesDataGroup();
         Assert.assertEquals(2, dataGroups.size());
-        Assert.assertEquals(expDataGroups,dataGroups);
+        Assert.assertEquals(expDataGroups, dataGroups);
 	}
 
 }

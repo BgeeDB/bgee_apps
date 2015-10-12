@@ -15,14 +15,36 @@
 
     <dependencies>
 
-            <dependency> 
-                <groupId>${project.groupId}</groupId>
-                <artifactId>bgee-core</artifactId> 
-                <version>${project.version}</version>
-                <scope>compile</scope> 
-            </dependency> 
-        <!-- Not clear if we need to include these dependencies, or if they will be shipped directly by bgee-core
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>bgee-core</artifactId>
+        </dependency>
+        <!-- Not clear if we need to include these dependencies, 
+             or if they will be shipped directly by bgee-core -->
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>bgee-dao-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>bgee-dao-sql</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bgee.log4jdbc-log4j2</groupId>
+            <artifactId>log4jdbc-log4j2-jdbc4.1</artifactId>
+            <scope>compile</scope>
+        </dependency>
         
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.3.1</version>
+        </dependency>
+        <!-- Remove these dependencies as long as the webapp does not use 
+            the actual Bgee API <dependency> <groupId>${project.groupId}</groupId> <artifactId>bgee-core</artifactId> 
+            <version>${project.version}</version> <scope>compile</scope> </dependency> 
             <dependency> <groupId>${project.groupId}</groupId> <artifactId>bgee-dao-api</artifactId> 
             <version>${project.version}</version> <scope>compile</scope> </dependency> -->
         <!-- as long as bgee-dao-sql is the only service provider for bgee-dao-api, 
@@ -113,7 +135,7 @@
                 <!-- change path where maven-antrun-plugin renames static files -->
                 <rename.tmp.directory>${project.build.directory}/m2e-wtp/web-resources/</rename.tmp.directory>
                 <!-- In order to have no extension in URLs, change tomcat context root -->
-                <m2eclipse.wtp.contextRoot>/</m2eclipse.wtp.contextRoot>
+                <m2eclipse.wtp.contextRoot></m2eclipse.wtp.contextRoot>
             </properties>
         </profile>
     </profiles>
@@ -187,13 +209,15 @@
                                 <include>**/*</include>
                             </includes>
                         </resource>
-                        <!-- We filter bgee.properties so that css version number 
-                             and javacript version number are configured. -->
+                        <!-- We filter bgee-webapp.properties so that css version number 
+                             and javacript version number are configured. 
+                             bgee.dao.properties is filtered to add database connection parameters -->
                         <resource>
                             <!-- this is relative to the pom.xml directory -->
                             <directory>src/main/resources/</directory>
                             <includes>
-                                <include>bgee.properties</include>
+                                <include>bgee-webapp.properties</include>
+                                <include>bgee.dao.properties</include>
                             </includes>
                             <!-- Activates filtering -->
                             <filtering>true</filtering>
@@ -268,7 +292,8 @@
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
                 <includes>
-                    <include>bgee.properties</include>
+                    <include>bgee-webapp.properties</include>
+                    <include>bgee.dao.properties</include>
                 </includes>
             </resource>  
         </resources>

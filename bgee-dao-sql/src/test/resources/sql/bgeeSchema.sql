@@ -1119,10 +1119,14 @@ create table differentialExpression (
 -- see (https://gitlab.isb-sib.ch/Bgee/bgee_apps/issues/31)
 create table downloadFile (
   downloadFileId mediumint unsigned not null,
-  path varchar(255) not null,
+-- path relative to the root of the download file directory, including file name
+  downloadFileRelativePath varchar(255) not null,
+-- currently, just the name of the file
   downloadFileName varchar(255) not null,
   downloadFileDescription text,
-  downloadFileCategory enum("expr_calls", "diff_expr_calls_stages", "diff_expr_calls_anatomy"),
+  downloadFileCategory enum("expr_simple", "expr_complete", "diff_expr_anatomy_complete", "diff_expr_anatomy_simple"
+   , "diff_expr_dev_complete", "diff_expr_dev_simple", "ortholog",
+   "affy_annot","rnaseq_annot","affy_data","rnaseq_data"),
   speciesDataGroupId mediumint unsigned not null,
   downloadFileSize int unsigned not null
 ) engine = innodb;
@@ -1135,7 +1139,9 @@ create table downloadFile (
 create table speciesDataGroup(
   speciesDataGroupId mediumint unsigned not null,
   speciesDataGroupName varchar(255) not null,
-  speciesDataGroupDescription text
+  speciesDataGroupDescription text, 
+-- preferred order to display speciesDataGroups
+  speciesDataGroupOrder tinyint unsigned not null default 255
 ) engine = innodb;
 
 create table speciesToDataGroup(

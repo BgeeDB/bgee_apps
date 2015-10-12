@@ -44,7 +44,7 @@ public class LoadPropertiesFromFileTest extends TestAncestor
 	public void shouldLoadPropertiesFromFile() {
 		//set a system properties to provide the name of the properties file 
 		//(default is bgee.dao.properties, but we want to use a test file)
-		System.setProperty(DAOManager.CONFIGFILEKEY, "/test.properties");
+		System.setProperty(DAOManager.CONFIG_FILE_KEY, "/test.properties");
 		
 		//we use the mock DAOManager to check what properties it received
 		Properties parameters = new Properties();
@@ -53,6 +53,6 @@ public class LoadPropertiesFromFileTest extends TestAncestor
         verify(MockDAOManager.mockManager).setParameters(eq(parameters));
 		
 		//clear the System properties
-		System.clearProperty(DAOManager.CONFIGFILEKEY);
+		System.clearProperty(DAOManager.CONFIG_FILE_KEY);
 	}
 }

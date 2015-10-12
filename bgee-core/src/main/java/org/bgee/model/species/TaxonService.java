@@ -30,6 +30,7 @@ public class TaxonService extends Service {
     /**
      * @param daoManager    The {@code DAOManager} to be used by this {@code TaxonService} 
      *                      to obtain {@code DAO}s.
+     * @throws IllegalArgumentException If {@code daoManager} is {@code null}.
      */
     public TaxonService(DAOManager daoManager) {
         super(daoManager);

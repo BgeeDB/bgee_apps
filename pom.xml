@@ -135,6 +135,13 @@
                 <version>${project.version}</version>
                 <scope>compile</scope>
             </dependency>
+            <!-- bgee-core, used by many modules -->
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>bgee-core</artifactId>
+                <version>${project.version}</version>
+                <scope>compile</scope>
+            </dependency>
             <!-- test classes from bgee-dao-pi, used by any module using 
                 DAOs -->
             <dependency>
@@ -285,7 +292,6 @@
                 <groupId>org.bgee.log4jdbc-log4j2</groupId>
                 <artifactId>log4jdbc-log4j2-jdbc4.1</artifactId>
                 <version>1.17-SNAPSHOT</version>
-                <scope>compile</scope>
             </dependency>
             <!-- The JDBC connector -->
             <dependency>

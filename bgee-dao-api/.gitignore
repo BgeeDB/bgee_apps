@@ -1,1 +1,3 @@
 /target/
+# Ignore .settings files that don't need to be shared
+.settings/org.eclipse.wst.*

@@ -16,9 +16,9 @@ import org.bgee.controller.RequestParameters;
  * @version Bgee May 2015
  * @since 	Bgee 13
  */
-public class TestDocumentationDisplay extends TestParentDisplay implements DocumentationDisplay {
+public class FakeDocumentationDisplay extends FakeParentDisplay implements DocumentationDisplay {
 
-    public TestDocumentationDisplay(HttpServletResponse response, 
+    public FakeDocumentationDisplay(HttpServletResponse response, 
             RequestParameters requestParameters, BgeeProperties prop, ViewFactory factory) 
                     throws IOException {
         super(response, requestParameters, prop, factory);

@@ -18,6 +18,7 @@ import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.GlobalNoExpress
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesDataGroupTO;
+import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesToDataGroupTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
@@ -163,6 +164,8 @@ public class TOComparator {
             return log.exit(areTOsEqual( (DownloadFileTO)to1, (DownloadFileTO) to2, compareId));
         } else if (to2 instanceof SpeciesDataGroupTO) {
             return log.exit(areTOsEqual((SpeciesDataGroupTO) to1,(SpeciesDataGroupTO) to2, compareId));
+        } else if (to2 instanceof SpeciesToDataGroupTO) {
+            return log.exit(areTOsEqual((SpeciesToDataGroupTO) to1,(SpeciesToDataGroupTO) to2));
         }
 
         throw log.throwing(new IllegalArgumentException("There is no comparison method " +
@@ -485,16 +488,54 @@ public class TOComparator {
         return log.exit(TOComparator.areEntityTOsEqual(to1, to2, compareId) && 
                 to1.getCategory() == to2.getCategory()
                 && StringUtils.equals(to1.getPath(), to2.getPath())
-                && to1.getSize() == to2.getSize()
+                //not possible to simply use to1.getSize() == to2.getSize() for Long value > 127, 
+                //see http://stackoverflow.com/a/20542511/1768736
+                && (to1.getSize() == null && to2.getSize() == null || 
+                    to1.getSize().equals(to2.getSize()))
                 && StringUtils.equals(to1.getSpeciesDataGroupId(), to2.getSpeciesDataGroupId())
         );
     }
 
+    /**
+     * Method to compare two {@code SpeciesDataGroupTO}s, to check for complete equality of each
+     * attribute. This is because the {@code equals} method of {@code SpeciesDataGroupTO}s is solely
+     * based on their ID, not on other attributes.
+     * <p>
+     * If {@code compareId} is {@code false}, the value returned by the method {@code getId} 
+     * will not be used for comparison.
+     * 
+     * @param to1       An {@code SpeciesDataGroupTO} to be compared to {@code to2}.
+     * @param to2       An {@code SpeciesDataGroupTO} to be compared to {@code to1}.
+     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be 
+     *                  used for comparisons. 
+     * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
+     */
     private static boolean areTOsEqual(SpeciesDataGroupTO to1, SpeciesDataGroupTO to2, 
             boolean compareId){
         log.entry(to1, to2, compareId);
-        return log.exit(TOComparator.areEntityTOsEqual(to1, to2, compareId));
+        return log.exit(TOComparator.areEntityTOsEqual(to1, to2, compareId) && 
+                (to1.getPreferredOrder() == null && to2.getPreferredOrder() == null || 
+                 to1.getPreferredOrder() != null && to1.getPreferredOrder().equals(to2.getPreferredOrder())));
     }
+    
+    /**
+     * Method to compare two {@code SpeciesToDataGroupTO}s, to check for complete equality of each
+     * attribute.
+     * 
+     * @param to1   An {@code SpeciesToDataGroupTO} to be compared to {@code to2}.
+     * @param to2   An {@code SpeciesToDataGroupTO} to be compared to {@code to1}.
+     * @return      {@code true} if {@code to1} and {@code to2} have all attributes equal.
+     */
+    private static boolean areTOsEqual(SpeciesToDataGroupTO to1, SpeciesToDataGroupTO to2){
+        log.entry(to1, to2);
+        
+        if (StringUtils.equals(to1.getGroupId(), to2.getGroupId()) && 
+                StringUtils.equals(to1.getSpeciesId(), to2.getSpeciesId())) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    
     /**
      * Method to compare two {@code StageTO}s, to check for complete equality of each
      * attribute. This is because the {@code equals} method of {@code StageTO}s is solely

@@ -404,18 +404,18 @@ BEGIN
                (11, 5), 
                (21, 5);
 
-        INSERT INTO speciesDataGroup(speciesDataGroupId, speciesDataGroupName, speciesDataGroupDescription)
-        VALUES (1, 'SingleSpecies1', 'SS1 is a ...'),
-               (2, 'MultiSpecies2', 'A multi species group...');
+        INSERT INTO speciesDataGroup(speciesDataGroupId, speciesDataGroupName, speciesDataGroupDescription, speciesDataGroupOrder)
+        VALUES (1, 'SingleSpecies1', 'SS1 is a ...', 1),
+               (2, 'MultiSpecies2', 'A multi species group...', 2);
 
         INSERT INTO speciesToDataGroup(speciesId, speciesDataGroupId)
         VALUES (11, 1),
                (21 ,2),
                (31, 2);
 
-        INSERT INTO downloadFile(downloadFileId, downloadFileName, path, downloadFileDescription, downloadFileCategory, speciesDataGroupId, downloadFileSize)
-        VALUES (1, 'file1.zip', '/dir/to/file1', 'this is file1', 'expr_calls',1, 0),
-               (2, 'file2.zip', '/dir/to/file2', 'this is file2', 'expr_calls',2, 0);
+        INSERT INTO downloadFile(downloadFileId, downloadFileName, downloadFileRelativePath, downloadFileDescription, downloadFileCategory, speciesDataGroupId, downloadFileSize)
+        VALUES (1, 'file1.zip', '/dir/to/file1', 'this is file1', 'expr_simple',1, 0),
+               (2, 'file2.zip', '/dir/to/file2', 'this is file2', 'expr_simple',2, 0);
 
         -- Data for MySQLSummarySimilarityAnnotationDAOIT and MySQLRawSimilarityAnnotationDAOIT
         INSERT INTO summarySimilarityAnnotation (summarySimilarityAnnotationId,taxonId,negated,CIOId)

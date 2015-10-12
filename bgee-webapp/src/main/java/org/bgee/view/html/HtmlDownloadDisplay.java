@@ -1,17 +1,25 @@
 package org.bgee.view.html;
 
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
+import org.bgee.model.file.SpeciesDataGroup;
+import org.bgee.model.species.Species;
 import org.bgee.view.DownloadDisplay;
+import org.bgee.view.JsonHelper;
 
 /**
  * This class displays the page having the category "download", i.e. with the parameter
@@ -19,88 +27,26 @@ import org.bgee.view.DownloadDisplay;
  * 
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
+ * @author  Philippe Moret
  * @version Bgee 13, June 2015
  * @since   Bgee 13
  */
 public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDisplay {
  
     private final static Logger log = LogManager.getLogger(HtmlDownloadDisplay.class.getName());
-
+    
     /**
-     * A {@code String} that is the group name of the pairwise Human/Mouse.
+     * An {@code enum defining} for which type of page some {@code SpeciesDataGroup}s 
+     * are being displayed. 
+     * <ul>
+     * <li>{@code PROC_EXPR_VALUES}: processed expression values page.
+     * <li>{@code EXPR_CALLS}: expression/diff. expression calls page.
+     * <li>{@code HOME_PAGE}: summary of data for the home page.
+     * </ul>
+     *
      */
-    private final static String GROUP_NAME_HUMAN_MOUSE= "Human/Mouse";
-    /**
-     * A {@code String} that is the group name of the pairwise Human/Zebrafish.
-     */
-    private final static String GROUP_NAME_HUMAN_ZEBRAFISH = "Human/Zebrafish";
-    /**
-     * A {@code String} that is the group name of the pairwise Human/Fruit fly.
-     */
-    private final static String GROUP_NAME_HUMAN_FRUITFLY = "Human/Fruit fly";
-    /**
-     * A {@code String} that is the group name of the pairwise Human/Nematode.
-     */
-    private final static String GROUP_NAME_HUMAN_NEMATODE = "Human/Nematode";
-    /**
-     * A {@code String} that is the group name of the pairwise Mouse/Zebrafish.
-     */
-    private final static String GROUP_NAME_MOUSE_ZEBRAFISH= "Mouse/Zebrafish";
-    /**
-     * A {@code String} that is the group name of the pairwise Mouse/Fruit fly.
-     */
-    private final static String GROUP_NAME_MOUSE_FRUITFLY = "Mouse/Fruit fly";
-    /**
-     * A {@code String} that is the group name of the pairwise Mouse/Nematode.
-     */
-    private final static String GROUP_NAME_MOUSE_NEMATODE = "Mouse/Nematode";
-    /**
-     * A {@code String} that is the group name of the pairwise Zebrafish/Fruit fly.
-     */
-    private final static String GROUP_NAME_ZEBRAFISH_FRUITFLY = "Zebrafish/Fruit fly";
-    /**
-     * A {@code String} that is the group name of the pairwise Zebrafish/Nematode.
-     */
-    private final static String GROUP_NAME_ZEBRAFISH_NEMATODE = "Zebrafish/Nematode";
-    /**
-     * A {@code String} that is the group name of the pairwise Fruit fly/Nematode.
-     */
-    private final static String GROUP_NAME_FRUITFLY_NEMATODE = "Fruit fly/Nematode";
-    /**
-     * A {@code String} that is the group name of the pairwise Fruit fly/Nematode.
-     */
-    private final static String GROUP_NAME_MACAQUE_CHIMP = "Macaque/Chimpanzee";
-    /**
-     * A {@code String} that is the group name of Catarrhini.
-     */
-    private final static String GROUP_NAME_CATARRHINI = "Catarrhini";
-    /**
-     * A {@code String} that is the group name of Rodentia.
-     */
-    private final static String GROUP_NAME_MURINAE = "Murinae";
-    /**
-     * A {@code String} that is the group name of Theria.
-     */
-   private final static String GROUP_NAME_THERIA = "Theria";
-   /**
-    * A {@code String} that is the group name of Mammalia.
-    */
-    private final static String GROUP_NAME_MAMMALIA = "Mammalia";
-    /**
-     * A {@code String} that is the group name of Amniota.
-     */
-    private final static String GROUP_NAME_AMNIOTA = "Amniota";
-    /**
-     * A {@code String} that is the group name of Tetrapoda.
-     */
-    private final static String GROUP_NAME_TETRAPODA = "Tetrapoda";
-    /**
-     * A {@code String} that is the group name of Bilateria.
-     */
-    private final static String GROUP_NAME_BILATERIA = "Bilateria";
-        
     public enum DownloadPageType {
-        PROC_EXPR_VALUES, EXPR_CALLS;
+        PROC_EXPR_VALUES, EXPR_CALLS, HOME_PAGE
     }
     /**
      * Constructor
@@ -112,13 +58,14 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      *                          and for display purposes.
      * @param prop              A {@code BgeeProperties} instance that contains the properties
      *                          to use.
+     * @param jsonHelper        A {@code JsonHelper} used to read/write variables into JSON.
      * @param factory           The {@code HtmlFactory} that instantiated this object.
      * @throws IOException      If there is an issue when trying to get or to use the
      *                          {@code PrintWriter} 
      */
     public HtmlDownloadDisplay(HttpServletResponse response, RequestParameters requestParameters, 
-            BgeeProperties prop, HtmlFactory factory) throws IOException {
-        super(response, requestParameters, prop, factory);
+            BgeeProperties prop, JsonHelper jsonHelper, HtmlFactory factory) throws IOException {
+        super(response, requestParameters, prop, jsonHelper, factory);
     }
 
     @Override
@@ -139,13 +86,15 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     }
     
     @Override
-    public void displayGeneExpressionCallDownloadPage() {
-        log.entry();
+    public void displayGeneExpressionCallDownloadPage(List<SpeciesDataGroup> groups, 
+            Map<String, Set<String>> keywords) {
+        log.entry(groups, keywords);
         
         this.startDisplay("Bgee gene expression call download page");
-
+        
         this.writeln(this.getMoreResultDivs());
-
+  		this.writeln(getDataGroupScriptTag(groups));
+        this.writeln(getKeywordScriptTag(keywords, groups, DownloadPageType.EXPR_CALLS));
         this.writeln("<div id='expr_calls'>");
 
         this.writeln("<div id='bgee_title'>");
@@ -164,18 +113,18 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln(this.getSearchBox());
         
         // Single species part
-        this.writeln(this.getSingleSpeciesSection(DownloadPageType.EXPR_CALLS));
+        this.writeln(getSingleSpeciesSection(DownloadPageType.EXPR_CALLS, groups, false));
 
         // Black banner when a species or a group is selected.
         this.writeln(this.getDownloadBanner(DownloadPageType.EXPR_CALLS));
         
         // Multi-species part
-        this.writeln(this.getMultiSpeciesSection(DownloadPageType.EXPR_CALLS));
+        this.writeln(this.getMultiSpeciesSection(DownloadPageType.EXPR_CALLS, groups));
 
         this.writeln("</div>");
 
         // Image sources
-        this.writeln(this.getImageSources());
+        this.writeln(getImageSources());
         
         this.endDisplay();
         
@@ -183,11 +132,15 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     }
 
     @Override
-    public void displayProcessedExpressionValuesDownloadPage() {
-        log.entry();
+    public void displayProcessedExpressionValuesDownloadPage(List<SpeciesDataGroup> groups,
+    		                                                 Map<String, Set<String>> keywords) {
+        log.entry(groups, keywords);
         
         this.startDisplay("Bgee " + PROCESSED_EXPR_VALUES_PAGE_NAME.toLowerCase() + " download page");
-        
+  		this.writeln(getDataGroupScriptTag(groups));
+        this.writeln(getKeywordScriptTag(keywords, groups, DownloadPageType.PROC_EXPR_VALUES));
+  		this.writeln(this.getExprValuesDirectoryScriptTag(groups));
+
         this.writeln(this.getMoreResultDivs());
 
         this.writeln("<div id='proc_values'>");
@@ -209,7 +162,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln(this.getSearchBox());
         
         // Single species part
-        this.writeln(this.getSingleSpeciesSection(DownloadPageType.PROC_EXPR_VALUES));
+        this.writeln(getSingleSpeciesSection(DownloadPageType.PROC_EXPR_VALUES, groups, false));
 
         // Black banner when a species or a group is selected.
         this.writeln(this.getDownloadBanner(DownloadPageType.PROC_EXPR_VALUES));
@@ -217,11 +170,52 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("</div>"); // close proc_values div
 
         // Image sources
-        this.writeln(this.getImageSources());
+        this.writeln(getImageSources());
         
         this.endDisplay();
         
         log.exit();
+    }
+    
+    /**
+     * Generates a javascript tag defining variables providing mappings 
+     * from {@code SpeciesDataGroup} IDs to directories storing 
+     * all Affymetrix and RNA-Seq processed expression values download files, 
+     * for the corresponding group. 
+     * <p>
+     * The javascript maps created in the tag are named {@code rna_seq_expr_values_dirs} 
+     * and {@code affy_expr_values_dirs}. 
+     * 
+     * @param groups    A {@code Collection} of {@code SpeciesDataGroup}s for which 
+     *                  to generate mappings to directories. 
+     * @return          A {@code String} containing a javascript tag defining the mappings. 
+     */
+    private String getExprValuesDirectoryScriptTag(Collection<SpeciesDataGroup> groups) {
+        log.entry(groups);
+
+        StringBuilder sb = new StringBuilder("<script>");
+
+        String rnaSeqRootDir = this.prop.getDownloadRNASeqProcExprValueFilesRootDirectory();
+        sb.append("var rnaSeqExprValuesDirs = ");
+        sb.append(this.getJsonHelper().toJson(groups.stream().filter(SpeciesDataGroup::isSingleSpecies)
+            .collect(Collectors.toMap(
+                SpeciesDataGroup::getId, 
+                g -> rnaSeqRootDir + g.getMembers().get(0).getScientificName().replace(" ", "_") + "/"
+            ))
+        ));
+        sb.append(";");
+
+        String affyRootDir = this.prop.getDownloadAffyProcExprValueFilesRootDirectory();
+        sb.append("var affyExprValuesDirs = ");
+        sb.append(this.getJsonHelper().toJson(groups.stream().filter(SpeciesDataGroup::isSingleSpecies)
+            .collect(Collectors.toMap(
+                SpeciesDataGroup::getId, 
+                g -> affyRootDir + g.getMembers().get(0).getScientificName().replace(" ", "_") + "/"
+            ))
+        ));
+        sb.append(";</script>");
+        
+        return log.exit(sb.toString());
     }
     
     /**
@@ -254,6 +248,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                     + "probeset normalized signal intensities). Click on a species "
                     + "to browse files available for download. ";
         } else {
+            //pre-condition check in private method, use of assert allowed
             assert false: "Unknown DownloadPageType";
         }
         intro += "See also ";
@@ -311,46 +306,31 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 "</div>");
     }
 
+
+    
     /**
-     * Get the single species section of a download page as a HTML 'div' element,
+     * Get the multi-species figure list for the given multi-species datagroups
      * according the provided page type.
      *
      * @param pageType  A {@code DownloadPageType} that is the type of the page.
-     * @return          the {@code String} that is the single species section as HTML 'div' element,
+     * @return          the {@code String} that is the multi-species section as HTML 'div' element,
      *                  according {@code pageType}.
      */
-    private String getSingleSpeciesSection(DownloadPageType pageType) {
-        log.entry(pageType);
-
-        StringBuffer s = new StringBuffer(); 
-        s.append("<div id='bgee_uniq_species'> ");
-        s.append("<h2>Single-species</h2>");
-        s.append("<div class='bgee_section bgee_download_section'>");
-        s.append(generateSpeciesFigure(9606, pageType));
-        s.append(generateSpeciesFigure(10090, pageType));
-        s.append(generateSpeciesFigure(7955, pageType));
-        s.append(generateSpeciesFigure(7227, pageType));
-        s.append(generateSpeciesFigure(6239, pageType));
-        s.append(generateSpeciesFigure(9597, pageType));
-        s.append(generateSpeciesFigure(9598, pageType));
-        s.append(generateSpeciesFigure(9593, pageType));
-//        s.append(generateSpeciesFigure(9600, pageType)); // no more data for Pongo pygmaeus
-        s.append(generateSpeciesFigure(9544, pageType));
-        s.append(generateSpeciesFigure(10116, pageType));
-        s.append(generateSpeciesFigure(9913, pageType));
-        s.append(generateSpeciesFigure(9823, pageType));
-        s.append(generateSpeciesFigure(13616, pageType));
-        s.append(generateSpeciesFigure(9258, pageType));
-        s.append(generateSpeciesFigure(9031, pageType));
-        s.append(generateSpeciesFigure(28377, pageType));
-        s.append(generateSpeciesFigure(8364, pageType));
-//        s.append(generateSpeciesFigure(99883, pageType)); // no more data for Tetraodon nigroviridis
-        s.append("</div>");
-        s.append("</div>");
-        
-        return log.exit(s.toString());
+    private String getMultiSpeciesFigures(DownloadPageType pageType,  List<SpeciesDataGroup> groups) {
+    	StringBuilder sb = new StringBuilder();
+    	
+    	for (SpeciesDataGroup sdg: groups) {
+    		if (sdg.isMultipleSpecies()) {
+    			Map<String, String> attr = new HashMap<>();
+    			attr.put("id", htmlEntities(sdg.getId()));
+    			attr.put("name", htmlEntities(sdg.getName()));
+    			sb.append(getHTMLTag("figure", attr, getHTMLTag("div", 
+    			        getSpeciesImages(sdg.getMembers(), pageType) + getCaption(sdg))));
+    		}
+    	}
+    	return sb.toString();
     }
-
+    
     /**
      * Get the multi-species section of a download page as a HTML 'div' element, 
      * according the provided page type.
@@ -359,40 +339,15 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      * @return          the {@code String} that is the multi-species section as HTML 'div' element,
      *                  according {@code pageType}.
      */
-    private String getMultiSpeciesSection(DownloadPageType pageType) {
+    private String getMultiSpeciesSection(DownloadPageType pageType, List<SpeciesDataGroup> groups) {
         log.entry(pageType);
 
-        StringBuffer s = new StringBuffer(); 
+        StringBuilder s = new StringBuilder(); 
         s.append("<div id='bgee_multi_species'>");
         s.append("<h2>Multi-species</h2>" +
                  "<span class='header_details'>(orthologous genes in homologous anatomical structures)</span>");
         s.append("<div class='bgee_section bgee_download_section'>");
-        //TODO set all groups and with all species when all files will be generated 
-        // Pairwises
-        s.append(generateSpeciesFigure(Arrays.asList(9606, 10090), GROUP_NAME_HUMAN_MOUSE, true, pageType));
-        //s.append(generateSpeciesFigure(Arrays.asList(9606, 7955), GROUP_NAME_HUMAN_ZEBRAFISH, true, pageType));
-        //s.append(generateSpeciesFigure(Arrays.asList(9606, 7227), GROUP_NAME_HUMAN_FRUITFLY, true, pageType));
-        //s.append(generateSpeciesFigure(Arrays.asList(9606, 6239), GROUP_NAME_HUMAN_NEMATODE, true, pageType));
-        //s.append(generateSpeciesFigure(Arrays.asList(10090, 7955), GROUP_NAME_MOUSE_ZEBRAFISH, true, pageType));
-        //s.append(generateSpeciesFigure(Arrays.asList(10090, 7227), GROUP_NAME_MOUSE_FRUITFLY, true, pageType));
-        //s.append(generateSpeciesFigure(Arrays.asList(10090, 6239), GROUP_NAME_MOUSE_NEMATODE, true, pageType));
-        //s.append(generateSpeciesFigure(Arrays.asList(7955, 7227), GROUP_NAME_ZEBRAFISH_FRUITFLY, true, pageType));
-        //s.append(generateSpeciesFigure(Arrays.asList(7955, 6239), GROUP_NAME_ZEBRAFISH_NEMATODE, true, pageType));
-        //s.append(generateSpeciesFigure(Arrays.asList(7227, 6239), GROUP_NAME_FRUITFLY_NEMATODE, true, pageType));
-        // Groups
-        //        s.append(generateSpeciesFigure(Arrays.asList(9606, 9598, 9593, 9544), GROUP_NAME_CATARRHINI, true, pageType));
-        //        s.append(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544), GROUP_NAME_PRIMATES, true, pageType));
-        //        s.append(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544, 10116, 10090, 9913, 9823, 13616), GROUP_NAME_THERIA, true, pageType));
-        //        s.append(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544, 10116, 10090, 9913, 9823, 13616, 9258), GROUP_NAME_MAMMALIA, true, pageType));
-        //        s.append(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544, 10116, 10090, 9913, 9823, 13616, 9258, 28377, 9031), GROUP_NAME_AMNIOTA, true, pageType));
-        //        s.append(generateSpeciesFigure(Arrays.asList(9598, 9597, 9606, 9593, 9544, 10116, 10090, 9913, 9823, 13616, 9258, 28377, 9031, 8364, 7955, 7227, 6239), GROUP_NAME_BILATERIA, true, pageType));
-        //        s.append(generateSpeciesFigure(Arrays.asList(9606, 9544), GROUP_NAME_CATARRHINI, true, pageType));
-        s.append(generateSpeciesFigure(Arrays.asList(10090, 10116), GROUP_NAME_MURINAE, true, pageType));
-        s.append(generateSpeciesFigure(Arrays.asList(9598, 9544), GROUP_NAME_MACAQUE_CHIMP, true, pageType));
-        s.append(generateSpeciesFigure(Arrays.asList(9606, 9598, 9593, 9544, 10116, 10090, 9913, 13616), GROUP_NAME_THERIA, true, pageType));
-        s.append(generateSpeciesFigure(Arrays.asList(9606, 9598, 9593, 9544, 10116, 10090, 9913, 13616, 9258), GROUP_NAME_MAMMALIA, true, pageType));
-        s.append(generateSpeciesFigure(Arrays.asList(9606, 9598, 9593, 9544, 10116, 10090, 9913, 13616, 9258, 9031), GROUP_NAME_AMNIOTA, true, pageType));
-        s.append(generateSpeciesFigure(Arrays.asList(9606, 9598, 9593, 9544, 10116, 10090, 9913, 13616, 9258, 9031, 8364), GROUP_NAME_TETRAPODA, true, pageType));
+        s.append(getMultiSpeciesFigures(pageType, groups));
         s.append("</div>");
         s.append("</div>");
 
@@ -410,7 +365,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     private String getDownloadBanner(DownloadPageType pageType) {
         log.entry(pageType);
     
-        StringBuffer banner = new StringBuffer();
+        StringBuilder banner = new StringBuilder();
         // This section is empty, it will be filled by JavaScript.
         banner.append("<div id='bgee_data_selection'>");
         
@@ -606,827 +561,215 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 "<img class='details' src='" + this.prop.getImagesRootDirectory() +
                 "plus.png' title='Show headers' alt='Plus'/></a>");
     }
-
-    /**
-     * Get the images sources of a download page as a HTML 'div' element. 
-     *
-     * @return  the {@code String} that is the images sources as HTML 'div' element.
-     */
-    private String getImageSources() {
-        log.entry();
-        
-        StringBuffer sources = new StringBuffer();
-        sources.append("<p id='creativecommons_title'>Images from Wikimedia Commons. In most cases, pictures corresponds to the sequenced strains. <a>Show information about original images.</a></p>");
-        sources.append("<div id='creativecommons'>");
-        sources.append("<p><i>Homo sapiens</i> picture by Leonardo da Vinci (Life time: 1519) [Public domain]. <a target='_blank' href='http://commons.wikimedia.org/wiki/File:Da_Vinci%27s_Anatomical_Man.jpg#mediaviewer/File:Da_Vinci%27s_Anatomical_Man.jpg'>See <i>H. sapiens</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Mus musculus</i> picture by Rasbak [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AApodemus_sylvaticus_bosmuis.jpg'>See <i>M. musculus</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Danio rerio</i> picture by Azul (Own work) [see page for license], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AZebrafisch.jpg'>See <i>D. rerio</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Drosophila melanogaster</i> picture by Andr&eacute; Karwath aka Aka (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/2.5'>CC-BY-SA-2.5</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ADrosophila_melanogaster_-_side_(aka).jpg'>See <i>D. melanogaster</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Caenorhabditis elegans</i> picture by Bob Goldstein, UNC Chapel Hill http://bio.unc.edu/people/faculty/goldstein/ (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ACelegansGoldsteinLabUNC.jpg'>See <i>C. elegans</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Pan paniscus</i> picture by Ltshears (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a> or <a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ABonobo1_CincinnatiZoo.jpg'>See <i>P. paniscus</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Pan troglodytes</i> picture by Thomas Lersch (Own work) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a>, <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a> or <a target='_blank' href='http://creativecommons.org/licenses/by/2.5'>CC-BY-2.5</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ASchimpanse_Zoo_Leipzig.jpg'>See <i>P. troglodytes</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Gorilla gorilla</i> picture by Brocken Inaglory (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a> or <a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AMale_gorilla_in_SF_zoo.jpg'>See <i>G. gorilla</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Pongo pygmaeus</i> picture by Greg Hume (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ASUMATRAN_ORANGUTAN.jpg'>See <i>P. pygmaeus</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Macaca mulatta</i> picture by Aiwok (Own work) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0-2.5-2.0-1.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AMacaca_mulatta_3.JPG'>See <i>M. mulatta</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Rattus norvegicus</i> picture by Reg Mckenna (originally posted to Flickr as Wild Rat) [<a target='_blank' href='http://creativecommons.org/licenses/by/2.0'>CC-BY-2.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AWildRat.jpg'>See <i>R. norvegicus</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Bos taurus</i> picture by User Robert Merkel on en.wikipedia (US Department of Agriculture) [Public domain], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AHereford_bull_large.jpg'>See <i>B. taurus</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Sus scrofa</i> picture by Joshua Lutz (Own work) [Public domain], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ASus_scrofa_scrofa.jpg'>See <i>S. scrofa</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Monodelphis domestica</i> picture by <i>Marsupial Genome Sheds Light on the Evolution of Immunity.</i> Hill E, PLoS Biology Vol. 4/3/2006, e75 <a rel='nofollow' href='http://dx.doi.org/10.1371/journal.pbio.0040075'>http://dx.doi.org/10.1371/journal.pbio.0040075</a> [<a target='_blank' href='http://creativecommons.org/licenses/by/2.5'>CC-BY-2.5</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AOpossum_with_young.png'>See <i>M. domestica</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Ornithorhynchus anatinus</i> picture by Dr. Philip Bethge (private) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0-2.5-2.0-1.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AOrnithorhynchus.jpg'>See <i>O. anatinus</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Gallus gallus</i> picture by Subramanya C K (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ARed_jungle_fowl.png'>See <i>G. gallus</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Anolis carolinensis</i> picture by PiccoloNamek (Moved from Image:P1010027.jpg) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AAnolis_carolinensis.jpg'>See <i>A. carolinensis</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Xenopus tropicalis</i> picture by V&aacute;clav Gvo&zcaron;d&iacute;k (http://calphotos.berkeley.edu) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/2.5'>CC-BY-SA-2.5</a>, <a target='_blank' href='http://creativecommons.org/licenses/by-sa/2.5'>CC-BY-SA-2.5</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AXenopus_tropicalis01.jpeg'>See <i>X. tropicalis</i> picture via Wikimedia Commons</a></p>");
-        sources.append("<p><i>Tetraodon nigroviridis</i> picture by Starseed (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/de/deed.en'>CC-BY-SA-3.0-de</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ATetraodon_nigroviridis_1.jpg'>See <i>T. nigroviridis</i> picture via Wikimedia Commons</a></p>");
-        sources.append("</div>");
     
-        return log.exit(sources.toString());
-    }
-
     /**
-     * Generate the HTML figure tag with a figcaption tag from a {@code int} that is a 
-     * species ID.
+     * Gets the html code to display images of species in figures.
      * 
-     * @param speciesId     An {@code int} that is the species ID of the species to be 
-     *                      displayed.
-     * @param pageType      A {@code DownloadPageType} that is the type of the page.
-     * @return              A {@code String} that is the  HTML figure tag generated from the 
-     *                      provided {@code int} of a species ID.
+     * @param species   A {@code List} of {@code Species} to be displayed in a figure.
+     * @param pageType  A {@code DownloadPageType} for which to generate img tags.
+     * @return          A {@String} containing the html code to display species images.
      */
-    private String generateSpeciesFigure(int speciesId, DownloadPageType pageType) {
-        log.entry(speciesId, pageType);
-        return log.exit(generateSpeciesFigure(Arrays.asList(speciesId), null, false, pageType));
-    }
-
-    /**
-     * Generate the HTML figure tag from a {@code List} of species IDs.
-     * 
-     * @param speciesIds   A {@code List} of {@code Integer} containing the species IDs to
-     *                     be diplayed.
-     * @param figcaption   A {@code String} that is the fieldcaption of the figure. If empty 
-     *                     or {@code null}, it's generated with the last species of the 
-     *                     {@code List}.
-     * @param isGroup      A {@code boolean} that is {@code true} if the figure represents 
-     *                     a group of species.
-     * @param pageType     A {@code DownloadPageType} that is the type of the page.
-     * @return             A {@code String} that is the  HTML figure tag generated from the 
-     *                     provided {@code List} of species IDs.
-     */
-    private String generateSpeciesFigure(List<Integer> speciesIds, String figcaption, 
-            boolean isGroup, DownloadPageType pageType) {
-        log.entry(speciesIds, figcaption, isGroup, pageType);
+    private String getSpeciesImages(List<Species> species, DownloadPageType pageType) {
+        log.entry(species, pageType);
+        
+        //sanity check in private method, assert acceptable
+        assert !species.isEmpty();
         
         StringBuilder images = new StringBuilder();
-        if (speciesIds == null || speciesIds.size() == 0) {
-            return ("");
+        for (Species spe : species) {
+            Map<String,String> attrs = new HashMap<>();
+            attrs.put("src", this.prop.getSpeciesImagesRootDirectory() + htmlEntities(spe.getId())+"_light.jpg");
+            attrs.put("alt", htmlEntities(spe.getShortName()));
+            attrs.put("class", "species_img");
+            images.append(getHTMLTag("img", attrs));
+        }
+        if (pageType == DownloadPageType.PROC_EXPR_VALUES) {
+            Map<String,String> attrs = new HashMap<>();
+            attrs.put("src", this.prop.getLogoImagesRootDirectory() + "proc_values_zoom_logo.png");
+            attrs.put("alt", htmlEntities(PROCESSED_EXPR_VALUES_PAGE_NAME));
+            attrs.put("class", "page_img");
+            images.append(getHTMLTag("img", attrs));
         }
         
-        String name = null, commonName = null, shortName = null, alternateNames = null;
-
-        // Hidden info, to improve the jQuery search, allow to look for any of the name, short,
-        // or common name, even if not displayed... for example droso.
-        String hiddenInfo = "";
-        for (Integer speciesId: speciesIds) {
-            switch(speciesId) {
-                case 9606: 
-                    name = "Homo sapiens";
-                    shortName = "H. sapiens";
-                    commonName = "human";
-                    alternateNames = "";
-                    break;
-                case 10090: 
-                    name = "Mus musculus";
-                    shortName="M. musculus";
-                    commonName = "mouse";
-                    alternateNames = "house mouse, mice";
-                    break;
-                case 7955: 
-                    name = "Danio rerio";
-                    shortName = "D. rerio";
-                    commonName = "zebrafish";
-                    alternateNames = "leopard danio, zebra danio";
-                    break;
-                case 7227: 
-                    name = "Drosophila melanogaster";
-                    shortName = "D. melanogaster";
-                    commonName = "fruit fly";
-                    alternateNames = "vinegar fly";
-                    break;
-                case 6239: 
-                    name = "Caenorhabditis elegans";
-                    shortName = "C. elegans";
-                    commonName = "nematode";
-                    alternateNames = "worm, roundworm";
-                    break;
-                case 9597: 
-                    name = "Pan paniscus";
-                    shortName = "P. paniscus";
-                    commonName = "bonobo";
-                    alternateNames = "pygmy chimpanzee";
-                    break;
-                case 9598: 
-                    name = "Pan troglodytes";
-                    shortName = "P. troglodytes";
-                    commonName = "chimpanzee";
-                    alternateNames = "";
-                    break;
-                case 9593: 
-                    name = "Gorilla gorilla";
-                    shortName = "G. gorilla";
-                    commonName = "gorilla";
-                    alternateNames = "western gorilla";
-                    break;
-                case 9600: 
-                    name = "Pongo pygmaeus";
-                    shortName = "P. pygmaeus";
-                    commonName = "orangutan";
-                    alternateNames = "orang utan, orang-utan";
-                    break;
-                case 9544: 
-                    name = "Macaca mulatta";
-                    shortName = "M. mulatta";
-                    commonName = "macaque";
-                    alternateNames = "rhesus monkey";
-                    break;
-                case 10116: 
-                    name = "Rattus norvegicus";
-                    shortName = "R. norvegicus";
-                    commonName = "rat";
-                    alternateNames = "brown rat";
-                    break;
-                case 9913: 
-                    name = "Bos taurus";
-                    shortName = "B. taurus";
-                    commonName = "cattle";
-                    alternateNames = "cow, domestic cow, domestic cattle, bovine cow";
-                    break;
-                case 9823: 
-                    name = "Sus scrofa";
-                    shortName = "S. scrofa";
-                    commonName = "pig";
-                    alternateNames = "domestic pig, swine";
-                    break;
-                case 13616: 
-                    name = "Monodelphis domestica";
-                    shortName = "M. domestica";
-                    commonName = "opossum";
-                    alternateNames = "gray short-tailed opossum, gray short tailed opossum";
-                    break;
-                case 9258: 
-                    name = "Ornithorhynchus anatinus";
-                    shortName = "O. anatinus";
-                    commonName = "platypus";
-                    alternateNames = "duckbill platypus, duck-billed platypus";
-                    break;
-                case 9031: 
-                    name = "Gallus gallus";
-                    shortName = "G. gallus";
-                    commonName = "chicken";
-                    alternateNames = "bantam, red junglefowl, red jungle fowl";
-                    break;
-                case 28377: 
-                    name = "Anolis carolinensis";
-                    shortName = "A. carolinensis";
-                    commonName = "green anole";
-                    alternateNames = "anolis, carolina anole";
-                    break;
-                case 8364: 
-                    name = "Xenopus tropicalis";
-                    shortName = "X. tropicalis";
-                    commonName = "western clawed frog";
-                    alternateNames = "xenopus";
-                    break;
-                case 99883: 
-                    name = "Tetraodon nigroviridis";
-                    shortName = "T. nigroviridis";
-                    commonName = "tetraodon";
-                    alternateNames = "spotted green pufferfish";
-                    break;
-                default:
-                    return ("");
-            }
-            
-            if (isGroup) {
-                hiddenInfo = hiddenInfo.concat(name + ", " + commonName + ", ");
-            } else {
-                hiddenInfo = name;
-            }
-            
-            images.append(generateSpeciesImg(speciesId, name, shortName, commonName, alternateNames, true));
-        }
-        if (StringUtils.isBlank(figcaption)) {
-            // If empty or null, it's generated with the last species ID of the given List. 
-            figcaption = "<p><i>" + shortName + "</i></p><p>" + commonName + "</p>";   
-        }
-
-        String figure = null;
-        if (isGroup) {
-            figure = "<figure data-bgeegroupname='" + figcaption + "' " + 
-                    this.getGroupFileData(figcaption) + ">";
-        } else {
-            figure = "<figure " + this.getSingleSpeciesFileData(speciesIds.get(0), pageType) + ">";
-        }
-
-        String pageImg = "";
-        if (pageType.equals(DownloadPageType.PROC_EXPR_VALUES)) {
-            pageImg = "<img class='page_img' src='" + this.prop.getLogoImagesRootDirectory() + 
-                    "proc_values_zoom_logo.png' alt='" + PROCESSED_EXPR_VALUES_PAGE_NAME + "' />";
-        }
-
-        figure += "<div>" + images + pageImg + "</div>" + 
-                  "<figcaption>" + figcaption + 
-                  " <span class='invisible'>" + hiddenInfo + "</span>" + 
-                  "</figcaption>" + 
-                  "</figure>";
-        return log.exit(figure);
+        return log.exit(images.toString());
     }
 
     /**
-     * Get custom data for a group.
-     * 
-     * @param groupName A {@code String} that is the name of the group.
-     * @return          A {@code String} that is data according to the given group name.
+     * Get the single species section of a download page as a HTML 'div' element,
+     * according to the provided page type and data groups.
+     *
+     * @param pageType                  A {@code DownloadPageType} that is the type of the page.
+     * @param groups                    A {@code List} of {@code SpeciesDataGroup}s 
+     *                                  containing the information to be displayed.
+     * @param includeDataGroupScriptTag A {@code boolean} defining whether this method 
+     *                                  should be responsible for including the javascript tag 
+     *                                  containing the species data groups information as JSON. 
+     *                                  If not already included, should be {@code true}.
+     * @return                          A {@code String} that is the single species section in HTML.
      */
-    private String getGroupFileData(String groupName) {
-        log.entry(groupName);
-        
-        String diffExprAnatSimpleFileSize = null, diffExprAnatCompleteFileSize = null,
-//                exprSimpleFileSize = null, exprCompleteFileSize = null,  
-//                diffExprDevSimpleFileSize = null, diffExprDevCompleteFileSize = null, 
-                orthologFileSize = null, filePrefix = null;
+    protected String getSingleSpeciesSection(DownloadPageType pageType, 
+            List<SpeciesDataGroup> groups, boolean includeDataGroupScriptTag) {
+        log.entry(pageType, groups, includeDataGroupScriptTag);
 
-        switch (groupName) {
-            //TODO: set file sizes            
-            case GROUP_NAME_HUMAN_MOUSE:
-//                exprSimpleFileSize = "xx MB";
-//                exprCompleteFileSize = "xx MB"; 
-                diffExprAnatSimpleFileSize = "0.7 MB";
-                diffExprAnatCompleteFileSize  = "6 MB";
-//                diffExprDevSimpleFileSize = "xx MB";
-//                diffExprDevCompleteFileSize = "xx MB"; 
-                orthologFileSize = "0.4 MB"; 
-                filePrefix= "human_mouse";
-                break;         
-            case GROUP_NAME_MACAQUE_CHIMP:
-//              exprSimpleFileSize = "xx MB";
-//              exprCompleteFileSize = "xx MB"; 
-              diffExprAnatSimpleFileSize = "0.3 MB";
-              diffExprAnatCompleteFileSize  = "1 MB";
-//              diffExprDevSimpleFileSize = "xx MB";
-//              diffExprDevCompleteFileSize = "xx MB"; 
-              orthologFileSize = "0.3 MB"; 
-              filePrefix= "macaque_chimpanzee";
-              break;
-            case GROUP_NAME_HUMAN_ZEBRAFISH:
-//                exprSimpleFileSize = "xx MB";
-//                exprCompleteFileSize = "xx MB"; 
-//                diffExprAnatSimpleFileSize = "xx MB";
-//                diffExprAnatCompleteFileSize  = "xx MB";
-//                diffExprDevSimpleFileSize = "xx MB";
-//                diffExprDevCompleteFileSize = "xx MB"; 
-                orthologFileSize = "xx MB"; 
-                filePrefix= "human_zebrafish";
-                break;
-            case GROUP_NAME_HUMAN_FRUITFLY:
-//                exprSimpleFileSize = "xx MB";
-//                exprCompleteFileSize = "xx MB"; 
-//                diffExprAnatSimpleFileSize = "xx MB";
-//                diffExprAnatCompleteFileSize  = "xx MB";
-//                diffExprDevSimpleFileSize = "xx MB";
-//                diffExprDevCompleteFileSize = "xx MB"; 
-                orthologFileSize = "xx MB"; 
-                filePrefix= "human_fruitfly";
-                break;
-            case GROUP_NAME_HUMAN_NEMATODE:
-//                exprSimpleFileSize = "xx MB";
-//                exprCompleteFileSize = "xx MB"; 
-//                diffExprAnatSimpleFileSize = "xx MB";
-//                diffExprAnatCompleteFileSize  = "xx MB";
-//                diffExprDevSimpleFileSize = "xx MB";
-//                diffExprDevCompleteFileSize = "xx MB"; 
-                orthologFileSize = "xx MB"; 
-                filePrefix= "human_nematode";
-                break;
-            case GROUP_NAME_MOUSE_ZEBRAFISH:
-//                exprSimpleFileSize = "xx MB";
-//                exprCompleteFileSize = "xx MB"; 
-//                diffExprAnatSimpleFileSize = "xx MB";
-//                diffExprAnatCompleteFileSize  = "xx MB";
-//                diffExprDevSimpleFileSize = "xx MB";
-//                diffExprDevCompleteFileSize = "xx MB"; 
-                orthologFileSize = "xx MB"; 
-                filePrefix= "mouse_zebrafish";
-                break;
-            case GROUP_NAME_MOUSE_FRUITFLY:
-//                exprSimpleFileSize = "xx MB";
-//                exprCompleteFileSize = "xx MB"; 
-//                diffExprAnatSimpleFileSize = "xx MB";
-//                diffExprAnatCompleteFileSize  = "xx MB";
-//                diffExprDevSimpleFileSize = "xx MB";
-//                diffExprDevCompleteFileSize = "xx MB"; 
-                orthologFileSize = "xx MB"; 
-                filePrefix= "mouse_fruitfly";
-                break;
-            case GROUP_NAME_MOUSE_NEMATODE:
-//                exprSimpleFileSize = "xx MB";
-//                exprCompleteFileSize = "xx MB"; 
-//                diffExprAnatSimpleFileSize = "xx MB";
-//                diffExprAnatCompleteFileSize  = "xx MB";
-//                diffExprDevSimpleFileSize = "xx MB";
-//                diffExprDevCompleteFileSize = "xx MB"; 
-                orthologFileSize = "xx MB"; 
-                filePrefix= "mouse_nematode";
-                break;
-            case GROUP_NAME_ZEBRAFISH_FRUITFLY:
-//                exprSimpleFileSize = "xx MB";
-//                exprCompleteFileSize = "xx MB"; 
-//                diffExprAnatSimpleFileSize = "xx MB";
-//                diffExprAnatCompleteFileSize  = "xx MB";
-//                diffExprDevSimpleFileSize = "xx MB";
-//                diffExprDevCompleteFileSize = "xx MB"; 
-                orthologFileSize = "xx MB"; 
-                filePrefix= "zebrafish_fruitfly";
-                break;
-            case GROUP_NAME_ZEBRAFISH_NEMATODE:
-//                exprSimpleFileSize = "xx MB";
-//                exprCompleteFileSize = "xx MB"; 
-//                diffExprAnatSimpleFileSize = "xx MB";
-//                diffExprAnatCompleteFileSize  = "xx MB";
-//                diffExprDevSimpleFileSize = "xx MB";
-//                diffExprDevCompleteFileSize = "xx MB"; 
-                orthologFileSize = "xx MB"; 
-                filePrefix= "zebrafish_nematode";
-                break;
-            case GROUP_NAME_FRUITFLY_NEMATODE:
-//                exprSimpleFileSize = "xx MB";
-//                exprCompleteFileSize = "xx MB"; 
-//                diffExprAnatSimpleFileSize = "xx MB";
-//                diffExprAnatCompleteFileSize  = "xx MB";
-//                diffExprDevSimpleFileSize = "xx MB";
-//                diffExprDevCompleteFileSize = "xx MB"; 
-                orthologFileSize = "xx MB"; 
-                filePrefix= "fruitfly_nematode";
-                break;
-            case GROUP_NAME_CATARRHINI:
-//                exprSimpleFileSize = "xx MB";
-//                exprCompleteFileSize = "xx MB"; 
-//                diffExprAnatSimpleFileSize = "xx MB";
-//                diffExprAnatCompleteFileSize  = "xx MB";
-//                diffExprDevSimpleFileSize = "xx MB";
-//                diffExprDevCompleteFileSize = "xx MB"; 
-                orthologFileSize = "xx MB"; 
-                filePrefix= "catarrhini";
-                break;
-            case GROUP_NAME_MURINAE:
-//                exprSimpleFileSize = "xx MB";
-//                exprCompleteFileSize = "xx MB"; 
-                diffExprAnatSimpleFileSize = "0.7 MB";
-                diffExprAnatCompleteFileSize  = "4 MB";
-//                diffExprDevSimpleFileSize = "xx MB";
-//                diffExprDevCompleteFileSize = "xx MB"; 
-                orthologFileSize = "0.3 MB"; 
-                filePrefix= "murinae";
-                break;
-            case GROUP_NAME_THERIA:
-//                exprSimpleFileSize = "xx MB";
-//                exprCompleteFileSize = "xx MB"; 
-                diffExprAnatSimpleFileSize = "3 MB";
-                diffExprAnatCompleteFileSize  = "15 MB";
-//                diffExprDevSimpleFileSize = "xx MB";
-//                diffExprDevCompleteFileSize = "xx MB"; 
-                orthologFileSize = "1 MB"; 
-                filePrefix= "theria";
-                break;
-            case GROUP_NAME_MAMMALIA:
-//                exprSimpleFileSize = "xx MB";
-//                exprCompleteFileSize = "xx MB"; 
-                diffExprAnatSimpleFileSize = "2 MB";
-                diffExprAnatCompleteFileSize  = "12 MB";
-//                diffExprDevSimpleFileSize = "xx MB";
-//                diffExprDevCompleteFileSize = "xx MB"; 
-                orthologFileSize = "0.7 MB"; 
-                filePrefix= "mammalia";
-                break;
-            case GROUP_NAME_AMNIOTA:
-//                exprSimpleFileSize = "xx MB";
-//                exprCompleteFileSize = "xx MB"; 
-                diffExprAnatSimpleFileSize = "3 MB";
-                diffExprAnatCompleteFileSize  = "17 MB";
-//                diffExprDevSimpleFileSize = "xx MB";
-//                diffExprDevCompleteFileSize = "xx MB"; 
-                orthologFileSize = "1 MB"; 
-                filePrefix= "amniota";
-                break;
-            case GROUP_NAME_TETRAPODA:
-//              exprSimpleFileSize = "xx MB";
-//              exprCompleteFileSize = "xx MB"; 
-              diffExprAnatSimpleFileSize = "3 MB";
-              diffExprAnatCompleteFileSize  = "17 MB";
-//              diffExprDevSimpleFileSize = "xx MB";
-//              diffExprDevCompleteFileSize = "xx MB"; 
-              orthologFileSize = "1 MB"; 
-              filePrefix= "tetrapoda";
-              break;
-            case GROUP_NAME_BILATERIA:
-//                exprSimpleFileSize = "xx MB";
-//                exprCompleteFileSize = "xx MB"; 
-                diffExprAnatSimpleFileSize = "632 KB";
-                diffExprAnatCompleteFileSize  = "3.4 MB";
-//                diffExprDevSimpleFileSize = "xx MB";
-//                diffExprDevCompleteFileSize = "xx MB"; 
-                orthologFileSize = "xx MB"; 
-                filePrefix= "bilateria";
-                break;
-            default:
-                throw log.throwing(new IllegalArgumentException("Unrecognized group: " + groupName));
+        StringBuilder s = new StringBuilder();
+        if (includeDataGroupScriptTag) {
+            s.append(getDataGroupScriptTag(groups));
         }
-        
-//        String beginExprFilePath = this.prop.getDownloadMultiExprFilesRootDirectory() + filePrefix + "_";
-        // TODO: remove hardcoded "_" in file names. 
-        // Use BgeeProperties... or RequestParameters ? or static variables?
-        String beginDiffExprFilePath = this.prop.getDownloadMultiDiffExprFilesRootDirectory() + filePrefix + "_";
-        String extension = ".tsv.zip";
-        
-        String data = "";
-        // TODO: remove hardcoded "_orthologs" in file names. 
-        // Use BgeeProperties... or RequestParameters ? or static variables?
-        data += " data-bgeeorthologfileurl='" + this.prop.getDownloadOrthologFilesRootDirectory() + 
-                filePrefix + "_orthologs" + extension +
-                "' data-bgeeorthologfilesize='" + orthologFileSize + "'";
-        
-//        if (exprSimpleFileSize != null) {
-//            data += " data-bgeeexprsimplefileurl='" + beginExprFilePath + 
-//                    "multi-expr-simple" + extension +
-//                    "' data-bgeeexprsimplefilesize='" + diffExprAnatSimpleFileSize + "'"; 
-//        }
-//        if (exprCompleteFileSize != null) {
-//            data += " data-bgeeexprcompletefileurl='" + beginExprFilePath + 
-//                    "multi-expr-complete" + extension +
-//                    "' data-bgeeexprcompletefilesize='" + diffExprAnatSimpleFileSize + "'"; 
-//        }
-        
-        if (diffExprAnatSimpleFileSize != null) {
-            data += " data-bgeediffexpranatomysimplefileurl='" + beginDiffExprFilePath + 
-                    "multi-diffexpr-anatomy-simple" + extension +
-                    "' data-bgeediffexpranatomysimplefilesize='" + diffExprAnatSimpleFileSize + "'"; 
+        s.append("<div id='bgee_uniq_species'> ");
+        switch (pageType) {
+        case HOME_PAGE: 
+        case PROC_EXPR_VALUES:
+            s.append("<h2>Species with data in Bgee</h2>");
+            break;
+        case EXPR_CALLS: 
+            s.append("<h2>Single-species</h2>");
+            break; 
+        default: 
+            throw log.throwing(new IllegalArgumentException("DownloadPageType not supported: " + pageType));
         }
-        if (diffExprAnatCompleteFileSize != null) {
-            data += " data-bgeediffexpranatomycompletefileurl='" + beginDiffExprFilePath + 
-                    "multi-diffexpr-anatomy-complete" + extension +
-                    "' data-bgeediffexpranatomycompletefilesize='" + diffExprAnatCompleteFileSize + "'"; 
-        }
-//        if (diffExprDevSimpleFileSize != null) {
-//            data += " data-bgeediffexprdevelopmentsimplefileurl='" + beginDiffExprFilePath + 
-//                    "multi-diffexpr-development-simple" + extension +
-//                    "' data-bgeediffexprdevelopmentsimplefilesize='" + diffExprDevSimpleFileSize + "'"; 
-//        }
-//        if (diffExprDevCompleteFileSize != null) {
-//            data += " data-bgeediffexprdevelopmentcompletefileurl='" + beginDiffExprFilePath + 
-//                    "multi-diffexpr-development-complete" + extension +
-//                    "' data-bgeediffexprdevelopmentcompletefilesize='" + diffExprDevCompleteFileSize + "'"; 
-//        }
-        return log.exit(data);
+        s.append("<span class='header_details'>(click on species to see more details)</span>");
+        s.append("<div class='bgee_section bgee_download_section'>");
+        s.append(getSingleSpeciesFigures(pageType, groups));
+        s.append("</div>");
+        s.append("</div>");
+        
+        return log.exit(s.toString());
+    }
+
+    /**
+     * Gets the single species section as a {@code String}
+     * @param pageType the {@code DownloadPageType} of this page
+     * @param groups   the {@code List} of {@code SpeciesDataGroup} to display
+     * @return A {@String} containing the html section 
+     */
+    //XXX: Could this method take a List<Species>, the ID attr should be the species ID, 
+    //this way CommandHome would not need to call getSpeciesDataGroupService, 
+    //but simply SpeciesService#loadSpeciesInDataGroups()
+    private String getSingleSpeciesFigures(DownloadPageType pageType, List<SpeciesDataGroup> groups) {
+        StringBuilder sb = new StringBuilder();
+
+        groups.stream().filter(sdg -> sdg.isSingleSpecies()).forEach(sdg -> {
+            Species species = sdg.getMembers().get(0);
+            Map<String, String> attr = new HashMap<>();
+            attr.put("id", htmlEntities(sdg.getId()));
+            sb.append(getHTMLTag("figure", attr, getHTMLTag("div", 
+                    getSpeciesImages(sdg.getMembers(), pageType)) + getCaption(species, sdg)));
+        });
+        return sb.toString();
+    }
+
+    /**
+     * Generates the script tag for the speciesData object that is accessible
+     * from the Javascript code of the page.
+     * @param dataGroups The {@code List} of {@code SpeciesDataGroup} for which download files are availables
+     * @return A {@String} containing the generated Javascript tag.
+     */
+    private String getDataGroupScriptTag(List<SpeciesDataGroup> dataGroups) {
+        log.entry(dataGroups);
+        StringBuilder sb = new StringBuilder("<script>");
+        sb.append("var speciesData = ");
+        sb.append(this.getJsonHelper().toJson(dataGroups.stream()
+                .collect(Collectors.toMap(SpeciesDataGroup::getId, Function.identity()))));
+        sb.append(";</script>");
+        return log.exit(sb.toString());
     }
     
     /**
-     * Get custom data for a single species.
+     * Generates the script tag for the species keywords (one entry is created per species group).
      * 
-     * @param speciesId A {@code String} that is the ID of the species.
-     * @param pageType  A {@code DownloadPageType} that is the type of the page.
-     * @return          A {@code String} that is data according to the given species ID.
+     * @param keywords  The {@code Map} of species id to keywords
+     * @param groups    The {@code List} of species data groups
+     * @param pageType  The {@code DownloadPageType} to generate the script tag for.
+     * @return          A {@String} containing the generated Javascript tag.
+     * @throws IllegalArgumentException If {@code keywords} is missing a mapping 
+     *                                  for a {@code Species} member of a {@code SpeciesDataGroup}.
      */
-    private String getSingleSpeciesFileData(int speciesId, DownloadPageType pageType) {
-        log.entry(speciesId, pageType);
-        
-        String exprSimpleFileSize = null, exprCompleteFileSize = null, 
-                diffExprAnatSimpleFileSize = null, diffExprAnatCompleteFileSize = null, 
-                diffExprDevSimpleFileSize = null, diffExprDevCompleteFileSize = null, 
-                rnaSeqDataFileSize = null, affyDataFileSize = null, inSituDataFileSize = null, 
-                estDataFileSize = null, rnaSeqAnnotFileSize = null, affyAnnotFileSize = null, 
-                inSituAnnotFileSize = null, estAnnotFileSize = null, latinName = null;
+    private String getKeywordScriptTag(Map<String, Set<String>> keywords, 
+            List<SpeciesDataGroup> groups, DownloadPageType pageType) throws IllegalArgumentException {
+        log.entry(keywords, groups, pageType);
 
-        switch (speciesId) {
-            case 9606: 
-                exprSimpleFileSize = "87 MB";
-                exprCompleteFileSize = "711 MB"; 
-                diffExprAnatSimpleFileSize = "4.4 MB";
-                diffExprAnatCompleteFileSize  = "25 MB";
-                diffExprDevSimpleFileSize = "0.5 MB";
-                diffExprDevCompleteFileSize = "13 MB"; 
-                rnaSeqDataFileSize = "32 MB";
-                rnaSeqAnnotFileSize = "6 KB";
-                affyDataFileSize = "1.4 GB";
-                affyAnnotFileSize = "0.3 MB";
-                //estDataFileSize = "xx MB";
-                //estAnnotFileSize = "xx MB";
-                latinName = "Homo_sapiens";
-                break;
-            case 10090: 
-                exprSimpleFileSize = "121 MB";
-                exprCompleteFileSize = "1.2 GB"; 
-                diffExprAnatSimpleFileSize = "8 MB";
-                diffExprAnatCompleteFileSize  = "40 MB";
-                diffExprDevSimpleFileSize = "4 MB";
-                diffExprDevCompleteFileSize = "32 MB";
-                rnaSeqDataFileSize = "32 MB";
-                rnaSeqAnnotFileSize = "9 KB";
-                affyDataFileSize = "1.2 GB";
-                affyAnnotFileSize = "0.5 MB";
-                //inSituDataFileSize = "xx MB";
-                //inSituAnnotFileSize = "xx MB";
-                //estDataFileSize = "xx MB";
-                //estAnnotFileSize = "xx MB";
-                latinName = "Mus_musculus";
-                break;
-            case 7955: 
-                exprSimpleFileSize = "4.2 MB";
-                exprCompleteFileSize = "158 MB"; 
-                diffExprAnatSimpleFileSize = "0.02 MB";
-                diffExprAnatCompleteFileSize  = "0.2 MB";
-                diffExprDevSimpleFileSize = "0,4 MB";
-                diffExprDevCompleteFileSize = "1.3 MB";
-                affyDataFileSize = "20 MB";
-                affyAnnotFileSize = "22 KB";
-                //inSituDataFileSize = "xx MB";
-                //inSituAnnotFileSize = "xx MB";
-                //estDataFileSize = "xx MB";
-                //estAnnotFileSize = "xx MB";
-                latinName = "Danio_rerio";
-                break;
-            case 7227: 
-                exprSimpleFileSize = "4.7 MB";
-                exprCompleteFileSize = "207 MB"; 
-                diffExprAnatSimpleFileSize = "0.5 MB";
-                diffExprAnatCompleteFileSize  = "1.6 MB";
-                diffExprDevSimpleFileSize = "0.2 MB";
-                diffExprDevCompleteFileSize = "0.9 MB"; 
-                affyDataFileSize = "115 MB";
-                affyAnnotFileSize = "69 KB";
-                //inSituDataFileSize = "xx MB";
-                //inSituAnnotFileSize = "xx MB";
-                //estDataFileSize = "xx MB";
-                //estAnnotFileSize = "xx MB";
-                latinName = "Drosophila_melanogaster";
-                break;
-            case 6239: 
-                exprSimpleFileSize = "1.2 MB";
-                exprCompleteFileSize = "13 MB"; 
-                diffExprDevSimpleFileSize = "0.2 MB";
-                diffExprDevCompleteFileSize = "1.7 MB"; 
-                affyDataFileSize = "13 MB";
-                affyAnnotFileSize = "4 KB";
-                rnaSeqDataFileSize = "11 MB";
-                rnaSeqAnnotFileSize = "4 KB";
-                //inSituDataFileSize = "xx MB";
-                //inSituAnnotFileSize = "xx MB";
-                latinName = "Caenorhabditis_elegans";
-                break;
-            case 9597: 
-                exprSimpleFileSize = "0.7 MB";
-                exprCompleteFileSize = "33 MB"; 
-                rnaSeqDataFileSize = "3 MB";
-                rnaSeqAnnotFileSize = "2 KB";
-                latinName = "Pan_paniscus";
-                break;
-            case 9598: 
-                exprSimpleFileSize = "0.5 MB";
-                exprCompleteFileSize = "29 MB";  
-                diffExprAnatSimpleFileSize = "0.2 MB";
-                diffExprAnatCompleteFileSize  = "0.9 MB";
-                rnaSeqDataFileSize = "3 MB";
-                rnaSeqAnnotFileSize = "3 KB";
-                latinName = "Pan_troglodytes";
-                break;
-            case 9593: 
-                exprSimpleFileSize = "0.6 MB";
-                exprCompleteFileSize = "26 MB"; 
-                diffExprAnatSimpleFileSize = "0.2 MB";
-                diffExprAnatCompleteFileSize  = "0.9 MB";
-                rnaSeqDataFileSize = "3 MB";
-                rnaSeqAnnotFileSize = "3 KB";
-                latinName = "Gorilla_gorilla";
-                break;
-            case 9600: 
-                latinName = "Pongo_pygmaeus";
-                break;
-            case 9544: 
-                exprSimpleFileSize = "1.2 MB";
-                exprCompleteFileSize = "54 MB"; 
-                diffExprAnatSimpleFileSize = "0.4 MB";
-                diffExprAnatCompleteFileSize  = "2.5 MB"; 
-                rnaSeqDataFileSize = "10 MB";
-                rnaSeqAnnotFileSize = "5 KB";
-                latinName = "Macaca_mulatta";
-                break;
-            case 10116: 
-                exprSimpleFileSize = "0.8 MB";
-                exprCompleteFileSize = "27 MB"; 
-                diffExprAnatSimpleFileSize = "0.5 MB";
-                diffExprAnatCompleteFileSize  = "2 MB"; 
-                rnaSeqDataFileSize = "6.2 MB";
-                rnaSeqAnnotFileSize = "3 KB";
-                latinName = "Rattus_norvegicus";
-                break;
-            case 9913: 
-                exprSimpleFileSize = "0.7 MB";
-                exprCompleteFileSize = "33 MB"; 
-                diffExprAnatSimpleFileSize = "0.4 MB";
-                diffExprAnatCompleteFileSize  = "1.9 MB"; 
-                rnaSeqDataFileSize = "6 MB";
-                rnaSeqAnnotFileSize = "3 KB";
-                latinName = "Bos_taurus";
-                break;
-            case 9823: 
-                exprSimpleFileSize = "0.3 MB";
-                exprCompleteFileSize = "2.3 MB";  
-                rnaSeqDataFileSize = "0.8 MB";
-                rnaSeqAnnotFileSize = "1 KB";
-                latinName = "Sus_scrofa";
-                break;
-            case 13616: 
-                exprSimpleFileSize = "0.9 MB";
-                exprCompleteFileSize = "25 MB";  
-                diffExprAnatSimpleFileSize = "0.2 MB";
-                diffExprAnatCompleteFileSize  = "0.5 MB"; 
-                rnaSeqDataFileSize = "4 MB";
-                rnaSeqAnnotFileSize = "3 KB";
-                latinName = "Monodelphis_domestica";
-                break;
-            case 9258: 
-                exprSimpleFileSize = "0.6 MB";
-                exprCompleteFileSize = "19 MB"; 
-                diffExprAnatSimpleFileSize = "0.2 MB";
-                diffExprAnatCompleteFileSize  = "1.2 MB"; 
-                rnaSeqDataFileSize = "4 MB";
-                rnaSeqAnnotFileSize = "3 KB";
-                latinName = "Ornithorhynchus_anatinus";
-                break;
-            case 9031: 
-                exprSimpleFileSize = "1 MB";
-                exprCompleteFileSize = "29 MB"; 
-                diffExprAnatSimpleFileSize = "0.4 MB";
-                diffExprAnatCompleteFileSize  = "1.7 MB"; 
-                rnaSeqDataFileSize = "7 MB";
-                rnaSeqAnnotFileSize = "5 KB";
-                latinName = "Gallus_gallus";
-                break;
-            case 28377: 
-                exprSimpleFileSize = "0.3 MB";
-                exprCompleteFileSize = "5.7 MB";  
-                rnaSeqDataFileSize = "0.8 MB";
-                rnaSeqAnnotFileSize = "2 KB";
-                latinName = "Anolis_carolinensis";
-                break;
-            case 8364: 
-                exprSimpleFileSize = "2.6 MB";
-                exprCompleteFileSize = "65 MB"; 
-                diffExprAnatSimpleFileSize = "0.2 MB";
-                diffExprAnatCompleteFileSize  = "1 MB";
-                diffExprDevSimpleFileSize = "0.1 MB";
-                diffExprDevCompleteFileSize = "0.6 MB";  
-                rnaSeqDataFileSize = "12 MB";
-                rnaSeqAnnotFileSize = "6 KB";
-                //inSituDataFileSize = "xx MB";
-                //inSituAnnotFileSize = "xx MB";
-                //estDataFileSize = "xx MB";
-                //estAnnotFileSize = "xx MB";
-                latinName = "Xenopus_tropicalis";
-                break;
-            case 99883: 
-                latinName = "Tetraodon_nigroviridis";
-                break;
-            default:
-                return ("");
+        //check that we have keywords for all species (we should at least have their names, etc)
+        //(not all species had keywords in a previous version, and the stream operations below 
+        //were throwing a null pointer exception)
+        if (!groups.stream().flatMap(e -> e.getMembers().stream()).map(spe -> spe.getId())
+                .collect(Collectors.toSet()).equals(keywords.keySet())) {
+            throw log.throwing(new IllegalArgumentException("Some species are missing associated keywords."));
         }
         
+        //Map group ID -> associated search terms
+        Map<String, Set<String>> groupIdsToTerms = groups.stream()
+                //skip multi-species groups for processed expression values pages, 
+                //to avoid proposing completion for multi-species group names (e.g., "macaque/chimpanzee")
+                .filter(e -> pageType == DownloadPageType.EXPR_CALLS || e.isSingleSpecies())
+                .collect(Collectors.toMap(e -> e.getId(), e -> {
+                    Set<String> terms = new HashSet<>();
+                    //first, store the group name to allow search by group name
+                    terms.add(e.getName());
+                    //then, add keywords associated to all species members of the group
+                    terms.addAll(e.getMembers().stream()
+                            .flatMap(spe -> keywords.get(spe.getId()).stream())
+                            .collect(Collectors.toSet()));
+                    return terms;
+                }));
+        log.trace("Group IDs to terms: {}", groupIdsToTerms);
         
-        StringBuffer data = new StringBuffer();
-        if (pageType.equals(DownloadPageType.EXPR_CALLS)) {
-            String extension = ".tsv.zip";
-            // TODO: remove hardcoded "_" in file names. 
-            // Use BgeeProperties... or RequestParameters ? or static variables?
-            String beginExprFilePath = this.prop.getDownloadExprFilesRootDirectory() + latinName + "_";
-            String beginDiffExprFilePath = this.prop.getDownloadDiffExprFilesRootDirectory() + latinName + "_";
-            data.append(" data-bgeeexprsimplefileurl='" + beginExprFilePath + "expr-simple" + extension + 
-                    "' data-bgeeexprsimplefilesize='" + exprSimpleFileSize + 
-                    "' data-bgeeexprcompletefileurl='" + beginExprFilePath + "expr-complete" + extension + 
-                    "' data-bgeeexprcompletefilesize='" + exprCompleteFileSize+ "'");
-            if (diffExprAnatSimpleFileSize != null) {
-                data.append(" data-bgeediffexpranatomysimplefileurl='" + beginDiffExprFilePath + 
-                                        "diffexpr-anatomy-simple" + extension +
-                        "' data-bgeediffexpranatomysimplefilesize='" + diffExprAnatSimpleFileSize + "'"); 
-            }
-            if (diffExprAnatCompleteFileSize != null) {
-                data.append(" data-bgeediffexpranatomycompletefileurl='" + beginDiffExprFilePath + 
-                                        "diffexpr-anatomy-complete" + extension +
-                        "' data-bgeediffexpranatomycompletefilesize='" + diffExprAnatCompleteFileSize + "'"); 
-            }
-            if (diffExprDevSimpleFileSize != null) {
-                data.append(" data-bgeediffexprdevelopmentsimplefileurl='" + beginDiffExprFilePath + 
-                                        "diffexpr-development-simple" + extension +
-                        "' data-bgeediffexprdevelopmentsimplefilesize='" + diffExprDevSimpleFileSize + "'"); 
-            }
-            if (diffExprDevCompleteFileSize != null) {
-                data.append(" data-bgeediffexprdevelopmentcompletefileurl='" + beginDiffExprFilePath + 
-                                        "diffexpr-development-complete" + extension +
-                        "' data-bgeediffexprdevelopmentcompletefilesize='" + diffExprDevCompleteFileSize + "'"); 
-            }
-
-        } else if (pageType.equals(DownloadPageType.PROC_EXPR_VALUES)) {
-            String extension = ".zip";
-            if (rnaSeqDataFileSize != null) {
-                String rnaSeqProcValueDir = this.prop.getDownloadRNASeqProcExprValueFilesRootDirectory()
-                        + latinName + "/";
-                String filePrefix = latinName + "_RNA-Seq_";
-                data.append(" data-bgeernaseqdatafileurl='" + rnaSeqProcValueDir + filePrefix + 
-                        "read_counts_RPKM" + extension +
-                        "' data-bgeernaseqdatafilesize='" + rnaSeqDataFileSize + "'"); 
-                data.append(" data-bgeernaseqannotfileurl='" + rnaSeqProcValueDir + filePrefix + 
-                        "experiments_libraries" + extension +
-                        "' data-bgeernaseqannotfilesize='" + rnaSeqAnnotFileSize + "'"); 
-                data.append(" data-bgeernaseqdatarooturl='" + rnaSeqProcValueDir + "' ");
-            }
-            if (affyDataFileSize != null) {
-                String affyProcValueDir = this.prop.getDownloadAffyProcExprValueFilesRootDirectory()
-                        + latinName + "/";
-                String filePrefix = latinName + "_Affymetrix_";
-                data.append(" data-bgeeaffydatafileurl='" + affyProcValueDir + filePrefix
-                        + "probesets" + extension 
-                        + "' data-bgeeaffydatafilesize='" + affyDataFileSize + "'"); 
-                data.append(" data-bgeeaffyannotfileurl='" + affyProcValueDir + filePrefix 
-                        + "experiments_chips" + extension +
-                        "' data-bgeeaffyannotfilesize='" + affyAnnotFileSize + "'"); 
-                data.append(" data-bgeeaffydatarooturl='" + affyProcValueDir + "' ");
-            }
-//            if (inSituDataFileSize != null) {
-//                data.append(" data-bgeeinsitudatafileurl='" + beginProcValueFilePath + 
-//                                        "InSitu_data" + extension +
-//                        "' data-bgeeinsitudatafilesize='" + inSituDataFileSize + "'"); 
-//                data.append(" data-bgeeinsituannotfileurl='" + beginProcValueFilePath + 
-//                        "InSitu_annotations" + extension +
-//                        "' data-bgeeinsituannotfilesize='" + inSituAnnotFileSize + "'"); 
-//            }
-//            if (estDataFileSize != null) {
-//                data.append(" data-bgeeestdatafileurl='" + beginProcValueFilePath + 
-//                                        "EST_data" + extension +
-//                        "' data-bgeeestdatafilesize='" + estDataFileSize + "'"); 
-//                data.append(" data-bgeeestannotfileurl='" + beginProcValueFilePath + 
-//                        "EST_annotations" + extension +
-//                        "' data-bgeeestannotfilesize='" + estAnnotFileSize + "'"); 
-//            }
-        } else {
-            assert false: "Unknown DownloadPageType";
-        }
+        StringBuilder sb = new StringBuilder("<script>");
+        sb.append("var keywords = ");
+        sb.append(this.getJsonHelper().toJson(groupIdsToTerms));
+        sb.append(";\n");
         
-        return log.exit(data.toString());
+        sb.append("var autocomplete = ");
+        sb.append(this.getJsonHelper().toJson(groupIdsToTerms.values().stream()
+                .flatMap(e -> e.stream())
+                .distinct() // filter potential duplicates 
+                .sorted()   // sort the autocompletion list alphabetically
+                .collect(Collectors.toList())));
+        sb.append(";</script>");
+        
+        return log.exit(sb.toString());
     }
-
+    
     /**
-     * Generate the HTML img tag of one species.
-     * 
-     * @return             A {@code String} that is the  HTML figure tag generated from the 
-     *                     provided {@code List} of species IDs
-     * @param id           An {@code int} of the species IDs to be diplayed.
-     * @param name         A {@code String} that is the species name.
-     * @param commonName   A {@code String} that is the species common name.
-     * @param lightImg     A {@code boolean} that is {@code true} if the image to use is 
-     *                     the light one.
-     * @return             A {@code String} that is the  HTML img tag of the provided species 
-     *                     data.
+     * Gets the {@code figcaption} element for a given {@code Species} belonging to {@code group}.
+     * @param species   A {@Species}
+     * @param group     The {@code SpeciesDataGroup} which {@code species} belongs to.
+     * @return A {@code String} containing the html code.
      */
-    private String generateSpeciesImg(int id, String name, String shortName, 
-            String commonName, String alternateNames, boolean lightImg) {
-        log.entry(id, name, shortName, commonName, alternateNames, lightImg);
-        StringBuilder image = new StringBuilder();
-        image.append("<img class='species_img' src='");
-        image.append(this.prop.getSpeciesImagesRootDirectory());
-        image.append(id);
-        if (lightImg) {
-            image.append("_light");
-        }
-        image.append(".jpg' alt='");
-        image.append(name);
-        image.append("' data-bgeespeciesid='");
-        image.append(id);
-        image.append("' data-bgeespeciesname='");
-        image.append(name);
-        image.append("' data-bgeespeciesshortname='");
-        image.append(shortName);
-        image.append("' data-bgeespeciescommonname='");
-        image.append(commonName);
-        image.append("' data-bgeespeciesalternatenames='");
-        image.append(alternateNames);
-        image.append("' />");
-                
-        return log.exit(image.toString());
+    private static String getCaption(Species species, SpeciesDataGroup group) {
+        log.entry(species, group);
+        return log.exit(getHTMLTag("figcaption", getShortNameTag(species)
+                //we display the group name as subtitle rather than the species common name, 
+                //because we used to have incorrect common names at some point, 
+                //and because this allows more flexibility (e.g. "human including GTEx data")
+                +getHTMLTag("p", htmlEntities(group.getName()))));
     }
-
-    @Override
-    protected void includeJs() {
-        log.entry();
-        super.includeJs();
-        this.includeJs("download.js");
-        log.exit();
+    
+    /**
+     * Gets the {@code figcaption} element for a given {@code SpeciesDataGroup}
+     * @param species A {SpeciesDataGroup}
+     * @return A {@code String} containing the html code
+     */
+    private static String getCaption(SpeciesDataGroup speciesDataGroup) {
+    	return getHTMLTag("figcaption", htmlEntities(speciesDataGroup.getName()));
     }
+    
+    /**
+     * Gets the short name element for a given {@Species}
+     * @param species A {@Species}
+     * @return A {@code String} containing the html code
+     */
+    private static String getShortNameTag(Species species) {
+    	return getHTMLTag("p", getHTMLTag("i", htmlEntities(species.getShortName())));
+    }
+    
+    
+  	@Override
+  	protected void includeJs() {
+  		log.entry();
+  		super.includeJs();
+  		this.includeJs("download.js");
+  		log.exit();
+  	}
 
     @Override
     protected void includeCss() {

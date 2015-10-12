@@ -48,7 +48,7 @@ public class LoadPropertiesFromSysPropsTest extends TestAncestor
 		System.setProperty("key.from.sys.props", "value.from.sys.props");
 		//set the properties file to an non-existing file, 
 		//so that System properties are used 
-		System.setProperty(DAOManager.CONFIGFILEKEY, "/none");
+		System.setProperty(DAOManager.CONFIG_FILE_KEY, "/none");
 		
 		//we use the mock DAOManager to check what properties it received
         Properties props = new Properties(System.getProperties());
@@ -56,7 +56,7 @@ public class LoadPropertiesFromSysPropsTest extends TestAncestor
         verify(MockDAOManager.mockManager).setParameters(eq(props));
 		
 		//clear the System properties
-		System.clearProperty(DAOManager.CONFIGFILEKEY);
+		System.clearProperty(DAOManager.CONFIG_FILE_KEY);
 		System.clearProperty("key.from.sys.props");
 	}
 }

@@ -409,9 +409,9 @@ BEGIN
                (2, 'MultiSpecies2', 'A multi species group...', 2);
 
         INSERT INTO speciesToDataGroup(speciesId, speciesDataGroupId)
-        VALUES (11, 1),
+        VALUES (41, 1),
                (21 ,2),
-               (31, 2);
+               (51, 2);
 
         INSERT INTO downloadFile(downloadFileId, downloadFileName, downloadFileRelativePath, downloadFileDescription, downloadFileCategory, speciesDataGroupId, downloadFileSize)
         VALUES (1, 'file1.zip', '/dir/to/file1', 'this is file1', 'expr_simple',1, 0),

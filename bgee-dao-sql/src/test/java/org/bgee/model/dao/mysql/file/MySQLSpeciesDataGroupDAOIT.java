@@ -91,25 +91,25 @@ public class MySQLSpeciesDataGroupDAOIT extends MySQLITAncestor {
     public void testGetAllSpeciesToDataGroup() throws SQLException {
         super.useSelectDB();
 
-        MySQLSpeciesDataGroupDAO dao = new MySQLSpeciesDataGroupDAO(getMySQLDAOManager(), "11");
+        MySQLSpeciesDataGroupDAO dao = new MySQLSpeciesDataGroupDAO(getMySQLDAOManager(), "41");
 
         //no ordering requested
         Collection<SpeciesToDataGroupTO> actual = dao.getAllSpeciesToDataGroup(null).getAllTOs();
         Collection<SpeciesToDataGroupTO> expected = Arrays.asList(
-                new SpeciesToDataGroupTO("11", "1"),
+                new SpeciesToDataGroupTO("41", "1"),
                 new SpeciesToDataGroupTO("21", "2"),
-                new SpeciesToDataGroupTO("31", "2")
+                new SpeciesToDataGroupTO("51", "2")
         );
         assertTrue("SpeciesToDataGroupTOs are incorrectly retrieved\nGOT\n" + actual + 
                 "\nEXPECTED\n" + expected, TOComparator.areTOCollectionsEqual(actual, expected));
         
-        //ordering requested only on taxonomic distance to species 11
+        //ordering requested only on taxonomic distance to species 41
         LinkedHashMap<SpeciesToGroupOrderingAttribute, OrderingDAO.Direction> attrs = new LinkedHashMap<>();
         attrs.put(SpeciesToGroupOrderingAttribute.DISTANCE_TO_SPECIES, OrderingDAO.Direction.ASC);
         List<SpeciesToDataGroupTO> actualList = dao.getAllSpeciesToDataGroup(attrs).getAllTOs();
         List<SpeciesToDataGroupTO> expectedList = Arrays.asList(
-                new SpeciesToDataGroupTO("11", "1"),
-                new SpeciesToDataGroupTO("31", "2"),
+                new SpeciesToDataGroupTO("41", "1"),
+                new SpeciesToDataGroupTO("51", "2"),
                 new SpeciesToDataGroupTO("21", "2")
         );
         assertTrue("SpeciesToDataGroupTOs are incorrectly retrieved\nGOT\n" + actualList + 
@@ -122,9 +122,9 @@ public class MySQLSpeciesDataGroupDAOIT extends MySQLITAncestor {
         attrs.put(SpeciesToGroupOrderingAttribute.DISTANCE_TO_SPECIES, OrderingDAO.Direction.ASC);
         actualList = dao.getAllSpeciesToDataGroup(attrs).getAllTOs();
         expectedList = Arrays.asList(
-                new SpeciesToDataGroupTO("31", "2"),
+                new SpeciesToDataGroupTO("51", "2"),
                 new SpeciesToDataGroupTO("21", "2"),
-                new SpeciesToDataGroupTO("11", "1")
+                new SpeciesToDataGroupTO("41", "1")
         );
         assertTrue("SpeciesToDataGroupTOs are incorrectly retrieved\nGOT\n" + actualList + 
                 "\nEXPECTED\n" + expectedList, TOComparator.areTOCollectionsEqual(actualList, expectedList));
@@ -137,10 +137,10 @@ public class MySQLSpeciesDataGroupDAOIT extends MySQLITAncestor {
         attrs.put(SpeciesToGroupOrderingAttribute.DISTANCE_TO_SPECIES, OrderingDAO.Direction.DESC);
         actualList = dao.getAllSpeciesToDataGroup(attrs).getAllTOs();
         expectedList = Arrays.asList(
-                //species 11 and 31 have the same taxonomic distance to species 21, 
+                //species 41 and 51 have the same taxonomic distance to species 21, 
                 //they should also be ordered by species ID among them.
-                new SpeciesToDataGroupTO("11", "1"),
-                new SpeciesToDataGroupTO("31", "2"),
+                new SpeciesToDataGroupTO("41", "1"),
+                new SpeciesToDataGroupTO("51", "2"),
                 new SpeciesToDataGroupTO("21", "2")
         );
         assertTrue("SpeciesToDataGroupTOs are incorrectly retrieved\nGOT\n" + actualList + 
@@ -153,10 +153,10 @@ public class MySQLSpeciesDataGroupDAOIT extends MySQLITAncestor {
         attrs.put(SpeciesToGroupOrderingAttribute.DATA_GROUP_ID, OrderingDAO.Direction.DESC);
         actualList = dao.getAllSpeciesToDataGroup(attrs).getAllTOs();
         expectedList = Arrays.asList(
-                //species 11 and 31 have the same taxonomic distance to species 21, 
+                //species 41 and 51 have the same taxonomic distance to species 21, 
                 //but here we also requested ordering per data group ID.
-                new SpeciesToDataGroupTO("31", "2"),
-                new SpeciesToDataGroupTO("11", "1"),
+                new SpeciesToDataGroupTO("51", "2"),
+                new SpeciesToDataGroupTO("41", "1"),
                 new SpeciesToDataGroupTO("21", "2")
         );
         assertTrue("SpeciesToDataGroupTOs are incorrectly retrieved\nGOT\n" + actualList + 

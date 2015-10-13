@@ -2,8 +2,6 @@ package org.bgee.model;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -69,8 +67,7 @@ public class BgeeProperties {
      * 
      * @see #PROPERTIES_FILE_NAME_KEY
      */
-    public final static List<String> PROPERTIES_FILE_NAMES_DEFAULT = Arrays.asList(
-            "/bgee.properties", "/bgee-webapp.properties");
+    public final static String PROPERTIES_FILE_NAME_DEFAULT = "/bgee.properties";
     
     /**
      * A {@code String} that is the key to access to the System property that contains the value
@@ -238,25 +235,13 @@ public class BgeeProperties {
         Properties filePropsToReturn = null;
         //try to get the properties file.
         //default name is bgee.properties
-        //check first if an alternative name has been provided in the System properties, 
-        //otherwise, use default file names, in preferred order.
-        InputStream propStream = null;
-        String propertyFile = System.getProperties().getProperty(PROPERTIES_FILE_NAME_KEY);
-        if (propertyFile == null) {
-            log.trace("No property file name defined in System properties, try to localize default property file.");
-            for (String fileName: PROPERTIES_FILE_NAMES_DEFAULT) {
-                log.trace("Try property file name {}", fileName);
-                propStream = BgeeProperties.class.getResourceAsStream(fileName);
-                if (propStream != null) {
-                    propertyFile = fileName;
-                    break;
-                }
-            }
-        } else {
-            propStream = BgeeProperties.class.getResourceAsStream(propertyFile);
-        }
+        //check first if an alternative name has been provided in the System properties
+        String propertyFile = (new Properties(System.getProperties()))
+                .getProperty(PROPERTIES_FILE_NAME_KEY, PROPERTIES_FILE_NAME_DEFAULT);
         
-        log.debug("Using properties file {}", propertyFile);
+        log.debug("Trying to use properties file {}", propertyFile);
+        InputStream propStream =
+                BgeeProperties.class.getResourceAsStream(propertyFile);
         if (propStream != null) {
             try {
                 filePropsToReturn = new Properties();

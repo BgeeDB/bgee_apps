@@ -951,15 +951,10 @@ public class GenerateExprFile extends GenerateDownloadFile {
             expressionValues.add(data.getStringRepresentation());
         }
 
-        List<Object> specificTypeQualities = new ArrayList<Object>();
-        specificTypeQualities.add(convertDataStateToString(DataState.HIGHQUALITY));
-        specificTypeQualities.add(convertDataStateToString(DataState.LOWQUALITY));
-        specificTypeQualities.add(GenerateDownloadFile.NA_VALUE);
-
-        List<Object> resumeQualities = new ArrayList<Object>();
-        resumeQualities.add(convertDataStateToString(DataState.HIGHQUALITY));
-        resumeQualities.add(convertDataStateToString(DataState.LOWQUALITY));
-        resumeQualities.add(GenerateDownloadFile.NA_VALUE);
+        List<Object> qualities = new ArrayList<Object>();
+        qualities.add(convertDataStateToString(DataState.HIGHQUALITY));
+        qualities.add(convertDataStateToString(DataState.LOWQUALITY));
+        qualities.add(GenerateDownloadFile.NA_VALUE);
 
         List<Object> originValues = new ArrayList<Object>();
         for (ObservedData data : ObservedData.values()) {
@@ -985,7 +980,7 @@ public class GenerateExprFile extends GenerateDownloadFile {
                 	processors[i] = new IsElementOf(expressionValues);
                     break;
                 case QUALITY_COLUMN_NAME:
-                	processors[i] = new IsElementOf(resumeQualities);
+                	processors[i] = new IsElementOf(qualities);
                     break;
             }
 
@@ -1011,7 +1006,7 @@ public class GenerateExprFile extends GenerateDownloadFile {
             	    case INSITU_CALL_QUALITY_COLUMN_NAME:
             	    case RNASEQ_CALL_QUALITY_COLUMN_NAME:
 //            	    case RELAXED_INSITU_CALL_QUALITY_COLUMN_NAME:
-            	        processors[i] = new IsElementOf(specificTypeQualities);
+            	        processors[i] = new IsElementOf(qualities);
             	        break;
             	    case AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME:
             	    case EST_OBSERVED_DATA_COLUMN_NAME:
@@ -1087,7 +1082,7 @@ public class GenerateExprFile extends GenerateDownloadFile {
      * whether each column should be quoted or not.
      *
      * @param headers   An {@code Array} of {@code String}s representing the names of the columns.
-     * @return          the {@code Array } of {@code booleans} (one per CSV column) indicating 
+     * @return          the {@code Array} of {@code booleans} (one per CSV column) indicating 
      *                  whether each column should be quoted or not.
      */
     private boolean[] generateQuoteMode(String[] headers) {

@@ -104,13 +104,13 @@ public interface GenerateMultiSpeciesDownloadFile {
          */
         private String omaId;
         /**
-         * @see #getEntityIds()
+         * @see #getAnatEntityIds()
          */
-        private List<String> entityIds;
+        private List<String> anatEntityIds;
         /**
-         * @see #getEntityNames()
+         * @see #getAnatEntityNames()
          */
-        private List<String> entityNames;
+        private List<String> anatEntityNames;
         /**
          * @see #getStageIds()
          */
@@ -130,16 +130,16 @@ public interface GenerateMultiSpeciesDownloadFile {
          * Constructor providing all arguments of the class.
          *
          * @param omaId             See {@link #getOmaId()}.
-         * @param entityIds         See {@link #getEntityIds()}.
-         * @param entityNames       See {@link #getEntityNames()}.
+         * @param anatEntityIds     See {@link #getAnatEntityIds()}.
+         * @param anatEntityNames   See {@link #getAnatEntityNames()}.
          * @param stageIds          See {@link #getStageIds()}.
          * @param stageNames        See {@link #getStageNames()}.
          */
-        protected MultiSpeciesFileBean(String omaId, List<String> entityIds, 
-                List<String> entityNames, List<String> stageIds, List<String> stageNames) {
+        protected MultiSpeciesFileBean(String omaId, List<String> anatEntityIds, 
+                List<String> anatEntityNames, List<String> stageIds, List<String> stageNames) {
             this.omaId = omaId;
-            this.entityIds = entityIds;
-            this.entityNames = entityNames;
+            this.anatEntityIds = anatEntityIds;
+            this.anatEntityNames = anatEntityNames;
             this.stageIds = stageIds;
             this.stageNames = stageNames;
         }
@@ -163,16 +163,16 @@ public interface GenerateMultiSpeciesDownloadFile {
          *          There is more than one entity only in multi-species files.
          *          When several are targeted, they are provided in alphabetical order.
          */
-        public List<String> getEntityIds() {
-            return entityIds;
+        public List<String> getAnatEntityIds() {
+            return anatEntityIds;
         }
         /** 
-         * @param entityIds A {@code List} of {@code String}s that are the IDs of the 
-         *                  anatomical entities.
-         * @see #getEntityIds()
+         * @param anatEntityNames   A {@code List} of {@code String}s that are the IDs of the 
+         *                          anatomical entities.
+         * @see #getAnatEntityIds()
          */
-        public void setEntityIds(List<String> entityIds) {
-            this.entityIds = entityIds;
+        public void setEntityIds(List<String> anatEntityIds) {
+            this.anatEntityIds = anatEntityIds;
         }
 
         /**
@@ -181,16 +181,16 @@ public interface GenerateMultiSpeciesDownloadFile {
          *          When there is several, they are returned in the same order as their 
          *          corresponding ID, as returned by {@link #getGeneIds()}.
          */
-        public List<String> getEntityNames() {
-            return entityNames;
+        public List<String> getAnatEntityNames() {
+            return anatEntityNames;
         }
         /**
-         * @param entityNames   A {@code List} of {@code String}s that are the names of the
-         *                      anatomical entities.
-         * @see #getEntityNames()
+         * @param anatEntityNames   A {@code List} of {@code String}s that are the names of the
+         *                          anatomical entities.
+         * @see #getAnatEntityNames()
          */
-        public void setEntityNames(List<String> entityNames) {
-            this.entityNames = entityNames;
+        public void setEntityNames(List<String> anatEntityNames) {
+            this.anatEntityNames = anatEntityNames;
         }
         
         /** 
@@ -226,8 +226,8 @@ public interface GenerateMultiSpeciesDownloadFile {
             final int prime = 31;
             int result = 1;
             result = prime * result + ((omaId == null) ? 0 : omaId.hashCode());
-            result = prime * result + ((entityIds == null) ? 0 : entityIds.hashCode());
-            result = prime * result + ((entityNames == null) ? 0 : entityNames.hashCode());
+            result = prime * result + ((anatEntityIds == null) ? 0 : anatEntityIds.hashCode());
+            result = prime * result + ((anatEntityNames == null) ? 0 : anatEntityNames.hashCode());
             result = prime * result + ((stageIds == null) ? 0 : stageIds.hashCode());
             result = prime * result + ((stageNames == null) ? 0 : stageNames.hashCode());
             return result;
@@ -247,15 +247,15 @@ public interface GenerateMultiSpeciesDownloadFile {
                     return false;
             } else if (!omaId.equals(other.omaId))
                 return false;
-            if (entityIds == null) {
-                if (other.entityIds != null)
+            if (anatEntityIds == null) {
+                if (other.anatEntityIds != null)
                     return false;
-            } else if (!entityIds.equals(other.entityIds))
+            } else if (!anatEntityIds.equals(other.anatEntityIds))
                 return false;
-            if (entityNames == null) {
-                if (other.entityNames != null)
+            if (anatEntityNames == null) {
+                if (other.anatEntityNames != null)
                     return false;
-            } else if (!entityNames.equals(other.entityNames))
+            } else if (!anatEntityNames.equals(other.anatEntityNames))
                 return false;
             if (stageIds == null) {
                 if (other.stageIds != null)
@@ -273,8 +273,124 @@ public interface GenerateMultiSpeciesDownloadFile {
         @Override
         public String toString() {
             return  "OMA ID: " + getOmaId() +
-                    " - Entity IDs: " + getEntityIds() + " - Entity names: " + getEntityNames() + 
+                    " - Anat. entity IDs: " + getAnatEntityIds() + 
+                    " - Anat. entity names: " + getAnatEntityNames() + 
                     " - Stage IDs: " + getStageIds() + " - Stage names: " + getStageNames();
+        }
+    }
+
+    /**
+     * Class parent of bean storing multi-species expression and differential expression 
+     * calls for a complete file, holding parameters common to all of them.
+     *
+     * @author  Valentine Rech de Laval
+     * @version Bgee 13 Apr. 2015
+     * @since   Bgee 13
+     */
+    public static abstract class MultiSpeciesSimpleFileBean extends MultiSpeciesFileBean {
+    
+        /**
+         * See {@link #getGeneIds()}
+         */
+        private List<String> geneIds;
+        /**
+         * See {@link #getGeneNames()}
+         */
+        private List<String> geneNames;
+        
+        /**
+         * 0-argument constructor of the bean.
+         */
+        protected MultiSpeciesSimpleFileBean() {
+        }
+
+        /**
+         * Constructor providing all arguments of the class.
+         *
+         * @param omaId             See {@link #getOmaId()}.
+         * @param geneId            See {@link #getGeneIds()}.
+         * @param geneName          See {@link #getGeneNames()}.
+         * @param anatEntityIds     See {@link #getAnatEntityIds()}.
+         * @param anatEntityNames   See {@link #getAnatEntityNames()}.
+         * @param stageIds          See {@link #getStageIds()}.
+         * @param stageNames        See {@link #getStageNames()}.
+         */
+        protected MultiSpeciesSimpleFileBean(String omaId,
+                List<String> geneIds, List<String> geneNames, 
+                List<String> anatEntityIds, List<String> anatEntityNames,
+                List<String> stageIds, List<String> stageNames) {
+            super(omaId, anatEntityIds, anatEntityNames, stageIds, stageNames);
+            this.geneIds = geneIds;
+            this.geneNames = geneNames;
+        }
+        
+        /**
+         * @return  the {@code List} of {@code String}s that are the IDs of the genes.
+         *          When there is several genes, they are provided in alphabetical order.
+         */
+        public List<String> getGeneIds() {
+            return geneIds;
+        }
+        /** 
+         * @param geneIds   A {@code List} of {@code String}s that are the IDs of the genes.
+         * @see #getGeneIds()
+         */
+        public void setGeneIds(List<String> geneIds) {
+            this.geneIds = geneIds;
+        }
+
+        /**
+         * @return  the {@code List} of {@code String}s that are the names of the genes.
+         *          When there is several genes, they are provided in same order as their 
+         *          corresponding ID, as returned by {@link #getGeneIds()}.
+         */
+        public List<String> getGeneNames() {
+            return geneNames;
+        }
+        /**
+         * @param geneNames A {@code List} of {@code String}s that are the names of genes.
+         * @see #getGeneNames()
+         */
+        public void setGeneNames(List<String> geneNames) {
+            this.geneNames = geneNames;
+        }
+
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = super.hashCode();
+            result = prime * result + ((geneIds == null) ? 0 : geneIds.hashCode());
+            result = prime * result + ((geneNames == null) ? 0 : geneNames.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (!super.equals(obj))
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            MultiSpeciesSimpleFileBean other = (MultiSpeciesSimpleFileBean) obj;
+            if (geneIds == null) {
+                if (other.geneIds != null)
+                    return false;
+            } else if (!geneIds.equals(other.geneIds))
+                return false;
+            if (geneNames == null) {
+                if (other.geneNames != null)
+                    return false;
+            } else if (!geneNames.equals(other.geneNames))
+                return false;
+            return true;
+        }
+
+        @Override
+        public String toString() {
+            return super.toString() +
+                    " - Gene IDs: " + getGeneIds() + " - Gene names: " + getGeneNames();
         }
     }
 
@@ -323,8 +439,8 @@ public interface GenerateMultiSpeciesDownloadFile {
          * Constructor providing all arguments of the class.
          *
          * @param omaId             See {@link #getOmaId()}.
-         * @param entityIds         See {@link #getEntityIds()}.
-         * @param entityNames       See {@link #getEntityNames()}.
+         * @param entityIds         See {@link #getAnatEntityIds()}.
+         * @param entityNames       See {@link #getAnatEntityNames()}.
          * @param stageIds          See {@link #getStageIds()}.
          * @param stageNames        See {@link #getStageNames()}.
          * @param geneId            See {@link #getGeneId()}.
@@ -494,7 +610,6 @@ public interface GenerateMultiSpeciesDownloadFile {
                     " - Species ID: " + getSpeciesId() + " - Species name: " + getSpeciesName();
         }
     }
-    
     
     /**
      * A bean representing a row of an OMA file. 

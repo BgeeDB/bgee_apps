@@ -163,7 +163,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             if (omaIdComp != 0)
                 return log.exit(omaIdComp);
 
-            int uberonIdComp = STRING_LIST_COMPARATOR.compare(bean1.getEntityIds(), bean2.getEntityIds());
+            int uberonIdComp = STRING_LIST_COMPARATOR.compare(bean1.getAnatEntityIds(), bean2.getAnatEntityIds());
             if (uberonIdComp != 0)
                 return log.exit(uberonIdComp);
             
@@ -405,16 +405,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * @version Bgee 13 Apr. 2015
      * @since Bgee 13
      */
-    public static class MultiSpeciesSimpleDiffExprFileBean extends MultiSpeciesFileBean {
+    public static class MultiSpeciesSimpleDiffExprFileBean extends MultiSpeciesSimpleFileBean {
     
-        /**
-         * See {@link #getGeneIds()}
-         */
-        private List<String> geneIds;
-        /**
-         * See {@link #getGeneNames()}
-         */
-        private List<String> geneNames;
         /**
          * See {@link #getSpeciesDiffExprCounts()}.
          */
@@ -432,53 +424,20 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
          * @param omaId             See {@link #getOmaId()}.
          * @param geneIds           See {@link #getGeneIds()}.
          * @param geneNames         See {@link #getGeneNames()}.
-         * @param entityIds         See {@link #getEntityIds()}.
-         * @param entityNames       See {@link #getEntityNames()}.
+         * @param anatEntityIds     See {@link #getAnatEntityIds()}.
+         * @param anatEntityNames   See {@link #getAnatEntityNames()}.
          * @param stageIds          See {@link #getStageIds()}.
          * @param stageNames        See {@link #getStageNames()}.
          * @param speciesCounts     See {@link #getSpeciesDiffExprCounts()}.
          */
         public MultiSpeciesSimpleDiffExprFileBean(String omaId, List<String> geneIds, 
-                List<String> geneNames, List<String> entityIds, List<String> entityNames, 
+                List<String> geneNames, List<String> anatEntityIds, List<String> anatEntityNames, 
                 List<String> stageIds, List<String> stageNames, 
                 List<SpeciesDiffExprCounts> speciesDiffExprCounts) {
-            super(omaId, entityIds, entityNames, stageIds, stageNames);
-            this.geneIds = geneIds;
-            this.geneNames = geneNames;
+            super(omaId, geneIds, geneNames, anatEntityIds, anatEntityNames, stageIds, stageNames);
             this.speciesDiffExprCounts = speciesDiffExprCounts;
         }
     
-        /**
-         * @return  the {@code List} of {@code String}s that are the IDs of the genes.
-         *          When there is several genes, they are provided in alphabetical order.
-         */
-        public List<String> getGeneIds() {
-            return geneIds;
-        }
-        /** 
-         * @param geneIds   A {@code List} of {@code String}s that are the IDs of the genes.
-         * @see #getGeneIds()
-         */
-        public void setGeneIds(List<String> geneIds) {
-            this.geneIds = geneIds;
-        }
-
-        /**
-         * @return  the {@code List} of {@code String}s that are the names of the genes.
-         *          When there is several genes, they are provided in same order as their 
-         *          corresponding ID, as returned by {@link #getGeneIds()}.
-         */
-        public List<String> getGeneNames() {
-            return geneNames;
-        }
-        /**
-         * @param geneNames A {@code List} of {@code String}s that are the names of genes.
-         * @see #getGeneNames()
-         */
-        public void setGeneNames(List<String> geneNames) {
-            this.geneNames = geneNames;
-        }
-
         /**
          * @return  the {@code List} of {@code SpeciesDiffExprCounts}s that are the counts of the 
          *          genes for each species of a multi-species differential expression file.
@@ -499,8 +458,6 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         public int hashCode() {
             final int prime = 31;
             int result = super.hashCode();
-            result = prime * result + ((geneIds == null) ? 0 : geneIds.hashCode());
-            result = prime * result + ((geneNames == null) ? 0 : geneNames.hashCode());
             result = prime * result + 
                     ((speciesDiffExprCounts == null) ? 0 : speciesDiffExprCounts.hashCode());
             return result;
@@ -515,16 +472,6 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             if (getClass() != obj.getClass())
                 return false;
             MultiSpeciesSimpleDiffExprFileBean other = (MultiSpeciesSimpleDiffExprFileBean) obj;
-            if (geneIds == null) {
-                if (other.geneIds != null)
-                    return false;
-            } else if (!geneIds.equals(other.geneIds))
-                return false;
-            if (geneNames == null) {
-                if (other.geneNames != null)
-                    return false;
-            } else if (!geneNames.equals(other.geneNames))
-                return false;
             if (speciesDiffExprCounts == null) {
                 if (other.speciesDiffExprCounts != null)
                     return false;
@@ -535,9 +482,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         
         @Override
         public String toString() {
-            return super.toString() + 
-                    " - Gene IDs: " + getGeneIds() + " - Gene names: " + getGeneNames() +
-                    " - Species counts: " + getSpeciesDiffExprCounts();
+            return super.toString() + " - Species counts: " + getSpeciesDiffExprCounts();
         }
     }
 
@@ -610,8 +555,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
          * Constructor providing all arguments of the class.
          * 
          * @param omaId                     See {@link #getOmaId()}.
-         * @param entityIds                 See {@link #getEntityIds()}.
-         * @param entityNames               See {@link #getEntityNames()}.
+         * @param anatEntityIds             See {@link #getAnatEntityIds()}.
+         * @param anatEntityNames           See {@link #getAnatEntityNames()}.
          * @param stageIds                  See {@link #getStageIds()}.
          * @param stageNames                See {@link #getStageNames()}.
          * @param geneId                    See {@link #getGeneId()}.
@@ -634,7 +579,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
          * @param callQuality               See {@link #getCallQuality()}.
          */
         public MultiSpeciesCompleteDiffExprFileBean(String omaId, 
-                List<String> entityIds, List<String> entityNames, List<String> stageIds, 
+                List<String> anatEntityIds, List<String> anatEntityNames, List<String> stageIds, 
                 List<String> stageNames, String geneId, String geneName, 
                 String cioId, String cioName, String speciesId, String speciesName,
                 String affymetrixData, String affymetrixQuality, Float affymetrixPValue, 
@@ -642,7 +587,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 String rnaSeqData, String rnaSeqQuality, Float rnaSeqPValue, 
                 Long rnaSeqConsistentDEA, Long rnaSeqInconsistentDEA,
                 String differentialExpression, String callQuality) {
-            super(omaId, entityIds, entityNames, stageIds, stageNames, 
+            super(omaId, anatEntityIds, anatEntityNames, stageIds, stageNames, 
                     geneId, geneName, cioId, cioName, speciesId, speciesName);
             this.affymetrixData = affymetrixData;
             this.affymetrixQuality = affymetrixQuality;
@@ -1282,7 +1227,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             String taxonId = this.getLeastCommonAncestor(setSpecies);
             
             // Retrieve gene TOs, stage names, anat. entity names, and cio names 
-            // for all species
+            // for all species of the group
             this.getGeneDAO().setAttributes(GeneDAO.Attribute.ID, GeneDAO.Attribute.NAME, 
                     GeneDAO.Attribute.OMA_PARENT_NODE_ID, GeneDAO.Attribute.SPECIES_ID);
             Map<String, GeneTO> geneTOByIds = 
@@ -2566,16 +2511,11 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         for (DiffExpressionData diffExprData: DiffExpressionData.values()) {
             data.add(diffExprData.getStringRepresentation());
         }
-        
-        List<Object> specificTypeQualities = new ArrayList<Object>();
-        specificTypeQualities.add(GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY));
-        specificTypeQualities.add(GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY));
-        specificTypeQualities.add(GenerateDownloadFile.NA_VALUE);
-        
-        List<Object> resumeQualities = new ArrayList<Object>();
-        resumeQualities.add(GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY));
-        resumeQualities.add(GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY));
-        resumeQualities.add(GenerateDownloadFile.NA_VALUE);
+
+        List<Object> qualities = new ArrayList<Object>();
+        qualities.add(GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY));
+        qualities.add(GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY));
+        qualities.add(GenerateDownloadFile.NA_VALUE);
         
         //Then, we build the CellProcessor
         CellProcessor[] processors = new CellProcessor[header.length];
@@ -2646,11 +2586,9 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                         processors[i] = new IsElementOf(data);
                         break;
                     case QUALITY_COLUMN_NAME:
-                        processors[i] = new IsElementOf(resumeQualities);
-                        break;
                     case AFFYMETRIX_CALL_QUALITY_COLUMN_NAME:
                     case RNASEQ_CALL_QUALITY_COLUMN_NAME:
-                        processors[i] = new IsElementOf(specificTypeQualities);
+                        processors[i] = new IsElementOf(qualities);
                         break;
                     case AFFYMETRIX_P_VALUE_COLUMN_NAME:
                     case RNASEQ_P_VALUE_COLUMN_NAME:
@@ -2700,6 +2638,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         if (fileType.isSimpleFileType()) {
             headers[1] = ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME;
             headers[2] = ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME;
+            //XXX change STAGE_XX_COLUMN_NAME to STAGE_XX_LIST_COLUMN_NAME 
             headers[3] = STAGE_ID_COLUMN_NAME;
             headers[4] = STAGE_NAME_COLUMN_NAME;
         } else {
@@ -2820,7 +2759,6 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      *                              of the columns of a multi-species differential expression file.
      * @param orderedSpeciesNames   An {@code Array} of {@code String}s representing the names 
      *                              of the columns of a multi-species differential expression file.
-     *                              Species names should start with a capital.
      * @return                      The {@code Array} of {@code String}s that is the field mapping, 
      *                              put in the {@code Array} at the same index as the column they 
      *                              are supposed to process.
@@ -2851,10 +2789,10 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                     fieldMapping[i] = "stageNames";
                     break;
                 case ANAT_ENTITY_ID_LIST_ID_COLUMN_NAME:
-                    fieldMapping[i] = "entityIds";
+                    fieldMapping[i] = "anatEntityIds";
                     break;
                 case ANAT_ENTITY_NAME_LIST_ID_COLUMN_NAME:
-                    fieldMapping[i] = "entityNames";
+                    fieldMapping[i] = "anatEntityNames";
                     break;
             }
             

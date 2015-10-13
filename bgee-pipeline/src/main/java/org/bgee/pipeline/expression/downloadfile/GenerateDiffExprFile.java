@@ -644,16 +644,11 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
             data.add(diffExprData.getStringRepresentation());
         }
         
-        List<Object> specificTypeQualities = new ArrayList<Object>();
-        specificTypeQualities.add(GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY));
-        specificTypeQualities.add(GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY));
-        specificTypeQualities.add(GenerateDownloadFile.NA_VALUE);
-        
-        List<Object> resumeQualities = new ArrayList<Object>();
-        resumeQualities.add(GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY));
-        resumeQualities.add(GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY));
-        resumeQualities.add(GenerateDownloadFile.NA_VALUE);
-        
+        List<Object> qualities = new ArrayList<Object>();
+        qualities.add(GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY));
+        qualities.add(GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY));
+        qualities.add(GenerateDownloadFile.NA_VALUE);
+
         //Then, we build the CellProcessor
         CellProcessor[] processors = new CellProcessor[header.length];
         for (int i = 0; i < header.length; i++) {
@@ -673,7 +668,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
                     processors[i] = new IsElementOf(data);
                     break;
                 case QUALITY_COLUMN_NAME:
-                    processors[i] = new IsElementOf(resumeQualities);
+                    processors[i] = new IsElementOf(qualities);
                     break;
             }
             
@@ -694,7 +689,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
                     break;
                 case AFFYMETRIX_CALL_QUALITY_COLUMN_NAME:
                 case RNASEQ_CALL_QUALITY_COLUMN_NAME:
-                    processors[i] = new IsElementOf(specificTypeQualities);
+                    processors[i] = new IsElementOf(qualities);
                     break;
                 case AFFYMETRIX_P_VALUE_COLUMN_NAME:
                 case RNASEQ_P_VALUE_COLUMN_NAME:

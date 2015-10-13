@@ -253,12 +253,14 @@ public class AnnotationCommon {
      *                                  they will be discarded.
      * @throws IOException              If an error occurred while reading or writing a file.
      * @throws FileNotFoundException    If a provided file could not be found.
+     * @throws OWLOntologyCreationException If an error occurred while merge the import closure 
+     *                                      of the provided ontology.
      */
     public static void filterUberonSimplificationInfo(OWLOntology originalOnt, 
             Set<String> infoFiles, 
             Set<String> singleAnatEntityFiles, Set<String> multipleAnatEntitieFiles, 
             String filteredFileDirectory, boolean filterUsingParents) 
-                    throws FileNotFoundException, IOException {
+                    throws FileNotFoundException, IOException, OWLOntologyCreationException {
         
         log.entry(originalOnt, infoFiles, singleAnatEntityFiles, multipleAnatEntitieFiles, 
                 filteredFileDirectory, filterUsingParents);

@@ -1,9 +1,12 @@
 package org.bgee.model.dao.api.expressiondata;
 
+import java.util.LinkedHashMap;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
+import org.bgee.model.dao.api.OrderingDAO;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
@@ -15,7 +18,8 @@ import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
  * @version Bgee 13
  * @since Bgee 13
  */
-public interface DiffExpressionCallDAO extends DAO<DiffExpressionCallDAO.Attribute> {
+public interface DiffExpressionCallDAO 
+    extends OrderingDAO<DiffExpressionCallDAO.Attribute, DiffExpressionCallDAO.OrderingAttribute> {
 
     /**
      * {@code Enum} used to define the attributes to populate in the 
@@ -59,6 +63,20 @@ public interface DiffExpressionCallDAO extends DAO<DiffExpressionCallDAO.Attribu
         DIFF_EXPR_CALL_RNA_SEQ, DIFF_EXPR_RNA_SEQ_DATA, BEST_P_VALUE_RNA_SEQ, 
         CONSISTENT_DEA_COUNT_RNA_SEQ, INCONSISTENT_DEA_COUNT_RNA_SEQ,
     }
+    
+    /**
+     * {@code Enum} used to define the attributes to order {@code DiffExpressionCallTO}s
+     * obtained from this {@code DiffExpressionCallDAO}.
+     * <ul>
+     * <li>{@code OMA_GROUP}: corresponds to order by groups of homologous genes.
+     * </ul>
+     * @see org.bgee.model.dao.api.OrderingDAO#setOrderingAttributes(LinkedHashMap)
+     * @see org.bgee.model.dao.api.OrderingDAO#setOrderingAttributes(Enum[])
+     * @see org.bgee.model.dao.api.OrderingDAO#clearOrderingAttributes()
+     */
+    public enum OrderingAttribute implements OrderingDAO.OrderingAttribute {
+        OMA_GROUP
+    }
 
     /**
      * Retrieve differential expression calls from data source according to 
@@ -78,16 +96,15 @@ public interface DiffExpressionCallDAO extends DAO<DiffExpressionCallDAO.Attribu
             throws DAOException;
 
     /**
-     * Retrieve differential expression calls for genes homologous in the provided taxon, 
-     * order by groups of homologous genes, and filtered according to 
-     * {@code DiffExpressionCallParams}.
+     * Retrieve differential expression calls for genes homologous in the provided taxon 
+     * filtered according to {@code DiffExpressionCallParams}.
      * <p>
      * Only genes that are homologous at the level of the provided taxon will be considered. 
      * If it is not needed to consider all species member of the provided taxon, 
      * they can be further filtered using the methods {@code addSpeciesId} or 
      * {@code addAllSpeciesIds} on the provided {@code DiffExpressionCallParams}.
      * <p>
-     * The {@code DiffExpressionCallTO}s retrieved will be order by groups of genes 
+     * The {@code DiffExpressionCallTO}s could be retrieved ordered by groups of genes 
      * homologous at the level of the provided taxon. To determine the homologous group 
      * being iterated, it is necessary to retrieve the mapping from gene IDs to 
      * homologous group IDs, see 
@@ -103,7 +120,7 @@ public interface DiffExpressionCallDAO extends DAO<DiffExpressionCallDAO.Attribu
      *                      the requested differential expression calls from the data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public DiffExpressionCallTOResultSet getOrderedHomologousGenesDiffExpressionCalls(
+    public DiffExpressionCallTOResultSet getHomologousGenesDiffExpressionCalls(
             String taxonId, DiffExpressionCallParams params) throws DAOException;
 
     /**

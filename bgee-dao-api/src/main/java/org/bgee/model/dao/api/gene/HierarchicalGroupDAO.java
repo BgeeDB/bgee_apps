@@ -75,12 +75,13 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
      * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
      *                      for which we want to retrieve genes. Can be {@code null} or empty, 
      *                      in order to retrieve all homologous genes for the provided taxon.
-     * @return          A {@code HierarchicalGroupToGeneTOResultSet} allowing to retrieve 
-     *                  the requested {@code HierarchicalGroupToGeneTO}s.
-     * @throws DAOException If an error occurred when accessing the data source. 
+     * @return              A {@code HierarchicalGroupToGeneTOResultSet} allowing to retrieve 
+     *                      the requested {@code HierarchicalGroupToGeneTO}s.
+     * @throws IllegalArgumentException If {@code taxonId} is empty or null. 
+     * @throws DAOException             If an error occurred when accessing the data source. 
      */
     public HierarchicalGroupToGeneTOResultSet getGroupToGene(String taxonId, 
-            Set<String> speciesIds) throws DAOException;
+            Set<String> speciesIds) throws DAOException, IllegalArgumentException;
 
     /**
      * {@code DAOResultSet} specifics to {@code HierarchicalGroupTO}s

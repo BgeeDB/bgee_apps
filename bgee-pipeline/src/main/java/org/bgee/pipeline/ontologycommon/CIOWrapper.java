@@ -1553,7 +1553,8 @@ public class CIOWrapper {
         
         //to identify the correct class, we use a graph-based approach, 
         //rather than using a reasoner to retrieve equivalent classes. 
-        //we store all classes retrieved to check for errors
+        //we do not retrieve all classes to check for errors, we stop iteration 
+        //as soon as a class is found, it is too slow to iterate all classes each time
         Set<OWLClass> identifiedClasses = new HashSet<OWLClass>();
         for (OWLClass cls: this.wrapper.getAllOWLClasses()) {
             if (!this.isConfidenceStatement(cls)) {
@@ -1578,9 +1579,6 @@ public class CIOWrapper {
             identifiedClasses.add(cls);
             log.trace("Confidence elements retrieved for class {} - evidence conc.: {} - evidence type conc.: {} - conf. level: {}", 
                     cls, clsEvidenceConcordance, clsEvidenceTypeConcordance, clsConfidenceLevel);
-                
-            //XXX: actually, stop iteration as soon as a class is found, it is too slow 
-            //to iterate all classes each time
             break;
         }
         

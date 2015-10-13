@@ -70,8 +70,11 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
         new AnatEntityTO("Anat_id6", "embryoStruct", "embryoStruct desc", "Stage_id2", "Stage_id5", false), 
         new AnatEntityTO("Anat_id7", "ectoderm", "ectoderm desc", "Stage_id6", "Stage_id13", false), 
         new AnatEntityTO("Anat_id8", "neuralTube", "neuralTube desc", "Stage_id8", "Stage_id17", false), 
-        new AnatEntityTO("Anat_id9", "forebrain", "forebrain desc", "Stage_id8", "Stage_id17", false));
-        
+        new AnatEntityTO("Anat_id9", "forebrain", "forebrain desc", "Stage_id8", "Stage_id17", false),
+        new AnatEntityTO("UBERON:0001687", "stapes bone", "stapes bone description", "Stage_id1", "Stage_id2", false),
+        new AnatEntityTO("UBERON:0001853", "utricle of membranous labyrinth", "utricle of membranous labyrinth description", "Stage_id1", "Stage_id2", false),
+        new AnatEntityTO("UBERON:0011606", "hyomandibular bone", "hyomandibular bone description", "Stage_id1", "Stage_id2", false));
+
         // Test recovery of all attributes without filter on species IDs
         List<AnatEntityTO> expectedAnatEntities = allAnatEntityTOs;
         assertTrue("AnatEntityTOs incorrectly retrieved",
@@ -94,7 +97,10 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
                 new AnatEntityTO("Anat_id6", null, null, null, null, null),
                 new AnatEntityTO("Anat_id7", null, null, null, null, null),
                 new AnatEntityTO("Anat_id8", null, null, null, null, null),
-                new AnatEntityTO("Anat_id9", null, null, null, null, null));
+                new AnatEntityTO("Anat_id9", null, null, null, null, null),
+                new AnatEntityTO("UBERON:0001687", null, null, null, null, null),
+                new AnatEntityTO("UBERON:0001853", null, null, null, null, null),
+                new AnatEntityTO("UBERON:0011606", null, null, null, null, null));
         assertTrue("AnatEntityTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(
                         dao.getAnatEntitiesBySpeciesIds(null).getAllTOs(), expectedAnatEntities));
@@ -113,14 +119,16 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
                 new AnatEntityTO("Anat_id14", null, null, "Stage_id6", "Stage_id13", true),
                 new AnatEntityTO("Anat_id2", null, null, "Stage_id10", "Stage_id18", false),
                 new AnatEntityTO("Anat_id6", null, null, "Stage_id2", "Stage_id5", false),
-                new AnatEntityTO("Anat_id8", null, null, "Stage_id8", "Stage_id17", false));
+                new AnatEntityTO("Anat_id8", null, null, "Stage_id8", "Stage_id17", false),
+                new AnatEntityTO("UBERON:0001853", null, null, "Stage_id1", "Stage_id2", false),
+                new AnatEntityTO("UBERON:0011606", null, null, "Stage_id1", "Stage_id2", false));
         assertTrue("AnatEntityTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(
                         dao.getAnatEntitiesBySpeciesIds(speciesIds).getAllTOs(), expectedAnatEntities));
 
         dao.clearAttributes();
         speciesIds = new HashSet<String>();
-        speciesIds.addAll(Arrays.asList("11", "21", "31", "44"));
+        speciesIds.addAll(Arrays.asList("11", "21", "31", "44", "51"));
         expectedAnatEntities = allAnatEntityTOs;
         assertTrue("AnatEntityTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(

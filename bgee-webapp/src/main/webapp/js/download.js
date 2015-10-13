@@ -149,6 +149,7 @@ var download = {
             this.$exprHelp = $( "#expr_help" );
             this.$diffAnatHelp = $( "#diffexpr_anatomy_help" );
             this.$diffDevHelp = $( "#diffexpr_development_help" );
+            this.$orthologsHelp = $( "#orthologs_help" );
             // Show headers
             this.$showSingleSimpleDiffexprAnatomyHeaders = $( "#show_single_simple_diffexpr_anatomy_headers" );
             this.$showSingleCompleteDiffexprAnatomyHeaders = $( "#show_single_complete_diffexpr_anatomy_headers" );
@@ -156,6 +157,7 @@ var download = {
             this.$showMultiCompleteDiffexprAnatomyHeaders = $( "#show_multi_complete_diffexpr_anatomy_headers" );
             this.$showSingleSimpleDiffexprDevelopmentHeaders = $( "#show_single_simple_diffexpr_development_headers" );
             this.$showSingleCompleteDiffexprDevelopmentHeaders = $( "#show_single_complete_diffexpr_development_headers" );
+            this.$showOrthologsHeaders = $( "#show_ortholog_headers" );
             // No data 
             this.$exprNoData = $( "#expr_no_data" );
             this.$diffExprAnatomyNoData = $( "#diffexpr_anatomy_no_data" );
@@ -176,9 +178,14 @@ var download = {
             this.$creativeCommonsTitleLink =  $( "#creativecommons_title a");
             this.$creativeCommons = $( "#creativecommons" );
             // Initialize the values that have to be dynamically set, i.e. ids and search content  
-            this.generateIds();
             this.generateSearchableContent();
             // Add the event listeners to all elements that have a dynamic behavior
+
+            //Google Analytics tracking
+            //(see https://developers.google.com/analytics/devguides/collection/analyticsjs/events)
+            $("a").click(function() {
+                ga ('send', 'event', 'link', 'click_'+CURRENT_REQUEST.getPage()+'_'+CURRENT_REQUEST.getAction(), $( this ).attr("href"));
+            });
 
             // Add a click listener to every species/group to load the corresponding details 
             // or to hide it if already displayed
@@ -301,6 +308,10 @@ var download = {
             else{
                 this.loadDetails( $species );
                 this.resetSearch( false );
+                //Google Analytics tracking
+                //(see https://developers.google.com/analytics/devguides/collection/analyticsjs/events)
+                var id = $species.attr("id");
+                ga ('send', 'event', 'detailbox_'+CURRENT_REQUEST.getPage()+'_'+CURRENT_REQUEST.getAction(), 'click', id);
             }        
         },
 
@@ -323,6 +334,42 @@ var download = {
             //of the document
             window.location.hash = "!";   
         },
+
+		/**
+		 * Gets the url of the file of the given category (undefined if not found)
+		 */
+        getUrlForFileCategory: function(files, category) {
+        	for (var idx = 0; idx < files.length; idx++) {
+        		var file = files[idx];
+        		if (file.category == category) {
+        			return file.path;
+        		}
+        	}
+        },
+        
+        /**
+        * Returns the formatted size for the file of the given category (undefined if no file found)
+        */
+        getSizeForFileCategory: function(files, category) {
+        	for (var idx = 0; idx < files.length; idx++) {
+        		var file = files[idx];
+        		if (file.category == category) {
+        			var size = file.size;
+        			// formatting file size
+        			if (size > (1 <<30) * 0.4) {
+        				return ""+  Math.round((10*size / (1024*1024*1024)))/10.0 +" GB";
+        			}
+        			if (size > 1024 * 1024 * 0.4) {
+        				return ""+  Math.round((10*size / (1024*1024)))/10.0 +" MB";
+        			} else if (size > 1024*0.4){
+        				return "" + Math.round((10*size / (1024)))/10.0+" KB";
+        			} else {
+        				return "" + size +" B";
+        			}
+        		}
+        	}
+        },
+        
 
         /**
          * This function update and display the detail box for the species or group provided
@@ -359,57 +406,62 @@ var download = {
         		this.$switchPageLink.text( "See gene expression calls" );    
         	}
         	this.$switchPageLink.attr( "href", 
-        			//TODO: handle the hash exactly as another parameter (see TODO 
-        			//in RequestParameters.java)
         			requestSwitchPage.getRequestURL());
             
+            var species = null, bgeeSpeciesCommonNames =null, bgeeSpeciesName = null;
+        	var groupData = speciesData[id];	
+        	// Get files urls for the current species/group
+            var files = groupData.downloadFiles;
+            var bgeeIsGroup = groupData.members.length > 1;
+            var bgeeGroupName = groupData.name;
             
-            // The images contain the data fields related to the species
-            var $images = $currentSpecies.find( ".species_img" ); 
-            var bgeeSpeciesName = $images.data( "bgeespeciesname" ); // Only the last one is kept when 
-            // there are multiple images, in the case of group, but the field is not used in this case,
-            // so no need to care about 
-            var bgeeSpeciesCommonNames = $images.data( "bgeespeciescommonname" );
-            var bgeeGroupName = $currentSpecies.data( "bgeegroupname" );
-            // Get files urls for the current species/group
-            var bgeeOrthologFileUrl = $currentSpecies.data( "bgeeorthologfileurl" );
-            var bgeeExprSimpleFileUrl = $currentSpecies.data( "bgeeexprsimplefileurl" );
-            var bgeeExprCompleteFileUrl = $currentSpecies.data( "bgeeexprcompletefileurl" );
-            var bgeeDiffExprAnatomySimpleFileUrl =
-            	$currentSpecies.data( "bgeediffexpranatomysimplefileurl" );
-            var bgeeDiffExprAnatomyCompleteFileUrl =
-            	$currentSpecies.data( "bgeediffexpranatomycompletefileurl" );
-            var bgeeDiffExprDevelopmentSimpleFileUrl =
-            	$currentSpecies.data( "bgeediffexprdevelopmentsimplefileurl" );
-            var bgeeDiffExprDevelopmentCompleteFileUrl = 
-            	$currentSpecies.data( "bgeediffexprdevelopmentcompletefileurl" );
-            //get file sizes
-            var bgeeOrthologFileSize = $currentSpecies.data( "bgeeorthologfilesize" );
-            var bgeeExprSimpleFileSize = $currentSpecies.data( "bgeeexprsimplefilesize" );
-            var bgeeExprCompleteFileSize = $currentSpecies.data( "bgeeexprcompletefilesize" );
-            var bgeeDiffExprAnatomySimpleFileSize =
-            	$currentSpecies.data( "bgeediffexpranatomysimplefilesize" );
-            var bgeeDiffExprAnatomyCompleteFileSize = 
-            	$currentSpecies.data( "bgeediffexpranatomycompletefilesize" );
-            var bgeeDiffExprDevelopmentSimpleFileSize =
-            	$currentSpecies.data( "bgeediffexprdevelopmentsimplefilesize" );
-            var bgeeDiffExprDevelopmentCompleteFileSize =
-            	$currentSpecies.data( "bgeediffexprdevelopmentcompletefilesize" );
+            if (!bgeeIsGroup) {
+            	 species = groupData.members[0]
+            	 bgeeSpeciesCommonNames = species.name;
+            	 bgeeSpeciesName = species.genus +" " +species.speciesName;
+                
+            }
+        	 var $images = $currentSpecies.find( ".species_img" );
+             
+             // there are multiple images, in the case of group, but the field is not used in this case,
+             // so no need to care about 
+             
+            var getUrlForFileCategory = download.getUrlForFileCategory;
+            var getSizeForFileCategory = download.getSizeForFileCategory;
+          
+            //var bgeeOrthologFileUrl = $currentSpecies.data( "bgeeorthologfileurl" );
+            var bgeeOrthologFileUrl = getUrlForFileCategory(files, "ortholog");
+            //var bgeeExprSimpleFileUrl = $currentSpecies.data( "bgeeexprsimplefileurl" );
+            var bgeeExprSimpleFileUrl = getUrlForFileCategory(files, "expr_simple");
+            var bgeeExprCompleteFileUrl = getUrlForFileCategory(files, "expr_complete");
+            var bgeeDiffExprAnatomySimpleFileUrl = getUrlForFileCategory(files, "diff_expr_anatomy_simple");
+            var bgeeDiffExprAnatomyCompleteFileUrl = getUrlForFileCategory(files, "diff_expr_anatomy_complete");
+            var bgeeDiffExprDevelopmentSimpleFileUrl = getUrlForFileCategory(files, "diff_expr_dev_simple");
+            var bgeeDiffExprDevelopmentCompleteFileUrl = getUrlForFileCategory(files, "diff_expr_dev_complete");
 
-            // RNA-Seq processed expression values
-            var bgeeRnaSeqDataFileUrl = $currentSpecies.data( "bgeernaseqdatafileurl" );
-            var bgeeRnaSeqAnnotFileUrl = $currentSpecies.data( "bgeernaseqannotfileurl" );
-            var bgeeRNASeqDataRootURL = $currentSpecies.data( "bgeernaseqdatarooturl" );
-            var bgeeRnaSeqDataFileSize = $currentSpecies.data( "bgeernaseqdatafilesize" );
-            var bgeeRnaSeqAnnotFileSize = $currentSpecies.data( "bgeernaseqannotfilesize" );
+             // get file sizes
+            var bgeeOrthologFileSize = getSizeForFileCategory(files, "ortholog");
+            var bgeeExprSimpleFileSize = getSizeForFileCategory(files, "expr_simple");
+            var bgeeExprCompleteFileSize = getSizeForFileCategory(files, "expr_complete");
+            var bgeeDiffExprAnatomySimpleFileSize =	getSizeForFileCategory(files, "diff_expr_anatomy_simple");
+            var bgeeDiffExprAnatomyCompleteFileSize = getSizeForFileCategory(files, "diff_expr_anatomy_complete");
+            var bgeeDiffExprDevelopmentSimpleFileSize = getSizeForFileCategory(files, "diff_expr_dev_simple");
+            var bgeeDiffExprDevelopmentCompleteFileSize = getSizeForFileCategory(files, "diff_expr_dev_complete");
+            
+           // RNA-Seq processed expression values
+            var bgeeRnaSeqDataFileUrl = getUrlForFileCategory(files, "rnaseq_data");
+            var bgeeRnaSeqAnnotFileUrl = getUrlForFileCategory(files, "rnaseq_annot");
+            var bgeeRNASeqDataRootURL = getUrlForFileCategory(files, "rnaseq_root");
+            var bgeeRnaSeqDataFileSize = getSizeForFileCategory(files, "rnaseq_data");
+            var bgeeRnaSeqAnnotFileSize = getSizeForFileCategory(files, "rnaseq_annot");
 
             // Affymetrix processed expression values
-            var bgeeAffyDataFileUrl = $currentSpecies.data( "bgeeaffydatafileurl" );
-            var bgeeAffyAnnotFileUrl = $currentSpecies.data( "bgeeaffyannotfileurl" );
-            var bgeeAffyDataRootURL = $currentSpecies.data( "bgeeaffydatarooturl" );
-            var bgeeAffyDataFileSize = $currentSpecies.data( "bgeeaffydatafilesize" );
-            var bgeeAffyAnnotFileSize = $currentSpecies.data( "bgeeaffyannotfilesize" );
-
+            var bgeeAffyDataFileUrl =getUrlForFileCategory(files, "affy_data");
+            var bgeeAffyAnnotFileUrl = getUrlForFileCategory(files, "affy_annot");
+            var bgeeAffyDataRootURL = getUrlForFileCategory(files, "affy_root");
+            var bgeeAffyDataFileSize = getSizeForFileCategory(files, "affy_data");
+            var bgeeAffyAnnotFileSize = getSizeForFileCategory(files, "affy_annot");
+            
             // In situ processed expression values
             var bgeeInSituDataFileUrl = $currentSpecies.data( "bgeeinsitudatafileurl" );
             var bgeeInSituAnnotFileUrl = $currentSpecies.data( "bgeeinsituannotfileurl" );
@@ -423,7 +475,7 @@ var download = {
             var bgeeEstAnnotFileSize = $currentSpecies.data( "bgeeestannotfilesize" );
 
             // Proceed to the update
-            var numberOfSpecies = $images.size() ;
+            var numberOfSpecies = groupData.members.length;
             var namesOfAllSpecies = "";
             this.$bgeeDataSelectionImg.empty();
             $images.each( function(){
@@ -440,12 +492,12 @@ var download = {
                 // Assume that the image is a square, so height and width are the same
                 $newElement.css( "height" , newHeight ).css( "width" , newHeight ); 
                 // Add the species short name to the name of all species field
-                namesOfAllSpecies = namesOfAllSpecies + $( this ).data( "bgeespeciesshortname" )
-                + ", ";
+                
+                namesOfAllSpecies = namesOfAllSpecies + $( this ).attr("alt") + ", ";
             });
             namesOfAllSpecies = namesOfAllSpecies.slice( 0, - 2 ); // Remove the extra ' ,'
             // if it is a group, use the group name as label, else the species name
-            if( bgeeGroupName ){
+            if( bgeeIsGroup ){
             	this.$switchPageLink.hide();
                 this.$bgeeDataSelectionTextScientific.text( "" );
                 this.$bgeeDataSelectionTextCommon.text( bgeeGroupName );
@@ -465,11 +517,18 @@ var download = {
                 	this.$exprHelp.attr( "href", urlDoc.getRequestURL());
                 	this.$diffDevHelp.attr( "href", urlDoc.getRequestURL());
                 	this.$diffAnatHelp.attr( "href", urlDoc.getRequestURL());
+                	
+                	urlDoc.setURLHash(urlDoc.HASH_DOC_CALL_OMA());
+                	this.$orthologsHelp.attr( "href", urlDoc.getRequestURL());
+                	
                 } 
             } else {
             	this.$switchPageLink.show();
                 this.$bgeeDataSelectionTextScientific.text( bgeeSpeciesName );
-                this.$bgeeDataSelectionTextCommon.text( "("+ bgeeSpeciesCommonNames +")" );
+                //we display the group name as subtitle rather than the species common name, 
+                //because we used to have incorrect common names at some point, 
+                //and because this allows more flexibility (e.g. "human including GTEx data")
+                this.$bgeeDataSelectionTextCommon.text( "("+ bgeeGroupName +")" );
                 this.$bgeeGroupDescription.text( "" );
                 this.$showMultiSimpleDiffexprAnatomyHeaders.hide();
                 this.$showMultiCompleteDiffexprAnatomyHeaders.hide();
@@ -501,7 +560,6 @@ var download = {
             });
 
             // Update the values of the download links and size files
-            
             // Ortholog file
             if (bgeeOrthologFileUrl === undefined) {
             	this.$orthologButtons.hide();
@@ -515,7 +573,7 @@ var download = {
             if (bgeeExprSimpleFileUrl === undefined) {
             	this.$exprSimpleData.hide();
             	//TODO remove when multi-species expression files are computed
-            	if( bgeeGroupName ){
+            	if( bgeeIsGroup ){
             		this.$exprNoData.hide();
             		this.$exprComingSoon.show();
             		this.$exprHelp.hide();
@@ -556,7 +614,7 @@ var download = {
             if( bgeeDiffExprDevelopmentSimpleFileUrl === undefined ) {
             	this.$diffExprDevelopmentData.hide();
             	//TODO remove when multi-species developmental diff. expression files are computed
-                if( bgeeGroupName ){
+                if( bgeeIsGroup ){
                 	this.$diffExprDevelopmentNoData.hide();
                 	this.$diffExprDevelopmentComingSoon.show();
                 	this.$diffDevHelp.hide();
@@ -579,7 +637,7 @@ var download = {
             }
             
             // RNA-Seq processed expression values
-            if (bgeeRnaSeqDataFileUrl === undefined) {
+            if (!this.$refExpr.length || bgeeRnaSeqDataFileUrl === undefined) {
             	this.$rnaSeqData.hide(); 
             	this.$rnaSeqNoData.show();
             } else {
@@ -589,11 +647,11 @@ var download = {
             	this.$rnaSeqAnnotCsv.attr( "href", bgeeRnaSeqAnnotFileUrl );
             	this.$rnaSeqAnnotCsv.text( "Download experiments/libraries info (" + bgeeRnaSeqAnnotFileSize + ")" );
             	this.$rnaSeqDataCsv.text( "Download read counts and RPKMs (" + bgeeRnaSeqDataFileSize + ")" );
-            	this.$rnaSeqDataRoot.attr("href", bgeeRNASeqDataRootURL);
+            	this.$rnaSeqDataRoot.attr("href", rnaSeqExprValuesDirs[id]);
             }
 
             // Affymetrix processed expression values
-            if (bgeeAffyDataFileUrl === undefined) {
+            if (!this.$refExpr.length || bgeeAffyDataFileUrl === undefined) {
             	this.$affyData.hide(); 
             	this.$affyNoData.show();
             } else {
@@ -603,11 +661,11 @@ var download = {
             	this.$affyAnnotCsv.attr( "href", bgeeAffyAnnotFileUrl );
             	this.$affyAnnotCsv.text( "Download experiments/chips info (" + bgeeAffyAnnotFileSize + ")" );
             	this.$affyDataCsv.text( "Download signal intensities (" + bgeeAffyDataFileSize + ")" );
-            	this.$affyDataRoot.attr("href", bgeeAffyDataRootURL);
+            	this.$affyDataRoot.attr("href", affyExprValuesDirs[id]);
             }
 
             // In situ processed expression values
-            if (bgeeInSituDataFileUrl === undefined) {
+            if (!this.$refExpr.length || bgeeInSituDataFileUrl === undefined) {
             	this.$inSituData.hide(); 
             	this.$inSituNoData.hide();
             	//TODO remove when in situ data files are computed
@@ -622,7 +680,7 @@ var download = {
             }
 
             // EST processed expression values
-            if (bgeeEstDataFileUrl === undefined) {
+            if (!this.$refExpr.length || bgeeEstDataFileUrl === undefined) {
             	this.$estData.hide(); 
             	this.$estNoData.hide();
             	//TODO remove when EST data files are computed
@@ -691,9 +749,12 @@ var download = {
             if( text.length > 1 ){
                 // Add the class on all species where the text match the searchContent 
                 this.$species.each(function (){
-                    if( download.searchContent[$( this ).attr( "id" )]
-                    .indexOf( text.toLowerCase() ) > -1){
-                        $( this ).addClass( "highlight" );
+                    for (var i = 0; i < download.searchContent[$( this ).attr( "id" )].length; i++) {
+                        if (download.searchContent[$( this ).attr( "id" )][i].toLowerCase()
+                                .indexOf( text.toLowerCase() ) > -1){
+                            $( this ).addClass( "highlight" );
+                            break;
+                        }
                     }
                 });
                 // Update the number of results
@@ -728,87 +789,15 @@ var download = {
         },
 
         /**
-         * This function generates ids for species and groups based on the ids present in 
-         * the data field in the images.
-         */
-        generateIds: function(){
-            this.$species.each(function() {   
-                var id = "";
-                $( this ).find( ".species_img" ).each(function() {
-                    id = id + $( this ).data( "bgeespeciesid" ) + "_";
-                });
-                id = id.slice( 0, - 1 ); // Remove the extra _ at the end.
-                $( this ).attr( "id", id ); // set the attr id of the species/group
-            });
-        },
-
-        /**
          * This function fetches the words that can be searched and put it in an associative array
          * where the id of the species/group corresponds to its searchable content.
          * It also fill a list with all possible words that can be proposed to the user during
          * a search (autocompletion)
          */
         generateSearchableContent: function(){
-            // Proceed for all species or group...
-            this.$species.each(function() { 
-                // Initialize empty strings for every kind of data that are searchable
-                var names = "";
-                var shortNames = "";
-                var commonNames = "";
-                var alternateNames = "";
-                var groupName = $( this ).data( "bgeegroupname" ); // First, fetch the group name
-                if( ! groupName ){
-                    groupName = ""; // To avoid "null" or "undefined" as searchable strings
-                }
-                else{
-                    groupName = groupName.toLowerCase() + " "; // Add the value to the searchable
-                    // content, in lower case
-                    download.addToAutoCompletionList( groupName ); // Add the value to the
-                }                                                  // auto completion list
-                // Then, fetch the values of the data fields contained in images
-                $( this ).find( ".species_img" ).each(function() {
-                    var currentName = $( this ).data( "bgeespeciesname" ).toLowerCase();
-                    if( currentName ){
-                        names = names +  currentName + " "; // Concat the name of all images, 
-                    }                                       // several values only in the case of group
-                    download.addToAutoCompletionList( currentName ); // Add to the autocompl. list
-                    var currentShortName = $( this ).data( "bgeespeciesshortname" ).toLowerCase();
-                    if( currentShortName ){
-                        shortNames = shortNames +  currentShortName + " "; // Same for short name
-                    }
-                    download.addToAutoCompletionList( currentShortName );
-                    var currentCommonName = $( this ).data( "bgeespeciescommonname" ).toLowerCase();
-                    if( currentCommonName ){
-                        commonNames = commonNames + currentCommonName + " "; // Same for common name
-                    }
-                    download.addToAutoCompletionList( currentCommonName );
-                    var currentAlternateNames = 
-                        $( this ).data( "bgeespeciesalternatenames" ).toLowerCase();
-                    if( currentAlternateNames ){
-                        // Same for alternate name, except there are several alternate names in one 
-                        // image, separated by comma, => split the values first.
-                        currentAlternateNames.split( ", " ).forEach(function( element ) {
-                            alternateNames = alternateNames + element + " ";
-                            download.addToAutoCompletionList( element );
-                        });
-                    }
-                });
-
-                // Sort the autocompletion list alphabetically
-                download.autoCompletionList.sort();
-
-                // Generate search content for the current species by putting all fields together
-                // in the array with the id as key
-                var id = $( this ).attr( "id" );
-                download.searchContent[id] = id.replace(/_/g, " ") + " " // remove "_" that separate                                                 
-                + names                                                  // species ids to form the group id,
-                + shortNames                                             // to be able to search on the 
-                + commonNames                                            // individual id of a species
-                + groupName                                              // but not on the group id that 
-                + alternateNames ;                                       // has no biological significance.
-
-            });    
-
+        	//we use the server-side generate variables
+        	download.autoCompletionList = autocomplete;
+        	download.searchContent = keywords;
         },
 
         /**

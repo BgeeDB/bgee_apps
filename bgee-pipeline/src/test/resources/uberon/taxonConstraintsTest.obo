@@ -1,5 +1,6 @@
 format-version: 1.2
 ontology: taxonConstraintsTest
+import: taxonConstraintsTest_import.obo
 
 [Term]
 id: UBERON:0001062
@@ -42,6 +43,17 @@ is_a: U:22
 id: U:24
 name: left antenna segment
 relationship: part_of U:23
+
+[Term]
+id: U:25
+name: left antenna2
+is_a: U:22
+relationship: in_taxon NCBITaxon:14
+
+[Term]
+id: U:26
+name: left antenna segment2
+relationship: part_of U:25
 
 [Term]
 id: U:5
@@ -125,6 +137,14 @@ name: Cell of Cephalus Obscurus
 is_a: S:5
 relationship: part_of S:998
 
+[Term]
+id: U:100
+name: structure x
+is_a: UBERON:0001062
+relationship: never_in_taxon NCBITaxon:8
+relationship: never_in_taxon NCBITaxon:13
+relationship: never_in_taxon NCBITaxon:15
+
 ! incorrect taxonomy on purpose
 [Term]
 id: NCBITaxon:8
@@ -150,7 +170,6 @@ name: fly_subspecies
 is_a: NCBITaxon:8
 disjoint_from: NCBITaxon:14
 ! disjoint_from: in_taxon NCBITaxon:14
-
 
 [Typedef]
 id: part_of

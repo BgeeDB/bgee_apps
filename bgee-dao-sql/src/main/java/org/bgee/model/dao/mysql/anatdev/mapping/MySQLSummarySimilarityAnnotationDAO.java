@@ -2,7 +2,6 @@ package org.bgee.model.dao.mysql.anatdev.mapping;
 
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -15,6 +14,8 @@ import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
+
+import com.mysql.jdbc.StringUtils;
 
 /**
  * A {@code SummarySimilarityAnnotationDAO} for MySQL.
@@ -48,7 +49,6 @@ public class MySQLSummarySimilarityAnnotationDAO
     }
 
     @Override
-    //TODO: integration test
     public SummarySimilarityAnnotationTOResultSet getAllSummarySimilarityAnnotations()
             throws DAOException {
         log.entry();
@@ -72,10 +72,13 @@ public class MySQLSummarySimilarityAnnotationDAO
     }
 
     @Override
-    //TODO: integration test
     public SummarySimilarityAnnotationTOResultSet getSummarySimilarityAnnotations(
-            String taxonId) throws DAOException {
+            String taxonId) throws DAOException, IllegalArgumentException {
         log.entry(taxonId);
+        
+        if (StringUtils.isEmptyOrWhitespaceOnly(taxonId)) {
+            throw log.throwing(new IllegalArgumentException("Taxon ID must be provided"));
+        }
         
         String sql = this.generateSelectClause(this.getAttributes(), "t3", true);
         sql += " FROM taxon AS t1 INNER JOIN taxon AS t2 "
@@ -97,10 +100,12 @@ public class MySQLSummarySimilarityAnnotationDAO
     }
 
     @Override
-    //TODO: integration test
     public SimAnnotToAnatEntityTOResultSet getSimAnnotToAnatEntity(String taxonId, 
-            Set<String> speciesIds) throws DAOException {
+            Set<String> speciesIds) throws DAOException, IllegalArgumentException {
         log.entry(taxonId, speciesIds);
+        if (StringUtils.isEmptyOrWhitespaceOnly(taxonId)) {
+            throw log.throwing(new IllegalArgumentException("Taxon ID must be provided"));
+        }
         
         String sql = this.getAnnotToAnatEntityQueryStart();
         
@@ -124,8 +129,7 @@ public class MySQLSummarySimilarityAnnotationDAO
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             stmt.setString(1, taxonId);
             if (speciesIds != null && !speciesIds.isEmpty()) {
-                List<Integer> orderedSpeciesIds = MySQLDAO.convertToOrderedIntList(speciesIds);
-                stmt.setIntegers(2, orderedSpeciesIds);
+                stmt.setStringsToIntegers(2, speciesIds, true);
             }
             return log.exit(new MySQLSimAnnotToAnatEntityTOResultSet(stmt));
         } catch (SQLException e) {
@@ -134,10 +138,12 @@ public class MySQLSummarySimilarityAnnotationDAO
     }
 
     @Override
-    //TODO: integration test
     public SimAnnotToAnatEntityTOResultSet getSimAnnotToLostAnatEntity(String taxonId, 
             Set<String> speciesIds) throws DAOException, IllegalArgumentException {
         log.entry(taxonId, speciesIds);
+        if (StringUtils.isEmptyOrWhitespaceOnly(taxonId)) {
+            throw log.throwing(new IllegalArgumentException("Taxon ID must be provided"));
+        }
         if (speciesIds == null || speciesIds.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Some species must be provided."));
         }
@@ -157,8 +163,7 @@ public class MySQLSummarySimilarityAnnotationDAO
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             stmt.setString(1, taxonId);
-            List<Integer> orderedSpeciesIds = MySQLDAO.convertToOrderedIntList(speciesIds);
-            stmt.setIntegers(2, orderedSpeciesIds);
+            stmt.setStringsToIntegers(2, speciesIds, true);
             return log.exit(new MySQLSimAnnotToAnatEntityTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

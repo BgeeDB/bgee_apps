@@ -1,9 +1,6 @@
 package org.bgee.model.dao.mysql.expressiondata;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -16,7 +13,7 @@ import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.ComparisonFactor;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.DiffExprCallType;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallParams;
-import org.bgee.model.dao.mysql.MySQLDAO;
+import org.bgee.model.dao.mysql.MySQLOrderingDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
@@ -31,7 +28,8 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
  * @see org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO
  * @since Bgee 13
  */
-public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.Attribute>
+public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionCallDAO.Attribute, 
+                                                            DiffExpressionCallDAO.OrderingAttribute>
                                         implements DiffExpressionCallDAO {
 
     /**
@@ -57,7 +55,7 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
     public DiffExpressionCallTOResultSet getDiffExpressionCalls(DiffExpressionCallParams params) 
             throws DAOException {
         log.entry(params);
-        return log.exit(getDiffExpressionCalls(null, params.getSpeciesIds(), 
+        return log.exit(this.getDiffExpressionCalls(null, params.getSpeciesIds(), 
                 params.getComparisonFactor(), 
                 params.getAffymetrixDiffExprCallTypes(), params.isIncludeAffymetrixTypes(),
                 params.getRNASeqDiffExprCallTypes(), params.isIncludeRNASeqTypes(), 
@@ -65,11 +63,10 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
     }
 
     @Override
-    //TODO: integration test
-    public DiffExpressionCallTOResultSet getOrderedHomologousGenesDiffExpressionCalls(
+    public DiffExpressionCallTOResultSet getHomologousGenesDiffExpressionCalls(
             String taxonId, DiffExpressionCallParams params) throws DAOException {
         log.entry(taxonId, params);
-        return log.exit(getDiffExpressionCalls(taxonId, params.getSpeciesIds(), 
+        return log.exit(this.getDiffExpressionCalls(taxonId, params.getSpeciesIds(), 
                 params.getComparisonFactor(), 
                 params.getAffymetrixDiffExprCallTypes(), params.isIncludeAffymetrixTypes(),
                 params.getRNASeqDiffExprCallTypes(), params.isIncludeRNASeqTypes(), 
@@ -84,6 +81,8 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
      * {@code DiffExpressionCallTOResultSet}. It is the responsibility of the caller to close this 
      * {@code DAOResultSet} once results are retrieved.
      * 
+     * @param omaTaxonId                    A {@code String} that is the taxon id to be used to 
+     *                                      retrieve calls for homologous genes. 
      * @param speciesIds                    A {@code Set} of {@code String}s that are the IDs of 
      *                                      species allowing to filter the calls to use.
      * @param factor                        A {@code ComparisonFactor} that is the comparison factor
@@ -109,11 +108,11 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
      *                                      expression calls.                      
      */
     private DiffExpressionCallTOResultSet getDiffExpressionCalls(
-            String OMATaxonId, Set<String> speciesIds,
+            String omaTaxonId, Set<String> speciesIds,
             ComparisonFactor factor, Set<DiffExprCallType> diffExprCallTypeAffymetrix,
             boolean includeAffymetrixTypes, Set<DiffExprCallType> diffExprCallTypeRNASeq, 
             boolean includeRnaSeqTypes, boolean isSatisfyAllCallTypeCondition) {
-        log.entry(OMATaxonId, speciesIds, factor, diffExprCallTypeAffymetrix, includeAffymetrixTypes, 
+        log.entry(omaTaxonId, speciesIds, factor, diffExprCallTypeAffymetrix, includeAffymetrixTypes, 
                 diffExprCallTypeRNASeq, includeRnaSeqTypes, isSatisfyAllCallTypeCondition);
 
         // Construct sql query
@@ -128,22 +127,38 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
         String sql = this.generateSelectClause(this.getAttributes(), diffExprTableName, distinct);
 
         boolean hasSpecies  = speciesIds != null && !speciesIds.isEmpty();
-        boolean hasOMATaxon = StringUtils.isNotBlank(OMATaxonId);
+        boolean hasOMATaxon = StringUtils.isNotBlank(omaTaxonId);
+        boolean orderTOsByOmaGroup = this.getOrderingAttributes().containsKey(
+                DiffExpressionCallDAO.OrderingAttribute.OMA_GROUP);
+        
+        // For the moment, it's not possible to order by OrderingAttributes other than OMA_GROUP
+        // because there is no other OrderingAttributes. But if we add an OrderingAttributes and 
+        // forget to implement the feature, an exception will be thrown.
+        if ((this.getOrderingAttributes().keySet().size() == 1 && !orderTOsByOmaGroup) ||
+                this.getOrderingAttributes().keySet().size() > 1) {
+            throw log.throwing(new UnsupportedOperationException("Operation not yet implemented, " +
+                    "ordering is possible only by " + DiffExpressionCallDAO.OrderingAttribute.OMA_GROUP +
+                    ". Provided set contains: " + this.getOrderingAttributes().keySet()));
+        }
+        
         String geneInfoTable = null;
         
         //either because we want to limit the results retrieved to some species, 
         //or because we want to order results by groups of homologous genes, 
         //we need to join additional tables. 
         sql += "FROM ";
-        if (hasSpecies || hasOMATaxon) {
+        
+        if (hasSpecies || hasOMATaxon || orderTOsByOmaGroup) {
             if (hasOMATaxon) {
-                //we want to order results by groups of homologous genes, so we recover 
+                //we want to retrieve calls for homologous genes, so we recover 
                 //the correct OMA node IDs for the requested taxon
                 geneInfoTable = "tempGene";
+                // If taxon ID is not provided, we retrieve the OMAParentNodeId of the gene,
+                // else we retrieve all OMA node IDs above each gene.
                 sql += "(SELECT DISTINCT t10.OMANodeId, t30.geneId "
                     + "FROM OMAHierarchicalGroup AS t10 "
-                    + "INNER JOIN OMAHierarchicalGroup AS t20 "
-                    + "ON t20.OMANodeLeftBound >= t10.OMANodeLeftBound AND "
+                    + "INNER JOIN OMAHierarchicalGroup AS t20 ON "
+                    + "t20.OMANodeLeftBound >= t10.OMANodeLeftBound AND " 
                     + "t20.OMANodeRightBound <= t10.OMANodeRightBound "
                     + "INNER JOIN gene AS t30 ON t20.OMANodeId = t30.OMAParentNodeId "
                     + "WHERE t10.taxonId = ? ";
@@ -167,17 +182,16 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
             sql += " STRAIGHT_JOIN " + diffExprTableName + 
                     " ON " + geneInfoTable + ".geneId = " + diffExprTableName + ".geneId ";
             
-            //if we want to order results by groups of homologous genes, we have already 
-            //filtered the species considered in the sub-query.
-            if (!hasOMATaxon) {
+            //if we want to retrieve groups of homologous genes, 
+            //we have already filtered the species considered in the sub-query.
+            if (hasSpecies && !hasOMATaxon) {
                 sql += " WHERE " + geneInfoTable + ".speciesId IN (" +
                         BgeePreparedStatement.generateParameterizedQueryString(
                                 speciesIds.size()) + ")";
             }
-            
         } else {
-            //if no conditions on the species considered, and no ordering 
-            //by groups of homologous genes, we only use the diff expression table.
+            //if no conditions on the species considered, no conditions on the taxon and  
+            //no ordering by groups of homologous genes, we only use the diff expression table.
             sql += diffExprTableName;
         }
         
@@ -186,7 +200,7 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
         boolean filterRNASeqTypes = 
                 (diffExprCallTypeRNASeq != null && diffExprCallTypeRNASeq.size() != 0 );
         if (factor != null || filterAffymetrixTypes || filterRNASeqTypes) {
-            if (hasSpecies && !hasOMATaxon) {
+            if (hasSpecies && !hasOMATaxon && !orderTOsByOmaGroup) {
                 sql += " AND ";                
             } else {
                 sql += " WHERE ";
@@ -236,8 +250,20 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
             sql += ")";
         }
         
-        if (hasOMATaxon) {
-            sql += " ORDER BY " + geneInfoTable + ".OMANodeId";
+        if (orderTOsByOmaGroup) {
+            // If we don't have the taxon id, the geneInfoTable is gene else 
+            // it is the temporary table tempGene
+            if (!hasOMATaxon) {
+                sql += " ORDER BY " + geneInfoTable + ".OMAParentNodeId ";
+            } else {
+                sql += " ORDER BY " + geneInfoTable + ".OMANodeId ";
+            }
+            // The default sort order is ascending, so if Direction of OMA_GROUP is DESC, 
+            // we need to specified it.
+            if (this.getOrderingAttributes().get(DiffExpressionCallDAO.OrderingAttribute.OMA_GROUP).
+                    equals(Direction.DESC)) {
+                sql += " DESC";                
+            }
         }
         
         //we don't use a try-with-resource, because we return a pointer to the results, 
@@ -247,12 +273,11 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
             stmt = this.getManager().getConnection().prepareStatement(sql);
             int stmtIndex = 1;
             if (hasOMATaxon) {
-                stmt.setString(1, OMATaxonId);
+                stmt.setString(1, omaTaxonId);
                 stmtIndex = 2;
             }
             if (hasSpecies) {
-                List<Integer> orderedSpeciesIds = MySQLDAO.convertToOrderedIntList(speciesIds);
-                stmt.setIntegers(stmtIndex, orderedSpeciesIds);
+                stmt.setStringsToIntegers(stmtIndex, speciesIds, true);
                 stmtIndex += speciesIds.size();
             }             
             
@@ -262,19 +287,13 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
             }
             
             if (filterAffymetrixTypes) {
-                List<DiffExprCallType> orderedAffymetrixTypes = 
-                        new ArrayList<DiffExprCallType>(diffExprCallTypeAffymetrix);
-                Collections.sort(orderedAffymetrixTypes);
-                stmt.setEnumDAOFields(stmtIndex, orderedAffymetrixTypes);
-                stmtIndex += orderedAffymetrixTypes.size();
+                stmt.setEnumDAOFields(stmtIndex, diffExprCallTypeAffymetrix, true);
+                stmtIndex += diffExprCallTypeAffymetrix.size();
             }             
             
             if (filterRNASeqTypes) {
-                List<DiffExprCallType> orderedRNASeqTypes = 
-                        new ArrayList<DiffExprCallType>(diffExprCallTypeRNASeq);
-                Collections.sort(orderedRNASeqTypes);
-                stmt.setEnumDAOFields(stmtIndex, orderedRNASeqTypes);
-                stmtIndex += orderedRNASeqTypes.size();
+                stmt.setEnumDAOFields(stmtIndex, diffExprCallTypeRNASeq, true);
+                stmtIndex += diffExprCallTypeRNASeq.size();
             }             
             
             return log.exit(new MySQLDiffExpressionCallTOResultSet(stmt));

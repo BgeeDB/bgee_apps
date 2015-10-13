@@ -591,7 +591,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         "supporting text 7", "bgee", "ANN", sdf.parse("2013-07-01"))));
         
         //everything should work with these annotations
-        simAnnot.checkAnnotations(annots, false);
+        simAnnot.checkAnnotations(annots, true);
         
         //incorrect HOM name
         RawAnnotationBean incorrectAnnot = new RawAnnotationBean(
@@ -1083,7 +1083,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 "supporting text 1 change for no duplicate", "bgee", "ANN", null);
         annots.add(incorrectAnnot);
         //everything should be fine
-        simAnnot.checkAnnotations(annots, false);
+        simAnnot.checkAnnotations(annots, true);
         annots.remove(incorrectAnnot);
     
         //entity IDs incorrectly ordered
@@ -1264,7 +1264,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
         
         //last verification, to check that the SimilarityAnnotation object is still 
         //in a correct state.
-        simAnnot.checkAnnotations(annots, false);
+        simAnnot.checkAnnotations(annots, true);
     }
     
     /**
@@ -1317,7 +1317,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         )));
 
         //everything should work with these annotations
-        simAnnot.checkAnnotations(annots, false);
+        simAnnot.checkAnnotations(annots, true);
         
         //duplicated annotation over HOM ID - entity IDs - taxon ID
         SummaryAnnotationBean incorrectAnnot = new SummaryAnnotationBean(
@@ -1402,7 +1402,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
 
         //last verification, to check that the SimilarityAnnotation object is still 
         //in a correct state.
-        simAnnot.checkAnnotations(annots, false);
+        simAnnot.checkAnnotations(annots, true);
     }
     
     /**
@@ -1437,7 +1437,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         "CIO:0000004", "medium confidence from single evidence", null)));
 
         //everything should work with these annotations
-        simAnnot.checkAnnotations(annots, false);
+        simAnnot.checkAnnotations(annots, true);
         
         //duplicated annotation over HOM ID - entity IDs - taxon ID
         AncestralTaxaAnnotationBean incorrectAnnot = 
@@ -1487,7 +1487,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         "CIO:0000004", "medium confidence from single evidence", null);
         annots.add(correctAnnot);
         //everything should work
-        simAnnot.checkAnnotations(annots, false);
+        simAnnot.checkAnnotations(annots, true);
         annots.remove(correctAnnot);
         
         //but it is not possible if the taxa are related (parent-child relation)
@@ -1511,7 +1511,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
 
         //last verification, to check that the SimilarityAnnotation object is still 
         //in a correct state.
-        simAnnot.checkAnnotations(annots, false);
+        simAnnot.checkAnnotations(annots, true);
     }
     
     /**

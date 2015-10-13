@@ -1,6 +1,7 @@
 package org.bgee.view.html;
 
 import java.io.IOException;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -11,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.ConcreteDisplayParent;
+import org.bgee.view.JsonHelper;
 import org.bgee.view.ViewFactory;
 
 /**
@@ -19,6 +21,7 @@ import org.bgee.view.ViewFactory;
  * @author Mathieu Seppey
  * @author Frederic Bastian
  * @author Valentine Rech de Laval
+ * @author Philippe Moret
  * @version Bgee 13, June 2015
  * @since   Bgee 13
  */
@@ -40,8 +43,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * @param stringToWrite A {@code String} that contains the HTML to escape
      * @return  The escaped HTML
      */
-    public static String htmlEntities(String stringToWrite)
-    {
+    protected static String htmlEntities(String stringToWrite) {
         log.entry(stringToWrite);
     	try {                            
     	    return log.exit(StringEscapeUtils.escapeHtml4(stringToWrite).replaceAll("'", "&apos;"));
@@ -51,32 +53,54 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     }
 
     /**
-     * Constructor providing the necessary dependencies.
-     * 
-     * @param response          A {@code HttpServletResponse} that will be used to display the 
-     *                          page to the client
-     * @param requestParameters The {@code RequestParameters} that handles the parameters of the 
-     *                          current request.
-     * @param prop              A {@code BgeeProperties} instance that contains the properties
-     *                          to use.
-     * @param factory           The {@code HtmlFactory} that was used to instantiate this object.
-     * 
-     * @throws IllegalArgumentException If {@code factory} is {@code null}.
-     * @throws IOException              If there is an issue when trying to get or to use the
-     *                                  {@code PrintWriter} 
+     * Helper method to get an html tag
+     * @param name    A {@code String} representing the name of the element 
+     * @param content A {@code String} reprensenting the content of the element
+     * @return The HTML code as {@code String}.
      */
-    public HtmlParentDisplay(HttpServletResponse response, RequestParameters requestParameters, 
-            BgeeProperties prop, HtmlFactory factory) throws IllegalArgumentException, IOException {
-        super(response, requestParameters, prop, factory);
-    }
-    
-    @Override
-    protected String getContentType() {
-        log.entry();
-        return log.exit("text/html");
-    }
+     protected static String getHTMLTag(String name, String content) {
+         log.entry(name, content);
+         return log.exit(getHTMLTag(name, null, content));
+     }
+     
+     /**
+      * Helper method to get an html tag with attributes set. 
+      * @param name          A {@code String} representing the name of the element 
+      * @param attributes    A {@code Map} where keys are attribute names and values are attribute values.
+      * @return The HTML code as {@code String}
+      */
+     protected static String getHTMLTag(String name, Map<String, String> attributes) {
+         log.entry(name, attributes);
+         return log.exit(getHTMLTag(name, attributes, null));
+     }
+     
+     /**
+      * Helper method to get an html tag
+      * @param name          A {@code String} representing the name of the element 
+      * @param attributes    A {@code Map} where keys are attribute names and values are attribute values.
+      *                      Can be {@code null} or empty. 
+      * @param content       A {@code String} representing the content of the element
+      * @return The HTML code as {@code String}.
+      */
+     protected static String getHTMLTag(String name, Map<String, String> attributes, String content) {
+         log.entry(name, attributes, content);
+         
+         StringBuilder sb = new StringBuilder();
+         sb.append("<").append(name); 
+         if (attributes != null) {
+             for (Map.Entry<String, String> attr: attributes.entrySet()) {
+                 sb.append(" ").append(attr.getKey()).append("='").append(attr.getValue()).append("'");
+             }
+         }
+         sb.append(">");
+         if (StringUtils.isNotBlank(content)) {
+             sb.append(content);
+         }
+         sb.append("</").append(name).append(">");
+         return log.exit(sb.toString());
+     }
 
-    /**
+     /**
      * Get the single feature logo with a description as a HTML 'div' element.
      *
      * @param url           A {@code String} that is the URL of the link.
@@ -96,7 +120,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             String imgPath, String desc) {
         log.entry(url, externalLink, title, figcaption, imgPath, desc);
         
-        StringBuffer feature = new StringBuffer();
+        StringBuilder feature = new StringBuilder();
         feature.append("<div class='single_feature'>");
         feature.append("<a href='" + url + "' title='" + title + "'"
                 + (externalLink ? " target='_blank'" : "") + ">" +
@@ -111,13 +135,69 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         return log.exit(feature.toString());
     }
 
+    /**
+      * The {@code JsonHelper} used to read/write variables into JSON.
+      */
+     private final JsonHelper jsonHelper;
+
+     
+     /**
+      * Constructor providing the necessary dependencies, except the {@code JsonHelper}, 
+      * that will thus be based on the default implementation.
+      * 
+      * @param response          A {@code HttpServletResponse} that will be used to display the 
+      *                          page to the client
+      * @param requestParameters The {@code RequestParameters} that handles the parameters of the 
+      *                          current request.
+      * @param prop              A {@code BgeeProperties} instance that contains the properties
+      *                          to use.
+      * @param factory           The {@code HtmlFactory} that was used to instantiate this object.
+      * 
+      * @throws IllegalArgumentException If {@code factory} is {@code null}.
+      * @throws IOException              If there is an issue when trying to get or to use the
+      *                                  {@code PrintWriter} 
+      * @see #HtmlParentDisplay(HttpServletResponse, RequestParameters, BgeeProperties, JsonHelper, HtmlFactory)
+      */
+     public HtmlParentDisplay(HttpServletResponse response, RequestParameters requestParameters, 
+             BgeeProperties prop, HtmlFactory factory) throws IllegalArgumentException, IOException {
+         this(response, requestParameters, prop, null, factory);
+     }
+    /**
+     * Constructor providing the necessary dependencies.
+     * 
+     * @param response          A {@code HttpServletResponse} that will be used to display the 
+     *                          page to the client
+     * @param requestParameters The {@code RequestParameters} that handles the parameters of the 
+     *                          current request.
+     * @param prop              A {@code BgeeProperties} instance that contains the properties
+     *                          to use.
+     * @param jsonHelper        A {@code JsonHelper} used to read/write variables into JSON. 
+     * @param factory           The {@code HtmlFactory} that was used to instantiate this object.
+     * 
+     * @throws IllegalArgumentException If {@code factory} is {@code null}.
+     * @throws IOException              If there is an issue when trying to get or to use the
+     *                                  {@code PrintWriter} 
+     */
+    public HtmlParentDisplay(HttpServletResponse response, RequestParameters requestParameters, 
+            BgeeProperties prop, JsonHelper jsonHelper, HtmlFactory factory) 
+                    throws IllegalArgumentException, IOException {
+        super(response, requestParameters, prop, factory);
+        this.jsonHelper = jsonHelper;
+    }
+    
+    @Override
+    protected String getContentType() {
+        log.entry();
+        return log.exit("text/html");
+    }
+
     public void emptyDisplay() {
         log.entry();
         this.sendHeaders();
         this.writeln("");
         log.exit();
     }
-
+    
     /**
      * Display the start of the HTML page (common to all pages).
      *
@@ -258,7 +338,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 
 
         // Navigation bar
-        StringBuffer navbar = new StringBuffer();
+        StringBuilder navbar = new StringBuilder();
 
         navbar.append("<div id='nav'>");
         
@@ -350,37 +430,6 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 this.prop.getLogoImagesRootDirectory() + "doc_logo.png", null));
     }
 
-    /**
-     * Get the feature logos of the documentation page, as HTML 'div' elements.
-     *
-     * @return  A {@code String} that is the feature documentation logos as HTML 'div' elements,
-     *          formated in HTML and HTML escaped if necessary.
-     */
-    //XXX: why isn't this in the HtmlDocumentationDisplay?
-    protected String getFeatureDocumentationLogos() {
-        log.entry();
-
-        RequestParameters urlHowToAccessGenerator = this.getNewRequestParameters();
-        urlHowToAccessGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
-        urlHowToAccessGenerator.setAction(RequestParameters.ACTION_DOC_HOW_TO_ACCESS);
-        
-        RequestParameters urlCallFilesGenerator = this.getNewRequestParameters();
-        urlCallFilesGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
-        urlCallFilesGenerator.setAction(RequestParameters.ACTION_DOC_CALL_DOWLOAD_FILES);
-
-        StringBuffer logos = new StringBuffer(); 
-
-        logos.append(HtmlParentDisplay.getSingleFeatureLogo(urlHowToAccessGenerator.getRequestURL(), 
-                false, "How to access to Bgee data", "Access to Bgee data", 
-                this.prop.getLogoImagesRootDirectory() + "bgee_access_logo.png", null));
-
-        logos.append(HtmlParentDisplay.getSingleFeatureLogo(urlCallFilesGenerator.getRequestURL(), 
-                false, "Download file documentation page", "Download file documentation", 
-                this.prop.getLogoImagesRootDirectory() + "download_logo.png", null));
-
-        return log.exit(logos.toString());
-    }
-
 //    /**
 //     * Get the main logo of the download page, as HTML 'div' element.
 //     *
@@ -417,7 +466,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         urlDownloadCallsGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
         urlDownloadCallsGenerator.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
         
-        StringBuffer logos = new StringBuffer(); 
+        StringBuilder logos = new StringBuilder(); 
         
         logos.append(HtmlParentDisplay.getSingleFeatureLogo(
                 urlDownloadCallsGenerator.getRequestURL(), false, 
@@ -633,5 +682,47 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     //method overridden only to provide more accurate javadoc
     protected ViewFactory getFactory() {
         return super.getFactory();
+    }
+    
+    /**
+     * @return  The {@code JsonHelper} used to read/write variables into JSON.
+     */
+    protected JsonHelper getJsonHelper() {
+        return jsonHelper;
+    }
+    
+    /**
+     * Get the images sources of a download page as a HTML 'div' element. 
+     *
+     * @return  the {@code String} that is the images sources as HTML 'div' element.
+     */
+    protected static String getImageSources() {
+        log.entry();
+        
+        StringBuilder sources = new StringBuilder();
+        sources.append("<p id='creativecommons_title'>Images from Wikimedia Commons. In most cases, pictures corresponds to the sequenced strains. <a>Show information about original images.</a></p>");
+        sources.append("<div id='creativecommons'>");
+        sources.append("<p><i>Homo sapiens</i> picture by Leonardo da Vinci (Life time: 1519) [Public domain]. <a target='_blank' href='http://commons.wikimedia.org/wiki/File:Da_Vinci%27s_Anatomical_Man.jpg#mediaviewer/File:Da_Vinci%27s_Anatomical_Man.jpg'>See <i>H. sapiens</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Mus musculus</i> picture by Rasbak [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AApodemus_sylvaticus_bosmuis.jpg'>See <i>M. musculus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Danio rerio</i> picture by Azul (Own work) [see page for license], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AZebrafisch.jpg'>See <i>D. rerio</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Drosophila melanogaster</i> picture by Andr&eacute; Karwath aka Aka (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/2.5'>CC-BY-SA-2.5</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ADrosophila_melanogaster_-_side_(aka).jpg'>See <i>D. melanogaster</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Caenorhabditis elegans</i> picture by Bob Goldstein, UNC Chapel Hill http://bio.unc.edu/people/faculty/goldstein/ (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ACelegansGoldsteinLabUNC.jpg'>See <i>C. elegans</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Pan paniscus</i> picture by Ltshears (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a> or <a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ABonobo1_CincinnatiZoo.jpg'>See <i>P. paniscus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Pan troglodytes</i> picture by Thomas Lersch (Own work) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a>, <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a> or <a target='_blank' href='http://creativecommons.org/licenses/by/2.5'>CC-BY-2.5</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ASchimpanse_Zoo_Leipzig.jpg'>See <i>P. troglodytes</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Gorilla gorilla</i> picture by Brocken Inaglory (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a> or <a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AMale_gorilla_in_SF_zoo.jpg'>See <i>G. gorilla</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Pongo pygmaeus</i> picture by Greg Hume (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ASUMATRAN_ORANGUTAN.jpg'>See <i>P. pygmaeus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Macaca mulatta</i> picture by Aiwok (Own work) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0-2.5-2.0-1.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AMacaca_mulatta_3.JPG'>See <i>M. mulatta</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Rattus norvegicus</i> picture by Reg Mckenna (originally posted to Flickr as Wild Rat) [<a target='_blank' href='http://creativecommons.org/licenses/by/2.0'>CC-BY-2.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AWildRat.jpg'>See <i>R. norvegicus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Bos taurus</i> picture by User Robert Merkel on en.wikipedia (US Department of Agriculture) [Public domain], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AHereford_bull_large.jpg'>See <i>B. taurus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Sus scrofa</i> picture by Joshua Lutz (Own work) [Public domain], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ASus_scrofa_scrofa.jpg'>See <i>S. scrofa</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Monodelphis domestica</i> picture by <i>Marsupial Genome Sheds Light on the Evolution of Immunity.</i> Hill E, PLoS Biology Vol. 4/3/2006, e75 <a rel='nofollow' href='http://dx.doi.org/10.1371/journal.pbio.0040075'>http://dx.doi.org/10.1371/journal.pbio.0040075</a> [<a target='_blank' href='http://creativecommons.org/licenses/by/2.5'>CC-BY-2.5</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AOpossum_with_young.png'>See <i>M. domestica</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Ornithorhynchus anatinus</i> picture by Dr. Philip Bethge (private) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0-2.5-2.0-1.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AOrnithorhynchus.jpg'>See <i>O. anatinus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Gallus gallus</i> picture by Subramanya C K (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ARed_jungle_fowl.png'>See <i>G. gallus</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Anolis carolinensis</i> picture by PiccoloNamek (Moved from Image:P1010027.jpg) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AAnolis_carolinensis.jpg'>See <i>A. carolinensis</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Xenopus tropicalis</i> picture by V&aacute;clav Gvo&zcaron;d&iacute;k (http://calphotos.berkeley.edu) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/2.5'>CC-BY-SA-2.5</a>, <a target='_blank' href='http://creativecommons.org/licenses/by-sa/2.5'>CC-BY-SA-2.5</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AXenopus_tropicalis01.jpeg'>See <i>X. tropicalis</i> picture via Wikimedia Commons</a></p>");
+        sources.append("<p><i>Tetraodon nigroviridis</i> picture by Starseed (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/de/deed.en'>CC-BY-SA-3.0-de</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ATetraodon_nigroviridis_1.jpg'>See <i>T. nigroviridis</i> picture via Wikimedia Commons</a></p>");
+        sources.append("</div>");
+    
+        return log.exit(sources.toString());
     }
 }

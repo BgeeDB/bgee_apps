@@ -39,6 +39,11 @@ add unique(species, genus),
 add unique(speciesCommonName);
 /*!40000 ALTER TABLE `species` ENABLE KEYS */;
 
+/*!40000 ALTER TABLE `speciesToKeyword` DISABLE KEYS */;
+alter table speciesToKeyword 
+add primary key (speciesId, keywordId);
+/*!40000 ALTER TABLE `speciesToKeyword` ENABLE KEYS */;
+
 --  ****************************************************
 --  CONFIDENCE AND EVIDENCE ONTOLOGIES
 --  ****************************************************
@@ -386,3 +391,21 @@ alter table deaRNASeqSummary
 add primary key (geneSummaryId, deaSampleGroupId);
 /*!40000 ALTER TABLE `deaRNASeqSummary` ENABLE KEYS */;
 
+-- *****************************************
+-- DOWNLOAD FILES
+-- *****************************************
+/*!40000 ALTER TABLE `speciesDataGroup` DISABLE KEYS */;
+alter table speciesDataGroup 
+modify speciesDataGroupId mediumint unsigned not null auto_increment primary key, 
+add unique(speciesDataGroupOrder);
+/*!40000 ALTER TABLE `speciesDataGroup` ENABLE KEYS */;
+
+/*!40000 ALTER TABLE `speciesToDataGroup` DISABLE KEYS */;
+alter table speciesToDataGroup 
+add primary key (speciesId, speciesDataGroupId);
+/*!40000 ALTER TABLE `speciesToDataGroup` ENABLE KEYS */;
+
+/*!40000 ALTER TABLE `downloadFile` DISABLE KEYS */;
+alter table downloadFile 
+modify downloadFileId mediumint unsigned not null auto_increment primary key;
+/*!40000 ALTER TABLE `downloadFile` ENABLE KEYS */;

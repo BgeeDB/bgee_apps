@@ -5,6 +5,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -31,6 +32,8 @@ import org.bgee.model.dao.mysql.expressiondata.MySQLNoExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.affymetrix.MySQLAffymetrixProbesetDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituSpotDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqResultDAO;
+import org.bgee.model.dao.mysql.file.MySQLDownloadFileDAO;
+import org.bgee.model.dao.mysql.file.MySQLSpeciesDataGroupDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneOntologyDAO;
 import org.bgee.model.dao.mysql.gene.MySQLHierarchicalGroupDAO;
@@ -61,10 +64,14 @@ public abstract class TestAncestor
 	/**
 	 * Default Constructor. 
 	 */
-	public TestAncestor()
-	{
-		
+	public TestAncestor() {
+		try {
+            CommandRunner.loadLogConfig();
+        } catch (SecurityException | IOException e) {
+            getLogger().catching(e);
+        }
 	}
+	
 	/**
 	 * A {@code TestWatcher} to log starting, succeeded and failed tests. 
 	 */
@@ -167,6 +174,9 @@ public abstract class TestAncestor
         public final MySQLDiffExpressionCallDAO mockDiffExpressionCallDAO = 
                 mock(MySQLDiffExpressionCallDAO.class);
         public final MySQLAnatEntityDAO mockAnatEntityDAO = mock(MySQLAnatEntityDAO.class);
+        public final MySQLSpeciesDataGroupDAO mockSpeciesDataGroupDAO = 
+                mock(MySQLSpeciesDataGroupDAO.class);
+        public final MySQLDownloadFileDAO mockDownloadFileDAO = mock(MySQLDownloadFileDAO.class);
         public final MySQLAffymetrixProbesetDAO mockAffymetrixProbesetDAO = 
                 mock(MySQLAffymetrixProbesetDAO.class);
         public final MySQLInSituSpotDAO mockInSituSpotDAO = mock(MySQLInSituSpotDAO.class);
@@ -262,6 +272,14 @@ public abstract class TestAncestor
         @Override
         protected MySQLAnatEntityDAO getNewAnatEntityDAO() {
             return this.mockAnatEntityDAO;
+        }
+        @Override
+        protected MySQLSpeciesDataGroupDAO getNewSpeciesDataGroupDAO() {
+            return this.mockSpeciesDataGroupDAO;
+        }
+        @Override
+        protected MySQLDownloadFileDAO getNewDownloadFileDAO() {
+            return this.mockDownloadFileDAO;
         }
         @Override
         protected MySQLAffymetrixProbesetDAO getNewAffymetrixProbesetDAO() {

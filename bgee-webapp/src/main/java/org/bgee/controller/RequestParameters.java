@@ -111,6 +111,11 @@ public class RequestParameters {
      * (see {@link URLParameters#getParamPage()}) when a download page is requested.
      */
     public static final String PAGE_ABOUT = "about";
+    /**
+     * A {@code String} that is the value taken by the {@code page} parameter 
+     * (see {@link URLParameters#getParamPage()}) when a page related to topAnat is requested.
+     */
+    public static final String PAGE_TOP_ANAT = "top_anat";
 
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
@@ -341,6 +346,16 @@ public class RequestParameters {
     private final String httpMethod;
 
     /**
+     * 0-arg constructor defining default implementations and values to use to call 
+     * {@link #RequestParameters(URLParameters, BgeeProperties, boolean, String)}. It uses 
+     * the {@code BgeeProperties} returned by {@link BgeeProperties#getBgeeProperties()}, 
+     * the default implementation of {@code URLParameters}, value {@code true} for 
+     * {@code encodeUrl}, value "&" for {@code parametersSeparator}.
+     */
+    public RequestParameters() {
+        this(new URLParameters(), BgeeProperties.getBgeeProperties(), true, "&");
+    }
+    /**
      * Default constructor. 
      * 
      * @param urlParametersInstance     A instance of {@code URLParameters} that 
@@ -520,12 +535,12 @@ public class RequestParameters {
         //Get the key
         String key = request.getParameter(this.getKeyParam().getName());
         if (StringUtils.isBlank(key)) {
-            log.debug("The key is blank, load params from request");
+            log.trace("The key is blank, load params from request");
             //no key set, get the parameters from the URL
             this.loadParametersFromRequest(request, true);
         } else {
             //a key is set, get the storable parameters from a file
-            log.debug("The key is set, load params from the file");
+            log.trace("The key is set, load params from the file");
             try {
                 this.loadStorableParametersFromKey(key);
             } catch (IOException e) {
@@ -1708,6 +1723,22 @@ public class RequestParameters {
         return log.exit(false);
     }
 
+    /**
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
+     * 
+     * @return  A {@code boolean} to tell whether the request is related to topAnat.
+     */
+    public boolean isATopAnatPageCategory()
+    {
+        log.entry();
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
+            this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_TOP_ANAT)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
 //    /**
 //     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
 //     * consistent as much as possible if the method evolves.
@@ -1888,23 +1919,6 @@ public class RequestParameters {
 //        log.entry();
 //        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
 //                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("search")) {
-//            return log.exit(true);
-//        }
-//        return log.exit(false);
-//    }
-
-//    /**
-//     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
-//     * consistent as much as possible if the method evolves.
-//     * 
-//     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
-//     * category "top_anat"
-//     */
-//    public boolean isATopOBOPageCategory()
-//    {
-//        log.entry();
-//        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
-//                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("top_anat")) {
 //            return log.exit(true);
 //        }
 //        return log.exit(false);

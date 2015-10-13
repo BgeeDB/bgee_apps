@@ -1,0 +1,6 @@
+format-version: 1.2
+ontology: taxonConstraintsTest_import
+
+[Term]
+id: FAKE:100
+name: Fake 100

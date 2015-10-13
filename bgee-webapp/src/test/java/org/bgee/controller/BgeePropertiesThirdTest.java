@@ -58,8 +58,10 @@ public class BgeePropertiesThirdTest extends BgeePropertiesParentTest {
         System.setProperty(BgeeProperties.IMAGES_ROOT_DIRECTORY_KEY, "/imgRootDir");
         System.setProperty(BgeeProperties.LOGO_IMAGES_ROOT_DIRECTORY_KEY, "/logoImgRootDir");
         System.setProperty(BgeeProperties.SPECIES_IMAGES_ROOT_DIRECTORY_KEY, "/speciesImgRootDir");
-        System.setProperty(BgeeProperties.TOP_OBO_RESULTS_URL_ROOT_DIRECTORY_KEY, "/topOboDir");
         System.setProperty(BgeeProperties.WEBPAGES_CACHE_CONFIG_FILE_NAME_KEY, "cacheConfigFileName");
+        System.setProperty(BgeeProperties.TOP_ANAT_RESULTS_URL_DIRECTORY_KEY, "/sysurldir");
+        // Test a superclass property
+        System.setProperty(BgeeProperties.TOP_ANAT_FUNCTION_FILE_KEY, "/systopanatfunction");
         
         // get the instance of bgeeproperties and check the values
         this.bgeeProp = BgeeProperties.getBgeeProperties();
@@ -97,10 +99,13 @@ public class BgeePropertiesThirdTest extends BgeePropertiesParentTest {
                 "/logoImgRootDir", bgeeProp.getLogoImagesRootDirectory());
         assertEquals("Wrong property value retrieved",
                 "/speciesImgRootDir", bgeeProp.getSpeciesImagesRootDirectory());
-        assertEquals("Wrong property value retrieved", 
-                "/topOboDir", bgeeProp.getTopOBOResultsUrlRootDirectory());
         assertEquals("Wrong property value retrieved",
                 "cacheConfigFileName", bgeeProp.getWebpagesCacheConfigFileName());
+        assertEquals("Wrong property value retrieved", 
+                "/sysurldir", bgeeProp.getTopAnatResultsUrlDirectory());
+        // Test a superclass property
+        assertEquals("Wrong property value retrieved", 
+                "/systopanatfunction", bgeeProp.getTopAnatFunctionFile());
 
     }
 }

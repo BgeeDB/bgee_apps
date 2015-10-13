@@ -96,7 +96,7 @@ public interface CallSourceRawDataDAO extends DAO<CallSourceRawDataDAO.Attribute
              * @throw IllegalArgumentException  If {@code representation} does not correspond 
              *                                  to any {@code DetectionFlag}.
              */
-            public static final DetectionFlag convertToRelationType(String representation) {
+            public static final DetectionFlag convertToDetectionFlag(String representation) {
                 log.entry(representation);
                 return log.exit(TransferObject.convert(DetectionFlag.class, representation));
             }
@@ -169,7 +169,7 @@ public interface CallSourceRawDataDAO extends DAO<CallSourceRawDataDAO.Attribute
              * @throw IllegalArgumentException  If {@code representation} does not correspond 
              *                                  to any {@code ExclusionReason}.
              */
-            public static final ExclusionReason convertToRelationType(String representation) {
+            public static final ExclusionReason convertToExclusionReason(String representation) {
                 log.entry(representation);
                 return log.exit(TransferObject.convert(ExclusionReason.class, representation));
             }

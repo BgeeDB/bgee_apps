@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Matcher;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -196,7 +197,8 @@ public class Uberon extends UberonCommon {
             ub.setClassesRemovedFilePath(args[3]);
             ub.setClassIdsToRemove(CommandRunner.parseListArgument(args[4]));
             ub.setRelIds(CommandRunner.parseListArgument(args[5]));
-            ub.setRelsBetweenToRemove(CommandRunner.parseMapArgument(args[6]));
+            ub.setRelsBetweenToRemove(CommandRunner.parseMapArgument(args[6]).entrySet().stream()
+                    .collect(Collectors.toMap(Entry::getKey, e -> new HashSet<String>(e.getValue()))));
             ub.setToRemoveSubgraphRootIds(CommandRunner.parseListArgument(args[7]));
             ub.setToFilterSubgraphRootIds(CommandRunner.parseListArgument(args[8]));
             ub.setSubsetNames(CommandRunner.parseListArgument(args[9]));
@@ -424,14 +426,6 @@ public class Uberon extends UberonCommon {
     
     
     /**
-     * Default constructor private in purpose, an ontology should always be provided somehow.
-     */
-    @SuppressWarnings("unused")
-    private Uberon() {
-        this((OntologyUtils) null);
-    }
-    
-    /**
      * Constructor providing the path to the Uberon ontology to used to perforn operations.
      * 
      * @param pathToUberon  A {@code String} that is the path to the Uberon ontology. 
@@ -449,8 +443,10 @@ public class Uberon extends UberonCommon {
      * that will be used to identify to which species classes belong.
      * 
      * @param ontUtils  the {@code OntologyUtils} that will be used. 
+     * @throws OWLOntologyCreationException If an error occurred while merging 
+     *                                      the import closure of the ontology.
      */
-    public Uberon(OntologyUtils ontUtils) {
+    public Uberon(OntologyUtils ontUtils) throws OWLOntologyCreationException {
         super(ontUtils);
     }
     /**
@@ -489,8 +485,11 @@ public class Uberon extends UberonCommon {
      *                          {@code OWLClass}es, and values are {@code Set}s 
      *                          of {@code Integer}s containing the IDs of taxa 
      *                          in which the {@code OWLClass} exists.
+     * @throws OWLOntologyCreationException If an error occurred while merging 
+     *                                      the import closure of the ontology.
      */
-    public Uberon(OntologyUtils ontUtils, Map<String, Set<Integer>> taxonConstraints) {
+    public Uberon(OntologyUtils ontUtils, Map<String, Set<Integer>> taxonConstraints) 
+            throws OWLOntologyCreationException {
         super(ontUtils);
         this.setTaxonConstraints(taxonConstraints);
     }

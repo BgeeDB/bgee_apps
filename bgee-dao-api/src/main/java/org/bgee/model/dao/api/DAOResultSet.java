@@ -1,6 +1,7 @@
 package org.bgee.model.dao.api;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
@@ -21,6 +22,9 @@ import org.bgee.model.dao.api.exception.QueryInterruptedException;
  * on a result, the method {@link #getTO()} can be called to obtain the result 
  * as a {@code TransferObject}.
  * <p>
+ * It is also possible to obtain a {@code Stream} to traverse the results by calling 
+ * {@link #stream()}.
+ * <p>
  * When a call to the {@code next} method returns {@code false}, this 
  * {@code DAOResultSet} is closed, and all underlying resources used 
  * to generate it are released. Calling {@link #getTO()} would throw 
@@ -30,6 +34,9 @@ import org.bgee.model.dao.api.exception.QueryInterruptedException;
  * {@code next} returns {@code false}). But the could be accomplished at end 
  * of the applicative code, by calling {@link DAOManager#close()}, that would 
  * close all resources, including {@code DAOResultSet}.
+ * <p>
+ * A {@code DAOResultSet} is also closed when a {@code Stream} obtained from the {@link #stream()} 
+ * method is closed.
  * <p>
  * As an example, if the {@code DAO} used is using a SQL database, then each result 
  * of a {@code DAOResultSet} would correspond to one row in the database. 
@@ -43,13 +50,43 @@ import org.bgee.model.dao.api.exception.QueryInterruptedException;
  * all results in memory. In any case, this is none of the business of the caller.
  * 
  * @author Frederic Bastian
- * @version Bgee 13
+ * @version Bgee 13 Sept. 2015
  * @since Bgee 13
  *
  * @param <T>   The type of {@code TransferObject} that can be obtained 
  *              from this {@code DAOResultSet}.
  */
 public interface DAOResultSet<T extends TransferObject> extends AutoCloseable {
+    /**
+     * Returns a {@code Stream} with this {@code DAOResultSet} as source. 
+     * It allows to traverse all the {@code T}s that can be obtained from this {@code DAOResultSet}. 
+     * When the returned {@code Stream} is closed, or after a complete traversal, 
+     * the underlying {@code DAOResultSet} is also closed.
+     * The returned {@code Stream} should be used in {@code try-finally} clauses exactly 
+     * as this {@code DAOResultSet} should have been used. 
+     * <p>
+     * <strong>Implementation specification</strong>: 
+     * <ul>
+     * <li>implementations should make sure that the returned {@code Stream} has a close handler 
+     * that closes the underlying {@code DAOResultSet} (see method {@code BaseStream#onClose(Runnable)}).
+     * <li>implementations should make sure that, each time this {@code stream} method is used, 
+     * a new {@code DAOResultSet} providing results identical to this one is used, 
+     * otherwise, different {@code Stream}s would iterate a same {@code DAOResultSet}.
+     * If this feature is not supported, implementations should throw an {@code IllegalStateException} 
+     * if this method is called several times on a same {@code DAOResultSet}, 
+     * or if this {@code DAOResultSet} was already started to be iterated. 
+     * </ul>
+     * 
+     * @return  A {@code Stream} over the {@code T}s obtained from this {@code DAOResultSet}. 
+     *          When it is closed, the underlying {@code DAOResultSet} is also closed.
+     * @throws IllegalStateException    If the implementation is not capable of producing 
+     *                                  several independent {@code Stream}s, and if it is not 
+     *                                  the first time that this method is called 
+     *                                  on this {@code DAOResultSet}, or if it was already 
+     *                                  started to be iterated.
+     */
+    public Stream<T> stream() throws IllegalStateException;
+    
     /**
      * Moves the cursor forward from its current position to the next result. 
      * A {@code DAOResultSet} cursor is initially positioned before the first result; 
@@ -106,5 +143,6 @@ public interface DAOResultSet<T extends TransferObject> extends AutoCloseable {
      * to generate it.
      * @throws DAOException If a {@code DAO} access occurs. 
      */
+    @Override
     public void close() throws DAOException;
 }

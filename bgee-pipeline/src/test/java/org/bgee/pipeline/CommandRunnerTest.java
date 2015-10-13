@@ -4,10 +4,9 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -42,8 +41,9 @@ public class CommandRunnerTest extends TestAncestor {
      */
     @Test
     public void shouldParseArgument() {
-        assertEquals("Incorrect argument parsing", "abc", CommandRunner.parseArgument("abc"));
-        assertEquals("Incorrect argument parsing", "", CommandRunner.parseArgument(""));
+        assertEquals("Incorrect argument parsing", "abc", CommandRunner.parseArgument(" abc "));
+        assertEquals("Incorrect argument parsing", "ab c", CommandRunner.parseArgument("ab c "));
+        assertEquals("Incorrect argument parsing", "", CommandRunner.parseArgument(" "));
         assertEquals("Incorrect argument parsing", null, CommandRunner.parseArgument(null));
         assertEquals("Incorrect argument parsing", null, CommandRunner.parseArgument(
                 CommandRunner.EMPTY_ARG));
@@ -55,10 +55,10 @@ public class CommandRunnerTest extends TestAncestor {
     @Test
     public void shouldParseListArgument() {
         assertEquals("Incorrect parsing of string as list", 
-                Arrays.asList("ID1", "ID2", "ID3"), 
+                Arrays.asList("ID1", "ID 2", "ID3"), 
                 CommandRunner.parseListArgument(
-                        "ID1" + CommandRunner.LIST_SEPARATOR + 
-                        "ID2" + CommandRunner.LIST_SEPARATOR + 
+                        " ID1" + CommandRunner.LIST_SEPARATOR + 
+                        "ID 2" + CommandRunner.LIST_SEPARATOR + 
                         "ID3" + CommandRunner.LIST_SEPARATOR));
         
 
@@ -81,7 +81,7 @@ public class CommandRunnerTest extends TestAncestor {
                 Arrays.asList(1, 2, 3), 
                 CommandRunner.parseListArgumentAsInt(
                         "1" + CommandRunner.LIST_SEPARATOR + 
-                        "2" + CommandRunner.LIST_SEPARATOR + 
+                        "2 " + CommandRunner.LIST_SEPARATOR + 
                         "3" + CommandRunner.LIST_SEPARATOR));
     }
 
@@ -90,19 +90,19 @@ public class CommandRunnerTest extends TestAncestor {
      */
     @Test
     public void shouldParseMapArgument() {
-        Map<String, Set<String>> expectedMap = new HashMap<String, Set<String>>();
-        expectedMap.put("key1", new HashSet<String>(Arrays.asList("value1", "value2")));
-        expectedMap.put("key2", new HashSet<String>(Arrays.asList("value2")));
-        expectedMap.put("key3", new HashSet<String>(Arrays.asList("value3")));
-        expectedMap.put("key4", new HashSet<String>(Arrays.asList("value4_1", 
-                "value4_2", "value4_3")));
-        expectedMap.put("key5", new HashSet<String>());
+        LinkedHashMap<String, List<String>> expectedMap = new LinkedHashMap<String, List<String>>();
+        expectedMap.put("key1", Arrays.asList("value1", "value1", "value2"));
+        expectedMap.put("key 2", Arrays.asList("value 2"));
+        expectedMap.put("key3", Arrays.asList("value3"));
+        expectedMap.put("key4", Arrays.asList("value4_1", 
+                "value4_2", "value4_3"));
+        expectedMap.put("key5", new ArrayList<String>());
         assertEquals("Incorrect parsing of string as map", 
                 expectedMap, 
                 CommandRunner.parseMapArgument(
                         " key1 " + CommandRunner.KEY_VALUE_SEPARATOR + " value1 " + 
                             CommandRunner.LIST_SEPARATOR + 
-                        "key2" + CommandRunner.KEY_VALUE_SEPARATOR + "value2" + 
+                        "key 2" + CommandRunner.KEY_VALUE_SEPARATOR + "value 2" + 
                             CommandRunner.LIST_SEPARATOR + 
                         "key1" + CommandRunner.KEY_VALUE_SEPARATOR + " value1 " + 
                             CommandRunner.LIST_SEPARATOR + 
@@ -118,7 +118,7 @@ public class CommandRunnerTest extends TestAncestor {
                             CommandRunner.EMPTY_LIST));
         
         expectedMap.clear();
-        expectedMap.put("key1", new HashSet<String>(Arrays.asList("value1")));
+        expectedMap.put("key1", Arrays.asList("value1"));
         assertEquals("Incorrect parsing of string as map", 
                 expectedMap, 
                 CommandRunner.parseMapArgument(
@@ -130,17 +130,17 @@ public class CommandRunnerTest extends TestAncestor {
      */
     @Test
     public void shouldParseMapArgumentAsInteger() {
-        Map<String, Set<Integer>> expectedMap = new HashMap<String, Set<Integer>>();
-        expectedMap.put("key1", new HashSet<Integer>(Arrays.asList(1, 2)));
-        expectedMap.put("key2", new HashSet<Integer>(Arrays.asList(2)));
-        expectedMap.put("key3", new HashSet<Integer>(Arrays.asList(3)));
-        expectedMap.put("key4", new HashSet<Integer>(Arrays.asList(4, 5, 6)));
+        LinkedHashMap<String, List<Integer>> expectedMap = new LinkedHashMap<String, List<Integer>>();
+        expectedMap.put("key1", Arrays.asList(1, 1, 2));
+        expectedMap.put("key 2", Arrays.asList(2));
+        expectedMap.put("key3", Arrays.asList(3));
+        expectedMap.put("key4", Arrays.asList(4, 5, 6));
         assertEquals("Incorrect parsing of string as map", 
                 expectedMap, 
                 CommandRunner.parseMapArgumentAsInteger(
                         " key1 " + CommandRunner.KEY_VALUE_SEPARATOR + " 1 " + 
                             CommandRunner.LIST_SEPARATOR + 
-                        "key2" + CommandRunner.KEY_VALUE_SEPARATOR + "2" + 
+                        "key 2" + CommandRunner.KEY_VALUE_SEPARATOR + "2" + 
                             CommandRunner.LIST_SEPARATOR + 
                         "key1" + CommandRunner.KEY_VALUE_SEPARATOR + " 1 " + 
                             CommandRunner.LIST_SEPARATOR + 
@@ -153,10 +153,45 @@ public class CommandRunnerTest extends TestAncestor {
                             CommandRunner.VALUE_SEPARATOR + "6"));
         
         expectedMap.clear();
-        expectedMap.put("key1", new HashSet<Integer>(Arrays.asList(1)));
+        expectedMap.put("key1", Arrays.asList(1));
         assertEquals("Incorrect parsing of string as map", 
                 expectedMap, 
                 CommandRunner.parseMapArgumentAsInteger(
                         " key1 " + CommandRunner.KEY_VALUE_SEPARATOR + " 1 "));
+    }
+
+    /**
+     * Test method {@link CommandRunner#parseMapArgumentAsAllInteger(String)}.
+     */
+    @Test
+    public void shouldParseMapArgumentAsAllInteger() {
+        Map<Integer, List<Integer>> expectedMap = new LinkedHashMap<Integer, List<Integer>>();
+        expectedMap.put(1, Arrays.asList(1, 1, 2));
+        expectedMap.put(2, Arrays.asList(2));
+        expectedMap.put(11, Arrays.asList(3));
+        expectedMap.put(3, Arrays.asList(4, 5, 6));
+        assertEquals("Incorrect parsing of string as map", 
+                expectedMap, 
+                CommandRunner.parseMapArgumentAsAllInteger(
+                        " 1 " + CommandRunner.KEY_VALUE_SEPARATOR + " 1 " + 
+                            CommandRunner.LIST_SEPARATOR + 
+                        "2" + CommandRunner.KEY_VALUE_SEPARATOR + "2" + 
+                            CommandRunner.LIST_SEPARATOR + 
+                        "1" + CommandRunner.KEY_VALUE_SEPARATOR + " 1 " + 
+                            CommandRunner.LIST_SEPARATOR + 
+                        "1" + CommandRunner.KEY_VALUE_SEPARATOR + "2" + 
+                            CommandRunner.LIST_SEPARATOR + 
+                        "11" + CommandRunner.KEY_VALUE_SEPARATOR + "3" + 
+                            CommandRunner.LIST_SEPARATOR + 
+                        "3" + CommandRunner.KEY_VALUE_SEPARATOR + "4" + 
+                            CommandRunner.VALUE_SEPARATOR + "5" + 
+                            CommandRunner.VALUE_SEPARATOR + "6"));
+        
+        expectedMap.clear();
+        expectedMap.put(1, Arrays.asList(1));
+        assertEquals("Incorrect parsing of string as map", 
+                expectedMap, 
+                CommandRunner.parseMapArgumentAsAllInteger(
+                        " 1 " + CommandRunner.KEY_VALUE_SEPARATOR + " 1 "));
     }
 }

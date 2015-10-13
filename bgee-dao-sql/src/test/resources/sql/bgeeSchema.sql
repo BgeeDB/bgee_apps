@@ -101,7 +101,7 @@ create table species (
     genus varchar(70) not null, 
 -- example: sapiens
     species varchar(70) not null, 
--- exemple: human
+-- example: human
     speciesCommonName varchar(70) not null, 
 -- ID of the taxon which this species belongs to, present in the table `taxonomy`.
 -- For instance, if this species is `human`, it belongs to the taxon `homo` (taxon ID 9605). 
@@ -125,6 +125,13 @@ create table species (
 -- (for instance, the chimp gene IDs, starting with 'ENSPTRG', will be changed to 'PPAG'
 -- when used for the bonobo)
     fakeGeneIdPrefix varchar(10) not null default ''
+) engine = innodb;
+
+-- represent mainly alternative common names (for instance, 'rhesus monkey', 'roundworm'), 
+-- or alternative taxon names related to a species.
+create table speciesToKeyword (
+    speciesId mediumint unsigned not null, 
+    keywordId int unsigned not null
 ) engine = innodb;
 
 --  ****************************************************
@@ -1105,3 +1112,40 @@ create table differentialExpression (
 
 
 --  select((select count(1) from rnaSeqExperiment) + (select count(1) from rnaSeqLibrary) + (select count(1) from rnaSeqResults) + (select count(1) from rnaSeqExperimentToKeyword) + (select count(1) from affymetrixChip) + (select count(1) from affymetrixProbeset) + (select count(1) from author) + (select count(1) from chipType) + (select count(1) from dataSource) + (select count(1) from dataType) + (select count(1) from deaAffymetrixProbesetSummary) + (select count(1) from deaChipsGroup) + (select count(1) from deaChipsGroupToAffymetrixChip) + (select count(1) from detectionType) + (select count(1) from differentialExpression) + (select count(1) from differentialExpressionAnalysis) + (select count(1) from differentialExpressionAnalysisType) + (select count(1) from estLibrary) + (select count(1) from estLibraryToKeyword) + (select count(1) from expressedSequenceTag) + (select count(1) from expression) + (select count(1) from gene) + (select count(1) from geneBioType) + (select count(1) from geneFamily) + (select count(1) from geneFamilyPredictionMethod) + (select count(1) from geneNameSynonym) + (select count(1) from geneOntologyDescendants) + (select count(1) from geneOntologyTerm) + (select count(1) from geneToTerm) + (select count(1) from geneXRef) + (select count(1) from globalExpression) + (select count(1) from globalExpressionToExpression) + (select count(1) from hogDescendants) + (select count(1) from hogExpression) + (select count(1) from hogExpressionSummary) + (select count(1) from hogExpressionToExpression) + (select count(1) from hogNameSynonym) + (select count(1) from hogRelationship) + (select count(1) from hogXRef) + (select count(1) from homologousOrgansGroup) + (select count(1) from inSituEvidence) + (select count(1) from inSituExperiment) + (select count(1) from inSituExperimentToKeyword) + (select count(1) from inSituSpot) + (select count(1) from keyword) + (select count(1) from metaStage) + (select count(1) from metaStageNameSynonym) + (select count(1) from microarrayExperiment) + (select count(1) from microarrayExperimentToKeyword) + (select count(1) from noExpression) + (select count(1) from normalizationType) + (select count(1) from organ) + (select count(1) from organDescendants) + (select count(1) from organNameSynonym) + (select count(1) from organRelationship) + (select count(1) from species) + (select count(1) from stage) + (select count(1) from stageNameSynonym) + (select count(1) from stageXRef));
+
+-- ******************************************
+-- AVAILABLE FILES FOR DOWNLOAD
+-- ******************************************
+-- see (https://gitlab.isb-sib.ch/Bgee/bgee_apps/issues/31)
+create table downloadFile (
+  downloadFileId mediumint unsigned not null,
+-- path relative to the root of the download file directory, including file name
+  downloadFileRelativePath varchar(255) not null,
+-- currently, just the name of the file
+  downloadFileName varchar(255) not null,
+  downloadFileDescription text,
+  downloadFileCategory enum("expr_simple", "expr_complete", "diff_expr_anatomy_complete", "diff_expr_anatomy_simple"
+   , "diff_expr_dev_complete", "diff_expr_dev_simple", "ortholog",
+   "affy_annot","rnaseq_annot","affy_data","rnaseq_data"),
+  speciesDataGroupId mediumint unsigned not null,
+  downloadFileSize int unsigned not null
+) engine = innodb;
+
+-- *****************************************
+-- SPECIES CONFIG
+-- *****************************************
+-- a set of species (containing at least one element) for which a file was generated
+
+create table speciesDataGroup(
+  speciesDataGroupId mediumint unsigned not null,
+  speciesDataGroupName varchar(255) not null,
+  speciesDataGroupDescription text, 
+-- preferred order to display speciesDataGroups
+  speciesDataGroupOrder tinyint unsigned not null default 255
+) engine = innodb;
+
+create table speciesToDataGroup(
+  speciesDataGroupId mediumint unsigned not null,
+  speciesId mediumint unsigned not null
+) engine = innodb;
+

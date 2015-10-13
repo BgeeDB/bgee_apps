@@ -1,11 +1,9 @@
 package org.bgee.pipeline;
 
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -18,6 +16,7 @@ import org.bgee.pipeline.expression.InsertGlobalCalls;
 import org.bgee.pipeline.expression.downloadfile.GenerateExprFile;
 import org.bgee.pipeline.expression.downloadfile.GenerateDiffExprFile;
 import org.bgee.pipeline.expression.downloadfile.GenerateMultiSpeciesDiffExprFile;
+import org.bgee.pipeline.expression.downloadfile.InsertSpeciesDataGroups;
 import org.bgee.pipeline.gene.InsertGO;
 import org.bgee.pipeline.gene.ParseOrthoXML;
 import org.bgee.pipeline.ontologycommon.InsertCIO;
@@ -55,6 +54,12 @@ public class CommandRunner {
             LogManager.getLogger(CommandRunner.class.getName());
 
     /**
+     * A {@code String} that is the path to a property file allowing to configure 
+     * log messages using the package {@code java.util.logging}. Path relative to 
+     * classpath root, starting with "/".
+     */
+    public static final String JDK_LOG_CONFIG_FILE = "/jdkLogConfig.properties";
+    /**
      * A {@code String} that is used to separate elements from a list when providing 
      * a response to a socket client (see {@link #socketUberonStagesBetween(Uberon, 
      * int)}).
@@ -80,7 +85,7 @@ public class CommandRunner {
      * 
      * @see #parseMapArgument(String)
      */
-    public static final String KEY_VALUE_SEPARATOR = "/";
+    public static final String KEY_VALUE_SEPARATOR = "//";
     /**
      * A {@code String} that is the separator between different values associated to a same key, 
      * in a list of key-value pairs of a map, 
@@ -104,6 +109,38 @@ public class CommandRunner {
      */
     public static final String EMPTY_ARG = "-";
 
+    /**
+     * Force configuration of loggers used by dependencies. 
+     * This method forces {@code java.util.logging.LogManager} to re-initialize 
+     * its configuration by reading the property file {@link #JDK_LOG_CONFIG_FILE}, 
+     * if the system property {@code java.util.logging.config.file} was not defined. 
+     * It also configures the property {@code org.slf4j.simpleLogger.defaultLogLevel} 
+     * to {@code error}, for the SLF4J {@code SimpleLogger}, if this property 
+     * was not defined.
+     * <p>
+     * Note that log4j and log4j2 properties are defined in configuration files stored 
+     * in classpath root. This method is used solely because of dependencies using 
+     * {@code java.util.logging} and {@code SimpleLogger}.
+     */
+    public static final void loadLogConfig() throws SecurityException, IOException {
+        log.entry();
+        if (System.getProperty("java.util.logging.config.file") == null) {
+            log.trace("Reset java.util.logging configuration from property file {}", 
+                    JDK_LOG_CONFIG_FILE);
+            //we need to reload the configuration, not only change the path 
+            //to the configuration file, because the logging config is read 
+            //at JVM initialization.
+            java.util.logging.LogManager.getLogManager().readConfiguration(
+                    CommandRunner.class.getResourceAsStream(JDK_LOG_CONFIG_FILE));
+        }
+        if (System.getProperty("org.slf4j.simpleLogger.defaultLogLevel") == null) {
+            String logLevel = "error";
+            log.trace("Setting property org.slf4j.simpleLogger.defaultLogLevel to {}", 
+                    logLevel);
+            System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", logLevel);
+        }
+        log.exit();
+    }
 
     /**
      * Entry point method of the Bgee pipeline. The first element in {@code args} 
@@ -131,6 +168,11 @@ public class CommandRunner {
      */
     public static void main(String[] args) throws IllegalArgumentException, Exception {
         log.entry((Object[]) args);
+        
+        loadLogConfig();
+        
+        //force use of custom JDK logging property file
+        System.setProperty("java.util.logging.config.file", "/jdkLogConfig.properties");
 
         if (args.length < 1) {
             throw log.throwing(new IllegalArgumentException("At least one argument " +
@@ -223,6 +265,9 @@ public class CommandRunner {
         case "GenerateMultiSpeciesDiffExprFile":
             GenerateMultiSpeciesDiffExprFile.main(newArgs);
             break;
+        case "InsertSpeciesDataGroups":
+            InsertSpeciesDataGroups.main(newArgs);
+            break;
             
         default: 
             throw log.throwing(new UnsupportedOperationException("The following action " +
@@ -233,18 +278,20 @@ public class CommandRunner {
     }
     
     /**
-     * Return either {@code arg}, or {@code null} if {@code arg} is equal to {@link #EMPTY_ARG}.
+     * Return a filtered value of {@code arg}: if {@code arg} is equal to {@link #EMPTY_ARG}, 
+     * this method returns {@code null}; all substrings equal to {@link #SPACE_IN_ARG} 
+     * will be replaced by a space; the returned {@code String} is trimmed.
+     * 
      * 
      * @param arg   A {@code String} that is an argument from a command line usage.
-     * @return      A {@code String} that is either {@code arg}, or {@code null} 
-     *              if {@code arg} is equal to {@link #EMPTY_ARG}.
+     * @return      A {@code String} that is a filtered value corresponding to {@code arg}.
      */
     public static String parseArgument(String arg) {
         log.entry(arg);
         if (arg == null || arg.trim().equals(EMPTY_ARG)) {
             return log.exit(null);
         }
-        return log.exit(arg);
+        return log.exit(arg.trim());
     }
 
     /**
@@ -290,14 +337,14 @@ public class CommandRunner {
         listArg = listArg.trim();
         if (!listArg.equals(EMPTY_LIST)) {
             for (String arg: listArg.split(LIST_SEPARATOR)) {
-                if (StringUtils.isNotBlank(arg)) {
-                    String value = arg.trim();
+                String filteredArg = parseArgument(arg);
+                if (StringUtils.isNotBlank(filteredArg)) {
                     if (type.equals(Integer.class)) {
-                        resultingList.add(type.cast(Integer.parseInt(value)));
+                        resultingList.add(type.cast(Integer.parseInt(filteredArg)));
                     } else if (type.equals(Boolean.class)) {
-                        resultingList.add(type.cast(Boolean.parseBoolean(value)));
+                        resultingList.add(type.cast(Boolean.parseBoolean(filteredArg)));
                     } else {
-                        resultingList.add(type.cast(value));
+                        resultingList.add(type.cast(filteredArg));
                     }
                 }
             }
@@ -307,26 +354,47 @@ public class CommandRunner {
     }
 
     /**
-     * Delegates to {@link #parseMapArgument(String, Class)} with {@code Class} argument 
-     * being {@code String.class}.
+     * Parses a command line argument and returns a corresponding {@code Map}.
      * 
-     * @param mapArg    See same name argument in {@link #parseMapArgument(String, Class)}.
-     * @return          See returned value in {@link #parseMapArgument(String, Class)}.
+     * @param mapArg    A {@code String} corresponding to a map encoded as command-line argument.
+     * @return          A {@code LinkedHashMap} where keys are {@code String}s and values are 
+     *                  {@code List}s of {@code String}s, corresponding to {code mapArg}.
+     * @see #LIST_SEPARATOR
+     * @see #KEY_VALUE_SEPARATOR
+     * @see #VALUE_SEPARATOR
      */
-    public static Map<String, Set<String>> parseMapArgument(String mapArg) {
+    public static LinkedHashMap<String, List<String>> parseMapArgument(String mapArg) {
         log.entry(mapArg);
-        return log.exit(CommandRunner.parseMapArgument(mapArg, String.class));
+        return log.exit(CommandRunner.parseMapArgument(mapArg, String.class, String.class));
     }
     /**
-     * Delegates to {@link #parseMapArgument(String, Class)} with {@code Class} argument 
-     * being {@code Integer.class}.
+     * Parses a command line argument and returns a corresponding {@code Map}.
      * 
-     * @param mapArg    See same name argument in {@link #parseMapArgument(String, Class)}.
-     * @return          See returned value in {@link #parseMapArgument(String, Class)}.
+     * @param mapArg    A {@code String} corresponding to a map encoded as command-line argument.
+     * @return          A {@code LinkedHashMap} where keys are {@code String}s and values are 
+     *                  {@code List}s of {@code Integer}s, corresponding to {code mapArg}.
+     * @see #LIST_SEPARATOR
+     * @see #KEY_VALUE_SEPARATOR
+     * @see #VALUE_SEPARATOR
      */
-    public static Map<String, Set<Integer>> parseMapArgumentAsInteger(String mapArg) {
+    public static LinkedHashMap<String, List<Integer>> parseMapArgumentAsInteger(String mapArg) {
         log.entry(mapArg);
-        return log.exit(CommandRunner.parseMapArgument(mapArg, Integer.class));
+        return log.exit(CommandRunner.parseMapArgument(mapArg, String.class, Integer.class));
+    }
+    
+    /**
+     * Parses a command line argument and returns a corresponding {@code Map}.
+     * 
+     * @param mapArg    A {@code String} corresponding to a map encoded as command-line argument.
+     * @return          A {@code LinkedHashMap} where keys are {@code Integer}s and values are 
+     *                  {@code List}s of {@code Integer}s, corresponding to {code mapArg}.
+     * @see #LIST_SEPARATOR
+     * @see #KEY_VALUE_SEPARATOR
+     * @see #VALUE_SEPARATOR
+     */
+    public static LinkedHashMap<Integer, List<Integer>> parseMapArgumentAsAllInteger(String mapArg) {
+        log.entry(mapArg);
+        return log.exit(CommandRunner.parseMapArgument(mapArg, Integer.class, Integer.class));
     }
 
     /**
@@ -341,44 +409,57 @@ public class CommandRunner {
      * @param mapArg    A {@code String} corresponding to a map, see {@link #KEY_VALUE_SEPARATOR} 
      *                  for an example.
      * @param type      The desired returned type of values.
-     * @return          A {@code Map} resulting from the split of {@code mapArg}, where keys 
-     *                  are {@code String}s that are associated to a {@code Set} of {@code T}s.
+     * @return          A {@code LinkedHashMap} where keys are {@code T}s and values are 
+     *                  {@code List}s of {@code U}s, corresponding to {code mapArg}.
      * @see #KEY_VALUE_SEPARATOR
+     * @param T The type of the keys in the returned {@code Map}
+     * @param U The type of the entries in the {@code List}s stored as values 
+     *          in the returned {@code Map}
      */
-    private static <T> Map<String, Set<T>> parseMapArgument(String mapArg, Class<T> type) {
-        log.entry(mapArg, type);
+    private static <T, U> LinkedHashMap<T, List<U>> parseMapArgument(String mapArg, Class<T> keyType, 
+            Class<U> valueType) {
+        log.entry(mapArg, keyType, valueType);
 
-        Map<String, Set<T>> resultingMap = new HashMap<String, Set<T>>();
+        LinkedHashMap<T, List<U>> resultingMap = new LinkedHashMap<T, List<U>>();
         mapArg = mapArg.trim();
         if (!mapArg.equals(EMPTY_LIST)) {
             for (String arg: mapArg.split(LIST_SEPARATOR)) {
                 log.trace("Map entry parsed: {}", arg);
                 if (StringUtils.isNotBlank(arg)) {
-                    String[] keyValue = arg.split(KEY_VALUE_SEPARATOR);
+                    String[] keyValues = arg.split(KEY_VALUE_SEPARATOR);
 
-                    if (keyValue.length != 2 || StringUtils.isBlank(keyValue[0]) || 
-                            StringUtils.isBlank(keyValue[1])) {
+                    if (keyValues.length != 2 || StringUtils.isBlank(keyValues[0]) || 
+                            StringUtils.isBlank(keyValues[1])) {
                         throw log.throwing(new IllegalArgumentException("Incorrect format " +
                                 "for a key-value pair in a Map command line argument: " + 
                                 arg));
                     }
 
-                    String key = keyValue[0].trim();
-                    Set<T> existingValues = resultingMap.get(key);
+                    String keyValue = parseArgument(keyValues[0]);
+                    T key = null;
+                    if (keyType.equals(Integer.class)) {
+                        key = keyType.cast(Integer.parseInt(keyValue));
+                    } else if (keyType.equals(Boolean.class)) {
+                        key = keyType.cast(Boolean.parseBoolean(keyValue));
+                    } else {
+                        key = keyType.cast(keyValue);
+                    }
+                    List<U> existingValues = resultingMap.get(key);
                     if (existingValues == null) {
-                        existingValues = new HashSet<T>();
+                        existingValues = new ArrayList<U>();
                         resultingMap.put(key, existingValues);
                     }
-                    log.trace("Key: {} - values to parse: {}", key, keyValue[1]);
-                    if (!keyValue[1].trim().equals(EMPTY_LIST)) {
-                        for (String value: keyValue[1].trim().split(VALUE_SEPARATOR)) {
+                    log.trace("Key: {} - values to parse: {}", key, keyValues[1]);
+                    if (!keyValues[1].trim().equals(EMPTY_LIST)) {
+                        for (String value: keyValues[1].trim().split(VALUE_SEPARATOR)) {
                             log.trace("Value parsed: {}", value);
-                            if (type.equals(Integer.class)) {
-                                existingValues.add(type.cast(Integer.parseInt(value)));
-                            } else if (type.equals(Boolean.class)) {
-                                existingValues.add(type.cast(Boolean.parseBoolean(value)));
+                            String filteredValue = parseArgument(value);
+                            if (valueType.equals(Integer.class)) {
+                                existingValues.add(valueType.cast(Integer.parseInt(filteredValue)));
+                            } else if (valueType.equals(Boolean.class)) {
+                                existingValues.add(valueType.cast(Boolean.parseBoolean(filteredValue)));
                             } else {
-                                existingValues.add(type.cast(value));
+                                existingValues.add(valueType.cast(filteredValue));
                             }
                         }
                     }

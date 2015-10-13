@@ -3,7 +3,6 @@ package org.bgee.model.dao.mysql.gene;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 import java.util.Map.Entry;
 
@@ -20,6 +19,8 @@ import org.bgee.model.dao.sql.*;*/
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
+
+import com.mysql.jdbc.StringUtils;
 
 /**
  * A {@code HierarchicalGroupDAO} for MySQL. 
@@ -51,9 +52,13 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
     }
     
     @Override
-    //TODO: integration test
     public HierarchicalGroupToGeneTOResultSet getGroupToGene(String taxonId, 
-            Set<String> speciesIds) throws DAOException {
+            Set<String> speciesIds) throws DAOException, IllegalArgumentException {
+        log.entry(taxonId, speciesIds);
+
+        if (StringUtils.isEmptyOrWhitespaceOnly(taxonId)) {
+            throw log.throwing(new IllegalArgumentException("No taxon ID is provided"));
+        }
         
         boolean hasSpecies  = speciesIds != null && !speciesIds.isEmpty();
         
@@ -76,8 +81,7 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             stmt.setString(1, taxonId);
             if (hasSpecies) {
-                List<Integer> orderedSpeciesIds = MySQLDAO.convertToOrderedIntList(speciesIds);
-                stmt.setIntegers(2, orderedSpeciesIds);
+                stmt.setStringsToIntegers(2, speciesIds, true);
             }  
             return log.exit(new MySQLHierarchicalGroupToGeneTOResultSet(stmt));
         } catch (SQLException e) {

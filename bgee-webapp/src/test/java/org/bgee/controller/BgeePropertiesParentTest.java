@@ -72,7 +72,9 @@ public abstract class BgeePropertiesParentTest {
         System.clearProperty(BgeeProperties.IMAGES_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.LOGO_IMAGES_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.SPECIES_IMAGES_ROOT_DIRECTORY_KEY);
-        System.clearProperty(BgeeProperties.TOP_OBO_RESULTS_URL_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.WEBPAGES_CACHE_CONFIG_FILE_NAME_KEY);
+        System.clearProperty(BgeeProperties.TOP_ANAT_RESULTS_URL_DIRECTORY_KEY);
+        // Superclass property
+        System.clearProperty(BgeeProperties.TOP_ANAT_FUNCTION_FILE_KEY);
     }
 }

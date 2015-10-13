@@ -9,7 +9,7 @@
     <root level="off">
       <appender-ref ref="Console"/>
     </root>  
-    <logger name="org.bgee" level="TRACE" additivity="false">
+    <logger name="org.bgee" level="DEBUG" additivity="false">
       <appender-ref ref="Console"/>
     </logger>
     <logger name="log4jdbc.log4j2" level="INFO" additivity="false">

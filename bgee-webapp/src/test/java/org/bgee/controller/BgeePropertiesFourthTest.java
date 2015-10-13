@@ -2,6 +2,7 @@ package org.bgee.controller;
 
 import static org.junit.Assert.assertEquals;
 
+import org.bgee.controller.BgeeProperties;
 import org.junit.Test;
 
 /**
@@ -47,8 +48,10 @@ public class BgeePropertiesFourthTest extends BgeePropertiesParentTest {
         System.clearProperty(BgeeProperties.IMAGES_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.LOGO_IMAGES_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.SPECIES_IMAGES_ROOT_DIRECTORY_KEY);
-        System.clearProperty(BgeeProperties.TOP_OBO_RESULTS_URL_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.WEBPAGES_CACHE_CONFIG_FILE_NAME_KEY);
+        System.clearProperty(BgeeProperties.TOP_ANAT_RESULTS_URL_DIRECTORY_KEY);
+        // Test a superclass property
+        System.clearProperty(BgeeProperties.TOP_ANAT_FUNCTION_FILE_KEY);
         // Also, set the properties file to an non-existing file, 
         // so that no property file is used (otherwise, property files in src/test/resources/ 
         // or src/main/resources/ would be used).
@@ -109,10 +112,14 @@ public class BgeePropertiesFourthTest extends BgeePropertiesParentTest {
                 BgeeProperties.SPECIES_IMAGES_ROOT_DIRECTORY_DEFAULT, 
                 bgeeProp.getSpeciesImagesRootDirectory());
         assertEquals("Wrong property value retrieved", 
-                BgeeProperties.TOP_OBO_RESULTS_URL_ROOT_DIRECTORY_DEFAULT, 
-                bgeeProp.getTopOBOResultsUrlRootDirectory());
-        assertEquals("Wrong property value retrieved", 
                 BgeeProperties.WEBPAGES_CACHE_CONFIG_FILE_NAME_DEFAULT, 
                 bgeeProp.getWebpagesCacheConfigFileName());
+        assertEquals("Wrong property value retrieved",
+                BgeeProperties.TOP_ANAT_RESULTS_URL_DIRECTORY_DEFAULT,
+                bgeeProp.getTopAnatResultsUrlDirectory());
+        // Test a superclass property
+        assertEquals("Wrong property value retrieved", 
+                BgeeProperties.TOP_ANAT_FUNCTION_FILE_DEFAULT, bgeeProp.getTopAnatFunctionFile());
+        
     }
 }

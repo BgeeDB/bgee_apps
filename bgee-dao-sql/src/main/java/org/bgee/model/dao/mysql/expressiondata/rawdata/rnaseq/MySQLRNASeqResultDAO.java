@@ -51,7 +51,7 @@ implements RNASeqResultDAO {
             stmt.setNull(1, Types.INTEGER);
             stmt.setString(2, CallSourceRawDataTO.ExclusionReason.NOEXPRESSIONCONFLICT.
                     getStringRepresentation());
-            stmt.setIntegers(3, MySQLDAO.convertToOrderedIntList(noExprIds));
+            stmt.setStringsToIntegers(3, noExprIds, true);
             
             return log.exit(stmt.executeUpdate());
         } catch (SQLException e) {

@@ -7,22 +7,20 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.EntityTO;
-import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
 import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
-import org.bgee.model.dao.api.gene.GeneDAO.GeneTOResultSet;
 import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO;
 import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTO;
-import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTOResultSet;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType;
@@ -36,7 +34,7 @@ import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
  * 
  * @author Valentine Rech de Laval
  * @author Frederic Bastian
- * @version Bgee 13
+ * @version Bgee 13 july
  * @since Bgee 13
  */
 public class BgeeDBUtils {
@@ -315,6 +313,85 @@ public class BgeeDBUtils {
     }
     
     /**
+     * Retrieve a mapping from IDs to {@code TransferObject}s using the {@code DAOResultSet} 
+     * {@code rs}.
+     * <p>
+     * {@code rs} is closed by this method before exiting.
+     * 
+     * @param rs    A {@code DAOResultSet} returning an {@code T} when calling 
+     *              the method {@code DAOResultSet#getTO()}. It should not have been closed, 
+     *              and the method {@code next} should not have been already called.
+     * @param <T>   The type of {@code EntityTO} in {@code rs}.
+     * @return      A {@code Map} where keys are {@code String}s corresponding to 
+     *              entity IDs, the associated values being {@code T}s 
+     *              corresponding to entity TOs. 
+     * @throws IllegalArgumentException If {@code rs} does not allow to retrieve EntityTO IDs.
+     * @throws IllegalStateException	If several TOs associated to a same ID.
+     */
+    //TODO Modify when NamedEntityTO implemented 
+    private static <T extends EntityTO> Map<String, T> generateTOsByIdsMap(DAOResultSet<T> rs) {
+        log.entry(rs);
+        
+        Map<String, T> tosByIds = new HashMap<String, T>();
+        try {
+            while (rs.next()) {
+                T entityTO = rs.getTO();
+                if (entityTO.getId() == null) {
+                    throw log.throwing(new IllegalArgumentException("The provided DAOResultSet " +
+                            "does not allow to retrieve EntityTO IDs"));                	
+                }
+
+                T previousValue = tosByIds.put(entityTO.getId(), entityTO);
+                if (previousValue != null) {
+                    throw log.throwing(new IllegalStateException("Several TOs associated to " +
+                            "a same ID: " + entityTO.getId() + " - " + previousValue + 
+                            " - " + entityTO));
+                }
+            }
+        } finally {
+            rs.close();
+        }
+        return log.exit(tosByIds);
+    }
+
+    /**
+     * Retrieve a mapping from IDs to names using the {@code DAOResultSet} {@code rs}.
+     * <p>
+     * {@code rs} is closed by this method before exiting.
+     * 
+     * @param rs    A {@code DAOResultSet} returning an {@code T} when calling 
+     *              the method {@code DAOResultSet#getTO()}. It should not have been closed, 
+     *              and the method {@code next} should not have been already called.
+     * @param <T>   The type of {@code EntityTO} in {@code rs}.
+     * @return      A {@code Map} where keys are {@code String}s corresponding to 
+     *              entity IDs, the associated values being {@code String}s 
+     *              corresponding to entity names. 
+     * @throws IllegalArgumentException If {@code rs} does not allow to retrieve EntityTO ID or name.
+     * @throws IllegalStateException    If several TOs associated to a same ID.
+     */
+    //XXX: Currently, we keep specific methods to be able to store and restore specific attributes.
+    //     This could be generic using Java 8, but we are just lazy to implement it now.
+
+    private static <T extends EntityTO> Map<String, String> generateNamesByIdsMap(DAOResultSet<T> rs) 
+    		throws IllegalArgumentException, IllegalStateException {
+        log.entry(rs);
+        
+        Map<String, String> namesByIds = new HashMap<String, String>();
+        for (Entry<String, T> entry: generateTOsByIdsMap(rs).entrySet()) {
+            if (entry.getValue().getName() == null) {
+                throw log.throwing(new IllegalArgumentException("The provided DAOResultSet " +
+                        "does not allow to retrieve EntityTO names"));                   
+            }
+            
+            String previousName = namesByIds.put(entry.getKey(), entry.getValue().getName());
+            // Keys are unique in a Map, so the previous value should be always null
+            assert(previousName == null);
+        }
+            
+        return log.exit(namesByIds);
+    }
+
+    /**
      * Retrieve from the data source a mapping from gene IDs to gene names for genes 
      * belonging to the requested species. 
      * 
@@ -326,6 +403,9 @@ public class BgeeDBUtils {
      *                      gene IDs, the associated values being {@code String}s 
      *                      corresponding to gene names. 
      */
+    //XXX: Currently, we keep this specific method to be able to store and restore 
+    //     specific attributes. This could be generic in generateNamesByIdsMap using Java 8, 
+    //     but we are just lazy to implement it now. 
     public static Map<String, String> getGeneNamesByIds(Set<String> speciesIds, GeneDAO geneDAO) {
         log.entry(speciesIds, geneDAO);
         log.debug("Start retrieving gene names for species: {}", speciesIds);
@@ -346,7 +426,7 @@ public class BgeeDBUtils {
     
     /**
      * Retrieve from the data source a mapping from gene IDs to gene TOs for genes 
-     * belonging to the requested species. 
+     * belonging to the requested species, using attributes stored in {@code geneDAO}.
      * 
      * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
      *                      for which we want to retrieve gene IDs-names mapping.
@@ -356,28 +436,20 @@ public class BgeeDBUtils {
      *                      gene IDs, the associated values being {@code GeneTO}s 
      *                      corresponding to gene TOs. 
      */
-    //XXX: implement generic method
-    //TODO implement test
     public static Map<String, GeneTO> getGeneTOsByIds(Set<String> speciesIds, GeneDAO geneDAO) {
         log.entry(speciesIds, geneDAO);
         
         log.debug("Start retrieving gene TOs for species: {}", speciesIds);
         
-        Map<String, GeneTO> geneTOsByIds = new HashMap<String, GeneTO>();
-
-        try (GeneTOResultSet rs = geneDAO.getGenesBySpeciesIds(speciesIds)) {
-            while (rs.next()) {
-                GeneTO geneTO = rs.getTO();
-                geneTOsByIds.put(geneTO.getId(), geneTO);
-            }
-        }
+        Map<String, GeneTO> geneTOsByIds = 
+                generateTOsByIdsMap(geneDAO.getGenesBySpeciesIds(speciesIds));
 
         log.debug("Done retrieving gene TOs for species: {}, {} TOs retrieved", 
                 speciesIds, geneTOsByIds.size());
         
         return log.exit(geneTOsByIds);
     }
-
+    
     /**
      * Retrieve from the data source a mapping from stage IDs to stage names for stages 
      * belonging to the requested species. 
@@ -390,6 +462,9 @@ public class BgeeDBUtils {
      *                      stage IDs, the associated values being {@code String}s 
      *                      corresponding to stage names. 
      */
+    //XXX: Currently, we keep this specific method to be able to store and restore 
+    //     specific attributes. This could be generic in generateNamesByIdsMap using Java 8, 
+    //     but we are just lazy to implement it now. 
     public static Map<String, String> getStageNamesByIds(Set<String> speciesIds, 
             StageDAO stageDAO) {
         log.entry(speciesIds, stageDAO);
@@ -422,6 +497,9 @@ public class BgeeDBUtils {
      *                      anatomical entity IDs, the associated values being {@code String}s 
      *                      corresponding to anatomical entity names. 
      */
+    //XXX: Currently, we keep this specific method to be able to store and restore 
+    //     specific attributes. This could be generic in generateNamesByIdsMap using Java 8, 
+    //     but we are just lazy to implement it now. 
     public static Map<String, String> getAnatEntityNamesByIds(Set<String> speciesIds, 
             AnatEntityDAO anatEntityDAO) {
         log.entry(speciesIds, anatEntityDAO);
@@ -440,76 +518,63 @@ public class BgeeDBUtils {
                 speciesIds, anatEntityNamesByIds.size());
         return log.exit(anatEntityNamesByIds);
     }
-    
+
     /**
-     * Retrieve a mapping from IDs to names using the {@code DAOResultSet} {@code rs}, 
-     * supposed to return an {@code EntityTO} when calling the method 
-     * {@code DAOResultSet#getTO()}.
-     * <p>
-     * {@code rs} is closed by this method before exiting.
+     * Retrieve from the data source a mapping from CIO IDs to names.
      * 
-     * @param rs    A {@code DAOResultSet} returning an {@code EntityTO} when calling 
-     *              the method {@code DAOResultSet#getTO()}. It should not have been closed, 
-     *              and the method {@code next} should not have been already called.
-     * @return      A {@code Map} where keys are {@code String}s corresponding to 
-     *              entity IDs, the associated values being {@code String}s 
-     *              corresponding to entity names. 
-     */
-    private static Map<String, String> generateNamesByIdsMap(
-            DAOResultSet<? extends TransferObject> rs) {
-        log.entry(rs);
-        Map<String, String> namesByIds = new HashMap<String, String>();
-        try {
-            while (rs.next()) {
-                EntityTO entityTO = null;
-                try {
-                    entityTO = (EntityTO) rs.getTO();
-                } catch (ClassCastException e) {
-                    throw log.throwing(new IllegalArgumentException("The provided DAOResultSet " +
-                            "does not allow to retrieve EntityTOs"));
-                }
-                String previousValue = namesByIds.put(entityTO.getId(), entityTO.getName());
-                if (previousValue != null && !previousValue.equals(entityTO.getName())) {
-                    throw log.throwing(new IllegalStateException("Several names associated to " +
-                            "a same ID: " + entityTO.getId() + " - " + previousValue + 
-                            " - " + entityTO.getName()));
-                }
-            }
-        } finally {
-            rs.close();
-        }
-        return log.exit(namesByIds);
-    }
-    
-    /**
-     * Retrieve from the data source a mapping from CIO IDs to CIO names. 
-     * 
-     * @param cioStatementDAO   A {@code CIOStatementDAO} to use to retrieve information about 
+     * @param cioStatementDAO	A {@code CIOStatementDAO} to use to retrieve information about 
      *                          CIO statements from the data source.
      * @return                  A {@code Map} where keys are {@code String}s corresponding to 
      *                          CIO IDs, the associated values being {@code String}s 
      *                          corresponding to CIO names. 
-     * @throws DAOException   If an error occurred while getting the data from the Bgee data source.
+     * @throws DAOException     If an error occurred while getting the data from 
+     * 							the Bgee data source.
      */
-    //XXX: Implement something more generic for any EntityTOs?
-    public static Map<String, CIOStatementTO> getCIOStatementsByIds(CIOStatementDAO cioStatementDAO) 
-            throws DAOException {
-        log.entry();
+    //XXX: Currently, we keep this specific method to be able to store and restore 
+    //     specific attributes. This could be generic in generateNamesByIdsMap using Java 8, 
+    //     but we are just lazy to implement it now. 
+    public static Map<String, String> getCIOStatementNamesByIds(CIOStatementDAO cioStatementDAO) 
+    		throws DAOException {
+        log.entry(cioStatementDAO);
         
         log.debug("Start retrieving all CIO names");
         
-        cioStatementDAO.setAttributes(CIOStatementDAO.Attribute.ID, CIOStatementDAO.Attribute.NAME, 
-                CIOStatementDAO.Attribute.TRUSTED);
+        //store original attributes to restore cioStatementDAO in proper state afterwards.
+        Collection<CIOStatementDAO.Attribute> attributes = cioStatementDAO.getAttributes();
+        cioStatementDAO.setAttributes(CIOStatementDAO.Attribute.ID, CIOStatementDAO.Attribute.NAME);
+
+        Map<String, String> cioByNames = 
+                generateNamesByIdsMap(cioStatementDAO.getAllCIOStatements());
         
-        Map<String, CIOStatementTO> cioByIds = new HashMap<String, CIOStatementTO>();
-        try (CIOStatementTOResultSet rs = cioStatementDAO.getAllCIOStatements()) {
-            while (rs.next()) {
-                CIOStatementTO cioTO = rs.getTO();
-                cioByIds.put(cioTO.getId(), cioTO);
-            }
-        }
+        //restore anatEntityDAO in proper state
+        cioStatementDAO.setAttributes(attributes);
+
+        log.debug("Done retrieving CIO names, {} names retrieved", cioByNames.size());
         
-        log.debug("Done retrieving CIO names, {} names retrieved", cioByIds.size());
+        return log.exit(cioByNames);
+    }
+
+    /**
+     * Retrieve from the data source a mapping from CIO IDs to CIO TOs, 
+     * using attributes stored in {@code cioStatementDAO}.
+     * 
+     * @param cioStatementDAO   A {@code CIOStatementDAO} to use to retrieve information about 
+     *                          CIO statements from the data source.
+     * @return                  A {@code Map} where keys are {@code String}s corresponding to 
+     *                          CIO IDs, the associated values being {@code CIOStatementTO}s 
+     *                          corresponding to CIO TOs. 
+     * @throws DAOException     If an error occurred while getting the data from the Bgee data source.
+     */
+    public static Map<String, CIOStatementTO> getCIOStatementTOsByIds(CIOStatementDAO cioStatementDAO) 
+            throws DAOException {
+        log.entry();
+        
+        log.debug("Start retrieving all CIO TOs");
+        
+        Map<String, CIOStatementTO> cioByIds = 
+                generateTOsByIdsMap(cioStatementDAO.getAllCIOStatements());
+        
+        log.debug("Done retrieving CIO TOs, {} TOs retrieved", cioByIds.size());
         
         return log.exit(cioByIds);
     }

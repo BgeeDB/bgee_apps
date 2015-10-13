@@ -4,7 +4,6 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -44,11 +43,6 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         super(manager);
     }
 
-    //***************************************************************************
-    // METHODS NOT PART OF THE bgee-dao-api, USED BY THE PIPELINE AND NOT MEANT 
-    // TO BE EXPOSED TO THE PUBLIC API.
-    //***************************************************************************
-
     @Override
     public GeneTOResultSet getAllGenes() throws DAOException {
         log.entry();
@@ -80,7 +74,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         
         sql += " FROM " + geneTableName;
         
-        if (speciesIds != null && speciesIds.size() > 0) {
+        if (speciesIds != null && !speciesIds.isEmpty()) {
             sql += " WHERE gene.speciesId IN (" + 
                        BgeePreparedStatement.generateParameterizedQueryString(
                                speciesIds.size()) + ")";
@@ -90,9 +84,8 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         //not the actual results, so we should not close this BgeePreparedStatement.
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
-            if (speciesIds != null && speciesIds.size() > 0) {
-                List<Integer> orderedSpeciesIds = MySQLDAO.convertToOrderedIntList(speciesIds);
-                stmt.setIntegers(1, orderedSpeciesIds);
+            if (speciesIds != null && !speciesIds.isEmpty()) {
+                stmt.setStringsToIntegers(1, speciesIds, true);
             }             
             return log.exit(new MySQLGeneTOResultSet(stmt));
         } catch (SQLException e) {
@@ -100,6 +93,12 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         }
     }
 
+
+    //***************************************************************************
+    // METHODS NOT PART OF THE bgee-dao-api, USED BY THE PIPELINE AND NOT MEANT 
+    // TO BE EXPOSED TO THE PUBLIC API.
+    //***************************************************************************
+    
     @Override
     public int updateGenes(Collection<GeneTO> genes, 
             Collection<GeneDAO.Attribute> attributesToUpdate) 
@@ -179,22 +178,11 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         
         Set<GeneDAO.Attribute> attributesToUse = new HashSet<GeneDAO.Attribute>(attributes);
         if (attributes == null || attributes.isEmpty()) {
-//            // we exclude ANCESTRAL_OMA_NODE_ID and ANCESTRAL_OMA_TAXON_ID
-//            // TODO remove when retrieving 'Ancestral OMA' data will be implemented and tested 
-//            attributesToUse = EnumSet.complementOf(EnumSet.of(
-//                    GeneDAO.Attribute.ANCESTRAL_OMA_NODE_ID, 
-//                    GeneDAO.Attribute.ANCESTRAL_OMA_TAXON_ID));
             attributesToUse = EnumSet.allOf(GeneDAO.Attribute.class);
-            //return log.exit("SELECT " + geneTableName + ".* ");
         }
 
         String sql = "";
         for (GeneDAO.Attribute attribute: attributesToUse) {
-//            if (attribute.equals(GeneDAO.Attribute.ANCESTRAL_OMA_NODE_ID) ||
-//                    attribute.equals(GeneDAO.Attribute.ANCESTRAL_OMA_TAXON_ID)) {
-//                // TODO remove when retrieving 'Ancestral OMA' data will be implemented and tested
-//                continue;
-//            }
                 
             if (sql.isEmpty()) {
                 sql += "SELECT ";

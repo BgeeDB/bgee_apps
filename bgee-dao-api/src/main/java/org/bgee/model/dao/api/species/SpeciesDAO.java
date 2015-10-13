@@ -1,5 +1,6 @@
 package org.bgee.model.dao.api.species;
 
+import java.util.Collection;
 import java.util.Set;
 
 import org.bgee.model.dao.api.DAO;
@@ -67,6 +68,13 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
      */
     public SpeciesTOResultSet getSpeciesByIds(Set<String> speciesIds) throws DAOException;
 
+    /**
+     * Retrieve all the species that are part of any data group.
+     * @return A {@link org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet} containing all the species
+     * that are part of at least one species data group.
+     * @throws DAOException
+     */
+    public SpeciesTOResultSet getSpeciesFromDataGroups() throws DAOException;
     /**
      * {@code DAOResultSet} specifics to {@code SpeciesTO}s
      * 
@@ -153,11 +161,10 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
          * @param parentTaxonId A {@code String} that is the NCBI ID of the parent taxon 
          *                      of this species (for instance, {@code 9605} for <i>homo</i>, 
          *                      the parent taxon of human).
-         * @throws IllegalArgumentException If {@code id} is empty.
          */
         public SpeciesTO(String id, String commonName, String genus, String speciesName, 
                 String parentTaxonId, String genomeFilePath, String genomeSpeciesId, 
-                String fakeGeneIdPrefix) throws IllegalArgumentException {
+                String fakeGeneIdPrefix) {
             super(id, commonName);
             
             this.genus = genus;

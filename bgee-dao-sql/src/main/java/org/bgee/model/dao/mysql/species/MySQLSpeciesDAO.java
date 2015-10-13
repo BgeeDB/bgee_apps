@@ -2,7 +2,6 @@ package org.bgee.model.dao.mysql.species;
 
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -67,9 +66,23 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             if (speciesIds != null && speciesIds.size() > 0) {
-                List<Integer> orderedSpeciesIds = MySQLDAO.convertToOrderedIntList(speciesIds);
-                stmt.setIntegers(1, orderedSpeciesIds);
+                stmt.setStringsToIntegers(1, speciesIds, true);
             }  
+            return log.exit(new MySQLSpeciesTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+
+    @Override
+    public SpeciesTOResultSet getSpeciesFromDataGroups() throws DAOException {
+        String sql = this.generateSelectClause(this.getAttributes(), "species");
+        sql += "FROM species WHERE EXISTS (SELECT 1 FROM speciesToDataGroup WHERE speciesToDataGroup.speciesId = species.speciesId)";
+
+        //we don't use a try-with-resource, because we return a pointer to the results,
+        //not the actual results, so we should not close this BgeePreparedStatement.
+        try {
+            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             return log.exit(new MySQLSpeciesTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

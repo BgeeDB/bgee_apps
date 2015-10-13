@@ -18,10 +18,17 @@ import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.GlobalExpressionToExpressionTO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.GlobalNoExpressionToNoExpressionTO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
+import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO;
+import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO.CategoryEnum;
+import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesToDataGroupTO;
+import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesDataGroupTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO.Domain;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTO;
+import org.bgee.model.dao.api.keyword.KeywordDAO.EntityToKeywordTO;
+import org.bgee.model.dao.api.keyword.KeywordDAO.KeywordTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType;
@@ -153,6 +160,23 @@ public class TOComparatorTest extends TestAncestor {
     
     /**
      * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * using {@code HierarchicalGroupToGeneTO}s.
+     */
+    @Test
+    public void testAreHierarchicalGroupToGeneTOEqual() {
+        HierarchicalGroupToGeneTO to1 = new HierarchicalGroupToGeneTO("1", "ID1");
+        HierarchicalGroupToGeneTO to2 = new HierarchicalGroupToGeneTO("1", "ID1");
+        assertTrue(TOComparator.areTOsEqual(to1, to2));
+        
+        to2 = new HierarchicalGroupToGeneTO("1", "ID2");
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+        
+        to1 = new HierarchicalGroupToGeneTO("2", "ID2");
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+    }
+    
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
      * using {@code AnatEntityTO}s.
      */
     @Test
@@ -174,6 +198,87 @@ public class TOComparatorTest extends TestAncestor {
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
     }
     
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * using {@code DownloadFileTO}s.
+     */
+    @Test
+    public void testAreDownloadFileTOsEqual() {
+        DownloadFileTO to1 = new DownloadFileTO("ID1", "name1", "desc1", 
+                "path/", 10L, CategoryEnum.EXPR_CALLS_COMPLETE, "");
+        DownloadFileTO to2 = new DownloadFileTO("ID1", "name1", "desc1", 
+                "path/", 10L, CategoryEnum.EXPR_CALLS_COMPLETE, "");
+        assertTrue(TOComparator.areTOsEqual(to1, to2, true));
+        
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+        
+        to2 = new DownloadFileTO("ID1", "name1", "desc1", 
+                "path/", 10L, CategoryEnum.DIFF_EXPR_ANAT_COMPLETE, "");
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        
+        to2 = new DownloadFileTO("ID2", "name1", "desc1", 
+                "path/", 10L, CategoryEnum.EXPR_CALLS_COMPLETE, "");
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+        
+        //regression test when using Long size value > 127, 
+        //see http://stackoverflow.com/a/20542511/1768736
+        to1 = new DownloadFileTO("ID1", "name1", "desc1", 
+                "path/", 3000L, CategoryEnum.EXPR_CALLS_COMPLETE, "");
+        to2 = new DownloadFileTO("ID1", "name1", "desc1", 
+                "path/", 3000L, CategoryEnum.EXPR_CALLS_COMPLETE, "");
+        assertTrue(TOComparator.areTOsEqual(to1, to2, true));
+        to1 = new DownloadFileTO("ID1", "name1", "desc1", 
+                "path/", null, CategoryEnum.EXPR_CALLS_COMPLETE, "");
+        to2 = new DownloadFileTO("ID1", "name1", "desc1", 
+                "path/", null, CategoryEnum.EXPR_CALLS_COMPLETE, "");
+        assertTrue(TOComparator.areTOsEqual(to1, to2, true));
+    }
+
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object)} 
+     * using {@code SpeciesDataGroupTO}s.
+     */
+    @Test
+    public void testAreSpeciesDataGroupTOsEqual() {
+        SpeciesDataGroupTO to1 = new SpeciesDataGroupTO("ID1", "name1", "desc1", 1);
+
+        SpeciesDataGroupTO to2 = new SpeciesDataGroupTO("ID1", "name1", "desc1", 1);
+        assertTrue(TOComparator.areTOsEqual(to1, to2, true));
+        
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+        
+        to2 = new SpeciesDataGroupTO("ID1", "name1", "desc2", 1);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        
+        to2 = new SpeciesDataGroupTO("ID2", "name1", "desc1", 1);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+        
+        to1 = new SpeciesDataGroupTO("ID1", "name1", "desc1", null);
+        to2 = new SpeciesDataGroupTO("ID1", "name1", "desc1", 1);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        assertFalse(TOComparator.areTOsEqual(to1, to2, false));
+    }
+
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object)} 
+     * using {@code SpeciesToDataGroupTO}s.
+     */
+    @Test
+    public void testAreSpeciesToDataGroupTOsEqual() {
+        SpeciesToDataGroupTO to1 = new SpeciesToDataGroupTO("1", "11");
+
+        SpeciesToDataGroupTO to2 = new SpeciesToDataGroupTO("1", "11");
+        assertTrue(TOComparator.areTOsEqual(to1, to2));
+        
+        to2 = new SpeciesToDataGroupTO("1", "12");
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+        
+        to2 = new SpeciesToDataGroupTO("2", "11");
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+    }
+
     /**
      * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
      * using {@code StageTO}s.
@@ -440,5 +545,44 @@ public class TOComparatorTest extends TestAncestor {
                 DataState.HIGHQUALITY, 0.05f, 2, 0, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                 DataState.LOWQUALITY, 0.05f, 1, 0);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+    }
+
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * using {@code KeywordTO}s.
+     */
+    @Test
+    public void testAreKeywordTOEqual() {
+        KeywordTO to1 = new KeywordTO("ID:1", "name1");
+        KeywordTO to2 = new KeywordTO("ID:1", "name1");
+        assertTrue(TOComparator.areTOsEqual(to1, to2, true));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+
+        to2 = new KeywordTO("ID:2", "name1");
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+
+        to2 = new KeywordTO("ID:1", "name2");
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        
+        to2 = new KeywordTO("ID:2", "name1");
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+    }
+
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * using {@code EntityToKeywordTO}s.
+     */
+    @Test
+    public void testAreEntityToKeywordTOEqual() {
+        EntityToKeywordTO to1 = new EntityToKeywordTO("ID:1", "SP:1");
+        EntityToKeywordTO to2 = new EntityToKeywordTO("ID:1", "SP:1");
+        assertTrue(TOComparator.areTOsEqual(to1, to2));
+
+        to2 = new EntityToKeywordTO("ID:2", "SP:1");
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+
+        to2 = new EntityToKeywordTO("ID:1", "SP:2");
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
     }
 }

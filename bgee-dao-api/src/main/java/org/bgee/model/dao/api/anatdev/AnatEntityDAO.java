@@ -147,10 +147,9 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
          *                          anatomical entity.
          * @param nonInformative    A {@code Boolean} defining whether this anatomical entity is 
          *                          part of a non-informative subset in the used ontology.
-         * @throws IllegalArgumentException If {@code id} is empty.
          */
         public AnatEntityTO(String id, String name, String description, String startStageId,
-                String endStageId, Boolean nonInformative) throws IllegalArgumentException {
+                String endStageId, Boolean nonInformative) {
             super(id, name, description);
             this.startStageId = startStageId;
             this.endStageId = endStageId;

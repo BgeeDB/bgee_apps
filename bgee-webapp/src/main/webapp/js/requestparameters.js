@@ -119,6 +119,20 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
     }
     /**
      * A {@code String} that is the value taken by the {@code page} parameter 
+     * (see {@link urlParameters#getParamPage()}) when a topAnat page is requested.
+     * This parameter will then be provided outside of this class through the method 
+     * {@link #PAGE_TOP_ANAT()} (to get the behavior of a public final parameter).
+     */
+    var pageTopAnat = 'top_anat';
+    /**
+     * A method to obtain the value taken by the {@code page} parameter 
+     * (see {@link urlParameters#getParamPage()}) when a topAnat page is requested.
+     */
+    this.PAGE_TOP_ANAT = function() {
+    	return pageTopAnat;
+    }
+    /**
+     * A {@code String} that is the value taken by the {@code page} parameter 
      * (see {@link #getParamPage()}) when a documentation page is requested.
      * This parameter will then be provided outside of this class through the method 
      * {@link #PAGE_DOCUMENTATION()} (to get the behavior of a public final parameter).
@@ -246,6 +260,21 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      */
     this.HASH_DOC_CALL_MULTI = function() {
     	return hashDocCallMulti;
+    }
+    /**
+     * A {@code String} that is the anchor to use in the hash part of an URL 
+     * to link to the OMA orthologs file part, in the documentation about gene expression calls.
+     * This parameter will then be provided outside of this class through the method 
+     * {@link #HASH_DOC_CALL_OMA()} (to get the behavior 
+     * of a public final parameter).
+     */
+    var hashDocCallOMA = 'oma_hog';
+    /**
+     * A method to obtain the value of the anchor to use in the hash part of an URL 
+     * to link to the OMA orthologs file part, in the documentation about gene expression calls.
+     */
+    this.HASH_DOC_CALL_OMA = function() {
+    	return hashDocCallOMA;
     }
     /**
      * A {@code String} that is the anchor to use in the hash part of an URL 
@@ -1103,7 +1132,18 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
             return true;
         }
         return false;
-    };    
+    };   
+    /**
+     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+     * 			category "topAnat"
+     */
+    this.isATopAnatPageCategory = function(){
+        if(this.getFirstValue(urlParameters.getParamPage()) != null &&
+                this.getFirstValue(urlParameters.getParamPage()) == this.PAGE_TOP_ANAT()){
+            return true;
+        }
+        return false;
+    };   
 //    /**
 //     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
 //     * category "expression"
@@ -1189,18 +1229,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
 //        }
 //        return false;
 //    };
-//    /**
-//     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
-//     * category "top_anat"
-//     */
-//    this.isATopOBOPageCategory = function()
-//    {
-//        if (this.getFirstValue(urlParameters.getParamPage()) != null && 
-//                this.getFirstValue(urlParameters.getParamPage()) == "top_anat"){
-//            return true;
-//        }
-//        return false;
-//    };
+
     /**
      * Determine whether the requested page contains sensitive information, 
      * such as passwords.

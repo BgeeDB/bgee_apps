@@ -26,6 +26,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.file.DownloadFileDAO;
+import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
+import org.bgee.model.dao.api.keyword.KeywordDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLAnatEntityDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLTaxonConstraintDAO;
@@ -38,9 +41,12 @@ import org.bgee.model.dao.mysql.expressiondata.MySQLNoExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.affymetrix.MySQLAffymetrixProbesetDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituSpotDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqResultDAO;
+import org.bgee.model.dao.mysql.file.MySQLDownloadFileDAO;
+import org.bgee.model.dao.mysql.file.MySQLSpeciesDataGroupDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneOntologyDAO;
 import org.bgee.model.dao.mysql.gene.MySQLHierarchicalGroupDAO;
+import org.bgee.model.dao.mysql.keyword.MySQLKeywordDAO;
 import org.bgee.model.dao.mysql.ontologycommon.MySQLCIOStatementDAO;
 import org.bgee.model.dao.mysql.ontologycommon.MySQLEvidenceOntologyDAO;
 import org.bgee.model.dao.mysql.ontologycommon.MySQLRelationDAO;
@@ -90,7 +96,7 @@ public class MySQLDAOManager extends DAOManager {
     /**
      * A {@code String} that is the resource name of the {@code DataSource} to use. 
      * This parameter is not mandatory if a JDBC {@code Driver} is used to connect 
-     * to the database (see {@link #getJdbcDriverName()}). If the user and 
+     * to the database (see {@link #getJdbcDriverNames()}). If the user and
      * password were not provided to the {@code InitialContext} loading the 
      * {@code DataSource}, it must be provided to this {@code MySQLDAOManager} 
      * (see {@link #getUser()} and {@link #getPassword()}).
@@ -160,7 +166,7 @@ public class MySQLDAOManager extends DAOManager {
      * contain the user and password to use, they must also be provided 
      * to this {@code DAOManager} (see {@link #getUser()} and {@link #getPassword()}).
      * 
-     * @see #JDBCDRIVERNAMEKEY
+     * @see #JDBC_DRIVER_NAMES_KEY
      * @see #getJdbcUrl()
      * @see #getUser()
      * @see #getPassword()
@@ -391,7 +397,7 @@ public class MySQLDAOManager extends DAOManager {
      * Providing the class name of the JDBC {@code Driver} to use is not mandatory, 
      * but is strongly recommended, when using {@code Driver}s not auto-loaded, 
      * or when using this application in a servlet container context. See 
-     * {@link #getJdbcDriverName()} for more details.
+     * {@link #getJdbcDriverNames()} for more details.
      * 
      * @throws IllegalStateException    If {@link #getJdbcDriverNames()} is not {@code null} 
      *                                  nor empty, but did not allow to register any JDBC 
@@ -458,7 +464,7 @@ public class MySQLDAOManager extends DAOManager {
             }
         }
         if (!jdbcUrlAccepted) {
-            throw log.throwing(new IllegalStateException("No Drivers accepted the JDBC URL " +
+            throw log.throwing(new IllegalStateException("No Drivers accepting the JDBC URL " +
                 this.getJdbcUrl()));
         }
         log.exit();
@@ -510,7 +516,7 @@ public class MySQLDAOManager extends DAOManager {
      * 
      * @param jdbcUrl       A {@code String} defining the JDBC URL used to open 
      *                      the connection. Will be used to generate the ID.
-     * @param user          A {@code String} defining the user used to open 
+     * @param username          A {@code String} defining the user used to open
      *                      the connection. Will be used to generate the ID.
      * @param databaseToUse A {@code String} representing an alternative database 
      *                      to use than the one specified in {@code jdbcUrl}. 
@@ -573,7 +579,7 @@ public class MySQLDAOManager extends DAOManager {
     /**
      * Sets the {@code String} that is the resource name of the {@code DataSource} 
      * to use. This parameter is not mandatory if a JDBC {@code Driver} is used 
-     * to connect to the database (see {@link #getJdbcDriverName()}). 
+     * to connect to the database (see {@link #getJdbcDriverNames()}).
      * If the user and password were not provided to the {@code InitialContext} 
      * loading the {@code DataSource}, it must be provided to this {@code MySQLDAOManager} 
      * (see {@link #getUser()} and {@link #getPassword()}).
@@ -1062,5 +1068,24 @@ public class MySQLDAOManager extends DAOManager {
         log.entry();
         return log.exit(new MySQLStageGroupingDAO(this));
     }
+
+    @Override
+    protected DownloadFileDAO getNewDownloadFileDAO() {
+        log.entry();
+        return log.exit(new MySQLDownloadFileDAO(this));
+    }
+
+    @Override
+    protected SpeciesDataGroupDAO getNewSpeciesDataGroupDAO() {
+        log.entry();
+        return log.exit(new MySQLSpeciesDataGroupDAO(this));
+    }
+
+	@Override
+	protected KeywordDAO getNewKeywordDAO() {
+        log.entry();
+        return log.exit(new MySQLKeywordDAO(this));
+	}
+
 
 }

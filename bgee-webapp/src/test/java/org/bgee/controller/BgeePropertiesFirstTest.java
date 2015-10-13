@@ -61,8 +61,10 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
         prop.put(BgeeProperties.JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY, "/injectedjs");
         prop.put(BgeeProperties.JAVASCRIPT_VERSION_EXTENSION_KEY, "injectedJsVersion");
         prop.put(BgeeProperties.REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY, "/injectedrequestparam");
-        prop.put(BgeeProperties.TOP_OBO_RESULTS_URL_ROOT_DIRECTORY_KEY, "/injectedtopobo");
         prop.put(BgeeProperties.WEBPAGES_CACHE_CONFIG_FILE_NAME_KEY, "cache");
+        prop.put(BgeeProperties.TOP_ANAT_RESULTS_URL_DIRECTORY_KEY, "/injectedurldir");
+        // Test a superclass property
+        prop.put(BgeeProperties.TOP_ANAT_FUNCTION_FILE_KEY, "/injectedfunctionfile");
 
         // get the instance of bgeeproperties and check the values
         this.bgeeProp = BgeeProperties.getBgeeProperties(prop);
@@ -101,9 +103,12 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
         assertEquals("Wrong property value retrieved", 
                 "/injectedrequestparam", bgeeProp.getRequestParametersStorageDirectory());
         assertEquals("Wrong property value retrieved", 
-                "/injectedtopobo", bgeeProp.getTopOBOResultsUrlRootDirectory());
-        assertEquals("Wrong property value retrieved", 
                 "cache", bgeeProp.getWebpagesCacheConfigFileName());
+        assertEquals("Wrong property value retrieved", 
+                "/injectedurldir", bgeeProp.getTopAnatResultsUrlDirectory());
+        // Test a superclass property
+        assertEquals("Wrong property value retrieved", 
+                "/injectedfunctionfile", bgeeProp.getTopAnatFunctionFile());
     }
 
     /**
@@ -139,7 +144,7 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
                     this.exchanger.exchange(null);
                 }
             }
-        };
+        }
 
         // Get two BgeeProperties in the main thread and check that it is the same instance
         BgeeProperties bgeeProp1 = BgeeProperties.getBgeeProperties();

@@ -31,9 +31,12 @@ import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixProbesetDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultDAO;
+import org.bgee.model.dao.api.file.DownloadFileDAO;
+import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
+import org.bgee.model.dao.api.keyword.KeywordDAO;
 import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO;
 import org.bgee.model.dao.api.ontologycommon.EvidenceOntologyDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
@@ -65,8 +68,8 @@ import org.bgee.model.dao.api.species.TaxonDAO;
  * what are the parameters needed. 
  * <p>
  * If a configuration file is used, it must be placed in the classpath. Its default 
- * name is {@link #DEFAULTCONFIGFILE}. This can be changed via System properties, 
- * using the key {@link #CONFIGFILEKEY}.
+ * name is {@link #DEFAULT_CONFIG_FILE}. This can be changed via System properties, 
+ * using the key {@link #CONFIG_FILE_KEY}.
  * <p>
  * See {@link #getDAOManager(Properties)} and {@link #getDAOManager()} for more details 
  * about the instantiation process of a {@code DAOManager}.
@@ -125,18 +128,18 @@ public abstract class DAOManager implements AutoCloseable
     /**
      * A {@code String} representing the default name of the configuration file 
      * to retrieve parameters from. The name of the file to use can be changed 
-     * via system properties, using the key {@link #CONFIGFILEKEY};
+     * via system properties, using the key {@link #CONFIG_FILE_KEY};
      */
-    public static final String DEFAULTCONFIGFILE = "bgee.dao.properties";
+    public static final String DEFAULT_CONFIG_FILE = "/bgee.dao.properties";
     /**
      * A {@code String} representing the key to use to retrieve from system properties 
      * an alternative name for the configuration file.
      */
-    public static final String CONFIGFILEKEY = "bgee.dao.properties.file";
+    public static final String CONFIG_FILE_KEY = "bgee.dao.properties.file";
     
     /**
      * The {@code Properties} obtained at class loading either from system properties, 
-     * or from a configuration file (see {@link #DEFAULTCONFIGFILE}). They will be used 
+     * or from a configuration file (see {@link #DEFAULT_CONFIG_FILE}). They will be used 
      * when {@link #getDAOManager()} is called, as default properties.
      */
     private static final Properties properties = DAOManager.loadProperties();
@@ -144,7 +147,7 @@ public abstract class DAOManager implements AutoCloseable
     /**
      * Get the default <code>java.util.Properties</code> either from the System properties, 
      * or from a configuration file. The name of the configuration file can be changed 
-     * via System properties (see {@link #CONFIGFILEKEY}). This default properties 
+     * via System properties (see {@link #CONFIG_FILE_KEY}). This default properties 
      * will be used when {@link #getDAOManager()} is called. 
      * @return      The <code>java.util.Properties</code> to get properties from.
      */
@@ -155,7 +158,7 @@ public abstract class DAOManager implements AutoCloseable
         //try to get the properties file.
         //default name is bgee.dao.properties
         //check first if an alternative name has been provided in the System properties
-        String propertyFile = props.getProperty(CONFIGFILEKEY, DEFAULTCONFIGFILE);
+        String propertyFile = props.getProperty(CONFIG_FILE_KEY, DEFAULT_CONFIG_FILE);
         log.debug("Trying to use properties file " + propertyFile);
         InputStream propStream = DAOManager.class.getResourceAsStream(propertyFile);
         if (propStream != null) {
@@ -184,7 +187,7 @@ public abstract class DAOManager implements AutoCloseable
     
     /**
      * Return the {@code Properties} obtained at class loading either from system properties, 
-     * or from a configuration file (see {@link #DEFAULTCONFIGFILE}). They will be used 
+     * or from a configuration file (see {@link #DEFAULT_CONFIG_FILE}). They will be used 
      * when {@link #getDAOManager()} is called, as default properties.
      * <p>
      * The {@code Properties} returned are a copy with the actual {@code Properties} 
@@ -192,7 +195,7 @@ public abstract class DAOManager implements AutoCloseable
      * 
      * @return  the {@code Properties} obtained at class loading.
      */
-    public final static Properties getDefaultProperties() {
+    public static Properties getDefaultProperties() {
         return new Properties(DAOManager.properties);
     }
     
@@ -352,9 +355,8 @@ public abstract class DAOManager implements AutoCloseable
 	 * 									   from the {@code ServiceLoader}. 
 	 * @see #getDAOManager()
 	 */
-	public final static DAOManager getDAOManager(Properties props) 
-	    throws IllegalStateException, ServiceConfigurationError
-	{
+	public static DAOManager getDAOManager(Properties props) 
+	    throws IllegalStateException, ServiceConfigurationError {
 		log.entry(props);
 
         if (DAOManager.allClosed.get()) {
@@ -511,7 +513,7 @@ public abstract class DAOManager implements AutoCloseable
 	 * 										from the {@code ServiceLoader}. 
 	 * @see #getDAOManager(Properties)
 	 */
-	public final static DAOManager getDAOManager() throws IllegalStateException, ServiceConfigurationError {
+	public static DAOManager getDAOManager() throws IllegalStateException, ServiceConfigurationError {
 		log.entry();
 		
 		if (hasDAOManager()) {
@@ -541,7 +543,7 @@ public abstract class DAOManager implements AutoCloseable
 	 * 			calling this method currently holds a {@code DAOManager}, 
 	 * 			{@code false} otherwise. 
 	 */
-	public final static boolean hasDAOManager() {
+	public static boolean hasDAOManager() {
 		log.entry();
 		return log.exit(managers.containsKey(Thread.currentThread().getId()));
 	}
@@ -562,8 +564,7 @@ public abstract class DAOManager implements AutoCloseable
      * 
      * @throws DAOException If an error occurred while closing the managers.
      */
-    public final static int closeAll() throws DAOException
-    {
+    public static int closeAll() throws DAOException {
         log.entry();
         
         //this volatile boolean will act more or less like a lock 
@@ -598,7 +599,7 @@ public abstract class DAOManager implements AutoCloseable
      * @throws DAOException If an error occurred while killing the manager.
      * @see #kill()
      */
-    public final static void kill(long managerId) throws DAOException {
+    public static void kill(long managerId) throws DAOException {
     	log.entry(managerId);
     	DAOManager manager = managers.get(managerId);
         if (manager != null) {
@@ -618,7 +619,7 @@ public abstract class DAOManager implements AutoCloseable
      * This method is used to hide the implementation detail that the ID associated 
      * to a DAOManager is its holder Thread ID.
      */
-    public final static void kill(Thread thread) throws DAOException {
+    public static void kill(Thread thread) throws DAOException {
     	log.entry(thread);
     	DAOManager.kill(thread.getId());
         log.exit();
@@ -675,7 +676,7 @@ public abstract class DAOManager implements AutoCloseable
 	 * 
 	 * @return 	A {@code long} that is the ID of this {@code DAOManager}.
 	 */
-	public final long getId() {
+	public long getId() {
 		log.entry();
 		return log.exit(this.id);
 	}
@@ -684,7 +685,7 @@ public abstract class DAOManager implements AutoCloseable
 	 * 
 	 * @param id 	the ID of this {@code DAOManager}
 	 */
-	private final void setId(long id) {
+	private void setId(long id) {
 		this.id = id;
 	}
 	
@@ -704,7 +705,7 @@ public abstract class DAOManager implements AutoCloseable
      * @see #kill(long)
      */
 	@Override
-    public final void close() throws DAOException {
+    public void close() throws DAOException {
         log.entry();
         if (this.atomicCloseAndRemoveFromPool(false)) {
         	//implementation-specific code here
@@ -721,8 +722,7 @@ public abstract class DAOManager implements AutoCloseable
      * @return	{@code true} if this {@code DAOManager} was closed, 
      * 			{@code false} otherwise.
      */
-    public final boolean isClosed()
-    {
+    public boolean isClosed() {
         log.entry();
         return log.exit(closed.get());
     }
@@ -732,7 +732,7 @@ public abstract class DAOManager implements AutoCloseable
      * 
      * @param closed 	a {@code boolean} to set {@link #closed}
      */
-    private final void setClosed(boolean closed) {
+    private void setClosed(boolean closed) {
     	this.closed.set(closed);
     }
     
@@ -747,7 +747,7 @@ public abstract class DAOManager implements AutoCloseable
      * @throws DAOException If an error occurred while killing the manager.
      * @see #kill(long)
      */
-    public final void kill() throws DAOException {
+    public void kill() throws DAOException {
     	log.entry();
     	if (this.atomicCloseAndRemoveFromPool(true)) {
     		//implementation-specific code here
@@ -776,7 +776,7 @@ public abstract class DAOManager implements AutoCloseable
      * @see #kill()
      * @see #kill(long)
      */
-    public final boolean isKilled() {
+    public boolean isKilled() {
     	log.entry();
     	return log.exit(this.killed);
     }
@@ -793,7 +793,7 @@ public abstract class DAOManager implements AutoCloseable
     /**
      * Atomic operation to set {@link #closed} to {@code true}, 
      * {@link #killed} to {@code true} if the parameter is {@code true},
-     * and to call {@link #removePromPool()}. 
+     * and to remove from the managers pool.
      * This method returns {@code true} if the operations were actually performed, 
      * and {@code false} if this {@code DAOManager} was actually 
      * already closed. 
@@ -845,7 +845,7 @@ public abstract class DAOManager implements AutoCloseable
      * @throws IllegalStateException 	If this {@code DAOManager} is already closed.
      * @see org.bgee.model.dao.api.source.SourceDAO SourceDAO
      */
-    public final SourceDAO getSourceDAO() {
+    public SourceDAO getSourceDAO() {
     	log.entry();
     	this.checkClosed();
     	return log.exit(this.getNewSourceDAO());
@@ -858,7 +858,7 @@ public abstract class DAOManager implements AutoCloseable
      * @throws IllegalStateException    If this {@code DAOManager} is already closed.
      * @see org.bgee.model.dao.api.species.SpeciesDAO SpeciesDAO
      */
-    public final SpeciesDAO getSpeciesDAO() {
+    public SpeciesDAO getSpeciesDAO() {
         log.entry();
         this.checkClosed();
         return log.exit(this.getNewSpeciesDAO());
@@ -871,7 +871,7 @@ public abstract class DAOManager implements AutoCloseable
      * @throws IllegalStateException    If this {@code DAOManager} is already closed.
      * @see org.bgee.model.dao.api.species.TaxonDAO TaxonDAO
      */
-    public final TaxonDAO getTaxonDAO() {
+    public TaxonDAO getTaxonDAO() {
         log.entry();
         this.checkClosed();
         return log.exit(this.getNewTaxonDAO());
@@ -884,7 +884,7 @@ public abstract class DAOManager implements AutoCloseable
      * @throws IllegalStateException    If this {@code DAOManager} is already closed.
      * @see org.bgee.model.dao.api.anatdev.TaxonConstraintDAO TaxonConstraintDAO
      */
-    public final TaxonConstraintDAO getTaxonConstraintDAO() {
+    public TaxonConstraintDAO getTaxonConstraintDAO() {
         log.entry();
         this.checkClosed();
         return log.exit(this.getNewTaxonConstraintDAO());
@@ -897,7 +897,7 @@ public abstract class DAOManager implements AutoCloseable
      * @throws IllegalStateException    If this {@code DAOManager} is already closed.
      * @see org.bgee.model.dao.api.gene.GeneOntologyDAO GeneOntologyDAO
      */
-    public final GeneOntologyDAO getGeneOntologyDAO() {
+    public GeneOntologyDAO getGeneOntologyDAO() {
         log.entry();
         this.checkClosed();
         return log.exit(this.getNewGeneOntologyDAO());
@@ -910,7 +910,7 @@ public abstract class DAOManager implements AutoCloseable
      * @throws IllegalStateException    If this {@code DAOManager} is already closed.
      * @see org.bgee.model.dao.api.gene.GeneDAO GeneDAO
      */
-    public final GeneDAO getGeneDAO() {
+    public GeneDAO getGeneDAO() {
         log.entry();
         this.checkClosed();
         return log.exit(this.getNewGeneDAO());
@@ -923,7 +923,7 @@ public abstract class DAOManager implements AutoCloseable
      * @throws IllegalStateException    If this {@code DAOManager} is already closed.
      * @see org.bgee.model.dao.api.gene.HierarchicalGroupDAO HierarchicalGroupDAO
      */
-    public final HierarchicalGroupDAO getHierarchicalGroupDAO() {
+    public HierarchicalGroupDAO getHierarchicalGroupDAO() {
         log.entry();
         this.checkClosed();
         return log.exit(this.getNewHierarchicalGroupDAO());
@@ -936,7 +936,7 @@ public abstract class DAOManager implements AutoCloseable
      * @throws IllegalStateException    If this {@code DAOManager} is already closed.
      * @see org.bgee.model.dao.api.anatdev.StageDAO StageDAO
      */
-    public final StageDAO getStageDAO() {
+    public StageDAO getStageDAO() {
         log.entry();
         this.checkClosed();
         return log.exit(this.getNewStageDAO());
@@ -949,7 +949,7 @@ public abstract class DAOManager implements AutoCloseable
      * @throws IllegalStateException    If this {@code DAOManager} is already closed.
      * @see org.bgee.model.dao.api.ontologycommon.RelationDAO RelationDAO
      */
-    public final RelationDAO getRelationDAO() {
+    public RelationDAO getRelationDAO() {
         log.entry();
         this.checkClosed();
         return log.exit(this.getNewRelationDAO());
@@ -962,7 +962,7 @@ public abstract class DAOManager implements AutoCloseable
      * @throws IllegalStateException    If this {@code DAOManager} is already closed.
      * @see org.bgee.model.dao.api.expressiondata.ExpressionCallDAO ExpressionCallDAO
      */
-    public final ExpressionCallDAO getExpressionCallDAO() {
+    public ExpressionCallDAO getExpressionCallDAO() {
         log.entry();
         this.checkClosed();
         return log.exit(this.getNewExpressionCallDAO());
@@ -975,7 +975,7 @@ public abstract class DAOManager implements AutoCloseable
      * @throws IllegalStateException    If this {@code DAOManager} is already closed.
      * @see org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO NoExpressionCallDAO
      */
-    public final NoExpressionCallDAO getNoExpressionCallDAO() {
+    public NoExpressionCallDAO getNoExpressionCallDAO() {
         log.entry();
         this.checkClosed();
         return log.exit(this.getNewNoExpressionCallDAO());
@@ -988,7 +988,7 @@ public abstract class DAOManager implements AutoCloseable
      * @throws IllegalStateException    If this {@code DAOManager} is already closed.
      * @see org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO DiffExpressionCallDAO
      */
-    public final DiffExpressionCallDAO getDiffExpressionCallDAO() {
+    public DiffExpressionCallDAO getDiffExpressionCallDAO() {
         log.entry();
         this.checkClosed();
         return log.exit(this.getNewDiffExpressionCallDAO());
@@ -1001,7 +1001,7 @@ public abstract class DAOManager implements AutoCloseable
      * @throws IllegalStateException    If this {@code DAOManager} is already closed.
      * @see org.bgee.model.dao.api.anatdev.AnatEntityDAO AnatEntityDAO
      */
-    public final AnatEntityDAO getAnatEntityDAO() {
+    public AnatEntityDAO getAnatEntityDAO() {
         log.entry();
         this.checkClosed();
         return log.exit(this.getNewAnatEntityDAO());
@@ -1016,7 +1016,7 @@ public abstract class DAOManager implements AutoCloseable
      * @see org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixProbesetDAO 
      * AffymetrixProbesetDAO
      */
-    public final AffymetrixProbesetDAO getAffymetrixProbesetDAO() {
+    public AffymetrixProbesetDAO getAffymetrixProbesetDAO() {
         log.entry();
         this.checkClosed();
         return log.exit(this.getNewAffymetrixProbesetDAO());
@@ -1030,7 +1030,7 @@ public abstract class DAOManager implements AutoCloseable
      * @throws IllegalStateException    If this {@code DAOManager} is already closed.
      * @see org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO InSituSpotDAO
      */
-    public final InSituSpotDAO getInSituSpotDAO() {
+    public InSituSpotDAO getInSituSpotDAO() {
         log.entry();
         this.checkClosed();
         return log.exit(this.getNewInSituSpotDAO());
@@ -1045,7 +1045,7 @@ public abstract class DAOManager implements AutoCloseable
      * @see org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultDAO 
      * RNASeqResultDAO
      */
-    public final RNASeqResultDAO getRNASeqResultDAO() {
+    public RNASeqResultDAO getRNASeqResultDAO() {
         log.entry();
         this.checkClosed();
         return log.exit(this.getNewRNASeqResultDAO());
@@ -1059,7 +1059,7 @@ public abstract class DAOManager implements AutoCloseable
      * @throws IllegalStateException    If this {@code DAOManager} is already closed.
      * @see org.bgee.model.dao.api.ontologycommon.CIOStatementDAO CIOStatementDAO 
      */
-    public final CIOStatementDAO getCIOStatementDAO() {
+    public CIOStatementDAO getCIOStatementDAO() {
         log.entry();
         this.checkClosed();
         return log.exit(this.getNewCIOStatementDAO());
@@ -1073,7 +1073,7 @@ public abstract class DAOManager implements AutoCloseable
      * @throws IllegalStateException    If this {@code DAOManager} is already closed.
      * @see org.bgee.model.dao.api.ontologycommon.EvidenceOntologyDAO EvidenceOntologyDAO 
      */
-    public final EvidenceOntologyDAO getEvidenceOntologyDAO() {
+    public EvidenceOntologyDAO getEvidenceOntologyDAO() {
         log.entry();
         this.checkClosed();
         return log.exit(this.getNewEvidenceOntologyDAO());
@@ -1087,7 +1087,7 @@ public abstract class DAOManager implements AutoCloseable
      * @throws IllegalStateException    If this {@code DAOManager} is already closed.
      * @see org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO SummarySimilarityAnnotationDAO 
      */
-    public final SummarySimilarityAnnotationDAO getSummarySimilarityAnnotationDAO() {
+    public SummarySimilarityAnnotationDAO getSummarySimilarityAnnotationDAO() {
         log.entry();
         this.checkClosed();
         return log.exit(this.getNewSummarySimilarityAnnotationDAO());
@@ -1101,7 +1101,7 @@ public abstract class DAOManager implements AutoCloseable
      * @throws IllegalStateException    If this {@code DAOManager} is already closed.
      * @see org.bgee.model.dao.api.anatdev.mapping.RawSimilarityAnnotationDAO RawSimilarityAnnotationDAO 
      */
-    public final RawSimilarityAnnotationDAO getRawSimilarityAnnotationDAO() {
+    public RawSimilarityAnnotationDAO getRawSimilarityAnnotationDAO() {
         log.entry();
         this.checkClosed();
         return log.exit(this.getNewRawSimilarityAnnotationDAO());
@@ -1115,13 +1115,53 @@ public abstract class DAOManager implements AutoCloseable
      * @throws IllegalStateException    If this {@code DAOManager} is already closed.
      * @see org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO StageGroupingDAO 
      */
-    public final StageGroupingDAO getStageGroupingDAO() {
+    public StageGroupingDAO getStageGroupingDAO() {
         log.entry();
         this.checkClosed();
         return log.exit(this.getNewStageGroupingDAO());
     }
 
-    
+	/**
+	 * Get a new {@link DownloadFileDAO},
+	 * unless this {@code DAOManager} is already closed.
+	 *
+	 * @return  A new {@code DownloadFileDAO}.
+	 * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+	 * @see DownloadFileDAO
+	 */
+	public DownloadFileDAO getDownloadFileDAO() {
+		log.entry();
+		this.checkClosed();
+		return log.exit(this.getNewDownloadFileDAO());
+	}
+
+	/**
+	 * Get a new {@link SpeciesDataGroupDAO},
+	 * unless this {@code DAOManager} is already closed.
+	 *
+	 * @return  A new {@code SpeciesDataGroupDAO}.
+	 * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+	 * @see SpeciesDataGroupDAO
+	 */
+	public SpeciesDataGroupDAO getSpeciesDataGroupDAO() {
+		log.entry();
+		this.checkClosed();
+		return log.exit(this.getNewSpeciesDataGroupDAO());
+	}
+	
+	/**
+	 * Get a new {@link KeywordDAO},
+	 * unless this {@code DAOManager} is already closed.
+	 *
+	 * @return  A new {@code KeywordDAO}.
+	 * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+	 * @see KeywordDAO
+	 */
+	public KeywordDAO getKeywordDAO() {
+		log.entry();
+		this.checkClosed();
+		return log.exit(this.getNewKeywordDAO());
+	}
     //*****************************************
     //  CORE ABSTRACT METHODS TO IMPLEMENT
     //*****************************************	
@@ -1391,4 +1431,23 @@ public abstract class DAOManager implements AutoCloseable
      * @return  A new {@code StageGroupingDAO}
      */
     protected abstract StageGroupingDAO getNewStageGroupingDAO();
+
+	/**
+	 * Service provider must return a new {@link DownloadFileDAO} instance when this method is called
+	 * @return A new {@link DownloadFileDAO}
+	 */
+	protected abstract DownloadFileDAO getNewDownloadFileDAO();
+
+	/**
+	 * Service provider must return a new {@link SpeciesDataGroupDAO} instance when this method is called
+	 * @return A new {@link SpeciesDataGroupDAO}
+	 */
+	protected abstract SpeciesDataGroupDAO getNewSpeciesDataGroupDAO();
+
+	/**
+	 * Service provider must return a new {@link KeywordDAO} instance when this method is called
+	 * @return A new {@link KeywordDAO}
+	 */
+	protected abstract KeywordDAO getNewKeywordDAO();
+
 }

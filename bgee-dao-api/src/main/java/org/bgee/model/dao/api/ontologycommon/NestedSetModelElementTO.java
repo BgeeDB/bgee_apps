@@ -38,12 +38,11 @@ public class NestedSetModelElementTO extends EntityTO {
      *                          in its nested set model.
      * @param level             An {@code Integer} that is the level of this element 
      *                          in its nested set model.
-     * @throws IllegalArgumentException If {@code id} is {@code null} or empty, or if any of 
-     *                                  {code leftBound} or {code rightBound} or {code level} 
-     *                                  is less than 0.
+     * @throws IllegalArgumentException If any of {code leftBound} or {code rightBound} or 
+     *                                  {code level} is not {@code null} and less than 0.
      */
-    public NestedSetModelElementTO(String id, 
-            Integer leftBound, Integer rightBound, Integer level) throws IllegalArgumentException {
+    public NestedSetModelElementTO(String id, Integer leftBound, Integer rightBound, Integer level) 
+            throws IllegalArgumentException {
         this(id, null, null, leftBound, rightBound, level);
     }
 
@@ -64,9 +63,8 @@ public class NestedSetModelElementTO extends EntityTO {
      *                          in its nested set model.
      * @param level             An {@code Integer} that is the level of this element 
      *                          in its nested set model.
-     * @throws IllegalArgumentException If {@code id} is empty, or if any of {code leftBound} or 
-     *                                  {code rightBound} or {code level} is not {@code null}
-     *                                  and less than 0.
+     * @throws IllegalArgumentException If any of {code leftBound} or {code rightBound} or 
+     *                                  {code level} is not {@code null} and less than 0.
      */
     public NestedSetModelElementTO(String id, String name, String description, 
             Integer leftBound, Integer rightBound, Integer level) throws IllegalArgumentException {

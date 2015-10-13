@@ -37,8 +37,7 @@ public abstract class ConcreteDisplayParent {
      */
     protected boolean headersAlreadySent;
     /**
-     * A {@code boolean} set to {@code true} when the display has been started
-     * TODO check why it is actually never used in views. ( Should be ? )
+     * A {@code boolean} set to {@code true} when the display has been started.
      */
     protected boolean displayAlreadyStarted;
     /**

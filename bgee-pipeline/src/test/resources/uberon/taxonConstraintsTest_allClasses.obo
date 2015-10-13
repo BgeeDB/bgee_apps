@@ -1,0 +1,195 @@
+format-version: 1.2
+ontology: taxonConstraintsTest
+comment: this ontology mirrors taxonConstraintsTest.obo, but with class U:6 removed, and classes FAKE:1 and FAKE:2 added, and with incorrect taxon contraints
+
+[Term]
+id: UBERON:0001062
+name: anatomical entity
+
+[Term]
+id: U:1
+is_a: UBERON:0001062
+name: anatomical structure
+
+[Term]
+id: U:2
+name: brain
+is_a: U:1
+
+[Term]
+id: U:3
+name: forebrain
+is_a: U:1
+relationship: part_of U:2 ! brain
+
+[Term]
+id: U:4
+name: forebrain astrocyte
+relationship: part_of U:3
+
+[Term]
+id: U:22
+name: antenna
+is_a: U:1
+relationship: never_in_taxon NCBITaxon:13
+
+[Term]
+id: U:23
+name: left antenna
+is_a: U:22
+
+[Term]
+id: U:24
+name: left antenna segment
+relationship: part_of U:23
+
+[Term]
+id: U:25
+name: left antenna2
+is_a: U:22
+relationship: in_taxon NCBITaxon:14
+
+[Term]
+id: U:26
+name: left antenna segment2
+relationship: part_of U:25
+
+[Term]
+id: U:5
+name: cell
+is_a: U:1
+
+[Term]
+id: S:1
+name: anatomical_entity
+intersection_of: U:1
+intersection_of: part_of NCBITaxon:8
+
+[Term]
+id: S:2
+name: Brain
+intersection_of: U:2
+intersection_of: part_of NCBITaxon:8
+is_a: S:1
+
+[Term]
+id: S:3
+name: ForeBrain
+intersection_of: U:3
+intersection_of: part_of NCBITaxon:8
+relationship: part_of S:2
+
+[Term]
+id: S:4
+name: Forebrain Astrocyte
+def: "The forebrain astrocyte of S expresses SG:2" []
+comment: experiment with declaring equiv
+intersection_of: S:6
+intersection_of: part_of S:3
+
+[Term]
+id: S:12
+name: Cephalus Obscurus Astrocyte
+intersection_of: S:6
+intersection_of: part_of S:998
+
+[Term]
+id: S:5
+name: Cell
+is_a: S:1
+intersection_of: U:5
+intersection_of: part_of NCBITaxon:8
+
+[Term]
+id: S:6
+name: Astrocyte
+def: "The astrocyte of S is known for expressing SG:3" [FOO:1]
+is_a: S:5
+relationship: part_of NCBITaxon:8
+
+[Term]
+id: S:999
+name: Musculus Obscurus
+is_a: S:1
+
+[Term]
+id: S:1000
+name: Left Musculus Obscurus
+is_a: S:999
+
+[Term]
+id: S:998
+name: Cephalus Obscurus
+relationship: part_of S:3
+comment: A made up structure in the forebrain of species S
+relationship: never_in_taxon NCBITaxon:8
+
+[Term]
+id: S:9
+name: Cell of Cephalus Obscurus
+is_a: S:5
+relationship: part_of S:998
+
+[Term]
+id: U:100
+name: structure x
+is_a: UBERON:0001062
+
+[Term]
+id: FAKE:1
+name: Fake 1
+
+[Term]
+id: FAKE:2
+name: Fake 2
+
+[Term]
+id: FAKE:100
+name: Fake 100
+
+! incorrect taxonomy on purpose
+[Term]
+id: NCBITaxon:8
+name: coelocanth
+
+[Term]
+id: NCBITaxon:13
+name: fly
+is_a: NCBITaxon:8
+
+[Term]
+id: NCBITaxon:14
+name: fly_subspecies
+is_a: NCBITaxon:8
+disjoint_from: NCBITaxon:13
+! disjoint_from: in_taxon NCBITaxon:13
+disjoint_from: NCBITaxon:15
+! disjoint_from: in_taxon NCBITaxon:15
+
+[Term]
+id: NCBITaxon:15
+name: fly_subspecies
+is_a: NCBITaxon:8
+disjoint_from: NCBITaxon:14
+! disjoint_from: in_taxon NCBITaxon:14
+
+[Typedef]
+id: part_of
+name: part_of
+xref: BFO:0000050
+is_transitive: true
+
+[Typedef]
+id: never_in_taxon
+name: never_in_taxon
+def: "S never_in_taxon T iff: S SubClassOf in_taxon only not T" [PMID:20973947]
+is_class_level: true
+is_metadata_tag: true
+xref: RO:0002161
+expand_assertion_to: "Class: <http://www.w3.org/2002/07/owl#Nothing> EquivalentTo: ?X and (RO_0002162 some ?Y)" []
+
+[Typedef]
+id: in_taxon
+name: in taxon
+xref: RO:0002162
+holds_over_chain: part_of in_taxon

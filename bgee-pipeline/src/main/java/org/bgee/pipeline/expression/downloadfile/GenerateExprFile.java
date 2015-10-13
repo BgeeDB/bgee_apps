@@ -954,7 +954,7 @@ public class GenerateExprFile extends GenerateDownloadFile {
         List<Object> specificTypeQualities = new ArrayList<Object>();
         specificTypeQualities.add(convertDataStateToString(DataState.HIGHQUALITY));
         specificTypeQualities.add(convertDataStateToString(DataState.LOWQUALITY));
-        specificTypeQualities.add(convertDataStateToString(DataState.NODATA));
+        specificTypeQualities.add(GenerateDownloadFile.NA_VALUE);
 
         List<Object> resumeQualities = new ArrayList<Object>();
         resumeQualities.add(convertDataStateToString(DataState.HIGHQUALITY));

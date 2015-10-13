@@ -646,12 +646,12 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         List<Object> specificTypeQualities = new ArrayList<Object>();
         specificTypeQualities.add(GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY));
         specificTypeQualities.add(GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY));
-        specificTypeQualities.add(GenerateDownloadFile.convertDataStateToString(DataState.NODATA));
+        specificTypeQualities.add(GenerateDownloadFile.NA_VALUE);
         
         List<Object> resumeQualities = new ArrayList<Object>();
         resumeQualities.add(GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY));
         resumeQualities.add(GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY));
-        resumeQualities.add(GenerateDownloadFile.convertDataStateToString(DataState.NODATA));
+        resumeQualities.add(GenerateDownloadFile.NA_VALUE);
         
         //Then, we build the CellProcessor
         CellProcessor[] processors = new CellProcessor[header.length];

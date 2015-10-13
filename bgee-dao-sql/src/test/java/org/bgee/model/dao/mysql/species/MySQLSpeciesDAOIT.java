@@ -159,10 +159,8 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
         
         // expected result
         List<SpeciesTO> expectedSpeciesTOs = Arrays.asList(
-                new SpeciesTO("11", "spCName11", "gen11", "sp11", "111", "path/genome11",
-                        "0", ""), 
-                new SpeciesTO("31", "spCName31", "gen31", "sp31", "311", "path/genome31", 
-                        "0", "")); 
+                new SpeciesTO("11", "spCName11", "gen11", "sp11", "111", "path/genome11", "0", ""), 
+                new SpeciesTO("31", "spCName31", "gen31", "sp31", "311", "path/genome31", "0", "")); 
         // Compare
         assertTrue("SpeciesTOs incorrectly retrieved, expected: " + expectedSpeciesTOs + 
                 ", but was: " + speciesTOs, 
@@ -194,12 +192,9 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
 
         // Generate manually expected result
         List<SpeciesTO> expectedSpecies = Arrays.asList(
-                new SpeciesTO("11", "spCName11", "gen11", "sp11", "111", "path/genome11",
-                        "0", ""),
-                new SpeciesTO("21", "spCName21", "gen21", "sp21", "211", "path/genome21",
-                        "51", "PREFIX51"),
-                new SpeciesTO("31", "spCName31", "gen31", "sp31", "311", "path/genome31",
-                        "0", ""));
+                new SpeciesTO("41", "spCName41", "gen41", "sp41", "411", "path/genome41", "0", ""),
+                new SpeciesTO("21", "spCName21", "gen21", "sp21", "211", "path/genome21", "51", "PREFIX51"),
+                new SpeciesTO("51", "spCName51", "gen51", "sp51", "511", "path/genome51", "0", ""));
         // Compare
         assertTrue("SpeciesTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(methSpecies, expectedSpecies));
@@ -210,9 +205,9 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
 
         // Generate manually expected result
         expectedSpecies = Arrays.asList(
-                new SpeciesTO(null, "spCName11", null, null, null, null, null, null),
+                new SpeciesTO(null, "spCName41", null, null, null, null, null, null),
                 new SpeciesTO(null, "spCName21",null, null,  null, null, null, null),
-                new SpeciesTO(null, "spCName31", null, null, null, null, null, null));
+                new SpeciesTO(null, "spCName51", null, null, null, null, null, null));
         // Compare
         assertTrue("SpeciesTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(methSpecies, expectedSpecies));

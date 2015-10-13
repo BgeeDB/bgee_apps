@@ -346,6 +346,16 @@ public class RequestParameters {
     private final String httpMethod;
 
     /**
+     * 0-arg constructor defining default implementations and values to use to call 
+     * {@link #RequestParameters(URLParameters, BgeeProperties, boolean, String)}. It uses 
+     * the {@code BgeeProperties} returned by {@link BgeeProperties#getBgeeProperties()}, 
+     * the default implementation of {@code URLParameters}, value {@code true} for 
+     * {@code encodeUrl}, value "&" for {@code parametersSeparator}.
+     */
+    public RequestParameters() {
+        this(new URLParameters(), BgeeProperties.getBgeeProperties(), true, "&");
+    }
+    /**
      * Default constructor. 
      * 
      * @param urlParametersInstance     A instance of {@code URLParameters} that 
@@ -525,12 +535,12 @@ public class RequestParameters {
         //Get the key
         String key = request.getParameter(this.getKeyParam().getName());
         if (StringUtils.isBlank(key)) {
-            log.debug("The key is blank, load params from request");
+            log.trace("The key is blank, load params from request");
             //no key set, get the parameters from the URL
             this.loadParametersFromRequest(request, true);
         } else {
             //a key is set, get the storable parameters from a file
-            log.debug("The key is set, load params from the file");
+            log.trace("The key is set, load params from the file");
             try {
                 this.loadStorableParametersFromKey(key);
             } catch (IOException e) {

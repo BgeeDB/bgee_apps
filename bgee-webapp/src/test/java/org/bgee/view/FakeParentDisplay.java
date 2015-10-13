@@ -8,7 +8,7 @@ import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 
 /**
- * This class exists only to be the parent of {@code TestDownloadDisplay}
+ * This class exists only to be the parent of {@code FakeDownloadDisplay}
  * 
  * @author Mathieu Seppey
  * @author Frederic Bastian
@@ -16,9 +16,9 @@ import org.bgee.controller.RequestParameters;
  * @since   Bgee 13
  */
 // None of these classes launch test
-public class TestParentDisplay extends ConcreteDisplayParent {
+public class FakeParentDisplay extends ConcreteDisplayParent {
 
-    public TestParentDisplay(HttpServletResponse response, RequestParameters requestParameters, 
+    public FakeParentDisplay(HttpServletResponse response, RequestParameters requestParameters, 
 	        BgeeProperties prop, ViewFactory factory) throws IOException {
 		super(response, requestParameters, prop, factory);
 	}

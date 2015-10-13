@@ -17,6 +17,7 @@ import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.Sim
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
+import org.bgee.model.file.DownloadFile.CategoryEnum;
 import org.bgee.pipeline.BgeeDBUtils;
 import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.Utils;
@@ -207,43 +208,45 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
      * @since Bgee 13
      */
     public enum MultiSpExprFileType implements FileType {
-        MULTI_EXPR_SIMPLE("multi-expr-simple", true), 
-        MULTI_EXPR_COMPLETE("multi-expr-complete", false);
+        MULTI_EXPR_SIMPLE(CategoryEnum.EXPR_CALLS_SIMPLE, true),
+        MULTI_EXPR_COMPLETE(CategoryEnum.EXPR_CALLS_COMPLETE, false);
 
         /**
-         * A {@code String} that can be used to generate names of files of this type.
+         * A {@code CategoryEnum} that is the category of files of this type.
          */
-        private final String stringRepresentation;
+        private final CategoryEnum category;
         
         /**
          * A {@code boolean} defining whether this {@code MultiSpeciesExprFileType} is a simple 
-         * file type
+         * file type.
          */
         private final boolean simpleFileType;
 
         /**
-         * Constructor providing the {@code String} representation of this 
-         * {@code MultiSpeciesExprFileType}, and a {@code boolean} defining whether this 
-         * {@code MultiSpeciesExprFileType} is a simple file type.
+         * Constructor providing the {@code CategoryEnum} of this {@code MultiSpeciesExprFileType},
+         * and a {@code boolean} defining whether this {@code MultiSpeciesExprFileType}
+         * is a simple file type.
          */
-        private MultiSpExprFileType(String stringRepresentation, boolean simpleFileType) {
-            this.stringRepresentation = stringRepresentation;
+        private MultiSpExprFileType(CategoryEnum category, boolean simpleFileType) {
+            this.category = category;
             this.simpleFileType = simpleFileType;
         }
 
         @Override
         public String getStringRepresentation() {
-            return this.stringRepresentation;
+            return this.category.getStringRepresentation();
         }
-
         @Override
         public boolean isSimpleFileType() {
             return this.simpleFileType;
         }
-
         @Override
         public String toString() {
             return this.getStringRepresentation();
+        }
+        @Override
+        public CategoryEnum getCategory() {
+            return this.category;
         }
     }
 

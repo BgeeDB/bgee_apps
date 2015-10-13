@@ -28,6 +28,7 @@ import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.file.DownloadFileDAO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
+import org.bgee.model.dao.api.keyword.KeywordDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLAnatEntityDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLTaxonConstraintDAO;
@@ -45,6 +46,7 @@ import org.bgee.model.dao.mysql.file.MySQLSpeciesDataGroupDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneOntologyDAO;
 import org.bgee.model.dao.mysql.gene.MySQLHierarchicalGroupDAO;
+import org.bgee.model.dao.mysql.keyword.MySQLKeywordDAO;
 import org.bgee.model.dao.mysql.ontologycommon.MySQLCIOStatementDAO;
 import org.bgee.model.dao.mysql.ontologycommon.MySQLEvidenceOntologyDAO;
 import org.bgee.model.dao.mysql.ontologycommon.MySQLRelationDAO;
@@ -462,7 +464,7 @@ public class MySQLDAOManager extends DAOManager {
             }
         }
         if (!jdbcUrlAccepted) {
-            throw log.throwing(new IllegalStateException("No Drivers accepted the JDBC URL " +
+            throw log.throwing(new IllegalStateException("No Drivers accepting the JDBC URL " +
                 this.getJdbcUrl()));
         }
         log.exit();
@@ -1078,6 +1080,12 @@ public class MySQLDAOManager extends DAOManager {
         log.entry();
         return log.exit(new MySQLSpeciesDataGroupDAO(this));
     }
+
+	@Override
+	protected KeywordDAO getNewKeywordDAO() {
+        log.entry();
+        return log.exit(new MySQLKeywordDAO(this));
+	}
 
 
 }

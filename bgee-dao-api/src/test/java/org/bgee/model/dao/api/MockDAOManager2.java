@@ -20,6 +20,7 @@ import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
+import org.bgee.model.dao.api.keyword.KeywordDAO;
 import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO;
 import org.bgee.model.dao.api.ontologycommon.EvidenceOntologyDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
@@ -198,4 +199,9 @@ public class MockDAOManager2 extends DAOManager {
     public void releaseResources() {
         this.instanceMockManager.releaseResources();
     }
+
+	@Override
+	protected KeywordDAO getNewKeywordDAO() {
+		return instanceMockManager.getNewKeywordDAO();
+	}
 }

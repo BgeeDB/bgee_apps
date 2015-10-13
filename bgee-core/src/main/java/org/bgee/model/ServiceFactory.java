@@ -3,6 +3,9 @@ package org.bgee.model;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOManager;
+import org.bgee.model.file.DownloadFileService;
+import org.bgee.model.file.SpeciesDataGroupService;
+import org.bgee.model.keyword.KeywordService;
 import org.bgee.model.species.SpeciesService;
 
 /**
@@ -38,7 +41,11 @@ import org.bgee.model.species.SpeciesService;
  * @version Bgee 13 Sept. 2015
  * @since Bgee 13
  */
-public class ServiceFactory {
+//XXX: should we put all Services in a same package, so that the constructors are protected 
+//and can only be obtained through the ServiceFactory?
+//XXX: similarly, should we use protected constructors for all classes obtained through a Service, 
+//so that they can be obtained only through these Services? Obviously, we can't do both...
+public class ServiceFactory implements AutoCloseable {
     /**
      * {@code Logger} of the class. 
      */
@@ -61,18 +68,64 @@ public class ServiceFactory {
     }
     /**
      * @param daoManager    The {@code DAOManager} to be used by this {@code ServiceFactory},  
-     *                      to be provided to the {@code Service}s it instantiates. 
+     *                      to be provided to {@code Service}s it instantiates. 
+     * @throws IllegalArgumentException If {@code daoManager} is {@code null}, or if calling 
+     *                                  {@link DAOManager#isClosed()} on it returns {@code true}.
      */
-    public ServiceFactory(DAOManager daoManager) {
+    public ServiceFactory(DAOManager daoManager) throws IllegalArgumentException {
+        log.entry(daoManager);
+        if (daoManager == null || daoManager.isClosed()) {
+            throw log.throwing(new IllegalArgumentException("Invalid DAOManager"));
+        }
         this.daoManager = daoManager;
+        log.exit();
     }
     
     /**
      * @return  A newly instantiated {@code SpeciesService}, using the same {@code DAOManager} 
      *          as the one selected by this {@code ServiceFactory}.
      */
-    public SpeciesService getSpeciesFactory() {
+    public SpeciesService getSpeciesService() {
         log.entry();
         return log.exit(new SpeciesService(this.daoManager));
+    }
+
+    /**
+     * @return A newly instantiated {@code DownloadFileService}, using the same {@code DAOManager}
+     *         as the one selected by this {@code ServiceFactory}.
+     */
+    public DownloadFileService getDownloadFileService() {
+        log.entry();
+        return log.exit(new DownloadFileService(this.daoManager));
+    }
+
+    /**
+     * @return A newly instantiated {@code SpeciesDataGroupService}, using the same {@code DAOManager}
+     *         as the one selected by this {@code ServiceFactory}, and the {@code DownloadFileService} 
+     *         and {@code SpeciesService} obtained from this {@code ServiceFactory}.
+     */
+    public SpeciesDataGroupService getSpeciesDataGroupService() {
+        log.entry();
+        return log.exit(new SpeciesDataGroupService(getDownloadFileService(), 
+                getSpeciesService(), this.daoManager));
+    }
+    
+    /**
+     * @return A newly instantiated {@code KeywordService}
+     */
+    public KeywordService getKeywordService() {
+    	log.entry();
+    	return log.exit(new KeywordService(this.daoManager));
+    }
+    
+    /**
+     * Release all resources hold by this {@code ServiceFactory} (notably releasing 
+     * the {@link DAOManager} used).
+     */
+    @Override
+    public void close() {
+        log.entry();
+        this.daoManager.close();
+        log.exit();
     }
 }

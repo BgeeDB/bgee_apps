@@ -30,7 +30,8 @@ import static org.mockito.Mockito.*;
  * Unit tests for the class {@link BgeePreparedStatement}.
  * 
  * @author Frederic Bastian
- * @version Bgee 13
+ * @author Valentine Rech de Laval
+ * @version Bgee 13 Sept. 2015
  * @since Bgee 13
  */
 public class BgeePreparedStatementTest extends TestAncestor
@@ -292,6 +293,50 @@ public class BgeePreparedStatementTest extends TestAncestor
         verify(MockDriver.getMockStatement()).setNull(5, Types.INTEGER);
     }
     
+    /**
+     * Test {@link BgeePreparedStatement#setLong(int, Long)}.
+     */
+    @Test
+    public void shouldSetLong() throws SQLException {
+        MockDriver.initialize();
+        BgeeConnection con = mock(BgeeConnection.class);
+        BgeePreparedStatement stmt = new BgeePreparedStatement(con, MockDriver.getMockStatement());
+        stmt.setLong(3, 10L);
+        
+        verify(MockDriver.getMockStatement()).setLong(3, 10L);
+        
+        MockDriver.initialize();
+        con = mock(BgeeConnection.class);
+        stmt = new BgeePreparedStatement(con, MockDriver.getMockStatement());
+        stmt.setLong(2, null);
+        
+        verify(MockDriver.getMockStatement()).setNull(2, Types.BIGINT);
+    }
+    
+    /**
+     * Test {@link BgeePreparedStatement#setLongs(int, List)}.
+     */
+    @Test
+    public void shouldSetLongs() throws SQLException {
+        MockDriver.initialize();
+        BgeeConnection con = mock(BgeeConnection.class);
+        BgeePreparedStatement stmt = new BgeePreparedStatement(con, 
+                MockDriver.getMockStatement());
+        stmt.setLongs(2, Arrays.asList(10L));
+        
+        verify(MockDriver.getMockStatement()).setLong(2, 10L);
+        
+        MockDriver.initialize();
+        con = mock(BgeeConnection.class);
+        stmt = new BgeePreparedStatement(con, MockDriver.getMockStatement());
+        stmt.setLongs(2, Arrays.asList(null, 10L, 14L, 17L));
+        
+        verify(MockDriver.getMockStatement()).setNull(2, Types.BIGINT);
+        verify(MockDriver.getMockStatement()).setLong(3, 10L);
+        verify(MockDriver.getMockStatement()).setLong(4, 14L);
+        verify(MockDriver.getMockStatement()).setLong(5, 17L);
+    }
+
     /**
      * Test {@link BgeePreparedStatement#setBoolean(int, Boolean)}.
      */

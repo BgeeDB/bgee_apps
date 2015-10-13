@@ -218,7 +218,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         urlCallFilesGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
         urlCallFilesGenerator.setAction(RequestParameters.ACTION_DOC_CALL_DOWLOAD_FILES);
 
-        StringBuffer logos = new StringBuffer(); 
+        StringBuilder logos = new StringBuilder(); 
 
         logos.append(HtmlParentDisplay.getSingleFeatureLogo(urlHowToAccessGenerator.getRequestURL(), 
                 false, "How to access to Bgee data", "Access to Bgee data", 

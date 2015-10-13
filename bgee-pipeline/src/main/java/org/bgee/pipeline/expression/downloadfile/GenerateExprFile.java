@@ -32,6 +32,7 @@ import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCal
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTOResultSet;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallParams;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
+import org.bgee.model.file.DownloadFile.CategoryEnum;
 import org.bgee.pipeline.BgeeDBUtils;
 import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.Utils;
@@ -140,12 +141,13 @@ public class GenerateExprFile extends GenerateDownloadFile {
      * @since Bgee 13
      */
     public enum SingleSpExprFileType implements FileType {
-        EXPR_SIMPLE("expr-simple", true), EXPR_COMPLETE("expr-complete", false);
+        EXPR_SIMPLE(CategoryEnum.EXPR_CALLS_SIMPLE, true),
+        EXPR_COMPLETE(CategoryEnum.EXPR_CALLS_COMPLETE, false);
 
         /**
-         * A {@code String} that can be used to generate names of files of this type.
+         * A {@code CategoryEnum} that is the category of files of this type.
          */
-        private final String stringRepresentation;
+        private final CategoryEnum category;
 
         /**
          * A {@code boolean} defining whether this {@code ExprFileType} is a simple file
@@ -154,26 +156,26 @@ public class GenerateExprFile extends GenerateDownloadFile {
         private final boolean simpleFileType;
 
         /**
-         * Constructor providing the {@code String} representation of this
-         * {@code ExprFileType}, and a {@code boolean} defining whether this
-         * {@code ExprFileType} is a simple file type.
+         * Constructor providing the {@code CategoryEnum} of this {@code ExprFileType},
+         * and a {@code boolean} defining whether this {@code ExprFileType} is a simple file type.
          */
-        private SingleSpExprFileType(String stringRepresentation,
-            boolean simpleFileType) {
-            this.stringRepresentation = stringRepresentation;
+        private SingleSpExprFileType(CategoryEnum category, boolean simpleFileType) {
+            this.category = category;
             this.simpleFileType = simpleFileType;
         }
 
         @Override
         public String getStringRepresentation() {
-            return this.stringRepresentation;
+            return this.category.getStringRepresentation();
         }
-
+        @Override
+        public CategoryEnum getCategory() {
+            return this.category;
+        }
         @Override
         public boolean isSimpleFileType() {
             return this.simpleFileType;
         }
-
         @Override
         public String toString() {
             return this.getStringRepresentation();

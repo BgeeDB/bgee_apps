@@ -16,6 +16,7 @@ import org.bgee.pipeline.expression.InsertGlobalCalls;
 import org.bgee.pipeline.expression.downloadfile.GenerateExprFile;
 import org.bgee.pipeline.expression.downloadfile.GenerateDiffExprFile;
 import org.bgee.pipeline.expression.downloadfile.GenerateMultiSpeciesDiffExprFile;
+import org.bgee.pipeline.expression.downloadfile.InsertSpeciesDataGroups;
 import org.bgee.pipeline.gene.InsertGO;
 import org.bgee.pipeline.gene.ParseOrthoXML;
 import org.bgee.pipeline.ontologycommon.InsertCIO;
@@ -84,7 +85,7 @@ public class CommandRunner {
      * 
      * @see #parseMapArgument(String)
      */
-    public static final String KEY_VALUE_SEPARATOR = "/";
+    public static final String KEY_VALUE_SEPARATOR = "//";
     /**
      * A {@code String} that is the separator between different values associated to a same key, 
      * in a list of key-value pairs of a map, 
@@ -264,6 +265,9 @@ public class CommandRunner {
         case "GenerateMultiSpeciesDiffExprFile":
             GenerateMultiSpeciesDiffExprFile.main(newArgs);
             break;
+        case "InsertSpeciesDataGroups":
+            InsertSpeciesDataGroups.main(newArgs);
+            break;
             
         default: 
             throw log.throwing(new UnsupportedOperationException("The following action " +
@@ -274,18 +278,20 @@ public class CommandRunner {
     }
     
     /**
-     * Return either {@code arg}, or {@code null} if {@code arg} is equal to {@link #EMPTY_ARG}.
+     * Return a filtered value of {@code arg}: if {@code arg} is equal to {@link #EMPTY_ARG}, 
+     * this method returns {@code null}; all substrings equal to {@link #SPACE_IN_ARG} 
+     * will be replaced by a space; the returned {@code String} is trimmed.
+     * 
      * 
      * @param arg   A {@code String} that is an argument from a command line usage.
-     * @return      A {@code String} that is either {@code arg}, or {@code null} 
-     *              if {@code arg} is equal to {@link #EMPTY_ARG}.
+     * @return      A {@code String} that is a filtered value corresponding to {@code arg}.
      */
     public static String parseArgument(String arg) {
         log.entry(arg);
         if (arg == null || arg.trim().equals(EMPTY_ARG)) {
             return log.exit(null);
         }
-        return log.exit(arg);
+        return log.exit(arg.trim());
     }
 
     /**
@@ -331,14 +337,14 @@ public class CommandRunner {
         listArg = listArg.trim();
         if (!listArg.equals(EMPTY_LIST)) {
             for (String arg: listArg.split(LIST_SEPARATOR)) {
-                if (StringUtils.isNotBlank(arg)) {
-                    String value = arg.trim();
+                String filteredArg = parseArgument(arg);
+                if (StringUtils.isNotBlank(filteredArg)) {
                     if (type.equals(Integer.class)) {
-                        resultingList.add(type.cast(Integer.parseInt(value)));
+                        resultingList.add(type.cast(Integer.parseInt(filteredArg)));
                     } else if (type.equals(Boolean.class)) {
-                        resultingList.add(type.cast(Boolean.parseBoolean(value)));
+                        resultingList.add(type.cast(Boolean.parseBoolean(filteredArg)));
                     } else {
-                        resultingList.add(type.cast(value));
+                        resultingList.add(type.cast(filteredArg));
                     }
                 }
             }
@@ -429,7 +435,7 @@ public class CommandRunner {
                                 arg));
                     }
 
-                    String keyValue = keyValues[0].trim();
+                    String keyValue = parseArgument(keyValues[0]);
                     T key = null;
                     if (keyType.equals(Integer.class)) {
                         key = keyType.cast(Integer.parseInt(keyValue));
@@ -447,12 +453,13 @@ public class CommandRunner {
                     if (!keyValues[1].trim().equals(EMPTY_LIST)) {
                         for (String value: keyValues[1].trim().split(VALUE_SEPARATOR)) {
                             log.trace("Value parsed: {}", value);
+                            String filteredValue = parseArgument(value);
                             if (valueType.equals(Integer.class)) {
-                                existingValues.add(valueType.cast(Integer.parseInt(value)));
+                                existingValues.add(valueType.cast(Integer.parseInt(filteredValue)));
                             } else if (valueType.equals(Boolean.class)) {
-                                existingValues.add(valueType.cast(Boolean.parseBoolean(value)));
+                                existingValues.add(valueType.cast(Boolean.parseBoolean(filteredValue)));
                             } else {
-                                existingValues.add(valueType.cast(value));
+                                existingValues.add(valueType.cast(filteredValue));
                             }
                         }
                     }

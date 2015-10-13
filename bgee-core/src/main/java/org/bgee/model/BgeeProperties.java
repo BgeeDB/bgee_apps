@@ -2,9 +2,12 @@ package org.bgee.model;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -13,18 +16,25 @@ import org.apache.logging.log4j.Logger;
 /**
  * This class loads the properties for Bgee core.
  * The configuration can be a {@code Properties} object injected through 
- * {@link #getBgeeProperties(Properties)} 
- * or loaded from the System properties or via a file named {@code bgee.properties}
- * put in the classpath, by using {@link #getBgeeProperties()}.
- * 
+ * {@link #getBgeeProperties(Properties)}, or loaded from the System properties 
+ * or via a file named "bgee.properties" put in the classpath, by using {@link #getBgeeProperties()}.
+ * <p>
  * When this class is loaded (so only <b>once</b> for a given {@code ClassLoader}), 
  * it reads the properties from both the System properties and the property file, 
  * so that, for instance, a property can be provided in the file, 
- * and another property via System properties. 
- * If a property is defined in both locations, then the System property 
- * overrides the property in the file.
+ * and another property via System properties. If a property is defined in both locations, 
+ * then the System property overrides the property in the file.
  * Of note, an additional property allows to change the name of the property file 
  * to use (corresponds to the property {@code bgee.properties.file}).
+ * <p>
+ * Any call, <b>inside a thread</b>, to the method {@link #getBgeeProperties()}, 
+ * will always return the same {@code BgeeProperties} instance ("per-thread singleton"). 
+ * After calling {@link #releaseAll()}, it is not possible to acquire a {@code BgeeProperties} object 
+ * by calling {@link #getBgeeProperties()} anymore (throws an exception).
+ * <p>
+ * You should always call {@link BgeeProperties().release()} at the end of the execution of a thread, 
+ * or {@link #releaseAll()} in multi-threads context (for instance, in a webapp context 
+ * when the webapp is shutdown). 
  * <p>
  * This class has been inspired from {@code net.sf.log4jdbc.DriverSpy}
  * developed by Arthur Blake.
@@ -32,11 +42,10 @@ import org.apache.logging.log4j.Logger;
  * @author Frederic Bastian
  * @author Mathieu Seppey
  * @author Valentine Rech de Laval
- * @version Bgee 13, August 2015
+ * @version Bgee 13, Oct. 2015
  * @since Bgee 13
  */
-public class BgeeProperties 
-{
+public class BgeeProperties {
 
     /**
      * {@code Logger} of the class. 
@@ -60,7 +69,8 @@ public class BgeeProperties
      * 
      * @see #PROPERTIES_FILE_NAME_KEY
      */
-    public final static String PROPERTIES_FILE_NAME_DEFAULT = "/bgee.properties";
+    public final static List<String> PROPERTIES_FILE_NAMES_DEFAULT = Arrays.asList(
+            "/bgee.properties", "/bgee-webapp.properties");
     
     /**
      * A {@code String} that is the key to access to the System property that contains the value
@@ -196,6 +206,13 @@ public class BgeeProperties
      */
     protected static final ConcurrentMap<Long, BgeeProperties> bgeeProperties = 
             new ConcurrentHashMap<Long, BgeeProperties>(); 
+    /**
+     * An {@code AtomicBoolean} to define if {@code BgeeProperties}s 
+     * can still be acquired (using {@link #getBgeeProperties()}), 
+     * or if it is not possible anymore (meaning that the method {@link #releaseAll()} 
+     * has been called)
+     */
+    private static final AtomicBoolean bgeePropertiesClosed = new AtomicBoolean(false);
 
     /**
      * A {@code java.util.Properties} used to load the values present in the Bgee property file. 
@@ -221,13 +238,25 @@ public class BgeeProperties
         Properties filePropsToReturn = null;
         //try to get the properties file.
         //default name is bgee.properties
-        //check first if an alternative name has been provided in the System properties
-        String propertyFile = (new Properties(System.getProperties()))
-                .getProperty(PROPERTIES_FILE_NAME_KEY, PROPERTIES_FILE_NAME_DEFAULT);
+        //check first if an alternative name has been provided in the System properties, 
+        //otherwise, use default file names, in preferred order.
+        InputStream propStream = null;
+        String propertyFile = System.getProperties().getProperty(PROPERTIES_FILE_NAME_KEY);
+        if (propertyFile == null) {
+            log.trace("No property file name defined in System properties, try to localize default property file.");
+            for (String fileName: PROPERTIES_FILE_NAMES_DEFAULT) {
+                log.trace("Try property file name {}", fileName);
+                propStream = BgeeProperties.class.getResourceAsStream(fileName);
+                if (propStream != null) {
+                    propertyFile = fileName;
+                    break;
+                }
+            }
+        } else {
+            propStream = BgeeProperties.class.getResourceAsStream(propertyFile);
+        }
         
-        log.debug("Trying to use properties file {}", propertyFile);
-        InputStream propStream =
-                BgeeProperties.class.getResourceAsStream(propertyFile);
+        log.debug("Using properties file {}", propertyFile);
         if (propStream != null) {
             try {
                 filePropsToReturn = new Properties();
@@ -361,13 +390,18 @@ public class BgeeProperties
      * was first call in a given thread, then the provided properties will be used 
      * for all following calls, including calls to this method (it means that this method 
      * might thus not use the System properties or the file properties).
+     * <p>
+     * Note that after having called {@link #releaseAll()}, no {@code BgeeProperties} 
+     * can be obtained anymore. This method will throw an {@code IllegalStateException} 
+     * if {@code releaseAll()} has been previously called.
      * 
      * @return  A {@code BgeeProperties} object with values already set. 
      *          The method will create an instance only once for each thread 
      *          and always return this instance when called ("per-thread singleton").
      * @see #getBgeeProperties(Properties)
+     * @throws IllegalStateException If no {@code BgeeProperties} could be obtained anymore. 
      */
-    public static BgeeProperties getBgeeProperties(){
+    public static BgeeProperties getBgeeProperties() throws IllegalStateException {
         return getBgeeProperties(null);
     }
 
@@ -393,6 +427,10 @@ public class BgeeProperties
      * from this thread, calling this method again with different properties will have no effect. 
      * The provided properties will be read only at first instantiation of 
      * a {@code BgeeProperties} object in a given thread. 
+     * <p>
+     * Note that after having called {@link #releaseAll()}, no {@code BgeeProperties} 
+     * can be obtained anymore. This method will throw an {@code IllegalStateException} 
+     * if {@code releaseAll()} has been previously called.
      * 
      * @param prop  A {@code java.util.Properties} instance that contains the system properties
      *              to use.
@@ -400,11 +438,19 @@ public class BgeeProperties
      *          {@code Properties}. The method will create an instance only once for each thread 
      *          and always return this instance when called ("per-thread singleton").
      * @see #getBgeeProperties()
+     * @throws IllegalStateException If no {@code BgeeProperties} could be obtained anymore. 
      */
-    public static BgeeProperties getBgeeProperties(Properties prop) {
+    public static BgeeProperties getBgeeProperties(Properties prop) throws IllegalStateException {
         log.entry(prop);
         BgeeProperties bgeeProp;
         long threadId = Thread.currentThread().getId();
+        log.trace("Trying to obtain a BgeeProperties instance for Thread {}", threadId);
+        
+        if (bgeePropertiesClosed.get()) {
+            throw new IllegalStateException("releaseAll() has been already called, " +
+                    "it is not possible to acquire a BgeeProperties anymore");
+        }
+        
         if (! hasBgeeProperties()) {
             // Create an instance
             bgeeProp = new BgeeProperties(prop);
@@ -439,6 +485,36 @@ public class BgeeProperties
     }
 
     /**
+     * Release all {@code BgeeProperties}s currently registered, and prevent any new 
+     * {@code BgeeProperties} to be obtained again by calling a {@code getBgeeProperties} method  
+     * (would throw a {@code IllegalStateException}). 
+     * <p>
+     * This method returns the number of {@code BgeeProperties}s that were released. 
+     * <p>
+     * This method is called for instance when a {@code ShutdownListener} 
+     * want to release all {@code BgeeProperties}s.
+     * 
+     * @return  An {@code int} that is the number of {@code BgeeProperties}s that were released
+     */
+    public static int releaseAll() {
+        log.entry();
+
+        //this AtomicBoolean will act more or less like a lock 
+        //(no new BgeeProperties can be obtained after this AtomicBoolean is set to true).
+        //It's not totally true, but we don't expect any major error if it doesn't act like a lock.
+        bgeePropertiesClosed.set(true);
+
+        int propCount = bgeeProperties.size();
+        bgeeProperties.clear();
+
+        return log.exit(propCount);
+    }
+    
+    //******************************
+    // INSTANCE METHODS
+    //******************************
+
+    /**
      * Protected constructor, can be only called through the use of one of the
      * {@code getBgeeProperties} method, the only way for the user to obtain an instance of this
      * class, unless it is called within a subclass constructor.
@@ -469,6 +545,30 @@ public class BgeeProperties
                 TOP_ANAT_RESULTS_WRITING_DIRECTORY_DEFAULT);
         log.debug("Initialization done.");
         log.exit();
+    }
+
+    /**
+     * Releases this {@code BgeeProperties}. 
+     * A call to {@link #getBgeeProperties()} from the thread that was holding it 
+     * will return a new {@code BgeeProperties} instance. 
+     * 
+     * @return  {@code true} if this {@code BgeeProperties} was released, 
+     *          {@code false} if it was already released.
+     */
+    public boolean release() {
+        log.entry();
+        return log.exit(bgeeProperties.values().remove(this));
+    }
+    /**
+     * Determines whether this {@code BgeeProperties} was released 
+     * (following a call to {@link #release()}).
+     * 
+     * @return  {@code true} if this {@code BgeeProperties} was released, 
+     *          {@code false} otherwise.
+     */
+    public boolean isReleased() {
+        log.entry();
+        return log.exit(!bgeeProperties.containsValue(this));
     }
 
     /**

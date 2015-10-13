@@ -41,8 +41,9 @@ public class CommandRunnerTest extends TestAncestor {
      */
     @Test
     public void shouldParseArgument() {
-        assertEquals("Incorrect argument parsing", "abc", CommandRunner.parseArgument("abc"));
-        assertEquals("Incorrect argument parsing", "", CommandRunner.parseArgument(""));
+        assertEquals("Incorrect argument parsing", "abc", CommandRunner.parseArgument(" abc "));
+        assertEquals("Incorrect argument parsing", "ab c", CommandRunner.parseArgument("ab c "));
+        assertEquals("Incorrect argument parsing", "", CommandRunner.parseArgument(" "));
         assertEquals("Incorrect argument parsing", null, CommandRunner.parseArgument(null));
         assertEquals("Incorrect argument parsing", null, CommandRunner.parseArgument(
                 CommandRunner.EMPTY_ARG));
@@ -54,10 +55,10 @@ public class CommandRunnerTest extends TestAncestor {
     @Test
     public void shouldParseListArgument() {
         assertEquals("Incorrect parsing of string as list", 
-                Arrays.asList("ID1", "ID2", "ID3"), 
+                Arrays.asList("ID1", "ID 2", "ID3"), 
                 CommandRunner.parseListArgument(
-                        "ID1" + CommandRunner.LIST_SEPARATOR + 
-                        "ID2" + CommandRunner.LIST_SEPARATOR + 
+                        " ID1" + CommandRunner.LIST_SEPARATOR + 
+                        "ID 2" + CommandRunner.LIST_SEPARATOR + 
                         "ID3" + CommandRunner.LIST_SEPARATOR));
         
 
@@ -80,7 +81,7 @@ public class CommandRunnerTest extends TestAncestor {
                 Arrays.asList(1, 2, 3), 
                 CommandRunner.parseListArgumentAsInt(
                         "1" + CommandRunner.LIST_SEPARATOR + 
-                        "2" + CommandRunner.LIST_SEPARATOR + 
+                        "2 " + CommandRunner.LIST_SEPARATOR + 
                         "3" + CommandRunner.LIST_SEPARATOR));
     }
 
@@ -91,7 +92,7 @@ public class CommandRunnerTest extends TestAncestor {
     public void shouldParseMapArgument() {
         LinkedHashMap<String, List<String>> expectedMap = new LinkedHashMap<String, List<String>>();
         expectedMap.put("key1", Arrays.asList("value1", "value1", "value2"));
-        expectedMap.put("key2", Arrays.asList("value2"));
+        expectedMap.put("key 2", Arrays.asList("value 2"));
         expectedMap.put("key3", Arrays.asList("value3"));
         expectedMap.put("key4", Arrays.asList("value4_1", 
                 "value4_2", "value4_3"));
@@ -101,7 +102,7 @@ public class CommandRunnerTest extends TestAncestor {
                 CommandRunner.parseMapArgument(
                         " key1 " + CommandRunner.KEY_VALUE_SEPARATOR + " value1 " + 
                             CommandRunner.LIST_SEPARATOR + 
-                        "key2" + CommandRunner.KEY_VALUE_SEPARATOR + "value2" + 
+                        "key 2" + CommandRunner.KEY_VALUE_SEPARATOR + "value 2" + 
                             CommandRunner.LIST_SEPARATOR + 
                         "key1" + CommandRunner.KEY_VALUE_SEPARATOR + " value1 " + 
                             CommandRunner.LIST_SEPARATOR + 
@@ -131,7 +132,7 @@ public class CommandRunnerTest extends TestAncestor {
     public void shouldParseMapArgumentAsInteger() {
         LinkedHashMap<String, List<Integer>> expectedMap = new LinkedHashMap<String, List<Integer>>();
         expectedMap.put("key1", Arrays.asList(1, 1, 2));
-        expectedMap.put("key2", Arrays.asList(2));
+        expectedMap.put("key 2", Arrays.asList(2));
         expectedMap.put("key3", Arrays.asList(3));
         expectedMap.put("key4", Arrays.asList(4, 5, 6));
         assertEquals("Incorrect parsing of string as map", 
@@ -139,7 +140,7 @@ public class CommandRunnerTest extends TestAncestor {
                 CommandRunner.parseMapArgumentAsInteger(
                         " key1 " + CommandRunner.KEY_VALUE_SEPARATOR + " 1 " + 
                             CommandRunner.LIST_SEPARATOR + 
-                        "key2" + CommandRunner.KEY_VALUE_SEPARATOR + "2" + 
+                        "key 2" + CommandRunner.KEY_VALUE_SEPARATOR + "2" + 
                             CommandRunner.LIST_SEPARATOR + 
                         "key1" + CommandRunner.KEY_VALUE_SEPARATOR + " 1 " + 
                             CommandRunner.LIST_SEPARATOR + 

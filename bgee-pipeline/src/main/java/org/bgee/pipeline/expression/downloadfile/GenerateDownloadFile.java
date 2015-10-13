@@ -12,6 +12,7 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.ComparisonFactor;
 import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
@@ -115,6 +116,24 @@ public abstract class GenerateDownloadFile extends CallUser {
     public final static String EXTENSION = ".tsv";
 
     /**
+     * A {@code String} that is the low quality data text, in the download file.
+     */
+    public final static String LOW_QUALITY_TEXT = "low quality";
+    /**
+     * A {@code String} that is the high quality data text, in the download file.
+     */
+    public final static String HIGH_QUALITY_TEXT = "high quality";
+
+    /**
+     * A {@code String} that is the weak ambiguity text for a call data, in the download file.
+     */
+    public final static String WEAK_AMBIGUITY = "weak ambiguity";
+    /**
+     * A {@code String} that is the strong ambiguity text for a call data, in the download file.
+     */
+    public final static String STRONG_AMBIGUITY= "strong ambiguity";
+
+    /**
      * An {@code interface} that must be implemented by {@code Enum}s representing a file type.
      * 
      * @author Valentine Rech de Laval
@@ -187,6 +206,43 @@ public abstract class GenerateDownloadFile extends CallUser {
         }
         
         return log.exit(fileTypes);
+    }
+
+    /**
+     * Convert a {@code org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState}
+     * into a {@code String}. This is because its method {@code getStringRepresentation}
+     * is not convenient for display in files.
+     * 
+     * @param dataState A {@code DataState} to be converted.
+     * @return          A {@code String} corresponding to {@code dataState}, to be used in files.
+     */
+    protected static String convertDataStateToString(DataState dataState) {
+        log.entry(dataState);
+        if (DataState.HIGHQUALITY.equals(dataState)) {
+            return log.exit(HIGH_QUALITY_TEXT);
+        }
+        if (DataState.LOWQUALITY.equals(dataState)) {
+            return log.exit(LOW_QUALITY_TEXT);
+        }
+        return log.exit(GenerateDiffExprFile.NA_VALUE);
+    }
+
+    /**
+     * Convert a {@code String} into a {@code org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState}
+     * This is because its method {@code getStringRepresentation} is not convenient for display in files.
+     * 
+     * @param string    A {@code String} to be converted.
+     * @return          A {@code DataState} corresponding to {@code string}, to be used in files.
+     */
+    protected static DataState convertStringToDataState(String string) {
+        log.entry(string);
+        if (string.equals(HIGH_QUALITY_TEXT)) {
+            return log.exit(DataState.HIGHQUALITY);
+        }
+        if (string.equals(LOW_QUALITY_TEXT)) {
+            return log.exit(DataState.LOWQUALITY);
+        }
+        return log.exit(DataState.NODATA);
     }
 
     /**

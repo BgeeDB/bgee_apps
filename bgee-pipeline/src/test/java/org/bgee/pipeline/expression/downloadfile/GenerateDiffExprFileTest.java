@@ -721,8 +721,8 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                                 anatEntityId.equals("Anat_id1")) {
                             this.assertCommonColumnRowEqual(geneId, "\"genN1\"", geneName,
                                     "\"stageN1\"", stageName, "\"anatName1\"", anatEntityName, 
-                                    DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), resume,
-                                    highQuality, quality);
+                                    DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(),
+                                    resume, highQuality, quality);
                             if (!isSimplified) {
                                 this.assertCompleteDiffExprColumnRowEqual(geneId,
                                         DiffExprCallType.OVER_EXPRESSED, affymetrixData,
@@ -740,8 +740,8 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                                 anatEntityId.equals("Anat_id2")) {
                             this.assertCommonColumnRowEqual(geneId, "\"genN1\"", geneName,
                                     "\"stageN2\"", stageName, "\"anatName2\"", anatEntityName, 
-                                    DiffExpressionData.STRONG_AMBIGUITY.getStringRepresentation(), resume,
-                                    noQuality, quality);
+                                    DiffExpressionData.STRONG_AMBIGUITY.getStringRepresentation(),
+                                    resume, noQuality, quality);
                             if (!isSimplified) {
                                 this.assertCompleteDiffExprColumnRowEqual(geneId,
                                         DiffExprCallType.UNDER_EXPRESSED, affymetrixData,
@@ -759,8 +759,8 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                                 anatEntityId.equals("Anat_id13")) {
                             this.assertCommonColumnRowEqual(geneId, "\"genN1\"", geneName,
                                     "\"stageN18\"", stageName, "\"anatName13\"", anatEntityName, 
-                                    DiffExpressionData.WEAK_AMBIGUITY.getStringRepresentation(), resume,
-                                    noQuality, quality);
+                                    DiffExpressionData.WEAK_AMBIGUITY.getStringRepresentation(),
+                                    resume, noQuality, quality);
                             if (!isSimplified) {
                                 this.assertCompleteDiffExprColumnRowEqual(geneId,
                                         DiffExprCallType.OVER_EXPRESSED, affymetrixData,
@@ -783,8 +783,8 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                                 anatEntityId.equals("Anat_id2")) {
                             this.assertCommonColumnRowEqual(geneId, "\"genN1\"", geneName,
                                     "\"stageN1\"", stageName, "\"anatName2\"", anatEntityName, 
-                                    DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), resume,
-                                    lowQuality, quality);
+                                    DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(),
+                                    resume, lowQuality, quality);
                             if (!isSimplified) {
                                 this.assertCompleteDiffExprColumnRowEqual(geneId,
                                         DiffExprCallType.OVER_EXPRESSED, affymetrixData,
@@ -802,8 +802,8 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                                 anatEntityId.equals("Anat_id13")) {
                             this.assertCommonColumnRowEqual(geneId, "\"genN1\"", geneName,
                                     "\"stageN18\"", stageName, "\"anatName13\"", anatEntityName, 
-                                    DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(), resume,
-                                    lowQuality, quality);
+                                    DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(),
+                                    resume, lowQuality, quality);
                             if (!isSimplified) {
                                 this.assertCompleteDiffExprColumnRowEqual(geneId,
                                         DiffExprCallType.NOT_EXPRESSED, affymetrixData,
@@ -831,8 +831,8 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                                 anatEntityId.equals("Anat_id2")) {
                             this.assertCommonColumnRowEqual(geneId, "\"genN2\"", geneName,
                                     "\"stageN1\"", stageName, "\"anatName2\"", anatEntityName, 
-                                    DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(), resume,
-                                    highQuality, quality);
+                                    DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(),
+                                    resume, highQuality, quality);
                             if (!isSimplified) {
                                 this.assertCompleteDiffExprColumnRowEqual(geneId,
                                         DiffExprCallType.NO_DATA, affymetrixData,
@@ -850,8 +850,8 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                                 anatEntityId.equals("Anat_id13")) {
                             this.assertCommonColumnRowEqual(geneId, "\"genN2\"", geneName,
                                     "\"stageN3\"", stageName, "\"anatName13\"", anatEntityName, 
-                                    DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), resume,
-                                    highQuality, quality);
+                                    DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(),
+                                    resume, highQuality, quality);
                             if (!isSimplified) {
                                 this.assertCompleteDiffExprColumnRowEqual(geneId,
                                         DiffExprCallType.NOT_DIFF_EXPRESSED, affymetrixData,
@@ -874,8 +874,8 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                                 anatEntityId.equals("Anat_id2")) {
                             this.assertCommonColumnRowEqual(geneId, "\"genN2\"", geneName,
                                     "\"stageN1\"", stageName, "\"anatName2\"", anatEntityName, 
-                                    DiffExpressionData.WEAK_AMBIGUITY.getStringRepresentation(), resume,
-                                    noQuality, quality);
+                                    DiffExpressionData.WEAK_AMBIGUITY.getStringRepresentation(),
+                                    resume, noQuality, quality);
                             if (!isSimplified) {
                                 this.assertCompleteDiffExprColumnRowEqual(geneId,
                                         DiffExprCallType.NOT_EXPRESSED, affymetrixData,
@@ -893,8 +893,8 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                                 anatEntityId.equals("Anat_id13")) {
                             this.assertCommonColumnRowEqual(geneId, "\"genN2\"", geneName,
                                     "\"stageN3\"", stageName, "\"anatName13\"", anatEntityName, 
-                                    DiffExpressionData.WEAK_AMBIGUITY.getStringRepresentation(), resume,
-                                    noQuality, quality);
+                                    DiffExpressionData.WEAK_AMBIGUITY.getStringRepresentation(),
+                                    resume, noQuality, quality);
                             if (!isSimplified) {
                                 this.assertCompleteDiffExprColumnRowEqual(geneId,
                                         DiffExprCallType.OVER_EXPRESSED, affymetrixData,

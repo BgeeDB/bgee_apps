@@ -53,7 +53,6 @@ import org.supercsv.io.ICsvMapWriter;
  */
 //TODO: stop using these awful Maps, use a BeanReader/BeanWriter instead,
 //see org.bgee.pipeline.annotations.SimilarityAnnotationUtils
-//FIXME: use "low quality" instead of "poor quality"
 public class GenerateExprFile extends GenerateDownloadFile {
 
     /**
@@ -186,18 +185,14 @@ public class GenerateExprFile extends GenerateDownloadFile {
      * An {@code Enum} used to define, for each data type (Affymetrix, RNA-Seq, ...),
      * as well as for the summary column, the data state of the call.
      * <ul>
-     * <li>{@code NO_DATA}: no data from the associated data type allowed to produce the
-     * call.
-     * <li>{@code NOEXPRESSION}:    no-expression was detected from the associated data type.
-     * <li>{@code LOWQUALITY}:      low-quality expression was detected from the associated
-     *                              data type.
-     * <li>{@code HIGHQUALITY}:     high-quality expression was detected from the associated
-     *                              data type.
-     * <li>{@code LOWAMBIGUITY}:    different data types are not coherent with an inferred
+     * <li>{@code NO_DATA}:         no data from the associated data type allowed to produce the call.
+     * <li>{@code NO_EXPRESSION}:   no-expression was detected from the associated data type.
+     * <li>{@code EXPRESSION}:      expression was detected from the associated data type.
+     * <li>{@code WEAK_AMBIGUITY}:  different data types are not coherent with an inferred
      *                              no-expression call (for instance, Affymetrix data reveals an 
      *                              expression while <em>in situ</em> data reveals an inferred
      *                              no-expression).
-     * <li>{@code HIGHAMBIGUITY}:   different data types are not coherent without at least
+     * <li>{@code HIGH_AMBIGUITY}:  different data types are not coherent without at least
      *                              an inferred no-expression call (for instance, Affymetrix data 
      *                              reveals expression while <em>in situ</em> data reveals a 
      *                              no-expression without been inferred).
@@ -209,7 +204,7 @@ public class GenerateExprFile extends GenerateDownloadFile {
      */
     public enum ExpressionData {
         NO_DATA("no data"), NO_EXPRESSION("absent"), EXPRESSION("present"),
-        LOW_AMBIGUITY("low ambiguity"), HIGH_AMBIGUITY("high ambiguity");
+        WEAK_AMBIGUITY("weak ambiguity"), HIGH_AMBIGUITY("high ambiguity");
 
         private final String stringRepresentation;
 
@@ -957,13 +952,13 @@ public class GenerateExprFile extends GenerateDownloadFile {
         }
 
         List<Object> specificTypeQualities = new ArrayList<Object>();
-        specificTypeQualities.add(DataState.HIGHQUALITY.getStringRepresentation());
-        specificTypeQualities.add(DataState.LOWQUALITY.getStringRepresentation());
-        specificTypeQualities.add(DataState.NODATA.getStringRepresentation());
+        specificTypeQualities.add(convertDataStateToString(DataState.HIGHQUALITY));
+        specificTypeQualities.add(convertDataStateToString(DataState.LOWQUALITY));
+        specificTypeQualities.add(convertDataStateToString(DataState.NODATA));
 
         List<Object> resumeQualities = new ArrayList<Object>();
-        resumeQualities.add(DataState.HIGHQUALITY.getStringRepresentation());
-        resumeQualities.add(DataState.LOWQUALITY.getStringRepresentation());
+        resumeQualities.add(convertDataStateToString(DataState.HIGHQUALITY));
+        resumeQualities.add(convertDataStateToString(DataState.LOWQUALITY));
         resumeQualities.add(GenerateDiffExprFile.NA_VALUE);
 
         List<Object> originValues = new ArrayList<Object>();
@@ -1310,7 +1305,7 @@ public class GenerateExprFile extends GenerateDownloadFile {
         String callQuality = GenerateDownloadFile.NA_VALUE;
         if (globalExpressionTO != null && globalNoExpressionTO != null) {
             if (globalNoExpressionTO.getOriginOfLine().equals(NoExpressionCallTO.OriginOfLine.PARENT)) {
-                summary = ExpressionData.LOW_AMBIGUITY;
+                summary = ExpressionData.WEAK_AMBIGUITY;
             } else {
                 summary = ExpressionData.HIGH_AMBIGUITY;
             }
@@ -1320,16 +1315,16 @@ public class GenerateExprFile extends GenerateDownloadFile {
                     globalExpressionTO.getInSituData(), globalExpressionTO.getRNASeqData());
 
             if (allDataState.contains(DataState.HIGHQUALITY)) {
-                callQuality = DataState.HIGHQUALITY.getStringRepresentation();
+                callQuality = GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY);
                 // summary = ExpressionData.HIGH_QUALITY;
             } else {
-                callQuality = DataState.LOWQUALITY.getStringRepresentation();
+                callQuality = GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY);
                 // summary = ExpressionData.LOW_QUALITY;
             }
             summary = ExpressionData.EXPRESSION;
         } else if (globalNoExpressionTO != null) {
             summary = ExpressionData.NO_EXPRESSION;
-            callQuality = DataState.HIGHQUALITY.getStringRepresentation();
+            callQuality = GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY);
         }
         row.put(EXPRESSION_COLUMN_NAME, summary.getStringRepresentation());
         row.put(QUALITY_COLUMN_NAME, callQuality);
@@ -1438,7 +1433,7 @@ public class GenerateExprFile extends GenerateDownloadFile {
 
         String[] data = new String[2];
         data[0] = ExpressionData.NO_DATA.getStringRepresentation();
-        data[1] = DataState.NODATA.getStringRepresentation();
+        data[1] = GenerateDownloadFile.convertDataStateToString(DataState.NODATA);
 
         // no data at all
         if (dataStateExpr == DataState.NODATA && dataStateNoExpr == DataState.NODATA) {
@@ -1452,21 +1447,21 @@ public class GenerateExprFile extends GenerateDownloadFile {
         if (dataStateExpr != DataState.NODATA) {
             data[0] = ExpressionData.EXPRESSION.getStringRepresentation();
             if (dataStateExpr.equals(DataState.HIGHQUALITY)) {
-                data[1] = DataState.HIGHQUALITY.getStringRepresentation();
+                data[1] = GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY);
                 return log.exit(data);
             }
             if (dataStateExpr.equals(DataState.LOWQUALITY)) {
-                data[1] = DataState.LOWQUALITY.getStringRepresentation();
+                data[1] = GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY);
                 return log.exit(data);
             }
             throw log.throwing(new IllegalArgumentException("The DataState provided (" + 
-                    dataStateExpr.getStringRepresentation() + ") is not supported"));
+                    GenerateDownloadFile.convertDataStateToString(dataStateExpr) + ") is not supported"));
         }
 
         if (dataStateNoExpr != DataState.NODATA) {
             // no-expression data available
             data[0] = ExpressionData.NO_EXPRESSION.getStringRepresentation();
-            data[1] = DataState.HIGHQUALITY.getStringRepresentation();
+            data[1] = GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY);
             return log.exit(data);
         }
 

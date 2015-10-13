@@ -96,21 +96,64 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
     public final static String EXPRESSION_COLUMN_NAME = "Expression";
 
     /**
+     * Main method to trigger the generate multi-species expression TSV download files
+     * (simple and advanced files) from Bgee database. Parameters that must be provided
+     * in order in {@code args} are:
+     * <ol>
+     * <li>a list of NCBI species IDs (for instance, {@code 9606} for human) that will be used to
+     * generate download files, separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}.
+     * If an empty list is provided (see {@link CommandRunner#EMPTY_LIST}), TODO to be decided.
+     * <li>a taxon ID (for instance, {@code 40674} for Mammalia) that will be used t
+     * generate download files. If an empty list is provided (see {@link CommandRunner#EMPTY_LIST}),
+     * TODO To be decided.
+     * <li>a list of files types that will be generated ('multi-expr-simple' for
+     * {@link MultiSpExprFileType MULTI_EXPR_SIMPLE}, and 'multi-expr-complete' for
+     * {@link MultiSpExprFileType MULTI_EXPR_COMPLETE}), separated by the {@code String}
+     * {@link CommandRunner#LIST_SEPARATOR}. If an empty list is provided
+     * (see {@link CommandRunner#EMPTY_LIST}), all possible file types will be generated.
+     * <li>the directory path that will be used to generate download files.
+     * <li>the prefix that will be used to generate multi-species file names. If {@code null} or
+     * empty, TODO to be decided.
+     * </ol>
+     * 
+     * @param args  An {@code Array} of {@code String}s containing the requested parameters.
+     * @throws IllegalArgumentException If incorrect parameters were provided.
+     * @throws IOException              If an error occurred while trying to write generated files.
+     */
+    public static void main(String[] args) throws IllegalArgumentException, IOException {
+        log.entry((Object[]) args);
+    
+        int expectedArgLength = 5;
+        if (args.length != expectedArgLength) {
+            throw log.throwing(new IllegalArgumentException(
+                    "Incorrect number of arguments provided, expected " +
+                    expectedArgLength + " arguments, " + args.length + " provided."));
+        }
+    
+        GenerateMultiSpeciesExprFile generator = new GenerateMultiSpeciesExprFile(
+            CommandRunner.parseListArgument(args[0]),
+            args[0],
+            GenerateDownloadFile.convertToFileTypes(
+                CommandRunner.parseListArgument(args[1]), MultiSpExprFileType.class),
+            args[2],
+            args[3]);
+        generator.generateMultiSpeciesExprFiles();
+    
+        log.exit();
+    }
+
+    /**
      * An {@code Enum} used to define, for each data type (Affymetrix, RNA-Seq, ...),
      * as well as for the summary column, the data state of the call.
      * <ul>
-     * <li>{@code NO_DATA}: no data from the associated data type allowed to produce the
-     * call.
-     * <li>{@code NOEXPRESSION}:    no-expression was detected from the associated data type.
-     * <li>{@code LOWQUALITY}:      low-quality expression was detected from the associated
-     *                              data type.
-     * <li>{@code HIGHQUALITY}:     high-quality expression was detected from the associated
-     *                              data type.
-     * <li>{@code LOWAMBIGUITY}:    different data types are not coherent with an inferred
+     * <li>{@code NO_DATA}:         no data from the associated data type allowed to produce the call.
+     * <li>{@code EXPRESSION}:      expression was detected from the associated data type.
+     * <li>{@code NO_EXPRESSION}:   no-expression was detected from the associated data type.
+     * <li>{@code WEAK_AMBIGUITY}:  different data types are not coherent with an inferred
      *                              no-expression call (for instance, Affymetrix data reveals an 
      *                              expression while <em>in situ</em> data reveals an inferred
      *                              no-expression).
-     * <li>{@code HIGHAMBIGUITY}:   different data types are not coherent without at least
+     * <li>{@code HIGH_AMBIGUITY}:  different data types are not coherent without at least
      *                              an inferred no-expression call (for instance, Affymetrix data 
      *                              reveals expression while <em>in situ</em> data reveals a 
      *                              no-expression without been inferred).
@@ -122,7 +165,7 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
      */
     public enum ExpressionData {
         NO_DATA("no data"), NO_EXPRESSION("absent"), EXPRESSION("expression"),
-        LOW_AMBIGUITY("low ambiguity"), HIGH_AMBIGUITY("high ambiguity");
+        WEAK_AMBIGUITY("weak ambiguity"), HIGH_AMBIGUITY("high ambiguity");
 
         private final String stringRepresentation;
 
@@ -182,18 +225,6 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
     }
 
     /**
-     * A {@code String} that is the IDs of the common ancestor taxon we want to into account. 
-     * If {@code null} or empty, TODO  to be decided.
-     */
-    private String taxonId;
-
-    /**
-     * A {@code String} that is the prefix that will be used to generate multi-species file names.
-     * If {@code null} or empty, TODO  to be decided.
-     */
-    private String groupPrefix;
-
-    /**
      * An {@code Enum} used to define the possible multi-species expression file types 
      * to be generated.
      * <ul>
@@ -210,7 +241,7 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
     public enum MultiSpExprFileType implements FileType {
         MULTI_EXPR_SIMPLE(CategoryEnum.EXPR_CALLS_SIMPLE, true),
         MULTI_EXPR_COMPLETE(CategoryEnum.EXPR_CALLS_COMPLETE, false);
-
+    
         /**
          * A {@code CategoryEnum} that is the category of files of this type.
          */
@@ -221,7 +252,7 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
          * file type.
          */
         private final boolean simpleFileType;
-
+    
         /**
          * Constructor providing the {@code CategoryEnum} of this {@code MultiSpeciesExprFileType},
          * and a {@code boolean} defining whether this {@code MultiSpeciesExprFileType}
@@ -231,7 +262,7 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
             this.category = category;
             this.simpleFileType = simpleFileType;
         }
-
+    
         @Override
         public String getStringRepresentation() {
             return this.category.getStringRepresentation();
@@ -249,6 +280,18 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
             return this.category;
         }
     }
+
+    /**
+     * A {@code String} that is the IDs of the common ancestor taxon we want to into account.
+     * If {@code null} or empty, TODO  to be decided.
+     */
+    private String taxonId;
+
+    /**
+     * A {@code String} that is the prefix that will be used to generate multi-species file names.
+     * If {@code null} or empty, TODO  to be decided.
+     */
+    private String groupPrefix;
 
     /**
      * Default constructor. 
@@ -305,53 +348,6 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
         super(manager, speciesIds, fileTypes, directory);
         this.taxonId = taxonId;
         this.groupPrefix = groupPrefix;
-    }
-    
-    /**
-     * Main method to trigger the generate multi-species expression TSV download files 
-     * (simple and advanced files) from Bgee database. Parameters that must be provided 
-     * in order in {@code args} are:
-     * <ol>
-     * <li>a list of NCBI species IDs (for instance, {@code 9606} for human) that will be used to 
-     * generate download files, separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}. 
-     * If an empty list is provided (see {@link CommandRunner#EMPTY_LIST}), TODO to be decided.
-     * <li>a taxon ID (for instance, {@code 40674} for Mammalia) that will be used to 
-     * generate download files. If an empty list is provided (see {@link CommandRunner#EMPTY_LIST}),
-     * TODO To be decided.
-     * <li>a list of files types that will be generated ('multi-expr-simple' for
-     * {@link MultiSpExprFileType MULTI_EXPR_SIMPLE}, and 'multi-expr-complete' for 
-     * {@link MultiSpExprFileType MULTI_EXPR_COMPLETE}), separated by the {@code String} 
-     * {@link CommandRunner#LIST_SEPARATOR}. If an empty list is provided 
-     * (see {@link CommandRunner#EMPTY_LIST}), all possible file types will be generated.
-     * <li>the directory path that will be used to generate download files.
-     * <li>the prefix that will be used to generate multi-species file names. If {@code null} or 
-     * empty, TODO to be decided.
-     * </ol>
-     * 
-     * @param args  An {@code Array} of {@code String}s containing the requested parameters.
-     * @throws IllegalArgumentException If incorrect parameters were provided.
-     * @throws IOException              If an error occurred while trying to write generated files.
-     */
-    public static void main(String[] args) throws IllegalArgumentException, IOException {
-        log.entry((Object[]) args);
-
-        int expectedArgLength = 5;
-        if (args.length != expectedArgLength) {
-            throw log.throwing(new IllegalArgumentException(
-                    "Incorrect number of arguments provided, expected " + 
-                    expectedArgLength + " arguments, " + args.length + " provided."));
-        }
-
-        GenerateMultiSpeciesExprFile generator = new GenerateMultiSpeciesExprFile(
-            CommandRunner.parseListArgument(args[0]),
-            args[0],
-            GenerateDownloadFile.convertToFileTypes(
-                CommandRunner.parseListArgument(args[1]), MultiSpExprFileType.class),
-            args[2],
-            args[3]);
-        generator.generateMultiSpeciesExprFiles();
-
-        log.exit();
     }
     
     /**
@@ -533,7 +529,7 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
 //                        - we filter families with only no diff expression
 //                        - do system to keep only the 'Observed' in single file
 //                          but for the first generation we do not active.
-//                        - filter poor quality homology annotations in simple file
+//                        - filter untrusted homology annotations in simple file
 //                  // We clear the set containing TO of an unique OMA Node ID
 //                  groupedCallTOs.clear();
 //              }
@@ -598,13 +594,13 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
         }
 
         List<Object> specificTypeQualities = new ArrayList<Object>();
-        specificTypeQualities.add(DataState.HIGHQUALITY.getStringRepresentation());
-        specificTypeQualities.add(DataState.LOWQUALITY.getStringRepresentation());
-        specificTypeQualities.add(DataState.NODATA.getStringRepresentation());
+        specificTypeQualities.add(GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY));
+        specificTypeQualities.add(GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY));
+        specificTypeQualities.add(GenerateDownloadFile.convertDataStateToString(DataState.NODATA));
 
         List<Object> resumeQualities = new ArrayList<Object>();
-        resumeQualities.add(DataState.HIGHQUALITY.getStringRepresentation());
-        resumeQualities.add(DataState.LOWQUALITY.getStringRepresentation());
+        resumeQualities.add(GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY));
+        resumeQualities.add(GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY));
         resumeQualities.add(GenerateDiffExprFile.NA_VALUE);
 
         List<Object> originValues = new ArrayList<Object>();

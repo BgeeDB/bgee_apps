@@ -15,9 +15,9 @@ import org.bgee.controller.RequestParameters;
  * @version Bgee 13 Jul 2015
  * @since   Bgee 13
  */
-public class TestTopAnatDisplay extends TestParentDisplay implements TopAnatDisplay {
+public class FakeTopAnatDisplay extends FakeParentDisplay implements TopAnatDisplay {
 
-    public TestTopAnatDisplay(HttpServletResponse response,
+    public FakeTopAnatDisplay(HttpServletResponse response,
             RequestParameters requestParameters, BgeeProperties prop,
             ViewFactory factory) throws IOException {
         super(response, requestParameters, prop, factory);

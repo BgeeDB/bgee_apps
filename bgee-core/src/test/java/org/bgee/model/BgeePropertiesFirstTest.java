@@ -1,8 +1,6 @@
 package org.bgee.model;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertSame;
+import static org.junit.Assert.*;
 
 import java.util.Properties;
 import java.util.concurrent.Callable;
@@ -90,7 +88,7 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
                     this.exchanger.exchange(null);
                 }
             }
-        };
+        }
 
         // Get two BgeeProperties in the main thread and check that it is the same instance
         BgeeProperties bgeeProp1 = BgeeProperties.getBgeeProperties();
@@ -112,7 +110,103 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
         }
         assertNotSame("The two objects are the same but they should not be",
                 bgeeProp1, test.bgeeProp3);
+        
+        //release the BgeeProperties one by one without calling releaseAll(), 
+        //that would make other test to fail
+        BgeeProperties.getBgeeProperties().release();
+        test.bgeeProp3.release();
 
     }
+    
+    /**
+    * test the behavior of {@link BgeeProperties.release()} and {@link BgeeProperties.isReleased()}.
+    */
+   @Test
+   public void shouldReleaseBgeeProperties() {
+       /**
+        * An anonymous class to acquire {@code BgeeProperties}s 
+        * from a different thread than this one, 
+        * and to be run alternatively to the main thread.
+        */
+       class ThreadTest extends Thread {
+           public volatile BgeeProperties prop1;
+           public volatile BgeeProperties prop2;
+           public volatile boolean firstReleaseReturn;
+           public volatile boolean secondReleaseReturn;
+           /**
+            * An {@code Exchanger} that will be used to run threads alternatively. 
+            */
+           public final Exchanger<Integer> exchanger = new Exchanger<Integer>();
+           
+           @Override
+           public void run() {
+               try {
+                   //acquire a BgeeProperties
+                   prop1 = BgeeProperties.getBgeeProperties();
+                   
+                   //release it
+                   firstReleaseReturn = prop1.release();
+                   //calling it again should do nothing, store the value to check
+                   secondReleaseReturn = prop1.release();
+                   
+                   //acquire a new BgeeProperties
+                   prop2 = BgeeProperties.getBgeeProperties();
+                   //main thread's turn
+                   this.exchanger.exchange(null);
+                   
+               } catch (InterruptedException e) {
+                   Thread.currentThread().interrupt();
+               } 
+           }
+       }
+       
+       try {
+           //get a BgeeProperties in the main thread
+           BgeeProperties prop1 = BgeeProperties.getBgeeProperties();
+           
+           //release it, should return true
+           assertTrue("A BgeeProperties was not correctly released", 
+                   prop1.release());
+           //calling it again should do nothing
+           assertFalse("The returned value of release() is inaccurate", 
+                   prop1.release());
+           
+           //acquire a new BgeeProperties
+           BgeeProperties prop2 = BgeeProperties.getBgeeProperties();
+           
+           //launch a second thread also acquiring and releasing BgeeProperties
+           ThreadTest test = new ThreadTest();
+           test.start();
+           //wait for this thread's turn
+           test.exchanger.exchange(null);
+           
+           //test the returned value of the two calls to release() in the second thread
+           assertTrue("A BgeeProperties was not correctly released in second thread", 
+                   test.firstReleaseReturn);
+           assertFalse("The returned value of release() is inaccurate in second thread", 
+                   test.secondReleaseReturn);
+  
+           //the first BgeeProperties of the main thread and the second thread 
+           //should be released
+           assertTrue("A BgeeProperties was not correctly released in the main thread", 
+                   prop1.isReleased());
+           assertTrue("A BgeeProperties was not correctly released in the second thread", 
+                   test.prop1.isReleased());
+           
+           //the second BgeeProperties of the main thread and the second thread 
+           //should NOT be released
+           assertFalse("A BgeeProperties should not have been released in the main thread", 
+                   prop2.isReleased());
+           assertFalse("A BgeeProperties should not have been released in the second thread", 
+                   test.prop2.isReleased());
+           
+           //release the BgeeProperties one by one without calling releaseAll(), 
+           //that would make other test to fail
+           BgeeProperties.getBgeeProperties().release();
+           test.prop2.release();
+       } catch (InterruptedException e) {
+           Thread.currentThread().interrupt();
+       } 
+   }
 
 }

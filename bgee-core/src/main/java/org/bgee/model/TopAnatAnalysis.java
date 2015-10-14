@@ -12,15 +12,22 @@ import java.nio.file.StandardCopyOption;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.expressiondata.querytool.AnatEntityService;
 import org.bgee.model.expressiondata.querytool.CallService;
 import org.bgee.model.species.Species;
 
 import rcaller.RCaller;
 import rcaller.RCode;
 
+/**
+ * TODO
+ * @author Mathieu Seppey
+ *
+ */
 public class TopAnatAnalysis extends QueryTool {
 
     /**
@@ -37,17 +44,12 @@ public class TopAnatAnalysis extends QueryTool {
     /**
      * 
      */
-    private final CallService callService;
-
-    /**
-     * 
-     */
     private final BgeeProperties prop = BgeeProperties.getBgeeProperties();
 
     /**
      * 
      */
-    private final Species species = null;
+    private final Species species = new Species("999");
 
     /**
      * {@code ConcurrentMap} used to manage concurrent access to the
@@ -107,7 +109,17 @@ public class TopAnatAnalysis extends QueryTool {
      * @see #generateGenesToOrgansAssociationFile()
      * @see #beginTopAnatAnalysis(String)
      */
-    private String geneToOrganFileName ;
+    private String geneToOrganFileName = "tmp"; // TODO remove this
+    
+    /**
+     * 
+     */
+    private CallService callService;
+
+    /**
+     * 
+     */
+    private AnatEntityService anatEntityService;
 
     @Override
     protected Logger getLogger() {
@@ -119,16 +131,7 @@ public class TopAnatAnalysis extends QueryTool {
      * @param params
      */
     public TopAnatAnalysis(TopAnatParams params) {
-        this(new CallService(),params);
-    }
-
-    /**
-     * 
-     * @param params
-     */
-    public TopAnatAnalysis(CallService callService,TopAnatParams params) {
-        log.entry(callService,params);
-        this.callService = callService;
+        log.entry(params);
         this.params = params;
         log.exit();
     }
@@ -161,16 +164,22 @@ public class TopAnatAnalysis extends QueryTool {
 
         // TODO
         // Check whether the foreground is included in the background
-        // Detect species        
-        // Get anat data
+        // Detect species  
+        
+
+        // Get anatomic entities data
+        this.anatEntityService = params.getServiceFactory()
+                .getAnatEntityFactory(this.species.getId()); 
+        this.generateOrganFiles();
         // Get call data
+        this.callService = params.getServiceFactory().getCallFactory();
         // Write R input file
         // perform R function and write output
-        
+
         try{
             // check le lock
             // perform the R anaysis
-            this.performRCallerFunctions(tmpResultFileName, tmpPDFFileName);
+//            this.performRCallerFunctions(tmpResultFileName, tmpPDFFileName);
         }
         finally{
             // delete tmp files
@@ -351,18 +360,11 @@ public class TopAnatAnalysis extends QueryTool {
      * Generates the Organ ID to Organ Name association file, and organ relationship file, 
      * only if they do not already exist.
      * <p>
-     * If only one species was submitted (see {@link #getDetectedSpecies()}, 
-     * the method will write into a file named 
-     * {@link #organNamesFileName}, the association between the organ IDs of this species 
-     * and their name (see {@link #writeOrganNamesToFile(String, String)}), and into 
+     * The method will write into a file named 
+     * {@link #organNamesFileName}, the association between the organ IDs of the current
+     * species and their name (see {@link #writeOrganNamesToFile(String, String)}), and into 
      * a file named {@link #organRelationshipsFileName}, the relations between the organs 
-     * of this species (see {@link #writeOrganRelationsToFile(String, String)}).
-     * <p>
-     * Ïf several species were submitted, the method will write in the file {@code 
-     * #organNamesFileName} the association between HOG IDs and HOG names 
-     * (see {@link #writeHogNamesToFile(String)}), and in the file {@code 
-     * #organRelationshipsFileName}, the relations between HOGs (see {@link 
-     * #writeHogRelationsToFile(String)}.
+     * of the species (see {@link #writeOrganRelationsToFile(String, String)}).
      * 
      * @throws IOException
      *             if the files cannot be opened or written to.
@@ -412,8 +414,8 @@ public class TopAnatAnalysis extends QueryTool {
                 log.exit(); return;
             }
 
-            this.writeOrganNamesToFile(namesTmpFileName, this.species.getId());
-            this.writeOrganRelationsToFile(relsTmpFileName, this.species.getId());
+            this.writeOrganNamesToFile(namesTmpFileName);
+            this.writeOrganRelationsToFile(relsTmpFileName);
 
             //move tmp files if successful
             //We check that there were no database error that could have corrupted the results
@@ -421,6 +423,7 @@ public class TopAnatAnalysis extends QueryTool {
             //                throw log.throwing(new IllegalStateException("A database error occurred, " +
             //                        "analysis canceled"));
             //            }
+            
             Files.move(namesTmpFile, finalNamesFile, StandardCopyOption.REPLACE_EXISTING);
             Files.move(relsTmpFile, finalRelsFile, StandardCopyOption.REPLACE_EXISTING);
 
@@ -440,41 +443,33 @@ public class TopAnatAnalysis extends QueryTool {
 
     /**
      * Write into the file {@code organNameFile}, the association between names 
-     * and IDs of organs, for the species with the ID {@code speciesId}. It will be 
+     * and IDs of organs, for the current species with the ID {@code speciesId}. It will be 
      * a TSV file with no header, with each organ corresponding to a line, with the ID 
      * in the first column, and the name in the second column.
      * <p>
      * Note that it is not the responsibility of this method to acquire a write lock 
      * on the file, it is the responsibility of the caller.
-     * 
      * @param organNameFile    A {@code String} that is the path to file where organ names 
      *                         will be written.
-     * @param speciesId        A {@code String} that is the ID of the species for which 
-     *                         we want organ names.
      * @throws IOException     If an error occurred while writing in the file.
      */
-    private void writeOrganNamesToFile(String organNameFile, String speciesId) throws IOException {
-        log.entry(organNameFile);
-
-        //        try (PrintWriter out = new PrintWriter(new BufferedWriter(
-        //                new FileWriter(organNameFile)))) {
-        //
-        //            OrganLoader organLoader = new OrganLoader();
-        //            Collection<Organ> allOrgans = organLoader
-        //                    .getOrgansBySpeciesId(speciesId);
-        //            for (Organ organ : allOrgans)
-        //                out.println(organ.getId() + "\t"
-        //                        + organ.getName().replaceAll("'", ""));
-        //        }
+    private void writeOrganNamesToFile(String organNameFile) throws IOException {
+        log.entry();
+        
+        try (PrintWriter out = new PrintWriter(new BufferedWriter(
+                new FileWriter(organNameFile)))) {
+            this.anatEntityService.getAnatEntities()
+            .forEach((id,name) -> out.println(id + "\t" + name.replaceAll("'", "")));
+        }
 
         log.exit();
     }
 
     /**
      * Write into the file {@code organRelFile}, the direct relations between organs, 
-     * for the species with the ID {@code speciesId}. It will be a TSV file with no header, 
-     * with each line corresponding to a relation, with the ID of the descent organ 
-     * in the first column, and the ID of the parent organ in the second column. 
+     * for the current species with the ID {@code speciesId}. It will be a TSV file with 
+     * no header, with each line corresponding to a relation, with the ID of the descent
+     * organ in the first column, and the ID of the parent organ in the second column. 
      * Only part_of and is_a relations should be considered.
      * <p>
      * Note that it is not the responsibility of this method to acquire a write lock 
@@ -482,26 +477,20 @@ public class TopAnatAnalysis extends QueryTool {
      * 
      * @param organRelFile     A {@code String} that is the path to file where organ relations 
      *                         will be written.
-     * @param speciesId        A {@code String} that is the ID of the species for which 
-     *                         we want organ names.
+     *                         
      * @throws IOException     If an error occurred while writing in the file.
      */
-    private void writeOrganRelationsToFile(String organRelFile, String speciesId) 
+    private void writeOrganRelationsToFile(String organRelFile)
             throws IOException {
-        log.entry(organRelFile);
+        log.entry();
 
-        //        try (PrintWriter out = new PrintWriter(new BufferedWriter(
-        //                new FileWriter(organRelFile)))) {
-        //
-        //            OrganDAO organDAO = DAOFactory.getDAOFactory().getOrganDAO();
-        //            Map<String, Set<String>> organRelationships = organDAO
-        //                    .getDirectOrganRelationshipsBySpeciesId(speciesId);
-        //            for (Map.Entry<String, Set<String>> entry : organRelationships
-        //                    .entrySet())
-        //                for (String descentId : entry.getValue())
-        //                    out.println(descentId + '\t' + entry.getKey());
-        //
-        //        }
+        try (PrintWriter out = new PrintWriter(new BufferedWriter(
+                new FileWriter(organRelFile)))) {
+            this.anatEntityService.getAnatEntitiesRelationships()
+            .forEach(
+                    (id,descentIds) -> descentIds.forEach(
+                            (descentId) -> out.println(descentId + '\t' + id)));
+        }
 
         log.exit();
     }
@@ -570,93 +559,93 @@ public class TopAnatAnalysis extends QueryTool {
             long finalWritingTime = 0;
             long finalNumberOfOrgans = 0;
 
-//            while (!genes.isEmpty()) {
-//
-//                //                if (log.isDebugEnabled()) {
-//                //                    log.debug("{} genes , {}th iteration", genes.size(),
-//                //                            iterationCount);
-//                //                }
-//                long startOrganRetrieval = 0;
-//                long stopOrganRetrieval = 0;
-//                long organRetrievalTime = 0;
-//                long startWritingInFile = 0;
-//                long stopWritingInFile = 0;
-//                long writingTime = 0;
-//                int noOfOrgans = 0;
-//
-//                for (Gene gene : genes) {
-//                    // load the anatomical structure where this gene is expressed,
-//                    // corresponding to the submitted parameters
-//                    // single species requested, we load species-specific
-//                    // anatomical structures for this gene
-//                    if (log.isDebugEnabled()) {
-//                        startOrganRetrieval = new GregorianCalendar()
-//                                .getTimeInMillis();
-//                    }
-//                    //NOTE: as of Bgee 12.1, all stages and sub-stages belonging 
-//                    //to a metastage are retrieved, so we disable includeChildrenStages
-//                    gene.loadRealOrgansFromStageIdsListAndExpression(
-//                            this.getExpressionParameters(), this.inferredStageIds,
-//                            //this.isIncludeChildrenStages());
-//                            false);
-//                    if (log.isDebugEnabled()) {
-//                        stopOrganRetrieval = new GregorianCalendar()
-//                                .getTimeInMillis();
-//                        organRetrievalTime = organRetrievalTime
-//                                + (stopOrganRetrieval - startOrganRetrieval);
-//
-//                    }
-//
-//                    if (log.isDebugEnabled()) {
-//                        noOfOrgans = noOfOrgans
-//                                + gene.getAnatomicalStructureIdsWithExpression()
-//                                .size();
-//                        startWritingInFile = new GregorianCalendar()
-//                                .getTimeInMillis();
-//                    }
-//
-//                    for (String organId : gene
-//                            .getAnatomicalStructureIdsWithExpression())
-//                        out.println(gene.getId() + '\t' + organId);
-//
-//                    if (log.isDebugEnabled()) {
-//                        stopWritingInFile = new GregorianCalendar()
-//                                .getTimeInMillis();
-//                        writingTime = writingTime
-//                                + (stopWritingInFile - startWritingInFile);
-//                    }
-//
-//                    //reset the expression information to free mmemory
-//                    gene.resetRealExpressionStructuresAndStages();
-//                }
-//                // trigger the next iteration to retrieve the next set of genes
-//                if (log.isDebugEnabled()) {
-//                    log.debug("Number of Organs for above {} GeneIDs: {}",
-//                            this.getResultsCountByIteration(), noOfOrgans);
-//                    log.debug("Time taken for organ retrieval for above {} GeneIDs: {}",
-//                            this.getResultsCountByIteration(), organRetrievalTime);
-//                    log.debug("Time taken to write to file for above {} GeneIDs: {}",
-//                            this.getResultsCountByIteration(), writingTime);
-//
-//                    finalRetreivalTime = finalRetreivalTime + organRetrievalTime;
-//                    finalWritingTime = finalWritingTime + writingTime;
-//                    finalNumberOfOrgans = finalNumberOfOrgans + noOfOrgans;
-//                }
-//                iterationCount++;
-//                long startGeneRetrieve = 0;
-//                long stopGeneRetrieve = 0;
-//                if (log.isDebugEnabled()) {
-//                    startGeneRetrieve = new GregorianCalendar().getTimeInMillis();
-//                }
-//                genes = this.loadBackgroundGenesByIteration(iterationCount);
-//                if (log.isDebugEnabled()) {
-//                    stopGeneRetrieve = new GregorianCalendar().getTimeInMillis();
-//
-//                    log.debug(
-//                            "Time taken to retrieve genes in  one iteration: {}",
-//                            (stopGeneRetrieve - startGeneRetrieve));
-//                }
-//            }
+            //            while (!genes.isEmpty()) {
+            //
+            //                //                if (log.isDebugEnabled()) {
+            //                //                    log.debug("{} genes , {}th iteration", genes.size(),
+            //                //                            iterationCount);
+            //                //                }
+            //                long startOrganRetrieval = 0;
+            //                long stopOrganRetrieval = 0;
+            //                long organRetrievalTime = 0;
+            //                long startWritingInFile = 0;
+            //                long stopWritingInFile = 0;
+            //                long writingTime = 0;
+            //                int noOfOrgans = 0;
+            //
+            //                for (Gene gene : genes) {
+            //                    // load the anatomical structure where this gene is expressed,
+            //                    // corresponding to the submitted parameters
+            //                    // single species requested, we load species-specific
+            //                    // anatomical structures for this gene
+            //                    if (log.isDebugEnabled()) {
+            //                        startOrganRetrieval = new GregorianCalendar()
+            //                                .getTimeInMillis();
+            //                    }
+            //                    //NOTE: as of Bgee 12.1, all stages and sub-stages belonging 
+            //                    //to a metastage are retrieved, so we disable includeChildrenStages
+            //                    gene.loadRealOrgansFromStageIdsListAndExpression(
+            //                            this.getExpressionParameters(), this.inferredStageIds,
+            //                            //this.isIncludeChildrenStages());
+            //                            false);
+            //                    if (log.isDebugEnabled()) {
+            //                        stopOrganRetrieval = new GregorianCalendar()
+            //                                .getTimeInMillis();
+            //                        organRetrievalTime = organRetrievalTime
+            //                                + (stopOrganRetrieval - startOrganRetrieval);
+            //
+            //                    }
+            //
+            //                    if (log.isDebugEnabled()) {
+            //                        noOfOrgans = noOfOrgans
+            //                                + gene.getAnatomicalStructureIdsWithExpression()
+            //                                .size();
+            //                        startWritingInFile = new GregorianCalendar()
+            //                                .getTimeInMillis();
+            //                    }
+            //
+            //                    for (String organId : gene
+            //                            .getAnatomicalStructureIdsWithExpression())
+            //                        out.println(gene.getId() + '\t' + organId);
+            //
+            //                    if (log.isDebugEnabled()) {
+            //                        stopWritingInFile = new GregorianCalendar()
+            //                                .getTimeInMillis();
+            //                        writingTime = writingTime
+            //                                + (stopWritingInFile - startWritingInFile);
+            //                    }
+            //
+            //                    //reset the expression information to free mmemory
+            //                    gene.resetRealExpressionStructuresAndStages();
+            //                }
+            //                // trigger the next iteration to retrieve the next set of genes
+            //                if (log.isDebugEnabled()) {
+            //                    log.debug("Number of Organs for above {} GeneIDs: {}",
+            //                            this.getResultsCountByIteration(), noOfOrgans);
+            //                    log.debug("Time taken for organ retrieval for above {} GeneIDs: {}",
+            //                            this.getResultsCountByIteration(), organRetrievalTime);
+            //                    log.debug("Time taken to write to file for above {} GeneIDs: {}",
+            //                            this.getResultsCountByIteration(), writingTime);
+            //
+            //                    finalRetreivalTime = finalRetreivalTime + organRetrievalTime;
+            //                    finalWritingTime = finalWritingTime + writingTime;
+            //                    finalNumberOfOrgans = finalNumberOfOrgans + noOfOrgans;
+            //                }
+            //                iterationCount++;
+            //                long startGeneRetrieve = 0;
+            //                long stopGeneRetrieve = 0;
+            //                if (log.isDebugEnabled()) {
+            //                    startGeneRetrieve = new GregorianCalendar().getTimeInMillis();
+            //                }
+            //                genes = this.loadBackgroundGenesByIteration(iterationCount);
+            //                if (log.isDebugEnabled()) {
+            //                    stopGeneRetrieve = new GregorianCalendar().getTimeInMillis();
+            //
+            //                    log.debug(
+            //                            "Time taken to retrieve genes in  one iteration: {}",
+            //                            (stopGeneRetrieve - startGeneRetrieve));
+            //                }
+            //            }
 
             if (log.isDebugEnabled()) {
                 log.debug("TOTAL NUMBER OF ORGANS RETRIEVED FOR aLL GENES: {}",
@@ -711,10 +700,10 @@ public class TopAnatAnalysis extends QueryTool {
             this.writeToGeneToOrganFile(tmpFileName);
             //move tmp file if successful
             //We check that there were no database error that could have corrupted the results
-//            if (Database.getDatabase().isError()) {
-//                throw log.throwing(new IllegalStateException("A database error occurred, " +
-//                        "analysis canceled"));
-//            }
+            //            if (Database.getDatabase().isError()) {
+            //                throw log.throwing(new IllegalStateException("A database error occurred, " +
+            //                        "analysis canceled"));
+            //            }
             Files.move(tmpFile, finalGeneToOrganFile, StandardCopyOption.REPLACE_EXISTING);
 
         } finally {
@@ -943,32 +932,32 @@ public class TopAnatAnalysis extends QueryTool {
     // SETTER AN GETTER
     // *******************
 
-//    /**
-//     * @return the resultTSVFileName
-//     */
-//    private String getResultTSVFileName() {
-//        return resultTSVFileName;
-//    }
-//
-//    /**
-//     * @param resultTSVFileName the resultTSVFileName to set
-//     */
-//    private void setResultTSVFileName(String resultTSVFileName) {
-//        this.resultTSVFileName = resultTSVFileName;
-//    }
-//
-//    /**
-//     * @return the resultGraphPDFFileName
-//     */
-//    private String getResultGraphPDFFileName() {
-//        return resultGraphPDFFileName;
-//    }
-//
-//    /**
-//     * @param resultGraphPDFFileName the resultGraphPDFFileName to set
-//     */
-//    private void setResultGraphPDFFileName(String resultGraphPDFFileName) {
-//        this.resultGraphPDFFileName = resultGraphPDFFileName;
-//    }
+    //    /**
+    //     * @return the resultTSVFileName
+    //     */
+    //    private String getResultTSVFileName() {
+    //        return resultTSVFileName;
+    //    }
+    //
+    //    /**
+    //     * @param resultTSVFileName the resultTSVFileName to set
+    //     */
+    //    private void setResultTSVFileName(String resultTSVFileName) {
+    //        this.resultTSVFileName = resultTSVFileName;
+    //    }
+    //
+    //    /**
+    //     * @return the resultGraphPDFFileName
+    //     */
+    //    private String getResultGraphPDFFileName() {
+    //        return resultGraphPDFFileName;
+    //    }
+    //
+    //    /**
+    //     * @param resultGraphPDFFileName the resultGraphPDFFileName to set
+    //     */
+    //    private void setResultGraphPDFFileName(String resultGraphPDFFileName) {
+    //        this.resultGraphPDFFileName = resultGraphPDFFileName;
+    //    }
 
 }

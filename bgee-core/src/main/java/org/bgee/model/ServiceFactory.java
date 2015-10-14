@@ -3,6 +3,8 @@ package org.bgee.model;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOManager;
+import org.bgee.model.expressiondata.querytool.AnatEntityService;
+import org.bgee.model.expressiondata.querytool.CallService;
 import org.bgee.model.species.SpeciesService;
 
 /**
@@ -74,5 +76,21 @@ public class ServiceFactory {
     public SpeciesService getSpeciesFactory() {
         log.entry();
         return log.exit(new SpeciesService(this.daoManager));
+    }
+    
+    /**
+     * TODO
+     */
+    public CallService getCallFactory() {
+        log.entry();
+        return log.exit(new CallService());
+    }
+    
+    /**
+     * TODO
+     */
+    public AnatEntityService getAnatEntityFactory(String speciesId) {
+        log.entry();
+        return log.exit(new AnatEntityService(speciesId));
     }
 }

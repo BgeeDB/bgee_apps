@@ -8,8 +8,8 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.CallData;
-import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.CallData.DiffExpressionCallData;
+import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DecorelationType;
@@ -56,7 +56,7 @@ public class TopAnatParams {
      * 
      */
     private final static DecorelationType DECORLATION_TYPE_DEFAULT = DecorelationType.PARENT_CHILD;
-    
+
     /**
      * 
      */
@@ -137,7 +137,7 @@ public class TopAnatParams {
      * 
      */
     private StatisticTest statisticTest;
-    
+
     /**
      * 
      */
@@ -157,6 +157,11 @@ public class TopAnatParams {
      * 
      */
     private int numberOfSignificantNodes;
+
+    /**
+     * 
+     */
+    private ServiceFactory serviceFactory;
 
     /**
      * 
@@ -213,12 +218,12 @@ public class TopAnatParams {
          * 
          */
         private DecorelationType decorelationType;
-        
+
         /**
          * 
          */
         private StatisticTest statisticTest;
-        
+
         /**
          * 
          */
@@ -241,6 +246,11 @@ public class TopAnatParams {
 
         /**
          * 
+         */
+        private ServiceFactory serviceFactory;
+
+        /**
+         * 
          * @param submittedIds
          */
         public Builder(Set<String> submittedIds){
@@ -248,7 +258,6 @@ public class TopAnatParams {
         }
 
         /**
-         * 
          * @param submittedIds
          * @param submittedBackgroundIds
          */
@@ -275,6 +284,7 @@ public class TopAnatParams {
             this.nodeSize = TopAnatParams.NODE_SIZE_DEFAULT;
             this.numberOfSignificantNode = TopAnatParams.NUMBER_OF_SIGNIFICANT_NODES_DEFAULT;
             this.pvalueThreashold = TopAnatParams.PVALUE_THRESHOLD_DEFAULT;
+            this.serviceFactory = new ServiceFactory();
             log.exit();
         }
 
@@ -343,7 +353,7 @@ public class TopAnatParams {
             this.decorelationType = decorelationType;
             return log.exit(this);
         } 
-        
+
         /**
          * 
          * @param statisticTest
@@ -397,7 +407,18 @@ public class TopAnatParams {
             log.entry(numberOfSignificantNode);
             this.numberOfSignificantNode = numberOfSignificantNode;
             return log.exit(this);
-        }       
+        }  
+
+        /**
+         * 
+         * @param callServiceFactory
+         * @return
+         */
+        public Builder serviceFactory(ServiceFactory serviceFactory){
+            log.entry(serviceFactory);
+            this.serviceFactory = serviceFactory;
+            return log.exit(this);
+        } 
 
         /**
          * 
@@ -408,6 +429,8 @@ public class TopAnatParams {
         }
 
     }
+
+
 
     private TopAnatParams(Builder builder) {
         log.entry();
@@ -425,6 +448,7 @@ public class TopAnatParams {
         this.pvalueThreashold = builder.pvalueThreashold;
         this.submittedBackgroundIds = builder.submittedBackgroundIds;
         this.submittedIds = builder.submittedIds;
+        this.serviceFactory = builder.serviceFactory;
         log.exit();
     }
 
@@ -483,14 +507,14 @@ public class TopAnatParams {
     public Collection<String> getDevStageIds() {
         return devStageIds;
     }
-    
+
     /**
      * @return the decorelationType
      */
     public DecorelationType getDecorelationType() {
         return decorelationType;
     }
-    
+
     /**
      * 
      * @return the statisticTest
@@ -531,6 +555,14 @@ public class TopAnatParams {
      * 
      * @return
      */
+    public ServiceFactory getServiceFactory(){
+        return serviceFactory;
+    }
+
+    /**
+     * 
+     * @return
+     */
     public Set<CallFilter> getCallFiltersForForeground(){
         return getCallFiltersFromRawParams(false);
     }
@@ -559,7 +591,7 @@ public class TopAnatParams {
             callDataFilters.add(new ExpressionCallData());
         }
         if(this.includeDifferentialExpression){
-            callDataFilters.add(new DiffExpressionCallData());  
+            callDataFilters.add(new DiffExpressionCallData());
         }
         CallDataConditionFilter callDataConditionFilter = 
                 new CallDataConditionFilter(conditionFilter,callDataFilters); 
@@ -573,4 +605,6 @@ public class TopAnatParams {
         }
         return callFilters;
     }
+
 }
+

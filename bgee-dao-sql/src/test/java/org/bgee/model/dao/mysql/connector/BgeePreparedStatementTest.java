@@ -431,47 +431,67 @@ public class BgeePreparedStatementTest extends TestAncestor
     }
     
     /**
-     * Test {@link BgeePreparedStatement#setFloat(int, Float)}.
+     * Test {@link BgeePreparedStatement#setBigDecimal(int, String)}.
      */
     @Test
-    public void shouldSetFloat() throws SQLException {
+    public void shouldSetBigDecimalString() throws SQLException {
         MockDriver.initialize();
         BgeeConnection con = mock(BgeeConnection.class);
         BgeePreparedStatement stmt = new BgeePreparedStatement(con, MockDriver.getMockStatement());
-        stmt.setFloat(2, 1.08f);
+        stmt.setBigDecimal(2, "1.088736433");
         
-        verify(MockDriver.getMockStatement()).setFloat(2, 1.08f);
+        verify(MockDriver.getMockStatement()).setBigDecimal(2, new BigDecimal("1.088736433"));
         
         MockDriver.initialize();
         con = mock(BgeeConnection.class);
         stmt = new BgeePreparedStatement(con, MockDriver.getMockStatement());
-        stmt.setFloat(2, null);
+        stmt.setBigDecimal(2, (String) null);
 
-        verify(MockDriver.getMockStatement()).setNull(2, Types.REAL);
+        verify(MockDriver.getMockStatement()).setNull(2, Types.DECIMAL);
     }
     
     /**
-     * Test {@link BgeePreparedStatement#setFloats(int, List, boolean)}.
+     * Test {@link BgeePreparedStatement#setBigDecimal(int, BigDecimal)}.
      */
     @Test
-    public void shouldSetFloats() throws SQLException {
+    public void shouldSetBigDecimal() throws SQLException {
+        MockDriver.initialize();
+        BgeeConnection con = mock(BgeeConnection.class);
+        BgeePreparedStatement stmt = new BgeePreparedStatement(con, MockDriver.getMockStatement());
+        stmt.setBigDecimal(2, new BigDecimal("1.088736433"));
+        
+        verify(MockDriver.getMockStatement()).setBigDecimal(2, new BigDecimal("1.088736433"));
+        
+        MockDriver.initialize();
+        con = mock(BgeeConnection.class);
+        stmt = new BgeePreparedStatement(con, MockDriver.getMockStatement());
+        stmt.setBigDecimal(2, (BigDecimal) null);
+
+        verify(MockDriver.getMockStatement()).setNull(2, Types.DECIMAL);
+    }
+    
+    /**
+     * Test {@link BgeePreparedStatement#setBigDecimals(int, Collection, boolean)}.
+     */
+    @Test
+    public void shouldSetBigDecimals() throws SQLException {
         MockDriver.initialize();
         BgeeConnection con = mock(BgeeConnection.class);
         BgeePreparedStatement stmt = new BgeePreparedStatement(con, 
                 MockDriver.getMockStatement());
-        stmt.setFloats(2, Arrays.asList(1.08f), false);
+        stmt.setBigDecimals(2, Arrays.asList("1.0888996"), false);
         
-        verify(MockDriver.getMockStatement()).setFloat(2, 1.08f);
+        verify(MockDriver.getMockStatement()).setBigDecimal(2, new BigDecimal("1.0888996"));
         
         MockDriver.initialize();
         con = mock(BgeeConnection.class);
         stmt = new BgeePreparedStatement(con, MockDriver.getMockStatement());
-        stmt.setFloats(2, Arrays.asList(3.6f, 18.01f, 3.14f, null), true);
+        stmt.setBigDecimals(2, Arrays.asList("3.6", "18.01", "3.14", null), true);
 
-        verify(MockDriver.getMockStatement()).setFloat(2, 3.14f);
-        verify(MockDriver.getMockStatement()).setFloat(3, 3.6f);
-        verify(MockDriver.getMockStatement()).setFloat(4, 18.01f);
-        verify(MockDriver.getMockStatement()).setNull(5, Types.REAL);
+        verify(MockDriver.getMockStatement()).setBigDecimal(2, new BigDecimal("3.14"));
+        verify(MockDriver.getMockStatement()).setBigDecimal(3, new BigDecimal("3.6"));
+        verify(MockDriver.getMockStatement()).setBigDecimal(4, new BigDecimal("18.01"));
+        verify(MockDriver.getMockStatement()).setNull(5, Types.DECIMAL);
     }
     
     /**

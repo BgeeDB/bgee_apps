@@ -367,7 +367,7 @@ BEGIN
         VALUES ('GSM1015164', 'ID1', 0.780113, 2.54, 117, 2, NULL, 'present', 'high quality', 'not excluded'),
                ('GSM1015161', 'ID1', 16552.65, 0, 0, NULL, NULL, 'absent', 'high quality', 'pre-filtering'),
                ('GSM1015161', 'ID2', 22.65, 54.3, 31, NULL, 4, 'absent', 'high quality', 'not excluded'),
-               ('GSM1015162', 'ID3', 10000, 9955.322, 31, NULL, 8, 'absent', 'poor quality', 'not excluded');
+               ('GSM1015162', 'ID3', 10000, 9955.3223, 31, NULL, 8, 'absent', 'poor quality', 'not excluded');
                
         INSERT INTO differentialExpression(differentialExpressionId, geneId, anatEntityId, stageId, comparisonFactor, diffExprCallAffymetrix, diffExprAffymetrixData, bestPValueAffymetrix, consistentDEACountAffymetrix, inconsistentDEACountAffymetrix, diffExprCallRNASeq, diffExprRNASeqData, bestPValueRNASeq, consistentDEACountRNASeq, inconsistentDEACountRNASeq)
         VALUES (321, 'ID1', 'Anat_id1', 'Stage_id1', 'anatomy', 'no diff expression', 'high quality', 0.02, 2, 0, 'no diff expression', 'poor quality', 0.05, 1, 0),

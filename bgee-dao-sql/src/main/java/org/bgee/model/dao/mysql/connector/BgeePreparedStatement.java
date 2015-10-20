@@ -1,5 +1,6 @@
 package org.bgee.model.dao.mysql.connector;
 
+import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -463,26 +464,44 @@ public class BgeePreparedStatement implements AutoCloseable {
         this.setValues(startIndex, values, (e, f) -> this.setEnumDAOField(e, f), toOrder);
         log.exit();
     }
-    
+
     /**
-     * Delegated to {@link java.sql.PreparedStatement#setFloat(int, float)}.
+     * Delegated to {@link java.sql.PreparedStatement#setBigDecimal(int, BigDecimal)}.
      * <p>
-     * If {@code x} is {@code null} delegated to {@link #setNull(int, Types.REAL)}.
+     * If {@code x} is {@code null} delegated to {@link #setNull(int, Types.DECIMAL)}.
      * 
      * @param parameterIndex    {@code int} that is the index of the parameter to set.
      *                          the first parameter is 1, the second is 2, ...
-     * @param x                 {@code Float} that is the value of the parameter 
+     * @param x                 {@code BigDecimal} that is the value of the parameter 
      *                          to set.
      * @throws SQLException     if parameterIndex does not correspond to a parameter 
      *                          marker in the SQL statement; if a database access error 
      *                          occurs or this method is called on a closed PreparedStatement.
      */
-    public void setFloat(int parameterIndex, Float x) throws SQLException {
+    public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException {
         if (x == null) {
-            this.setNull(parameterIndex, Types.REAL);
+            this.setNull(parameterIndex, Types.DECIMAL);
         } else {
-            this.getRealPreparedStatement().setFloat(parameterIndex, x);
+            this.getRealPreparedStatement().setBigDecimal(parameterIndex, x);
         }
+    }
+    /**
+     * Delegated to {@link java.sql.PreparedStatement#setBigDecimal(int, BigDecimal)}, 
+     * after instantiating a new {@code BigDecimal} object using {@code x}.
+     * <p>
+     * If {@code x} is {@code null} delegated to {@link #setNull(int, Types.DECIMAL)}.
+     * 
+     * @param parameterIndex    {@code int} that is the index of the parameter to set.
+     *                          the first parameter is 1, the second is 2, ...
+     * @param x                 {@code String} that will be used in the constructor 
+     *                          of a {@code BigDecimal} object to be provided to 
+     *                          {@code seBigDecimal}.
+     * @throws SQLException     if parameterIndex does not correspond to a parameter 
+     *                          marker in the SQL statement; if a database access error 
+     *                          occurs or this method is called on a closed PreparedStatement.
+     */
+    public void setBigDecimal(int parameterIndex, String x) throws SQLException {
+        this.setBigDecimal(parameterIndex, x == null? null: new BigDecimal(x));
     }
 
     /**
@@ -493,19 +512,26 @@ public class BgeePreparedStatement implements AutoCloseable {
      * @param startIndex        An {@code int} that is the first index of the parameter to set.
      *                          If these are the first parameters set for this 
      *                          {@code BgeePreparedStatement}, the first parameter is 1.
-     * @param values            A {@code Collection} of {@code float}s that are values to be used 
-     *                          to set the parameters.
+     * @param values            A {@code Collection} of {@code String}s that are values to be used 
+     *                          to set the parameters (see {@link #setDecimal(int, String)}).
      * @param toOrder           A {@code boolean} defining whether {@code values} should be ordered 
      *                          based on their natural ordering, to improve chances of cache hit. 
-     *                          {@code values} will not be modified.
+     *                          {@code values} will not be modified. Values will be converted 
+     *                          to {@code BigDecimal}s <strong>before</strong> the ordering.
      * @throws SQLException     If parameterIndex does not correspond to a parameter marker in the 
      *                          SQL statement; if a database access error occurs or this method is 
      *                          called on a closed {@code PreparedStatement}.
      */
-    public void setFloats(int startIndex, Collection<Float> values, boolean toOrder) 
+    public void setBigDecimals(int startIndex, Collection<String> values, boolean toOrder) 
             throws SQLException {
         log.entry(startIndex, values, toOrder);
-        this.setValues(startIndex, values, (e, f) -> this.setFloat(e, f), toOrder);
+        //it is important to convert before ordering.
+        Collection<BigDecimal> convertedValues = values.stream()
+                .map(e -> e == null? null: new BigDecimal(e))
+                .collect(Collectors.toList());
+        this.setValues(startIndex, convertedValues, 
+                (e, f) -> this.setBigDecimal(e, f), 
+                toOrder);
         log.exit();
     }
 

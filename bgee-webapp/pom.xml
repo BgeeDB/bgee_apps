@@ -225,6 +225,18 @@
                                  relative to the root of the WAR file -->
                             <targetPath>WEB-INF/classes</targetPath>
                         </resource>
+                        <!-- log configuration files, no filtering -->
+                        <resource>
+                            <!-- this is relative to the pom.xml directory -->
+                            <directory>src/main/resources/</directory>
+                            <includes>
+                                <include>log4j2.xml</include>
+                            </includes>
+                            <filtering>false</filtering>
+                            <!-- override the destination directory for this resource, 
+                                 relative to the root of the WAR file -->
+                            <targetPath>WEB-INF/classes</targetPath>
+                        </resource>
                     </webResources>
                     
                     <attachClasses>true</attachClasses>

@@ -349,6 +349,11 @@ add foreign key (expressionId) references expression(expressionId) on delete set
 add foreign key (noExpressionId) references noExpression(noExpressionId) on delete set null;
 /*!40000 ALTER TABLE `rnaSeqResult` ENABLE KEYS */;
 
+/*!40000 ALTER TABLE `rnaSeqFeatureLength` DISABLE KEYS */;
+alter table rnaSeqFeatureLength 
+add foreign key (geneId) references gene(geneId) on delete cascade;
+/*!40000 ALTER TABLE `rnaSeqFeatureLength` ENABLE KEYS */;
+
 -- ****** for diff expression ********
 
 /*!40000 ALTER TABLE `deaSampleGroupToRnaSeqLibrary` DISABLE KEYS */;

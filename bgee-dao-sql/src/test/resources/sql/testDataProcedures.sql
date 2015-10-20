@@ -358,16 +358,16 @@ BEGIN
         INSERT INTO rnaSeqPlatform (rnaSeqPlatformId, rnaSeqPlatformDescription)
         VALUES ('Illumina HiSeq 2000', '');
 
-        INSERT INTO rnaSeqLibrary(rnaSeqLibraryId, rnaSeqSecondaryLibraryId, rnaSeqExperimentId, rnaSeqPlatformId, anatEntityId, stageId, log2RPKMThreshold, allGenesPercentPresent, proteinCodingGenesPercentPresent, intergenicRegionsPercentPresent, allReadsCount, leftMappedReadsCount, rightMappedReadsCount, minReadLength, maxReadLength, libraryType, libraryOrientation)
-        VALUES ('GSM1015161', 'SRX191160', 'GSE41338', 'Illumina HiSeq 2000', 'Anat_id11', 'Stage_id1', 1.000000, 68.27, 58.96, 15.85, 91641467, 33352222, 32332998, 75, 75, 'paired', 'unstranded'),
-               ('GSM1015164', 'SRX191163', 'GSE41338', 'Illumina HiSeq 2000', 'Anat_id13', 'Stage_id18', 1.000000, 43.85, 37.72, 6.23, 81401754, 28408829, 28299304, 75, 75, 'paired', 'unstranded'),
-               ('GSM1015162', 'SRX191161', 'GSE41338', 'Illumina HiSeq 2000', 'Anat_id10', 'Stage_id4', 1.000000, 60.13, 51.96, 12.61, 81401754, 43858614, 10260750, 75, 75, 'paired', 'unstranded');
+        INSERT INTO rnaSeqLibrary(rnaSeqLibraryId, rnaSeqSecondaryLibraryId, rnaSeqExperimentId, rnaSeqPlatformId, anatEntityId, stageId, tmmFactor, rpkmThreshold, allGenesPercentPresent, proteinCodingGenesPercentPresent, intergenicRegionsPercentPresent, allReadsCount, leftMappedReadsCount, rightMappedReadsCount, minReadLength, maxReadLength, libraryType, libraryOrientation)
+        VALUES ('GSM1015161', 'SRX191160', 'GSE41338', 'Illumina HiSeq 2000', 'Anat_id11', 'Stage_id1', 10.2, 1.08, 68.27, 58.96, 15.85, 91641467, 33352222, 32332998, 75, 75, 'paired', 'unstranded'),
+               ('GSM1015164', 'SRX191163', 'GSE41338', 'Illumina HiSeq 2000', 'Anat_id13', 'Stage_id18', 0.9155, 0.9, 43.85, 37.72, 6.23, 81401754, 28408829, 28299304, 75, 75, 'paired', 'unstranded'),
+               ('GSM1015162', 'SRX191161', 'GSE41338', 'Illumina HiSeq 2000', 'Anat_id10', 'Stage_id4', 1.000000, 1.54, 60.13, 51.96, 12.61, 81401754, 43858614, 10260750, 75, 75, 'paired', 'unstranded');
 
-        INSERT INTO rnaSeqResult (rnaSeqLibraryId, geneId, log2RPKM, readsCount, expressionId, noExpressionId, detectionFlag, rnaSeqData, reasonForExclusion)
-        VALUES ('GSM1015164', 'ID1', 0.780113, 117, 2, NULL, 'present', 'high quality', 'not excluded'),
-               ('GSM1015161', 'ID1', -26.575425, 0, NULL, NULL, 'absent', 'high quality', 'pre-filtering'),
-               ('GSM1015161', 'ID2', -1.687530, 31, NULL, 4, 'absent', 'high quality', 'not excluded'),
-               ('GSM1015162', 'ID3', -2.462678, 31, NULL, 8, 'absent', 'poor quality', 'not excluded');
+        INSERT INTO rnaSeqResult (rnaSeqLibraryId, geneId, rpkm, tpm, readsCount, expressionId, noExpressionId, detectionFlag, rnaSeqData, reasonForExclusion)
+        VALUES ('GSM1015164', 'ID1', 0.780113, 2.54, 117, 2, NULL, 'present', 'high quality', 'not excluded'),
+               ('GSM1015161', 'ID1', 16552.65, 0, 0, NULL, NULL, 'absent', 'high quality', 'pre-filtering'),
+               ('GSM1015161', 'ID2', 22.65, 54.3, 31, NULL, 4, 'absent', 'high quality', 'not excluded'),
+               ('GSM1015162', 'ID3', 10000, 9955.322, 31, NULL, 8, 'absent', 'poor quality', 'not excluded');
                
         INSERT INTO differentialExpression(differentialExpressionId, geneId, anatEntityId, stageId, comparisonFactor, diffExprCallAffymetrix, diffExprAffymetrixData, bestPValueAffymetrix, consistentDEACountAffymetrix, inconsistentDEACountAffymetrix, diffExprCallRNASeq, diffExprRNASeqData, bestPValueRNASeq, consistentDEACountRNASeq, inconsistentDEACountRNASeq)
         VALUES (321, 'ID1', 'Anat_id1', 'Stage_id1', 'anatomy', 'no diff expression', 'high quality', 0.02, 2, 0, 'no diff expression', 'poor quality', 0.05, 1, 0),

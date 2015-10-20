@@ -54,26 +54,28 @@ public class MySQLRNASeqResultDAOIT  extends MySQLITAncestor {
 
             try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
                     prepareStatement("SELECT 1 FROM rnaSeqResult WHERE rnaSeqLibraryId = ? AND " +
-                            "geneId = ? AND log2RPKM = ? AND readsCount = ? AND " +
+                            "geneId = ? AND rpkm = ? AND tpm = ? AND readsCount = ? AND " +
                             "expressionId is null AND noExpressionId is null " +
                             "AND detectionFlag = ? AND rnaSeqData = ? AND reasonForExclusion = ?")) {
                 stmt.setString(1, "GSM1015161");
                 stmt.setString(2, "ID2");
-                stmt.setFloat(3, -1.687530f);
-                stmt.setInt(4, 31);
-                stmt.setString(5, DetectionFlag.ABSENT.getStringRepresentation());
-                stmt.setString(6, DataState.HIGHQUALITY.getStringRepresentation());
-                stmt.setString(7, ExclusionReason.NOEXPRESSIONCONFLICT.getStringRepresentation());
+                stmt.setFloat(3, 22.65f);
+                stmt.setFloat(4, 54.3f);
+                stmt.setInt(5, 31);
+                stmt.setString(6, DetectionFlag.ABSENT.getStringRepresentation());
+                stmt.setString(7, DataState.HIGHQUALITY.getStringRepresentation());
+                stmt.setString(8, ExclusionReason.NOEXPRESSIONCONFLICT.getStringRepresentation());
                 assertTrue("RNASeqResultTO incorrectly updated", 
                         stmt.getRealPreparedStatement().executeQuery().next());
 
                 stmt.setString(1, "GSM1015162");
                 stmt.setString(2, "ID3");
-                stmt.setFloat(3, -2.462678f);
-                stmt.setInt(4, 31);
-                stmt.setString(5, DetectionFlag.ABSENT.getStringRepresentation());
-                stmt.setString(6, DataState.LOWQUALITY.getStringRepresentation());
-                stmt.setString(7, ExclusionReason.NOEXPRESSIONCONFLICT.getStringRepresentation());
+                stmt.setFloat(3, 10000f);
+                stmt.setFloat(4, 9955.322f);
+                stmt.setInt(5, 31);
+                stmt.setString(6, DetectionFlag.ABSENT.getStringRepresentation());
+                stmt.setString(7, DataState.LOWQUALITY.getStringRepresentation());
+                stmt.setString(8, ExclusionReason.NOEXPRESSIONCONFLICT.getStringRepresentation());
                 assertTrue("RNASeqResultTO incorrectly updated", 
                         stmt.getRealPreparedStatement().executeQuery().next());
             }

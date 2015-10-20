@@ -379,6 +379,11 @@ alter table rnaSeqResult
 add primary key (geneId, rnaSeqLibraryId);
 /*!40000 ALTER TABLE `rnaSeqResult` ENABLE KEYS */;
 
+/*!40000 ALTER TABLE `rnaSeqFeatureLength` DISABLE KEYS */;
+alter table rnaSeqFeatureLength 
+add primary key (geneId);
+/*!40000 ALTER TABLE `rnaSeqFeatureLength` ENABLE KEYS */;
+
 -- ****** for diff expression ********
 
 /*!40000 ALTER TABLE `deaSampleGroupToRnaSeqLibrary` DISABLE KEYS */;

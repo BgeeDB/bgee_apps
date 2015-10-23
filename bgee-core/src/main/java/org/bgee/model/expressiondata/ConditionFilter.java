@@ -1,4 +1,4 @@
-package org.bgee.model.expressiondata.querytool;
+package org.bgee.model.expressiondata;
 
 import java.util.Collections;
 import java.util.HashSet;

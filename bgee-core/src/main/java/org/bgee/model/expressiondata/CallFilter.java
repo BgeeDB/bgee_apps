@@ -1,9 +1,7 @@
-package org.bgee.model.expressiondata.querytool;
+package org.bgee.model.expressiondata;
 
 import java.util.Set;
 
-import org.bgee.model.expressiondata.CallData;
-import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.species.TaxonomyFilter;
 

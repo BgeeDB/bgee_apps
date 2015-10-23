@@ -16,13 +16,11 @@ public abstract class Call<T extends SummaryCallType, U extends CallData<?>> {
     //**********************************************
     //   INNER CLASSES
     //**********************************************
-    public static class ExpressionSummaryCall 
-        extends Call<ExpressionSummary, ExpressionCallData> {
+    public static class ExpressionCall extends Call<ExpressionSummary, ExpressionCallData> {
         
     }
     //XXX: DiffExpressionFactor managed here?
-    public static class DiffExpressionSummaryCall 
-        extends Call<DiffExpressionSummary, DiffExpressionCallData> {
+    public static class DiffExpressionCall extends Call<DiffExpressionSummary, DiffExpressionCallData> {
         
     }
   //**********************************************

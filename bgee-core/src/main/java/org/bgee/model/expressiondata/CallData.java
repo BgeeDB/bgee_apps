@@ -62,7 +62,7 @@ public abstract class CallData<T extends CallType> {
     private final DataType dataType;
     
     
-    private final CallType callType;
+    private final T callType;
     
     private final DataQuality dataQuality;
     

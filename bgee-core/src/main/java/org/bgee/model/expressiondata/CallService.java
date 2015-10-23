@@ -7,6 +7,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
 import org.bgee.model.dao.api.DAOManager;
+import org.bgee.model.expressiondata.Call.DiffExpressionCall;
+import org.bgee.model.expressiondata.Call.ExpressionCall;
+import org.bgee.model.expressiondata.CallData.DiffExpressionCallData;
+import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.species.TaxonomyFilter;
 
@@ -77,7 +81,19 @@ public class CallService extends Service {
     //XXX: example single-species query, signature/returned value to be better defined
     //XXX: would several CallFilters represent AND or OR conditions?
     public Stream<Call<? extends SummaryCallType, ? extends CallData<?>>> loadCalls(
-            String speciesId, Set<CallFilter> callFilters) {
+            String speciesId, Set<CallFilter<?>> callFilters) {
+        //TODO
+        return null;
+    }
+    
+    public Stream<ExpressionCall> loadExpressionCalls(String speciesId, 
+            CallFilter<ExpressionCallData> callFilter) {
+        //TODO
+        return null;
+    }
+    
+    public Stream<DiffExpressionCall> loadDiffExpressionCalls(String speciesId, 
+            CallFilter<DiffExpressionCallData> callFilter) {
         //TODO
         return null;
     }

@@ -5,6 +5,17 @@ import java.util.Set;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.gene.GeneFilter;
 
+/**
+ * A filter to parameterize queries to {@link CallService}. 
+ * 
+ * @author Frederic Bastian
+ * @version Bgee 13 Oct. 2015
+ * @since Bgee 13 Oct. 2015
+ *
+ * @param T The type of {@code CallData} to be used by this {@code CallFilter}. 
+ *          Can be declared as {@code CallData}, to include a mixture of {@code CallData} subtypes, 
+ *          or as a specific subtype, for instance, {@code ExpressionCallData}.
+ */
 //XXX: would several CallFilters represent AND or OR conditions.
 //If OR conditions, we could provide a Set<Set<CallFilter>> to CallService methods, 
 //to provide AND/OR conditions.
@@ -14,7 +25,7 @@ import org.bgee.model.gene.GeneFilter;
 //the same CallDatas. If we really needed it, then we could still do it in several queries 
 //(even if it is less optimized).
 //=> let's consider several CallFilters as AND conditions for now, and let's see what happens in the future.  
-public class CallFilter {
+public class CallFilter<T extends CallData<? extends CallType>> {
     //XXX: The only problem with using directly ConditionFilters and CallDatas in this class, 
     //is that GeneFilters are costly to use in a query; using the class CallDataConditionFilter 
     //was allowing to have a same GeneFilter to target several conditions/call data combinations. 
@@ -33,7 +44,7 @@ public class CallFilter {
     //using generic types? And even, for the ExpressionCallData, should we force the call type 
     //to be either EXPRESSED or NOT_EXPRESSED. They are not in the same tables, so this would help...
     //XXX: again, where to accept the diffExpressionFactor
-    private final Set<CallData<? extends CallType>> callDataFilters;
+    private final Set<T> callDataFilters;
     
     
     //XXX: here, it means that the DataType of CallData will be null. Is it valid? 

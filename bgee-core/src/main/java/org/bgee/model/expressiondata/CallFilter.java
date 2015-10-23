@@ -3,6 +3,7 @@ package org.bgee.model.expressiondata;
 import java.util.Set;
 
 import org.bgee.model.expressiondata.baseelements.CallType;
+import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.species.TaxonomyFilter;
 
 //XXX: 

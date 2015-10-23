@@ -43,12 +43,16 @@ public abstract class CallData<T extends CallType> {
     //XXX: where to manage the DiffExpressionFactor? Here, or only in a "Call" class? 
     //But then, we could not use this CallData in query filters to specify the factor to use.
     public static class DiffExpressionCallData extends CallData<DiffExpression> {
-        
+        public DiffExpressionCallData(DiffExpression callType, DataQuality dataQual, DataType dataType) {
+            super(callType, dataQual, dataType);
+        }
     }
     //XXX: for now, there is nothing really special about expression calls.
     //But maybe it's good for typing the generic type, and for future evolutions?
     public static class ExpressionCallData extends CallData<Expression> {
-        
+        public ExpressionCallData(Expression callType, DataQuality dataQual, DataType dataType) {
+            super(callType, dataQual, dataType);
+        }
     }
 
 
@@ -56,11 +60,7 @@ public abstract class CallData<T extends CallType> {
     //   INSTANCE ATTRIBUTES AND METHODS
     //**********************************************
     
-    //XXX: should we remove the DataType attribute from CallData, and always use a Map 
-    //when we want to associate a CallData to a DataType? Otherwise it could be null 
-    //when use with a CallFilter
     private final DataType dataType;
-    
     
     private final T callType;
     
@@ -70,13 +70,50 @@ public abstract class CallData<T extends CallType> {
 	
 	
 	/**
-	 * Default constructor not public. At least a {@code CallType}, a {@code DataQuality}, 
-	 * and a {@code DataPropagation} must be provided, 
-	 * see {@link #CallData(CallType, DataQuality, DataType, DataPropagation)}.
+	 * Basic constructor allowing to only specify a {@code CallType}. The {@code DataQuality} 
+	 * will be set to {@code LOW}, the {@code DataType} will be {@code null}, 
+	 * and the {@code DataPropagation} will be instantiated using its 0-arg constructor. 
+	 * 
+	 * @param callType The {@code CallType} of this {@code CallData}.
+     * @throws IllegalArgumentException    If {@code callType} is {@code null}.
+	 * @see #CallData(T, DataQuality, DataType, DataPropagation)
 	 */
-	private CallData() {
-		this(null, null, null, null);
+	protected CallData(T callType) throws IllegalArgumentException {
+	    this(callType, null);
 	}
+    /**
+     * Constructor allowing to specify a {@code CallType} and a {@code DataType}. 
+     * The {@code DataQuality} will be set to {@code LOW}, 
+     * and the {@code DataPropagation} will be instantiated using its 0-arg constructor. 
+     * 
+     * @param callType          The {@code CallType} of this {@code CallData}.
+     * @param dataType          The {@code DataType} that allowed to generate the {@code CallType}.
+     * @throws IllegalArgumentException    If {@code callType} is {@code null}, 
+     *                                     or if {@code dataType} is not {@code null} 
+     *                                     and incompatible with {@code callType}.
+     * @see #CallData(T, DataQuality, DataType, DataPropagation)
+     */
+    protected CallData(T callType, DataType dataType) throws IllegalArgumentException {
+        this(callType, DataQuality.LOW, dataType);
+    }
+    /**
+     * Constructor allowing to specify a {@code CallType} and its associated {@code DataQuality} 
+     * and {@code DataType}. 
+     * The {@code DataPropagation} will be instantiated using its 0-arg constructor.  
+     * 
+     * @param callType          The {@code CallType} of this {@code CallData}.
+     * @param dataQual          The {@code DataQuality} associated to the {@code CallType} 
+     *                          of this {@code CallData}.
+     * @param dataType          The {@code DataType} that allowed to generate the {@code CallType}, 
+     *                          with its associated {@code DataQuality}, for this {@code CallData}.
+     * @throws IllegalArgumentException    If {@code callType} or {@code dataQual} are {@code null}, 
+     *                                     or if {@code dataType} is not {@code null} 
+     *                                     and incompatible with {@code callType}.
+     */
+    protected CallData(T callType, DataQuality dataQual, DataType dataType) 
+            throws IllegalArgumentException {
+        this(callType, dataQual, dataType, new DataPropagation());
+    }
 	/**
 	 * Instantiate a {@code CallData}: for the type of call {@code callType}, representing 
 	 * the expression state of a gene; the quality {@code dataQual}, representing 
@@ -108,7 +145,7 @@ public abstract class CallData<T extends CallType> {
      *                                     {@code callType}.
 	 */
 	protected CallData(T callType, DataQuality dataQual, DataType dataType, 
-	        DataPropagation dataPropagation) {
+	        DataPropagation dataPropagation) throws IllegalArgumentException {
         log.entry(callType, dataQual, dataType, dataPropagation);
         
         if (callType == null || dataQual == null || dataPropagation == null) {
@@ -126,6 +163,19 @@ public abstract class CallData<T extends CallType> {
         this.dataPropagation = dataPropagation;
 
         log.exit();
+    }
+	
+    public DataType getDataType() {
+        return dataType;
+    }
+    public T getCallType() {
+        return callType;
+    }
+    public DataQuality getDataQuality() {
+        return dataQuality;
+    }
+    public DataPropagation getDataPropagation() {
+        return dataPropagation;
     }
 	
 	//TODO: implements equals/hashCode/toString

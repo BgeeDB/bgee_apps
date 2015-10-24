@@ -11,7 +11,7 @@ import org.apache.logging.log4j.Logger;
  * the strain, or other experimental conditions (gene knock-out, drug treatment, etc).
  * 
  * @author Frederic Bastian
- * @version Bgee 13 Sept. 2015
+ * @version Bgee 13 Oct. 2015
  * @since Bgee 13 Sept. 2015
  */
 //XXX: how to manage multi-species conditions? Should we have a class SingleSpeciesCondition 
@@ -30,15 +30,6 @@ public class Condition {
     private final String devStageId;
     
     /**
-     * Default constructor not public, at least an anat. entity and a dev. stage must be provided, 
-     * see {@link #Condition(AnatEntity, DevStage)}.
-     */
-    //Constructor not public on purpose, suppress warnings
-    @SuppressWarnings("unused")
-    private Condition() {
-        this(null, null);
-    }
-    /**
      * Constructor providing the IDs of the anatomical entity and the developmental stage 
      * of this {@code Condition}.
      * 
@@ -46,16 +37,12 @@ public class Condition {
      *                      used in this gene expression condition.
      * @param devStageId    A {@code String} that is the ID of the developmental stage  
      *                      used in this gene expression condition.
-     * @throws IllegalArgumentException     if {@code anatEntity} or {@code devStage} is {@code null}. 
+     * @throws IllegalArgumentException if both {@code anatEntity} and {@code devStage} are blank. 
      */
-    public Condition(String anatEntityId, String devStageId) {
-        if (StringUtils.isBlank(anatEntityId)) {
-            throw log.throwing(
-                    new IllegalArgumentException("The provided anatomical entity ID cannot be blank"));
-        }
-        if (StringUtils.isBlank(devStageId)) {
-            throw log.throwing(
-                    new IllegalArgumentException("The provided developmental stage ID cannot be blank"));
+    public Condition(String anatEntityId, String devStageId) throws IllegalArgumentException {
+        if (StringUtils.isBlank(anatEntityId) && StringUtils.isBlank(devStageId)) {
+            throw log.throwing(new IllegalArgumentException(
+                    "The anat. entity ID and the dev. stage ID cannot be both blank."));
         }
         this.anatEntityId = anatEntityId;
         this.devStageId   = devStageId;
@@ -74,5 +61,47 @@ public class Condition {
      */
     public String getDevStageId() {
         return devStageId;
+    }
+    
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((anatEntityId == null) ? 0 : anatEntityId.hashCode());
+        result = prime * result + ((devStageId == null) ? 0 : devStageId.hashCode());
+        return result;
+    }
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        Condition other = (Condition) obj;
+        if (anatEntityId == null) {
+            if (other.anatEntityId != null) {
+                return false;
+            }
+        } else if (!anatEntityId.equals(other.anatEntityId)) {
+            return false;
+        }
+        if (devStageId == null) {
+            if (other.devStageId != null) {
+                return false;
+            }
+        } else if (!devStageId.equals(other.devStageId)) {
+            return false;
+        }
+        return true;
+    }
+    
+    @Override
+    public String toString() {
+        return "Condition [anatEntityId=" + anatEntityId + ", devStageId=" + devStageId + "]";
     }
 }

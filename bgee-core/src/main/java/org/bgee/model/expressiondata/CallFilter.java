@@ -7,6 +7,8 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.expressiondata.CallData.DiffExpressionCallData;
+import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.gene.GeneFilter;
 
 /**
@@ -79,11 +81,14 @@ public class CallFilter<T extends CallData<?>> {
      * <p>
      * If the method {@link CallData#getDataType()} returns {@code null} for a {@code CallData}, 
      * then it means that it targets any {@code DataType}, otherwise, it means that it targets only 
-     * that specific {@code DataType}. It is not possible to provide several {@code CallData}s
+     * that specific {@code DataType}. It is not possible to provide several {@code ExpressionCallData}s
      * targeting the same combination of {@code CallType} (see {@link CallData#getCallType()}) 
      * and {@code DataType} (see {@link CallData#getDataType()}), or targeting 
-     * for a same {@code CallType} both a {@code null} {@code DataType} and a non-null {@code DataType}; 
-     * otherwise an {@code IllegalArgumentException} is thrown. 
+     * for a same {@code CallType} both a {@code null} {@code DataType} and a non-null {@code DataType};
+     * for {@code DiffExpressionCallData}, it is similarly not possible to target a redundant combination 
+     * of {@code CallType}, {@code DataType}, and {@code DiffExpressionFactor} (see 
+     * {@link DiffExpressionCallData#getDiffExpressionFactor()}); otherwise, 
+     * an {@code IllegalArgumentException} is thrown. 
      * 
      * @param geneFilter        A {@code GeneFilter} to configure gene-related filtering.
      * @param conditionFilters  A {@code Set} of {@code ConditionFilter}s to configure 
@@ -95,9 +100,12 @@ public class CallFilter<T extends CallData<?>> {
      *                          e.g., propagation of expression calls from substructures). If several 
      *                          {@code CallData}s are provided, they are seen as "OR" conditions.
      * @throws IllegalArgumentException If {@code callDataFilters} is {@code null} or empty, 
-     *                                  or contains a {@code null} {@code CallData}, 
-     *                                  or if the {@code CallData}s provided target a redundant 
-     *                                  combination of {@code CallType} and {@code DataType}.
+     *                                  or contains a {@code null} {@code CallData}; 
+     *                                  or if the {@code ExpressionCallData}s provided target 
+     *                                  a redundant combination of {@code CallType} and {@code DataType}; 
+     *                                  or if the {@code DiffExpressionCallData}s provided target 
+     *                                  a redundant combination of {@code CallType}, {@code DataType}, 
+     *                                  and {@code DiffExpressionFactor}.
      */
     public CallFilter(GeneFilter geneFilter, Set<ConditionFilter> conditionFilters, 
             Set<T> callDataFilters) throws IllegalArgumentException {
@@ -110,7 +118,14 @@ public class CallFilter<T extends CallData<?>> {
         callDataFilters.stream().forEach(e1 -> callDataFilters.stream().forEach(e2 -> {
             if (!e1.equals(e2) && e1.getCallType().equals(e2.getCallType()) && 
                     (e1.getDataType() == null || e2.getDataType() == null || 
-                    e1.getDataType().equals(e2.getDataType()))) {
+                    e1.getDataType().equals(e2.getDataType()) && 
+                    //if they are of type ExpressionCallData, then they target redundant CallType/DataType
+                    (e1 instanceof ExpressionCallData && e2 instanceof ExpressionCallData || 
+                    //if they are of type DiffExpressionCallData, they will be considered redundant 
+                    //only if they also target the same DiffExpressionFactor
+                     e1 instanceof DiffExpressionCallData && e2 instanceof DiffExpressionCallData && 
+                     ((DiffExpressionCallData) e1).getDiffExpressionFactor().equals(
+                             ((DiffExpressionCallData) e2).getDiffExpressionFactor())))) {
                 throw log.throwing(new IllegalArgumentException(
                         "The provided CallDatas target a redundant combination of CallType and DataType: "
                                 + e1 + " - " + e2));

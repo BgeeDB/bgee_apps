@@ -8,6 +8,7 @@ import java.util.HashSet;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.DiffExpressionFactor;
 import org.bgee.model.expressiondata.CallData.DiffExpressionCallData;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.baseelements.CallType.DiffExpression;
@@ -66,12 +67,27 @@ public class CallFilterTest extends TestAncestor {
         } catch (IllegalArgumentException e) {
             //test passed
         }
+        try {
+            new CallFilter<DiffExpressionCallData>(null, null, new HashSet<>(Arrays.asList(
+                    new DiffExpressionCallData(DiffExpressionFactor.ANATOMY, DiffExpression.UNDER_EXPRESSED, 
+                            DataQuality.LOW, DataType.RNA_SEQ), 
+                    new DiffExpressionCallData(DiffExpressionFactor.ANATOMY, DiffExpression.UNDER_EXPRESSED, 
+                            DataQuality.HIGH, DataType.RNA_SEQ))));
+            fail("An exception should be thrown when some CallData target redundant combinations "
+                    + "of CallType/DataType/DiffExpressionFactor.");
+        } catch (IllegalArgumentException e) {
+            //test passed
+        }
         
         //now, test when everything is fine
         new CallFilter<>(null, null, new HashSet<>(Arrays.asList(
                 new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX), 
                 new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.RNA_SEQ), 
-                new DiffExpressionCallData(DiffExpression.OVER_EXPRESSED, DataQuality.LOW, null), 
-                new DiffExpressionCallData(DiffExpression.UNDER_EXPRESSED, DataQuality.LOW, DataType.RNA_SEQ))));
+                new DiffExpressionCallData(DiffExpressionFactor.ANATOMY, DiffExpression.OVER_EXPRESSED, 
+                        DataQuality.LOW, null), 
+                new DiffExpressionCallData(DiffExpressionFactor.ANATOMY, DiffExpression.UNDER_EXPRESSED, 
+                        DataQuality.LOW, DataType.RNA_SEQ), 
+                new DiffExpressionCallData(DiffExpressionFactor.DEVELOPMENT, DiffExpression.UNDER_EXPRESSED, 
+                        DataQuality.LOW, DataType.RNA_SEQ))));
     }
 }

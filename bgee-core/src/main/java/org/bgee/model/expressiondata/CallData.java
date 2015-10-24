@@ -6,6 +6,7 @@ import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.DiffExpressionFactor;
 import org.bgee.model.expressiondata.baseelements.CallType.DiffExpression;
 import org.bgee.model.expressiondata.baseelements.CallType.Expression;
 
@@ -29,7 +30,7 @@ import org.bgee.model.expressiondata.baseelements.CallType.Expression;
 //this is meaningful both from a "query filter" perspective and a "data retrieval" perspective, 
 //and this could be common to baseline present/absent and diff. expression analyses 
 //(even if we currently store the information only for diff. expression analyses). 
-public abstract class CallData<T extends CallType> {
+public abstract class CallData<T extends Enum<T> & CallType> {
     /**
      * {@code Logger} of the class. 
      */
@@ -43,15 +44,88 @@ public abstract class CallData<T extends CallType> {
     //XXX: where to manage the DiffExpressionFactor? Here, or only in a "Call" class? 
     //But then, we could not use this CallData in query filters to specify the factor to use.
     public static class DiffExpressionCallData extends CallData<DiffExpression> {
-        public DiffExpressionCallData(DiffExpression callType, DataQuality dataQual, DataType dataType) {
-            super(callType, dataQual, dataType);
+        //XXX: I'm not very happy about this field, as it is redundant as compared to the field in 
+        //DiffExpressionCall, and as it is not something specific to a data type, 
+        //which is what this class is supposed to be about.
+        //This field was created only to be able to parameterize queries to a CallService, 
+        //though a CallFilter, to request diff. expression calls produced from analyzes 
+        //over anatomy, and/or over development.
+        //But maybe we can argue that it is always useful to be able to know from which type 
+        //of analysis a DiffExpressionCallData comes from...
+        private final DiffExpressionFactor diffExpressionFactor;
+        
+        public DiffExpressionCallData(DiffExpressionFactor factor, DiffExpression callType) {
+            this(factor, callType, null);
+        }
+        public DiffExpressionCallData(DiffExpressionFactor factor, DiffExpression callType, 
+                DataType dataType) {
+            this(factor, callType, DataQuality.LOW, dataType);
+        }
+        public DiffExpressionCallData(DiffExpressionFactor factor, DiffExpression callType, 
+                DataQuality dataQual, DataType dataType) {
+            this(factor, callType, dataQual, dataType, new DataPropagation());
+        }
+        public DiffExpressionCallData(DiffExpressionFactor factor, DiffExpression callType, 
+                DataQuality dataQual, DataType dataType, DataPropagation dataPropagation) {
+            super(callType, dataQual, dataType, dataPropagation);
+            if (factor == null) {
+                throw log.throwing(new IllegalArgumentException(
+                        "The provided DiffExpressionFactor cannot be null."));
+            }
+            this.diffExpressionFactor = factor;
+        }
+        
+        public DiffExpressionFactor getDiffExpressionFactor() {
+            return diffExpressionFactor;
+        }
+        
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = super.hashCode();
+            result = prime * result + ((diffExpressionFactor == null) ? 0 : diffExpressionFactor.hashCode());
+            return result;
+        }
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (!super.equals(obj)) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            DiffExpressionCallData other = (DiffExpressionCallData) obj;
+            if (diffExpressionFactor != other.diffExpressionFactor) {
+                return false;
+            }
+            return true;
+        }
+        
+        @Override
+        public String toString() {
+            return "DiffExpressionCallData [diffExpressionFactor=" + diffExpressionFactor 
+                    + ", super CallData=" + super.toString() + "]";
         }
     }
+    
     //XXX: for now, there is nothing really special about expression calls.
     //But maybe it's good for typing the generic type, and for future evolutions?
     public static class ExpressionCallData extends CallData<Expression> {
+        public ExpressionCallData(Expression callType) {
+            this(callType, null);
+        }
+        public ExpressionCallData(Expression callType, DataType dataType) {
+            this(callType, DataQuality.LOW, dataType);
+        }
         public ExpressionCallData(Expression callType, DataQuality dataQual, DataType dataType) {
-            super(callType, dataQual, dataType);
+            this(callType, dataQual, dataType, new DataPropagation());
+        }
+        public ExpressionCallData(Expression callType, DataQuality dataQual, DataType dataType, 
+                DataPropagation dataPropagation) {
+            super(callType, dataQual, dataType, dataPropagation);
         }
     }
 
@@ -135,6 +209,8 @@ public abstract class CallData<T extends CallType> {
      *                          of this {@code CallData}.
      * @param dataType          The {@code DataType} that allowed to generate the {@code CallType}, 
      *                          with its associated {@code DataQuality}, for this {@code CallData}.
+     *                          If {@code null}, then it means that this {@code CallData} 
+     *                          is applicable to any {@code DataType}.
      * @param dataPropagation   The {@code DataPropagation} representing the origin of the data, 
      *                          relative to the condition in which the call was made.
 	 * @throws IllegalArgumentException    If any of {@code callType}, {@code dataQual}, 
@@ -177,7 +253,57 @@ public abstract class CallData<T extends CallType> {
     public DataPropagation getDataPropagation() {
         return dataPropagation;
     }
-	
-	//TODO: implements equals/hashCode/toString
-	
+    
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((callType == null) ? 0 : callType.hashCode());
+        result = prime * result + ((dataPropagation == null) ? 0 : dataPropagation.hashCode());
+        result = prime * result + ((dataQuality == null) ? 0 : dataQuality.hashCode());
+        result = prime * result + ((dataType == null) ? 0 : dataType.hashCode());
+        return result;
+    }
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        CallData<?> other = (CallData<?>) obj;
+        if (callType == null) {
+            if (other.callType != null) {
+                return false;
+            }
+        } else if (!callType.equals(other.callType)) {
+            return false;
+        }
+        if (dataPropagation == null) {
+            if (other.dataPropagation != null) {
+                return false;
+            }
+        } else if (!dataPropagation.equals(other.dataPropagation)) {
+            return false;
+        }
+        if (dataQuality != other.dataQuality) {
+            return false;
+        }
+        if (dataType != other.dataType) {
+            return false;
+        }
+        return true;
+    }
+    
+    @Override
+    public String toString() {
+        return "CallData [dataType=" + dataType 
+                + ", callType=" + callType 
+                + ", dataQuality=" + dataQuality
+                + ", dataPropagation=" + dataPropagation + "]";
+    }
 }

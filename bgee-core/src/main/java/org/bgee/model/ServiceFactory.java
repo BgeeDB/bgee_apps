@@ -6,6 +6,8 @@ import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.file.DownloadFileService;
 import org.bgee.model.file.SpeciesDataGroupService;
 import org.bgee.model.keyword.KeywordService;
+import org.bgee.model.expressiondata.querytool.AnatEntityService;
+import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.species.SpeciesService;
 
 /**
@@ -116,6 +118,22 @@ public class ServiceFactory implements AutoCloseable {
     public KeywordService getKeywordService() {
     	log.entry();
     	return log.exit(new KeywordService(this.daoManager));
+    }
+    
+    /**
+     * TODO
+     */
+    public CallService getCallFactory() {
+        log.entry();
+        return log.exit(new CallService(this.daoManager));
+    }
+    
+    /**
+     * TODO
+     */
+    public AnatEntityService getAnatEntityFactory(String speciesId) {
+        log.entry();
+        return log.exit(new AnatEntityService(speciesId));
     }
     
     /**

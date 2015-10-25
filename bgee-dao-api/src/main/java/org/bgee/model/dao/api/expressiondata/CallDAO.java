@@ -244,6 +244,8 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
         /**
          * @param id    the {@code String} representing the ID of this call.
          */
+        //deprecated because all TOs should now be immutable. 
+        @Deprecated
         void setId(String id) {
             this.id = id;
         }
@@ -258,6 +260,8 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
          * @param geneId    the {@code String} representing the ID of the gene associated to 
          *                  this call.
          */
+        //deprecated because all TOs should now be immutable. 
+        @Deprecated
         void setGeneId(String geneId) {
             this.geneId = geneId;
         }
@@ -272,6 +276,8 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
          * @param stageId    the {@code String} representing the ID of the 
          *                      developmental stage associated to this call.
          */
+        //deprecated because all TOs should now be immutable. 
+        @Deprecated
         void setStageId(String stageId) {
             this.stageId = stageId;
         }
@@ -286,6 +292,8 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
          * @param anatEntityId  the {@code String} representing the ID of the 
          *                      anatomical entity associated to this call.
          */
+        //deprecated because all TOs should now be immutable. 
+        @Deprecated
         void setAnatEntityId(String anatEntityId) {
             this.anatEntityId = anatEntityId;
         }
@@ -302,6 +310,8 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
          * @param affymetrixData    the {@code DataState} defining the contribution 
          *                          of Affymetrix data to the generation of this call.
          */
+        //deprecated because all TOs should now be immutable. 
+        @Deprecated
         void setAffymetrixData(DataState affymetrixData) {
             this.affymetrixData = affymetrixData;
         }
@@ -316,6 +326,8 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
          * @param estData   the {@code DataState} defining the contribution 
          *                  of EST data to the generation of this call.
          */
+        //deprecated because all TOs should now be immutable. 
+        @Deprecated
         void setESTData(DataState estData) {
             this.estData = estData;
         }
@@ -330,6 +342,8 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
          * @param inSituData    the {@code DataState} defining the contribution 
          *                      of <em>in situ</em> data to the generation of this call.
          */
+        //deprecated because all TOs should now be immutable. 
+        @Deprecated
         void setInSituData(DataState inSituData) {
             this.inSituData = inSituData;
         }
@@ -355,6 +369,8 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
          *                      of relaxed <em>in situ</em> data to the generation 
          *                      of this call.
          */
+        //deprecated because all TOs should now be immutable. 
+        @Deprecated
         void setRelaxedInSituData(DataState inSituData) {
             this.relaxedInSituData = inSituData;
         }
@@ -369,6 +385,8 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
          * @param rnaSeqData    the {@code DataState} defining the contribution 
          *                      of RNA-Seq data to the generation of this call.
          */
+        //deprecated because all TOs should now be immutable. 
+        @Deprecated
         void setRNASeqData(DataState rnaSeqData) {
             this.rnaSeqData = rnaSeqData;
         }

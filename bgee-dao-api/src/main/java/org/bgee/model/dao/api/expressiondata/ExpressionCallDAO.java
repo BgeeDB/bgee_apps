@@ -60,6 +60,8 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
      *                      from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
+    //deprecated because a new CallFilter design is being implemented
+    @Deprecated
     public ExpressionCallTOResultSet getExpressionCalls(ExpressionCallParams params) 
             throws DAOException;
     
@@ -309,6 +311,8 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
          * @param includeSubstructures  A {@code boolean} defining whether descendants 
          *                              of the anatomical entity were considered.
          */
+        //deprecated because all TOs should now be immutable. 
+        @Deprecated
         void setIncludeSubstructures(boolean includeSubstructures) {
             this.includeSubstructures = includeSubstructures;
         }
@@ -348,6 +352,8 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
          * @param originOfLine  the {@code OriginOfLine} representing how the expression call 
          *                      was propagated among anatomical entities.
          */
+        //deprecated because all TOs should now be immutable. 
+        @Deprecated
         void setAnatOriginOfLine(OriginOfLine originOfLine) {
             this.anatOriginOfLine = originOfLine;
         }
@@ -383,6 +389,8 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
          * @param includeSubstructures  A {@code boolean} defining whether descendants 
          *                              of the developmental stage were considered.
          */
+        //deprecated because all TOs should now be immutable. 
+        @Deprecated
         void setIncludeSubStages(boolean includeSubStages) {
             this.includeSubStages = includeSubStages;
         }
@@ -400,6 +408,8 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
          * @param originOfLine  the {@code OriginOfLine} representing how the expression call 
          *                      was propagated among developmental stages.
          */
+        //deprecated because all TOs should now be immutable. 
+        @Deprecated
         void setStageOriginOfLine(OriginOfLine originOfLine) {
             this.stageOriginOfLine = originOfLine;
         }
@@ -415,6 +425,8 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
          * 
          * @param observedData A {@code Boolean} defining whether this expression call is observed.
          */
+        //deprecated because all TOs should now be immutable. 
+        @Deprecated
         void setObservedData(boolean observedData) {
             this.observedData = observedData;
         }

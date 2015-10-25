@@ -60,6 +60,8 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
      *                      from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
+    //deprecated because a new CallFilter design is being implemented
+    @Deprecated
     public NoExpressionCallTOResultSet getNoExpressionCalls(NoExpressionCallParams params)
             throws DAOException;
     
@@ -340,6 +342,8 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
          * @param includeParentStructures   A {@code boolean} defining whether parents 
          *                                  of the anatomical entity were considered.
          */
+        //deprecated because all TOs should now be immutable. 
+        @Deprecated
         void setIncludeParentStructures(boolean includeParentStructures) {
             this.includeParentStructures = includeParentStructures;
         }
@@ -357,6 +361,8 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
          * @param originOfLine  An {@code OriginOfLine} representing the origin of the 
          *                      global expression call.
          */
+        //deprecated because all TOs should now be immutable. 
+        @Deprecated
         void setOriginOfLine(OriginOfLine originOfLine) {
             this.originOfLine = originOfLine;
         }

@@ -29,6 +29,8 @@ import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
  * getDifferentParametersCount, getDataTypeSetCount, haveSameDataStates, and 
  * hasCoherentDataStates.
  */
+//deprecated because a new CallFilter design is being implemented
+@Deprecated
 public abstract class CallParams {
 
     /**

@@ -3,8 +3,8 @@ package org.bgee.model.dao.api.expressiondata;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
-import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.OrderingDAO;
+import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
@@ -72,7 +72,7 @@ public interface DiffExpressionCallDAO
      * @see org.bgee.model.dao.api.OrderingDAO#setOrderingAttributes(Enum[])
      * @see org.bgee.model.dao.api.OrderingDAO#clearOrderingAttributes()
      */
-    public enum OrderingAttribute implements OrderingDAO.OrderingAttribute {
+    public enum OrderingAttribute implements DAO.OrderingAttribute {
         OMA_GROUP
     }
 

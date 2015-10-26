@@ -14,6 +14,7 @@ import java.util.Set;
  *              to define what attributes should be populated in the {@code TransferObject}s 
  *              obtained from this {@code DAO}.
  */
+//TODO: when all DAOs will be immutable, this class will not need a generic type anymore.
 public interface DAO<T extends Enum<?> & DAO.Attribute> {
     /**
      * Interface implemented by {@code Enum} classes allowing to select 
@@ -22,16 +23,47 @@ public interface DAO<T extends Enum<?> & DAO.Attribute> {
      * 
      * @author Frederic Bastian
      * @version Bgee 13
-     * @see #setAttributes(Collection)
-     * @see #setAttributes(Enum[])
-     * @see #getAttributes()
-     * @see #clearAttributes()
      * @since Bgee 13
      */
+    ////XXX: when all DAOs will be immutable, will we still actually need this interface?
     public interface Attribute {
         //nothing here, it is only used for typing the Enum classes.
     }
     
+    /**
+     * {@code Enum} used to specify the direction of the ordering, 
+     * for a given {@link OrderingAttribute} a query is sorted by.
+     * <ul>
+     * <li>{@code ASC}: order by ascending order.
+     * <li>{@code DESC}: order by descending order.
+     * </ul>
+     */
+    enum Direction {
+        ASC, DESC;
+    }
+
+    /**
+     * Interface implemented by {@code Enum} classes allowing to select 
+     * the attributes used to order the results of a query to a {@code DAO}. 
+     * This is a separate interface from {@link DAO.Attribute}, because 
+     * the attributes to retrieve from a query, and the attributes to use to order 
+     * the results of a query, are often different, and some attributes used for ordering 
+     * can even be absent from the set of attributes retrievable from a query.
+     * <p>
+     * Note that implementations can still decide that the attributes to retrieve from a query
+     * and the attributes used to order results are the same, in which case 
+     * a same {@code Enum} class would be defined as implementing both {@code DAO.Attribute} 
+     * and {@code OrderingDAO.OrderingAttribute}.
+     * 
+     * @author Frederic Bastian
+     * @version Bgee 13 Jul 2015
+     * @since Bgee 13
+     */
+    ////XXX: when all DAOs will be immutable, will we still actually need this interface?
+    interface OrderingAttribute {
+        //nothing here, it is only used for typing the Enum classes.
+    }
+
     /**
      * Allows to define what attributes should be populated in the {@code TransferObject}s 
      * obtained from this {@code DAO}, for all the following calls. By default, 

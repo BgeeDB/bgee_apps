@@ -6,7 +6,6 @@ import java.util.LinkedHashMap;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.EntityTO;
-import org.bgee.model.dao.api.OrderingDAO;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 
@@ -18,8 +17,7 @@ import org.bgee.model.dao.api.exception.DAOException;
  * @version Bgee 13 Sept. 2015
  * @since Bgee 13
  */
-public interface SpeciesDataGroupDAO 
-extends OrderingDAO<SpeciesDataGroupDAO.Attribute, SpeciesDataGroupDAO.OrderingAttribute> {
+public interface SpeciesDataGroupDAO extends DAO<SpeciesDataGroupDAO.Attribute> {
 
     /**
      * The attributes available for {@code SpeciesDataGroupTO}
@@ -39,7 +37,7 @@ extends OrderingDAO<SpeciesDataGroupDAO.Attribute, SpeciesDataGroupDAO.OrderingA
      *   <li>@{code PREFERRED_ORDER} uses {@link SpeciesDataGroupTO#getPreferredOrder()}
      * </ul>
      */
-    enum OrderingAttribute implements OrderingDAO.OrderingAttribute {
+    enum OrderingAttribute implements DAO.OrderingAttribute {
         PREFERRED_ORDER
     }
 
@@ -101,7 +99,8 @@ extends OrderingDAO<SpeciesDataGroupDAO.Attribute, SpeciesDataGroupDAO.OrderingA
      * @throws DAOException         If an error occurred while accessing the data source. 
      */
     SpeciesDataGroupTOResultSet getAllSpeciesDataGroup(Collection<Attribute> attributes, 
-        LinkedHashMap<OrderingAttribute, OrderingDAO.Direction> orderingAttributes) throws DAOException;
+        LinkedHashMap<SpeciesDataGroupDAO.OrderingAttribute, SpeciesDataGroupDAO.Direction> orderingAttributes) 
+                throws DAOException;
 
     /**
      * Insert the provided species data groups into the Bgee database, represented as
@@ -137,7 +136,7 @@ extends OrderingDAO<SpeciesDataGroupDAO.Attribute, SpeciesDataGroupDAO.OrderingA
      *   a default species ID. 
      * </ul>
      */
-    enum SpeciesToGroupOrderingAttribute implements OrderingDAO.OrderingAttribute {
+    enum SpeciesToGroupOrderingAttribute implements DAO.OrderingAttribute {
         DATA_GROUP_ID, DISTANCE_TO_SPECIES
     }
     /**
@@ -238,7 +237,7 @@ extends OrderingDAO<SpeciesDataGroupDAO.Attribute, SpeciesDataGroupDAO.OrderingA
      * @return                      The results as a {@code SpeciesToDataGroupTOResultSet}.
      */
     SpeciesToDataGroupTOResultSet getAllSpeciesToDataGroup(
-            LinkedHashMap<SpeciesToGroupOrderingAttribute, OrderingDAO.Direction> orderingAttributes);
+            LinkedHashMap<SpeciesToGroupOrderingAttribute, DAO.Direction> orderingAttributes);
 
     /**
      * Insert the provided species data groups to species mappings into the Bgee database,

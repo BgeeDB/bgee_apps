@@ -200,6 +200,7 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
      * @see #reverseColNameMap(Map)
      * @see #generateSelectClause(String, Map)
      */
+    //FIXME: we shouldn't reverse the Map at each call to this method...
     protected String getSelectExprFromAttribute(T attr, Map<String, T> selectExprsToAttributes) 
             throws IllegalArgumentException {
         log.entry(attr, selectExprsToAttributes);

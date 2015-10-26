@@ -20,6 +20,9 @@ import java.util.Map.Entry;
  *              with this {@code OrderingDAO}, to define what attributes to use 
  *              to order the results of a query to this {@code OrderingDAO}.
  */
+//deprecated, as it was decided that each DAO method should accept OrderingAttributes when needed, 
+//and that DAOs should be immutable. As a result, this interface is now pointless.
+@Deprecated
 public interface OrderingDAO<T extends Enum<?> & DAO.Attribute, 
                              U extends Enum<?> & OrderingDAO.OrderingAttribute
                             > extends DAO<T> {
@@ -86,6 +89,9 @@ public interface OrderingDAO<T extends Enum<?> & DAO.Attribute,
      * @see #setOrderingAttributes(Enum[])
      * @see #clearOrderingAttributes()
      */
+    //deprecated, as it was decided that each DAO method should accept OrderingAttributes when needed, 
+    //and that DAOs should be immutable.
+    @Deprecated
     public void setOrderingAttributes(LinkedHashMap<U, Direction> attributesWithDir) 
         throws IllegalArgumentException;
     /**
@@ -109,6 +115,9 @@ public interface OrderingDAO<T extends Enum<?> & DAO.Attribute,
      * @see #setOrderingAttributes(Enum[])
      * @see #clearOrderingAttributes()
      */
+    //deprecated, as it was decided that each DAO method should accept OrderingAttributes when needed, 
+    //and that DAOs should be immutable.
+    @Deprecated
     public void setOrderingAttributes(List<U> attributes) throws IllegalArgumentException;
     
     /**
@@ -131,6 +140,9 @@ public interface OrderingDAO<T extends Enum<?> & DAO.Attribute,
     //to make the method robust to heap pollution, and to add the @SafeVarargs 
     //annotation. See http://docs.oracle.com/javase/7/docs/technotes/guides/language/non-reifiable-varargs.html
     @SuppressWarnings("unchecked")
+    //deprecated, as it was decided that each DAO method should accept OrderingAttributes when needed, 
+    //and that DAOs should be immutable.
+    @Deprecated
     public void setOrderingAttributes(Entry<U, Direction>... attributes);
     
 
@@ -152,6 +164,9 @@ public interface OrderingDAO<T extends Enum<?> & DAO.Attribute,
     //to make the method robust to heap pollution, and to add the @SafeVarargs 
     //annotation. See http://docs.oracle.com/javase/7/docs/technotes/guides/language/non-reifiable-varargs.html
     @SuppressWarnings("unchecked")
+    //deprecated, as it was decided that each DAO method should accept OrderingAttributes when needed, 
+    //and that DAOs should be immutable.
+    @Deprecated
     public void setOrderingAttributes(U... attributes);
     
     /**
@@ -164,6 +179,9 @@ public interface OrderingDAO<T extends Enum<?> & DAO.Attribute,
      *          with {@code OrderingAttribute}s as keys, associated to 
      *          their ordering {@code Direction} as values. 
      */
+    //deprecated, as it was decided that each DAO method should accept OrderingAttributes when needed, 
+    //and that DAOs should be immutable.
+    @Deprecated
     public LinkedHashMap<U, Direction> getOrderingAttributes();
 
     /**
@@ -177,5 +195,8 @@ public interface OrderingDAO<T extends Enum<?> & DAO.Attribute,
      * @see #setOrderingAttributes(Entry[])
      * @see #setOrderingAttributes(Enum[])
      */
+    //deprecated, as it was decided that each DAO method should accept OrderingAttributes when needed, 
+    //and that DAOs should be immutable.
+    @Deprecated
     public void clearOrderingAttributes();
 }

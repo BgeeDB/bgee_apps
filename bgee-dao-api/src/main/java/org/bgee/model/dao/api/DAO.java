@@ -49,6 +49,9 @@ public interface DAO<T extends Enum<?> & DAO.Attribute> {
      *                      {@code TransferObject}s obtained from this {@code DAO}.
      * @see #clearAttributes()
      */
+    //deprecated, as it was decided that each DAO method should accept Attributes when needed, 
+    //and that DAOs should be immutable.
+    @Deprecated
     public void setAttributes(Collection<T> attributes);
     
     /**
@@ -67,6 +70,9 @@ public interface DAO<T extends Enum<?> & DAO.Attribute> {
     //to make the method robust to heap pollution, and to add the @SafeVarargs 
     //annotation. See http://docs.oracle.com/javase/7/docs/technotes/guides/language/non-reifiable-varargs.html
     @SuppressWarnings("unchecked")
+    //deprecated, as it was decided that each DAO method should accept Attributes when needed, 
+    //and that DAOs should be immutable.
+    @Deprecated
     public void setAttributes(T... attributes);
     
     /**
@@ -76,6 +82,9 @@ public interface DAO<T extends Enum<?> & DAO.Attribute> {
      * @return	A {@code Set} of {@code Attribute}s {@code T} defining the attributes
      * 			to populate in the {@code TransferObject}s obtained from this {@code DAO}.
      */
+    //deprecated, as it was decided that each DAO method should accept Attributes when needed, 
+    //and that DAOs should be immutable.
+    @Deprecated
     public Set<T> getAttributes();
 
     /**
@@ -88,5 +97,8 @@ public interface DAO<T extends Enum<?> & DAO.Attribute> {
      * @see #setAttributes(Collection)
      * @see #setAttributes(Enum[])
      */
+    //deprecated, as it was decided that each DAO method should accept Attributes when needed, 
+    //and that DAOs should be immutable.
+    @Deprecated
     public void clearAttributes();
  }

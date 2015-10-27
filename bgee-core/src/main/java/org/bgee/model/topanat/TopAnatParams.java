@@ -1,85 +1,31 @@
-package org.bgee.model;
+package org.bgee.model.topanat;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.ServiceFactory;
 import org.bgee.model.expressiondata.CallData;
-import org.bgee.model.expressiondata.CallData.DiffExpressionCallData;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
+import org.bgee.model.expressiondata.CallData.DiffExpressionCallData;
+import org.bgee.model.expressiondata.CallFilter;
+import org.bgee.model.expressiondata.ConditionFilter;
 import org.bgee.model.expressiondata.baseelements.CallType;
+import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DecorelationType;
 import org.bgee.model.expressiondata.baseelements.StatisticTest;
-import org.bgee.model.expressiondata.CallFilter;
-import org.bgee.model.expressiondata.ConditionFilter;
 import org.bgee.model.gene.GeneFilter;
 
+
+import org.bgee.model.expressiondata.baseelements.DiffExpressionFactor;
+
 public class TopAnatParams {
-
-    /**
-     * Default values //XXX Managed in BgeeProperties instead ?
-     */
-
-    /**
-     * 
-     */
-    private final static boolean INCLUDE_EXPRESSION_DEFAULT = true;
-
-    /**
-     * 
-     */
-    private final static boolean INCLUDE_DIFFERENTIAL_EXPRESSION_DEFAULT = true;
-
-    /**
-     * 
-     */
-    private final static boolean HIGH_CONFIDENCE_ONLY_DEFAULT = false;
-
-    /**
-     * 
-     */
-    private final static Set<DataType> DATA_TYPES_DEFAULT = 
-            new HashSet<DataType>(Arrays.asList(DataType.values()));
-
-    /**
-     * TODO need the true list, or make it mandatory
-     */
-    private final static Set<String> DEV_STAGE_IDS_DEFAULT = 
-            new HashSet<String>(Arrays.asList("1","2","3"));
-
-    /**
-     * 
-     */
-    private final static DecorelationType DECORLATION_TYPE_DEFAULT = DecorelationType.PARENT_CHILD;
-
-    /**
-     * 
-     */
-    private final static StatisticTest STATISTIC_TEST_DEFAULT = StatisticTest.FISHER;
-
-    /**
-     * 
-     */
-    private final static int NODE_SIZE_DEFAULT = 5;
-
-    /**
-     * 
-     */
-    private final static float FDR_THRESHOLD_DEFAULT = 0.05f;
-
-    /**
-     * 
-     */
-    private final static float PVALUE_THRESHOLD_DEFAULT = 0.05f;
-
-    /**
-     * 
-     */
-    private final static int NUMBER_OF_SIGNIFICANT_NODES_DEFAULT = 10;
 
     /**
      * 
@@ -90,10 +36,10 @@ public class TopAnatParams {
     /**
      * 
      */
-    private final Set<String> submittedIds;
+    private final Set<String> submittedForegroundIds;
 
     /**
-     * 
+     *
      */
     private final boolean backgroundSubmitted;
 
@@ -105,17 +51,12 @@ public class TopAnatParams {
     /**
      * 
      */
-    private boolean includeExpression;
+    private CallType callType;
 
     /**
      * 
      */
-    private boolean includeDifferentialExpression;
-
-    /**
-     * 
-     */
-    private boolean highConfidenceOnly;
+    private DataQuality dataQuality;
 
     /**
      * 
@@ -125,7 +66,7 @@ public class TopAnatParams {
     /**
      * 
      */
-    private Set<String> devStageIds;
+    private String devStageId;
 
     /**
      * 
@@ -176,10 +117,10 @@ public class TopAnatParams {
         /**
          * 
          */
-        private final Set<String> submittedIds;
+        private final Set<String> submittedForegroundIds;
 
         /**
-         * 
+         *
          */
         private final boolean backgroundSubmitted;
 
@@ -191,17 +132,12 @@ public class TopAnatParams {
         /**
          * 
          */
-        private boolean includeExpression;
+        private CallType callType;
 
         /**
          * 
          */
-        private boolean includeDifferentialExpression;
-
-        /**
-         * 
-         */
-        private boolean highConfidenceOnly;
+        private DataQuality dataQuality;
 
         /**
          * 
@@ -211,7 +147,7 @@ public class TopAnatParams {
         /**
          * 
          */
-        private Set<String> devStageIds;
+        private String devStageId;
 
         /**
          * 
@@ -249,21 +185,23 @@ public class TopAnatParams {
         private ServiceFactory serviceFactory;
 
         /**
-         * 
-         * @param submittedIds
+         * @param submittedForegroundIds
+         * @param callType
          */
-        public Builder(Set<String> submittedIds){
-            this(submittedIds, null);
+        public Builder(Set<String> submittedForegroundIds,CallType callType){
+            this(submittedForegroundIds, null, callType);
         }
 
         /**
-         * @param submittedIds
+         * @param submittedForegroundIds
          * @param submittedBackgroundIds
+         * @param callType
          */
-        public Builder(Set<String> submittedIds, Set<String> submittedBackgroundIds) {
-            log.entry(submittedIds,submittedBackgroundIds);
+        public Builder(Set<String> submittedForegroundIds, Set<String> submittedBackgroundIds, 
+                CallType callType) {
+            log.entry(submittedForegroundIds,submittedBackgroundIds);
             // Mandatory attributes
-            this.submittedIds = submittedIds;
+            this.submittedForegroundIds = submittedForegroundIds;
             this.submittedBackgroundIds = submittedBackgroundIds;
             if (this.submittedBackgroundIds != null) {
                 this.backgroundSubmitted = true;                
@@ -271,74 +209,42 @@ public class TopAnatParams {
             else{
                 this.backgroundSubmitted = false;  
             }
-            // Default value for optional attributes
-            this.dataTypes = TopAnatParams.DATA_TYPES_DEFAULT;
-            this.decorelationType = TopAnatParams.DECORLATION_TYPE_DEFAULT;
-            this.statisticTest = TopAnatParams.STATISTIC_TEST_DEFAULT;
-            this.devStageIds = TopAnatParams.DEV_STAGE_IDS_DEFAULT;
-            this.fdrThreshold = TopAnatParams.FDR_THRESHOLD_DEFAULT;
-            this.highConfidenceOnly = TopAnatParams.HIGH_CONFIDENCE_ONLY_DEFAULT;
-            this.includeDifferentialExpression = TopAnatParams.INCLUDE_DIFFERENTIAL_EXPRESSION_DEFAULT;
-            this.includeExpression = TopAnatParams.INCLUDE_EXPRESSION_DEFAULT;
-            this.nodeSize = TopAnatParams.NODE_SIZE_DEFAULT;
-            this.numberOfSignificantNode = TopAnatParams.NUMBER_OF_SIGNIFICANT_NODES_DEFAULT;
-            this.pvalueThreashold = TopAnatParams.PVALUE_THRESHOLD_DEFAULT;
-            this.serviceFactory = new ServiceFactory();
+            this.callType = callType;
+
             log.exit();
         }
 
         /**
          * 
-         * @param includeDifferentialExpression
+         * @param dataQuality
          * @return
          */
-        public Builder includeDifferentialExpression(boolean includeDifferentialExpression){
-            log.entry(includeDifferentialExpression);
-            this.includeDifferentialExpression = includeDifferentialExpression;
-            return log.exit(this);
-        }    
-
-        /**
-         * 
-         * @param includeExpression
-         * @return
-         */
-        public Builder includeExpression(boolean includeExpression){
-            log.entry(includeExpression);
-            this.includeExpression = includeExpression;
-            return log.exit(this);
-        }   
-
-        /**
-         * 
-         * @param highConfidenceOnly
-         * @return
-         */
-        public Builder highConfidenceOnly(boolean highConfidenceOnly){
-            log.entry(highConfidenceOnly);
-            this.highConfidenceOnly = highConfidenceOnly;
+        public Builder dataQuality(DataQuality dataQuality){
+            log.entry(dataQuality);
+            this.dataQuality = dataQuality;
             return log.exit(this);
         } 
 
         /**
-         * 
+         * XXX checkCallTypeDataTypes here or elsewhere ? Convert to null if all of them ?
          * @param dataTypes
          * @return
          */
         public Builder dataTypes(Set<DataType> dataTypes){
             log.entry(dataTypes);
+            this.callType.checkCallTypeDataTypes(dataTypes);
             this.dataTypes = dataTypes;
             return log.exit(this);
         }  
 
         /**
          * 
-         * @param devStageIds
+         * @param devStageId
          * @return
          */
-        public Builder devStageIds(Set<String> devStageIds){
-            log.entry(devStageIds);
-            this.devStageIds = devStageIds;
+        public Builder devStageId(String devStageId){
+            log.entry(devStageId);
+            this.devStageId = devStageId;
             return log.exit(this);
         }         
 
@@ -424,29 +330,29 @@ public class TopAnatParams {
          * @return
          */
         public TopAnatParams build(){
+            if(this.serviceFactory == null){
+                this.serviceFactory = new ServiceFactory();
+            }
             return new TopAnatParams(this);
         }
 
     }
 
-
-
     private TopAnatParams(Builder builder) {
         log.entry();
         this.backgroundSubmitted = builder.backgroundSubmitted;
+        this.callType = builder.callType;
         this.dataTypes = builder.dataTypes;
         this.decorelationType = builder.decorelationType;
         this.statisticTest = builder.statisticTest;
-        this.devStageIds = builder.devStageIds;
+        this.devStageId = builder.devStageId;
         this.fdrThreshold = builder.fdrThreshold;
-        this.highConfidenceOnly = builder.highConfidenceOnly;
-        this.includeDifferentialExpression = builder.includeDifferentialExpression;
-        this.includeExpression = builder.includeExpression;
+        this.dataQuality = builder.dataQuality;
         this.nodeSize = builder.nodeSize;
         this.numberOfSignificantNodes = builder.numberOfSignificantNode;
         this.pvalueThreashold = builder.pvalueThreashold;
         this.submittedBackgroundIds = builder.submittedBackgroundIds;
-        this.submittedIds = builder.submittedIds;
+        this.submittedForegroundIds = builder.submittedForegroundIds;
         this.serviceFactory = builder.serviceFactory;
         log.exit();
     }
@@ -454,8 +360,8 @@ public class TopAnatParams {
     /**
      * @return the submittedIds
      */
-    public Collection<String> getSubmittedIds() {
-        return submittedIds;
+    public Collection<String> getSubmittedForegroundIds() {
+        return submittedForegroundIds;
     }
 
     /**
@@ -473,24 +379,17 @@ public class TopAnatParams {
     }
 
     /**
-     * @return the includeExpression
+     * @return the callType
      */
-    public boolean isIncludeExpression() {
-        return includeExpression;
+    public CallType getCallType() {
+        return callType;
     }
 
     /**
-     * @return the includeDifferentialExpression
+     * @return
      */
-    public boolean isIncludeDifferentialExpression() {
-        return includeDifferentialExpression;
-    }
-
-    /**
-     * @return the highConfidenceOnly
-     */
-    public boolean isHighConfidenceOnly() {
-        return highConfidenceOnly;
+    public DataQuality getDataQuality() {
+        return dataQuality;
     }
 
     /**
@@ -501,10 +400,10 @@ public class TopAnatParams {
     }
 
     /**
-     * @return the devStageIds
+     * @return the devStageId
      */
-    public Collection<String> getDevStageIds() {
-        return devStageIds;
+    public String getDevStageId() {
+        return devStageId;
     }
 
     /**
@@ -515,7 +414,6 @@ public class TopAnatParams {
     }
 
     /**
-     * 
      * @return the statisticTest
      */
     public StatisticTest getStatisticTest() {
@@ -551,7 +449,6 @@ public class TopAnatParams {
     }
 
     /**
-     * 
      * @return
      */
     public ServiceFactory getServiceFactory(){
@@ -559,51 +456,46 @@ public class TopAnatParams {
     }
 
     /**
-     * 
      * @return
      */
-    public Set<CallFilter> getCallFiltersForForeground(){
-        return getCallFiltersFromRawParams(false);
+    public CallFilter<CallData<? extends CallType>> rawParametersToCallFilter(){
+        ConditionFilter conditionFilter = new ConditionFilter(Arrays.asList(this.devStageId),null);
+        return new CallFilter<CallData<? extends CallType>>(
+                new GeneFilter(this.submittedBackgroundIds),
+                new HashSet<ConditionFilter>(Arrays.asList(conditionFilter)),
+                new HashSet<CallData<? extends CallType>>(this.getCallData())
+                );
     }
 
     /**
-     * 
+     * XXX check: DiffExpressionFactor.ANATOMY ? DiffExpression.DIFF_EXPRESSED ?
      * @return
      */
-    public Set<CallFilter> getCallFiltersForBackground(){
-        if(this.isBackgroundSubmitted()){
-            return getCallFiltersFromRawParams(true);
-        }
-        return null;
-    }
+    private List<CallData<? extends CallType>> getCallData(){
 
-    /**
-     * 
-     * @return
-     */
-    private Set<CallFilter> getCallFiltersFromRawParams(boolean isBackground){  
-        Set<CallFilter> callFilters = new HashSet<CallFilter>();
-        ConditionFilter conditionFilter = new ConditionFilter(this.devStageIds);
-        Set<CallData<? extends CallType>> callDataFilters = 
-                new HashSet<CallData<? extends CallType>>();
-        if(this.includeExpression){
-            callDataFilters.add(new ExpressionCallData());
-        }
-        if(this.includeDifferentialExpression){
-            callDataFilters.add(new DiffExpressionCallData());
-        }
-        CallDataConditionFilter callDataConditionFilter = 
-                new CallDataConditionFilter(conditionFilter,callDataFilters); 
-        if(isBackground){
-            this.submittedBackgroundIds.forEach(id -> callFilters.add(new CallFilter(
-                    new GeneFilter(id),callDataConditionFilter)));
-        }
-        else{
-            this.submittedIds.forEach(id -> callFilters.add(new CallFilter(
-                    new GeneFilter(id),callDataConditionFilter)));            
-        }
-        return callFilters;
-    }
+        List<CallData<? extends CallType>> callDataList = null;
 
+        if (this.dataTypes != null){
+            if(this.callType == CallType.Expression.EXPRESSED){
+                callDataList = this.dataTypes.stream()
+                        .map(dataType -> new ExpressionCallData(
+                                CallType.Expression.EXPRESSED,
+                                this.dataQuality,
+                                dataType))
+                        .collect(Collectors.toList());
+            }
+            else{
+                callDataList = this.dataTypes.stream()
+                        .map(dataType -> new DiffExpressionCallData(
+                                DiffExpressionFactor.ANATOMY,
+                                CallType.DiffExpression.DIFF_EXPRESSED,
+                                this.dataQuality,
+                                dataType))
+                        .collect(Collectors.toList());
+            }                
+        }
+
+        return callDataList;
+    }
 }
 

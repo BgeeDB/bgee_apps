@@ -461,35 +461,52 @@ public class TopAnatParams {
      */
     public CallFilter<CallData<? extends CallType>> rawParametersToCallFilter(){
         ConditionFilter conditionFilter = new ConditionFilter(Arrays.asList(this.devStageId),null);
+        GeneFilter geneFilter = null;
+        if(this.isBackgroundSubmitted()){
+            geneFilter = new GeneFilter(this.submittedBackgroundIds);
+        }
         return new CallFilter<CallData<? extends CallType>>(
-                new GeneFilter(this.submittedBackgroundIds),
+                geneFilter,
                 new HashSet<ConditionFilter>(Arrays.asList(conditionFilter)),
                 new HashSet<CallData<? extends CallType>>(this.getCallData())
                 );
     }
 
     /**
-     * XXX check: DiffExpressionFactor.ANATOMY ? DiffExpression.DIFF_EXPRESSED ?
-     * XXX check: DataPropagation
+     * XXX check if correct: DiffExpressionFactor.ANATOMY ? DiffExpression.DIFF_EXPRESSED ?
+     * XXX check if correct: DataPropagation
      * @return
      */
     private List<CallData<? extends CallType>> getCallData(){
 
         List<CallData<? extends CallType>> callDataList = null;
+        DataPropagation dataPropagation = new DataPropagation(
+                DataPropagation.PropagationState.SELF,
+                DataPropagation.PropagationState.SELF_OR_CHILD);
+        if(this.dataQuality == null){
+            this.dataQuality = DataQuality.LOW;
+        }
 
-        if (this.dataTypes != null){
-            if(this.callType == CallType.Expression.EXPRESSED){
+        if(this.callType == CallType.Expression.EXPRESSED){
+            if (this.dataTypes != null){
                 callDataList = this.dataTypes.stream()
                         .map(dataType -> new ExpressionCallData(
                                 CallType.Expression.EXPRESSED,
                                 this.dataQuality,
                                 dataType,
-                                new DataPropagation(
-                                        DataPropagation.PropagationState.SELF,
-                                        DataPropagation.PropagationState.SELF_OR_CHILD)))
-                        .collect(Collectors.toList());
+                                dataPropagation))
+                        .collect(Collectors.toList()); 
             }
             else{
+                callDataList = Arrays.asList(new ExpressionCallData(
+                        CallType.Expression.EXPRESSED,
+                        this.dataQuality,
+                        null,
+                        dataPropagation));
+            }
+        }
+        else{
+            if (this.dataTypes != null){
                 callDataList = this.dataTypes.stream()
                         .map(dataType -> new DiffExpressionCallData(
                                 DiffExpressionFactor.ANATOMY,
@@ -497,8 +514,15 @@ public class TopAnatParams {
                                 this.dataQuality,
                                 dataType))
                         .collect(Collectors.toList());
-            }                
-        }
+            }
+            else{
+                callDataList = Arrays.asList(new DiffExpressionCallData(
+                        DiffExpressionFactor.ANATOMY,
+                        CallType.DiffExpression.DIFF_EXPRESSED,
+                        this.dataQuality,
+                        null));
+            }
+        }                
 
         return callDataList;
     }

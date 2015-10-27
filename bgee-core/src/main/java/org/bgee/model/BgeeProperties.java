@@ -121,7 +121,7 @@ public class BgeeProperties {
      * @see #TOP_ANAT_FUNCTION_FILE_KEY
      */
     public final static String TOP_ANAT_FUNCTION_FILE_DEFAULT = 
-            "TopAnatFiles/R_scripts/topAnat_functions.R";   
+            "/R_scripts/topAnat_functions.R";   
 
     /**
      * A {@code String} that is the key to access to the System property that contains the name of 

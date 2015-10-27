@@ -37,6 +37,24 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
         ID, GENE_ID, STAGE_ID, ANAT_ENTITY_ID, 
         AFFYMETRIX_DATA, EST_DATA, IN_SITU_DATA, RELAXED_IN_SITU_DATA, RNA_SEQ_DATA;
     }
+    /**
+     * The attributes available to order retrieved {@code CallTO}s
+     * <ul>
+     * <li>{@code GENE_ID}: corresponds to {@link CallTO#getGeneId()}.
+     * <li>{@code STAGE_ID}: corresponds to {@link CallTO#getStageId()}.
+     * <li>{@code ANAT_ENTITY_ID}: corresponds to {@link CallTO#getAnatEntityId()}.
+     * <li>{@code OMA_GROUP_ID}: order results by the OMA group genes belong to. 
+     * If this {@code OrderingAttribute} is used in a query not specifying any targeted taxon 
+     * for gene orthology, then the {@code OMAParentNodeId} of the gene is used (see 
+     * {@link org.bgee.model.dao.api.gene.GeneDAO.GeneTO.getOMAParentNodeId()}); otherwise, 
+     * the OMA group the gene belongs to at the level of the targeted taxon is used. 
+     * <li>{@code MEAN_RANK}: order results by mean rank of the gene in the corresponding condition. 
+     * Only the mean ranks computed from the data types requested in the query are considered. 
+     * </ul>
+     */
+    enum OrderingAttribute implements DAO.OrderingAttribute {
+        GENE_ID, STAGE_ID, ANAT_ENTITY_ID, OMA_GROUP_ID, MEAN_RANK;
+    }
 
     /**
      * A {@code TransferObject} carrying information about calls present in the Bgee database, 

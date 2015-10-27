@@ -1,6 +1,7 @@
 package org.bgee.model.dao.api.expressiondata;
 
 import java.util.Collection;
+import java.util.LinkedHashMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -14,7 +15,8 @@ import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
  * DAO defining queries using or retrieving {@link ExpressionCallTO}s. 
  * 
  * @author Valentine Rech de Laval
- * @version Bgee 13
+ * @author Frederic Bastian
+ * @version Bgee 13 Oct. 2015
  * @since Bgee 13
  */
 public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
@@ -46,6 +48,62 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
         INCLUDE_SUBSTRUCTURES, INCLUDE_SUBSTAGES, 
         ANAT_ORIGIN_OF_LINE, STAGE_ORIGIN_OF_LINE, OBSERVED_DATA;
     }
+    
+    /**
+     * Retrieve expression calls from the data source. The parameters are provided through 
+     * {@code DAOCallFilter}s. Note that while it is possible to filter genes to consider 
+     * notably by providing ID lists in the {@code DAOCallFilter}s, it is also possible to provide 
+     * a global list ({@code globalGeneIds}), overriding any gene IDs provided in the {@code DAOCallFilter}s, 
+     * to avoid the need of repeating a same gene ID filtering in several {@code DAOCallFilter}s, 
+     * which could be costly, as many gene IDs could be provided.
+     * <p>
+     * Please also note that all the {@code ExpressionCallTO}s in the provided {@code DAOCallFilter}s 
+     * should all have the same propagation states (methods {@code isIncludeSubstructures} and 
+     * {@code isIncludeSubStages}), otherwise, an {@code IllegalArgumentException} is thrown.
+     * <p>
+     * It is possible to request only for genes that are orthologous at the level of a targeted taxon, 
+     * by setting {@code taxonId}. In that case, only genes that are orthologous in this taxon 
+     * will be considered. If the species member of the provided taxon should be 
+     * further filtered, a list of species IDs should be defined in the {@code DAOCallFilter}s. 
+     * Otherwise, all species existing in the targeted taxon will be considered. 
+     * If {@code taxonId} is blank, then no gene orthology is considered. 
+     * <p>
+     * The expression calls are retrieved and returned as an {@code ExpressionCallTOResultSet}. 
+     * It is the responsibility of the caller to close this {@code DAOResultSet} once 
+     * results are retrieved.
+     * 
+     * @param callFiters            A {@code Collection} of {@code DAOCallFilter}s using 
+     *                              {@code ExpressionCallTO}s, allowing to configure this query. 
+     *                              If several {@code DAOCallFilter}s are provided, they are seen 
+     *                              as "OR" conditions. Can be {@code null} or empty.
+     * @param globalGeneIds         A {@code Set} of {@code String}s that are IDs of genes 
+     *                              to globally filter this query, overriding any gene IDs 
+     *                              provided in the {@code DAOCallFilter}s. 
+     *                              Can be {@code null} or empty.
+     * @param taxonId               A {@code String} that is the ID of a targeted taxon, 
+     *                              that should be non-null if only orthologous genes are requested. 
+     *                              Can be {@code null}.
+     * @param attributes            A {@code Collection} of {@code ExpressionCallDAO.Attribute}s 
+     *                              defining the attributes to populate in the returned 
+     *                              {@code ExpressionCallTO}s. If {@code null} or empty, 
+     *                              all attributes are populated. 
+     * @param orderingAttributes    A {@code LinkedHashMap} where keys are 
+     *                              {@code CallDAO.OrderingAttribute}s defining 
+     *                              the attributes used to order the returned {@code ExpressionCallTO}s, 
+     *                              the associated value being a {@code DAO.Direction} 
+     *                              defining whether the ordering should be ascendant or descendant.
+     *                              If {@code null} or empty, then no ordering is performed. 
+     * @return                      An {@code ExpressionCallTOResultSet} allowing to obtain 
+     *                              the requested {@code ExpressionCallTO}s.
+     * @throws DAOException             If an error occurred while accessing the data source. 
+     * @throws IllegalArgumentException If the {@code DAOCallFilter}s provided define multiple 
+     *                                  expression propagation states requested.
+     */
+    public ExpressionCallTOResultSet getExpressionCalls(
+            Collection<DAOCallFilter<ExpressionCallTO>> callFiters, Collection<String> globalGeneIds, 
+            String taxonId, Collection<Attribute> attributes, 
+            LinkedHashMap<OrderingAttribute, DAO.Direction> orderingAttributes) 
+                    throws DAOException, IllegalArgumentException;
     
     /**
      * Retrieve expression calls from data source according {@code ExpressionCallParams}.

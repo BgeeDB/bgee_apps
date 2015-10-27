@@ -4,14 +4,17 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.DAOCallFilter;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO.OriginOfLine;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallParams;
@@ -46,6 +49,16 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
      */
     public MySQLExpressionCallDAO(MySQLDAOManager manager) throws IllegalArgumentException {
         super(manager);
+    }
+
+    @Override
+    public ExpressionCallTOResultSet getExpressionCalls(
+            Collection<DAOCallFilter<ExpressionCallTO>> callFiters, Collection<String> globalGeneIds, 
+            String taxonId, Collection<ExpressionCallDAO.Attribute> attributes, 
+            LinkedHashMap<ExpressionCallDAO.OrderingAttribute, DAO.Direction> orderingAttributes) 
+                    throws DAOException {
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override

@@ -16,6 +16,7 @@ import org.bgee.model.expressiondata.CallData.DiffExpressionCallData;
 import org.bgee.model.expressiondata.CallFilter;
 import org.bgee.model.expressiondata.ConditionFilter;
 import org.bgee.model.expressiondata.baseelements.CallType;
+import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DecorelationType;
@@ -469,6 +470,7 @@ public class TopAnatParams {
 
     /**
      * XXX check: DiffExpressionFactor.ANATOMY ? DiffExpression.DIFF_EXPRESSED ?
+     * XXX check: DataPropagation
      * @return
      */
     private List<CallData<? extends CallType>> getCallData(){
@@ -481,7 +483,10 @@ public class TopAnatParams {
                         .map(dataType -> new ExpressionCallData(
                                 CallType.Expression.EXPRESSED,
                                 this.dataQuality,
-                                dataType))
+                                dataType,
+                                new DataPropagation(
+                                        DataPropagation.PropagationState.SELF,
+                                        DataPropagation.PropagationState.SELF_OR_CHILD)))
                         .collect(Collectors.toList());
             }
             else{

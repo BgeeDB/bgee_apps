@@ -1,20 +1,22 @@
 package org.bgee.model.topanat;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeProperties;
+import org.bgee.model.QueryTool;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.function.TriFunction;
 
 /**
  * @author Mathieu Seppey
- *
  */
-public class TopAnatController {
+public class TopAnatController extends QueryTool {
     private final static Logger log = LogManager.getLogger(TopAnatController.class.getName()); 
 
     /**
@@ -27,6 +29,9 @@ public class TopAnatController {
      */
     private final BgeeProperties props;
     
+    /**
+     * 
+     */
     private final ServiceFactory serviceFactory;
 
     /**
@@ -76,7 +81,7 @@ public class TopAnatController {
         if (serviceFactory == null) {
             throw log.throwing(new IllegalArgumentException("A ServiceFactory must be provided."));
         }
-        this.topAnatParams = topAnatParams;
+        this.topAnatParams = Collections.unmodifiableList(topAnatParams);
         this.topAnatAnalysisSupplier = topAnatAnalysisSupplier;
         this.props = props;
         this.serviceFactory = serviceFactory;
@@ -93,8 +98,10 @@ public class TopAnatController {
         this.validateForeground();
         
         // Create TopAnatAnalysis for each TopAnatParams
+                
         return log.exit(this.topAnatParams.stream()
-                .map(params -> this.topAnatAnalysisSupplier.apply(params, this.props, this.serviceFactory))
+                .map(params -> this.topAnatAnalysisSupplier.apply(params, this.props, 
+                        this.serviceFactory))
                 .map(analysis -> {
                     try {
                         return analysis.proceedToAnalysis();
@@ -108,5 +115,10 @@ public class TopAnatController {
     
     private void validateForeground(){
         //Check whether the foreground is included into the submitted background or the species
+    }
+    
+    @Override
+    protected Logger getLogger() {
+        return log;
     }
 }

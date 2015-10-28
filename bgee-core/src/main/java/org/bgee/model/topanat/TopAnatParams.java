@@ -2,6 +2,7 @@ package org.bgee.model.topanat;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
@@ -22,7 +23,6 @@ import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DecorelationType;
 import org.bgee.model.expressiondata.baseelements.StatisticTest;
 import org.bgee.model.gene.GeneFilter;
-import org.bgee.model.species.Species;
 import org.bgee.model.expressiondata.baseelements.DiffExpressionFactor;
 
 public class TopAnatParams {
@@ -32,6 +32,11 @@ public class TopAnatParams {
      */
     private final static Logger log = LogManager
             .getLogger(TopAnatParams.class.getName());
+    
+    /**
+     * 
+     */
+    private final static String FILE_PREFIX = "topAnat_";
 
     /**
      * 
@@ -39,19 +44,14 @@ public class TopAnatParams {
     private final Set<String> submittedForegroundIds;
 
     /**
-     *
-     */
-    private final boolean backgroundSubmitted;
-
-    /**
      * 
      */
-    private final Collection<String> submittedBackgroundIds;
+    private final Set<String> submittedBackgroundIds;
     
     /**
      * 
      */
-    private final Species species;
+    private final String speciesId;
 
     /**
      * 
@@ -102,6 +102,11 @@ public class TopAnatParams {
      * 
      */
     private final int numberOfSignificantNodes;
+    
+    /**
+     * 
+     */
+    private final String uniqueFileNameString;
 
     /**
      * 
@@ -118,21 +123,16 @@ public class TopAnatParams {
          * 
          */
         private final Set<String> submittedForegroundIds;
-
-        /**
-         *
-         */
-        private final boolean backgroundSubmitted;
         
         /**
          * 
          */
-        private final Species species;
+        private final String speciesId;
 
         /**
          * 
          */
-        private Collection<String> submittedBackgroundIds;
+        private Set<String> submittedBackgroundIds;
 
         /**
          * 
@@ -193,8 +193,8 @@ public class TopAnatParams {
          * @param submittedForegroundIds
          * @param callType
          */
-        public Builder(Set<String> submittedForegroundIds, Species species, CallType callType){
-            this(submittedForegroundIds, null, species, callType);
+        public Builder(Set<String> submittedForegroundIds, String speciesId, CallType callType){
+            this(submittedForegroundIds, null, speciesId, callType);
         }
 
         /**
@@ -203,18 +203,12 @@ public class TopAnatParams {
          * @param callType
          */
         public Builder(Set<String> submittedForegroundIds, Set<String> submittedBackgroundIds,
-                Species species,
+                String speciesId,
                 CallType callType) {
-            log.entry(submittedForegroundIds,submittedBackgroundIds,species,callType);
+            log.entry(submittedForegroundIds,submittedBackgroundIds,speciesId,callType);
             this.submittedForegroundIds = submittedForegroundIds;
             this.submittedBackgroundIds = submittedBackgroundIds;
-            if (this.submittedBackgroundIds != null) {
-                this.backgroundSubmitted = true;                
-            }
-            else{
-                this.backgroundSubmitted = false;  
-            }
-            this.species = species;
+            this.speciesId = speciesId;
             this.callType = callType;
             
             log.exit();
@@ -346,10 +340,10 @@ public class TopAnatParams {
 
     private TopAnatParams(Builder builder) {
         log.entry();
-        this.backgroundSubmitted = builder.backgroundSubmitted;
-        this.species = builder.species;
+        this.speciesId = builder.speciesId;
         this.callType = builder.callType;
-        this.dataTypes = builder.dataTypes;
+        this.dataTypes = builder.dataTypes == null ? null :
+            Collections.unmodifiableSet(new HashSet<>(builder.dataTypes));
         this.decorelationType = builder.decorelationType;
         this.statisticTest = builder.statisticTest;
         this.devStageId = builder.devStageId;
@@ -358,8 +352,12 @@ public class TopAnatParams {
         this.nodeSize = builder.nodeSize;
         this.numberOfSignificantNodes = builder.numberOfSignificantNode;
         this.pvalueThreashold = builder.pvalueThreashold;
-        this.submittedBackgroundIds = builder.submittedBackgroundIds;
-        this.submittedForegroundIds = builder.submittedForegroundIds;
+        this.submittedBackgroundIds = builder.submittedBackgroundIds == null ? null :
+            Collections.unmodifiableSet(new HashSet<>(builder.submittedBackgroundIds));
+        this.submittedForegroundIds = builder.submittedForegroundIds == null ? null :
+            Collections.unmodifiableSet(new HashSet<>(builder.submittedForegroundIds));
+        // XXX Probably something else based on different params and digested
+        this.uniqueFileNameString = this.speciesId+this.devStageId+this.callType;
         log.exit();
     }
 
@@ -368,13 +366,6 @@ public class TopAnatParams {
      */
     public Collection<String> getSubmittedForegroundIds() {
         return submittedForegroundIds;
-    }
-
-    /**
-     * @return the backgroundSubmitted
-     */
-    public boolean isBackgroundSubmitted() {
-        return backgroundSubmitted;
     }
 
     /**
@@ -388,8 +379,8 @@ public class TopAnatParams {
      * 
      * @return
      */
-    public Species getSpecies(){
-       return species; 
+    public String getSpeciesId(){
+       return speciesId; 
     }
 
     /**
@@ -468,11 +459,56 @@ public class TopAnatParams {
     public CallFilter<CallData<?>> rawParametersToCallFilter() {
         ConditionFilter conditionFilter = new ConditionFilter(null, Arrays.asList(this.devStageId));
         return new CallFilter<CallData<?>>(
-                this.isBackgroundSubmitted()? new GeneFilter(this.submittedBackgroundIds): null, 
+                this.submittedBackgroundIds != null ? new GeneFilter(this.submittedBackgroundIds): null, 
                 new HashSet<>(Arrays.asList(conditionFilter)), this.getCallData()
             );
     }
-
+        
+    /**
+     * 
+     */
+    public String getResultFileName(){
+        return TopAnatParams.FILE_PREFIX + this.uniqueFileNameString + ".tsv";
+    }
+    
+    /**
+     * 
+     */
+    public String getResultPDFFileName(){
+        return TopAnatParams.FILE_PREFIX + "PDF_" + this.uniqueFileNameString + ".pdf";
+    }
+    
+    /**
+     *
+     */
+    public String getGeneToAnatEntitiesFileName(){
+        return TopAnatParams.FILE_PREFIX 
+                + "GeneToAnatEntities_" + this.uniqueFileNameString + ".tsv";
+    }
+    
+    /**
+     * @return
+     */
+    public String getAnatEntitiesNamesFileName(){
+        return TopAnatParams.FILE_PREFIX + "AnatEntitiesNames_" + this.speciesId + ".tsv";
+    }
+    
+    /**
+     * 
+     */
+    public String getAnatEntitiesRelationshipsFileName(){
+        return TopAnatParams.FILE_PREFIX 
+                + "AnatEntitiesRelationships_" + this.speciesId + ".tsv";
+    }
+    
+    /**
+     * 
+     */
+    public String getRScriptOutputFileName(){
+        return TopAnatParams.FILE_PREFIX 
+                + "RScript" + this.uniqueFileNameString + ".R";
+    }
+    
     /**
      * XXX check if correct: DiffExpressionFactor.ANATOMY ? DiffExpression.DIFF_EXPRESSED ?
      * => storyboard says over-expressed of diff. expressed? I don't remember.

@@ -62,7 +62,8 @@ implements ExpressionCallDAO {
      * the query based on, nor request attributes related to: {@code getAnatOriginOfLine}, 
      * {@code getStageOriginOfLine}, or {@code isObservedData}; any data types parameter
      * ({@code getAffymetrixData}, {@code getESTData}, {@code getInSituData}, {@code getRNASeqData}, 
-     * and {@code getRelaxedInSituData}). This is because when {@code isIncludeSubStages} 
+     * and {@code getRelaxedInSituData}); nor to request ordering base on 
+     * {@code CallDAO.OrderingAttribute.MEAN_RANK}. This is because when {@code isIncludeSubStages} 
      * is requested, these parameters need to be computed on-the-fly, necessitating an expensive 
      * "GROUP BY" of the data, and filtering of the results needs to be performed 
      * in a "HAVING" clause, instead of a "WHERE" clause. So this should be used only 
@@ -116,11 +117,20 @@ implements ExpressionCallDAO {
                 clonedGlobalGeneIds = new HashSet<>(allGeneIdFilters.iterator().next());
             }
         }
+        //if no global gene ID filtering, try to see if all CallFilters specify gene IDs, 
+        //in which case it is useful to collect all of them
+        Set<String> allGeneIds = new HashSet<String>();
+        if (clonedGlobalGeneIds.isEmpty() && callFilters.stream()
+                .noneMatch(filter -> filter.getGeneIds() == null || filter.getGeneIds().isEmpty())) {
+            allGeneIds = callFilters.stream().flatMap(filter -> filter.getGeneIds().stream())
+                    .collect(Collectors.toSet());
+        }
         
         //Get the requested attributes, and update them if needed. Notably, if includeSubStages is true, 
         //and some specific parameters are requested, the filtering will need to be done 
         //in a HAVING clause. In that case, we add the columns we will need in the HAVING clause, 
         //based on the parameters provided, to avoid over-verbose HAVING clause. 
+        //We also need these columns if an ordering is requested on them.
         Set<ExpressionCallDAO.Attribute> originalAttrs = Optional.ofNullable(attributes)
                 .map(e -> EnumSet.copyOf(e)).orElse(EnumSet.allOf(ExpressionCallDAO.Attribute.class));
         Set<ExpressionCallDAO.Attribute> updatedAttrs = EnumSet.copyOf(originalAttrs);
@@ -148,7 +158,8 @@ implements ExpressionCallDAO {
                     .map(e -> {
                         Set<DataState> states = new HashSet<>(e.extractDataTypesToDataStates().values());
                         //if all data types are null or requested to DataState.LOWQUALITY 
-                        //or DataState.NODATA, it is equivalent to having no filtering for data types...
+                        //or DataState.NODATA, or if we only have null and DataState.NODATA values, 
+                        //it is equivalent to having no filtering for data types...
                         if ((states.size() == 1 && 
                                 (states.contains(null) || states.contains(DataState.NODATA) || 
                                  states.contains(DataState.LOWQUALITY))) || 
@@ -172,21 +183,29 @@ implements ExpressionCallDAO {
             if (!filteredDataTypes.isEmpty()) {
                 havingClauseNeeded = true;
                 groupingByNeeded = true;
+                //add in the SELECT clause the columns we will need in the HAVING clause, 
+                //to avoid over-verbose HAVING clause.
                 updatedAttrs.addAll(filteredDataTypes);
             }
             if (allCallTOs.stream().anyMatch(e -> e.isObservedData() != null)) {
                 havingClauseNeeded = true;
                 groupingByNeeded = true;
+                //add in the SELECT clause the columns we will need in the HAVING clause, 
+                //to avoid over-verbose HAVING clause.
                 updatedAttrs.add(ExpressionCallDAO.Attribute.OBSERVED_DATA);
             }
             if (allCallTOs.stream().anyMatch(e -> e.getAnatOriginOfLine() != null)) {
                 havingClauseNeeded = true;
                 groupingByNeeded = true;
+                //add in the SELECT clause the columns we will need in the HAVING clause, 
+                //to avoid over-verbose HAVING clause.
                 updatedAttrs.add(ExpressionCallDAO.Attribute.ANAT_ORIGIN_OF_LINE);
             }
             if (allCallTOs.stream().anyMatch(e -> e.getStageOriginOfLine() != null)) {
                 havingClauseNeeded = true;
                 groupingByNeeded = true;
+                //add in the SELECT clause the columns we will need in the HAVING clause, 
+                //to avoid over-verbose HAVING clause.
                 updatedAttrs.add(ExpressionCallDAO.Attribute.STAGE_ORIGIN_OF_LINE);
             }
             
@@ -198,6 +217,11 @@ implements ExpressionCallDAO {
                         + "You should rather compute these results in several queries.");
             }
         }
+        
+        Set<String> allSpeciesIdsRequested = callFilters.stream()
+                .filter(filter -> filter.getSpeciesIds() != null && !filter.getSpeciesIds().isEmpty())
+                .flatMap(filter -> filter.getSpeciesIds().stream())
+                .collect(Collectors.toSet());
 
         //**********************************************
         
@@ -264,6 +288,184 @@ implements ExpressionCallDAO {
                 return log.exit(Integer.valueOf(resultSet.getTO().getId()));
             } 
             return log.exit(0);
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+    
+    /**
+     * Retrieve expression calls from data source according to a {@code Set} of {@code String}s 
+     * that are the IDs of species allowing to filter the calls to use, a {@code boolean} defining
+     * whether this expression call was generated using data from the anatomical entity with  
+     * the ID {@link CallTO#getAnatEntityId()} alone, or by also considering all its descendants  
+     * by <em>is_a</em> or <em>part_of</em> relations, even indirect, and a {@code boolean}  
+     * defining whether this expression call was generated using data from the stage with   
+     * the ID {@link CallTO#getStageId()} alone, or by also considering all its descendants.
+     * <p>
+     * It is possible to obtain the calls ordered based on IDs of homologous gene groups, 
+     * which is useful for multi-species analyzes. In that case, it is necessary to provide 
+     * the ID of a taxon targeted, in order to retrieve the proper homologous groups.
+     * <p>
+     * The expression calls are retrieved and returned as a {@code ExpressionCallTOResultSet}. 
+     * It is the responsibility of the caller to close this {@code DAOResultSet} once 
+     * results are retrieved.
+     * 
+     * @param speciesIds             A {@code Set} of {@code String}s that are the IDs of species 
+     *                               allowing to filter the calls to use
+     * @param isIncludeSubstructures A {@code boolean} defining whether descendants 
+     *                               of the anatomical entity were considered.
+     * @param isIncludeSubStages     A {@code boolean} defining whether descendants 
+     *                               of the stage were considered.
+     * @param commonAncestralTaxonId A {@code String} that is the ID of the taxon used 
+     *                               to retrieve the OMANodeId of the genes, that will be used 
+     *                               to order the calls. If {@code null} or empty, calls 
+     *                               will not be ordered. 
+     * @return                       An {@code ExpressionCallTOResultSet} containing all expression 
+     *                               calls from data source.
+     * @throws DAOException          If a {@code SQLException} occurred while trying to get 
+     *                               expression calls.                      
+     */
+    //- how will we aggregate with NoExpressionCalls? Just using the ordering by OMAGroupId 
+    //  will be complicated :/ Should we use an UNION clause between expression and 
+    //  noExpression tables? -> complicated for our DAOs/TOs
+    //- Actually, commonAncestralTaxonId will not be derived from the list of species 
+    //  provided. This is because, sometimes, we might want to group genes in some species 
+    //  based on, e.g., a duplication event preceding the split of their lineages.
+    //- Actually, it seems that it is not necessary to put this commonAncestralTaxonId attribute 
+    //  in CallParams: as this is ill trigger an ordering of the calls, it needs to be 
+    //  a specific method anyway.
+    //- Speaking of duplication event... would it be possible to target a specific 
+    //  duplication event? They don't have any taxonId...
+    //
+    private ExpressionCallTOResultSet getExpressionCalls(Collection<DAOCallFilter<ExpressionCallTO>> callFilters, 
+            Set<String> globalGeneIds, Set<String> allGeneIds, Set<String> allSpeciesIds, 
+            boolean includeSubstructures, boolean includeSubStages, 
+            String commonAncestralTaxonId, Set<ExpressionCallDAO.Attribute> attrs, 
+            LinkedHashMap<ExpressionCallDAO.OrderingAttribute, DAO.Direction> orderingAttrs, 
+            boolean stageGroupingByNeeded, boolean havingClauseNeeded) throws DAOException {
+        log.entry(callFilters, globalGeneIds, allSpeciesIds, 
+                includeSubstructures, includeSubStages, 
+                commonAncestralTaxonId, attrs, orderingAttrs, 
+                stageGroupingByNeeded, havingClauseNeeded);
+
+        // Construct sql query
+        String exprTableName = "expression";
+        if (includeSubstructures) {
+            exprTableName = "globalExpression";
+        }
+        String propagatedStageTableName = "propagatedStage";
+
+        //If there is no globalGeneIds provided, we try to see if all CallFilters provide 
+        //some gene IDs, in which case we'll use the union of them
+        Set<String> useGeneIds = !globalGeneIds.isEmpty()? globalGeneIds: allGeneIds;
+
+        String sql = this.generateSelectClause(attrs, includeSubstructures, includeSubStages, 
+                exprTableName, propagatedStageTableName);
+        
+        sql += " FROM " + exprTableName;
+
+        if (includeSubStages) {
+            //propagate expression calls to parent stages.
+            sql += " INNER JOIN stage ON " + exprTableName + ".stageId = stage.stageId " +
+                   " INNER JOIN stage AS " + propagatedStageTableName + " ON " +
+                       propagatedStageTableName + ".stageLeftBound <= stage.stageLeftBound AND " +
+                       propagatedStageTableName + ".stageRightBound >= stage.stageRightBound ";
+            //when some parameters are requested, we need to perform a GROUP BY to compute them 
+            //on the fly. But there is too much data to do it at once, except when restricted to few genes, 
+            //so we need to do it using several queries, group of genes by group of genes.
+            //So we need to identify genes with expression data, and to retrieve them 
+            //with a LIMIT clause. We cannot use a subquery with a LIMIT in a IN clause 
+            //(limitation of MySQL as of version 5.5), so we use the subquery to create 
+            //a temporary table to join to in the main query. 
+            //In the subquery, the EXISTS clause is used to speed-up the main query, 
+            //to make sure we will not look up for data not present in the expression table.
+            //here, we generate the first part of the subquery, as we may need 
+            //to set speciesIds afterwards.
+            if (stageGroupingByNeeded && (useGeneIds.isEmpty() || 
+                    useGeneIds.size() > this.getManager().getExprPropagationGeneCount())) {
+                sql += " INNER JOIN (SELECT geneId from gene where exists " 
+                    + "(select 1 from expression where expression.geneId = gene.geneId) ";
+                if (!allSpeciesIds.isEmpty()) {
+                    sql += "AND gene.speciesId IN (" + BgeePreparedStatement.generateParameterizedQueryString(
+                            allSpeciesIds.size()) + ") ";
+                }
+                if (!useGeneIds.isEmpty()) {
+                    sql += "AND gene.geneId IN (" + BgeePreparedStatement.generateParameterizedQueryString(
+                            useGeneIds.size()) + ") ";
+                }
+                sql += "ORDER BY gene.geneId LIMIT ?, ?) as tempTable on " 
+                    + exprTableName + ".geneId = tempTable.geneId ";
+            }
+        }
+        //even if we already joined the gene table because includeSubStages is true, 
+        //we need to access to this table in the main query for the species filtering 
+        //defined in the CallFilters. 
+        if (!allSpeciesIds.isEmpty()) {
+            sql += " INNER JOIN gene ON (gene.geneId = " + exprTableName + ".geneId) ";
+        }
+        //If a global gene filter is defined, we can apply it to all conditions in all cases.
+        //Also, if all CallFilters provide a non-empty gene ID list, and if we need 
+        //to filter the query in the HAVING clause rather than in the WHERE clause, 
+        //then it's worth filtering the genes in the WHERE clause immediately; 
+        //otherwise, if the query will be filtered in the WHERE clause, then these gene IDs 
+        //will be specify anyway, and we don't need to set them here.
+        boolean whereClauseStarted = false;
+        if (!globalGeneIds.isEmpty() || (havingClauseNeeded && !useGeneIds.isEmpty())) {
+            sql += " WHERE exprTableName.geneId IN (" + BgeePreparedStatement.generateParameterizedQueryString(
+                    useGeneIds.size()) + ") ";
+            whereClauseStarted = true;
+        }
+        
+        String filtering = this.generateFilteringClause();
+        if (!havingClauseNeeded && filtering != null && !filtering.isEmpty()) {
+            if (!whereClauseStarted) {
+                sql += "WHERE ";
+            } else {
+                sql += "AND ";
+            }
+            sql += filtering;
+        }
+        
+        if (stageGroupingByNeeded) {
+            sql += " GROUP BY " + exprTableName + ".geneId, " + 
+                   exprTableName + ".anatEntityId, " + propagatedStageTableName + ".stageId";
+        }
+        
+        if (havingClauseNeeded && filtering != null && !filtering.isEmpty()) {
+            sql += "HAVING " + filtering;
+        }
+
+        //we don't use a try-with-resource, because we return a pointer to the results, 
+        //not the actual results, so we should not close this BgeePreparedStatement.
+        try {
+            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
+            if (speciesIds != null && !speciesIds.isEmpty()) {
+                stmt.setStringsToIntegers(1, speciesIds, true);
+            }
+
+            if (!isIncludeSubStages) {
+                return log.exit(new MySQLExpressionCallTOResultSet(stmt));
+            } 
+            
+            int offsetParamIndex = (speciesIds == null ? 1: speciesIds.size() + 1);
+            int rowCountParamIndex = offsetParamIndex + 1;
+            int rowCount = this.getManager().getExprPropagationGeneCount();
+            //if attributes requested are such that there cannot be duplicated results, 
+            //we do not need to filter duplicates on the application side (which has 
+            //a huge memory cost); also, if geneIds were requested, there cannot be 
+            //duplicates between queries (duplicates inside a query will be filtered by 
+            //the DISTINCT clause), so, no need to filter on the application side.
+            //this method should have an argument 'distinctClause'; it is the responsibility 
+            //of the caller, depending on the parameters of the query, to determine 
+            //whether the clause is needed.
+            boolean filterDuplicates = 
+                    this.getAttributes() != null && !this.getAttributes().isEmpty() && 
+                    !this.getAttributes().contains(ExpressionCallDAO.Attribute.ID) && 
+                    !this.getAttributes().contains(ExpressionCallDAO.Attribute.GENE_ID);
+            
+            return log.exit(new MySQLExpressionCallTOResultSet(stmt, offsetParamIndex, 
+                    rowCountParamIndex, rowCount, filterDuplicates));
+            
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -664,6 +866,11 @@ implements ExpressionCallDAO {
             }
         }
         return log.exit(sql);
+    }
+    
+    private String generateFilteringClause(Collection<DAOCallFilter<ExpressionCallTO>> callFilters, 
+            boolean useGeneIds, String exprTableName, String stageTableName, String geneTableName) {
+        log.entry();
     }
 
     @Override

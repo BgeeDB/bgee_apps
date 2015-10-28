@@ -11,18 +11,17 @@ import rcaller.RCaller;
 import rcaller.RCode;
 
 public class TopAnatRManager {
+    private final static Logger log = LogManager.getLogger(TopAnatRManager.class.getName());
     
     private final RCaller caller;
     
     private final RCode code;
     
-    private BgeeProperties props;
-
-    /**
-     * 
-     */
-    private final static Logger log = LogManager
-            .getLogger(TopAnatRManager.class.getName());
+    private final BgeeProperties props;
+    
+    public TopAnatRManager(BgeeProperties props){
+        this(new RCaller(), new RCode(), props);
+    }
     
     public TopAnatRManager(RCaller caller, RCode code, BgeeProperties props){
      

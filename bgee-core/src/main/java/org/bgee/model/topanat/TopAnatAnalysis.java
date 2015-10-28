@@ -127,13 +127,16 @@ public class TopAnatAnalysis extends QueryTool {
         return log;
     }
     
+    public TopAnatAnalysis(TopAnatParams params, BgeeProperties props, 
+            ServiceFactory serviceFactory) {
+        this(params, props, serviceFactory, new TopAnatRManager(props));
+    }
     /**
      * @param params
      */
-    public TopAnatAnalysis(TopAnatParams params, ServiceFactory serviceFactory, 
-            TopAnatRManager rManager,
-            BgeeProperties props) {
-        log.entry(params);        
+    public TopAnatAnalysis(TopAnatParams params, BgeeProperties props, 
+            ServiceFactory serviceFactory, TopAnatRManager rManager) {
+        log.entry(params, props, serviceFactory, rManager);        
         this.params = params;
         this.anatEntityService = 
                 serviceFactory.getAnatEntityService(); 

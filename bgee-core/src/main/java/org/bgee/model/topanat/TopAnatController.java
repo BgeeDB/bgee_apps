@@ -2,66 +2,64 @@ package org.bgee.model.topanat;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeProperties;
+import org.bgee.model.ServiceFactory;
+import org.bgee.model.function.TriFunction;
 
 /**
  * @author Mathieu Seppey
  *
  */
 public class TopAnatController {
-    private final static Logger log = LogManager.getLogger(TopAnatController.class.getName());
+    private final static Logger log = LogManager.getLogger(TopAnatController.class.getName()); 
 
     /**
      * 
      */
     private final List<TopAnatParams> topAnatParams;
-    
-    /**
-     * 
-     */
-    private final TopAnatRManager rManager;
 
     /**
      * 
      */
     private final BgeeProperties props;
+    
+    private final ServiceFactory serviceFactory;
 
     /**
-     * A {@code Function} accepting a {@code TopAnatParams} object as argument 
-     * and returning a new {@code TopAnatAnalysis} instance.
+     * A {@code TriFunction} allowing to obtain new {@code TopAnatAnalysis} instances.
      */
-    private final Function<TopAnatParams, TopAnatAnalysis> topAnatAnalysisSupplier;
+    private final TriFunction<TopAnatParams, BgeeProperties, ServiceFactory, TopAnatAnalysis> 
+        topAnatAnalysisSupplier;
     
     /**
      * 
      * @param topAnatParams
      */
     public TopAnatController(List<TopAnatParams> topAnatParams) {
-        this(topAnatParams, BgeeProperties.getBgeeProperties());
+        this(topAnatParams, BgeeProperties.getBgeeProperties(), new ServiceFactory());
     }
     /**
      * 
      * @param topAnatParams
      * @param props
      */
-    public TopAnatController(List<TopAnatParams> topAnatParams, BgeeProperties props) {
-        this(topAnatParams, TopAnatAnalysis::new, null, props);
+    public TopAnatController(List<TopAnatParams> topAnatParams, BgeeProperties props, 
+            ServiceFactory serviceFactory) {
+        this(topAnatParams, props, serviceFactory, TopAnatAnalysis::new);
     }
     
     /**
      * 
      * @param params
      */
-    public TopAnatController(List<TopAnatParams> topAnatParams, 
-            Function<TopAnatParams, TopAnatAnalysis> topAnatAnalysisSupplier,
-            TopAnatRManager rManager,
-            BgeeProperties props) {
-        log.entry(topAnatParams, topAnatAnalysisSupplier, props);
+    public TopAnatController(List<TopAnatParams> topAnatParams, BgeeProperties props, 
+            ServiceFactory serviceFactory, 
+            TriFunction<TopAnatParams, BgeeProperties, ServiceFactory, TopAnatAnalysis> topAnatAnalysisSupplier) {
+        log.entry(topAnatParams, props, serviceFactory, topAnatAnalysisSupplier);
         
         if (topAnatParams == null || topAnatParams.isEmpty() || 
                 topAnatParams.stream().anyMatch(Objects::isNull)) {
@@ -75,10 +73,13 @@ public class TopAnatController {
         if (props == null) {
             throw log.throwing(new IllegalArgumentException("A BgeeProperties object must be provided."));
         }
+        if (serviceFactory == null) {
+            throw log.throwing(new IllegalArgumentException("A ServiceFactory must be provided."));
+        }
         this.topAnatParams = topAnatParams;
         this.topAnatAnalysisSupplier = topAnatAnalysisSupplier;
-        this.rManager = rManager;
         this.props = props;
+        this.serviceFactory = serviceFactory;
         
         log.exit();
     }
@@ -93,7 +94,7 @@ public class TopAnatController {
         
         // Create TopAnatAnalysis for each TopAnatParams
         return log.exit(this.topAnatParams.stream()
-                .map(this.topAnatAnalysisSupplier::apply)
+                .map(params -> this.topAnatAnalysisSupplier.apply(params, this.props, this.serviceFactory))
                 .map(analysis -> {
                     try {
                         return analysis.proceedToAnalysis();

@@ -20,6 +20,11 @@ public class TopAnatController {
      * 
      */
     private final List<TopAnatParams> topAnatParams;
+    
+    /**
+     * 
+     */
+    private final TopAnatRManager rManager;
 
     /**
      * 
@@ -32,18 +37,29 @@ public class TopAnatController {
      */
     private final Function<TopAnatParams, TopAnatAnalysis> topAnatAnalysisSupplier;
     
+    /**
+     * 
+     * @param topAnatParams
+     */
     public TopAnatController(List<TopAnatParams> topAnatParams) {
         this(topAnatParams, BgeeProperties.getBgeeProperties());
     }
+    /**
+     * 
+     * @param topAnatParams
+     * @param props
+     */
     public TopAnatController(List<TopAnatParams> topAnatParams, BgeeProperties props) {
-        this(topAnatParams, TopAnatAnalysis::new, props);
+        this(topAnatParams, TopAnatAnalysis::new, null, props);
     }
+    
     /**
      * 
      * @param params
      */
     public TopAnatController(List<TopAnatParams> topAnatParams, 
-            Function<TopAnatParams, TopAnatAnalysis> topAnatAnalysisSupplier, 
+            Function<TopAnatParams, TopAnatAnalysis> topAnatAnalysisSupplier,
+            TopAnatRManager rManager,
             BgeeProperties props) {
         log.entry(topAnatParams, topAnatAnalysisSupplier, props);
         
@@ -61,6 +77,7 @@ public class TopAnatController {
         }
         this.topAnatParams = topAnatParams;
         this.topAnatAnalysisSupplier = topAnatAnalysisSupplier;
+        this.rManager = rManager;
         this.props = props;
         
         log.exit();

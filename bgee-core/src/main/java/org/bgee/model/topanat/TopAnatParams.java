@@ -22,8 +22,7 @@ import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DecorelationType;
 import org.bgee.model.expressiondata.baseelements.StatisticTest;
 import org.bgee.model.gene.GeneFilter;
-
-
+import org.bgee.model.species.Species;
 import org.bgee.model.expressiondata.baseelements.DiffExpressionFactor;
 
 public class TopAnatParams {
@@ -48,6 +47,11 @@ public class TopAnatParams {
      * 
      */
     private final Collection<String> submittedBackgroundIds;
+    
+    /**
+     * 
+     */
+    private final Species species;
 
     /**
      * 
@@ -102,11 +106,6 @@ public class TopAnatParams {
     /**
      * 
      */
-    private final ServiceFactory serviceFactory;
-
-    /**
-     * 
-     */
     public static class Builder {
 
         /**
@@ -124,6 +123,11 @@ public class TopAnatParams {
          *
          */
         private final boolean backgroundSubmitted;
+        
+        /**
+         * 
+         */
+        private final Species species;
 
         /**
          * 
@@ -189,8 +193,8 @@ public class TopAnatParams {
          * @param submittedForegroundIds
          * @param callType
          */
-        public Builder(Set<String> submittedForegroundIds,CallType callType){
-            this(submittedForegroundIds, null, callType);
+        public Builder(Set<String> submittedForegroundIds, Species species, CallType callType){
+            this(submittedForegroundIds, null, species, callType);
         }
 
         /**
@@ -198,10 +202,10 @@ public class TopAnatParams {
          * @param submittedBackgroundIds
          * @param callType
          */
-        public Builder(Set<String> submittedForegroundIds, Set<String> submittedBackgroundIds, 
+        public Builder(Set<String> submittedForegroundIds, Set<String> submittedBackgroundIds,
+                Species species,
                 CallType callType) {
-            log.entry(submittedForegroundIds,submittedBackgroundIds);
-            // Mandatory attributes
+            log.entry(submittedForegroundIds,submittedBackgroundIds,species,callType);
             this.submittedForegroundIds = submittedForegroundIds;
             this.submittedBackgroundIds = submittedBackgroundIds;
             if (this.submittedBackgroundIds != null) {
@@ -210,8 +214,9 @@ public class TopAnatParams {
             else{
                 this.backgroundSubmitted = false;  
             }
+            this.species = species;
             this.callType = callType;
-
+            
             log.exit();
         }
 
@@ -342,6 +347,7 @@ public class TopAnatParams {
     private TopAnatParams(Builder builder) {
         log.entry();
         this.backgroundSubmitted = builder.backgroundSubmitted;
+        this.species = builder.species;
         this.callType = builder.callType;
         this.dataTypes = builder.dataTypes;
         this.decorelationType = builder.decorelationType;
@@ -354,7 +360,6 @@ public class TopAnatParams {
         this.pvalueThreashold = builder.pvalueThreashold;
         this.submittedBackgroundIds = builder.submittedBackgroundIds;
         this.submittedForegroundIds = builder.submittedForegroundIds;
-        this.serviceFactory = builder.serviceFactory;
         log.exit();
     }
 
@@ -377,6 +382,14 @@ public class TopAnatParams {
      */
     public Collection<String> getSubmittedBackgroundIds() {
         return submittedBackgroundIds;
+    }
+    
+    /**
+     * 
+     * @return
+     */
+    public Species getSpecies(){
+       return species; 
     }
 
     /**
@@ -447,13 +460,6 @@ public class TopAnatParams {
      */
     public int getNumberOfSignificantNodes() {
         return numberOfSignificantNodes;
-    }
-
-    /**
-     * @return
-     */
-    public ServiceFactory getServiceFactory(){
-        return serviceFactory;
     }
 
     /**

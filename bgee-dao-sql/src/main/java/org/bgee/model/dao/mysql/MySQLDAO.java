@@ -3,7 +3,6 @@ package org.bgee.model.dao.mysql;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,7 +29,7 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
  *              to define what attributes should be populated in the {@code TransferObject}s 
  *              obtained from this {@code DAO}.
  */
-public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO<T> {
+public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO<T> {
     /**
      * {@code Logger} of the class. 
      */

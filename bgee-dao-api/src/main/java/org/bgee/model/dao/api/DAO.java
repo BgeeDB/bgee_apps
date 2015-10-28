@@ -15,7 +15,7 @@ import java.util.Set;
  *              obtained from this {@code DAO}.
  */
 //TODO: when all DAOs will be immutable, this class will not need a generic type anymore.
-public interface DAO<T extends Enum<?> & DAO.Attribute> {
+public interface DAO<T extends Enum<T> & DAO.Attribute> {
     /**
      * Interface implemented by {@code Enum} classes allowing to select 
      * what are the attributes to populate in the {@code TransferObject}s obtained 

@@ -23,8 +23,8 @@ import java.util.Map.Entry;
 //deprecated, as it was decided that each DAO method should accept OrderingAttributes when needed, 
 //and that DAOs should be immutable. As a result, this interface is now pointless.
 @Deprecated
-public interface OrderingDAO<T extends Enum<?> & DAO.Attribute, 
-                             U extends Enum<?> & DAO.OrderingAttribute
+public interface OrderingDAO<T extends Enum<T> & DAO.Attribute, 
+                             U extends Enum<U> & DAO.OrderingAttribute
                             > extends DAO<T> {
     
     /**

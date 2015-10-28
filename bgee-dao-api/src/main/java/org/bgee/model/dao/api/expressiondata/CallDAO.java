@@ -1,5 +1,7 @@
 package org.bgee.model.dao.api.expressiondata;
 
+import java.util.Map;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
@@ -13,29 +15,24 @@ import org.bgee.model.dao.api.TransferObject;
  * @see CallTO
  * @since Bgee 13
  */
-public interface CallDAO extends DAO<CallDAO.Attribute> {
+public interface CallDAO<T extends Enum<T> & CallDAO.Attribute> extends DAO<T> {
     
     /**
-     * {@code Enum} used to define the attributes to populate in the {@code CallTO}s 
-     * obtained from this {@code CallDAO}.
-     * <ul>
-     * <li>{@code ID}: corresponds to {@link CallTO#getId()}.
-     * <li>{@code GENEID}: corresponds to {@link CallTO#getGeneId()}.
-     * <li>{@code STAGEID}: corresponds to {@link CallTO#getStageId()}.
-     * <li>{@code ANATENTITYID}: corresponds to {@link CallTO#getAnatEntityId()}.
-     * <li>{@code AFFYMETRIXDATA}: corresponds to {@link CallTO#getAffymetrixData()}.
-     * <li>{@code ESTDATA}: corresponds to {@link CallTO#getESTData()}.
-     * <li>{@code INSITUDATA}: corresponds to {@link CallTO#getInSituData()}.
-     * <li>{@code RELAXEDINSITUDATA}: corresponds to {@link CallTO#getRelaxedInSituData()}.
-     * <li>{@code RNASEQDATA}: corresponds to {@link CallTO#getRNASeqData()}.
-     * </ul>
-     * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
-     * @see org.bgee.model.dao.api.DAO#setAttributes(Enum[])
-     * @see org.bgee.model.dao.api.DAO#clearAttributes()
+     * Interface implemented by {@code Enum} classes allowing to select 
+     * what are the attributes to populate in the {@code CallTO}s obtained 
+     * from a {@code CallDAO}.
+     * 
+     * @author Frederic Bastian
+     * @version Bgee 13
+     * @since Bgee 13
      */
-    public enum Attribute implements DAO.Attribute {
-        ID, GENE_ID, STAGE_ID, ANAT_ENTITY_ID, 
-        AFFYMETRIX_DATA, EST_DATA, IN_SITU_DATA, RELAXED_IN_SITU_DATA, RNA_SEQ_DATA;
+    public static interface Attribute extends DAO.Attribute {
+        /**
+         * @return  A {@code boolean} allowing to determine whether this {@code Attribute} 
+         *          is related to a data type, meaning that the method related to 
+         *          this {@code Attribute} in an {@code CallTO} returns a {@code DataState}.
+         */
+        public boolean isDataTypeAttribute();
     }
     /**
      * The attributes available to order retrieved {@code CallTO}s
@@ -73,10 +70,9 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
      * @version Bgee 13
      * @since Bgee 13
      */
-    public abstract class CallTO extends TransferObject {
+    public static abstract class CallTO<T extends Enum<T> & CallDAO.Attribute> extends TransferObject {
         // TODO modify the class to be immutable. Use a Builder pattern?
         private static final long serialVersionUID = 2157139618099008406L;
-        
         /**
          * {@code Logger} of the class. 
          */
@@ -248,6 +244,20 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
             this.relaxedInSituData = relaxedInSituData;
             this.rnaSeqData = rnaSeqData;
         }
+        
+        /**
+         * Map the {@code Attribute}s of type {@code T} related to data types 
+         * to their corresponding {@code DataState} defined in this {@code CallTO}.
+         * For instance, if the method {@code getAffymetrixData} returns {@code DataState.HIGHQUALITY}, 
+         * then the returned {@code Map} will contain an entry 
+         * {@code AFFYMETRIX_DATA} -> {@code DataState.HIGHQUALITY}. Values can be {@code null}.
+         * 
+         * @return          A {@code Map} where keys are {@code T}s related to data types (see 
+         *                  {@link CallDAO.Attribute#isDataTypeAttribute()}), 
+         *                  the associated value being the corresponding {@code DataState} 
+         *                  defined in this {@code ExpressionCallTO}.
+         */
+        public abstract Map<T, DataState> extractDataTypesToDataStates();
 
         //**************************************
         // GETTERS/SETTERS
@@ -490,7 +500,7 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
             if (!(obj instanceof CallTO)) {
                 return false;
             }
-            CallTO other = (CallTO) obj;
+            CallTO<?> other = (CallTO<?>) obj;
             
             if (id == null) {
                 if (other.id != null) {

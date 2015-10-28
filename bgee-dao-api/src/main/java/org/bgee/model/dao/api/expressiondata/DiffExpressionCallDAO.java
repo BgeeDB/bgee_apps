@@ -1,5 +1,8 @@
 package org.bgee.model.dao.api.expressiondata;
 
+import java.util.EnumMap;
+import java.util.Map;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
@@ -54,12 +57,26 @@ public interface DiffExpressionCallDAO
      * @see org.bgee.model.dao.api.DAO#setAttributes(Enum[])
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
-    public enum Attribute implements DAO.Attribute {
-        ID, GENE_ID, ANAT_ENTITY_ID, STAGE_ID, COMPARISON_FACTOR,
-        DIFF_EXPR_CALL_AFFYMETRIX, DIFF_EXPR_AFFYMETRIX_DATA, BEST_P_VALUE_AFFYMETRIX, 
-        CONSISTENT_DEA_COUNT_AFFYMETRIX, INCONSISTENT_DEA_COUNT_AFFYMETRIX,
-        DIFF_EXPR_CALL_RNA_SEQ, DIFF_EXPR_RNA_SEQ_DATA, BEST_P_VALUE_RNA_SEQ, 
-        CONSISTENT_DEA_COUNT_RNA_SEQ, INCONSISTENT_DEA_COUNT_RNA_SEQ,
+    public enum Attribute implements CallDAO.Attribute {
+        ID(false), GENE_ID(false), ANAT_ENTITY_ID(false), STAGE_ID(false), COMPARISON_FACTOR(false),
+        DIFF_EXPR_CALL_AFFYMETRIX(false), DIFF_EXPR_AFFYMETRIX_DATA(true), BEST_P_VALUE_AFFYMETRIX(false), 
+        CONSISTENT_DEA_COUNT_AFFYMETRIX(false), INCONSISTENT_DEA_COUNT_AFFYMETRIX(false),
+        DIFF_EXPR_CALL_RNA_SEQ(false), DIFF_EXPR_RNA_SEQ_DATA(true), BEST_P_VALUE_RNA_SEQ(false), 
+        CONSISTENT_DEA_COUNT_RNA_SEQ(false), INCONSISTENT_DEA_COUNT_RNA_SEQ(false);
+        
+        /**
+         * @see #isDataTypeAttribute()
+         */
+        private final boolean dataTypeAttribute;
+        
+        private Attribute(boolean dataTypeAttribute) {
+            this.dataTypeAttribute = dataTypeAttribute;
+        }
+        
+        @Override
+        public boolean isDataTypeAttribute() {
+            return dataTypeAttribute;
+        }
     }
     
     /**
@@ -151,7 +168,7 @@ public interface DiffExpressionCallDAO
      * @version Bgee 13
      * @since Bgee 13
      */
-    public final class DiffExpressionCallTO extends CallTO {
+    public final class DiffExpressionCallTO extends CallTO<Attribute> {
         // TODO modify the class to be immutable. Use a Builder pattern?
 
         private static final long serialVersionUID = 1130761423323249175L;
@@ -405,6 +422,18 @@ public interface DiffExpressionCallDAO
             this.bestPValueRNASeq = bestPValueRNASeq;
             this.consistentDEACountRNASeq = consistentDEACountRNASeq;
             this.inconsistentDEACountRNASeq = inconsistentDEACountRNASeq;
+        }
+
+        @Override
+        public Map<Attribute, DataState> extractDataTypesToDataStates() {
+            log.entry();
+            
+            Map<Attribute, DataState> typesToStates = new EnumMap<>(Attribute.class);
+            
+            typesToStates.put(Attribute.DIFF_EXPR_AFFYMETRIX_DATA, this.getAffymetrixData());
+            typesToStates.put(Attribute.DIFF_EXPR_RNA_SEQ_DATA, this.getRNASeqData());
+            
+            return log.exit(typesToStates);
         }
         
         /**

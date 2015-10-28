@@ -48,7 +48,9 @@ public class DAOCallFilter<T extends CallTO> {
      * <li>{@code getAffymetrixData}, {@code getESTData}, {@code getInSituData}, {@code getRNASeqData}, 
      * and {@code getRelaxedInSituData}, to define the minimum quality level for each data type. 
      * if equal to {@code null} or {@code DataState.NODATA}, then no filtering is performed 
-     * based on this data type. 
+     * based on this data type. Also, if all these methods return {@code DataState.LOWQUALITY} 
+     * in an {@code ExpressionCallTO}, then no filtering on any data type is performed 
+     * for this {@code ExpressionCallTO}. 
      * <li>{@code isIncludeSubstructures}, {@code isIncludeSubStages}, and {@code isIncludeParentStructures}, 
      * to define whether calls should be propagated. 
      * <li>{@code getAnatOriginOfLine}, {@code getStageOriginOfLine}, and {@code getOriginOfLine}, 

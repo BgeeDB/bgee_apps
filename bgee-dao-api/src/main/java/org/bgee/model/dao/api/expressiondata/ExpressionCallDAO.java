@@ -1,7 +1,9 @@
 package org.bgee.model.dao.api.expressiondata;
 
 import java.util.Collection;
+import java.util.EnumMap;
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -9,7 +11,6 @@ import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
 
 /**
  * DAO defining queries using or retrieving {@link ExpressionCallTO}s. 
@@ -19,7 +20,7 @@ import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
  * @version Bgee 13 Oct. 2015
  * @since Bgee 13
  */
-public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
+public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> {
 
     /**
      * {@code Enum} used to define the attributes to populate in the {@code ExpressionCallTO}s 
@@ -42,11 +43,25 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
      * @see org.bgee.model.dao.api.DAO#setAttributes(Enum[])
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
-    public enum Attribute implements DAO.Attribute {
-        ID, GENE_ID, STAGE_ID, ANAT_ENTITY_ID, 
-        AFFYMETRIX_DATA, EST_DATA, IN_SITU_DATA, RNA_SEQ_DATA,
-        INCLUDE_SUBSTRUCTURES, INCLUDE_SUBSTAGES, 
-        ANAT_ORIGIN_OF_LINE, STAGE_ORIGIN_OF_LINE, OBSERVED_DATA;
+    public enum Attribute implements CallDAO.Attribute {
+        ID(false), GENE_ID(false), STAGE_ID(false), ANAT_ENTITY_ID(false), 
+        AFFYMETRIX_DATA(true), EST_DATA(true), IN_SITU_DATA(true), RNA_SEQ_DATA(true),
+        INCLUDE_SUBSTRUCTURES(false), INCLUDE_SUBSTAGES(false), 
+        ANAT_ORIGIN_OF_LINE(false), STAGE_ORIGIN_OF_LINE(false), OBSERVED_DATA(false);
+        
+        /**
+         * @see #isDataTypeAttribute()
+         */
+        private final boolean dataTypeAttribute;
+        
+        private Attribute(boolean dataTypeAttribute) {
+            this.dataTypeAttribute = dataTypeAttribute;
+        }
+        
+        @Override
+        public boolean isDataTypeAttribute() {
+            return dataTypeAttribute;
+        }
     }
     
     /**
@@ -187,7 +202,7 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
      * @version Bgee 13
      * @since Bgee 13
      */
-    public final class ExpressionCallTO extends CallTO {
+    public final class ExpressionCallTO extends CallTO<Attribute> {
         // TODO modify the class to be immutable.
 
         private static final long serialVersionUID = 1198652013999835872L;
@@ -357,6 +372,21 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
             this.anatOriginOfLine = anatOrigin;
             this.stageOriginOfLine = stageOrigin;
             this.observedData = observedData;
+        }
+        
+        @Override
+        public Map<Attribute, DataState> extractDataTypesToDataStates() {
+            log.entry();
+            
+            Map<Attribute, DataState> typesToStates = 
+                    new EnumMap<>(ExpressionCallDAO.Attribute.class);
+            
+            typesToStates.put(Attribute.AFFYMETRIX_DATA, this.getAffymetrixData());
+            typesToStates.put(Attribute.EST_DATA, this.getESTData());
+            typesToStates.put(Attribute.IN_SITU_DATA, this.getInSituData());
+            typesToStates.put(Attribute.RNA_SEQ_DATA, this.getRNASeqData());
+            
+            return log.exit(typesToStates);
         }
         
         /**

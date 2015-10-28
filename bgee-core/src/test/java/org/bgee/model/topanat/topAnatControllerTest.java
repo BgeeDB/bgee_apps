@@ -15,11 +15,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.bgee.model.BgeeProperties;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.expressiondata.Call;
 import org.bgee.model.expressiondata.CallData;
+import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallFilter;
 import org.bgee.model.expressiondata.CallService;
@@ -61,7 +63,7 @@ public class topAnatControllerTest {
         ServiceFactory mockServiceFactory = mock(ServiceFactory.class);
         AnatEntityService mockAnatEntityService = mock(AnatEntityService.class);
         CallService mockCallService = mock(CallService.class);
-        Call<SummaryCallType,CallData<?>> mockExpressionCall1 = mock(Call.class);
+        ExpressionCall mockExpressionCall1 = mock(ExpressionCall.class);
         ExpressionCall mockExpressionCall2 = mock(ExpressionCall.class);
         ExpressionCall mockExpressionCall3 = mock(ExpressionCall.class);
         Condition mockCondition = mock(Condition.class);
@@ -70,9 +72,7 @@ public class topAnatControllerTest {
         when(mockServiceFactory.getCallFactory())
         .thenReturn(mockCallService);
         when(mockCallService.loadCalls(anyString(), any(Set.class)))
-        .thenReturn(Arrays.asList(mockExpressionCall1).stream())
-        .thenReturn(Arrays.asList(mockExpressionCall2).stream())
-        .thenReturn(Arrays.asList(mockExpressionCall3).stream());     
+        .thenReturn(Stream.of(mockExpressionCall1, mockExpressionCall2, mockExpressionCall3));     
         when(mockExpressionCall1.getCondition())
         .thenReturn(mockCondition);
         when(mockExpressionCall2.getCondition())

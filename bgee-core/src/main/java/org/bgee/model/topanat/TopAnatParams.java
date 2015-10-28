@@ -3,8 +3,8 @@ package org.bgee.model.topanat;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -52,57 +52,57 @@ public class TopAnatParams {
     /**
      * 
      */
-    private CallType callType;
+    private final CallType callType;
 
     /**
      * 
      */
-    private DataQuality dataQuality;
+    private final DataQuality dataQuality;
 
     /**
      * 
      */
-    private Set<DataType> dataTypes;
+    private final Set<DataType> dataTypes;
 
     /**
      * 
      */
-    private String devStageId;
+    private final String devStageId;
 
     /**
      * 
      */
-    private DecorelationType decorelationType;
+    private final DecorelationType decorelationType;
 
     /**
      * 
      */
-    private StatisticTest statisticTest;
+    private final StatisticTest statisticTest;
 
     /**
      * 
      */
-    private int nodeSize;
+    private final int nodeSize;
 
     /**
      * 
      */
-    private float fdrThreshold;
+    private final float fdrThreshold;
 
     /**
      * 
      */
-    private float pvalueThreashold;
+    private final float pvalueThreashold;
 
     /**
      * 
      */
-    private int numberOfSignificantNodes;
+    private final int numberOfSignificantNodes;
 
     /**
      * 
      */
-    private ServiceFactory serviceFactory;
+    private final ServiceFactory serviceFactory;
 
     /**
      * 
@@ -459,72 +459,42 @@ public class TopAnatParams {
     /**
      * @return
      */
-    public CallFilter<CallData<? extends CallType>> rawParametersToCallFilter(){
-        ConditionFilter conditionFilter = new ConditionFilter(Arrays.asList(this.devStageId),null);
-        GeneFilter geneFilter = null;
-        if(this.isBackgroundSubmitted()){
-            geneFilter = new GeneFilter(this.submittedBackgroundIds);
-        }
-        return new CallFilter<CallData<? extends CallType>>(
-                geneFilter,
-                new HashSet<ConditionFilter>(Arrays.asList(conditionFilter)),
-                new HashSet<CallData<? extends CallType>>(this.getCallData())
-                );
+    public CallFilter<CallData<?>> rawParametersToCallFilter() {
+        ConditionFilter conditionFilter = new ConditionFilter(null, Arrays.asList(this.devStageId));
+        return new CallFilter<CallData<?>>(
+                this.isBackgroundSubmitted()? new GeneFilter(this.submittedBackgroundIds): null, 
+                new HashSet<>(Arrays.asList(conditionFilter)), this.getCallData()
+            );
     }
 
     /**
      * XXX check if correct: DiffExpressionFactor.ANATOMY ? DiffExpression.DIFF_EXPRESSED ?
+     * => storyboard says over-expressed of diff. expressed? I don't remember.
      * XXX check if correct: DataPropagation
      * @return
      */
-    private List<CallData<? extends CallType>> getCallData(){
-
-        List<CallData<? extends CallType>> callDataList = null;
-        DataPropagation dataPropagation = new DataPropagation(
+    private Set<CallData<?>> getCallData() {
+        log.entry();
+        
+        final DataPropagation dataPropagation = new DataPropagation(
                 DataPropagation.PropagationState.SELF,
                 DataPropagation.PropagationState.SELF_OR_CHILD);
-        if(this.dataQuality == null){
-            this.dataQuality = DataQuality.LOW;
+        final DataQuality dataQual = this.dataQuality == null? DataQuality.LOW: this.dataQuality;
+        
+        Function<DataType, CallData<?>> callDataSupplier = null;
+        if (this.callType == CallType.Expression.EXPRESSED) {
+            callDataSupplier = dataType -> new ExpressionCallData(CallType.Expression.EXPRESSED,
+                dataQual, dataType, dataPropagation);
+        } else if (this.callType == CallType.DiffExpression.OVER_EXPRESSED) {
+            callDataSupplier = dataType -> new DiffExpressionCallData(DiffExpressionFactor.ANATOMY,
+                    CallType.DiffExpression.OVER_EXPRESSED, dataQual, dataType);
         }
-
-        if(this.callType == CallType.Expression.EXPRESSED){
-            if (this.dataTypes != null){
-                callDataList = this.dataTypes.stream()
-                        .map(dataType -> new ExpressionCallData(
-                                CallType.Expression.EXPRESSED,
-                                this.dataQuality,
-                                dataType,
-                                dataPropagation))
-                        .collect(Collectors.toList()); 
-            }
-            else{
-                callDataList = Arrays.asList(new ExpressionCallData(
-                        CallType.Expression.EXPRESSED,
-                        this.dataQuality,
-                        null,
-                        dataPropagation));
-            }
+        
+        if (this.dataTypes == null || this.dataTypes.isEmpty() || 
+                this.dataTypes.containsAll(this.callType.getAllowedDataTypes())) {
+            return log.exit(new HashSet<>(Arrays.asList(callDataSupplier.apply(null))));
         }
-        else{
-            if (this.dataTypes != null){
-                callDataList = this.dataTypes.stream()
-                        .map(dataType -> new DiffExpressionCallData(
-                                DiffExpressionFactor.ANATOMY,
-                                CallType.DiffExpression.DIFF_EXPRESSED,
-                                this.dataQuality,
-                                dataType))
-                        .collect(Collectors.toList());
-            }
-            else{
-                callDataList = Arrays.asList(new DiffExpressionCallData(
-                        DiffExpressionFactor.ANATOMY,
-                        CallType.DiffExpression.DIFF_EXPRESSED,
-                        this.dataQuality,
-                        null));
-            }
-        }                
-
-        return callDataList;
+        return log.exit(this.dataTypes.stream().map(callDataSupplier::apply).collect(Collectors.toSet()));
     }
 }
 

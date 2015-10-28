@@ -69,6 +69,8 @@ public interface CallDAO<T extends Enum<T> & CallDAO.Attribute> extends DAO<T> {
      * @author Frederic Bastian
      * @version Bgee 13
      * @since Bgee 13
+     * 
+     * @param T The type of {@code Attribute} associated to this {@code CallTO}.
      */
     public static abstract class CallTO<T extends Enum<T> & CallDAO.Attribute> extends TransferObject {
         // TODO modify the class to be immutable. Use a Builder pattern?

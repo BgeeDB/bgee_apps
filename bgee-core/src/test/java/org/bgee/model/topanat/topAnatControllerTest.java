@@ -28,7 +28,7 @@ import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
-import org.bgee.model.expressiondata.querytool.AnatEntityService;
+import org.bgee.model.anatdev.AnatEntityService;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -67,24 +67,16 @@ public class topAnatControllerTest {
         ExpressionCall mockExpressionCall2 = mock(ExpressionCall.class);
         ExpressionCall mockExpressionCall3 = mock(ExpressionCall.class);
         Condition mockCondition = mock(Condition.class);
-        when(mockServiceFactory.getAnatEntityFactory(anyString()))
-        .thenReturn(mockAnatEntityService);
-        when(mockServiceFactory.getCallFactory())
-        .thenReturn(mockCallService);
+        when(mockServiceFactory.getAnatEntityService()).thenReturn(mockAnatEntityService);
+        when(mockServiceFactory.getCallService()).thenReturn(mockCallService);
         when(mockCallService.loadCalls(anyString(), any(Set.class)))
         .thenReturn(Stream.of(mockExpressionCall1, mockExpressionCall2, mockExpressionCall3));     
-        when(mockExpressionCall1.getCondition())
-        .thenReturn(mockCondition);
-        when(mockExpressionCall2.getCondition())
-        .thenReturn(mockCondition);
-        when(mockExpressionCall3.getCondition())
-        .thenReturn(mockCondition);
-        when(mockExpressionCall1.getGeneId())
-        .thenReturn("5");
-        when(mockExpressionCall2.getGeneId())
-        .thenReturn("6");
-        when(mockExpressionCall3.getGeneId())
-        .thenReturn("7");
+        when(mockExpressionCall1.getCondition()).thenReturn(mockCondition);
+        when(mockExpressionCall2.getCondition()).thenReturn(mockCondition);
+        when(mockExpressionCall3.getCondition()).thenReturn(mockCondition);
+        when(mockExpressionCall1.getGeneId()).thenReturn("5");
+        when(mockExpressionCall2.getGeneId()).thenReturn("6");
+        when(mockExpressionCall3.getGeneId()).thenReturn("7");
         when(mockCondition.getAnatEntityId())
         .thenReturn("5999").thenReturn("6999").thenReturn("7999");        
         HashMap<String,String> anatEntities = new HashMap<String,String>();

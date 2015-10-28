@@ -19,9 +19,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeProperties;
 import org.bgee.model.QueryTool;
+import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.expressiondata.CallFilter;
 import org.bgee.model.expressiondata.CallService;
-import org.bgee.model.expressiondata.querytool.AnatEntityService;
 import org.bgee.model.species.Species;
 
 import rcaller.RCaller;
@@ -49,10 +49,6 @@ public class TopAnatAnalysis extends QueryTool {
      */
     private final BgeeProperties prop = BgeeProperties.getBgeeProperties();
 
-    /**
-     * 
-     */
-    private final Species species;
 
     /**
      * {@code ConcurrentMap} used to manage concurrent access to the
@@ -132,20 +128,19 @@ public class TopAnatAnalysis extends QueryTool {
     /**
      * @param params
      */
-    public TopAnatAnalysis(TopAnatParams params, String speciesId) {
+    public TopAnatAnalysis(TopAnatParams params) {
         log.entry(params);        
         this.params = params;
-        this.species = new Species(speciesId);
         this.anatEntityService = 
-                params.getServiceFactory().getAnatEntityFactory(speciesId); 
-        this.callService = params.getServiceFactory().getCallFactory();
+                params.getServiceFactory().getAnatEntityService(); 
+        this.callService = params.getServiceFactory().getCallService();
         log.exit();
     }
 
     /**
      * @throws IOException
      */
-    public void beginTopAnatAnalysis() throws IOException{
+    public TopAnatResults proceedToAnalysis() throws IOException{
         log.entry();
 
         this.resultTSVFileName = "topAnatResult_" + this.getTaskName()
@@ -785,13 +780,6 @@ public class TopAnatAnalysis extends QueryTool {
             }
         }
         return readWritelock;
-    }
-
-    /**
-     * @return
-     */
-    public TopAnatResults getResults(){
-        return null;
     }
 
 }

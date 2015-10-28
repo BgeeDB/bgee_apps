@@ -2,11 +2,11 @@ package org.bgee.model;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.file.DownloadFileService;
 import org.bgee.model.file.SpeciesDataGroupService;
 import org.bgee.model.keyword.KeywordService;
-import org.bgee.model.expressiondata.querytool.AnatEntityService;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.species.SpeciesService;
 
@@ -123,7 +123,7 @@ public class ServiceFactory implements AutoCloseable {
     /**
      * TODO
      */
-    public CallService getCallFactory() {
+    public CallService getCallService() {
         log.entry();
         return log.exit(new CallService(this.daoManager));
     }
@@ -131,9 +131,9 @@ public class ServiceFactory implements AutoCloseable {
     /**
      * TODO
      */
-    public AnatEntityService getAnatEntityFactory(String speciesId) {
+    public AnatEntityService getAnatEntityService() {
         log.entry();
-        return log.exit(new AnatEntityService(speciesId));
+        return log.exit(new AnatEntityService(this.daoManager));
     }
     
     /**

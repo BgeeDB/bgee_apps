@@ -4,8 +4,11 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
+import java.util.Optional;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
@@ -28,16 +31,14 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
  * A {@code ExpressionCallDAO} for MySQL. 
  * 
  * @author Valentine Rech de Laval
- * @version Bgee 13
+ * @author Frederic Bastian
+ * @version Bgee 13 Oct. 2015
  * @see org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO
  * @since Bgee 13
  */
 public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute> 
-                                    implements ExpressionCallDAO {
-
-    /**
-     * {@code Logger} of the class. 
-     */
+implements ExpressionCallDAO {
+    
     private final static Logger log = LogManager.getLogger(MySQLExpressionCallDAO.class.getName());
 
     /**
@@ -51,17 +52,161 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
         super(manager);
     }
 
+    /** 
+     * {@inheritDoc}
+     * <p>
+     * <strong>Implementation notes</strong>: 
+     * If a {@code true} value is defined by the method {@code isIncludeSubStages} 
+     * of {@code ExpressionCallTO}s in the {@code DAOCallFilter}s, and if it is expected 
+     * to have a large amount of data to consider, it is highly recommended to NOT filter  
+     * the query based on, nor request attributes related to: {@code getAnatOriginOfLine}, 
+     * {@code getStageOriginOfLine}, or {@code isObservedData}; any data types parameter
+     * ({@code getAffymetrixData}, {@code getESTData}, {@code getInSituData}, {@code getRNASeqData}, 
+     * and {@code getRelaxedInSituData}). This is because when {@code isIncludeSubStages} 
+     * is requested, these parameters need to be computed on-the-fly, necessitating an expensive 
+     * "GROUP BY" of the data, and filtering of the results needs to be performed 
+     * in a "HAVING" clause, instead of a "WHERE" clause. So this should be used only 
+     * when requesting data for a very low number of specific genes.
+     */
     @Override
     public ExpressionCallTOResultSet getExpressionCalls(
-            Collection<DAOCallFilter<ExpressionCallTO>> callFiters, Collection<String> globalGeneIds, 
+            Collection<DAOCallFilter<ExpressionCallTO>> callFilters, Collection<String> globalGeneIds, 
             String taxonId, Collection<ExpressionCallDAO.Attribute> attributes, 
             LinkedHashMap<ExpressionCallDAO.OrderingAttribute, DAO.Direction> orderingAttributes) 
-                    throws DAOException {
-        // TODO Auto-generated method stub
+                    throws DAOException, IllegalArgumentException {
+        log.entry(callFilters, globalGeneIds, taxonId, attributes, orderingAttributes);
+        
+        
+        //**********************************************
+        // Extract relevant information from arguments
+        //**********************************************
+        Set<ExpressionCallTO> allCallTOs = callFilters.stream()
+                .flatMap(e -> e.getCallTOFilters().stream())
+                .collect(Collectors.toSet());
+        
+        //includeSubstructures
+        Set<Boolean> allIncludeSubstructures = allCallTOs.stream()
+                .map(e -> Optional.ofNullable(e.isIncludeSubstructures()).orElse(false))
+                .collect(Collectors.toSet());
+        if (allIncludeSubstructures.size() != 1) {
+            throw log.throwing(new IllegalArgumentException("It is mandatory to request "
+                    + "one and only one propagation method along anatomical structures in a same query."));
+        }
+        boolean includeSubstructures = allIncludeSubstructures.iterator().next();
+        log.trace("includeSubstructures: {}", includeSubstructures);
+        
+        //includeSubstages
+        Set<Boolean> allIncludeSubStages = allCallTOs.stream()
+                .map(e -> Optional.ofNullable(e.isIncludeSubStages()).orElse(false))
+                .collect(Collectors.toSet());
+        if (allIncludeSubStages.size() != 1) {
+            throw log.throwing(new IllegalArgumentException("It is mandatory to request "
+                    + "one and only one propagation method along developmental stages in a same query."));
+        }
+        boolean includeSubStages = allIncludeSubStages.iterator().next();
+        log.trace("includeSubStages: {}", includeSubStages);
+        
+        //store the global gene ID filtering, or try to create one if all DAOCallFilters have the same
+        Set<String> clonedGlobalGeneIds = Optional.ofNullable(globalGeneIds)
+                .map(e -> new HashSet<>(e)).orElse(new HashSet<>());
+        if (clonedGlobalGeneIds.isEmpty()) {
+            Set<Set<String>> allGeneIdFilters = callFilters.stream().map(e -> e.getGeneIds())
+                    .collect(Collectors.toSet());
+            if (allGeneIdFilters.size() == 1 && allGeneIdFilters.iterator().next() != null) {
+                clonedGlobalGeneIds = new HashSet<>(allGeneIdFilters.iterator().next());
+            }
+        }
+        
+        //Get the requested attributes, and update them if needed. Notably, if includeSubStages is true, 
+        //and some specific parameters are requested, the filtering will need to be done 
+        //in a HAVING clause. In that case, we add the columns we will need in the HAVING clause, 
+        //based on the parameters provided, to avoid over-verbose HAVING clause. 
+        Set<ExpressionCallDAO.Attribute> originalAttrs = Optional.ofNullable(attributes)
+                .map(e -> EnumSet.copyOf(e)).orElse(EnumSet.allOf(ExpressionCallDAO.Attribute.class));
+        Set<ExpressionCallDAO.Attribute> updatedAttrs = EnumSet.copyOf(originalAttrs);
+        LinkedHashMap<ExpressionCallDAO.OrderingAttribute, DAO.Direction> clonedOrderingAttributes = 
+                Optional.ofNullable(orderingAttributes)
+                .map(e -> new LinkedHashMap<>(e)).orElse(new LinkedHashMap<>());
+        boolean havingClauseNeeded = false;
+        boolean groupingByNeeded = false;
+        
+        if (includeSubStages) {
+            if (originalAttrs.contains(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA) || 
+                    originalAttrs.contains(ExpressionCallDAO.Attribute.EST_DATA) || 
+                    originalAttrs.contains(ExpressionCallDAO.Attribute.IN_SITU_DATA) || 
+                    originalAttrs.contains(ExpressionCallDAO.Attribute.RNA_SEQ_DATA) || 
+                    originalAttrs.contains(ExpressionCallDAO.Attribute.OBSERVED_DATA) || 
+                    originalAttrs.contains(ExpressionCallDAO.Attribute.ANAT_ORIGIN_OF_LINE) || 
+                    originalAttrs.contains(ExpressionCallDAO.Attribute.STAGE_ORIGIN_OF_LINE) || 
+                    clonedOrderingAttributes.keySet().contains(ExpressionCallDAO.OrderingAttribute.MEAN_RANK)) {
+                
+                groupingByNeeded = true;
+            }
+            
+            //Retrieve all data types with a specified filtering
+            Set<ExpressionCallDAO.Attribute> filteredDataTypes = allCallTOs.stream()
+                    .map(e -> {
+                        Set<DataState> states = new HashSet<>(e.extractDataTypesToDataStates().values());
+                        //if all data types are null or requested to DataState.LOWQUALITY 
+                        //or DataState.NODATA, it is equivalent to having no filtering for data types...
+                        if ((states.size() == 1 && 
+                                (states.contains(null) || states.contains(DataState.NODATA) || 
+                                 states.contains(DataState.LOWQUALITY))) || 
+                            (states.size() == 2 && states.contains(null) && 
+                            states.contains(DataState.NODATA))) {
+                            return EnumSet.noneOf(ExpressionCallDAO.Attribute.class);
+                        }
+                        //otherwise, get the data types with a filtering requested
+                        return e.extractDataTypesToDataStates().entrySet().stream()
+                                .filter(entry -> entry.getValue() != null && 
+                                        entry.getValue() != DataState.NODATA)
+                                .map(entry -> entry.getKey())
+                                .collect(Collectors.toCollection(
+                                        () -> EnumSet.noneOf(ExpressionCallDAO.Attribute.class)));
+                    })
+                    .flatMap(Set::stream)
+                    .collect(Collectors.toCollection(() -> EnumSet.noneOf(ExpressionCallDAO.Attribute.class)));
+            log.trace("includeSubStages true, data types with filtering requested: {}", 
+                    filteredDataTypes);
+            
+            if (!filteredDataTypes.isEmpty()) {
+                havingClauseNeeded = true;
+                groupingByNeeded = true;
+                updatedAttrs.addAll(filteredDataTypes);
+            }
+            if (allCallTOs.stream().anyMatch(e -> e.isObservedData() != null)) {
+                havingClauseNeeded = true;
+                groupingByNeeded = true;
+                updatedAttrs.add(ExpressionCallDAO.Attribute.OBSERVED_DATA);
+            }
+            if (allCallTOs.stream().anyMatch(e -> e.getAnatOriginOfLine() != null)) {
+                havingClauseNeeded = true;
+                groupingByNeeded = true;
+                updatedAttrs.add(ExpressionCallDAO.Attribute.ANAT_ORIGIN_OF_LINE);
+            }
+            if (allCallTOs.stream().anyMatch(e -> e.getStageOriginOfLine() != null)) {
+                havingClauseNeeded = true;
+                groupingByNeeded = true;
+                updatedAttrs.add(ExpressionCallDAO.Attribute.STAGE_ORIGIN_OF_LINE);
+            }
+            
+            if (log.isWarnEnabled() && groupingByNeeded && 
+                    (clonedGlobalGeneIds.isEmpty() || 
+                            clonedGlobalGeneIds.size() > this.getManager().getExprPropagationGeneCount())) {
+                log.warn("IncludeSubStages is true and some parameters highly costly to compute "
+                        + "are needed, this will take lots of time... "
+                        + "You should rather compute these results in several queries.");
+            }
+        }
+
+        //**********************************************
+        
         return null;
     }
 
     @Override
+    //deprecated, see other getExpressionCalls method
+    @Deprecated
     public ExpressionCallTOResultSet getExpressionCalls(ExpressionCallParams params) 
             throws DAOException {
         log.entry(params);

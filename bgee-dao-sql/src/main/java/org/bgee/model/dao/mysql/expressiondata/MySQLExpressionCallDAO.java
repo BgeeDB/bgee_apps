@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.Optional;
@@ -17,7 +18,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
-import org.bgee.model.dao.api.expressiondata.DAOCallFilter;
+import org.bgee.model.dao.api.expressiondata.CallDAOFilter.ExpressionCallDAOFilter;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO.OriginOfLine;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallParams;
@@ -57,7 +58,7 @@ implements ExpressionCallDAO {
      * <p>
      * <strong>Implementation notes</strong>: 
      * If a {@code true} value is defined by the method {@code isIncludeSubStages} 
-     * of {@code ExpressionCallTO}s in the {@code DAOCallFilter}s, and if it is expected 
+     * of {@code ExpressionCallTO}s in the {@code CallDAOFilter}s, and if it is expected 
      * to have a large amount of data to consider, it is highly recommended to NOT filter  
      * the query based on, nor request attributes related to: {@code getAnatOriginOfLine}, 
      * {@code getStageOriginOfLine}, or {@code isObservedData}; any data types parameter
@@ -71,7 +72,7 @@ implements ExpressionCallDAO {
      */
     @Override
     public ExpressionCallTOResultSet getExpressionCalls(
-            Collection<DAOCallFilter<ExpressionCallTO>> callFilters, Collection<String> globalGeneIds, 
+            Collection<ExpressionCallDAOFilter> callFilters, Collection<String> globalGeneIds, 
             String taxonId, Collection<ExpressionCallDAO.Attribute> attributes, 
             LinkedHashMap<ExpressionCallDAO.OrderingAttribute, DAO.Direction> orderingAttributes) 
                     throws DAOException, IllegalArgumentException {
@@ -107,23 +108,29 @@ implements ExpressionCallDAO {
         boolean includeSubStages = allIncludeSubStages.iterator().next();
         log.trace("includeSubStages: {}", includeSubStages);
         
-        //store the global gene ID filtering, or try to create one if all DAOCallFilters have the same
-        Set<String> clonedGlobalGeneIds = Optional.ofNullable(globalGeneIds)
+        //store the global gene ID filtering, or try to create one based on the CallDAOFilters
+        Set<String> geneIds = Optional.ofNullable(globalGeneIds)
                 .map(e -> new HashSet<>(e)).orElse(new HashSet<>());
-        if (clonedGlobalGeneIds.isEmpty()) {
+        boolean globalGeneFilter = false;
+        if (geneIds.isEmpty()) {
+            //if all callFilters have the same gene ID filter
             Set<Set<String>> allGeneIdFilters = callFilters.stream().map(e -> e.getGeneIds())
                     .collect(Collectors.toSet());
-            if (allGeneIdFilters.size() == 1 && allGeneIdFilters.iterator().next() != null) {
-                clonedGlobalGeneIds = new HashSet<>(allGeneIdFilters.iterator().next());
+            if (allGeneIdFilters.size() == 1 && !allGeneIdFilters.iterator().next().isEmpty()) {
+                geneIds = new HashSet<>(allGeneIdFilters.iterator().next());
+                globalGeneFilter = true;
             }
-        }
-        //if no global gene ID filtering, try to see if all CallFilters specify gene IDs, 
-        //in which case it is useful to collect all of them
-        Set<String> allGeneIds = new HashSet<String>();
-        if (clonedGlobalGeneIds.isEmpty() && callFilters.stream()
-                .noneMatch(filter -> filter.getGeneIds() == null || filter.getGeneIds().isEmpty())) {
-            allGeneIds = callFilters.stream().flatMap(filter -> filter.getGeneIds().stream())
-                    .collect(Collectors.toSet());
+            //otherwise, check whether all callFilters specify a gene ID filtering, 
+            //we will collect them all
+            if (geneIds.isEmpty() && callFilters.stream()
+                    .noneMatch(filter -> filter.getGeneIds() == null || filter.getGeneIds().isEmpty())) {
+                //we collect the gene IDs, but it is not the same as a global gene ID filter, 
+                //so globalGeneFilter remains false
+                geneIds = callFilters.stream().flatMap(filter -> filter.getGeneIds().stream())
+                        .collect(Collectors.toSet());
+            }
+        } else {
+            globalGeneFilter = true;
         }
         
         //Get the requested attributes, and update them if needed. Notably, if includeSubStages is true, 
@@ -154,27 +161,9 @@ implements ExpressionCallDAO {
             }
             
             //Retrieve all data types with a specified filtering
-            Set<ExpressionCallDAO.Attribute> filteredDataTypes = allCallTOs.stream()
-                    .map(e -> {
-                        Set<DataState> states = new HashSet<>(e.extractDataTypesToDataStates().values());
-                        //if all data types are null or requested to DataState.LOWQUALITY 
-                        //or DataState.NODATA, or if we only have null and DataState.NODATA values, 
-                        //it is equivalent to having no filtering for data types...
-                        if ((states.size() == 1 && 
-                                (states.contains(null) || states.contains(DataState.NODATA) || 
-                                 states.contains(DataState.LOWQUALITY))) || 
-                            (states.size() == 2 && states.contains(null) && 
-                            states.contains(DataState.NODATA))) {
-                            return EnumSet.noneOf(ExpressionCallDAO.Attribute.class);
-                        }
-                        //otherwise, get the data types with a filtering requested
-                        return e.extractDataTypesToDataStates().entrySet().stream()
-                                .filter(entry -> entry.getValue() != null && 
-                                        entry.getValue() != DataState.NODATA)
-                                .map(entry -> entry.getKey())
-                                .collect(Collectors.toCollection(
-                                        () -> EnumSet.noneOf(ExpressionCallDAO.Attribute.class)));
-                    })
+            Set<ExpressionCallDAO.Attribute> filteredDataTypes = callFilters.stream()
+                    .flatMap(filter -> filter.getCallTOFilters().stream()
+                                       .map(callTO -> filter.extractFilteringDataTypes(callTO).keySet()))
                     .flatMap(Set::stream)
                     .collect(Collectors.toCollection(() -> EnumSet.noneOf(ExpressionCallDAO.Attribute.class)));
             log.trace("includeSubStages true, data types with filtering requested: {}", 
@@ -210,8 +199,7 @@ implements ExpressionCallDAO {
             }
             
             if (log.isWarnEnabled() && groupingByNeeded && 
-                    (clonedGlobalGeneIds.isEmpty() || 
-                            clonedGlobalGeneIds.size() > this.getManager().getExprPropagationGeneCount())) {
+                    (geneIds.isEmpty() || geneIds.size() > this.getManager().getExprPropagationGeneCount())) {
                 log.warn("IncludeSubStages is true and some parameters highly costly to compute "
                         + "are needed, this will take lots of time... "
                         + "You should rather compute these results in several queries.");
@@ -219,7 +207,6 @@ implements ExpressionCallDAO {
         }
         
         Set<String> allSpeciesIdsRequested = callFilters.stream()
-                .filter(filter -> filter.getSpeciesIds() != null && !filter.getSpeciesIds().isEmpty())
                 .flatMap(filter -> filter.getSpeciesIds().stream())
                 .collect(Collectors.toSet());
 
@@ -337,7 +324,8 @@ implements ExpressionCallDAO {
     //- Speaking of duplication event... would it be possible to target a specific 
     //  duplication event? They don't have any taxonId...
     //
-    private ExpressionCallTOResultSet getExpressionCalls(Collection<DAOCallFilter<ExpressionCallTO>> callFilters, 
+    private ExpressionCallTOResultSet getExpressionCalls(
+            LinkedHashSet<ExpressionCallDAOFilter> callFilters, 
             Set<String> globalGeneIds, Set<String> allGeneIds, Set<String> allSpeciesIds, 
             boolean includeSubstructures, boolean includeSubStages, 
             String commonAncestralTaxonId, Set<ExpressionCallDAO.Attribute> attrs, 
@@ -868,9 +856,72 @@ implements ExpressionCallDAO {
         return log.exit(sql);
     }
     
-    private String generateFilteringClause(Collection<DAOCallFilter<ExpressionCallTO>> callFilters, 
+    private String generateFilteringClause(LinkedHashSet<ExpressionCallDAOFilter> callFilters, 
             boolean useGeneIds, String exprTableName, String stageTableName, String geneTableName) {
-        log.entry();
+        log.entry(callFilters, useGeneIds, exprTableName, stageTableName, geneTableName);
+        
+        StringBuilder sb = new StringBuilder();
+        for (ExpressionCallDAOFilter callFilter: callFilters) {
+            if (sb.length() == 0) {
+                sb.append("AND ");
+            }
+            sb.append("(");
+            boolean hasPreviousClause = false;
+            
+            //genes
+            if (useGeneIds && callFilter.getGeneIds() != null && !callFilter.getGeneIds().isEmpty()) {
+                if (hasPreviousClause) {
+                    sb.append("AND ");
+                }
+                sb.append(exprTableName).append(".geneId IN (")
+                .append(BgeePreparedStatement.generateParameterizedQueryString(callFilter.getGeneIds().size()))
+                .append(") ");
+                hasPreviousClause = true;
+            }
+            
+            //species
+            if (callFilter.getSpeciesIds() != null && !callFilter.getSpeciesIds().isEmpty()) {
+                if (hasPreviousClause) {
+                    sb.append("AND ");
+                }
+                sb.append(geneTableName).append(".speciesId IN (")
+                .append(BgeePreparedStatement.generateParameterizedQueryString(callFilter.getSpeciesIds().size()))
+                .append(") ");
+                hasPreviousClause = true;
+            }
+            
+            //conditions
+            if (callFilter.getConditionFilters() != null && !callFilter.getConditionFilters().isEmpty()) {
+                if (hasPreviousClause) {
+                    sb.append("AND ");
+                }
+                sb.append(callFilter.getConditionFilters().stream()
+                    .map(cond -> {
+                        StringBuilder sb2 = new StringBuilder();
+                        if (cond.getAnatEntitieIds() != null && !cond.getAnatEntitieIds().isEmpty()) {
+                            sb.append(exprTableName).append(".anatEntityId IN (")
+                            .append(BgeePreparedStatement.generateParameterizedQueryString(
+                                    cond.getAnatEntitieIds().size())).append(") ");
+                        }
+                        if (cond.getDevStageIds() != null && !cond.getDevStageIds().isEmpty()) {
+                            if (sb2.length() == 0) {
+                                sb2.append("AND ");
+                            }
+                            sb.append(exprTableName).append(".stageId IN (")
+                            .append(BgeePreparedStatement.generateParameterizedQueryString(
+                                    cond.getDevStageIds().size())).append(") ");
+                        }
+                        return sb2.toString();
+                    }).collect(Collectors.joining("OR "))
+                );
+                hasPreviousClause = true;
+            }
+            
+            //CallTOs
+            
+
+            sb.append(")");
+        }
     }
 
     @Override

@@ -183,8 +183,8 @@ var download = {
 
             //Google Analytics tracking
             //(see https://developers.google.com/analytics/devguides/collection/analyticsjs/events)
-            $("a").click(function() {
-                ga ('send', 'event', 'link', 'click_'+CURRENT_REQUEST.getPage()+'_'+CURRENT_REQUEST.getAction(), $( this ).attr("href"));
+            $("div#bgee_data_selection a").click(function() {
+        		ga ('send', 'event', 'link', 'click', $( this ).attr("href"));
             });
 
             // Add a click listener to every species/group to load the corresponding details 
@@ -310,8 +310,8 @@ var download = {
                 this.resetSearch( false );
                 //Google Analytics tracking
                 //(see https://developers.google.com/analytics/devguides/collection/analyticsjs/events)
-                var id = $species.attr("id");
-                ga ('send', 'event', 'detailbox_'+CURRENT_REQUEST.getPage()+'_'+CURRENT_REQUEST.getAction(), 'click', id);
+                var name = speciesData[$species.attr("id")].name;
+                ga ('send', 'event', 'detailbox', 'click', name);
             }        
         },
 

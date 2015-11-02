@@ -41,11 +41,73 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
     }
 
     @Override
-    public void displayTopAnatPage() {
-        // TODO Auto-generated method stub
+    public void displayTopAnatHomePage() {
+        log.entry();
         
+        this.startDisplay("Bgee TopAnat page");
+
+        this.writeln("<h1>TopAnat</h1>");
+        this.writeln("<h2>Test for Enrichment and Depletion of "
+                + "Gene Expression in Anatomical Structures</h2>");
+        
+        this.writeln(this.getForm(true));
+        
+        this.endDisplay();
+
+        log.exit();
     }
     
+    @Override
+    public void displayTopAnatWaitingPage() {
+        log.entry();
+        
+        this.startDisplay("Bgee TopAnat page");
+
+        this.writeln("<h1>TopAnat</h1>");
+        this.writeln("<h2>Test for Enrichment and Depletion of "
+                + "Gene Expression in Anatomical Structures</h2>");
+        
+        this.writeln(this.getForm(false));
+        this.writeln(this.getJobInfo());
+        
+        this.endDisplay();
+
+        log.exit();
+    }
+
+    @Override
+    public void displayTopAnatResultPage() {
+        log.entry();
+        
+        this.startDisplay("Bgee TopAnat page");
+
+        this.writeln("<h1>TopAnat</h1>");
+        this.writeln("<h2>Test for Enrichment and Depletion of "
+                + "Gene Expression in Anatomical Structures</h2>");
+        
+        this.writeln(this.getForm(false));
+        this.writeln(this.getJobInfo());
+        this.writeln(this.getResults());
+        
+        this.endDisplay();
+
+        log.exit();
+    }
+
+    private String getForm(boolean isActive) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    private String getJobInfo() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    private String getResults() {
+        // TODO Auto-generated method stub
+        return null;
+    }
 
     @Override
     protected void includeJs() {

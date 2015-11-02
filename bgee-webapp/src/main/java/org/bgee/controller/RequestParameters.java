@@ -1773,6 +1773,26 @@ public class RequestParameters {
 //        return log.exit(false);
 //    }
 
+    public boolean isATopAnatGeneListUpload() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+    public boolean isATopAnatNewJob() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+    public boolean isATopAnatTrackingJob() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+    public boolean isATopAnatCompletedJob() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+    public boolean isATopAnatHomePageWithData() {
+        // TODO Auto-generated method stub
+        return false;
+    }
     /**
      * This method has a js counterpart in {@code requestparameters.js} that should be kept 
      * consistent as much as possible if the method evolves.

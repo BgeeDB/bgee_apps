@@ -9,7 +9,17 @@ package org.bgee.view;
  */
 public interface TopAnatDisplay {
     /**
-     * Display the topAnat container.
+     * Display the topAnat home page.
      */
-    public void displayTopAnatPage();
+    public void displayTopAnatHomePage();
+    
+    /**
+     * Display the topAnat waiting page.
+     */
+    public void displayTopAnatWaitingPage();
+    
+    /**
+     * Display the topAnat page with displayed results.
+     */
+    public void displayTopAnatResultPage();
 }

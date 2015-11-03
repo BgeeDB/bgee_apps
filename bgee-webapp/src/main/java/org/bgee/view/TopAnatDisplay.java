@@ -1,5 +1,12 @@
 package org.bgee.view;
 
+import java.util.List;
+import java.util.Map;
+
+import org.bgee.model.anatdev.DevStage;
+import org.bgee.model.species.Species;
+import org.bgee.model.topanat.TopAnatResults;
+
 /**
  * Interface defining the methods that views related to topAnat must implemented. 
  * 
@@ -12,14 +19,22 @@ public interface TopAnatDisplay {
      * Display the topAnat home page.
      */
     public void displayTopAnatHomePage();
+    /**
+     * Display the response following a gene list upload to server (either from file upload, 
+     * or from copy/paste in textarea).
+     */
+    //TODO: example parameters. Maybe we want to use Species objects as keys in the Map?
+    //Should the Species class has a validStages attribute? Or is it not directly related to Species?
+    public void sendGeneListReponse(Map<String, Integer> speciesIdToGeneCount, 
+            Species selectedSpecies, List<DevStage> validStages);
     
     /**
-     * Display the topAnat waiting page.
+     * Sends the response following the submission of a new TopAnat job, with no cached results.
      */
-    public void displayTopAnatWaitingPage();
+    public void sendNewJobResponse(int jobTrackingId);
     
     /**
      * Display the topAnat page with displayed results.
      */
-    public void displayTopAnatResultPage();
+    public void displayResultPage(TopAnatResults results);
 }

@@ -55,10 +55,14 @@ public class CommandTopAnat extends CommandParent {
             // - selected species (species with most valid genes).
             // - valid stages for selected species
             // - hash to retrieve gene list needs to be included in the response
-            //   (hash to be used when submitting job)
+            //   (the hash to retrieve the requestParameters object)
+            
+            // Retrieve association species -> valid gene IDs, using gene IDs in this.requestParameters.
+            // Retrieve valid stages for selected species
 
-            // Display page (using previous response)
-            display.displayTopAnatHomePage();
+            // Send response with association species -> gene count, selected species, 
+            // and valid stages
+            display.sendGeneListReponse(map, species, stages);
             
         // Job submission, response 1: job not started
         } else if (this.requestParameters.isATopAnatNewJob()) {
@@ -68,13 +72,19 @@ public class CommandTopAnat extends CommandParent {
             // Get params
             // - data parameters hash obtained from the gene upload request
             // - all form parameters
-
-            // Request server and get response
-            // - "admin" URL, allowing to come back at any moment to track job advancement
-            // - advancement status (could be hardcoded, e.g., "starting job")
-
-            // Display page (using previous response)
-            display.displayTopAnatWaitingPage();
+            
+            // Launch the TopAnat analyses / Check that results are cached
+            if (cached) {
+                display.displayResultPage(results);
+                // - Or should the client redirects itself to a new page to display results, 
+                //   using an URL provided in this response?
+                
+            } else {
+                // Request server and get response
+                // - "admin" URL, allowing to come back at any moment to track job advancement
+                // - advancement status (could be hardcoded, e.g., "starting job")
+                display.sendNewJobResponse(id);
+            }
 
         // Job submission: job tracking
         } else if (this.requestParameters.isATopAnatTrackingJob()) {
@@ -84,20 +94,20 @@ public class CommandTopAnat extends CommandParent {
             // Request server and get response
             // - advancement status (real one, based on TaskManager)
 
-            // Display page (using previous response)
-            display.displayTopAnatWaitingPage();
-
-        // Job submission, response 2: job completed
-        } else if (this.requestParameters.isATopAnatCompletedJob()) {
-            // Get params
-            // - ID to track job
-
-            // Request server and get response
-            // - response saying to redirect to a provided URL 
-            //   (is it doable or do we get the results through an AJAX query only?)
-            
-            // Display page (using previous response)
-            display.displayTopAnatResultPage();
+            // Retrieve task manager associated to the provided ID
+            if (taskManager.isSuccessful()) {
+                //retrieve results from the task held by the task manager
+                display.displayTopAnatResultPage(results);
+                //Or should the client redirects itself to a new page to display results, 
+                //using an URL provided in this response?
+                
+            } else if (taskManager.isRunning()) {
+                
+                display.displayJobStatus(taskManager);
+            } else {
+                
+                display.jobError(taskManager);
+            }
 
         // Home page, with data parameters provided in URL
         } else if (this.requestParameters.isATopAnatHomePageWithData()) {

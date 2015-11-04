@@ -5,6 +5,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 /**
  * A filter to parameterize queries using expression data conditions. 
  * 
@@ -13,6 +16,7 @@ import java.util.Set;
  * @since Bgee 13 Oct. 2015
  */
 public class DAOConditionFilter {
+    private final static Logger log = LogManager.getLogger(DAOConditionFilter.class.getName());
     /**
      * @see #getAnatEntitieIds()
      */
@@ -29,8 +33,16 @@ public class DAOConditionFilter {
      * @param devStageIds       A {@code Collection} of {@code String}s that are the IDs 
      *                          of the developmental stages that this {@code DAOConditionFilter} 
      *                          will specify to use.
+     * @throws IllegalArgumentException If no anatomical entity IDs and no developmental stage IDs 
+     *                                  are provided. 
      */
-    public DAOConditionFilter(Collection<String> anatEntitieIds, Collection<String> devStageIds) {
+    public DAOConditionFilter(Collection<String> anatEntitieIds, Collection<String> devStageIds) 
+            throws IllegalArgumentException {
+        if ((anatEntitieIds == null || anatEntitieIds.isEmpty()) && 
+                (devStageIds == null || devStageIds.isEmpty())) {
+            throw log.throwing(new IllegalArgumentException(
+                    "Some anatatomical entity IDs or developmental stage IDs must be provided."));
+        }
         this.anatEntitieIds = anatEntitieIds == null ? null: Collections.unmodifiableSet(
                 new HashSet<>(anatEntitieIds));
         this.devStageIds = devStageIds == null? null: Collections.unmodifiableSet(

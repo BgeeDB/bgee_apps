@@ -47,6 +47,32 @@ public abstract class CallDAOFilter<T extends Enum<T> & CallDAO.Attribute, U ext
                 Collection<DAOConditionFilter> conditionFilters, 
                 Collection<ExpressionCallTO> callTOFilters) throws IllegalArgumentException {
             super(geneIds, speciesIds, conditionFilters, callTOFilters, ExpressionCallDAO.Attribute.class);
+            //sanity check for propagation states
+            if (callTOFilters != null && callTOFilters.stream()
+                //We map each CallTO to a String representing its propagation states. 
+                //We should have only one equal String at the end.
+                .map(e -> (e.isIncludeSubstructures() == null? false: e.isIncludeSubstructures())
+                  + "-" + (e.isIncludeSubStages() == null? false: e.isIncludeSubStages())
+                ).collect(Collectors.toSet()).size() > 1) {
+                
+                throw log.throwing(new IllegalArgumentException("It is not possible to mix "
+                        + "different propagation states or different CallTO types."));
+            }
+            if (callTOFilters != null && callTOFilters.stream()
+                    .anyMatch(e -> ((new Boolean(false).equals(e.isIncludeSubstructures()) && 
+                                        (e.getAnatOriginOfLine() == ExpressionCallTO.OriginOfLine.BOTH || 
+                                        e.getAnatOriginOfLine() == ExpressionCallTO.OriginOfLine.DESCENT)) || 
+                                    (new Boolean(false).equals(e.isIncludeSubStages()) && 
+                                        (e.getStageOriginOfLine() == ExpressionCallTO.OriginOfLine.BOTH || 
+                                         e.getStageOriginOfLine() == ExpressionCallTO.OriginOfLine.DESCENT)) || 
+                                    (new Boolean(false).equals(e.isIncludeSubstructures()) && 
+                                        new Boolean(false).equals(e.isIncludeSubStages()) && 
+                                        new Boolean(false).equals(e.isObservedData())))
+                    )) {
+
+                throw log.throwing(new IllegalArgumentException("Requested origin of line/observed data state "
+                        + "incompatible with requested propagation"));
+            }
         }
     }
     /**
@@ -66,6 +92,26 @@ public abstract class CallDAOFilter<T extends Enum<T> & CallDAO.Attribute, U ext
                 Collection<DAOConditionFilter> conditionFilters, 
                 Collection<NoExpressionCallTO> callTOFilters) throws IllegalArgumentException {
             super(geneIds, speciesIds, conditionFilters, callTOFilters, NoExpressionCallDAO.Attribute.class);
+          //sanity check for propagation states
+            if (callTOFilters != null && callTOFilters.stream()
+                //We map each CallTO to a String representing its propagation states. 
+                //We should have only one equal String at the end.
+                .map(e -> "" + (e.isIncludeParentStructures() == null? false: 
+                                e.isIncludeParentStructures())
+                ).collect(Collectors.toSet()).size() > 1) {
+                
+                throw log.throwing(new IllegalArgumentException("It is not possible to mix "
+                        + "different propagation states or different CallTO types."));
+            }
+            if (callTOFilters != null && callTOFilters.stream()
+                    .anyMatch(e -> (new Boolean(false).equals(e.isIncludeParentStructures()) && 
+                                   (e.getOriginOfLine() == NoExpressionCallTO.OriginOfLine.BOTH || 
+                                    e.getOriginOfLine() == NoExpressionCallTO.OriginOfLine.PARENT))
+                    )) {
+
+                throw log.throwing(new IllegalArgumentException("Requested origin of line state "
+                        + "incompatible with requested propagation"));
+            }
         }
     }
     /**
@@ -155,43 +201,13 @@ public abstract class CallDAOFilter<T extends Enum<T> & CallDAO.Attribute, U ext
      * @param attributeType     The class type of the {@code Attribute}s of type {@code T}.
      * @throws IllegalArgumentException If some {@code T}s have different propagation states.
      */
-    protected CallDAOFilter(Collection<String> geneIds, Collection<String> speciesIds, 
+    public CallDAOFilter(Collection<String> geneIds, Collection<String> speciesIds, 
             Collection<DAOConditionFilter> conditionFilters, Collection<U> callTOFilters, 
             Class<T> attributeType) throws IllegalArgumentException {
         log.entry(geneIds, speciesIds, conditionFilters, callTOFilters, attributeType);
         
         if (attributeType == null) {
             throw log.throwing(new IllegalArgumentException("The Attribute class type must be provided."));
-        }
-        
-        //sanity check for propagation states
-        if (callTOFilters != null && callTOFilters.stream()
-            //We map each CallTO to a String representing its propagation states. 
-            //We should have only one equal String at the end.
-            .map(e -> {
-                if (e instanceof ExpressionCallTO) {
-                    ExpressionCallTO exprTO = (ExpressionCallTO) e;
-                    return (exprTO.isIncludeSubstructures() == null? false: exprTO.isIncludeSubstructures())
-                    + "-" + (exprTO.isIncludeSubStages() == null? false: exprTO.isIncludeSubStages())
-                    + "-" + (exprTO.getAnatOriginOfLine() == null? 
-                            ExpressionCallTO.OriginOfLine.SELF: exprTO.getAnatOriginOfLine())
-                    + "-" + (exprTO.getStageOriginOfLine() == null? 
-                            ExpressionCallTO.OriginOfLine.SELF: exprTO.getStageOriginOfLine());
-                } else if (e instanceof NoExpressionCallTO) {
-                    NoExpressionCallTO noExprTO = (NoExpressionCallTO) e;
-                    return "" + (noExprTO.isIncludeParentStructures() == null? false: 
-                        noExprTO.isIncludeParentStructures());
-                } else if (e instanceof DiffExpressionCallTO) {
-                    //no propagation for diff. expression calls
-                    return "";
-                } else {
-                    throw log.throwing(new IllegalArgumentException("Unsupported CallTO"));
-                }
-            })
-            .collect(Collectors.toSet()).size() > 1) {
-            
-            throw log.throwing(new IllegalArgumentException("It is not possible to mix "
-                    + "different propagation states or different CallTO types."));
         }
 
         this.attributeType = attributeType;

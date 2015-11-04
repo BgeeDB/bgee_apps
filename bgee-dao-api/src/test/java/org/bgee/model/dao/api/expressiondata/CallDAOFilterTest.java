@@ -88,6 +88,56 @@ public class CallDAOFilterTest extends TestAncestor {
             //test passed
         }
         
+        callTO1 = new ExpressionCallTO(null, null, null, null, null, null, null, null,
+                false, true, ExpressionCallTO.OriginOfLine.BOTH, null, null); 
+        try {
+            new ExpressionCallDAOFilter(null, null, null, Arrays.asList(callTO1));
+            fail("An exception should be thrown when an origin of line/observed data stage "
+                    + "is incompatible with the propagation state.");
+        } catch (IllegalArgumentException e) {
+            //test passed
+        }
+        
+        callTO1 = new ExpressionCallTO(null, null, null, null, null, null, null, null,
+                false, true, ExpressionCallTO.OriginOfLine.DESCENT, null, null); 
+        try {
+            new ExpressionCallDAOFilter(null, null, null, Arrays.asList(callTO1));
+            fail("An exception should be thrown when an origin of line/observed data stage "
+                    + "is incompatible with the propagation state.");
+        } catch (IllegalArgumentException e) {
+            //test passed
+        }
+        
+        callTO1 = new ExpressionCallTO(null, null, null, null, null, null, null, null,
+                true, false, null, ExpressionCallTO.OriginOfLine.DESCENT, null); 
+        try {
+            new ExpressionCallDAOFilter(null, null, null, Arrays.asList(callTO1));
+            fail("An exception should be thrown when an origin of line/observed data stage "
+                    + "is incompatible with the propagation state.");
+        } catch (IllegalArgumentException e) {
+            //test passed
+        }
+        
+        callTO1 = new ExpressionCallTO(null, null, null, null, null, null, null, null,
+                true, false, null, ExpressionCallTO.OriginOfLine.BOTH, null); 
+        try {
+            new ExpressionCallDAOFilter(null, null, null, Arrays.asList(callTO1));
+            fail("An exception should be thrown when an origin of line/observed data stage "
+                    + "is incompatible with the propagation state.");
+        } catch (IllegalArgumentException e) {
+            //test passed
+        }
+        
+        callTO1 = new ExpressionCallTO(null, null, null, null, null, null, null, null,
+                false, false, null, null, false); 
+        try {
+            new ExpressionCallDAOFilter(null, null, null, Arrays.asList(callTO1));
+            fail("An exception should be thrown when an origin of line/observed data stage "
+                    + "is incompatible with the propagation state.");
+        } catch (IllegalArgumentException e) {
+            //test passed
+        }
+        
         //test when everything is fine
         callTO1 = new ExpressionCallTO(null, null, null, null, null, null, null, null,
                 true, false, null, null, null); 
@@ -120,6 +170,26 @@ public class CallDAOFilterTest extends TestAncestor {
         try {
             new NoExpressionCallDAOFilter(null, null, null, Arrays.asList(callTO1, callTO2));
             fail("An exception should be thrown when multiple propagation states are mixed.");
+        } catch (IllegalArgumentException e) {
+            //test passed
+        }
+        
+        callTO1 = new NoExpressionCallTO(null, null, null, null, null, null, null, null, false, 
+                NoExpressionCallTO.OriginOfLine.BOTH);
+        try {
+            new NoExpressionCallDAOFilter(null, null, null, Arrays.asList(callTO1));
+            fail("An exception should be thrown when an origin of line/observed data stage "
+                    + "is incompatible with the propagation state.");
+        } catch (IllegalArgumentException e) {
+            //test passed
+        }
+        
+        callTO1 = new NoExpressionCallTO(null, null, null, null, null, null, null, null, false, 
+                NoExpressionCallTO.OriginOfLine.PARENT);
+        try {
+            new NoExpressionCallDAOFilter(null, null, null, Arrays.asList(callTO1));
+            fail("An exception should be thrown when an origin of line/observed data stage "
+                    + "is incompatible with the propagation state.");
         } catch (IllegalArgumentException e) {
             //test passed
         }

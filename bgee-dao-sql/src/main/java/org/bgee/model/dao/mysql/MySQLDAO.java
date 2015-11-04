@@ -15,6 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
+import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 
@@ -54,6 +55,27 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
      * {@code BgeeConnection}s.
      */
     private final MySQLDAOManager manager;
+    
+    /**
+     * Convert a {@code DataState} into its corresponding index in a MySQL enum field. 
+     * 
+     * @param state The {@code DataState} to be converted.
+     * @return      An {@code int} that is the index corresponding to {@code DataState} 
+     *              in a MySQL enum field. 
+     */
+    protected static int convertDataStateToInt(DataState state) {
+        log.entry(state);
+        switch(state) {
+        case NODATA: 
+            return log.exit(1);
+        case LOWQUALITY: 
+            return log.exit(2);
+        case HIGHQUALITY: 
+            return log.exit(3);
+        default: 
+            throw log.throwing(new IllegalStateException("DataState not supported: " + state));
+        }
+    }
     
     /**
      * Default constructor private, should not be used, a {@code MySQLDAOManager} 

@@ -242,8 +242,8 @@ public abstract class CallDAOFilter<T extends Enum<T> & CallDAO.Attribute, U ext
      * @return  A {@code LinkedHashSet} of {@code ConditionFilter}s to configure the filtering 
      *          of conditions with expression data. If several {@code ConditionFilter}s are provided, 
      *          they are seen as "OR" conditions. Can be {@code null} or empty. 
-     *          Provided as a {@code LinkedHashSet} for convenience when building queries 
-     *          using several methods.
+     *          Provided as a {@code LinkedHashSet} for convenience, to consistently set parameters 
+     *          in queries.
      */
     public LinkedHashSet<DAOConditionFilter> getConditionFilters() {
         //defensive copying
@@ -255,8 +255,8 @@ public abstract class CallDAOFilter<T extends Enum<T> & CallDAO.Attribute, U ext
      *          the call types produced from each data type... If several 
      *          {@code T}s are provided, they are seen as "OR" conditions.
      *          See {@code CallDAOFilter} constructor for more details.
-     *          Provided as a {@code LinkedHashSet} for convenience when building queries 
-     *          using several methods.
+     *          Provided as a {@code LinkedHashSet} for convenience, to consistently set parameters 
+     *          in queries.
      */
     public LinkedHashSet<U> getCallTOFilters() {
         //defensive copying
@@ -278,12 +278,14 @@ public abstract class CallDAOFilter<T extends Enum<T> & CallDAO.Attribute, U ext
      * and the {@code Map} returned by this method will be empty. 
      *  
      * @param callTO    A {@code CallTO} to extract filtering data types from.
-     * @return          A {@code Map} where keys are {@code Attribute}s associated to a data type, 
+     * @return          An {@code EnumMap} where keys are {@code Attribute}s associated to a data type, 
      *                  the associated value being a {@code DataState} to be used 
      *                  to parameterize queries to the data source (results should have 
      *                  a data state equal to or higher than this value for this data type).
+     *                  Returned as an {@code EnumMap} for consistent iteration order 
+     *                  when setting parameters in a query. 
      */
-    public Map<T, DataState> extractFilteringDataTypes(U callTO) {
+    public EnumMap<T, DataState> extractFilteringDataTypes(U callTO) {
         log.entry(callTO);
         
         final Map<T, DataState> typesToStates = callTO.extractDataTypesToDataStates();
@@ -303,9 +305,12 @@ public abstract class CallDAOFilter<T extends Enum<T> & CallDAO.Attribute, U ext
         
         //otherwise, get the data types with a filtering requested
         return log.exit(typesToStates.entrySet().stream()
-                .filter(entry -> entry.getValue() != null && 
-                        entry.getValue() != DataState.NODATA)
-                .collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue())));
+                .filter(entry -> entry.getValue() != null && entry.getValue() != DataState.NODATA)
+                .collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue(), 
+                        (k, v) -> {throw log.throwing(
+                                new IllegalArgumentException("Key used more than once: " + k));}, 
+                        //Cannot write EnumMap<>, Eclipse manages to infer the correct type, but not javac. 
+                        () -> new EnumMap<T, DataState>(this.attributeType))));
     }
 
     @Override

@@ -48,7 +48,7 @@ public class JsonHelperTest extends TestAncestor {
     @Test
     public void testSpeciesDataGroupToJson() {
         SpeciesDataGroup group = new SpeciesDataGroup("singleSpeG1", "single spe g1", null, 
-                Arrays.asList(new Species("9606", "human", null, "Homo", "sapiens")), 
+                Arrays.asList(new Species("9606", "human", null, "Homo", "sapiens", "hsap1")), 
                 new HashSet<>(Arrays.asList(
                         new DownloadFile("my/path/fileg1_1.tsv.zip", "fileg1_1.tsv.zip", 
                         CategoryEnum.EXPR_CALLS_SIMPLE, 5000L, "singleSpeG1"))));
@@ -58,7 +58,8 @@ public class JsonHelperTest extends TestAncestor {
         JsonHelper helper = new JsonHelper(props);
         String json = helper.toJson(group);
         String expected = "{\n  \"members\": [\n    {\n      \"genus\": \"Homo\",\n      "
-                + "\"speciesName\": \"sapiens\",\n      \"name\": \"human\",\n      "
+                + "\"speciesName\": \"sapiens\",\n      "
+                + "\"genomeVersion\": \"hsap1\",\n      \"name\": \"human\",\n      "
                 + "\"id\": \"9606\"\n    }\n  ],\n  \"downloadFiles\": [\n    {\n      "
                 + "\"name\": \"fileg1_1.tsv.zip\",\n      \"size\": 5000,\n      "
                 + "\"speciesDataGroupId\": \"singleSpeG1\",\n      "

@@ -1,5 +1,6 @@
 package org.bgee.model.dao.mysql.species;
 
+import java.io.File;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Map.Entry;
@@ -123,6 +124,9 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
                     sql += speciesTableName + ".taxonId";
                 } else if (attribute.equals(SpeciesDAO.Attribute.GENOME_FILE_PATH)) {
                     sql += speciesTableName + ".genomeFilePath";
+                // TODO uncomment when genome version in species table
+//                } else if (attribute.equals(SpeciesDAO.Attribute.GENOME_VERSION)) {
+//                    sql += speciesTableName + ".genomeVersion";
                 } else if (attribute.equals(SpeciesDAO.Attribute.GENOME_SPECIES_ID)) {
                     sql += speciesTableName + ".genomeSpeciesId";
                 } else if (attribute.equals(SpeciesDAO.Attribute.FAKE_GENE_ID_PREFIX)) {
@@ -236,8 +240,8 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
         @Override
         protected SpeciesTO getNewTO() {
             log.entry();
-            String speciesId = null, genus = null, species = null, 
-                   speciesCommonName = null, taxonId = null, genomeFilePath = null, 
+            String speciesId = null, genus = null, species = null, speciesCommonName = null, 
+                   taxonId = null, genomeFilePath = null, genomeVersion = null,
                    genomeSpeciesId = null, fakeGeneIdPrefix=null;
             // Get results
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
@@ -259,6 +263,9 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
                         
                     } else if (column.getValue().equals("genomeFilePath")) {
                         genomeFilePath = this.getCurrentResultSet().getString(column.getKey());
+                        //TODO: modify when genome version in species table 
+                        String tokens[] = genomeFilePath.split(File.separator);
+                        genomeVersion = tokens[tokens.length - 1];
 
                     } else if (column.getValue().equals("genomeSpeciesId")) {
                         genomeSpeciesId = this.getCurrentResultSet().getString(column.getKey());
@@ -274,7 +281,7 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
             }
             //Set SpeciesTO
             return log.exit(new SpeciesTO(speciesId, speciesCommonName, genus, species,
-                    taxonId, genomeFilePath, genomeSpeciesId, fakeGeneIdPrefix));
+                    taxonId, genomeFilePath, genomeVersion, genomeSpeciesId, fakeGeneIdPrefix));
         }
     }
 

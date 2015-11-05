@@ -3,11 +3,13 @@ package org.bgee.model;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.anatdev.AnatEntityService;
+import org.bgee.model.anatdev.DevStageService;
 import org.bgee.model.dao.api.DAOManager;
+import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.file.DownloadFileService;
 import org.bgee.model.file.SpeciesDataGroupService;
+import org.bgee.model.gene.GeneService;
 import org.bgee.model.keyword.KeywordService;
-import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.species.SpeciesService;
 
 /**
@@ -40,7 +42,8 @@ import org.bgee.model.species.SpeciesService;
  * <ul>
  * 
  * @author Frederic Bastian
- * @version Bgee 13 Sept. 2015
+ * @author Valentine Rech de Laval
+ * @version Bgee 13, Nov. 2015
  * @since Bgee 13
  */
 //XXX: should we put all Services in a same package, so that the constructors are protected 
@@ -90,6 +93,24 @@ public class ServiceFactory implements AutoCloseable {
     public SpeciesService getSpeciesService() {
         log.entry();
         return log.exit(new SpeciesService(this.daoManager));
+    }
+
+    /**
+     * @return  A newly instantiated {@code GeneService}, using the same {@code DAOManager} 
+     *          as the one selected by this {@code ServiceFactory}.
+     */
+    public GeneService getGeneService() {
+        log.entry();
+        return log.exit(new GeneService(this.daoManager));
+    }
+
+    /**
+     * @return  A newly instantiated {@code DevStageService}, using the same {@code DAOManager} 
+     *          as the one selected by this {@code ServiceFactory}.
+     */
+    public DevStageService getDevStageService() {
+        log.entry();
+        return log.exit(new DevStageService(this.daoManager));
     }
 
     /**

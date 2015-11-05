@@ -5,18 +5,21 @@ import org.bgee.model.NamedEntity;
 /**
  * Class allowing to describe species used in Bgee.
  * 
- * @author Frederic Bastian
- * @version Bgee 13, Mar 2013
- * @since Bgee 01
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13, Nov 2013
+ * @since   Bgee 01
  */
-//TODO: equals/hashCode/toString
 public class Species extends NamedEntity {
     
 	/** @see #getGenus() */
 	private final String genus;
 	
-	/** @see #getSpeciesName() */
-	private final String speciesName;
+    /** @see #getSpeciesName() */
+    private final String speciesName;
+    
+    /** @see #getGenomeVersion() */
+    private final String genomeVersion;
 	
     /**
      * 0-arg constructor private, at least an ID must be provided, see {@link #Species(String)}.
@@ -45,7 +48,7 @@ public class Species extends NamedEntity {
      * @param description   A {@code String} description of this {@code Species}.
      */
     public Species(String id, String name, String description) throws IllegalArgumentException {
-        this(id, name, description, null, null);
+        this(id, name, description, null, null, null);
     }
     
     /**
@@ -54,32 +57,46 @@ public class Species extends NamedEntity {
      *                      Cannot be blank.
      * @param name          A {@code String} representing the (common) name of this {@code Species}.
      * @param description   A {@code String} description of this {@code Species}.
-     * @param genus			A {@code String} representing the genus of this {@code Species} (e.g., "Homo" for human).
-     * @param speciesName   A {@code String} representing the species name of this {@code Species} (e.g., "sapiens" for human)
+     * @param genus         A {@code String} representing the genus of this {@code Species} 
+     *                      (e.g., "Homo" for human).
+     * @param speciesName   A {@code String} representing the species name of this 
+     *                      {@code Species} (e.g., "sapiens" for human).
+     * @param genomeVersion A {@code String} representing the genome version used for 
+     *                      this {@code Species}.
      */
-    public Species(String id, String name, String description, String genus, String speciesName) throws IllegalArgumentException {
+    public Species(String id, String name, String description, String genus, String speciesName,
+            String genomeVersion) throws IllegalArgumentException {
         super(id, name, description);
         this.genus = genus;
         this.speciesName = speciesName;
+        this.genomeVersion = genomeVersion;
     }
 
-
     /**
-     * @return A {@code String} representing the genus of the species (e.g., "Homo" for human)
+     * @return A {@code String} representing the genus of the species (e.g., "Homo" for human).
      */
     public String getGenus() {
     	return this.genus;
     }
 
     /**
-     * @return A {@code String} representing the species name of this {@code Species} (e.g., "sapiens" for human)
+     * @return  A {@code String} representing the species name 
+     *          of this {@code Species} (e.g., "sapiens" for human).
      */
     public String getSpeciesName() {
     	return this.speciesName;
     }
     
     /**
-     * @return  A {@code String} representing the species common name (e.g., "human" for Homo sapiens)
+     * @return A {@code String} representing the genome version used for this {@code Species}
+     */
+    public String getGenomeVersion() {
+        return this.speciesName;
+    }
+    
+    /**
+     * @return  A {@code String} representing the species common name 
+     *          (e.g., "human" for Homo sapiens).
      */
     @Override
     //method overridden to provide a more accurate javadoc
@@ -96,7 +113,8 @@ public class Species extends NamedEntity {
     }
 
     /**
-     * @return A {@code String} containing a short representation of the name (e.g., "H. sapiens" for Homo sapiens).
+     * @return  A {@code String} containing a short representation of the name 
+     *          (e.g., "H. sapiens" for Homo sapiens).
      */
     public String getShortName() {
     	if (genus == null || speciesName == null) return "";
@@ -109,14 +127,15 @@ public class Species extends NamedEntity {
 		final int prime = 31;
 		int result = super.hashCode();
 		result = prime * result + ((genus == null) ? 0 : genus.hashCode());
-		result = prime * result + ((speciesName == null) ? 0 : speciesName.hashCode());
+        result = prime * result + ((speciesName == null) ? 0 : speciesName.hashCode());
+        result = prime * result + ((genomeVersion == null) ? 0 : genomeVersion.hashCode());
 		return result;
 	}
 
 	@Override
 	public String toString() {
-		return "Species [genus=" + genus + ", speciesName=" + speciesName + ", getDescription()=" + getDescription()
-		        + ", getId()=" + getId() + ", toString()=" + super.toString() + "]";
+		return super.toString() + "Genus: " + genus + "- Species name: " + speciesName + 
+		        " - Genome version=" + genomeVersion;
 	}
 
 	@Override
@@ -145,10 +164,14 @@ public class Species extends NamedEntity {
 		} else if (!speciesName.equals(other.speciesName)) {
 			return false;
 		}
+        if (genomeVersion == null) {
+            if (other.genomeVersion != null) {
+                return false;
+            }
+        } else if (!genomeVersion.equals(other.genomeVersion)) {
+            return false;
+        }
 		return true;
 	}
-
-    
-
 }
 

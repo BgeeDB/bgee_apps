@@ -1,6 +1,8 @@
 package org.bgee.view.html;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -8,13 +10,17 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
+import org.bgee.model.TaskManager;
+import org.bgee.model.anatdev.DevStage;
+import org.bgee.model.topanat.TopAnatResults;
 import org.bgee.view.TopAnatDisplay;
 
 /**
  * This class generates the HTML views relative to topAnat.
  * 
  * @author  Frederic Bastian
- * @version Bgee 13, Jul 2015
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13, Nov 2015
  * @since   Bgee 13
  */
 public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisplay {
@@ -51,6 +57,8 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
                 + "Gene Expression in Anatomical Structures</h2>");
         
         this.writeln(this.getForm(true));
+        this.writeln(this.getJobInfo());
+        this.writeln(this.getResults());
         
         this.endDisplay();
 
@@ -58,40 +66,29 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
     }
     
     @Override
-    public void displayTopAnatWaitingPage() {
-        log.entry();
-        
-        this.startDisplay("Bgee TopAnat page");
-
-        this.writeln("<h1>TopAnat</h1>");
-        this.writeln("<h2>Test for Enrichment and Depletion of "
-                + "Gene Expression in Anatomical Structures</h2>");
-        
-        this.writeln(this.getForm(false));
-        this.writeln(this.getJobInfo());
-        
-        this.endDisplay();
-
-        log.exit();
+    public void sendResultResponse(TopAnatResults results) {
+        throw log.throwing(new UnsupportedOperationException("Not available for HTML display"));
     }
 
     @Override
-    public void displayTopAnatResultPage() {
-        log.entry();
-        
-        this.startDisplay("Bgee TopAnat page");
+    public void sendJobStatusResponse(TaskManager taskManager) {
+        throw log.throwing(new UnsupportedOperationException("Not available for HTML display"));
+    }
 
-        this.writeln("<h1>TopAnat</h1>");
-        this.writeln("<h2>Test for Enrichment and Depletion of "
-                + "Gene Expression in Anatomical Structures</h2>");
-        
-        this.writeln(this.getForm(false));
-        this.writeln(this.getJobInfo());
-        this.writeln(this.getResults());
-        
-        this.endDisplay();
+    @Override
+    public void sendJobErrorResponse(TaskManager taskManager) {
+        throw log.throwing(new UnsupportedOperationException("Not available for HTML display"));
+    }
 
-        log.exit();
+    @Override
+    public void sendGeneListReponse(Map<String, Long> speciesIdToGeneCount, String selectedSpeciesId,
+            Set<DevStage> validStages, Set<String> undeterminedGeneIds, int statusCode, String msg) {
+        throw log.throwing(new UnsupportedOperationException("Not available for HTML display"));
+    }
+
+    @Override
+    public void sendNewJobResponse(int jobTrackingId) {
+        throw log.throwing(new UnsupportedOperationException("Not available for HTML display"));
     }
 
     private String getForm(boolean isActive) {
@@ -123,4 +120,5 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
         this.includeCss("topanat.css");
         log.exit();
     }
+
 }

@@ -20,25 +20,25 @@ public class TestURLParameters extends URLParameters {
 	 */
 	private static final Parameter<String> TEST_STRING = 
 			new Parameter<String>("test_string",
-			false, false, false, 
-			128, "[a-z0-9]*",
-			String.class);
+			        false, false, null, false, 
+			        false, 128, "[a-z0-9]*",
+			        String.class);
 	/**
 	 * Test {@code Parameter}  of the type  {@code Integer} that does allow
 	 * multiple values and is storable
 	 */	
 	private static final Parameter<Integer> TEST_INTEGER = 
 			new Parameter<Integer>("test_integer",
-			true, true, true, 
-			128, null,Integer.class);
+			        true, false, null, true, true, 
+			        128, null,Integer.class);
 	/**
 	 * Test {@code Parameter} of the type  {@code Boolean} that does allow 
 	 * multiple values and is storable
 	 */	
 	private static final Parameter<Boolean> TEST_BOOLEAN = 
 			new Parameter<Boolean>("test_boolean",
-			true, true, true, 
-			128, null,Boolean.class);
+			        true, false, null, true, true, 
+			        128, null,Boolean.class);
 	
 	/**
      * An {@code List<Parameter<T>>} to list all declared {@code Parameter<T>}

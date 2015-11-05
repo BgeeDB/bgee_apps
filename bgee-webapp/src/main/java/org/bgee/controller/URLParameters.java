@@ -1,7 +1,9 @@
 package org.bgee.controller;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -55,6 +57,12 @@ public class URLParameters {
     protected static final boolean DEFAULT_ALLOWS_MULTIPLE_VALUES = false;
 
     /**
+     * A {@code String} that is the default value to use for separate values of one parameter
+     * ({@see URLParameters.Parameter#allowsSeparatedValues}).
+     */
+    protected static final String DEFAULT_SEPARATOR = ",";
+
+    /**
      * A {@code boolean} that contains the default value for {@link URLParameters.Parameter#isStorable}
      */
     protected static final boolean DEFAULT_IS_STORABLE = true;
@@ -94,7 +102,7 @@ public class URLParameters {
      * Corresponds to the URL parameter "page".
      */
     private static final Parameter<String> PAGE = new Parameter<String>("page",
-            DEFAULT_ALLOWS_MULTIPLE_VALUES, false, DEFAULT_IS_SECURE, 
+            DEFAULT_ALLOWS_MULTIPLE_VALUES, false, null, false, DEFAULT_IS_SECURE, 
             DEFAULT_MAX_SIZE, 
             DEFAULT_FORMAT,String.class);
 
@@ -104,7 +112,7 @@ public class URLParameters {
      * parameter "action".
      */
     private static final Parameter<String> ACTION = new Parameter<String>("action",
-            DEFAULT_ALLOWS_MULTIPLE_VALUES, false, DEFAULT_IS_SECURE, 
+            DEFAULT_ALLOWS_MULTIPLE_VALUES, false, null, false, DEFAULT_IS_SECURE, 
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
 
     /**
@@ -113,7 +121,7 @@ public class URLParameters {
      * and has to be reset before adding a value.
      */
     private static final Parameter<String> DATA = new Parameter<String>("data",
-            false, false , DEFAULT_IS_SECURE, 
+            false, false, null, false , DEFAULT_IS_SECURE, 
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
 
     /**
@@ -122,7 +130,7 @@ public class URLParameters {
      * Corresponds to the URL parameter "display_type".
      */
     private static final Parameter<String> DISPLAY_TYPE = new Parameter<String>("display_type",
-            false, false, DEFAULT_IS_SECURE, 
+            false, false, null, false, DEFAULT_IS_SECURE, 
             DEFAULT_MAX_SIZE, 
             DEFAULT_FORMAT,String.class);
     
@@ -132,8 +140,27 @@ public class URLParameters {
      * Corresponds to the URL parameter "ajax".
      */
     private static final Parameter<Boolean> AJAX = new Parameter<Boolean>("ajax",
-            false, false, false, 5, DEFAULT_FORMAT, Boolean.class);
+            false, false, null, false, false, 5, DEFAULT_FORMAT, Boolean.class);
     
+    /**
+     * A {@code Parameter<List<String>>} that contains the gene IDs used 
+     * as key to store parameters on the disk.
+     * Corresponds to the URL parameter "gene_list".
+     */
+    private static final Parameter<Set<String>> GENE_LIST = new Parameter<Set<String>>("gene_list",
+            false, true, DEFAULT_SEPARATOR, false, DEFAULT_IS_SECURE, 
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, (Class<Set<String>>) new HashSet<String>().getClass());
+
+    
+    /**
+     * A {@code Parameter<String>} that contains the species IDs used 
+     * as key to store parameters on the disk.
+     * Corresponds to the URL parameter "species_id".
+     */
+    private static final Parameter<String> SPECIES_ID = new Parameter<String>("species_id",
+            true, false, null, false, DEFAULT_IS_SECURE, 
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+
 //    /**
 //     * A {@code Parameter<Boolean>} to determine whether all anatomical structures of 
 //     * an ontology should be displayed. (and not only structures with the parent manually
@@ -195,6 +222,8 @@ public class URLParameters {
     private final List<Parameter<?>> list = Arrays.<Parameter<?>>asList(
             PAGE,
             ACTION,
+            GENE_LIST,
+            SPECIES_ID,
 //            ALL_ORGANS,
 //            CHOSEN_DATA_TYPE,
 //            EMAIL,
@@ -320,6 +349,22 @@ public class URLParameters {
     public Parameter<Boolean> getParamAjax(){
         return AJAX;
     }
+    
+    /**
+     * @return  A {@code Parameter<Set<String>>} defining a gene ID list.
+     *          Corresponds to the URL parameter "gene_list".
+     */
+    public Parameter<Set<String>> getParamGeneIds(){
+        return GENE_LIST;
+    }
+    
+    /**
+     * @return  A {@code Parameter<List<String>>} defining a gene ID list.
+     *          Corresponds to the URL parameter "gene_list".
+     */
+    public Parameter<String> getParamSpeciesId(){
+        return SPECIES_ID;
+    }
 
     /**
      * This class is designed to wrap all parameters that can be received and sent
@@ -352,7 +397,18 @@ public class URLParameters {
         /**
          * A {@code Boolean} that indicates whether the parameter accepts multiple values.
          */
-        private final boolean allowsMultipleValues ;
+        private final boolean allowsMultipleValues;
+
+        /**
+         * A {@code Boolean} that indicates whether the parameter accepts separated values, 
+         * i.e. contains several values in one parameter, separated by {@code separator}.
+         */
+        private final boolean allowsSeparatedValues;
+
+        /**
+         * A {@code String} that is the separator to separate values for one parameter.
+         */
+        private final String separator;
 
         /**
          * A {@code boolean} that indicates whether the parameter is storable or not.
@@ -402,13 +458,16 @@ public class URLParameters {
          * @param type                    A {@code Class<T>} that is the data type of the value 
          *                                to be store by this parameter.
          */
-        protected Parameter(String name, Boolean allowsMultipleValues,boolean isStorable, 
-                boolean isSecure,int maxSize,String format,Class<T> type){
+        protected Parameter(String name, Boolean allowsMultipleValues, boolean allowsSeparatedValues,
+                String separator, boolean isStorable, boolean isSecure, int maxSize, String format,
+                Class<T> type){
 
             log.entry(name,allowsMultipleValues,isStorable,isSecure,maxSize,format,type);
 
             this.name = name ;
             this.allowsMultipleValues = allowsMultipleValues;
+            this.allowsSeparatedValues = allowsSeparatedValues;
+            this.separator = separator;
             this.isStorable = isStorable ;
             this.isSecure = isSecure ;
             this.maxSize = maxSize ;
@@ -426,10 +485,24 @@ public class URLParameters {
         }
 
         /**
-         * @return	A {@code Boolean} that indicates whether the parameter accepts multiple values.
+         * @return  A {@code Boolean} that indicates whether the parameter accepts multiple values.
          */
         public boolean allowsMultipleValues() {
             return allowsMultipleValues;
+        }
+
+        /**
+         * @return  A {@code Boolean} that indicates whether the parameter accepts separated values.
+         */
+        public boolean allowsSeparatedValues() {
+            return allowsSeparatedValues;
+        }
+
+        /**
+         * @return  A {@code String} that is the separator to separate values for one parameter.
+         */
+        public String getSeparator() {
+            return separator;
         }
 
         /**
@@ -476,8 +549,6 @@ public class URLParameters {
         }
 
     }
-
-
 }
 
 

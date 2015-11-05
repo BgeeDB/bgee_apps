@@ -7,10 +7,13 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -147,6 +150,12 @@ public class RequestParameters {
      * {@link #PAGE_DOCUMENTATION}.
      */
     public static final String ACTION_DOC_PROC_EXPR_VALUE_DOWLOAD_FILES = "proc_value_files";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link URLParameters#getParamAction()}) when gene list upload is requested.
+     * Value of the parameter page should be {@link #PAGE_TOP_ANAT}.
+     */
+    public static final String ACTION_GENE_LIST_UPLOAD = "gene_list_updad";
 
     /**
      * A {@code String} that is the anchor to use in the hash part of an URL 
@@ -609,7 +618,12 @@ public class RequestParameters {
                             valueFromUrl = this.secureString(valueFromUrl, 
                                     parameter.getMaxSize(), parameter.getFormat());
                             if(parameter.getType().equals(String.class)){
-                                parameterValues.add(valueFromUrl);
+                                if (parameter.allowsSeparatedValues()) {
+                                    parameterValues.addAll(
+                                            Arrays.asList(valueFromUrl.split(parameter.getSeparator())));
+                                } else {
+                                    parameterValues.add(valueFromUrl);
+                                }
                             } else if(parameter.getType().equals(Integer.class)){
                                 parameterValues.add(castToInt(valueFromUrl));
                             } else if(parameter.getType().equals(Boolean.class)){
@@ -1614,6 +1628,23 @@ public class RequestParameters {
         this.resetValues(this.getUrlParametersInstance().getParamDisplayType());
         this.addValue(this.getUrlParametersInstance().getParamDisplayType(), displayType);
     }
+    
+    /**
+     * @return A {@code Set} of {@code String}s that will be used to upload genes.
+     * @see geneIds
+     */
+    public Set<String> getGeneIds() {
+        return new HashSet<String>(this.getFirstValue(this.getUrlParametersInstance().getParamGeneIds()));
+    }
+
+    /**
+     * @return A {@code Set} of {@code String}s that will be used to upload genes.
+     * @see geneIds
+     */
+    public void setGeneIds(Set<String> geneIds) {
+        this.resetValues(this.getUrlParametersInstance().getParamGeneIds());
+        this.addValue(this.getUrlParametersInstance().getParamGeneIds(), geneIds);
+    }
     /**
      * This method has a js counterpart in {@code requestparameters.js} that should be kept 
      * consistent as much as possible if the method evolves.
@@ -1717,7 +1748,7 @@ public class RequestParameters {
     {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
-                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("about")) {
+                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_ABOUT)) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -1774,24 +1805,29 @@ public class RequestParameters {
 //    }
 
     public boolean isATopAnatGeneListUpload() {
-        // TODO Auto-generated method stub
-        return false;
+        log.entry();
+        if (isATopAnatPageCategory() &&
+                this.getFirstValue(this.urlParametersInstance.getParamGeneIds()) != null &&
+                !this.getValues(this.urlParametersInstance.getParamGeneIds()).isEmpty()) {
+            return log.exit(true);
+        }
+        return log.exit(false);
     }
     public boolean isATopAnatNewJob() {
         // TODO Auto-generated method stub
-        return false;
+        return isATopAnatPageCategory();
     }
     public boolean isATopAnatTrackingJob() {
         // TODO Auto-generated method stub
-        return false;
+        return isATopAnatPageCategory();
     }
     public boolean isATopAnatCompletedJob() {
         // TODO Auto-generated method stub
-        return false;
+        return isATopAnatPageCategory();
     }
     public boolean isATopAnatHomePageWithData() {
         // TODO Auto-generated method stub
-        return false;
+        return isATopAnatPageCategory();
     }
     /**
      * This method has a js counterpart in {@code requestparameters.js} that should be kept 

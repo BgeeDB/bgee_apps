@@ -13,6 +13,7 @@ import org.bgee.view.DocumentationDisplay;
 import org.bgee.view.DownloadDisplay;
 import org.bgee.view.ErrorDisplay;
 import org.bgee.view.GeneralDisplay;
+import org.bgee.view.SpeciesDisplay;
 import org.bgee.view.TopAnatDisplay;
 import org.bgee.view.ViewFactory;
 
@@ -20,7 +21,8 @@ import org.bgee.view.ViewFactory;
  * {@code ViewFactory} returning objects generating JSON views.
  * 
  * @author  Frederic Bastian
- * @version Bgee 13 Jul 2015
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13 Nov 2015
  * @since   Bgee 13
  */
 public class JsonFactory extends ViewFactory { 
@@ -75,5 +77,11 @@ public class JsonFactory extends ViewFactory {
     public AboutDisplay getAboutDisplay() throws IOException {
         throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
     }
-    
+
+    @Override
+    public SpeciesDisplay getSpeciesDisplay() throws IOException {
+        log.entry();
+        return log.exit(new JsonSpeciesDisplay(this.response, this.requestParameters,
+            this.prop, this));
+    }
 }

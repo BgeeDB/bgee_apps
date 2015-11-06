@@ -1,10 +1,7 @@
 package org.bgee.model.topanat;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -192,15 +189,13 @@ public class TopAnatRManager {
         return log.exit(code.toString());
 
     }
-    public List<List<String>> performRFunction(){
+    public void performRFunction(){
 
         log.info("Running statistical tests in R...");
         assert(this.code != null);
         caller.setRCode(code);
         caller.runAndReturnResult("tableOver");
-        return log.exit(caller.getParser().getNames().stream().map(
-                name -> Arrays.asList(caller.getParser()
-                        .getAsStringArray(name))).collect(Collectors.toList()));
+        log.exit();
 
     }
 

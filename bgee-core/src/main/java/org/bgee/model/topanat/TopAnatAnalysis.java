@@ -2,6 +2,8 @@ package org.bgee.model.topanat;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -9,10 +11,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -31,6 +35,12 @@ import org.bgee.model.expressiondata.CallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.gene.GeneService;
 import org.bgee.model.species.SpeciesService;
+import org.supercsv.cellprocessor.ParseDouble;
+import org.supercsv.cellprocessor.constraint.NotNull;
+import org.supercsv.cellprocessor.ift.CellProcessor;
+import org.supercsv.io.CsvMapReader;
+import org.supercsv.io.ICsvMapReader;
+import org.supercsv.prefs.CsvPreference;
 
 /**
  * @author Mathieu Seppey
@@ -91,6 +101,25 @@ public class TopAnatAnalysis {
     private final Collection<String> backgroundIds;
 
     /**
+     * @return the cell processors
+     */
+    private static CellProcessor[] getCsvProcessors() {
+
+        final CellProcessor[] processors = new CellProcessor[] { 
+                new NotNull(), // AnatEntity Id
+                new NotNull(), // AnatEntity Name
+                new ParseDouble(), // Annotated
+                new ParseDouble(), // Significant
+                new ParseDouble(), // Expected
+                new ParseDouble(), // fold enrich
+                new ParseDouble(), // p
+                new ParseDouble() // fdr
+        };
+
+        return processors;
+    }
+
+    /**
      * @param params
      * @param props
      * @param serviceFactory
@@ -149,13 +178,16 @@ public class TopAnatAnalysis {
         this.generateRCodeFile();
 
         // Run the R analysis and return the result
-        List<List<String>> result  = this.runRcode();
-        if (result != null){
+        this.runRcode();
+
+        List<TopAnatResults.TopAnatResultLine> resultLines = this.getResultLines();
+        if (resultLines != null){
             return log.exit(new TopAnatResults(
-                    result,
+                    resultLines,
                     this.params.getCallType(),
-                    this.params.getDevStageId() == null ? null : new DevStage(this.params.getDevStageId()),
-                            this.params.getDataTypes()));
+                    this.params.getDevStageId() == null ? null : 
+                        new DevStage(this.params.getDevStageId()),
+                        this.params.getDataTypes()));
         }
         return null;
 
@@ -186,12 +218,10 @@ public class TopAnatAnalysis {
      * 
      * @throws IOException
      */
-    private List<List<String>> runRcode() throws IOException {
+    private void runRcode() throws IOException {
         log.entry();
 
         log.info("Run R code...");
-
-        List<List<String>> ret = null;
 
         File file = new File(
                 this.props.getTopAnatResultsWritingDirectory(),
@@ -213,7 +243,7 @@ public class TopAnatAnalysis {
             //acquires the lock)
             if (Files.exists(finalFile)) {
                 log.info("R result file already generated.");
-                log.exit(); return null;
+                log.exit();return;
             }
 
             String namesFileName = new File(
@@ -230,7 +260,7 @@ public class TopAnatAnalysis {
             this.acquireReadLock(relsFileName);
             this.acquireReadLock(geneToAnatEntitiesFile);
 
-            ret = this.rManager.performRFunction();
+            this.rManager.performRFunction();
 
             this.releaseReadLock(namesFileName);
             this.releaseReadLock(relsFileName);
@@ -247,9 +277,42 @@ public class TopAnatAnalysis {
         log.info("Result file name: {}", 
                 this.params.getRScriptOutputFileName());
 
-        return log.exit(ret);
+        log.exit();
     }
 
+    /**
+     * 
+     * @return
+     * @throws FileNotFoundException
+     * @throws IOException
+     */
+    private List<TopAnatResults.TopAnatResultLine> getResultLines() throws FileNotFoundException,
+    IOException{
+
+        File resultFile = new File(
+                this.props.getTopAnatResultsWritingDirectory(),
+                this.params.getResultFileName());
+
+        this.acquireReadLock(resultFile.getPath());
+
+        List<TopAnatResults.TopAnatResultLine> listToReturn 
+        = new ArrayList<TopAnatResults.TopAnatResultLine>();
+
+        try (ICsvMapReader mapReader = 
+                new CsvMapReader(new FileReader(resultFile), 
+                        CsvPreference.TAB_PREFERENCE)) {
+            String[] header = mapReader.getHeader(true);
+            final CellProcessor[] processors = getCsvProcessors();
+            Map<String, Object> row;
+            while( (row = mapReader.read(header, processors)) != null ) {
+                listToReturn.add(new TopAnatResults.TopAnatResultLine(row));
+            }
+        }
+
+        this.releaseReadLock(resultFile.getPath());
+
+        return listToReturn;
+    }
 
     /**
      * 

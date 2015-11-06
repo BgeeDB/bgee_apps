@@ -11,6 +11,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -18,9 +19,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeProperties;
-import org.bgee.model.QueryTool;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntityService;
+import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.expressiondata.CallFilter;
 import org.bgee.model.expressiondata.CallService;
 
@@ -52,11 +53,7 @@ public class TopAnatAnalysis {
 
 
     /**
-     * {@code ConcurrentMap} used to manage concurrent access to the
-     * read/write locks that are used to manage concurrent reading and writing
-     * of the files that can be simultaneously accessed by different threads. In
-     * this {@code Map}, {@code keys} are file names, and
-     * {@code values} are {@link ReentrantReadWriteLock}}.
+     * 
      */
     private final static ConcurrentMap<String, ReentrantReadWriteLock> readWriteLocks =
             new ConcurrentHashMap<String, ReentrantReadWriteLock>();
@@ -72,7 +69,6 @@ public class TopAnatAnalysis {
     private final AnatEntityService anatEntityService;
 
     /**
-     * 
      * @param params
      * @param props
      * @param serviceFactory
@@ -81,8 +77,12 @@ public class TopAnatAnalysis {
             ServiceFactory serviceFactory) {
         this(params, props, serviceFactory, new TopAnatRManager(props,params));
     }
+
     /**
      * @param params
+     * @param props
+     * @param serviceFactory
+     * @param rManager
      */
     public TopAnatAnalysis(TopAnatParams params, BgeeProperties props, 
             ServiceFactory serviceFactory, TopAnatRManager rManager) {
@@ -108,72 +108,143 @@ public class TopAnatAnalysis {
 
         // Generate call data
         this.generateGenesToAnatEntitiessAssociationFile();
-        
-        // perform R function and write all outputs
-        try{
-            // perform the R analysis
-            try (PrintWriter out = new PrintWriter(new BufferedWriter(
-                    new FileWriter(new File(
-                            this.props.getTopAnatResultsWritingDirectory(),
-                            this.params.getRScriptOutputFileName()))))) {
-                out.println(this.rManager.generateRCode());
-            }
-            
-            //create File to use its path as lock name (because the same name 
-            //is used in other methods)
-            File geneToAnatEntitiesAssociationFile = new File(
-                    this.props.getTopAnatResultsWritingDirectory(),
-                    this.params.getGeneToAnatEntitiesFileName());
-            String geneToAnatEntitiesAssociationFilePath = geneToAnatEntitiesAssociationFile
-                    .getPath();
-            File namesFile = new File(
-                    this.props.getTopAnatResultsWritingDirectory(),
-                    this.params.getAnatEntitiesNamesFileName());
-            String namesFileName = namesFile.getPath();
-            File relsFile = new File(
-                    this.props.getTopAnatResultsWritingDirectory(),
-                    this.params.getAnatEntitiesRelationshipsFileName());
-            String relsFileName = relsFile.getPath();
 
-            try {
-                this.acquireReadLock(namesFileName);
-                this.acquireReadLock(relsFileName);
-                this.acquireReadLock(geneToAnatEntitiesAssociationFilePath);
+        // Write the params on the disk
+        this.generateTopAnatParamsFile();
 
-                this.rManager.performRFunction();
+        // Generate R code and write it on the disk
+        this.generateRCodeFile();
 
-            } finally {
-                this.releaseReadLock(namesFileName);
-                this.releaseReadLock(relsFileName);
-                this.releaseReadLock(geneToAnatEntitiesAssociationFilePath);
-            }
-
-        }
-        finally{
-            // delete tmp files
-            // unlock lock
-        }
+        // Run the R analysis and return the result
+        List<List<String>> result  = this.runRcode();
+        if (result != null){
         return log.exit(new TopAnatResults(
-                this.props.getTopAnatResultsWritingDirectory()
-                +this.params.getResultFileName()));
+                result,
+                this.params.getCallType(),
+                this.params.getDevStageId() == null ? null : new DevStage(this.params.getDevStageId()),
+                this.params.getDataTypes()));
+        }
+        return null;
+
+    }
+    
+    /**
+     * 
+     * @throws IOException
+     */
+    private List<List<String>> runRcode() throws IOException {
+        log.entry();
+
+        log.info("Run R code...");
+        
+        List<List<String>> ret = null;
+
+        File file = new File(
+                this.props.getTopAnatResultsWritingDirectory(),
+                this.params.getResultFileName());
+        String fileName = file.getPath();
+
+        //we will write results into a tmp file, moved at the end if everything 
+        //went fine.
+        String tmpFileName = fileName + ".tmp";
+        Path tmpFile = Paths.get(tmpFileName);
+        Path finalFile = Paths.get(fileName);
+
+        try {
+            this.acquireWriteLock(tmpFileName);
+            this.acquireWriteLock(fileName);
+
+            //check, AFTER having acquired the locks, that the final files do not 
+            //already exist (maybe another thread generated the files before this one 
+            //acquires the lock)
+            if (Files.exists(finalFile)) {
+                log.info("R result file already generated.");
+                log.exit(); return null;
+            }
+
+            ret = this.rManager.performRFunction();
+
+            Files.move(tmpFile, finalFile, StandardCopyOption.REPLACE_EXISTING);
+
+        } finally {
+            Files.deleteIfExists(tmpFile);
+            this.releaseWriteLock(tmpFileName);
+            this.releaseWriteLock(fileName);
+        }
+
+        log.info("Result file name: {}", 
+                this.params.getRScriptOutputFileName());
+        
+        return log.exit(ret);
+    }
+    
+
+    /**
+     * 
+     * @throws IOException
+     */
+    private void generateRCodeFile() throws IOException {
+        log.entry();
+
+        log.info("Generating R code file...");
+
+        File file = new File(
+                this.props.getTopAnatResultsWritingDirectory(),
+                this.params.getRScriptOutputFileName());
+        String fileName = file.getPath();
+
+        //we will write results into a tmp file, moved at the end if everything 
+        //went fine.
+        String tmpFileName = fileName + ".tmp";
+        Path tmpFile = Paths.get(tmpFileName);
+        Path finalFile = Paths.get(fileName);
+
+        try {
+            this.acquireWriteLock(tmpFileName);
+            this.acquireWriteLock(fileName);
+
+            //check, AFTER having acquired the locks, that the final files do not 
+            //already exist (maybe another thread generated the files before this one 
+            //acquires the lock)
+            if (Files.exists(finalFile)) {
+                log.info("R code file already generated.");
+                log.exit(); return;
+            }
+
+            this.writeRcodeFile(tmpFileName);
+
+            Files.move(tmpFile, finalFile, StandardCopyOption.REPLACE_EXISTING);
+
+        } finally {
+            Files.deleteIfExists(tmpFile);
+            this.releaseWriteLock(tmpFileName);
+            this.releaseWriteLock(fileName);
+        }
+
+        log.info("Rcode file name: {}", 
+                this.params.getRScriptOutputFileName());
+        log.exit();
     }
 
 
     /**
-     * Generates the AnatEntities ID to AnatEntities Name association file, and AnatEntities relationship file, 
-     * only if they do not already exist.
-     * <p>
-     * The method will write into a file named 
-     * {@link #AnatEntitiesNamesFileName}, the association between the AnatEntities IDs of the current
-     * species and their name (see {@link #writeAnatEntitiesNamesToFile(String, String)}), and into 
-     * a file named {@link #AnatEntitiesRelationshipsFileName}, the relations between the AnatEntitiess 
-     * of the species (see {@link #writeAnatEntitiesRelationsToFile(String, String)}).
+     */
+    private void writeRcodeFile(String RcodeFile) throws IOException {
+        log.entry(RcodeFile);
+
+        try (PrintWriter out = new PrintWriter(new BufferedWriter(
+                new FileWriter(RcodeFile)))) {
+            out.println(this.rManager.generateRCode(
+                    this.params.getResultFileName()+".tmp",
+                    this.params.getResultPDFFileName()+".tmp"));
+        }
+
+        log.exit();
+    }
+
+    /**
      * 
      * @throws IOException
-     *             if the files cannot be opened or written to.
-     * 
-     * @see #AnatEntitiesNamesFileName
-     * @see #AnatEntitiesRelationshipsFileName
      */
     private void generateAnatEntitiesFiles() throws IOException {
         log.entry();
@@ -240,20 +311,14 @@ public class TopAnatAnalysis {
         log.exit();
     }
 
+
     /**
-     * Write into the file {@code AnatEntitiesNameFile}, the association between names 
-     * and IDs of AnatEntitiess, for the current species with the ID {@code speciesId}. It will be 
-     * a TSV file with no header, with each AnatEntities corresponding to a line, with the ID 
-     * in the first column, and the name in the second column.
-     * <p>
-     * Note that it is not the responsibility of this method to acquire a write lock 
-     * on the file, it is the responsibility of the caller.
-     * @param AnatEntitiesNameFile    A {@code String} that is the path to file where AnatEntities names 
-     *                         will be written.
-     * @throws IOException     If an error occurred while writing in the file.
+     * 
+     * @param AnatEntitiesNameFile
+     * @throws IOException
      */
     private void writeAnatEntitiesNamesToFile(String AnatEntitiesNameFile) throws IOException {
-        log.entry();
+        log.entry(AnatEntitiesNameFile);
 
         try (PrintWriter out = new PrintWriter(new BufferedWriter(
                 new FileWriter(AnatEntitiesNameFile)))) {
@@ -266,23 +331,10 @@ public class TopAnatAnalysis {
     }
 
     /**
-     * Write into the file {@code AnatEntitiesRelFile}, the direct relations between AnatEntitiess, 
-     * for the current species with the ID {@code speciesId}. It will be a TSV file with 
-     * no header, with each line corresponding to a relation, with the ID of the descent
-     * AnatEntities in the first column, and the ID of the parent AnatEntities in the second column. 
-     * Only part_of and is_a relations should be considered.
-     * <p>
-     * Note that it is not the responsibility of this method to acquire a write lock 
-     * on the file, it is the responsibility of the caller.
-     * 
-     * @param AnatEntitiesRelFile     A {@code String} that is the path to file where AnatEntities relations 
-     *                         will be written.
-     *                         
-     * @throws IOException     If an error occurred while writing in the file.
      */
     private void writeAnatEntitiesRelationsToFile(String AnatEntitiesRelFile)
             throws IOException {
-        log.entry();
+        log.entry(AnatEntitiesRelFile);
 
         try (PrintWriter out = new PrintWriter(new BufferedWriter(
                 new FileWriter(AnatEntitiesRelFile)))) {
@@ -319,16 +371,6 @@ public class TopAnatAnalysis {
     }    
 
     /**
-     * Writes association between genes and the anatomical entities where they are 
-     * expressed in a TSV file, named according to the value returned by 
-     * {@link #getGeneToAnatEntitiesFileName()}.
-     * 
-     * @throws IOException
-     *             if the {@code geneToAnatEntitiesFileName} cannot be opened or
-     *             written to.
-     * 
-     * @see #geneToAnatEntitiesFileName
-     * @see #writeToGeneToAnatEntitiesFile(String)
      */
     private void generateGenesToAnatEntitiessAssociationFile() throws IOException {
         log.entry();
@@ -376,6 +418,70 @@ public class TopAnatAnalysis {
         log.info("GeneToAnatEntitiesAssociationFile: {}", this.params.getGeneToAnatEntitiesFileName());
         log.exit();
     }    
+
+    /**
+     * 
+     * @param tmpFileName
+     * @throws IOException
+     */
+    private void writeToTopAnatParamsFile(String topAnatParamsFileName) throws IOException {
+        log.entry();
+
+        try (PrintWriter out = new PrintWriter(new BufferedWriter(
+                new FileWriter(topAnatParamsFileName)))) {
+            out.println("# Warning, this file contains the initial values of the parameters for your information only.");
+            out.println("# Changing a value in this file won't affect the R script.");
+            out.println(this.params.toString());
+        }
+
+        log.exit();
+    }
+
+    /**
+     * 
+     * @throws IOException
+     */
+    private void generateTopAnatParamsFile() throws IOException {
+        log.entry();
+        log.info("Generating TopAnatParams file...");
+
+        File topAnatParamsFile = new File(
+                this.props.getTopAnatResultsWritingDirectory(),
+                this.params.getParamsOutputFileName());
+        String topAnatParamsFilePath = topAnatParamsFile
+                .getPath();
+
+        //we will write results into a tmp file, moved at the end if everything 
+        //went fine.
+        String tmpFileName = topAnatParamsFilePath + ".tmp";
+        Path tmpFile = Paths.get(tmpFileName);
+        Path finalTopAnatParamsFile = Paths.get(topAnatParamsFilePath);
+
+        try {
+            this.acquireWriteLock(topAnatParamsFilePath);
+            this.acquireWriteLock(tmpFileName);
+
+            //check, AFTER having acquired the locks, that the final file does not 
+            //already exist (maybe another thread generated the files before this one 
+            //acquired the lock)
+            if (Files.exists(finalTopAnatParamsFile)) {
+                log.info("TopAnatParams file already generated.");
+                log.exit(); return;
+            }
+
+            this.writeToTopAnatParamsFile(tmpFileName);
+
+            Files.move(tmpFile, finalTopAnatParamsFile, StandardCopyOption.REPLACE_EXISTING);
+
+        } finally {
+            Files.deleteIfExists(tmpFile);
+            this.releaseWriteLock(topAnatParamsFilePath);
+            this.releaseWriteLock(tmpFileName);
+        }
+
+        log.info("TopAnatParamsFile: {}", this.params.getParamsOutputFileName());
+        log.exit();
+    }  
 
     // *************************************************
     // FILE LOCKING

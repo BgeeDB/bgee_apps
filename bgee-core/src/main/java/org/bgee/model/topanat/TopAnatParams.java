@@ -1,19 +1,22 @@
 package org.bgee.model.topanat;
 
+import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.ServiceFactory;
 import org.bgee.model.expressiondata.CallData;
-import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.CallData.DiffExpressionCallData;
+import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.CallFilter;
 import org.bgee.model.expressiondata.ConditionFilter;
 import org.bgee.model.expressiondata.baseelements.CallType;
@@ -21,9 +24,10 @@ import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DecorelationType;
+import org.bgee.model.expressiondata.baseelements.DiffExpressionFactor;
 import org.bgee.model.expressiondata.baseelements.StatisticTest;
 import org.bgee.model.gene.GeneFilter;
-import org.bgee.model.expressiondata.baseelements.DiffExpressionFactor;
+
 
 public class TopAnatParams {
 
@@ -32,7 +36,7 @@ public class TopAnatParams {
      */
     private final static Logger log = LogManager
             .getLogger(TopAnatParams.class.getName());
-    
+
     /**
      * 
      */
@@ -47,7 +51,7 @@ public class TopAnatParams {
      * 
      */
     private final Set<String> submittedBackgroundIds;
-    
+
     /**
      * 
      */
@@ -86,27 +90,27 @@ public class TopAnatParams {
     /**
      * 
      */
-    private final int nodeSize;
+    private final Integer nodeSize;
 
     /**
      * 
      */
-    private final float fdrThreshold;
+    private final Float fdrThreshold;
 
     /**
      * 
      */
-    private final float pvalueThreashold;
+    private final Float pvalueThreshold;
 
     /**
      * 
      */
-    private final int numberOfSignificantNodes;
-    
+    private final Integer numberOfSignificantNodes;
+
     /**
      * 
      */
-    private final String uniqueFileNameString;
+    private final String key;
 
     /**
      * 
@@ -123,7 +127,7 @@ public class TopAnatParams {
          * 
          */
         private final Set<String> submittedForegroundIds;
-        
+
         /**
          * 
          */
@@ -177,17 +181,12 @@ public class TopAnatParams {
         /**
          * 
          */
-        private float pvalueThreashold;
+        private float pvalueThreshold;
 
         /**
          * 
          */
         private int numberOfSignificantNode;
-
-        /**
-         * 
-         */
-        private ServiceFactory serviceFactory;
 
         /**
          * @param submittedForegroundIds
@@ -200,6 +199,7 @@ public class TopAnatParams {
         /**
          * @param submittedForegroundIds
          * @param submittedBackgroundIds
+         * @param speciesId
          * @param callType
          */
         public Builder(Set<String> submittedForegroundIds, Set<String> submittedBackgroundIds,
@@ -210,7 +210,7 @@ public class TopAnatParams {
             this.submittedBackgroundIds = submittedBackgroundIds;
             this.speciesId = speciesId;
             this.callType = callType;
-            
+
             log.exit();
         }
 
@@ -294,12 +294,12 @@ public class TopAnatParams {
 
         /**
          * 
-         * @param pvalueThreashold
+         * @param pvalueThreshold
          * @return
          */
-        public Builder pvalueThreashold(float pvalueThreashold){
-            log.entry(pvalueThreashold);
-            this.pvalueThreashold = pvalueThreashold;
+        public Builder pvalueThreshold(float pvalueThreshold){
+            log.entry(pvalueThreshold);
+            this.pvalueThreshold = pvalueThreshold;
             return log.exit(this);
         }   
 
@@ -316,48 +316,39 @@ public class TopAnatParams {
 
         /**
          * 
-         * @param callServiceFactory
-         * @return
-         */
-        public Builder serviceFactory(ServiceFactory serviceFactory){
-            log.entry(serviceFactory);
-            this.serviceFactory = serviceFactory;
-            return log.exit(this);
-        } 
-
-        /**
-         * 
          * @return
          */
         public TopAnatParams build(){
-            if(this.serviceFactory == null){
-                this.serviceFactory = new ServiceFactory();
-            }
-            return new TopAnatParams(this);
+            log.entry();
+            return log.exit(new TopAnatParams(this));
         }
+
 
     }
 
     private TopAnatParams(Builder builder) {
-        log.entry();
-        this.speciesId = builder.speciesId;
+        log.entry(builder);
+        // mandatory params
+        this.submittedForegroundIds = builder.submittedForegroundIds == null ? null :
+            Collections.unmodifiableSet(new HashSet<>(builder.submittedForegroundIds));       
         this.callType = builder.callType;
+        // optional params
+        this.speciesId = builder.speciesId;
         this.dataTypes = builder.dataTypes == null ? null :
             Collections.unmodifiableSet(new HashSet<>(builder.dataTypes));
-        this.decorelationType = builder.decorelationType;
-        this.statisticTest = builder.statisticTest;
+        this.decorelationType = builder.decorelationType == null ? DecorelationType.PARENT_CHILD :
+            builder.decorelationType;
+        this.statisticTest = builder.statisticTest == null ? StatisticTest.FISHER : 
+            builder.statisticTest;
         this.devStageId = builder.devStageId;
         this.fdrThreshold = builder.fdrThreshold;
-        this.dataQuality = builder.dataQuality;
+        this.dataQuality = builder.dataQuality == null ? DataQuality.HIGH : builder.dataQuality;
         this.nodeSize = builder.nodeSize;
         this.numberOfSignificantNodes = builder.numberOfSignificantNode;
-        this.pvalueThreashold = builder.pvalueThreashold;
+        this.pvalueThreshold = builder.pvalueThreshold;
         this.submittedBackgroundIds = builder.submittedBackgroundIds == null ? null :
             Collections.unmodifiableSet(new HashSet<>(builder.submittedBackgroundIds));
-        this.submittedForegroundIds = builder.submittedForegroundIds == null ? null :
-            Collections.unmodifiableSet(new HashSet<>(builder.submittedForegroundIds));
-        // XXX Probably something else based on different params and digested
-        this.uniqueFileNameString = this.speciesId+this.devStageId+this.callType;
+        this.key = this.generateKey();
         log.exit();
     }
 
@@ -374,13 +365,13 @@ public class TopAnatParams {
     public Collection<String> getSubmittedBackgroundIds() {
         return submittedBackgroundIds;
     }
-    
+
     /**
      * 
      * @return
      */
     public String getSpeciesId(){
-       return speciesId; 
+        return speciesId; 
     }
 
     /**
@@ -443,7 +434,7 @@ public class TopAnatParams {
      * @return the pvalueThreashold
      */
     public float getPvalueThreashold() {
-        return pvalueThreashold;
+        return pvalueThreshold;
     }
 
     /**
@@ -454,45 +445,53 @@ public class TopAnatParams {
     }
 
     /**
+     * @return the key
+     */
+    public String getKey() {
+        return key;
+    }
+
+    /**
      * @return
      */
     public CallFilter<CallData<?>> rawParametersToCallFilter() {
+        log.entry();
         ConditionFilter conditionFilter = new ConditionFilter(null, Arrays.asList(this.devStageId));
-        return new CallFilter<CallData<?>>(
+        return log.exit(new CallFilter<CallData<?>>(
                 this.submittedBackgroundIds != null ? new GeneFilter(this.submittedBackgroundIds): null, 
-                new HashSet<>(Arrays.asList(conditionFilter)), this.getCallData()
-            );
+                        new HashSet<>(Arrays.asList(conditionFilter)), this.getCallData()
+                ));
     }
-        
+
     /**
      * 
      */
     public String getResultFileName(){
-        return TopAnatParams.FILE_PREFIX + this.uniqueFileNameString + ".tsv";
+        return TopAnatParams.FILE_PREFIX + this.key + ".tsv";
     }
-    
+
     /**
      * 
      */
     public String getResultPDFFileName(){
-        return TopAnatParams.FILE_PREFIX + "PDF_" + this.uniqueFileNameString + ".pdf";
+        return TopAnatParams.FILE_PREFIX + "PDF_" + this.key + ".pdf";
     }
-    
+
     /**
      *
      */
     public String getGeneToAnatEntitiesFileName(){
         return TopAnatParams.FILE_PREFIX 
-                + "GeneToAnatEntities_" + this.uniqueFileNameString + ".tsv";
+                + "GeneToAnatEntities_" + this.key + ".tsv";
     }
-    
+
     /**
      * @return
      */
     public String getAnatEntitiesNamesFileName(){
         return TopAnatParams.FILE_PREFIX + "AnatEntitiesNames_" + this.speciesId + ".tsv";
     }
-    
+
     /**
      * 
      */
@@ -500,15 +499,23 @@ public class TopAnatParams {
         return TopAnatParams.FILE_PREFIX 
                 + "AnatEntitiesRelationships_" + this.speciesId + ".tsv";
     }
-    
+
     /**
      * 
      */
     public String getRScriptOutputFileName(){
         return TopAnatParams.FILE_PREFIX 
-                + "RScript" + this.uniqueFileNameString + ".R";
+                + "RScript_" + this.key + ".R";
     }
-    
+
+    /**
+     * 
+     */
+    public String getParamsOutputFileName(){
+        return TopAnatParams.FILE_PREFIX 
+                + "Params_" + this.key + ".txt";
+    }
+
     /**
      * XXX check if correct: DiffExpressionFactor.ANATOMY ? DiffExpression.DIFF_EXPRESSED ?
      * => storyboard says over-expressed of diff. expressed? I don't remember.
@@ -517,26 +524,141 @@ public class TopAnatParams {
      */
     private Set<CallData<?>> getCallData() {
         log.entry();
-        
+
         final DataPropagation dataPropagation = new DataPropagation(
                 DataPropagation.PropagationState.SELF,
                 DataPropagation.PropagationState.SELF_OR_CHILD);
         final DataQuality dataQual = this.dataQuality == null? DataQuality.LOW: this.dataQuality;
-        
+
         Function<DataType, CallData<?>> callDataSupplier = null;
         if (this.callType == CallType.Expression.EXPRESSED) {
             callDataSupplier = dataType -> new ExpressionCallData(CallType.Expression.EXPRESSED,
-                dataQual, dataType, dataPropagation);
+                    dataQual, dataType, dataPropagation);
         } else if (this.callType == CallType.DiffExpression.OVER_EXPRESSED) {
             callDataSupplier = dataType -> new DiffExpressionCallData(DiffExpressionFactor.ANATOMY,
                     CallType.DiffExpression.OVER_EXPRESSED, dataQual, dataType);
         }
-        
+
         if (this.dataTypes == null || this.dataTypes.isEmpty() || 
                 this.dataTypes.containsAll(this.callType.getAllowedDataTypes())) {
             return log.exit(new HashSet<>(Arrays.asList(callDataSupplier.apply(null))));
         }
         return log.exit(this.dataTypes.stream().map(callDataSupplier::apply).collect(Collectors.toSet()));
     }
+
+    /**
+     * @return
+     */
+    private String generateKey() {
+        log.entry();
+
+        log.info("Trying to generate a key based on all params");
+
+        StringBuilder valueToHash = new StringBuilder();
+
+        if(this.submittedForegroundIds != null)
+            valueToHash.append(new TreeSet<String>(this.submittedForegroundIds).toString());
+        if(this.submittedBackgroundIds != null)
+            valueToHash.append(new TreeSet<String>(this.submittedBackgroundIds).toString());
+        if(this.speciesId != null)
+            valueToHash.append(this.speciesId.toString());
+        if(this.callType != null)
+            valueToHash.append(this.callType.toString());
+        if(this.dataQuality != null)
+            valueToHash.append(this.dataQuality.toString());
+        if(this.dataTypes != null)
+            valueToHash.append(new TreeSet<DataType>(this.dataTypes).toString());
+        if(this.devStageId != null)
+            valueToHash.append(this.devStageId.toString());
+        if(this.decorelationType != null)
+            valueToHash.append(this.decorelationType.toString());
+        if(this.statisticTest != null)
+            valueToHash.append(this.statisticTest.toString());
+        valueToHash.append(this.nodeSize);
+        valueToHash.append(this.fdrThreshold);
+        valueToHash.append(this.pvalueThreshold);
+        valueToHash.append(this.numberOfSignificantNodes);
+
+        String keyToReturn = null;
+
+        if (StringUtils.isNotBlank(valueToHash)) {
+            keyToReturn = DigestUtils.sha1Hex(valueToHash.toString());
+        }
+
+        log.info("Key generated: {}", keyToReturn);
+
+        return log.exit(keyToReturn);
+    }
+
+    @Override
+    public String toString(){
+        StringWriter ret = new StringWriter();
+        ret.append("submittedForegroundIds:");
+        ret.append("\t\t");
+        ret.append(this.submittedForegroundIds.toString());
+        ret.append("\n");
+        ret.append("submittedBackgroundIds:");
+        ret.append("\t\t");
+        if(this.submittedBackgroundIds != null)
+            ret.append(this.submittedBackgroundIds.toString());
+        ret.append("\n");
+        ret.append("speciesId:");
+        ret.append("\t\t\t");
+        if(this.speciesId != null)
+            ret.append(this.speciesId);
+        ret.append("\n");
+        ret.append("callType:");
+        ret.append("\t\t\t");
+        if(this.callType != null)
+            ret.append(this.callType.toString());
+        ret.append("\n");
+        ret.append("dataQuality:");
+        ret.append("\t\t\t");
+        if(this.dataQuality != null)
+            ret.append(this.dataQuality.toString());
+        ret.append("\n");
+        ret.append("dataTypes:");
+        ret.append("\t\t\t");
+        if(this.dataTypes != null)
+            ret.append(this.dataTypes.toString());
+        ret.append("\n");
+        ret.append("devStageId:");
+        ret.append("\t\t\t");
+        if(this.devStageId != null)
+            ret.append(this.devStageId.toString());
+        ret.append("\n");
+        ret.append("decorelationType:");
+        ret.append("\t\t");
+        if(this.decorelationType != null)
+            ret.append(this.decorelationType.toString());
+        ret.append("\n");
+        ret.append("statisticTest:");
+        ret.append("\t\t\t");
+        if(this.statisticTest != null)
+            ret.append(this.statisticTest.toString());
+        ret.append("\n");
+        ret.append("nodeSize:");
+        ret.append("\t\t\t");
+        if(this.nodeSize != null)
+            ret.append(this.nodeSize.toString());
+        ret.append("\n");
+        ret.append("fdrThreshold:");
+        ret.append("\t\t\t");
+        if(this.fdrThreshold != null)
+            ret.append(this.fdrThreshold.toString());
+        ret.append("\n");
+        ret.append("pvalueThreshold:");
+        ret.append("\t\t");
+        if(this.pvalueThreshold != null)
+            ret.append(this.pvalueThreshold.toString());
+        ret.append("\n");
+        ret.append("numberOfSignificantNodes:");
+        ret.append("\t");
+        if(this.numberOfSignificantNodes != null)
+            ret.append(this.numberOfSignificantNodes.toString());
+        ret.append("\n");
+        return ret.toString();
+    }
+
 }
 

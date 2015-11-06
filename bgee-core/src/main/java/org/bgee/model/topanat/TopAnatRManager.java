@@ -1,6 +1,9 @@
 package org.bgee.model.topanat;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -10,7 +13,7 @@ import rcaller.RCaller;
 import rcaller.RCode;
 
 public class TopAnatRManager {
-    
+
     private final static Logger log = LogManager.getLogger(TopAnatRManager.class.getName());
 
     private final RCaller caller;
@@ -21,29 +24,43 @@ public class TopAnatRManager {
 
     private final TopAnatParams params;
 
+    /**
+     * 
+     * @param props
+     * @param topAnatParams
+     */
     public TopAnatRManager(BgeeProperties props, TopAnatParams topAnatParams){
         this(new RCaller(), new RCode(), props, topAnatParams);
     }
 
+    /**
+     * 
+     * @param caller
+     * @param code
+     * @param props
+     * @param params
+     */
     public TopAnatRManager(RCaller caller, RCode code, BgeeProperties props, TopAnatParams params){
 
+        log.entry(caller,code,props,params);
         this.caller = caller;
         this.code = code;
         this.props = props;
         this.params = params;
+        log.exit();
 
     }
 
-    public String generateRCode() 
+    public String generateRCode(String resultFileName, String resultPdfFileName) 
             throws IOException {
         log.entry();
 
         caller.setRscriptExecutable(this.props.getTopAnatRScriptExecutable());
         if (log.isDebugEnabled()) {
             caller.redirectROutputToFile(this.props.getTopAnatResultsWritingDirectory()
-                    +this.params.getResultFileName() + ".R_console", true);
+                    +resultFileName + ".R_console", true);
         }
-                
+
         code.clear();
         code.addRCode("packageExistRgraphviz<-require(Rgraphviz)");
         code.addRCode("if(!packageExistRgraphviz){");
@@ -72,10 +89,10 @@ public class TopAnatRManager {
 
         code.addRCode("resultExist <- FALSE");
 
-        String[] topOBOResultFile = { this.params.getResultFileName() };
+        String[] topOBOResultFile = { resultFileName };
         code.addStringArray("topOBOResultFile", topOBOResultFile);
 
-        String[] topOBOResultPDFFile = { this.params.getResultPDFFileName() };
+        String[] topOBOResultPDFFile = { resultPdfFileName };
         code.addStringArray("resultPDF", topOBOResultPDFFile);
 
         // Organ Relationships File
@@ -127,7 +144,7 @@ public class TopAnatRManager {
         //code.addRCode("test.stat <- new('elimCount', testStatistic = GOFisherTestUnder, name ='Elim / Fisher test / underrepresentation')");
         //code.addRCode("resFis.under <- getSigGroups(myData, test.stat)");
 
-        code.addRCode("    tableOver <- makeTable(myData,score(resFis), 1 , organNames)");
+        code.addRCode("    tableOver <- makeTable(myData,score(resFis), "+this.params.getFdrThreshold() + " , organNames)");
         code.addRCode("    tableOver <- data.frame(lapply(tableOver,as.character), stringsAsFactors=FALSE)");
 
         code.addRCode("    print(nrow(tableOver))");
@@ -167,17 +184,21 @@ public class TopAnatRManager {
         //we need a tableOver object for RCaller to perform the commands
         code.addRCode("    tableOver <- data.frame(1, 8)");
         code.addRCode("}");
-   
-        
-        return code.toString();
+
+
+        return log.exit(code.toString());
 
     }
-    public void performRFunction(){
+    public List<List<String>> performRFunction(){
 
         log.info("Running statistical tests in R...");
+        assert(this.code != null);
         caller.setRCode(code);
         caller.runAndReturnResult("tableOver");
-        log.exit();
+        return log.exit(caller.getParser().getNames().stream().map(
+                name -> Arrays.asList(caller.getParser()
+                        .getAsStringArray(name))).collect(Collectors.toList()));
+
     }
 
 }

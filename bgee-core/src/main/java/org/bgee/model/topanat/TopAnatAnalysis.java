@@ -10,11 +10,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,8 +25,12 @@ import org.bgee.model.BgeeProperties;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.anatdev.DevStage;
+import org.bgee.model.exception.InvalidForegroundException;
+import org.bgee.model.exception.InvalidSpeciesGenesException;
 import org.bgee.model.expressiondata.CallFilter;
 import org.bgee.model.expressiondata.CallService;
+import org.bgee.model.gene.GeneService;
+import org.bgee.model.species.SpeciesService;
 
 /**
  * @author Mathieu Seppey
@@ -69,6 +76,21 @@ public class TopAnatAnalysis {
     private final AnatEntityService anatEntityService;
 
     /**
+     * 
+     */
+    private final GeneService geneService;
+
+    /**
+     * 
+     */
+    private final SpeciesService speciesService;
+
+    /**
+     * 
+     */
+    private final Collection<String> backgroundIds;
+
+    /**
      * @param params
      * @param props
      * @param serviceFactory
@@ -91,17 +113,28 @@ public class TopAnatAnalysis {
         this.anatEntityService = 
                 serviceFactory.getAnatEntityService(); 
         this.callService = serviceFactory.getCallService();
+        this.geneService = serviceFactory.getGeneService();
+        this.speciesService = serviceFactory.getSpeciesService();
         this.rManager = rManager;
         this.props = props;
-        log.exit();
+        this.backgroundIds = this.params.getSubmittedBackgroundIds() == null ?
+                this.speciesService.getGenes().stream().map(g -> g.getId()).collect(Collectors.toSet()) 
+                : this.params.getSubmittedBackgroundIds();
+                log.exit();
     }
 
     /**
      * @throws IOException
+     * @throws InvalidForegroundException 
+     * @throws InvalidSpeciesException 
      */
-    public TopAnatResults proceedToAnalysis() throws IOException{
+    public TopAnatResults proceedToAnalysis() throws IOException, InvalidForegroundException, 
+    InvalidSpeciesGenesException{
         log.entry();
         log.info("Result File: {}", this.params.getResultFileName());
+
+        // Validate and load the gene in the foreground and background
+        this.validateForegroundAndBackground();
 
         // Generate anatomic entities data
         this.generateAnatEntitiesFiles();
@@ -118,16 +151,37 @@ public class TopAnatAnalysis {
         // Run the R analysis and return the result
         List<List<String>> result  = this.runRcode();
         if (result != null){
-        return log.exit(new TopAnatResults(
-                result,
-                this.params.getCallType(),
-                this.params.getDevStageId() == null ? null : new DevStage(this.params.getDevStageId()),
-                this.params.getDataTypes()));
+            return log.exit(new TopAnatResults(
+                    result,
+                    this.params.getCallType(),
+                    this.params.getDevStageId() == null ? null : new DevStage(this.params.getDevStageId()),
+                            this.params.getDataTypes()));
         }
         return null;
 
     }
-    
+
+    /***
+     * @throws InvalidForegroundException
+     * @throws InvalidSpeciesException 
+     */
+    private void validateForegroundAndBackground() throws InvalidForegroundException, 
+    InvalidSpeciesGenesException{
+        // First check whether the foreground match the background
+        if(! this.backgroundIds
+                .containsAll(this.params.getSubmittedForegroundIds())){
+            throw new InvalidForegroundException("All foreground Ids are not included "
+                    + "in the background");
+        }
+        // Then check that all these background genes exist for the species
+        Predicate<String> matchSpecies = id -> id == this.params.getSpeciesId();
+        if(! this.backgroundIds.stream().map(
+                geneId-> this.geneService.retrieveSpeciesId(geneId)
+                ).allMatch(matchSpecies))
+            throw new InvalidSpeciesGenesException("At least one provided gene does not belong "
+                    + "to the correct species");
+    }
+
     /**
      * 
      * @throws IOException
@@ -136,7 +190,7 @@ public class TopAnatAnalysis {
         log.entry();
 
         log.info("Run R code...");
-        
+
         List<List<String>> ret = null;
 
         File file = new File(
@@ -162,7 +216,25 @@ public class TopAnatAnalysis {
                 log.exit(); return null;
             }
 
+            String namesFileName = new File(
+                    this.props.getTopAnatResultsWritingDirectory(),
+                    this.params.getAnatEntitiesNamesFileName()).getPath();
+            String relsFileName = new File(
+                    this.props.getTopAnatResultsWritingDirectory(),
+                    this.params.getAnatEntitiesRelationshipsFileName()).getPath();
+            String geneToAnatEntitiesFile = new File(
+                    this.props.getTopAnatResultsWritingDirectory(),
+                    this.params.getGeneToAnatEntitiesFileName()).getPath();
+
+            this.acquireReadLock(namesFileName);
+            this.acquireReadLock(relsFileName);
+            this.acquireReadLock(geneToAnatEntitiesFile);
+
             ret = this.rManager.performRFunction();
+
+            this.releaseReadLock(namesFileName);
+            this.releaseReadLock(relsFileName);
+            this.releaseReadLock(geneToAnatEntitiesFile);            
 
             Files.move(tmpFile, finalFile, StandardCopyOption.REPLACE_EXISTING);
 
@@ -174,10 +246,10 @@ public class TopAnatAnalysis {
 
         log.info("Result file name: {}", 
                 this.params.getRScriptOutputFileName());
-        
+
         return log.exit(ret);
     }
-    
+
 
     /**
      * 
@@ -236,7 +308,8 @@ public class TopAnatAnalysis {
                 new FileWriter(RcodeFile)))) {
             out.println(this.rManager.generateRCode(
                     this.params.getResultFileName()+".tmp",
-                    this.params.getResultPDFFileName()+".tmp"));
+                    this.params.getResultPDFFileName()+".tmp",
+                    this.backgroundIds));
         }
 
         log.exit();

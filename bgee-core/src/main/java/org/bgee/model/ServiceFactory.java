@@ -6,6 +6,7 @@ import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.file.DownloadFileService;
 import org.bgee.model.file.SpeciesDataGroupService;
+import org.bgee.model.gene.GeneService;
 import org.bgee.model.keyword.KeywordService;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.species.SpeciesService;
@@ -121,7 +122,7 @@ public class ServiceFactory implements AutoCloseable {
     }
     
     /**
-     * TODO
+     * @return A newly instantiated {@code CallService}
      */
     public CallService getCallService() {
         log.entry();
@@ -129,11 +130,19 @@ public class ServiceFactory implements AutoCloseable {
     }
     
     /**
-     * TODO
+     * @return A newly instantiated {@code AnatEntityService}
      */
     public AnatEntityService getAnatEntityService() {
         log.entry();
         return log.exit(new AnatEntityService(this.daoManager));
+    }
+     
+    /**
+     * @return A newly instantiated {@code GeneService}
+     */
+    public GeneService getGeneService() {
+        log.entry();
+        return log.exit(new GeneService(this.daoManager));
     }
     
     /**

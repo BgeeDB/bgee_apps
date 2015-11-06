@@ -14,6 +14,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.exception.MissingParameterException;
 import org.bgee.model.expressiondata.CallData;
 import org.bgee.model.expressiondata.CallData.DiffExpressionCallData;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
@@ -317,8 +318,9 @@ public class TopAnatParams {
         /**
          * 
          * @return
+         * @throws MissingParameterException 
          */
-        public TopAnatParams build(){
+        public TopAnatParams build() throws MissingParameterException{
             log.entry();
             return log.exit(new TopAnatParams(this));
         }
@@ -326,14 +328,26 @@ public class TopAnatParams {
 
     }
 
-    private TopAnatParams(Builder builder) {
+    private TopAnatParams(Builder builder) throws MissingParameterException {
         log.entry(builder);
         // mandatory params
-        this.submittedForegroundIds = builder.submittedForegroundIds == null ? null :
-            Collections.unmodifiableSet(new HashSet<>(builder.submittedForegroundIds));       
+        if(builder.submittedForegroundIds == null){
+            throw new MissingParameterException("foreground Ids");
+        }
+
+        if(builder.callType == null){
+            throw new MissingParameterException("call type");           
+        }
+
+        if(builder.speciesId == null){
+            throw new MissingParameterException("species id");           
+        }
+
+        this.submittedForegroundIds = Collections.unmodifiableSet(
+                new HashSet<>(builder.submittedForegroundIds));       
         this.callType = builder.callType;
-        // optional params
         this.speciesId = builder.speciesId;
+        // optional params
         this.dataTypes = builder.dataTypes == null ? null :
             Collections.unmodifiableSet(new HashSet<>(builder.dataTypes));
         this.decorelationType = builder.decorelationType == null ? DecorelationType.PARENT_CHILD :

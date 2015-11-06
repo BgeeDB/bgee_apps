@@ -7,6 +7,7 @@ import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
 import org.bgee.model.dao.api.species.SpeciesDAO;
+import org.bgee.model.gene.Gene;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -70,6 +71,14 @@ public class SpeciesService extends Service {
         log.entry(speciesTO);
         return log.exit(new Species(speciesTO.getId(), speciesTO.getName(), 
                 speciesTO.getDescription(), speciesTO.getGenus(), speciesTO.getSpeciesName()));
+    }
+    
+    /**
+     * 
+     * @return
+     */
+    public Set<Gene> getGenes(){
+        return null;
     }
 
 }

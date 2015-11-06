@@ -2,6 +2,7 @@ package org.bgee.model.topanat;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -51,7 +52,8 @@ public class TopAnatRManager {
 
     }
 
-    public String generateRCode(String resultFileName, String resultPdfFileName) 
+    public String generateRCode(String resultFileName, String resultPdfFileName, 
+            Collection<String> backgroundIds) 
             throws IOException {
         log.entry();
 
@@ -123,7 +125,8 @@ public class TopAnatRManager {
         code.addRCode("  head(organNames)");
 
         code.addStringArray("StringIDs",
-                params.getSubmittedBackgroundIds().toArray(new String[0]));
+                backgroundIds == null ? params.getSubmittedBackgroundIds().toArray(new String[0]) :
+                    backgroundIds.toArray(new String[0]));
         code.addRCode("  geneList <- factor(as.integer(names(gene2anatomy) %in% StringIDs))");
         code.addRCode("  names(geneList) <- names(gene2anatomy)");
         code.addRCode("  print('GeneList:')");

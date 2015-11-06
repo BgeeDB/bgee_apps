@@ -118,6 +118,17 @@ public class RequestParameters {
     public static final String PAGE_TOP_ANAT = "top_anat";
 
     /**
+     * A {@code String} that is the value taken by the {@code page} parameter 
+     * (see {@link URLParameters#getParamPage()}) when a page related to a gene is requested.
+     */
+    public static final String PAGE_GENE = "gene";
+    
+    /**
+     * A {@code String} that encapsulates the value of the gene id parameter for the gene page.
+     */
+    public static final String GENE_ID = "gene_id";
+    
+    /**
      * A {@code String} that is the value taken by the {@code action} parameter 
      * (see {@link URLParameters#getParamAction()}) when download page about files 
      * providing calls of expression is requested. Value of the parameter page should be 
@@ -1364,7 +1375,8 @@ public class RequestParameters {
 
         log.entry(parameter);
         try{
-            return log.exit(((List<T>) this.values.get(parameter)).get(0));
+
+        	return log.exit(((List<T>) this.values.get(parameter)).get(0));
 
         } catch(IndexOutOfBoundsException | NullPointerException e){
             return log.exit(null);            
@@ -1574,6 +1586,13 @@ public class RequestParameters {
      */
     public String getDataKey() {
         return this.getFirstValue(this.getUrlParametersInstance().getParamData());
+    }
+    
+    /**
+     * @return the gene_id parameter
+     */
+    public String getGeneId() {
+    	return this.getFirstValue(this.getUrlParametersInstance().getParamGeneId());
     }
     
     /**
@@ -1822,22 +1841,22 @@ public class RequestParameters {
 //        return log.exit(false);
 //    }
 
-//    /**
-//     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
-//     * consistent as much as possible if the method evolves.
-//     * 
-//     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
-//     * category "gene"
-//     */
-//    public boolean isAGenePageCategory()
-//    {
-//        log.entry();
-//        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
-//                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("gene")) {
-//            return log.exit(true);
-//        }
-//        return log.exit(false);
-//    }
+    /**
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
+     * 
+     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+     * category "gene"
+     */
+    public boolean isAGenePageCategory()
+    {
+        log.entry();
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
+                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("gene")) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
 
 //    /**
 //     * This method has a js counterpart in {@code requestparameters.js} that should be kept 

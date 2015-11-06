@@ -134,6 +134,15 @@ public class URLParameters {
     private static final Parameter<Boolean> AJAX = new Parameter<Boolean>("ajax",
             false, false, false, 5, DEFAULT_FORMAT, Boolean.class);
     
+    
+    /**
+     * A {@code Parameter<String>} representing a gene id, typically for the gene page.
+     * Category of the parameter: controller parameter.
+     * Corresponds to the URL parameter "gene_id".
+     */
+    private static final Parameter<String> GENE_ID = 
+    		new Parameter<String>("gene_id", false,true, false, 50, DEFAULT_FORMAT, String.class);
+    
 //    /**
 //     * A {@code Parameter<Boolean>} to determine whether all anatomical structures of 
 //     * an ontology should be displayed. (and not only structures with the parent manually
@@ -199,6 +208,7 @@ public class URLParameters {
 //            CHOSEN_DATA_TYPE,
 //            EMAIL,
 //            STAGE_CHILDREN,
+            GENE_ID,
             DISPLAY_TYPE,
             DATA, 
             AJAX
@@ -311,6 +321,13 @@ public class URLParameters {
      */
     public Parameter<String> getParamData(){
         return DATA;
+    }
+    
+   /**
+    * @return  A {@code Parameter<String>} that contains the gene id.
+    */
+    public Parameter<String> getParamGeneId() {
+    	return GENE_ID;
     }
 
     /**

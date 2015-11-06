@@ -89,5 +89,10 @@ public class FakeFactory extends ViewFactory {
         }
         return null;
     }
+
+	@Override
+	public GeneDisplay getGeneDisplay() throws IOException {
+		return null;
+	}
     
 }

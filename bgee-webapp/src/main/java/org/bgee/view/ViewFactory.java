@@ -118,5 +118,13 @@ public abstract class ViewFactory {
      *                      response output.
      */
     public abstract TopAnatDisplay getTopAnatDisplay() throws IOException;
+    
+    /**
+     * 
+     * @return A {@code GeneDisplay} instance of the appropriate display type.
+     * @throws IOException If an error occurs with the {@code PrintWriter} when writing the
+     * 	                   response output.
+     */
+    public abstract GeneDisplay getGeneDisplay() throws IOException;
 
 }

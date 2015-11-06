@@ -12,6 +12,7 @@ import org.bgee.view.AboutDisplay;
 import org.bgee.view.DocumentationDisplay;
 import org.bgee.view.DownloadDisplay;
 import org.bgee.view.ErrorDisplay;
+import org.bgee.view.GeneDisplay;
 import org.bgee.view.GeneralDisplay;
 import org.bgee.view.TopAnatDisplay;
 import org.bgee.view.JsonHelper;
@@ -115,4 +116,9 @@ public class HtmlFactory extends ViewFactory {
         return log.exit(new HtmlTopAnatDisplay(
                 this.response, this.requestParameters, this.prop, this));
     }
+	@Override
+	public GeneDisplay getGeneDisplay() throws IOException {
+		log.entry();
+		return log.exit(new HtmlGeneDisplay(response, requestParameters, prop, jsonHelper, this));
+	}
 }

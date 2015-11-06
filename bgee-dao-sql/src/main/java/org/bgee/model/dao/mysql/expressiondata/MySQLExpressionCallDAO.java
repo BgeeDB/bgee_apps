@@ -125,25 +125,29 @@ implements ExpressionCallDAO {
                 .collect(Collectors.toSet());
         
         //includeSubstructures
+        boolean includeSubstructures = false;
         Set<Boolean> allIncludeSubstructures = allCallTOs.stream()
                 .map(e -> Optional.ofNullable(e.isIncludeSubstructures()).orElse(false))
                 .collect(Collectors.toSet());
-        if (allIncludeSubstructures.size() != 1) {
+        if (allIncludeSubstructures.size() == 1) {
+            includeSubstructures = allIncludeSubstructures.iterator().next();
+        } else if (allIncludeSubstructures.size() > 1) {
             throw log.throwing(new IllegalArgumentException("It is mandatory to request "
                     + "one and only one propagation method along anatomical structures in a same query."));
-        }
-        boolean includeSubstructures = allIncludeSubstructures.iterator().next();
+        } 
         log.trace("includeSubstructures: {}", includeSubstructures);
         
         //includeSubstages
+        boolean includeSubStages = false;
         Set<Boolean> allIncludeSubStages = allCallTOs.stream()
                 .map(e -> Optional.ofNullable(e.isIncludeSubStages()).orElse(false))
                 .collect(Collectors.toSet());
-        if (allIncludeSubStages.size() != 1) {
+        if (allIncludeSubStages.size() == 1) {
+            includeSubStages = allIncludeSubStages.iterator().next();
+        } else if (allIncludeSubStages.size() > 1) {
             throw log.throwing(new IllegalArgumentException("It is mandatory to request "
                     + "one and only one propagation method along developmental stages in a same query."));
-        }
-        boolean includeSubStages = allIncludeSubStages.iterator().next();
+        } 
         log.trace("includeSubStages: {}", includeSubStages);
         
         //store the global gene ID filtering, or try to create one based on the CallDAOFilters
@@ -216,7 +220,8 @@ implements ExpressionCallDAO {
                     originalAttrs.contains(ExpressionCallDAO.Attribute.IN_SITU_DATA) || 
                     originalAttrs.contains(ExpressionCallDAO.Attribute.RNA_SEQ_DATA) || 
                     originalAttrs.contains(ExpressionCallDAO.Attribute.OBSERVED_DATA) || 
-                    originalAttrs.contains(ExpressionCallDAO.Attribute.ANAT_ORIGIN_OF_LINE) || 
+                    (includeSubstructures && 
+                            originalAttrs.contains(ExpressionCallDAO.Attribute.ANAT_ORIGIN_OF_LINE)) || 
                     originalAttrs.contains(ExpressionCallDAO.Attribute.STAGE_ORIGIN_OF_LINE) || 
                     clonedOrderingAttributes.keySet().contains(ExpressionCallDAO.OrderingAttribute.MEAN_RANK)) {
                 
@@ -332,7 +337,7 @@ implements ExpressionCallDAO {
         String sql = "SELECT MAX(" + id + ") AS " + id + " FROM " + tableName;
     
         try (MySQLExpressionCallTOResultSet resultSet = new MySQLExpressionCallTOResultSet(
-                this.getManager().getConnection().prepareStatement(sql))) {
+                this.getManager().getConnection().prepareStatement(sql), null)) {
             
             if (resultSet.next() && StringUtils.isNotBlank(resultSet.getTO().getId())) {
                 return log.exit(Integer.valueOf(resultSet.getTO().getId()));
@@ -474,8 +479,8 @@ implements ExpressionCallDAO {
         boolean whereClauseStarted = false;
         if (!allGeneIds.isEmpty() && !genesAndSpeciesFilteredForPropagation && 
                 (globalGeneFilter || havingClauseNeeded)) {
-            sql += " WHERE exprTableName.geneId IN (" + BgeePreparedStatement.generateParameterizedQueryString(
-                    allGeneIds.size()) + ") ";
+            sql += " WHERE " + exprTableName + ".geneId IN (" 
+                + BgeePreparedStatement.generateParameterizedQueryString(allGeneIds.size()) + ") ";
             whereClauseStarted = true;
         }
         //same for species IDs: if a HAVING clause is needed, and allSpeciesIds is not empty, 
@@ -556,12 +561,16 @@ implements ExpressionCallDAO {
             this.parameterizeFilteringClause(stmt, index, callFilters, !globalGeneFilter, 
                     !globalSpeciesFilter, includeSubstructures, includeSubStages);
             
+            //If we don't need to perform several queries with a LIMIT clause, return
+            if (offsetParamIndex == 0) {
+                return log.exit(new MySQLExpressionCallTOResultSet(stmt, originalAttrs));
+            } 
             //In case we need to perform several queries with a LIMIT clause, 
             //determine whether we need to filter duplicated results over several queries.
             boolean filterDistinct = !(originalAttrs.contains(ExpressionCallDAO.Attribute.ID) || 
                     (originalAttrs.contains(ExpressionCallDAO.Attribute.GENE_ID) && 
-                     originalAttrs.contains(ExpressionCallDAO.Attribute.ANAT_ENTITY_ID) && 
-                     originalAttrs.contains(ExpressionCallDAO.Attribute.STAGE_ID)));
+                            originalAttrs.contains(ExpressionCallDAO.Attribute.ANAT_ENTITY_ID) && 
+                            originalAttrs.contains(ExpressionCallDAO.Attribute.STAGE_ID)));
             
             return log.exit(new MySQLExpressionCallTOResultSet(stmt, originalAttrs, offsetParamIndex, 
                     offsetParamIndex + 1, this.getManager().getExprPropagationGeneCount(), filterDistinct));
@@ -680,7 +689,7 @@ implements ExpressionCallDAO {
             }
 
             if (!isIncludeSubStages) {
-                return log.exit(new MySQLExpressionCallTOResultSet(stmt));
+                return log.exit(new MySQLExpressionCallTOResultSet(stmt, this.getAttributes()));
             } 
             
             int offsetParamIndex = (speciesIds == null ? 1: speciesIds.size() + 1);
@@ -995,7 +1004,6 @@ implements ExpressionCallDAO {
             if (sb.length() != 0) {
                 sb.append("OR ");
             }
-            sb.append("(");
             boolean hasPreviousClause = false;
             
             //genes
@@ -1109,8 +1117,10 @@ implements ExpressionCallDAO {
                 hasPreviousClause = true;
             }
             
-
-            sb.append(")");
+            if (sb.length() != 0) {
+                sb.insert(0, "(");
+                sb.append(")");
+            }
         }
         
         return log.exit(sb.toString());
@@ -1324,11 +1334,18 @@ implements ExpressionCallDAO {
          * Delegates to {@link MySQLDAOResultSet#MySQLDAOResultSet(BgeePreparedStatement)}
          * super constructor.
          * 
-         * @param statement The first {@code BgeePreparedStatement} to execute a query on.
+         * @param statement             The first {@code BgeePreparedStatement} to execute a query on.
+         * @param attributes            A {@code Set} of {@code ExpressionCallDAO.Attribute} 
+         *                              defining which columns were originally requested. 
+         *                              This is needed because, in {@code MySQLExpressionDAO}, 
+         *                              some SELECT clauses can be added to the query to be accessible 
+         *                              from a HAVING clause, while it is not needed to populate 
+         *                              the retrieved {@code ExpressionCallTO}s with these data.
          */
-        private MySQLExpressionCallTOResultSet(BgeePreparedStatement statement) {
+        private MySQLExpressionCallTOResultSet(BgeePreparedStatement statement, 
+                Set<ExpressionCallDAO.Attribute> attributes) {
             super(statement);
-            this.attributes = null;
+            this.attributes = attributes;
         }
         /**
          * Delegates to {@link MySQLDAOResultSet#MySQLDAOResultSet(BgeePreparedStatement, 

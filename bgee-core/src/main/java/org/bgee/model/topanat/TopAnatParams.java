@@ -172,22 +172,22 @@ public class TopAnatParams {
         /**
          * 
          */
-        private int nodeSize;
+        private Integer nodeSize;
 
         /**
          * 
          */
-        private float fdrThreshold;
+        private Float fdrThreshold;
 
         /**
          * 
          */
-        private float pvalueThreshold;
+        private Float pvalueThreshold;
 
         /**
          * 
          */
-        private int numberOfSignificantNode;
+        private Integer numberOfSignificantNode;
 
         /**
          * @param submittedForegroundIds
@@ -276,7 +276,7 @@ public class TopAnatParams {
          * @param nodeSize
          * @return
          */
-        public Builder nodeSize(int nodeSize){
+        public Builder nodeSize(Integer nodeSize){
             log.entry(nodeSize);
             this.nodeSize = nodeSize;
             return log.exit(this);
@@ -287,7 +287,7 @@ public class TopAnatParams {
          * @param fdrThreshold
          * @return
          */
-        public Builder fdrThreshold(float fdrThreshold){
+        public Builder fdrThreshold(Float fdrThreshold){
             log.entry(fdrThreshold);
             this.fdrThreshold = fdrThreshold;
             return log.exit(this);
@@ -298,7 +298,7 @@ public class TopAnatParams {
          * @param pvalueThreshold
          * @return
          */
-        public Builder pvalueThreshold(float pvalueThreshold){
+        public Builder pvalueThreshold(Float pvalueThreshold){
             log.entry(pvalueThreshold);
             this.pvalueThreshold = pvalueThreshold;
             return log.exit(this);
@@ -309,7 +309,7 @@ public class TopAnatParams {
          * @param numberOfSignificantNode
          * @return
          */
-        public Builder numberOfSignificantNode(int numberOfSignificantNode){
+        public Builder numberOfSignificantNode(Integer numberOfSignificantNode){
             log.entry(numberOfSignificantNode);
             this.numberOfSignificantNode = numberOfSignificantNode;
             return log.exit(this);
@@ -355,11 +355,12 @@ public class TopAnatParams {
         this.statisticTest = builder.statisticTest == null ? StatisticTest.FISHER : 
             builder.statisticTest;
         this.devStageId = builder.devStageId;
-        this.fdrThreshold = builder.fdrThreshold;
+        this.fdrThreshold = builder.fdrThreshold == null ? 0 : builder.fdrThreshold;
         this.dataQuality = builder.dataQuality == null ? DataQuality.HIGH : builder.dataQuality;
-        this.nodeSize = builder.nodeSize;
-        this.numberOfSignificantNodes = builder.numberOfSignificantNode;
-        this.pvalueThreshold = builder.pvalueThreshold;
+        this.nodeSize = builder.nodeSize == null ? 0 : builder.nodeSize;
+        this.numberOfSignificantNodes = builder.numberOfSignificantNode == null ? 0 : 
+            builder.numberOfSignificantNode;
+        this.pvalueThreshold = builder.pvalueThreshold == null ? 0 : builder.pvalueThreshold;
         this.submittedBackgroundIds = builder.submittedBackgroundIds == null ? null :
             Collections.unmodifiableSet(new HashSet<>(builder.submittedBackgroundIds));
         this.key = this.generateKey();
@@ -433,28 +434,28 @@ public class TopAnatParams {
     /**
      * @return the nodeSize
      */
-    public int getNodeSize() {
+    public Integer getNodeSize() {
         return nodeSize;
     }
 
     /**
      * @return the fdrThreshold
      */
-    public float getFdrThreshold() {
+    public Float getFdrThreshold() {
         return fdrThreshold;
     }
 
     /**
      * @return the pvalueThreashold
      */
-    public float getPvalueThreashold() {
+    public Float getPvalueThreashold() {
         return pvalueThreshold;
     }
 
     /**
      * @return the numberOfSignificantNodes
      */
-    public int getNumberOfSignificantNodes() {
+    public Integer getNumberOfSignificantNodes() {
         return numberOfSignificantNodes;
     }
 
@@ -588,10 +589,14 @@ public class TopAnatParams {
             valueToHash.append(this.decorelationType.toString());
         if(this.statisticTest != null)
             valueToHash.append(this.statisticTest.toString());
-        valueToHash.append(this.nodeSize);
-        valueToHash.append(this.fdrThreshold);
-        valueToHash.append(this.pvalueThreshold);
-        valueToHash.append(this.numberOfSignificantNodes);
+        if(this.nodeSize != null)
+            valueToHash.append(this.nodeSize.toString());
+        if(this.fdrThreshold != null)
+            valueToHash.append(this.fdrThreshold.toString());
+        if(this.pvalueThreshold != null)
+            valueToHash.append(this.pvalueThreshold.toString());
+        if(this.numberOfSignificantNodes != null)
+            valueToHash.append(this.numberOfSignificantNodes.toString());
 
         String keyToReturn = null;
 

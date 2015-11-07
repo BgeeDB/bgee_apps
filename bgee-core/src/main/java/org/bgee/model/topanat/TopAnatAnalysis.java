@@ -304,8 +304,10 @@ public class TopAnatAnalysis {
             String[] header = mapReader.getHeader(true);
             final CellProcessor[] processors = getCsvProcessors();
             Map<String, Object> row;
-            while( (row = mapReader.read(header, processors)) != null ) {
-                listToReturn.add(new TopAnatResults.TopAnatResultLine(row));
+            if(header != null){
+                while( (row = mapReader.read(header, processors)) != null ) {
+                    listToReturn.add(new TopAnatResults.TopAnatResultLine(row));
+                }
             }
         }
 

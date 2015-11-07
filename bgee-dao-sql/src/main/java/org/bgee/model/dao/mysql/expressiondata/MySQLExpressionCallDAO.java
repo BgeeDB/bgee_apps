@@ -38,6 +38,15 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
  * @see org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO
  * @since Bgee 13
  */
+//TODO: manage OrderingAttributes in new method getExpressionCalls.
+//TODO: add ranks to method generateSelectClause. If including substages, 
+//      the mean rank (over the GROUP BY) of each data type rank should be used.
+//TODO: add ranks to ExpressionCallTO and MySQLExpressionCallTOResultSet
+//TODO: allow ordering by the mean rank of the ranks of each data type (OrderingAttribute.MEAN_RANK). 
+//      The data types used should be all data types considered from the CallDAOFilters.
+//      If including substages, the mean rank (over the GROUP BY) of the mean rank 
+//      (over the requested data types) should be used.
+//TODO: manage ancestralTaxonId in new method getExpressionCalls
 public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute> 
 implements ExpressionCallDAO {
     
@@ -87,26 +96,57 @@ implements ExpressionCallDAO {
      * {@inheritDoc}
      * <p>
      * <strong>Implementation notes</strong>: 
-     * If a {@code true} value is defined by the method {@code isIncludeSubStages} 
-     * of {@code ExpressionCallTO}s in the {@code CallDAOFilter}s, and if it is expected 
-     * to have a large amount of data to consider, it is highly recommended to NOT filter  
-     * the query based on, nor request attributes related to: {@code getAnatOriginOfLine}, 
-     * {@code getStageOriginOfLine}, or {@code isObservedData}; any data types parameter
-     * ({@code getAffymetrixData}, {@code getESTData}, {@code getInSituData}, {@code getRNASeqData}, 
-     * and {@code getRelaxedInSituData}); nor to request ordering base on 
-     * {@code CallDAO.OrderingAttribute.MEAN_RANK}. This is because when {@code isIncludeSubStages} 
-     * is requested, these parameters need to be computed on-the-fly, necessitating an expensive 
-     * "GROUP BY" of the data, and filtering of the results needs to be performed 
-     * in a "HAVING" clause, instead of a "WHERE" clause. So this should be used only 
-     * when requesting data for a very low number of specific genes.
+     * If {@code isIncludeSubStages} is {@code true}, and if it is expected 
+     * to have a large amount of data to consider, it is highly recommended: 
+     * <ul>
+     * <li>to only request basic attributes related to {@code getGeneId}, 
+     * {@code getAnatEntityId}, and {@code getStageId}. So, to avoid requesting attributes 
+     * related to: {@code getAnatOriginOfLine}, {@code getStageOriginOfLine}, 
+     * or {@code isObservedData}; or any data types parameter ({@code getAffymetrixData}, 
+     * {@code getAffymetrixMeanRank}, etc); 
+     * <li>to not request ordering based on {@code CallDAO.OrderingAttribute.MEAN_RANK}. 
+     * <li>to not perform a filtering with AND conditions between data types (for instance, 
+     * "affymetrixData >= LOW_QUALITY AND rnaSeqData >= LOW_QUALITY"). It means that it is recommended 
+     * to not set parameters for different data types in a same {@code ExpressionCallTO}. 
+     * It is OK to set parameters for different data types in different {@code ExpressionCallTO}s 
+     * to perform an OR filtering (for instance, "affymetrixData >= LOW_QUALITY OR 
+     * rnaSeqData >= LOW_QUALITY").
+     * </ul>
+     * This is because when {@code isIncludeSubStages} is requested, these parameters need 
+     * to be computed on-the-fly, necessitating an expensive "GROUP BY" of the data. 
+     * So this should be used only when requesting data for a very low number of specific genes.
+     * <p>
+     * Another reason is due to the propagation itself. Consider the following case, 
+     * where stageId2 is a sub-stage of stageId1, and where the filtering requested is 
+     * "affymetrixData >= LOW_QUALITY AND rnaSeqData >= LOW_QUALITY": 
+     * <ul>
+     * <li>geneId1, anatEntityId1, stageId1, affymetrixData = HIGH_QUALITY, rnaSeqData = NO_DATA
+     * <li>geneId1, anatEntityId1, stageId2, affymetrixData = NO_DATA, rnaSeqData = HIGH_QUALITY
+     * </ul>
+     * The infer call is: 
+     * <ul>
+     * <li>geneId1, anatEntityId1, stageId1, affymetrixData = HIGH_QUALITY, rnaSeqData = HIGH_QUALITY
+     * </ul>
+     * If the filtering was performed in a WHERE clause with no GROUP BY, no results would be returned, 
+     * because of the AND conditions between data types. If the conditions between data types 
+     * were OR conditions, we could filter in a WHERE clause with no GROUP BY. But only 
+     * if no attributes necessitating a GROUP BY were requested, otherwise the values produced  
+     * would be inconsistent, depending on the calls filtered in the WHERE clause. 
+     * So, even if there are only OR conditions between data types, we might need a GROUP BY 
+     * and a filtering in a HAVING clause, depending on the attributes requested.
+     * <p>
+     * All of this is OK if you query only a few genes, as it wouldn't be too computer-intensive.
      */
     @Override
     public ExpressionCallTOResultSet getExpressionCalls(
-            Collection<ExpressionCallDAOFilter> callFilters, Collection<String> globalGeneIds, 
-            String taxonId, Collection<ExpressionCallDAO.Attribute> attributes, 
+            Collection<ExpressionCallDAOFilter> callFilters, 
+            boolean includeSubstructures, boolean includeSubStages, 
+            Collection<String> globalGeneIds, String taxonId, 
+            Collection<ExpressionCallDAO.Attribute> attributes, 
             LinkedHashMap<ExpressionCallDAO.OrderingAttribute, DAO.Direction> orderingAttributes) 
                     throws DAOException, IllegalArgumentException {
-        log.entry(callFilters, globalGeneIds, taxonId, attributes, orderingAttributes);
+        log.entry(callFilters, includeSubstructures, includeSubStages, globalGeneIds, taxonId, 
+                attributes, orderingAttributes);
         
         if (taxonId != null && !taxonId.isEmpty()) {
             throw log.throwing(new UnsupportedOperationException(
@@ -116,39 +156,16 @@ implements ExpressionCallDAO {
         //needs a LinkedHashSet for consistent settings of the parameters. 
         LinkedHashSet<ExpressionCallDAOFilter> clonedCallFilters = Optional.ofNullable(callFilters)
                 .map(e -> new LinkedHashSet<>(e)).orElse(new LinkedHashSet<>());
+        //attributes
+        Set<ExpressionCallDAO.Attribute> originalAttrs = Optional.ofNullable(attributes)
+                .map(e -> EnumSet.copyOf(e)).orElse(EnumSet.allOf(ExpressionCallDAO.Attribute.class));
+        //ordering attributes
+        LinkedHashMap<ExpressionCallDAO.OrderingAttribute, DAO.Direction> clonedOrderingAttrs = 
+                Optional.ofNullable(orderingAttributes)
+                .map(e -> new LinkedHashMap<>(orderingAttributes)).orElse(new LinkedHashMap<>());
         //**********************************************
         // Extract relevant information from arguments
         //**********************************************
-        //get all ExpressionCallTOs from all ExpressionCallDAOFilters
-        Set<ExpressionCallTO> allCallTOs = clonedCallFilters.stream()
-                .flatMap(e -> e.getCallTOFilters().stream())
-                .collect(Collectors.toSet());
-        
-        //includeSubstructures
-        boolean includeSubstructures = false;
-        Set<Boolean> allIncludeSubstructures = allCallTOs.stream()
-                .map(e -> Optional.ofNullable(e.isIncludeSubstructures()).orElse(false))
-                .collect(Collectors.toSet());
-        if (allIncludeSubstructures.size() == 1) {
-            includeSubstructures = allIncludeSubstructures.iterator().next();
-        } else if (allIncludeSubstructures.size() > 1) {
-            throw log.throwing(new IllegalArgumentException("It is mandatory to request "
-                    + "one and only one propagation method along anatomical structures in a same query."));
-        } 
-        log.trace("includeSubstructures: {}", includeSubstructures);
-        
-        //includeSubstages
-        boolean includeSubStages = false;
-        Set<Boolean> allIncludeSubStages = allCallTOs.stream()
-                .map(e -> Optional.ofNullable(e.isIncludeSubStages()).orElse(false))
-                .collect(Collectors.toSet());
-        if (allIncludeSubStages.size() == 1) {
-            includeSubStages = allIncludeSubStages.iterator().next();
-        } else if (allIncludeSubStages.size() > 1) {
-            throw log.throwing(new IllegalArgumentException("It is mandatory to request "
-                    + "one and only one propagation method along developmental stages in a same query."));
-        } 
-        log.trace("includeSubStages: {}", includeSubStages);
         
         //store the global gene ID filtering, or try to create one based on the CallDAOFilters
         Set<String> geneIds = Optional.ofNullable(globalGeneIds)
@@ -163,8 +180,8 @@ implements ExpressionCallDAO {
                 globalGeneFilter = true;
             }
             //otherwise, check whether all callFilters specify a gene ID filtering, 
-            //we will collect them all. We will use these gene IDs in case we need to define 
-            //parameters in a HAVING clause (see below, includeSubStages = true)
+            //we will collect them all. We will use these gene IDs in case we need to perform 
+            //a GROUP BY with a LIMIT clause.
             if (geneIds.isEmpty() && clonedCallFilters.stream()
                     .noneMatch(filter -> filter.getGeneIds() == null || filter.getGeneIds().isEmpty())) {
                 //we collect the gene IDs, but it is not the same as a global gene ID filter, 
@@ -178,8 +195,7 @@ implements ExpressionCallDAO {
         }
         
         //same principle for species IDs: if all callFilters specify some species ID filtering, 
-        //then we can apply a "global" species ID filtering to the query
-        //if all callFilters have the same gene ID filter
+        //then we can apply a "global" species ID filtering to the query.
         boolean globalSpeciesFilter = false;
         Set<String> speciesIds = new HashSet<>();
         Set<Set<String>> allSpeciesIdFilters = clonedCallFilters.stream().map(e -> e.getSpeciesIds())
@@ -190,8 +206,8 @@ implements ExpressionCallDAO {
             assert !speciesIds.isEmpty();
         }
         //otherwise, check whether all callFilters specify a species ID filtering, 
-        //we will collect them all. We will use these species IDs in case we need to define 
-        //parameters in a HAVING clause (see below, includeSubStages = true)
+        //we will collect them all. We will use these species IDs in case we need to perform 
+        //a GROUP BY with a LIMIT clause.
         if (speciesIds.isEmpty() && clonedCallFilters.stream()
                 .noneMatch(filter -> filter.getSpeciesIds() == null || filter.getSpeciesIds().isEmpty())) {
             //we collect the species IDs, but it is not the same as a global species ID filter, 
@@ -205,12 +221,7 @@ implements ExpressionCallDAO {
         //in a HAVING clause. In that case, we add the columns we will need in the HAVING clause, 
         //based on the parameters provided, to avoid over-verbose HAVING clause. 
         //We also need these columns if an ordering is requested on them.
-        Set<ExpressionCallDAO.Attribute> originalAttrs = Optional.ofNullable(attributes)
-                .map(e -> EnumSet.copyOf(e)).orElse(EnumSet.allOf(ExpressionCallDAO.Attribute.class));
         Set<ExpressionCallDAO.Attribute> updatedAttrs = EnumSet.copyOf(originalAttrs);
-        LinkedHashMap<ExpressionCallDAO.OrderingAttribute, DAO.Direction> clonedOrderingAttributes = 
-                Optional.ofNullable(orderingAttributes)
-                .map(e -> new LinkedHashMap<>(e)).orElse(new LinkedHashMap<>());
         boolean havingClauseNeeded = false;
         boolean groupingByNeeded = false;
         
@@ -223,27 +234,36 @@ implements ExpressionCallDAO {
                     (includeSubstructures && 
                             originalAttrs.contains(ExpressionCallDAO.Attribute.ANAT_ORIGIN_OF_LINE)) || 
                     originalAttrs.contains(ExpressionCallDAO.Attribute.STAGE_ORIGIN_OF_LINE) || 
-                    clonedOrderingAttributes.keySet().contains(ExpressionCallDAO.OrderingAttribute.MEAN_RANK)) {
+                    clonedOrderingAttrs.keySet().contains(ExpressionCallDAO.OrderingAttribute.MEAN_RANK)) {
                 
                 groupingByNeeded = true;
             }
             
-            //Retrieve all data types with a specified filtering
-            Set<ExpressionCallDAO.Attribute> filteredDataTypes = clonedCallFilters.stream()
+            //for filtering based on data types, we can still avoid to filter in the HAVING clause 
+            //or to use a GROUP BY, if there is no GROUP BY needed because of requested attributes 
+            //(test above), and if there is no AND condition between data types.
+            //First, retrieve all data types with a specified filtering, per CallTO.
+            Set<Set<ExpressionCallDAO.Attribute>> filteringDataTypesPerCallTO = clonedCallFilters.stream()
                     .flatMap(filter -> filter.getCallTOFilters().stream()
-                                       .map(callTO -> filter.extractFilteringDataTypes(callTO).keySet()))
-                    .flatMap(Set::stream)
-                    .collect(Collectors.toCollection(() -> EnumSet.noneOf(ExpressionCallDAO.Attribute.class)));
-            log.trace("includeSubStages true, data types with filtering requested: {}", 
-                    filteredDataTypes);
-            
-            if (!filteredDataTypes.isEmpty()) {
+                            .map(callTO -> filter.extractFilteringDataTypes(callTO).keySet()))
+                    .collect(Collectors.toSet());
+            if (groupingByNeeded || 
+                    //check whether there is any AND condition between data types
+                    filteringDataTypesPerCallTO.stream().anyMatch(set -> set.size() > 1)) {
                 havingClauseNeeded = true;
                 groupingByNeeded = true;
                 //add in the SELECT clause the columns we will need in the HAVING clause, 
                 //to avoid over-verbose HAVING clause.
-                updatedAttrs.addAll(filteredDataTypes);
+                updatedAttrs.addAll(filteringDataTypesPerCallTO.stream()
+                        .flatMap(Set::stream)
+                        .collect(Collectors.toCollection(() -> 
+                            EnumSet.noneOf(ExpressionCallDAO.Attribute.class))));
             }
+            
+            Set<ExpressionCallTO> allCallTOs = clonedCallFilters.stream()
+                    .flatMap(e -> e.getCallTOFilters().stream())
+                    .collect(Collectors.toSet());
+            
             if (allCallTOs.stream().anyMatch(e -> e.isObservedData() != null)) {
                 havingClauseNeeded = true;
                 groupingByNeeded = true;
@@ -251,7 +271,8 @@ implements ExpressionCallDAO {
                 //to avoid over-verbose HAVING clause.
                 updatedAttrs.add(ExpressionCallDAO.Attribute.OBSERVED_DATA);
             }
-            if (allCallTOs.stream().anyMatch(e -> e.getAnatOriginOfLine() != null)) {
+            if (includeSubstructures && 
+                    allCallTOs.stream().anyMatch(e -> e.getAnatOriginOfLine() != null)) {
                 havingClauseNeeded = true;
                 groupingByNeeded = true;
                 //add in the SELECT clause the columns we will need in the HAVING clause, 
@@ -279,7 +300,7 @@ implements ExpressionCallDAO {
         //execute query
         return log.exit(this.getExpressionCalls(clonedCallFilters, geneIds, globalGeneFilter, 
                 speciesIds, globalSpeciesFilter, includeSubstructures, includeSubStages, 
-                taxonId, originalAttrs, updatedAttrs, clonedOrderingAttributes, 
+                taxonId, originalAttrs, updatedAttrs, clonedOrderingAttrs, 
                 groupingByNeeded, havingClauseNeeded));
     }
 
@@ -515,13 +536,12 @@ implements ExpressionCallDAO {
         
         if (stageGroupingByNeeded) {
             sql += " GROUP BY " + exprTableName + ".geneId, " + 
-                   exprTableName + ".anatEntityId, " + propagatedStageTableName + ".stageId";
+                   exprTableName + ".anatEntityId, " + propagatedStageTableName + ".stageId ";
+            
+            if (havingClauseNeeded && !filtering.isEmpty()) {
+                sql += "HAVING " + filtering;
+            }
         }
-        
-        if (havingClauseNeeded && !filtering.isEmpty()) {
-            sql += "HAVING " + filtering;
-        }
-        
         
 
         //we don't use a try-with-resource, because we return a pointer to the results, 
@@ -1031,13 +1051,14 @@ implements ExpressionCallDAO {
             //conditions
             if (!callFilter.getConditionFilters().isEmpty()) {
                 if (hasPreviousClause) {
-                    sb.append("AND (");
+                    sb.append("AND ");
                 }
+                sb.append("(");
                 sb.append(callFilter.getConditionFilters().stream()
                     .map(cond -> {
                         StringBuilder sb2 = new StringBuilder();
                         if (!cond.getAnatEntitieIds().isEmpty()) {
-                            sb.append(exprTableName).append(".anatEntityId IN (")
+                            sb2.append(exprTableName).append(".anatEntityId IN (")
                             .append(BgeePreparedStatement.generateParameterizedQueryString(
                                     cond.getAnatEntitieIds().size())).append(") ");
                         }
@@ -1045,14 +1066,14 @@ implements ExpressionCallDAO {
                             if (sb2.length() != 0) {
                                 sb2.append("AND ");
                             }
-                            sb.append(stageTableName).append(".stageId IN (")
+                            sb2.append(stageTableName).append(".stageId IN (")
                             .append(BgeePreparedStatement.generateParameterizedQueryString(
                                     cond.getDevStageIds().size())).append(") ");
                         }
                         return sb2.toString();
                     }).collect(Collectors.joining("OR "))
                 );
-                sb.append(")");
+                sb.append(") ");
                 hasPreviousClause = true;
             }
             
@@ -1068,10 +1089,10 @@ implements ExpressionCallDAO {
                 String dataFilter = callFilter.extractFilteringDataTypes(callTO).keySet().stream()
                     //we don't use the expression table name here, maybe these parameters 
                     //were computed using a MAX and a GROUP BY, and renamed using a AS statement.
-                    .map(attr -> convertDataTypeAttrToColName(attr) + " >= ?")
-                    .collect(Collectors.joining(" OR "));
+                    .map(attr -> convertDataTypeAttrToColName(attr) + " >= ? ")
+                    .collect(Collectors.joining("AND "));
                 if (!dataFilter.isEmpty()) {
-                    sb2.append("(").append(dataFilter).append(") ");
+                    sb2.append(dataFilter);
                     callTOClauseStarted = true;
                 }
                 
@@ -1080,7 +1101,11 @@ implements ExpressionCallDAO {
                     if (callTOClauseStarted) {
                         sb2.append("AND ");
                     } 
-                    sb2.append("anatOriginOfLine = ? ");
+                    if (!includeSubStages) {
+                        sb2.append(exprTableName).append(".originOfLine = ? ");
+                    } else {
+                        sb2.append("anatOriginOfLine = ? ");
+                    }
                     callTOClauseStarted = true;
                 }
                 if (callTO.getStageOriginOfLine() != null && includeSubStages) {
@@ -1113,13 +1138,13 @@ implements ExpressionCallDAO {
                 if (hasPreviousClause) {
                     sb.append("AND ");
                 }
-                sb.append("(").append(sb2.toString()).append(")");
+                sb.append("(").append(sb2.toString()).append(") ");
                 hasPreviousClause = true;
             }
             
             if (sb.length() != 0) {
                 sb.insert(0, "(");
-                sb.append(")");
+                sb.append(") ");
             }
         }
         

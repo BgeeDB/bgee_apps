@@ -92,6 +92,16 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
      *                              allowing to configure this query. If several 
      *                              {@code ExpressionCallDAOFilter}s are provided, they are seen 
      *                              as "OR" conditions. Can be {@code null} or empty.
+     * @param includeSubstructures  A {@code boolean} defining whether the expression calls 
+     *                              retrieved should be based on calls generated using data 
+     *                              from anatomical entities, and all of their descendants 
+     *                              by is_a and part_of relations (expression taking into account 
+     *                              substructures).
+     * @param includeSubStages      A {@code boolean} defining whether the expression calls 
+     *                              retrieved should be based on calls generated using data 
+     *                              from developmental stages, and all of their descendants 
+     *                              by is_a and part_of relations (expression taking into account 
+     *                              sub-stages).
      * @param globalGeneIds         A {@code Set} of {@code String}s that are IDs of genes 
      *                              to globally filter this query, overriding any gene IDs 
      *                              provided in the {@code CallDAOFilter}s. 
@@ -116,6 +126,7 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
      *                                  expression propagation states requested.
      */
     public ExpressionCallTOResultSet getExpressionCalls(Collection<ExpressionCallDAOFilter> callFiters, 
+            boolean includeSubstructures, boolean includeSubStages, 
             Collection<String> globalGeneIds, String taxonId, Collection<Attribute> attributes, 
             LinkedHashMap<OrderingAttribute, DAO.Direction> orderingAttributes) 
                     throws DAOException, IllegalArgumentException;
@@ -320,7 +331,7 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
         }
 
         /**
-         * Constructor providing only the parameters that are used as part of a 
+         * Constructor providing only the data type parameters that are used as part of a 
          * {@link org.bgee.model.dao.api.expressiondata.CallDAOFilter}.
          * 
          * @param affymetrixData        A {@code DataSate} that is the contribution of Affymetrix  
@@ -331,13 +342,24 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
          *                              <em>in situ</em> data to the generation of this call.
          * @param rnaSeqData            A {@code DataSate} that is the contribution of RNA-Seq data
          *                              to the generation of this call.
-         * @param includeSubstructures  A {@code Boolean} defining whether this expression call was 
-         *                              generated using data from the anatomical entity with the ID 
-         *                              alone, or by also considering all its descendants by 
-         *                              <em>is_a</em> or <em>part_of</em> relations, even indirect.
-         * @param includeSubStages      A {@code Boolean} defining whether this expression call was 
-         *                              generated using data from the developmental stage with the ID
-         *                              alone, or by also considering all its descendants.
+         */
+        public ExpressionCallTO(DataState affymetrixData, DataState estData, DataState inSituData, 
+                DataState rnaSeqData) {
+            this(affymetrixData, estData, inSituData, rnaSeqData, null, null, null);
+        }
+
+        /**
+         * Constructor providing all the parameters that are used as part of a 
+         * {@link org.bgee.model.dao.api.expressiondata.CallDAOFilter}.
+         * 
+         * @param affymetrixData        A {@code DataSate} that is the contribution of Affymetrix  
+         *                              data to the generation of this call.
+         * @param estData               A {@code DataSate} that is the contribution of EST data
+         *                              to the generation of this call.
+         * @param inSituData            A {@code DataSate} that is the contribution of 
+         *                              <em>in situ</em> data to the generation of this call.
+         * @param rnaSeqData            A {@code DataSate} that is the contribution of RNA-Seq data
+         *                              to the generation of this call.
          * @param anatOrigin            An {@code OriginOfLine} defining how this call 
          *                              was produced among anatomical entities: from 
          *                              the related anatomical itself, 
@@ -351,28 +373,9 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
          *                              generated from some kind of propagation.
          */
         public ExpressionCallTO(DataState affymetrixData, DataState estData, DataState inSituData, 
-                DataState rnaSeqData, Boolean includeSubstructures, Boolean includeSubStages, 
-                OriginOfLine anatOrigin, OriginOfLine stageOrigin, Boolean observedData) {
+                DataState rnaSeqData, OriginOfLine anatOrigin, OriginOfLine stageOrigin, Boolean observedData) {
             this(null, null, null, null, affymetrixData, estData, inSituData, rnaSeqData, 
-                 includeSubstructures, includeSubStages, anatOrigin, stageOrigin, observedData);
-        }
-
-        /**
-         * Convenient constructor to only specify whether to include substructures and/or 
-         * sub-stages, in a {@link org.bgee.model.dao.api.expressiondata.CallDAOFilter}, 
-         * when retrieving expression calls.
-         * 
-         * @param includeSubstructures  A {@code Boolean} defining whether this expression call was 
-         *                              generated using data from the anatomical entity with the ID 
-         *                              alone, or by also considering all its descendants by 
-         *                              <em>is_a</em> or <em>part_of</em> relations, even indirect.
-         * @param includeSubStages      A {@code Boolean} defining whether this expression call was 
-         *                              generated using data from the developmental stage with the ID
-         *                              alone, or by also considering all its descendants.
-         */
-        public ExpressionCallTO(Boolean includeSubstructures, Boolean includeSubStages) {
-            this(null, null, null, null, 
-                 includeSubstructures, includeSubStages, null, null, null);
+                 null, null, anatOrigin, stageOrigin, observedData);
         }
 
         /**

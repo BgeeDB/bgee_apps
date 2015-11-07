@@ -43,10 +43,10 @@ public class DAOConditionFilter {
             throw log.throwing(new IllegalArgumentException(
                     "Some anatatomical entity IDs or developmental stage IDs must be provided."));
         }
-        this.anatEntitieIds = anatEntitieIds == null ? null: Collections.unmodifiableSet(
-                new HashSet<>(anatEntitieIds));
-        this.devStageIds = devStageIds == null? null: Collections.unmodifiableSet(
-                new HashSet<>(devStageIds));
+        this.anatEntitieIds = Collections.unmodifiableSet(anatEntitieIds == null ? 
+                new HashSet<>(): new HashSet<>(anatEntitieIds));
+        this.devStageIds = Collections.unmodifiableSet(devStageIds == null? 
+                new HashSet<>(): new HashSet<>(devStageIds));
     }
 
     /**

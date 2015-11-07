@@ -47,32 +47,6 @@ public abstract class CallDAOFilter<T extends Enum<T> & CallDAO.Attribute, U ext
                 Collection<DAOConditionFilter> conditionFilters, 
                 Collection<ExpressionCallTO> callTOFilters) throws IllegalArgumentException {
             super(geneIds, speciesIds, conditionFilters, callTOFilters, ExpressionCallDAO.Attribute.class);
-            //sanity check for propagation states
-            if (callTOFilters != null && callTOFilters.stream()
-                //We map each CallTO to a String representing its propagation states. 
-                //We should have only one equal String at the end.
-                .map(e -> (e.isIncludeSubstructures() == null? false: e.isIncludeSubstructures())
-                  + "-" + (e.isIncludeSubStages() == null? false: e.isIncludeSubStages())
-                ).collect(Collectors.toSet()).size() > 1) {
-                
-                throw log.throwing(new IllegalArgumentException("It is not possible to mix "
-                        + "different propagation states or different CallTO types."));
-            }
-            if (callTOFilters != null && callTOFilters.stream()
-                    .anyMatch(e -> ((new Boolean(false).equals(e.isIncludeSubstructures()) && 
-                                        (e.getAnatOriginOfLine() == ExpressionCallTO.OriginOfLine.BOTH || 
-                                        e.getAnatOriginOfLine() == ExpressionCallTO.OriginOfLine.DESCENT)) || 
-                                    (new Boolean(false).equals(e.isIncludeSubStages()) && 
-                                        (e.getStageOriginOfLine() == ExpressionCallTO.OriginOfLine.BOTH || 
-                                         e.getStageOriginOfLine() == ExpressionCallTO.OriginOfLine.DESCENT)) || 
-                                    (new Boolean(false).equals(e.isIncludeSubstructures()) && 
-                                        new Boolean(false).equals(e.isIncludeSubStages()) && 
-                                        new Boolean(false).equals(e.isObservedData())))
-                    )) {
-
-                throw log.throwing(new IllegalArgumentException("Requested origin of line/observed data state "
-                        + "incompatible with requested propagation"));
-            }
         }
     }
     /**
@@ -92,26 +66,6 @@ public abstract class CallDAOFilter<T extends Enum<T> & CallDAO.Attribute, U ext
                 Collection<DAOConditionFilter> conditionFilters, 
                 Collection<NoExpressionCallTO> callTOFilters) throws IllegalArgumentException {
             super(geneIds, speciesIds, conditionFilters, callTOFilters, NoExpressionCallDAO.Attribute.class);
-          //sanity check for propagation states
-            if (callTOFilters != null && callTOFilters.stream()
-                //We map each CallTO to a String representing its propagation states. 
-                //We should have only one equal String at the end.
-                .map(e -> "" + (e.isIncludeParentStructures() == null? false: 
-                                e.isIncludeParentStructures())
-                ).collect(Collectors.toSet()).size() > 1) {
-                
-                throw log.throwing(new IllegalArgumentException("It is not possible to mix "
-                        + "different propagation states or different CallTO types."));
-            }
-            if (callTOFilters != null && callTOFilters.stream()
-                    .anyMatch(e -> (new Boolean(false).equals(e.isIncludeParentStructures()) && 
-                                   (e.getOriginOfLine() == NoExpressionCallTO.OriginOfLine.BOTH || 
-                                    e.getOriginOfLine() == NoExpressionCallTO.OriginOfLine.PARENT))
-                    )) {
-
-                throw log.throwing(new IllegalArgumentException("Requested origin of line state "
-                        + "incompatible with requested propagation"));
-            }
         }
     }
     /**
@@ -157,17 +111,13 @@ public abstract class CallDAOFilter<T extends Enum<T> & CallDAO.Attribute, U ext
     private final Class<T> attributeType;
     
     /**
-     * Constructor accepting all requested parameters. In the provided {@code T}s, 
-     * only the following methods are considered (if available for this type of {@code T}): 
+     * Constructor accepting all requested parameters. In the provided {@code U}s, 
+     * only the following methods are considered (if available for this type of {@code U}): 
      * <ul>
      * <li>{@code getAffymetrixData}, {@code getESTData}, {@code getInSituData}, {@code getRNASeqData}, 
      * and {@code getRelaxedInSituData}, to define the minimum quality level for each data type. 
      * if equal to {@code null} or {@code DataState.NODATA}, then no filtering is performed 
-     * based on this data type. Also, if all these methods return {@code DataState.LOWQUALITY} 
-     * in an {@code ExpressionCallTO}, then no filtering on any data type is performed 
-     * for this {@code ExpressionCallTO}. 
-     * <li>{@code isIncludeSubstructures}, {@code isIncludeSubStages}, and {@code isIncludeParentStructures}, 
-     * to define whether calls should be propagated. 
+     * based on this data type. All parameters in a same {@code U} are considered as AND conditions. 
      * <li>{@code getAnatOriginOfLine}, {@code getStageOriginOfLine}, and {@code getOriginOfLine}, 
      * to define whether the returned calls should be filtered based on the origin of the propagated data.
      * Must be {@code null} to accept all origins. 
@@ -180,10 +130,14 @@ public abstract class CallDAOFilter<T extends Enum<T> & CallDAO.Attribute, U ext
      * the minimum p-values requested. 
      * </ul>
      * <p>
-     * Note that all the provided {@code T}s should have the same propagation states 
-     * (methods {@code isIncludeSubstructures}, {@code isIncludeSubStages}, and 
-     * {@code isIncludeParentStructures}, when available), otherwise, 
-     * an {@code IllegalArgumentException} is thrown.
+     * Several {@code U}s are seen as OR conditions, and different parameters in a same {@code U} 
+     * are seen as AND conditions. Notably, each quality associated to a data type 
+     * in a same {@code CallTO} is considered as an AND condition (for instance, 
+     * "affymetrixData >= HIGH_QUALITY AND rnaSeqData >= HIGH_QUALITY"). To configure OR conditions, 
+     * (for instance, "affymetrixData >= HIGH_QUALITY OR rnaSeqData >= HIGH_QUALITY"), 
+     * several {@code CallTO}s must be provided to this {@code CallDAOFilter}. 
+     * So for instance, if the quality of all data types in a {@code CallTO} are set to 
+     * {@code LOW_QUALITY}, it will only allow to retrieve calls with data in all data types. 
      * 
      * @param geneIds           A {@code Collection} of {@code String}s that are IDs of genes 
      *                          to filter expression queries. Can be {@code null} or empty.
@@ -193,13 +147,11 @@ public abstract class CallDAOFilter<T extends Enum<T> & CallDAO.Attribute, U ext
      *                          the filtering of conditions with expression data. If several 
      *                          {@code ConditionFilter}s are provided, they are seen as "OR" conditions.
      *                          Can be {@code null} or empty.
-     * @param callTOFilters     A {@code Collection} of {@code T}s allowing to configure the minimum 
-     *                          quality level for each data type, the call propagation method, 
-     *                          the call types produced from each data type... If several 
-     *                          {@code T}s are provided, they are seen as "OR" conditions.
+     * @param callTOFilters     A {@code Collection} of {@code CallTO}s of type {@code U} allowing 
+     *                          to configure the minimum quality level for each data type, etc. If several 
+     *                          {@code U}s are provided, they are seen as "OR" conditions.
      *                          Can be {@code null} or empty.
      * @param attributeType     The class type of the {@code Attribute}s of type {@code T}.
-     * @throws IllegalArgumentException If some {@code T}s have different propagation states.
      */
     public CallDAOFilter(Collection<String> geneIds, Collection<String> speciesIds, 
             Collection<DAOConditionFilter> conditionFilters, Collection<U> callTOFilters, 
@@ -250,11 +202,9 @@ public abstract class CallDAOFilter<T extends Enum<T> & CallDAO.Attribute, U ext
         return new LinkedHashSet<>(conditionFilters);
     }
     /**
-     * @return  A {@code LinkedHashSet} of {@code T}s allowing to configure the minimum 
-     *          quality level for each data type, the call propagation method, 
-     *          the call types produced from each data type... If several 
-     *          {@code T}s are provided, they are seen as "OR" conditions.
-     *          See {@code CallDAOFilter} constructor for more details.
+     * @return  A {@code LinkedHashSet} of {@code CallTO}s of type {@code U} allowing to configure 
+     *          the minimum quality level for each data type, etc. If several 
+     *          {@code U}s are provided, they are seen as "OR" conditions.
      *          Provided as a {@code LinkedHashSet} for convenience, to consistently set parameters 
      *          in queries.
      */
@@ -273,9 +223,17 @@ public abstract class CallDAOFilter<T extends Enum<T> & CallDAO.Attribute, U ext
      * (see {@link CallDAO.Attribute#isDataTypeAttribute()}). The {@code DataState}s 
      * associated to each data type are retrieved using {@link CallTO#extractDataTypesToDataStates()}. 
      * A check is then performed to ensure that the {@code CallTO} will actually result 
-     * in a filtering of the data. For instance, if all data types are associated to 
-     * a {@code DataState} {@code LOWQUALITY}, then it is equivalent to requesting no filtering at all, 
-     * and the {@code Map} returned by this method will be empty. 
+     * in a filtering of the data. For instance, if all data qualities are {@code null},  
+     * then it is equivalent to requesting no filtering at all, and the {@code EnumMap} returned 
+     * by this method will be empty. 
+     * <p>
+     * Each quality associated to a data type in a same {@code CallTO} is considered 
+     * as an AND condition (for instance, "affymetrixData >= HIGH_QUALITY AND 
+     * rnaSeqData >= HIGH_QUALITY"). To configure OR conditions, (for instance, 
+     * "affymetrixData >= HIGH_QUALITY OR rnaSeqData >= HIGH_QUALITY"), several {@code CallTO}s 
+     * must be provided to this {@code CallDAOFilter}. So for instance, if the quality 
+     * of all data types of {@code callTO} are set to {@code LOW_QUALITY}, it will only allow 
+     * to retrieve calls with data in all data types. 
      *  
      * @param callTO    A {@code CallTO} to extract filtering data types from.
      * @return          An {@code EnumMap} where keys are {@code Attribute}s associated to a data type, 
@@ -291,12 +249,10 @@ public abstract class CallDAOFilter<T extends Enum<T> & CallDAO.Attribute, U ext
         final Map<T, DataState> typesToStates = callTO.extractDataTypesToDataStates();
         
         Set<DataState> states = new HashSet<>(typesToStates.values());
-        //if all data types are null or requested to DataState.LOWQUALITY 
-        //or DataState.NODATA, or if we only have null and DataState.NODATA values, 
-        //it is equivalent to having no filtering for data types...
+        //if we only have null and/or DataState.NODATA values, 
+        //it is equivalent to having no filtering for data types.
         if ((states.size() == 1 && 
-                (states.contains(null) || states.contains(DataState.NODATA) || 
-                 states.contains(DataState.LOWQUALITY))) || 
+                (states.contains(null) || states.contains(DataState.NODATA))) || 
             (states.size() == 2 && states.contains(null) && 
             states.contains(DataState.NODATA))) {
             

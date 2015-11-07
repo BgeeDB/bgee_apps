@@ -18,6 +18,7 @@ import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.TOComparator;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.CallDAOFilter.ExpressionCallDAOFilter;
+import org.bgee.model.dao.api.expressiondata.DAOConditionFilter;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO.OriginOfLine;
@@ -114,7 +115,8 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
 
         // Compare
         MySQLExpressionCallTOResultSet rs = 
-                (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(null, null, null, null, null);
+                (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(null, false, false, 
+                        null, null, null, null);
         //no ordering requested, put results in a Set
         Set<ExpressionCallTO> expressions = new HashSet<>(rs.getAllTOs());
         assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + expectedExprCalls 
@@ -134,7 +136,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         null, null, true)));
 
         // Compare
-        rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(null, null, null, 
+        rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(null, false, false, null, null, 
                         Arrays.asList(ExpressionCallDAO.Attribute.GENE_ID, 
                                 ExpressionCallDAO.Attribute.OBSERVED_DATA), 
                         null);
@@ -170,7 +172,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true)));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), 
-                null, null, null, null);
+                false, false, null, null, null, null);
         //no ordering requested, put results in a Set
         expressions = new HashSet<>(rs.getAllTOs());
         assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + expectedExprCalls 
@@ -184,8 +186,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         // Generate parameters
         filter = new ExpressionCallDAOFilter(null, 
                 Arrays.asList("11", "41"), // 41 = species Id that does not exist)
-                null, 
-                Arrays.asList(new ExpressionCallTO(true, false)));
+                null, null);
         // Generate manually expected result
         expectedExprCalls = new HashSet<>(Arrays.asList(
                 new ExpressionCallTO("2", "ID1", "Anat_id6", "Stage_id6", DataState.LOWQUALITY, 
@@ -208,7 +209,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         true, false, OriginOfLine.SELF, OriginOfLine.SELF, true)));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), 
-                null, null, null, null);
+                true, false, null, null, null, null);
         //no ordering requested, put results in a Set
         expressions = new HashSet<>(rs.getAllTOs());
         assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + expectedExprCalls 
@@ -221,8 +222,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         // Generate parameters
         filter = new ExpressionCallDAOFilter(null, 
                 Arrays.asList("11", "41"), // 41 = species Id that does not exist)
-                null, 
-                Arrays.asList(new ExpressionCallTO(true, false)));
+                null, null);
         // Generate manually expected result
         expectedExprCalls = new HashSet<>(Arrays.asList(
                 new ExpressionCallTO(null, "ID1", null, null, null, null, null, null, 
@@ -231,7 +231,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         null, null, null, null, false)));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), 
-                null, null, 
+                true, false, null, null, 
                 Arrays.asList(ExpressionCallDAO.Attribute.GENE_ID, 
                         ExpressionCallDAO.Attribute.OBSERVED_DATA), 
                 null);
@@ -245,8 +245,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         
         // Without species filter but include substructures, all attributes
         // Generate parameters
-        filter = new ExpressionCallDAOFilter(null, null, null, 
-                Arrays.asList(new ExpressionCallTO(true, false)));
+        filter = new ExpressionCallDAOFilter(null, null, null, null);
         //Generate manually expected result
         expectedExprCalls = new HashSet<>(Arrays.asList(
                 new ExpressionCallTO("1", "ID3", "Anat_id1", "Stage_id1", 
@@ -329,7 +328,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         true, false, OriginOfLine.SELF, OriginOfLine.SELF, true)));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), 
-                null, null, null, null);
+                true, false, null, null, null, null);
         //no ordering requested, put results in a Set
         expressions = new HashSet<>(rs.getAllTOs());
         assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + expectedExprCalls 
@@ -339,15 +338,14 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         assertFalse("Incorrect use of the LIMIT feature", rs.isUsingLimitFeature()); 
         
         // Test get only GENE_ID without species filter and without including substructures
-        filter = new ExpressionCallDAOFilter(null, null, null, 
-                Arrays.asList(new ExpressionCallTO(false, false)));
+        filter = new ExpressionCallDAOFilter(null, null, null, null);
         expectedExprCalls = new HashSet<>(Arrays.asList(
                 new ExpressionCallTO(null, "ID1", null, null, null, null, null, null, null, null, null, null, null),
                 new ExpressionCallTO(null, "ID2", null, null, null, null, null, null, null, null, null, null, null),
                 new ExpressionCallTO(null, "ID3", null, null, null, null, null, null, null, null, null, null, null)));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), 
-                null, null, Arrays.asList(ExpressionCallDAO.Attribute.GENE_ID), null);
+                true, false, null, null, Arrays.asList(ExpressionCallDAO.Attribute.GENE_ID), null);
         //no ordering requested, put results in a Set
         expressions = new HashSet<>(rs.getAllTOs());
         assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + expectedExprCalls 
@@ -357,14 +355,13 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         assertFalse("Incorrect use of the LIMIT feature", rs.isUsingLimitFeature()); 
 
         // Test get only INCLUDE_SUBSTRUCTURES without species filter and without including substructures
-        filter = new ExpressionCallDAOFilter(null, null, null, 
-                Arrays.asList(new ExpressionCallTO(false, false)));
+        filter = new ExpressionCallDAOFilter(null, null, null, null);
         expectedExprCalls = new HashSet<>(Arrays.asList(
                 new ExpressionCallTO(null, null, null, null, null, null, null, null, false, null, 
                         null, null, null)));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), 
-                null, null, Arrays.asList(ExpressionCallDAO.Attribute.INCLUDE_SUBSTRUCTURES), null);
+                false, false, null, null, Arrays.asList(ExpressionCallDAO.Attribute.INCLUDE_SUBSTRUCTURES), null);
         //no ordering requested, put results in a Set
         expressions = new HashSet<>(rs.getAllTOs());
         assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + expectedExprCalls 
@@ -374,8 +371,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         assertFalse("Incorrect use of the LIMIT feature", rs.isUsingLimitFeature()); 
 
         // Test get only ID without species filter and including substructures
-        filter = new ExpressionCallDAOFilter(null, null, null, 
-                Arrays.asList(new ExpressionCallTO(true, false)));
+        filter = new ExpressionCallDAOFilter(null, null, null, null);
         expectedExprCalls = new HashSet<>(Arrays.asList(
                 new ExpressionCallTO("1", null, null, null, null, null, null, null, null, null, null, null, null),
                 new ExpressionCallTO("2", null, null, null, null, null, null, null, null, null, null, null, null),
@@ -405,7 +401,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 new ExpressionCallTO("26", null, null, null, null, null, null, null, null, null, null, null, null)));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), 
-                null, null, Arrays.asList(ExpressionCallDAO.Attribute.ID), null);
+                true, false, null, null, Arrays.asList(ExpressionCallDAO.Attribute.ID), null);
         //no ordering requested, put results in a Set
         expressions = new HashSet<>(rs.getAllTOs());
         assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + expectedExprCalls 
@@ -415,8 +411,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         assertFalse("Incorrect use of the LIMIT feature", rs.isUsingLimitFeature()); 
         
         // Test get INCLUDE_SUBSTRUCTURES (and STAGE_ID) without OriginOfLine including substructures
-        filter = new ExpressionCallDAOFilter(null, null, null, 
-                Arrays.asList(new ExpressionCallTO(true, false)));
+        filter = new ExpressionCallDAOFilter(null, null, null, null);
         expectedExprCalls = new HashSet<>(Arrays.asList(
                 new ExpressionCallTO(null, null, null, "Stage_id1", 
                         null, null, null, null, true, null, null, null, null),
@@ -438,7 +433,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         null, null, null, null, true, null, null, null, null)));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), 
-                null, null, Arrays.asList(ExpressionCallDAO.Attribute.STAGE_ID, 
+                true, false, null, null, Arrays.asList(ExpressionCallDAO.Attribute.STAGE_ID, 
                         ExpressionCallDAO.Attribute.INCLUDE_SUBSTRUCTURES), null);
         //no ordering requested, put results in a Set
         expressions = new HashSet<>(rs.getAllTOs());
@@ -447,9 +442,12 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions));
         assertFalse("Incorrect filtering of duplicates", rs.isFilterDuplicates());
         assertFalse("Incorrect use of the LIMIT feature", rs.isUsingLimitFeature()); 
-    }/**
-     * Test the select method {@link MySQLExpressionCallDAO#getExpressionCalls(ExpressionCallParams)} 
-     * when including data from sub-stages.
+    }
+    
+    /**
+     * Test the method {@link MySQLExpressionCallDAO#getExpressionCalls(Collection, 
+     * Collection, String, Collection, LinkedHashMap)} when including data from sub-stages, 
+     * to see if it correctly reproduces already existing behavior. 
      */
     @Test
     public void regressionTestGetExpressionCallsIncludeSubStages() throws SQLException {
@@ -472,8 +470,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         // First, we test with no GROUP BY needed (we only request attributes not needing a GROUP BY)
         // Without speciesIds and not include organ substructures
         // Generate parameters
-        ExpressionCallDAOFilter filter = new ExpressionCallDAOFilter(null, null, null, 
-                Arrays.asList(new ExpressionCallTO(false, true)));
+        ExpressionCallDAOFilter filter = new ExpressionCallDAOFilter(null, null, null, null);
         // Generate manually expected result. No ordering requested, put in a Set
         Set<ExpressionCallTO> expectedExprCalls = new HashSet<>(Arrays.asList(
                 new ExpressionCallTO("ID1__Anat_id1__Stage_id1", "ID1", "Anat_id1", "Stage_id1",
@@ -523,7 +520,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         // Compare
         MySQLExpressionCallTOResultSet rs = 
                 (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), 
-                        null, null, 
+                        false, true, null, null, 
                         Arrays.asList(ExpressionCallDAO.Attribute.ID, 
                                 ExpressionCallDAO.Attribute.GENE_ID, 
                                 ExpressionCallDAO.Attribute.STAGE_ID, 
@@ -544,8 +541,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         // GROUP BY needed but no LIMIT clause
         dao = new MySQLExpressionCallDAO(this.getMySQLDAOManager(DAOManager.getDefaultProperties()));
         //need to restrict the gene IDs to use to get no LIMIT clause
-        filter = new ExpressionCallDAOFilter(allGeneIds, null, null, 
-                Arrays.asList(new ExpressionCallTO(false, true)));
+        filter = new ExpressionCallDAOFilter(allGeneIds, null, null, null);
         // Generate manually expected result. No ordering requested, put in a Set
         expectedExprCalls = new HashSet<>(Arrays.asList(
                 new ExpressionCallTO("ID1__Anat_id1__Stage_id1", "ID1", "Anat_id1", "Stage_id1",
@@ -616,7 +612,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         DataState.NODATA, false, true, OriginOfLine.SELF, OriginOfLine.SELF, true)));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), 
-                        null, null, null, null);
+                        false, true, null, null, null, null);
         //no ordering requested, put results in a Set
         expressions = new HashSet<>(rs.getAllTOs());
         assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + expectedExprCalls 
@@ -628,11 +624,10 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         
         // GROUP BY needed, and LIMIT clause
         dao = new MySQLExpressionCallDAO(this.getMySQLDAOManager(newProps));
-        filter = new ExpressionCallDAOFilter(null, null, null, 
-                Arrays.asList(new ExpressionCallTO(false, true)));
+        filter = new ExpressionCallDAOFilter(null, null, null, null);
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), 
-                        null, null, null, null);
+                        false, true, null, null, null, null);
         //no ordering requested, put results in a Set
         expressions = new HashSet<>(rs.getAllTOs());
         assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + expectedExprCalls 
@@ -647,7 +642,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         // Generate parameters
         filter = new ExpressionCallDAOFilter(null, 
                 Arrays.asList("11", "41"), // 41 = species Id that does not exist
-                null, Arrays.asList(new ExpressionCallTO(false, true)));
+                null, null);
         // Generate manually expected result
         expectedExprCalls = new HashSet<>(Arrays.asList(
                 new ExpressionCallTO("ID1__Anat_id1__Stage_id1", "ID1", "Anat_id1", "Stage_id1",
@@ -668,7 +663,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         null, null, null, null, false, true, OriginOfLine.SELF, null, null)));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), 
-                null, null, 
+                false, true, null, null, 
                 Arrays.asList(ExpressionCallDAO.Attribute.ID, 
                         ExpressionCallDAO.Attribute.GENE_ID, 
                         ExpressionCallDAO.Attribute.STAGE_ID, 
@@ -691,7 +686,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         //need to restrict the gene IDs to get no LIMIT clause
         filter = new ExpressionCallDAOFilter(allGeneIds, 
                 Arrays.asList("11", "41"), // 41 = species Id that does not exist
-                null, Arrays.asList(new ExpressionCallTO(false, true)));
+                null, null);
         // Generate manually expected result
         expectedExprCalls = new HashSet<>(Arrays.asList(
                 new ExpressionCallTO("ID1__Anat_id1__Stage_id1", "ID1", "Anat_id1", "Stage_id1",
@@ -720,7 +715,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         DataState.LOWQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false)));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), 
-                        null, null, null, null);
+                        false, true, null, null, null, null);
         //no ordering requested, put results in a Set
         expressions = new HashSet<>(rs.getAllTOs());
         assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + expectedExprCalls 
@@ -734,10 +729,10 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         dao = new MySQLExpressionCallDAO(this.getMySQLDAOManager(newProps));
         filter = new ExpressionCallDAOFilter(null, 
                 Arrays.asList("11", "41"), // 41 = species Id that does not exist
-                null, Arrays.asList(new ExpressionCallTO(false, true)));
+                null, null);
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), 
-                        null, null, null, null);
+                        false, true, null, null, null, null);
         //no ordering requested, put results in a Set
         expressions = new HashSet<>(rs.getAllTOs());
         assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + expectedExprCalls 
@@ -755,7 +750,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         //need to restrict the gene IDs to get no LIMIT clause
         filter = new ExpressionCallDAOFilter(allGeneIds, 
                 Arrays.asList("11", "21", "41"), // 41 = species Id that does not exist
-                null, Arrays.asList(new ExpressionCallTO(true, true)));
+                null, null);
         // Generate manually expected result
         expectedExprCalls = new HashSet<>(Arrays.asList(
                 new ExpressionCallTO("ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6", 
@@ -834,7 +829,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         null, null, null, null, true, true, null, null, null)));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), 
-                        null, null, 
+                        true, true, null, null, 
                         Arrays.asList(ExpressionCallDAO.Attribute.ID, 
                                 ExpressionCallDAO.Attribute.GENE_ID, 
                                 ExpressionCallDAO.Attribute.STAGE_ID, 
@@ -856,7 +851,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         //need to restrict the gene IDs to get no LIMIT clause
         filter = new ExpressionCallDAOFilter(allGeneIds, 
                 Arrays.asList("11", "21", "41"), // 41 = species Id that does not exist
-                null, Arrays.asList(new ExpressionCallTO(true, true)));
+                null, null);
         // Generate manually expected result
         expectedExprCalls = new HashSet<>(Arrays.asList(
                 new ExpressionCallTO("ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6", 
@@ -998,7 +993,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false)));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), 
-                        null, null, null, null);
+                        true, true, null, null, null, null);
         //no ordering requested, put results in a Set
         expressions = new HashSet<>(rs.getAllTOs());
         assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + expectedExprCalls 
@@ -1012,10 +1007,10 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         dao = new MySQLExpressionCallDAO(this.getMySQLDAOManager(newProps));
         filter = new ExpressionCallDAOFilter(null, 
                 Arrays.asList("11", "21", "41"), // 41 = species Id that does not exist
-                null, Arrays.asList(new ExpressionCallTO(true, true)));
+                null, null);
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), 
-                        null, null, null, null);
+                        true, true, null, null, null, null);
         //no ordering requested, put results in a Set
         expressions = new HashSet<>(rs.getAllTOs());
         assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + expectedExprCalls 
@@ -1026,15 +1021,14 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         
         // Test get only GENE_ID without species filter and without including substructures, 
         // but with including sub-stages
-        filter = new ExpressionCallDAOFilter(null, null, 
-                null, Arrays.asList(new ExpressionCallTO(false, true)));
+        filter = new ExpressionCallDAOFilter(null, null, null, null);
         expectedExprCalls = new HashSet<>(Arrays.asList(
                 new ExpressionCallTO(null, "ID1", null, null, null, null, null, null, null, null, null, null, null),
                 new ExpressionCallTO(null, "ID2", null, null, null, null, null, null, null, null, null, null, null),
                 new ExpressionCallTO(null, "ID3", null, null, null, null, null, null, null, null, null, null, null)));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), 
-                        null, null, Arrays.asList(ExpressionCallDAO.Attribute.GENE_ID), null);
+                        false, true, null, null, Arrays.asList(ExpressionCallDAO.Attribute.GENE_ID), null);
         //no ordering requested, put results in a Set
         expressions = new HashSet<>(rs.getAllTOs());
         assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + expectedExprCalls 
@@ -1049,7 +1043,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 new ExpressionCallTO(null, null, null, null, null, null, null, null, false, null, null, null, null)));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), 
-                        null, null, Arrays.asList(ExpressionCallDAO.Attribute.INCLUDE_SUBSTRUCTURES), null);
+                        false, true, null, null, Arrays.asList(ExpressionCallDAO.Attribute.INCLUDE_SUBSTRUCTURES), null);
         //no ordering requested, put results in a Set
         expressions = new HashSet<>(rs.getAllTOs());
         assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + expectedExprCalls 
@@ -1064,7 +1058,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 new ExpressionCallTO(null, null, null, null, null, null, null, null, null, true, null, null, null)));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), 
-                        null, null, Arrays.asList(ExpressionCallDAO.Attribute.INCLUDE_SUBSTAGES), null);
+                        false, true, null, null, Arrays.asList(ExpressionCallDAO.Attribute.INCLUDE_SUBSTAGES), null);
         //no ordering requested, put results in a Set
         expressions = new HashSet<>(rs.getAllTOs());
         assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + expectedExprCalls 
@@ -1076,7 +1070,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         // Test get only ID with species filter and including substructures and sub-stages
         filter = new ExpressionCallDAOFilter(null, 
                 Arrays.asList("11", "41"), // 41 = species Id that does not exist
-                null, Arrays.asList(new ExpressionCallTO(true, true)));
+                null, null);
         expectedExprCalls = new HashSet<>(Arrays.asList(
                 new ExpressionCallTO("ID1__Anat_id6__Stage_id1", null, null, null, null, null, 
                         null, null, null, null, null, null, null),
@@ -1102,7 +1096,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         null, null, null, null, null, null, null)));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), 
-                        null, null, Arrays.asList(ExpressionCallDAO.Attribute.ID), null);
+                        true, true, null, null, Arrays.asList(ExpressionCallDAO.Attribute.ID), null);
         //no ordering requested, put results in a Set
         expressions = new HashSet<>(rs.getAllTOs());
         assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + expectedExprCalls 
@@ -1115,7 +1109,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         // and sub-structures and species filter
         filter = new ExpressionCallDAOFilter(null, 
                 Arrays.asList("11", "41"), // 41 = species Id that does not exist
-                null, Arrays.asList(new ExpressionCallTO(true, true)));
+                null, null);
         expectedExprCalls = new HashSet<>(Arrays.asList(
                 new ExpressionCallTO(null, null, null, "Stage_id1", 
                 null, null, null, null, null, true, null, null, null),
@@ -1131,7 +1125,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         null, null, null, null, null, true, null, null, null)));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), 
-                        null, null, 
+                        true, true, null, null, 
                         Arrays.asList(ExpressionCallDAO.Attribute.STAGE_ID, 
                                 ExpressionCallDAO.Attribute.INCLUDE_SUBSTAGES), 
                         null);

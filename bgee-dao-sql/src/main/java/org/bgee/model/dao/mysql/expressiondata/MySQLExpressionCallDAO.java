@@ -237,6 +237,7 @@ implements ExpressionCallDAO {
                     clonedOrderingAttrs.keySet().contains(ExpressionCallDAO.OrderingAttribute.MEAN_RANK)) {
                 
                 groupingByNeeded = true;
+                log.trace("GROUP BY needed because of requested Attributes.");
             }
             
             //for filtering based on data types, we can still avoid to filter in the HAVING clause 
@@ -250,6 +251,10 @@ implements ExpressionCallDAO {
             if (groupingByNeeded || 
                     //check whether there is any AND condition between data types
                     filteringDataTypesPerCallTO.stream().anyMatch(set -> set.size() > 1)) {
+                if (log.isTraceEnabled() && !groupingByNeeded) {
+                    log.trace("GROUP BY needed because of AND conditions between data types. {}", 
+                            filteringDataTypesPerCallTO);
+                }
                 havingClauseNeeded = true;
                 groupingByNeeded = true;
                 //add in the SELECT clause the columns we will need in the HAVING clause, 
@@ -270,6 +275,7 @@ implements ExpressionCallDAO {
                 //add in the SELECT clause the columns we will need in the HAVING clause, 
                 //to avoid over-verbose HAVING clause.
                 updatedAttrs.add(ExpressionCallDAO.Attribute.OBSERVED_DATA);
+                log.trace("GROUP BY needed because of filtering based on OBSERVED_DATA.");
             }
             if (includeSubstructures && 
                     allCallTOs.stream().anyMatch(e -> e.getAnatOriginOfLine() != null)) {
@@ -278,6 +284,7 @@ implements ExpressionCallDAO {
                 //add in the SELECT clause the columns we will need in the HAVING clause, 
                 //to avoid over-verbose HAVING clause.
                 updatedAttrs.add(ExpressionCallDAO.Attribute.ANAT_ORIGIN_OF_LINE);
+                log.trace("GROUP BY needed because of filtering based on ANAT_ORIGIN_OF_LINE.");
             }
             if (allCallTOs.stream().anyMatch(e -> e.getStageOriginOfLine() != null)) {
                 havingClauseNeeded = true;
@@ -285,6 +292,7 @@ implements ExpressionCallDAO {
                 //add in the SELECT clause the columns we will need in the HAVING clause, 
                 //to avoid over-verbose HAVING clause.
                 updatedAttrs.add(ExpressionCallDAO.Attribute.STAGE_ORIGIN_OF_LINE);
+                log.trace("GROUP BY needed because of filtering based on STAGE_ORIGIN_OF_LINE.");
             }
             
             if (log.isWarnEnabled() && groupingByNeeded && 
@@ -522,9 +530,12 @@ implements ExpressionCallDAO {
         }
         
         String filtering = this.generateFilteringClause(callFilters, !globalGeneFilter, 
-                !globalSpeciesFilter, exprTableName, 
-                includeSubStages? propagatedStageTableName: exprTableName,
-                "gene", includeSubstructures, includeSubStages);
+                !globalSpeciesFilter, 
+                havingClauseNeeded? null: exprTableName, 
+                havingClauseNeeded? null: 
+                    includeSubStages? propagatedStageTableName: exprTableName,
+                havingClauseNeeded? null: "gene", 
+                includeSubstructures, includeSubStages);
         if (!havingClauseNeeded && !filtering.isEmpty()) {
             if (!whereClauseStarted) {
                 sql += "WHERE ";
@@ -536,10 +547,17 @@ implements ExpressionCallDAO {
         
         if (stageGroupingByNeeded) {
             sql += " GROUP BY " + exprTableName + ".geneId, " + 
-                   exprTableName + ".anatEntityId, " + propagatedStageTableName + ".stageId ";
+                   exprTableName + ".anatEntityId, " + propagatedStageTableName + ".stageId";
             
             if (havingClauseNeeded && !filtering.isEmpty()) {
-                sql += "HAVING " + filtering;
+                //in case we need to filter species in the HAVING clause, we need to add it 
+                //to the GROUP BY to be able to "see" them in the HAVING.
+                if (!globalSpeciesFilter &&  
+                        callFilters.stream().anyMatch(filter -> !filter.getSpeciesIds().isEmpty())) {
+                    sql += ", gene.speciesId";
+                }
+                
+                sql += " HAVING " + filtering;
             }
         }
         
@@ -993,7 +1011,9 @@ implements ExpressionCallDAO {
     }
     
     /**
-     * Generates the WHERE or HAVING clause of an expression query. 
+     * Generates the WHERE or HAVING clause of an expression query. If it is meant to be used 
+     * on the HAVING clause, then no table name should be provided, calling a table name 
+     * from a HAVING clause is invalid.
      * 
      * @param callFilters           A {@code LinkedHashSet} of {@code ExpressionCallDAOFilter}s, 
      *                              providing the parameters of the query.
@@ -1031,7 +1051,10 @@ implements ExpressionCallDAO {
                 if (hasPreviousClause) {
                     sb.append("AND ");
                 }
-                sb.append(exprTableName).append(".geneId IN (")
+                if (exprTableName != null) {
+                    sb.append(exprTableName).append(".");
+                }
+                sb.append("geneId IN (")
                 .append(BgeePreparedStatement.generateParameterizedQueryString(callFilter.getGeneIds().size()))
                 .append(") ");
                 hasPreviousClause = true;
@@ -1042,7 +1065,10 @@ implements ExpressionCallDAO {
                 if (hasPreviousClause) {
                     sb.append("AND ");
                 }
-                sb.append(geneTableName).append(".speciesId IN (")
+                if (geneTableName != null) {
+                    sb.append(geneTableName).append(".");
+                }
+                sb.append("speciesId IN (")
                 .append(BgeePreparedStatement.generateParameterizedQueryString(callFilter.getSpeciesIds().size()))
                 .append(") ");
                 hasPreviousClause = true;
@@ -1058,7 +1084,10 @@ implements ExpressionCallDAO {
                     .map(cond -> {
                         StringBuilder sb2 = new StringBuilder();
                         if (!cond.getAnatEntitieIds().isEmpty()) {
-                            sb2.append(exprTableName).append(".anatEntityId IN (")
+                            if (exprTableName != null) {
+                                sb2.append(exprTableName).append(".");
+                            }
+                            sb2.append("anatEntityId IN (")
                             .append(BgeePreparedStatement.generateParameterizedQueryString(
                                     cond.getAnatEntitieIds().size())).append(") ");
                         }
@@ -1066,7 +1095,10 @@ implements ExpressionCallDAO {
                             if (sb2.length() != 0) {
                                 sb2.append("AND ");
                             }
-                            sb2.append(stageTableName).append(".stageId IN (")
+                            if (stageTableName != null) {
+                                sb2.append(stageTableName).append(".");
+                            }
+                            sb2.append("stageId IN (")
                             .append(BgeePreparedStatement.generateParameterizedQueryString(
                                     cond.getDevStageIds().size())).append(") ");
                         }
@@ -1102,7 +1134,10 @@ implements ExpressionCallDAO {
                         sb2.append("AND ");
                     } 
                     if (!includeSubStages) {
-                        sb2.append(exprTableName).append(".originOfLine = ? ");
+                        if (exprTableName != null) {
+                            sb2.append(exprTableName).append(".");
+                        }
+                        sb2.append("originOfLine = ? ");
                     } else {
                         sb2.append("anatOriginOfLine = ? ");
                     }

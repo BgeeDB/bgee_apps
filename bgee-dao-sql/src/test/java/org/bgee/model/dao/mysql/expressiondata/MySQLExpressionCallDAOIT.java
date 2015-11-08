@@ -62,6 +62,165 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
     
     /**
      * Unit test for {@link MySQLExpressionCallDAO#getExpressionCalls(Collection, 
+     * Collection, String, Collection, LinkedHashMap)}, when not including substages.
+     */
+    @Test
+    public void shouldGetExpressionCallsNoSubStages() throws SQLException {
+        
+        this.useSelectDB();
+        MySQLExpressionCallDAO dao = new MySQLExpressionCallDAO(this.getMySQLDAOManager());
+
+        //now, filter with conditions, data types, gene IDs, species IDs, etc
+        //First, without substructures
+        Collection<ExpressionCallDAOFilter> filters = Arrays.asList(
+                new ExpressionCallDAOFilter(Arrays.asList("ID1", "ID2", "ID3"), 
+                        Arrays.asList("11", "31"), 
+                        Arrays.asList(new DAOConditionFilter(
+                                Arrays.asList("Anat_id1", "Anat_id3"), 
+                                Arrays.asList("Stage_id1")), 
+                                new DAOConditionFilter(Arrays.asList("Anat_id6"), null)), 
+                        Arrays.asList(
+                                new ExpressionCallTO(null, null, 
+                                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                                        OriginOfLine.SELF, OriginOfLine.SELF, true), 
+                                new ExpressionCallTO(null, null, DataState.HIGHQUALITY, null), 
+                                new ExpressionCallTO(null, null, null, DataState.LOWQUALITY, 
+                                        OriginOfLine.SELF, OriginOfLine.SELF, true))
+                        ), 
+                new ExpressionCallDAOFilter(Arrays.asList("ID2"), 
+                        null, 
+                        Arrays.asList(new DAOConditionFilter(
+                                Arrays.asList("Anat_id11", "Anat_id1"), 
+                                Arrays.asList("Stage_id12", "Stage_id13", "Stage_id9", "Stage_id2")), 
+                                new DAOConditionFilter(null, Arrays.asList("Stage_id18"))), 
+                        Arrays.asList(
+                                new ExpressionCallTO(null, null, 
+                                        DataState.HIGHQUALITY, DataState.HIGHQUALITY), 
+                                new ExpressionCallTO(DataState.HIGHQUALITY, null, null, null))
+                        ));
+        List<ExpressionCallTO> orderedExpectedExprCalls = Arrays.asList(
+                //calls retrieved thanks to first filter
+                new ExpressionCallTO("1", "ID3", "Anat_id1", "Stage_id1", DataState.LOWQUALITY, 
+                        DataState.NODATA, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
+                        false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
+                new ExpressionCallTO("2", "ID1", "Anat_id6", "Stage_id6", DataState.LOWQUALITY,
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY,
+                        false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
+                new ExpressionCallTO("3", "ID1", "Anat_id6", "Stage_id7", DataState.NODATA, 
+                        DataState.NODATA, DataState.NODATA, DataState.LOWQUALITY,
+                        false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
+                //retrieved thanks to second filter
+                new ExpressionCallTO("4", "ID2", "Anat_id2", "Stage_id18", DataState.HIGHQUALITY, 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                        false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
+                new ExpressionCallTO("6", "ID2", "Anat_id11", "Stage_id12", DataState.HIGHQUALITY, 
+                        DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
+                        false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
+                new ExpressionCallTO("9", "ID2", "Anat_id1", "Stage_id9", DataState.HIGHQUALITY, 
+                        DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
+                        false, false, OriginOfLine.SELF, OriginOfLine.SELF, true));
+        //No ordering requested, put in a Set
+        Set<ExpressionCallTO> unorderedExpectedExprCalls = new HashSet<>(orderedExpectedExprCalls);
+        // Compare
+        MySQLExpressionCallTOResultSet rs = 
+                (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(filters, 
+                        false, false, null, null, null, null);
+        //no ordering requested, put results in a Set
+        Set<ExpressionCallTO> unorderedExpressions = new HashSet<>(rs.getAllTOs());
+        assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + unorderedExpectedExprCalls 
+                + ", but was: " + unorderedExpressions, 
+                TOComparator.areTOCollectionsEqual(unorderedExpectedExprCalls, unorderedExpressions));
+        assertFalse("Incorrect filtering of duplicates", rs.isFilterDuplicates());
+        assertFalse("Incorrect use of the LIMIT feature", rs.isUsingLimitFeature());
+
+        //TODO: test with ordering
+        
+        //now, without substructures
+        filters = Arrays.asList(
+                new ExpressionCallDAOFilter(Arrays.asList("ID1", "ID2", "ID3"), 
+                        Arrays.asList("11", "31"), 
+                        Arrays.asList(new DAOConditionFilter(
+                                Arrays.asList("Anat_id1", "Anat_id3"), 
+                                Arrays.asList("Stage_id1")), 
+                                new DAOConditionFilter(Arrays.asList("Anat_id6"), null)), 
+                        Arrays.asList(
+                                new ExpressionCallTO(null, null, 
+                                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                                        OriginOfLine.SELF, OriginOfLine.SELF, true), 
+                                new ExpressionCallTO(null, null, DataState.HIGHQUALITY, null), 
+                                new ExpressionCallTO(null, null, null, DataState.LOWQUALITY, 
+                                        OriginOfLine.SELF, OriginOfLine.SELF, true))
+                        ), 
+                new ExpressionCallDAOFilter(Arrays.asList("ID2"), 
+                        null, 
+                        Arrays.asList(new DAOConditionFilter(
+                                Arrays.asList("Anat_id11", "Anat_id1"), 
+                                Arrays.asList("Stage_id12", "Stage_id13", "Stage_id9", "Stage_id2")), 
+                                new DAOConditionFilter(null, Arrays.asList("Stage_id18"))), 
+                        Arrays.asList(
+                                new ExpressionCallTO(null, null, 
+                                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                                        OriginOfLine.DESCENT, OriginOfLine.SELF, false), 
+                                new ExpressionCallTO(DataState.HIGHQUALITY, null, null, null))
+                        ));
+        orderedExpectedExprCalls = Arrays.asList(
+                //first filter
+                new ExpressionCallTO("1", "ID3", "Anat_id1", "Stage_id1", 
+                        DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
+                        DataState.HIGHQUALITY, true, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
+                new ExpressionCallTO("9", "ID3", "Anat_id3", "Stage_id1", 
+                        DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
+                        DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
+                new ExpressionCallTO("12", "ID3", "Anat_id6", "Stage_id1", 
+                        DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
+                        DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
+                new ExpressionCallTO("2", "ID1", "Anat_id6", "Stage_id6", 
+                        DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                        DataState.LOWQUALITY, true, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
+                new ExpressionCallTO("3", "ID1", "Anat_id6", "Stage_id7", 
+                        DataState.NODATA, DataState.NODATA, DataState.NODATA, 
+                        DataState.LOWQUALITY, true, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
+                //second filter
+                new ExpressionCallTO("4", "ID2", "Anat_id2", "Stage_id18",
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
+                        DataState.HIGHQUALITY, true, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
+                new ExpressionCallTO("6", "ID2", "Anat_id11", "Stage_id12",
+                        DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
+                        DataState.HIGHQUALITY, true, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
+                new ExpressionCallTO("16", "ID2", "Anat_id3", "Stage_id18", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
+                        DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
+                new ExpressionCallTO("17", "ID2", "Anat_id4", "Stage_id18", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                        DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
+                new ExpressionCallTO("18", "ID2", "Anat_id5", "Stage_id18", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                        DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
+                new ExpressionCallTO("19", "ID2", "Anat_id9", "Stage_id18", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                        DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
+                new ExpressionCallTO("20", "ID2", "Anat_id10", "Stage_id18", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                        DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false),
+                new ExpressionCallTO("21", "ID2", "Anat_id11", "Stage_id18", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                        DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF, false));
+        //No ordering requested, put in a Set
+        unorderedExpectedExprCalls = new HashSet<>(orderedExpectedExprCalls);
+        // Compare
+        rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(filters, 
+                        true, false, null, null, null, null);
+        //no ordering requested, put results in a Set
+        unorderedExpressions = new HashSet<>(rs.getAllTOs());
+        assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + unorderedExpectedExprCalls 
+                + ", but was: " + unorderedExpressions, 
+                TOComparator.areTOCollectionsEqual(unorderedExpectedExprCalls, unorderedExpressions));
+        assertFalse("Incorrect filtering of duplicates", rs.isFilterDuplicates());
+        assertFalse("Incorrect use of the LIMIT feature", rs.isUsingLimitFeature());
+    }
+    
+    /**
+     * Unit test for {@link MySQLExpressionCallDAO#getExpressionCalls(Collection, 
      * Collection, String, Collection, LinkedHashMap)}, when including substages, 
      * but avoiding to request or filter on some specific parameters triggering the use 
      * of a GROUP BY clause.

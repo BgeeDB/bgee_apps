@@ -1,6 +1,7 @@
 package org.bgee.model.expressiondata;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -33,6 +34,63 @@ import org.bgee.model.gene.GeneFilter;
 //=> let's consider several CallFilters as AND conditions for now, and let's see what happens in the future.  
 public class CallFilter<T extends CallData<?>> {
     private final static Logger log = LogManager.getLogger(CallFilter.class.getName());
+    
+    /**
+     * A {@code CallFilter} for {@code ExpressionCall}.
+     * 
+     * @author Frederic Bastian
+     * @version Bgee 13 Nov. 2015
+     * @since Bgee 13
+     */
+    public static class ExpressionCallFilter extends CallFilter<ExpressionCallData> {
+        /**
+         * Basic constructor allowing to provide one {@code ExpressionCallData} filter.
+         * 
+         * @param callDataFilter    A {@code ExpressionCallData} to configure the filtering 
+         *                          based on the expression data generation (for instance, 
+         *                          minimum quality level for each data type, or type of propagation allowed, 
+         *                          e.g., propagation of expression calls from substructures).
+         * @see #ExpressionCallFilter(GeneFilter, Set, Set)
+         */
+        public ExpressionCallFilter(ExpressionCallData callDataFilter) {
+            this(null, null, new HashSet<>(Arrays.asList(callDataFilter)));
+        }
+        /**
+         * See {@link CallFilter#CallFilter(GeneFilter, Set, Set)}.
+         */
+        public ExpressionCallFilter(GeneFilter geneFilter, Collection<ConditionFilter> conditionFilters, 
+                Collection<ExpressionCallData> callDataFilters) throws IllegalArgumentException {
+            super(geneFilter, conditionFilters, callDataFilters);
+        }
+    }
+    
+    /**
+     * A {@code CallFilter} for {@code DiffExpressionCall}.
+     * 
+     * @author Frederic Bastian
+     * @version Bgee 13 Nov. 2015
+     * @since Bgee 13
+     */
+    public static class DiffExpressionCallFilter extends CallFilter<DiffExpressionCallData> {
+        /**
+         * Basic constructor allowing to provide one {@code DiffExpressionCallData} filter.
+         * 
+         * @param callDataFilter    A {@code DiffExpressionCallData} to configure the filtering 
+         *                          based on the expression data generation (for instance, 
+         *                          minimum quality level for each data type).
+         * @see #DiffExpressionCallFilter(GeneFilter, Set, Set)
+         */
+        public DiffExpressionCallFilter(DiffExpressionCallData callDataFilter) {
+            this(null, null, new HashSet<>(Arrays.asList(callDataFilter)));
+        }
+        /**
+         * See {@link CallFilter#CallFilter(GeneFilter, Set, Set)}.
+         */
+        public DiffExpressionCallFilter(GeneFilter geneFilter, Collection<ConditionFilter> conditionFilters, 
+                Collection<DiffExpressionCallData> callDataFilters) throws IllegalArgumentException {
+            super(geneFilter, conditionFilters, callDataFilters);
+        }
+    }
     
     /**
      * @see #getGeneFilter()
@@ -91,10 +149,10 @@ public class CallFilter<T extends CallData<?>> {
      * an {@code IllegalArgumentException} is thrown. 
      * 
      * @param geneFilter        A {@code GeneFilter} to configure gene-related filtering.
-     * @param conditionFilters  A {@code Set} of {@code ConditionFilter}s to configure 
+     * @param conditionFilters  A {@code Collection} of {@code ConditionFilter}s to configure 
      *                          the filtering of conditions with expression data. If several 
      *                          {@code ConditionFilter}s are provided, they are seen as "OR" conditions.
-     * @param callDataFilters   A {@code Set} of {@code CallData}s to configure the filtering 
+     * @param callDataFilters   A {@code Collection} of {@code CallData}s to configure the filtering 
      *                          based on the expression data generation (for instance, 
      *                          minimum quality level for each data type, or type of propagation allowed, 
      *                          e.g., propagation of expression calls from substructures). If several 
@@ -107,8 +165,8 @@ public class CallFilter<T extends CallData<?>> {
      *                                  a redundant combination of {@code CallType}, {@code DataType}, 
      *                                  and {@code DiffExpressionFactor}.
      */
-    public CallFilter(GeneFilter geneFilter, Set<ConditionFilter> conditionFilters, 
-            Set<T> callDataFilters) throws IllegalArgumentException {
+    public CallFilter(GeneFilter geneFilter, Collection<ConditionFilter> conditionFilters, 
+            Collection<T> callDataFilters) throws IllegalArgumentException {
         if (callDataFilters == null || callDataFilters.isEmpty() || callDataFilters.contains(null)) {
             throw log.throwing(new IllegalArgumentException(
                     "At least one CallData filter must be provided, and none can be null."));
@@ -135,7 +193,8 @@ public class CallFilter<T extends CallData<?>> {
         this.geneFilter = geneFilter;
         this.conditionFilters = Collections.unmodifiableSet(
                 conditionFilters == null? new HashSet<>(): new HashSet<>(conditionFilters));
-        this.callDataFilters = Collections.unmodifiableSet(new HashSet<>(callDataFilters));
+        this.callDataFilters = Collections.unmodifiableSet(
+                callDataFilters == null? new HashSet<>(): new HashSet<>(callDataFilters));
     }
 
     

@@ -148,11 +148,6 @@ implements ExpressionCallDAO {
         log.entry(callFilters, includeSubstructures, includeSubStages, globalGeneIds, taxonId, 
                 attributes, orderingAttributes);
         
-        if (taxonId != null && !taxonId.isEmpty()) {
-            throw log.throwing(new UnsupportedOperationException(
-                    "Query using gene orthology not yet implemented"));
-        }
-        
         //needs a LinkedHashSet for consistent settings of the parameters. 
         LinkedHashSet<ExpressionCallDAOFilter> clonedCallFilters = Optional.ofNullable(callFilters)
                 .map(e -> new LinkedHashSet<>(e)).orElse(new LinkedHashSet<>());
@@ -163,6 +158,15 @@ implements ExpressionCallDAO {
         LinkedHashMap<ExpressionCallDAO.OrderingAttribute, DAO.Direction> clonedOrderingAttrs = 
                 Optional.ofNullable(orderingAttributes)
                 .map(e -> new LinkedHashMap<>(orderingAttributes)).orElse(new LinkedHashMap<>());
+        
+        if (taxonId != null && !taxonId.isEmpty()) {
+            throw log.throwing(new UnsupportedOperationException(
+                    "Query using gene orthology not yet implemented"));
+        }
+        if (!clonedOrderingAttrs.isEmpty()) {
+            throw log.throwing(new UnsupportedOperationException(
+                    "Management of OrderingAttributes not yet implemented"));
+        }
         //**********************************************
         // Extract relevant information from arguments
         //**********************************************

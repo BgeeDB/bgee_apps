@@ -110,13 +110,44 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
     protected void includeJs() {
         log.entry();
         super.includeJs();
-        this.includeJs("topanat.js");
+        //currently, AngularJS is only used by TopAnat
+        this.includeJs("lib/angular.min.js");
+        this.includeJs("lib/angular_modules/angular-animate.min.js");
+        this.includeJs("lib/angular_modules/angular-cookies.min.js");
+        this.includeJs("lib/angular_modules/angular-file-upload.min.js");
+        this.includeJs("lib/angular_modules/angular-messages.min.js");
+        this.includeJs("lib/angular_modules/angular-resource.min.js");
+        this.includeJs("lib/angular_modules/angular-route.min.js");
+        this.includeJs("lib/angular_modules/angular-sanitize.min.js");
+        this.includeJs("lib/angular_modules/angular-touch.min.js");
+        this.includeJs("lib/angular_modules/ui_modules/ui-bootstrap-tpls.min.js");
+        this.includeJs("lib/angular_modules/ui_modules/ui-grid.min.js");
+        //jQuery modules only used by TopAnat
+        this.includeJs("lib/jquery_plugins/bootstrap.min.js");
+        this.includeJs("lib/jquery_plugins/toastr.min.js");
+        //TopAnat JS files
+        this.includeJs("topanat/topanat.js");
+        this.includeJs("topanat/controllers/main.js");
+        this.includeJs("topanat/services/bgeedataservice.js");
+        this.includeJs("topanat/services/bgeejobservice.js");
+        this.includeJs("topanat/services/config.js");
+        this.includeJs("topanat/services/constants.js");
+        this.includeJs("topanat/services/datatypefactory.js");
+        this.includeJs("topanat/services/helpservice.js");
+        this.includeJs("topanat/services/logger.js");
+        this.includeJs("topanat/services/logger.module.js");
         log.exit();
     }
     @Override
     protected void includeCss() {
         log.entry();
         super.includeCss();
+        //CSS files of AngularJS modules only used by TopAnat
+        this.includeCss("lib/angular_modules/ui-grid.min.css");
+        //CSS files of jQuery plugins only used by TopAnat
+        this.includeCss("lib/jquery_plugins/bootstrap.min.css");
+        this.includeCss("lib/jquery_plugins/toastr.min.css");
+        //CSS files specific to TopAnat
         this.includeCss("topanat.css");
         log.exit();
     }

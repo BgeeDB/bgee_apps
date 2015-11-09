@@ -617,17 +617,23 @@ public class RequestParameters {
                         try {
                             valueFromUrl = this.secureString(valueFromUrl, 
                                     parameter.getMaxSize(), parameter.getFormat());
-                            if(parameter.getType().equals(String.class)){
-                                if (parameter.allowsSeparatedValues()) {
-                                    parameterValues.addAll(
-                                            Arrays.asList(valueFromUrl.split(parameter.getSeparator())));
-                                } else {
-                                    parameterValues.add(valueFromUrl);
+                            List<String> values = new ArrayList<>();
+                            if (!parameter.allowsSeparatedValues()) {
+                                values.add(valueFromUrl);
+                            } else {
+                                values.addAll(Arrays.asList(valueFromUrl.split(parameter.getSeparator())));
+                            }
+                            for (String value: values) {
+                                if (StringUtils.isBlank(value)) {
+                                    continue;
                                 }
-                            } else if(parameter.getType().equals(Integer.class)){
-                                parameterValues.add(castToInt(valueFromUrl));
-                            } else if(parameter.getType().equals(Boolean.class)){
-                                parameterValues.add(castToBoolean(valueFromUrl));
+                                if(parameter.getType().equals(String.class)){
+                                    parameterValues.add(value);
+                                } else if(parameter.getType().equals(Integer.class)){
+                                    parameterValues.add(castToInt(value));
+                                } else if(parameter.getType().equals(Boolean.class)){
+                                    parameterValues.add(castToBoolean(value));
+                                }
                             }
                         } catch (WrongFormatException e) {
                             throw new WrongFormatException(parameter.getName(), e);

@@ -34,35 +34,20 @@ public class DevStageServiceTest extends TestAncestor {
         
         List<StageTO> stageTOs = Arrays.asList(
                 new StageTO("Stage_id1", "stageN1", "stage Desc 1", 1, 36, 1, false, true), 
-                new StageTO("Stage_id2", "stageN2", "stage Desc 2", 2, 7, 2, false, false), 
-                new StageTO("Stage_id3", "stageN3", "stage Desc 3", 3, 4, 3, true, false), 
-                new StageTO("Stage_id4", "stageN4", "stage Desc 4", 5, 6, 3, false, false), 
-                new StageTO("Stage_id5", "stageN5", "stage Desc 5", 8, 17, 2, false, false), 
-                new StageTO("Stage_id6", "stageN6", "stage Desc 6", 9, 10, 3, false, false), 
-                new StageTO("Stage_id7", "stageN7", "stage Desc 7", 11, 16, 3, false, false), 
                 new StageTO("Stage_id8", "stageN8", "stage Desc 8", 12, 13, 4, false, true), 
-                new StageTO("Stage_id9", "stageN9", "stage Desc 9", 14, 15, 4, false, false), 
                 new StageTO("Stage_id10", "stageN10", "stage Desc 10", 18, 25, 2, false, true), 
                 new StageTO("Stage_id11", "stageN11", "stage Desc 11", 19, 20, 3, false, true), 
                 new StageTO("Stage_id12", "stageN12", "stage Desc 12", 21, 22, 3, false, true), 
                 new StageTO("Stage_id13", "stageN13", "stage Desc 13", 23, 24, 3, false, true), 
-                new StageTO("Stage_id14", "stageN14", "stage Desc 14", 26, 35, 2, false, false), 
-                new StageTO("Stage_id15", "stageN15", "stage Desc 15", 27, 32, 3, false, true), 
-                new StageTO("Stage_id16", "stageN16", "stage Desc 16", 28, 29, 4, false, false), 
-                new StageTO("Stage_id17", "stageN17", "stage Desc 17", 30, 31, 4, false, false), 
-                new StageTO("Stage_id18", "stageN18", "stage Desc 18", 33, 34, 3, false, false));
+                new StageTO("Stage_id15", "stageN15", "stage Desc 15", 27, 32, 3, false, true));
 
         // Filter on species IDs is not tested here (tested in StageDAO)
         // but we need a variable to mock DAO answer
         Set<String> speciesIds1 = new HashSet<String>();
         speciesIds1.add("44");
-        Set<String> speciesIds2 = new HashSet<String>();
-        speciesIds2.add("11");
 
         StageTOResultSet mockStageRs1 = getMockResultSet(StageTOResultSet.class, stageTOs);
-        when(dao.getStagesBySpeciesIds(speciesIds1)).thenReturn(mockStageRs1);
-        StageTOResultSet mockStageRs2 = getMockResultSet(StageTOResultSet.class, stageTOs);
-        when(dao.getStagesBySpeciesIds(speciesIds2)).thenReturn(mockStageRs2);
+        when(dao.getStagesBySpeciesIds(speciesIds1, true)).thenReturn(mockStageRs1);
         
         // Test without defined level
         List<DevStage> expectedDevStage = Arrays.asList(
@@ -76,6 +61,5 @@ public class DevStageServiceTest extends TestAncestor {
         DevStageService service = new DevStageService(managerMock);
         assertEquals("Incorrect dev stages",
                 expectedDevStage, service.loadGroupingDevStages(speciesIds1));
-
     }
 }

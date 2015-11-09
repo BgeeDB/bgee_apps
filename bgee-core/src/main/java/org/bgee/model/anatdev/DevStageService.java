@@ -53,8 +53,7 @@ public class DevStageService extends Service {
     public List<DevStage> loadGroupingDevStages(Set<String> speciesIds) {
         log.entry(speciesIds);
 
-        return log.exit(getDaoManager().getStageDAO().getStagesBySpeciesIds(speciesIds).stream()
-                .filter(e -> e.isGroupingStage())
+        return log.exit(getDaoManager().getStageDAO().getStagesBySpeciesIds(speciesIds, true).stream()
                 .map(DevStageService::mapFromTO)
                 .collect(Collectors.toList()));
     }

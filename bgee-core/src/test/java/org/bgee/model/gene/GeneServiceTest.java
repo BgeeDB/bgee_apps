@@ -42,12 +42,13 @@ public class GeneServiceTest extends TestAncestor {
         speciesIds.addAll(Arrays.asList("11", "22", "44"));
         
         Set<String> geneIds = new HashSet<String>();
-        geneIds.addAll(Arrays.asList("ID1", "ID3", "ID4"));
+        geneIds.addAll(Arrays.asList("ID1", "ID2", "ID4"));
         
-        when(dao.getGenesBySpeciesIds(speciesIds)).thenReturn(mockGeneRs);
+        when(dao.getGenesBySpeciesIds(speciesIds, geneIds)).thenReturn(mockGeneRs);
 
         List<Gene> expectedGenes= new ArrayList<Gene>();
         expectedGenes.add(new Gene("ID1", "11"));
+        expectedGenes.add(new Gene("ID2", "22"));
         expectedGenes.add(new Gene("ID4", "44"));
         
         GeneService service = new GeneService(managerMock);

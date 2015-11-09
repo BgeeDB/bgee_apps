@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -15,7 +16,6 @@ import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.model.TaskManager;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.gene.Gene;
-import org.bgee.model.species.Species;
 import org.bgee.model.topanat.TopAnatResults;
 import org.bgee.view.TopAnatDisplay;
 import org.bgee.view.ViewFactory;
@@ -69,8 +69,7 @@ public class CommandTopAnat extends CommandParent {
         TopAnatDisplay display = this.viewFactory.getTopAnatDisplay();
         
         // AJAX gene list upload 
-        if (!this.requestParameters.isATopAnatGeneListUpload()) {
-
+        if (this.requestParameters.isATopAnatGeneListUpload()) {
             // Get submitted gene IDs (either from file upload, or from copy/paste in textarea)
             Set<String> submittedGeneIds = this.getSubmittedGeneIdsList();
 
@@ -94,16 +93,8 @@ public class CommandTopAnat extends CommandParent {
                     .filter(e -> !validGeneIds.contains(e))
                     .collect(Collectors.toSet());
 
-            // Determine selected species IDs
-            // TODO manage if there is two identical count? maybe an error
-            // check if in stream if they manage equality
-            // sort map by gene count then speciesid
-            String selectedSpeciesId = speciesIdToGeneCount.entrySet().stream()
-                    .max((entry1, entry2) -> entry1.getValue() > entry2.getValue() ? 1 : -1)
-                    .get()
-                    .getKey();
-            Set<String> setSelectedSpeciesId = new HashSet<String>();
-            setSelectedSpeciesId.add(selectedSpeciesId);
+            // Determine selected species ID
+            String selectedSpeciesId = this.getSelectedSpecies(speciesIdToGeneCount);
             
             // Load valid stages for selected species
             Set<DevStage> validStages = this.getGroupingDevStages(selectedSpeciesId, DEV_STAGE_LEVEL);
@@ -113,7 +104,7 @@ public class CommandTopAnat extends CommandParent {
             int statusCode = 0;
 
             // Determine message
-            String msg = "blablabla";
+            String msg = getMessage(submittedGeneIds, speciesIdToGeneCount, undeterminedGeneIds);
 
             // Send response with association species -> gene count, selected species, 
             // and valid stages
@@ -206,7 +197,36 @@ public class CommandTopAnat extends CommandParent {
 
         log.exit();
     }
-    
+
+    /**
+     * Determine the species to be used.
+     * 
+     * @param speciesIdToGeneCount  A {@code Map} where keys are species IDs, the associated values 
+     *                              being a {@code Long} that are gene ID count found in the species.
+     * @return                      A {@code String} that is the species ID to be used.
+     */
+    private String getSelectedSpecies(Map<String, Long> speciesIdToGeneCount) {
+        log.entry(speciesIdToGeneCount);
+        
+        // We sort the map by gene count (value) then species ID (key)
+        List<String> orderedSpeciesIdsByValue = speciesIdToGeneCount.entrySet().stream()
+                .sorted((Entry<String, Long> o1, Entry<String, Long> o2) -> {
+                    if (o1.getValue().equals(o2.getValue())) {
+                        return o1.getKey().compareTo(o2.getKey()); 
+                    } 
+                    return o1.getValue().compareTo(o2.getValue());
+                })
+                .map(e -> e.getKey())
+                .collect(Collectors.toList());
+        
+        return log.exit(orderedSpeciesIdsByValue.get(0));
+    }
+
+    /**
+     * Get submitted gene IDs.
+     * 
+     * @return The {@code Set} of {@code String}s that are submitted gene IDs.
+     */
     private Set<String> getSubmittedGeneIdsList() {
         // TODO Manage when it's a file
         return this.requestParameters.getGeneIds();
@@ -261,5 +281,44 @@ public class CommandTopAnat extends CommandParent {
         return log.exit(devStages.stream()
                 .filter(e -> e.getLevel() == level)
                 .collect(Collectors.toSet()));
+    }
+
+    /**
+     * Build message according to submitted gene IDs, the gene count by species,
+     * and the undetermined gene IDs.
+     * 
+     * @param submittedGeneIds      A {@code Set} of {@code String}s that are submitted gene IDs.
+     * @param speciesIdToGeneCount  A {@code Map} where keys are species IDs, the associated values 
+     *                              being a {@code Long} that are gene ID count found in the species.
+     * @param undeterminedGeneIds   A {@code Set} of {@code String}s that are submitted gene IDs
+     *                              from undetermined species.
+     * @return                      A {@code String} that is the message to display.
+     */
+    private String getMessage(Set<String> submittedGeneIds, Map<String, Long> speciesIdToGeneCount,
+            Set<String> undeterminedGeneIds) {
+        log.entry(submittedGeneIds, speciesIdToGeneCount, undeterminedGeneIds);
+        
+        StringBuilder msg = new StringBuilder();
+        msg.append(submittedGeneIds.size());
+        msg.append(" genes entered");
+        if (!speciesIdToGeneCount.isEmpty()) {
+            boolean isFirst = true;
+            for (Entry<String, Long> entry : speciesIdToGeneCount.entrySet()) {
+                if (isFirst) {
+                    msg.append(", ");
+                    isFirst = false;
+                }
+                msg.append(entry.getValue());
+                msg.append(" from species ");
+                msg.append(entry.getKey());
+            }
+        }
+        if (!undeterminedGeneIds.isEmpty()) {
+            msg.append(undeterminedGeneIds.size());
+            msg.append(" from undetermined species");
+        }
+        msg.append(".");
+        
+        return log.exit(msg.toString());
     }
 }

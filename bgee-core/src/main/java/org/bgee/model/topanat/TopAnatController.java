@@ -1,9 +1,9 @@
 package org.bgee.model.topanat;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
@@ -94,9 +94,7 @@ public class TopAnatController extends QueryTool {
      */
     public Stream<TopAnatResults> proceedToTopAnatAnalyses() {
         log.entry();
-        
-        this.validateForeground();
-        
+                
         // Create TopAnatAnalysis for each TopAnatParams
                 
         return log.exit(this.topAnatParams.stream()
@@ -112,11 +110,7 @@ public class TopAnatController extends QueryTool {
                     return null;
                 }));
     }
-    
-    private void validateForeground(){
-        //Check whether the foreground is included into the submitted background or the species
-    }
-    
+        
     @Override
     protected Logger getLogger() {
         return log;

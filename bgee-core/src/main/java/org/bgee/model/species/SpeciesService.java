@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
  * @version Bgee 13 Nov. 2015
  * @since   Bgee 13 Sept. 2015
  */
-//TODO: unit tests, injecting a mock DAOManager, that will return mock DAOs, etc.
 public class SpeciesService extends Service {
     
     private static final Logger log = LogManager.getLogger(SpeciesService.class.getName());

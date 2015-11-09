@@ -142,7 +142,7 @@ public class ServiceFactory implements AutoCloseable {
     }
     
     /**
-     * TODO
+     * @return A newly instantiated {@code CallService}
      */
     public CallService getCallService() {
         log.entry();
@@ -150,7 +150,7 @@ public class ServiceFactory implements AutoCloseable {
     }
     
     /**
-     * TODO
+     * @return A newly instantiated {@code AnatEntityService}
      */
     public AnatEntityService getAnatEntityService() {
         log.entry();

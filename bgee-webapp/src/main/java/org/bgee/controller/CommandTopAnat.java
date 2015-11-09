@@ -229,7 +229,7 @@ public class CommandTopAnat extends CommandParent {
      */
     private Set<String> getSubmittedGeneIdsList() {
         // TODO Manage when it's a file
-        return this.requestParameters.getGeneIds();
+        return new HashSet<String>(this.requestParameters.getGeneIds());
     }
 
     /**

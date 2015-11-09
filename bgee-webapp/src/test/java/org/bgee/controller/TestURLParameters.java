@@ -2,6 +2,7 @@ package org.bgee.controller;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * This class extends {@link URLParameters} to provide
@@ -23,6 +24,15 @@ public class TestURLParameters extends URLParameters {
 			        false, false, null, false, 
 			        false, 128, "[a-z0-9]*",
 			        String.class);
+	/**
+     * Test {@code Parameter} of the type  {@code String} that does 
+     * allow separated values and is not storable
+     */
+    private static final Parameter<String> TEST_STRING_LIST = 
+            new Parameter<String>("test_string_list",
+                    false, true, URLParameters.DEFAULT_SEPARATOR, false, 
+                    false, 128, "([a-z0-9]*"+Pattern.quote(URLParameters.DEFAULT_SEPARATOR)+"*)*",
+                    String.class);
 	/**
 	 * Test {@code Parameter}  of the type  {@code Integer} that does allow
 	 * multiple values and is storable
@@ -51,7 +61,8 @@ public class TestURLParameters extends URLParameters {
 	 */
 	protected TestURLParameters(){
 	    this.list = Arrays.<Parameter<?>>asList(
-	            TEST_STRING,
+                TEST_STRING,
+                TEST_STRING_LIST,
 	            TEST_INTEGER,
 	            TEST_BOOLEAN,
 	            super.getParamPage(),
@@ -59,14 +70,22 @@ public class TestURLParameters extends URLParameters {
 	            super.getParamData());
 	}
 	
-	/**
-	 * @return Test {@code Parameter} of the type  {@code String} that does 
-	 * not allow multiple values and is not storable
-	 */
-	public Parameter<String >getParamTestString(){
-		return TEST_STRING;
-	}	
-	
+    /**
+     * @return Test {@code Parameter} of the type  {@code String} that does 
+     * not allow multiple values and is not storable
+     */
+    public Parameter<String >getParamTestString(){
+        return TEST_STRING;
+    }   
+    
+    /**
+     * @return Test {@code Parameter} of the type {@code String} that does 
+     * allow separated values and is not storable
+     */
+    public Parameter<String> getParamTestStringList(){
+        return TEST_STRING_LIST;
+    }   
+    
 	/**
 	 * @return Test {@code Parameter}  of the type  {@code Integer} that does allow
 	 * multiple values and is storable

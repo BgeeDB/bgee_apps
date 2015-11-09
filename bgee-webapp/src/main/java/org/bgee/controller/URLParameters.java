@@ -1,9 +1,7 @@
 package org.bgee.controller;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -143,13 +141,13 @@ public class URLParameters {
             false, false, null, false, false, 5, DEFAULT_FORMAT, Boolean.class);
     
     /**
-     * A {@code Parameter<List<String>>} that contains the gene IDs used 
+     * A {@code Parameter<String>} that contains the gene IDs used 
      * as key to store parameters on the disk.
      * Corresponds to the URL parameter "gene_list".
      */
-    private static final Parameter<Set<String>> GENE_LIST = new Parameter<Set<String>>("gene_list",
+    private static final Parameter<String> GENE_LIST = new Parameter<String>("gene_list",
             false, true, DEFAULT_SEPARATOR, false, DEFAULT_IS_SECURE, 
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, (Class<Set<String>>) new HashSet<String>().getClass());
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
 
     
     /**
@@ -351,16 +349,16 @@ public class URLParameters {
     }
     
     /**
-     * @return  A {@code Parameter<Set<String>>} defining a gene ID list.
+     * @return  A {@code Parameter<String>} defining a gene ID list.
      *          Corresponds to the URL parameter "gene_list".
      */
-    public Parameter<Set<String>> getParamGeneIds(){
+    public Parameter<String> getParamGeneIds(){
         return GENE_LIST;
     }
     
     /**
-     * @return  A {@code Parameter<List<String>>} defining a gene ID list.
-     *          Corresponds to the URL parameter "gene_list".
+     * @return  A {@code Parameter<String>} defining a gene ID list.
+     *          Corresponds to the URL parameter "species_id".
      */
     public Parameter<String> getParamSpeciesId(){
         return SPECIES_ID;
@@ -447,7 +445,11 @@ public class URLParameters {
          *                                as seen in an URL
          * @param allowsMultipleValues    A {@code Boolean} that indicates whether 
          *                                the parameter accepts multiple values.
-         * @param isStorable              A {@code boolean} defining whether the parameter 
+         * @param allowsSeparatedValues   A {@code Boolean} that indicates whether
+         *                                the parameter accepts separated values.
+         * @param separator               A {@code String} that is the separator for
+         *                                separated values.
+         * @param isStorable              A {@code boolean} defining whether the parameter
          *                                is storable.
          * @param isSecure		          A {@code boolean} defining whether the parameter 
          *                                is secure.
@@ -456,7 +458,8 @@ public class URLParameters {
          * @param format                  A {@code String} that contains the regular expression 
          *                                that this parameter has to fit to.
          * @param type                    A {@code Class<T>} that is the data type of the value 
-         *                                to be store by this parameter.
+         *                                (or values if {@code allowsSeparatedValues} is
+         *                                {@code true}) to be store by this parameter.
          */
         protected Parameter(String name, Boolean allowsMultipleValues, boolean allowsSeparatedValues,
                 String separator, boolean isStorable, boolean isSecure, int maxSize, String format,

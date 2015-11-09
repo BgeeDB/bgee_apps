@@ -62,8 +62,7 @@ public class CommandTopAnatTest extends TestAncestor {
         //mock data returned by Services
         Set<String> speciesIds = new HashSet<String>();
         speciesIds.addAll(Arrays.asList("11"));
-        Set<String> geneIds = new HashSet<String>();
-        geneIds.addAll(Arrays.asList("ID1", "ID3", "ID4"));
+        List<String> geneIds = Arrays.asList("ID1", "ID3", "ID4");
 
         List<Gene> genes = this.getGeneDataTest();
         when(geneService.loadGenesByIdsAndSpeciesIds(geneIds, speciesIds)).thenReturn(genes);

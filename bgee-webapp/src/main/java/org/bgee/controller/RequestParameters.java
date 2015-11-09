@@ -10,13 +10,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -606,7 +606,8 @@ public class RequestParameters {
                 // If the param is set, initialize an List to receive the values 
                 // and browse them
                 if(valuesFromUrl != null){
-                    if(!parameter.allowsMultipleValues() && valuesFromUrl.length > 1){
+                    if(!(parameter.allowsMultipleValues() || parameter.allowsSeparatedValues())
+                            && valuesFromUrl.length > 1){
                         throw(new MultipleValuesNotAllowedException(parameter.getName()));
                     }
                     List<Object> parameterValues = new ArrayList<Object>();
@@ -1013,19 +1014,33 @@ public class RequestParameters {
                     // its values
                     List<?> parameterValues = this.getValues(parameter);
                     if(parameterValues != null && !parameterValues.isEmpty()){
-                        for(Object parameterValue : parameterValues){
-                            if(parameterValue != null && StringUtils.isNotBlank(
-                                    parameterValue.toString())){
+                        if (parameter.allowsSeparatedValues()) {
+                            String currentValues = parameterValues.stream()
+                                    .filter(v -> v != null && StringUtils.isNotBlank(v.toString()))
+                                    .map(Object::toString)
+                                    .map(v-> this.urlEncode(v))
+                                    .collect(Collectors.joining(parameter.getSeparator()));
+                            if (StringUtils.isNotBlank(currentValues)) {
                                 urlFragment += parameter.getName()+ "=";
-                                urlFragment += this.urlEncode(parameterValue.toString()) 
-                                        + parametersSeparator;
+                                urlFragment += currentValues;
+                                urlFragment += parametersSeparator;
                                 paramAdded = true;
+                            }
+                        } else {
+                            for(Object parameterValue : parameterValues){
+                                if(parameterValue != null && StringUtils.isNotBlank(
+                                        parameterValue.toString())){
+                                    urlFragment += parameter.getName()+ "=";
+                                    urlFragment += this.urlEncode(parameterValue.toString());
+                                    urlFragment += parametersSeparator;
+                                    paramAdded = true;
+                                }
                             }
                         }
                     }
                 }
             }
-            
+
             // Remove the extra separator at the end 
             if(paramAdded){
                 int paramSeparatorLength = parametersSeparator.length();
@@ -1443,7 +1458,33 @@ public class RequestParameters {
         log.exit();
     }
 
-    
+    /**
+     * Add values to the given {@code URLParameters.Parameter<T>}
+     *
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept
+     * consistent as much as possible if the method evolves.
+     * 
+     * @param parameter The {@code URLParameters.Parameter<T>} to add the value to
+     * @param values    A {@code List} of {@code T}s, the values to set
+     * @throws MultipleValuesNotAllowedException    If more than one value is present in the
+     *                                              {@code request} for a
+     *                                              {@link URLParameters.Parameter} that
+     *                                              does not allow multiple values.
+     * @throws WrongFormatException                 A value in the {@code request} does not
+     *                                              fit the format requirement for related
+     *                                              {@link URLParameters.Parameter}
+     */
+    protected <T> void addValues(URLParameters.Parameter<T> parameter, List<T> values)
+            throws MultipleValuesNotAllowedException, WrongFormatException {
+        log.entry(parameter,values);
+
+        for (T value: values) {
+            this.addValue(parameter, value);
+        }
+
+        log.exit();
+    }
+
     /**
      * Reset the value for the given {@code URLParameters.Parameter<T>}
      *
@@ -1505,7 +1546,7 @@ public class RequestParameters {
             clonedRequestParameters = new RequestParameters(request, 
                     this.urlParametersInstance.getClass().newInstance(),this.prop,
                     this.encodeUrl, this.parametersSeparator);
-            if(! includeNonStorable){
+            if(!includeNonStorable){
                 // Add the key which is not a storable parameters and was not included
                 clonedRequestParameters.addValue(this.getKeyParam(), 
                         this.getFirstValue(this.getKeyParam()));
@@ -1636,20 +1677,20 @@ public class RequestParameters {
     }
     
     /**
-     * @return A {@code Set} of {@code String}s that will be used to upload genes.
+     * @return A {@code List} of {@code String}s that will be used to upload genes.
      * @see geneIds
      */
-    public Set<String> getGeneIds() {
-        return new HashSet<String>(this.getFirstValue(this.getUrlParametersInstance().getParamGeneIds()));
+    public List<String> getGeneIds() {
+        return this.getValues(this.getUrlParametersInstance().getParamGeneIds());
     }
 
     /**
-     * @return A {@code Set} of {@code String}s that will be used to upload genes.
+     * @return A {@code List} of {@code String}s that will be used to upload genes.
      * @see geneIds
      */
-    public void setGeneIds(Set<String> geneIds) {
+    public void setGeneIds(List<String> geneIds) {
         this.resetValues(this.getUrlParametersInstance().getParamGeneIds());
-        this.addValue(this.getUrlParametersInstance().getParamGeneIds(), geneIds);
+        this.addValues(this.getUrlParametersInstance().getParamGeneIds(), geneIds);
     }
     /**
      * This method has a js counterpart in {@code requestparameters.js} that should be kept 

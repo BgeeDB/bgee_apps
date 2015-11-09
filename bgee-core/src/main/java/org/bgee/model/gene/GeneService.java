@@ -1,5 +1,7 @@
 package org.bgee.model.gene;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -45,18 +47,24 @@ public class GeneService extends Service {
     /**
      * Retrieve {@code Gene}s for a given set of species IDs and a given set of gene IDs.
      * 
-     * @param geneIds       A {@code Set} of {@code String}s that are IDs of genes 
+     * @param geneIds       A {@code Collection} of {@code String}s that are IDs of genes 
      *                      for which to return the {@code Gene}s.
-     * @param speciesIds    A {@code Set} of {@code String}s that are IDs of species 
+     * @param speciesIds    A {@code Collection} of {@code String}s that are IDs of species 
      *                      for which to return the {@code Gene}s.
      * @return              A {@code List} of {@code Gene}s that are the {@code Gene}s 
      *                      for the given set of species IDs and the given set of gene IDs.
      */
-    public List<Gene> loadGenesByIdsAndSpeciesIds(Set<String> geneIds, Set<String> speciesIds) {
+    public List<Gene> loadGenesByIdsAndSpeciesIds(Collection<String> geneIds, 
+            Collection<String> speciesIds) {
         log.entry(geneIds, speciesIds);
         
-        return log.exit(getDaoManager().getGeneDAO().getGenesBySpeciesIds(speciesIds).stream()
-                .filter(e -> geneIds.contains(e.getId()))
+        Set<String> filteredGeneIds = geneIds == null? new HashSet<>(): new HashSet<>(geneIds);
+        Set<String> filteredSpeciesIds = speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds);
+        
+        //TODO: the DAO method should accept the gene IDs! Not to do a filtering afterwards!
+        //XXX: shouldn't we return a Stream here?
+        return log.exit(getDaoManager().getGeneDAO().getGenesBySpeciesIds(filteredSpeciesIds).stream()
+                .filter(e -> filteredGeneIds.contains(e.getId()))
                 .map(GeneService::mapFromTO)
                 .collect(Collectors.toList()));
     }

@@ -13,14 +13,13 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -33,6 +32,7 @@ import org.bgee.model.exception.InvalidForegroundException;
 import org.bgee.model.exception.InvalidSpeciesGenesException;
 import org.bgee.model.expressiondata.CallFilter;
 import org.bgee.model.expressiondata.CallService;
+import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneService;
 import org.bgee.model.species.SpeciesService;
 import org.supercsv.cellprocessor.ParseDouble;
@@ -96,11 +96,6 @@ public class TopAnatAnalysis {
     private final SpeciesService speciesService;
 
     /**
-     * 
-     */
-    private final Collection<String> backgroundIds;
-
-    /**
      * @return the cell processors
      */
     private static CellProcessor[] getCsvProcessors() {
@@ -146,10 +141,6 @@ public class TopAnatAnalysis {
         this.speciesService = serviceFactory.getSpeciesService();
         this.rManager = rManager;
         this.props = props;
-        this.backgroundIds = this.params.getSubmittedBackgroundIds() == null ?
-                this.speciesService.getGenes().stream().map(g -> g.getId()).collect(Collectors.toSet()) 
-                : this.params.getSubmittedBackgroundIds();
-                log.exit();
     }
 
     /**
@@ -200,18 +191,26 @@ public class TopAnatAnalysis {
     private void validateForegroundAndBackground() throws InvalidForegroundException, 
     InvalidSpeciesGenesException{
         // First check whether the foreground match the background
-        if(! this.backgroundIds
-                .containsAll(this.params.getSubmittedForegroundIds())){
+        if(this.params.getSubmittedBackgroundIds() != null && 
+                !this.params.getSubmittedBackgroundIds().isEmpty() && 
+                !this.params.getSubmittedBackgroundIds().containsAll(
+                        this.params.getSubmittedForegroundIds())){
             throw new InvalidForegroundException("All foreground Ids are not included "
                     + "in the background");
         }
-        // Then check that all these background genes exist for the species
-        Predicate<String> matchSpecies = id -> id == this.params.getSpeciesId();
-        if(! this.backgroundIds.stream().map(
-                geneId-> this.geneService.retrieveSpeciesId(geneId)
-                ).allMatch(matchSpecies))
-            throw new InvalidSpeciesGenesException("At least one provided gene does not belong "
-                    + "to the correct species");
+        
+        Set<String> allGeneIds = new HashSet<String>(this.params.getSubmittedForegroundIds());
+        if (this.params.getSubmittedBackgroundIds() != null) {
+            allGeneIds.addAll(this.params.getSubmittedBackgroundIds());
+        }
+        allGeneIds.removeAll(this.geneService.loadGenesByIdsAndSpeciesIds(allGeneIds, 
+                Arrays.asList(this.params.getSpeciesId())).stream()
+                .map(Gene::getId)
+                .collect(Collectors.toSet()));
+        if (!allGeneIds.isEmpty()) {
+            throw log.throwing(new IllegalStateException("Some gene IDs are unrecognized, "
+                    + "or does not belong to the selected species: " + allGeneIds));
+        }
     }
 
     /**
@@ -374,7 +373,7 @@ public class TopAnatAnalysis {
             out.println(this.rManager.generateRCode(
                     this.params.getResultFileName()+".tmp",
                     this.params.getResultPDFFileName()+".tmp",
-                    this.backgroundIds));
+                    this.params.getSubmittedBackgroundIds()));
         }
 
         log.exit();

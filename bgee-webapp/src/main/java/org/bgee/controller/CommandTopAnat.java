@@ -133,7 +133,8 @@ public class CommandTopAnat extends CommandParent {
             // Launch the TopAnat analyses / Check that results are cached
             boolean cached = false;
             if (cached) {
-                TopAnatResults results = new TopAnatResults("resultPath");
+                //TODO: update instantiation of TopAnatResults
+                TopAnatResults results = new TopAnatResults(null, null, null, null);
                 display.sendResultResponse(results);
                 // - Or should the client redirects itself to a new page to display results, 
                 //   using an URL provided in this response?
@@ -158,7 +159,8 @@ public class CommandTopAnat extends CommandParent {
             TaskManager taskManager = TaskManager.getTaskManager(jobTrackingId);
             if (taskManager.isSuccessful()) {
                 //retrieve results from the task held by the task manager
-                TopAnatResults results = new TopAnatResults("resultPath");
+                //TODO: update instantiation of TopAnatResults
+                TopAnatResults results = new TopAnatResults(null, null, null, null);
                 display.sendResultResponse(results);
                 //Or should the client redirects itself to a new page to display results, 
                 //using an URL provided in this response?
@@ -184,7 +186,8 @@ public class CommandTopAnat extends CommandParent {
             
             // Display page (using previous response)
             if (hasResults) {
-                TopAnatResults results = new TopAnatResults("resultPath");
+                //TODO: update instantiation of TopAnatResults
+                TopAnatResults results = new TopAnatResults(null, null, null, null);
                 display.sendResultResponse(results);
             } else {
                 display.displayTopAnatHomePage();

@@ -86,7 +86,7 @@ public class TopAnatResults {
     private final Set<DataType> dataType;
 
     public TopAnatResults(List<TopAnatResults.TopAnatResultLine> content,
-            CallType callType,DevStage devStage,Set<DataType> dataType){
+            CallType callType, DevStage devStage, Set<DataType> dataType){
         this.content = Collections.unmodifiableList(content);
         this.callType = callType;
         this.devStage = devStage;

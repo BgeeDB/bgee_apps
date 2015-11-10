@@ -60,39 +60,6 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
             "browser</a> to improve your experience.</p>" +
         "<![endif]-->");
 
-        this.writeln("<div class='container'>" +
-            "<nav class='navbar navbar-default navbar-fixed-top'>" +
-                "<div class='row'>" +
-                    "<div class='col-sm-4'>" +
-                        "<a class='navbar-brand' href='http://bgee.org/' style = 'padding: 15px 0px 8px 20px'>" +
-                            "<img src='images/bgee13_logo.png' width='86' height='32' alt='Bgee - Gene Expression Evolution'>" +
-                        "</a>" +
-                        "<a class='navbar-brand' href='http://www.isb-sib.ch/' style = 'padding: 15px 0px 8px 20px'>" +
-                            "<img src='images/sib_logo_small.gif' width='42' height='32' alt='SIB Swiss Institute of Bioinformatics'>" +
-                        "</a>" +
-                    "</div>" +
-                    "<div class='col-sm-8'>" +
-
-                        "<h2>TopAnat</h2>" +
-
-                        "<div class='row'>" +
-                            "<div class='col-sm-8'>" +
-                                "<span style='font-size: small'>Test for Enrichment and Depletion of Gene Expression in Anatomical Structures</span>" +
-                            "</div>" +
-
-                            "<!-- LINKS -->" +
-                            "<div class='col-sm-4'>" +
-                                "<a href='' style='margin-right: 6px;' class='pull-right'>" +
-                                    "<span style='margin-right: 6px;vertical-align: middle;' class='glyphicon glyphicon-education' aria-hidden='true'></span>Documentation</a>" +
-                                "<a href='' style='margin-right: 6px;' class='pull-right'>" +
-                                    "<span style='margin-right: 6px;vertical-align: middle;' class='glyphicon glyphicon-th-list' aria-hidden='true'></span>Recent jobs</a>" +
-                            "</div>" +
-                        "</div>" +
-                    "</div>" +
-                "</div>" +
-            "</nav>" +
-        "</div>");
-
         this.writeln("<div style='padding: 90px 0 0 0;margin-left: 20px; margin-right: 20px' ng-view=''>" +
 
         "</div>");

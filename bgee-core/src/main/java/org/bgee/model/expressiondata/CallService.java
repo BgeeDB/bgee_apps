@@ -176,7 +176,10 @@ public class CallService extends Service {
                 //consider only callData for the ExpressionCallDAO
                 .filter(callData -> Expression.EXPRESSED.equals(callData.getCallType()))
                 
-                .collect(Collectors.toMap(callData -> 
+                .collect(Collectors
+                        //I don't know why, but javac doesn't manage to infer the correct types, 
+                        //while Eclipse does, so we type explicitly the method toMap
+                        .<CallData<?>, DataPropagation, Set<ExpressionCallData>>toMap(callData -> 
                         //create a DataPropagation object as key, using only 
                         //PropagationState.SELF and PropagationState.DESCENDANT, 
                         //to determine whether to include substructures/sub-stages

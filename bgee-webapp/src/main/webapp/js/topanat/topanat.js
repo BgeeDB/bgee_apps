@@ -24,7 +24,7 @@ angular
     .config(function ($routeProvider) {
         $routeProvider
             .when('/', {
-                templateUrl: 'views/main.html',
+                templateUrl: 'js/topanat/views/main.html',
                 controller: 'MainCtrl',
                 controllerAs: 'vm'
             })

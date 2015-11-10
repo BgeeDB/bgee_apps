@@ -207,9 +207,10 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         log.entry(title);
         this.sendHeaders();
         this.writeln("<!DOCTYPE html>");
-        this.writeln("<html lang='en'>");
+        this.writeln("<html lang='en' class='no-js'>");
         this.writeln("<head>");
         this.writeln("<meta charset='UTF-8'>");
+        this.writeln("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
         this.writeln("<title>"+title+"</title>");
         this.writeln("<meta name='description' content='Bgee allows to automatically"
                 + " compare gene expression patterns between species, by referencing"

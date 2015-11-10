@@ -606,7 +606,7 @@ public class RequestParameters {
                 // If the param is set, initialize an List to receive the values 
                 // and browse them
                 if(valuesFromUrl != null){
-                    if(!(parameter.allowsMultipleValues() || parameter.allowsSeparatedValues())
+                    if(!parameter.allowsMultipleValues() && !parameter.allowsSeparatedValues()
                             && valuesFromUrl.length > 1){
                         throw(new MultipleValuesNotAllowedException(parameter.getName()));
                     }
@@ -1014,27 +1014,22 @@ public class RequestParameters {
                     // its values
                     List<?> parameterValues = this.getValues(parameter);
                     if(parameterValues != null && !parameterValues.isEmpty()){
+                        List<?> valuesToUse = parameterValues;
+                        
                         if (parameter.allowsSeparatedValues()) {
-                            String currentValues = parameterValues.stream()
-                                    .filter(v -> v != null && StringUtils.isNotBlank(v.toString()))
+                            String separatedValues = parameterValues.stream()
+                                    .filter(v -> StringUtils.isNotBlank(v.toString()))
                                     .map(Object::toString)
-                                    .map(v-> this.urlEncode(v))
                                     .collect(Collectors.joining(parameter.getSeparator()));
-                            if (StringUtils.isNotBlank(currentValues)) {
+                            valuesToUse = Arrays.asList(separatedValues);
+                        } 
+                        
+                        for(Object parameterValue : valuesToUse){
+                            if(StringUtils.isNotBlank(parameterValue.toString())){
                                 urlFragment += parameter.getName()+ "=";
-                                urlFragment += currentValues;
+                                urlFragment += this.urlEncode(parameterValue.toString());
                                 urlFragment += parametersSeparator;
                                 paramAdded = true;
-                            }
-                        } else {
-                            for(Object parameterValue : parameterValues){
-                                if(parameterValue != null && StringUtils.isNotBlank(
-                                        parameterValue.toString())){
-                                    urlFragment += parameter.getName()+ "=";
-                                    urlFragment += this.urlEncode(parameterValue.toString());
-                                    urlFragment += parametersSeparator;
-                                    paramAdded = true;
-                                }
                             }
                         }
                     }
@@ -1442,7 +1437,8 @@ public class RequestParameters {
         try{
             // Throw an exception if the param does not allow 
             // multiple values and has already one
-            if (!parameter.allowsMultipleValues() && parameterValues.get(0) != null){
+            if (!parameter.allowsMultipleValues() && !parameter.allowsSeparatedValues() && 
+                    parameterValues.get(0) != null){
                 throw(new MultipleValuesNotAllowedException(parameter.getName()));
             }
             parameterValues.add(value);

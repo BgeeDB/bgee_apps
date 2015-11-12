@@ -19,7 +19,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
+import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOManager;
+import org.bgee.model.dao.api.expressiondata.CallDAO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
 import org.bgee.model.dao.api.expressiondata.CallDAOFilter.ExpressionCallDAOFilter;
 import org.bgee.model.dao.api.expressiondata.DAOConditionFilter;
@@ -118,7 +120,7 @@ public class CallService extends Service {
             LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes) throws IllegalArgumentException {
         log.entry(speciesId, callFilter, attributes, orderingAttributes);
         return log.exit(this.loadCalls(speciesId, Arrays.asList(callFilter), 
-                                       attributes, orderingAttributes)
+                    attributes, orderingAttributes)
                 .map(call -> (ExpressionCall) call));
     }
     
@@ -202,7 +204,8 @@ public class CallService extends Service {
         
         //dispatch ExpressionCallDatas between different propagation states requested, 
         //to determine the ExpressionCallDAO parameters includeSubstructures, and includeSubStages.
-        //We use DataPropagation objects to do the dispatching. 
+        //We use DataPropagation objects to do the dispatching, and we'll do one query 
+        //per DataPropagation.
         Map<DataPropagation, Set<ExpressionCallData>> dispatchedCallData = 
                 callFilter.getCallDataFilters().stream()
                 
@@ -216,12 +219,13 @@ public class CallService extends Service {
                         //create a DataPropagation object as key, using only 
                         //PropagationState.SELF and PropagationState.SELF_OR_DESCENDANT, 
                         //to determine whether to include substructures/sub-stages
-                        new DataPropagation(
-                                PropagationState.SELF.equals(
-                                        callData.getDataPropagation().getAnatEntityPropagationState())?
+                        new DataPropagation(Optional.ofNullable(
+                                    callData.getDataPropagation().getAnatEntityPropagationState())
+                                .orElse(PropagationState.SELF).equals(PropagationState.SELF)?
                                         PropagationState.SELF: PropagationState.SELF_OR_DESCENDANT, 
-                                PropagationState.SELF.equals(
-                                        callData.getDataPropagation().getDevStagePropagationState())?
+                                Optional.ofNullable(
+                                    callData.getDataPropagation().getDevStagePropagationState())
+                                .orElse(PropagationState.SELF).equals(PropagationState.SELF)?
                                         PropagationState.SELF: PropagationState.SELF_OR_DESCENDANT), 
                         
                         //store the callData in a Set as value
@@ -272,13 +276,13 @@ public class CallService extends Service {
                         //no gene orthology requested
                         null, 
                         //Attributes
-                        convertServiceAttrsToDAOAttrs(attributes, entry.getValue().stream()
+                        convertServiceAttrsToExprDAOAttrs(attributes, entry.getValue().stream()
                                 .flatMap(callData -> callData.getDataType() != null? 
                                         EnumSet.of(callData.getDataType()).stream(): 
                                         EnumSet.allOf(DataType.class).stream())
                                 .collect(Collectors.toCollection(() -> EnumSet.noneOf(DataType.class)))), 
-                        //TODO: OrderingAttributes
-                        null
+                        //OrderingAttributes
+                        convertServiceOrderingAttrsToDAOOrderingAttrs(orderingAttributes)
                     )
                     //retrieve the Stream resulting from the query. Note that the query is not executed 
                     //as long as the Stream is not consumed (lazy-loading).
@@ -385,7 +389,10 @@ public class CallService extends Service {
             ExpressionCallDAO.Attribute attr) throws IllegalStateException {
         log.entry(attr);
         
-        return log.exit(Optional.ofNullable(EXPR_ATTR_TO_DATA_TYPE.get(attr)).orElseThrow(
+        return log.exit(Optional.ofNullable(EXPR_ATTR_TO_DATA_TYPE.get(attr))
+                //bug of javac for type inference, we need to type the exception explicitly to RuntimeException,
+                //see http://stackoverflow.com/questions/25523375/java8-lambdas-and-exceptions
+                .<RuntimeException>orElseThrow(
                 () -> log.throwing(new IllegalStateException(
                         "Unsupported ExpressionCallDAO.Attribute: " + attr))));
     }
@@ -411,7 +418,7 @@ public class CallService extends Service {
     }
 
     //*************************************************************************
-    // METHODS MAPPING CallDatas TO CallTOs
+    // METHODS MAPPING CallDatas TO ExpressionCallTOs
     //*************************************************************************
     private static Set<ExpressionCallTO> mapCallDataToCallTOFilters(ExpressionCallData callData) {
         log.entry(callData);
@@ -468,6 +475,42 @@ public class CallService extends Service {
             throw log.throwing(new IllegalStateException("Unsupported DataQuality: " + qual));
         }
     }
+    
+    private static LinkedHashMap<CallDAO.OrderingAttribute, DAO.Direction> 
+        convertServiceOrderingAttrsToDAOOrderingAttrs(
+            LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttrs) {
+        log.entry(orderingAttrs);
+        
+        return log.exit(orderingAttrs.entrySet().stream().collect(Collectors.toMap(
+            entry -> {
+                switch (entry.getKey()) {
+                case GENE_ID: 
+                    return CallDAO.OrderingAttribute.GENE_ID;
+                case ANAT_ENTITY_ID: 
+                    return CallDAO.OrderingAttribute.ANAT_ENTITY_ID;
+                case DEV_STAGE_ID: 
+                    return CallDAO.OrderingAttribute.STAGE_ID;
+                case RANK: 
+                    return CallDAO.OrderingAttribute.MEAN_RANK;
+                default: 
+                    throw log.throwing(new IllegalStateException("Unsupported OrderingAttributes from CallService: "
+                            + entry.getKey()));
+                }
+            }, 
+            entry -> {
+                switch (entry.getValue()) {
+                case ASC: 
+                    return DAO.Direction.ASC;
+                case DESC: 
+                    return DAO.Direction.DESC;
+                default: 
+                    throw log.throwing(new IllegalStateException("Unsupported ordering Direction from CallService: "
+                            + entry.getValue()));
+                }
+            }, 
+            (v1, v2) -> {throw log.throwing(new IllegalStateException("No key collision possible"));}, 
+            () -> new LinkedHashMap<CallDAO.OrderingAttribute, DAO.Direction>())));
+    }
 
     //*************************************************************************
     // HELPER METHODS CONVERTING INFORMATION FROM Call LAYER TO ExpressionCallDAO LAYER
@@ -492,7 +535,7 @@ public class CallService extends Service {
         }
     }
     
-    private static Set<ExpressionCallDAO.Attribute> convertServiceAttrsToDAOAttrs(
+    private static Set<ExpressionCallDAO.Attribute> convertServiceAttrsToExprDAOAttrs(
             Set<Attribute> attributes, Set<DataType> dataTypesRequested) {
         log.entry(attributes, dataTypesRequested);
         
@@ -513,7 +556,10 @@ public class CallService extends Service {
             case DATA_QUALITY: 
             case CALL_DATA: 
                 return dataTypesRequested.stream().map(type -> Optional.ofNullable(typeToDAOAttr.get(type))
-                        .orElseThrow(() -> log.throwing(new IllegalStateException(
+                        //bug of javac for type inference, we need to type the exception 
+                        //explicitly to RuntimeException,
+                        //see http://stackoverflow.com/questions/25523375/java8-lambdas-and-exceptions
+                        .<RuntimeException>orElseThrow(() -> log.throwing(new IllegalStateException(
                                 "Unsupported DataType: " + type))));
             case GLOBAL_ANAT_PROPAGATION: 
                 return Stream.of(ExpressionCallDAO.Attribute.ANAT_ORIGIN_OF_LINE);

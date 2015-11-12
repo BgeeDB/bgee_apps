@@ -4,12 +4,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Entity;
 import org.bgee.model.Service;
+import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOManager;
-import org.bgee.model.dao.api.OrderingDAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
-import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.OrderingAttribute;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesToDataGroupTOResultSet;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesToGroupOrderingAttribute;
 import org.bgee.model.species.Species;
@@ -98,9 +97,9 @@ public class SpeciesDataGroupService extends Service {
         final Map<String, Set<DownloadFile>> groupIdToDownloadFilesMap = 
                 buildDownloadFileMap(downloadFileService.getAllDownloadFiles());
         
-        LinkedHashMap<SpeciesToGroupOrderingAttribute, OrderingDAO.Direction> orderAttrs = new LinkedHashMap<>();
-        orderAttrs.put(SpeciesToGroupOrderingAttribute.DATA_GROUP_ID, OrderingDAO.Direction.ASC);
-        orderAttrs.put(SpeciesToGroupOrderingAttribute.DISTANCE_TO_SPECIES, OrderingDAO.Direction.ASC);
+        LinkedHashMap<SpeciesToGroupOrderingAttribute, DAO.Direction> orderAttrs = new LinkedHashMap<>();
+        orderAttrs.put(SpeciesToGroupOrderingAttribute.DATA_GROUP_ID, DAO.Direction.ASC);
+        orderAttrs.put(SpeciesToGroupOrderingAttribute.DISTANCE_TO_SPECIES, DAO.Direction.ASC);
         final Map<String, List<Species>> groupIdToSpeciesMap = buildSpeciesMap(
                 getDaoManager().getSpeciesDataGroupDAO().getAllSpeciesToDataGroup(orderAttrs), 
                 speciesService.loadSpeciesInDataGroups());
@@ -111,8 +110,8 @@ public class SpeciesDataGroupService extends Service {
                     + "associated to species."));
         }
         
-        LinkedHashMap<OrderingAttribute, OrderingDAO.Direction> orderAttrs2 = new LinkedHashMap<>();
-        orderAttrs2.put(OrderingAttribute.PREFERRED_ORDER, OrderingDAO.Direction.ASC);
+        LinkedHashMap<SpeciesDataGroupDAO.OrderingAttribute, DAO.Direction> orderAttrs2 = new LinkedHashMap<>();
+        orderAttrs2.put(SpeciesDataGroupDAO.OrderingAttribute.PREFERRED_ORDER, DAO.Direction.ASC);
         return log.exit(getDaoManager().getSpeciesDataGroupDAO()
                 .getAllSpeciesDataGroup(null, orderAttrs2).stream()
                 .map(e -> newSpeciesDataGroup(e, groupIdToSpeciesMap.get(e.getId()), 

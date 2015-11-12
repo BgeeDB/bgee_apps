@@ -37,7 +37,14 @@ public class FakeTopAnatDisplay extends FakeParentDisplay implements TopAnatDisp
 
     @Override
     public void sendGeneListReponse(Map<String, Long> speciesIdToGeneCount, String selectedSpeciesId,
-            Set<DevStage> validStages, Set<String> underteminedGeneIds, int statusCode, String msg) {
+            Set<DevStage> validStages, Set<String> submittedGeneIds, Set<String> underteminedGeneIds,
+            int statusCode, String msg) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void sendTopAnatParameters(String hash) {
         // TODO Auto-generated method stub
         
     }

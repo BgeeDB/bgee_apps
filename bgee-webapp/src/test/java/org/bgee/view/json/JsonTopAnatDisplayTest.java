@@ -56,6 +56,8 @@ public class JsonTopAnatDisplayTest extends TestAncestor {
         validStages.add(new DevStage("8967786", "adult", "adult desc", 2));
 
         Set<String> undeterminedGeneIds = new HashSet<String>(Arrays.asList("GeneA", "GeneB"));
+        Set<String> submittedGeneIds = new HashSet<String>(
+                Arrays.asList("GeneA", "GeneB", "GeneC", "GeneD"));
 
         int statusCode = 0;
         
@@ -66,6 +68,6 @@ public class JsonTopAnatDisplayTest extends TestAncestor {
                 new RequestParameters(), props, mock(JsonFactory.class));
 
         display.sendGeneListReponse(speciesIdToGeneCount, selectedSpeciesId, 
-                validStages, undeterminedGeneIds, statusCode, msg);
+                validStages, submittedGeneIds, undeterminedGeneIds, statusCode, msg);
     }
 }

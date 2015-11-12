@@ -54,14 +54,22 @@ public class JsonTopAnatDisplay extends JsonParentDisplay implements TopAnatDisp
 
     @Override
     public void sendGeneListReponse(Map<String, Long> speciesIdToGeneCount, String selectedSpeciesId,
-            Set<DevStage> validStages, Set<String> undeterminedGeneIds, int statusCode, String msg) {
+            Set<DevStage> validStages, Set<String> submittedGeneIds, Set<String> undeterminedGeneIds,
+            int statusCode, String msg) {
         log.entry(speciesIdToGeneCount, selectedSpeciesId,
-                validStages, undeterminedGeneIds, statusCode, msg);
+                validStages, submittedGeneIds, undeterminedGeneIds, statusCode, msg);
 
         this.write(new JsonHelper().toJson(new GeneListResponse(speciesIdToGeneCount, 
-                selectedSpeciesId, validStages, undeterminedGeneIds, statusCode, msg)));
+                selectedSpeciesId, validStages, submittedGeneIds, undeterminedGeneIds,
+                statusCode, msg)));
         
         log.exit();
+    }
+
+    @Override
+    public void sendTopAnatParameters(String hash) {
+        // TODO Auto-generated method stub
+        
     }
 
     @Override
@@ -102,6 +110,11 @@ public class JsonTopAnatDisplay extends JsonParentDisplay implements TopAnatDisp
         Set<DevStage> stages;
         
         /**
+         * See {@link #getSubmittedGeneIds()}.
+         */
+        Set<String> submittedGeneIds;
+
+        /**
          * See {@link #getUndeterminedGeneIds()}.
          */
         Set<String> undeterminedGeneIds;
@@ -125,16 +138,20 @@ public class JsonTopAnatDisplay extends JsonParentDisplay implements TopAnatDisp
          * @param selectedSpecies       A {@code String} representing the ID of the selected species.
          * @param stages                A {@code Set} of {@code DevStage}s that are 
          *                              valid dev. stages for {@code selectedSpecies}.
+         * @param submittedGeneIds      A {@code Set} of {@code String}s that are submitted gene IDs 
+         *                              by the user.
          * @param undeterminedGeneIds   A {@code Set} of {@code String}s that are gene IDs 
          *                              with undetermined species.
          * @param statusCode            An {@code int} that is the status code of response.
          * @param msg                   A {@code String} that is the message of response.
          */
         public GeneListResponse(Map<String, Long> geneCount, String selectedSpecies,
-                Set<DevStage> stages, Set<String> undeterminedGeneIds, int statusCode, String msg) {
+                Set<DevStage> stages, Set<String> submittedGeneIds, 
+                Set<String> undeterminedGeneIds, int statusCode, String msg) {
             this.geneCount= Collections.unmodifiableMap(geneCount);
             this.selectedSpecies = selectedSpecies;
-            this.stages = Collections.unmodifiableSet(stages) ;
+            this.stages = Collections.unmodifiableSet(stages);
+            this.submittedGeneIds = Collections.unmodifiableSet(submittedGeneIds);
             this.undeterminedGeneIds = Collections.unmodifiableSet(undeterminedGeneIds) ;
             this.statusCode = statusCode;
             this.msg = msg;
@@ -161,6 +178,13 @@ public class JsonTopAnatDisplay extends JsonParentDisplay implements TopAnatDisp
          */
         public Set<DevStage> getStages() {
             return this.stages;
+        }
+        
+        /**
+         * @return  The {@code Set} of {@code String}s that are submitted gene IDs by the user.
+         */
+        public Set<String> getSubmittedGeneIds() {
+            return this.submittedGeneIds;
         }
         
         /**

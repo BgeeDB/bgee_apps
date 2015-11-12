@@ -51,7 +51,7 @@ public class CommandSpecies extends CommandParent {
         
         // Get submitted species IDs
         Set<String> submittedSpeciesIds = new HashSet<String>(requestParameters.getValues(
-                requestParameters.getUrlParametersInstance().getParamSpeciesId()));
+                requestParameters.getUrlParametersInstance().getParamSpeciesList()));
 
         // Load detected species
         Set<Species> species = serviceFactory.getSpeciesService().

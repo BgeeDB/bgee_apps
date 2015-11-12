@@ -22,15 +22,35 @@ public interface TopAnatDisplay {
     public void displayTopAnatHomePage();
     
     /**
-     * Display the response following a gene list upload to server (either from file upload, 
-     * or from copy/paste in textarea).
+     * Display the response following a gene list upload to server
+     * (either from file upload, or from copy/paste in textarea).
+     * 
+     * @param speciesIdToGeneCount  A {@code Map} where keys are species IDs, the associated values 
+     *                              being a {@code Long} that are gene ID count found in the species.
+     * @param selectedSpeciesId     A {@code String} that is the species ID to be used.
+     * @param validStages           A {@code Set} of {@code DevStage}s containing valid stages.
+     * @param submittedGeneIds      A {@code Set} of {@code String}s that are submitted gene IDs.
+     *                              It could be {@code null} if we do not need to add them
+     *                              to the response.
+     * @param undeterminedGeneIds   A {@code Set} of {@code String}s that are submitted gene IDs
+     *                              from undetermined species.
+     * @param statusCode            An {@code int} that is the status code of the response.
+     * @param msg                   A {@code String} that is the text message resuming the response.
      */
     //TODO: example parameters. Maybe we want to use Species objects as keys in the Map?
     //Should the Species class has a validStages attribute? Or is it not directly related to Species?
     public void sendGeneListReponse( 
             Map<String, Long> speciesIdToGeneCount, String selectedSpeciesId,
-            Set<DevStage> validStages, Set<String> undeterminedGeneIds, int statusCode, String msg);
+            Set<DevStage> validStages, Set<String> submittedGeneIds, Set<String> undeterminedGeneIds,
+            int statusCode, String msg);
     
+    /**
+     * Display the response following a top anat parameters upload to server.
+     * 
+     * @param hash  A {@code String} that is hash to be "de-hash".
+     */
+    public void sendTopAnatParameters(String hash);
+
     /**
      * Send the response following the submission of a new TopAnat job, with no cached results.
      * 

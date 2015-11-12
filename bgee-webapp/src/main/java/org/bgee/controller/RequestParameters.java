@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
@@ -77,7 +78,8 @@ import org.bgee.controller.servletutils.BgeeHttpServletRequest;
  * 
  * @author Mathieu Seppey
  * @author Frederic Bastian
- * @version Bgee 13, Aug 2014
+ * @author Valentine Rech de Laval
+ * @version Bgee 13, Nov 2014
  * @since Bgee 1
  */
 public class RequestParameters {
@@ -152,11 +154,40 @@ public class RequestParameters {
     public static final String ACTION_DOC_PROC_EXPR_VALUE_DOWLOAD_FILES = "proc_value_files";
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
-     * (see {@link URLParameters#getParamAction()}) when gene list upload is requested.
+     * (see {@link URLParameters#getParamAction()}) when a gene list validation is requested.
      * Value of the parameter page should be {@link #PAGE_TOP_ANAT}.
      */
-    public static final String ACTION_GENE_LIST_UPLOAD = "gene_list_updad";
-
+    public static final String ACTION_TOP_ANAT_GENE_VALIDATION = "gene_validation";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link URLParameters#getParamAction()}) when a species list data is requested.
+     * Value of the parameter page should be {@link #PAGE_TOP_ANAT}.
+     */
+    public static final String ACTION_TOP_ANAT_SPECIES_DATA = "species_data";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link URLParameters#getParamAction()}) when a new job is submitted.
+     * Value of the parameter page should be {@link #PAGE_TOP_ANAT}.
+     */
+    public static final String ACTION_TOP_ANAT_NEW_JOB = "new_job";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link URLParameters#getParamAction()}) when a tracking job is requested.
+     * Value of the parameter page should be {@link #PAGE_TOP_ANAT}.
+     */
+    public static final String ACTION_TOP_ANAT_TRACKING_JOB = "tracking_job";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link URLParameters#getParamAction()}) when results of a completed job is requested.
+     * Value of the parameter page should be {@link #PAGE_TOP_ANAT}.
+     */
+    public static final String ACTION_TOP_ANAT_COMPLETED_JOB = "completed_job";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link URLParameters#getParamAction()}) when from parameters are requested.
+     * Value of the parameter page should be {@link #PAGE_TOP_ANAT}.
+     */
+    public static final String ACTION_TOP_ANAT_FORM_DATA = "form_data";
     /**
      * A {@code String} that is the anchor to use in the hash part of an URL 
      * to link to the single-species part, in the documentation about gene expression calls.
@@ -453,7 +484,7 @@ public class RequestParameters {
                     throws RequestParametersNotFoundException, 
                     MultipleValuesNotAllowedException, WrongFormatException {
         log.entry(request, urlParametersInstance, prop, encodeUrl, parametersSeparator);
-
+        
         // set the properties and then call the constructor method.
         this.prop = prop;
         this.encodeUrl = encodeUrl;
@@ -622,7 +653,14 @@ public class RequestParameters {
                             if (!parameter.allowsSeparatedValues()) {
                                 values.add(valueFromUrl);
                             } else {
-                                values.addAll(Arrays.asList(valueFromUrl.split(parameter.getSeparator())));
+                                String splitPattern = "";
+                                for (String separator: URLParameters.DEFAULT_SEPARATORS) {
+                                    if (!splitPattern.equals("")) {
+                                        splitPattern += "|";
+                                    }
+                                    splitPattern += Pattern.quote(separator);
+                                }
+                                values.addAll(Arrays.asList(valueFromUrl.split(splitPattern)));
                             }
                             for (String value: values) {
                                 if (StringUtils.isBlank(value)) {
@@ -1017,10 +1055,12 @@ public class RequestParameters {
                         List<?> valuesToUse = parameterValues;
                         
                         if (parameter.allowsSeparatedValues()) {
+                            System.err.println("{"+parameter.getSeparators().get(0)+"}");
                             String separatedValues = parameterValues.stream()
                                     .filter(v -> StringUtils.isNotBlank(v.toString()))
                                     .map(Object::toString)
-                                    .collect(Collectors.joining(parameter.getSeparator()));
+                                    .collect(Collectors.joining(parameter.getSeparators().get(0)));
+                            System.err.println("["+separatedValues+"]");
                             valuesToUse = Arrays.asList(separatedValues);
                         } 
                         
@@ -1673,21 +1713,182 @@ public class RequestParameters {
     }
     
     /**
-     * @return A {@code List} of {@code String}s that will be used to upload genes.
-     * @see geneIds
+     * Convenient method to retrieve values of the parameter returned by 
+     * {@link URLParameters#getParamSpeciesList()}. Equivalent to calling 
+     * {@link #getValues(Parameter)} for this parameter.
+     * 
+     * @return  A {@code List} of {@code String}s that are the values of 
+     *          the {@code species_list} URL parameter. Can be {@code null}. 
      */
-    public List<String> getGeneIds() {
-        return this.getValues(this.getUrlParametersInstance().getParamGeneIds());
+    public List<String> getSpeciesList(){
+        return this.getValues(this.getUrlParametersInstance().getParamSpeciesList());
+    }
+    /**
+     * Convenient method to retrieve values of the parameter returned by 
+     * {@link URLParameters#getParamForegroundList()}. Equivalent to calling 
+     * {@link #getValues(Parameter)} for this parameter.
+     * 
+     * @return  A {@code List} of {@code String}s that are the values of 
+     *          the {@code fg_list} URL parameter. Can be {@code null}. 
+     */
+    public List<String> getForegroundList() {
+        return this.getValues(this.getUrlParametersInstance().getParamForegroundList());
+    }
+    /**
+     * Convenient method to retrieve values of the parameter returned by 
+     * {@link URLParameters#getParamForegroundFile()}. Equivalent to calling 
+     * {@link #getFirstValue(Parameter)} for this parameter.
+     * 
+     * @return  A {@code String} that is the value of the {@code fg_file} URL parameter.
+     *          Can be {@code null}. 
+     */
+    public String getForegroundFile() {
+        return this.getFirstValue(this.getUrlParametersInstance().getParamForegroundFile());
+    }
+    /**
+     * Convenient method to retrieve values of the parameter returned by 
+     * {@link URLParameters#getParamBackgroundList()}. Equivalent to calling 
+     * {@link #getValues(Parameter)} for this parameter.
+     * 
+     * @return  A {@code List} of {@code String}s that are the values of 
+     *          the {@code bg_list} URL parameter. Can be {@code null}. 
+     */
+    public List<String> getBackgroundList() {
+        return this.getValues(this.getUrlParametersInstance().getParamBackgroundList());
+    }
+    /**
+     * Convenient method to retrieve values of the parameter returned by 
+     * {@link URLParameters#getParamBackgroundFile()}. Equivalent to calling 
+     * {@link #getFirstValue(Parameter)} for this parameter.
+     * 
+     * @return  A {@code String} that is the value of the {@code bg_file} URL parameter.
+     *          Can be {@code null}. 
+     */
+    public String getBackgroundFile() {
+        return this.getFirstValue(this.getUrlParametersInstance().getParamBackgroundFile());
+    }
+    /**
+     * Convenient method to retrieve values of the parameter returned by 
+     * {@link URLParameters#getParamExprType()}. Equivalent to calling 
+     * {@link #getValues(Parameter)} for this parameter.
+     * 
+     * @return  A {@code List} of {@code String}s that are the values of 
+     *          the {@code expr_type} URL parameter. Can be {@code null}. 
+     */
+    public List<String> getExprType() {
+        return this.getValues(this.getUrlParametersInstance().getParamExprType());
+    }
+    /**
+     * Convenient method to retrieve values of the parameter returned by 
+     * {@link URLParameters#getParamDataQuality()}. Equivalent to calling 
+     * {@link #getFirstValue(Parameter)} for this parameter.
+     * 
+     * @return  A {@code String} that is the value of the {@code data_qual} URL parameter.
+     *          Can be {@code null}. 
+     */
+    public String getDataQuality() {
+        return this.getFirstValue(this.getUrlParametersInstance().getParamDataQuality());
+    }
+    /**
+     * Convenient method to retrieve values of the parameter returned by 
+     * {@link URLParameters#getParamDataType()}. Equivalent to calling 
+     * {@link #getValues(Parameter)} for this parameter.
+     * 
+     * @return  A {@code List} of {@code String}s that are the values of 
+     *          the {@code data_type} URL parameter. Can be {@code null}. 
+     */
+    public List<String> getDataType() {
+        return this.getValues(this.getUrlParametersInstance().getParamDataType());
+    }
+    /**
+     * Convenient method to retrieve values of the parameter returned by 
+     * {@link URLParameters#getParamDevStage()}. Equivalent to calling 
+     * {@link #getValues(Parameter)} for this parameter.
+     * 
+     * @return  A {@code List} of {@code String}s that are the values of 
+     *          the {@code dev_stage} URL parameter. Can be {@code null}. 
+     */
+    public List<String> getDevStage() {
+        return this.getValues(this.getUrlParametersInstance().getParamDevStage());
+    }
+    /**
+     * Convenient method to retrieve value of the parameter returned by 
+     * {@link URLParameters#getParamDecorrelationType()}. Equivalent to calling 
+     * {@link #getFirstValue(Parameter)} for this parameter.
+     * 
+     * @return  A {@code String} that is the value of the {@code decorr_type} URL parameter.
+     *          Can be {@code null}. 
+     */
+    public String getDecorrelationType() {
+        return this.getFirstValue(this.getUrlParametersInstance().getParamDecorrelationType());
+    }
+    /**
+     * Convenient method to retrieve value of the parameter returned by 
+     * {@link URLParameters#getParamNodeSize()}. Equivalent to calling 
+     * {@link #getFirstValue(Parameter)} for this parameter.
+     * 
+     * @return  An {@code Integer} that is the value of the {@code node_size} URL parameter.
+     *          Can be {@code null}. 
+     */
+    public Integer getNodeSize() {
+        return this.getFirstValue(this.getUrlParametersInstance().getParamNodeSize());
+    }
+    /**
+     * Convenient method to retrieve value of the parameter returned by 
+     * {@link URLParameters#getParamNbNode()}. Equivalent to calling 
+     * {@link #getFirstValue(Parameter)} for this parameter.
+     * 
+     * @return  An {@code Integer} that is the value of the {@code nb_node} URL parameter.
+     *          Can be {@code null}. 
+     */
+    public Integer getNbNode() {
+        return this.getFirstValue(this.getUrlParametersInstance().getParamNbNode());
+    }
+    /**
+     * Convenient method to retrieve value of the parameter returned by 
+     * {@link URLParameters#getParamFdrThreshold()}. Equivalent to calling 
+     * {@link #getFirstValue(Parameter)} for this parameter.
+     * 
+     * @return  An {@code Float} that is the value of the {@code fdr_thr} URL parameter.
+     *          Can be {@code null}. 
+     */
+    public Float getFdrThreshold() {
+        return this.getFirstValue(this.getUrlParametersInstance().getParamFdrThreshold());
+    }
+    /**
+     * Convenient method to retrieve value of the parameter returned by 
+     * {@link URLParameters#getParamPValueThreshold()}. Equivalent to calling 
+     * {@link #getFirstValue(Parameter)} for this parameter.
+     * 
+     * @return  An {@code Float} that is the value of the {@code pvalue_thr} URL parameter.
+     *          Can be {@code null}. 
+     */
+    public Float getPValueThreshold() {
+        return this.getFirstValue(this.getUrlParametersInstance().getParamPValueThreshold());
+    }
+    /**
+     * Convenient method to retrieve value of the parameter returned by 
+     * {@link URLParameters#getParamJobId()}. Equivalent to calling 
+     * {@link #getFirstValue(Parameter)} for this parameter.
+     * 
+     * @return  An {@code Integer} that is the value of the {@code job_id} URL parameter.
+     *          Can be {@code null}. 
+     */
+    public Integer getJobId() {
+        return this.getFirstValue(this.getUrlParametersInstance().getParamJobId());
+    }
+    /**
+     * Convenient method to retrieve value of the parameter returned by 
+     * {@link URLParameters#getParamFormData()}. Equivalent to calling 
+     * {@link #getFirstValue(Parameter)} for this parameter.
+     * 
+     * @return  A {@code String} that is the value of the {@code form_data} URL parameter.
+     *          Can be {@code null}. 
+     */
+    public String getFormData() {
+        return this.getFirstValue(this.getUrlParametersInstance().getParamFormData());
     }
 
-    /**
-     * @return A {@code List} of {@code String}s that will be used to upload genes.
-     * @see geneIds
-     */
-    public void setGeneIds(List<String> geneIds) {
-        this.resetValues(this.getUrlParametersInstance().getParamGeneIds());
-        this.addValues(this.getUrlParametersInstance().getParamGeneIds(), geneIds);
-    }
     /**
      * This method has a js counterpart in {@code requestparameters.js} that should be kept 
      * consistent as much as possible if the method evolves.
@@ -1803,8 +2004,7 @@ public class RequestParameters {
      * 
      * @return  A {@code boolean} to tell whether the request is related to topAnat.
      */
-    public boolean isATopAnatPageCategory()
-    {
+    public boolean isATopAnatPageCategory() {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
             this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_TOP_ANAT)) {
@@ -1847,31 +2047,81 @@ public class RequestParameters {
 //        return log.exit(false);
 //    }
 
-    public boolean isATopAnatGeneListUpload() {
+    /**
+     * @return  A {@code boolean} to tell whether the request is related to
+     *          gene list upload in topAnat.
+     */
+    public boolean isATopAnatGeneUpload() {
         log.entry();
-        if (isATopAnatPageCategory() &&
-                this.getFirstValue(this.urlParametersInstance.getParamGeneIds()) != null &&
-                !this.getValues(this.urlParametersInstance.getParamGeneIds()).isEmpty()) {
+        if (isATopAnatPageCategory() && this.getAction().equals(ACTION_TOP_ANAT_GENE_VALIDATION)) {
             return log.exit(true);
         }
         return log.exit(false);
     }
+    /**
+     * @return  A {@code boolean} to tell whether the request is related to
+     *          species list upload in topAnat.
+     */
+    public boolean isATopAnatSpeciesUpload() {
+        log.entry();
+        if (isATopAnatPageCategory() && this.getAction().equals(ACTION_TOP_ANAT_SPECIES_DATA)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    /**
+     * @return  A {@code boolean} to tell whether the request is related to
+     *          a new job in topAnat.
+     */
     public boolean isATopAnatNewJob() {
-        // TODO Auto-generated method stub
-        return isATopAnatPageCategory();
+        log.entry();
+        if (isATopAnatPageCategory() &&
+                this.getHttpMethod().equals("POST") &&
+                this.getAction().equals(ACTION_TOP_ANAT_NEW_JOB)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
     }
+    /**
+     * @return  A {@code boolean} to tell whether the request is related to
+     *          a tracking job in topAnat.
+     */
     public boolean isATopAnatTrackingJob() {
-        // TODO Auto-generated method stub
-        return isATopAnatPageCategory();
+        log.entry();
+        if (isATopAnatPageCategory() &&
+                this.getHttpMethod().equals("POST") &&
+                this.getAction().equals(ACTION_TOP_ANAT_TRACKING_JOB)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
     }
+    /**
+     * @return  A {@code boolean} to tell whether the request is related to
+     *          a completed job in topAnat.
+     */
     public boolean isATopAnatCompletedJob() {
-        // TODO Auto-generated method stub
-        return isATopAnatPageCategory();
+        log.entry();
+        if (isATopAnatPageCategory() &&
+                this.getHttpMethod().equals("POST") &&
+                this.getAction().equals(ACTION_TOP_ANAT_COMPLETED_JOB)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
     }
-    public boolean isATopAnatHomePageWithData() {
-        // TODO Auto-generated method stub
-        return isATopAnatPageCategory();
+    /**
+     * @return  A {@code boolean} to tell whether the request is related to
+     *          retrieve form data.
+     */
+    public boolean isATopAnatFormDataUpload() {
+        log.entry();
+        if (isATopAnatPageCategory() &&
+                this.getHttpMethod().equals("POST") &&
+                this.getAction().equals(ACTION_TOP_ANAT_FORM_DATA)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
     }
+    
     /**
      * This method has a js counterpart in {@code requestparameters.js} that should be kept 
      * consistent as much as possible if the method evolves.
@@ -2213,5 +2463,3 @@ public class RequestParameters {
         this.parametersSeparator = parametersSeparator;
     }
 }
-
-

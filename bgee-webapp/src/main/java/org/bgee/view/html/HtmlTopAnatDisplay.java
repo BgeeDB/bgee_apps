@@ -91,7 +91,13 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
 
     @Override
     public void sendGeneListReponse(Map<String, Long> speciesIdToGeneCount, String selectedSpeciesId,
-            Set<DevStage> validStages, Set<String> undeterminedGeneIds, int statusCode, String msg) {
+            Set<DevStage> validStages, Set<String> submittedGeneIds, Set<String> undeterminedGeneIds,
+            int statusCode, String msg) {
+        throw log.throwing(new UnsupportedOperationException("Not available for HTML display"));
+    }
+
+    @Override
+    public void sendTopAnatParameters(String hash) {
         throw log.throwing(new UnsupportedOperationException("Not available for HTML display"));
     }
 

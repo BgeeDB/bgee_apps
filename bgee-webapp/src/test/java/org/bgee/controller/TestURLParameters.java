@@ -9,7 +9,8 @@ import java.util.regex.Pattern;
  * the additional parameters used for unit tests
  * 
  * @author Mathieu Seppey
- * @version Bgee 13
+ * @author Valentine Rech de Laval
+ * @version Bgee 13, Nov 15
  * @since Bgee 13
  * @see RequestParametersTest
  */
@@ -29,9 +30,9 @@ public class TestURLParameters extends URLParameters {
      * allow separated values and is not storable
      */
     private static final Parameter<String> TEST_STRING_LIST = 
-            new Parameter<String>("test_string_list",
-                    false, true, URLParameters.DEFAULT_SEPARATOR, false, 
-                    false, 128, "([a-z0-9]*"+Pattern.quote(URLParameters.DEFAULT_SEPARATOR)+"*)*",
+            new Parameter<String>("test_list",
+                    false, true, URLParameters.DEFAULT_SEPARATORS, false, 
+                    false, 128, "[a-z0-9]*",
                     String.class);
 	/**
 	 * Test {@code Parameter}  of the type  {@code Integer} that does allow

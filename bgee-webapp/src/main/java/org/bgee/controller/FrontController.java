@@ -175,7 +175,7 @@ public class FrontController extends HttpServlet {
             } else if (requestParameters.isAnAboutPageCategory()) {
                 controller = new CommandAbout(response, requestParameters, this.prop, factory);
             } else if (requestParameters.isATopAnatPageCategory()) {
-                controller = new CommandTopAnat(response, requestParameters, this.prop, factory);
+                controller = new CommandTopAnat(response, requestParameters, this.prop, factory, serviceFactory);
             } else {
                 throw log.throwing(new PageNotFoundException("Request not recognized."));
             }

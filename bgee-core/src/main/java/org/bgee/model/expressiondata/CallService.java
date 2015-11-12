@@ -1,11 +1,13 @@
 package org.bgee.model.expressiondata;
 
+import java.util.AbstractMap.SimpleEntry;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -70,6 +72,15 @@ public class CallService extends Service {
     //XXX: If true, retrieve results only in homologous structure/comparable stages, always.
 //    private final boolean forceHomology;
 //******************
+    
+    public static enum Attribute implements Service.Attribute {
+        GENE_ID, ANAT_ENTITY_ID, DEV_STAGE_ID, DATA_QUALITY, CALL_DATA, 
+        GLOBAL_ANAT_PROPAGATION, GLOBAL_STAGE_PROPAGATION, GLOBAL_OBSERVED_DATA, 
+        CALL_DATA_OBSERVED_DATA;
+    }
+    public static enum OrderingAttribute implements Service.OrderingAttribute {
+        GENE_ID, ANAT_ENTITY_ID, DEV_STAGE_ID, RANK;
+    }
 
     /**
      * 0-arg constructor that will cause this {@code CallService} to use 
@@ -103,9 +114,11 @@ public class CallService extends Service {
     }
     
     public Stream<ExpressionCall> loadExpressionCalls(String speciesId, 
-            ExpressionCallFilter callFilter) throws IllegalArgumentException {
-        log.entry(speciesId, callFilter);
-        return log.exit(this.loadCalls(speciesId, Arrays.asList(callFilter))
+            ExpressionCallFilter callFilter, Collection<Attribute> attributes, 
+            LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes) throws IllegalArgumentException {
+        log.entry(speciesId, callFilter, attributes, orderingAttributes);
+        return log.exit(this.loadCalls(speciesId, Arrays.asList(callFilter), 
+                                       attributes, orderingAttributes)
                 .map(call -> (ExpressionCall) call));
     }
     
@@ -117,9 +130,11 @@ public class CallService extends Service {
     
     //XXX: example single-species query, signature/returned value to be better defined
     //XXX: would several CallFilters represent AND or OR conditions?
-    public Stream<? extends Call<?, ?>> loadCalls(
-            String speciesId, Collection<CallFilter<?>> callFilters) throws IllegalArgumentException {
-        log.entry(speciesId, callFilters);
+    public Stream<? extends Call<?, ?>> loadCalls(String speciesId, 
+            Collection<CallFilter<?>> callFilters, Collection<Attribute> attributes, 
+            LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes) 
+                    throws IllegalArgumentException {
+        log.entry(speciesId, callFilters, attributes, orderingAttributes);
         //sanity checks
         if (StringUtils.isBlank(speciesId)) {
             throw log.throwing(new IllegalArgumentException("A speciesID must be provided"));
@@ -131,8 +146,16 @@ public class CallService extends Service {
             throw log.throwing(new IllegalArgumentException("No CallFilter can be null"));
         }
         final Set<CallFilter<?>> clonedFilters = Collections.unmodifiableSet(new HashSet<>(callFilters));
+        final Set<Attribute> clonedAttrs = Collections.unmodifiableSet(
+                attributes == null? EnumSet.noneOf(Attribute.class): EnumSet.copyOf(attributes));
+        LinkedHashMap<OrderingAttribute, Service.Direction> clonedOrderingAttrs = 
+                orderingAttributes == null? new LinkedHashMap<>(): new LinkedHashMap<>(orderingAttributes);
         
-        
+        //UnsupportedOperationExceptions (for now)
+        if (clonedAttrs.contains(Attribute.CALL_DATA_OBSERVED_DATA)) {
+            throw log.throwing(new UnsupportedOperationException(
+                    "Retrieval of observed data state per data type not yet implemented."));
+        }
         if (clonedFilters.stream().flatMap(filter -> filter.getCallDataFilters().stream())
                 .anyMatch(callData -> Expression.NOT_EXPRESSED.equals(callData.getCallType()) || 
                         EnumSet.allOf(DiffExpression.class).contains(callData.getCallType()))) {
@@ -140,11 +163,13 @@ public class CallService extends Service {
                     "Management of diff. expression and no-expression queries not yet implemented."));
         }
 
+        //OK, real work starts here
         Set<Stream<? extends Call<?, ?>>> streamsJoinAnd = new HashSet<>();
         for (CallFilter<?> filter: clonedFilters) { 
             //dispatch the CallData per DAO needed. 
             Set<Stream<? extends Call<?, ?>>> streamsJoinOr = new HashSet<>();
-            streamsJoinOr.addAll(this.performsExpressionQueries(speciesId, filter));
+            streamsJoinOr.addAll(this.performsExpressionQueries(speciesId, filter, clonedAttrs, 
+                    clonedOrderingAttrs));
             assert streamsJoinOr.size() > 0;
             
             if (streamsJoinOr.size() > 1) {
@@ -171,8 +196,9 @@ public class CallService extends Service {
     // METHODS PERFORMING THE QUERIES TO THE DAOs
     //*************************************************************************
     private Set<Stream<ExpressionCall>> performsExpressionQueries(String speciesId, 
-            CallFilter<?> callFilter) {
-        log.entry(speciesId, callFilter);
+            CallFilter<?> callFilter, Set<Attribute> attributes, 
+            LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes) {
+        log.entry(speciesId, callFilter, attributes, orderingAttributes);
         
         //dispatch ExpressionCallDatas between different propagation states requested, 
         //to determine the ExpressionCallDAO parameters includeSubstructures, and includeSubStages.
@@ -245,8 +271,14 @@ public class CallService extends Service {
                         callFilter.getGeneFilter().getGeneIds(), 
                         //no gene orthology requested
                         null, 
-                        //TODO: attributes and ordering attributes
-                        null, null
+                        //Attributes
+                        convertServiceAttrsToDAOAttrs(attributes, entry.getValue().stream()
+                                .flatMap(callData -> callData.getDataType() != null? 
+                                        EnumSet.of(callData.getDataType()).stream(): 
+                                        EnumSet.allOf(DataType.class).stream())
+                                .collect(Collectors.toCollection(() -> EnumSet.noneOf(DataType.class)))), 
+                        //TODO: OrderingAttributes
+                        null
                     )
                     //retrieve the Stream resulting from the query. Note that the query is not executed 
                     //as long as the Stream is not consumed (lazy-loading).
@@ -268,9 +300,8 @@ public class CallService extends Service {
             DataPropagation daoDataPropagation) {
         log.entry(callTO, daoDataPropagation);
         
-        if (Arrays.stream(new PropagationState[]{
-                        daoDataPropagation.getAnatEntityPropagationState(), 
-                        daoDataPropagation.getDevStagePropagationState()})
+        if (Stream.of(daoDataPropagation.getAnatEntityPropagationState(), 
+                        daoDataPropagation.getDevStagePropagationState())
                   .anyMatch(e -> !PropagationState.SELF.equals(e) && 
                                  !PropagationState.SELF_OR_DESCENDANT.equals(e))) {
             throw log.throwing(new IllegalArgumentException("Only the propagation states "
@@ -343,23 +374,20 @@ public class CallService extends Service {
     //*************************************************************************
     // HELPER METHODS CONVERTING INFORMATION FROM ExpressionCallDAO LAYER TO Call LAYER
     //*************************************************************************
+    private static final Map<ExpressionCallDAO.Attribute, DataType> EXPR_ATTR_TO_DATA_TYPE = Stream.of(
+            new SimpleEntry<>(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA, DataType.AFFYMETRIX), 
+            new SimpleEntry<>(ExpressionCallDAO.Attribute.EST_DATA, DataType.EST), 
+            new SimpleEntry<>(ExpressionCallDAO.Attribute.IN_SITU_DATA, DataType.IN_SITU), 
+            new SimpleEntry<>(ExpressionCallDAO.Attribute.RNA_SEQ_DATA, DataType.RNA_SEQ))
+            .collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue));
+            
     private static DataType convertExprAttributeToDataType(
             ExpressionCallDAO.Attribute attr) throws IllegalStateException {
         log.entry(attr);
         
-        switch (attr) {
-        case AFFYMETRIX_DATA: 
-            return log.exit(DataType.AFFYMETRIX);
-        case EST_DATA: 
-            return log.exit(DataType.EST);
-        case IN_SITU_DATA: 
-            return log.exit(DataType.IN_SITU);
-        case RNA_SEQ_DATA: 
-            return log.exit(DataType.RNA_SEQ);
-        default: 
-            throw log.throwing(new IllegalStateException("Unsupported ExpressionCallDAO.Attribute: "
-                     + attr));
-        }
+        return log.exit(Optional.ofNullable(EXPR_ATTR_TO_DATA_TYPE.get(attr)).orElseThrow(
+                () -> log.throwing(new IllegalStateException(
+                        "Unsupported ExpressionCallDAO.Attribute: " + attr))));
     }
     
     private static PropagationState convertExprOriginToPropagationState(
@@ -462,5 +490,45 @@ public class CallService extends Service {
             throw log.throwing(new IllegalStateException("Unsupported PropagationState "
                     + "for ExpressionCallTOs: " + state));
         }
+    }
+    
+    private static Set<ExpressionCallDAO.Attribute> convertServiceAttrsToDAOAttrs(
+            Set<Attribute> attributes, Set<DataType> dataTypesRequested) {
+        log.entry(attributes, dataTypesRequested);
+        
+        //revert the existing map ExpressionCallDAO.Attribute -> DataType
+        Map<DataType, ExpressionCallDAO.Attribute> typeToDAOAttr = EXPR_ATTR_TO_DATA_TYPE.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
+        
+        return log.exit(attributes.stream().flatMap(attr -> {
+            switch (attr) {
+            case GENE_ID: 
+                return Stream.of(ExpressionCallDAO.Attribute.GENE_ID);
+            case ANAT_ENTITY_ID: 
+                return Stream.of(ExpressionCallDAO.Attribute.GENE_ID);
+            case DEV_STAGE_ID: 
+                return Stream.of(ExpressionCallDAO.Attribute.GENE_ID);
+            //Whether we need to get a global quality level over all requested data types, 
+            //or the detailed quality level per data type, it's the same DAO attributes that we need. 
+            case DATA_QUALITY: 
+            case CALL_DATA: 
+                return dataTypesRequested.stream().map(type -> Optional.ofNullable(typeToDAOAttr.get(type))
+                        .orElseThrow(() -> log.throwing(new IllegalStateException(
+                                "Unsupported DataType: " + type))));
+            case GLOBAL_ANAT_PROPAGATION: 
+                return Stream.of(ExpressionCallDAO.Attribute.ANAT_ORIGIN_OF_LINE);
+            case GLOBAL_STAGE_PROPAGATION: 
+                return Stream.of(ExpressionCallDAO.Attribute.STAGE_ORIGIN_OF_LINE);
+            case GLOBAL_OBSERVED_DATA: 
+                return Stream.of(ExpressionCallDAO.Attribute.OBSERVED_DATA);
+            case CALL_DATA_OBSERVED_DATA: 
+                //nothing here, the only way to get this information is by performing 2 queries, 
+                //one including substructures/sub-stages, another one without substructures/sub-stages.
+                return Stream.empty();
+            default: 
+                throw log.throwing(new IllegalStateException("Unsupported Attributes from CallService: "
+                        + attr));
+            }
+        }).collect(Collectors.toCollection(() -> EnumSet.noneOf(ExpressionCallDAO.Attribute.class))));
     }
 }

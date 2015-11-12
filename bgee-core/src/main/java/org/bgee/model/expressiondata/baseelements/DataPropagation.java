@@ -34,6 +34,8 @@ public class DataPropagation {
      * or in some ancestor of the condition element.
      * <li>{@code SELF_OR_DESCENDANT}: data observed either in the condition element itself, 
      * or in some descendant of the condition element.
+     * <li>{@code ALL}: data observed both in the condition element itself, 
+     * and in some descendant of the condition element, and in some ancestor of the condition element.
      * </ul>
      * 
      * @author Frederic Bastian
@@ -43,7 +45,7 @@ public class DataPropagation {
      */
     public static enum PropagationState {
         SELF, ANCESTOR, DESCENDANT, SELF_AND_ANCESTOR, SELF_AND_DESCENDANT, 
-        SELF_OR_ANCESTOR, SELF_OR_DESCENDANT;
+        SELF_OR_ANCESTOR, SELF_OR_DESCENDANT, ALL;
     }
     
     /**

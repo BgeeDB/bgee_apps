@@ -1,5 +1,7 @@
 package org.bgee.model.expressiondata.baseelements;
 
+import java.util.Arrays;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -56,32 +58,76 @@ public class DataPropagation {
      * @see #getDevStagePropagationState()
      */
     private final PropagationState devStagePropagationState;
+    /**
+     * @see #getIncludingObservedData()
+     */
+    private final Boolean includingObservedData;
     
     /**
      * Instantiate a new {@code DataPropagation} with a {@code PropagationState.SELF} state 
      * for all condition elements.
      * @see #DataPropagation(PropagationState, PropagationState)
+     * @see #DataPropagation(PropagationState, PropagationState, Boolean)
      */
     public DataPropagation() {
         this(PropagationState.SELF, PropagationState.SELF);
     }
     /**
      * Instantiate a new {@code DataPropagation} by providing the propagation state along anatomy, 
-     * and the propagation state along developmental stages. 
+     * and the propagation state along developmental stages. The observed data state 
+     * is unknown.
      * 
      * @param anatEntityPropagationState    A {@code PropagationState} describing how data 
      *                                      are propagated along anatomy.
      * @param devStagePropagationState      A {@code PropagationState} describing how data 
      *                                      are propagated along dev. stages.
      * @throws IllegalArgumentException     If any of the arguments is {@code null}.
+     * @see #DataPropagation(PropagationState, PropagationState, Boolean)
      */
     public DataPropagation(PropagationState anatEntityPropagationState, 
             PropagationState devStagePropagationState) throws IllegalArgumentException {
+        this(anatEntityPropagationState, devStagePropagationState, null);
+    }
+    /**
+     * Instantiate a new {@code DataPropagation} by providing the propagation state along anatomy, 
+     * the propagation state along developmental stages, and the observed data state. 
+     * If {@code includingObservedData} is {@code null}, it means that the observed data state 
+     * is unknown. 
+     * 
+     * @param anatEntityPropagationState    A {@code PropagationState} describing how data 
+     *                                      are propagated along anatomy.
+     * @param devStagePropagationState      A {@code PropagationState} describing how data 
+     *                                      are propagated along dev. stages.
+     * @param includingObservedData         A {@code Boolean} defining whether the data includes 
+     *                                      some that were observed in the condition itself, 
+     *                                      and not only in an ancestor or a descendant. 
+     *                                      If {@code null}, it means that this information is unknown.
+     * @throws IllegalArgumentException     If {@code anatEntityPropagationState} or 
+     *                                      {@code devStagePropagationState} is {@code null}.
+     */
+    public DataPropagation(PropagationState anatEntityPropagationState, 
+            PropagationState devStagePropagationState, Boolean includingObservedData) 
+                    throws IllegalArgumentException {
         if (anatEntityPropagationState == null || devStagePropagationState == null) {
-            throw log.throwing(new IllegalArgumentException("No argument can be null"));
+            throw log.throwing(new IllegalArgumentException("The propagation states cannot be null"));
         }
+        //check consistency of the PropagationState and of the observed data state
+        PropagationState[] states = new PropagationState[]{
+                anatEntityPropagationState, devStagePropagationState};
+        if (new Boolean(true).equals(includingObservedData) && Arrays.stream(states).anyMatch(
+                e -> PropagationState.ANCESTOR.equals(e) || PropagationState.DESCENDANT.equals(e)) ||
+                
+            new Boolean(false).equals(includingObservedData) && Arrays.stream(states).allMatch(
+                e -> PropagationState.SELF.equals(e) || PropagationState.SELF_AND_ANCESTOR.equals(e) || 
+                PropagationState.SELF_AND_DESCENDANT.equals(e) || PropagationState.ALL.equals(e))) {
+            
+            throw log.throwing(new IllegalArgumentException("The provided observed data state ("
+                    + includingObservedData + ") is incompatible with the provided PropagationStates ("
+                    + "anatomy: " + anatEntityPropagationState + " - stage: " + devStagePropagationState));
+        } 
         this.anatEntityPropagationState = anatEntityPropagationState;
         this.devStagePropagationState   = devStagePropagationState;
+        this.includingObservedData      = includingObservedData;
     }
     
     /**
@@ -97,19 +143,22 @@ public class DataPropagation {
     public PropagationState getDevStagePropagationState() {
         return devStagePropagationState;
     }
+    /**
+     * @return  A {@code Boolean} defining whether the data includes some that were observed 
+     *          in the condition itself, and not only in an ancestor or a descendant. 
+     *          If {@code null}, it means that this information is unknown.  
+     */
+    public Boolean getIncludingObservedData() {
+        return includingObservedData;
+    }
     
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime
-                * result
-                + ((anatEntityPropagationState == null) ? 0
-                        : anatEntityPropagationState.hashCode());
-        result = prime
-                * result
-                + ((devStagePropagationState == null) ? 0
-                        : devStagePropagationState.hashCode());
+        result = prime * result + ((anatEntityPropagationState == null) ? 0 : anatEntityPropagationState.hashCode());
+        result = prime * result + ((devStagePropagationState == null) ? 0 : devStagePropagationState.hashCode());
+        result = prime * result + ((includingObservedData == null) ? 0 : includingObservedData.hashCode());
         return result;
     }
     @Override
@@ -120,7 +169,7 @@ public class DataPropagation {
         if (obj == null) {
             return false;
         }
-        if (!(obj instanceof DataPropagation)) {
+        if (getClass() != obj.getClass()) {
             return false;
         }
         DataPropagation other = (DataPropagation) obj;
@@ -130,14 +179,22 @@ public class DataPropagation {
         if (devStagePropagationState != other.devStagePropagationState) {
             return false;
         }
+        if (includingObservedData == null) {
+            if (other.includingObservedData != null) {
+                return false;
+            }
+        } else if (!includingObservedData.equals(other.includingObservedData)) {
+            return false;
+        }
         return true;
     }
+    
     @Override
     public String toString() {
-        return "DataPropagation [anatEntity="
-                + anatEntityPropagationState
-                + ", devStage=" + devStagePropagationState
-                + "]";
+        StringBuilder builder = new StringBuilder();
+        builder.append("DataPropagation [anatEntityPropagationState=").append(anatEntityPropagationState)
+                .append(", devStagePropagationState=").append(devStagePropagationState)
+                .append(", includingObservedData=").append(includingObservedData).append("]");
+        return builder.toString();
     }
-    
 }

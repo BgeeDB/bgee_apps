@@ -192,11 +192,11 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
 
     @Override
     public String toString() {
-        return "Call [geneId=" + geneId + ", condition=" + condition 
+        return this.getClass().getSimpleName() + " [geneId=" + geneId 
+                + ", condition=" + condition 
                 + ", dataPropagation=" + dataPropagation
                 + ", summaryCallType=" + summaryCallType 
                 + ", summaryQuality=" + summaryQuality 
                 + ", callData=" + callData + "]";
     }
-    
 }

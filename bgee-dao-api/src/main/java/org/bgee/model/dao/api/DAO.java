@@ -26,7 +26,7 @@ public interface DAO<T extends Enum<T> & DAO.Attribute> {
      * @since Bgee 13
      */
     ////XXX: when all DAOs will be immutable, will we still actually need this interface?
-    public interface Attribute {
+    public static interface Attribute {
         //nothing here, it is only used for typing the Enum classes.
     }
     
@@ -38,7 +38,7 @@ public interface DAO<T extends Enum<T> & DAO.Attribute> {
      * <li>{@code DESC}: order by descending order.
      * </ul>
      */
-    enum Direction {
+    public static enum Direction {
         ASC, DESC;
     }
 
@@ -53,14 +53,14 @@ public interface DAO<T extends Enum<T> & DAO.Attribute> {
      * Note that implementations can still decide that the attributes to retrieve from a query
      * and the attributes used to order results are the same, in which case 
      * a same {@code Enum} class would be defined as implementing both {@code DAO.Attribute} 
-     * and {@code OrderingDAO.OrderingAttribute}.
+     * and {@code DAO.OrderingAttribute}.
      * 
      * @author Frederic Bastian
      * @version Bgee 13 Jul 2015
      * @since Bgee 13
      */
     ////XXX: when all DAOs will be immutable, will we still actually need this interface?
-    interface OrderingAttribute {
+    public static interface OrderingAttribute {
         //nothing here, it is only used for typing the Enum classes.
     }
 

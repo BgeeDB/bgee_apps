@@ -87,15 +87,15 @@ public class URLParameters {
     /**
      * A {@code String} that contains the default value for {@link URLParameters.Parameter#format}
      */
-    protected static final String DEFAULT_FORMAT = null;
+    protected static final String DEFAULT_FORMAT = "^\\w*$";
 
     /**
      * A {@code String} that contains the default value for {@link URLParameters.Parameter#format}
      * of a list.
      */
     protected static final String DEFAULT_LIST_FORMAT = 
-            "[A-Za-z0-9" + DEFAULT_SEPARATORS.stream()
-                    .map(Pattern::quote).collect(Collectors.joining()) + "]*";
+            "^[\\w" + DEFAULT_SEPARATORS.stream()
+                    .map(Pattern::quote).collect(Collectors.joining()) + "]*$";
 
     // *************************************
     //
@@ -347,7 +347,7 @@ public class URLParameters {
             // Species request
             SPECIES_LIST,
             // TopAnat analyze params
-            FOREGROUND_LIST, FOREGROUND_FILE, BACKGROUND_LIST, BACKGROUND_LIST,
+            FOREGROUND_LIST, FOREGROUND_FILE, BACKGROUND_LIST, BACKGROUND_FILE,
             EXPRESSION_TYPE, DATA_QUALITY, DATA_TYPE, DEV_STAGE, DECORRELATION_TYPE,
             NODE_SIZE, FDR_THRESHOLD, P_VALUE_THRESHOLD, NB_NODE,
             JOB_ID, FORM_DATA,

@@ -1,13 +1,15 @@
 package org.bgee.view.json;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
@@ -18,6 +20,7 @@ import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.TaskManager;
 import org.bgee.model.anatdev.DevStage;
+import org.bgee.model.species.Species;
 import org.bgee.model.topanat.TopAnatResults;
 import org.bgee.view.JsonHelper;
 import org.bgee.view.TopAnatDisplay;
@@ -63,23 +66,27 @@ public class JsonTopAnatDisplay extends JsonParentDisplay implements TopAnatDisp
     }
 
     @Override
-    public void sendGeneListReponse(Map<String, Long> speciesIdToGeneCount, String selectedSpeciesId,
+    public void sendGeneListReponse(Map<Species, Long> speciesToGeneCount, String selectedSpeciesId,
             Set<DevStage> validStages, Set<String> submittedGeneIds, Set<String> undeterminedGeneIds,
             int statusCode, String msg) {
-        log.entry(speciesIdToGeneCount, selectedSpeciesId,
+        log.entry(speciesToGeneCount, selectedSpeciesId,
                 validStages, submittedGeneIds, undeterminedGeneIds, statusCode, msg);
         
         //sanity checks
-        if (speciesIdToGeneCount.isEmpty() && undeterminedGeneIds.isEmpty()) {
+        if (speciesToGeneCount.isEmpty() && undeterminedGeneIds.isEmpty()) {
             throw log.throwing(new IllegalArgumentException(
                     "Some gene information to display must be provided."));
         }
 
-        //add into the speciesIdToGeneCount the invalid gene IDs, associated to a specific key, 
-        //and make it a LinkedHashMap for sorting and predictable responses
-        LinkedHashMap<String, Long> responseSpeciesIdToGeneCount = Optional.of(speciesIdToGeneCount)
+        //Transform speciesToGeneCount into a Map species ID -> gene count, and add 
+        //the invalid gene count, associated to a specific key, and make it a LinkedHashMap, 
+        //for sorted and predictable responses
+        LinkedHashMap<String, Long> responseSpeciesIdToGeneCount = Optional.of(speciesToGeneCount)
                 .map(map -> {
-                    LinkedHashMap<String, Long> newMap = new LinkedHashMap<>(map);
+                    //create a map species ID -> gene count
+                    Map<String, Long> newMap = map.entrySet().stream()
+                            .collect(Collectors.toMap(e -> e.getKey().getId(), e -> e.getValue()));
+                    //add an entry for undetermined genes
                     newMap.put(UNDETERMINED_SPECIES_LABEL, Long.valueOf(undeterminedGeneIds.size()));
                     return newMap;
                 })
@@ -96,8 +103,28 @@ public class JsonTopAnatDisplay extends JsonParentDisplay implements TopAnatDisp
                     LinkedHashMap::new));
 
         this.sendHeaders();
-        this.write(new JsonHelper().toJson(new GeneListResponse(responseSpeciesIdToGeneCount, 
-                selectedSpeciesId, validStages, submittedGeneIds, undeterminedGeneIds,
+        this.write(new JsonHelper().toJson(new GeneListResponse(
+                responseSpeciesIdToGeneCount, 
+                //provide a TreeMap species ID -> species
+                speciesToGeneCount.keySet().stream().collect(Collectors.toMap(
+                        spe -> spe.getId(), spe -> spe, 
+                        (v1, v2) -> {throw log.throwing(new IllegalStateException("No key collision possible"));}, 
+                        TreeMap::new)), 
+                selectedSpeciesId, 
+                //provide a sorted List of DevStages
+                Optional.ofNullable(validStages)
+                    .map(stages -> stages.stream()
+                        .sorted((st1, st2) -> st1.getId().compareTo(st2.getId()))
+                        .collect(Collectors.toList()))
+                    .orElse(new ArrayList<>()), 
+                //SortedSet of submitted gene IDs
+                Optional.ofNullable(submittedGeneIds)
+                    .map(TreeSet<String>::new)
+                    .orElse(new TreeSet<>()), 
+                //SortedSet of undetermined gene IDs
+                Optional.ofNullable(undeterminedGeneIds)
+                    .map(TreeSet<String>::new)
+                    .orElse(new TreeSet<>()),
                 statusCode, msg)));
         
         log.exit();
@@ -131,71 +158,73 @@ public class JsonTopAnatDisplay extends JsonParentDisplay implements TopAnatDisp
         // TODO Auto-generated method stub
     }
     
+    /**
+     * A convenient class to be passed to {@link JsonHelper} for gene list upload responses. 
+     */
     public static class GeneListResponse {
-        
         /**
          * See {@link #getGeneCount()}.
          */
-        private final Map<String, Long> geneCount;
-        
+        private final LinkedHashMap<String, Long> geneCount;
+        /**
+         * See {@link #getDetectedSpecies()}.
+         */
+        private final TreeMap<String, Species> detectedSpecies;
         /**
          * See {@link #getSelectedSpecies()}.
          */
         private final String selectedSpecies;
-        
         /**
          * See {@link #getStages()}.
          */
-        private final Set<DevStage> stages;
-        
+        private final List<DevStage> stages;
         /**
          * See {@link #getSubmittedGeneIds()}.
          */
-        private final Set<String> submittedGeneIds;
-
+        private final TreeSet<String> submittedGeneIds;
         /**
          * See {@link #getUndeterminedGeneIds()}.
          */
-        private final Set<String> undeterminedGeneIds;
-        
+        private final TreeSet<String> undeterminedGeneIds;
         /**
          * See {@link #getStatusCode()}.
          */
         private final int statusCode;
-        
         /**
          * See {@link #getMessage()}.
          */
         private final String msg;
         
         /**
-         * Constructor of {@code GeneListResponse}.
+         * Constructor of {@code GeneListResponse}. All {@code Collection}s or {@code Map}s 
+         * have a predictable iteration order, for predictable and consistent responses.
          * 
-         * @param geneCount             A {@code Map} where keys are {@code String}s corresponding 
-         *                              species IDs, the associated value being a {@code Long}
-         *                              that is the gene count on the species.
+         * @param geneCount             A {@code LinkedHashMap} where keys are {@code String}s 
+         *                              corresponding to species IDs, the associated value being 
+         *                              a {@code Long} that is the gene count on the species.
+         * @param detectedSpecies       A {@code List} of {@code Species} detected in the gene list uploaded.
          * @param selectedSpecies       A {@code String} representing the ID of the selected species.
-         * @param stages                A {@code Set} of {@code DevStage}s that are 
+         * @param stages                A {@code List} of {@code DevStage}s that are 
          *                              valid dev. stages for {@code selectedSpecies}.
-         * @param submittedGeneIds      A {@code Set} of {@code String}s that are submitted gene IDs 
+         * @param submittedGeneIds      A {@code TreeSet} of {@code String}s that are submitted gene IDs 
          *                              by the user.
-         * @param undeterminedGeneIds   A {@code Set} of {@code String}s that are gene IDs 
+         * @param undeterminedGeneIds   A {@code TreeSet} of {@code String}s that are gene IDs 
          *                              with undetermined species.
          * @param statusCode            An {@code int} that is the status code of response.
          * @param msg                   A {@code String} that is the message of response.
          */
-        public GeneListResponse(Map<String, Long> geneCount, String selectedSpecies,
-                Set<DevStage> stages, Set<String> submittedGeneIds, 
-                Set<String> undeterminedGeneIds, int statusCode, String msg) {
-            log.entry(geneCount, selectedSpecies, stages, submittedGeneIds, undeterminedGeneIds, 
-                    statusCode, msg);
-            this.geneCount= Collections.unmodifiableMap(geneCount);
+        private GeneListResponse(LinkedHashMap<String, Long> geneCount, 
+                TreeMap<String, Species> detectedSpecies, 
+                String selectedSpecies, List<DevStage> stages, TreeSet<String> submittedGeneIds, 
+                TreeSet<String> undeterminedGeneIds, int statusCode, String msg) {
+            log.entry(geneCount, detectedSpecies, selectedSpecies, stages, 
+                    submittedGeneIds, undeterminedGeneIds, statusCode, msg);
+            this.geneCount= geneCount;
+            this.detectedSpecies = detectedSpecies;
             this.selectedSpecies = selectedSpecies;
-            this.stages = Collections.unmodifiableSet(Optional.ofNullable(stages)
-                    .map(st -> new HashSet<>(st)).orElse(new HashSet<>()));
-            this.submittedGeneIds = Collections.unmodifiableSet(Optional.ofNullable(submittedGeneIds)
-                    .map(st -> new HashSet<>(st)).orElse(new HashSet<>()));
-            this.undeterminedGeneIds = Collections.unmodifiableSet(undeterminedGeneIds) ;
+            this.stages = stages;
+            this.submittedGeneIds = submittedGeneIds;
+            this.undeterminedGeneIds = undeterminedGeneIds;
             this.statusCode = statusCode;
             this.msg = msg;
             log.exit();
@@ -205,46 +234,48 @@ public class JsonTopAnatDisplay extends JsonParentDisplay implements TopAnatDisp
          * @return  The {@code Map} where keys are {@code String}s corresponding species IDs,
          *          the associated value being a {@code Long} that is the gene count on the species.
          */
-        public Map<String, Long> getGeneCount() {
+        public LinkedHashMap<String, Long> getGeneCount() {
             return this.geneCount;
         }
-        
+        /**
+         * @return  The {@code TreeMap} where keys are {@code String}s corresponding 
+         *          to IDs of detected species, the associated value being the corresponding 
+         *          {@code Species} object.
+         */
+        public TreeMap<String, Species> getDetectedSpecies() {
+            return this.detectedSpecies;
+        }
         /**
          * @return  The {@code String} representing the ID of the selected species.
          */
         public String getSelectedSpecies() {
             return this.selectedSpecies;
         }
-        
         /**
          * @return The {@code Set} of {@code DevStage}s that are 
          *          valid dev. stages for {@code selectedSpecies}.
          */
-        public Set<DevStage> getStages() {
+        public List<DevStage> getStages() {
             return this.stages;
         }
-        
         /**
          * @return  The {@code Set} of {@code String}s that are submitted gene IDs by the user.
          */
-        public Set<String> getSubmittedGeneIds() {
+        public TreeSet<String> getSubmittedGeneIds() {
             return this.submittedGeneIds;
         }
-        
         /**
          * @return  The {@code Set} of {@code String}s that are gene IDs with undetermined species.
          */
-        public Set<String> getUndeterminedGeneIds() {
+        public TreeSet<String> getUndeterminedGeneIds() {
             return this.undeterminedGeneIds;
         }
-        
         /**
          * @return  The {@code int} that is the status code of response.
          */
         public int getStatusCode() {
             return this.statusCode;
         }
-        
         /**
          * @return  The {@code String} that is the message of response.
          */

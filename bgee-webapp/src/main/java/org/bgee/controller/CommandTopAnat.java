@@ -23,6 +23,7 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.TaskManager;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.gene.Gene;
+import org.bgee.model.species.Species;
 import org.bgee.model.topanat.TopAnatController;
 import org.bgee.model.topanat.TopAnatParams;
 import org.bgee.model.topanat.TopAnatResults;
@@ -271,16 +272,21 @@ public class CommandTopAnat extends CommandParent {
         
 
         // Load valid submitted gene IDs
-        Set<Gene> validGenes = new HashSet<>(this.getGenes(null, submittedGeneIds));
+        final Set<Gene> validGenes = new HashSet<>(this.getGenes(null, submittedGeneIds));
         // Identify undetermined gene IDs
-        Set<String> undeterminedGeneIds = new HashSet<>(submittedGeneIds);
+        final Set<String> undeterminedGeneIds = new HashSet<>(submittedGeneIds);
         undeterminedGeneIds.removeAll(validGenes.stream()
                 .map(Gene::getId)
                 .collect(Collectors.toSet()));
         
         // Map species ID to valid gene ID count
-        Map<String, Long> speciesIdToGeneCount = validGenes.stream()
+        final Map<String, Long> speciesIdToGeneCount = validGenes.stream()
                     .collect(Collectors.groupingBy(Gene::getSpeciesId, Collectors.counting()));
+        // Retrieve detected species, and create a new Map Species -> Long
+        final Map<Species, Long> speciesToGeneCount = this.serviceFactory.getSpeciesService()
+                .loadSpeciesByIds(speciesIdToGeneCount.keySet())
+                .stream()
+                .collect(Collectors.toMap(spe -> spe, spe -> speciesIdToGeneCount.get(spe.getId())));
         // Determine selected species ID. 
         String selectedSpeciesId = speciesIdToGeneCount.entrySet().stream()
                 //sort based on gene count (and in case of equality, based on species ID)
@@ -292,14 +298,14 @@ public class CommandTopAnat extends CommandParent {
                 })
                 .map(e -> e.getKey())
                 .orElse(null);
+        // Load valid stages for selected species
         Set<DevStage> validStages = null;
         if (selectedSpeciesId != null) {
-            // Load valid stages for selected species
             validStages = this.getGroupingDevStages(selectedSpeciesId, DEV_STAGE_LEVEL);
         }
 
         // Determine message
-        String msg = this.getGeneUploadResponseMessage(submittedGeneIds, speciesIdToGeneCount, 
+        String msg = this.getGeneUploadResponseMessage(submittedGeneIds, speciesToGeneCount, 
                 undeterminedGeneIds);
 
         // We do not return submitted gene IDs if they were not extracted from a file.
@@ -308,7 +314,7 @@ public class CommandTopAnat extends CommandParent {
         }
         
         // Send response
-        display.sendGeneListReponse(speciesIdToGeneCount, selectedSpeciesId,
+        display.sendGeneListReponse(speciesToGeneCount, selectedSpeciesId,
                 validStages, submittedGeneIds, undeterminedGeneIds, 0, msg);
         log.exit();
     }
@@ -357,30 +363,31 @@ public class CommandTopAnat extends CommandParent {
      * and the undetermined gene IDs.
      * 
      * @param submittedGeneIds      A {@code Set} of {@code String}s that are submitted gene IDs.
-     * @param speciesIdToGeneCount  A {@code Map} where keys are species IDs, the associated values 
-     *                              being a {@code Long} that are gene ID count found in the species.
+     * @param speciesToGeneCount    A {@code Map} where keys are {@code Species} objects, 
+     *                              the associated values being a {@code Long} that are gene ID 
+     *                              count found in the species.
      * @param undeterminedGeneIds   A {@code Set} of {@code String}s that are submitted gene IDs
      *                              from undetermined species.
      * @return                      A {@code String} that is the message to display.
      */
     private String getGeneUploadResponseMessage(Set<String> submittedGeneIds, 
-            Map<String, Long> speciesIdToGeneCount, Set<String> undeterminedGeneIds) {
-        log.entry(submittedGeneIds, speciesIdToGeneCount, undeterminedGeneIds);
+            Map<Species, Long> speciesToGeneCount, Set<String> undeterminedGeneIds) {
+        log.entry(submittedGeneIds, speciesToGeneCount, undeterminedGeneIds);
         
         StringBuilder msg = new StringBuilder();
         msg.append(submittedGeneIds.size());
         msg.append(" genes entered");
-        if (!speciesIdToGeneCount.isEmpty()) {
-            msg.append(speciesIdToGeneCount.entrySet().stream()
+        if (!speciesToGeneCount.isEmpty()) {
+            msg.append(speciesToGeneCount.entrySet().stream()
                 //sort in descending order of gene count (and in case of equality, 
                 //by ascending order of key, for predictable message generation)
                 .sorted((e1, e2) -> {
                     if (e1.getValue().equals(e2.getValue())) {
-                        return e1.getKey().compareTo(e2.getKey()); 
+                        return e1.getKey().getId().compareTo(e2.getKey().getId()); 
                     } 
                     return e2.getValue().compareTo(e1.getValue());
                 })
-                .map(e -> ", " + e.getValue() + " from species " + e.getKey())
+                .map(e -> ", " + e.getValue() + " in " + e.getKey().getName())
                 .collect(Collectors.joining()));
         }
         if (!undeterminedGeneIds.isEmpty()) {

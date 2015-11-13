@@ -2075,7 +2075,8 @@ public class RequestParameters {
      */
     public boolean isATopAnatGeneUpload() {
         log.entry();
-        if (isATopAnatPageCategory() && this.getAction().equals(ACTION_TOP_ANAT_GENE_VALIDATION)) {
+        if (isATopAnatPageCategory() && 
+                this.getAction() != null && this.getAction().equals(ACTION_TOP_ANAT_GENE_VALIDATION)) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -2086,7 +2087,8 @@ public class RequestParameters {
      */
     public boolean isATopAnatSpeciesUpload() {
         log.entry();
-        if (isATopAnatPageCategory() && this.getAction().equals(ACTION_TOP_ANAT_SPECIES_DATA)) {
+        if (isATopAnatPageCategory() && 
+                this.getAction() != null && this.getAction().equals(ACTION_TOP_ANAT_SPECIES_DATA)) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -2099,7 +2101,7 @@ public class RequestParameters {
         log.entry();
         if (isATopAnatPageCategory() &&
                 this.getHttpMethod().equals("POST") &&
-                this.getAction().equals(ACTION_TOP_ANAT_NEW_JOB)) {
+                this.getAction() != null && this.getAction().equals(ACTION_TOP_ANAT_NEW_JOB)) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -2112,7 +2114,7 @@ public class RequestParameters {
         log.entry();
         if (isATopAnatPageCategory() &&
                 this.getHttpMethod().equals("POST") &&
-                this.getAction().equals(ACTION_TOP_ANAT_TRACKING_JOB)) {
+                this.getAction() != null && this.getAction().equals(ACTION_TOP_ANAT_TRACKING_JOB)) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -2125,7 +2127,7 @@ public class RequestParameters {
         log.entry();
         if (isATopAnatPageCategory() &&
                 this.getHttpMethod().equals("POST") &&
-                this.getAction().equals(ACTION_TOP_ANAT_COMPLETED_JOB)) {
+                this.getAction() != null && this.getAction().equals(ACTION_TOP_ANAT_COMPLETED_JOB)) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -2138,7 +2140,7 @@ public class RequestParameters {
         log.entry();
         if (isATopAnatPageCategory() &&
                 this.getHttpMethod().equals("POST") &&
-                this.getAction().equals(ACTION_TOP_ANAT_FORM_DATA)) {
+                this.getAction() != null && this.getAction().equals(ACTION_TOP_ANAT_FORM_DATA)) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -2406,15 +2408,17 @@ public class RequestParameters {
         if (stringToCheck == null) {
             return "";
         }
-        else if(lengthToCheck != 0 && stringToCheck.length() > lengthToCheck){
-            log.info("The string {} cannot be validated because it is too long ({})", 
-                    stringToCheck, stringToCheck.length());
-            throw log.throwing(new WrongFormatException());
+        else if (lengthToCheck != 0 && stringToCheck.length() > lengthToCheck){
+            String msg = "The parameter value it is too long (" + stringToCheck.length() + "). ";
+            log.error(msg);
+            throw log.throwing(new WrongFormatException(msg));
         }
-        else if(format != null && stringToCheck.matches(format) == false){
-            log.error("The string {} cannot be validated because it does not match the format {}", 
-                    stringToCheck, format);
-            throw log.throwing(new WrongFormatException());
+        else if (format != null && stringToCheck.matches(format) == false) {
+            log.error("The string {} does not match the format {}", stringToCheck, format);
+            //do not provide the accepted format in the exception, we don't need to provide 
+            //too much information to potential hackers :p
+            throw log.throwing(new WrongFormatException("The parameter value " + stringToCheck 
+                    + " has an invalid format. "));
         }
         return log.exit(stringToCheck.trim());
     }

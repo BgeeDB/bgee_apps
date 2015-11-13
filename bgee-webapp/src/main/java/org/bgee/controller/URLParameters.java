@@ -64,10 +64,10 @@ public class URLParameters {
 
     /**
      * A {@code List} of {@code String}s that are the default values to use to separate values
-     * of one parameter.
+     * of one parameter. Contains: "\r\n", "\r", "\n", ",".
      * ({@see URLParameters.Parameter#allowsSeparatedValues}).
      */
-    protected static final List<String> DEFAULT_SEPARATORS = Arrays.asList("\r\n", "\r", "\n");
+    protected static final List<String> DEFAULT_SEPARATORS = Arrays.asList("\r\n", "\r", "\n", ",");
 
     /**
      * A {@code boolean} that contains the default value for {@link URLParameters.Parameter#isStorable}
@@ -187,7 +187,7 @@ public class URLParameters {
      */
     private static final Parameter<String> BACKGROUND_LIST = new Parameter<String>("bg_list",
             false, true, DEFAULT_SEPARATORS, false, DEFAULT_IS_SECURE, 
-            DEFAULT_MAX_SIZE, DEFAULT_LIST_FORMAT, String.class);
+            1000000, DEFAULT_LIST_FORMAT, String.class);
     /**
      * A {@code Parameter<String>} that contains the background gene ID file to be used 
      * for TopAnat analysis.
@@ -195,7 +195,7 @@ public class URLParameters {
      */
     private static final Parameter<String> BACKGROUND_FILE = new Parameter<String>("bg_file",
             false, false, null, false, DEFAULT_IS_SECURE, 
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+            1000000, DEFAULT_FORMAT, String.class);
     /**
      * A {@code Parameter<String>} that contains the expression types to be used 
      * for TopAnat analysis.

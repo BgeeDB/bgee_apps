@@ -46,7 +46,7 @@ public class CommandTopAnat extends CommandParent {
     /**
      * An {@code Integer} that is the level to be used to filter retrieved dev. stages. 
      */
-    private final static Integer DEV_STAGE_LEVEL = 1;
+    private final static Integer DEV_STAGE_LEVEL = 2;
     
     /**
      * Comparator sorting gene count by species map by gene count then species ID
@@ -291,9 +291,12 @@ public class CommandTopAnat extends CommandParent {
                     return e1.getValue().compareTo(e2.getValue());
                 })
                 .map(e -> e.getKey())
-                .get();
-        // Load valid stages for selected species
-        Set<DevStage> validStages = this.getGroupingDevStages(selectedSpeciesId, DEV_STAGE_LEVEL);
+                .orElse(null);
+        Set<DevStage> validStages = null;
+        if (selectedSpeciesId != null) {
+            // Load valid stages for selected species
+            validStages = this.getGroupingDevStages(selectedSpeciesId, DEV_STAGE_LEVEL);
+        }
 
         // Determine message
         String msg = this.getGeneUploadResponseMessage(submittedGeneIds, speciesIdToGeneCount, 
@@ -424,10 +427,6 @@ public class CommandTopAnat extends CommandParent {
         log.entry(speciesIds, geneIds);
         List<Gene> genes = serviceFactory.getGeneService().
                 loadGenesByIdsAndSpeciesIds(geneIds, speciesIds);
-        if (genes.isEmpty()) {
-            throw log.throwing(new IllegalStateException(
-                    "A GeneService did not allow to obtain any Gene."));
-        }
         return log.exit(genes);
     }
     

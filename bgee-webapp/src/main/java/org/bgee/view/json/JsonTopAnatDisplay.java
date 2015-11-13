@@ -2,6 +2,7 @@ package org.bgee.view.json;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -186,13 +187,18 @@ public class JsonTopAnatDisplay extends JsonParentDisplay implements TopAnatDisp
         public GeneListResponse(Map<String, Long> geneCount, String selectedSpecies,
                 Set<DevStage> stages, Set<String> submittedGeneIds, 
                 Set<String> undeterminedGeneIds, int statusCode, String msg) {
+            log.entry(geneCount, selectedSpecies, stages, submittedGeneIds, undeterminedGeneIds, 
+                    statusCode, msg);
             this.geneCount= Collections.unmodifiableMap(geneCount);
             this.selectedSpecies = selectedSpecies;
-            this.stages = Collections.unmodifiableSet(stages);
-            this.submittedGeneIds = Collections.unmodifiableSet(submittedGeneIds);
+            this.stages = Collections.unmodifiableSet(Optional.ofNullable(stages)
+                    .map(st -> new HashSet<>(st)).orElse(new HashSet<>()));
+            this.submittedGeneIds = Collections.unmodifiableSet(Optional.ofNullable(submittedGeneIds)
+                    .map(st -> new HashSet<>(st)).orElse(new HashSet<>()));
             this.undeterminedGeneIds = Collections.unmodifiableSet(undeterminedGeneIds) ;
             this.statusCode = statusCode;
             this.msg = msg;
+            log.exit();
         }
         
         /**

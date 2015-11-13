@@ -90,7 +90,8 @@ public class CommandTopAnatTest extends TestAncestor {
         speciesIdToGeneCount.put("10090", 1L);
         
         verify(display).sendGeneListReponse(speciesIdToGeneCount, selectedSpeciesId,
-                new HashSet<>(Arrays.asList(new DevStage("2443", "embryo", null, 1))), //adult filtered by level
+                new HashSet<>(Arrays.asList(new DevStage("25", "embryo", "embryo desc", 2), 
+                        new DevStage("26", "adult", "adult desc", 2))), 
                 null, new HashSet<>(Arrays.asList("ID4")), 0, 
                 "4 genes entered, 2 from species 9606, 1 from species 10090, "
                 + "1 not found in Bgee.");
@@ -99,8 +100,9 @@ public class CommandTopAnatTest extends TestAncestor {
     private List<DevStage> getDevStagesDataTest() {
         log.entry();
         return log.exit(Arrays.asList(
-                new DevStage("2443", "embryo", null, 1),
-                new DevStage("8967786", "adult", "adult desc", 2)));
+                new DevStage("2443", "Life stage", null, 1),
+                new DevStage("25", "embryo", "embryo desc", 2),
+                new DevStage("26", "adult", "adult desc", 2)));
     }
 
     private List<Gene> getGeneDataTest() {

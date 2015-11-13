@@ -61,7 +61,7 @@ public class CommandTopAnat extends CommandParent {
                 if (o2.getValue().equals(o1.getValue())) {
                     return o2.getKey().compareTo(o1.getKey()); 
                 } 
-                return o2.getValue().compareTo(o1.getValue());
+                return o1.getValue().compareTo(o2.getValue());
             };
 
     /**
@@ -323,7 +323,7 @@ public class CommandTopAnat extends CommandParent {
         
         // We sort the map by gene count (value) then species ID (key)
         return log.exit(speciesIdToGeneCount.entrySet().stream()
-                .min(SPECIES_COUNT_COMPARATOR)
+                .max(SPECIES_COUNT_COMPARATOR)
                 .map(e -> e.getKey())
                 .get());
     }

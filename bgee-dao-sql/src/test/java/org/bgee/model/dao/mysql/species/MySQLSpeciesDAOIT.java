@@ -117,12 +117,18 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
         
         // Generate manually expected result
         List<SpeciesTO> expectedSpecies = Arrays.asList(
-                new SpeciesTO("11", "spCName11", "gen11", "sp11", "111", "path/genome11", "genome11", "0", ""),
-                new SpeciesTO("21", "spCName21", "gen21", "sp21", "211", "path/genome21", "genome21", "51", "PREFIX51"),
-                new SpeciesTO("31", "spCName31", "gen31", "sp31", "311", "path/genome31", "genome31", "0", ""),
-                new SpeciesTO("41", "spCName41", "gen41", "sp41", "411", "path/genome41", "genome41", "0", ""),
-                new SpeciesTO("42", "spCName42", "gen41", "sp42", "411", "path/genome42", "genome42", "41", "PREFIX41"),
-                new SpeciesTO("51", "spCName51", "gen51", "sp51", "511", "path/genome51", "genome51", "0", ""));
+                new SpeciesTO("11", "spCName11", "gen11", "sp11", "111", 
+                        "gen11_sp11/gen11_sp11.genome11", "genome11", "0", ""),
+                new SpeciesTO("21", "spCName21", "gen21", "sp21", "211", 
+                        "gen51_sp51/gen51_sp51.genome51", "genome51", "51", "PREFIX51"),
+                new SpeciesTO("31", "spCName31", "gen31", "sp31", "311", 
+                        "gen31_sp31/gen31_sp31.genome31", "genome31", "0", ""),
+                new SpeciesTO("41", "spCName41", "gen41", "sp41", "411", 
+                        "gen41_sp41/gen41_sp41.genome41", "genome41", "0", ""),
+                new SpeciesTO("42", "spCName42", "gen41", "sp42", "411", 
+                        "gen41_sp41/gen41_sp41.genome41", "genome41", "41", "PREFIX41"),
+                new SpeciesTO("51", "spCName51", "gen51", "sp51", "511", 
+                        "gen51_sp51/gen51_sp51.genome51", "genome51", "0", ""));
         // Compare
         assertTrue("SpeciesTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(methSpecies, expectedSpecies));
@@ -159,8 +165,10 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
         
         // expected result
         List<SpeciesTO> expectedSpeciesTOs = Arrays.asList(
-                new SpeciesTO("11", "spCName11", "gen11", "sp11", "111", "path/genome11", "genome11", "0", ""), 
-                new SpeciesTO("31", "spCName31", "gen31", "sp31", "311", "path/genome31", "genome31", "0", "")); 
+                new SpeciesTO("11", "spCName11", "gen11", "sp11", "111", 
+                        "gen11_sp11/gen11_sp11.genome11", "genome11", "0", ""), 
+                new SpeciesTO("31", "spCName31", "gen31", "sp31", "311", 
+                        "gen31_sp31/gen31_sp31.genome31", "genome31", "0", "")); 
         // Compare
         assertTrue("SpeciesTOs incorrectly retrieved, expected: " + expectedSpeciesTOs + 
                 ", but was: " + speciesTOs, 
@@ -192,9 +200,12 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
 
         // Generate manually expected result
         List<SpeciesTO> expectedSpecies = Arrays.asList(
-                new SpeciesTO("41", "spCName41", "gen41", "sp41", "411", "path/genome41", "genome41", "0", ""),
-                new SpeciesTO("21", "spCName21", "gen21", "sp21", "211", "path/genome21", "genome21", "51", "PREFIX51"),
-                new SpeciesTO("51", "spCName51", "gen51", "sp51", "511", "path/genome51", "genome51", "0", ""));
+                new SpeciesTO("41", "spCName41", "gen41", "sp41", "411", 
+                        "gen41_sp41/gen41_sp41.genome41", "genome41", "0", ""),
+                new SpeciesTO("21", "spCName21", "gen21", "sp21", "211", 
+                        "gen51_sp51/gen51_sp51.genome51", "genome51", "51", "PREFIX51"),
+                new SpeciesTO("51", "spCName51", "gen51", "sp51", "511", 
+                        "gen51_sp51/gen51_sp51.genome51", "genome51", "0", ""));
         // Compare
         assertTrue("SpeciesTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(methSpecies, expectedSpecies));

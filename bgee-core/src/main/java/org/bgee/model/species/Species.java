@@ -91,7 +91,7 @@ public class Species extends NamedEntity {
      * @return A {@code String} representing the genome version used for this {@code Species}
      */
     public String getGenomeVersion() {
-        return this.speciesName;
+        return this.genomeVersion;
     }
     
     /**

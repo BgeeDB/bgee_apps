@@ -917,7 +917,7 @@ public class RequestParameters {
      *                                                  key or to write the query string in a file
      */
     private void generateParametersQuery(String parametersSeparator,
-            Collection<URLParameters.Parameter> searchOrHashParams, boolean areSearchParams) 
+            Collection<URLParameters.Parameter<?>> searchOrHashParams, boolean areSearchParams) 
                     throws RequestParametersNotStorableException {
         log.entry(parametersSeparator, searchOrHashParams, areSearchParams);
 
@@ -995,7 +995,7 @@ public class RequestParameters {
      */
     private String generateParametersQuery(boolean includeStorable, 
             boolean includeNonStorable, String parametersSeparator, 
-            Collection<URLParameters.Parameter> searchOrHashParams, boolean areSearchParams){
+            Collection<URLParameters.Parameter<?>> searchOrHashParams, boolean areSearchParams){
 
         log.entry(includeStorable, includeNonStorable, parametersSeparator, 
                 searchOrHashParams, areSearchParams);
@@ -1298,7 +1298,7 @@ public class RequestParameters {
      *                                  {@code searchOrHashParams}).
      * 
      */
-    public String getRequestURL(Collection<URLParameters.Parameter> searchOrHashParams, 
+    public String getRequestURL(Collection<URLParameters.Parameter<?>> searchOrHashParams, 
             boolean areSearchParams) throws RequestParametersNotStorableException, 
             IllegalStateException {
         log.entry(searchOrHashParams, areSearchParams);
@@ -1345,7 +1345,7 @@ public class RequestParameters {
     //XXX: This method has a js counterpart in {@code requestparameters.js} that should be kept 
     //consistent as much as possible if the method evolves.
     public String getRequestURL(String parametersSeparator, 
-            Collection<URLParameters.Parameter> searchOrHashParams, boolean areSearchParams) 
+            Collection<URLParameters.Parameter<?>> searchOrHashParams, boolean areSearchParams) 
             throws RequestParametersNotStorableException, IllegalStateException {
         log.entry(parametersSeparator, searchOrHashParams, areSearchParams);
         this.generateParametersQuery(parametersSeparator, searchOrHashParams, areSearchParams);

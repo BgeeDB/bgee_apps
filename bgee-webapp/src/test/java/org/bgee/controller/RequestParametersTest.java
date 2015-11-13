@@ -277,7 +277,7 @@ public class RequestParametersTest extends TestAncestor {
         // in different ways. Do it with the default parameters separator and with
         // a custom one.
         // The URL root directory to use to generate URLs is defined in loadMockRequest().
-        Collection<URLParameters.Parameter> params = new HashSet<URLParameters.Parameter>();
+        Collection<URLParameters.Parameter<?>> params = new HashSet<URLParameters.Parameter<?>>();
         params.add(RequestParametersTest.testURLParameters.getParamTestString());
         params.add(RequestParametersTest.testURLParameters.getParamTestBoolean());
         
@@ -308,7 +308,7 @@ public class RequestParametersTest extends TestAncestor {
                         params, true));
         
         //same tests, but with custom separator
-        params = new HashSet<URLParameters.Parameter>();
+        params = new HashSet<URLParameters.Parameter<?>>();
         params.add(RequestParametersTest.testURLParameters.getParamTestString());
         params.add(RequestParametersTest.testURLParameters.getParamTestBoolean());
         assertEquals("Incorrect query returned ", TEST_ROOT_DIR + "?test_string=string1"
@@ -342,7 +342,7 @@ public class RequestParametersTest extends TestAncestor {
         // it is non storable, and with parameters attributed to search or hash part
         this.addParamsToExceedThreshold(this.requestParametersWithNoKey);
 
-        params = new HashSet<URLParameters.Parameter>();
+        params = new HashSet<URLParameters.Parameter<?>>();
         params.add(RequestParametersTest.testURLParameters.getParamData());
         assertEquals("Incorrect query returned ", TEST_ROOT_DIR + 
                 "?test_string=string1+test_list=s1,s2" + RequestParameters.JS_HASH_SEPARATOR 

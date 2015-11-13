@@ -99,8 +99,7 @@ public class CommandTopAnatTest extends TestAncestor {
         speciesToGeneCount.put(species.get(1), 1L);
         
         verify(display).sendGeneListReponse(speciesToGeneCount, selectedSpeciesId,
-                new HashSet<>(Arrays.asList(new DevStage("25", "embryo", "embryo desc", 2), 
-                        new DevStage("26", "adult", "adult desc", 2))), 
+                new HashSet<>(Arrays.asList(devStages.get(1), devStages.get(2))), 
                 null, new HashSet<>(Arrays.asList("ID4")), 0, 
                 "4 genes entered, 2 in human, 1 in mouse, "
                 + "1 not found in Bgee.");
@@ -109,9 +108,9 @@ public class CommandTopAnatTest extends TestAncestor {
     private List<DevStage> getDevStagesDataTest() {
         log.entry();
         return log.exit(Arrays.asList(
-                new DevStage("2443", "Life stage", null, 1),
-                new DevStage("25", "embryo", "embryo desc", 2),
-                new DevStage("26", "adult", "adult desc", 2)));
+                new DevStage("2443", "Life stage", null, 1, 6, 1, false, true),
+                new DevStage("25", "embryo", "embryo desc", 2, 3, 2, false, true),
+                new DevStage("26", "adult", "adult desc", 4, 5, 2, false, true)));
     }
 
     private List<Species> getSpeciesDataTest() {

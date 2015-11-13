@@ -2,6 +2,7 @@ package org.bgee.view.json;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -111,10 +112,11 @@ public class JsonTopAnatDisplay extends JsonParentDisplay implements TopAnatDisp
                         (v1, v2) -> {throw log.throwing(new IllegalStateException("No key collision possible"));}, 
                         TreeMap::new)), 
                 selectedSpeciesId, 
-                //provide a sorted List of DevStages
+                //provide a List of DevStages sorted by their natural ordering 
+                //(= by left bound = by temporal ordering)
                 Optional.ofNullable(validStages)
                     .map(stages -> stages.stream()
-                        .sorted((st1, st2) -> st1.getId().compareTo(st2.getId()))
+                        .sorted(Comparator.naturalOrder())
                         .collect(Collectors.toList()))
                     .orElse(new ArrayList<>()), 
                 //SortedSet of submitted gene IDs

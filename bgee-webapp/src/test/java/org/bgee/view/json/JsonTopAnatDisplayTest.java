@@ -50,8 +50,8 @@ public class JsonTopAnatDisplayTest extends TestAncestor {
         String selectedSpeciesId = "9606";
         
         Set<DevStage> validStages = new HashSet<DevStage>();
-        validStages.add(new DevStage("2443", "embryo", null, 1));
-        validStages.add(new DevStage("8967786", "adult", "adult desc", 2));
+        validStages.add(new DevStage("2443", "embryo", null, 1, 2, 1, false, true));
+        validStages.add(new DevStage("8967786", "adult", "adult desc", 3, 4, 1, false, true));
 
         Set<String> undeterminedGeneIds = new HashSet<String>(Arrays.asList("GeneA", "GeneB"));
         Set<String> submittedGeneIds = new HashSet<String>(

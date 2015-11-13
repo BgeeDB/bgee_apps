@@ -2,8 +2,12 @@ package org.bgee.view.json;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -27,6 +31,11 @@ import org.bgee.view.TopAnatDisplay;
 public class JsonTopAnatDisplay extends JsonParentDisplay implements TopAnatDisplay {
     
     private final static Logger log = LogManager.getLogger(JsonTopAnatDisplay.class.getName());
+    
+    /**
+     * A {@code String} that is the label of the count of genes whose the species is undetermined. 
+     */
+    private final static String UNDETERMINED_SPECIES_LABEL = "UNDETERMINED";
 
     /**
      * Constructor providing the necessary dependencies. 
@@ -58,14 +67,42 @@ public class JsonTopAnatDisplay extends JsonParentDisplay implements TopAnatDisp
             int statusCode, String msg) {
         log.entry(speciesIdToGeneCount, selectedSpeciesId,
                 validStages, submittedGeneIds, undeterminedGeneIds, statusCode, msg);
+        
+        //sanity checks
+        if (speciesIdToGeneCount.isEmpty() && undeterminedGeneIds.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "Some gene information to display must be provided."));
+        }
+
+        //add into the speciesIdToGeneCount the invalid gene IDs, associated to a specific key, 
+        //and make it a LinkedHashMap for sorting and predictable responses
+        LinkedHashMap<String, Long> responseSpeciesIdToGeneCount = Optional.of(speciesIdToGeneCount)
+                .map(map -> {
+                    LinkedHashMap<String, Long> newMap = new LinkedHashMap<>(map);
+                    newMap.put(UNDETERMINED_SPECIES_LABEL, Long.valueOf(undeterminedGeneIds.size()));
+                    return newMap;
+                })
+                .get().entrySet().stream()
+                //sort in descending order of gene count (and in case of equality, 
+                //by ascending order of key, for predictable message generation)
+                .sorted((e1, e2) -> {
+                    if (e1.getValue().equals(e2.getValue())) {
+                        return e1.getKey().compareTo(e2.getKey()); 
+                    } 
+                    return e2.getValue().compareTo(e1.getValue());
+                }).collect(Collectors.toMap(Entry::getKey, Entry::getValue, 
+                    (v1, v2) -> {throw log.throwing(new IllegalStateException("no key collision possible"));}, 
+                    LinkedHashMap::new));
 
         this.sendHeaders();
-        this.write(new JsonHelper().toJson(new GeneListResponse(speciesIdToGeneCount, 
+        this.write(new JsonHelper().toJson(new GeneListResponse(responseSpeciesIdToGeneCount, 
                 selectedSpeciesId, validStages, submittedGeneIds, undeterminedGeneIds,
                 statusCode, msg)));
         
         log.exit();
     }
+    
+
 
     @Override
     public void sendTopAnatParameters(String hash) {
@@ -98,37 +135,37 @@ public class JsonTopAnatDisplay extends JsonParentDisplay implements TopAnatDisp
         /**
          * See {@link #getGeneCount()}.
          */
-        Map<String, Long> geneCount;
+        private final Map<String, Long> geneCount;
         
         /**
          * See {@link #getSelectedSpecies()}.
          */
-        String selectedSpecies;
+        private final String selectedSpecies;
         
         /**
          * See {@link #getStages()}.
          */
-        Set<DevStage> stages;
+        private final Set<DevStage> stages;
         
         /**
          * See {@link #getSubmittedGeneIds()}.
          */
-        Set<String> submittedGeneIds;
+        private final Set<String> submittedGeneIds;
 
         /**
          * See {@link #getUndeterminedGeneIds()}.
          */
-        Set<String> undeterminedGeneIds;
+        private final Set<String> undeterminedGeneIds;
         
         /**
          * See {@link #getStatusCode()}.
          */
-        int statusCode;
+        private final int statusCode;
         
         /**
          * See {@link #getMessage()}.
          */
-        String msg;
+        private final String msg;
         
         /**
          * Constructor of {@code GeneListResponse}.

@@ -79,6 +79,7 @@ public class CommandTopAnatTest extends TestAncestor {
         params.setPage(RequestParameters.PAGE_TOP_ANAT);
         params.setAction(RequestParameters.ACTION_TOP_ANAT_GENE_VALIDATION);
         params.addValues(params.getUrlParametersInstance().getParamBackgroundList(), submittedGeneIds);
+        log.info("Generated query URL: " + params.getRequestURL());
 
         CommandTopAnat controller = new CommandTopAnat(mock(HttpServletResponse.class),
                 params, mock(BgeeProperties.class), viewFac, serviceFac);
@@ -87,13 +88,12 @@ public class CommandTopAnatTest extends TestAncestor {
         Map<String, Long> speciesIdToGeneCount = new HashMap<String, Long>();
         speciesIdToGeneCount.put("9606", 2L);
         speciesIdToGeneCount.put("10090", 1L);
-        speciesIdToGeneCount.put("UNDETERMINED", 1L);
         
         verify(display).sendGeneListReponse(speciesIdToGeneCount, selectedSpeciesId,
                 new HashSet<>(Arrays.asList(new DevStage("2443", "embryo", null, 1))), //adult filtered by level
                 null, new HashSet<>(Arrays.asList("ID4")), 0, 
                 "4 genes entered, 2 from species 9606, 1 from species 10090, "
-                + "1 from undetermined species.");
+                + "1 not found in Bgee.");
     }
 
     private List<DevStage> getDevStagesDataTest() {

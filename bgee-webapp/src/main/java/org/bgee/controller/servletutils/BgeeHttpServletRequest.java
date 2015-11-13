@@ -146,7 +146,8 @@ public class BgeeHttpServletRequest implements HttpServletRequest {
         if (queryStringMatcher.matches()) {
             this.setQueryString(queryStringMatcher.group(2));
         } else {
-            assert false: "Error, could not match query string: " + queryString;
+            throw log.throwing(new IllegalArgumentException("Error, could not match query string: " 
+                + queryString));
         }
         log.exit();
     }

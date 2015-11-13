@@ -1596,10 +1596,9 @@ public class RequestParameters {
         } catch ( RequestParametersNotFoundException
                 | MultipleValuesNotAllowedException | WrongFormatException e) {
             // In this particular case, should never be thrown.
-            assert false: "Unreachable code reached in cloneWithAllParameters";
+            throw log.throwing(new IllegalStateException("Code supposed to be unreachable", e));
         } catch (InstantiationException | IllegalAccessException e) {
-            // Do nothing but log the event
-            log.throwing(e);
+            throw log.throwing(new IllegalStateException(e));
         }
         return log.exit(clonedRequestParameters);
     }

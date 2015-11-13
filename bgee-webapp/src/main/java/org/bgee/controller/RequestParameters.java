@@ -9,10 +9,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -650,8 +653,7 @@ public class RequestParameters {
                         // the list
                         // First secure the string
                         try {
-                            valueFromUrl = this.secureString(valueFromUrl, 
-                                    parameter.getMaxSize(), parameter.getFormat());
+                            valueFromUrl = this.secureString(valueFromUrl, parameter);
                             List<String> values = new ArrayList<>();
                             if (!parameter.allowsSeparatedValues()) {
                                 values.add(valueFromUrl);
@@ -797,7 +799,7 @@ public class RequestParameters {
                 // we cannot store an URL-decoded query string to store encoding independent values, 
                 // for cases where, e.g., a parameter value include a character such as '&': 
                 // we couldn't distinguish it anymore from real parameter separators.
-                bufferedWriter.write(generateParametersQuery(true, false, "&", null, false));
+                bufferedWriter.write(generateParametersQuery(null, true, false, "&", null, false));
             }
         } catch (IOException e) {
             //delete the file if something went wrong
@@ -931,15 +933,15 @@ public class RequestParameters {
             // the same parameters, no matter the separator provided.
             // Also, never use searchOrHashParams provided, so that all the parameters are always 
             // in the search part of the URL to generate the key.
-            this.generateKey(this.generateParametersQuery(true, false,"&", null, false));
+            this.generateKey(this.generateParametersQuery(null, true, false,"&", null, false));
             // Regenerate the parameters query, with the non storable that include
             // the key parameter
-            this.parametersQuery = generateParametersQuery(false, true,parametersSeparator, 
+            this.parametersQuery = generateParametersQuery(null, false, true,parametersSeparator, 
                     searchOrHashParams, areSearchParams);
         } else{
             // No key for the moment, generate the query and then evaluate if its
             // length is still under the threshold at which the key is used
-            this.parametersQuery = generateParametersQuery(true, true,parametersSeparator, 
+            this.parametersQuery = generateParametersQuery(null, true, true,parametersSeparator, 
                     searchOrHashParams, areSearchParams);
             if(this.isUrlTooLong()){
                 // Generate the key, store the values and regenerate the query
@@ -947,7 +949,7 @@ public class RequestParameters {
                 // the same parameters, no matter the separator provided. 
                 // Also, never use searchOrHashParams provided, so that all the parameters 
                 // are always in the search part of the URL to generate the key.
-                this.generateKey(this.generateParametersQuery(true, false,"&", null, false));
+                this.generateKey(this.generateParametersQuery(null, true, false,"&", null, false));
                 if(StringUtils.isNotBlank(this.getDataKey())){
                     this.store();
                     this.generateParametersQuery(parametersSeparator, 
@@ -980,6 +982,9 @@ public class RequestParameters {
      * This method has a js counterpart in {@code requestparameters.js}, called getRequestURL(),
      * that should be kept consistent as much as possible if the method evolves.
      * 
+     * @param targetedParams        A {@code Set} of {@code Parameter}s, allowing which parameters 
+     *                              to use to produce the query string. If {@code null} or empty, 
+     *                              then all parameters are used. 
      * @param parametersSeparator   A {@code String} that is used as parameters separator 
      *                              in the URL.
      * @param includeStorable       A {@code boolean} to indicate whether to include
@@ -996,11 +1001,11 @@ public class RequestParameters {
      *                              if {@code false}.
      * @return  A {@code String} that is the generated query
      */
-    private String generateParametersQuery(boolean includeStorable, 
-            boolean includeNonStorable, String parametersSeparator, 
+    private String generateParametersQuery(Set<URLParameters.Parameter<?>> targetedParams, 
+            boolean includeStorable, boolean includeNonStorable, String parametersSeparator, 
             Collection<URLParameters.Parameter<?>> searchOrHashParams, boolean areSearchParams){
 
-        log.entry(includeStorable, includeNonStorable, parametersSeparator, 
+        log.entry(targetedParams, includeStorable, includeNonStorable, parametersSeparator, 
                 searchOrHashParams, areSearchParams);
 
         String urlFragment = "";
@@ -1021,6 +1026,10 @@ public class RequestParameters {
             boolean paramAdded = false;
             boolean firstParam = true;
             for (URLParameters.Parameter<?> parameter : this.urlParametersInstance.getList()){
+                if (targetedParams != null && !targetedParams.isEmpty() && !targetedParams.contains(parameter)) {
+                    log.trace("Skipping parameter because not targeted: {}", parameter);
+                    continue;
+                }
                 //if a split between parameters in search and hash parts has been requested 
                 if (searchOrHashParams != null) {
                     //first pass, store parameters in the search part of the URL
@@ -1473,31 +1482,37 @@ public class RequestParameters {
             throws MultipleValuesNotAllowedException, WrongFormatException {
         log.entry(parameter,value);
 
-        // Secure the value
-        if(value != null){
-            value = (T) this.secureString(value.toString(), parameter.getMaxSize(),
-                    parameter.getFormat());
+        if(value == null){
+            log.exit(); return;
         }
 
         // fetch the existing values for the given parameter and try to add the value
         List<T> parameterValues = (List<T>) this.values.get(parameter);
-        try{
-            // Throw an exception if the param does not allow 
-            // multiple values and has already one
-            if (!parameter.allowsMultipleValues() && !parameter.allowsSeparatedValues() && 
-                    parameterValues.get(0) != null){
-                throw(new MultipleValuesNotAllowedException(parameter.getName()));
-            }
-            parameterValues.add(value);
+        // Throw an exception if the param does not allow 
+        // multiple values and has already one
+        if (parameterValues != null && 
+                !parameter.allowsMultipleValues() && !parameter.allowsSeparatedValues() && 
+                !parameterValues.isEmpty()){
+            throw(new MultipleValuesNotAllowedException(parameter.getName()));
         }
-        // If nullpointer, it means that there were no previous values at all, 
-        // create the list
-        catch(NullPointerException e){
-            parameterValues = new ArrayList<T>();
-            parameterValues.add(value);
+        //OK, add value
+        if (parameterValues == null) {
+            parameterValues = new ArrayList<>();
+            this.values.put(parameter, parameterValues);
         }
-
-        this.values.put(parameter, parameterValues);
+        parameterValues.add(value);
+        
+        //now, check that the resulting String to generate the query string still respects 
+        //the validation format, max length, etc. We generate the resulting query string 
+        //for this parameter only, we pass it to a BgeeHttpServletRequest, to be able 
+        //to retrieve solely the value of the parameter through the method getParameterValues
+        Arrays.stream(
+                new BgeeHttpServletRequest(this.generateParametersQuery(
+                        new HashSet<>(Arrays.asList(parameter)), true, true, "&", null, true), 
+                        CHAR_ENCODING)
+                .getParameterValues(parameter.getName()))
+            .forEach(paramValue -> this.secureString(paramValue, parameter));
+        
         log.exit();
     }
 
@@ -1581,7 +1596,7 @@ public class RequestParameters {
         //to avoid duplicating methods, 
         //we we simulate a HttpServletRequest with a query string 
         //we provide holding storable parameters of this object
-        String queryString = this.generateParametersQuery(true, includeNonStorable, "&", 
+        String queryString = this.generateParametersQuery(null, true, includeNonStorable, "&", 
                 null, false);
         BgeeHttpServletRequest request = new BgeeHttpServletRequest(queryString, CHAR_ENCODING);
         RequestParameters clonedRequestParameters = null;
@@ -2338,15 +2353,29 @@ public class RequestParameters {
      * Perform security controls and prepare the submitted {@code String} for use
      * 
      * @param stringToCheck    a {@code String} to be checked 
-     * @return a secured and prepared {@code String}. Return an empty String if security checks 
-     *         have failed.
+     * @return a secured and prepared {@code String}. 
      * @throws WrongFormatException The {@code String} to secure does not fit the requirement
      */
-    private String secureString(String stringToCheck) throws WrongFormatException
-    {
-        return secureString(stringToCheck, 0, null);
+    private String secureString(String stringToCheck) throws WrongFormatException {
+        log.entry(stringToCheck);
+        return log.exit(secureString(stringToCheck, 0, null));
     }
-
+    /**
+     * Perform security controls and prepare the submitted {@code String} for use, 
+     * corresponding to the value of the provided parameter.
+     * 
+     * @param stringToCheck    a {@code String} to be checked. 
+     * @param parameter         A {@code Parameter} which {@code stringToCheck} is 
+     *                          the associated value, providing the security parameters 
+     *                          (see {@link URLParameters.Parameter#getMaxSize()} and 
+     *                          {@link URLParameters.Parameter#getFormat()})
+     * @return a secured and prepared {@code String}. 
+     * @throws WrongFormatException The {@code String} to secure does not fit the requirement
+     */
+    private String secureString(String stringToCheck, URLParameters.Parameter<?> parameter) {
+        log.entry(stringToCheck, parameter);
+        return log.exit(secureString(stringToCheck, parameter.getMaxSize(), parameter.getFormat()));
+    }
     /**
      * Perform security controls and prepare the submitted {@code String} for use. It includes
      * a check of the {@code String} length and the format of the {@code String}.
@@ -2365,8 +2394,7 @@ public class RequestParameters {
      *                         such as triming the {@code String}). 
      * @param format           A {@code String} that contains the regular expression the 
      *                         {@code String} should match.
-     * @return a secured and prepared {@code String}. Return an empty String if the stringToCheck
-     *         was null.
+     * @return a secured and prepared {@code String}. 
      * @throws WrongFormatException The {@code String} to secure does not fit the requirement
      *
      *              

@@ -174,8 +174,7 @@ public class BgeeHttpServletRequest implements HttpServletRequest {
      * @see #getParameterMap()
      * @see #queryString
      */
-    private void loadParameterMap()
-    {
+    private void loadParameterMap() {
         log.entry();
         this.parameterMap = new HashMap<String, String[]>();
         if (StringUtils.isBlank(this.queryString)){
@@ -199,7 +198,17 @@ public class BgeeHttpServletRequest implements HttpServletRequest {
                     values = new ArrayList<String>();
                     mapOfLists.put(pair.getName(), values);
                 }
-                values.add(pair.getValue());
+                try {
+                    //the methods getParameter and getParameterValues usually return 
+                    //the decoded values, so we store them decoded in the Map. 
+                    String decodedVal = java.net.URLDecoder.decode(pair.getValue(), 
+                            this.getCharacterEncoding());
+                    log.trace("Storing decoded value in parameterMap: {}", decodedVal);
+                    values.add(decodedVal);
+                } catch (UnsupportedEncodingException e) {
+                    //we're confident that our encoding is supported
+                    throw log.throwing(new IllegalStateException(e));
+                }
             }
         }
 

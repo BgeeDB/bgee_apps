@@ -99,6 +99,8 @@ public class RequestParameters {
      */
     private static final ConcurrentMap<String, ReentrantReadWriteLock> readWriteLocks= 
             new ConcurrentHashMap<String, ReentrantReadWriteLock>();
+    
+    public static final String CHAR_ENCODING = "UTF-8";
 
     /**
      * A {@code String} that is the value taken by the {@code page} parameter 
@@ -736,7 +738,7 @@ public class RequestParameters {
                     //this way we do not duplicate code to load parameters into 
                     // this RequestParameters object.
                     HttpServletRequest request = new BgeeHttpServletRequest(
-                            retrievedQueryString);
+                            retrievedQueryString, CHAR_ENCODING);
                     this.loadParametersFromRequest(request, true);
                 }
             }
@@ -792,10 +794,10 @@ public class RequestParameters {
             try (BufferedWriter bufferedWriter = new BufferedWriter(
                     new FileWriter(prop.getRequestParametersStorageDirectory() 
                             + this.getFirstValue(this.getKeyParam())))) {
-                // decode the parameters, so the value written is the real encoding independent
-                // value.
-                bufferedWriter.write(this.urlDecode(generateParametersQuery(true, false, "&", 
-                        null, false)));
+                // we cannot store an URL-decoded query string to store encoding independent values, 
+                // for cases where, e.g., a parameter value include a character such as '&': 
+                // we couldn't distinguish it anymore from real parameter separators.
+                bufferedWriter.write(generateParametersQuery(true, false, "&", null, false));
             }
         } catch (IOException e) {
             //delete the file if something went wrong
@@ -1194,7 +1196,7 @@ public class RequestParameters {
             // warning, you need to add an attribut to the connector in server.xml  
             // in order to get the utf-8 encoding working : URIEncoding="UTF-8"
             // See https://wiki.apache.org/tomcat/FAQ/CharacterEncoding#Q8
-            encodeString = java.net.URLEncoder.encode(url, "UTF-8");
+            encodeString = java.net.URLEncoder.encode(url, CHAR_ENCODING);
         } catch (Exception e) {
             log.error("Error while URLencoding", e);
         }
@@ -1215,7 +1217,7 @@ public class RequestParameters {
         String decodeString = url;
 
         try {
-            decodeString = java.net.URLDecoder.decode(url, "UTF-8");
+            decodeString = java.net.URLDecoder.decode(url, CHAR_ENCODING);
         } catch (Exception e) {
             log.error("Error while URLdecoding", e);
         }
@@ -1581,7 +1583,7 @@ public class RequestParameters {
         //we provide holding storable parameters of this object
         String queryString = this.generateParametersQuery(true, includeNonStorable, "&", 
                 null, false);
-        BgeeHttpServletRequest request = new BgeeHttpServletRequest(this.urlDecode(queryString));
+        BgeeHttpServletRequest request = new BgeeHttpServletRequest(queryString, CHAR_ENCODING);
         RequestParameters clonedRequestParameters = null;
         try {
             clonedRequestParameters = new RequestParameters(request, 

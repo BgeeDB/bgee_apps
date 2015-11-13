@@ -59,6 +59,7 @@ public class JsonTopAnatDisplay extends JsonParentDisplay implements TopAnatDisp
         log.entry(speciesIdToGeneCount, selectedSpeciesId,
                 validStages, submittedGeneIds, undeterminedGeneIds, statusCode, msg);
 
+        this.sendHeaders();
         this.write(new JsonHelper().toJson(new GeneListResponse(speciesIdToGeneCount, 
                 selectedSpeciesId, validStages, submittedGeneIds, undeterminedGeneIds,
                 statusCode, msg)));

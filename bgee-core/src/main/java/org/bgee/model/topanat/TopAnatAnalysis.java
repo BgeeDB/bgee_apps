@@ -226,16 +226,43 @@ public class TopAnatAnalysis {
                 this.props.getTopAnatResultsWritingDirectory(),
                 this.params.getResultFileName());
         String fileName = file.getPath();
+        
+        File pdfFile = new File(
+                this.props.getTopAnatResultsWritingDirectory(),
+                this.params.getResultPDFFileName());
+        String pdfFileName = pdfFile.getPath();
 
         //we will write results into a tmp file, moved at the end if everything 
         //went fine.
         String tmpFileName = fileName + ".tmp";
         Path tmpFile = Paths.get(tmpFileName);
         Path finalFile = Paths.get(fileName);
+        
+        String tmpPdfFileName = pdfFileName + ".tmp";
+        Path tmpPdfFile = Paths.get(tmpPdfFileName);
+        Path finalPdfFile = Paths.get(pdfFileName);
+        
+        String namesFileName = new File(
+                this.props.getTopAnatResultsWritingDirectory(),
+                this.params.getAnatEntitiesNamesFileName()).getPath();
+        String relsFileName = new File(
+                this.props.getTopAnatResultsWritingDirectory(),
+                this.params.getAnatEntitiesRelationshipsFileName()).getPath();
+        String geneToAnatEntitiesFile = new File(
+                this.props.getTopAnatResultsWritingDirectory(),
+                this.params.getGeneToAnatEntitiesFileName()).getPath();
 
         try {
+        	
+            this.acquireReadLock(namesFileName);
+            this.acquireReadLock(relsFileName);
+            this.acquireReadLock(geneToAnatEntitiesFile);
+        	
             this.acquireWriteLock(tmpFileName);
             this.acquireWriteLock(fileName);
+            
+            this.acquireWriteLock(tmpPdfFileName);
+            this.acquireWriteLock(pdfFileName);
 
             //check, AFTER having acquired the locks, that the final files do not 
             //already exist (maybe another thread generated the files before this one 
@@ -244,33 +271,21 @@ public class TopAnatAnalysis {
                 log.info("R result file already generated.");
                 log.exit();return;
             }
-
-            String namesFileName = new File(
-                    this.props.getTopAnatResultsWritingDirectory(),
-                    this.params.getAnatEntitiesNamesFileName()).getPath();
-            String relsFileName = new File(
-                    this.props.getTopAnatResultsWritingDirectory(),
-                    this.params.getAnatEntitiesRelationshipsFileName()).getPath();
-            String geneToAnatEntitiesFile = new File(
-                    this.props.getTopAnatResultsWritingDirectory(),
-                    this.params.getGeneToAnatEntitiesFileName()).getPath();
-
-            this.acquireReadLock(namesFileName);
-            this.acquireReadLock(relsFileName);
-            this.acquireReadLock(geneToAnatEntitiesFile);
-
+            
             this.rManager.performRFunction();
 
-            this.releaseReadLock(namesFileName);
-            this.releaseReadLock(relsFileName);
-            this.releaseReadLock(geneToAnatEntitiesFile);            
-
             Files.move(tmpFile, finalFile, StandardCopyOption.REPLACE_EXISTING);
+            Files.move(tmpPdfFile, finalPdfFile, StandardCopyOption.REPLACE_EXISTING);
 
         } finally {
             Files.deleteIfExists(tmpFile);
             this.releaseWriteLock(tmpFileName);
             this.releaseWriteLock(fileName);
+            this.releaseWriteLock(tmpPdfFileName);
+            this.releaseWriteLock(pdfFileName);
+            this.releaseReadLock(namesFileName);
+            this.releaseReadLock(relsFileName);
+            this.releaseReadLock(geneToAnatEntitiesFile);   
         }
 
         log.info("Result file name: {}", 

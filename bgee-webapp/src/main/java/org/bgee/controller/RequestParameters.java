@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -675,7 +676,7 @@ public class RequestParameters {
                                 }
                             }
                         } catch (WrongFormatException e) {
-                            throw new WrongFormatException(parameter.getName(), e);
+                            throw log.throwing(new WrongFormatException(parameter.getName(), e));
                         }
                     }
                     // store the list of values in the HashMap using
@@ -1052,20 +1053,24 @@ public class RequestParameters {
                     // its values
                     List<?> parameterValues = this.getValues(parameter);
                     if(parameterValues != null && !parameterValues.isEmpty()){
+                        log.trace("Retrieving values for Parameter {}: {}", parameter, parameterValues);
                         List<?> valuesToUse = parameterValues;
                         
+                        //If the parameter can hold several values provided as a single String 
+                        //(e.g., list of IDs separated by a line return in a textarea), 
+                        //we need to regenerate a single String from the multiple values
                         if (parameter.allowsSeparatedValues()) {
-                            System.err.println("{"+parameter.getSeparators().get(0)+"}");
                             String separatedValues = parameterValues.stream()
                                     .filter(v -> StringUtils.isNotBlank(v.toString()))
                                     .map(Object::toString)
                                     .collect(Collectors.joining(parameter.getSeparators().get(0)));
-                            System.err.println("["+separatedValues+"]");
                             valuesToUse = Arrays.asList(separatedValues);
                         } 
                         
                         for(Object parameterValue : valuesToUse){
-                            if(StringUtils.isNotBlank(parameterValue.toString())){
+                            log.trace("Trying to add to URL value {}", parameterValue);
+                            if(parameterValue != null && StringUtils.isNotBlank(parameterValue.toString())) {
+                                log.trace("Value added");
                                 urlFragment += parameter.getName()+ "=";
                                 urlFragment += this.urlEncode(parameterValue.toString());
                                 urlFragment += parametersSeparator;
@@ -1587,6 +1592,7 @@ public class RequestParameters {
                 clonedRequestParameters.addValue(this.getKeyParam(), 
                         this.getFirstValue(this.getKeyParam()));
             }
+            log.trace("Cloned RequestParameters generated: {}", clonedRequestParameters);
         } catch ( RequestParametersNotFoundException
                 | MultipleValuesNotAllowedException | WrongFormatException e) {
             // In this particular case, should never be thrown.
@@ -2374,12 +2380,12 @@ public class RequestParameters {
         else if(lengthToCheck != 0 && stringToCheck.length() > lengthToCheck){
             log.info("The string {} cannot be validated because it is too long ({})", 
                     stringToCheck, stringToCheck.length());
-            throw(new WrongFormatException());
+            throw log.throwing(new WrongFormatException());
         }
         else if(format != null && stringToCheck.matches(format) == false){
-            log.info("The string {} cannot be validated because it does not match the format {}", 
+            log.error("The string {} cannot be validated because it does not match the format {}", 
                     stringToCheck, format);
-            throw(new WrongFormatException());
+            throw log.throwing(new WrongFormatException());
         }
         return log.exit(stringToCheck.trim());
     }

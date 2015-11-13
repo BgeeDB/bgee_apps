@@ -243,19 +243,21 @@ public class BgeeHttpServletRequest implements HttpServletRequest {
 
     @Override
     public String[] getParameterValues(String parameterName) {
+        log.entry(parameterName);
         String[] vals = this.parameterMap.get(parameterName);
-        return vals == null? null: vals.clone();
+        return log.exit(vals == null? null: vals.clone());
     }
 
     @Override
     public Map<String, String[]> getParameterMap() {
+        log.entry();
         if (this.parameterMap == null) {
-            return null;
+            return log.exit(null);
         }
         //deep cloning the map
-        return this.parameterMap.entrySet().stream()
+        return log.exit(this.parameterMap.entrySet().stream()
                 .collect(Collectors.toMap(e -> e.getKey(), 
-                                          e -> e.getValue() == null ? null: e.getValue().clone()));
+                                          e -> e.getValue() == null ? null: e.getValue().clone())));
     }
 
     @Override

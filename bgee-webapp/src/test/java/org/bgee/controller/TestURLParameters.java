@@ -3,6 +3,7 @@ package org.bgee.controller;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * This class extends {@link URLParameters} to provide
@@ -32,7 +33,7 @@ public class TestURLParameters extends URLParameters {
     private static final Parameter<String> TEST_STRING_LIST = 
             new Parameter<String>("test_list",
                     false, true, URLParameters.DEFAULT_SEPARATORS, false, 
-                    false, 128, "[a-z0-9]*",
+                    false, 128, URLParameters.DEFAULT_LIST_FORMAT,
                     String.class);
 	/**
 	 * Test {@code Parameter}  of the type  {@code Integer} that does allow

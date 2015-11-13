@@ -1,8 +1,15 @@
 package org.bgee.controller;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -87,7 +94,8 @@ public class URLParameters {
      * of a list.
      */
     protected static final String DEFAULT_LIST_FORMAT = 
-            "[A-Za-z0-9]*";
+            "[A-Za-z0-9" + DEFAULT_SEPARATORS.stream()
+                    .map(Pattern::quote).collect(Collectors.joining()) + "]*";
 
     // *************************************
     //
@@ -661,10 +669,13 @@ public class URLParameters {
         /**
          * Protected constructor to allow only {@link URLParameters} to create instances 
          * of this class.
+         * <p>
+         * Note that if {@code allowsSeparatedValues} is {@code true} and some separators 
+         * are provided, the regex {@code format} must accept these separators. 
          * 
          * @param name                    A {@code String} that is the name of the parameter 
          *                                as seen in an URL
-         * @param allowsMultipleValues    A {@code Boolean} that indicates whether 
+         * @param allowsMultipleValues    A {@code boolean} that indicates whether 
          *                                the parameter accepts multiple values.
          * @param allowsSeparatedValues   A {@code Boolean} that indicates whether
          *                                the parameter accepts separated values.
@@ -681,22 +692,37 @@ public class URLParameters {
          * @param type                    A {@code Class<T>} that is the data type of the value 
          *                                (or values if {@code allowsSeparatedValues} is
          *                                {@code true}) to be store by this parameter.
+         * @throws IllegalArgumentException If no separators are provided for a separated-value 
+         *                                  parameter, or if the separators are not contained 
+         *                                  in {@code format}.
          */
-        protected Parameter(String name, Boolean allowsMultipleValues, boolean allowsSeparatedValues,
+        protected Parameter(String name, boolean allowsMultipleValues, boolean allowsSeparatedValues,
                 List<String> separators, boolean isStorable, boolean isSecure, int maxSize,
-                String format, Class<T> type){
+                String format, Class<T> type) throws IllegalArgumentException {
 
-            log.entry(name,allowsMultipleValues,isStorable,isSecure,maxSize,format,type);
+            log.entry(name, allowsMultipleValues, isStorable, isSecure, maxSize, format, type);
 
             this.name = name ;
             this.allowsMultipleValues = allowsMultipleValues;
             this.allowsSeparatedValues = allowsSeparatedValues;
-            this.separators = separators;
+            this.separators = Collections.unmodifiableList(Optional.ofNullable(separators)
+                    .orElse(new ArrayList<>()));
             this.isStorable = isStorable ;
             this.isSecure = isSecure ;
             this.maxSize = maxSize ;
             this.format = format ;
             this.type = type ;
+            
+            if (this.allowsSeparatedValues) {
+                if (this.separators.isEmpty() || this.separators.stream().anyMatch(Objects::isNull)) {
+                    throw log.throwing(new IllegalArgumentException("Separators must be provided "
+                            + "for separated-values parameters."));
+                }
+                if (this.separators.stream().anyMatch(sep -> !this.format.contains(Pattern.quote(sep)))) {
+                    throw log.throwing(new IllegalArgumentException("Separators must be part of "
+                            + "the String allowing to validate input format."));
+                }
+            }
             
             log.exit();
         }
@@ -797,7 +823,7 @@ public class URLParameters {
                 return false;
             if (getClass() != obj.getClass())
                 return false;
-            Parameter<T> other = (Parameter<T>) obj;
+            Parameter<?> other = (Parameter<?>) obj;
             if (allowsMultipleValues != other.allowsMultipleValues)
                 return false;
             if (allowsSeparatedValues != other.allowsSeparatedValues)

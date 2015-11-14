@@ -333,32 +333,6 @@ public class CommandTopAnat extends CommandParent {
     }
 
     /**
-     * Get submitted gene IDs from the foreground or background gene list.
-     * 
-     * @return The {@code Set} of {@code String}s that are submitted gene IDs.
-     */
-    private Set<String> getGeneIdsFromList() {
-        // TODO Manage when it's a file
-        // if data in gene ids and background ids => error (message error // status -1)
-        List<String> ids;
-        
-        List<String> fg = this.requestParameters.getForegroundList();
-        List<String> bg = this.requestParameters.getBackgroundList();
-
-        if ((fg == null || fg.isEmpty()) && (bg == null || bg.isEmpty())) {
-            throw log.throwing(new IllegalStateException("No gene IDs provided"));            
-        } else if (fg != null && !fg.isEmpty() && bg != null && !bg.isEmpty()) {
-            throw log.throwing(new IllegalStateException(
-                    "Foreground and background gene ID lists provided"));
-        } else if (fg != null && !fg.isEmpty()) {
-            ids = fg;
-        } else {
-            ids = bg;
-        }
-        return new HashSet<String>(ids);
-    }
-
-    /**
      * Build message according to submitted gene IDs, the gene count by species,
      * and the undetermined gene IDs.
      * 
@@ -398,23 +372,6 @@ public class CommandTopAnat extends CommandParent {
         msg.append(".");
         
         return log.exit(msg.toString());
-    }
-
-    /**
-     * Determine the species to be used.
-     * 
-     * @param speciesIdToGeneCount  A {@code Map} where keys are species IDs, the associated values 
-     *                              being a {@code Long} that are gene ID count found in the species.
-     * @return                      The {@code String} that is the species ID to be used.
-     */
-    private String getSelectedSpecies(Map<String, Long> speciesIdToGeneCount) {
-        log.entry(speciesIdToGeneCount);
-        
-        // We sort the map by gene count (value) then species ID (key)
-        return log.exit(speciesIdToGeneCount.entrySet().stream()
-                .max(SPECIES_COUNT_COMPARATOR)
-                .map(e -> e.getKey())
-                .get());
     }
 
     /**

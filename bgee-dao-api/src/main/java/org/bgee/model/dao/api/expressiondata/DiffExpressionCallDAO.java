@@ -1,7 +1,5 @@
 package org.bgee.model.dao.api.expressiondata;
 
-import java.util.LinkedHashMap;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;

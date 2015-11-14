@@ -51,14 +51,17 @@ public class JsonTopAnatDisplay extends JsonParentDisplay implements TopAnatDisp
      *                          current request.
      * @param prop              A {@code BgeeProperties} instance that contains the properties
      *                          to use.
-     * @param factory           The {@code JsonFactory} that instantiated this object.
+     * @param jsonHelper        A {@code JsonHelper} used to dump variables into Json.
+     * @param factory           The {@code JsonFactory} that was used to instantiate this object.
+     * 
+     * @throws IllegalArgumentException If {@code factory} or {@code jsonHelper} is {@code null}.
      * @throws IOException      If there is an issue when trying to get or to use the
      *                          {@code PrintWriter} 
      */
     public JsonTopAnatDisplay(HttpServletResponse response,
             RequestParameters requestParameters, BgeeProperties prop,
-            JsonFactory factory) throws IllegalArgumentException, IOException {
-        super(response, requestParameters, prop, factory);
+            JsonHelper jsonHelper, JsonFactory factory) throws IllegalArgumentException, IOException {
+        super(response, requestParameters, prop, jsonHelper, factory);
     }
 
     @Override
@@ -104,7 +107,7 @@ public class JsonTopAnatDisplay extends JsonParentDisplay implements TopAnatDisp
                     LinkedHashMap::new));
 
         this.sendHeaders();
-        this.write(new JsonHelper().toJson(new GeneListResponse(
+        this.write(this.getJsonHelper().toJson(new GeneListResponse(
                 responseSpeciesIdToGeneCount, 
                 //provide a TreeMap species ID -> species
                 speciesToGeneCount.keySet().stream().collect(Collectors.toMap(

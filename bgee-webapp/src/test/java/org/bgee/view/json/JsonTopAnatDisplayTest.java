@@ -16,6 +16,7 @@ import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.species.Species;
+import org.bgee.view.JsonHelper;
 import org.junit.Test;
 
 /**
@@ -63,7 +64,7 @@ public class JsonTopAnatDisplayTest extends TestAncestor {
         
         BgeeProperties props = mock(BgeeProperties.class);
         JsonTopAnatDisplay display = new JsonTopAnatDisplay(getMockHttpServletResponse(), 
-                new RequestParameters(), props, mock(JsonFactory.class));
+                new RequestParameters(), props, mock(JsonHelper.class), mock(JsonFactory.class));
 
         display.sendGeneListReponse(speciesToGeneCount, selectedSpeciesId, 
                 validStages, submittedGeneIds, undeterminedGeneIds, statusCode, msg);

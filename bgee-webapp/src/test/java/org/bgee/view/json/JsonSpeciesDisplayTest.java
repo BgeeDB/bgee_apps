@@ -5,8 +5,6 @@ import static org.mockito.Mockito.mock;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -15,6 +13,7 @@ import org.bgee.TestAncestor;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.species.Species;
+import org.bgee.view.JsonHelper;
 import org.junit.Test;
 
 /**
@@ -48,7 +47,7 @@ public class JsonSpeciesDisplayTest extends TestAncestor {
         
         BgeeProperties props = mock(BgeeProperties.class);
         JsonSpeciesDisplay display = new JsonSpeciesDisplay(getMockHttpServletResponse(), 
-                new RequestParameters(), props, mock(JsonFactory.class));
+                new RequestParameters(), props, mock(JsonHelper.class), mock(JsonFactory.class));
 
         display.sendSpeciesResponse(species);
     }

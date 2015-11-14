@@ -26,22 +26,25 @@ public class JsonSpeciesDisplay extends JsonParentDisplay implements SpeciesDisp
      *                          current request.
      * @param prop              A {@code BgeeProperties} instance that contains the properties
      *                          to use.
+     * @param jsonHelper        A {@code JsonHelper} used to dump variables into Json.
      * @param factory           The {@code JsonFactory} that instantiated this object.
+     * 
+     * @throws IllegalArgumentException If {@code factory} or {@code jsonHelper} is {@code null}.
      * @throws IOException      If there is an issue when trying to get or to use the
      *                          {@code PrintWriter} 
      */
     public JsonSpeciesDisplay(HttpServletResponse response,
             RequestParameters requestParameters, BgeeProperties prop,
-            JsonFactory factory) throws IllegalArgumentException, IOException {
-        super(response, requestParameters, prop, factory);
+            JsonHelper jsonHelper, JsonFactory factory) throws IllegalArgumentException, IOException {
+        super(response, requestParameters, prop, jsonHelper, factory);
     }
 
     @Override
     public void sendSpeciesResponse(Set<Species> species) {
         log.entry(species);
 
-        log.debug(new JsonHelper().toJson(species));
-        this.write(new JsonHelper().toJson(species));
+        log.debug(this.getJsonHelper().toJson(species));
+        this.write(this.getJsonHelper().toJson(species));
         
         log.exit();
     }

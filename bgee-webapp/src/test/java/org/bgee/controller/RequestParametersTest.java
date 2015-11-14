@@ -132,7 +132,7 @@ public class RequestParametersTest extends TestAncestor {
         .thenReturn(new String[]{"string1"}) // for requestParametersWithNoKey
         .thenReturn(new String[]{"string1"}) // for requestParametersHavingAKey
         .thenReturn(new String[]{"string1","explode"}) // for testLoadTooMuchValue
-        .thenReturn(new String[]{"STRING1"}); // for testLoadWrongFormatValue
+        .thenReturn(new String[]{"string^1"}); // for testLoadWrongFormatValue
 
         // note : test_list cannot contain uppercase letters to be valid
         when(mockHttpServletRequest.getParameterValues("test_list"))
@@ -790,10 +790,10 @@ public class RequestParametersTest extends TestAncestor {
         //Check that the problem can be detected also not at the first add
         this.requestParametersWithNoKey.addValue(
                 testURLParameters.getParamTestStringList(), "string1");
-        //add -, which is not allowed
+        //add ^, which is not allowed
         try {
             this.requestParametersWithNoKey.addValue(
-                    testURLParameters.getParamTestStringList(),"string-1");
+                    testURLParameters.getParamTestStringList(),"string^1");
             fail("A WrongFormatException should have been thrown.");
         } catch (WrongFormatException e) {
             //test passed

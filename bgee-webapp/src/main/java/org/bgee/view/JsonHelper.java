@@ -7,9 +7,12 @@ import com.google.gson.stream.JsonWriter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
+import org.bgee.controller.RequestParameters;
+import org.bgee.controller.URLParameters;
 import org.bgee.model.file.DownloadFile;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * This class handles the serialization of objects to JSON.
@@ -17,7 +20,7 @@ import java.io.IOException;
  *
  * @author Philippe Moret
  * @author Frederic Bastian
- * @version Bgee 13 Oct. 2015
+ * @version Bgee 13 Nov. 2015
  * @sine Bgee 13
  */
 public class JsonHelper {
@@ -78,6 +81,71 @@ public class JsonHelper {
     }
 
     /**
+     * A {@code TypeAdapter} to read/write {@code DownloadFile}s in JSON. This adapter 
+     * is needed to prepend the actual download file root directory to relative paths 
+     * returned by {@link DownloadFile#getPath()}, and to correctly manage 
+     * {@link DownloadFile.CategoryEnum}.
+     * <p>
+     * We use a {@code TypeAdapter} rather than a {@code JsonSerializer}, because, 
+     * as stated in the {@code JsonSerializer} javadoc: "New applications should prefer 
+     * {@code TypeAdapter}, whose streaming API is more efficient than this interface's tree API. "
+     */
+    private static final class RequestParametersTypeAdapter extends TypeAdapter<RequestParameters> {
+        private RequestParametersTypeAdapter() {
+            
+        }
+        @Override
+        public void write(JsonWriter out, RequestParameters rqParams) throws IOException {
+            log.entry(out, rqParams);
+            if (rqParams == null) {
+                out.nullValue();
+                log.exit(); return;
+            }
+            log.trace("Start writing object RequestParameters.");
+            out.beginObject();
+            //Stream not used because the out methods throw checked Exceptions, 
+            //not following functional interface signatures. 
+            for (URLParameters.Parameter<?> param: rqParams.getUrlParametersInstance().getList()) {
+                log.trace("Iterating parameter {}", param);
+                
+                List<?> values = rqParams.getValues(param);
+                if (values == null) {
+                    log.trace("No value stored.");
+                    continue;
+                }
+                out.name(param.getName());
+                log.trace("Printing parameter name {}", param.getName());
+                if (param.allowsMultipleValues() || param.allowsSeparatedValues()) {
+                    log.trace("Allows multiple or separated values, start printing Array.");
+                    out.beginArray();
+                }
+                for (Object value: values) {
+                    if (value == null) {
+                        log.trace("Skip null value.");
+                        continue;
+                    }
+                    log.trace("Printing parameter value {}", value.toString());
+                    out.value(value.toString());
+                }
+                if (param.allowsMultipleValues() || param.allowsSeparatedValues()) {
+                    log.trace("Allows multiple or separated values, end printing Array.");
+                    out.endArray();
+                }
+            }
+
+            log.trace("End writing object RequestParameters.");
+            out.endObject();
+            log.exit();
+        }
+        
+        @Override
+        public RequestParameters read(JsonReader in) throws IOException {
+            //for now, we never read JSON values
+            throw log.throwing(new UnsupportedOperationException("No custom JSON reader for RequestParameters."));
+        } 
+    }
+
+    /**
      * The {@code Gson} used to dump JSON
      */
     private final Gson gson;
@@ -108,6 +176,7 @@ public class JsonHelper {
         //are not dependent of a specific JSON library. 
         this.gson = new GsonBuilder()
                 .registerTypeAdapter(DownloadFile.class, new DownloadFileTypeAdapter(this.props))
+                .registerTypeAdapter(RequestParameters.class, new RequestParametersTypeAdapter())
                 .setPrettyPrinting()
                 .create();
     }

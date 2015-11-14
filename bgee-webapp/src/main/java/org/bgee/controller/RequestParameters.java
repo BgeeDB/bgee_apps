@@ -100,6 +100,10 @@ public class RequestParameters {
     private static final ConcurrentMap<String, ReentrantReadWriteLock> readWriteLocks= 
             new ConcurrentHashMap<String, ReentrantReadWriteLock>();
     
+    /**
+     * A {@code String} that is the default value of character encoding for encoding and 
+     * decoding query strings.
+     */
     public static final String CHAR_ENCODING = "UTF-8";
     
     /**
@@ -358,14 +362,16 @@ public class RequestParameters {
      * A {@code boolean} defining whether parameters should be url encoded 
      * by the {@code encodeUrl} method.
      * If {@code false}, then the {@code encodeUrl} method returns 
-     * Strings with no modifications, otherwise, they are url encoded if needed 
-     * (it does not necessarily mean they will. For index, if there are no 
-     * special chars to encode in the submitted String).
-     * <parameter>
+     * Strings with no modifications, otherwise, they are url encoded if needed.
      * 
      * @see #urlEncode(String)
      */
     private boolean encodeUrl ;
+    
+    /**
+     * A {@code String} defining the character encoding for encoding and decoding query strings.
+     */
+    private final String charEncoding;
 
     /**
      * A {@code String} defining the character(s) that are used as parameters separator in the
@@ -405,8 +411,6 @@ public class RequestParameters {
         this(new URLParameters(), BgeeProperties.getBgeeProperties(), true, "&");
     }
     /**
-     * Default constructor. 
-     * 
      * @param urlParametersInstance     A instance of {@code URLParameters} that 
      *                                  is injected to provide the available parameters
      *                                  list. 
@@ -423,17 +427,36 @@ public class RequestParameters {
      */
     public RequestParameters(URLParameters urlParametersInstance, BgeeProperties prop,
             boolean encodeUrl, String parametersSeparator)  {
-        log.entry(urlParametersInstance,prop,encodeUrl, parametersSeparator);
+        this(urlParametersInstance, prop, encodeUrl, parametersSeparator, CHAR_ENCODING);
+    }
+    /**
+     * @param urlParametersInstance     A instance of {@code URLParameters} that 
+     *                                  is injected to provide the available parameters
+     *                                  list. 
+     * @param prop                      An instance of {@code BgeeProperties}  that is injected
+     *                                  to provide the all the properties values.
+     * @param encodeUrl                 A {@code boolean} defining whether parameters should be
+     *                                  url encoded. 
+     * @param parametersSeparator       A {@code String} defining the character(s) that are
+     *                                  used as parameters separator in the URL.
+     * @param charEncoding              A {@code String} that is the character encoding used 
+     *                                  to encode/decode query strings.
+     *                                  
+     */
+    public RequestParameters(URLParameters urlParametersInstance, BgeeProperties prop,
+            boolean encodeUrl, String parametersSeparator, String charEncoding)  {
+        log.entry(urlParametersInstance,prop,encodeUrl, parametersSeparator, charEncoding);
 
         // set the properties and then call the constructor method.
         this.prop = prop;
         this.encodeUrl = encodeUrl;
+        this.charEncoding = charEncoding;
         this.urlParametersInstance = urlParametersInstance;
         this.parametersSeparator = parametersSeparator;
         //to avoid duplicating methods, 
         //here we simulate a HttpServletRequest with an empty query string, 
         //so that all parameters will be initialized empty
-        HttpServletRequest request = new BgeeHttpServletRequest();
+        HttpServletRequest request = new BgeeHttpServletRequest("", this.charEncoding);
         this.httpMethod = request.getMethod();
         try {
             this.constructor(request);
@@ -451,22 +474,18 @@ public class RequestParameters {
     /**
      * Constructor building a {@code RequestParameters} object from a 
      * {@code HttpServletRequest} object.
-     * <parameter>
+     * <p>
      * It means that the parameters are recovered from the query string or posted data.
      * 
      * @param request               The HttpServletRequest object corresponding to the current 
      *                              request to the server.
-     * 
      * @param urlParametersInstance An instance of {@code URLParameters} that 
      *                              is injected to provide the available parameters
      *                              list. 
-     *                              
      * @param prop                  An instance of {@code BgeeProperties}  that is injected to 
-     *                              provide the all the properties values
-     *                                                          
+     *                              provide the all the properties values.       
      * @param encodeUrl             A {@code boolean} defining whether parameters should be
      *                              url encoded.
-     * 
      * @param parametersSeparator   A {@code String} defining the character(s) that are
      *                              used as parameters separator in the URL                              
      * 
@@ -478,12 +497,10 @@ public class RequestParameters {
      *                                                  these parameters could not be found using
      *                                                  this key. See {@code 
      *                                                  loadStorableParametersFromKey(String)}
-     *                                                  
      * @throws MultipleValuesNotAllowedException        if more than one value is present in the
      *                                                  {@code request}
      *                                                  for a {@link URLParameters.Parameter}
      *                                                  that does not allow multiple values.
-     *                                                  
      * @throws WrongFormatException                     The value in the {@code request} does not
      *                                                  fit the format requirement for related
      *                                                  {@link URLParameters.Parameter}
@@ -492,11 +509,55 @@ public class RequestParameters {
             BgeeProperties prop,  boolean encodeUrl, String parametersSeparator)
                     throws RequestParametersNotFoundException, 
                     MultipleValuesNotAllowedException, WrongFormatException {
-        log.entry(request, urlParametersInstance, prop, encodeUrl, parametersSeparator);
+        this(request, urlParametersInstance, prop, encodeUrl, parametersSeparator, CHAR_ENCODING);
+    }
+
+    /**
+     * Constructor building a {@code RequestParameters} object from a 
+     * {@code HttpServletRequest} object.
+     * <p>
+     * It means that the parameters are recovered from the query string or posted data.
+     * 
+     * @param request               The HttpServletRequest object corresponding to the current 
+     *                              request to the server.
+     * @param urlParametersInstance An instance of {@code URLParameters} that 
+     *                              is injected to provide the available parameters
+     *                              list. 
+     * @param prop                  An instance of {@code BgeeProperties}  that is injected to 
+     *                              provide the all the properties values 
+     * @param encodeUrl             A {@code boolean} defining whether parameters should be
+     *                              url encoded.
+     * @param parametersSeparator   A {@code String} defining the character(s) that are
+     *                              used as parameters separator in the URL.
+     * @param charEncoding          A {@code String} that is the character encoding used 
+     *                              to encode/decode query strings.                         
+     * 
+     * @throws RequestParametersNotFoundException       if a key is set in the 
+     *                                                  URL, meaning that a stored query string
+     *                                                  should be retrieved using this key, to
+     *                                                  populate the storable parameters of this 
+     *                                                  {@code RequestParameters} object, but 
+     *                                                  these parameters could not be found using
+     *                                                  this key. See {@code 
+     *                                                  loadStorableParametersFromKey(String)}
+     * @throws MultipleValuesNotAllowedException        if more than one value is present in the
+     *                                                  {@code request}
+     *                                                  for a {@link URLParameters.Parameter}
+     *                                                  that does not allow multiple values.
+     * @throws WrongFormatException                     The value in the {@code request} does not
+     *                                                  fit the format requirement for related
+     *                                                  {@link URLParameters.Parameter}
+     */
+    public RequestParameters(HttpServletRequest request, URLParameters urlParametersInstance,
+            BgeeProperties prop,  boolean encodeUrl, String parametersSeparator, String charEncoding)
+                    throws RequestParametersNotFoundException, 
+                    MultipleValuesNotAllowedException, WrongFormatException {
+        log.entry(request, urlParametersInstance, prop, encodeUrl, parametersSeparator, charEncoding);
         
         // set the properties and then call the constructor method.
         this.prop = prop;
         this.encodeUrl = encodeUrl;
+        this.charEncoding = charEncoding;
         this.urlParametersInstance = urlParametersInstance;
         this.parametersSeparator = parametersSeparator;
         this.httpMethod = request.getMethod();
@@ -745,7 +806,7 @@ public class RequestParameters {
                     //this way we do not duplicate code to load parameters into 
                     // this RequestParameters object.
                     HttpServletRequest request = new BgeeHttpServletRequest(
-                            retrievedQueryString, CHAR_ENCODING);
+                            retrievedQueryString, this.getCharacterEncoding());
                     this.loadParametersFromRequest(request, true);
                 }
             }
@@ -801,8 +862,8 @@ public class RequestParameters {
             try (BufferedWriter bufferedWriter = new BufferedWriter(
                     new FileWriter(prop.getRequestParametersStorageDirectory() 
                             + this.getFirstValue(this.getKeyParam())))) {
-                // we cannot store an URL-decoded query string to store encoding independent values, 
-                // for cases where, e.g., a parameter value include a character such as '&': 
+                // we cannot store an URL-decoded query string, to store encoding-independent values, 
+                // because of cases where, e.g., a parameter value include a character such as '&': 
                 // we couldn't distinguish it anymore from real parameter separators.
                 bufferedWriter.write(generateParametersQuery(null, true, false, "&", null, false));
             }
@@ -1207,10 +1268,14 @@ public class RequestParameters {
             return encodeString;
         }
         try {
-            // warning, you need to add an attribut to the connector in server.xml  
-            // in order to get the utf-8 encoding working : URIEncoding="UTF-8"
+            // "In Tomcat 8 starting with 8.0.0 (8.0.0-RC3, to be specific), the default value 
+            // of URIEncoding attribute on the <Connector> element depends on 'strict servlet 
+            // compliance' setting. The default value (strict compliance is off) of URIEncoding 
+            // is now UTF-8. If 'strict servlet compliance' is enabled, the default value 
+            // is ISO-8859-1. 
+            // => So we should now be fine when using UTF-8 for character encoding.
             // See https://wiki.apache.org/tomcat/FAQ/CharacterEncoding#Q8
-            encodeString = java.net.URLEncoder.encode(url, CHAR_ENCODING);
+            encodeString = java.net.URLEncoder.encode(url, this.getCharacterEncoding());
         } catch (Exception e) {
             log.error("Error while URLencoding", e);
         }
@@ -1231,7 +1296,7 @@ public class RequestParameters {
         String decodeString = url;
 
         try {
-            decodeString = java.net.URLDecoder.decode(url, CHAR_ENCODING);
+            decodeString = java.net.URLDecoder.decode(url, this.getCharacterEncoding());
         } catch (Exception e) {
             log.error("Error while URLdecoding", e);
         }
@@ -1554,7 +1619,7 @@ public class RequestParameters {
             //the value of the parameter through the method getParameterValues
             Arrays.stream(new BgeeHttpServletRequest(this.generateParametersQuery(
                     new HashSet<>(Arrays.asList(parameter)), true, true, "&", null, true), 
-                    CHAR_ENCODING)
+                    this.getCharacterEncoding())
                     .getParameterValues(parameter.getName()))
             .forEach(paramValue -> this.secureString(paramValue, parameter));
         }
@@ -1644,12 +1709,12 @@ public class RequestParameters {
         //we provide holding storable parameters of this object
         String queryString = this.generateParametersQuery(null, true, includeNonStorable, "&", 
                 null, false);
-        BgeeHttpServletRequest request = new BgeeHttpServletRequest(queryString, CHAR_ENCODING);
+        BgeeHttpServletRequest request = new BgeeHttpServletRequest(queryString, this.getCharacterEncoding());
         RequestParameters clonedRequestParameters = null;
         try {
             clonedRequestParameters = new RequestParameters(request, 
                     this.urlParametersInstance.getClass().newInstance(),this.prop,
-                    this.encodeUrl, this.parametersSeparator);
+                    this.encodeUrl, this.parametersSeparator, this.charEncoding);
             if (!includeNonStorable){
                 // Add the key which is not a storable parameters and was not included
                 clonedRequestParameters.addValue(this.getKeyParam(), 
@@ -2528,6 +2593,13 @@ public class RequestParameters {
         return log.exit(castInt);
     }
 
+    /**
+     * @return  A {@code String} that is the character encoding used to encode/decode 
+     *          query strings. 
+     */
+    public String getCharacterEncoding() {
+        return this.charEncoding;
+    }
     /**
      * Change the {@code boolean} defining whether parameters should be url encoded 
      * by the {@code encodeUrl} method.

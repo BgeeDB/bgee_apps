@@ -142,6 +142,8 @@ public abstract class ConcreteDisplayParent {
         if (!this.headersAlreadySent) {
             log.trace("Set content type to {}", this.getContentType());
             this.response.setContentType(this.getContentType());
+            log.trace("Set character encoding to {}", this.requestParameters.getCharacterEncoding());
+            this.response.setCharacterEncoding(this.requestParameters.getCharacterEncoding());
             
             if (this.getRequestParameters().isAnAjaxRequest()) {
                 this.response.setDateHeader("Expires", 1);

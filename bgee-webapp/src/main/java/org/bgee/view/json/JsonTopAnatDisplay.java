@@ -72,9 +72,9 @@ public class JsonTopAnatDisplay extends JsonParentDisplay implements TopAnatDisp
     @Override
     public void sendGeneListReponse(Map<Species, Long> speciesToGeneCount, String selectedSpeciesId,
             Set<DevStage> validStages, Set<String> submittedGeneIds, Set<String> undeterminedGeneIds,
-            int statusCode, String msg) {
+            String msg) {
         log.entry(speciesToGeneCount, selectedSpeciesId,
-                validStages, submittedGeneIds, undeterminedGeneIds, statusCode, msg);
+                validStages, submittedGeneIds, undeterminedGeneIds, msg);
         
         //sanity checks
         if (speciesToGeneCount.isEmpty() && undeterminedGeneIds.isEmpty()) {
@@ -106,8 +106,12 @@ public class JsonTopAnatDisplay extends JsonParentDisplay implements TopAnatDisp
                     (v1, v2) -> {throw log.throwing(new IllegalStateException("no key collision possible"));}, 
                     LinkedHashMap::new));
 
-        this.sendHeaders();
-        this.write(this.getJsonHelper().toJson(new GeneListResponse(
+        LinkedHashMap<String, Object> data = new LinkedHashMap<>();
+        //TODO: the reponse will change, this method will be provided with one GeneResponse 
+        //for the foreground, one for the background, and display of both will be allowed
+        data.put(this.getRequestParameters().getUrlParametersInstance()
+                .getParamForegroundList().getName(), 
+        new GeneListResponse(
                 responseSpeciesIdToGeneCount, 
                 //provide a TreeMap species ID -> species
                 speciesToGeneCount.keySet().stream().collect(Collectors.toMap(
@@ -129,9 +133,9 @@ public class JsonTopAnatDisplay extends JsonParentDisplay implements TopAnatDisp
                 //SortedSet of undetermined gene IDs
                 Optional.ofNullable(undeterminedGeneIds)
                     .map(TreeSet<String>::new)
-                    .orElse(new TreeSet<>()),
-                statusCode, msg)));
+                    .orElse(new TreeSet<>())));
         
+        this.sendResponse(msg, data);
         log.exit();
     }
     
@@ -191,14 +195,6 @@ public class JsonTopAnatDisplay extends JsonParentDisplay implements TopAnatDisp
          * See {@link #getUndeterminedGeneIds()}.
          */
         private final TreeSet<String> undeterminedGeneIds;
-        /**
-         * See {@link #getStatusCode()}.
-         */
-        private final int statusCode;
-        /**
-         * See {@link #getMessage()}.
-         */
-        private final String msg;
         
         /**
          * Constructor of {@code GeneListResponse}. All {@code Collection}s or {@code Map}s 
@@ -215,23 +211,19 @@ public class JsonTopAnatDisplay extends JsonParentDisplay implements TopAnatDisp
          *                              by the user.
          * @param undeterminedGeneIds   A {@code TreeSet} of {@code String}s that are gene IDs 
          *                              with undetermined species.
-         * @param statusCode            An {@code int} that is the status code of response.
-         * @param msg                   A {@code String} that is the message of response.
          */
         private GeneListResponse(LinkedHashMap<String, Long> geneCount, 
                 TreeMap<String, Species> detectedSpecies, 
                 String selectedSpecies, List<DevStage> stages, TreeSet<String> submittedGeneIds, 
-                TreeSet<String> undeterminedGeneIds, int statusCode, String msg) {
+                TreeSet<String> undeterminedGeneIds) {
             log.entry(geneCount, detectedSpecies, selectedSpecies, stages, 
-                    submittedGeneIds, undeterminedGeneIds, statusCode, msg);
+                    submittedGeneIds, undeterminedGeneIds);
             this.geneCount= geneCount;
             this.detectedSpecies = detectedSpecies;
             this.selectedSpecies = selectedSpecies;
             this.stages = stages;
             this.submittedGeneIds = submittedGeneIds;
             this.undeterminedGeneIds = undeterminedGeneIds;
-            this.statusCode = statusCode;
-            this.msg = msg;
             log.exit();
         }
         
@@ -274,18 +266,6 @@ public class JsonTopAnatDisplay extends JsonParentDisplay implements TopAnatDisp
          */
         public TreeSet<String> getUndeterminedGeneIds() {
             return this.undeterminedGeneIds;
-        }
-        /**
-         * @return  The {@code int} that is the status code of response.
-         */
-        public int getStatusCode() {
-            return this.statusCode;
-        }
-        /**
-         * @return  The {@code String} that is the message of response.
-         */
-        public String getMessage() {
-            return this.msg;
         }
     }    
 }

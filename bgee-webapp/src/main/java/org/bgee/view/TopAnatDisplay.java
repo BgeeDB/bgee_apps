@@ -42,7 +42,7 @@ public interface TopAnatDisplay {
     //XXX: Should the Species class has a validStages attribute? Or is it not directly related to Species?
     public void sendGeneListReponse(Map<Species, Long> speciesToGeneCount, String selectedSpeciesId,
             Set<DevStage> validStages, Set<String> submittedGeneIds, Set<String> undeterminedGeneIds,
-            int statusCode, String msg);
+            String msg);
     
     /**
      * Display the response following a top anat parameters upload to server.

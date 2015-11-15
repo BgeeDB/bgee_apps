@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -283,7 +284,8 @@ public class CommandTopAnat extends CommandParent {
         final Map<String, Long> speciesIdToGeneCount = validGenes.stream()
                     .collect(Collectors.groupingBy(Gene::getSpeciesId, Collectors.counting()));
         // Retrieve detected species, and create a new Map Species -> Long
-        final Map<Species, Long> speciesToGeneCount = this.serviceFactory.getSpeciesService()
+        final Map<Species, Long> speciesToGeneCount = speciesIdToGeneCount.isEmpty()? new HashMap<>(): 
+                this.serviceFactory.getSpeciesService()
                 .loadSpeciesByIds(speciesIdToGeneCount.keySet())
                 .stream()
                 .collect(Collectors.toMap(spe -> spe, spe -> speciesIdToGeneCount.get(spe.getId())));
@@ -315,7 +317,7 @@ public class CommandTopAnat extends CommandParent {
         
         // Send response
         display.sendGeneListReponse(speciesToGeneCount, selectedSpeciesId,
-                validStages, submittedGeneIds, undeterminedGeneIds, 0, msg);
+                validStages, submittedGeneIds, undeterminedGeneIds, msg);
         log.exit();
     }
 

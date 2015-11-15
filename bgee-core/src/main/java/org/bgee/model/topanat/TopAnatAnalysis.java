@@ -35,6 +35,7 @@ import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneService;
 import org.bgee.model.species.SpeciesService;
 import org.supercsv.cellprocessor.ParseDouble;
+import org.supercsv.cellprocessor.constraint.DMinMax;
 import org.supercsv.cellprocessor.constraint.NotNull;
 import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.io.CsvMapReader;
@@ -103,12 +104,12 @@ public class TopAnatAnalysis {
         final CellProcessor[] processors = new CellProcessor[] { 
                 new NotNull(), // AnatEntity Id
                 new NotNull(), // AnatEntity Name
-                new ParseDouble(), // Annotated
-                new ParseDouble(), // Significant
-                new ParseDouble(), // Expected
-                new ParseDouble(), // fold enrich
-                new ParseDouble(), // p
-                new ParseDouble() // fdr
+                new NotNull(new ParseDouble()), // Annotated
+                new NotNull(new ParseDouble()), // Significant
+                new NotNull(new ParseDouble()), // Expected
+                new NotNull(new ParseDouble()), // fold enrich
+                new NotNull(new DMinMax(0d,1d)), // p
+                new NotNull(new DMinMax(0d,1d)) // fdr
         };
 
         return processors;

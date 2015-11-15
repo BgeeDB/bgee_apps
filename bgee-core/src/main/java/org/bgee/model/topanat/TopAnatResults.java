@@ -3,15 +3,10 @@ package org.bgee.model.topanat;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
-import org.bgee.model.anatdev.DevStage;
-import org.bgee.model.expressiondata.baseelements.CallType;
-import org.bgee.model.expressiondata.baseelements.DataType;
 
 public class TopAnatResults {
 
-    public static class TopAnatResultLine{
+    public static class TopAnatResultRow{
 
         /**
          * 
@@ -32,7 +27,7 @@ public class TopAnatResults {
         
         private final float fdr;
         
-        public TopAnatResultLine(Map<String,Object> line){
+        public TopAnatResultRow(Map<String,Object> line){
             this.anatEntitiesId = line.get("OrganId").toString();
             this.anatEntitiesName = line.get("OrganName").toString();
             this.annotated = Float.valueOf(line.get("Annotated").toString());
@@ -77,36 +72,22 @@ public class TopAnatResults {
         
     }
 
-    private final List<TopAnatResults.TopAnatResultLine> content; 
+    private final List<TopAnatResults.TopAnatResultRow> rows; 
 
-    private final CallType callType;
+    private final TopAnatParams topAnatParams; 
 
-    private final DevStage devStage;
-
-    private final Set<DataType> dataType;
-
-    public TopAnatResults(List<TopAnatResults.TopAnatResultLine> content,
-            CallType callType, DevStage devStage, Set<DataType> dataType){
-        this.content = Collections.unmodifiableList(content);
-        this.callType = callType;
-        this.devStage = devStage;
-        this.dataType = dataType;
+    public TopAnatResults(List<TopAnatResults.TopAnatResultRow> rows,
+            TopAnatParams topAnatParams){
+        this.rows = Collections.unmodifiableList(rows);
+        this.topAnatParams = topAnatParams;
     }
 
-    public CallType getCallType() {
-        return callType;
+    public List<TopAnatResultRow> getRows() {
+        return rows;
     }
 
-    public DevStage getDevStage() {
-        return devStage;
-    }
-
-    public List<TopAnatResultLine> getContent() {
-        return content;
-    }
-
-    public Set<DataType> getDataType() {
-        return dataType;
+    public TopAnatParams getTopAnatParams() {
+        return topAnatParams;
     }
 
 }

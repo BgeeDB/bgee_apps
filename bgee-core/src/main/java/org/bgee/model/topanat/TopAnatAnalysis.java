@@ -27,7 +27,6 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeProperties;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntityService;
-import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.exception.InvalidForegroundException;
 import org.bgee.model.exception.InvalidSpeciesGenesException;
 import org.bgee.model.expressiondata.CallFilter;
@@ -44,6 +43,7 @@ import org.supercsv.prefs.CsvPreference;
 
 /**
  * @author Mathieu Seppey
+ * @author Frederic Bastian
  */
 public class TopAnatAnalysis {
 
@@ -171,14 +171,10 @@ public class TopAnatAnalysis {
         // Run the R analysis and return the result
         this.runRcode();
 
-        List<TopAnatResults.TopAnatResultLine> resultLines = this.getResultLines();
-        if (resultLines != null){
+        List<TopAnatResults.TopAnatResultRow> resultRows = this.getResultRows();
+        if (resultRows != null){
             return log.exit(new TopAnatResults(
-                    resultLines,
-                    this.params.getCallType(),
-                    this.params.getDevStageId() == null ? null : 
-                        new DevStage(this.params.getDevStageId()),
-                        this.params.getDataTypes()));
+                    resultRows,this.params));
         }
         return null;
 
@@ -300,7 +296,7 @@ public class TopAnatAnalysis {
      * @throws FileNotFoundException
      * @throws IOException
      */
-    private List<TopAnatResults.TopAnatResultLine> getResultLines() throws FileNotFoundException,
+    private List<TopAnatResults.TopAnatResultRow> getResultRows() throws FileNotFoundException,
     IOException{
 
         File resultFile = new File(
@@ -309,8 +305,8 @@ public class TopAnatAnalysis {
 
         this.acquireReadLock(resultFile.getPath());
 
-        List<TopAnatResults.TopAnatResultLine> listToReturn 
-        = new ArrayList<TopAnatResults.TopAnatResultLine>();
+        List<TopAnatResults.TopAnatResultRow> listToReturn 
+        = new ArrayList<TopAnatResults.TopAnatResultRow>();
 
         try (ICsvMapReader mapReader = 
                 new CsvMapReader(new FileReader(resultFile), 
@@ -320,7 +316,7 @@ public class TopAnatAnalysis {
             Map<String, Object> row;
             if(header != null){
                 while( (row = mapReader.read(header, processors)) != null ) {
-                    listToReturn.add(new TopAnatResults.TopAnatResultLine(row));
+                    listToReturn.add(new TopAnatResults.TopAnatResultRow(row));
                 }
             }
         }

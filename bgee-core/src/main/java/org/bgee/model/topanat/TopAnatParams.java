@@ -4,6 +4,7 @@ import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
@@ -42,7 +43,7 @@ public class TopAnatParams {
      * 
      */
     private final static String FILE_PREFIX = "topAnat_";
- 
+
     /**
      * 
      */
@@ -66,12 +67,12 @@ public class TopAnatParams {
     /**
      * 
      */
-    private final static Double FDR_THRESHOLD_DEFAULT = 0.05;
+    private final static Double FDR_THRESHOLD_DEFAULT = 0.05d;
 
     /**
      * 
      */
-    private final static Double PVALUE_THRESHOLD_DEFAULT = 0.05;
+    private final static Double PVALUE_THRESHOLD_DEFAULT = 0.05d;
 
     /**
      * 
@@ -398,7 +399,7 @@ public class TopAnatParams {
                 : builder.nodeSize;
         this.numberOfSignificantNodes = builder.numberOfSignificantNode == null ? 
                 TopAnatParams.NUMBER_OF_NODES_TO_DISPLAX_DEFAULT : 
-            builder.numberOfSignificantNode;
+                    builder.numberOfSignificantNode;
         this.pvalueThreshold = builder.pvalueThreshold == null ? TopAnatParams.PVALUE_THRESHOLD_DEFAULT
                 : builder.pvalueThreshold;
         this.submittedBackgroundIds = builder.submittedBackgroundIds == null ? null :
@@ -622,7 +623,7 @@ public class TopAnatParams {
         if(this.dataQuality != null)
             valueToHash.append(this.dataQuality.toString());
         if(this.dataTypes != null)
-            valueToHash.append(new TreeSet<DataType>(this.dataTypes).toString());
+            valueToHash.append(EnumSet.copyOf(this.dataTypes).toString());
         if(this.devStageId != null)
             valueToHash.append(this.devStageId.toString());
         if(this.decorelationType != null)

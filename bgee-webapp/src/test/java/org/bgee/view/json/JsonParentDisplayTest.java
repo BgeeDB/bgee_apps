@@ -62,6 +62,11 @@ public class JsonParentDisplayTest extends TestAncestor {
         RequestParameters rq = new RequestParameters();
         rq.setPage("mypage");
         rq.setAction("myaction");
+        //this parameter trigger the display of the RequestParameters, 
+        //but does not appear itself in the response.
+        URLParameters.Parameter<Boolean> displayRpParam = params.getParamDisplayRequestParams();
+        rq.resetValues(displayRpParam);
+        rq.addValue(displayRpParam, true);
         
         JsonParentDisplay display = new JsonParentDisplay(response, rq, prop, helper, viewFac); 
         
@@ -72,7 +77,7 @@ public class JsonParentDisplayTest extends TestAncestor {
                 new Species("13", "SpeciesName", "A string description of that species")));
         
         //trigger response
-        display.sendResponse("My msg.", data, true);
+        display.sendResponse("My msg.", data);
         sw.flush();
         assertEquals("Incorrect Json generated from writer", 
                 "{\n  \"code\": 200,\n  \"status\": \"SUCCESS\",\n  \"message\": \"My msg.\",\n"
@@ -93,8 +98,14 @@ public class JsonParentDisplayTest extends TestAncestor {
         writer = new PrintWriter(sw);
         when(response.getWriter()).thenReturn(writer);
         display = new JsonParentDisplay(response, rq, prop, helper, viewFac);
+
+        //this parameter trigger the display of the RequestParameters, 
+        //but does not appear itself in the response.
+        rq.resetValues(displayRpParam);
+        rq.addValue(displayRpParam, false);
+        
         //trigger response
-        display.sendResponse("My msg.", data, false);
+        display.sendResponse("My msg.", data);
         sw.flush();
         assertEquals("Incorrect Json generated from writer", 
                 "{\n  \"code\": 200,\n  \"status\": \"SUCCESS\",\n  \"message\": \"My msg.\",\n"
@@ -131,6 +142,11 @@ public class JsonParentDisplayTest extends TestAncestor {
         RequestParameters rq = new RequestParameters();
         rq.setPage("mypage");
         rq.setAction("myaction");
+        //this parameter trigger the display of the RequestParameters, 
+        //but does not appear itself in the response.
+        URLParameters.Parameter<Boolean> displayRpParam = params.getParamDisplayRequestParams();
+        rq.resetValues(displayRpParam);
+        rq.addValue(displayRpParam, true);
         
         JsonParentDisplay display = new JsonParentDisplay(response, rq, prop, helper, viewFac); 
         
@@ -141,7 +157,7 @@ public class JsonParentDisplayTest extends TestAncestor {
                 new Species("13", "SpeciesName", "A string description of that species")));
         
         //trigger response
-        display.sendResponse(HttpServletResponse.SC_NOT_FOUND, "My msg.", data, true);
+        display.sendResponse(HttpServletResponse.SC_NOT_FOUND, "My msg.", data);
         sw.flush();
         assertEquals("Incorrect Json generated from writer", 
                 "{\n  \"code\": " + HttpServletResponse.SC_NOT_FOUND 
@@ -163,8 +179,14 @@ public class JsonParentDisplayTest extends TestAncestor {
         writer = new PrintWriter(sw);
         when(response.getWriter()).thenReturn(writer);
         display = new JsonParentDisplay(response, rq, prop, helper, viewFac);
+
+        //this parameter trigger the display of the RequestParameters, 
+        //but does not appear itself in the response.
+        rq.resetValues(displayRpParam);
+        rq.addValue(displayRpParam, false);
+        
         //trigger response
-        display.sendResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "My msg.", data, false);
+        display.sendResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "My msg.", data);
         sw.flush();
         assertEquals("Incorrect Json generated from writer", 
                 "{\n  \"code\": " + HttpServletResponse.SC_INTERNAL_SERVER_ERROR 

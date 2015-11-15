@@ -149,11 +149,19 @@ public class URLParameters {
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
     
     /**
-     * A {@code Parameter<String>} appended to all AJAX queries to detect them.
+     * A {@code Parameter<Boolean>} appended to all AJAX queries to detect them.
      * Category of the parameter: controller parameter.
      * Corresponds to the URL parameter "ajax".
      */
     private static final Parameter<Boolean> AJAX = new Parameter<Boolean>("ajax",
+            false, false, null, false, false, 5, DEFAULT_FORMAT, Boolean.class);
+    /**
+     * A {@code Parameter<Boolean>} defining whether to display the {@code RequestParameters} 
+     * corresponding to a request as part of its response.
+     * Corresponds to the URL parameter "display_rp".
+     */
+    private static final Parameter<Boolean> DISPLAY_REQUEST_PARAMS = 
+            new Parameter<Boolean>("display_rp",
             false, false, null, false, false, 5, DEFAULT_FORMAT, Boolean.class);
     
     /**
@@ -361,6 +369,7 @@ public class URLParameters {
 //            STAGE_CHILDREN,
             DISPLAY_TYPE,
             DATA, 
+            DISPLAY_REQUEST_PARAMS, 
             AJAX
             );
 
@@ -474,8 +483,16 @@ public class URLParameters {
     }
 
     /**
-     * @return  A {@code Parameter<Boolean>} defining whether the request is made 
-     *          through an AJAX call. 
+     * @return  A {@code Parameter<Boolean>} defining whether to display the {@code RequestParameters} 
+     *          corresponding to a request as part of its response.
+     *          Corresponds to the URL parameter "display_rp".
+     */
+    public Parameter<Boolean> getParamDisplayRequestParams(){
+        return DISPLAY_REQUEST_PARAMS;
+    }
+    /**
+     * @return  A {@code Parameter<Boolean>} appended to all AJAX queries to detect them.
+     *          Corresponds to the URL parameter "ajax".
      */
     public Parameter<Boolean> getParamAjax(){
         return AJAX;
@@ -705,6 +722,11 @@ public class URLParameters {
                 String format, Class<T> type) throws IllegalArgumentException {
 
             log.entry(name, allowsMultipleValues, isStorable, isSecure, maxSize, format, type);
+            
+            if (format == null) {
+                throw log.throwing(new IllegalArgumentException("A format for validation "
+                        + "must be provided."));
+            }
 
             this.name = name ;
             this.allowsMultipleValues = allowsMultipleValues;

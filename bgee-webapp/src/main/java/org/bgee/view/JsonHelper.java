@@ -285,8 +285,16 @@ public class JsonHelper {
             out.beginObject();
             //Stream not used because the out methods throw checked Exceptions, 
             //not following functional interface signatures. 
+            URLParameters.Parameter<?> displayRpParam = rqParams.getUrlParametersInstance()
+                    .getParamDisplayRequestParams();
             for (URLParameters.Parameter<?> param: rqParams.getUrlParametersInstance().getList()) {
                 log.trace("Iterating parameter {}", param);
+                //we don't display the parameter requesting to display the parameters, 
+                //will always be true :p
+                if (param.equals(displayRpParam)) {
+                    log.trace("Skipping parameter {}", displayRpParam);
+                    continue;
+                }
                 
                 List<?> values = rqParams.getValues(param);
                 if (values == null) {

@@ -124,20 +124,19 @@ public class JsonParentDisplay extends ConcreteDisplayParent {
      * 
      * @param msg
      * @param data
-     * @param sendRequestParameters
      */
-    protected void sendResponse(String msg, LinkedHashMap<String, Object> data, 
-            boolean sendRequestParameters) {
-        log.entry(msg, data, sendRequestParameters);
-        this.sendResponse(HttpServletResponse.SC_OK, msg, data, sendRequestParameters);
+    protected void sendResponse(String msg, LinkedHashMap<String, Object> data) {
+        log.entry(msg, data);
+        this.sendResponse(HttpServletResponse.SC_OK, msg, data);
         log.exit();   
     }
     /**
      * Send a standard JSON response to client. The response include the HTTP response status code, 
      * ("code" parameter), and status message ("status" parameter, see {@link ResponseStatus}), 
      * a custom message provided ("message" parameter), and some data ("data" parameter).
-     * If request, the {@code RequestParameters} of the current request can also be 
-     * sent with the response ("requestParameters" parameter).
+     * If the value associated to the URL parameter {@code URLParameters.getParamDisplayRequestParams()} 
+     * is {@code true} in the current request, then the {@code RequestParameters} object corresponding to
+     * the current request will be sent with the response.
      * 
      * @param code                      An {@code int} that is the HTTP response status code.
      * @param msg                       A {@code String} that is a message describing the response.
@@ -145,12 +144,9 @@ public class JsonParentDisplay extends ConcreteDisplayParent {
      *                                  that are parameter names, the associated value being 
      *                                  the value to be dumped. Provided as {@code LinkedHashMap} 
      *                                  to obtain predictable responses. 
-     * @param sendRequestParameters     A {@code boolean} defining whether the {@code RequestParameters} 
-     *                                  of the current request should also be displayed. 
      */
-    protected void sendResponse(int code, String msg, LinkedHashMap<String, Object> data, 
-            boolean sendRequestParameters) {
-        log.entry(code, msg, data, sendRequestParameters);
+    protected void sendResponse(int code, String msg, LinkedHashMap<String, Object> data) {
+        log.entry(code, msg, data);
         
         //The code will be validated by the calls to the methods sendAppropriateHeaders and 
         //getResponseStatusFromCode. 
@@ -161,7 +157,8 @@ public class JsonParentDisplay extends ConcreteDisplayParent {
         if (StringUtils.isNotBlank(msg)) {
             jsonResponse.put("message", msg);
         }
-        if (sendRequestParameters) {
+        if (new Boolean(true).equals(this.getRequestParameters().getFirstValue(
+                this.getRequestParameters().getUrlParametersInstance().getParamDisplayRequestParams()))) {
             jsonResponse.put("requestParameters", this.getRequestParameters());
         }
         if (data != null) {

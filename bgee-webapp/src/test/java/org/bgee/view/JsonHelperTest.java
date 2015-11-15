@@ -118,7 +118,9 @@ public class JsonHelperTest extends TestAncestor {
                     + "ID3.3&"
                 + params.getParamAjax().getName() + "=1&"
                 + params.getParamNbNode().getName() + "=10&"
-                + params.getParamExprType().getName() + "=expr";
+                + params.getParamExprType().getName() + "=expr&"
+                //this parameter should never be considered in the JSON generated
+                + params.getParamDisplayRequestParams() + "=1";
         RequestParameters rqParams = new RequestParameters(new BgeeHttpServletRequest(queryString, 
                 "UTF-8"), params, mock(BgeeProperties.class), true, "&");
 

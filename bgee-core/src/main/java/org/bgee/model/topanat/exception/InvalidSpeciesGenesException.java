@@ -1,19 +1,24 @@
-package org.bgee.model.exception;
+package org.bgee.model.topanat.exception;
 
-public class InvalidForegroundException extends Exception
+import java.util.Set;
+
+public class InvalidSpeciesGenesException extends Exception
 {
 
     /**
      * 
      */
-    private static final long serialVersionUID = -7541635356881955063L;
+    private static final long serialVersionUID = 3416827306247244166L;
+    
+    private final Set<String> invalidGeneIds;
 
     /**
      * Default constructor
      */
-    public InvalidForegroundException()
+    public InvalidSpeciesGenesException(Set<String> invalidGeneIds)
     {
         super();
+        this.invalidGeneIds = invalidGeneIds;
     }
 
     /**
@@ -25,9 +30,10 @@ public class InvalidForegroundException extends Exception
      *                  BUT despite usually, it MUST be really basic and 
      *                  understandable, as it will be displayed to the user. 
      */
-    public InvalidForegroundException(String message)
+    public InvalidSpeciesGenesException(String message,Set<String> invalidGeneIds)
     {        
         super(message);
+        this.invalidGeneIds = invalidGeneIds;
     }
 
     /**
@@ -35,9 +41,10 @@ public class InvalidForegroundException extends Exception
      * 
      * @param cause     a {@code Throwable} giving the cause of the exception.
      */
-    public InvalidForegroundException(Throwable cause)
+    public InvalidSpeciesGenesException(Throwable cause,Set<String> invalidGeneIds)
     {
         super(cause);
+        this.invalidGeneIds = invalidGeneIds;
     }
 
     /**
@@ -46,8 +53,18 @@ public class InvalidForegroundException extends Exception
      * @param message   a {@code String} giving details about the exception.
      * @param cause     a {@code Throwable} giving the cause of the exception.
      */
-    public InvalidForegroundException(String message, Throwable cause)
+    public InvalidSpeciesGenesException(String message, Throwable cause,Set<String> invalidGeneIds)
     {
         super(message, cause);
+        this.invalidGeneIds = invalidGeneIds;
+    }
+
+    /**
+     * 
+     * @return
+     */
+    public Set<String> getInvalidGeneIds() {
+        return invalidGeneIds;
+        
     }
 }

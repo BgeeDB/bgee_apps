@@ -27,13 +27,13 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeProperties;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntityService;
-import org.bgee.model.exception.InvalidForegroundException;
-import org.bgee.model.exception.InvalidSpeciesGenesException;
 import org.bgee.model.expressiondata.CallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneService;
 import org.bgee.model.species.SpeciesService;
+import org.bgee.model.topanat.exception.InvalidForegroundException;
+import org.bgee.model.topanat.exception.InvalidSpeciesGenesException;
 import org.supercsv.cellprocessor.ParseDouble;
 import org.supercsv.cellprocessor.constraint.DMinMax;
 import org.supercsv.cellprocessor.constraint.NotNull;
@@ -192,8 +192,11 @@ public class TopAnatAnalysis {
                 !this.params.getSubmittedBackgroundIds().isEmpty() && 
                 !this.params.getSubmittedBackgroundIds().containsAll(
                         this.params.getSubmittedForegroundIds())){
+            
+            Set<String> notIncludedIds = new HashSet<String>(this.params.getSubmittedForegroundIds());
+            notIncludedIds.removeAll(this.params.getSubmittedBackgroundIds());
             throw new InvalidForegroundException("All foreground Ids are not included "
-                    + "in the background");
+                    + "in the background",notIncludedIds);
         }
         
         Set<String> allGeneIds = new HashSet<String>(this.params.getSubmittedForegroundIds());
@@ -205,8 +208,8 @@ public class TopAnatAnalysis {
                 .map(Gene::getId)
                 .collect(Collectors.toSet()));
         if (!allGeneIds.isEmpty()) {
-            throw log.throwing(new IllegalStateException("Some gene IDs are unrecognized, "
-                    + "or does not belong to the selected species: " + allGeneIds));
+            throw log.throwing(new InvalidSpeciesGenesException("Some gene IDs are unrecognized, "
+                    + "or does not belong to the selected species",allGeneIds));
         }
     }
 

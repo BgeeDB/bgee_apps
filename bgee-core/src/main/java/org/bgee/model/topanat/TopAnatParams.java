@@ -15,7 +15,6 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.exception.MissingParameterException;
 import org.bgee.model.expressiondata.CallData;
 import org.bgee.model.expressiondata.CallData.DiffExpressionCallData;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
@@ -29,6 +28,7 @@ import org.bgee.model.expressiondata.baseelements.DecorelationType;
 import org.bgee.model.expressiondata.baseelements.DiffExpressionFactor;
 import org.bgee.model.expressiondata.baseelements.StatisticTest;
 import org.bgee.model.gene.GeneFilter;
+import org.bgee.model.topanat.exception.MissingParameterException;
 
 
 public class TopAnatParams {
@@ -411,14 +411,14 @@ public class TopAnatParams {
     /**
      * @return the submittedIds
      */
-    public Collection<String> getSubmittedForegroundIds() {
+    public Set<String> getSubmittedForegroundIds() {
         return submittedForegroundIds;
     }
 
     /**
      * @return the submittedBackgroundIds
      */
-    public Collection<String> getSubmittedBackgroundIds() {
+    public Set<String> getSubmittedBackgroundIds() {
         return submittedBackgroundIds;
     }
 

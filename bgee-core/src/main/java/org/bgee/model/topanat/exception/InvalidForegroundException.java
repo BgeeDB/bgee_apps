@@ -1,19 +1,27 @@
-package org.bgee.model.exception;
+package org.bgee.model.topanat.exception;
 
-public class InvalidSpeciesGenesException extends Exception
+import java.util.Set;
+
+public class InvalidForegroundException extends Exception
 {
 
     /**
      * 
      */
-    private static final long serialVersionUID = 3416827306247244166L;
+    private static final long serialVersionUID = -7541635356881955063L;
+    
+    /**
+     * 
+     */
+    private final Set<String> notIncludedIds;
 
     /**
      * Default constructor
      */
-    public InvalidSpeciesGenesException()
+    public InvalidForegroundException(Set <String> notIncludedIds)
     {
         super();
+        this.notIncludedIds = notIncludedIds;
     }
 
     /**
@@ -25,9 +33,10 @@ public class InvalidSpeciesGenesException extends Exception
      *                  BUT despite usually, it MUST be really basic and 
      *                  understandable, as it will be displayed to the user. 
      */
-    public InvalidSpeciesGenesException(String message)
+    public InvalidForegroundException(String message,Set<String> notIncludedIds)
     {        
         super(message);
+        this.notIncludedIds = notIncludedIds;
     }
 
     /**
@@ -35,9 +44,10 @@ public class InvalidSpeciesGenesException extends Exception
      * 
      * @param cause     a {@code Throwable} giving the cause of the exception.
      */
-    public InvalidSpeciesGenesException(Throwable cause)
+    public InvalidForegroundException(Throwable cause,Set <String> notIncludedIds)
     {
         super(cause);
+        this.notIncludedIds = notIncludedIds;
     }
 
     /**
@@ -46,8 +56,13 @@ public class InvalidSpeciesGenesException extends Exception
      * @param message   a {@code String} giving details about the exception.
      * @param cause     a {@code Throwable} giving the cause of the exception.
      */
-    public InvalidSpeciesGenesException(String message, Throwable cause)
+    public InvalidForegroundException(String message, Throwable cause,Set <String> notIncludedIds)
     {
         super(message, cause);
+        this.notIncludedIds = notIncludedIds;
+    }
+
+    public Set<String> getNotIncludedIds() {
+        return notIncludedIds;
     }
 }

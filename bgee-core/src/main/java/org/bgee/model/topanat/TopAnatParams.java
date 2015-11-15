@@ -42,6 +42,41 @@ public class TopAnatParams {
      * 
      */
     private final static String FILE_PREFIX = "topAnat_";
+ 
+    /**
+     * 
+     */
+    private final static DataQuality DATA_QUALITY_DEFAULT = DataQuality.HIGH;
+
+    /**
+     * 
+     */
+    private final static DecorelationType DECORLATION_TYPE_DEFAULT = DecorelationType.WEIGTH;
+
+    /**
+     * 
+     */
+    private final static StatisticTest STATISTIC_TEST_DEFAULT = StatisticTest.FISHER;
+
+    /**
+     * 
+     */
+    private final static int NODE_SIZE_DEFAULT = 5;
+
+    /**
+     * 
+     */
+    private final static Double FDR_THRESHOLD_DEFAULT = 0.05;
+
+    /**
+     * 
+     */
+    private final static Double PVALUE_THRESHOLD_DEFAULT = 0.05;
+
+    /**
+     * 
+     */
+    private final static int NUMBER_OF_NODES_TO_DISPLAX_DEFAULT = 10;
 
     /**
      * 
@@ -96,12 +131,12 @@ public class TopAnatParams {
     /**
      * 
      */
-    private final Float fdrThreshold;
+    private final Double fdrThreshold;
 
     /**
      * 
      */
-    private final Float pvalueThreshold;
+    private final Double pvalueThreshold;
 
     /**
      * 
@@ -177,12 +212,12 @@ public class TopAnatParams {
         /**
          * 
          */
-        private Float fdrThreshold;
+        private Double fdrThreshold;
 
         /**
          * 
          */
-        private Float pvalueThreshold;
+        private Double pvalueThreshold;
 
         /**
          * 
@@ -287,7 +322,7 @@ public class TopAnatParams {
          * @param fdrThreshold
          * @return
          */
-        public Builder fdrThreshold(Float fdrThreshold){
+        public Builder fdrThreshold(Double fdrThreshold){
             log.entry(fdrThreshold);
             this.fdrThreshold = fdrThreshold;
             return log.exit(this);
@@ -298,7 +333,7 @@ public class TopAnatParams {
          * @param pvalueThreshold
          * @return
          */
-        public Builder pvalueThreshold(Float pvalueThreshold){
+        public Builder pvalueThreshold(Double pvalueThreshold){
             log.entry(pvalueThreshold);
             this.pvalueThreshold = pvalueThreshold;
             return log.exit(this);
@@ -350,17 +385,22 @@ public class TopAnatParams {
         // optional params
         this.dataTypes = builder.dataTypes == null ? null :
             Collections.unmodifiableSet(new HashSet<>(builder.dataTypes));
-        this.decorelationType = builder.decorelationType == null ? DecorelationType.PARENT_CHILD :
+        this.decorelationType = builder.decorelationType == null ? TopAnatParams.DECORLATION_TYPE_DEFAULT :
             builder.decorelationType;
-        this.statisticTest = builder.statisticTest == null ? StatisticTest.FISHER : 
+        this.statisticTest = builder.statisticTest == null ? TopAnatParams.STATISTIC_TEST_DEFAULT : 
             builder.statisticTest;
         this.devStageId = builder.devStageId;
-        this.fdrThreshold = builder.fdrThreshold == null ? 0 : builder.fdrThreshold;
-        this.dataQuality = builder.dataQuality == null ? DataQuality.HIGH : builder.dataQuality;
-        this.nodeSize = builder.nodeSize == null ? 0 : builder.nodeSize;
-        this.numberOfSignificantNodes = builder.numberOfSignificantNode == null ? 0 : 
+        this.fdrThreshold = builder.fdrThreshold == null ? TopAnatParams.FDR_THRESHOLD_DEFAULT :
+            builder.fdrThreshold;
+        this.dataQuality = builder.dataQuality == null ? TopAnatParams.DATA_QUALITY_DEFAULT
+                : builder.dataQuality;
+        this.nodeSize = builder.nodeSize == null ? TopAnatParams.NODE_SIZE_DEFAULT
+                : builder.nodeSize;
+        this.numberOfSignificantNodes = builder.numberOfSignificantNode == null ? 
+                TopAnatParams.NUMBER_OF_NODES_TO_DISPLAX_DEFAULT : 
             builder.numberOfSignificantNode;
-        this.pvalueThreshold = builder.pvalueThreshold == null ? 0 : builder.pvalueThreshold;
+        this.pvalueThreshold = builder.pvalueThreshold == null ? TopAnatParams.PVALUE_THRESHOLD_DEFAULT
+                : builder.pvalueThreshold;
         this.submittedBackgroundIds = builder.submittedBackgroundIds == null ? null :
             Collections.unmodifiableSet(new HashSet<>(builder.submittedBackgroundIds));
         this.key = this.generateKey();
@@ -441,14 +481,14 @@ public class TopAnatParams {
     /**
      * @return the fdrThreshold
      */
-    public Float getFdrThreshold() {
+    public Double getFdrThreshold() {
         return fdrThreshold;
     }
 
     /**
      * @return the pvalueThreashold
      */
-    public Float getPvalueThreashold() {
+    public Double getPvalueThreashold() {
         return pvalueThreshold;
     }
 

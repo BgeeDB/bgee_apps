@@ -155,7 +155,7 @@ public class JsonHelperTest extends TestAncestor {
         response.put("status", "success");
         response.put("message", "my msg");
         response.put("data", data);
-        log.info(helper.toJson(response));
+        
         StringBuilder out = new StringBuilder();
         helper.toJson(response, out);
         assertEquals("Incorrect Json generated from writer", 

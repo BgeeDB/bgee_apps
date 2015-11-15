@@ -583,7 +583,7 @@ public class TopAnatAnalysis {
                 new FileWriter(topAnatParamsFileName)))) {
             out.println("# Warning, this file contains the initial values of the parameters for your information only.");
             out.println("# Changing a value in this file won't affect the R script.");
-            out.println(this.params.toString());
+            out.println(this.params.toString(true));
         }
 
         log.exit();

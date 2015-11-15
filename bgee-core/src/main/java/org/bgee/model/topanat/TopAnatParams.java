@@ -1,8 +1,6 @@
 package org.bgee.model.topanat;
 
-import java.io.StringWriter;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -263,7 +261,6 @@ public class TopAnatParams {
         } 
 
         /**
-         * XXX checkCallTypeDataTypes here or elsewhere ? Convert to null if all of them ?
          * @param dataTypes
          * @return
          */
@@ -651,72 +648,85 @@ public class TopAnatParams {
     }
 
     @Override
+    /**
+     * 
+     */
     public String toString(){
-        StringWriter ret = new StringWriter();
+        return this.toString(false);
+    }
+
+    /**
+     * 
+     */
+    public String toString(boolean prettyPrinting){
+        String sep =" ";
+        if(prettyPrinting == true)
+            sep ="\t";
+        StringBuffer ret = new StringBuffer();
         ret.append("submittedForegroundIds:");
-        ret.append("\t\t");
+        ret.append(sep);
         ret.append(this.submittedForegroundIds.toString());
-        ret.append("\n");
+        ret.append("\r\n");
         ret.append("submittedBackgroundIds:");
-        ret.append("\t\t");
+        ret.append(sep);
         if(this.submittedBackgroundIds != null)
             ret.append(this.submittedBackgroundIds.toString());
-        ret.append("\n");
+        ret.append("\r\n");
         ret.append("speciesId:");
-        ret.append("\t\t\t");
+        ret.append(sep);
         if(this.speciesId != null)
             ret.append(this.speciesId);
-        ret.append("\n");
+        ret.append("\r\n");
         ret.append("callType:");
-        ret.append("\t\t\t");
+        ret.append(sep);
         if(this.callType != null)
             ret.append(this.callType.toString());
-        ret.append("\n");
+        ret.append("\r\n");
         ret.append("dataQuality:");
-        ret.append("\t\t\t");
+        ret.append(sep);
         if(this.dataQuality != null)
             ret.append(this.dataQuality.toString());
-        ret.append("\n");
+        ret.append("\r\n");
         ret.append("dataTypes:");
-        ret.append("\t\t\t");
+        ret.append(sep);
         if(this.dataTypes != null)
             ret.append(this.dataTypes.toString());
-        ret.append("\n");
+        ret.append("\r\n");
         ret.append("devStageId:");
-        ret.append("\t\t\t");
+        ret.append(sep);
         if(this.devStageId != null)
             ret.append(this.devStageId.toString());
-        ret.append("\n");
+        ret.append("\r\n");
         ret.append("decorelationType:");
-        ret.append("\t\t");
+        ret.append(sep);
         if(this.decorelationType != null)
             ret.append(this.decorelationType.toString());
-        ret.append("\n");
+        ret.append("\r\n");
         ret.append("statisticTest:");
-        ret.append("\t\t\t");
+        ret.append(sep);
         if(this.statisticTest != null)
             ret.append(this.statisticTest.toString());
-        ret.append("\n");
+        ret.append("\r\n");
         ret.append("nodeSize:");
-        ret.append("\t\t\t");
+        ret.append(sep);
         if(this.nodeSize != null)
             ret.append(this.nodeSize.toString());
-        ret.append("\n");
+        ret.append("\r\n");
         ret.append("fdrThreshold:");
-        ret.append("\t\t\t");
+        ret.append(sep);
         if(this.fdrThreshold != null)
             ret.append(this.fdrThreshold.toString());
-        ret.append("\n");
+        ret.append("\r\n");
         ret.append("pvalueThreshold:");
-        ret.append("\t\t");
+        ret.append(sep);
         if(this.pvalueThreshold != null)
             ret.append(this.pvalueThreshold.toString());
-        ret.append("\n");
+        ret.append("\r\n");
         ret.append("numberOfSignificantNodes:");
-        ret.append("\t");
+        ret.append(sep);
         if(this.numberOfSignificantNodes != null)
             ret.append(this.numberOfSignificantNodes.toString());
-        ret.append("\n");
+        ret.append("\r\n");
         return ret.toString();
     }
 

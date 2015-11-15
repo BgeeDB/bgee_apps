@@ -7,7 +7,6 @@ import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
 import org.bgee.model.dao.api.species.SpeciesDAO;
-import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
 
 import java.util.Set;
 import java.util.stream.Collectors;

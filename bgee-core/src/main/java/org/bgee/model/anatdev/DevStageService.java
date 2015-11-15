@@ -71,7 +71,8 @@ public class DevStageService extends Service {
         }
         
         return log.exit(new DevStage(stageTO.getId(), stageTO.getName(), 
-                stageTO.getDescription(), stageTO.getLevel()));
+                stageTO.getDescription(), stageTO.getLeftBound(), stageTO.getRightBound(), 
+                stageTO.getLevel(), stageTO.isTooGranular(), stageTO.isGroupingStage()));
     }
 
 

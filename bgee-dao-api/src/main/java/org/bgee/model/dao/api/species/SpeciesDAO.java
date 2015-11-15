@@ -1,6 +1,5 @@
 package org.bgee.model.dao.api.species;
 
-import java.util.Collection;
 import java.util.Set;
 
 import org.bgee.model.dao.api.DAO;
@@ -38,8 +37,9 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
      */
     public enum Attribute implements DAO.Attribute {
         ID, COMMON_NAME, GENUS, SPECIES_NAME, PARENT_TAXON_ID, GENOME_FILE_PATH, 
-        // TODO add GENOME_VERSION when genome version in species table
-        GENOME_SPECIES_ID, FAKE_GENE_ID_PREFIX;
+        GENOME_SPECIES_ID, FAKE_GENE_ID_PREFIX, 
+        // TODO currently this info is not present in the table
+        GENOME_VERSION;
     }
     
     /**

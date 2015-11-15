@@ -197,6 +197,7 @@ public class FrontController extends HttpServlet {
             errorDisplay.displayMultipleParametersNotAllowed(e.getMessage());
         } catch(WrongFormatException e) {
             log.catching(e);
+            //TODO: provide the actual exception, to be able to display the underlying cause
             errorDisplay.displayWrongFormat(e.getMessage());
         } catch(UnsupportedOperationException e) {
             log.catching(e);

@@ -9,7 +9,6 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -41,11 +40,13 @@ import org.apache.logging.log4j.Logger;
  *
  * @author Mathieu Seppey
  * @author Valentine Rech de Laval
- * @version Bgee 13, Nov 2014
- * @since Bgee 13
+ * @author Frederic Bastian
+ * @version Bgee 13, Nov 2015
+ * @since Bgee 13 Nov. 2014
  * @see URLParameters.Parameter
  * @see	RequestParameters
  */
+//XXX: I think we should add support for Enum types, e.g., for expression type
 public class URLParameters {
 
     private final static Logger log = LogManager.getLogger(URLParameters.class.getName());
@@ -64,10 +65,10 @@ public class URLParameters {
 
     /**
      * A {@code List} of {@code String}s that are the default values to use to separate values
-     * of one parameter.
+     * of one parameter. Contains: "\r\n", "\r", "\n", ",".
      * ({@see URLParameters.Parameter#allowsSeparatedValues}).
      */
-    protected static final List<String> DEFAULT_SEPARATORS = Arrays.asList("\r\n", "\r", "\n");
+    protected static final List<String> DEFAULT_SEPARATORS = Arrays.asList("\r\n", "\r", "\n", ",");
 
     /**
      * A {@code boolean} that contains the default value for {@link URLParameters.Parameter#isStorable}
@@ -87,15 +88,15 @@ public class URLParameters {
     /**
      * A {@code String} that contains the default value for {@link URLParameters.Parameter#format}
      */
-    protected static final String DEFAULT_FORMAT = null;
+    protected static final String DEFAULT_FORMAT = "^[\\w,.;:\\-_']*$";
 
     /**
      * A {@code String} that contains the default value for {@link URLParameters.Parameter#format}
      * of a list.
      */
     protected static final String DEFAULT_LIST_FORMAT = 
-            "[A-Za-z0-9" + DEFAULT_SEPARATORS.stream()
-                    .map(Pattern::quote).collect(Collectors.joining()) + "]*";
+            "^[\\w,.;:\\-_'" + DEFAULT_SEPARATORS.stream()
+                    .map(Pattern::quote).collect(Collectors.joining()) + "]*$";
 
     // *************************************
     //
@@ -160,8 +161,11 @@ public class URLParameters {
      * as key to store parameters on the disk.
      * Corresponds to the URL parameter "species_list".
      */
+    //XXX: Do we really need this parameter. Maybe we could simply allow species_id 
+    //to provide multiple values. And we could keep the word "list" for textarea upload, 
+    //where multiple values are separated by a specific separator in a same parameter value.
     private static final Parameter<String> SPECIES_LIST = new Parameter<String>("species_list",
-            true, false, null, false, DEFAULT_IS_SECURE, 
+            true, false, null, true, DEFAULT_IS_SECURE, 
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
 
     /**
@@ -170,7 +174,7 @@ public class URLParameters {
      * Corresponds to the URL parameter "fg_list".
      */
     private static final Parameter<String> FOREGROUND_LIST = new Parameter<String>("fg_list",
-            false, true, DEFAULT_SEPARATORS, false, DEFAULT_IS_SECURE, 
+            false, true, DEFAULT_SEPARATORS, true, DEFAULT_IS_SECURE, 
             DEFAULT_MAX_SIZE, DEFAULT_LIST_FORMAT, String.class);
     /**
      * A {@code Parameter<String>} that contains the foreground gene ID file to be used 
@@ -178,7 +182,7 @@ public class URLParameters {
      * Corresponds to the URL parameter "fg_file".
      */
     private static final Parameter<String> FOREGROUND_FILE = new Parameter<String>("fg_file",
-            false, false, null, false, DEFAULT_IS_SECURE, 
+            false, false, null, false, true, 
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
     /**
      * A {@code Parameter<String>} that contains the background gene IDs to be used 
@@ -186,23 +190,23 @@ public class URLParameters {
      * Corresponds to the URL parameter "bg_list".
      */
     private static final Parameter<String> BACKGROUND_LIST = new Parameter<String>("bg_list",
-            false, true, DEFAULT_SEPARATORS, false, DEFAULT_IS_SECURE, 
-            DEFAULT_MAX_SIZE, DEFAULT_LIST_FORMAT, String.class);
+            false, true, DEFAULT_SEPARATORS, true, DEFAULT_IS_SECURE, 
+            1000000, DEFAULT_LIST_FORMAT, String.class);
     /**
      * A {@code Parameter<String>} that contains the background gene ID file to be used 
      * for TopAnat analysis.
      * Corresponds to the URL parameter "bg_file".
      */
     private static final Parameter<String> BACKGROUND_FILE = new Parameter<String>("bg_file",
-            false, false, null, false, DEFAULT_IS_SECURE, 
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+            false, false, null, false, true, 
+            1000000, DEFAULT_FORMAT, String.class);
     /**
      * A {@code Parameter<String>} that contains the expression types to be used 
      * for TopAnat analysis.
      * Corresponds to the URL parameter "expr_type".
      */
     private static final Parameter<String> EXPRESSION_TYPE = new Parameter<String>("expr_type",
-            true, false, null, false, DEFAULT_IS_SECURE, 
+            true, false, null, true, DEFAULT_IS_SECURE, 
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
     /**
      * A {@code Parameter<String>} that contains the data quality to be used 
@@ -210,7 +214,7 @@ public class URLParameters {
      * Corresponds to the URL parameter "data_qual".
      */
     private static final Parameter<String> DATA_QUALITY = new Parameter<String>("data_qual",
-            false, false, null, false, DEFAULT_IS_SECURE, 
+            false, false, null, true, DEFAULT_IS_SECURE, 
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
     /**
      * A {@code Parameter<String>} that contains the data quality to be used 
@@ -218,15 +222,15 @@ public class URLParameters {
      * Corresponds to the URL parameter "data_type".
      */
     private static final Parameter<String> DATA_TYPE = new Parameter<String>("data_type",
-            true, false, null, false, DEFAULT_IS_SECURE, 
+            true, false, null, true, DEFAULT_IS_SECURE, 
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
     /**
-     * A {@code Parameter<String>} that contains the developmental stage to be used 
+     * A {@code Parameter<String>} that contains the developmental stages to be used 
      * for TopAnat analysis.
-     * Corresponds to the URL parameter "dev_stage".
+     * Corresponds to the URL parameter "stage_id".
      */
-    private static final Parameter<String> DEV_STAGE = new Parameter<String>("dev_stage",
-            true, false, null, false, DEFAULT_IS_SECURE, 
+    private static final Parameter<String> DEV_STAGE = new Parameter<String>("stage_id",
+            true, false, null, true, DEFAULT_IS_SECURE, 
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
     /**
      * A {@code Parameter<String>} that contains the decorrelation type to be used 
@@ -234,14 +238,14 @@ public class URLParameters {
      * Corresponds to the URL parameter "decorr_type".
      */
     private static final Parameter<String> DECORRELATION_TYPE = new Parameter<String>("decorr_type",
-            false, false, null, false, DEFAULT_IS_SECURE, 
+            false, false, null, true, DEFAULT_IS_SECURE, 
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
     /**
      * A {@code Parameter<Integer>} that contains the node size to be used for TopAnat analysis.
      * Corresponds to the URL parameter "node_size".
      */
     private static final Parameter<Integer> NODE_SIZE = new Parameter<Integer>("node_size",
-            false, false, null, false, DEFAULT_IS_SECURE, 
+            false, false, null, true, DEFAULT_IS_SECURE, 
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Integer.class);
     /**
      * A {@code Parameter<Integer>} that contains the number of nodes to be used
@@ -249,7 +253,7 @@ public class URLParameters {
      * Corresponds to the URL parameter "nb_node".
      */
     private static final Parameter<Integer> NB_NODE = new Parameter<Integer>("nb_node",
-            false, false, null, false, DEFAULT_IS_SECURE, 
+            false, false, null, true, DEFAULT_IS_SECURE, 
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Integer.class);
 
     /**
@@ -257,7 +261,7 @@ public class URLParameters {
      * Corresponds to the URL parameter "fdr_thr".
      */
     private static final Parameter<Float> FDR_THRESHOLD = new Parameter<Float>("fdr_thr",
-            false, false, null, false, DEFAULT_IS_SECURE, 
+            false, false, null, true, DEFAULT_IS_SECURE, 
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Float.class);
     /**
      * A {@code Parameter<Float>} that contains the p-value threshold to be used
@@ -265,7 +269,7 @@ public class URLParameters {
      * Corresponds to the URL parameter "pvalue_thr".
      */
     private static final Parameter<Float> P_VALUE_THRESHOLD = new Parameter<Float>("pvalue_thr",
-            false, false, null, false, DEFAULT_IS_SECURE, 
+            false, false, null, true, DEFAULT_IS_SECURE, 
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Float.class);
     /**
      * A {@code Parameter<Integer>} that contains the job ID to be used to track a job.
@@ -347,7 +351,7 @@ public class URLParameters {
             // Species request
             SPECIES_LIST,
             // TopAnat analyze params
-            FOREGROUND_LIST, FOREGROUND_FILE, BACKGROUND_LIST, BACKGROUND_LIST,
+            FOREGROUND_LIST, FOREGROUND_FILE, BACKGROUND_LIST, BACKGROUND_FILE,
             EXPRESSION_TYPE, DATA_QUALITY, DATA_TYPE, DEV_STAGE, DECORRELATION_TYPE,
             NODE_SIZE, FDR_THRESHOLD, P_VALUE_THRESHOLD, NB_NODE,
             JOB_ID, FORM_DATA,

@@ -20,6 +20,8 @@ import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.DevStageService;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneService;
+import org.bgee.model.species.Species;
+import org.bgee.model.species.SpeciesService;
 import org.bgee.view.TopAnatDisplay;
 import org.bgee.view.ViewFactory;
 import org.junit.Test;
@@ -56,6 +58,9 @@ public class CommandTopAnatTest extends TestAncestor {
         
         DevStageService devStageService = mock(DevStageService.class);
         when(serviceFac.getDevStageService()).thenReturn(devStageService);
+        
+        SpeciesService speciesService = mock(SpeciesService.class);
+        when(serviceFac.getSpeciesService()).thenReturn(speciesService);
 
         //mock data returned by Services
         List<String> submittedGeneIds = Arrays.asList("ID1", "ID2", "ID3", "ID4");
@@ -69,6 +74,10 @@ public class CommandTopAnatTest extends TestAncestor {
         when(devStageService.loadGroupingDevStages(new HashSet<>(Arrays.asList(selectedSpeciesId))))
             .thenReturn(devStages);
 
+        List<Species> species = this.getSpeciesDataTest();
+        when(speciesService.loadSpeciesByIds(new HashSet<>(Arrays.asList("9606", "10090"))))
+            .thenReturn(new HashSet<>(species));
+
         //mock view
         ViewFactory viewFac = mock(ViewFactory.class);
         TopAnatDisplay display = mock(TopAnatDisplay.class);
@@ -79,28 +88,36 @@ public class CommandTopAnatTest extends TestAncestor {
         params.setPage(RequestParameters.PAGE_TOP_ANAT);
         params.setAction(RequestParameters.ACTION_TOP_ANAT_GENE_VALIDATION);
         params.addValues(params.getUrlParametersInstance().getParamBackgroundList(), submittedGeneIds);
+        log.info("Generated query URL: " + params.getRequestURL());
 
         CommandTopAnat controller = new CommandTopAnat(mock(HttpServletResponse.class),
                 params, mock(BgeeProperties.class), viewFac, serviceFac);
         controller.processRequest();
 
-        Map<String, Long> speciesIdToGeneCount = new HashMap<String, Long>();
-        speciesIdToGeneCount.put("9606", 2L);
-        speciesIdToGeneCount.put("10090", 1L);
-        speciesIdToGeneCount.put("UNDETERMINED", 1L);
+        Map<Species, Long> speciesToGeneCount = new HashMap<>();
+        speciesToGeneCount.put(species.get(0), 2L);
+        speciesToGeneCount.put(species.get(1), 1L);
         
-        verify(display).sendGeneListReponse(speciesIdToGeneCount, selectedSpeciesId,
-                new HashSet<>(Arrays.asList(new DevStage("2443", "embryo", null, 1))), //adult filtered by level
+        verify(display).sendGeneListReponse(speciesToGeneCount, selectedSpeciesId,
+                new HashSet<>(Arrays.asList(devStages.get(1), devStages.get(2))), 
                 null, new HashSet<>(Arrays.asList("ID4")), 0, 
-                "4 genes entered, 2 from species 9606, 1 from species 10090, "
-                + "1 from undetermined species.");
+                "4 genes entered, 2 in human, 1 in mouse, "
+                + "1 not found in Bgee.");
     }
 
     private List<DevStage> getDevStagesDataTest() {
         log.entry();
         return log.exit(Arrays.asList(
-                new DevStage("2443", "embryo", null, 1),
-                new DevStage("8967786", "adult", "adult desc", 2)));
+                new DevStage("2443", "Life stage", null, 1, 6, 1, false, true),
+                new DevStage("25", "embryo", "embryo desc", 2, 3, 2, false, true),
+                new DevStage("26", "adult", "adult desc", 4, 5, 2, false, true)));
+    }
+
+    private List<Species> getSpeciesDataTest() {
+        log.entry();
+        return log.exit(Arrays.asList(
+                new Species("9606", "human", "", "Homo", "sapiens", "genome9606"), 
+                new Species("10090", "mouse", "", "Mus", "musculus", "genome10090")));
     }
 
     private List<Gene> getGeneDataTest() {

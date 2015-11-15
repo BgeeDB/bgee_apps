@@ -3,6 +3,7 @@ package org.bgee.controller;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -12,6 +13,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -129,7 +132,7 @@ public class RequestParametersTest extends TestAncestor {
         .thenReturn(new String[]{"string1"}) // for requestParametersWithNoKey
         .thenReturn(new String[]{"string1"}) // for requestParametersHavingAKey
         .thenReturn(new String[]{"string1","explode"}) // for testLoadTooMuchValue
-        .thenReturn(new String[]{"STRING1"}); // for testLoadWrongFormatValue
+        .thenReturn(new String[]{"string^1"}); // for testLoadWrongFormatValue
 
         // note : test_list cannot contain uppercase letters to be valid
         when(mockHttpServletRequest.getParameterValues("test_list"))
@@ -777,18 +780,52 @@ public class RequestParametersTest extends TestAncestor {
      * @throws MultipleValuesNotAllowedException 
      * @throws WrongFormatException 
      */
-    @Test (expected=WrongFormatException.class)
+    @Test
     public void testAddWrongFormatValue() throws MultipleValuesNotAllowedException, 
     WrongFormatException{
 
-        // test_string does not accept upper case => exception
+        this.requestParametersWithNoKey.resetValues(
+                testURLParameters.getParamTestStringList());
+
+        //Check that the problem can be detected also not at the first add
+        this.requestParametersWithNoKey.addValue(
+                testURLParameters.getParamTestStringList(), "string1");
+        //add ^, which is not allowed
+        try {
+            this.requestParametersWithNoKey.addValue(
+                    testURLParameters.getParamTestStringList(),"string^1");
+            fail("A WrongFormatException should have been thrown.");
+        } catch (WrongFormatException e) {
+            //test passed
+        }
+    }
+    /**
+     * Check that an overall check is performed about added values for a parameter, 
+     * not only one value added at a time. 
+     */
+    @Test
+    public void testAddGlobalWrongFormatValue() {
 
         this.requestParametersWithNoKey.resetValues(
-                testURLParameters.getParamTestString());
+                testURLParameters.getParamTestStringList());
+        
+        //generate a value that will exceed allowed length, but only if the addValue 
+        //are considered together
 
+        //Check that the problem can be detected also not at the first add
         this.requestParametersWithNoKey.addValue(
-                testURLParameters.getParamTestString(),"STRING1");
-
+                testURLParameters.getParamTestStringList(), 
+                IntStream.range(0, testURLParameters.getParamTestStringList().getMaxSize() / 2)
+                .mapToObj(i -> "a").collect(Collectors.joining()));
+        try {
+            this.requestParametersWithNoKey.addValue(
+                    testURLParameters.getParamTestStringList(), 
+                    IntStream.range(0, (testURLParameters.getParamTestStringList().getMaxSize() / 2) + 2)
+                    .mapToObj(i -> "a").collect(Collectors.joining()));
+            fail("A WrongFormatException should have been thrown.");
+        } catch (WrongFormatException e) {
+            //test passed
+        }
     }
 
 }

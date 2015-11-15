@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.ErrorDisplay;
+import org.bgee.view.JsonHelper;
 
 public class JsonErrorDisplay extends JsonParentDisplay implements ErrorDisplay {
     
@@ -23,13 +24,17 @@ public class JsonErrorDisplay extends JsonParentDisplay implements ErrorDisplay 
      *                          current request.
      * @param prop              A {@code BgeeProperties} instance that contains the properties
      *                          to use.
+     * @param jsonHelper        A {@code JsonHelper} used to dump variables into Json.
      * @param factory           The {@code HtmlFactory} that instantiated this object.
+     * 
+     * @throws IllegalArgumentException If {@code factory} or {@code jsonHelper} is {@code null}.
      * @throws IOException      If there is an issue when trying to get or to use the
      *                          {@code PrintWriter} 
      */
     public JsonErrorDisplay(HttpServletResponse response, RequestParameters requestParameters,
-            BgeeProperties prop, JsonFactory factory) throws IOException {
-        super(response, requestParameters, prop, factory);
+            BgeeProperties prop, JsonHelper jsonHelper, JsonFactory factory) 
+                    throws IllegalArgumentException, IOException {
+        super(response, requestParameters, prop, jsonHelper, factory);
     }
 
     @Override

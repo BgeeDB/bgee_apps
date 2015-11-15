@@ -96,14 +96,6 @@ public class BgeeHttpServletRequest implements HttpServletRequest {
     private String method;
 
     /**
-     * Default constructor, 
-     * used to simulate a request with no parameters set (empty query string).
-     */
-    public BgeeHttpServletRequest() {
-        this("");
-    }
-
-    /**
      * A public constructor taking as a parameter a {@code String}, 
      * that should be a regular query string of a URL. 
      * It will be used to set the {@code queryString} attribute of this class. 

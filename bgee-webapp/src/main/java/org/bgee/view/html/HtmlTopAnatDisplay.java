@@ -12,6 +12,7 @@ import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.TaskManager;
 import org.bgee.model.anatdev.DevStage;
+import org.bgee.model.species.Species;
 import org.bgee.model.topanat.TopAnatResults;
 import org.bgee.view.TopAnatDisplay;
 
@@ -90,7 +91,7 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
     }
 
     @Override
-    public void sendGeneListReponse(Map<String, Long> speciesIdToGeneCount, String selectedSpeciesId,
+    public void sendGeneListReponse(Map<Species, Long> speciesToGeneCount, String selectedSpeciesId,
             Set<DevStage> validStages, Set<String> submittedGeneIds, Set<String> undeterminedGeneIds,
             int statusCode, String msg) {
         throw log.throwing(new UnsupportedOperationException("Not available for HTML display"));

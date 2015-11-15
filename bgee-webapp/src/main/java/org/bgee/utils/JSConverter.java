@@ -88,7 +88,7 @@ public abstract class JSConverter {
         }
         else if(className.equals("urlparameters")){
             new URLParametersJsConverter(new FileWriter(targetFile),
-                    new URLParameters()).writeFile();;
+                    new URLParameters()).writeFile();
         }
         else{
             throw log.throwing(new IllegalArgumentException("Incorrect class name provided :"

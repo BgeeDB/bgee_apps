@@ -51,13 +51,13 @@ public class DevStageServiceTest extends TestAncestor {
         
         // Test without defined level
         List<DevStage> expectedDevStage = Arrays.asList(
-                new DevStage("Stage_id1", "stageN1", "stage Desc 1", 1), 
-                new DevStage("Stage_id8", "stageN8", "stage Desc 8", 4), 
-                new DevStage("Stage_id10", "stageN10", "stage Desc 10", 2), 
-                new DevStage("Stage_id11", "stageN11", "stage Desc 11", 3), 
-                new DevStage("Stage_id12", "stageN12", "stage Desc 12", 3), 
-                new DevStage("Stage_id13", "stageN13", "stage Desc 13", 3), 
-                new DevStage("Stage_id15", "stageN15", "stage Desc 15", 3));
+                new DevStage("Stage_id1", "stageN1", "stage Desc 1", 1, 36, 1, false, true), 
+                new DevStage("Stage_id8", "stageN8", "stage Desc 8", 12, 13, 4, false, true), 
+                new DevStage("Stage_id10", "stageN10", "stage Desc 10", 18, 25, 2, false, true), 
+                new DevStage("Stage_id11", "stageN11", "stage Desc 11", 19, 20, 3, false, true), 
+                new DevStage("Stage_id12", "stageN12", "stage Desc 12", 21, 22, 3, false, true), 
+                new DevStage("Stage_id13", "stageN13", "stage Desc 13", 23, 24, 3, false, true), 
+                new DevStage("Stage_id15", "stageN15", "stage Desc 15", 27, 32, 3, false, true));
         DevStageService service = new DevStageService(managerMock);
         assertEquals("Incorrect dev stages",
                 expectedDevStage, service.loadGroupingDevStages(speciesIds1));

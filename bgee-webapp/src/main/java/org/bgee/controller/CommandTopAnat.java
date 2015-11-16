@@ -142,7 +142,7 @@ public class CommandTopAnat extends CommandParent {
             boolean cached = false;
             if (cached) {
                 //TODO: update instantiation of TopAnatResults
-                TopAnatResults results = new TopAnatResults(null, null, null, null);
+                TopAnatResults results = new TopAnatResults(null, null);
                 display.sendResultResponse(results);
                 // - Or should the client redirects itself to a new page to display results, 
                 //   using an URL provided in this response?
@@ -174,7 +174,7 @@ public class CommandTopAnat extends CommandParent {
             } else if (taskManager.isSuccessful()) {
                 //retrieve results from the task held by the task manager
                 //TODO: update instantiation of TopAnatResults
-                TopAnatResults results = new TopAnatResults(null, null, null, null);
+                TopAnatResults results = new TopAnatResults(null, null);
                 display.sendResultResponse(results);
                 //Or should the client redirects itself to a new page to display results, 
                 //using an URL provided in this response?
@@ -199,7 +199,7 @@ public class CommandTopAnat extends CommandParent {
             // Display page (using previous response)
             if (hasResults) {
                 //TODO: update instantiation of TopAnatResults
-                TopAnatResults results = new TopAnatResults(null, null, null, null);
+                TopAnatResults results = new TopAnatResults(null, null);
                 display.sendResultResponse(results);
             } else {
                 display.displayTopAnatHomePage();

@@ -1,5 +1,6 @@
 package org.bgee.model.dao.mysql.expressiondata;
 
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -809,6 +810,12 @@ implements ExpressionCallDAO {
                 if (distinctClause) {
                     sql += "DISTINCT ";
                 }
+            } else if (attribute.equals(ExpressionCallDAO.Attribute.GLOBAL_MEAN_RANK) || 
+                    attribute.equals(ExpressionCallDAO.Attribute.AFFYMETRIX_MEAN_RANK) ||
+                    attribute.equals(ExpressionCallDAO.Attribute.EST_MEAN_RANK) ||
+                    attribute.equals(ExpressionCallDAO.Attribute.IN_SITU_MEAN_RANK) ||
+                    attribute.equals(ExpressionCallDAO.Attribute.RNA_SEQ_MEAN_RANK)) {
+                //TODO: remove when this attribute will be managed
             } else {
                 sql += ", ";
             }
@@ -970,6 +977,8 @@ implements ExpressionCallDAO {
                 
                 sql += "AS observedData ";
                 
+            } else if (attribute.equals(ExpressionCallDAO.Attribute.GLOBAL_MEAN_RANK)) {
+                //TODO
             } else if (attribute.equals(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA)) {
                 if (!includeSubStages) {
                     sql += "(affymetrixData + 0) ";
@@ -979,6 +988,8 @@ implements ExpressionCallDAO {
                     sql += "MAX(affymetrixData + 0) ";
                 }
                 sql += "AS affymetrixData ";
+            } else if (attribute.equals(ExpressionCallDAO.Attribute.AFFYMETRIX_MEAN_RANK)) {
+                //TODO
             } else if (attribute.equals(ExpressionCallDAO.Attribute.EST_DATA)) {
                 if (!includeSubStages) {
                     sql += "(estData + 0) ";
@@ -988,6 +999,8 @@ implements ExpressionCallDAO {
                     sql += "MAX(estData + 0) ";
                 }
                 sql += "AS estData ";
+            } else if (attribute.equals(ExpressionCallDAO.Attribute.EST_MEAN_RANK)) {
+                //TODO
             } else if (attribute.equals(ExpressionCallDAO.Attribute.IN_SITU_DATA)) {
                 if (!includeSubStages) {
                     sql += "(inSituData + 0) ";
@@ -997,6 +1010,8 @@ implements ExpressionCallDAO {
                     sql += "MAX(inSituData + 0) ";
                 }
                 sql += "AS inSituData ";
+            } else if (attribute.equals(ExpressionCallDAO.Attribute.IN_SITU_MEAN_RANK)) {
+                //TODO
             } else if (attribute.equals(ExpressionCallDAO.Attribute.RNA_SEQ_DATA)) {
                 if (!includeSubStages) {
                     sql += "(rnaSeqData + 0) ";
@@ -1006,6 +1021,8 @@ implements ExpressionCallDAO {
                     sql += "MAX(rnaSeqData + 0) ";
                 }
                 sql += "AS rnaSeqData ";
+            } else if (attribute.equals(ExpressionCallDAO.Attribute.RNA_SEQ_MEAN_RANK)) {
+                //TODO
             } else {
                 throw log.throwing(new IllegalArgumentException("The attribute provided (" +
                         attribute.toString() + ") is unknown for " + ExpressionCallDAO.class.getName()));
@@ -1454,6 +1471,8 @@ implements ExpressionCallDAO {
 
             String id = null, geneId = null, anatEntityId = null, stageId = null;
             DataState affymetrixData = null, estData = null, inSituData = null, rnaSeqData = null;
+            BigDecimal globalMeanRank = null, affymetrixMeanRank = null, estMeanRank = null, 
+                    inSituMeanRank = null, rnaSeqMeanRank = null;
             Boolean includeSubstructures = null, includeSubStages = null, observedData = null;
             OriginOfLine anatOriginOfLine = null, stageOriginOfLine = null;
 
@@ -1478,11 +1497,17 @@ implements ExpressionCallDAO {
                     case STAGE_ID:
                         stageId = this.getCurrentResultSet().getString(column.getKey());
                         break;
+                    case GLOBAL_MEAN_RANK:
+                        globalMeanRank = this.getCurrentResultSet().getBigDecimal(column.getKey());
+                        break;
                     case AFFYMETRIX_DATA: 
                         //index of the enum in the mysql database corresponds to the ordinal 
                         //of DataState + 1
                         affymetrixData = 
                             dataStates[this.getCurrentResultSet().getInt(column.getKey()) - 1];
+                        break;
+                    case AFFYMETRIX_MEAN_RANK:
+                        affymetrixMeanRank = this.getCurrentResultSet().getBigDecimal(column.getKey());
                         break;
                     case EST_DATA:
                        //index of the enum in the mysql database corresponds to the ordinal 
@@ -1490,17 +1515,26 @@ implements ExpressionCallDAO {
                         estData = 
                             dataStates[this.getCurrentResultSet().getInt(column.getKey()) - 1];
                         break;
+                    case EST_MEAN_RANK:
+                        estMeanRank = this.getCurrentResultSet().getBigDecimal(column.getKey());
+                        break;
                     case IN_SITU_DATA: 
                         //index of the enum in the mysql database corresponds to the ordinal 
                         //of DataState + 1
                         inSituData = 
                             dataStates[this.getCurrentResultSet().getInt(column.getKey()) - 1];
                         break;
+                    case IN_SITU_MEAN_RANK:
+                        inSituMeanRank = this.getCurrentResultSet().getBigDecimal(column.getKey());
+                        break;
                     case RNA_SEQ_DATA:
                         //index of the enum in the mysql database corresponds to the ordinal 
                         //of DataState + 1
                         rnaSeqData = 
                             dataStates[this.getCurrentResultSet().getInt(column.getKey()) - 1];
+                        break;
+                    case RNA_SEQ_MEAN_RANK:
+                        rnaSeqMeanRank = this.getCurrentResultSet().getBigDecimal(column.getKey());
                         break;
                     case ANAT_ORIGIN_OF_LINE: 
                         anatOriginOfLine = OriginOfLine.convertToOriginOfLine(
@@ -1529,8 +1563,9 @@ implements ExpressionCallDAO {
                     throw log.throwing(new DAOException(e));
                 }
             }
-            return log.exit(new ExpressionCallTO(id, geneId, anatEntityId, stageId,
-                    affymetrixData, estData, inSituData, rnaSeqData,
+            return log.exit(new ExpressionCallTO(id, geneId, anatEntityId, stageId, globalMeanRank, 
+                    affymetrixData, affymetrixMeanRank, estData, estMeanRank, 
+                    inSituData, inSituMeanRank, rnaSeqData, rnaSeqMeanRank, 
                     includeSubstructures, includeSubStages, 
                     anatOriginOfLine, stageOriginOfLine, observedData));
         }
@@ -1551,17 +1586,32 @@ implements ExpressionCallDAO {
             if (colName.equals("stageId")) {
                 return log.exit(ExpressionCallDAO.Attribute.STAGE_ID);
             } 
+            if (colName.equals("globalMeanRank")) {
+                return log.exit(ExpressionCallDAO.Attribute.GLOBAL_MEAN_RANK);
+            } 
             if (colName.equals("affymetrixData")) {
                 return log.exit(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA);
+            } 
+            if (colName.equals("affymetrixMeanRank")) {
+                return log.exit(ExpressionCallDAO.Attribute.AFFYMETRIX_MEAN_RANK);
             } 
             if (colName.equals("estData")) {
                 return log.exit(ExpressionCallDAO.Attribute.EST_DATA);
             } 
+            if (colName.equals("estMeanRank")) {
+                return log.exit(ExpressionCallDAO.Attribute.EST_MEAN_RANK);
+            } 
             if (colName.equals("inSituData")) {
                 return log.exit(ExpressionCallDAO.Attribute.IN_SITU_DATA);
             } 
+            if (colName.equals("inSituMeanRank")) {
+                return log.exit(ExpressionCallDAO.Attribute.IN_SITU_MEAN_RANK);
+            } 
             if (colName.equals("rnaSeqData")) {
                 return log.exit(ExpressionCallDAO.Attribute.RNA_SEQ_DATA);
+            } 
+            if (colName.equals("rnaSeqMeanRank")) {
+                return log.exit(ExpressionCallDAO.Attribute.RNA_SEQ_MEAN_RANK);
             } 
             if (colName.equals("originOfLine") || colName.equals("anatOriginOfLine")) {
                 return log.exit(ExpressionCallDAO.Attribute.ANAT_ORIGIN_OF_LINE);

@@ -34,6 +34,7 @@ import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 
 /**
@@ -622,7 +623,7 @@ public class TOComparator {
      * @return      {@code true} if {@code to1} and {@code to2} have all 
      *              attributes equal.
      */
-    private static boolean areCallTOsEqual(CallTO to1, CallTO to2, 
+    private static boolean areCallTOsEqual(CallTO<?> to1, CallTO<?> to2, 
             boolean compareId) {
         log.entry(to1, to2, compareId);
         if ((!compareId || StringUtils.equals(to1.getId(), to2.getId())) &&
@@ -661,7 +662,12 @@ public class TOComparator {
                 to1.isIncludeSubStages() == to2.isIncludeSubStages() &&
                 to1.getAnatOriginOfLine() == to2.getAnatOriginOfLine() &&
                 to1.getStageOriginOfLine() == to2.getStageOriginOfLine() &&
-                to1.isObservedData() == to2.isObservedData()) {
+                to1.isObservedData() == to2.isObservedData() && 
+                Objects.equals(to1.getGlobalMeanRank(), to2.getGlobalMeanRank()) && 
+                Objects.equals(to1.getAffymetrixMeanRank(), to2.getAffymetrixMeanRank()) && 
+                Objects.equals(to1.getESTMeanRank(), to2.getESTMeanRank()) && 
+                Objects.equals(to1.getInSituMeanRank(), to2.getInSituMeanRank()) && 
+                Objects.equals(to1.getRNASeqMeanRank(), to2.getRNASeqMeanRank())) {
             return log.exit(true);
         }
         return log.exit(false);

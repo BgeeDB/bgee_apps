@@ -38,9 +38,8 @@ public class CallDAOFilterTest extends TestAncestor {
     @Test
     public void shouldRetrieveExpressionFilteringDataTypes() {
         ExpressionCallDAOFilter exprFilter = new ExpressionCallDAOFilter(null, null, null, null);
-        ExpressionCallTO callTO = new ExpressionCallTO(null, null, null, null,
-                DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, null,
-                null, null, null, null, null);
+        ExpressionCallTO callTO = new ExpressionCallTO(DataState.HIGHQUALITY, DataState.NODATA, 
+                DataState.LOWQUALITY, null);
         Map<ExpressionCallDAO.Attribute, DataState> expectedMap = 
                 new EnumMap<>(ExpressionCallDAO.Attribute.class);
         expectedMap.put(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA, DataState.HIGHQUALITY);
@@ -49,9 +48,8 @@ public class CallDAOFilterTest extends TestAncestor {
         assertEquals("Incorrect filtering data types retrieved", expectedMap, 
                 exprFilter.extractFilteringDataTypes(callTO));
         
-        callTO = new ExpressionCallTO(null, null, null, null,
-                DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY,
-                null, null, null, null, null);
+        callTO = new ExpressionCallTO(DataState.LOWQUALITY, DataState.LOWQUALITY, 
+                DataState.LOWQUALITY, DataState.LOWQUALITY);
         expectedMap = new EnumMap<>(ExpressionCallDAO.Attribute.class);
         expectedMap.put(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA, DataState.LOWQUALITY);
         expectedMap.put(ExpressionCallDAO.Attribute.EST_DATA, DataState.LOWQUALITY);
@@ -61,17 +59,14 @@ public class CallDAOFilterTest extends TestAncestor {
         assertEquals("Incorrect filtering data types retrieved with all LOWQUALITY", expectedMap, 
                 exprFilter.extractFilteringDataTypes(callTO));
         
-        callTO = new ExpressionCallTO(null, null, null, null,
-                DataState.NODATA, null, DataState.NODATA, null,
-                null, null, null, null, null);
+        callTO = new ExpressionCallTO(DataState.NODATA, null, DataState.NODATA, null);
         expectedMap = new EnumMap<>(ExpressionCallDAO.Attribute.class);
         
         assertEquals("Incorrect filtering data types retrieved with mixed null and NODATA", expectedMap, 
                 exprFilter.extractFilteringDataTypes(callTO));
         
-        callTO = new ExpressionCallTO(null, null, null, null,
-                DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
-                null, null, null, null, null);
+        callTO = new ExpressionCallTO(DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                DataState.HIGHQUALITY, DataState.HIGHQUALITY);
         expectedMap = new EnumMap<>(ExpressionCallDAO.Attribute.class);
         expectedMap.put(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA, DataState.HIGHQUALITY);
         expectedMap.put(ExpressionCallDAO.Attribute.EST_DATA, DataState.HIGHQUALITY);

@@ -50,7 +50,7 @@ public interface CallDAO<T extends Enum<T> & CallDAO.Attribute> extends DAO<T> {
      * </ul>
      */
     enum OrderingAttribute implements DAO.OrderingAttribute {
-        GENE_ID, STAGE_ID, ANAT_ENTITY_ID, OMA_GROUP_ID, MEAN_RANK;
+        GENE_ID, STAGE_ID, ANAT_ENTITY_ID, OMA_GROUP_ID;
     }
 
     /**

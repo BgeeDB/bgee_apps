@@ -40,9 +40,8 @@ public class ExpressionCallDAOTest extends TestAncestor {
      */
     @Test
     public void shouldExtractDataTypesToDataStates() {
-        ExpressionCallTO callTO = new ExpressionCallTO(null, null, null, null,
-                DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, null,
-                null, null, null, null, null);
+        ExpressionCallTO callTO = new ExpressionCallTO(DataState.HIGHQUALITY, DataState.NODATA, 
+                DataState.LOWQUALITY, null);
         Map<ExpressionCallDAO.Attribute, DataState> expectedMap = new HashMap<>();
         expectedMap.put(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA, DataState.HIGHQUALITY);
         expectedMap.put(ExpressionCallDAO.Attribute.EST_DATA, DataState.NODATA);
@@ -51,9 +50,8 @@ public class ExpressionCallDAOTest extends TestAncestor {
         assertEquals("Incorrect data types to data states extracted", expectedMap, 
                 callTO.extractDataTypesToDataStates());
         
-        callTO = new ExpressionCallTO(null, null, null, null,
-                DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.HIGHQUALITY,
-                null, null, null, null, null);
+        callTO = new ExpressionCallTO(DataState.LOWQUALITY, DataState.HIGHQUALITY, 
+                DataState.NODATA, DataState.HIGHQUALITY);
         expectedMap = new HashMap<>();
         expectedMap.put(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA, DataState.LOWQUALITY);
         expectedMap.put(ExpressionCallDAO.Attribute.EST_DATA, DataState.HIGHQUALITY);

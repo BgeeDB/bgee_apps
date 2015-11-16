@@ -13,7 +13,10 @@ import org.bgee.controller.exception.MultipleValuesNotAllowedException;
 import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.controller.exception.RequestParametersNotFoundException;
 import org.bgee.controller.exception.RequestParametersNotStorableException;
-import org.bgee.controller.exception.WrongFormatException;
+import org.bgee.controller.exception.RequestSizeExceededException;
+import org.bgee.controller.exception.ValueSizeExceededException;
+import org.bgee.controller.exception.InvalidFormatException;
+import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.model.ServiceFactory;
 import org.bgee.view.ErrorDisplay;
 import org.bgee.view.ViewFactory;
@@ -182,26 +185,33 @@ public class FrontController extends HttpServlet {
             controller.processRequest();
             
         //=== process errors ===
-        } catch(RequestParametersNotFoundException e) {
+        } catch(InvalidFormatException e) {
             log.catching(e);
-            errorDisplay.displayRequestParametersNotFound(requestParameters.getFirstValue(
-                    this.urlParameters.getParamData()));
-        } catch(PageNotFoundException e) {
+            errorDisplay.displayControllerException(e);
+        } catch(InvalidRequestException e) {
             log.catching(e);
-            errorDisplay.displayPageNotFound(e.getMessage());
-        } catch(RequestParametersNotStorableException e) {
-            log.catching(e);
-            errorDisplay.displayRequestParametersNotStorable(e.getMessage());
+            errorDisplay.displayControllerException(e);
         } catch(MultipleValuesNotAllowedException e) {
             log.catching(e);
-            errorDisplay.displayMultipleParametersNotAllowed(e.getMessage());
-        } catch(WrongFormatException e) {
+            errorDisplay.displayControllerException(e);
+        } catch(PageNotFoundException e) {
             log.catching(e);
-            //TODO: provide the actual exception, to be able to display the underlying cause
-            errorDisplay.displayWrongFormat(e.getMessage());
+            errorDisplay.displayControllerException(e);
+        } catch(RequestParametersNotFoundException e) {
+            log.catching(e);
+            errorDisplay.displayControllerException(e);
+        } catch(RequestParametersNotStorableException e) {
+            log.catching(e);
+            errorDisplay.displayControllerException(e);
+        } catch(RequestSizeExceededException e) {
+            log.catching(e);
+            errorDisplay.displayControllerException(e);
+        } catch(ValueSizeExceededException e) {
+            log.catching(e);
+            errorDisplay.displayControllerException(e);
         } catch(UnsupportedOperationException e) {
             log.catching(e);
-            errorDisplay.displayUnsupportedOperationException(e.getMessage());
+            errorDisplay.displayUnsupportedOperationException();
         } catch(Exception e) {
             log.catching(e);
             if (errorDisplay != null) {

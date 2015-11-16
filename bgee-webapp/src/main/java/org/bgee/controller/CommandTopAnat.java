@@ -1,5 +1,6 @@
 package org.bgee.controller;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -18,7 +19,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.controller.exception.IncorrectRequest;
+import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.TaskManager;
@@ -80,7 +81,7 @@ public class CommandTopAnat extends CommandParent {
     }
 
     @Override
-    public void processRequest() throws Exception {
+    public void processRequest() throws IOException, PageNotFoundException, InvalidRequestException {
         log.entry();
         
         TopAnatDisplay display = this.viewFactory.getTopAnatDisplay();
@@ -218,7 +219,7 @@ public class CommandTopAnat extends CommandParent {
         log.exit();
     }
     
-    private void processGeneUpload(TopAnatDisplay display) {
+    private void processGeneUpload(TopAnatDisplay display) throws InvalidRequestException {
         log.entry(display);
 
         //retrieve possible parameters for this query
@@ -232,17 +233,18 @@ public class CommandTopAnat extends CommandParent {
         //sanity checks
         if (StringUtils.isBlank(fgFile) && StringUtils.isBlank(bgFile) && 
             fgList.isEmpty() && bgList.isEmpty()) {
-            throw log.throwing(new IllegalStateException("A gene ID list must be provided "
+            throw log.throwing(new InvalidRequestException("A gene ID list must be provided "
                     + "through either file upload or request parameter."));
         }
         if (StringUtils.isNotBlank(fgFile) && StringUtils.isNotBlank(bgFile) || 
             !fgList.isEmpty() && !bgList.isEmpty()) {
-            throw log.throwing(new IllegalStateException("It is not possible to submit both "
-                    + "a foreground and a background gene ID list at the same time"));
+            throw log.throwing(new InvalidRequestException("It is not possible to submit both "
+                    + "a foreground and a background gene ID list at the same time "
+                    + "when requesting information about it."));
         }
         if ((StringUtils.isNotBlank(fgFile) || StringUtils.isNotBlank(bgFile)) && 
             (!fgList.isEmpty() || !bgList.isEmpty())) {
-            throw log.throwing(new IllegalStateException("It is not possible to submit a gene ID list "
+            throw log.throwing(new InvalidRequestException("It is not possible to submit a gene ID list "
                     + "through both file upload and request parameter at the same time"));
         }
         
@@ -260,7 +262,7 @@ public class CommandTopAnat extends CommandParent {
             isFileUpdoad = true;
             submittedGeneIds = this.getGeneIdsFromFile(fileToUse);
             if (submittedGeneIds.isEmpty()) {
-                throw log.throwing(new IncorrectRequest("A file supposed to contain a gene ID list "
+                throw log.throwing(new InvalidRequestException("A file supposed to contain a gene ID list "
                         + "was provided, but it is empty or incorrectly formatted."));
             }
         } else if (!fgList.isEmpty()) {

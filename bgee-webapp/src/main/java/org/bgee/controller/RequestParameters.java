@@ -13,6 +13,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -611,7 +613,7 @@ public class RequestParameters {
     MultipleValuesNotAllowedException, InvalidFormatException{
         log.entry(request);
 
-        this.loadParameters(request);
+        this.loadParameters(request.getParameterMap());
 
         log.exit();
     }
@@ -625,8 +627,9 @@ public class RequestParameters {
      * If no key is provided, the storable parameters are simply retrieved from
      * the current request.
      * 
-     * @param request   the {@code HttpServletRequest} object representing the current request
-     *                  to the server.
+     * @param paramValues   A {@code Map} where keys are parameter names, and values are 
+     *                      {@code Array}s of {@code String}s containing the associatd values, 
+     *                      as returned by {@code ServletRequest.getParameterMap()}.
      *                  
      * @throws RequestParametersNotFoundException       if a key is set in the 
      *                                                  URL, meaning that a stored query string
@@ -649,17 +652,20 @@ public class RequestParameters {
      * @see #loadParametersFromRequest
      * @see #loadStorableParametersFromKey
      */
-    private void loadParameters(HttpServletRequest request) 
+    private void loadParameters(Map<String, String[]> paramValues) 
             throws RequestParametersNotFoundException, 
             MultipleValuesNotAllowedException, InvalidFormatException{
-        log.entry(request);
+        log.entry(paramValues);
 
         //Get the key
-        String key = request.getParameter(this.getKeyParam().getName());
+        String key = Optional.ofNullable(
+                paramValues.get(this.getUrlParametersInstance().getParamData().getName()))
+                .map(arr -> arr.length > 0? arr[0]: null)
+                .orElse(null);
         if (StringUtils.isBlank(key)) {
             log.trace("The key is blank, load params from request");
             //no key set, get the parameters from the URL
-            this.loadParametersFromRequest(request, true);
+            this.loadParametersFromRequest(paramValues, true);
         } else {
             //a key is set, get the storable parameters from a file
             log.trace("The key is set, load params from the file");
@@ -670,7 +676,7 @@ public class RequestParameters {
                 throw new RequestParametersNotFoundException(key);
             }
             // load the non storable params
-            this.loadParametersFromRequest(request, false);
+            this.loadParametersFromRequest(paramValues, false);
         }
 
         log.exit();
@@ -704,16 +710,21 @@ public class RequestParameters {
      * @see #loadStorableParametersFromKey
      * @see #loadParameters
      */
-    private void loadParametersFromRequest(HttpServletRequest request, boolean loadStorable) 
+    private void loadParametersFromRequest(Map<String, String[]> paramValues, boolean loadStorable) 
             throws MultipleValuesNotAllowedException, InvalidFormatException {
-        log.entry(request, loadStorable);
+        log.entry(paramValues, loadStorable);
 
         // Browse all available parameters
-        for (URLParameters.Parameter<?> parameter : this.urlParametersInstance.getList()){    
+        for (URLParameters.Parameter<?> parameter : this.urlParametersInstance.getList()) {
+            log.trace("Trying to retrieve value for parameter {}", parameter.getName());
             // If it is a param that has the desired isStorable status, proceed...
             if (loadStorable || !parameter.isStorable()){
                 // Fetch the string values from the URL
-                String[] valuesFromUrl = request.getParameterValues(parameter.getName());
+                String[] valuesFromUrl = paramValues.get(parameter.getName());
+                if (log.isTraceEnabled()) {
+                    log.trace("Values retrieved: {}", Arrays.deepToString(
+                            Optional.ofNullable(valuesFromUrl).orElse(new String[0])));
+                }
                 if (valuesFromUrl == null) {
                     continue;
                 }
@@ -813,7 +824,7 @@ public class RequestParameters {
                     // this RequestParameters object.
                     HttpServletRequest request = new BgeeHttpServletRequest(
                             retrievedQueryString, this.getCharacterEncoding());
-                    this.loadParametersFromRequest(request, true);
+                    this.loadParametersFromRequest(request.getParameterMap(), true);
                 }
             }
 

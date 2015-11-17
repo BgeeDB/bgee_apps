@@ -155,12 +155,11 @@ public class FrontController extends HttpServlet {
             //can be thrown.
             ViewFactory factory = this.viewFactoryProvider.getFactory(response, requestParameters);
             errorDisplay = factory.getErrorDisplay();
-            
             //OK, now we try to get the view requested. If an error occurred, 
             //the HTML view will allow to display an error message anyway
             requestParameters = new RequestParameters(request, this.urlParameters, this.prop,
                     true, "&");
-            log.info("Analyzed URL: " + requestParameters.getRequestURL());
+            log.debug("Analyzed URL: " + requestParameters.getRequestURL());
             factory = this.viewFactoryProvider.getFactory(response, requestParameters);
             errorDisplay = factory.getErrorDisplay();
             
@@ -226,6 +225,7 @@ public class FrontController extends HttpServlet {
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) {
         log.entry(request, response);
+        log.debug("doGet");
         doRequest(request, response, false);
         log.exit();
     }
@@ -233,6 +233,7 @@ public class FrontController extends HttpServlet {
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) {
         log.entry(request, response);
+        log.debug("doPost");
         doRequest(request, response, true);
         log.exit();
     }

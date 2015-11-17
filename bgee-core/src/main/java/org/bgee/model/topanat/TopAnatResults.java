@@ -17,7 +17,7 @@ public class TopAnatResults {
         
         private final float annotated;
         
-        private final float observed;
+        private final float significant;
         
         private final float expected;
         
@@ -31,7 +31,7 @@ public class TopAnatResults {
             this.anatEntitiesId = line.get("OrganId").toString();
             this.anatEntitiesName = line.get("OrganName").toString();
             this.annotated = Float.valueOf(line.get("Annotated").toString());
-            this.observed = Float.valueOf(line.get("Significant").toString());
+            this.significant = Float.valueOf(line.get("Significant").toString());
             this.expected = Float.valueOf(line.get("Expected").toString());
             this.enrich = Float.valueOf(line.get("foldEnrichment").toString());
             this.pval = Float.valueOf(line.get("p").toString());
@@ -50,8 +50,8 @@ public class TopAnatResults {
             return annotated;
         }
 
-        public float getObserved() {
-            return observed;
+        public float getSignificant() {
+            return significant;
         }
 
         public float getExpected() {

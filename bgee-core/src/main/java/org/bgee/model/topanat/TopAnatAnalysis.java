@@ -266,7 +266,7 @@ public class TopAnatAnalysis {
                 log.exit();return;
             }
 
-            this.rManager.performRFunction();
+            this.rManager.performRFunction(this.getRScriptConsoleFileName());
 
             this.move(tmpFile, finalFile);
             this.move(tmpPdfFile, finalPdfFile);
@@ -641,7 +641,7 @@ public class TopAnatAnalysis {
      * 
      */
     public String getRScriptConsoleFileName(){
-        return TopAnatAnalysis.FILE_PREFIX + this.params.getKey() + ".tsv.tmp.R_console";
+        return TopAnatAnalysis.FILE_PREFIX + this.params.getKey() + ".R_console";
     }
 
     /**

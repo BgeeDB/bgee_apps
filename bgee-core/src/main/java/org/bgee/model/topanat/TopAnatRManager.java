@@ -1,5 +1,6 @@
 package org.bgee.model.topanat;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collection;
 
@@ -52,16 +53,11 @@ public class TopAnatRManager {
     public String generateRCode(String resultFileName, String resultPdfFileName, 
             String anatEntitiesNamesFileName, String anatEntitiesRelationshipsFileName,
             String geneToAnatEntitiesFileName,
-            Collection<String> backgroundIds) 
-            throws IOException {
+            Collection<String> backgroundIds) {
         log.entry();
 
         caller.setRscriptExecutable(this.props.getTopAnatRScriptExecutable());
-        if (log.isDebugEnabled()) {
-            caller.redirectROutputToFile(this.props.getTopAnatResultsWritingDirectory()
-                    +resultFileName + ".R_console", true);
-        }
-
+        
         code.clear();
         code.addRCode("packageExistRgraphviz<-require(Rgraphviz)");
         code.addRCode("if(!packageExistRgraphviz){");
@@ -191,10 +187,12 @@ public class TopAnatRManager {
         return log.exit(code.toString());
 
     }
-    public void performRFunction(){
+    public void performRFunction(String consoleFileName) throws FileNotFoundException{
 
         log.info("Running statistical tests in R...");
         assert(this.code != null);
+        caller.redirectROutputToFile(
+                this.props.getTopAnatResultsWritingDirectory()+consoleFileName, true);
         caller.setRCode(code);
         caller.runAndReturnResult("tableOver");
         log.exit();

@@ -502,7 +502,7 @@ public class TopAnatParams {
     /**
      * @return
      */
-    public CallFilter<CallData<?>> rawParametersToCallFilter() {
+    public CallFilter<CallData<?>> convertRawParametersToCallFilter() {
         log.entry();
         ConditionFilter conditionFilter = new ConditionFilter(null, Arrays.asList(this.devStageId));
         return log.exit(new CallFilter<CallData<?>>(

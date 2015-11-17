@@ -519,7 +519,7 @@ public class TopAnatAnalysis {
                 geneToAnatEntitiesFile)))) {
             this.callService.loadCalls(
                     this.params.getSpeciesId(),new HashSet<CallFilter<?>>(
-                            Arrays.asList(this.params.rawParametersToCallFilter()))
+                            Arrays.asList(this.params.convertRawParametersToCallFilter()))
                     ).forEach(
                             call -> out.println(
                                     call.getGeneId() + '\t' + 

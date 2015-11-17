@@ -54,7 +54,7 @@ public class TopAnatAnalysis {
      */
     private final static Logger log = LogManager
             .getLogger(TopAnatAnalysis.class.getName());
-    
+
     /**
      * 
      */
@@ -268,11 +268,12 @@ public class TopAnatAnalysis {
 
             this.rManager.performRFunction();
 
-            Files.move(tmpFile, finalFile, StandardCopyOption.REPLACE_EXISTING);
-            Files.move(tmpPdfFile, finalPdfFile, StandardCopyOption.REPLACE_EXISTING);
+            this.move(tmpFile, finalFile);
+            this.move(tmpPdfFile, finalPdfFile);
 
         } finally {
             Files.deleteIfExists(tmpFile);
+            Files.deleteIfExists(tmpPdfFile);
             this.releaseWriteLock(tmpFileName);
             this.releaseWriteLock(fileName);
             this.releaseWriteLock(tmpPdfFileName);
@@ -367,7 +368,7 @@ public class TopAnatAnalysis {
 
             this.writeRcodeFile(tmpFileName);
 
-            Files.move(tmpFile, finalFile, StandardCopyOption.REPLACE_EXISTING);
+            this.move(tmpFile, finalFile);
 
         } finally {
             Files.deleteIfExists(tmpFile);
@@ -445,15 +446,8 @@ public class TopAnatAnalysis {
             this.writeAnatEntitiesNamesToFile(namesTmpFileName);
             this.writeAnatEntitiesRelationsToFile(relsTmpFileName);
 
-            //move tmp files if successful
-            //We check that there were no database error that could have corrupted the results
-            //            if (Database.getDatabase().isError()) {
-            //                throw log.throwing(new IllegalStateException("A database error occurred, " +
-            //                        "analysis canceled"));
-            //            }
-
-            Files.move(namesTmpFile, finalNamesFile, StandardCopyOption.REPLACE_EXISTING);
-            Files.move(relsTmpFile, finalRelsFile, StandardCopyOption.REPLACE_EXISTING);
+            this.move(namesTmpFile, finalNamesFile);
+            this.move(relsTmpFile, finalRelsFile);
 
         } finally {
             Files.deleteIfExists(namesTmpFile);
@@ -560,12 +554,7 @@ public class TopAnatAnalysis {
 
             this.writeToGeneToAnatEntitiesFile(tmpFileName);
             //move tmp file if successful
-            //We check that there were no database error that could have corrupted the results
-            //            if (Database.getDatabase().isError()) {
-            //                throw log.throwing(new IllegalStateException("A database error occurred, " +
-            //                        "analysis canceled"));
-            //            }
-            Files.move(tmpFile, finalGeneToAnatEntitiesFile, StandardCopyOption.REPLACE_EXISTING);
+            this.move(tmpFile, finalGeneToAnatEntitiesFile);
 
         } finally {
             Files.deleteIfExists(tmpFile);
@@ -629,7 +618,7 @@ public class TopAnatAnalysis {
 
             this.writeToTopAnatParamsFile(tmpFileName);
 
-            Files.move(tmpFile, finalTopAnatParamsFile, StandardCopyOption.REPLACE_EXISTING);
+            this.move(tmpFile, finalTopAnatParamsFile);
 
         } finally {
             Files.deleteIfExists(tmpFile);
@@ -654,7 +643,7 @@ public class TopAnatAnalysis {
     public String getRScriptConsoleFileName(){
         return TopAnatAnalysis.FILE_PREFIX + this.params.getKey() + ".tsv.tmp.R_console";
     }
-    
+
     /**
      * 
      */
@@ -701,6 +690,21 @@ public class TopAnatAnalysis {
         return TopAnatAnalysis.FILE_PREFIX 
                 + "Params_" + this.params.getKey() + ".txt";
     }
+
+    /**
+     * 
+     * @param src
+     * @param dest
+     * @throws IOException 
+     */
+    private void move(Path src, Path dest) throws IOException{
+        if(Files.size(src) > 0)
+            Files.move(src, dest, StandardCopyOption.REPLACE_EXISTING);
+        else{
+            throw log.throwing(new IllegalStateException("Empty tmp file"));
+        }
+    }
+
 
     // *************************************************
     // FILE LOCKING

@@ -1,16 +1,13 @@
 package org.bgee.view;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.Set;
+import java.util.LinkedHashMap;
 
 import javax.servlet.http.HttpServletResponse;
 
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.TaskManager;
-import org.bgee.model.anatdev.DevStage;
-import org.bgee.model.species.Species;
 import org.bgee.model.topanat.TopAnatResults;
 
 /**
@@ -37,9 +34,7 @@ public class FakeTopAnatDisplay extends FakeParentDisplay implements TopAnatDisp
     }
 
     @Override
-    public void sendGeneListReponse(Map<Species, Long> speciesIdToGeneCount, String selectedSpeciesId,
-            Set<DevStage> validStages, Set<String> submittedGeneIds, Set<String> underteminedGeneIds,
-            String msg) {
+    public void sendGeneListReponse(LinkedHashMap<String, Object> data, String msg) {
         // TODO Auto-generated method stub
         
     }

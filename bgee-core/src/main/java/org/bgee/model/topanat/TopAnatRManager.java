@@ -50,6 +50,8 @@ public class TopAnatRManager {
     }
 
     public String generateRCode(String resultFileName, String resultPdfFileName, 
+            String anatEntitiesNamesFileName, String anatEntitiesRelationshipsFileName,
+            String geneToAnatEntitiesFileName,
             Collection<String> backgroundIds) 
             throws IOException {
         log.entry();
@@ -95,7 +97,7 @@ public class TopAnatRManager {
         code.addStringArray("resultPDF", topOBOResultPDFFile);
 
         // Organ Relationships File
-        String[] organRelationships = { this.params.getAnatEntitiesRelationshipsFileName() };
+        String[] organRelationships = { anatEntitiesRelationshipsFileName };
         code.addStringArray("organRelationshipsFileName", organRelationships);
         code.addRCode("tab <- read.table(organRelationshipsFileName,header=FALSE, sep='\t')");
         code.addRCode("relations <- tapply(as.character(tab[,2]), as.character(tab[,1]), unique)");
@@ -103,7 +105,7 @@ public class TopAnatRManager {
         code.addRCode("head(relations)");
 
         // Gene to Organ Relationship File
-        String[] geneToOrgan = { this.params.getGeneToAnatEntitiesFileName() };
+        String[] geneToOrgan = { geneToAnatEntitiesFileName };
         code.addStringArray("geneToOrganFileName", geneToOrgan);
         //maybe the background is empty because of too stringent parameters.
         //Check whether file is empty, otherwise an error would be generated
@@ -114,7 +116,7 @@ public class TopAnatRManager {
         code.addRCode("  head(gene2anatomy)");
 
         // Organ Names File
-        String[] organNames = { this.params.getAnatEntitiesNamesFileName() };
+        String[] organNames = { anatEntitiesNamesFileName };
         code.addStringArray("organNamesFileName", organNames);
         code.addRCode("  organNames <- read.table(organNamesFileName, header = FALSE, sep='\t',row.names=1)");
         code.addRCode("  names(organNames) <- organNames");

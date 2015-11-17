@@ -40,11 +40,6 @@ public class TopAnatParams {
     /**
      * 
      */
-    private final static String FILE_PREFIX = "topAnat_";
-
-    /**
-     * 
-     */
     private final static DataQuality DATA_QUALITY_DEFAULT = DataQuality.HIGH;
 
     /**
@@ -514,59 +509,6 @@ public class TopAnatParams {
                 this.submittedBackgroundIds != null ? new GeneFilter(this.submittedBackgroundIds): null, 
                         new HashSet<>(Arrays.asList(conditionFilter)), this.getCallData()
                 ));
-    }
-
-    /**
-     * 
-     */
-    public String getResultFileName(){
-        return TopAnatParams.FILE_PREFIX + this.key + ".tsv";
-    }
-
-    /**
-     * 
-     */
-    public String getResultPDFFileName(){
-        return TopAnatParams.FILE_PREFIX + "PDF_" + this.key + ".pdf";
-    }
-
-    /**
-     *
-     */
-    public String getGeneToAnatEntitiesFileName(){
-        return TopAnatParams.FILE_PREFIX 
-                + "GeneToAnatEntities_" + this.key + ".tsv";
-    }
-
-    /**
-     * @return
-     */
-    public String getAnatEntitiesNamesFileName(){
-        return TopAnatParams.FILE_PREFIX + "AnatEntitiesNames_" + this.speciesId + ".tsv";
-    }
-
-    /**
-     * 
-     */
-    public String getAnatEntitiesRelationshipsFileName(){
-        return TopAnatParams.FILE_PREFIX 
-                + "AnatEntitiesRelationships_" + this.speciesId + ".tsv";
-    }
-
-    /**
-     * 
-     */
-    public String getRScriptOutputFileName(){
-        return TopAnatParams.FILE_PREFIX 
-                + "RScript_" + this.key + ".R";
-    }
-
-    /**
-     * 
-     */
-    public String getParamsOutputFileName(){
-        return TopAnatParams.FILE_PREFIX 
-                + "Params_" + this.key + ".txt";
     }
 
     /**

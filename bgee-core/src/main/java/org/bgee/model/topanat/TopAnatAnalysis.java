@@ -53,6 +53,11 @@ public class TopAnatAnalysis {
      */
     private final static Logger log = LogManager
             .getLogger(TopAnatAnalysis.class.getName());
+    
+    /**
+     * 
+     */
+    private final static String FILE_PREFIX = "topAnat_";
 
     /**
      * 
@@ -152,7 +157,7 @@ public class TopAnatAnalysis {
     public TopAnatResults proceedToAnalysis() throws IOException, InvalidForegroundException, 
     InvalidSpeciesGenesException{
         log.entry();
-        log.info("Result File: {}", this.params.getResultFileName());
+        log.info("Result File: {}", this.getResultFileName());
 
         // Validate and load the gene in the foreground and background
         this.validateForegroundAndBackground();
@@ -161,7 +166,7 @@ public class TopAnatAnalysis {
         this.generateAnatEntitiesFiles();
 
         // Generate call data
-        this.generateGenesToAnatEntitiessAssociationFile();
+        this.generateGenesToAnatEntitiesAssociationFile();
 
         // Write the params on the disk
         this.generateTopAnatParamsFile();
@@ -192,13 +197,13 @@ public class TopAnatAnalysis {
                 !this.params.getSubmittedBackgroundIds().isEmpty() && 
                 !this.params.getSubmittedBackgroundIds().containsAll(
                         this.params.getSubmittedForegroundIds())){
-            
+
             Set<String> notIncludedIds = new HashSet<String>(this.params.getSubmittedForegroundIds());
             notIncludedIds.removeAll(this.params.getSubmittedBackgroundIds());
             throw new InvalidForegroundException("All foreground Ids are not included "
                     + "in the background",notIncludedIds);
         }
-        
+
         Set<String> allGeneIds = new HashSet<String>(this.params.getSubmittedForegroundIds());
         if (this.params.getSubmittedBackgroundIds() != null) {
             allGeneIds.addAll(this.params.getSubmittedBackgroundIds());
@@ -224,12 +229,12 @@ public class TopAnatAnalysis {
 
         File file = new File(
                 this.props.getTopAnatResultsWritingDirectory(),
-                this.params.getResultFileName());
+                this.getResultFileName());
         String fileName = file.getPath();
-        
+
         File pdfFile = new File(
                 this.props.getTopAnatResultsWritingDirectory(),
-                this.params.getResultPDFFileName());
+                this.getResultPDFFileName());
         String pdfFileName = pdfFile.getPath();
 
         //we will write results into a tmp file, moved at the end if everything 
@@ -237,30 +242,30 @@ public class TopAnatAnalysis {
         String tmpFileName = fileName + ".tmp";
         Path tmpFile = Paths.get(tmpFileName);
         Path finalFile = Paths.get(fileName);
-        
+
         String tmpPdfFileName = pdfFileName + ".tmp";
         Path tmpPdfFile = Paths.get(tmpPdfFileName);
         Path finalPdfFile = Paths.get(pdfFileName);
-        
+
         String namesFileName = new File(
                 this.props.getTopAnatResultsWritingDirectory(),
-                this.params.getAnatEntitiesNamesFileName()).getPath();
+                this.getAnatEntitiesNamesFileName()).getPath();
         String relsFileName = new File(
                 this.props.getTopAnatResultsWritingDirectory(),
-                this.params.getAnatEntitiesRelationshipsFileName()).getPath();
+                this.getAnatEntitiesRelationshipsFileName()).getPath();
         String geneToAnatEntitiesFile = new File(
                 this.props.getTopAnatResultsWritingDirectory(),
-                this.params.getGeneToAnatEntitiesFileName()).getPath();
+                this.getGeneToAnatEntitiesFileName()).getPath();
 
         try {
-        	
+
             this.acquireReadLock(namesFileName);
             this.acquireReadLock(relsFileName);
             this.acquireReadLock(geneToAnatEntitiesFile);
-        	
+
             this.acquireWriteLock(tmpFileName);
             this.acquireWriteLock(fileName);
-            
+
             this.acquireWriteLock(tmpPdfFileName);
             this.acquireWriteLock(pdfFileName);
 
@@ -271,7 +276,7 @@ public class TopAnatAnalysis {
                 log.info("R result file already generated.");
                 log.exit();return;
             }
-            
+
             this.rManager.performRFunction();
 
             Files.move(tmpFile, finalFile, StandardCopyOption.REPLACE_EXISTING);
@@ -289,7 +294,7 @@ public class TopAnatAnalysis {
         }
 
         log.info("Result file name: {}", 
-                this.params.getRScriptOutputFileName());
+                this.getRScriptOutputFileName());
 
         log.exit();
     }
@@ -305,7 +310,7 @@ public class TopAnatAnalysis {
 
         File resultFile = new File(
                 this.props.getTopAnatResultsWritingDirectory(),
-                this.params.getResultFileName());
+                this.getResultFileName());
 
         this.acquireReadLock(resultFile.getPath());
 
@@ -341,7 +346,7 @@ public class TopAnatAnalysis {
 
         File file = new File(
                 this.props.getTopAnatResultsWritingDirectory(),
-                this.params.getRScriptOutputFileName());
+                this.getRScriptOutputFileName());
         String fileName = file.getPath();
 
         //we will write results into a tmp file, moved at the end if everything 
@@ -373,7 +378,7 @@ public class TopAnatAnalysis {
         }
 
         log.info("Rcode file name: {}", 
-                this.params.getRScriptOutputFileName());
+                this.getRScriptOutputFileName());
         log.exit();
     }
 
@@ -386,8 +391,11 @@ public class TopAnatAnalysis {
         try (PrintWriter out = new PrintWriter(new BufferedWriter(
                 new FileWriter(RcodeFile)))) {
             out.println(this.rManager.generateRCode(
-                    this.params.getResultFileName()+".tmp",
-                    this.params.getResultPDFFileName()+".tmp",
+                    this.getResultFileName()+".tmp",
+                    this.getResultPDFFileName()+".tmp",
+                    this.getAnatEntitiesNamesFileName(),
+                    this.getAnatEntitiesRelationshipsFileName(),
+                    this.getGeneToAnatEntitiesFileName(),
                     this.params.getSubmittedBackgroundIds()));
         }
 
@@ -405,12 +413,12 @@ public class TopAnatAnalysis {
 
         File namesFile = new File(
                 this.props.getTopAnatResultsWritingDirectory(),
-                this.params.getAnatEntitiesNamesFileName());
+                this.getAnatEntitiesNamesFileName());
         String namesFileName = namesFile.getPath();
 
         File relsFile = new File(
                 this.props.getTopAnatResultsWritingDirectory(),
-                this.params.getAnatEntitiesRelationshipsFileName());
+                this.getAnatEntitiesRelationshipsFileName());
         String relsFileName = relsFile.getPath();
 
         //we will write results into a tmp file, moved at the end if everything 
@@ -459,7 +467,7 @@ public class TopAnatAnalysis {
         }
 
         log.info("AnatEntitiesNamesFileName: {} - relationshipsFileName: {}", 
-                this.params.getAnatEntitiesNamesFileName(), this.params.getAnatEntitiesRelationshipsFileName());
+                this.getAnatEntitiesNamesFileName(), this.getAnatEntitiesRelationshipsFileName());
         log.exit();
     }
 
@@ -524,13 +532,13 @@ public class TopAnatAnalysis {
 
     /**
      */
-    private void generateGenesToAnatEntitiessAssociationFile() throws IOException {
+    private void generateGenesToAnatEntitiesAssociationFile() throws IOException {
         log.entry();
         log.info("Generating Gene to AnatEntities Association file...");
 
         File geneToAnatEntitiesAssociationFile = new File(
                 this.props.getTopAnatResultsWritingDirectory(),
-                this.params.getGeneToAnatEntitiesFileName());
+                this.getGeneToAnatEntitiesFileName());
         String geneToAnatEntitiesAssociationFilePath = geneToAnatEntitiesAssociationFile
                 .getPath();
 
@@ -567,7 +575,7 @@ public class TopAnatAnalysis {
             this.releaseWriteLock(tmpFileName);
         }
 
-        log.info("GeneToAnatEntitiesAssociationFile: {}", this.params.getGeneToAnatEntitiesFileName());
+        log.info("GeneToAnatEntitiesAssociationFile: {}", this.getGeneToAnatEntitiesFileName());
         log.exit();
     }    
 
@@ -599,7 +607,7 @@ public class TopAnatAnalysis {
 
         File topAnatParamsFile = new File(
                 this.props.getTopAnatResultsWritingDirectory(),
-                this.params.getParamsOutputFileName());
+                this.getParamsOutputFileName());
         String topAnatParamsFilePath = topAnatParamsFile
                 .getPath();
 
@@ -631,9 +639,63 @@ public class TopAnatAnalysis {
             this.releaseWriteLock(tmpFileName);
         }
 
-        log.info("TopAnatParamsFile: {}", this.params.getParamsOutputFileName());
+        log.info("TopAnatParamsFile: {}", this.getParamsOutputFileName());
         log.exit();
     }  
+
+    /**
+     * 
+     */
+    public String getResultFileName(){
+        return TopAnatAnalysis.FILE_PREFIX + this.params.getKey() + ".tsv";
+    }
+
+    /**
+     * 
+     */
+    public String getResultPDFFileName(){
+        return TopAnatAnalysis.FILE_PREFIX + "PDF_" + this.params.getKey()  + ".pdf";
+    }
+
+    /**
+     *
+     */
+    public String getGeneToAnatEntitiesFileName(){
+        return TopAnatAnalysis.FILE_PREFIX 
+                + "GeneToAnatEntities_" + this.params.getKey()  + ".tsv";
+    }
+
+    /**
+     * @return
+     */
+    public String getAnatEntitiesNamesFileName(){
+        return TopAnatAnalysis.FILE_PREFIX + "AnatEntitiesNames_" + this.params.getSpeciesId() 
+        + ".tsv";
+    }
+
+    /**
+     * 
+     */
+    public String getAnatEntitiesRelationshipsFileName(){
+        return TopAnatAnalysis.FILE_PREFIX 
+                + "AnatEntitiesRelationships_" + this.params.getSpeciesId() + ".tsv";
+    }
+
+    /**
+     * 
+     */
+    public String getRScriptOutputFileName(){
+        return TopAnatAnalysis.FILE_PREFIX 
+                + "RScript_" + this.params.getKey()  + ".R";
+    }
+
+    /**
+     * 
+     */
+    public String getParamsOutputFileName(){
+        return TopAnatAnalysis.FILE_PREFIX 
+                + "Params_" + this.params.getKey() + ".txt";
+    }
 
     // *************************************************
     // FILE LOCKING

@@ -40,7 +40,7 @@ public class TestURLParameters extends URLParameters {
 	private static final Parameter<Integer> TEST_INTEGER = 
 			new Parameter<Integer>("test_integer",
 			        true, false, null, true, true, 
-			        128, null,Integer.class);
+			        128, "^[0-9]*$", Integer.class);
 	/**
 	 * Test {@code Parameter} of the type  {@code Boolean} that does allow 
 	 * multiple values and is storable
@@ -48,7 +48,7 @@ public class TestURLParameters extends URLParameters {
 	private static final Parameter<Boolean> TEST_BOOLEAN = 
 			new Parameter<Boolean>("test_boolean",
 			        true, false, null, true, true, 
-			        128, null,Boolean.class);
+			        10, URLParameters.DEFAULT_FORMAT, Boolean.class);
 	
 	/**
      * An {@code List<Parameter<T>>} to list all declared {@code Parameter<T>}

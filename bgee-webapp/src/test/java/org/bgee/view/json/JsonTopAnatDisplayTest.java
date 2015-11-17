@@ -61,12 +61,14 @@ public class JsonTopAnatDisplayTest extends TestAncestor {
         int statusCode = 0;
         
         String msg= "blablabla";
-        
+
+        //TODO: verify output by telling the HttpServletResponse to return a custom PrintWriter, 
+        //see JsonDisplayParentTest for an example.
         BgeeProperties props = mock(BgeeProperties.class);
         JsonTopAnatDisplay display = new JsonTopAnatDisplay(getMockHttpServletResponse(), 
                 new RequestParameters(), props, mock(JsonHelper.class), mock(JsonFactory.class));
 
         display.sendGeneListReponse(speciesToGeneCount, selectedSpeciesId, 
-                validStages, submittedGeneIds, undeterminedGeneIds, statusCode, msg);
+                validStages, submittedGeneIds, undeterminedGeneIds, msg);
     }
 }

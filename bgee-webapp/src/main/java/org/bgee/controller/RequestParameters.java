@@ -6,11 +6,11 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -30,7 +30,9 @@ import org.bgee.controller.URLParameters.Parameter;
 import org.bgee.controller.exception.MultipleValuesNotAllowedException;
 import org.bgee.controller.exception.RequestParametersNotFoundException;
 import org.bgee.controller.exception.RequestParametersNotStorableException;
-import org.bgee.controller.exception.WrongFormatException;
+import org.bgee.controller.exception.RequestSizeExceededException;
+import org.bgee.controller.exception.ValueSizeExceededException;
+import org.bgee.controller.exception.InvalidFormatException;
 import org.bgee.controller.servletutils.BgeeHttpServletRequest;
 
 /**
@@ -366,7 +368,9 @@ public class RequestParameters {
      * 
      * @see #urlEncode(String)
      */
-    private boolean encodeUrl ;
+    private boolean encodeUrl;
+    
+    private final int secureMaxURLLength;
     
     /**
      * A {@code String} defining the character encoding for encoding and decoding query strings.
@@ -427,29 +431,32 @@ public class RequestParameters {
      */
     public RequestParameters(URLParameters urlParametersInstance, BgeeProperties prop,
             boolean encodeUrl, String parametersSeparator)  {
-        this(urlParametersInstance, prop, encodeUrl, parametersSeparator, CHAR_ENCODING);
+        this(urlParametersInstance, prop, encodeUrl, parametersSeparator, CHAR_ENCODING, 
+                SECURE_MAX_URL_LENGTH);
     }
     /**
-     * @param urlParametersInstance     A instance of {@code URLParameters} that 
-     *                                  is injected to provide the available parameters
-     *                                  list. 
-     * @param prop                      An instance of {@code BgeeProperties}  that is injected
-     *                                  to provide the all the properties values.
-     * @param encodeUrl                 A {@code boolean} defining whether parameters should be
-     *                                  url encoded. 
-     * @param parametersSeparator       A {@code String} defining the character(s) that are
-     *                                  used as parameters separator in the URL.
-     * @param charEncoding              A {@code String} that is the character encoding used 
-     *                                  to encode/decode query strings.
+     * @param urlParametersInstance A instance of {@code URLParameters} that 
+     *                              is injected to provide the available parameters list. 
+     * @param prop                  An instance of {@code BgeeProperties}  that is injected
+     *                              to provide the all the properties values.
+     * @param encodeUrl             A {@code boolean} defining whether parameters should be
+     *                              url encoded. 
+     * @param parametersSeparator   A {@code String} defining the character(s) that are
+     *                              used as parameters separator in the URL.
+     * @param charEncoding          A {@code String} that is the character encoding used 
+     *                              to encode/decode query strings.
+     * @param urlMaxLength          An {@code int} that is the maximum total length of the parameters, 
+     *                              whether provided by POST or GET method, for security reasons.  
      *                                  
      */
     public RequestParameters(URLParameters urlParametersInstance, BgeeProperties prop,
-            boolean encodeUrl, String parametersSeparator, String charEncoding)  {
-        log.entry(urlParametersInstance,prop,encodeUrl, parametersSeparator, charEncoding);
+            boolean encodeUrl, String parametersSeparator, String charEncoding, int urlMaxLength)  {
+        log.entry(urlParametersInstance,prop,encodeUrl, parametersSeparator, charEncoding, urlMaxLength);
 
         // set the properties and then call the constructor method.
         this.prop = prop;
         this.encodeUrl = encodeUrl;
+        this.secureMaxURLLength = urlMaxLength;
         this.charEncoding = charEncoding;
         this.urlParametersInstance = urlParametersInstance;
         this.parametersSeparator = parametersSeparator;
@@ -461,11 +468,11 @@ public class RequestParameters {
         try {
             this.constructor(request);
         } catch (RequestParametersNotFoundException | MultipleValuesNotAllowedException | 
-                WrongFormatException e) {
+                InvalidFormatException e) {
             //here we do nothing, 
             //because we provide a "blank" HttpServletRequest, so none of the declared exception
             //is expected
-            assert false: "Unreachable code reached in default constructor";
+            throw log.throwing(new AssertionError("Unreachable code reached in default constructor", e));
         }
 
         log.exit();
@@ -501,15 +508,16 @@ public class RequestParameters {
      *                                                  {@code request}
      *                                                  for a {@link URLParameters.Parameter}
      *                                                  that does not allow multiple values.
-     * @throws WrongFormatException                     The value in the {@code request} does not
+     * @throws InvalidFormatException                     The value in the {@code request} does not
      *                                                  fit the format requirement for related
      *                                                  {@link URLParameters.Parameter}
      */
     public RequestParameters(HttpServletRequest request, URLParameters urlParametersInstance,
             BgeeProperties prop,  boolean encodeUrl, String parametersSeparator)
                     throws RequestParametersNotFoundException, 
-                    MultipleValuesNotAllowedException, WrongFormatException {
-        this(request, urlParametersInstance, prop, encodeUrl, parametersSeparator, CHAR_ENCODING);
+                    MultipleValuesNotAllowedException, InvalidFormatException {
+        this(request, urlParametersInstance, prop, encodeUrl, parametersSeparator, CHAR_ENCODING, 
+                SECURE_MAX_URL_LENGTH);
     }
 
     /**
@@ -530,7 +538,9 @@ public class RequestParameters {
      * @param parametersSeparator   A {@code String} defining the character(s) that are
      *                              used as parameters separator in the URL.
      * @param charEncoding          A {@code String} that is the character encoding used 
-     *                              to encode/decode query strings.                         
+     *                              to encode/decode query strings.  
+     * @param urlMaxLength          An {@code int} that is the maximum total length of the parameters, 
+     *                              whether provided by POST or GET method, for security reasons.                       
      * 
      * @throws RequestParametersNotFoundException       if a key is set in the 
      *                                                  URL, meaning that a stored query string
@@ -544,19 +554,21 @@ public class RequestParameters {
      *                                                  {@code request}
      *                                                  for a {@link URLParameters.Parameter}
      *                                                  that does not allow multiple values.
-     * @throws WrongFormatException                     The value in the {@code request} does not
+     * @throws InvalidFormatException                     The value in the {@code request} does not
      *                                                  fit the format requirement for related
      *                                                  {@link URLParameters.Parameter}
      */
     public RequestParameters(HttpServletRequest request, URLParameters urlParametersInstance,
-            BgeeProperties prop,  boolean encodeUrl, String parametersSeparator, String charEncoding)
-                    throws RequestParametersNotFoundException, 
-                    MultipleValuesNotAllowedException, WrongFormatException {
-        log.entry(request, urlParametersInstance, prop, encodeUrl, parametersSeparator, charEncoding);
+            BgeeProperties prop,  boolean encodeUrl, String parametersSeparator, String charEncoding, 
+            int urlMaxLength) throws RequestParametersNotFoundException, 
+                    MultipleValuesNotAllowedException, InvalidFormatException {
+        log.entry(request, urlParametersInstance, prop, encodeUrl, parametersSeparator, 
+                charEncoding, urlMaxLength);
         
         // set the properties and then call the constructor method.
         this.prop = prop;
         this.encodeUrl = encodeUrl;
+        this.secureMaxURLLength = urlMaxLength;
         this.charEncoding = charEncoding;
         this.urlParametersInstance = urlParametersInstance;
         this.parametersSeparator = parametersSeparator;
@@ -588,7 +600,7 @@ public class RequestParameters {
      *                                                  for a {@link URLParameters.Parameter}
      *                                                  that does not allow multiple values.
      *                                                  
-     * @throws WrongFormatException                     The value in the {@code request} does not
+     * @throws InvalidFormatException                     The value in the {@code request} does not
      *                                                  fit the format requirement for related
      *                                                  {@link URLParameters.Parameter}
      *                                                  
@@ -596,7 +608,7 @@ public class RequestParameters {
      * @see #RequestParameters(HttpServletRequest, URLParameters, BgeeProperties, boolean, String)
      */
     private void constructor(HttpServletRequest request) throws RequestParametersNotFoundException,
-    MultipleValuesNotAllowedException, WrongFormatException{
+    MultipleValuesNotAllowedException, InvalidFormatException{
         log.entry(request);
 
         this.loadParameters(request);
@@ -630,7 +642,7 @@ public class RequestParameters {
      *                                                  for a {@link URLParameters.Parameter}
      *                                                  that does not allow multiple values.
      *                                                  
-     * @throws WrongFormatException                     The value in the {@code request} does not
+     * @throws InvalidFormatException                     The value in the {@code request} does not
      *                                                  fit the format requirement for related
      *                                                  {@link URLParameters.Parameter}
      * 
@@ -639,7 +651,7 @@ public class RequestParameters {
      */
     private void loadParameters(HttpServletRequest request) 
             throws RequestParametersNotFoundException, 
-            MultipleValuesNotAllowedException, WrongFormatException{
+            MultipleValuesNotAllowedException, InvalidFormatException{
         log.entry(request);
 
         //Get the key
@@ -655,7 +667,7 @@ public class RequestParameters {
                 this.loadStorableParametersFromKey(key);
             } catch (IOException e) {
                 // Re throw a custom exception instead
-                throw new RequestParametersNotFoundException(e);
+                throw new RequestParametersNotFoundException(key);
             }
             // load the non storable params
             this.loadParametersFromRequest(request, false);
@@ -685,7 +697,7 @@ public class RequestParameters {
      *                                                  for a {@link URLParameters.Parameter}
      *                                                  that does not allow multiple values.
      *                                                  
-     * @throws WrongFormatException                     The value in the {@code request} does not
+     * @throws InvalidFormatException                     The value in the {@code request} does not
      *                                                  fit the format requirement for related
      *                                                  {@link URLParameters.Parameter}
      * 
@@ -693,7 +705,7 @@ public class RequestParameters {
      * @see #loadParameters
      */
     private void loadParametersFromRequest(HttpServletRequest request, boolean loadStorable) 
-            throws MultipleValuesNotAllowedException, WrongFormatException {
+            throws MultipleValuesNotAllowedException, InvalidFormatException {
         log.entry(request, loadStorable);
 
         // Browse all available parameters
@@ -709,13 +721,7 @@ public class RequestParameters {
                 //process the parameter and store it into this RequestParameters
                 Arrays.stream(valuesFromUrl)
                       //secure the String value
-                      .map(value -> {
-                          try {
-                              return this.secureString(value, parameter);
-                          } catch (WrongFormatException e) {
-                              throw log.throwing(new WrongFormatException(parameter.getName(), e));
-                          }
-                      })
+                      .map(value -> this.secureString(value, parameter))
                       //split into multiple values if the parameter is a separated-value parameter.
                       .flatMap(value -> {
                           List<String> values = new ArrayList<>();
@@ -742,15 +748,15 @@ public class RequestParameters {
                               if(parameter.getType().equals(String.class)){
                                   return value;
                               } else if (parameter.getType().equals(Integer.class)){
-                                  return castToInt(value);
+                                  return Integer.parseInt(value);
                               } else if (parameter.getType().equals(Boolean.class)){
                                   return castToBoolean(value);
                               } else {
                                   throw log.throwing(new IllegalStateException(
                                           "Unsupported parameter type: " + parameter.getType()));
                               }
-                          } catch (WrongFormatException e) {
-                              throw log.throwing(new WrongFormatException(parameter.getName(), e));
+                          } catch (NumberFormatException e) {
+                              throw log.throwing(new InvalidFormatException(parameter, e));
                           }
                       })
                       //store to this RequestParameters
@@ -774,7 +780,7 @@ public class RequestParameters {
      *                                                  {@code request}
      *                                                  for a {@link URLParameters.Parameter}
      *                                                  that does not allow multiple values.
-     * @throws WrongFormatException                     The value in the {@code request} does not
+     * @throws InvalidFormatException                     The value in the {@code request} does not
      *                                                  fit the format requirement for related
      *                                                  {@link URLParameters.Parameter}
      * 
@@ -783,7 +789,7 @@ public class RequestParameters {
      * 
      */
     private void loadStorableParametersFromKey(String key) throws IOException, 
-    MultipleValuesNotAllowedException, WrongFormatException {
+    MultipleValuesNotAllowedException, InvalidFormatException {
         log.entry(key);
 
         ReentrantReadWriteLock lock = this.getReadWriteLock(key);
@@ -840,8 +846,8 @@ public class RequestParameters {
 
         if (StringUtils.isBlank(this.getFirstValue(
                 this.getKeyParam()))) {
-            throw new RequestParametersNotStorableException("No key generated before storing a "
-                    + "RequestParameters object");
+            throw new RequestParametersNotStorableException(
+                    "No key was generated before trying to store the associated parameters.");
         }
         //first check whether these parameters have already been serialized
         File storageFile = new File(prop.getRequestParametersStorageDirectory() 
@@ -868,13 +874,15 @@ public class RequestParameters {
                 bufferedWriter.write(generateParametersQuery(null, true, false, "&", null, false));
             }
         } catch (IOException e) {
+            log.catching(e);
             //delete the file if something went wrong
             storageFile = new File(prop.getRequestParametersStorageDirectory() 
                     + this.getFirstValue(this.getKeyParam()));
             if (storageFile.exists()) {
                 storageFile.delete();
             }
-            throw new RequestParametersNotStorableException(e.getMessage(), e);
+            throw new RequestParametersNotStorableException(
+                    "An error occurred and it was not possible to store the parameters.");
         } finally {
             lock.writeLock().unlock();
             this.removeLockIfPossible(this.getFirstValue(
@@ -1128,32 +1136,11 @@ public class RequestParameters {
                         && !parameter.isStorable())){
                     // Fetch the values of this param and generate a query with all
                     // its values
-                    List<?> parameterValues = this.getValues(parameter);
-                    if(parameterValues != null && !parameterValues.isEmpty()){
-                        log.trace("Retrieving values for Parameter {}: {}", parameter, parameterValues);
-                        List<?> valuesToUse = parameterValues;
-                        
-                        //If the parameter can hold several values provided as a single String 
-                        //(e.g., list of IDs separated by a line return in a textarea), 
-                        //we need to regenerate a single String from the multiple values
-                        if (parameter.allowsSeparatedValues()) {
-                            String separatedValues = parameterValues.stream()
-                                    .filter(v -> StringUtils.isNotBlank(v.toString()))
-                                    .map(Object::toString)
-                                    .collect(Collectors.joining(parameter.getSeparators().get(0)));
-                            valuesToUse = Arrays.asList(separatedValues);
-                        } 
-                        
-                        for(Object parameterValue : valuesToUse){
-                            log.trace("Trying to add to URL value {}", parameterValue);
-                            if(parameterValue != null && StringUtils.isNotBlank(parameterValue.toString())) {
-                                log.trace("Value added");
-                                urlFragment += parameter.getName()+ "=";
-                                urlFragment += this.urlEncode(parameterValue.toString());
-                                urlFragment += parametersSeparator;
-                                paramAdded = true;
-                            }
-                        }
+                    String paramFragment = this.generateParameterQueryStringFragment(parameter, 
+                            this.getValues(parameter), parametersSeparator);
+                    if (StringUtils.isNotBlank(paramFragment)) {
+                        urlFragment += paramFragment + parametersSeparator;
+                        paramAdded = true;
                     }
                 }
             }
@@ -1175,6 +1162,56 @@ public class RequestParameters {
         }
 
         return log.exit(urlFragment);
+    }
+    
+    /**
+     * Generates the URL query string fragment related to {@code parameter}, using the values 
+     * provided in {@code parameterValues}. Values are URL encoded (see {@link #urlEncode(String)}). 
+     * 
+     * @param parameter             A {@code URLParameters.Parameter} whose values should be 
+     *                              written in an URL query string.
+     * @param parameterValues       A {@code List} containing the values associated to 
+     *                              {@code parameter}.
+     * @param parameterSeparator    A {@code String} that is used as parameter separator 
+     *                              in the URL.
+     * @return                  A {@code String} that is the resulting URL query string fragment. 
+     *                          Empty if no values were written. It does not finish with 
+     *                          {@link #parametersSeparator}.
+     * @throws IllegalArgumentException If the type of a value does not correspond to 
+     *                                  type associated to {@code parameter} (see {@link 
+     *                                  URLParameters.Parameter#getType()}).
+     */
+    private String generateParameterQueryStringFragment(URLParameters.Parameter<?> parameter, 
+            List<?> parameterValues, String parameterSeparator) {
+        log.entry(parameter, parameterValues, parameterSeparator);
+        if (parameterValues == null || parameterValues.isEmpty()) {
+            return log.exit("");
+        }
+
+        //If the parameter can hold several values provided as a single String 
+        //(e.g., list of IDs separated by a line return in a textarea), 
+        //we need to regenerate a single String from the multiple values
+        List<?> valuesToUse = parameterValues;
+        if (parameter.allowsSeparatedValues()) {
+            String separatedValues = parameterValues.stream()
+                    .filter(v -> v != null && StringUtils.isNotBlank(v.toString()))
+                    .map(Object::toString)
+                    .collect(Collectors.joining(parameter.getSeparators().get(0)));
+            valuesToUse = Arrays.asList(separatedValues);
+        } 
+        
+        return log.exit(valuesToUse.stream()
+            .filter(value -> value != null && StringUtils.isNotBlank(value.toString()))
+            .map(value -> {
+                if (!parameter.getType().equals(value.getClass())) {
+                    throw log.throwing(new IllegalArgumentException("The value type ("
+                            + value.getClass().getSimpleName() 
+                            + " does not correspond to the parameter type ("
+                            + parameter.getType().getSimpleName()));
+                }
+                return parameter.getName() + "=" + this.urlEncode(value.toString());
+            })
+            .collect(Collectors.joining(parameterSeparator)));
     }
 
     /** 
@@ -1229,9 +1266,9 @@ public class RequestParameters {
             try {
                 this.addValue(this.getKeyParam(), 
                         DigestUtils.sha1Hex(urlFragment.toLowerCase(Locale.ENGLISH)));
-            } catch (MultipleValuesNotAllowedException | WrongFormatException e) {
+            } catch (MultipleValuesNotAllowedException | InvalidFormatException e) {
                 // In this particular case, should never be thrown.
-                assert false: "Unreachable code reached in generateKey";
+                throw log.throwing(new AssertionError("Unreachable code reached in generateKey", e));
             }
         }
 
@@ -1286,21 +1323,13 @@ public class RequestParameters {
      * Decode String that was received through the URL.
      * 
      * @param url   the {@code String} to be decoded.
-     * @return  a {@code String} decoded
+     * @return      A {@code String} decoded
      * 
      * @see #encodeUrl
      */
-    private String urlDecode(String url){
-
+    private String urlDecode(String url) throws UnsupportedEncodingException {
         log.entry(url);
-        String decodeString = url;
-
-        try {
-            decodeString = java.net.URLDecoder.decode(url, this.getCharacterEncoding());
-        } catch (Exception e) {
-            log.error("Error while URLdecoding", e);
-        }
-        return log.exit(decodeString);
+        return log.exit(java.net.URLDecoder.decode(url, this.getCharacterEncoding()));
     }
 
     /**
@@ -1543,12 +1572,12 @@ public class RequestParameters {
      *                                                  for a {@link URLParameters.Parameter}
      *                                                  that does not allow multiple values.
      *                                                  
-     * @throws WrongFormatException                     The value in the {@code request} does not
+     * @throws InvalidFormatException                     The value in the {@code request} does not
      *                                                  fit the format requirement for related
      *                                                  {@link URLParameters.Parameter}
      */
-    protected <T> void addValue(URLParameters.Parameter<T> parameter, T value) 
-            throws MultipleValuesNotAllowedException, WrongFormatException {
+    public <T> void addValue(URLParameters.Parameter<T> parameter, T value) 
+            throws MultipleValuesNotAllowedException, InvalidFormatException {
         log.entry(parameter, value);
 
         this.addAnyValue(parameter, value);
@@ -1561,22 +1590,24 @@ public class RequestParameters {
      * @param parameter The {@code URLParameters.Parameter} to add the value to.
      * @param value     An {@code Object} that is the value to set.
      * 
-     * @throws IllegalArgumentException                 If the type of {@code value} is different 
-     *                                                  from the type returned by 
-     *                                                  {@code URLParameters.Parameter.getType()}.
-     * @throws MultipleValuesNotAllowedException        if more than one value is present in the
-     *                                                  {@code request}
-     *                                                  for a {@link URLParameters.Parameter}
-     *                                                  that does not allow multiple values.
-     * @throws WrongFormatException                     The value in the {@code request} does not
-     *                                                  fit the format requirement for related
-     *                                                  {@link URLParameters.Parameter}
+     * @throws IllegalArgumentException             If the type of {@code value} is different 
+     *                                              from the type returned by 
+     *                                              {@code URLParameters.Parameter.getType()}.
+     * @throws InvalidFormatException               If the value in the {@code request} does not
+     *                                              fit the format requirement for {parameter}.
+     * @throws MultipleValuesNotAllowedException    If more than one value is present in the
+     *                                              {@code request} for a {@link URLParameters.Parameter}
+     *                                              that does not allow multiple values.
+     * @throws RequestSizeExceededException         If the overall size of the request exceeds 
+     *                                              the max allowed size, following the addition 
+     *                                              of this parameter value.
      */
     private void addAnyValue(URLParameters.Parameter<?> parameter, Object value) 
-            throws MultipleValuesNotAllowedException, WrongFormatException {
+            throws IllegalArgumentException, InvalidFormatException, MultipleValuesNotAllowedException, 
+            RequestSizeExceededException {
         log.entry(parameter, value);
 
-        if(value == null){
+        if (value == null || StringUtils.isBlank(value.toString())) {
             log.exit(); return;
         }
         if (!parameter.getType().equals(value.getClass())) {
@@ -1596,7 +1627,7 @@ public class RequestParameters {
         if (parameterValues != null && 
                 !parameter.allowsMultipleValues() && !parameter.allowsSeparatedValues() && 
                 !parameterValues.isEmpty()){
-            throw(new MultipleValuesNotAllowedException(parameter.getName()));
+            throw(new MultipleValuesNotAllowedException(parameter));
         }
         //OK, add value
         if (parameterValues == null) {
@@ -1606,22 +1637,27 @@ public class RequestParameters {
         parameterValues.add(valueToUse);
         
         //Now, we check whether all parameters considered together exceed the global 
-        //max parameter length defined, following the addition of this parameter. 
-        if (this.generateParametersQuery(
-                null, true, true, "&", null, true).length() > SECURE_MAX_URL_LENGTH) {
-            throw log.throwing(new WrongFormatException("Overall parameter size exceeded. "));
+        //max request length defined, following the addition of this parameter. 
+        int globalQueryLength = this.generateParametersQuery(null, true, true, "&", null, true)
+                .length();
+        if (globalQueryLength > this.secureMaxURLLength) {
+            log.error("Max request size exceeded, current: {} - max allowed: {}", globalQueryLength, 
+                    this.secureMaxURLLength);
+            throw log.throwing(new RequestSizeExceededException());
         }
+        
         //then, if this parameter is a separated-value parameter, then we need to check 
         //whether the overall length of the updated parameter value exceeds its max allowed length.
         if (parameter.allowsSeparatedValues()) {
-            //We generate the resulting query string for this parameter only, 
-            //we pass it to a BgeeHttpServletRequest, to be able to retrieve solely 
-            //the value of the parameter through the method getParameterValues
-            Arrays.stream(new BgeeHttpServletRequest(this.generateParametersQuery(
-                    new HashSet<>(Arrays.asList(parameter)), true, true, "&", null, true), 
-                    this.getCharacterEncoding())
-                    .getParameterValues(parameter.getName()))
-            .forEach(paramValue -> this.secureString(paramValue, parameter));
+            String urlFragment = this.generateParameterQueryStringFragment(parameter, parameterValues, "&");
+            //remove the parameter name from the beginning of the URL fragment
+            String fragmentStart = parameter.getName() + "=";
+            if (!urlFragment.startsWith(fragmentStart)) {
+                throw log.throwing(new IllegalStateException("The URL fragment produced "
+                        + "does not have the expected prefix, expected " + fragmentStart 
+                        + ". Actual fragment: " + fragmentStart));
+            }
+            this.throwIfParamValueTooLong(parameter, urlFragment.substring(fragmentStart.length()));
         }
         
         log.exit();
@@ -1639,12 +1675,12 @@ public class RequestParameters {
      *                                              {@code request} for a
      *                                              {@link URLParameters.Parameter} that
      *                                              does not allow multiple values.
-     * @throws WrongFormatException                 A value in the {@code request} does not
+     * @throws InvalidFormatException                 A value in the {@code request} does not
      *                                              fit the format requirement for related
      *                                              {@link URLParameters.Parameter}
      */
-    protected <T> void addValues(URLParameters.Parameter<T> parameter, List<T> values)
-            throws MultipleValuesNotAllowedException, WrongFormatException {
+    public <T> void addValues(URLParameters.Parameter<T> parameter, List<T> values)
+            throws MultipleValuesNotAllowedException, InvalidFormatException {
         log.entry(parameter,values);
 
         for (T value: values) {
@@ -1662,7 +1698,7 @@ public class RequestParameters {
      *  
      * @param parameter The {@code URLParameters.Parameter<T>} to reset
      */
-    protected <T>  void resetValues(URLParameters.Parameter<T> parameter) 
+    public <T>  void resetValues(URLParameters.Parameter<T> parameter) 
     {
         log.entry(parameter);
         this.values.put(parameter, null);
@@ -1714,7 +1750,7 @@ public class RequestParameters {
         try {
             clonedRequestParameters = new RequestParameters(request, 
                     this.urlParametersInstance.getClass().newInstance(),this.prop,
-                    this.encodeUrl, this.parametersSeparator, this.charEncoding);
+                    this.encodeUrl, this.parametersSeparator, this.charEncoding, this.secureMaxURLLength);
             if (!includeNonStorable){
                 // Add the key which is not a storable parameters and was not included
                 clonedRequestParameters.addValue(this.getKeyParam(), 
@@ -1722,9 +1758,9 @@ public class RequestParameters {
             }
             log.trace("Cloned RequestParameters generated: {}", clonedRequestParameters);
         } catch ( RequestParametersNotFoundException
-                | MultipleValuesNotAllowedException | WrongFormatException e) {
+                | MultipleValuesNotAllowedException | InvalidFormatException e) {
             // In this particular case, should never be thrown.
-            throw log.throwing(new IllegalStateException("Code supposed to be unreachable", e));
+            throw log.throwing(new AssertionError("Code supposed to be unreachable", e));
         } catch (InstantiationException | IllegalAccessException e) {
             throw log.throwing(new IllegalStateException(e));
         }
@@ -2463,90 +2499,72 @@ public class RequestParameters {
     }
 
     /**
-     * Perform security controls and prepare the submitted {@code String} for use
-     * 
-     * @param stringToCheck    a {@code String} to be checked 
-     * @return a secured and prepared {@code String}. 
-     * @throws WrongFormatException The {@code String} to secure does not fit the requirement
-     */
-    private String secureString(String stringToCheck) throws WrongFormatException {
-        log.entry(stringToCheck);
-        return log.exit(secureString(stringToCheck, 0, null));
-    }
-    /**
      * Perform security controls and prepare the submitted {@code String} for use, 
      * corresponding to the value of the provided parameter.
      * 
-     * @param stringToCheck    a {@code String} to be checked. 
-     * @param parameter         A {@code Parameter} which {@code stringToCheck} is 
-     *                          the associated value, providing the security parameters 
-     *                          (see {@link URLParameters.Parameter#getMaxSize()} and 
-     *                          {@link URLParameters.Parameter#getFormat()})
-     * @return a secured and prepared {@code String}. 
-     * @throws WrongFormatException The {@code String} to secure does not fit the requirement
+     * @param value     A {@code String} to be checked. 
+     * @param parameter A {@code Parameter} which {@code stringToCheck} is 
+     *                  the associated value, providing the security parameters 
+     *                  (see {@link URLParameters.Parameter#getMaxSize()} and 
+     *                  {@link URLParameters.Parameter#getFormat()})
+     * @return          A secured and prepared {@code String}. 
+     * @throws InvalidFormatException       if the format of {@code value} is invalid.
+     * @throws ValueSizeExceededException   if {@code value} is too long.
+     * @see #throwIfParamValueTooLong(URLParameters.Parameter, String)
+     * @see #throwIfInvalidFormatParamValue(URLParameters.Parameter, String)
      */
-    private String secureString(String stringToCheck, URLParameters.Parameter<?> parameter) {
-        log.entry(stringToCheck, parameter);
-        return log.exit(secureString(stringToCheck, parameter.getMaxSize(), parameter.getFormat()));
+    private String secureString(String value, URLParameters.Parameter<?> parameter) 
+            throws InvalidFormatException, ValueSizeExceededException {
+        log.entry(value, parameter);
+        if (value == null) {
+            return log.exit("");
+        }
+        this.throwIfParamValueTooLong(parameter, value);
+        this.throwIfInvalidFormatParamValue(parameter, value);
+        return log.exit(value.trim());
+    }
+    
+    /**
+     * Throws a {@code ValueSizeExceededException} if the length of {@code value} is greater 
+     * than the max allowed length for {@code parameter} (see {@link URLParameters.Parameter#getMaxSize()}).
+     * 
+     * @param parameter An {@code URLParameters.Parameter} used to validate the length of {@code value}.
+     * @param value     A {@code value} to be validated for maximum length.
+     * @throws ValueSizeExceededException   if {@code value} is too long.
+     */
+    private void throwIfParamValueTooLong(URLParameters.Parameter<?> parameter, String value) 
+            throws ValueSizeExceededException {
+        log.entry(parameter, value);
+        if (value == null) {
+            log.exit(); return;
+        }
+        if (value.length() > parameter.getMaxSize()) {
+            log.error("Value too long for parameter {}. Value length: {} - Max allowed length: {}", 
+                    parameter, value.length(), parameter.getMaxSize());
+            throw log.throwing(new ValueSizeExceededException(parameter));
+        }
     }
     /**
-     * Perform security controls and prepare the submitted {@code String} for use. It includes
-     * a check of the {@code String} length and the format of the {@code String}.
+     * Throws an {@code InvalidFormatException} if the format of {@code value} is invalid 
+     * for {@code parameter} (see {@link URLParameters.Parameter#getFormat()}).
      * 
-     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
-     * consistent as much as possible if the method evolves.
-     * 
-     * @param stringToCheck    a {@code String} to be checked 
-     * @param lengthToCheck    an {@code int} defining the max allowed length of 
-     *                         {@code stringToCheck}. If {@code stringToCheck} is greater 
-     *                         than 0, and if the length of {@code stringToCheck} is greater
-     *                         than {@code lengthToCheck}, this method throw a 
-     *                         {@code WrongFormatException}. 
-     *                         If {@code stringToCheck} is equal to 0, no control are performed 
-     *                         on string length (but other modifications are still performed, 
-     *                         such as triming the {@code String}). 
-     * @param format           A {@code String} that contains the regular expression the 
-     *                         {@code String} should match.
-     * @return a secured and prepared {@code String}. 
-     * @throws WrongFormatException The {@code String} to secure does not fit the requirement
-     *
-     *              
+     * @param parameter An {@code URLParameters.Parameter} used to validate the format of {@code value}.
+     * @param value     A {@code value} to be validated for correct format.
+     * @throws InvalidFormatException   if the format of {@code value} is invalid.
      */
-    private String secureString(String stringToCheck, int lengthToCheck, String format)
-            throws WrongFormatException
-    {
-        log.entry(stringToCheck, lengthToCheck, format);
-        if (stringToCheck == null) {
-            return "";
+    private void throwIfInvalidFormatParamValue(URLParameters.Parameter<?> parameter, String value) 
+            throws InvalidFormatException {
+        log.entry(parameter, value);
+        if (value == null) {
+            log.exit(); return;
         }
-        else if (lengthToCheck != 0 && stringToCheck.length() > lengthToCheck){
-            String msg = "The parameter value it is too long (" + stringToCheck.length() + "). ";
-            log.error(msg);
-            throw log.throwing(new WrongFormatException(msg));
-        }
-        else if (format != null && stringToCheck.matches(format) == false) {
-            log.error("The string {} does not match the format {}", stringToCheck, format);
+        log.trace("Trying to validate {} against format {}", value, parameter.getFormat());
+        if (!value.matches(parameter.getFormat())) {
+            log.error("The string {} does not match the format {}", value, parameter.getFormat());
             //do not provide the accepted format in the exception, we don't need to provide 
             //too much information to potential hackers :p
-            throw log.throwing(new WrongFormatException("The parameter value " + stringToCheck 
-                    + " has an invalid format. "));
+            throw log.throwing(new InvalidFormatException(parameter));
         }
-        return log.exit(stringToCheck.trim());
-    }
-
-    /**
-     * Perform security controls and prepare the submitted {@code String} for use, 
-     * without checking length of {@code stringToCheck} ({@code MAXSTRINGLENGTH}).
-     * 
-     * @param stringToCheck
-     * @return a secured and prepared {@code String}. Return an empty String if the stringToCheck
-     *         was null.
-     * @throws WrongFormatException The {@code String} to secure does not fit the requirement
-     * @see #secureString(String)
-     */
-    private String secureStringWithoutLengthCheck(String stringToCheck) throws WrongFormatException
-    {
-        return secureString(stringToCheck, 0, null);
     }
 
     /**
@@ -2567,30 +2585,6 @@ public class RequestParameters {
             return log.exit(true);
         }
         return log.exit(false);
-    }
-    /**
-     * Transform {@code paramValue} into an {@code int}. This {@code String} should first 
-     * have been secured (see {@link #secureString(String, int, String)}).
-     * 
-     * @param paramValue    A {@code String} corresponding to the value of a parameter 
-     *                      in a request, to be converted into an {@code int}
-     * @return  an {@code int} corresponding to {@code paramValue}. 
-     *          Return also 0 if {@code paramValue} is {@code null} or blank.
-     * @throws WrongFormatException If {@code paramValue} could not be casted to an {@code int}.
-     */
-    private int castToInt(String paramValue) throws WrongFormatException {
-        log.entry(paramValue);
-
-        int castInt = 0;
-        if (StringUtils.isNotBlank(paramValue)) {
-            try {
-                castInt = Integer.parseInt(paramValue);
-            } catch(NumberFormatException e) {
-                throw log.throwing(new WrongFormatException(
-                        "Incorrect integer value: " + paramValue, e));
-            }
-        }
-        return log.exit(castInt);
     }
 
     /**

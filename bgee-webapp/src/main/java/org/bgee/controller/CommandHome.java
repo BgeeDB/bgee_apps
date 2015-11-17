@@ -65,7 +65,7 @@ public class CommandHome extends CommandParent
                     .collect(Collectors.toList());
             display.displayHomePage(singlesSpeciesGroup);
         } else {
-            throw new PageNotFoundException("Wrong parameters");
+            throw new PageNotFoundException();
         }
         log.exit();
     }

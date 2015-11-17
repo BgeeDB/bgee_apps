@@ -39,7 +39,7 @@ public class FakeTopAnatDisplay extends FakeParentDisplay implements TopAnatDisp
     @Override
     public void sendGeneListReponse(Map<Species, Long> speciesIdToGeneCount, String selectedSpeciesId,
             Set<DevStage> validStages, Set<String> submittedGeneIds, Set<String> underteminedGeneIds,
-            int statusCode, String msg) {
+            String msg) {
         // TODO Auto-generated method stub
         
     }

@@ -1,6 +1,7 @@
 package org.bgee.view.json;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletResponse;
@@ -42,9 +43,12 @@ public class JsonSpeciesDisplay extends JsonParentDisplay implements SpeciesDisp
     @Override
     public void sendSpeciesResponse(Set<Species> species) {
         log.entry(species);
-
-        log.debug(this.getJsonHelper().toJson(species));
-        this.write(this.getJsonHelper().toJson(species));
+        
+        LinkedHashMap<String, Object> data = new LinkedHashMap<>();
+        data.put(this.getRequestParameters().getUrlParametersInstance()
+                .getParamSpeciesList().getName(), species);
+        
+        this.sendResponse("List of requested species", data);
         
         log.exit();
     }

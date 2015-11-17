@@ -21,7 +21,9 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.MultipleValuesNotAllowedException;
 import org.bgee.controller.exception.RequestParametersNotFoundException;
 import org.bgee.controller.exception.RequestParametersNotStorableException;
-import org.bgee.controller.exception.WrongFormatException;
+import org.bgee.controller.exception.RequestSizeExceededException;
+import org.bgee.controller.exception.ValueSizeExceededException;
+import org.bgee.controller.exception.InvalidFormatException;
 import org.bgee.controller.servletutils.BgeeHttpServletRequest;
 import org.bgee.TestAncestor;
 import org.junit.AfterClass;
@@ -118,11 +120,11 @@ public class RequestParametersTest extends TestAncestor {
      * @throws MultipleValuesNotAllowedException 
      * @throws RequestParametersNotStorableException 
      * @throws RequestParametersNotFoundException 
-     * @throws WrongFormatException 
+     * @throws InvalidFormatException 
      */
     @Before
     public void loadMockRequest() throws RequestParametersNotFoundException,
-    RequestParametersNotStorableException, MultipleValuesNotAllowedException, WrongFormatException{
+    RequestParametersNotStorableException, MultipleValuesNotAllowedException, InvalidFormatException{
 
         mockHttpServletRequest = mock(BgeeHttpServletRequest.class);
 
@@ -217,11 +219,11 @@ public class RequestParametersTest extends TestAncestor {
      * @throws MultipleValuesNotAllowedException 
      * @throws RequestParametersNotStorableException 
      * @throws RequestParametersNotFoundException 
-     * @throws WrongFormatException 
+     * @throws InvalidFormatException 
      */
     @Test
     public void testGetRequestURL() throws RequestParametersNotStorableException,
-    MultipleValuesNotAllowedException, WrongFormatException, UnsupportedEncodingException {
+    MultipleValuesNotAllowedException, InvalidFormatException, UnsupportedEncodingException {
 
         // Check that the query returned corresponds to the parameters declared in
         // the mockHttpServletRequest. Do it with the default parameters separator and with
@@ -287,11 +289,11 @@ public class RequestParametersTest extends TestAncestor {
      * @throws MultipleValuesNotAllowedException 
      * @throws RequestParametersNotStorableException 
      * @throws RequestParametersNotFoundException 
-     * @throws WrongFormatException 
+     * @throws InvalidFormatException 
      */
     @Test
     public void testGetRequestURLWithHash() throws RequestParametersNotStorableException,
-    MultipleValuesNotAllowedException, WrongFormatException, UnsupportedEncodingException, IllegalStateException{
+    MultipleValuesNotAllowedException, InvalidFormatException, UnsupportedEncodingException, IllegalStateException{
         // Check that the query returned corresponds to the parameters declared in
         // the mockHttpServletRequest, but by requesting some to be in the hash, 
         // in different ways. Do it with the default parameters separator and with
@@ -544,10 +546,10 @@ public class RequestParametersTest extends TestAncestor {
     /**
      * Test addValue()
      * @throws MultipleValuesNotAllowedException 
-     * @throws WrongFormatException 
+     * @throws InvalidFormatException 
      */
     @Test
-    public void testAddValue() throws MultipleValuesNotAllowedException, WrongFormatException {
+    public void testAddValue() throws MultipleValuesNotAllowedException, InvalidFormatException {
 
         // Add two values and check that they are there
         this.requestParametersWithNoKey.addValue(
@@ -580,10 +582,10 @@ public class RequestParametersTest extends TestAncestor {
     /**
      * Test addValue() with too much values
      * @throws MultipleValuesNotAllowedException 
-     * @throws WrongFormatException 
+     * @throws InvalidFormatException 
      */
     @Test (expected=MultipleValuesNotAllowedException.class)
-    public void testAddTooMuchValue() throws MultipleValuesNotAllowedException, WrongFormatException {
+    public void testAddTooMuchValue() throws MultipleValuesNotAllowedException, InvalidFormatException {
 
         // Try to add to much param when it is not allowed,
         // i.e test_string does not allow multiple values => exception
@@ -595,10 +597,10 @@ public class RequestParametersTest extends TestAncestor {
     /**
      * Test addValues()
      * @throws MultipleValuesNotAllowedException
-     * @throws WrongFormatException
+     * @throws InvalidFormatException
      */
     @Test
-    public void testAddValues() throws MultipleValuesNotAllowedException, WrongFormatException {
+    public void testAddValues() throws MultipleValuesNotAllowedException, InvalidFormatException {
 
         // Add two values and an empty one, and check that they are there
         this.requestParametersWithNoKey.addValues(
@@ -720,13 +722,13 @@ public class RequestParametersTest extends TestAncestor {
      * allow multiple values throws an exception
      * @throws MultipleValuesNotAllowedException 
      * @throws RequestParametersNotFoundException 
-     * @throws WrongFormatException 
+     * @throws InvalidFormatException 
      */
     //suppress warning, the object is created solely to check that an exception is thrown
     @SuppressWarnings("unused")
     @Test (expected=MultipleValuesNotAllowedException.class)
     public void testLoadTooMuchValue() throws RequestParametersNotFoundException,
-    MultipleValuesNotAllowedException, WrongFormatException{
+    MultipleValuesNotAllowedException, InvalidFormatException{
 
         // This is actually the forth time a request parameter is instantiated
         // for this test => see the @before loadMockRequest, thus it tries to load 
@@ -742,13 +744,13 @@ public class RequestParametersTest extends TestAncestor {
      * accepted 
      * @throws MultipleValuesNotAllowedException 
      * @throws RequestParametersNotFoundException 
-     * @throws WrongFormatException 
+     * @throws InvalidFormatException 
      */
     //suppress warning, the objects are created solely to check that exceptions are thrown
     @SuppressWarnings("unused")
-    @Test (expected=WrongFormatException.class)
+    @Test (expected=InvalidFormatException.class)
     public void testLoadWrongFormatValue() throws MultipleValuesNotAllowedException, 
-    RequestParametersNotFoundException, WrongFormatException{
+    RequestParametersNotFoundException, InvalidFormatException{
 
         // Load the forth instance of RequestParameters that is used in
         // testLoadTooMuchValue and just ignore the exception that is not
@@ -778,11 +780,11 @@ public class RequestParametersTest extends TestAncestor {
      * Check that adding a value that does not match the format is not 
      * accepted 
      * @throws MultipleValuesNotAllowedException 
-     * @throws WrongFormatException 
+     * @throws InvalidFormatException 
      */
     @Test
     public void testAddWrongFormatValue() throws MultipleValuesNotAllowedException, 
-    WrongFormatException{
+    InvalidFormatException{
 
         this.requestParametersWithNoKey.resetValues(
                 testURLParameters.getParamTestStringList());
@@ -794,8 +796,45 @@ public class RequestParametersTest extends TestAncestor {
         try {
             this.requestParametersWithNoKey.addValue(
                     testURLParameters.getParamTestStringList(),"string^1");
-            fail("A WrongFormatException should have been thrown.");
-        } catch (WrongFormatException e) {
+            fail("A InvalidFormatException should have been thrown.");
+        } catch (InvalidFormatException e) {
+            //test passed
+        }
+    }
+
+    /**
+     * Check that exceeding the overall URL length is not accepted.
+     */
+    @Test
+    public void testTooLongRequest() {
+
+        RequestParameters rq = new RequestParameters(testURLParameters, mock(BgeeProperties.class),
+                true, "&", "UTF-8", 15);
+
+        rq.addValue(testURLParameters.getParamAction(), "add_12_chars");
+        try {
+            rq.addValue(testURLParameters.getParamPage(), "request_too_long_throw");
+            fail("A RequestSizeExceededException should have been thrown.");
+        } catch (RequestSizeExceededException e) {
+            //test passed
+        }
+    }
+    
+    /**
+     * Check that adding a value that exceeds the max length is not accepted.
+     */
+    @Test
+    public void testAddTooLongValue() {
+
+        this.requestParametersWithNoKey.resetValues(
+                testURLParameters.getParamAction());
+
+        try {
+            this.requestParametersWithNoKey.addValue(testURLParameters.getParamAction(),
+                IntStream.range(0, testURLParameters.getParamTestStringList().getMaxSize() + 1)
+                .mapToObj(i -> "a").collect(Collectors.joining()));
+            fail("A ValueSizeExceededException should have been thrown.");
+        } catch (ValueSizeExceededException e) {
             //test passed
         }
     }
@@ -804,7 +843,7 @@ public class RequestParametersTest extends TestAncestor {
      * not only one value added at a time. 
      */
     @Test
-    public void testAddGlobalWrongFormatValue() {
+    public void testSeparatedValueParamTooLong() {
 
         this.requestParametersWithNoKey.resetValues(
                 testURLParameters.getParamTestStringList());
@@ -822,8 +861,8 @@ public class RequestParametersTest extends TestAncestor {
                     testURLParameters.getParamTestStringList(), 
                     IntStream.range(0, (testURLParameters.getParamTestStringList().getMaxSize() / 2) + 2)
                     .mapToObj(i -> "a").collect(Collectors.joining()));
-            fail("A WrongFormatException should have been thrown.");
-        } catch (WrongFormatException e) {
+            fail("A ValueSizeExceededException should have been thrown.");
+        } catch (ValueSizeExceededException e) {
             //test passed
         }
     }

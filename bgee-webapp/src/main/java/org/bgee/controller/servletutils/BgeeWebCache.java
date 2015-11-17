@@ -25,7 +25,7 @@ import org.bgee.controller.exception.MultipleValuesNotAllowedException;
 import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.controller.exception.RequestParametersNotFoundException;
 import org.bgee.controller.exception.RequestParametersNotStorableException;
-import org.bgee.controller.exception.WrongFormatException;
+import org.bgee.controller.exception.InvalidFormatException;
 
 /**
  * This class is a {@code Filter} that manages Web pages caching, thus it has to be placed
@@ -109,7 +109,7 @@ public class BgeeWebCache extends CachingFilter
                 // Not cachable, leave the caching process
                 chain.doFilter(request, response);
             }
-        } catch (RequestParametersNotFoundException | WrongFormatException
+        } catch (RequestParametersNotFoundException | InvalidFormatException
                 | RequestParametersNotStorableException
                 | MultipleValuesNotAllowedException | PageNotFoundException e) {
             // If an Exception is thrown by the RequestParameter, call the next element in chain

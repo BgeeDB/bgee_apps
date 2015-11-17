@@ -7,6 +7,8 @@ import static org.mockito.Mockito.when;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,7 +18,7 @@ import org.bgee.controller.RequestParameters;
 import org.bgee.controller.URLParameters;
 import org.bgee.controller.exception.MultipleValuesNotAllowedException;
 import org.bgee.controller.exception.RequestParametersNotFoundException;
-import org.bgee.controller.exception.WrongFormatException;
+import org.bgee.controller.exception.InvalidFormatException;
 import org.bgee.controller.servletutils.BgeeHttpServletRequest;
 import org.bgee.model.file.DownloadFile;
 import org.bgee.model.file.SpeciesDataGroup;
@@ -42,7 +44,7 @@ public class JsonHelperTest extends TestAncestor {
     }
     
     /**
-     * Unit test of dumping a {@link Species} object into Json.
+     * Unit test of dumping a {@link Species} object into JSON.
      */
     @Test
     public void testSpeciesToJson() {
@@ -56,7 +58,7 @@ public class JsonHelperTest extends TestAncestor {
     }
     
     /**
-     * Unit test of dumping a {@link SpeciesDataGroup} object into Json.
+     * Unit test of dumping a {@link SpeciesDataGroup} object into JSON.
      */
     @Test
     public void testSpeciesDataGroupToJson() {
@@ -84,11 +86,11 @@ public class JsonHelperTest extends TestAncestor {
     }
     
     /**
-     * Unit test of dumping a {@link RequestParameters} object into Json.
+     * Unit test of dumping a {@link RequestParameters} object into JSON.
      */
     @Test
     public void testRequestParametersToJson() throws UnsupportedEncodingException, 
-        MultipleValuesNotAllowedException, WrongFormatException, RequestParametersNotFoundException {
+        MultipleValuesNotAllowedException, InvalidFormatException, RequestParametersNotFoundException {
         
         //use a BgeeHttpServletRequest object to be able to set parameters simply by providing 
         //a query string, and to create a RequestParameters object. 
@@ -116,7 +118,9 @@ public class JsonHelperTest extends TestAncestor {
                     + "ID3.3&"
                 + params.getParamAjax().getName() + "=1&"
                 + params.getParamNbNode().getName() + "=10&"
-                + params.getParamExprType().getName() + "=expr";
+                + params.getParamExprType().getName() + "=expr&"
+                //this parameter should never be considered in the JSON generated
+                + params.getParamDisplayRequestParams() + "=1";
         RequestParameters rqParams = new RequestParameters(new BgeeHttpServletRequest(queryString, 
                 "UTF-8"), params, mock(BgeeProperties.class), true, "&");
 
@@ -133,5 +137,79 @@ public class JsonHelperTest extends TestAncestor {
                 + "\"" + params.getParamAjax().getName() + "\": \"true\"\n}";
 
         assertEquals("Incorrect JSON generated from RequestParameters", expected, json);
+    }
+    
+    /**
+     * Test method {@link JsonHelper#toJson(LinkedHashMap, Appendable)}.
+     */
+    @Test
+    public void shouldWriteMapInJson() {
+
+        JsonHelper helper = new JsonHelper();
+        
+        LinkedHashMap<String, Object> data = new LinkedHashMap<>();
+        data.put("speciesList", Arrays.asList(
+                new Species("12", "SpeciesName", "A string description of that species"), 
+                new Species("13", "SpeciesName", "A string description of that species")));
+        
+        LinkedHashMap<String, Object> response = new LinkedHashMap<>();
+        response.put("code", 200);
+        response.put("status", "success");
+        response.put("message", "my msg");
+        response.put("data", data);
+        
+        StringBuilder out = new StringBuilder();
+        helper.toJson(response, out);
+        assertEquals("Incorrect Json generated from writer", 
+                "{\n  \"code\": 200,\n  \"status\": \"success\",\n  \"message\": \"my msg\",\n"
+                + "  \"data\": {\n    \"speciesList\": [\n      {\n        "
+                + "\"name\": \"SpeciesName\",\n        \"description\": "
+                + "\"A string description of that species\",\n        \"id\": \"12\"\n"
+                + "      },\n      {\n        \"name\": \"SpeciesName\",\n        "
+                + "\"description\": \"A string description of that species\",\n"
+                + "        \"id\": \"13\"\n      }\n    ]\n  }\n}",  
+                out.toString());
+    }
+    
+    /**
+     * Test the dumping of {@code Stream}s into JSON.
+     */
+    @Test
+    public void testStreamToJson() {
+        JsonHelper helper = new JsonHelper();
+        URLParameters params = new URLParameters();
+        //basic Stream to dump
+        assertEquals("Incorrect dump of Stream of Strings", "[\n  \"1\",\n  \"2\"\n]", 
+                helper.toJson(Stream.of("1", "2")));
+        
+        //Stream of a type with a custom dumping
+        RequestParameters rp1 = new RequestParameters();
+        rp1.setPage("mypage1");
+        rp1.setAction("myaction1");
+        RequestParameters rp2 = new RequestParameters();
+        rp2.setPage("mypage2");
+        rp2.setAction("myaction2");
+        assertEquals("Incorrect dump of Stream of RequestParameters", 
+                "[\n  {\n    \"" + params.getParamPage().getName() + "\": \"mypage1\",\n"
+                + "    \"" + params.getParamAction().getName() + "\": \"myaction1\"\n"
+                + "  },\n  {\n    \"" + params.getParamPage().getName() + "\": \"mypage2\",\n"
+                + "    \"" + params.getParamAction().getName() + "\": \"myaction2\"\n  }\n]", 
+                helper.toJson(Stream.of(rp1, rp2)));
+        
+        //Stream of mixed element types, custom and not custom
+        assertEquals("Incorrect dump of Stream of mixed element types", 
+                "[\n  {\n    \"" + params.getParamPage().getName() + "\": \"mypage1\",\n"
+               + "    \"" + params.getParamAction().getName() + "\": \"myaction1\"\n  },\n  \"2\"\n]", 
+                helper.toJson(Stream.of(rp1, "2")));
+        helper.toJson(Stream.of(Stream.of("a", "b"), Stream.of(rp1, rp2)));
+        
+        //Stream of Streams
+        assertEquals("Incorrect dump of Stream of Streams", 
+                "[\n  [\n    \"a\",\n    \"b\"\n  ],\n  [\n    {\n      \"" 
+                + params.getParamPage().getName() + "\": \"mypage1\",\n      \"" 
+                + params.getParamAction().getName() + "\": \"myaction1\"\n    },\n    {\n      \"" 
+                + params.getParamPage().getName() + "\": \"mypage2\",\n"
+                + "      \"" + params.getParamAction().getName() + "\": \"myaction2\"\n    }\n  ]\n]", 
+                helper.toJson(Stream.of(Stream.of("a", "b"), Stream.of(rp1, rp2))));
     }
 }

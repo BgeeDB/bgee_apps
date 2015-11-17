@@ -100,7 +100,7 @@ public class CommandTopAnatTest extends TestAncestor {
         
         verify(display).sendGeneListReponse(speciesToGeneCount, selectedSpeciesId,
                 new HashSet<>(Arrays.asList(devStages.get(1), devStages.get(2))), 
-                null, new HashSet<>(Arrays.asList("ID4")), 0, 
+                null, new HashSet<>(Arrays.asList("ID4")), 
                 "4 genes entered, 2 in human, 1 in mouse, "
                 + "1 not found in Bgee.");
     }

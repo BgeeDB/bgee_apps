@@ -5,9 +5,11 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.Optional;
@@ -154,11 +156,21 @@ implements ExpressionCallDAO {
                 .map(e -> new LinkedHashSet<>(e)).orElse(new LinkedHashSet<>());
         //attributes
         Set<ExpressionCallDAO.Attribute> originalAttrs = Optional.ofNullable(attributes)
-                .map(e -> EnumSet.copyOf(e)).orElse(EnumSet.allOf(ExpressionCallDAO.Attribute.class));
+                .map(e -> EnumSet.copyOf(e)).orElse(EnumSet.allOf(ExpressionCallDAO.Attribute.class))
+                //TODO: to remove when ready to adapt integration tests. Do TODO below first.
+                .stream().filter(e -> !e.isRankAttribute()).collect(Collectors.toSet());
         //ordering attributes
         LinkedHashMap<ExpressionCallDAO.OrderingAttribute, DAO.Direction> clonedOrderingAttrs = 
                 Optional.ofNullable(orderingAttributes)
                 .map(e -> new LinkedHashMap<>(orderingAttributes)).orElse(new LinkedHashMap<>());
+        
+        //ranks are not accessible from the globalExpression table
+        if (includeSubstructures && 
+                (originalAttrs.stream().anyMatch(e -> e.isRankAttribute()) || 
+                 clonedOrderingAttrs.keySet().contains(ExpressionCallDAO.OrderingAttribute.MEAN_RANK))) {
+            throw log.throwing(new IllegalArgumentException(
+                    "Rank information is not accessible when includeSubstructures is true."));
+        }
         
         if (taxonId != null && !taxonId.isEmpty()) {
             throw log.throwing(new UnsupportedOperationException(
@@ -225,24 +237,43 @@ implements ExpressionCallDAO {
         //and some specific parameters are requested, the filtering will need to be done 
         //in a HAVING clause. In that case, we add the columns we will need in the HAVING clause, 
         //based on the parameters provided, to avoid over-verbose HAVING clause. 
-        //We also need these columns if an ordering is requested on them.
+        //We also need these columns if an ordering is requested on them. This latter point 
+        //also applies to ordering based on ranks when includeSubStages is false.
         Set<ExpressionCallDAO.Attribute> updatedAttrs = EnumSet.copyOf(originalAttrs);
         boolean havingClauseNeeded = false;
         boolean groupingByNeeded = false;
         
-        if (includeSubStages) {
-            if (originalAttrs.contains(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA) || 
-                    originalAttrs.contains(ExpressionCallDAO.Attribute.EST_DATA) || 
-                    originalAttrs.contains(ExpressionCallDAO.Attribute.IN_SITU_DATA) || 
-                    originalAttrs.contains(ExpressionCallDAO.Attribute.RNA_SEQ_DATA) || 
-                    originalAttrs.contains(ExpressionCallDAO.Attribute.OBSERVED_DATA) || 
+        //if we want to order based on global rank, as it is not a real column we need 
+        //to add it to the SELECT clause for simplicity. 
+        if (clonedOrderingAttrs.keySet().contains(ExpressionCallDAO.OrderingAttribute.MEAN_RANK)) {
+            updatedAttrs.add(ExpressionCallDAO.Attribute.GLOBAL_MEAN_RANK);
+        }
+        
+        //boolean to know whether attributes based on primary key or full unique index are requested, 
+        //this is important to know if a GROUP BY is needed in some situations.
+        //TODO: actually, we need a GROUP BY also when primaryKey is false and a data type parameter 
+        //is requested. Currently, this is not the case. Addressing this will allow to correctly 
+        //manage ranks when not requesting all gene ID + stage ID + anat entity ID. 
+        boolean primaryKey = (originalAttrs.contains(ExpressionCallDAO.Attribute.ID) || 
+                (originalAttrs.contains(ExpressionCallDAO.Attribute.GENE_ID) && 
+                 originalAttrs.contains(ExpressionCallDAO.Attribute.ANAT_ENTITY_ID) && 
+                 originalAttrs.contains(ExpressionCallDAO.Attribute.STAGE_ID)));
+        //TODO: to remove when ready to update code and tests
+        primaryKey = true;
+        
+        if (includeSubStages || !primaryKey) {
+            if (originalAttrs.stream().anyMatch(e -> e.isDataTypeAttribute()) || 
+                    originalAttrs.stream().anyMatch(e -> e.isRankAttribute()) || 
+                    ((includeSubStages || includeSubstructures) && 
+                            originalAttrs.contains(ExpressionCallDAO.Attribute.OBSERVED_DATA)) || 
                     (includeSubstructures && 
                             originalAttrs.contains(ExpressionCallDAO.Attribute.ANAT_ORIGIN_OF_LINE)) || 
-                    originalAttrs.contains(ExpressionCallDAO.Attribute.STAGE_ORIGIN_OF_LINE) || 
+                    (includeSubStages && 
+                            originalAttrs.contains(ExpressionCallDAO.Attribute.STAGE_ORIGIN_OF_LINE)) || 
                     clonedOrderingAttrs.keySet().contains(ExpressionCallDAO.OrderingAttribute.MEAN_RANK)) {
                 
                 groupingByNeeded = true;
-                log.trace("GROUP BY needed because of requested Attributes.");
+                log.trace("GROUP BY needed because of requested Attributes or ordering.");
             }
             
             //for filtering based on data types, we can still avoid to filter in the HAVING clause 
@@ -266,15 +297,15 @@ implements ExpressionCallDAO {
                 //to avoid over-verbose HAVING clause.
                 updatedAttrs.addAll(filteringDataTypesPerCallTO.stream()
                         .flatMap(Set::stream)
-                        .collect(Collectors.toCollection(() -> 
-                            EnumSet.noneOf(ExpressionCallDAO.Attribute.class))));
+                        .collect(Collectors.toSet()));
             }
             
             Set<ExpressionCallTO> allCallTOs = clonedCallFilters.stream()
                     .flatMap(e -> e.getCallTOFilters().stream())
                     .collect(Collectors.toSet());
             
-            if (allCallTOs.stream().anyMatch(e -> e.isObservedData() != null)) {
+            if ((includeSubStages || includeSubstructures) && 
+                    allCallTOs.stream().anyMatch(e -> e.isObservedData() != null)) {
                 havingClauseNeeded = true;
                 groupingByNeeded = true;
                 //add in the SELECT clause the columns we will need in the HAVING clause, 
@@ -291,7 +322,8 @@ implements ExpressionCallDAO {
                 updatedAttrs.add(ExpressionCallDAO.Attribute.ANAT_ORIGIN_OF_LINE);
                 log.trace("GROUP BY needed because of filtering based on ANAT_ORIGIN_OF_LINE.");
             }
-            if (allCallTOs.stream().anyMatch(e -> e.getStageOriginOfLine() != null)) {
+            if (includeSubStages && 
+                    allCallTOs.stream().anyMatch(e -> e.getStageOriginOfLine() != null)) {
                 havingClauseNeeded = true;
                 groupingByNeeded = true;
                 //add in the SELECT clause the columns we will need in the HAVING clause, 
@@ -307,14 +339,25 @@ implements ExpressionCallDAO {
                         + "You should rather compute these results in several queries.");
             }
         }
+        
+        //determine the attributes on which to perform the GROUP BY
+        Set<ExpressionCallDAO.Attribute> groupByAttrs = null;
+        if (groupingByNeeded) {
+            groupByAttrs = originalAttrs.stream()
+                .filter(e -> e.equals(ExpressionCallDAO.Attribute.ID) || 
+                        e.equals(ExpressionCallDAO.Attribute.GENE_ID) || 
+                        e.equals(ExpressionCallDAO.Attribute.ANAT_ENTITY_ID) || 
+                        e.equals(ExpressionCallDAO.Attribute.STAGE_ID))
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(ExpressionCallDAO.Attribute.class)));
+        }
 
         //**********************************************
         
         //execute query
         return log.exit(this.getExpressionCalls(clonedCallFilters, geneIds, globalGeneFilter, 
                 speciesIds, globalSpeciesFilter, includeSubstructures, includeSubStages, 
-                taxonId, originalAttrs, updatedAttrs, clonedOrderingAttrs, 
-                groupingByNeeded, havingClauseNeeded));
+                taxonId, originalAttrs, updatedAttrs, clonedOrderingAttrs, groupByAttrs, 
+                havingClauseNeeded));
     }
 
     @Override
@@ -426,6 +469,7 @@ implements ExpressionCallDAO {
     //- Speaking of duplication event... would it be possible to target a specific 
     //  duplication event? They don't have any taxonId...
     //
+    //TODO: update javadoc
     private ExpressionCallTOResultSet getExpressionCalls(
             LinkedHashSet<ExpressionCallDAOFilter> callFilters, 
             Set<String> allGeneIds, boolean globalGeneFilter, 
@@ -434,11 +478,12 @@ implements ExpressionCallDAO {
             String commonAncestralTaxonId, 
             Set<ExpressionCallDAO.Attribute> originalAttrs, Set<ExpressionCallDAO.Attribute> updatedAttrs, 
             LinkedHashMap<ExpressionCallDAO.OrderingAttribute, DAO.Direction> orderingAttrs, 
-            boolean stageGroupingByNeeded, boolean havingClauseNeeded) throws DAOException {
+            Set<ExpressionCallDAO.Attribute> groupByAttrs, boolean havingClauseNeeded) throws DAOException {
+        
         log.entry(callFilters, allGeneIds, globalGeneFilter, allSpeciesIds, globalSpeciesFilter, 
                 includeSubstructures, includeSubStages, 
                 commonAncestralTaxonId, originalAttrs, updatedAttrs, orderingAttrs, 
-                stageGroupingByNeeded, havingClauseNeeded);
+                groupByAttrs, havingClauseNeeded);
 
         // Construct sql query
         String exprTableName = "expression";
@@ -448,14 +493,22 @@ implements ExpressionCallDAO {
         String propagatedStageTableName = "propagatedStage";
 
         //determine whether to use DISTINCT keyword.
-        boolean distinct = !(stageGroupingByNeeded || (!includeSubStages && 
+        boolean distinct = !(groupByAttrs != null || (!includeSubStages && 
                 (updatedAttrs.contains(ExpressionCallDAO.Attribute.ID) || 
                 (updatedAttrs.contains(ExpressionCallDAO.Attribute.GENE_ID) && 
                  updatedAttrs.contains(ExpressionCallDAO.Attribute.ANAT_ENTITY_ID) && 
                  updatedAttrs.contains(ExpressionCallDAO.Attribute.STAGE_ID)))));
-        String sql = this.generateSelectClause(updatedAttrs, distinct, 
-                includeSubstructures, includeSubStages, 
-                exprTableName, propagatedStageTableName);
+        String sql = this.generateSelectClause(
+                updatedAttrs, 
+                //Attributes corresponding to data types used for filtering the results
+                callFilters.stream()
+                    .flatMap(filter -> filter.getCallTOFilters().stream())
+                    .flatMap(callTO -> callTO.extractDataTypesToDataStates().keySet().stream())
+                    .collect(Collectors.toCollection(() -> 
+                             EnumSet.noneOf(ExpressionCallDAO.Attribute.class))), 
+                    
+                distinct, groupByAttrs != null, 
+                includeSubstructures, includeSubStages, exprTableName, propagatedStageTableName);
         
         sql += " FROM " + exprTableName;
 
@@ -478,7 +531,7 @@ implements ExpressionCallDAO {
             //a temporary table to join to in the main query. 
             //In the subquery, the EXISTS clause is used to speed-up the main query, 
             //to make sure we will not look up for data not present in the expression table.
-            if (stageGroupingByNeeded && (allGeneIds.isEmpty() || 
+            if (groupByAttrs != null && (allGeneIds.isEmpty() || 
                     allGeneIds.size() > this.getManager().getExprPropagationGeneCount())) {
                 
                 genesAndSpeciesFilteredForPropagation = true;
@@ -550,7 +603,10 @@ implements ExpressionCallDAO {
             sql += filtering;
         }
         
-        if (stageGroupingByNeeded) {
+        if (groupByAttrs != null) {
+            //TODO: use the groupByAttrs rather than always using geneId, anatEntityId, stageId, 
+            //when ready to update integration tests
+            //Also, it won't always be the 'propagatedStageTableName' now. 
             sql += " GROUP BY " + exprTableName + ".geneId, " + 
                    exprTableName + ".anatEntityId, " + propagatedStageTableName + ".stageId";
             
@@ -566,6 +622,35 @@ implements ExpressionCallDAO {
             }
         }
         
+        //ORDER BY
+        if (!orderingAttrs.isEmpty()) {
+            sql += orderingAttrs.entrySet().stream()
+                .map(entry -> {
+                    String orderBy = "";
+                    switch(entry.getKey()) {
+                    case MEAN_RANK: 
+                        orderBy = "globalMeanRank";
+                        break;
+                    default: 
+                        throw log.throwing(new IllegalStateException("Unsupported OrderingAttribute: " 
+                                + entry.getKey()));
+                    }
+                    switch(entry.getValue()) {
+                    case DESC: 
+                        orderBy = " desc";
+                        break;
+                    case ASC: 
+                        orderBy = " asc";
+                        break;
+                    default: 
+                        throw log.throwing(new IllegalStateException("Unsupported Direction: " 
+                                + entry.getValue()));
+                    }
+                    return orderBy;
+                })
+                .collect(Collectors.joining(", ", " ORDER BY ", ""));
+        }
+        
 
         //we don't use a try-with-resource, because we return a pointer to the results, 
         //not the actual results, so we should not close this BgeePreparedStatement.
@@ -574,7 +659,7 @@ implements ExpressionCallDAO {
             
             int index = 1;
             int offsetParamIndex = 0;
-            if (includeSubStages && stageGroupingByNeeded && (allGeneIds.isEmpty() || 
+            if (includeSubStages && groupByAttrs != null && (allGeneIds.isEmpty() || 
                     allGeneIds.size() > this.getManager().getExprPropagationGeneCount())) {
                     
                 if (!allSpeciesIds.isEmpty()) {
@@ -610,10 +695,8 @@ implements ExpressionCallDAO {
             } 
             //In case we need to perform several queries with a LIMIT clause, 
             //determine whether we need to filter duplicated results over several queries.
-            boolean filterDistinct = !(originalAttrs.contains(ExpressionCallDAO.Attribute.ID) || 
-                    (originalAttrs.contains(ExpressionCallDAO.Attribute.GENE_ID) && 
-                            originalAttrs.contains(ExpressionCallDAO.Attribute.ANAT_ENTITY_ID) && 
-                            originalAttrs.contains(ExpressionCallDAO.Attribute.STAGE_ID)));
+            boolean filterDistinct = !originalAttrs.contains(ExpressionCallDAO.Attribute.ID) && 
+                    !originalAttrs.contains(ExpressionCallDAO.Attribute.GENE_ID);
             
             return log.exit(new MySQLExpressionCallTOResultSet(stmt, originalAttrs, offsetParamIndex, 
                     offsetParamIndex + 1, this.getManager().getExprPropagationGeneCount(), filterDistinct));
@@ -681,7 +764,16 @@ implements ExpressionCallDAO {
         }
         String propagatedStageTableName = "propagatedStage";
 
-        String sql = this.generateSelectClause(this.getAttributes(), true, 
+        String sql = this.generateSelectClause(
+                //make sure this method keeps working while we implement new features 
+                //in the non-deprecated methods. 
+                Optional.ofNullable(this.getAttributes())
+                    .map(e -> e.isEmpty()? EnumSet.allOf(ExpressionCallDAO.Attribute.class): e)
+                    .orElse(EnumSet.allOf(ExpressionCallDAO.Attribute.class))
+                    .stream().filter(e -> !e.isRankAttribute())
+                    .collect(Collectors.toSet()), 
+                null, 
+                true, isIncludeSubStages, 
                 isIncludeSubstructures, isIncludeSubStages, 
                 exprTableName, propagatedStageTableName);
         
@@ -778,10 +870,14 @@ implements ExpressionCallDAO {
      *                                  for the requested query.
      * @throws IllegalArgumentException If one {@code Attribute} of {@code attributes} is unknown.
      */
+    //TODO: update javadoc
     private String generateSelectClause(Set<ExpressionCallDAO.Attribute> attributes, 
-            boolean distinctClause, boolean includeSubstructures, boolean includeSubStages, 
+            Set<ExpressionCallDAO.Attribute> filteringDataTypes, 
+            boolean distinctClause, boolean groupByClause, 
+            boolean includeSubstructures, boolean includeSubStages, 
             String exprTableName, String propagatedStageTableName) throws IllegalArgumentException {
-        log.entry(attributes, distinctClause, includeSubstructures, includeSubStages, 
+        log.entry(attributes, filteringDataTypes, distinctClause, groupByClause, 
+                includeSubstructures, includeSubStages, 
                 exprTableName, propagatedStageTableName);
         
         String sql = "";
@@ -804,18 +900,40 @@ implements ExpressionCallDAO {
         String stageOriginIfClause = "IF(" + exprTableName + ".stageId =" + 
             propagatedStageTableName + ".stageId" + ", 1, 0)";
         
+        
+        //Ranks: 
+        Map<ExpressionCallDAO.Attribute, String> dataTypeToSql = new HashMap<>();
+        String affyRank = exprTableName + ".affymetrixMeanRank ";
+        if (groupByClause) {
+            affyRank = "AVG(" + exprTableName + ".affymetrixMeanRank) AS affymetrixMeanRank ";
+        }
+        dataTypeToSql.put(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA, affyRank);
+        
+        String estRank = exprTableName + ".estMeanRank ";
+        if (groupByClause) {
+            estRank = "AVG(" + exprTableName + ".estMeanRank) AS estMeanRank ";
+        }
+        dataTypeToSql.put(ExpressionCallDAO.Attribute.EST_DATA, estRank);
+        
+        String inSituRank = exprTableName + ".inSituMeanRank ";
+        if (groupByClause) {
+            inSituRank = "AVG(" + exprTableName + ".inSituMeanRank) AS inSituMeanRank ";
+        }
+        dataTypeToSql.put(ExpressionCallDAO.Attribute.IN_SITU_DATA, inSituRank);
+        
+        String rnaSeqRank = exprTableName + ".rnaSeqMeanRank ";
+        if (groupByClause) {
+            rnaSeqRank = "AVG(" + exprTableName + ".rnaSeqMeanRank) AS rnaSeqMeanRank ";
+        }
+        dataTypeToSql.put(ExpressionCallDAO.Attribute.RNA_SEQ_DATA, rnaSeqRank);
+        
+        
         for (ExpressionCallDAO.Attribute attribute: attributes) {
             if (sql.isEmpty()) {
                 sql += "SELECT ";
                 if (distinctClause) {
                     sql += "DISTINCT ";
                 }
-            } else if (attribute.equals(ExpressionCallDAO.Attribute.GLOBAL_MEAN_RANK) || 
-                    attribute.equals(ExpressionCallDAO.Attribute.AFFYMETRIX_MEAN_RANK) ||
-                    attribute.equals(ExpressionCallDAO.Attribute.EST_MEAN_RANK) ||
-                    attribute.equals(ExpressionCallDAO.Attribute.IN_SITU_MEAN_RANK) ||
-                    attribute.equals(ExpressionCallDAO.Attribute.RNA_SEQ_MEAN_RANK)) {
-                //TODO: remove when this attribute will be managed
             } else {
                 sql += ", ";
             }
@@ -828,11 +946,12 @@ implements ExpressionCallDAO {
                 //in case we include sub-stages, we need to generate fake IDs,  
                 //because equality of ExpressionCallTO can be based on ID, and here 
                 //a same basic call with a given ID can be associated to different propagated calls.
-                if (includeSubStages) {
+                if (includeSubStages || groupByClause) {
                     log.warn("Retrieval of expression IDs with on-the-fly propagation " +
                     		"of expression calls, can increase memory usage.");
                     //XXX: transform into a bit value for lower memory consumption?
                     //see convert unsigned: http://dev.mysql.com/doc/refman/5.5/en/cast-functions.html#function_convert
+                    //TODO: use only the requested attributes
                     sql += "CONCAT(" + exprTableName + ".geneId, '__', " + 
                             exprTableName + ".anatEntityId, '__', " + 
                             propagatedStageTableName + ".stageId) AS " + colName;
@@ -859,8 +978,8 @@ implements ExpressionCallDAO {
                     sql += "'" + OriginOfLine.SELF.getStringRepresentation() + "' ";
                 } else {
                     //otherwise, we use the real column in the global expression table, 
-                    //unless we are propagating on the fly to include sub-stages
-                    if (!includeSubStages) {
+                    //unless we are doing a grouping by
+                    if (!groupByClause) {
                         sql += "originOfLine ";
                     } else {
                         //the anatOriginOfLine has to be recomputed, as it is possible 
@@ -941,20 +1060,18 @@ implements ExpressionCallDAO {
                 //the origins of line.
                 
                 String anatOriginIfClause = "IF(originOfLine = 'descent', 0, 1) ";
-                if (!includeSubStages) {
-                    if (!includeSubstructures) {
-                        //if no propagation requested, it's easy, all data are observed
-                        sql += "1 ";
-                    } else {
-                        //if we propagate only from substructures, we check the column 
-                        //originOfLine in the globalExpression table: if it equals to 'descent', 
-                        //then there are no observed data.
-                        sql += anatOriginIfClause;
-                    }
+                if (!includeSubStages && !includeSubstructures) {
+                    //if no propagation requested, it's easy, all data are observed
+                    sql += "1 ";
+                } else if (!includeSubStages && !groupByClause) {
+                    //if we propagate only from substructures, we check the column 
+                    //originOfLine in the globalExpression table: if it equals to 'descent', 
+                    //then there are no observed data.
+                    assert includeSubstructures == true;
+                    sql += anatOriginIfClause;
                 } else {
-                    //If we propagate from sub-stages, it's more complicated, as data 
-                    //are grouped, so we need to use GROUP_CONCAT to examine 
-                    //the different origins of a line.
+                    //It's more complicated when data are grouped, we need 
+                    //to use GROUP_CONCAT to examine the different origins of a line.
                     //Notably, we need to check at the same time the anat. and the stage 
                     //origins of line, this is why we also use CONCAT. 
                     sql += "IF(GROUP_CONCAT(DISTINCT CONCAT(";
@@ -968,17 +1085,29 @@ implements ExpressionCallDAO {
                     }
                     //then, observation status for stage.
                     //we use '.' as a separator between anat. and stage status.
-                    sql += ", '.', " + stageOriginIfClause + ")) " +
-                           //if we have at the same time observed data in the organ 
-                           //and in the stage (corresponds to '1.1'), then this line 
-                           //is actually observed.
-                    	   "LIKE '%1.1%', 1, 0) ";
+                    sql += ", '.', ";
+                    if (includeSubStages) {
+                        sql += stageOriginIfClause + ")) ";
+                    } else {
+                        sql += "'1' ";
+                    }
+                    //if we have at the same time observed data in the organ 
+                    //and in the stage (corresponds to '1.1'), then this line 
+                    //is actually observed.
+                    sql += "LIKE '%1.1%', 1, 0) ";
                 }
                 
                 sql += "AS observedData ";
                 
             } else if (attribute.equals(ExpressionCallDAO.Attribute.GLOBAL_MEAN_RANK)) {
-                //TODO
+                
+                sql += (filteringDataTypes.isEmpty()? 
+                        EnumSet.allOf(ExpressionCallDAO.Attribute.class): filteringDataTypes)
+                        .stream()
+                            .map(dataType -> dataTypeToSql.get(dataType))
+                            .collect(Collectors.joining("+ ", "((", 
+                                ") / " + filteringDataTypes.size() + ") AS globalMeanRank "));
+                
             } else if (attribute.equals(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA)) {
                 if (!includeSubStages) {
                     sql += "(affymetrixData + 0) ";
@@ -989,7 +1118,9 @@ implements ExpressionCallDAO {
                 }
                 sql += "AS affymetrixData ";
             } else if (attribute.equals(ExpressionCallDAO.Attribute.AFFYMETRIX_MEAN_RANK)) {
-                //TODO
+                
+                sql += affyRank;
+                
             } else if (attribute.equals(ExpressionCallDAO.Attribute.EST_DATA)) {
                 if (!includeSubStages) {
                     sql += "(estData + 0) ";
@@ -1000,7 +1131,9 @@ implements ExpressionCallDAO {
                 }
                 sql += "AS estData ";
             } else if (attribute.equals(ExpressionCallDAO.Attribute.EST_MEAN_RANK)) {
-                //TODO
+                
+                sql += estRank;
+                
             } else if (attribute.equals(ExpressionCallDAO.Attribute.IN_SITU_DATA)) {
                 if (!includeSubStages) {
                     sql += "(inSituData + 0) ";
@@ -1011,7 +1144,9 @@ implements ExpressionCallDAO {
                 }
                 sql += "AS inSituData ";
             } else if (attribute.equals(ExpressionCallDAO.Attribute.IN_SITU_MEAN_RANK)) {
-                //TODO
+                
+                sql += inSituRank;
+                
             } else if (attribute.equals(ExpressionCallDAO.Attribute.RNA_SEQ_DATA)) {
                 if (!includeSubStages) {
                     sql += "(rnaSeqData + 0) ";
@@ -1022,7 +1157,9 @@ implements ExpressionCallDAO {
                 }
                 sql += "AS rnaSeqData ";
             } else if (attribute.equals(ExpressionCallDAO.Attribute.RNA_SEQ_MEAN_RANK)) {
-                //TODO
+                
+                sql += rnaSeqRank;
+                
             } else {
                 throw log.throwing(new IllegalArgumentException("The attribute provided (" +
                         attribute.toString() + ") is unknown for " + ExpressionCallDAO.class.getName()));

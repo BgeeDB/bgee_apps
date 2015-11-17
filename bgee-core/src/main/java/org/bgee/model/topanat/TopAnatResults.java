@@ -80,7 +80,7 @@ public class TopAnatResults {
 
     private final String resultPDFFileName;
     
-    private final String rScriptOutputFileName;
+    private final String rScriptAnalysisFileName;
 
     private final String paramsOutputFileName;
     
@@ -94,14 +94,14 @@ public class TopAnatResults {
 
     public TopAnatResults(List<TopAnatResults.TopAnatResultRow> rows,
             TopAnatParams topAnatParams,String resultFileName,
-            String resultPDFFileName, String rScriptOutputFileName, String  paramsOutputFileName,
+            String resultPDFFileName, String rScriptAnalysisFileName, String  paramsOutputFileName,
             String anatEntitiesFilename, String anatEntitiesRelationshipsFileName, 
             String geneToAnatEntitiesFileName, String rScriptConsoleFileName){
         this.rows = Collections.unmodifiableList(rows);
         this.topAnatParams = topAnatParams;
         this.resultFileName = resultFileName;
         this.resultPDFFileName = resultPDFFileName;
-        this.rScriptOutputFileName = rScriptOutputFileName;
+        this.rScriptAnalysisFileName = rScriptAnalysisFileName;
         this.rScriptConsoleFileName = rScriptConsoleFileName;
         this.paramsOutputFileName = paramsOutputFileName;
         this.anatEntitiesFilename = anatEntitiesFilename;
@@ -125,8 +125,8 @@ public class TopAnatResults {
         return resultPDFFileName;
     }
 
-    public String getrScriptOutputFileName() {
-        return rScriptOutputFileName;
+    public String getRScriptAnalysisFileName() {
+        return rScriptAnalysisFileName;
     }
 
     public String getParamsOutputFileName() {
@@ -145,7 +145,7 @@ public class TopAnatResults {
         return geneToAnatEntitiesFileName;
     }
 
-    public String getrScriptConsoleFileName() {
+    public String getRScriptConsoleFileName() {
         return rScriptConsoleFileName;
     }
 

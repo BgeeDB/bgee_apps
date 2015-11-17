@@ -165,12 +165,12 @@ public class TopAnatAnalysis {
                     resultRows,this.params,
                     this.getResultFileName(),
                     this.getResultPDFFileName(),
-                    this.getRScriptOutputFileName(),
+                    this.getRScriptAnalysisFileName(),
                     this.getParamsOutputFileName(),
                     this.getAnatEntitiesNamesFileName(),
                     this.getAnatEntitiesRelationshipsFileName(),
                     this.getGeneToAnatEntitiesFileName(),
-                    this.getRScriptOutputFileName()));
+                    this.getRScriptConsoleFileName()));
         }
         return null;
     }
@@ -283,7 +283,7 @@ public class TopAnatAnalysis {
         }
 
         log.info("Result file name: {}", 
-                this.getRScriptOutputFileName());
+                this.getResultFileName());
 
         log.exit();
     }
@@ -344,7 +344,7 @@ public class TopAnatAnalysis {
 
         File file = new File(
                 this.props.getTopAnatResultsWritingDirectory(),
-                this.getRScriptOutputFileName());
+                this.getRScriptAnalysisFileName());
         String fileName = file.getPath();
 
         //we will write results into a tmp file, moved at the end if everything 
@@ -376,7 +376,7 @@ public class TopAnatAnalysis {
         }
 
         log.info("Rcode file name: {}", 
-                this.getRScriptOutputFileName());
+                this.getRScriptAnalysisFileName());
         log.exit();
     }
 
@@ -651,6 +651,13 @@ public class TopAnatAnalysis {
     /**
      * 
      */
+    public String getRScriptConsoleFileName(){
+        return TopAnatAnalysis.FILE_PREFIX + this.params.getKey() + ".tsv.tmp.R_console";
+    }
+    
+    /**
+     * 
+     */
     public String getResultPDFFileName(){
         return TopAnatAnalysis.FILE_PREFIX + "PDF_" + this.params.getKey()  + ".pdf";
     }
@@ -682,7 +689,7 @@ public class TopAnatAnalysis {
     /**
      * 
      */
-    public String getRScriptOutputFileName(){
+    public String getRScriptAnalysisFileName(){
         return TopAnatAnalysis.FILE_PREFIX 
                 + "RScript_" + this.params.getKey()  + ".R";
     }

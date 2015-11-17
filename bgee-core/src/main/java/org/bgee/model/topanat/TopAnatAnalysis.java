@@ -34,6 +34,7 @@ import org.bgee.model.gene.GeneService;
 import org.bgee.model.species.SpeciesService;
 import org.bgee.model.topanat.exception.InvalidForegroundException;
 import org.bgee.model.topanat.exception.InvalidSpeciesGenesException;
+import org.supercsv.cellprocessor.Optional;
 import org.supercsv.cellprocessor.ParseDouble;
 import org.supercsv.cellprocessor.constraint.DMinMax;
 import org.supercsv.cellprocessor.constraint.NotNull;
@@ -100,25 +101,6 @@ public class TopAnatAnalysis {
      * 
      */
     private final SpeciesService speciesService;
-
-    /**
-     * @return the cell processors
-     */
-    private static CellProcessor[] getCsvProcessors() {
-
-        final CellProcessor[] processors = new CellProcessor[] { 
-                new NotNull(), // AnatEntity Id
-                new NotNull(), // AnatEntity Name
-                new NotNull(new ParseDouble()), // Annotated
-                new NotNull(new ParseDouble()), // Significant
-                new NotNull(new ParseDouble()), // Expected
-                new NotNull(new ParseDouble()), // fold enrich
-                new NotNull(new DMinMax(0d,1d)), // p
-                new NotNull(new DMinMax(0d,1d)) // fdr
-        };
-
-        return processors;
-    }
 
     /**
      * @param params
@@ -321,7 +303,16 @@ public class TopAnatAnalysis {
                 new CsvMapReader(new FileReader(resultFile), 
                         CsvPreference.TAB_PREFERENCE)) {
             String[] header = mapReader.getHeader(true);
-            final CellProcessor[] processors = getCsvProcessors();
+            CellProcessor[] processors = new CellProcessor[] { 
+                    new NotNull(), // AnatEntity Id
+                    new Optional(), // AnatEntity Name
+                    new NotNull(new ParseDouble()), // Annotated
+                    new NotNull(new ParseDouble()), // Significant
+                    new NotNull(new ParseDouble()), // Expected
+                    new NotNull(new ParseDouble()), // fold enrich
+                    new NotNull(new DMinMax(0d,1d)), // p
+                    new NotNull(new DMinMax(0d,1d)) // fdr
+            };
             Map<String, Object> row;
             if(header != null){
                 while( (row = mapReader.read(header, processors)) != null ) {

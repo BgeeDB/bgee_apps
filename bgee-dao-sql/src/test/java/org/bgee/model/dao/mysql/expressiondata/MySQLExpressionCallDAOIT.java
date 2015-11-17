@@ -582,19 +582,13 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         //now with some filtering of duplicates. Request only anatEntityId and Affy data
         orderedExpectedExprCalls = Arrays.asList(
                 new ExpressionCallTO(null, null, "Anat_id6", null,  
-                        DataState.LOWQUALITY, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO(null, null, "Anat_id6", null,  
                         DataState.HIGHQUALITY, null, null, null, null, null, null, null, null),
                 new ExpressionCallTO(null, null, "Anat_id1", null,  
                         DataState.HIGHQUALITY, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO(null, null, "Anat_id1", null,  
-                        DataState.NODATA, null, null, null, null, null, null, null, null), 
                 new ExpressionCallTO(null, null, "Anat_id7", null,  
                         DataState.LOWQUALITY, null, null, null, null, null, null, null, null), 
                 new ExpressionCallTO(null, null, "Anat_id11", null,  
                         DataState.HIGHQUALITY, null, null, null, null, null, null, null, null), 
-                new ExpressionCallTO(null, null, "Anat_id11", null,  
-                        DataState.NODATA, null, null, null, null, null, null, null, null), 
                 new ExpressionCallTO(null, null, "Anat_id2", null,  
                         DataState.HIGHQUALITY, null, null, null, null, null, null, null, null), 
                 new ExpressionCallTO(null, null, "Anat_id3", null,  
@@ -898,19 +892,13 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
             //now with some filtering of duplicates. Request only anatEntityId and Affy data
             orderedExpectedExprCalls = Arrays.asList(
                 new ExpressionCallTO(null, null, "Anat_id6", null,  
-                        DataState.LOWQUALITY, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO(null, null, "Anat_id6", null,  
                         DataState.HIGHQUALITY, null, null, null, null, null, null, null, null),
                 new ExpressionCallTO(null, null, "Anat_id1", null,  
                         DataState.HIGHQUALITY, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO(null, null, "Anat_id1", null,  
-                        DataState.NODATA, null, null, null, null, null, null, null, null), 
                 new ExpressionCallTO(null, null, "Anat_id7", null,  
                         DataState.LOWQUALITY, null, null, null, null, null, null, null, null), 
                 new ExpressionCallTO(null, null, "Anat_id11", null,  
                         DataState.HIGHQUALITY, null, null, null, null, null, null, null, null), 
-                new ExpressionCallTO(null, null, "Anat_id11", null,  
-                        DataState.NODATA, null, null, null, null, null, null, null, null), 
                 new ExpressionCallTO(null, null, "Anat_id2", null,  
                         DataState.HIGHQUALITY, null, null, null, null, null, null, null, null), 
                 new ExpressionCallTO(null, null, "Anat_id3", null,  
@@ -1201,9 +1189,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         // Generate manually expected result
         expectedExprCalls = new HashSet<>(Arrays.asList(
                 new ExpressionCallTO(null, "ID1", null, null, null, null, null, null, 
-                        null, null, null, null, true),
-                new ExpressionCallTO(null, "ID1", null, null, null, null, null, null, 
-                        null, null, null, null, false)));
+                        null, null, null, null, true)));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), 
                 true, false, null, null, 

@@ -162,10 +162,17 @@ public class TopAnatAnalysis {
         List<TopAnatResults.TopAnatResultRow> resultRows = this.getResultRows();
         if (resultRows != null){
             return log.exit(new TopAnatResults(
-                    resultRows,this.params));
+                    resultRows,this.params,
+                    this.getResultFileName(),
+                    this.getResultPDFFileName(),
+                    this.getRScriptOutputFileName(),
+                    this.getParamsOutputFileName(),
+                    this.getAnatEntitiesNamesFileName(),
+                    this.getAnatEntitiesRelationshipsFileName(),
+                    this.getGeneToAnatEntitiesFileName(),
+                    this.getRScriptOutputFileName()));
         }
         return null;
-
     }
 
     /***

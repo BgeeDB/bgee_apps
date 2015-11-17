@@ -26,7 +26,7 @@ public class TopAnatResults {
         private final float pval;
         
         private final float fdr;
-        
+                
         public TopAnatResultRow(Map<String,Object> line){
             this.anatEntitiesId = line.get("OrganId").toString();
             this.anatEntitiesName = line.get("OrganName").toString();
@@ -69,17 +69,44 @@ public class TopAnatResults {
         public float getFdr() {
             return fdr;
         }
-        
+                
     }
 
     private final List<TopAnatResults.TopAnatResultRow> rows; 
 
     private final TopAnatParams topAnatParams; 
+    
+    private final String resultFileName;
+
+    private final String resultPDFFileName;
+    
+    private final String rScriptOutputFileName;
+
+    private final String paramsOutputFileName;
+    
+    private final String anatEntitiesFilename;
+    
+    private final String anatEntitiesRelationshipsFileName;
+    
+    private final String geneToAnatEntitiesFileName;
+    
+    private final String rScriptConsoleFileName;
 
     public TopAnatResults(List<TopAnatResults.TopAnatResultRow> rows,
-            TopAnatParams topAnatParams){
+            TopAnatParams topAnatParams,String resultFileName,
+            String resultPDFFileName, String rScriptOutputFileName, String  paramsOutputFileName,
+            String anatEntitiesFilename, String anatEntitiesRelationshipsFileName, 
+            String geneToAnatEntitiesFileName, String rScriptConsoleFileName){
         this.rows = Collections.unmodifiableList(rows);
         this.topAnatParams = topAnatParams;
+        this.resultFileName = resultFileName;
+        this.resultPDFFileName = resultPDFFileName;
+        this.rScriptOutputFileName = rScriptOutputFileName;
+        this.rScriptConsoleFileName = rScriptConsoleFileName;
+        this.paramsOutputFileName = paramsOutputFileName;
+        this.anatEntitiesFilename = anatEntitiesFilename;
+        this.anatEntitiesRelationshipsFileName = anatEntitiesRelationshipsFileName;
+        this.geneToAnatEntitiesFileName = geneToAnatEntitiesFileName;
     }
 
     public List<TopAnatResultRow> getRows() {
@@ -88,6 +115,38 @@ public class TopAnatResults {
 
     public TopAnatParams getTopAnatParams() {
         return topAnatParams;
+    }
+    
+    public String getResultFileName() {
+        return resultFileName;
+    }
+
+    public String getResultPDFFileName() {
+        return resultPDFFileName;
+    }
+
+    public String getrScriptOutputFileName() {
+        return rScriptOutputFileName;
+    }
+
+    public String getParamsOutputFileName() {
+        return paramsOutputFileName;
+    }
+
+    public String getAnatEntitiesFilename() {
+        return anatEntitiesFilename;
+    }
+
+    public String getAnatEntitiesRelationshipsFileName() {
+        return anatEntitiesRelationshipsFileName;
+    }
+
+    public String getGeneToAnatEntitiesFileName() {
+        return geneToAnatEntitiesFileName;
+    }
+
+    public String getrScriptConsoleFileName() {
+        return rScriptConsoleFileName;
     }
 
 }

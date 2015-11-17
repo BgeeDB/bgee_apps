@@ -1,6 +1,7 @@
 package org.bgee.view.html;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -91,9 +92,7 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
     }
 
     @Override
-    public void sendGeneListReponse(Map<Species, Long> speciesToGeneCount, String selectedSpeciesId,
-            Set<DevStage> validStages, Set<String> submittedGeneIds, Set<String> undeterminedGeneIds,
-            String msg) {
+    public void sendGeneListReponse(LinkedHashMap<String, Object> data, String msg) {
         throw log.throwing(new UnsupportedOperationException("Not available for HTML display"));
     }
 

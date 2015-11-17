@@ -3,16 +3,23 @@ package org.bgee.view.json;
 import static org.mockito.Mockito.mock;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.TestAncestor;
 import org.bgee.controller.BgeeProperties;
+import org.bgee.controller.CommandTopAnat.GeneListResponse;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.species.Species;
@@ -44,31 +51,44 @@ public class JsonTopAnatDisplayTest extends TestAncestor {
     @Test
     public void shouldSendGeneListReponse() throws IllegalArgumentException, IOException {
 
-        Map<Species, Long> speciesToGeneCount = new HashMap<>();
-        speciesToGeneCount.put(new Species("9606", "human", "", "Homo", "sapiens", "genome9606"), 2L);
-        speciesToGeneCount.put(new Species("10090", "mouse", "", "Mus", "musculus", "genome10090"), 1L);
+        LinkedHashMap<String, Long> speciesToGeneCount = new LinkedHashMap<>();
+        speciesToGeneCount.put("9606", 2L);
+        speciesToGeneCount.put("10090", 1L);
         
+        TreeMap<String, Species> detectedSpecies = new TreeMap<>();
+        detectedSpecies.put("9606", new Species("9606", "human", "", "Homo", "sapiens", "genome9606"));
+        detectedSpecies.put("10090", new Species("10090", "mouse", "", "Mus", "musculus", "genome10090"));
+
         String selectedSpeciesId = "9606";
         
-        Set<DevStage> validStages = new HashSet<DevStage>();
+        List<DevStage> validStages = new ArrayList<DevStage>();
         validStages.add(new DevStage("2443", "embryo", null, 1, 2, 1, false, true));
         validStages.add(new DevStage("8967786", "adult", "adult desc", 3, 4, 1, false, true));
 
-        Set<String> undeterminedGeneIds = new HashSet<String>(Arrays.asList("GeneA", "GeneB"));
-        Set<String> submittedGeneIds = new HashSet<String>(
+        TreeSet<String> undeterminedGeneIds = new TreeSet<>(Arrays.asList("GeneA", "GeneB"));
+        TreeSet<String> submittedGeneIds = new TreeSet<>(
                 Arrays.asList("GeneA", "GeneB", "GeneC", "GeneD"));
-
-        int statusCode = 0;
         
         String msg= "blablabla";
 
         //TODO: verify output by telling the HttpServletResponse to return a custom PrintWriter, 
         //see JsonDisplayParentTest for an example.
         BgeeProperties props = mock(BgeeProperties.class);
+        RequestParameters requestParam = new RequestParameters();
         JsonTopAnatDisplay display = new JsonTopAnatDisplay(getMockHttpServletResponse(), 
-                new RequestParameters(), props, mock(JsonHelper.class), mock(JsonFactory.class));
+                requestParam, props, mock(JsonHelper.class), mock(JsonFactory.class));
+        
+        LinkedHashMap<String, Object> data = new LinkedHashMap<>();
+        data.put(requestParam.getUrlParametersInstance().getParamForegroundList().getName(),
+                new GeneListResponse(
+                        speciesToGeneCount, detectedSpecies, selectedSpeciesId, 
+                        Optional.ofNullable(validStages)
+                            .map(stages -> stages.stream()
+                            .sorted(Comparator.naturalOrder())
+                            .collect(Collectors.toList()))
+                            .orElse(new ArrayList<>()), 
+                        submittedGeneIds, undeterminedGeneIds));
 
-        display.sendGeneListReponse(speciesToGeneCount, selectedSpeciesId, 
-                validStages, submittedGeneIds, undeterminedGeneIds, msg);
+        display.sendGeneListReponse(data, msg);
     }
 }

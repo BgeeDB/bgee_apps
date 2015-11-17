@@ -7,16 +7,18 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.InvalidRequestException;
@@ -29,6 +31,7 @@ import org.bgee.model.species.Species;
 import org.bgee.model.topanat.TopAnatController;
 import org.bgee.model.topanat.TopAnatParams;
 import org.bgee.model.topanat.TopAnatResults;
+import org.bgee.view.JsonHelper;
 import org.bgee.view.TopAnatDisplay;
 import org.bgee.view.ViewFactory;
 
@@ -52,15 +55,14 @@ public class CommandTopAnat extends CommandParent {
     private final static Integer DEV_STAGE_LEVEL = 2;
     
     /**
-     * Comparator sorting gene count by species map by gene count then species ID
+     * A {@code String} that is the label of the count of genes whose the species is undetermined. 
      */
-    private final static Comparator<Entry<String, Long>> SPECIES_COUNT_COMPARATOR =
-            (Entry<String, Long> o1, Entry<String, Long> o2) -> {
-                if (o2.getValue().equals(o1.getValue())) {
-                    return o2.getKey().compareTo(o1.getKey()); 
-                } 
-                return o1.getValue().compareTo(o2.getValue());
-            };
+    private final static String UNDETERMINED_SPECIES_LABEL = "UNDETERMINED";
+
+    /**
+     * A {@code List} of {@code String}s that are messages to be displayed.
+     */
+    private static List<String> messages;
 
     /**
      * Constructor providing necessary dependencies. 
@@ -78,6 +80,7 @@ public class CommandTopAnat extends CommandParent {
     public CommandTopAnat(HttpServletResponse response, RequestParameters requestParameters, 
             BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory) {
         super(response, requestParameters, prop, viewFactory, serviceFactory);
+        messages = new ArrayList<>();
     }
 
     @Override
@@ -223,61 +226,56 @@ public class CommandTopAnat extends CommandParent {
         log.entry(display);
 
         //retrieve possible parameters for this query
-        final String fgFile = this.requestParameters.getForegroundFile();
-        final String bgFile = this.requestParameters.getBackgroundFile();
         final List<String> fgList = Collections.unmodifiableList(Optional.ofNullable(
                 this.requestParameters.getForegroundList()).orElse(new ArrayList<>()));
         final List<String> bgList = Collections.unmodifiableList(Optional.ofNullable(
                 this.requestParameters.getBackgroundList()).orElse(new ArrayList<>()));
         
         //sanity checks
-        if (StringUtils.isBlank(fgFile) && StringUtils.isBlank(bgFile) && 
-            fgList.isEmpty() && bgList.isEmpty()) {
-            throw log.throwing(new InvalidRequestException("A gene ID list must be provided "
-                    + "through either file upload or request parameter."));
-        }
-        if (StringUtils.isNotBlank(fgFile) && StringUtils.isNotBlank(bgFile) || 
-            !fgList.isEmpty() && !bgList.isEmpty()) {
-            throw log.throwing(new InvalidRequestException("It is not possible to submit both "
-                    + "a foreground and a background gene ID list at the same time "
-                    + "when requesting information about it."));
-        }
-        if ((StringUtils.isNotBlank(fgFile) || StringUtils.isNotBlank(bgFile)) && 
-            (!fgList.isEmpty() || !bgList.isEmpty())) {
-            throw log.throwing(new InvalidRequestException("It is not possible to submit a gene ID list "
-                    + "through both file upload and request parameter at the same time"));
+        if (fgList.isEmpty() && bgList.isEmpty()) {
+            throw log.throwing(new InvalidRequestException("A gene ID list must be provided"));
         }
         
         //OK, start processing the query. First, retrieve the gene list.
-        String fileToUse = null;
-        if (StringUtils.isNotBlank(fgFile)) {
-            fileToUse = fgFile;
-        } else if (StringUtils.isNotBlank(bgFile)) {
-            fileToUse = bgFile;
+        LinkedHashMap<String, Object> data = new LinkedHashMap<>();
+        if (!fgList.isEmpty()) {
+            data.put(
+                    this.requestParameters.getUrlParametersInstance().getParamForegroundList().getName(),
+                    this.getGeneResponse(fgList, 
+                            this.requestParameters.getUrlParametersInstance().getParamForegroundList().getName()));
+        } 
+        if (!bgList.isEmpty()) {
+            data.put(
+                    this.requestParameters.getUrlParametersInstance().getParamBackgroundList().getName(),
+                    this.getGeneResponse(bgList,
+                            this.requestParameters.getUrlParametersInstance().getParamBackgroundList().getName()));
         }
 
-        Set<String> submittedGeneIds = null;
-        boolean isFileUpdoad = false;
-        if (fileToUse != null) {
-            isFileUpdoad = true;
-            submittedGeneIds = this.getGeneIdsFromFile(fileToUse);
-            if (submittedGeneIds.isEmpty()) {
-                throw log.throwing(new InvalidRequestException("A file supposed to contain a gene ID list "
-                        + "was provided, but it is empty or incorrectly formatted."));
-            }
-        } else if (!fgList.isEmpty()) {
-            submittedGeneIds = new HashSet<>(fgList);
-        } else if (!bgList.isEmpty()) {
-            submittedGeneIds = new HashSet<>(bgList);
-        } else {
+        // Send response
+        display.sendGeneListReponse(data, messages.stream().collect(Collectors.joining("\n")));
+        log.exit();
+    }
+
+    /**
+     * Build a {@code GeneListResponse}.
+     * 
+     * @param geneList  A {@code List} of {@code String}s that are IDs of genes.
+     * @param paramName A {@code String} that is the name of the parameter.
+     * @return          The {@code GeneListResponse} built from 
+     *                  {@code geneList} and {@code paramName}.
+     */
+    private GeneListResponse getGeneResponse(List<String> geneList, String paramName) {
+        log.entry(geneList, paramName);
+        
+        if (geneList.isEmpty()) {
             throw log.throwing(new AssertionError("Code supposed to be unreachable."));
         }
-        
 
+        TreeSet<String> geneSet = new TreeSet<>(geneList);
         // Load valid submitted gene IDs
-        final Set<Gene> validGenes = new HashSet<>(this.getGenes(null, submittedGeneIds));
+        final Set<Gene> validGenes = new HashSet<>(this.getGenes(null, geneSet));
         // Identify undetermined gene IDs
-        final Set<String> undeterminedGeneIds = new HashSet<>(submittedGeneIds);
+        final Set<String> undeterminedGeneIds = new HashSet<>(geneSet);
         undeterminedGeneIds.removeAll(validGenes.stream()
                 .map(Gene::getId)
                 .collect(Collectors.toSet()));
@@ -309,31 +307,62 @@ public class CommandTopAnat extends CommandParent {
         }
 
         // Determine message
-        String msg = this.getGeneUploadResponseMessage(submittedGeneIds, speciesToGeneCount, 
-                undeterminedGeneIds);
-
-        // We do not return submitted gene IDs if they were not extracted from a file.
-        if (!isFileUpdoad) {
-            submittedGeneIds = null;
-        }
+        messages.add(this.getGeneUploadResponseMessage(geneSet, speciesToGeneCount, 
+                undeterminedGeneIds, paramName));
         
-        // Send response
-        display.sendGeneListReponse(speciesToGeneCount, selectedSpeciesId,
-                validStages, submittedGeneIds, undeterminedGeneIds, msg);
-        log.exit();
-    }
+        //sanity checks
+        if (speciesToGeneCount.isEmpty() && undeterminedGeneIds.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "Some gene information to display must be provided."));
+        }
 
-    /**
-     * Get submitted gene IDs from a file.
-     * 
-     * @param fileName  A {@code String} that is the path to the file to retrieve gene IDs from.
-     * @return          The {@code Set} of {@code String}s that are submitted gene IDs.
-     */
-    private Set<String> getGeneIdsFromFile(String fileName) {
-        log.entry(fileName);
-        //TODO: sanity check on the size of the file.
-        //TODO: how to access to uploaded file on Tomcat?
-        return null;
+        //Transform speciesToGeneCount into a Map species ID -> gene count, and add
+        //the invalid gene count, associated to a specific key, and make it a LinkedHashMap,
+        //for sorted and predictable responses
+        LinkedHashMap<String, Long> responseSpeciesIdToGeneCount = Optional.of(speciesToGeneCount)
+                .map(map -> {
+                    //create a map species ID -> gene count
+                    Map<String, Long> newMap = map.entrySet().stream()
+                            .collect(Collectors.toMap(e -> e.getKey().getId(), e -> e.getValue()));
+                    //add an entry for undetermined genes
+                    if (!undeterminedGeneIds.isEmpty()) {
+                        newMap.put(UNDETERMINED_SPECIES_LABEL, Long.valueOf(undeterminedGeneIds.size()));
+                    }
+                    return newMap;
+                })
+                .get().entrySet().stream()
+                //sort in descending order of gene count (and in case of equality,
+                //by ascending order of key, for predictable message generation)
+                .sorted((e1, e2) -> {
+                    if (e1.getValue().equals(e2.getValue())) {
+                        return e1.getKey().compareTo(e2.getKey());
+                    }
+                    return e2.getValue().compareTo(e1.getValue());
+                }).collect(Collectors.toMap(Entry::getKey, Entry::getValue,
+                    (v1, v2) -> {throw log.throwing(new IllegalStateException("no key collision possible"));},
+                    LinkedHashMap::new));
+
+        return log.exit(new GeneListResponse(
+                responseSpeciesIdToGeneCount,
+                //provide a TreeMap species ID -> species
+                speciesToGeneCount.keySet().stream().collect(Collectors.toMap(
+                        spe -> spe.getId(), spe -> spe,
+                        (v1, v2) -> {throw log.throwing(new IllegalStateException("No key collision possible"));},
+                        TreeMap::new)),
+                selectedSpeciesId,
+                //provide a List of DevStages sorted by their natural ordering
+                //(= by left bound = by temporal ordering)
+                Optional.ofNullable(validStages)
+                    .map(stages -> stages.stream()
+                    .sorted(Comparator.naturalOrder())
+                    .collect(Collectors.toList()))
+                    .orElse(new ArrayList<>()),
+                //SortedSet of submitted gene IDs
+                geneSet,
+                //SortedSet of undetermined gene IDs
+                Optional.ofNullable(undeterminedGeneIds)
+                    .map(TreeSet<String>::new)
+                    .orElse(new TreeSet<>())));
     }
 
     /**
@@ -349,7 +378,8 @@ public class CommandTopAnat extends CommandParent {
      * @return                      A {@code String} that is the message to display.
      */
     private String getGeneUploadResponseMessage(Set<String> submittedGeneIds, 
-            Map<Species, Long> speciesToGeneCount, Set<String> undeterminedGeneIds) {
+            Map<Species, Long> speciesToGeneCount, Set<String> undeterminedGeneIds,
+            String paramName) {
         log.entry(submittedGeneIds, speciesToGeneCount, undeterminedGeneIds);
         
         StringBuilder msg = new StringBuilder();
@@ -371,9 +401,10 @@ public class CommandTopAnat extends CommandParent {
         if (!undeterminedGeneIds.isEmpty()) {
             msg.append(", ");
             msg.append(undeterminedGeneIds.size());
-            msg.append(" not found in Bgee");
+            msg.append(" not found");
         }
-        msg.append(".");
+        msg.append(" in Bgee for ");
+        msg.append(paramName);
         
         return log.exit(msg.toString());
     }
@@ -427,4 +458,168 @@ public class CommandTopAnat extends CommandParent {
                 .collect(Collectors.toSet()));
     }
 
+    /**
+     * A convenient class to be passed to {@link JsonHelper} for gene list upload responses. 
+     */
+    public static class GeneListResponse {
+        /**
+         * See {@link #getGeneCount()}.
+         */
+        private final LinkedHashMap<String, Long> geneCount;
+        /**
+         * See {@link #getDetectedSpecies()}.
+         */
+        private final TreeMap<String, Species> detectedSpecies;
+        /**
+         * See {@link #getSelectedSpecies()}.
+         */
+        private final String selectedSpecies;
+        /**
+         * See {@link #getStages()}.
+         */
+        private final List<DevStage> stages;
+        /**
+         * See {@link #getSubmittedGeneIds()}.
+         */
+        private final TreeSet<String> submittedGeneIds;
+        /**
+         * See {@link #getUndeterminedGeneIds()}.
+         */
+        private final TreeSet<String> undeterminedGeneIds;
+        
+        /**
+         * Constructor of {@code GeneListResponse}. All {@code Collection}s or {@code Map}s
+         * have a predictable iteration order, for predictable and consistent responses.
+         * 
+         * @param geneCount             A {@code LinkedHashMap} where keys are {@code String}s
+         *                              corresponding to species IDs, the associated value being
+         *                              a {@code Long} that is the gene count on the species.
+         * @param detectedSpecies       A {@code List} of {@code Species} detected in the gene list uploaded.
+         * @param selectedSpecies       A {@code String} representing the ID of the selected species.
+         * @param stages                A {@code List} of {@code DevStage}s that are
+         *                              valid dev. stages for {@code selectedSpecies}.
+         * @param submittedGeneIds      A {@code TreeSet} of {@code String}s that are submitted gene IDs
+         *                              by the user.
+         * @param undeterminedGeneIds   A {@code TreeSet} of {@code String}s that are gene IDs
+         *                              with undetermined species.
+         */
+        public GeneListResponse(LinkedHashMap<String, Long> geneCount,
+                TreeMap<String, Species> detectedSpecies,
+                String selectedSpecies, List<DevStage> stages, TreeSet<String> submittedGeneIds,
+                TreeSet<String> undeterminedGeneIds) {
+            log.entry(geneCount, detectedSpecies, selectedSpecies, stages,
+                    submittedGeneIds, undeterminedGeneIds);
+            this.geneCount= geneCount;
+            this.detectedSpecies = detectedSpecies;
+            this.selectedSpecies = selectedSpecies;
+            this.stages = stages;
+            this.submittedGeneIds = submittedGeneIds;
+            this.undeterminedGeneIds = undeterminedGeneIds;
+            log.exit();
+        }
+        
+        /**
+         * @return  The {@code Map} where keys are {@code String}s corresponding species IDs,
+         *          the associated value being a {@code Long} that is the gene count on the species.
+         */
+        public LinkedHashMap<String, Long> getGeneCount() {
+            return this.geneCount;
+        }
+        /**
+         * @return  The {@code TreeMap} where keys are {@code String}s corresponding 
+         *          to IDs of detected species, the associated value being the corresponding 
+         *          {@code Species} object.
+         */
+        public TreeMap<String, Species> getDetectedSpecies() {
+            return this.detectedSpecies;
+        }
+        /**
+         * @return  The {@code String} representing the ID of the selected species.
+         */
+        public String getSelectedSpecies() {
+            return this.selectedSpecies;
+        }
+        /**
+         * @return The {@code Set} of {@code DevStage}s that are 
+         *          valid dev. stages for {@code selectedSpecies}.
+         */
+        public List<DevStage> getStages() {
+            return this.stages;
+        }
+        /**
+         * @return  The {@code Set} of {@code String}s that are submitted gene IDs by the user.
+         */
+        public TreeSet<String> getSubmittedGeneIds() {
+            return this.submittedGeneIds;
+        }
+        /**
+         * @return  The {@code Set} of {@code String}s that are gene IDs with undetermined species.
+         */
+        public TreeSet<String> getUndeterminedGeneIds() {
+            return this.undeterminedGeneIds;
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((detectedSpecies == null) ? 0 : detectedSpecies.hashCode());
+            result = prime * result + ((geneCount == null) ? 0 : geneCount.hashCode());
+            result = prime * result + ((selectedSpecies == null) ? 0 : selectedSpecies.hashCode());
+            result = prime * result + ((stages == null) ? 0 : stages.hashCode());
+            result = prime * result + ((submittedGeneIds == null) ? 0 : submittedGeneIds.hashCode());
+            result = prime * result + ((undeterminedGeneIds == null) ? 0 : undeterminedGeneIds.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            GeneListResponse other = (GeneListResponse) obj;
+            if (detectedSpecies == null) {
+                if (other.detectedSpecies != null)
+                    return false;
+            } else if (!detectedSpecies.equals(other.detectedSpecies))
+                return false;
+            if (geneCount == null) {
+                if (other.geneCount != null)
+                    return false;
+            } else if (!geneCount.equals(other.geneCount))
+                return false;
+            if (selectedSpecies == null) {
+                if (other.selectedSpecies != null)
+                    return false;
+            } else if (!selectedSpecies.equals(other.selectedSpecies))
+                return false;
+            if (stages == null) {
+                if (other.stages != null)
+                    return false;
+            } else if (!stages.equals(other.stages))
+                return false;
+            if (submittedGeneIds == null) {
+                if (other.submittedGeneIds != null)
+                    return false;
+            } else if (!submittedGeneIds.equals(other.submittedGeneIds))
+                return false;
+            if (undeterminedGeneIds == null) {
+                if (other.undeterminedGeneIds != null)
+                    return false;
+            } else if (!undeterminedGeneIds.equals(other.undeterminedGeneIds))
+                return false;
+            return true;
+        }
+
+        @Override
+        public String toString() {
+            return "Gene count: " + getGeneCount() + " - Detected species: " + getDetectedSpecies()
+                    + " - Selected species: " + getSelectedSpecies() + " - Stages: " + getStages()
+                    + " - Submitted gene IDs: " + getSubmittedGeneIds()
+                    + " - Undetermined gene IDs: " + getUndeterminedGeneIds();
+        }
+    }
 }

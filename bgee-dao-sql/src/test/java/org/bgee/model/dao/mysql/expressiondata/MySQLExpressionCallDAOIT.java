@@ -1154,25 +1154,32 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                             Arrays.asList("Anat_id6", "Anat_id1"), Arrays.asList("Stage_id8"))));
             // Generate manually expected result
             List<ExpressionCallTO> orderedExpectedExprCalls = Arrays.asList(
-                new ExpressionCallTO("ID1__Anat_id6__Stage_id8", "ID1", "Anat_id6", "Stage_id8", 
+                new ExpressionCallTO(null, null, "Anat_id6", "Stage_id8", 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
                         true, true, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("ID1__Anat_id1__Stage_id8", "ID1", "Anat_id1", "Stage_id8", 
+                new ExpressionCallTO(null, null, "Anat_id1", "Stage_id8", 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
                         true, true, OriginOfLine.DESCENT, OriginOfLine.SELF, false));
             //No ordering requested, put in a Set
             Set<ExpressionCallTO> unorderedExpectedExprCalls = new HashSet<>(orderedExpectedExprCalls);
             // Compare
-            continuer en utilisan que anat et stage pour avoir le filtering
             MySQLExpressionCallTOResultSet rs = 
                     (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), 
-                            null, true, true, null, null, null, null);
+                            null, true, true, null, null, 
+                            EnumSet.allOf(ExpressionCallDAO.Attribute.class).stream()
+                                .filter(attr -> !attr.equals(ExpressionCallDAO.Attribute.ID) && 
+                                        !attr.equals(ExpressionCallDAO.Attribute.GENE_ID))
+                                .collect(Collectors.toCollection(() -> 
+                                         EnumSet.noneOf(ExpressionCallDAO.Attribute.class))), 
+                            null);
             //no ordering requested, put results in a Set
             Set<ExpressionCallTO> unorderedExpressions = new HashSet<>(rs.getAllTOs());
             assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + unorderedExpectedExprCalls 
                     + ", but was: " + unorderedExpressions, 
                     TOComparator.areTOCollectionsEqual(unorderedExpectedExprCalls, unorderedExpressions));
-            assertFalse("Incorrect filtering of duplicates", rs.isFilterDuplicates());
+            //the filtering should be activated, because if we don't retrieve a gene ID or an expression ID, 
+            //then the iterations of the LIMIT sub-query could return redundant results
+            assertTrue("Incorrect filtering of duplicates", rs.isFilterDuplicates());
             assertTrue("Incorrect use of the LIMIT feature", rs.isUsingLimitFeature());
             
             //TODO: test with some ordering

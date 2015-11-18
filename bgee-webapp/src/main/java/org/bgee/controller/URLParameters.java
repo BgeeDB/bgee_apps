@@ -95,7 +95,7 @@ public class URLParameters {
      * of a list.
      */
     protected static final String DEFAULT_LIST_FORMAT = 
-            "^[\\w,.;:\\-_'" + DEFAULT_SEPARATORS.stream()
+            "^[\\w ,.;:\\-_'" + DEFAULT_SEPARATORS.stream()
                     .map(Pattern::quote).collect(Collectors.joining()) + "]*$";
 
     // *************************************

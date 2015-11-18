@@ -24,9 +24,6 @@ import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.CallDAOFilter;
 import org.bgee.model.dao.api.expressiondata.DAOConditionFilter;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
-import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.Attribute;
-import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
-import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.OrderingAttribute;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO.OriginOfLine;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallParams;
 import org.bgee.model.dao.mysql.MySQLDAO;
@@ -162,9 +159,7 @@ implements ExpressionCallDAO {
                 .map(e -> new LinkedHashSet<>(e)).orElse(new LinkedHashSet<>());
         //attributes
         Set<ExpressionCallDAO.Attribute> originalAttrs = Optional.ofNullable(attributes)
-                .map(e -> EnumSet.copyOf(e)).orElse(EnumSet.allOf(ExpressionCallDAO.Attribute.class))
-                //TODO: to remove when ready to adapt integration tests. Do TODO below first.
-                .stream().filter(e -> !e.isRankAttribute()).collect(Collectors.toSet());
+                .map(e -> EnumSet.copyOf(e)).orElse(EnumSet.allOf(ExpressionCallDAO.Attribute.class));
         //ordering attributes
         LinkedHashMap<ExpressionCallDAO.OrderingAttribute, DAO.Direction> clonedOrderingAttrs = 
                 Optional.ofNullable(orderingAttributes)

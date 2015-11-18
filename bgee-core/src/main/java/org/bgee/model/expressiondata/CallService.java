@@ -21,9 +21,8 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOManager;
-import org.bgee.model.dao.api.expressiondata.CallDAO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
-import org.bgee.model.dao.api.expressiondata.CallDAOFilter.ExpressionCallDAOFilter;
+import org.bgee.model.dao.api.expressiondata.CallDAOFilter;
 import org.bgee.model.dao.api.expressiondata.DAOConditionFilter;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
@@ -76,7 +75,7 @@ public class CallService extends Service {
 //******************
     
     public static enum Attribute implements Service.Attribute {
-        GENE_ID, ANAT_ENTITY_ID, DEV_STAGE_ID, DATA_QUALITY, CALL_DATA, 
+        GENE_ID, ANAT_ENTITY_ID, DEV_STAGE_ID, GLOBAL_DATA_QUALITY, CALL_DATA, 
         GLOBAL_ANAT_PROPAGATION, GLOBAL_STAGE_PROPAGATION, GLOBAL_OBSERVED_DATA, 
         CALL_DATA_OBSERVED_DATA;
     }
@@ -170,7 +169,7 @@ public class CallService extends Service {
         for (CallFilter<?> filter: clonedFilters) { 
             //dispatch the CallData per DAO needed. 
             Set<Stream<? extends Call<?, ?>>> streamsJoinOr = new HashSet<>();
-            streamsJoinOr.addAll(this.performsExpressionQueries(speciesId, filter, clonedAttrs, 
+            streamsJoinOr.add(this.performsExpressionQueries(speciesId, filter, clonedAttrs, 
                     clonedOrderingAttrs));
             assert streamsJoinOr.size() > 0;
             
@@ -197,62 +196,27 @@ public class CallService extends Service {
     //*************************************************************************
     // METHODS PERFORMING THE QUERIES TO THE DAOs
     //*************************************************************************
-    private Set<Stream<ExpressionCall>> performsExpressionQueries(String speciesId, 
+    private Stream<ExpressionCall> performsExpressionQueries(String speciesId, 
             CallFilter<?> callFilter, Set<Attribute> attributes, 
             LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes) {
         log.entry(speciesId, callFilter, attributes, orderingAttributes);
         
-        //dispatch ExpressionCallDatas between different propagation states requested, 
-        //to determine the ExpressionCallDAO parameters includeSubstructures, and includeSubStages.
-        //We use DataPropagation objects to do the dispatching, and we'll do one query 
-        //per DataPropagation.
-        Map<DataPropagation, Set<ExpressionCallData>> dispatchedCallData = 
+        //Extract only the CallData related to expression queries
+        Set<ExpressionCallData> exprCallData = 
                 callFilter.getCallDataFilters().stream()
-                
                 //consider only callData for the ExpressionCallDAO
                 .filter(callData -> Expression.EXPRESSED.equals(callData.getCallType()))
-                
-                .collect(Collectors
-                        //I don't know why, but javac doesn't manage to infer the correct types, 
-                        //while Eclipse does, so we type explicitly the method toMap
-                        .<CallData<?>, DataPropagation, Set<ExpressionCallData>>toMap(callData -> 
-                        //create a DataPropagation object as key, using only 
-                        //PropagationState.SELF and PropagationState.SELF_OR_DESCENDANT, 
-                        //to determine whether to include substructures/sub-stages
-                        new DataPropagation(Optional.ofNullable(
-                                    callData.getDataPropagation().getAnatEntityPropagationState())
-                                .orElse(PropagationState.SELF).equals(PropagationState.SELF)?
-                                        PropagationState.SELF: PropagationState.SELF_OR_DESCENDANT, 
-                                Optional.ofNullable(
-                                    callData.getDataPropagation().getDevStagePropagationState())
-                                .orElse(PropagationState.SELF).equals(PropagationState.SELF)?
-                                        PropagationState.SELF: PropagationState.SELF_OR_DESCENDANT), 
-                        
-                        //store the callData in a Set as value
-                        callData -> new HashSet<ExpressionCallData>(Arrays.asList(
-                                (ExpressionCallData) callData)),
-                        //merge in case of key collision
-                        (v1, v2) -> {
-                            Set<ExpressionCallData> merge = new HashSet<>(v1);
-                            merge.addAll(v2);
-                            return merge;
-                        })
-                );
+                .map(callData -> (ExpressionCallData) callData)
+                .collect(Collectors.toSet());
         
         //now, do one query for each combination of propagation states
         final ExpressionCallDAO dao = this.getDaoManager().getExpressionCallDAO();
-        return log.exit(dispatchedCallData.entrySet().stream()
-               
-                //perform one query to the DAO for each entry. From each of these queries,  
-                //we retrieve the Stream<ExpressionCallTO> returned by DAOResultSet.stream(), 
-                //and we map it to a Stream<ExpressionCall>. Then we collect the Streams into a Set 
-                //(without actually consuming them)
-                .map(entry -> 
-                    dao.getExpressionCalls(Arrays.asList(
-                        //generate an ExpressionCallDAOFilter from callFilter and its ExpressionCallDatas
-                        new ExpressionCallDAOFilter(
+        return log.exit(
+                dao.getExpressionCalls(Arrays.asList(
+                        //generate an ExpressionCallDAOFilter from callFilter 
+                        new CallDAOFilter(
                             //we will provide the gene IDs to the getExpressionCalls method 
-                            //as a global gene filter, not through the ExpressionCallDAOFilter. 
+                            //as a global gene filter, not through the CallDAOFilter. 
                             null, 
                             //species
                             Arrays.asList(speciesId), 
@@ -261,40 +225,38 @@ public class CallService extends Service {
                                 .map(condFilter -> new DAOConditionFilter(
                                         condFilter.getAnatEntitieIds(), 
                                         condFilter.getDevStageIds()))
-                                .collect(Collectors.toSet()), 
-                            //CallFilter
-                            entry.getValue().stream()
-                                .flatMap(callData -> mapCallDataToCallTOFilters(callData).stream())
                                 .collect(Collectors.toSet())
-                        )), 
+                        )),  
+                        //CallTOFilters
+                        exprCallData.stream()
+                            .flatMap(callData -> mapCallDataToExprCallTOFilters(callData).stream())
+                            .collect(Collectors.toSet()), 
                         //includeSubstructures
-                        !PropagationState.SELF.equals(entry.getKey().getAnatEntityPropagationState()), 
+                        !PropagationState.SELF.equals(callFilter.getDataPropagationFilter()
+                                .getAnatEntityPropagationState()), 
                         //includeSubStages
-                        !PropagationState.SELF.equals(entry.getKey().getDevStagePropagationState()), 
+                        !PropagationState.SELF.equals(callFilter.getDataPropagationFilter()
+                                .getDevStagePropagationState()), 
                         //global gene filter
                         callFilter.getGeneFilter().getGeneIds(), 
                         //no gene orthology requested
                         null, 
                         //Attributes
-                        convertServiceAttrsToExprDAOAttrs(attributes, entry.getValue().stream()
-                                .flatMap(callData -> callData.getDataType() != null? 
+                        convertServiceAttrsToExprDAOAttrs(attributes, exprCallData.stream()
+                                    .flatMap(callData -> callData.getDataType() != null? 
                                         EnumSet.of(callData.getDataType()).stream(): 
                                         EnumSet.allOf(DataType.class).stream())
-                                .collect(Collectors.toCollection(() -> EnumSet.noneOf(DataType.class)))), 
+                                    .collect(Collectors.toCollection(() -> EnumSet.noneOf(DataType.class)))), 
                         //OrderingAttributes
-                        convertServiceOrderingAttrsToDAOOrderingAttrs(orderingAttributes)
+                        convertServiceOrderingAttrsToExprDAOOrderingAttrs(orderingAttributes)
                     )
                     //retrieve the Stream resulting from the query. Note that the query is not executed 
                     //as long as the Stream is not consumed (lazy-loading).
                     .stream()
                     //allow mapping of the ExpressionCallTOs to ExpressionCalls. The Stream is still 
                     //not consumed at this point (map is a lazy operation as well). 
-                    .map(callTO -> mapCallTOToExpressionCall(callTO, entry.getKey()))
-                )
-                //generates a Set<Stream<ExpressionCall>>. Note that while 
-                //the Stream<Entry<DataPropagation, Set<ExpressionCallData>>> is consumed at this point, 
-                //the Streams stored in the resulting Set are not. 
-                .collect(Collectors.toSet()));
+                    .map(callTO -> mapCallTOToExpressionCall(callTO, callFilter.getDataPropagationFilter())
+                ));
     }
 
     //*************************************************************************
@@ -303,14 +265,24 @@ public class CallService extends Service {
     private static ExpressionCall mapCallTOToExpressionCall(ExpressionCallTO callTO, 
             DataPropagation daoDataPropagation) {
         log.entry(callTO, daoDataPropagation);
-        
-        if (Stream.of(daoDataPropagation.getAnatEntityPropagationState(), 
-                        daoDataPropagation.getDevStagePropagationState())
-                  .anyMatch(e -> !PropagationState.SELF.equals(e) && 
-                                 !PropagationState.SELF_OR_DESCENDANT.equals(e))) {
-            throw log.throwing(new IllegalArgumentException("Only the propagation states "
-                    + "SELF and SELF_OR_DESCENDANT are permitted for an ExpressionCallDAO query."));
-        }
+
+        //at this point, we cannot know the propagation status per data type, 
+        //the expression tables only store a global propagation status 
+        //over all data types. To infer the status per data type, 
+        //we would need two queries, one including sub-stages/subtructures, 
+        //and another one not including them. 
+        //so here, we provide the only thing we know: the propagation status 
+        //requested to the DAO.
+        DataPropagation callDataPropagation = new DataPropagation(
+                !PropagationState.SELF.equals(daoDataPropagation.getAnatEntityPropagationState())? 
+                        PropagationState.SELF_OR_DESCENDANT: PropagationState.SELF, 
+                !PropagationState.SELF.equals(daoDataPropagation.getDevStagePropagationState())? 
+                        PropagationState.SELF_OR_DESCENDANT: PropagationState.SELF, 
+                //No way to get any information about "observed data" per data type at this point, 
+                //unless both includeSubstructures and includeSubStages are false.
+                PropagationState.SELF.equals(daoDataPropagation.getAnatEntityPropagationState()) 
+                && PropagationState.SELF.equals(daoDataPropagation.getDevStagePropagationState())? 
+                        true: null);
         
         //infer the global Propagation status of the call, either from the CallTO 
         //if it contains this information, or from the PropagationState defined for the DAO.
@@ -336,14 +308,8 @@ public class CallService extends Service {
                     .map(entry -> new ExpressionCallData(Expression.EXPRESSED, 
                             convertDataStateToDataQuality(entry.getValue()), 
                             convertExprAttributeToDataType(entry.getKey()), 
-                            //at this point, we cannot know the propagation status per data type, 
-                            //the expression tables only store a global propagation status 
-                            //over all data types. To infer the status per data type, 
-                            //we would need two queries, one including sub-stages/subtructures, 
-                            //and another one not including them. 
-                            //so here, we provide the only thing we know: the propagation status 
-                            //requested to the DAO (using SELF or SELF_OR_DESCENDANT)
-                            daoDataPropagation))
+                            callDataPropagation))
+                    
                     .collect(Collectors.toSet())
                 ));
     }
@@ -420,7 +386,7 @@ public class CallService extends Service {
     //*************************************************************************
     // METHODS MAPPING CallDatas TO ExpressionCallTOs
     //*************************************************************************
-    private static Set<ExpressionCallTO> mapCallDataToCallTOFilters(ExpressionCallData callData) {
+    private static Set<ExpressionCallTO> mapCallDataToExprCallTOFilters(ExpressionCallData callData) {
         log.entry(callData);
         
         //if the dataType of the callData is null, then it means that it targets all data types. 
@@ -456,7 +422,7 @@ public class CallService extends Service {
             return new ExpressionCallTO(affyState, estState, inSituState, rnaSeqState, 
             convertPropagationStateToExprOrigin(callData.getDataPropagation().getAnatEntityPropagationState()), 
             convertPropagationStateToExprOrigin(callData.getDataPropagation().getDevStagePropagationState()), 
-            null);
+            callData.getDataPropagation().getIncludingObservedData());
         }).collect(Collectors.toSet()));
     }
 
@@ -476,8 +442,8 @@ public class CallService extends Service {
         }
     }
     
-    private static LinkedHashMap<CallDAO.OrderingAttribute, DAO.Direction> 
-        convertServiceOrderingAttrsToDAOOrderingAttrs(
+    private static LinkedHashMap<ExpressionCallDAO.OrderingAttribute, DAO.Direction> 
+        convertServiceOrderingAttrsToExprDAOOrderingAttrs(
             LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttrs) {
         log.entry(orderingAttrs);
         
@@ -485,13 +451,13 @@ public class CallService extends Service {
             entry -> {
                 switch (entry.getKey()) {
                 case GENE_ID: 
-                    return CallDAO.OrderingAttribute.GENE_ID;
+                    return ExpressionCallDAO.OrderingAttribute.GENE_ID;
                 case ANAT_ENTITY_ID: 
-                    return CallDAO.OrderingAttribute.ANAT_ENTITY_ID;
+                    return ExpressionCallDAO.OrderingAttribute.ANAT_ENTITY_ID;
                 case DEV_STAGE_ID: 
-                    return CallDAO.OrderingAttribute.STAGE_ID;
+                    return ExpressionCallDAO.OrderingAttribute.STAGE_ID;
                 case RANK: 
-                    return CallDAO.OrderingAttribute.MEAN_RANK;
+                    return ExpressionCallDAO.OrderingAttribute.MEAN_RANK;
                 default: 
                     throw log.throwing(new IllegalStateException("Unsupported OrderingAttributes from CallService: "
                             + entry.getKey()));
@@ -509,7 +475,7 @@ public class CallService extends Service {
                 }
             }, 
             (v1, v2) -> {throw log.throwing(new IllegalStateException("No key collision possible"));}, 
-            () -> new LinkedHashMap<CallDAO.OrderingAttribute, DAO.Direction>())));
+            () -> new LinkedHashMap<ExpressionCallDAO.OrderingAttribute, DAO.Direction>())));
     }
 
     //*************************************************************************
@@ -553,7 +519,7 @@ public class CallService extends Service {
                 return Stream.of(ExpressionCallDAO.Attribute.GENE_ID);
             //Whether we need to get a global quality level over all requested data types, 
             //or the detailed quality level per data type, it's the same DAO attributes that we need. 
-            case DATA_QUALITY: 
+            case GLOBAL_DATA_QUALITY: 
             case CALL_DATA: 
                 return dataTypesRequested.stream().map(type -> Optional.ofNullable(typeToDAOAttr.get(type))
                         //bug of javac for type inference, we need to type the exception 

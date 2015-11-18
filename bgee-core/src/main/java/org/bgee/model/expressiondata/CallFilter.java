@@ -10,6 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.CallData.DiffExpressionCallData;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
+import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.gene.GeneFilter;
 
 /**
@@ -32,6 +33,9 @@ import org.bgee.model.gene.GeneFilter;
 //the same CallDatas. If we really needed it, then we could still do it in several queries 
 //(even if it is less optimized (only when it targets the same CallType)).
 //=> let's consider several CallFilters as AND conditions for now, and let's see what happens in the future.  
+//Note that even if they were OR conditions, they should be used in several queries, 
+//as it is not possible from the DAO to make one query applying a different Set 
+//of CallData filters to different Sets of GeneFilters, ConditionFilters, etc.
 public class CallFilter<T extends CallData<?>> {
     private final static Logger log = LogManager.getLogger(CallFilter.class.getName());
     
@@ -50,17 +54,18 @@ public class CallFilter<T extends CallData<?>> {
          *                          based on the expression data generation (for instance, 
          *                          minimum quality level for each data type, or type of propagation allowed, 
          *                          e.g., propagation of expression calls from substructures).
-         * @see #ExpressionCallFilter(GeneFilter, Set, Set)
+         * @see #ExpressionCallFilter(GeneFilter, Set, DataPropagation, Set)
          */
         public ExpressionCallFilter(ExpressionCallData callDataFilter) {
-            this(null, null, new HashSet<>(Arrays.asList(callDataFilter)));
+            this(null, null, null, new HashSet<>(Arrays.asList(callDataFilter)));
         }
         /**
-         * See {@link CallFilter#CallFilter(GeneFilter, Set, Set)}.
+         * See {@link CallFilter#CallFilter(GeneFilter, Set, DataPropagation, Set)}.
          */
         public ExpressionCallFilter(GeneFilter geneFilter, Collection<ConditionFilter> conditionFilters, 
-                Collection<ExpressionCallData> callDataFilters) throws IllegalArgumentException {
-            super(geneFilter, conditionFilters, callDataFilters);
+                DataPropagation dataPropagationFilter, Collection<ExpressionCallData> callDataFilters) 
+                        throws IllegalArgumentException {
+            super(geneFilter, conditionFilters, dataPropagationFilter, callDataFilters);
         }
     }
     
@@ -87,8 +92,9 @@ public class CallFilter<T extends CallData<?>> {
          * See {@link CallFilter#CallFilter(GeneFilter, Set, Set)}.
          */
         public DiffExpressionCallFilter(GeneFilter geneFilter, Collection<ConditionFilter> conditionFilters, 
-                Collection<DiffExpressionCallData> callDataFilters) throws IllegalArgumentException {
-            super(geneFilter, conditionFilters, callDataFilters);
+                Collection<DiffExpressionCallData> callDataFilters) 
+                        throws IllegalArgumentException {
+            super(geneFilter, conditionFilters, null, callDataFilters);
         }
     }
     
@@ -109,13 +115,21 @@ public class CallFilter<T extends CallData<?>> {
      */
     //XXX: all parameters are OR conditions
     private final Set<ConditionFilter> conditionFilters;
+
+    /**
+     * @see #getDataPropagationFilter()
+     */
+    private final DataPropagation dataPropagationFilter;
     
     /**
      * @see #getCallDataFilters()
      */
     //XXX: all CallData are OR conditions. The only type of query not easily doable is: 
-    //affymetrixData = expressed high && rnaSeqData = expressed high
+    //affymetrixData = expressed high && rnaSeqData = expressed high. 
+    //Note that they *must* remain OR conditions, because the DataPropagation 
+    //is part of these CallData, and we need to do one query
     //XXX: again, where to accept the diffExpressionFactor
+    
     private final Set<T> callDataFilters;
     
     
@@ -129,7 +143,7 @@ public class CallFilter<T extends CallData<?>> {
      * @see #CallFilter(GeneFilter, Set, Set)
      */
     public CallFilter(T callDataFilter) {
-        this(null, null, new HashSet<T>(Arrays.asList(callDataFilter)));
+        this(null, null, null, new HashSet<T>(Arrays.asList(callDataFilter)));
     }
     /**
      * Constructor accepting all requested parameters to build a new {@code CallFilter}. 
@@ -147,16 +161,28 @@ public class CallFilter<T extends CallData<?>> {
      * of {@code CallType}, {@code DataType}, and {@code DiffExpressionFactor} (see 
      * {@link DiffExpressionCallData#getDiffExpressionFactor()}); otherwise, 
      * an {@code IllegalArgumentException} is thrown. 
+     * <p>
+     * Note that the {@code DataPropagation}s provided in {@code callDataFilters} 
+     * are <strong>not</strong> considered. This is because this information cannot be inferred 
+     * for each data type individually from one single query. This information is provided 
+     * at the level of a {@code Call}, and so is the filtering allowed. 
      * 
-     * @param geneFilter        A {@code GeneFilter} to configure gene-related filtering.
-     * @param conditionFilters  A {@code Collection} of {@code ConditionFilter}s to configure 
-     *                          the filtering of conditions with expression data. If several 
-     *                          {@code ConditionFilter}s are provided, they are seen as "OR" conditions.
-     * @param callDataFilters   A {@code Collection} of {@code CallData}s to configure the filtering 
-     *                          based on the expression data generation (for instance, 
-     *                          minimum quality level for each data type, or type of propagation allowed, 
-     *                          e.g., propagation of expression calls from substructures). If several 
-     *                          {@code CallData}s are provided, they are seen as "OR" conditions.
+     * @param geneFilter            A {@code GeneFilter} to configure gene-related filtering.
+     * @param conditionFilters      A {@code Collection} of {@code ConditionFilter}s to configure 
+     *                              the filtering of conditions with expression data. If several 
+     *                              {@code ConditionFilter}s are provided, they are seen as "OR" conditions.
+     * @param dataPropagationFilter A {@code DataPropagation}s, allowing to configure the origin 
+     *                              of the data related to data propagation. Allows for instance 
+     *                              to request that data returned includes expression 
+     *                              from substructures, or to request that all data propagated 
+     *                              also includes observed data. Note that the {@code DataPropagation}s 
+     *                              provided in {@code callDataFilters} are <strong>not</strong> considered.
+     * @param callDataFilters       A {@code Collection} of {@code CallData}s to configure the filtering 
+     *                              based on the expression data generation (for instance, 
+     *                              minimum quality level for each data type). If several 
+     *                              {@code CallData}s are provided, they are seen as "OR" conditions.
+     *                              Note that the {@code DataPropagation}s provided through 
+     *                              these {@code CallData} objects are <strong>not</strong> considered.
      * @throws IllegalArgumentException If {@code callDataFilters} is {@code null} or empty, 
      *                                  or contains a {@code null} {@code CallData}; 
      *                                  or if the {@code ExpressionCallData}s provided target 
@@ -166,7 +192,7 @@ public class CallFilter<T extends CallData<?>> {
      *                                  and {@code DiffExpressionFactor}.
      */
     public CallFilter(GeneFilter geneFilter, Collection<ConditionFilter> conditionFilters, 
-            Collection<T> callDataFilters) throws IllegalArgumentException {
+            DataPropagation dataPropagationFilter, Collection<T> callDataFilters) throws IllegalArgumentException {
         if (callDataFilters == null || callDataFilters.isEmpty() || callDataFilters.contains(null)) {
             throw log.throwing(new IllegalArgumentException(
                     "At least one CallData filter must be provided, and none can be null."));
@@ -190,9 +216,16 @@ public class CallFilter<T extends CallData<?>> {
             }
         }));
         
+        //check for compatibility of DataPropagation with the CallData
+        if (dataPropagationFilter != null) {
+            callDataFilters.stream().forEach(callData -> callData.getCallType()
+                .checkDataPropagation(dataPropagationFilter));
+        }
+        
         this.geneFilter = geneFilter;
         this.conditionFilters = Collections.unmodifiableSet(
                 conditionFilters == null? new HashSet<>(): new HashSet<>(conditionFilters));
+        this.dataPropagationFilter = dataPropagationFilter == null? new DataPropagation(): dataPropagationFilter;
         this.callDataFilters = Collections.unmodifiableSet(
                 callDataFilters == null? new HashSet<>(): new HashSet<>(callDataFilters));
     }
@@ -213,11 +246,23 @@ public class CallFilter<T extends CallData<?>> {
         return conditionFilters;
     }
     /**
+     * @return  A {@code DataPropagation}s, allowing to configure the origin of the data 
+     *          related to data propagation. Allows for instance to request that data returned 
+     *          includes expression from substructures, or to request that all data propagated 
+     *          also includes observed data. Not that the {@code DataPropagation}s 
+     *          provided in the {@code CallData} objects of this {@code CallFilter} are 
+     *          <strong>not</strong> considered. 
+     */
+    public DataPropagation getDataPropagationFilter() {
+        return dataPropagationFilter;
+    }
+    /**
      * @return  An unmodifiable {@code Set} of {@code T}s, allowing to configure the filtering based on 
      *          the expression data generation (for instance, minimum quality level 
      *          for each data type, or type of propagation allowed, e.g., propagation 
      *          of expression calls from substructures). If several {@code CallData}s 
-     *          are configured, they are seen as "OR" conditions.
+     *          are configured, they are seen as "OR" conditions. Note that the {@code DataPropagation}s 
+     *          provided through these {@code CallData} objects are <strong>not</strong> considered.
      */
     public Set<T> getCallDataFilters() {
         return callDataFilters;
@@ -231,6 +276,7 @@ public class CallFilter<T extends CallData<?>> {
         result = prime * result + ((callDataFilters == null) ? 0 : callDataFilters.hashCode());
         result = prime * result + ((conditionFilters == null) ? 0 : conditionFilters.hashCode());
         result = prime * result + ((geneFilter == null) ? 0 : geneFilter.hashCode());
+        result = prime * result + ((dataPropagationFilter == null) ? 0 : dataPropagationFilter.hashCode());
         return result;
     }
     @Override
@@ -266,12 +312,20 @@ public class CallFilter<T extends CallData<?>> {
         } else if (!geneFilter.equals(other.geneFilter)) {
             return false;
         }
+        if (dataPropagationFilter == null) {
+            if (other.dataPropagationFilter != null) {
+                return false;
+            }
+        } else if (!dataPropagationFilter.equals(other.dataPropagationFilter)) {
+            return false;
+        }
         return true;
     }
     @Override
     public String toString() {
         return "CallFilter [geneFilter=" + geneFilter 
                 + ", conditionFilters=" + conditionFilters 
+                + ", dataPropagationFilter=" + dataPropagationFilter
                 + ", callDataFilters=" + callDataFilters + "]";
     }
 }

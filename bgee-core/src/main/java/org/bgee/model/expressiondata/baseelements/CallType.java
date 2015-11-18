@@ -224,7 +224,7 @@ public interface CallType {
      *                                  for this {@code CallType.}
      * @see DataPropagation
      */
-    public void checkDataPropagation(DataPropagation propagation);
+    public void checkDataPropagation(DataPropagation propagation) throws IllegalArgumentException;
     
     /**
      * Returns the {@code DataType}s capable of producing this {@code CallType}. 

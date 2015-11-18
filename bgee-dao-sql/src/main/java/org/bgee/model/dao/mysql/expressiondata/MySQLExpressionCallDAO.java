@@ -21,9 +21,12 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
-import org.bgee.model.dao.api.expressiondata.CallDAOFilter.ExpressionCallDAOFilter;
+import org.bgee.model.dao.api.expressiondata.CallDAOFilter;
 import org.bgee.model.dao.api.expressiondata.DAOConditionFilter;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
+import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.Attribute;
+import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
+import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.OrderingAttribute;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO.OriginOfLine;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallParams;
 import org.bgee.model.dao.mysql.MySQLDAO;
@@ -106,7 +109,7 @@ implements ExpressionCallDAO {
      * {@code getAnatEntityId}, and {@code getStageId}. So, to avoid requesting attributes 
      * related to: {@code getAnatOriginOfLine}, {@code getStageOriginOfLine}, 
      * or {@code isObservedData}; or any data types parameter ({@code getAffymetrixData}, 
-     * {@code getAffymetrixMeanRank}, etc); 
+     * {@code getAffymetrixMeanRank}, etc); or any rank parameter;
      * <li>to not request ordering based on {@code CallDAO.OrderingAttribute.MEAN_RANK}. 
      * <li>to not perform a filtering with AND conditions between data types (for instance, 
      * "affymetrixData >= LOW_QUALITY AND rnaSeqData >= LOW_QUALITY"). It means that it is recommended 
@@ -142,7 +145,7 @@ implements ExpressionCallDAO {
      */
     @Override
     public ExpressionCallTOResultSet getExpressionCalls(
-            Collection<ExpressionCallDAOFilter> callFilters, 
+            Collection<CallDAOFilter> callFilters, Collection<ExpressionCallTO> callTOFilters, 
             boolean includeSubstructures, boolean includeSubStages, 
             Collection<String> globalGeneIds, String taxonId, 
             Collection<ExpressionCallDAO.Attribute> attributes, 
@@ -152,7 +155,10 @@ implements ExpressionCallDAO {
                 attributes, orderingAttributes);
         
         //needs a LinkedHashSet for consistent settings of the parameters. 
-        LinkedHashSet<ExpressionCallDAOFilter> clonedCallFilters = Optional.ofNullable(callFilters)
+        LinkedHashSet<CallDAOFilter> clonedCallFilters = Optional.ofNullable(callFilters)
+                .map(e -> new LinkedHashSet<>(e)).orElse(new LinkedHashSet<>());
+        //same for CallTOs
+        LinkedHashSet<ExpressionCallTO> clonedCallTOFilters = Optional.ofNullable(callTOFilters)
                 .map(e -> new LinkedHashSet<>(e)).orElse(new LinkedHashSet<>());
         //attributes
         Set<ExpressionCallDAO.Attribute> originalAttrs = Optional.ofNullable(attributes)
@@ -176,14 +182,11 @@ implements ExpressionCallDAO {
             throw log.throwing(new UnsupportedOperationException(
                     "Query using gene orthology not yet implemented"));
         }
-        if (!clonedOrderingAttrs.isEmpty()) {
-            throw log.throwing(new UnsupportedOperationException(
-                    "Management of OrderingAttributes not yet implemented"));
-        }
+        
         //**********************************************
         // Extract relevant information from arguments
         //**********************************************
-        
+
         //store the global gene ID filtering, or try to create one based on the CallDAOFilters
         Set<String> geneIds = Optional.ofNullable(globalGeneIds)
                 .map(e -> new HashSet<>(e)).orElse(new HashSet<>());
@@ -234,11 +237,10 @@ implements ExpressionCallDAO {
         }
         
         //Get the requested attributes, and update them if needed. Notably, if includeSubStages is true, 
-        //and some specific parameters are requested, the filtering will need to be done 
+        //or some specific attributes are requested, the filtering of some parameters will need to be done 
         //in a HAVING clause. In that case, we add the columns we will need in the HAVING clause, 
         //based on the parameters provided, to avoid over-verbose HAVING clause. 
-        //We also need these columns if an ordering is requested on them. This latter point 
-        //also applies to ordering based on ranks when includeSubStages is false.
+        //We also need these columns if an ordering is requested on them. 
         Set<ExpressionCallDAO.Attribute> updatedAttrs = EnumSet.copyOf(originalAttrs);
         boolean havingClauseNeeded = false;
         boolean groupingByNeeded = false;
@@ -275,9 +277,9 @@ implements ExpressionCallDAO {
             //or to use a GROUP BY, if there is no GROUP BY needed because of requested attributes 
             //(test above), and if there is no AND condition between data types.
             //First, retrieve all data types with a specified filtering, per CallTO.
-            Set<Set<ExpressionCallDAO.Attribute>> filteringDataTypesPerCallTO = clonedCallFilters.stream()
-                    .flatMap(filter -> filter.getCallTOFilters().stream()
-                            .map(callTO -> filter.extractFilteringDataTypes(callTO).keySet()))
+            Set<Set<ExpressionCallDAO.Attribute>> filteringDataTypesPerCallTO = clonedCallTOFilters
+                    .stream()
+                    .map(callTO -> callTO.extractFilteringDataTypes().keySet())
                     .collect(Collectors.toSet());
             if (groupingByNeeded || 
                     //check whether there is any AND condition between data types
@@ -295,12 +297,8 @@ implements ExpressionCallDAO {
                         .collect(Collectors.toSet()));
             }
             
-            Set<ExpressionCallTO> allCallTOs = clonedCallFilters.stream()
-                    .flatMap(e -> e.getCallTOFilters().stream())
-                    .collect(Collectors.toSet());
-            
             if ((includeSubStages || includeSubstructures) && 
-                    allCallTOs.stream().anyMatch(e -> e.isObservedData() != null)) {
+                    clonedCallTOFilters.stream().anyMatch(e -> e.isObservedData() != null)) {
                 havingClauseNeeded = true;
                 groupingByNeeded = true;
                 //add in the SELECT clause the columns we will need in the HAVING clause, 
@@ -309,7 +307,7 @@ implements ExpressionCallDAO {
                 log.trace("GROUP BY needed because of filtering based on OBSERVED_DATA.");
             }
             if (includeSubstructures && 
-                    allCallTOs.stream().anyMatch(e -> e.getAnatOriginOfLine() != null)) {
+                    clonedCallTOFilters.stream().anyMatch(e -> e.getAnatOriginOfLine() != null)) {
                 havingClauseNeeded = true;
                 groupingByNeeded = true;
                 //add in the SELECT clause the columns we will need in the HAVING clause, 
@@ -318,7 +316,7 @@ implements ExpressionCallDAO {
                 log.trace("GROUP BY needed because of filtering based on ANAT_ORIGIN_OF_LINE.");
             }
             if (includeSubStages && 
-                    allCallTOs.stream().anyMatch(e -> e.getStageOriginOfLine() != null)) {
+                    clonedCallTOFilters.stream().anyMatch(e -> e.getStageOriginOfLine() != null)) {
                 havingClauseNeeded = true;
                 groupingByNeeded = true;
                 //add in the SELECT clause the columns we will need in the HAVING clause, 
@@ -349,8 +347,9 @@ implements ExpressionCallDAO {
         //**********************************************
         
         //execute query
-        return log.exit(this.getExpressionCalls(clonedCallFilters, geneIds, globalGeneFilter, 
-                speciesIds, globalSpeciesFilter, includeSubstructures, includeSubStages, 
+        return log.exit(this.getExpressionCalls(clonedCallFilters, clonedCallTOFilters, 
+                geneIds, globalGeneFilter, speciesIds, globalSpeciesFilter, 
+                includeSubstructures, includeSubStages, 
                 taxonId, originalAttrs, updatedAttrs, clonedOrderingAttrs, groupByAttrs, 
                 havingClauseNeeded));
     }
@@ -466,7 +465,7 @@ implements ExpressionCallDAO {
     //
     //TODO: update javadoc
     private ExpressionCallTOResultSet getExpressionCalls(
-            LinkedHashSet<ExpressionCallDAOFilter> callFilters, 
+            LinkedHashSet<CallDAOFilter> callFilters, LinkedHashSet<ExpressionCallTO> callTOFilters, 
             Set<String> allGeneIds, boolean globalGeneFilter, 
             Set<String> allSpeciesIds, boolean globalSpeciesFilter, 
             boolean includeSubstructures, final boolean includeSubStages, 
@@ -475,7 +474,8 @@ implements ExpressionCallDAO {
             LinkedHashMap<ExpressionCallDAO.OrderingAttribute, DAO.Direction> orderingAttrs, 
             Set<ExpressionCallDAO.Attribute> groupByAttrs, boolean havingClauseNeeded) throws DAOException {
         
-        log.entry(callFilters, allGeneIds, globalGeneFilter, allSpeciesIds, globalSpeciesFilter, 
+        log.entry(callFilters, callTOFilters, allGeneIds, globalGeneFilter, 
+                allSpeciesIds, globalSpeciesFilter, 
                 includeSubstructures, includeSubStages, 
                 commonAncestralTaxonId, originalAttrs, updatedAttrs, orderingAttrs, 
                 groupByAttrs, havingClauseNeeded);
@@ -493,12 +493,10 @@ implements ExpressionCallDAO {
         String sql = this.generateSelectClause(
                 updatedAttrs, 
                 //Attributes corresponding to data types used for filtering the results
-                callFilters.stream()
-                    .flatMap(filter -> filter.getCallTOFilters().stream())
+                callTOFilters.stream()
                     .flatMap(callTO -> callTO.extractDataTypesToDataStates().keySet().stream())
                     .collect(Collectors.toCollection(() -> 
                              EnumSet.noneOf(ExpressionCallDAO.Attribute.class))), 
-                    
                 distinct, groupByAttrs != null, 
                 includeSubstructures, includeSubStages, exprTableName, propagatedStageTableName);
         
@@ -553,26 +551,17 @@ implements ExpressionCallDAO {
                 callFilters.stream().anyMatch(filter -> !filter.getSpeciesIds().isEmpty())) {
             sql += " INNER JOIN gene ON (gene.geneId = " + exprTableName + ".geneId) ";
         }
-        //If a global gene filter is defined, we can apply it to all conditions in all cases.
-        //Also, if all CallFilters provide a non-empty gene ID list, and if we need 
-        //to filter the query in the HAVING clause rather than in the WHERE clause, 
-        //then it's worth filtering the genes in the WHERE clause immediately; 
-        //otherwise, if the query will be filtered in the WHERE clause, then these gene IDs 
-        //will be specified anyway, so we don't need to set them here.
+        //If a global gene filter is defined, we can apply it to all conditions in all cases, 
+        //only if not already apply to the sub-query. 
         boolean whereClauseStarted = false;
-        if (!allGeneIds.isEmpty() && !genesAndSpeciesFilteredForPropagation && 
-                (globalGeneFilter || havingClauseNeeded)) {
+        if (!allGeneIds.isEmpty() && !genesAndSpeciesFilteredForPropagation && globalGeneFilter) {
             sql += " WHERE " + exprTableName + ".geneId IN (" 
                 + BgeePreparedStatement.generateParameterizedQueryString(allGeneIds.size()) + ") ";
             whereClauseStarted = true;
         }
-        //same for species IDs: if a HAVING clause is needed, and allSpeciesIds is not empty, 
-        //then it's worth filtering immediately based on species IDs, to simplify 
-        //the HAVING filtering; otherwise, it's useless, the species IDs are going to be specified 
-        //in the WHERE clause by the CallFilters anyway, unless it is a global filter to be applied 
-        //on top of all CallFilter filtering.
-        if (!allSpeciesIds.isEmpty() && !genesAndSpeciesFilteredForPropagation && 
-                (globalSpeciesFilter || havingClauseNeeded)) {
+        //If a global species filter is defined, we can apply it to all conditions in all cases, 
+        //only if not already apply to the sub-query. 
+        if (!allSpeciesIds.isEmpty() && !genesAndSpeciesFilteredForPropagation && globalSpeciesFilter) {
             if (!whereClauseStarted) {
                 sql += "WHERE ";
             } else {
@@ -583,20 +572,34 @@ implements ExpressionCallDAO {
             whereClauseStarted = true;
         }
         
-        String filtering = this.generateFilteringClause(callFilters, !globalGeneFilter, 
-                !globalSpeciesFilter, 
-                havingClauseNeeded? null: exprTableName, 
-                havingClauseNeeded? null: 
-                    includeSubStages? propagatedStageTableName: exprTableName,
-                havingClauseNeeded? null: "gene", 
-                includeSubstructures, includeSubStages, groupByAttrs != null);
-        if (!havingClauseNeeded && !filtering.isEmpty()) {
+        String callDAOFilterClause = this.generateCallDAOFilterClause(callFilters, 
+                !globalGeneFilter, !globalSpeciesFilter, 
+                exprTableName, 
+                includeSubStages? propagatedStageTableName: exprTableName,
+                "gene");
+        if (!callDAOFilterClause.isEmpty()) {
             if (!whereClauseStarted) {
                 sql += "WHERE ";
             } else {
                 sql += "AND ";
             }
-            sql += filtering;
+            sql += callDAOFilterClause;
+            whereClauseStarted = true;
+        }
+
+        //The filtering based on CallTOs must be done in a HAVING clause in case of GROUP BY, 
+        //otherwise, in the WHERE clause
+        String callTOFilterClause = this.generateCallTOFilterClause(callTOFilters, 
+                havingClauseNeeded? null: exprTableName, 
+                includeSubstructures, includeSubStages, groupByAttrs != null);
+        if (!havingClauseNeeded && !callTOFilterClause.isEmpty()) {
+            if (!whereClauseStarted) {
+                sql += "WHERE ";
+            } else {
+                sql += "AND ";
+            }
+            sql += callTOFilterClause;
+            whereClauseStarted = true;
         }
         
         if (groupByAttrs != null) {
@@ -619,15 +622,8 @@ implements ExpressionCallDAO {
                     }
                 }).collect(Collectors.joining(", ", " GROUP BY ", ""));
             
-            if (havingClauseNeeded && !filtering.isEmpty()) {
-                //in case we need to filter species in the HAVING clause, we need to add it 
-                //to the GROUP BY to be able to "see" them in the HAVING.
-                if (!globalSpeciesFilter &&  
-                        callFilters.stream().anyMatch(filter -> !filter.getSpeciesIds().isEmpty())) {
-                    sql += ", gene.speciesId";
-                }
-                
-                sql += " HAVING " + filtering;
+            if (havingClauseNeeded && !callTOFilterClause.isEmpty()) {
+                sql += " HAVING " + callTOFilterClause;
             }
         }
         
@@ -684,19 +680,19 @@ implements ExpressionCallDAO {
                 index += 2;
             }
             
-            if (!allGeneIds.isEmpty() && !genesAndSpeciesFilteredForPropagation && 
-                    (globalGeneFilter || havingClauseNeeded)) {
+            if (!allGeneIds.isEmpty() && !genesAndSpeciesFilteredForPropagation && globalGeneFilter) {
                 stmt.setStrings(index, allGeneIds, true);
                 index += allGeneIds.size();
             }
-            if (!allSpeciesIds.isEmpty() && !genesAndSpeciesFilteredForPropagation && 
-                    (globalSpeciesFilter || havingClauseNeeded)) {
+            if (!allSpeciesIds.isEmpty() && !genesAndSpeciesFilteredForPropagation && globalSpeciesFilter) {
                 stmt.setStringsToIntegers(index, allSpeciesIds, true);
                 index += allSpeciesIds.size();
             }
             
-            this.parameterizeFilteringClause(stmt, index, callFilters, !globalGeneFilter, 
-                    !globalSpeciesFilter, includeSubstructures, includeSubStages);
+            index = this.parameterizeCallDAOFilterClause(stmt, index, callFilters, !globalGeneFilter, 
+                    !globalSpeciesFilter);
+            index = this.parameterizeCallTOFilterClause(stmt, index, callTOFilters, 
+                    includeSubstructures, includeSubStages);
             
             //If we don't need to perform several queries with a LIMIT clause, return
             if (offsetParamIndex == 0) {
@@ -1177,11 +1173,9 @@ implements ExpressionCallDAO {
     }
     
     /**
-     * Generates the WHERE or HAVING clause of an expression query. If it is meant to be used 
-     * on the HAVING clause, then no table name should be provided, calling a table name 
-     * from a HAVING clause is invalid.
+     * Generates the WHERE clause of an expression query relative to {@code CallDAOFiler}s. 
      * 
-     * @param callFilters           A {@code LinkedHashSet} of {@code ExpressionCallDAOFilter}s, 
+     * @param callFilters           A {@code LinkedHashSet} of {@code CallDAOFilter}s, 
      *                              providing the parameters of the query.
      * @param useGeneIds            A {@code boolean} defining whether gene ID filters 
      *                              of {@code callFilters} should be used. Useful if a global 
@@ -1193,35 +1187,30 @@ implements ExpressionCallDAO {
      * @param stageTableName        A {@code String} that is the name of the table containing 
      *                              stages to filter.
      * @param geneTableName         A {@code String} that is the name of the gene table used.
-     * @param includeSubstructures  A {@code boolean} defining whether the query requests 
-     *                              to propagate calls from anatomical substructures.
-     * @param includeSubStages      A {@code boolean} defining whether the query requests 
-     *                              to propagate calls from child developmental stages.
      * @return                      A {@code String} that is the filtering clause of the query.
      */
-    private String generateFilteringClause(LinkedHashSet<ExpressionCallDAOFilter> callFilters, 
+    private String generateCallDAOFilterClause(LinkedHashSet<CallDAOFilter> callFilters, 
             boolean useGeneIds, boolean useSpeciesIds, String exprTableName, String stageTableName, 
-            String geneTableName, boolean includeSubstructures, boolean includeSubStages, 
-            boolean groupByClause) {
-        log.entry(callFilters, useGeneIds, useSpeciesIds, exprTableName, stageTableName, geneTableName, 
-                includeSubstructures, includeSubStages, groupByClause);
+            String geneTableName) {
+        log.entry(callFilters, useGeneIds, useSpeciesIds, exprTableName, stageTableName, geneTableName);
         
         StringBuilder sb = new StringBuilder();
-        for (ExpressionCallDAOFilter callFilter: callFilters) {
+        for (CallDAOFilter callFilter: callFilters) {
             if (sb.length() != 0) {
                 sb.append("OR ");
             }
+            StringBuilder sb2 = new StringBuilder();
             boolean hasPreviousClause = false;
             
             //genes
             if (useGeneIds && !callFilter.getGeneIds().isEmpty()) {
                 if (hasPreviousClause) {
-                    sb.append("AND ");
+                    sb2.append("AND ");
                 }
                 if (exprTableName != null) {
-                    sb.append(exprTableName).append(".");
+                    sb2.append(exprTableName).append(".");
                 }
-                sb.append("geneId IN (")
+                sb2.append("geneId IN (")
                 .append(BgeePreparedStatement.generateParameterizedQueryString(callFilter.getGeneIds().size()))
                 .append(") ");
                 hasPreviousClause = true;
@@ -1230,12 +1219,12 @@ implements ExpressionCallDAO {
             //species
             if (useSpeciesIds && !callFilter.getSpeciesIds().isEmpty()) {
                 if (hasPreviousClause) {
-                    sb.append("AND ");
+                    sb2.append("AND ");
                 }
                 if (geneTableName != null) {
-                    sb.append(geneTableName).append(".");
+                    sb2.append(geneTableName).append(".");
                 }
-                sb.append("speciesId IN (")
+                sb2.append("speciesId IN (")
                 .append(BgeePreparedStatement.generateParameterizedQueryString(callFilter.getSpeciesIds().size()))
                 .append(") ");
                 hasPreviousClause = true;
@@ -1244,123 +1233,158 @@ implements ExpressionCallDAO {
             //conditions
             if (!callFilter.getConditionFilters().isEmpty()) {
                 if (hasPreviousClause) {
-                    sb.append("AND ");
+                    sb2.append("AND ");
                 }
-                sb.append("(");
-                sb.append(callFilter.getConditionFilters().stream()
+                sb2.append("(");
+                sb2.append(callFilter.getConditionFilters().stream()
                     .map(cond -> {
-                        StringBuilder sb2 = new StringBuilder();
+                        StringBuilder sb3 = new StringBuilder();
                         if (!cond.getAnatEntitieIds().isEmpty()) {
                             if (exprTableName != null) {
-                                sb2.append(exprTableName).append(".");
+                                sb3.append(exprTableName).append(".");
                             }
-                            sb2.append("anatEntityId IN (")
+                            sb3.append("anatEntityId IN (")
                             .append(BgeePreparedStatement.generateParameterizedQueryString(
                                     cond.getAnatEntitieIds().size())).append(") ");
                         }
                         if (!cond.getDevStageIds().isEmpty()) {
-                            if (sb2.length() != 0) {
-                                sb2.append("AND ");
+                            if (sb3.length() != 0) {
+                                sb3.append("AND ");
                             }
                             if (stageTableName != null) {
-                                sb2.append(stageTableName).append(".");
+                                sb3.append(stageTableName).append(".");
                             }
-                            sb2.append("stageId IN (")
+                            sb3.append("stageId IN (")
                             .append(BgeePreparedStatement.generateParameterizedQueryString(
                                     cond.getDevStageIds().size())).append(") ");
                         }
-                        return sb2.toString();
+                        return sb3.toString();
                     }).collect(Collectors.joining("OR "))
                 );
-                sb.append(") ");
+                sb2.append(") ");
                 hasPreviousClause = true;
-            }
-            
-            //CallTOs
-            StringBuilder sb2 = new StringBuilder();
-            for (ExpressionCallTO callTO: callFilter.getCallTOFilters()) {
-                if (sb2.length() != 0) {
-                    sb2.append("OR ");
-                }
-                boolean callTOClauseStarted = false;
-                
-                //data filtering (affymetrixData, rnaSeqData, ...)
-                String dataFilter = callFilter.extractFilteringDataTypes(callTO).keySet().stream()
-                    //we don't use the expression table name here, maybe these parameters 
-                    //were computed using a MAX and a GROUP BY, and renamed using a AS statement.
-                    .map(attr -> convertDataTypeAttrToColName(attr) + " >= ? ")
-                    .collect(Collectors.joining("AND "));
-                if (!dataFilter.isEmpty()) {
-                    sb2.append(dataFilter);
-                    callTOClauseStarted = true;
-                }
-                
-                //origin of call from propagation
-                if (callTO.getAnatOriginOfLine() != null && includeSubstructures) {
-                    if (callTOClauseStarted) {
-                        sb2.append("AND ");
-                    } 
-                    if (!groupByClause) {
-                        if (exprTableName != null) {
-                            sb2.append(exprTableName).append(".");
-                        }
-                        sb2.append("originOfLine = ? ");
-                    } else {
-                        sb2.append("anatOriginOfLine = ? ");
-                    }
-                    callTOClauseStarted = true;
-                }
-                if (callTO.getStageOriginOfLine() != null && includeSubStages) {
-                    if (callTOClauseStarted) {
-                        sb2.append("AND ");
-                    } 
-                    sb2.append("stageOriginOfLine = ? ");
-                    callTOClauseStarted = true;
-                }
-                if (callTO.isObservedData() != null && (includeSubStages || includeSubstructures)) {
-                    if (callTOClauseStarted) {
-                        sb2.append("AND ");
-                    } 
-                    if (!includeSubStages && includeSubstructures) {
-                        //if we propagate only from substructures, we check the column 
-                        //originOfLine in the globalExpression table: if it equals to 'descent', 
-                        //then there are no observed data.
-                        sb2.append("IF(originOfLine = 'descent', 0, 1) ");
-                    } else if (includeSubStages) {
-                        //if includeSubStages is true, then it means that this parameter 
-                        //can only be filtered from the HAVING clause, so we directly have access 
-                        //to the parameter name
-                        sb2.append("observedData ");
-                    }
-                    sb2.append("= ? ");
-                    callTOClauseStarted = true;
-                }
             }
             if (sb2.length() != 0) {
-                if (hasPreviousClause) {
-                    sb.append("AND ");
-                }
                 sb.append("(").append(sb2.toString()).append(") ");
-                hasPreviousClause = true;
             }
-            
-            if (sb.length() != 0) {
-                sb.insert(0, "(");
-                sb.append(") ");
-            }
+        }
+        if (sb.length() != 0) {
+            sb.insert(0, "(");
+            sb.append(") ");
         }
         
         return log.exit(sb.toString());
     }
     
-    private int parameterizeFilteringClause(BgeePreparedStatement stmt, int startIndex, 
-            LinkedHashSet<ExpressionCallDAOFilter> callFilters, 
-            boolean useGeneIds, boolean useSpeciesIds, 
-            boolean includeSubstructures, boolean includeSubStages) throws SQLException {
-        log.entry(callFilters, useGeneIds, useSpeciesIds, includeSubstructures, includeSubStages);
+    /**
+     * Generates the WHERE or HAVING clause of an expression query relative to 
+     * {@code ExpressionCallTO}s. If it is meant to be used on the HAVING clause, 
+     * then no table name should be provided, calling a table name from a HAVING clause is invalid.
+     * 
+     * @param callTOFilters         A {@code LinkedHashSet} of {@code ExpressionCallTO}s, 
+     *                              providing the parameters of the query.
+     * @param exprTableName         A {@code String} that is the name of the expression table used.
+     * @param stageTableName        A {@code String} that is the name of the table containing 
+     *                              stages to filter.
+     * @param geneTableName         A {@code String} that is the name of the gene table used.
+     * @param includeSubstructures  A {@code boolean} defining whether the query requests 
+     *                              to propagate calls from anatomical substructures.
+     * @param includeSubStages      A {@code boolean} defining whether the query requests 
+     *                              to propagate calls from child developmental stages.
+     * @return                      A {@code String} that is the filtering clause of the query.
+     */
+    private String generateCallTOFilterClause(LinkedHashSet<ExpressionCallTO> callTOFilters, 
+            String exprTableName, 
+            boolean includeSubstructures, boolean includeSubStages, boolean groupByClause) {
+        log.entry(callTOFilters, exprTableName, 
+                includeSubstructures, includeSubStages, groupByClause);
+        
+        if (groupByClause && exprTableName!= null && !exprTableName.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("A table name should not be used "
+                    + "in a HAVING clause."));
+        }
+        
+        StringBuilder sb = new StringBuilder();
+        for (ExpressionCallTO callTO: callTOFilters) {
+            if (sb.length() != 0) {
+                sb.append("OR ");
+            }
+            boolean hasPreviousClause = false;
+            StringBuilder sb2 = new StringBuilder();
+                
+            //data filtering (affymetrixData, rnaSeqData, ...)
+            String dataFilter = callTO.extractFilteringDataTypes().keySet().stream()
+                    //we don't use the expression table name here, maybe these parameters 
+                    //were computed using a MAX and a GROUP BY, and renamed using a AS statement.
+                    .map(attr -> convertDataTypeAttrToColName(attr) + " >= ? ")
+                    .collect(Collectors.joining("AND "));
+            if (!dataFilter.isEmpty()) {
+                sb2.append(dataFilter);
+                hasPreviousClause = true;
+            }
+            
+            //origin of call from propagation
+            if (callTO.getAnatOriginOfLine() != null && includeSubstructures) {
+                if (hasPreviousClause) {
+                    sb2.append("AND ");
+                } 
+                if (!groupByClause) {
+                    if (exprTableName != null) {
+                        sb2.append(exprTableName).append(".");
+                    }
+                    sb2.append("originOfLine = ? ");
+                } else {
+                    sb2.append("anatOriginOfLine = ? ");
+                }
+                hasPreviousClause = true;
+            }
+            if (callTO.getStageOriginOfLine() != null && includeSubStages) {
+                if (hasPreviousClause) {
+                    sb2.append("AND ");
+                } 
+                sb2.append("stageOriginOfLine = ? ");
+                hasPreviousClause = true;
+            }
+            if (callTO.isObservedData() != null && (includeSubStages || includeSubstructures)) {
+                if (hasPreviousClause) {
+                    sb2.append("AND ");
+                } 
+                if (!includeSubStages && includeSubstructures && !groupByClause) {
+                    //if we propagate only from substructures, we check the column 
+                    //originOfLine in the globalExpression table: if it equals to 'descent', 
+                    //then there are no observed data.
+                    //But if we made a GROUP BY, then we have already generated the obervedData 
+                    //field in the SELECT clause. 
+                    sb2.append("IF(originOfLine = 'descent', 0, 1) ");
+                } else if (includeSubStages || groupByClause) {
+                    //if includeSubStages is true, then it means that this parameter 
+                    //can only be filtered from the HAVING clause, so we directly have access 
+                    //to the parameter name
+                    sb2.append("observedData ");
+                }
+                sb2.append("= ? ");
+                hasPreviousClause = true;
+            }
+                
+            if (sb2.length() != 0) {
+                sb.append("(").append(sb2.toString()).append(") ");
+            }
+        }
+        if (sb.length() != 0) {
+            sb.insert(0, "(");
+            sb.append(") ");
+        }
+        
+        return log.exit(sb.toString());
+    }
+    
+    private int parameterizeCallDAOFilterClause(BgeePreparedStatement stmt, int startIndex, 
+            LinkedHashSet<CallDAOFilter> callFilters, boolean useGeneIds, boolean useSpeciesIds) 
+                    throws SQLException {
+        log.entry(callFilters, useGeneIds, useSpeciesIds);
         
         int index = startIndex;
-        for (ExpressionCallDAOFilter callFilter: callFilters) {
+        for (CallDAOFilter callFilter: callFilters) {
             //genes
             if (useGeneIds && !callFilter.getGeneIds().isEmpty()) {
                 stmt.setStrings(index, callFilter.getGeneIds(), true);
@@ -1383,31 +1407,40 @@ implements ExpressionCallDAO {
                     index += cond.getDevStageIds().size();
                 }
             }
+        }
+        
+        return log.exit(index);
+    }
+    
+    private int parameterizeCallTOFilterClause(BgeePreparedStatement stmt, int startIndex, 
+            LinkedHashSet<ExpressionCallTO> callTOFilters, 
+            boolean includeSubstructures, boolean includeSubStages) throws SQLException {
+        log.entry(callTOFilters, includeSubstructures, includeSubStages);
+        
+        int index = startIndex;
+        for (ExpressionCallTO callTO: callTOFilters) {
             
-            //CallTOs
-            for (ExpressionCallTO callTO: callFilter.getCallTOFilters()) {
-                //data filtering (affymetrixData, rnaSeqData, ...)
-                for (DataState state: callFilter.extractFilteringDataTypes(callTO).values()) {
-                    stmt.setInt(index, convertDataStateToInt(state)); 
-                    index++;
+            //data filtering (affymetrixData, rnaSeqData, ...)
+            for (DataState state: callTO.extractFilteringDataTypes().values()) {
+                stmt.setInt(index, convertDataStateToInt(state)); 
+                index++;
+            }
+            //origin of call from propagation
+            if (callTO.getAnatOriginOfLine() != null && includeSubstructures) {
+                stmt.setEnumDAOField(index, callTO.getAnatOriginOfLine()); 
+                index++;
+            }
+            if (callTO.getStageOriginOfLine() != null && includeSubStages) {
+                stmt.setEnumDAOField(index, callTO.getStageOriginOfLine()); 
+                index++;
+            }
+            if (callTO.isObservedData() != null && (includeSubStages || includeSubstructures)) {
+                if (callTO.isObservedData()) {
+                    stmt.setInt(index, 1);
+                } else {
+                    stmt.setInt(index, 0);
                 }
-                //origin of call from propagation
-                if (callTO.getAnatOriginOfLine() != null && includeSubstructures) {
-                    stmt.setEnumDAOField(index, callTO.getAnatOriginOfLine()); 
-                    index++;
-                }
-                if (callTO.getStageOriginOfLine() != null && includeSubStages) {
-                    stmt.setEnumDAOField(index, callTO.getStageOriginOfLine()); 
-                    index++;
-                }
-                if (callTO.isObservedData() != null && (includeSubStages || includeSubstructures)) {
-                    if (callTO.isObservedData()) {
-                        stmt.setInt(index, 1);
-                    } else {
-                        stmt.setInt(index, 0);
-                    }
-                    index++;
-                }
+                index++;
             }
         }
         

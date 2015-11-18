@@ -3,6 +3,7 @@ package org.bgee.model.dao.api.expressiondata;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -67,5 +68,49 @@ public class ExpressionCallDAOTest extends TestAncestor {
         assertEquals("Missing data type attributes, extractDataTypesToDataStates method "
                 + "in ExpressionCallTO might need an update", dataTypeAttrs, 
                 callTO.extractDataTypesToDataStates().keySet());
+    }
+    
+    /**
+     * Test method {@link ExpressionCallTO#extractFilteringDataTypes()}
+     */
+    @Test
+    public void shouldRetrieveExpressionFilteringDataTypes() {
+        ExpressionCallTO callTO = new ExpressionCallTO(DataState.HIGHQUALITY, DataState.NODATA, 
+                DataState.LOWQUALITY, null);
+        Map<ExpressionCallDAO.Attribute, DataState> expectedMap = 
+                new EnumMap<>(ExpressionCallDAO.Attribute.class);
+        expectedMap.put(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA, DataState.HIGHQUALITY);
+        expectedMap.put(ExpressionCallDAO.Attribute.IN_SITU_DATA, DataState.LOWQUALITY);
+        
+        assertEquals("Incorrect filtering data types retrieved", expectedMap, 
+                callTO.extractFilteringDataTypes());
+        
+        callTO = new ExpressionCallTO(DataState.LOWQUALITY, DataState.LOWQUALITY, 
+                DataState.LOWQUALITY, DataState.LOWQUALITY);
+        expectedMap = new EnumMap<>(ExpressionCallDAO.Attribute.class);
+        expectedMap.put(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA, DataState.LOWQUALITY);
+        expectedMap.put(ExpressionCallDAO.Attribute.EST_DATA, DataState.LOWQUALITY);
+        expectedMap.put(ExpressionCallDAO.Attribute.IN_SITU_DATA, DataState.LOWQUALITY);
+        expectedMap.put(ExpressionCallDAO.Attribute.RNA_SEQ_DATA, DataState.LOWQUALITY);
+        
+        assertEquals("Incorrect filtering data types retrieved with all LOWQUALITY", expectedMap, 
+                callTO.extractFilteringDataTypes());
+        
+        callTO = new ExpressionCallTO(DataState.NODATA, null, DataState.NODATA, null);
+        expectedMap = new EnumMap<>(ExpressionCallDAO.Attribute.class);
+        
+        assertEquals("Incorrect filtering data types retrieved with mixed null and NODATA", expectedMap, 
+                callTO.extractFilteringDataTypes());
+        
+        callTO = new ExpressionCallTO(DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                DataState.HIGHQUALITY, DataState.HIGHQUALITY);
+        expectedMap = new EnumMap<>(ExpressionCallDAO.Attribute.class);
+        expectedMap.put(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA, DataState.HIGHQUALITY);
+        expectedMap.put(ExpressionCallDAO.Attribute.EST_DATA, DataState.HIGHQUALITY);
+        expectedMap.put(ExpressionCallDAO.Attribute.IN_SITU_DATA, DataState.HIGHQUALITY);
+        expectedMap.put(ExpressionCallDAO.Attribute.RNA_SEQ_DATA, DataState.HIGHQUALITY);
+        
+        assertEquals("Incorrect filtering data types retrieved with all HIGHQUALITY", expectedMap, 
+                callTO.extractFilteringDataTypes());
     }
 }

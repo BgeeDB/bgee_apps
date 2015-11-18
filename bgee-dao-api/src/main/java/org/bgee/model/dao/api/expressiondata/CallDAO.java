@@ -1,11 +1,16 @@
 package org.bgee.model.dao.api.expressiondata;
 
+import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.TransferObject;
+import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 
 /**
  * DAO defining queries using or retrieving {@link CallTO}s. 
@@ -260,6 +265,63 @@ public interface CallDAO<T extends Enum<T> & CallDAO.Attribute> extends DAO<T> {
          *                  defined in this {@code ExpressionCallTO}.
          */
         public abstract Map<T, DataState> extractDataTypesToDataStates();
+        
+
+        
+        /**
+         * Retrieve from this {@code CallTO} the data types with a filtering requested, 
+         * allowing to parameterize queries to the data source. For instance, to only retrieve 
+         * calls with an Affymetrix data state equal to {@code HIGHQUALITY}, or with some RNA-Seq data 
+         * of any quality (minimal data state {@code LOWQUALITY}).
+         * <p>
+         * The data types are represented as {@code Attribute}s allowing to request a data type parameter 
+         * (see {@link CallDAO.Attribute#isDataTypeAttribute()}). The {@code DataState}s 
+         * associated to each data type are retrieved using {@link CallTO#extractDataTypesToDataStates()}. 
+         * A check is then performed to ensure that the {@code CallTO} will actually result 
+         * in a filtering of the data. For instance, if all data qualities are {@code null},  
+         * then it is equivalent to requesting no filtering at all, and the {@code EnumMap} returned 
+         * by this method will be empty. 
+         * <p>
+         * Each quality associated to a data type in a same {@code CallTO} is considered 
+         * as an AND condition (for instance, "affymetrixData >= HIGH_QUALITY AND 
+         * rnaSeqData >= HIGH_QUALITY"). To configure OR conditions, (for instance, 
+         * "affymetrixData >= HIGH_QUALITY OR rnaSeqData >= HIGH_QUALITY"), several {@code CallTO}s 
+         * must be provided to this {@code CallDAOFilter}. So for instance, if the quality 
+         * of all data types of {@code callTO} are set to {@code LOW_QUALITY}, it will only allow 
+         * to retrieve calls with data in all data types. 
+         *  
+         * @return          An {@code EnumMap} where keys are {@code Attribute}s associated to a data type, 
+         *                  the associated value being a {@code DataState} to be used 
+         *                  to parameterize queries to the data source (results should have 
+         *                  a data state equal to or higher than this value for this data type).
+         *                  Returned as an {@code EnumMap} for consistent iteration order 
+         *                  when setting parameters in a query. 
+         */
+        protected EnumMap<T, DataState> extractFilteringDataTypes(Class<T> attributeType) {
+            log.entry();
+            
+            final Map<T, DataState> typesToStates = this.extractDataTypesToDataStates();
+            
+            Set<DataState> states = new HashSet<>(typesToStates.values());
+            //if we only have null and/or DataState.NODATA values, 
+            //it is equivalent to having no filtering for data types.
+            if ((states.size() == 1 && 
+                    (states.contains(null) || states.contains(DataState.NODATA))) || 
+                (states.size() == 2 && states.contains(null) && 
+                states.contains(DataState.NODATA))) {
+                
+                return log.exit(new EnumMap<>(attributeType));
+            }
+            
+            //otherwise, get the data types with a filtering requested
+            return log.exit(typesToStates.entrySet().stream()
+                    .filter(entry -> entry.getValue() != null && entry.getValue() != DataState.NODATA)
+                    .collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue(), 
+                            (k, v) -> {throw log.throwing(
+                                    new IllegalArgumentException("Key used more than once: " + k));}, 
+                            //Cannot write EnumMap<>, Eclipse manages to infer the correct type, but not javac. 
+                            () -> new EnumMap<T, DataState>(attributeType))));
+        }
 
         //**************************************
         // GETTERS/SETTERS

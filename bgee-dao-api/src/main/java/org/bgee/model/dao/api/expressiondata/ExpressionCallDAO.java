@@ -12,14 +12,13 @@ import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.expressiondata.CallDAOFilter.ExpressionCallDAOFilter;
 
 /**
  * DAO defining queries using or retrieving {@link ExpressionCallTO}s. 
  * 
  * @author Valentine Rech de Laval
  * @author Frederic Bastian
- * @version Bgee 13 Oct. 2015
+ * @version Bgee 13 Nov. 2015
  * @since Bgee 13
  */
 public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> {
@@ -108,15 +107,26 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
     
     /**
      * Retrieve expression calls from the data source. The parameters are provided through 
-     * {@code CallDAOFilter}s. Note that while it is possible to filter genes to consider 
-     * notably by providing ID lists in the {@code CallDAOFilter}s, it is also possible to provide 
-     * a global list ({@code globalGeneIds}), overriding any gene IDs provided in the {@code CallDAOFilter}s, 
-     * to avoid the need of repeating a same gene ID filtering in several {@code CallDAOFilter}s, 
-     * which could be costly, as many gene IDs could be provided.
+     * {@code CallDAOFilter}s and {@code ExpressionCallTO}s. Note that while it is possible 
+     * to filter genes to consider notably by providing ID lists in the {@code CallDAOFilter}s, 
+     * it is also possible to provide a global list ({@code globalGeneIds}), overriding 
+     * any gene IDs provided in the {@code CallDAOFilter}s, to avoid the need of repeating 
+     * a same gene ID filtering in several {@code CallDAOFilter}s, which could be costly, 
+     * as many gene IDs could be provided.
      * <p>
-     * Please also note that all the {@code ExpressionCallTO}s in the provided {@code CallDAOFilter}s 
-     * should all have the same propagation states (methods {@code isIncludeSubstructures} and 
-     * {@code isIncludeSubStages}), otherwise, an {@code IllegalArgumentException} is thrown.
+     * In the provided {@code ExpressionCallTO}s, only the following methods are considered: 
+     * <ul>
+     * <li>{@code getAffymetrixData}, {@code getESTData}, {@code getInSituData}, {@code getRNASeqData}, 
+     * to define the minimum quality level for each data type. If equal to {@code null} 
+     * or {@code DataState.NODATA}, then no filtering is performed based on this data type. 
+     * All parameters in a same {@code ExpressionCallO} are considered as AND conditions. 
+     * <li>{@code getAnatOriginOfLine}, {@code getStageOriginOfLine}, to define whether 
+     * the returned calls should be filtered based on the origin of the propagated data.
+     * Must be {@code null} to accept all origins. 
+     * <li>{@code isObservedData}, to define a criteria of having at least one observation 
+     * of the returned calls (no propagated calls only). Must be {@code null} to accept 
+     * all observed data states.
+     * </ul>
      * <p>
      * It is possible to request only for genes that are orthologous at the level of a targeted taxon, 
      * by setting {@code taxonId}. In that case, only genes that are orthologous in this taxon 
@@ -129,10 +139,16 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
      * It is the responsibility of the caller to close this {@code DAOResultSet} once 
      * results are retrieved.
      * 
-     * @param callFiters            A {@code Collection} of {@code ExpressionCallDAOFilter}s, 
+     * @param callFilters           A {@code Collection} of {@code CallDAOFilter}s, 
      *                              allowing to configure this query. If several 
-     *                              {@code ExpressionCallDAOFilter}s are provided, they are seen 
+     *                              {@code CallDAOFilter}s are provided, they are seen 
      *                              as "OR" conditions. Can be {@code null} or empty.
+     * @param callTOFilters         A {@code Collection} of {@code ExpressionCallTO}s allowing 
+     *                              to configure the minimum quality level for each data type, etc. 
+     *                              If several {@code ExpressionCallTO}s are provided, 
+     *                              they are seen as "OR" conditions. Attributes inside 
+     *                              a same {@code ExpressionCallTO} are seend as AND conditions. 
+     *                              Can be {@code null} or empty.
      * @param includeSubstructures  A {@code boolean} defining whether the expression calls 
      *                              retrieved should be based on calls generated using data 
      *                              from anatomical entities, and all of their descendants 
@@ -166,7 +182,8 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
      * @throws IllegalArgumentException If the {@code CallDAOFilter}s provided define multiple 
      *                                  expression propagation states requested.
      */
-    public ExpressionCallTOResultSet getExpressionCalls(Collection<ExpressionCallDAOFilter> callFiters, 
+    public ExpressionCallTOResultSet getExpressionCalls(
+            Collection<CallDAOFilter> callFilters, Collection<ExpressionCallTO> callTOFilters, 
             boolean includeSubstructures, boolean includeSubStages, 
             Collection<String> globalGeneIds, String taxonId, Collection<Attribute> attributes, 
             LinkedHashMap<OrderingAttribute, DAO.Direction> orderingAttributes) 
@@ -593,6 +610,39 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
             typesToStates.put(Attribute.RNA_SEQ_DATA, this.getRNASeqData());
             
             return log.exit(typesToStates);
+        }
+        /**
+         * Retrieve from this {@code CallTO} the data types with a filtering requested, 
+         * allowing to parameterize queries to the data source. For instance, to only retrieve 
+         * calls with an Affymetrix data state equal to {@code HIGHQUALITY}, or with some RNA-Seq data 
+         * of any quality (minimal data state {@code LOWQUALITY}).
+         * <p>
+         * The data types are represented as {@code Attribute}s allowing to request a data type parameter 
+         * (see {@link CallDAO.Attribute#isDataTypeAttribute()}). The {@code DataState}s 
+         * associated to each data type are retrieved using {@link CallTO#extractDataTypesToDataStates()}. 
+         * A check is then performed to ensure that the {@code CallTO} will actually result 
+         * in a filtering of the data. For instance, if all data qualities are {@code null},  
+         * then it is equivalent to requesting no filtering at all, and the {@code EnumMap} returned 
+         * by this method will be empty. 
+         * <p>
+         * Each quality associated to a data type in a same {@code CallTO} is considered 
+         * as an AND condition (for instance, "affymetrixData >= HIGH_QUALITY AND 
+         * rnaSeqData >= HIGH_QUALITY"). To configure OR conditions, (for instance, 
+         * "affymetrixData >= HIGH_QUALITY OR rnaSeqData >= HIGH_QUALITY"), several {@code CallTO}s 
+         * must be provided to this {@code CallDAOFilter}. So for instance, if the quality 
+         * of all data types of {@code callTO} are set to {@code LOW_QUALITY}, it will only allow 
+         * to retrieve calls with data in all data types. 
+         *  
+         * @return          An {@code EnumMap} where keys are {@code Attribute}s associated to a data type, 
+         *                  the associated value being a {@code DataState} to be used 
+         *                  to parameterize queries to the data source (results should have 
+         *                  a data state equal to or higher than this value for this data type).
+         *                  Returned as an {@code EnumMap} for consistent iteration order 
+         *                  when setting parameters in a query. 
+         */
+        public EnumMap<Attribute, DataState> extractFilteringDataTypes() {
+            log.entry();
+            return log.exit(super.extractFilteringDataTypes(Attribute.class));
         }
         
         /**

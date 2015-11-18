@@ -905,27 +905,43 @@ implements ExpressionCallDAO {
         Map<ExpressionCallDAO.Attribute, String> dataTypeToSql = new HashMap<>();
         String affyRank = exprTableName + ".affymetrixMeanRank ";
         if (groupByClause) {
-            affyRank = "AVG(" + exprTableName + ".affymetrixMeanRank) AS affymetrixMeanRank ";
+            affyRank = "AVG(" + exprTableName + ".affymetrixMeanRank) ";
         }
         dataTypeToSql.put(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA, affyRank);
+        //for the global mean rank clause, we don't want the AS part, but we need it for the main query
+        if (groupByClause) {
+            affyRank += "AS affymetrixMeanRank ";
+        }
         
         String estRank = exprTableName + ".estMeanRank ";
         if (groupByClause) {
-            estRank = "AVG(" + exprTableName + ".estMeanRank) AS estMeanRank ";
+            estRank = "AVG(" + exprTableName + ".estMeanRank) ";
         }
         dataTypeToSql.put(ExpressionCallDAO.Attribute.EST_DATA, estRank);
+        //for the global mean rank clause, we don't want the AS part, but we need it for the main query
+        if (groupByClause) {
+            estRank += "AS estMeanRank ";
+        }
         
         String inSituRank = exprTableName + ".inSituMeanRank ";
         if (groupByClause) {
-            inSituRank = "AVG(" + exprTableName + ".inSituMeanRank) AS inSituMeanRank ";
+            inSituRank = "AVG(" + exprTableName + ".inSituMeanRank) ";
         }
         dataTypeToSql.put(ExpressionCallDAO.Attribute.IN_SITU_DATA, inSituRank);
+        //for the global mean rank clause, we don't want the AS part, but we need it for the main query
+        if (groupByClause) {
+            inSituRank += "AS inSituMeanRank ";
+        }
         
         String rnaSeqRank = exprTableName + ".rnaSeqMeanRank ";
         if (groupByClause) {
-            rnaSeqRank = "AVG(" + exprTableName + ".rnaSeqMeanRank) AS rnaSeqMeanRank ";
+            rnaSeqRank = "AVG(" + exprTableName + ".rnaSeqMeanRank) ";
         }
         dataTypeToSql.put(ExpressionCallDAO.Attribute.RNA_SEQ_DATA, rnaSeqRank);
+        //for the global mean rank clause, we don't want the AS part, but we need it for the main query
+        if (groupByClause) {
+            rnaSeqRank += "AS rnaSeqMeanRank ";
+        }
         
         
         for (ExpressionCallDAO.Attribute attribute: attributes) {
@@ -1100,12 +1116,27 @@ implements ExpressionCallDAO {
                 
             } else if (attribute.equals(ExpressionCallDAO.Attribute.GLOBAL_MEAN_RANK)) {
                 
-                sql += (filteringDataTypes.isEmpty()? 
+                Set<ExpressionCallDAO.Attribute> attributesForRank = (filteringDataTypes.isEmpty()? 
                         EnumSet.allOf(ExpressionCallDAO.Attribute.class): filteringDataTypes)
-                        .stream()
-                            .map(dataType -> dataTypeToSql.get(dataType))
-                            .collect(Collectors.joining("+ ", "((", 
-                                ") / " + filteringDataTypes.size() + ") AS globalMeanRank "));
+                    .stream()
+                    //in case we retrieved all Attributes because no filtering on data types
+                    .filter(dataType -> dataType.isDataTypeAttribute())
+                    .collect(Collectors.toCollection(() -> 
+                             EnumSet.noneOf(ExpressionCallDAO.Attribute.class)));
+                //use for dividing afterwards, don't want a division by 0 :p
+                assert attributesForRank.size() > 0;
+                
+                sql += attributesForRank.stream()
+                        .map(dataType -> {
+                                String rankSql = dataTypeToSql.get(dataType);
+                                if (rankSql == null) {
+                                    throw log.throwing(new IllegalStateException(
+                                            "No rank clause associated to data type: " + dataType));
+                                }
+                                return rankSql;
+                            })
+                        .collect(Collectors.joining("+ ", "((", 
+                                ") / " + attributesForRank.size() + ") AS globalMeanRank "));
                 
             } else if (attribute.equals(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA)) {
                 if (!groupByClause) {

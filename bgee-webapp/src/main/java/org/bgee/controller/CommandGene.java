@@ -5,6 +5,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.ServiceFactory;
+import org.bgee.model.gene.Gene;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.ViewFactory;
 
@@ -36,4 +37,9 @@ public class CommandGene extends CommandParent {
 		log.exit();
 	}
 
+	private Gene getGene(String geneId) {
+		//TODO: use GeneService here
+		return new Gene(geneId);
+	}
+	
 }

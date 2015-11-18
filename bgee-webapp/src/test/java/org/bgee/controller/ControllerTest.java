@@ -10,7 +10,9 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import javax.servlet.http.HttpServletRequest;
@@ -69,7 +71,7 @@ public class ControllerTest {
      */
     @Before
     public void initMockObjects() throws IOException {
-
+        TestURLParameters params = new TestURLParameters();
         this.mockHttpServletRequest = mock(HttpServletRequest.class);
         this.mockHttpServletResponse = mock(HttpServletResponse.class);
         this.mockPrintWriter = mock(PrintWriter.class);
@@ -81,15 +83,11 @@ public class ControllerTest {
         // The mock HttpServletResponse provides a mock PrintWriter
         when(this.mockHttpServletResponse.getWriter()).thenReturn(this.mockPrintWriter);
         // The mock HttpServletRequest provides values for three URL parameters
-        String[] displayTypeValues = {"xml"};
-        when(this.mockHttpServletRequest.getParameterValues(eq("display_type")))
-        .thenReturn(displayTypeValues);
-        String[] pagesValues = {"download"};
-        when(this.mockHttpServletRequest.getParameterValues(eq("page")))
-        .thenReturn(pagesValues); 
-        String[] testStringValues = {"test"};
-        when(this.mockHttpServletRequest.getParameterValues(eq("test_string")))
-        .thenReturn(testStringValues); 
+        Map<String, String[]> parameterMap = new HashMap<>();
+        parameterMap.put(params.getParamDisplayType().getName(), new String[]{"xml"});
+        parameterMap.put(params.getParamPage().getName(), new String[]{"download"});
+        parameterMap.put(params.getParamTestString().getName(), new String[]{"test"});
+        when(this.mockHttpServletRequest.getParameterMap()).thenReturn(parameterMap);
     }
 
     /**

@@ -1163,7 +1163,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
             //No ordering requested, put in a Set
             Set<ExpressionCallTO> unorderedExpectedExprCalls = new HashSet<>(orderedExpectedExprCalls);
             // Compare
-            continuer en utilisan que anat et stage pour avoir le filtering
+            //continuer en utilisan que anat et stage pour avoir le filtering
             MySQLExpressionCallTOResultSet rs = 
                     (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), 
                             null, true, true, null, null, null, null);

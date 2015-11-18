@@ -2,7 +2,9 @@ package org.bgee.model.topanat;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -21,6 +23,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -156,9 +160,13 @@ public class TopAnatAnalysis {
         // Generate R code and write it on the disk
         this.generateRCodeFile();
 
-        // Run the R analysis and return the result
+        // Run the R analysis
         this.runRcode();
 
+        // create the zip file
+        this.generateZipFile();
+
+        // return the result
         List<TopAnatResults.TopAnatResultRow> resultRows = this.getResultRows();
         if (resultRows != null){
             return log.exit(new TopAnatResults(
@@ -170,8 +178,10 @@ public class TopAnatAnalysis {
                     this.getAnatEntitiesNamesFileName(),
                     this.getAnatEntitiesRelationshipsFileName(),
                     this.getGeneToAnatEntitiesFileName(),
-                    this.getRScriptConsoleFileName()));
+                    this.getRScriptConsoleFileName(),
+                    this.getZipFileName()));
         }
+
         return null;
     }
 
@@ -262,7 +272,7 @@ public class TopAnatAnalysis {
             //already exist (maybe another thread generated the files before this one 
             //acquires the lock)
             if (Files.exists(finalFile)) {
-                log.info("R result file already generated.");
+                log.info("Result files already generated.");
                 log.exit();return;
             }
 
@@ -629,6 +639,104 @@ public class TopAnatAnalysis {
         log.info("TopAnatParamsFile: {}", this.getParamsOutputFileName());
         log.exit();
     }  
+    
+    private void generateZipFile() throws IOException{
+        log.entry();
+        log.info("Generating Zip file...");
+
+        File zipFile = new File(
+                this.props.getTopAnatResultsWritingDirectory(),
+                this.getZipFileName());
+        String zipFilePath = zipFile
+                .getPath();
+
+        //we will write into a tmp file, moved at the end if everything 
+        //went fine.
+        String tmpFileName = zipFilePath + ".tmp";
+        Path tmpFile = Paths.get(tmpFileName);
+        Path finalZipFile = Paths.get(zipFilePath);
+
+        try {
+            this.acquireWriteLock(zipFilePath);
+            this.acquireWriteLock(tmpFileName);
+
+            //check, AFTER having acquired the locks, that the final file does not 
+            //already exist (maybe another thread generated the files before this one 
+            //acquired the lock)
+            if (Files.exists(finalZipFile)) {
+                log.info("Zip file already generated.");
+                log.exit(); return;
+            }
+
+            this.writeZipFile(tmpFileName);
+
+            this.move(tmpFile, finalZipFile);
+
+        } finally {
+            Files.deleteIfExists(tmpFile);
+            this.releaseWriteLock(zipFilePath);
+            this.releaseWriteLock(tmpFileName);
+        }
+
+        log.info("TopAnatParamsFile: {}", this.getParamsOutputFileName());
+        log.exit();
+    }
+
+    /**
+     * 99% from here: 
+     * http://examples.javacodegeeks.com/
+     * core-java/util/zip/create-zip-file-from-multiple-files-with-zipoutputstream/
+     * @throws IOException 
+     */
+    public void writeZipFile(String path) throws IOException {
+
+        String zipFile = path;
+        
+        String[] srcFiles = { 
+                this.props.getTopAnatResultsWritingDirectory() + this.getResultFileName(),
+                this.props.getTopAnatResultsWritingDirectory() + this.getResultPDFFileName(),
+                this.props.getTopAnatResultsWritingDirectory() + this.getRScriptConsoleFileName(),
+                this.props.getTopAnatResultsWritingDirectory() + this.getAnatEntitiesNamesFileName(),
+                this.props.getTopAnatResultsWritingDirectory() + this.getGeneToAnatEntitiesFileName(),
+                this.props.getTopAnatResultsWritingDirectory() + this.getParamsOutputFileName(),
+                this.props.getTopAnatResultsWritingDirectory() + this.getAnatEntitiesRelationshipsFileName(),
+                this.props.getTopAnatResultsWritingDirectory() + this.getRScriptAnalysisFileName()
+        };
+
+        // create byte buffer
+        byte[] buffer = new byte[1024];
+
+        FileOutputStream fos = new FileOutputStream(zipFile);
+
+        ZipOutputStream zos = new ZipOutputStream(fos);
+
+        for (int i=0; i < srcFiles.length; i++) {
+
+            File srcFile = new File(srcFiles[i]);
+
+            FileInputStream fis = new FileInputStream(srcFile);
+
+            // begin writing a new ZIP entry, positions the stream to the start of the entry data
+            zos.putNextEntry(new ZipEntry(srcFile.getName()));
+
+            int length;
+
+            while ((length = fis.read(buffer)) > 0) {
+                zos.write(buffer, 0, length);
+            }
+
+            zos.closeEntry();
+
+            // close the InputStream
+            fis.close();
+
+        }
+
+        // close the ZipOutputStream
+        zos.close();
+
+    }
+
 
     /**
      * 
@@ -693,6 +801,14 @@ public class TopAnatAnalysis {
 
     /**
      * 
+     */
+    public String getZipFileName(){
+        return TopAnatAnalysis.FILE_PREFIX 
+                + this.params.getKey() + ".zip";
+    }
+
+    /**
+     * 
      * @param src
      * @param dest
      * @throws IOException 
@@ -704,7 +820,6 @@ public class TopAnatAnalysis {
             throw log.throwing(new IllegalStateException("Empty tmp file"));
         }
     }
-
 
     // *************************************************
     // FILE LOCKING

@@ -149,6 +149,8 @@ public class TopAnatResults {
                 return false;
             return true;
         }
+
+     
         
         
 
@@ -283,110 +285,6 @@ public class TopAnatResults {
     public String getZipFileName() {
         return zipFileName;
     }
-    
-    @Override
-    public String toString() {
-        return "TopAnatResults [topAnatParams=" + topAnatParams + ", resultFileName=" + resultFileName
-                + ", resultPDFFileName=" + resultPDFFileName + ", rScriptAnalysisFileName=" + rScriptAnalysisFileName
-                + ", paramsOutputFileName=" + paramsOutputFileName + ", anatEntitiesFilename=" + anatEntitiesFilename
-                + ", anatEntitiesRelationshipsFileName=" + anatEntitiesRelationshipsFileName
-                + ", geneToAnatEntitiesFileName=" + geneToAnatEntitiesFileName + ", rScriptConsoleFileName="
-                + rScriptConsoleFileName + ", zipFileName=" + zipFileName + ", controller=" + controller + ", props="
-                + props + "]";
-    }
-
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((anatEntitiesFilename == null) ? 0 : anatEntitiesFilename.hashCode());
-        result = prime * result
-                + ((anatEntitiesRelationshipsFileName == null) ? 0 : anatEntitiesRelationshipsFileName.hashCode());
-        result = prime * result + ((controller == null) ? 0 : controller.hashCode());
-        result = prime * result + ((geneToAnatEntitiesFileName == null) ? 0 : geneToAnatEntitiesFileName.hashCode());
-        result = prime * result + ((paramsOutputFileName == null) ? 0 : paramsOutputFileName.hashCode());
-        result = prime * result + ((props == null) ? 0 : props.hashCode());
-        result = prime * result + ((rScriptAnalysisFileName == null) ? 0 : rScriptAnalysisFileName.hashCode());
-        result = prime * result + ((rScriptConsoleFileName == null) ? 0 : rScriptConsoleFileName.hashCode());
-        result = prime * result + ((resultFileName == null) ? 0 : resultFileName.hashCode());
-        result = prime * result + ((resultPDFFileName == null) ? 0 : resultPDFFileName.hashCode());
-        result = prime * result + ((topAnatParams == null) ? 0 : topAnatParams.hashCode());
-        result = prime * result + ((zipFileName == null) ? 0 : zipFileName.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        TopAnatResults other = (TopAnatResults) obj;
-        if (anatEntitiesFilename == null) {
-            if (other.anatEntitiesFilename != null)
-                return false;
-        } else if (!anatEntitiesFilename.equals(other.anatEntitiesFilename))
-            return false;
-        if (anatEntitiesRelationshipsFileName == null) {
-            if (other.anatEntitiesRelationshipsFileName != null)
-                return false;
-        } else if (!anatEntitiesRelationshipsFileName.equals(other.anatEntitiesRelationshipsFileName))
-            return false;
-        if (controller == null) {
-            if (other.controller != null)
-                return false;
-        } else if (!controller.equals(other.controller))
-            return false;
-        if (geneToAnatEntitiesFileName == null) {
-            if (other.geneToAnatEntitiesFileName != null)
-                return false;
-        } else if (!geneToAnatEntitiesFileName.equals(other.geneToAnatEntitiesFileName))
-            return false;
-        if (paramsOutputFileName == null) {
-            if (other.paramsOutputFileName != null)
-                return false;
-        } else if (!paramsOutputFileName.equals(other.paramsOutputFileName))
-            return false;
-        if (props == null) {
-            if (other.props != null)
-                return false;
-        } else if (!props.equals(other.props))
-            return false;
-        if (rScriptAnalysisFileName == null) {
-            if (other.rScriptAnalysisFileName != null)
-                return false;
-        } else if (!rScriptAnalysisFileName.equals(other.rScriptAnalysisFileName))
-            return false;
-        if (rScriptConsoleFileName == null) {
-            if (other.rScriptConsoleFileName != null)
-                return false;
-        } else if (!rScriptConsoleFileName.equals(other.rScriptConsoleFileName))
-            return false;
-        if (resultFileName == null) {
-            if (other.resultFileName != null)
-                return false;
-        } else if (!resultFileName.equals(other.resultFileName))
-            return false;
-        if (resultPDFFileName == null) {
-            if (other.resultPDFFileName != null)
-                return false;
-        } else if (!resultPDFFileName.equals(other.resultPDFFileName))
-            return false;
-        if (topAnatParams == null) {
-            if (other.topAnatParams != null)
-                return false;
-        } else if (!topAnatParams.equals(other.topAnatParams))
-            return false;
-        if (zipFileName == null) {
-            if (other.zipFileName != null)
-                return false;
-        } else if (!zipFileName.equals(other.zipFileName))
-            return false;
-        return true;
-    }
-
-
+ 
 }
 

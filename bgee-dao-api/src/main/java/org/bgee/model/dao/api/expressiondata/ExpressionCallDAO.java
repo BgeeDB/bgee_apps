@@ -95,7 +95,7 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
          *          data propagation information.
          */
         public boolean isPropagationAttribute() {
-            return rankAttribute;
+            return propagationAttribute;
         }
     }
     /**

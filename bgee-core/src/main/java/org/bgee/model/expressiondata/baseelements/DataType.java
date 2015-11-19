@@ -23,5 +23,5 @@ package org.bgee.model.expressiondata.baseelements;
  * @since Bgee 13
  */
 public enum DataType {
-    AFFYMETRIX, EST, IN_SITU, RELAXED_IN_SITU, RNA_SEQ;
+    AFFYMETRIX, EST, IN_SITU, RNA_SEQ;
 }

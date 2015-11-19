@@ -272,7 +272,7 @@ public class CommandTopAnat extends CommandParent {
                     this.requestParameters.getGeneInfo()) {
                 data.putAll(this.getGeneResponses());
             }
-            display.sendTrackingJobResponse(data, "message");
+            display.sendTrackingJobResponse(data, jobStatus.name() + " job");
 
         // Get result 
         } else if (this.requestParameters.isATopAnatGetResult()) {

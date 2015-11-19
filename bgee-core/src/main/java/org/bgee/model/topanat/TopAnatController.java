@@ -14,7 +14,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeProperties;
 import org.bgee.model.QueryTool;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.function.QuadriFunction;
+import org.bgee.model.function.PentaFunction;
 
 /**
  * @author Mathieu Seppey
@@ -44,9 +44,9 @@ public class TopAnatController extends QueryTool {
     private final ServiceFactory serviceFactory;
 
     /**
-     * A {@code QuadriFunction} allowing to obtain new {@code TopAnatAnalysis} instances.
+     * A {@code PentaFunction} allowing to obtain new {@code TopAnatAnalysis} instances.
      */
-    private final QuadriFunction<TopAnatParams, BgeeProperties, ServiceFactory, TopAnatController, TopAnatAnalysis> 
+    private final PentaFunction<TopAnatParams, BgeeProperties, ServiceFactory, TopAnatRManager,TopAnatController, TopAnatAnalysis> 
     topAnatAnalysisSupplier;
 
     /**
@@ -63,7 +63,7 @@ public class TopAnatController extends QueryTool {
      */
     public TopAnatController(List<TopAnatParams> topAnatParams, BgeeProperties props, 
             ServiceFactory serviceFactory) {
-        this(topAnatParams, props, serviceFactory, TopAnatAnalysis::new);
+        this(topAnatParams, props, serviceFactory,TopAnatAnalysis::new);
     }
 
     /**
@@ -72,7 +72,7 @@ public class TopAnatController extends QueryTool {
      */
     public TopAnatController(List<TopAnatParams> topAnatParams, BgeeProperties props, 
             ServiceFactory serviceFactory, 
-            QuadriFunction<TopAnatParams, BgeeProperties, ServiceFactory, TopAnatController, 
+            PentaFunction<TopAnatParams, BgeeProperties, ServiceFactory, TopAnatRManager, TopAnatController,
             TopAnatAnalysis> topAnatAnalysisSupplier) {
         log.entry(topAnatParams, props, serviceFactory, topAnatAnalysisSupplier);
 
@@ -109,7 +109,7 @@ public class TopAnatController extends QueryTool {
 
         return log.exit(this.topAnatParams.stream()
                 .map(params -> this.topAnatAnalysisSupplier.apply(params, this.props, 
-                        this.serviceFactory, this))
+                        this.serviceFactory, new TopAnatRManager(this.props, params),this))
                 .map(analysis -> {
                     try {
                         return analysis.proceedToAnalysis();
@@ -345,7 +345,8 @@ public class TopAnatController extends QueryTool {
         log.entry();
         if(this.topAnatParams.stream()
                 .map(params -> this.topAnatAnalysisSupplier.apply(params, this.props, 
-                        this.serviceFactory, this)).filter(a -> a.isAnalysisDone() == false).count() > 0)
+                        this.serviceFactory, new TopAnatRManager(this.props,params), this))
+                .filter(a -> a.isAnalysisDone() == false).count() > 0)
             return log.exit(false);
         return log.exit(true);
     }

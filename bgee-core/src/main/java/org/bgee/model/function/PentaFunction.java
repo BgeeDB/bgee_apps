@@ -9,6 +9,7 @@ package org.bgee.model.function;
  * @param U the type of the second argument to the function
  * @param V the type of the third argument to the function
  * @param W the type of the fourth argument to the function
+ * @param X the type of the fifth argument to the function
  * @param R the type of the result of the function
  * 
  * @author Frederic Bastian
@@ -16,6 +17,6 @@ package org.bgee.model.function;
  * @since Bgee 13 Oct. 2015
  */
 @FunctionalInterface
-public interface QuadriFunction<T, U, V, W, R> {
-    public R apply(T t, U u, V v, W w);
+public interface PentaFunction<T, U, V, W, X, R> {
+    public R apply(T t, U u, V v, W w, X x);
 }

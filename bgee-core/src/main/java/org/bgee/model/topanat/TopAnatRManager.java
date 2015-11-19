@@ -1,7 +1,6 @@
 package org.bgee.model.topanat;
 
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Collection;
 
@@ -51,7 +50,7 @@ public class TopAnatRManager {
 
     }
 
-    public String generateRCode(String resultFileName, String resultPdfFileName, 
+    protected String generateRCode(String resultFileName, String resultPdfFileName, 
             String anatEntitiesNamesFileName, String anatEntitiesRelationshipsFileName,
             String geneToAnatEntitiesFileName,
             Collection<String> backgroundIds) {
@@ -190,7 +189,7 @@ public class TopAnatRManager {
         return log.exit(code.toString());
 
     }
-    public void performRFunction(String consoleFileName) throws FileNotFoundException{
+    protected void performRFunction(String consoleFileName) throws FileNotFoundException{
 
         log.info("Running statistical tests in R...");
         if(this.code.toString().equals(new RCode().toString())){

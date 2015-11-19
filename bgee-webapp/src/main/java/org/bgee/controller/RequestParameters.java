@@ -2274,7 +2274,6 @@ public class RequestParameters {
     public boolean isATopAnatSubmitJob() {
         log.entry();
         if (isATopAnatPageCategory() &&
-                this.getHttpMethod().equals("POST") &&
                 this.getAction() != null && this.getAction().equals(ACTION_TOP_ANAT_SUBMIT_JOB)) {
             return log.exit(true);
         }
@@ -2287,7 +2286,6 @@ public class RequestParameters {
     public boolean isATopAnatTrackingJob() {
         log.entry();
         if (isATopAnatPageCategory() &&
-                this.getHttpMethod().equals("POST") &&
                 this.getAction() != null && this.getAction().equals(ACTION_TOP_ANAT_TRACKING_JOB)) {
             return log.exit(true);
         }
@@ -2300,7 +2298,6 @@ public class RequestParameters {
     public boolean isATopAnatGetResult() {
         log.entry();
         if (isATopAnatPageCategory() &&
-                this.getHttpMethod().equals("POST") &&
                 this.getAction() != null && this.getAction().equals(ACTION_TOP_ANAT_GET_RESULT)) {
             return log.exit(true);
         }

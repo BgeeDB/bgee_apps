@@ -21,7 +21,6 @@ import java.util.stream.Stream;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.InvalidRequestException;
@@ -38,7 +37,6 @@ import org.bgee.model.species.Species;
 import org.bgee.model.topanat.TopAnatController;
 import org.bgee.model.topanat.TopAnatParams;
 import org.bgee.model.topanat.TopAnatResults;
-import org.bgee.model.topanat.TopAnatResults.TopAnatResultRow;
 import org.bgee.model.topanat.exception.MissingParameterException;
 import org.bgee.view.JsonHelper;
 import org.bgee.view.TopAnatDisplay;
@@ -57,6 +55,9 @@ public class CommandTopAnat extends CommandParent {
      * {@code Logger} of the class. 
      */
     private final static Logger log = LogManager.getLogger(CommandTopAnat.class.getName());
+    
+    //TODO Remove, it's for live tests
+    private volatile static int nbJobTrackingTries = 0;
     
     /**
      * An {@code int} that is the level to be used to filter retrieved dev. stages. 
@@ -250,12 +251,19 @@ public class CommandTopAnat extends CommandParent {
             // Retrieve task manager associated to the provided ID
             TaskManager taskManager = TaskManager.getTaskManager(jobID);
             JobStatus jobStatus;
-            if (taskManager == null || taskManager.isTerminated()) {
+            //TODO Remove, it's for live tests
+            if (nbJobTrackingTries % 3 == 0) {
                 jobStatus = JobStatus.UNDEFINED;
             } else {
-                jobStatus = JobStatus.RUNNING;
-                // TODO message
+                jobStatus = JobStatus.RUNNING;                
             }
+//            if (taskManager == null || taskManager.isTerminated()) {
+//                jobStatus = JobStatus.UNDEFINED;
+//            } else {
+//                jobStatus = JobStatus.RUNNING;
+//                // TODO nice complete message
+//            }
+            nbJobTrackingTries++;
             LinkedHashMap<String, Object> data = new LinkedHashMap<>();
 
             data.put(JOB_RESPONSE_LABEL, new JobResponse(jobID, jobStatus.name(), keyParam));

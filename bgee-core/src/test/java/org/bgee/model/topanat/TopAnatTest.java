@@ -4,7 +4,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyCollection;
+import static org.mockito.Matchers.anyCollectionOf;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -16,8 +19,10 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -25,10 +30,13 @@ import java.util.stream.Stream;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.bgee.model.BgeeProperties;
+import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
+import org.bgee.model.expressiondata.Call;
+import org.bgee.model.expressiondata.CallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.baseelements.CallType;
@@ -119,9 +127,12 @@ public class TopAnatTest {
         .thenReturn("A3").thenReturn("A4").thenReturn("A5");
         when(mockAnatEntity.getName()).thenReturn("body").thenReturn("head")
         .thenReturn("hand").thenReturn("eye").thenReturn("finger");
-        when(mockCallService.loadCalls(anyString(), any(Set.class))) // TODO be more specific here
-        .thenReturn(Stream.of(mockExpressionCall1, mockExpressionCall2, mockExpressionCall3,
-                mockExpressionCall4,mockExpressionCall5));    
+        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> ordering = null;
+        Stream callStream = Stream.of(mockExpressionCall1, mockExpressionCall2, mockExpressionCall3,
+                mockExpressionCall4,mockExpressionCall5);
+        when(mockCallService.loadCalls(anyString(), ((Collection<CallFilter<?>>) anyCollection()), 
+                anyCollectionOf(CallService.Attribute.class), eq(ordering))) // TODO be more specific here
+        .thenReturn(callStream);    
         when(mockServiceFactory.getGeneService()).thenReturn(mockGeneService);
         when(mockServiceFactory.getCallService()).thenReturn(mockCallService);
         when(mockServiceFactory.getAnatEntityService()).thenReturn(mockAnatEntityService);

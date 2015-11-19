@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -23,7 +24,6 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeProperties;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntityService;
-import org.bgee.model.expressiondata.CallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneService;
@@ -258,8 +258,8 @@ public class TopAnatAnalysis {
 
             this.rManager.performRFunction(this.getRScriptConsoleFileName());
 
-            this.move(tmpFile, finalFile);
-            this.move(tmpPdfFile, finalPdfFile);
+            this.move(tmpFile, finalFile, false);
+            this.move(tmpPdfFile, finalPdfFile, false);
 
         } finally {
             Files.deleteIfExists(tmpFile);
@@ -313,7 +313,7 @@ public class TopAnatAnalysis {
 
             this.writeRcodeFile(tmpFileName);
 
-            this.move(tmpFile, finalFile);
+            this.move(tmpFile, finalFile, true);
 
         } finally {
             Files.deleteIfExists(tmpFile);
@@ -391,8 +391,8 @@ public class TopAnatAnalysis {
             this.writeAnatEntitiesNamesToFile(namesTmpFileName);
             this.writeAnatEntitiesRelationsToFile(relsTmpFileName);
 
-            this.move(namesTmpFile, finalNamesFile);
-            this.move(relsTmpFile, finalRelsFile);
+            this.move(namesTmpFile, finalNamesFile, true);
+            this.move(relsTmpFile, finalRelsFile, true);
 
         } finally {
             Files.deleteIfExists(namesTmpFile);
@@ -455,14 +455,16 @@ public class TopAnatAnalysis {
         try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(
                 geneToAnatEntitiesFile)))) {
             this.callService.loadCalls(
-                    this.params.getSpeciesId(),new HashSet<CallFilter<?>>(
-                            Arrays.asList(this.params.convertRawParametersToCallFilter()))
-                    ).forEach(
-                            call -> out.println(
-                                    call.getGeneId() + '\t' + 
-                                    call.getCondition().getAnatEntityId()
-                                    )
-                            );
+                    this.params.getSpeciesId(), 
+                    Arrays.asList(this.params.convertRawParametersToCallFilter()), 
+                    EnumSet.of(CallService.Attribute.GENE_ID, CallService.Attribute.ANAT_ENTITY_ID), 
+                    null
+                ).forEach(
+                    call -> out.println(
+                        call.getGeneId() + '\t' + 
+                        call.getCondition().getAnatEntityId()
+                    )
+                );
         }
         log.exit();
     }    
@@ -499,7 +501,7 @@ public class TopAnatAnalysis {
 
             this.writeToGeneToAnatEntitiesFile(tmpFileName);
             //move tmp file if successful
-            this.move(tmpFile, finalGeneToAnatEntitiesFile);
+            this.move(tmpFile, finalGeneToAnatEntitiesFile, false);
 
         } finally {
             Files.deleteIfExists(tmpFile);
@@ -563,7 +565,7 @@ public class TopAnatAnalysis {
 
             this.writeToTopAnatParamsFile(tmpFileName);
 
-            this.move(tmpFile, finalTopAnatParamsFile);
+            this.move(tmpFile, finalTopAnatParamsFile, true);
 
         } finally {
             Files.deleteIfExists(tmpFile);
@@ -605,7 +607,7 @@ public class TopAnatAnalysis {
 
             this.writeZipFile(tmpFileName);
 
-            this.move(tmpFile, finalZipFile);
+            this.move(tmpFile, finalZipFile, true);
 
         } finally {
             Files.deleteIfExists(tmpFile);
@@ -770,10 +772,10 @@ public class TopAnatAnalysis {
      * @param dest
      * @throws IOException 
      */
-    private void move(Path src, Path dest) throws IOException{
-        if(true | Files.size(src) > 0) // TODO true to avoid an exception when an empty R output file is produced
+    private void move(Path src, Path dest, boolean checkSize) throws IOException{
+        if(!checkSize || Files.size(src) > 0) 
             Files.move(src, dest, StandardCopyOption.REPLACE_EXISTING);
-        else{
+        else {
             throw log.throwing(new IllegalStateException("Empty tmp file"));
         }
     }

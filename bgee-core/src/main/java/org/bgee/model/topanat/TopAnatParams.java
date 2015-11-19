@@ -1,12 +1,13 @@
 package org.bgee.model.topanat;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -17,6 +18,7 @@ import org.bgee.model.expressiondata.CallData;
 import org.bgee.model.expressiondata.CallData.DiffExpressionCallData;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.CallFilter;
+import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.ConditionFilter;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
@@ -25,6 +27,9 @@ import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DecorelationType;
 import org.bgee.model.expressiondata.baseelements.DiffExpressionFactor;
 import org.bgee.model.expressiondata.baseelements.StatisticTest;
+import org.bgee.model.expressiondata.baseelements.CallType.DiffExpression;
+import org.bgee.model.expressiondata.baseelements.CallType.Expression;
+import org.bgee.model.expressiondata.baseelements.DataPropagation.PropagationState;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.topanat.exception.MissingParameterException;
 
@@ -379,9 +384,6 @@ public class TopAnatParams {
     private TopAnatParams(Builder builder) throws MissingParameterException {
         log.entry(builder);
         // mandatory params
-        if(builder.submittedForegroundIds == null){
-            throw new MissingParameterException("foreground Ids");
-        }
 
         if(builder.callType == null){
             throw new MissingParameterException("call type");           
@@ -531,13 +533,35 @@ public class TopAnatParams {
     /**
      * @return
      */
-    public CallFilter<CallData<?>> convertRawParametersToCallFilter() {
+    public CallFilter<?> convertRawParametersToCallFilter() {
         log.entry();
-        ConditionFilter conditionFilter = new ConditionFilter(null, Arrays.asList(this.devStageId));
-        return log.exit(new CallFilter<CallData<?>>(
-                this.submittedBackgroundIds != null ? new GeneFilter(this.submittedBackgroundIds): null, 
-                        new HashSet<>(Arrays.asList(conditionFilter)), this.getCallData()
+        if (this.callType == Expression.EXPRESSED) {
+            return log.exit(new ExpressionCallFilter(
+                    //gene filter 
+                    this.submittedBackgroundIds != null? new GeneFilter(this.submittedBackgroundIds): null, 
+                    //condition filter
+                    Arrays.asList(new ConditionFilter(null, Arrays.asList(this.devStageId))), 
+                    //data propagation
+                    new DataPropagation(PropagationState.SELF, PropagationState.SELF_OR_DESCENDANT), 
+                    this.getExpressionCallData()
                 ));
+        }
+        if (this.callType == DiffExpression.OVER_EXPRESSED) {
+            //TODO: to implement, and use method getDiffExpressionCallData
+            throw log.throwing(new UnsupportedOperationException(
+                    "CallService for diff. expression not yet implemented"));
+        }
+        throw log.throwing(new IllegalStateException("Unsupported CallType: " + this.callType));
+    }
+    
+    private Collection<ExpressionCallData> getExpressionCallData() {
+        log.entry();
+
+        return log.exit(this.getCallData((dataType, dataQual) -> 
+            new ExpressionCallData(CallType.Expression.EXPRESSED,
+                dataQual, dataType, 
+                new DataPropagation(PropagationState.SELF, 
+                        PropagationState.SELF_OR_DESCENDANT))));
     }
 
     /**
@@ -546,28 +570,27 @@ public class TopAnatParams {
      * XXX check if correct: DataPropagation
      * @return
      */
-    private Set<CallData<?>> getCallData() {
+    private Collection<DiffExpressionCallData> getDiffExpressionCallData() {
         log.entry();
 
-        final DataPropagation dataPropagation = new DataPropagation(
-                DataPropagation.PropagationState.SELF,
-                DataPropagation.PropagationState.SELF_OR_CHILD);
-        final DataQuality dataQual = this.dataQuality == null? DataQuality.LOW: this.dataQuality;
+        return log.exit(this.getCallData((dataType, dataQual) -> 
+            new DiffExpressionCallData(DiffExpressionFactor.ANATOMY, 
+                CallType.DiffExpression.OVER_EXPRESSED, dataQual, dataType)));
+    }
 
-        Function<DataType, CallData<?>> callDataSupplier = null;
-        if (this.callType == CallType.Expression.EXPRESSED) {
-            callDataSupplier = dataType -> new ExpressionCallData(CallType.Expression.EXPRESSED,
-                    dataQual, dataType, dataPropagation);
-        } else if (this.callType == CallType.DiffExpression.OVER_EXPRESSED) {
-            callDataSupplier = dataType -> new DiffExpressionCallData(DiffExpressionFactor.ANATOMY,
-                    CallType.DiffExpression.OVER_EXPRESSED, dataQual, dataType);
-        }
+    private <T extends CallData<?>> Collection<T> getCallData(
+            BiFunction<DataType, DataQuality, T> callDataSupplier) {
+        log.entry(callDataSupplier);
+
+        final DataQuality dataQual = this.dataQuality == null? DataQuality.LOW: this.dataQuality;
 
         if (this.dataTypes == null || this.dataTypes.isEmpty() || 
                 this.dataTypes.containsAll(this.callType.getAllowedDataTypes())) {
-            return log.exit(new HashSet<>(Arrays.asList(callDataSupplier.apply(null))));
+            return log.exit(Arrays.asList(callDataSupplier.apply(null, dataQual)));
         }
-        return log.exit(this.dataTypes.stream().map(callDataSupplier::apply).collect(Collectors.toSet()));
+        return log.exit(this.dataTypes.stream()
+                .map(dataType -> callDataSupplier.apply(dataType, dataQual))
+                .collect(Collectors.toSet()));
     }
 
     /**

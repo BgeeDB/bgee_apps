@@ -62,7 +62,15 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
-    
+
+    /**
+     * @return A {@code Set} of all non-ranking attributes.
+     */
+    private Set<ExpressionCallDAO.Attribute> getNonRankingAttributes() {
+        return EnumSet.allOf(ExpressionCallDAO.Attribute.class).stream()
+                .filter(attr -> !attr.isRankAttribute()).collect(Collectors.toSet());
+    }
+
     /**
      * Unit test for {@link MySQLExpressionCallDAO#getExpressionCalls(Collection, 
      * Collection, String, Collection, LinkedHashMap)}, when not needing a GROUP BY clause.
@@ -114,7 +122,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         BigDecimal.valueOf(12554.2), DataState.HIGHQUALITY, BigDecimal.valueOf(233.3),
                         DataState.HIGHQUALITY, BigDecimal.valueOf(200.0), DataState.LOWQUALITY, BigDecimal.valueOf(1243.2),
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("3", "ID1", "Anat_id6", "Stage_id7", null, DataState.NODATA, null,
+                new ExpressionCallTO("3", "ID1", "Anat_id6", "Stage_id7", gi, DataState.NODATA, null,
                         DataState.NODATA, null, DataState.NODATA, BigDecimal.valueOf(5.0), DataState.LOWQUALITY, null,
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
                 //retrieved thanks to second filter
@@ -413,7 +421,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
             this.getMySQLDAOManager(DAOManager.getDefaultProperties());
         }
     }
-    
+
     /**
      * Unit test for {@link MySQLExpressionCallDAO#getExpressionCalls(Collection, 
      * Collection, String, Collection, LinkedHashMap)}, when needing a GROUP BY clause 
@@ -1314,7 +1322,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         // Compare
         MySQLExpressionCallTOResultSet rs = 
                 (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(null, null, false, false, 
-                        null, null, null, null);
+                        null, null, getNonRankingAttributes(), null);
         //no ordering requested, put results in a Set
         Set<ExpressionCallTO> expressions = new HashSet<>(rs.getAllTOs());
         assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + expectedExprCalls 
@@ -1370,7 +1378,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true)));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), null,  
-                false, false, null, null, null, null);
+                false, false, null, null, getNonRankingAttributes(), null);
         //no ordering requested, put results in a Set
         expressions = new HashSet<>(rs.getAllTOs());
         assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + expectedExprCalls 
@@ -1407,7 +1415,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         true, false, OriginOfLine.SELF, OriginOfLine.SELF, true)));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), null, 
-                true, false, null, null, null, null);
+                true, false, null, null, getNonRankingAttributes(), null);
         //no ordering requested, put results in a Set
         expressions = new HashSet<>(rs.getAllTOs());
         assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + expectedExprCalls 
@@ -1524,7 +1532,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         true, false, OriginOfLine.SELF, OriginOfLine.SELF, true)));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), null,  
-                true, false, null, null, null, null);
+                true, false, null, null, getNonRankingAttributes(), null);
         //no ordering requested, put results in a Set
         expressions = new HashSet<>(rs.getAllTOs());
         assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + expectedExprCalls 
@@ -1808,7 +1816,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         DataState.NODATA, false, true, OriginOfLine.SELF, OriginOfLine.SELF, true)));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), null, 
-                        false, true, null, null, null, null);
+                        false, true, null, null, getNonRankingAttributes(), null);
         //no ordering requested, put results in a Set
         expressions = new HashSet<>(rs.getAllTOs());
         assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + expectedExprCalls 
@@ -1823,7 +1831,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         filter = new CallDAOFilter(null, null, null);
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), null, 
-                        false, true, null, null, null, null);
+                        false, true, null, null, getNonRankingAttributes(), null);
         //no ordering requested, put results in a Set
         expressions = new HashSet<>(rs.getAllTOs());
         assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + expectedExprCalls 
@@ -1911,7 +1919,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         DataState.LOWQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT, false)));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), null,  
-                        false, true, null, null, null, null);
+                        false, true, null, null, getNonRankingAttributes(), null);
         //no ordering requested, put results in a Set
         expressions = new HashSet<>(rs.getAllTOs());
         assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + expectedExprCalls 
@@ -1928,7 +1936,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 null);
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), null, 
-                        false, true, null, null, null, null);
+                        false, true, null, null, getNonRankingAttributes(), null);
         //no ordering requested, put results in a Set
         expressions = new HashSet<>(rs.getAllTOs());
         assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + expectedExprCalls 
@@ -2189,7 +2197,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         OriginOfLine.DESCENT, OriginOfLine.DESCENT, false)));
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), null, 
-                        true, true, null, null, null, null);
+                        true, true, null, null, getNonRankingAttributes(), null);
         //no ordering requested, put results in a Set
         expressions = new HashSet<>(rs.getAllTOs());
         assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + expectedExprCalls 
@@ -2206,7 +2214,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 null);
         // Compare
         rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), null, 
-                        true, true, null, null, null, null);
+                        true, true, null, null, getNonRankingAttributes(), null);
         //no ordering requested, put results in a Set
         expressions = new HashSet<>(rs.getAllTOs());
         assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + expectedExprCalls 

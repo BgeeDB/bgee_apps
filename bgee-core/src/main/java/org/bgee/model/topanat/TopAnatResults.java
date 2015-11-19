@@ -1,8 +1,22 @@
 package org.bgee.model.topanat;
 
-import java.util.Collections;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import org.bgee.model.BgeeProperties;
+import org.supercsv.cellprocessor.Optional;
+import org.supercsv.cellprocessor.ParseDouble;
+import org.supercsv.cellprocessor.constraint.DMinMax;
+import org.supercsv.cellprocessor.constraint.NotNull;
+import org.supercsv.cellprocessor.ift.CellProcessor;
+import org.supercsv.io.CsvMapReader;
+import org.supercsv.io.ICsvMapReader;
+import org.supercsv.prefs.CsvPreference;
 
 public class TopAnatResults {
 
@@ -72,8 +86,6 @@ public class TopAnatResults {
 
     }
 
-    private final List<TopAnatResults.TopAnatResultRow> rows; 
-
     private final TopAnatParams topAnatParams; 
 
     private final String resultFileName;
@@ -94,13 +106,16 @@ public class TopAnatResults {
 
     private final String zipFileName;
 
-    public TopAnatResults(List<TopAnatResults.TopAnatResultRow> rows,
+    private final TopAnatController controller;
+
+    private final BgeeProperties props;
+
+    public TopAnatResults(
             TopAnatParams topAnatParams,String resultFileName,
             String resultPDFFileName, String rScriptAnalysisFileName, String  paramsOutputFileName,
             String anatEntitiesFilename, String anatEntitiesRelationshipsFileName, 
             String geneToAnatEntitiesFileName, String rScriptConsoleFileName,
-            String zipFileName){
-        this.rows = Collections.unmodifiableList(rows);
+            String zipFileName, TopAnatController controller){
         this.topAnatParams = topAnatParams;
         this.resultFileName = resultFileName;
         this.resultPDFFileName = resultPDFFileName;
@@ -111,10 +126,53 @@ public class TopAnatResults {
         this.anatEntitiesRelationshipsFileName = anatEntitiesRelationshipsFileName;
         this.geneToAnatEntitiesFileName = geneToAnatEntitiesFileName;
         this.zipFileName = zipFileName;
+        this.controller = controller;
+        this.props = BgeeProperties.getBgeeProperties();
     }
 
-    public List<TopAnatResultRow> getRows() {
-        return rows;
+    /**
+     * 
+     * @return
+     * @throws FileNotFoundException
+     * @throws IOException
+     */
+    public List<TopAnatResults.TopAnatResultRow> getRows() throws FileNotFoundException,
+    IOException{
+            File resultFile = new File(
+                    this.props.getTopAnatResultsWritingDirectory(),
+                    this.getResultFileName());
+
+            this.controller.acquireReadLock(resultFile.getPath());
+
+            List<TopAnatResults.TopAnatResultRow> listToReturn 
+            = new ArrayList<TopAnatResults.TopAnatResultRow>();
+            
+            try (ICsvMapReader mapReader = 
+                    new CsvMapReader(new FileReader(resultFile), 
+                            CsvPreference.TAB_PREFERENCE)) {
+                String[] header = mapReader.getHeader(true);
+                CellProcessor[] processors = new CellProcessor[] { 
+                        new NotNull(), // AnatEntity Id
+                        new Optional(), // AnatEntity Name
+                        new NotNull(new ParseDouble()), // Annotated
+                        new NotNull(new ParseDouble()), // Significant
+                        new NotNull(new ParseDouble()), // Expected
+                        new NotNull(new ParseDouble()), // fold enrich
+                        new NotNull(new DMinMax(0d,1d)), // p
+                        new NotNull(new DMinMax(0d,1d)) // fdr
+                };
+                Map<String, Object> row;
+                if(header != null){
+                    while( (row = mapReader.read(header, processors)) != null ) {
+                        listToReturn.add(new TopAnatResults.TopAnatResultRow(row));
+                    }
+                }
+            }
+
+            this.controller.releaseReadLock(resultFile.getPath());
+
+            return listToReturn;
+   
     }
 
     public TopAnatParams getTopAnatParams() {

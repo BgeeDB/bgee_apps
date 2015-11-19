@@ -3,9 +3,7 @@ package org.bgee.model.topanat;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -13,15 +11,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -38,14 +30,6 @@ import org.bgee.model.gene.GeneService;
 import org.bgee.model.species.SpeciesService;
 import org.bgee.model.topanat.exception.InvalidForegroundException;
 import org.bgee.model.topanat.exception.InvalidSpeciesGenesException;
-import org.supercsv.cellprocessor.Optional;
-import org.supercsv.cellprocessor.ParseDouble;
-import org.supercsv.cellprocessor.constraint.DMinMax;
-import org.supercsv.cellprocessor.constraint.NotNull;
-import org.supercsv.cellprocessor.ift.CellProcessor;
-import org.supercsv.io.CsvMapReader;
-import org.supercsv.io.ICsvMapReader;
-import org.supercsv.prefs.CsvPreference;
 
 /**
  * @author Mathieu Seppey
@@ -79,13 +63,6 @@ public class TopAnatAnalysis {
      */
     private final BgeeProperties props;
 
-
-    /**
-     * 
-     */
-    private final static ConcurrentMap<String, ReentrantReadWriteLock> readWriteLocks =
-            new ConcurrentHashMap<String, ReentrantReadWriteLock>();
-
     /**
      * 
      */
@@ -107,13 +84,18 @@ public class TopAnatAnalysis {
     private final SpeciesService speciesService;
 
     /**
+     * 
+     */
+    private final TopAnatController controller;
+
+    /**
      * @param params
      * @param props
      * @param serviceFactory
      */
     public TopAnatAnalysis(TopAnatParams params, BgeeProperties props, 
-            ServiceFactory serviceFactory) {
-        this(params, props, serviceFactory, new TopAnatRManager(props,params));
+            ServiceFactory serviceFactory, TopAnatController controller) {
+        this(params, props, serviceFactory, new TopAnatRManager(props,params),controller);
     }
 
     /**
@@ -123,7 +105,7 @@ public class TopAnatAnalysis {
      * @param rManager
      */
     public TopAnatAnalysis(TopAnatParams params, BgeeProperties props, 
-            ServiceFactory serviceFactory, TopAnatRManager rManager) {
+            ServiceFactory serviceFactory, TopAnatRManager rManager, TopAnatController controller) {
         log.entry(params, props, serviceFactory, rManager); 
         this.params = params;
         this.anatEntityService = 
@@ -133,6 +115,7 @@ public class TopAnatAnalysis {
         this.speciesService = serviceFactory.getSpeciesService();
         this.rManager = rManager;
         this.props = props;
+        this.controller = controller;
     }
 
     /**
@@ -167,22 +150,21 @@ public class TopAnatAnalysis {
         this.generateZipFile();
 
         // return the result
-        List<TopAnatResults.TopAnatResultRow> resultRows = this.getResultRows();
-        if (resultRows != null){
-            return log.exit(new TopAnatResults(
-                    resultRows,this.params,
-                    this.getResultFileName(),
-                    this.getResultPDFFileName(),
-                    this.getRScriptAnalysisFileName(),
-                    this.getParamsOutputFileName(),
-                    this.getAnatEntitiesNamesFileName(),
-                    this.getAnatEntitiesRelationshipsFileName(),
-                    this.getGeneToAnatEntitiesFileName(),
-                    this.getRScriptConsoleFileName(),
-                    this.getZipFileName()));
-        }
 
-        return null;
+        return log.exit(new TopAnatResults(
+                this.params,
+                this.getResultFileName(),
+                this.getResultPDFFileName(),
+                this.getRScriptAnalysisFileName(),
+                this.getParamsOutputFileName(),
+                this.getAnatEntitiesNamesFileName(),
+                this.getAnatEntitiesRelationshipsFileName(),
+                this.getGeneToAnatEntitiesFileName(),
+                this.getRScriptConsoleFileName(),
+                this.getZipFileName(),
+                this.controller)
+                );
+
     }
 
     /***
@@ -258,15 +240,15 @@ public class TopAnatAnalysis {
 
         try {
 
-            this.acquireReadLock(namesFileName);
-            this.acquireReadLock(relsFileName);
-            this.acquireReadLock(geneToAnatEntitiesFile);
+            this.controller.acquireReadLock(namesFileName);
+            this.controller.acquireReadLock(relsFileName);
+            this.controller.acquireReadLock(geneToAnatEntitiesFile);
 
-            this.acquireWriteLock(tmpFileName);
-            this.acquireWriteLock(fileName);
+            this.controller.acquireWriteLock(tmpFileName);
+            this.controller.acquireWriteLock(fileName);
 
-            this.acquireWriteLock(tmpPdfFileName);
-            this.acquireWriteLock(pdfFileName);
+            this.controller.acquireWriteLock(tmpPdfFileName);
+            this.controller.acquireWriteLock(pdfFileName);
 
             //check, AFTER having acquired the locks, that the final files do not 
             //already exist (maybe another thread generated the files before this one 
@@ -284,64 +266,19 @@ public class TopAnatAnalysis {
         } finally {
             Files.deleteIfExists(tmpFile);
             Files.deleteIfExists(tmpPdfFile);
-            this.releaseWriteLock(tmpFileName);
-            this.releaseWriteLock(fileName);
-            this.releaseWriteLock(tmpPdfFileName);
-            this.releaseWriteLock(pdfFileName);
-            this.releaseReadLock(namesFileName);
-            this.releaseReadLock(relsFileName);
-            this.releaseReadLock(geneToAnatEntitiesFile);   
+            this.controller.releaseWriteLock(tmpFileName);
+            this.controller.releaseWriteLock(fileName);
+            this.controller.releaseWriteLock(tmpPdfFileName);
+            this.controller.releaseWriteLock(pdfFileName);
+            this.controller.releaseReadLock(namesFileName);
+            this.controller.releaseReadLock(relsFileName);
+            this.controller.releaseReadLock(geneToAnatEntitiesFile);   
         }
 
         log.info("Result file name: {}", 
                 this.getResultFileName());
 
         log.exit();
-    }
-
-    /**
-     * 
-     * @return
-     * @throws FileNotFoundException
-     * @throws IOException
-     */
-    private List<TopAnatResults.TopAnatResultRow> getResultRows() throws FileNotFoundException,
-    IOException{
-
-        File resultFile = new File(
-                this.props.getTopAnatResultsWritingDirectory(),
-                this.getResultFileName());
-
-        this.acquireReadLock(resultFile.getPath());
-
-        List<TopAnatResults.TopAnatResultRow> listToReturn 
-        = new ArrayList<TopAnatResults.TopAnatResultRow>();
-
-        try (ICsvMapReader mapReader = 
-                new CsvMapReader(new FileReader(resultFile), 
-                        CsvPreference.TAB_PREFERENCE)) {
-            String[] header = mapReader.getHeader(true);
-            CellProcessor[] processors = new CellProcessor[] { 
-                    new NotNull(), // AnatEntity Id
-                    new Optional(), // AnatEntity Name
-                    new NotNull(new ParseDouble()), // Annotated
-                    new NotNull(new ParseDouble()), // Significant
-                    new NotNull(new ParseDouble()), // Expected
-                    new NotNull(new ParseDouble()), // fold enrich
-                    new NotNull(new DMinMax(0d,1d)), // p
-                    new NotNull(new DMinMax(0d,1d)) // fdr
-            };
-            Map<String, Object> row;
-            if(header != null){
-                while( (row = mapReader.read(header, processors)) != null ) {
-                    listToReturn.add(new TopAnatResults.TopAnatResultRow(row));
-                }
-            }
-        }
-
-        this.releaseReadLock(resultFile.getPath());
-
-        return listToReturn;
     }
 
     /**
@@ -365,8 +302,8 @@ public class TopAnatAnalysis {
         Path finalFile = Paths.get(fileName);
 
         try {
-            this.acquireWriteLock(tmpFileName);
-            this.acquireWriteLock(fileName);
+            this.controller.acquireWriteLock(tmpFileName);
+            this.controller.acquireWriteLock(fileName);
 
             //check, AFTER having acquired the locks, that the final files do not 
             //already exist (maybe another thread generated the files before this one 
@@ -382,8 +319,8 @@ public class TopAnatAnalysis {
 
         } finally {
             Files.deleteIfExists(tmpFile);
-            this.releaseWriteLock(tmpFileName);
-            this.releaseWriteLock(fileName);
+            this.controller.releaseWriteLock(tmpFileName);
+            this.controller.releaseWriteLock(fileName);
         }
 
         log.info("Rcode file name: {}", 
@@ -440,10 +377,10 @@ public class TopAnatAnalysis {
         Path finalRelsFile = Paths.get(relsFileName);
 
         try {
-            this.acquireWriteLock(namesTmpFileName);
-            this.acquireWriteLock(namesFileName);
-            this.acquireWriteLock(relsTmpFileName);
-            this.acquireWriteLock(relsFileName);
+            this.controller.acquireWriteLock(namesTmpFileName);
+            this.controller.acquireWriteLock(namesFileName);
+            this.controller.acquireWriteLock(relsTmpFileName);
+            this.controller.acquireWriteLock(relsFileName);
 
             //check, AFTER having acquired the locks, that the final files do not 
             //already exist (maybe another thread generated the files before this one 
@@ -462,10 +399,10 @@ public class TopAnatAnalysis {
         } finally {
             Files.deleteIfExists(namesTmpFile);
             Files.deleteIfExists(relsTmpFile);
-            this.releaseWriteLock(namesTmpFileName);
-            this.releaseWriteLock(namesFileName);
-            this.releaseWriteLock(relsTmpFileName);
-            this.releaseWriteLock(relsFileName);
+            this.controller.releaseWriteLock(namesTmpFileName);
+            this.controller.releaseWriteLock(namesFileName);
+            this.controller.releaseWriteLock(relsTmpFileName);
+            this.controller.releaseWriteLock(relsFileName);
         }
 
         log.info("AnatEntitiesNamesFileName: {} - relationshipsFileName: {}", 
@@ -551,8 +488,8 @@ public class TopAnatAnalysis {
         Path finalGeneToAnatEntitiesFile = Paths.get(geneToAnatEntitiesAssociationFilePath);
 
         try {
-            this.acquireWriteLock(geneToAnatEntitiesAssociationFilePath);
-            this.acquireWriteLock(tmpFileName);
+            this.controller.acquireWriteLock(geneToAnatEntitiesAssociationFilePath);
+            this.controller.acquireWriteLock(tmpFileName);
 
             //check, AFTER having acquired the locks, that the final file does not 
             //already exist (maybe another thread generated the files before this one 
@@ -568,8 +505,8 @@ public class TopAnatAnalysis {
 
         } finally {
             Files.deleteIfExists(tmpFile);
-            this.releaseWriteLock(geneToAnatEntitiesAssociationFilePath);
-            this.releaseWriteLock(tmpFileName);
+            this.controller.releaseWriteLock(geneToAnatEntitiesAssociationFilePath);
+            this.controller.releaseWriteLock(tmpFileName);
         }
 
         log.info("GeneToAnatEntitiesAssociationFile: {}", this.getGeneToAnatEntitiesFileName());
@@ -615,8 +552,8 @@ public class TopAnatAnalysis {
         Path finalTopAnatParamsFile = Paths.get(topAnatParamsFilePath);
 
         try {
-            this.acquireWriteLock(topAnatParamsFilePath);
-            this.acquireWriteLock(tmpFileName);
+            this.controller.acquireWriteLock(topAnatParamsFilePath);
+            this.controller.acquireWriteLock(tmpFileName);
 
             //check, AFTER having acquired the locks, that the final file does not 
             //already exist (maybe another thread generated the files before this one 
@@ -632,14 +569,14 @@ public class TopAnatAnalysis {
 
         } finally {
             Files.deleteIfExists(tmpFile);
-            this.releaseWriteLock(topAnatParamsFilePath);
-            this.releaseWriteLock(tmpFileName);
+            this.controller.releaseWriteLock(topAnatParamsFilePath);
+            this.controller.releaseWriteLock(tmpFileName);
         }
 
         log.info("TopAnatParamsFile: {}", this.getParamsOutputFileName());
         log.exit();
     }  
-    
+
     private void generateZipFile() throws IOException{
         log.entry();
         log.info("Generating Zip file...");
@@ -657,8 +594,8 @@ public class TopAnatAnalysis {
         Path finalZipFile = Paths.get(zipFilePath);
 
         try {
-            this.acquireWriteLock(zipFilePath);
-            this.acquireWriteLock(tmpFileName);
+            this.controller.acquireWriteLock(zipFilePath);
+            this.controller.acquireWriteLock(tmpFileName);
 
             //check, AFTER having acquired the locks, that the final file does not 
             //already exist (maybe another thread generated the files before this one 
@@ -674,8 +611,8 @@ public class TopAnatAnalysis {
 
         } finally {
             Files.deleteIfExists(tmpFile);
-            this.releaseWriteLock(zipFilePath);
-            this.releaseWriteLock(tmpFileName);
+            this.controller.releaseWriteLock(zipFilePath);
+            this.controller.releaseWriteLock(tmpFileName);
         }
 
         log.info("TopAnatParamsFile: {}", this.getParamsOutputFileName());
@@ -691,7 +628,7 @@ public class TopAnatAnalysis {
     public void writeZipFile(String path) throws IOException {
 
         String zipFile = path;
-        
+
         String[] srcFiles = { 
                 this.props.getTopAnatResultsWritingDirectory() + this.getResultFileName(),
                 this.props.getTopAnatResultsWritingDirectory() + this.getResultPDFFileName(),
@@ -819,218 +756,6 @@ public class TopAnatAnalysis {
         else{
             throw log.throwing(new IllegalStateException("Empty tmp file"));
         }
-    }
-
-    // *************************************************
-    // FILE LOCKING
-    // *************************************************
-    /**
-     * Acquires a write lock corresponding to the {@code fileName} by
-     * calling the {@link #acquireLock(String, boolean)} method
-     * 
-     * @param fileName
-     *            a {@code String} corresponding to the fileName to acquire
-     *            the read lock.
-     * @see #acquireLock(String, boolean)
-     */
-    private void acquireReadLock(String fileName) {
-        this.acquireLock(fileName, true);
-    }
-
-    /**
-     * Acquires a write lock corresponding to the {@code fileName} by
-     * calling the {@link #acquireLock(String, boolean)} method
-     * 
-     * @param fileName
-     *            a {@code String} corresponding to the fileName to acquire
-     *            the write lock.
-     * @see #acquireLock(String, boolean)
-     */
-    private void acquireWriteLock(String fileName) {
-        this.acquireLock(fileName, false);
-    }
-
-    /**
-     * Releases the write lock corresponding to the {@code fileName} by
-     * calling the {@link #releaseLock(String, boolean)} method
-     * 
-     * @param fileName
-     *            a {@code String} corresponding to the fileName to release
-     *            the write lock
-     * @see #releaseLock(String, boolean)
-     */
-    private void releaseWriteLock(String fileName) {
-        this.releaseLock(fileName, false);
-    }
-
-    /**
-     * Method to acquire a lock on a file, corresponding to the param
-     * {@code fileName}
-     * 
-     * @param fileName
-     *            a {@code String} corresponding to the fileName to
-     *            retrieve the lock from {@code readWriteLocks}
-     * @param readLock
-     *            {@code true} if a read lock should be acquired.
-     *            {@code false} if it should be a read lock
-     * @see #readWriteLocks
-     */
-    private void acquireLock(String fileName, boolean readLock) {
-        ReentrantReadWriteLock lock = this.getReadWriteLock(fileName);
-
-        if (readLock) {
-            lock.readLock().lock();
-        } else {
-            lock.writeLock().lock();
-        }
-        // {@code removeLockIfPossible(String)} determines whether the lock
-        // could be removed
-        // from the {@code ConcurrentHashMap} {@code readWriteLocks}.
-        // The problem is that {@code removeLockIfPossible(String)} could
-        // remove the lock from the map,
-        // AFTER this method acquire a lock and put it in the map
-        // (this.getReadWriteLock(this.getGeneratedKey())),
-        // but BEFORE actually locking it (lock.readLock().lock()).
-        // To solve this issue, this method will test after locking the lock
-        // whether it is still in the map,
-        // or whether the element present in the map is equal to the "locked"
-        // lock.
-        // If it is not, it will call again
-        // {@code getReadWriteLock(String)}
-        // to generate a new lock to be put in the map, or to obtain the lock
-        // generated by another thread.
-        while (readWriteLocks.get(fileName) == null
-                || !readWriteLocks.get(fileName).equals(lock)) {
-
-            lock = this.getReadWriteLock(fileName);
-            if (readLock) {
-                lock.readLock().lock();
-            } else {
-                lock.writeLock().lock();
-            }
-        }
-    }
-
-    /**
-     * Releases the read lock corresponding to the {@code fileName} by
-     * calling the {@link #releaseLock(String, boolean)} method
-     * 
-     * @param fileName
-     *            a {@code String} corresponding to the fileName to release
-     *            the read lock
-     * @see #releaseLock(String, boolean)
-     */
-    private void releaseReadLock(String fileName) {
-        this.releaseLock(fileName, true);
-    }
-
-    /**
-     * Method to release a lock on a file, corresponding to the param
-     * {@code fileName}
-     * 
-     * @param fileName
-     *            a {@code String} corresponding to the fileName to release
-     *            the lock from {@code readWriteLocks}
-     * @param readLock
-     *            {@code true} if a read lock should be acquired.
-     *            {@code false} if it should be a read lock
-     * @see #readWriteLocks
-     */
-    private void releaseLock(String fileName, boolean readLock) {
-        ReentrantReadWriteLock lock = this.getReadWriteLock(fileName);
-        if (readLock) {
-            lock.readLock().unlock();
-        } else {
-            lock.writeLock().unlock();
-        }
-        this.removeLockIfPossible(fileName);
-    }
-
-    /**
-     * Try to remove the {@code ReentrantReadWriteLock} corresponding to
-     * the param {@code fileName}, from the {@code ConcurrentHashMap}
-     * {@code readWriteLocks}. The lock will be removed from the map only
-     * if there are no read or write locks, and no ongoing request for a read or
-     * write lock.
-     * <p>
-     * Note: there might be here a race, where another thread acquired the lock
-     * and actually locked it, i) just after this method tests the presence of
-     * read or write locks and ongoing requests for a read or write lock, and
-     * ii) just before removing it from the map. To solve this issue, methods
-     * acquiring a lock must check after locking it whether it is still in the
-     * readWriteLocks map, or whether the element present in the map for the key
-     * is equal to the acquired lock. If it is not, they must generate a new
-     * lock to be used.
-     * 
-     * @param fileName
-     *            a {@code String} corresponding to the fileName to
-     *            retrieve the lock from {@code readWriteLocks}, to remove
-     *            it.
-     * @see #readWriteLocks
-     */
-    private void removeLockIfPossible(String fileName) {
-        // check if there is already a lock stored for this key
-        ReentrantReadWriteLock lock = readWriteLocks.get(fileName);
-
-        // there is a lock to remove
-        if (lock != null) {
-            // there is no thread with write lock, or read lock, or waiting to
-            // acquire a lock
-            if (!lock.isWriteLocked() && lock.getReadLockCount() == 0
-                    && !lock.hasQueuedThreads()) {
-                // there might be here a race, where another thread acquired the
-                // lock and
-                // actually locked it, just after the precedent condition test,
-                // and just before the following remove statement.
-                // to solve this issue, methods acquiring a lock must check
-                // after locking it
-                // whether it is still in the readWriteLocks map.
-                // if it is not, they must generate a new lock to be used.
-                readWriteLocks.remove(fileName);
-            }
-        }
-    }
-
-    /**
-     * Obtain a {@code ReentrantReadWriteLock}, for the param
-     * {@code fileName}.
-     * 
-     * This method tries to obtain {@code ReentrantReadWriteLock}
-     * corresponding to the fileName, from the {@code ConcurrentHashMap}
-     * {@code readWriteLocks}. If the lock is not already stored, create a
-     * new one, and put it in {@code readWriteLocks}, to be used by other
-     * threads.
-     * 
-     * @param fileName
-     *            a {@code String} corresponding to the fileName to
-     *            retrieve the lock from {@code readWriteLocks}.
-     * 
-     * @return a {@code ReentrantReadWriteLock} corresponding to the
-     *         fileName.
-     * 
-     * @see #readWriteLocks
-     */
-    private ReentrantReadWriteLock getReadWriteLock(String fileName) {
-        // check if there is already a lock stored for this key
-        ReentrantReadWriteLock readWritelock = readWriteLocks.get(fileName);
-
-        // no lock already stored
-        if (readWritelock == null) {
-            ReentrantReadWriteLock newReadWriteLock = new ReentrantReadWriteLock(
-                    true);
-            // try to put the new lock in the ConcurrentHashMap
-            readWritelock = readWriteLocks.putIfAbsent(fileName,
-                    newReadWriteLock);
-            // if readWritelock is null, the newLock has been successfully put
-            // in the map, and we use it.
-            // otherwise, it means that another thread has inserted a new lock
-            // for this key in the mean time.
-            // readWritelock then corresponds to this value, that we should use.
-            if (readWritelock == null) {
-                readWritelock = newReadWriteLock;
-            }
-        }
-        return readWritelock;
     }
 
 }

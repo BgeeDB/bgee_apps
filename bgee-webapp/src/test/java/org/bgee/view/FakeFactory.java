@@ -12,8 +12,9 @@ import org.bgee.controller.TestURLParameters;
  * This class is a fake {@code ViewFactory} used for tests. It return a {@code FakeDownloadDisplay}
  * when a {@code DownloadDisplay} is requested. It returns a mock {@code GeneralDisplay} in other
  * cases.
- * @author Mathieu Seppey
- * @version Bgee 13 Aug 2014
+ * @author  Mathieu Seppey
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13 Nov 2015
  * @since   Bgee 13
  */
 public class FakeFactory extends ViewFactory {
@@ -86,6 +87,16 @@ public class FakeFactory extends ViewFactory {
                 ((TestURLParameters)this.requestParameters.getUrlParametersInstance())
                 .getParamTestString()).equals("test")){
             return new FakeTopAnatDisplay(this.response, this.requestParameters, prop, this);
+        }
+        return null;
+    }
+
+    @Override
+    public SpeciesDisplay getSpeciesDisplay() throws IOException {
+        if(prop.getUrlMaxLength() == 9999 && this.requestParameters.getFirstValue(
+                ((TestURLParameters)this.requestParameters.getUrlParametersInstance())
+                .getParamTestString()).equals("test")){
+            return new FakeSpeciesDisplay(this.response, this.requestParameters, prop, this);
         }
         return null;
     }

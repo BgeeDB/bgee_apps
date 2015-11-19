@@ -80,7 +80,7 @@ public class CallService extends Service {
     
     //XXX: example single-species query, signature/returned value to be better defined
     //XXX: would several CallFilters represent AND or OR conditions?
-    public Stream<Call<? extends SummaryCallType, ? extends CallData<?>>> loadCalls(
+    public Stream<Call<?, ?>> loadCalls(
             String speciesId, Set<CallFilter<?>> callFilters) {
         //TODO
         return null;

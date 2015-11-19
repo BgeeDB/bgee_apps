@@ -1,62 +1,82 @@
 package org.bgee.view;
 
+import org.bgee.controller.exception.InvalidFormatException;
+import org.bgee.controller.exception.InvalidRequestException;
+import org.bgee.controller.exception.MultipleValuesNotAllowedException;
+import org.bgee.controller.exception.PageNotFoundException;
+import org.bgee.controller.exception.RequestParametersNotFoundException;
+import org.bgee.controller.exception.RequestParametersNotStorableException;
+import org.bgee.controller.exception.RequestSizeExceededException;
+import org.bgee.controller.exception.ValueSizeExceededException;
+
 /**
  * Interface defining the methods to be implemented by views to display error messages.
  * 
  * @author Frederic Bastian
- * @version Bgee 13 Jul 2015
+ * @version Bgee 13 Nov. 2015
  * @since   Bgee 13
  */
 public interface ErrorDisplay {
+
+    //******************************
+    // CONTROLLER EXCEPTION TYPES
+    //******************************
     /**
-     * Display an error message if no stored request parameters 
-     * could be found using the key provided by the user (most likely in the URL). 
-     * This display is launched when a <code>RequestParametersNotFoundException</code> is thrown. 
-     * 
-     * @param key   a <code>String</code> representing the key used when trying 
-     *              to retrieve the stored parameters.
-     * @see org.bgee.controller.exception.RequestParametersNotFoundException
+     * Display an error message following an {@link InvalidFormatException}.
+     * @param e     The {@link InvalidFormatException} to display details about.
      */
-    public void displayRequestParametersNotFound(String key);
+    public void displayControllerException(InvalidFormatException e);
     /**
-     * Display an error message when the number of parameters is not correct.
-     * @param message   A {@code String} providing more details about the error.
-     * @see org.bgee.controller.exception.RequestParametersNotStorableException
+     * Display an error message following an {@link InvalidFormatException}.
+     * @param e     The {@link InvalidFormatException} to display details about.
      */
-    public void displayRequestParametersNotStorable(String message);
+    public void displayControllerException(InvalidRequestException e);
     /**
-     * Display an error message when a <code>PageNotFoundException</code> is thrown 
-     * (basically, a "404 not found"), most likely by a controller 
-     * that could not understand a query.
-     * 
-     * @param message   A {@code String} providing more details about the error.
-     * @see org.bgee.controller.exception.PageNotFoundException
+     * Display an error message following an {@link InvalidFormatException}.
+     * @param e     The {@link InvalidFormatException} to display details about.
      */
-    public void displayPageNotFound(String message);
+    public void displayControllerException(MultipleValuesNotAllowedException e);
     /**
-     * Display an error message when the number of parameters is not correct.
-     * @param message   A {@code String} providing more details about the error.
-     * @see org.bgee.controller.exception.MultipleValuesNotAllowedException
+     * Display an error message following an {@link InvalidFormatException}.
+     * @param e     The {@link InvalidFormatException} to display details about.
      */
-    public void displayMultipleParametersNotAllowed(String message);
+    public void displayControllerException(RequestSizeExceededException e);
     /**
-     * Display an error message when the format of parameters is not correct. 
-     * @param message   A {@code String} providing more details about the error.
-     * @see org.bgee.controller.exception.WrongFormatException
+     * Display an error message following an {@link InvalidFormatException}.
+     * @param e     The {@link InvalidFormatException} to display details about.
      */
-    public void displayWrongFormat(String message);
+    public void displayControllerException(ValueSizeExceededException e);
+
+    /**
+     * Display an error message following an {@link InvalidFormatException}.
+     * @param e     The {@link InvalidFormatException} to display details about.
+     */
+    public void displayControllerException(PageNotFoundException e);
+    /**
+     * Display an error message following an {@link InvalidFormatException}.
+     * @param e     The {@link InvalidFormatException} to display details about.
+     */
+    public void displayControllerException(RequestParametersNotFoundException e);
+    /**
+     * Display an error message following an {@link InvalidFormatException}.
+     * @param e     The {@link InvalidFormatException} to display details about.
+     */
+    public void displayControllerException(RequestParametersNotStorableException e);
+    
+    //******************************
+    // OTHER EXCEPTION TYPES
+    //******************************
     /**
      * Display an error message when a requested operation is not supported 
      * by the requested view.
-     * @param message   A {@code String} providing more details about the error.
      */
-    public void displayUnsupportedOperationException(String message);
+    public void displayUnsupportedOperationException();
     /**
      * Display the output expected in the case of a HTTP error 503.
      */
     public void displayServiceUnavailable();
     /**
-     * Display an error message in an unexpected error occurred.
+     * Display an error message if an unexpected error occurred.
      */
     public void displayUnexpectedError();
 }

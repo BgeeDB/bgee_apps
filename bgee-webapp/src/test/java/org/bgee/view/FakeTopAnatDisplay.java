@@ -1,18 +1,22 @@
 package org.bgee.view;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
 
 import javax.servlet.http.HttpServletResponse;
 
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
+import org.bgee.model.TaskManager;
+import org.bgee.model.topanat.TopAnatResults;
 
 /**
  * Fake view used for tests related to topAnat display. 
  * 
- * @author Frederic Bastian
- * @author Mathieu Seppey
- * @version Bgee 13 Jul 2015
+ * @author  Frederic Bastian
+ * @author  Mathieu Seppey
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13 Nov 2015
  * @since   Bgee 13
  */
 public class FakeTopAnatDisplay extends FakeParentDisplay implements TopAnatDisplay {
@@ -25,8 +29,45 @@ public class FakeTopAnatDisplay extends FakeParentDisplay implements TopAnatDisp
     }
 
     @Override
-    public void displayTopAnatPage() {
+    public void displayTopAnatHomePage() {
         this.out.println("Test topAnat container");
+    }
+
+    @Override
+    public void sendGeneListReponse(LinkedHashMap<String, Object> data, String msg) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void sendTopAnatParameters(String hash) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void sendNewJobResponse(int jobTrackingId) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void sendResultResponse(TopAnatResults results) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void sendJobErrorResponse(TaskManager taskManager) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void sendTrackingJobResponse(LinkedHashMap<String, Object> data,
+            String msg) {
+        // TODO Auto-generated method stub
+        
     }
     
 }

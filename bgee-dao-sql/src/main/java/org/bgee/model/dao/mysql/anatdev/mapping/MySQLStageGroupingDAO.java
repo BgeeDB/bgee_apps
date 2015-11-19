@@ -14,6 +14,7 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 
+//How to dealk with Attribute type here?
 public class MySQLStageGroupingDAO extends MySQLDAO implements StageGroupingDAO {
     /**
      * {@code Logger} of the class. 

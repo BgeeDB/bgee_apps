@@ -8,7 +8,8 @@ import java.util.List;
  * the additional parameters used for unit tests
  * 
  * @author Mathieu Seppey
- * @version Bgee 13
+ * @author Valentine Rech de Laval
+ * @version Bgee 13, Nov 15
  * @since Bgee 13
  * @see RequestParametersTest
  */
@@ -20,25 +21,34 @@ public class TestURLParameters extends URLParameters {
 	 */
 	private static final Parameter<String> TEST_STRING = 
 			new Parameter<String>("test_string",
-			false, false, false, 
-			128, "[a-z0-9]*",
-			String.class);
+			        false, false, null, false, 
+			        false, 128, URLParameters.DEFAULT_FORMAT,
+			        String.class);
+	/**
+     * Test {@code Parameter} of the type  {@code String} that does 
+     * allow separated values and is not storable
+     */
+    private static final Parameter<String> TEST_STRING_LIST = 
+            new Parameter<String>("test_list",
+                    false, true, URLParameters.DEFAULT_SEPARATORS, false, 
+                    false, 128, URLParameters.DEFAULT_LIST_FORMAT,
+                    String.class);
 	/**
 	 * Test {@code Parameter}  of the type  {@code Integer} that does allow
 	 * multiple values and is storable
 	 */	
 	private static final Parameter<Integer> TEST_INTEGER = 
 			new Parameter<Integer>("test_integer",
-			true, true, true, 
-			128, null,Integer.class);
+			        true, false, null, true, true, 
+			        128, "^[0-9]*$", Integer.class);
 	/**
 	 * Test {@code Parameter} of the type  {@code Boolean} that does allow 
 	 * multiple values and is storable
 	 */	
 	private static final Parameter<Boolean> TEST_BOOLEAN = 
 			new Parameter<Boolean>("test_boolean",
-			true, true, true, 
-			128, null,Boolean.class);
+			        true, false, null, true, true, 
+			        10, URLParameters.DEFAULT_FORMAT, Boolean.class);
 	
 	/**
      * An {@code List<Parameter<T>>} to list all declared {@code Parameter<T>}
@@ -51,7 +61,8 @@ public class TestURLParameters extends URLParameters {
 	 */
 	protected TestURLParameters(){
 	    this.list = Arrays.<Parameter<?>>asList(
-	            TEST_STRING,
+                TEST_STRING,
+                TEST_STRING_LIST,
 	            TEST_INTEGER,
 	            TEST_BOOLEAN,
 	            super.getParamPage(),
@@ -59,14 +70,22 @@ public class TestURLParameters extends URLParameters {
 	            super.getParamData());
 	}
 	
-	/**
-	 * @return Test {@code Parameter} of the type  {@code String} that does 
-	 * not allow multiple values and is not storable
-	 */
-	public Parameter<String >getParamTestString(){
-		return TEST_STRING;
-	}	
-	
+    /**
+     * @return Test {@code Parameter} of the type  {@code String} that does 
+     * not allow multiple values and is not storable
+     */
+    public Parameter<String >getParamTestString(){
+        return TEST_STRING;
+    }   
+    
+    /**
+     * @return Test {@code Parameter} of the type {@code String} that does 
+     * allow separated values and is not storable
+     */
+    public Parameter<String> getParamTestStringList(){
+        return TEST_STRING_LIST;
+    }   
+    
 	/**
 	 * @return Test {@code Parameter}  of the type  {@code Integer} that does allow
 	 * multiple values and is storable

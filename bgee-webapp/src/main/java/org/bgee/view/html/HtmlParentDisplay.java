@@ -207,9 +207,10 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         log.entry(title);
         this.sendHeaders();
         this.writeln("<!DOCTYPE html>");
-        this.writeln("<html lang='en'>");
+        this.writeln("<html lang='en' class='no-js'>");
         this.writeln("<head>");
         this.writeln("<meta charset='UTF-8'>");
+        this.writeln("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
         this.writeln("<title>"+title+"</title>");
         this.writeln("<meta name='description' content='Bgee allows to automatically"
                 + " compare gene expression patterns between species, by referencing"
@@ -522,9 +523,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     protected void includeJs() {
         log.entry();
         this.includeJs("lib/jquery.min.js");
-        this.includeJs("lib/jquery.visible.js");
-        this.includeJs("lib/jquery-ui.min.js");
-        this.includeJs("lib/angular.min.js");
+        this.includeJs("lib/jquery_plugins/jquery.visible.min.js");
+        this.includeJs("lib/jquery_plugins/jquery-ui.min.js");
         this.includeJs("bgeeproperties.js");
         this.includeJs("urlparameters.js");
         this.includeJs("requestparameters.js");

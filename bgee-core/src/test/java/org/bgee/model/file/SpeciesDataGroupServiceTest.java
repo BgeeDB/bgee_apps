@@ -24,7 +24,9 @@ import static org.mockito.Mockito.when;
  * This class holds the unit tests for {@code SpeciesDataGroup}
  * 
  * @author Philippe Moret
- *
+ * @author Valentine Rech de Laval
+ * @version Bgee 13, Nov. 2015
+ * @since   Bgee 13
  */
 public class SpeciesDataGroupServiceTest extends TestAncestor {
 
@@ -39,8 +41,8 @@ public class SpeciesDataGroupServiceTest extends TestAncestor {
 
 
 		// services return values
-		Species v1 = new Species("9606", "human", null, "Homo", "sapiens");
-		Species v2 = new Species("1234", "name", null, "genus", "someSpecies");
+		Species v1 = new Species("9606", "human", null, "Homo", "sapiens", "version1");
+		Species v2 = new Species("1234", "name", null, "genus", "someSpecies", "versionA");
 		
         Set<Species> species = new HashSet<>();
 		species.add(v1);

@@ -62,22 +62,22 @@ public class TOComparatorTest extends TestAncestor {
     @Test
     public void testAreSpeciesTOEqual() {
         SpeciesTO to1 = new SpeciesTO("ID:1", "name1", "genus1", "species1", 
-                "parentTaxon1", "path1", "genSpeId1", "fakePrefix1");
+                "parentTaxon1", "path1", "version1", "genSpeId1", "fakePrefix1");
         SpeciesTO to2 = new SpeciesTO("ID:1", "name1", "genus1", "species1", 
-                "parentTaxon1", "path1", "genSpeId1", "fakePrefix1");
+                "parentTaxon1", "path1", "version1", "genSpeId1", "fakePrefix1");
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
 
         to2 = new SpeciesTO("ID:2", "name1", "genus1", "species1", 
-                "parentTaxon1", "path1", "genSpeId1", "fakePrefix2");
+                "parentTaxon1", "path1", "version1", "genSpeId1", "fakePrefix2");
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
 
         to2 = new SpeciesTO("ID:1", "name1", "genus1", "species1", 
-                "parentTaxon1", "path1", "genSpeId1", "fakePrefix2");
+                "parentTaxon1", "path1", "version1", "genSpeId1", "fakePrefix2");
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         
         to2 = new SpeciesTO("ID:2", "name1", "genus1", "species1", 
-                "parentTaxon1", "path1", "genSpeId1", "fakePrefix1");
+                "parentTaxon1", "path1", "version1", "genSpeId1", "fakePrefix1");
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
     }

@@ -64,6 +64,23 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
     public GeneTOResultSet getGenesBySpeciesIds(Set<String> speciesIds) throws DAOException;
 
     /**
+     * Retrieves genes from data source according to a {@code Set} of {@code String}s
+     * that are the IDs of species allowing to filter the genes to use.
+     * <p>
+     * The genes are retrieved and returned as a {@code GeneTOResultSet}. It is the
+     * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
+     * 
+     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
+     *                      allowing to filter the genes to use.
+     * @param geneIds       A {@code Set} of {@code String}s that are the IDs of genes 
+                            allowing to filter the genes to use.
+     * @return              An {@code GeneTOResultSet} containing all genes from data source.
+     * @throws DAOException If an error occurred when accessing the data source. 
+     */
+    public GeneTOResultSet getGenesBySpeciesIds(Set<String> speciesIds, Set<String> geneIds) 
+            throws DAOException;
+
+    /**
      * Update {@code Attribute}s of the provided genes, which are represented as a 
      * {@code Collection} of {@code GeneTO}s
      * 

@@ -65,7 +65,14 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
     
     @Override
     public GeneTOResultSet getGenesBySpeciesIds(Set<String> speciesIds) throws DAOException {
-        log.entry();      
+        log.entry(speciesIds);
+        return log.exit(this.getGenesBySpeciesIds(speciesIds, null));
+    }
+    
+    @Override
+    public GeneTOResultSet getGenesBySpeciesIds(Set<String> speciesIds, Set<String> geneIds)
+            throws DAOException {
+        log.entry(speciesIds, geneIds);
 
         //Construct sql query
         String geneTableName = "gene";
@@ -74,19 +81,39 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         
         sql += " FROM " + geneTableName;
         
-        if (speciesIds != null && !speciesIds.isEmpty()) {
-            sql += " WHERE gene.speciesId IN (" + 
+        boolean filterBySpeciesIDs = speciesIds != null && !speciesIds.isEmpty();
+        boolean filterByGeneIDsFilter = geneIds != null && !geneIds.isEmpty();
+        
+        if (filterBySpeciesIDs || filterByGeneIDsFilter) {
+            sql += " WHERE ";
+        }
+        if (filterBySpeciesIDs) {
+            sql += "gene.speciesId IN (" + 
                        BgeePreparedStatement.generateParameterizedQueryString(
                                speciesIds.size()) + ")";
         }
-
+        if (filterBySpeciesIDs && filterByGeneIDsFilter) {
+            sql += " AND ";
+        }
+        if (filterByGeneIDsFilter) {
+            sql += "gene.geneId IN (" + 
+                    BgeePreparedStatement.generateParameterizedQueryString(
+                            geneIds.size()) + ")";
+        }
+        
         //we don't use a try-with-resource, because we return a pointer to the results, 
         //not the actual results, so we should not close this BgeePreparedStatement.
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
-            if (speciesIds != null && !speciesIds.isEmpty()) {
+            if (filterBySpeciesIDs) {
                 stmt.setStringsToIntegers(1, speciesIds, true);
+            }
+
+            int offsetParamIndex = (filterBySpeciesIDs ? speciesIds.size() + 1 : 1);
+            if (filterByGeneIDsFilter) {
+                stmt.setStrings(offsetParamIndex, geneIds, true);
             }             
+
             return log.exit(new MySQLGeneTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

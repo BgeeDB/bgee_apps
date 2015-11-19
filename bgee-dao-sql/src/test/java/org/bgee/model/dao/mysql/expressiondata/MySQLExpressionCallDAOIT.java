@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -103,27 +104,42 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
             );
         List<ExpressionCallTO> orderedExpectedExprCalls = Arrays.asList(
                 //calls retrieved thanks to first filter
-                new ExpressionCallTO("1", "ID3", "Anat_id1", "Stage_id1", DataState.LOWQUALITY, 
-                        DataState.NODATA, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
+                new ExpressionCallTO("1", "ID3", "Anat_id1", "Stage_id1", null,
+                        DataState.LOWQUALITY, BigDecimal.valueOf(234.33),
+                        DataState.NODATA, null,
+                        DataState.HIGHQUALITY, BigDecimal.valueOf(123.20),
+                        DataState.HIGHQUALITY, BigDecimal.valueOf(2500.01),
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("2", "ID1", "Anat_id6", "Stage_id6", DataState.LOWQUALITY,
-                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY,
+                new ExpressionCallTO("2", "ID1", "Anat_id6", "Stage_id6", BigDecimal.valueOf(3557.675000), DataState.LOWQUALITY,
+                        BigDecimal.valueOf(12554.2), DataState.HIGHQUALITY, BigDecimal.valueOf(233.3),
+                        DataState.HIGHQUALITY, BigDecimal.valueOf(200.0), DataState.LOWQUALITY, BigDecimal.valueOf(1243.2),
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("3", "ID1", "Anat_id6", "Stage_id7", DataState.NODATA, 
-                        DataState.NODATA, DataState.NODATA, DataState.LOWQUALITY,
+                new ExpressionCallTO("3", "ID1", "Anat_id6", "Stage_id7", null, DataState.NODATA, null,
+                        DataState.NODATA, null, DataState.NODATA, BigDecimal.valueOf(5.0), DataState.LOWQUALITY, null,
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
                 //retrieved thanks to second filter
-                new ExpressionCallTO("4", "ID2", "Anat_id2", "Stage_id18", DataState.HIGHQUALITY, 
-                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                new ExpressionCallTO("4", "ID2", "Anat_id2", "Stage_id18", BigDecimal.valueOf(1209.807500), DataState.HIGHQUALITY,
+                        BigDecimal.valueOf(234.5),
+                        DataState.HIGHQUALITY,  BigDecimal.valueOf(42.1), DataState.HIGHQUALITY,
+                        BigDecimal.valueOf(241.13), DataState.HIGHQUALITY,  BigDecimal.valueOf(4321.5),
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("6", "ID2", "Anat_id11", "Stage_id12", DataState.HIGHQUALITY, 
-                        DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
+                new ExpressionCallTO("6", "ID2", "Anat_id11", "Stage_id12", BigDecimal.valueOf(2817.675000),
+                        DataState.HIGHQUALITY,  BigDecimal.valueOf(4325.0),
+                        DataState.LOWQUALITY, BigDecimal.valueOf(2341.0),
+                        DataState.NODATA,  BigDecimal.valueOf(252.3),
+                        DataState.HIGHQUALITY,  BigDecimal.valueOf(4352.4),
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("9", "ID2", "Anat_id1", "Stage_id9", DataState.HIGHQUALITY, 
-                        DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
+                new ExpressionCallTO("9", "ID2", "Anat_id1", "Stage_id9", null,
+                        DataState.HIGHQUALITY, BigDecimal.valueOf(241.5),
+                        DataState.LOWQUALITY, BigDecimal.valueOf(4321.1),
+                        DataState.NODATA, BigDecimal.valueOf(123.4),
+                        DataState.HIGHQUALITY, null ,
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("10", "ID1", "Anat_id6", "Stage_id8", DataState.HIGHQUALITY, 
-                        DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
+                new ExpressionCallTO("10", "ID1", "Anat_id6", "Stage_id8", null,
+                        DataState.HIGHQUALITY, BigDecimal.valueOf(1222.5),
+                        DataState.HIGHQUALITY, BigDecimal.valueOf(122.3),
+                        DataState.NODATA, null,
+                        DataState.NODATA, null,
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true));
         //No ordering requested, put in a Set
         Set<ExpressionCallTO> unorderedExpectedExprCalls = new HashSet<>(orderedExpectedExprCalls);
@@ -645,7 +661,8 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 true, false, Arrays.asList("ID1", "ID2", "ID100"), null, 
                 EnumSet.allOf(ExpressionCallDAO.Attribute.class).stream()
                     .filter(attr -> !attr.equals(ExpressionCallDAO.Attribute.ID) && 
-                            !attr.equals(ExpressionCallDAO.Attribute.STAGE_ID) && !attr.isRankAttribute())
+                            !attr.equals(ExpressionCallDAO.Attribute.STAGE_ID) &&
+                            !attr.isRankAttribute())
                     .collect(Collectors.toCollection(() -> EnumSet.noneOf(ExpressionCallDAO.Attribute.class))), 
                 null);
         //no ordering requested, put results in a Set
@@ -1007,7 +1024,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                     true, false, null, null, 
                     EnumSet.allOf(ExpressionCallDAO.Attribute.class).stream()
                         .filter(attr -> !attr.equals(ExpressionCallDAO.Attribute.ID) && 
-                                !attr.equals(ExpressionCallDAO.Attribute.STAGE_ID))
+                                !attr.equals(ExpressionCallDAO.Attribute.STAGE_ID) && !attr.isRankAttribute())
                         .collect(Collectors.toCollection(() -> EnumSet.noneOf(ExpressionCallDAO.Attribute.class))), 
                     null);
             //no ordering requested, put results in a Set
@@ -1168,7 +1185,8 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                             null, true, true, null, null, 
                             EnumSet.allOf(ExpressionCallDAO.Attribute.class).stream()
                                 .filter(attr -> !attr.equals(ExpressionCallDAO.Attribute.ID) && 
-                                        !attr.equals(ExpressionCallDAO.Attribute.GENE_ID))
+                                        !attr.equals(ExpressionCallDAO.Attribute.GENE_ID) &&
+                                !attr.isRankAttribute())
                                 .collect(Collectors.toCollection(() -> 
                                          EnumSet.noneOf(ExpressionCallDAO.Attribute.class))), 
                             null);
@@ -1218,7 +1236,8 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                     EnumSet.allOf(ExpressionCallDAO.Attribute.class).stream()
                     .filter(attr -> !attr.equals(ExpressionCallDAO.Attribute.ID) && 
                             !attr.equals(ExpressionCallDAO.Attribute.GENE_ID) &&
-                            !attr.equals(ExpressionCallDAO.Attribute.STAGE_ID))
+                            !attr.equals(ExpressionCallDAO.Attribute.STAGE_ID) &&
+                            !attr.isRankAttribute())
                     .collect(Collectors.toCollection(() -> EnumSet.noneOf(ExpressionCallDAO.Attribute.class))), 
                     null);
             //no ordering requested, put results in a Set

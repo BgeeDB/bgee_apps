@@ -193,7 +193,7 @@ BEGIN
                (23,null);
 
         INSERT INTO expression(expressionId,geneId,anatEntityId,stageId,estData,affymetrixData,inSituData,rnaSeqData, estMeanRank, affymetrixMeanRank, rnaSeqMeanRank, inSituMeanRank)
-        VALUES (1,'ID3','Anat_id1','Stage_id1','no data','poor quality','high quality','high quality', null, 234.33, 2500.01, null),
+        VALUES (1,'ID3','Anat_id1','Stage_id1','no data','poor quality','high quality','high quality', null, 234.33, 2500.01, 123.2),
                (10,'ID1','Anat_id6','Stage_id8','high quality','high quality','no data','no data', 122.3, 1222.5, null, null ),
                (2,'ID1','Anat_id6','Stage_id6','high quality','poor quality','high quality','poor quality', 233.3, 12554.2, 1243.2, 200.0),
                (3,'ID1','Anat_id6','Stage_id7','no data','no data','no data','poor quality', null, null, null, 5.0),

@@ -645,7 +645,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 true, false, Arrays.asList("ID1", "ID2", "ID100"), null, 
                 EnumSet.allOf(ExpressionCallDAO.Attribute.class).stream()
                     .filter(attr -> !attr.equals(ExpressionCallDAO.Attribute.ID) && 
-                            !attr.equals(ExpressionCallDAO.Attribute.STAGE_ID))
+                            !attr.equals(ExpressionCallDAO.Attribute.STAGE_ID) && !attr.isRankAttribute())
                     .collect(Collectors.toCollection(() -> EnumSet.noneOf(ExpressionCallDAO.Attribute.class))), 
                 null);
         //no ordering requested, put results in a Set

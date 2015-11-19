@@ -160,6 +160,13 @@ implements ExpressionCallDAO {
         //attributes
         Set<ExpressionCallDAO.Attribute> originalAttrs = Optional.ofNullable(attributes)
                 .map(e -> EnumSet.copyOf(e)).orElse(EnumSet.allOf(ExpressionCallDAO.Attribute.class));
+
+        if (attributes == null && includeSubstructures) {
+        //if attributes is null we filter out the rankAttributes, since they are not available
+            originalAttrs = originalAttrs.stream()
+                    .filter(a -> !a.isRankAttribute())
+                    .collect(Collectors.toSet());
+        }
         //ordering attributes
         LinkedHashMap<ExpressionCallDAO.OrderingAttribute, DAO.Direction> clonedOrderingAttrs = 
                 Optional.ofNullable(orderingAttributes)

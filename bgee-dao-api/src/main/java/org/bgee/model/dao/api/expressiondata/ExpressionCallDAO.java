@@ -50,14 +50,15 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements CallDAO.Attribute {
-        ID(false, false), GENE_ID(false, false), STAGE_ID(false, false), ANAT_ENTITY_ID(false, false), 
-        GLOBAL_MEAN_RANK(false, true), 
-        AFFYMETRIX_DATA(true, false), AFFYMETRIX_MEAN_RANK(false, true), 
-        EST_DATA(true, false), EST_MEAN_RANK(false, true), 
-        IN_SITU_DATA(true, false), IN_SITU_MEAN_RANK(false, true), 
-        RNA_SEQ_DATA(true, false), RNA_SEQ_MEAN_RANK(false, true), 
-        INCLUDE_SUBSTRUCTURES(false, false), INCLUDE_SUBSTAGES(false, false), 
-        ANAT_ORIGIN_OF_LINE(false, false), STAGE_ORIGIN_OF_LINE(false, false), OBSERVED_DATA(false, false);
+        ID(false, false, false), GENE_ID(false, false, false), STAGE_ID(false, false, false), 
+        ANAT_ENTITY_ID(false, false, false), GLOBAL_MEAN_RANK(false, true, false), 
+        AFFYMETRIX_DATA(true, false, false), AFFYMETRIX_MEAN_RANK(false, true, false), 
+        EST_DATA(true, false, false), EST_MEAN_RANK(false, true, false), 
+        IN_SITU_DATA(true, false, false), IN_SITU_MEAN_RANK(false, true, false), 
+        RNA_SEQ_DATA(true, false, false), RNA_SEQ_MEAN_RANK(false, true, false), 
+        INCLUDE_SUBSTRUCTURES(false, false, true), INCLUDE_SUBSTAGES(false, false, true), 
+        ANAT_ORIGIN_OF_LINE(false, false, true), STAGE_ORIGIN_OF_LINE(false, false, true), 
+        OBSERVED_DATA(false, false, true);
         
         /**
          * @see #isDataTypeAttribute()
@@ -67,10 +68,15 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
          * @see #isRankAttribute()
          */
         private final boolean rankAttribute;
+        /**
+         * @see #isPropagationAttribute()
+         */
+        private final boolean propagationAttribute;
         
-        private Attribute(boolean dataTypeAttribute, boolean rankAttribute) {
+        private Attribute(boolean dataTypeAttribute, boolean rankAttribute, boolean propagationAttribute) {
             this.dataTypeAttribute = dataTypeAttribute;
             this.rankAttribute = rankAttribute;
+            this.propagationAttribute = propagationAttribute;
         }
         
         @Override
@@ -82,6 +88,13 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
          *          gene rank information.
          */
         public boolean isRankAttribute() {
+            return rankAttribute;
+        }
+        /**
+         * @return  A {@code boolean} defining whether this {@code Attribute} is related to 
+         *          data propagation information.
+         */
+        public boolean isPropagationAttribute() {
             return rankAttribute;
         }
     }

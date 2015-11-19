@@ -239,7 +239,8 @@ public class CallService extends Service {
                         !PropagationState.SELF.equals(callFilter.getDataPropagationFilter()
                                 .getDevStagePropagationState()), 
                         //global gene filter
-                        callFilter.getGeneFilter().getGeneIds(), 
+                        Optional.ofNullable(callFilter.getGeneFilter())
+                            .map(geneFilter -> geneFilter.getGeneIds()).orElse(new HashSet<>()), 
                         //no gene orthology requested
                         null, 
                         //Attributes
@@ -296,7 +297,8 @@ public class CallService extends Service {
                 Optional.ofNullable(convertExprOriginToPropagationState(callTO.getAnatOriginOfLine()))
                 .orElse(callDataPropagation.getAnatEntityPropagationState()), 
                 Optional.ofNullable(convertExprOriginToPropagationState(callTO.getStageOriginOfLine()))
-                .orElse(callDataPropagation.getDevStagePropagationState()));
+                .orElse(callDataPropagation.getDevStagePropagationState()), 
+                callTO.isObservedData() == null? observedData: callTO.isObservedData());
         
         return log.exit(new ExpressionCall(callTO.getGeneId(), 
                 callTO.getAnatEntityId() != null || callTO.getStageId() != null? 
@@ -540,9 +542,9 @@ public class CallService extends Service {
             case GENE_ID: 
                 return Stream.of(ExpressionCallDAO.Attribute.GENE_ID);
             case ANAT_ENTITY_ID: 
-                return Stream.of(ExpressionCallDAO.Attribute.GENE_ID);
+                return Stream.of(ExpressionCallDAO.Attribute.ANAT_ENTITY_ID);
             case DEV_STAGE_ID: 
-                return Stream.of(ExpressionCallDAO.Attribute.GENE_ID);
+                return Stream.of(ExpressionCallDAO.Attribute.STAGE_ID);
             //Whether we need to get a global quality level over all requested data types, 
             //or the detailed quality level per data type, it's the same DAO attributes that we need. 
             case GLOBAL_DATA_QUALITY: 

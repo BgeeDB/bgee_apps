@@ -42,8 +42,7 @@ public interface CallType {
     public static enum Expression implements CallType {
         EXPRESSED(Collections.unmodifiableSet(EnumSet.allOf(DataType.class))), 
         NOT_EXPRESSED(Collections.unmodifiableSet(
-                EnumSet.of(DataType.AFFYMETRIX, DataType.IN_SITU, 
-                        DataType.RELAXED_IN_SITU, DataType.RNA_SEQ)));
+                EnumSet.of(DataType.AFFYMETRIX, DataType.IN_SITU, DataType.RNA_SEQ)));
         /**
          * {@code Logger} of the class. 
          */

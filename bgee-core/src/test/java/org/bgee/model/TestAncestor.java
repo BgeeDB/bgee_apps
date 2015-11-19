@@ -1,9 +1,11 @@
 package org.bgee.model;
 
+import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -13,6 +15,7 @@ import org.bgee.model.dao.api.TransferObject;
 import org.junit.Rule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
+import org.mockito.ArgumentMatcher;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -106,6 +109,51 @@ public abstract class TestAncestor {
         when(rs.getAllTOs()).thenReturn(clonedValues);
         
         return rs;
+    }
+    
+    /**
+     * An {@code ArgumentMatcher} allowing to determine whether two {@code Collection}s 
+     * contains the same elements (as considered by their {@code equals} method), 
+     * independently of the iteration order of the {@code Collection}s.
+     */
+    protected static class IsCollectionEqual<T> extends ArgumentMatcher<Collection<T>> {
+        private final Collection<?> expectedCollection;
+        
+        IsCollectionEqual(Collection<?> expectedCollection) {
+            this.expectedCollection = expectedCollection;
+        }
+
+        @Override
+        public boolean matches(Object argument) {
+            if (expectedCollection == argument) {
+                return true;
+            }
+            if (expectedCollection == null) {
+                if (argument == null) {
+                    return true;
+                } 
+                return false;
+            } else if (argument == null) {
+                return false;
+            }
+            if (!(argument instanceof Collection)) {
+                return false;
+            }
+            Collection<?> arg = (Collection<?>) argument;
+            if (arg.size() != expectedCollection.size()) {
+                return false;
+            }
+            return arg.containsAll(expectedCollection);
+        }
+    }
+    /**
+     * Helper method to obtain a {@link IsCollectionEqual} {@code ArgumentMatcher}, 
+     * for readability. 
+     * @param expectedCollection    The {@code Collection} that is expected, to be used 
+     *                              in stub or verify methods. 
+     */
+    protected static <T> Collection<T> collectionEq(Collection<T> expectedCollection) {
+        return argThat(new IsCollectionEqual<>(expectedCollection));
     }
     
 	/**

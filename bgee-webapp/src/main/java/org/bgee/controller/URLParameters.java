@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.controller.CommandTopAnat.GeneListResponse;
 
 /**
  * This class is designed to declare and provide all {@code Parameter<T>} that
@@ -177,6 +178,14 @@ public class URLParameters {
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
 
     /**
+     * A {@code Parameter<Boolean>} defining whether to display the {@code GeneListResponse} 
+     * corresponding to gene validation response.
+     * Corresponds to the URL parameter "gene_info".
+     */
+    private static final Parameter<Boolean> GENE_INFO = new Parameter<Boolean>("gene_info",
+            false, false, null, false, false, 5, DEFAULT_FORMAT, Boolean.class);
+   
+    /**
      * A {@code Parameter<String>} that contains the foreground gene IDs to be used 
      * for TopAnat analysis.
      * Corresponds to the URL parameter "fg_list".
@@ -283,17 +292,9 @@ public class URLParameters {
      * A {@code Parameter<Integer>} that contains the job ID to be used to track a job.
      * Corresponds to the URL parameter "jobId".
      */
-    private static final Parameter<Integer> JOB_ID = new Parameter<Integer>("jobId",
+    private static final Parameter<Integer> JOB_ID = new Parameter<Integer>("job_id",
             false, false, null, false, DEFAULT_IS_SECURE, 
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Integer.class);
-    /**
-     * A {@code Parameter<String>} that contains the p-value threshold to be used
-     * for TopAnat analysis.
-     * Corresponds to the URL parameter "form_data".
-     */
-    private static final Parameter<String> FORM_DATA = new Parameter<String>("form_data",
-            false, false, null, false, DEFAULT_IS_SECURE, 
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
 
     //    /**
 //     * A {@code Parameter<Boolean>} to determine whether all anatomical structures of 
@@ -361,8 +362,8 @@ public class URLParameters {
             // TopAnat analyze params
             FOREGROUND_LIST, FOREGROUND_FILE, BACKGROUND_LIST, BACKGROUND_FILE,
             EXPRESSION_TYPE, DATA_QUALITY, DATA_TYPE, DEV_STAGE, DECORRELATION_TYPE,
-            NODE_SIZE, FDR_THRESHOLD, P_VALUE_THRESHOLD, NB_NODE,
-            JOB_ID, FORM_DATA,
+            NODE_SIZE, FDR_THRESHOLD, P_VALUE_THRESHOLD, NB_NODE, JOB_ID,
+            GENE_INFO,
 //            ALL_ORGANS,
 //            CHOSEN_DATA_TYPE,
 //            EMAIL,
@@ -605,11 +606,11 @@ public class URLParameters {
         return JOB_ID;
     }
     /**
-     * @return  A {@code Parameter<String>} defining a hash based on data form.
-     *          Corresponds to the URL parameter "form_data".
+     * @return  A {@code Parameter<Boolean>} defining whether to display the {@code GeneListResponse} 
+     *          corresponding to gene validation response.
      */
-    public Parameter<String> getParamFormData() {
-        return FORM_DATA;
+    public Parameter<Boolean> getParamGeneInfo() {
+        return GENE_INFO;
     }
 
     /**

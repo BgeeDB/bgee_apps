@@ -15,10 +15,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.InvalidRequestException;
@@ -26,11 +29,17 @@ import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.TaskManager;
 import org.bgee.model.anatdev.DevStage;
+import org.bgee.model.expressiondata.baseelements.CallType;
+import org.bgee.model.expressiondata.baseelements.DataQuality;
+import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.DecorelationType;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.species.Species;
 import org.bgee.model.topanat.TopAnatController;
 import org.bgee.model.topanat.TopAnatParams;
 import org.bgee.model.topanat.TopAnatResults;
+import org.bgee.model.topanat.TopAnatResults.TopAnatResultRow;
+import org.bgee.model.topanat.exception.MissingParameterException;
 import org.bgee.view.JsonHelper;
 import org.bgee.view.TopAnatDisplay;
 import org.bgee.view.ViewFactory;
@@ -50,15 +59,37 @@ public class CommandTopAnat extends CommandParent {
     private final static Logger log = LogManager.getLogger(CommandTopAnat.class.getName());
     
     /**
-     * An {@code Integer} that is the level to be used to filter retrieved dev. stages. 
+     * An {@code int} that is the level to be used to filter retrieved dev. stages. 
      */
-    private final static Integer DEV_STAGE_LEVEL = 2;
+    private final static int DEV_STAGE_LEVEL = 2;
     
     /**
      * A {@code String} that is the label of the count of genes whose the species is undetermined. 
      */
     private final static String UNDETERMINED_SPECIES_LABEL = "UNDETERMINED";
 
+    /**
+     * A {@code String} that is the label of the job response. 
+     */
+    private final static String JOB_RESPONSE_LABEL = "job_response";
+    
+    /**
+     * An {@code int} that is the number of try to create a task manager with a job ID. 
+     */
+    private final static int MAX_TASK_MANAGER_RETRY = 10000;
+    
+    /**
+     * An {@code enum} defining the job status. 
+     * 
+     * @author  Valentine Rech de Laval
+     * @version Bgee 13 Nov. 2015
+     * @since   Bgee 13 Nov. 2015
+     */
+    private static enum JobStatus {
+        UNDEFINED, RUNNING;
+    }
+    
+    
     /**
      * A {@code List} of {@code String}s that are messages to be displayed.
      */
@@ -84,133 +115,169 @@ public class CommandTopAnat extends CommandParent {
     }
 
     @Override
-    public void processRequest() throws IOException, PageNotFoundException, InvalidRequestException {
+    public void processRequest() throws IOException, PageNotFoundException, InvalidRequestException,
+            MissingParameterException {
         log.entry();
         
         TopAnatDisplay display = this.viewFactory.getTopAnatDisplay();
         
-        // AJAX gene list upload 
+        // Gene list validation 
         if (this.requestParameters.isATopAnatGeneUpload()) {
             
-            this.processGeneUpload(display);
-            
-        // Job submission, response 1: job not started
-        } else if (this.requestParameters.isATopAnatNewJob()) {
-            
-            // TODO Create the ID to track job
-            int jobTrackingId = 0;
-            
-            // Get params
-            List<String> foregroundIds = this.requestParameters.getForegroundList();
-            List<String> backgroundIds = this.requestParameters.getBackgroundList(); 
-            List<String> callTypes = this.requestParameters.getExprType(); 
-            String dataQuality = this.requestParameters.getDataQuality(); 
-            List<String> dataTypes = this.requestParameters.getDataType(); 
-            List<String> devStages = this.requestParameters.getDevStage(); 
-            String decorrelationType = this.requestParameters.getDecorrelationType(); 
-            Integer nodeSize = this.requestParameters.getNodeSize(); 
-            Integer nbNodes = this.requestParameters.getNbNode(); 
-            Float fdrThr = this.requestParameters.getFdrThreshold(); 
-            Float pValueThr = this.requestParameters.getPValueThreshold();
+            // Get gene responses
+            LinkedHashMap<String, Object> data = this.getGeneResponses();
 
-            // un topanat par analyse et une analyse = 1call type & un stade de dev
+            // Send response
+            display.sendGeneListReponse(data, messages.stream().collect(Collectors.joining("\n")));
+
+        // New job submission
+        } else if (this.requestParameters.isATopAnatSubmitJob()) {
+            
+            // TODO geneinfo?
+            // Get submitted params
+            List<String> subFgIds = this.requestParameters.getForegroundList();
+            List<String> subBgIds = this.requestParameters.getBackgroundList(); 
+            List<String> subCallTypes = this.requestParameters.getExprType(); 
+            String subDataQuality = this.requestParameters.getDataQuality();
+            // XXX: We cannot use convert of DataQuality because
+            //      "all" does not equivalent to "low", non?
+            DataQuality dataQuality = DataQuality.HIGH; 
+            if (subDataQuality != null && subDataQuality.equals("all")) {
+                dataQuality = DataQuality.LOW;
+            }
+            List<String> subDataTypes = this.requestParameters.getDataType();
+            List<String> subDevStages = this.requestParameters.getDevStage(); 
+            String subDecorrType = this.requestParameters.getDecorrelationType(); 
+            Integer subNodeSize = this.requestParameters.getNodeSize(); 
+            Integer subNbNodes = this.requestParameters.getNbNode(); 
+            Float subFdrThr = this.requestParameters.getFdrThreshold(); 
+            Float subPValueThr = this.requestParameters.getPValueThreshold();
+
+            // Define species ID
+            GeneListResponse fgGeneListResponse = this.getGeneResponse(subFgIds, null);
+            GeneListResponse bgGeneListResponse; 
+            String speciesId = fgGeneListResponse.getSelectedSpecies();
+            if (subBgIds != null && !subBgIds.isEmpty()) {
+                bgGeneListResponse = this.getGeneResponse(subBgIds, null);
+                // We take selected species ID of background if not empty.
+                speciesId = bgGeneListResponse.getSelectedSpecies();
+            }
+            
+            // enlever les gene de la bonne espece
+            // check fg no in bg
+            // cleanner les list avant de les envoyer à top anat
+            // fg: keep genes valid in the goog species
+            // We do not check parameters, because it's done by the builder            
+            // XXX: Do we need to check that subFgIds and subBgIds (if subBgIds not null) 
+            //      have the same selected species
+            // XXX: Do we need to check that subFgIds are contains in subBgIds (if subBgIds not null)
+            // XXX: Do we need to check that subCallTypes
+            
+            // One TopAnat analyze has one call type and one dev. stage
             List<TopAnatParams> allTopAnatParams = new ArrayList<TopAnatParams>();
-            for (String callType: callTypes) {
-                for (String devStage: devStages) {
-//                    TopAnatParams.Builder builder = new TopAnatParams.Builder(
-//                            foregroundIds, backgroundIds, "", CallType.Expression);
-//                    //TODO where convert data quality from String to DataQuality
-//                    if (dataQuality.equals("all")) {
-//                        //TODO do we need to set data quality if all qualities are requested
-//                        builder.dataQuality(DataQuality.LOW);
-//                    } else {
-//                        builder.dataQuality(DataQuality.HIGH);
-//                    }
-//                    //TODO where convert data types from String to DataType
-//                    builder.dataTypes(dataTypes);
-//                    builder.devStageId(devStage);
-//                    //TODO where convert decorelation type from String to DecorelationType
-//                    builder.decorelationType(decorelationType);
-//                    builder.nodeSize(nodeSize);
-//                    builder.numberOfSignificantNode(nbNodes);
-//                    builder.fdrThreshold(fdrThr);
-//                    builder.pvalueThreshold(pValueThr);
-//                    allTopAnatParams.add(builder.build());
+            for (String callType: subCallTypes) {
+                for (String devStage: subDevStages) {
+                    CallType foundCallType = CallType.Expression.convertToExpression(callType);
+                    if (foundCallType == null) {
+                        foundCallType = CallType.DiffExpression.convertToDiffExpression(callType);
+                    }
+                    TopAnatParams.Builder builder = new TopAnatParams.Builder(
+                            new HashSet<>(subFgIds), new HashSet<>(subBgIds),
+                            speciesId, foundCallType);
+                    builder.dataQuality(dataQuality);
+                    builder.dataTypes(DataType.convertToDataTypeSet(new HashSet<>(subDataTypes)));
+                    builder.devStageId(devStage);
+                    builder.decorelationType(DecorelationType.convertToDecorelationType(subDecorrType));
+                    builder.nodeSize(subNodeSize);
+                    builder.numberOfSignificantNode(subNbNodes);
+                    builder.fdrThreshold(subFdrThr.doubleValue());
+                    builder.pvalueThreshold(subPValueThr.doubleValue());
+                    allTopAnatParams.add(builder.build());
                 }
             }
-            TopAnatController controller =
-                    new TopAnatController(allTopAnatParams, prop, serviceFactory);
 
+            // Create the ID to track job creating a random int
+            Integer jobTrackingId = null;
+            boolean hasCreateTaskManager = false;
+            for (int i = 0; i < MAX_TASK_MANAGER_RETRY ; i++) {
+                try {
+                    jobTrackingId = ThreadLocalRandom.current().nextInt();
+                    TaskManager.registerTaskManager(jobTrackingId);
+                } catch (IllegalArgumentException | IllegalStateException e) {
+                    continue;
+                }
+                log.debug("New job ID: {}", jobTrackingId);
+                hasCreateTaskManager = true;
+                break;
+            }
+            
+            if (!hasCreateTaskManager) {
+                throw log.throwing(new RuntimeException("Failed to get task manager after" +
+                        MAX_TASK_MANAGER_RETRY + " tries"));
+            }
+            
+            TopAnatController controller = new TopAnatController(allTopAnatParams, prop, serviceFactory);
+            
+            // Job ID if available, add hash, add page, add action
+//            display.sendTrakingJobResponse(null);
+
+            // Launch the TopAnat analysis
+            Stream<TopAnatResults> results = controller.proceedToTopAnatAnalyses();
+            
             // Check if results are already cached
-            boolean cached = false;
-            if (cached) {
-                //TODO: update instantiation of TopAnatResults
-                TopAnatResults results = new TopAnatResults(null, null);
-                display.sendResultResponse(results);
-                // - Or should the client redirects itself to a new page to display results, 
-                //   using an URL provided in this response?
-                
+            boolean isCached = false;
+            // TODO boolean cached = controller.hasResult();
+            if (isCached) {
+                // We retrieve immediately results
+                LinkedHashMap<String, Object> data = new LinkedHashMap<>();
+                // TODO add hash
+                // TODO add url
+                // TODO add results if available.
+//                display.sendResultResponse(data);
             } else {
-                // Launch the TopAnat analysis
-                
-                // Request server and get response
-                // - "admin" URL, allowing to come back at any moment to track job advancement
-                // - advancement status (could be hardcoded, e.g., "starting job")
-                display.sendNewJobResponse(jobTrackingId);
             }
 
-        // Job submission: job tracking
+        // Job tracking
         } else if (this.requestParameters.isATopAnatTrackingJob()) {
             // Get params
             Integer jobID = this.requestParameters.getJobId(); 
-            String formData = this.requestParameters.getFormData();
+            String keyParam = this.requestParameters.getDataKey(); 
             
-            if (jobID == null || formData == null) {
-                display.sendJobErrorResponse(null);
+            if (jobID == null || jobID < 1) {
+                throw log.throwing(new InvalidRequestException("A job ID must be provided"));
             }
             
             // Retrieve task manager associated to the provided ID
             TaskManager taskManager = TaskManager.getTaskManager(jobID);
-            if (taskManager == null) {
-                // We did not know that job
-                display.sendJobErrorResponse(taskManager);
-            } else if (taskManager.isSuccessful()) {
-                //retrieve results from the task held by the task manager
-                //TODO: update instantiation of TopAnatResults
-                TopAnatResults results = new TopAnatResults(null, null);
-                display.sendResultResponse(results);
-                //Or should the client redirects itself to a new page to display results, 
-                //using an URL provided in this response?
-                
-            } else if (!taskManager.isTerminated()) {
-                display.sendJobStatusResponse(taskManager);
+            JobStatus jobStatus;
+            if (taskManager == null || taskManager.isTerminated()) {
+                jobStatus = JobStatus.UNDEFINED;
             } else {
-                display.sendJobErrorResponse(taskManager);
+                jobStatus = JobStatus.RUNNING;
+                // TODO message
             }
+            LinkedHashMap<String, Object> data = new LinkedHashMap<>();
 
-        // Home page, with data parameters provided in URL
-        } else if (this.requestParameters.isATopAnatFormDataUpload()) {
-            // Get params:
-            String formData = this.requestParameters.getFormData(); 
+            data.put(JOB_RESPONSE_LABEL, new JobResponse(jobID, jobStatus.name(), keyParam));
 
-            // Request server and get response
-            // - information to pre-fill the form
-            // - information to display results 
-            //   (is it doable or do we get the results through an AJAX query only?)
-            boolean hasResults = true;
-            
-            // Display page (using previous response)
-            if (hasResults) {
-                //TODO: update instantiation of TopAnatResults
-                TopAnatResults results = new TopAnatResults(null, null);
-                display.sendResultResponse(results);
-            } else {
-                display.displayTopAnatHomePage();
+            if (this.requestParameters.getGeneInfo() != null &&
+                    this.requestParameters.getGeneInfo()) {
+                data.putAll(this.getGeneResponses());
+            }
+            display.sendTrackingJobResponse(data, "message");
+
+        // Get result 
+        } else if (this.requestParameters.isATopAnatGetResult()) {
+            LinkedHashMap<String, Object> data = new LinkedHashMap<>();
+//            data.put("results", results);
+            if (this.requestParameters.getGeneInfo() != null &&
+                    this.requestParameters.getGeneInfo()) {
+                // We add gene info response
+                data.putAll(this.getGeneResponses());
             }
 
         // Home page, empty
         } else if (this.requestParameters.getAction() == null) {
-            // Display page
             display.displayTopAnatHomePage();
             
         } else {
@@ -222,8 +289,8 @@ public class CommandTopAnat extends CommandParent {
         log.exit();
     }
     
-    private void processGeneUpload(TopAnatDisplay display) throws InvalidRequestException {
-        log.entry(display);
+    private LinkedHashMap<String, Object> getGeneResponses() throws InvalidRequestException {
+        log.entry();
 
         //retrieve possible parameters for this query
         final List<String> fgList = Collections.unmodifiableList(Optional.ofNullable(
@@ -250,10 +317,7 @@ public class CommandTopAnat extends CommandParent {
                     this.getGeneResponse(bgList,
                             this.requestParameters.getUrlParametersInstance().getParamBackgroundList().getName()));
         }
-
-        // Send response
-        display.sendGeneListReponse(data, messages.stream().collect(Collectors.joining("\n")));
-        log.exit();
+        return log.exit(data);
     }
 
     /**
@@ -306,6 +370,13 @@ public class CommandTopAnat extends CommandParent {
             validStages = this.getGroupingDevStages(selectedSpeciesId, DEV_STAGE_LEVEL);
         }
 
+        // Identify gene IDs not in the selected species
+        TreeSet<String> notSelectedSpeciesGenes = new TreeSet<>(
+                validGenes.stream()
+                    .filter(g -> !g.getSpeciesId().equals(selectedSpeciesId))
+                    .map(Gene::getId)
+                    .collect(Collectors.toSet()));
+        
         // Determine message
         messages.add(this.getGeneUploadResponseMessage(geneSet, speciesToGeneCount, 
                 undeterminedGeneIds, paramName));
@@ -357,8 +428,8 @@ public class CommandTopAnat extends CommandParent {
                     .sorted(Comparator.naturalOrder())
                     .collect(Collectors.toList()))
                     .orElse(new ArrayList<>()),
-                //SortedSet of submitted gene IDs
-                geneSet,
+                //SortedSet of gene IDs with known species but not the selected species
+                notSelectedSpeciesGenes,
                 //SortedSet of undetermined gene IDs
                 Optional.ofNullable(undeterminedGeneIds)
                     .map(TreeSet<String>::new)
@@ -479,9 +550,9 @@ public class CommandTopAnat extends CommandParent {
          */
         private final List<DevStage> stages;
         /**
-         * See {@link #getSubmittedGeneIds()}.
+         * See {@link #getNotInSelectedSpeciesGeneIds()}.
          */
-        private final TreeSet<String> submittedGeneIds;
+        private final TreeSet<String> notInSelectedSpeciesGeneIds;
         /**
          * See {@link #getUndeterminedGeneIds()}.
          */
@@ -498,22 +569,22 @@ public class CommandTopAnat extends CommandParent {
          * @param selectedSpecies       A {@code String} representing the ID of the selected species.
          * @param stages                A {@code List} of {@code DevStage}s that are
          *                              valid dev. stages for {@code selectedSpecies}.
-         * @param submittedGeneIds      A {@code TreeSet} of {@code String}s that are submitted gene IDs
-         *                              by the user.
+         * @param notInSelectedSpeciesGeneIds      A {@code TreeSet} of {@code String}s that are 
+         *                              submitted gene IDs that are not in the selected species.
          * @param undeterminedGeneIds   A {@code TreeSet} of {@code String}s that are gene IDs
          *                              with undetermined species.
          */
         public GeneListResponse(LinkedHashMap<String, Long> geneCount,
                 TreeMap<String, Species> detectedSpecies,
-                String selectedSpecies, List<DevStage> stages, TreeSet<String> submittedGeneIds,
+                String selectedSpecies, List<DevStage> stages, TreeSet<String> notInSelectedSpeciesGeneIds,
                 TreeSet<String> undeterminedGeneIds) {
             log.entry(geneCount, detectedSpecies, selectedSpecies, stages,
-                    submittedGeneIds, undeterminedGeneIds);
+                    notInSelectedSpeciesGeneIds, undeterminedGeneIds);
             this.geneCount= geneCount;
             this.detectedSpecies = detectedSpecies;
             this.selectedSpecies = selectedSpecies;
             this.stages = stages;
-            this.submittedGeneIds = submittedGeneIds;
+            this.notInSelectedSpeciesGeneIds = notInSelectedSpeciesGeneIds;
             this.undeterminedGeneIds = undeterminedGeneIds;
             log.exit();
         }
@@ -547,10 +618,11 @@ public class CommandTopAnat extends CommandParent {
             return this.stages;
         }
         /**
-         * @return  The {@code Set} of {@code String}s that are submitted gene IDs by the user.
+         * @return  The {@code TreeSet} of {@code String}s that are 
+         *          submitted gene IDs that are not in the selected species.
          */
-        public TreeSet<String> getSubmittedGeneIds() {
-            return this.submittedGeneIds;
+        public TreeSet<String> getNotInSelectedSpeciesGeneIds() {
+            return this.notInSelectedSpeciesGeneIds;
         }
         /**
          * @return  The {@code Set} of {@code String}s that are gene IDs with undetermined species.
@@ -567,7 +639,8 @@ public class CommandTopAnat extends CommandParent {
             result = prime * result + ((geneCount == null) ? 0 : geneCount.hashCode());
             result = prime * result + ((selectedSpecies == null) ? 0 : selectedSpecies.hashCode());
             result = prime * result + ((stages == null) ? 0 : stages.hashCode());
-            result = prime * result + ((submittedGeneIds == null) ? 0 : submittedGeneIds.hashCode());
+            result = prime * result + ((notInSelectedSpeciesGeneIds == null) ? 0 : 
+                notInSelectedSpeciesGeneIds.hashCode());
             result = prime * result + ((undeterminedGeneIds == null) ? 0 : undeterminedGeneIds.hashCode());
             return result;
         }
@@ -601,10 +674,10 @@ public class CommandTopAnat extends CommandParent {
                     return false;
             } else if (!stages.equals(other.stages))
                 return false;
-            if (submittedGeneIds == null) {
-                if (other.submittedGeneIds != null)
+            if (notInSelectedSpeciesGeneIds == null) {
+                if (other.notInSelectedSpeciesGeneIds != null)
                     return false;
-            } else if (!submittedGeneIds.equals(other.submittedGeneIds))
+            } else if (!notInSelectedSpeciesGeneIds.equals(other.notInSelectedSpeciesGeneIds))
                 return false;
             if (undeterminedGeneIds == null) {
                 if (other.undeterminedGeneIds != null)
@@ -618,8 +691,101 @@ public class CommandTopAnat extends CommandParent {
         public String toString() {
             return "Gene count: " + getGeneCount() + " - Detected species: " + getDetectedSpecies()
                     + " - Selected species: " + getSelectedSpecies() + " - Stages: " + getStages()
-                    + " - Submitted gene IDs: " + getSubmittedGeneIds()
+                    + " - Gene IDs not in selected: " + getNotInSelectedSpeciesGeneIds()
                     + " - Undetermined gene IDs: " + getUndeterminedGeneIds();
+        }
+    }
+
+    /**
+     * A convenient class to be passed to {@link JsonHelper} for job responses. 
+     */
+    public static class JobResponse {
+        /**
+         * See {@link #getJobId()}.
+         */
+        private final Integer jobId;
+        /**
+         * See {@link #getJobStatus()}.
+         */
+        private final String jobStatus;
+        /**
+         * See {@link #getData()}.
+         */
+        private final String data;
+        
+        /**
+         * Constructor of {@code JobResponse}.
+         * 
+         * @param jobId     An {@code Integer} representing the ID of the job (task).
+         * @param jobStatus A {@code String} representing the status of the job.
+         * @param data      A {@code String} representing the key of the parameters.
+         */
+        public JobResponse(Integer jobId, String jobStatus, String data) {
+            log.entry(jobId, jobStatus, data);
+            this.jobId = jobId;
+            this.jobStatus = jobStatus;
+            this.data = data;
+            log.exit();
+        }
+        
+        /**
+         * @return  The {@code Integer} representing the ID of the job (task).
+         */
+        public Integer getJobId() {
+            return this.jobId;
+        }
+        /**
+         * @return  The {@code String} representing the status of the job.
+         */
+        public String getJobStatus() {
+            return this.jobStatus;
+        }
+        /**
+         * @return  The {@code String} representing the key of the parameters.
+         */
+        public String getData() {
+            return this.data;
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((jobId == null) ? 0 : jobId.hashCode());
+            result = prime * result + ((jobStatus == null) ? 0 : jobStatus.hashCode());
+            result = prime * result + ((data == null) ? 0 : data.hashCode());
+            return result;
+        }
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            JobResponse other = (JobResponse) obj;
+            if (jobId == null) {
+                if (other.jobId != null)
+                    return false;
+            } else if (!jobId.equals(other.jobId))
+                return false;
+            if (jobStatus == null) {
+                if (other.jobStatus != null)
+                    return false;
+            } else if (!jobStatus.equals(other.jobStatus))
+                return false;
+            if (data == null) {
+                if (other.data != null)
+                    return false;
+            } else if (!data.equals(other.data))
+                return false;
+            return true;
+        }
+        @Override
+        public String toString() {
+            return "Job ID: " + getJobId() + " - Job status: "
+                    + getJobStatus() + " - Data: " + getData();
         }
     }
 }

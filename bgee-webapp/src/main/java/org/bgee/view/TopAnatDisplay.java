@@ -56,11 +56,14 @@ public interface TopAnatDisplay {
     public void sendResultResponse(TopAnatResults results);
     
     /**
-     * Send the response while a TopAnat job is running.
+     * Send the response when a tracking job is requested.
      * 
-     * @param taskManager   A {@code TaskManager} that is the task manager tracking a TopAnat job.
+     * @param data  A {@code LinkedHashMap} where keys are {@code String}s that are displayed 
+     *              object names, the associated values being a {@code Object} that are the object
+     *              to be displayed.
+     * @param msg   A {@code String} that is the text message resuming the response.
      */
-    public void sendJobStatusResponse(TaskManager taskManager);
+    public void sendTrackingJobResponse(LinkedHashMap<String, Object> data, String msg);
     
     /**
      * Send the response following an error in a TopAnat job.

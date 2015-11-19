@@ -7,6 +7,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.ServiceFactory;
 import org.bgee.model.species.Species;
 import org.bgee.view.SpeciesDisplay;
 import org.bgee.view.ViewFactory;
@@ -36,11 +37,11 @@ public class CommandSpecies extends CommandParent {
      *                          the properties to use.
      * @param viewFactory       A {@code ViewFactory} providing the views of the appropriate 
      *                          display type.
+     * @param serviceFactory    A {@code ServiceFactory} that provides bgee services.
      */
-    public CommandSpecies(HttpServletResponse response,
-            RequestParameters requestParameters, BgeeProperties prop,
-            ViewFactory viewFactory) {
-        super(response, requestParameters, prop, viewFactory);
+    public CommandSpecies(HttpServletResponse response, RequestParameters requestParameters,
+            BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory) {
+        super(response, requestParameters, prop, viewFactory, serviceFactory);
     }
 
     @Override
@@ -50,11 +51,11 @@ public class CommandSpecies extends CommandParent {
         SpeciesDisplay display = this.viewFactory.getSpeciesDisplay();
         
         // Get submitted species IDs
-        Set<String> submittedSpeciesIds = new HashSet<String>(requestParameters.getValues(
-                requestParameters.getUrlParametersInstance().getParamSpeciesList()));
+        Set<String> submittedSpeciesIds = new HashSet<String>(this.requestParameters.getValues(
+                this.requestParameters.getUrlParametersInstance().getParamSpeciesList()));
 
         // Load detected species
-        Set<Species> species = serviceFactory.getSpeciesService().
+        Set<Species> species = this.serviceFactory.getSpeciesService().
                 loadSpeciesByIds(submittedSpeciesIds);
         if (species.isEmpty()) {
             throw log.throwing(new IllegalStateException(

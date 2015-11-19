@@ -18,7 +18,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.TestAncestor;
 import org.bgee.controller.CommandTopAnat.GeneListResponse;
+import org.bgee.controller.CommandTopAnat.JobResponse;
 import org.bgee.model.ServiceFactory;
+import org.bgee.model.TaskManager;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.DevStageService;
 import org.bgee.model.gene.Gene;
@@ -47,11 +49,11 @@ public class CommandTopAnatTest extends TestAncestor {
     }
 
     /**
-     * Test {@link CommandTopAnat#processRequest()}.
+     * Test {@link CommandTopAnat#processRequest()} for a gene list validation
      * @throws Exception 
      */
     @Test
-    public void shouldProcessRequest() throws Exception {
+    public void shouldProcessRequestGeneValidation() throws Exception {
         
         //mock Services
         ServiceFactory serviceFac = mock(ServiceFactory.class);
@@ -67,11 +69,11 @@ public class CommandTopAnatTest extends TestAncestor {
 
         //mock data returned by Services
         List<String> fgSubmittedGeneIds = Arrays.asList("ID3");
-        TreeSet<String> fgSubmittedGeneIdSet = new TreeSet<>(fgSubmittedGeneIds);
+        TreeSet<String> fgNotSelectedGeneIdSet = new TreeSet<>();
         String fgSelectedSpeciesId = "10090";
 
         List<String> bgSubmittedGeneIds = Arrays.asList("ID1", "ID2", "ID3", "ID4");
-        TreeSet<String> bgSubmittedGeneIdSet = new TreeSet<>(bgSubmittedGeneIds);
+        TreeSet<String> bgNotSelectedGeneIdSet = new TreeSet<>(Arrays.asList("ID3"));
         String bgSelectedSpeciesId = "9606";
 
         List<Gene> fgGenes = Arrays.asList(new Gene("ID3", "10090"));
@@ -143,10 +145,10 @@ public class CommandTopAnatTest extends TestAncestor {
         
         GeneListResponse response1 = new GeneListResponse(
                 fgSpToGeneCount, fgDetectedSpecies, fgSelectedSpeciesId, 
-                devStages, fgSubmittedGeneIdSet, fgUndeterminedGeneIds);
+                devStages, fgNotSelectedGeneIdSet, fgUndeterminedGeneIds);
         GeneListResponse response2 = new GeneListResponse(
                 bgSpToGeneCount, bgDetectedSpecies, bgSelectedSpeciesId, 
-                devStages, bgSubmittedGeneIdSet, bgUndeterminedGeneIds);
+                devStages, bgNotSelectedGeneIdSet, bgUndeterminedGeneIds);
         LinkedHashMap<String, Object> data = new LinkedHashMap<>();
         data.put(params.getUrlParametersInstance().getParamForegroundList().getName(),
                 response1);
@@ -158,5 +160,58 @@ public class CommandTopAnatTest extends TestAncestor {
                         params.getUrlParametersInstance().getParamForegroundList().getName() + "\n" +
                 "4 genes entered, 2 in human, 1 in mouse, 1 not found in Bgee for " + 
                         params.getUrlParametersInstance().getParamBackgroundList().getName());
+    }
+    
+    /**
+     * Test {@link CommandTopAnat#processRequest()} for a job tracking.
+     * @throws Exception 
+     */
+//    @Test
+    //TODO activate this test. It's not activate because I need to continue
+    public void shouldProcessRequestJobTracking() throws Exception {
+
+        Integer jobId = 10;
+        String keyParam="ab3d";
+
+        //mock Services
+        ServiceFactory serviceFac = mock(ServiceFactory.class);
+        
+        TaskManager taskManager = mock(TaskManager.class);
+        when(TaskManager.getTaskManager(jobId)).thenReturn(taskManager);
+        when(taskManager.isTerminated()).thenReturn(true);
+
+        GeneService geneService = mock(GeneService.class);
+        when(serviceFac.getGeneService()).thenReturn(geneService);
+        
+        DevStageService devStageService = mock(DevStageService.class);
+        when(serviceFac.getDevStageService()).thenReturn(devStageService);
+        
+        SpeciesService speciesService = mock(SpeciesService.class);
+        when(serviceFac.getSpeciesService()).thenReturn(speciesService);
+
+        //mock data returned by Services
+        
+        //mock view
+        ViewFactory viewFac = mock(ViewFactory.class);
+        TopAnatDisplay display = mock(TopAnatDisplay.class);
+        when(viewFac.getTopAnatDisplay()).thenReturn(display);
+        
+        // Launch tests
+        RequestParameters params = new RequestParameters();
+        params.setPage(RequestParameters.PAGE_TOP_ANAT);
+        params.setAction(RequestParameters.ACTION_TOP_ANAT_TRACKING_JOB);
+        params.addValue(params.getUrlParametersInstance().getParamJobId(), jobId);
+        params.addValue(params.getUrlParametersInstance().getParamData(), keyParam);
+        log.info("Generated query URL: " + params.getRequestURL());
+
+        CommandTopAnat controller = new CommandTopAnat(mock(HttpServletResponse.class),
+                params, mock(BgeeProperties.class), viewFac, serviceFac);
+        controller.processRequest();
+
+        JobResponse response1 = new JobResponse(jobId, "DONE", keyParam);
+        LinkedHashMap<String, Object> data = new LinkedHashMap<>();
+        data.put("job_response", response1);
+        
+        verify(display).sendTrackingJobResponse(data, "message");
     }
 }

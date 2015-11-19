@@ -54,8 +54,7 @@ public class JsonTopAnatDisplay extends JsonParentDisplay implements TopAnatDisp
 
     @Override
     public void sendGeneListReponse(LinkedHashMap<String, Object> data, String msg) {
-        log.entry(data, msg);
-        
+        log.entry(data, msg);        
         this.sendResponse(msg, data);
         log.exit();
     }
@@ -68,16 +67,26 @@ public class JsonTopAnatDisplay extends JsonParentDisplay implements TopAnatDisp
 
     @Override
     public void sendNewJobResponse(int jobTrackingId) {
-        // TODO Auto-generated method stub
+        log.entry(jobTrackingId);
+        
+        LinkedHashMap<String, Object> data = new LinkedHashMap<>();
+        data.put(this.getRequestParameters().getUrlParametersInstance().getParamJobId().getName(),
+                jobTrackingId);
+        
+        this.sendResponse("New TopAnat analyze launch", data);
+        
+        log.exit();
+    }
+
+    @Override
+    public void sendTrackingJobResponse(LinkedHashMap<String, Object> data, String msg) {
+        log.entry(data, msg);        
+        this.sendResponse(msg, data);
+        log.exit();
     }
 
     @Override
     public void sendResultResponse(TopAnatResults results) {
-        // TODO Auto-generated method stub
-    }
-
-    @Override
-    public void sendJobStatusResponse(TaskManager taskManager) {
         // TODO Auto-generated method stub
     }
 

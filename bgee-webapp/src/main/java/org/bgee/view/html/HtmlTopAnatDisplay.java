@@ -82,7 +82,7 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
     }
 
     @Override
-    public void sendJobStatusResponse(TaskManager taskManager) {
+    public void sendTrackingJobResponse(LinkedHashMap<String, Object> data, String msg) {
         throw log.throwing(new UnsupportedOperationException("Not available for HTML display"));
     }
 

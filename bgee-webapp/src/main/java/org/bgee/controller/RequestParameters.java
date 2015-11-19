@@ -130,9 +130,16 @@ public class RequestParameters {
     
     /**
      * A {@code String} that is the value taken by the {@code page} parameter 
-     * (see {@link URLParameters#getParamPage()}) when a download page is requested.
+     * (see {@link URLParameters#getParamPage()}) when a about page is requested.
      */
     public static final String PAGE_ABOUT = "about";
+    
+    /**
+     * A {@code String} that is the value taken by the {@code page} parameter 
+     * (see {@link URLParameters#getParamPage()}) when a species page is requested.
+     */
+    public static final String PAGE_SPECIES = "species";
+    
     /**
      * A {@code String} that is the value taken by the {@code page} parameter 
      * (see {@link URLParameters#getParamPage()}) when a page related to topAnat is requested.
@@ -171,22 +178,22 @@ public class RequestParameters {
     public static final String ACTION_DOC_PROC_EXPR_VALUE_DOWLOAD_FILES = "proc_value_files";
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link URLParameters#getParamAction()}) when a species data is requested.
+     * Value of the parameter page should be {@link #PAGE_SPECIES}.
+     */
+    public static final String ACTION_SPECIES_UPLOAD = "species_upload";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
      * (see {@link URLParameters#getParamAction()}) when a gene list validation is requested.
      * Value of the parameter page should be {@link #PAGE_TOP_ANAT}.
      */
     public static final String ACTION_TOP_ANAT_GENE_VALIDATION = "gene_validation";
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
-     * (see {@link URLParameters#getParamAction()}) when a species list data is requested.
+     * (see {@link URLParameters#getParamAction()}) when a submission of a new job is requested.
      * Value of the parameter page should be {@link #PAGE_TOP_ANAT}.
      */
-    public static final String ACTION_TOP_ANAT_SPECIES_DATA = "species_data";
-    /**
-     * A {@code String} that is the value taken by the {@code action} parameter 
-     * (see {@link URLParameters#getParamAction()}) when a new job is submitted.
-     * Value of the parameter page should be {@link #PAGE_TOP_ANAT}.
-     */
-    public static final String ACTION_TOP_ANAT_NEW_JOB = "new_job";
+    public static final String ACTION_TOP_ANAT_SUBMIT_JOB = "submit_job";
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
      * (see {@link URLParameters#getParamAction()}) when a tracking job is requested.
@@ -195,16 +202,10 @@ public class RequestParameters {
     public static final String ACTION_TOP_ANAT_TRACKING_JOB = "tracking_job";
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
-     * (see {@link URLParameters#getParamAction()}) when results of a completed job is requested.
+     * (see {@link URLParameters#getParamAction()}) when a result is requested.
      * Value of the parameter page should be {@link #PAGE_TOP_ANAT}.
      */
-    public static final String ACTION_TOP_ANAT_COMPLETED_JOB = "completed_job";
-    /**
-     * A {@code String} that is the value taken by the {@code action} parameter 
-     * (see {@link URLParameters#getParamAction()}) when from parameters are requested.
-     * Value of the parameter page should be {@link #PAGE_TOP_ANAT}.
-     */
-    public static final String ACTION_TOP_ANAT_FORM_DATA = "form_data";
+    public static final String ACTION_TOP_ANAT_GET_RESULT = "get_result";
     /**
      * A {@code String} that is the anchor to use in the hash part of an URL 
      * to link to the single-species part, in the documentation about gene expression calls.
@@ -2059,14 +2060,14 @@ public class RequestParameters {
     }
     /**
      * Convenient method to retrieve value of the parameter returned by 
-     * {@link URLParameters#getParamFormData()}. Equivalent to calling 
+     * {@link URLParameters#getParamGeneInfo()}. Equivalent to calling 
      * {@link #getFirstValue(Parameter)} for this parameter.
      * 
-     * @return  A {@code String} that is the value of the {@code form_data} URL parameter.
+     * @return  A {@code Boolean} that is the value of the {@code gene_info} URL parameter.
      *          Can be {@code null}. 
      */
-    public String getFormData() {
-        return this.getFirstValue(this.getUrlParametersInstance().getParamFormData());
+    public Boolean getGeneInfo() {
+        return this.getFirstValue(this.getUrlParametersInstance().getParamGeneInfo());
     }
 
     /**
@@ -2165,11 +2166,38 @@ public class RequestParameters {
      * This method has a js counterpart in {@code requestparameters.js} that should be kept 
      * consistent as much as possible if the method evolves.
      * 
+     * @return  A {@code boolean} to tell whether the request is related to species.
+     */
+    public boolean isASpeciesPageCategory() {
+        log.entry();
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
+            this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_SPECIES)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
+     * @return  A {@code boolean} to tell whether the request is related to
+     *          species list upload.
+     */
+    public boolean isASpeciesUpload() {
+        log.entry();
+        if (isASpeciesPageCategory() && 
+                this.getAction() != null && this.getAction().equals(ACTION_SPECIES_UPLOAD)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
+     * 
      * @return  A {@code boolean} to tell whether the request corresponds to a page of the
      * category "about"
      */
-    public boolean isAnAboutPageCategory()
-    {
+    public boolean isAnAboutPageCategory() {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
                 this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_ABOUT)) {
@@ -2241,25 +2269,13 @@ public class RequestParameters {
     }
     /**
      * @return  A {@code boolean} to tell whether the request is related to
-     *          species list upload in topAnat.
+     *          a submission of a submission of a new job in topAnat.
      */
-    public boolean isATopAnatSpeciesUpload() {
-        log.entry();
-        if (isATopAnatPageCategory() && 
-                this.getAction() != null && this.getAction().equals(ACTION_TOP_ANAT_SPECIES_DATA)) {
-            return log.exit(true);
-        }
-        return log.exit(false);
-    }
-    /**
-     * @return  A {@code boolean} to tell whether the request is related to
-     *          a new job in topAnat.
-     */
-    public boolean isATopAnatNewJob() {
+    public boolean isATopAnatSubmitJob() {
         log.entry();
         if (isATopAnatPageCategory() &&
                 this.getHttpMethod().equals("POST") &&
-                this.getAction() != null && this.getAction().equals(ACTION_TOP_ANAT_NEW_JOB)) {
+                this.getAction() != null && this.getAction().equals(ACTION_TOP_ANAT_SUBMIT_JOB)) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -2279,31 +2295,17 @@ public class RequestParameters {
     }
     /**
      * @return  A {@code boolean} to tell whether the request is related to
-     *          a completed job in topAnat.
+     *          get a job in topAnat.
      */
-    public boolean isATopAnatCompletedJob() {
+    public boolean isATopAnatGetResult() {
         log.entry();
         if (isATopAnatPageCategory() &&
                 this.getHttpMethod().equals("POST") &&
-                this.getAction() != null && this.getAction().equals(ACTION_TOP_ANAT_COMPLETED_JOB)) {
+                this.getAction() != null && this.getAction().equals(ACTION_TOP_ANAT_GET_RESULT)) {
             return log.exit(true);
         }
         return log.exit(false);
     }
-    /**
-     * @return  A {@code boolean} to tell whether the request is related to
-     *          retrieve form data.
-     */
-    public boolean isATopAnatFormDataUpload() {
-        log.entry();
-        if (isATopAnatPageCategory() &&
-                this.getHttpMethod().equals("POST") &&
-                this.getAction() != null && this.getAction().equals(ACTION_TOP_ANAT_FORM_DATA)) {
-            return log.exit(true);
-        }
-        return log.exit(false);
-    }
-    
     /**
      * This method has a js counterpart in {@code requestparameters.js} that should be kept 
      * consistent as much as possible if the method evolves.

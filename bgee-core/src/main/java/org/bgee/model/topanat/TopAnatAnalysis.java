@@ -86,16 +86,6 @@ public class TopAnatAnalysis {
      * @param params
      * @param props
      * @param serviceFactory
-     */
-    public TopAnatAnalysis(TopAnatParams params, BgeeProperties props, 
-            ServiceFactory serviceFactory, TopAnatController controller) {
-        this(params, props, serviceFactory, new TopAnatRManager(props,params),controller);
-    }
-
-    /**
-     * @param params
-     * @param props
-     * @param serviceFactory
      * @param rManager
      */
     public TopAnatAnalysis(TopAnatParams params, BgeeProperties props, 

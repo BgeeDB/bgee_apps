@@ -617,4 +617,24 @@ public class TOComparatorTest extends TestAncestor {
         to2 = new EntityToKeywordTO("ID:1", "SP:2");
         assertFalse(TOComparator.areTOsEqual(to1, to2));
     }
+
+    /**
+     * Test the custom {@code BigDecimal} comparator.
+     */
+    @Test
+    public void testBigDecimalComparator() {
+        BigDecimal ten0 = BigDecimal.valueOf(10.0);
+        BigDecimal ten1 = BigDecimal.valueOf(10);
+        BigDecimal tenPlus = BigDecimal.valueOf(10.001);
+
+
+        assertTrue("Null are the same", TOComparator.areBigDecimalEquals(null, null));
+        assertFalse("Null is different", TOComparator.areBigDecimalEquals(null, ten1));
+        assertFalse("Null is different", TOComparator.areBigDecimalEquals(ten0, null));
+        assertFalse("Should not be equals: " + ten0 + " " + tenPlus, TOComparator.areBigDecimalEquals(ten0, tenPlus));
+
+        assertTrue("Should be equals: " + ten0 + " " + ten1, TOComparator.areBigDecimalEquals(ten0, ten1));
+        assertTrue("Should be equals: " + ten0 + " " + ten0, TOComparator.areBigDecimalEquals(ten0, ten0));
+
+    }
 }

@@ -1,12 +1,15 @@
 package org.bgee.model.expressiondata.baseelements;
 
 import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Defines the source of expression data of a {@link CallData} along 
+ * Defines the source of expression data of a {@link CallData} or {@code Call}, along 
  * the ontologies used to capture conditions. For instance, the expression of a gene 
  * in a given anatomical entity could have been observed in the anatomical entity itself, 
  * or only in some substructures of the entity, or in both. Similarly, expression in a given 
@@ -18,6 +21,13 @@ import org.apache.logging.log4j.Logger;
  * @since Bgee 13 Sept. 2015
  *
  */
+//TODO: actually, if we really wanted to abstract away details about what elements 
+//compose a condition, we should use an Enum describing the condition elements 
+//(e.g., ANAT_ENTITY, DEV_STAGE, ...).
+//The constructor could accept a Map ConditionElement -> PropagationState. And a sanity check 
+//could be performed to ensure that all ConditionElement enum elements are in the key set of the Map.
+//If we don't want to change the class signature, we could keep the getAnatEntityPropagationState etc 
+//as helper methods. 
 public class DataPropagation {
     private final static Logger log = LogManager.getLogger(DataPropagation.class.getName());
     
@@ -101,7 +111,8 @@ public class DataPropagation {
      * @param includingObservedData         A {@code Boolean} defining whether the data includes 
      *                                      some that were observed in the condition itself, 
      *                                      and not only in an ancestor or a descendant. 
-     *                                      If {@code null}, it means that this information is unknown.
+     *                                      If {@code null}, it means that this information is unknown 
+     *                                      (or not requested, if used as part of a {@code CallFilter}).
      * @throws IllegalArgumentException     If {@code anatEntityPropagationState} or 
      *                                      {@code devStagePropagationState} is {@code null}.
      */
@@ -150,6 +161,16 @@ public class DataPropagation {
      */
     public Boolean getIncludingObservedData() {
         return includingObservedData;
+    }
+    
+    /**
+     * @return  A {@code Set} of {@code PropagationState}s that are all the states 
+     *          associated to all condition elements. 
+     */
+    //this method is useful to abstract away what are the elements defining a condition.
+    public EnumSet<PropagationState> getAllPropagationStates() {
+        return Stream.of(anatEntityPropagationState, devStagePropagationState)
+        .collect(Collectors.toCollection(() -> EnumSet.noneOf(PropagationState.class)));
     }
     
     @Override

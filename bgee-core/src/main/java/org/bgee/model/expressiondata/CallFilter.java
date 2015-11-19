@@ -148,8 +148,10 @@ public class CallFilter<T extends CallData<?>> {
     /**
      * Constructor accepting all requested parameters to build a new {@code CallFilter}. 
      * {@code geneFilter} and {@code conditionFilters} can be {@code null} or empty, 
-     * but {@code callDataFilters} cannot, otherwise an {@code IllegalArgumentException} is thrown. 
-     * Indeed, at least one  {@code CallType} should be targeted through at least one {@code CallData}.
+     * but {@code callDataFilters} and {@code dataPropagationFilter} cannot, otherwise 
+     * an {@code IllegalArgumentException} is thrown. 
+     * Indeed, at least one  {@code CallType} should be targeted through at least one {@code CallData}, 
+     * and the origin of the data along the ontologies used to capture conditions should be specified.
      * <p>
      * If the method {@link CallData#getDataType()} returns {@code null} for a {@code CallData}, 
      * then it means that it targets any {@code DataType}, otherwise, it means that it targets only 
@@ -257,12 +259,24 @@ public class CallFilter<T extends CallData<?>> {
         return dataPropagationFilter;
     }
     /**
+     * {@code CallData} objects of type {@code T} allowing to configure the query. 
+     * If several {@code CallData}s are configured, they are seen as "OR" conditions. 
+     * Note that the {@code DataPropagation}s provided through these {@code CallData} objects 
+     * are <strong>not</strong> considered. 
+     * <p>
+     * The reason for not taking them into account is that a condition on {@code DataPropagation} 
+     * can only be applied to a {@code Call}, taking all data into account. So it is 
+     * counter-intuitive to provide a filtering on {@code DataPropagation} in a {@code CallData}, 
+     * that can target one specific data type. The filtering should be provided at the level 
+     * of the {@code CallFilter}, not specific to a data type. 
+     * <p>
+     * It should be noted that {@code CallData}s can contain more precise information 
+     * in some situations, but that needs to perform several queries. 
+     * 
      * @return  An unmodifiable {@code Set} of {@code T}s, allowing to configure the filtering based on 
      *          the expression data generation (for instance, minimum quality level 
      *          for each data type, or type of propagation allowed, e.g., propagation 
-     *          of expression calls from substructures). If several {@code CallData}s 
-     *          are configured, they are seen as "OR" conditions. Note that the {@code DataPropagation}s 
-     *          provided through these {@code CallData} objects are <strong>not</strong> considered.
+     *          of expression calls from substructures). 
      */
     public Set<T> getCallDataFilters() {
         return callDataFilters;

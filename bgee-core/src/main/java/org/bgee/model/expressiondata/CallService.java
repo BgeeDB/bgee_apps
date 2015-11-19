@@ -229,7 +229,8 @@ public class CallService extends Service {
                         )),  
                         //CallTOFilters
                         exprCallData.stream()
-                            .flatMap(callData -> mapCallDataToExprCallTOFilters(callData).stream())
+                            .flatMap(callData -> mapCallDataToExprCallTOFilters(callData, 
+                                    callFilter.getDataPropagationFilter()).stream())
                             .collect(Collectors.toSet()), 
                         //includeSubstructures
                         !PropagationState.SELF.equals(callFilter.getDataPropagationFilter()
@@ -263,8 +264,8 @@ public class CallService extends Service {
     // METHODS MAPPING CallTOs TO Calls
     //*************************************************************************
     private static ExpressionCall mapCallTOToExpressionCall(ExpressionCallTO callTO, 
-            DataPropagation daoDataPropagation) {
-        log.entry(callTO, daoDataPropagation);
+            DataPropagation callFilterPropag) {
+        log.entry(callTO, callFilterPropag);
 
         //at this point, we cannot know the propagation status per data type, 
         //the expression tables only store a global propagation status 
@@ -273,27 +274,32 @@ public class CallService extends Service {
         //and another one not including them. 
         //so here, we provide the only thing we know: the propagation status 
         //requested to the DAO.
+        //Infer observation state first. No way to get any information about "observed data" 
+        //per data type at this point, unless the results have some specific propagation states.
+        Set<PropagationState> allPropagStates = callFilterPropag.getAllPropagationStates();
+        Boolean observedData = null;
+        if (allPropagStates.size() == 1 && allPropagStates.contains(PropagationState.SELF)) {
+            observedData = true;
+        } else if (allPropagStates.contains(PropagationState.DESCENDANT)) {
+            observedData = false;
+        }
         DataPropagation callDataPropagation = new DataPropagation(
-                !PropagationState.SELF.equals(daoDataPropagation.getAnatEntityPropagationState())? 
+                !PropagationState.SELF.equals(callFilterPropag.getAnatEntityPropagationState())? 
                         PropagationState.SELF_OR_DESCENDANT: PropagationState.SELF, 
-                !PropagationState.SELF.equals(daoDataPropagation.getDevStagePropagationState())? 
+                !PropagationState.SELF.equals(callFilterPropag.getDevStagePropagationState())? 
                         PropagationState.SELF_OR_DESCENDANT: PropagationState.SELF, 
-                //No way to get any information about "observed data" per data type at this point, 
-                //unless both includeSubstructures and includeSubStages are false.
-                PropagationState.SELF.equals(daoDataPropagation.getAnatEntityPropagationState()) 
-                && PropagationState.SELF.equals(daoDataPropagation.getDevStagePropagationState())? 
-                        true: null);
+                observedData);
         
         //infer the global Propagation status of the call, either from the CallTO 
-        //if it contains this information, or from the PropagationState defined for the DAO.
+        //if it contains this information, or from the PropagationState defined from the CallFilter.
         DataPropagation globalPropagation = new DataPropagation(
                 Optional.ofNullable(convertExprOriginToPropagationState(callTO.getAnatOriginOfLine()))
-                .orElse(daoDataPropagation.getAnatEntityPropagationState()), 
+                .orElse(callDataPropagation.getAnatEntityPropagationState()), 
                 Optional.ofNullable(convertExprOriginToPropagationState(callTO.getStageOriginOfLine()))
-                .orElse(daoDataPropagation.getDevStagePropagationState()));
+                .orElse(callDataPropagation.getDevStagePropagationState()));
         
         return log.exit(new ExpressionCall(callTO.getGeneId(), 
-                callTO.getAnatEntityId() != null || callTO.getStageId() == null? 
+                callTO.getAnatEntityId() != null || callTO.getStageId() != null? 
                         new Condition(callTO.getAnatEntityId(), callTO.getStageId()): null, 
                 globalPropagation, 
                 //At this point, there can't be any ambiguity state, as we haven't compare 
@@ -386,44 +392,64 @@ public class CallService extends Service {
     //*************************************************************************
     // METHODS MAPPING CallDatas TO ExpressionCallTOs
     //*************************************************************************
-    private static Set<ExpressionCallTO> mapCallDataToExprCallTOFilters(ExpressionCallData callData) {
-        log.entry(callData);
+    private static Set<ExpressionCallTO> mapCallDataToExprCallTOFilters(ExpressionCallData callData, 
+            DataPropagation callFilterPropag) {
+        log.entry(callData, callFilterPropag);
         
         //if the dataType of the callData is null, then it means that it targets all data types. 
         //In order to get OR conditions between data type parameters 
         //(e.g., affymetrixData >= HIGH OR rnaSeqData >= HIGH), we need to create one ExpressionCallTO 
         //per data type (because data type parameters inside a same ExpressionCallTO are considered 
-        //as AND conditions)
-        Set<DataType> dataTypes = callData.getDataType() != null? 
+        //as AND conditions). But this is needed only if there is a filtering requested 
+        //on a minimum quality level, of course.
+        //Here, don't use an EnumSet to be able to put 'null' in it (see below).
+        Set<DataType> dataTypes = new HashSet<>();
+        if (callData.getDataType() == null && callData.getDataQuality().equals(DataQuality.LOW)) {
+            //no filtering on data quality for any data type
+            dataTypes.add(null);
+        } else {
+            //filtering requested on data quality for any data type, 
+            //or filtering requested on one specific data type for any quality
+            dataTypes = callData.getDataType() != null? 
                 EnumSet.of(callData.getDataType()): EnumSet.allOf(DataType.class);
+        }
                 
         return log.exit(dataTypes.stream().map(dataType -> {
             CallTO.DataState affyState = null;
             CallTO.DataState estState = null;
             CallTO.DataState inSituState = null;
             CallTO.DataState rnaSeqState = null;
-            CallTO.DataState state = convertDataQualityToDataState(callData.getDataQuality());
-            switch (dataType) {
-            case AFFYMETRIX: 
-                affyState = state;
-                break;
-            case EST: 
-                estState = state;
-                break;
-            case IN_SITU: 
-                inSituState = state;
-                break;
-            case RNA_SEQ: 
-                rnaSeqState = state;
-                break;
-            default: 
-                throw log.throwing(new IllegalStateException("Unsupported DataType: " + dataType));
+            assert dataType != null || 
+                    (dataType == null && callData.getDataQuality().equals(DataQuality.LOW));
+            
+            if (dataType != null) {
+                CallTO.DataState state = convertDataQualityToDataState(callData.getDataQuality());
+                switch (dataType) {
+                case AFFYMETRIX: 
+                    affyState = state;
+                    break;
+                case EST: 
+                    estState = state;
+                    break;
+                case IN_SITU: 
+                    inSituState = state;
+                    break;
+                case RNA_SEQ: 
+                    rnaSeqState = state;
+                    break;
+                default: 
+                    throw log.throwing(new IllegalStateException("Unsupported DataType: " + dataType));
+                }
             }
+            
             return new ExpressionCallTO(affyState, estState, inSituState, rnaSeqState, 
-            convertPropagationStateToExprOrigin(callData.getDataPropagation().getAnatEntityPropagationState()), 
-            convertPropagationStateToExprOrigin(callData.getDataPropagation().getDevStagePropagationState()), 
-            callData.getDataPropagation().getIncludingObservedData());
-        }).collect(Collectors.toSet()));
+                convertPropagationStateToExprOrigin(callFilterPropag.getAnatEntityPropagationState()), 
+                convertPropagationStateToExprOrigin(callFilterPropag.getDevStagePropagationState()), 
+                callFilterPropag.getIncludingObservedData());
+        })
+        //filter CallTOs that provide no filtering at all
+        .filter(callTO -> !callTO.equals(new ExpressionCallTO(null, null, null, null)))
+        .collect(Collectors.toSet()));
     }
 
     //*************************************************************************

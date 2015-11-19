@@ -771,7 +771,7 @@ public class TopAnatAnalysis {
      * @throws IOException 
      */
     private void move(Path src, Path dest) throws IOException{
-        if(Files.size(src) > 0)
+        if(true | Files.size(src) > 0) // TODO true to avoid an exception when an empty R output file is produced
             Files.move(src, dest, StandardCopyOption.REPLACE_EXISTING);
         else{
             throw log.throwing(new IllegalStateException("Empty tmp file"));

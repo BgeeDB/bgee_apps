@@ -27,7 +27,6 @@ import org.bgee.model.expressiondata.CallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneService;
-import org.bgee.model.species.SpeciesService;
 import org.bgee.model.topanat.exception.InvalidForegroundException;
 import org.bgee.model.topanat.exception.InvalidSpeciesGenesException;
 
@@ -81,11 +80,6 @@ public class TopAnatAnalysis {
     /**
      * 
      */
-    private final SpeciesService speciesService;
-
-    /**
-     * 
-     */
     private final TopAnatController controller;
 
     /**
@@ -112,7 +106,6 @@ public class TopAnatAnalysis {
                 serviceFactory.getAnatEntityService(); 
         this.callService = serviceFactory.getCallService();
         this.geneService = serviceFactory.getGeneService();
-        this.speciesService = serviceFactory.getSpeciesService();
         this.rManager = rManager;
         this.props = props;
         this.controller = controller;
@@ -123,7 +116,7 @@ public class TopAnatAnalysis {
      * @throws InvalidForegroundException 
      * @throws InvalidSpeciesException 
      */
-    public TopAnatResults proceedToAnalysis() throws IOException, InvalidForegroundException, 
+    protected TopAnatResults proceedToAnalysis() throws IOException, InvalidForegroundException, 
     InvalidSpeciesGenesException{
         log.entry();
         log.info("Result File: {}", this.getResultFileName());

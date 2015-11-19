@@ -1,4 +1,4 @@
-package org.bgee.model.expressiondata;
+package org.bgee.model.dao.api.expressiondata;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -15,9 +15,8 @@ import org.apache.logging.log4j.Logger;
  * @version Bgee 13 Oct. 2015
  * @since Bgee 13 Oct. 2015
  */
-public class ConditionFilter {
-    private final static Logger log = LogManager.getLogger(ConditionFilter.class.getName());
-    
+public class DAOConditionFilter {
+    private final static Logger log = LogManager.getLogger(DAOConditionFilter.class.getName());
     /**
      * @see #getAnatEntitieIds()
      */
@@ -29,15 +28,15 @@ public class ConditionFilter {
     
     /**
      * @param anatEntitieIds    A {@code Collection} of {@code String}s that are the IDs 
-     *                          of the anatomical entities that this {@code ConditionFilter} 
+     *                          of the anatomical entities that this {@code DAOConditionFilter} 
      *                          will specify to use.
      * @param devStageIds       A {@code Collection} of {@code String}s that are the IDs 
-     *                          of the developmental stages that this {@code ConditionFilter} 
+     *                          of the developmental stages that this {@code DAOConditionFilter} 
      *                          will specify to use.
      * @throws IllegalArgumentException If no anatomical entity IDs and no developmental stage IDs 
      *                                  are provided. 
      */
-    public ConditionFilter(Collection<String> anatEntitieIds, Collection<String> devStageIds) 
+    public DAOConditionFilter(Collection<String> anatEntitieIds, Collection<String> devStageIds) 
             throws IllegalArgumentException {
         if ((anatEntitieIds == null || anatEntitieIds.isEmpty()) && 
                 (devStageIds == null || devStageIds.isEmpty())) {
@@ -52,14 +51,14 @@ public class ConditionFilter {
 
     /**
      * @return  An unmodifiable {@code Set} of {@code String}s that are the IDs 
-     *          of the anatomical entities that this {@code ConditionFilter} will specify to use.
+     *          of the anatomical entities that this {@code DAOConditionFilter} will specify to use.
      */
     public Set<String> getAnatEntitieIds() {
         return anatEntitieIds;
     }
     /**
      * @return  An unmodifiable {@code Set} of {@code String}s that are the IDs 
-     *          of the developmental stages that this {@code ConditionFilter} will specify to use.
+     *          of the developmental stages that this {@code DAOConditionFilter} will specify to use.
      */
     public Set<String> getDevStageIds() {
         return devStageIds;
@@ -84,7 +83,7 @@ public class ConditionFilter {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        ConditionFilter other = (ConditionFilter) obj;
+        DAOConditionFilter other = (DAOConditionFilter) obj;
         if (anatEntitieIds == null) {
             if (other.anatEntitieIds != null) {
                 return false;
@@ -104,7 +103,7 @@ public class ConditionFilter {
 
     @Override
     public String toString() {
-        return "ConditionFilter [anatEntitieIds=" + anatEntitieIds 
+        return "DAOConditionFilter [anatEntitieIds=" + anatEntitieIds 
                 + ", devStageIds=" + devStageIds + "]";
     }
 }

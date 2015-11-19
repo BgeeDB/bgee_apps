@@ -44,8 +44,7 @@ public interface CallType {
     public static enum Expression implements CallType, BgeeEnumField {
         EXPRESSED(Collections.unmodifiableSet(EnumSet.allOf(DataType.class))), 
         NOT_EXPRESSED(Collections.unmodifiableSet(
-                EnumSet.of(DataType.AFFYMETRIX, DataType.IN_SITU, 
-                        DataType.RELAXED_IN_SITU, DataType.RNA_SEQ)));
+                EnumSet.of(DataType.AFFYMETRIX, DataType.IN_SITU, DataType.RNA_SEQ)));
         /**
          * {@code Logger} of the class. 
          */
@@ -73,20 +72,20 @@ public interface CallType {
             if (this.equals(EXPRESSED)) {
                 //no propagation from parents allowed for expression calls, 
                 //all other propagations allowed. 
-                if (anatPropagation == PropagationState.PARENT || 
-                        anatPropagation == PropagationState.SELF_AND_PARENT || 
-                        anatPropagation == PropagationState.SELF_OR_PARENT || 
-                        devStagePropagation == PropagationState.PARENT || 
-                        devStagePropagation == PropagationState.SELF_AND_PARENT || 
-                        devStagePropagation == PropagationState.SELF_OR_PARENT) {
+                if (anatPropagation == PropagationState.ANCESTOR || 
+                        anatPropagation == PropagationState.SELF_AND_ANCESTOR || 
+                        anatPropagation == PropagationState.SELF_OR_ANCESTOR || 
+                        devStagePropagation == PropagationState.ANCESTOR || 
+                        devStagePropagation == PropagationState.SELF_AND_ANCESTOR || 
+                        devStagePropagation == PropagationState.SELF_OR_ANCESTOR) {
                     incorrectPropagation = true;
                 }
             } else if (this.equals(NOT_EXPRESSED)) {
                 //for no-expression calls, propagation from parents for anat. entities allowed, 
                 //no propagation for dev. stage allowed. 
-                if (anatPropagation == PropagationState.CHILD || 
-                        anatPropagation == PropagationState.SELF_AND_CHILD || 
-                        anatPropagation == PropagationState.SELF_OR_CHILD || 
+                if (anatPropagation == PropagationState.DESCENDANT || 
+                        anatPropagation == PropagationState.SELF_AND_DESCENDANT || 
+                        anatPropagation == PropagationState.SELF_OR_DESCENDANT || 
                         devStagePropagation != PropagationState.SELF) {
                     incorrectPropagation = true;
                 }
@@ -273,7 +272,7 @@ public interface CallType {
      *                                  for this {@code CallType.}
      * @see DataPropagation
      */
-    public void checkDataPropagation(DataPropagation propagation);
+    public void checkDataPropagation(DataPropagation propagation) throws IllegalArgumentException;
     
     /**
      * Returns the {@code DataType}s capable of producing this {@code CallType}. 

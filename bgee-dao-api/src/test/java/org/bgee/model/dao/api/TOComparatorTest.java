@@ -2,6 +2,7 @@ package org.bgee.model.dao.api;
 
 import static org.junit.Assert.*;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -346,40 +347,71 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreExpressionCallTOEqual() {
-        ExpressionCallTO to1 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", 
-                DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
-                DataState.LOWQUALITY, false, false, 
+        ExpressionCallTO to1 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", null, 
+                DataState.HIGHQUALITY, null, DataState.LOWQUALITY, null, DataState.HIGHQUALITY, null, 
+                DataState.LOWQUALITY, null, false, false, 
                 ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.SELF, true);
-        ExpressionCallTO to2 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", 
-                DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
-                DataState.LOWQUALITY, false, false, 
+        ExpressionCallTO to2 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", null, 
+                DataState.HIGHQUALITY, null, DataState.LOWQUALITY, null, DataState.HIGHQUALITY, null, 
+                DataState.LOWQUALITY, null, false, false, 
                 ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.SELF, true);
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
-        to2 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", 
-                DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
-                DataState.LOWQUALITY, false, false, 
+        to2 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", null, 
+                DataState.HIGHQUALITY, null, DataState.LOWQUALITY, null, DataState.HIGHQUALITY, null, 
+                DataState.LOWQUALITY, null, false, false, 
                 ExpressionCallTO.OriginOfLine.DESCENT, ExpressionCallTO.OriginOfLine.SELF, true);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         
-        to2 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", 
-                DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
-                DataState.LOWQUALITY, false, false, 
+        to2 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", null, 
+                DataState.HIGHQUALITY, null, DataState.LOWQUALITY, null, DataState.HIGHQUALITY, null, 
+                DataState.LOWQUALITY, null, false, false, 
                 ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.BOTH, true);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         
-        to2 = new ExpressionCallTO("2", "ID1", "Anat_id1", "Stage_id6", 
-                DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
-                DataState.LOWQUALITY, false, false, 
+        to2 = new ExpressionCallTO("2", "ID1", "Anat_id1", "Stage_id6", null, 
+                DataState.HIGHQUALITY, null, DataState.LOWQUALITY, null, DataState.HIGHQUALITY, null, 
+                DataState.LOWQUALITY, null, false, false, 
                 ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.SELF, true);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
-        to2 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", 
-                DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
-                DataState.LOWQUALITY, false, false, 
+        to2 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", null, 
+                DataState.HIGHQUALITY, null, DataState.LOWQUALITY, null, DataState.HIGHQUALITY, null, 
+                DataState.LOWQUALITY, null, false, false, 
                 ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.SELF, false);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        
+        to1 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", new BigDecimal("1.5"), 
+                DataState.HIGHQUALITY, new BigDecimal("2.5"), DataState.LOWQUALITY, new BigDecimal("3.5"), 
+                DataState.HIGHQUALITY, new BigDecimal("4.5"),  
+                DataState.LOWQUALITY, new BigDecimal("5.5"), false, false, 
+                ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.SELF, true);
+        to2 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", new BigDecimal("1.5"), 
+                DataState.HIGHQUALITY, new BigDecimal("2.5"), DataState.LOWQUALITY, new BigDecimal("3.5"), 
+                DataState.HIGHQUALITY, new BigDecimal("4.5"),  
+                DataState.LOWQUALITY, new BigDecimal("5.5"), false, false, 
+                ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.SELF, true);
+        assertTrue(TOComparator.areTOsEqual(to1, to2, true));
+
+        to2 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", new BigDecimal("2.5"), 
+                DataState.HIGHQUALITY, new BigDecimal("2.5"), DataState.LOWQUALITY, new BigDecimal("3.5"), 
+                DataState.HIGHQUALITY, new BigDecimal("4.5"),  
+                DataState.LOWQUALITY, new BigDecimal("5.5"), false, false, 
+                ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.SELF, true);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        to2 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", null, 
+                DataState.HIGHQUALITY, new BigDecimal("2.5"), DataState.LOWQUALITY, new BigDecimal("3.5"), 
+                DataState.HIGHQUALITY, new BigDecimal("4.5"),  
+                DataState.LOWQUALITY, new BigDecimal("5.5"), false, false, 
+                ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.SELF, true);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        to2 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", new BigDecimal("1.5"), 
+                DataState.HIGHQUALITY, new BigDecimal("200.5"), DataState.LOWQUALITY, new BigDecimal("3.5"), 
+                DataState.HIGHQUALITY, new BigDecimal("4.5"),  
+                DataState.LOWQUALITY, new BigDecimal("5.5"), false, false, 
+                ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.SELF, true);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
     }
 
@@ -584,5 +616,25 @@ public class TOComparatorTest extends TestAncestor {
 
         to2 = new EntityToKeywordTO("ID:1", "SP:2");
         assertFalse(TOComparator.areTOsEqual(to1, to2));
+    }
+
+    /**
+     * Test the custom {@code BigDecimal} comparator.
+     */
+    @Test
+    public void testBigDecimalComparator() {
+        BigDecimal ten0 = BigDecimal.valueOf(10.0);
+        BigDecimal ten1 = BigDecimal.valueOf(10);
+        BigDecimal tenPlus = BigDecimal.valueOf(10.001);
+
+
+        assertTrue("Null are the same", TOComparator.areBigDecimalEquals(null, null));
+        assertFalse("Null is different", TOComparator.areBigDecimalEquals(null, ten1));
+        assertFalse("Null is different", TOComparator.areBigDecimalEquals(ten0, null));
+        assertFalse("Should not be equals: " + ten0 + " " + tenPlus, TOComparator.areBigDecimalEquals(ten0, tenPlus));
+
+        assertTrue("Should be equals: " + ten0 + " " + ten1, TOComparator.areBigDecimalEquals(ten0, ten1));
+        assertTrue("Should be equals: " + ten0 + " " + ten0, TOComparator.areBigDecimalEquals(ten0, ten0));
+
     }
 }

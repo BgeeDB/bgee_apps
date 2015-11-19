@@ -22,7 +22,52 @@ public abstract class Service {
      */
     private final static Logger log = LogManager.getLogger(Service.class.getName());
     
-	/**
+    /**
+     * Interface implemented by {@code Enum} classes allowing to select 
+     * what are the fields to populate in objects returned by {@code Service}s.
+     * Not all {@code Service}s define such an implementation.
+     * 
+     * @author Frederic Bastian
+     * @version Bgee 13 Nov. 2015
+     * @since Bgee 13 Nov. 2015
+     */
+    public static interface Attribute {
+        //nothing here, it is only used for typing the Enum classes.
+    }
+    /**
+     * Interface implemented by {@code Enum} classes allowing to select 
+     * the fields used to order the results of a query to a {@code Service}. 
+     * This is a separate interface from {@link DAO.Attribute}, because 
+     * the attributes to retrieve from a query, and the attributes to use to order 
+     * the results of a query, are often different, and some attributes used for ordering 
+     * can even be absent from the set of attributes retrievable from a query.
+     * <p>
+     * Note that {@code Service}s can still decide that the attributes to retrieve from a query
+     * and the attributes used to order results are the same, in which case 
+     * a same {@code Enum} class would be defined as implementing both {@code Service.Attribute} 
+     * and {@code Service.OrderingAttribute}.
+     * 
+     * @author Frederic Bastian
+     * @version Bgee 13 Nov. 2015
+     * @since Bgee 13 Nov. 2015
+     */
+    public static interface OrderingAttribute {
+        //nothing here, it is only used for typing the Enum classes.
+    }
+    /**
+     * {@code Enum} used to specify the direction of the ordering, 
+     * for a given {@link OrderingAttribute} a query is sorted by.
+     * <ul>
+     * <li>{@code ASC}: order by ascending order.
+     * <li>{@code DESC}: order by descending order.
+     * </ul>
+     * @see OrderingAttribute
+     */
+    public static enum Direction {
+        ASC, DESC;
+    }
+
+    /**
 	 * @see #getDAOManager()
 	 */
 	private final DAOManager daoManager;

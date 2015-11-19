@@ -1,10 +1,13 @@
 package org.bgee.model.dao.api.expressiondata;
 
+import java.util.EnumMap;
+import java.util.Map;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
-import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.OrderingDAO;
+import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
@@ -13,7 +16,8 @@ import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
  * DAO defining queries using or retrieving {@link DiffExpressionCallTO}s. 
  * 
  * @author Valentine Rech de Laval
- * @version Bgee 13
+ * @author Frederic Bastian
+ * @version Bgee 13 Nov. 2015
  * @since Bgee 13
  */
 public interface DiffExpressionCallDAO 
@@ -54,12 +58,26 @@ public interface DiffExpressionCallDAO
      * @see org.bgee.model.dao.api.DAO#setAttributes(Enum[])
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
-    public enum Attribute implements DAO.Attribute {
-        ID, GENE_ID, ANAT_ENTITY_ID, STAGE_ID, COMPARISON_FACTOR,
-        DIFF_EXPR_CALL_AFFYMETRIX, DIFF_EXPR_AFFYMETRIX_DATA, BEST_P_VALUE_AFFYMETRIX, 
-        CONSISTENT_DEA_COUNT_AFFYMETRIX, INCONSISTENT_DEA_COUNT_AFFYMETRIX,
-        DIFF_EXPR_CALL_RNA_SEQ, DIFF_EXPR_RNA_SEQ_DATA, BEST_P_VALUE_RNA_SEQ, 
-        CONSISTENT_DEA_COUNT_RNA_SEQ, INCONSISTENT_DEA_COUNT_RNA_SEQ,
+    public enum Attribute implements CallDAO.Attribute {
+        ID(false), GENE_ID(false), ANAT_ENTITY_ID(false), STAGE_ID(false), COMPARISON_FACTOR(false),
+        DIFF_EXPR_CALL_AFFYMETRIX(false), DIFF_EXPR_AFFYMETRIX_DATA(true), BEST_P_VALUE_AFFYMETRIX(false), 
+        CONSISTENT_DEA_COUNT_AFFYMETRIX(false), INCONSISTENT_DEA_COUNT_AFFYMETRIX(false),
+        DIFF_EXPR_CALL_RNA_SEQ(false), DIFF_EXPR_RNA_SEQ_DATA(true), BEST_P_VALUE_RNA_SEQ(false), 
+        CONSISTENT_DEA_COUNT_RNA_SEQ(false), INCONSISTENT_DEA_COUNT_RNA_SEQ(false);
+        
+        /**
+         * @see #isDataTypeAttribute()
+         */
+        private final boolean dataTypeAttribute;
+        
+        private Attribute(boolean dataTypeAttribute) {
+            this.dataTypeAttribute = dataTypeAttribute;
+        }
+        
+        @Override
+        public boolean isDataTypeAttribute() {
+            return dataTypeAttribute;
+        }
     }
     
     /**
@@ -72,7 +90,7 @@ public interface DiffExpressionCallDAO
      * @see org.bgee.model.dao.api.OrderingDAO#setOrderingAttributes(Enum[])
      * @see org.bgee.model.dao.api.OrderingDAO#clearOrderingAttributes()
      */
-    public enum OrderingAttribute implements OrderingDAO.OrderingAttribute {
+    public enum OrderingAttribute implements DAO.OrderingAttribute {
         OMA_GROUP
     }
 
@@ -90,6 +108,8 @@ public interface DiffExpressionCallDAO
      *                      the requested differential expression calls from the data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
+    //deprecated because a new CallFilter design is being implemented
+    @Deprecated
     public DiffExpressionCallTOResultSet getDiffExpressionCalls(DiffExpressionCallParams params) 
             throws DAOException;
 
@@ -118,6 +138,7 @@ public interface DiffExpressionCallDAO
      *                      the requested differential expression calls from the data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
+    @Deprecated
     public DiffExpressionCallTOResultSet getHomologousGenesDiffExpressionCalls(
             String taxonId, DiffExpressionCallParams params) throws DAOException;
 
@@ -148,7 +169,7 @@ public interface DiffExpressionCallDAO
      * @version Bgee 13
      * @since Bgee 13
      */
-    public final class DiffExpressionCallTO extends CallTO {
+    public final class DiffExpressionCallTO extends CallTO<Attribute> {
         // TODO modify the class to be immutable. Use a Builder pattern?
 
         private static final long serialVersionUID = 1130761423323249175L;
@@ -403,6 +424,51 @@ public interface DiffExpressionCallDAO
             this.consistentDEACountRNASeq = consistentDEACountRNASeq;
             this.inconsistentDEACountRNASeq = inconsistentDEACountRNASeq;
         }
+
+        @Override
+        public Map<Attribute, DataState> extractDataTypesToDataStates() {
+            log.entry();
+            
+            Map<Attribute, DataState> typesToStates = new EnumMap<>(Attribute.class);
+            
+            typesToStates.put(Attribute.DIFF_EXPR_AFFYMETRIX_DATA, this.getAffymetrixData());
+            typesToStates.put(Attribute.DIFF_EXPR_RNA_SEQ_DATA, this.getRNASeqData());
+            
+            return log.exit(typesToStates);
+        }
+        /**
+         * Retrieve from this {@code CallTO} the data types with a filtering requested, 
+         * allowing to parameterize queries to the data source. For instance, to only retrieve 
+         * calls with an Affymetrix data state equal to {@code HIGHQUALITY}, or with some RNA-Seq data 
+         * of any quality (minimal data state {@code LOWQUALITY}).
+         * <p>
+         * The data types are represented as {@code Attribute}s allowing to request a data type parameter 
+         * (see {@link CallDAO.Attribute#isDataTypeAttribute()}). The {@code DataState}s 
+         * associated to each data type are retrieved using {@link CallTO#extractDataTypesToDataStates()}. 
+         * A check is then performed to ensure that the {@code CallTO} will actually result 
+         * in a filtering of the data. For instance, if all data qualities are {@code null},  
+         * then it is equivalent to requesting no filtering at all, and the {@code EnumMap} returned 
+         * by this method will be empty. 
+         * <p>
+         * Each quality associated to a data type in a same {@code CallTO} is considered 
+         * as an AND condition (for instance, "affymetrixData >= HIGH_QUALITY AND 
+         * rnaSeqData >= HIGH_QUALITY"). To configure OR conditions, (for instance, 
+         * "affymetrixData >= HIGH_QUALITY OR rnaSeqData >= HIGH_QUALITY"), several {@code CallTO}s 
+         * must be provided to this {@code CallDAOFilter}. So for instance, if the quality 
+         * of all data types of {@code callTO} are set to {@code LOW_QUALITY}, it will only allow 
+         * to retrieve calls with data in all data types. 
+         *  
+         * @return          An {@code EnumMap} where keys are {@code Attribute}s associated to a data type, 
+         *                  the associated value being a {@code DataState} to be used 
+         *                  to parameterize queries to the data source (results should have 
+         *                  a data state equal to or higher than this value for this data type).
+         *                  Returned as an {@code EnumMap} for consistent iteration order 
+         *                  when setting parameters in a query. 
+         */
+        protected EnumMap<Attribute, DataState> extractFilteringDataTypes() {
+            log.entry();
+            return log.exit(super.extractFilteringDataTypes(Attribute.class));
+        }
         
         /**
          * @return  the {@code ComparisonFactor} defining whether different organs at a same 
@@ -418,6 +484,8 @@ public interface DiffExpressionCallDAO
          *                          at a same (broad) developmental stage were compared ('anatomy'), 
          *                          or a same organ at different developmental stages ('development').
          */
+        //deprecated because all TOs should now be immutable. 
+        @Deprecated
         void setComparisonFactor(ComparisonFactor comparisonFactor) {
             this.comparisonFactor = comparisonFactor;
         }
@@ -435,6 +503,8 @@ public interface DiffExpressionCallDAO
          *                                      differential expression of this call generated by 
          *                                      Affymetrix.
          */
+        //deprecated because all TOs should now be immutable. 
+        @Deprecated
         void setDiffExprCallTypeAffymetrix(DiffExprCallType diffExprCallTypeAffymetrix) {
             this.diffExprCallTypeAffymetrix = diffExprCallTypeAffymetrix;
         }
@@ -452,6 +522,8 @@ public interface DiffExpressionCallDAO
          *                              call among all the analysis using Affymetrix comparing 
          *                              this condition.
          */
+        //deprecated because all TOs should now be immutable. 
+        @Deprecated
         void setBestPValueAffymetrix(Float bestPValueAffymetrix) {
             this.bestPValueAffymetrix = bestPValueAffymetrix;
         }
@@ -468,6 +540,8 @@ public interface DiffExpressionCallDAO
          * @param consistentDEACountAffymetrix  An {@code Integer} that is the number of analysis 
          *                                      using Affymetrix data where the same call is found.
          */
+        //deprecated because all TOs should now be immutable. 
+        @Deprecated
         void setConsistentDEACountAffymetrix(Integer consistentDEACountAffymetrix) {
             this.consistentDEACountAffymetrix = consistentDEACountAffymetrix;
         }
@@ -485,6 +559,8 @@ public interface DiffExpressionCallDAO
          *                                          analysis using Affymetrix data where 
          *                                          a different call is found.
          */
+        //deprecated because all TOs should now be immutable. 
+        @Deprecated
         void setInconsistentDEACountAffymetrix(Integer inconsistentDEACountAffymetrix) {
             this.inconsistentDEACountAffymetrix = inconsistentDEACountAffymetrix;
         }
@@ -502,6 +578,8 @@ public interface DiffExpressionCallDAO
          *                                  differential expression of this call generated 
          *                                  by RNA-seq.
          */
+        //deprecated because all TOs should now be immutable. 
+        @Deprecated
         void setDiffExprCallTypeRNASeq(DiffExprCallType diffExprCallTypeRNASeq) {
             this.diffExprCallTypeRNASeq = diffExprCallTypeRNASeq;
         }
@@ -518,6 +596,8 @@ public interface DiffExpressionCallDAO
          * @param bestPValueRNASeq  A {@code Float} that is best p-value associated to this call 
          *                          among all the analysis using RNA-seq comparing this condition.
          */
+        //deprecated because all TOs should now be immutable. 
+        @Deprecated
         void setBestPValueRNASeq(Float bestPValueRNASeq) {
             this.bestPValueRNASeq = bestPValueRNASeq;
         }
@@ -534,6 +614,8 @@ public interface DiffExpressionCallDAO
          * @param consistentDEACountRNASeq  An {@code Integer} that is the number of analysis using
          *                                  RNA-seq data where the same call is found.
          */
+        //deprecated because all TOs should now be immutable. 
+        @Deprecated
         void setConsistentDEACountRNASeq(Integer consistentDEACountRNASeq) {
             this.consistentDEACountRNASeq = consistentDEACountRNASeq;
         }
@@ -550,6 +632,8 @@ public interface DiffExpressionCallDAO
          * @param inconsistentDEACountRNASeq    An {@code Integer} that is the number of analysis 
          *                                      using RNA-seq data where a different call is found.
          */
+        //deprecated because all TOs should now be immutable. 
+        @Deprecated
         void setInconsistentDEACountRNASeq(Integer inconsistentDEACountRNASeq) {
             this.inconsistentDEACountRNASeq = inconsistentDEACountRNASeq;
         }

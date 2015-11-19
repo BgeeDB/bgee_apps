@@ -31,9 +31,11 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
 
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 
 /**
@@ -458,6 +460,16 @@ public class TOComparator {
     }
 
     /**
+     * Method to safely compare two {@code BigDecimal} instances
+     * @param b0 A {@code BigDecimal}
+     * @param b1 A {@code BigDecimal}
+     * @return true if both BigDecimal are null, or their value are equals using {@link BigDecimal#compareTo(Object)}
+     */
+    protected static boolean areBigDecimalEquals(BigDecimal b0, BigDecimal b1) {
+        return b0 == b1 || b0 != null && b1 != null && b0.compareTo(b1) == 0;
+    }
+
+    /**
      * Method to compare two {@code AnatEntityTO}s, to check for complete equality of each
      * attribute. This is because the {@code equals} method of {@code AnatEntityTO}s is solely
      * based on their ID, not on other attributes.
@@ -623,7 +635,7 @@ public class TOComparator {
      * @return      {@code true} if {@code to1} and {@code to2} have all 
      *              attributes equal.
      */
-    private static boolean areCallTOsEqual(CallTO to1, CallTO to2, 
+    private static boolean areCallTOsEqual(CallTO<?> to1, CallTO<?> to2, 
             boolean compareId) {
         log.entry(to1, to2, compareId);
         if ((!compareId || StringUtils.equals(to1.getId(), to2.getId())) &&
@@ -662,7 +674,12 @@ public class TOComparator {
                 to1.isIncludeSubStages() == to2.isIncludeSubStages() &&
                 to1.getAnatOriginOfLine() == to2.getAnatOriginOfLine() &&
                 to1.getStageOriginOfLine() == to2.getStageOriginOfLine() &&
-                to1.isObservedData() == to2.isObservedData()) {
+                to1.isObservedData() == to2.isObservedData() &&
+                areBigDecimalEquals(to1.getGlobalMeanRank(), to2.getGlobalMeanRank()) &&
+                areBigDecimalEquals(to1.getAffymetrixMeanRank(), to2.getAffymetrixMeanRank()) &&
+                areBigDecimalEquals(to1.getESTMeanRank(), to2.getESTMeanRank()) &&
+                areBigDecimalEquals(to1.getInSituMeanRank(), to2.getInSituMeanRank()) &&
+                areBigDecimalEquals(to1.getRNASeqMeanRank(), to2.getRNASeqMeanRank())) {
             return log.exit(true);
         }
         return log.exit(false);

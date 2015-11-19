@@ -1,11 +1,13 @@
 package org.bgee.model.expressiondata;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 import org.bgee.model.expressiondata.CallData.DiffExpressionCallData;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
+import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DiffExpressionFactor;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
@@ -18,9 +20,10 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
     //   INNER CLASSES
     //**********************************************
     public static class ExpressionCall extends Call<ExpressionSummary, ExpressionCallData> {
-        public ExpressionCall(String geneId, Condition condition, ExpressionSummary summaryCallType, 
-                DataQuality summaryQual, Set<ExpressionCallData> callData) {
-            super(geneId, condition, summaryCallType, summaryQual, callData);
+        public ExpressionCall(String geneId, Condition condition, DataPropagation dataPropagation, 
+                ExpressionSummary summaryCallType, DataQuality summaryQual, 
+                Collection<ExpressionCallData> callData) {
+            super(geneId, condition, dataPropagation, summaryCallType, summaryQual, callData);
         }
     }
     
@@ -31,8 +34,8 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         
         public DiffExpressionCall(DiffExpressionFactor factor, String geneId, 
                 Condition condition, DiffExpressionSummary summaryCallType, 
-                DataQuality summaryQual, Set<DiffExpressionCallData> callData) {
-            super(geneId, condition, summaryCallType, summaryQual, callData);
+                DataQuality summaryQual, Collection<DiffExpressionCallData> callData) {
+            super(geneId, condition, new DataPropagation(), summaryCallType, summaryQual, callData);
             this.diffExpressionFactor = factor;
         }
 
@@ -79,17 +82,22 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
     
     private final Condition condition;
     
+    private final DataPropagation dataPropagation;
+    
     private final T summaryCallType;
     
     private final DataQuality summaryQuality;
     
     private final Set<U> callData;
 
-    protected Call(String geneId, Condition condition, 
-            T summaryCallType, DataQuality summaryQual, Set<U> callData) {
+    //Note: we cannot always know the DataPropagation status per data type, 
+    //so we need to be able to provide a global DataPropagation status over all data types.
+    protected Call(String geneId, Condition condition, DataPropagation dataPropagation, 
+            T summaryCallType, DataQuality summaryQual, Collection<U> callData) {
         //TODO: sanity checks
         this.geneId = geneId;
         this.condition = condition;
+        this.dataPropagation = dataPropagation;
         this.summaryCallType = summaryCallType;
         this.summaryQuality = summaryQual;
         this.callData = Collections.unmodifiableSet(
@@ -99,9 +107,14 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
     public String getGeneId() {
         return geneId;
     }
+    
     public Condition getCondition() {
         return condition;
     }
+    public DataPropagation getDataPropagation() {
+        return dataPropagation;
+    }
+
     public T getSummaryCallType() {
         return summaryCallType;
     }
@@ -118,6 +131,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         int result = 1;
         result = prime * result + ((callData == null) ? 0 : callData.hashCode());
         result = prime * result + ((condition == null) ? 0 : condition.hashCode());
+        result = prime * result + ((dataPropagation == null) ? 0 : dataPropagation.hashCode());
         result = prime * result + ((geneId == null) ? 0 : geneId.hashCode());
         result = prime * result + ((summaryCallType == null) ? 0 : summaryCallType.hashCode());
         result = prime * result + ((summaryQuality == null) ? 0 : summaryQuality.hashCode());
@@ -149,6 +163,13 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         } else if (!condition.equals(other.condition)) {
             return false;
         }
+        if (dataPropagation == null) {
+            if (other.dataPropagation != null) {
+                return false;
+            }
+        } else if (!dataPropagation.equals(other.dataPropagation)) {
+            return false;
+        }
         if (geneId == null) {
             if (other.geneId != null) {
                 return false;
@@ -171,9 +192,10 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
 
     @Override
     public String toString() {
-        return "Call [geneId=" + geneId 
+        return this.getClass().getSimpleName() + " [geneId=" + geneId 
                 + ", condition=" + condition 
-                + ", summaryCallType=" + summaryCallType
+                + ", dataPropagation=" + dataPropagation
+                + ", summaryCallType=" + summaryCallType 
                 + ", summaryQuality=" + summaryQuality 
                 + ", callData=" + callData + "]";
     }

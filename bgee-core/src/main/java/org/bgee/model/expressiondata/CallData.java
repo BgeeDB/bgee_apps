@@ -301,7 +301,8 @@ public abstract class CallData<T extends Enum<T> & CallType> {
     
     @Override
     public String toString() {
-        return "CallData [dataType=" + dataType 
+        return this.getClass().getSimpleName() 
+                + " [dataType=" + dataType 
                 + ", callType=" + callType 
                 + ", dataQuality=" + dataQuality
                 + ", dataPropagation=" + dataPropagation + "]";

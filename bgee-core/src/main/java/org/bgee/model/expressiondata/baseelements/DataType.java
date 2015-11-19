@@ -28,7 +28,7 @@ import org.bgee.model.BgeeEnum.BgeeEnumField;
  * @since Bgee 13
  */
 public enum DataType implements BgeeEnumField {
-    AFFYMETRIX, EST, IN_SITU, RELAXED_IN_SITU, RNA_SEQ;
+    AFFYMETRIX, EST, IN_SITU, RNA_SEQ;
 
     @Override
     public String getStringRepresentation() {

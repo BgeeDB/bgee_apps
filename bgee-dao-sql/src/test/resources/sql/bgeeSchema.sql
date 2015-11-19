@@ -522,6 +522,14 @@ create table expressedSequenceTag (
     estData enum('no data', 'poor quality', 'high quality') default 'no data'
 ) engine = innodb;
 
+create table estRank (
+    geneId varchar(20) not null,
+    estLibraryId varchar(50) not null,
+    estCount int unsigned not null,
+-- rank is not "not null" because we update this information afterwards
+    rank mediumint unsigned
+) engine = innodb;
+
 
 -- ****************************************************
 -- RAW AFFYMETRIX DATA
@@ -611,6 +619,10 @@ create table affymetrixProbeset (
 -- expressionId and noExpressionId can never be both not null simultaneously (but can be both null simultaneously)
     expressionId int unsigned,
     noExpressionId int unsigned,
+-- rank is not "not null" because we update this information afterwards
+    rank mediumint unsigned,
+-- rank normalized taking into account the other chips used in the same conditions
+    normalizedRank decimal(9, 2) unsigned,
 -- Warning, qualities must be ordered, the index in the enum is used in many queries
     affymetrixData enum('no data', 'poor quality', 'high quality') not null default 'no data',
 -- When both expressionId and noExpressionId are null, the probeset is not used for the summary of expression.
@@ -769,7 +781,9 @@ create table rnaSeqResult (
     rnaSeqLibraryId varchar(70) not null,
     geneId varchar(20) not null,
     rpkm decimal(16, 6) not null,
-    tpm decimal(16, 6) not null, 
+    tpm decimal(16, 6) not null,
+-- rank is not "not null" because we update this information afterwards
+    rank mediumint unsigned,
 -- for information, measure not normalized for reads or genes lengths
     readsCount int unsigned not null,
 -- expressionId and noExpressionId can never be both not null simultaneously (but can be both null simultaneously)
@@ -930,7 +944,11 @@ create table expression (
     estData enum('no data', 'poor quality', 'high quality') default 'no data',
     affymetrixData enum('no data', 'poor quality', 'high quality') default 'no data',
     inSituData enum('no data', 'poor quality', 'high quality') default 'no data',
-    rnaSeqData enum('no data', 'poor quality', 'high quality') default 'no data'
+    rnaSeqData enum('no data', 'poor quality', 'high quality') default 'no data',
+    estMeanRank decimal(9, 2) unsigned,
+    affymetrixMeanRank decimal(9, 2) unsigned,
+    inSituMeanRank decimal(9, 2) unsigned, 
+    rnaSeqMeanRank decimal(9, 2) unsigned
 ) engine = innodb;
 
 -- precomputed expression table where the expression of an organ and

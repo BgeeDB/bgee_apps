@@ -11,7 +11,6 @@ import java.util.Map;
 import org.bgee.model.BgeeProperties;
 import org.supercsv.cellprocessor.Optional;
 import org.supercsv.cellprocessor.ParseDouble;
-import org.supercsv.cellprocessor.constraint.DMinMax;
 import org.supercsv.cellprocessor.constraint.NotNull;
 import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.io.CsvMapReader;
@@ -29,27 +28,27 @@ public class TopAnatResults {
 
         private final String anatEntitiesName;
 
-        private final float annotated;
+        private final double annotated;
 
-        private final float significant;
+        private final double significant;
 
-        private final float expected;
+        private final double expected;
 
-        private final float enrich;
+        private final double enrich;
 
-        private final float pval;
+        private final Double pval;
 
-        private final float fdr;
+        private final Double fdr;
 
-        public TopAnatResultRow(Map<String,Object> line){
-            this.anatEntitiesId = line.get("OrganId").toString();
-            this.anatEntitiesName = line.get("OrganName").toString();
-            this.annotated = Float.valueOf(line.get("Annotated").toString());
-            this.significant = Float.valueOf(line.get("Significant").toString());
-            this.expected = Float.valueOf(line.get("Expected").toString());
-            this.enrich = Float.valueOf(line.get("foldEnrichment").toString());
-            this.pval = Float.valueOf(line.get("p").toString());
-            this.fdr = Float.valueOf(line.get("fdr").toString());
+        public TopAnatResultRow(Map<String, Object> line){
+            this.anatEntitiesId = (String) line.get("OrganId");
+            this.anatEntitiesName = (String) line.get("OrganName");
+            this.annotated = (Double) line.get("Annotated");
+            this.significant = (Double) line.get("Significant");
+            this.expected = (Double) line.get("Expected");
+            this.enrich = (Double) line.get("foldEnrichment");
+            this.pval = (Double) line.get("p");
+            this.fdr = (Double) line.get("fdr");
         }
 
         public String getAnatEntitiesId() {
@@ -60,27 +59,27 @@ public class TopAnatResults {
             return anatEntitiesName;
         }
 
-        public float getAnnotated() {
+        public double getAnnotated() {
             return annotated;
         }
 
-        public float getSignificant() {
+        public double getSignificant() {
             return significant;
         }
 
-        public float getExpected() {
+        public double getExpected() {
             return expected;
         }
 
-        public float getEnrich() {
+        public double getEnrich() {
             return enrich;
         }
 
-        public float getPval() {
+        public double getPval() {
             return pval;
         }
 
-        public float getFdr() {
+        public double getFdr() {
             return fdr;
         }
 
@@ -158,8 +157,8 @@ public class TopAnatResults {
                         new NotNull(new ParseDouble()), // Significant
                         new NotNull(new ParseDouble()), // Expected
                         new NotNull(new ParseDouble()), // fold enrich
-                        new NotNull(new DMinMax(0d,1d)), // p
-                        new NotNull(new DMinMax(0d,1d)) // fdr
+                        new NotNull(new ParseDouble()), // p
+                        new NotNull(new ParseDouble()) // fdr
                 };
                 Map<String, Object> row;
                 if(header != null){

@@ -1,6 +1,5 @@
 package org.bgee.model.topanat;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -120,6 +119,10 @@ public class TopAnatController extends QueryTool {
                     }
                     return null;
                 }));
+    }
+    
+    public BgeeProperties getBgeeProperties() {
+        return this.props;
     }
 
     // *************************************************

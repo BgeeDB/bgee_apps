@@ -127,7 +127,7 @@ public class TopAnatResults {
         this.geneToAnatEntitiesFileName = geneToAnatEntitiesFileName;
         this.zipFileName = zipFileName;
         this.controller = controller;
-        this.props = BgeeProperties.getBgeeProperties();
+        this.props = controller.getBgeeProperties();
     }
 
     /**

@@ -143,6 +143,21 @@ public class TopAnatAnalysis {
         // Generate R code and write it on the disk
         this.generateRCodeFile();
 
+        // Copy the Rscript file to the working directory
+        try{
+            this.controller.acquireWriteLock("");
+            this.controller.acquireReadLock("");
+            Path source = Paths.get(
+                    TopAnatAnalysis.class.getResource(this.props.getTopAnatFunctionFile()).getPath());
+            Path target = Paths.get(
+                    this.props.getTopAnatResultsWritingDirectory()+source.getFileName());
+            Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+        }
+        finally{
+            this.controller.releaseReadLock("");
+            this.controller.releaseWriteLock("");
+        }
+
         // Run the R analysis
         this.runRcode();
 
@@ -152,7 +167,6 @@ public class TopAnatAnalysis {
         }
 
         // return the result
-
         return log.exit(new TopAnatResults(
                 this.params,
                 this.getResultFileName(),
@@ -626,7 +640,7 @@ public class TopAnatAnalysis {
      * core-java/util/zip/create-zip-file-from-multiple-files-with-zipoutputstream/
      * @throws IOException 
      */
-    public void writeZipFile(String path) throws IOException {
+    private void writeZipFile(String path) throws IOException {
 
         String zipFile = path;
 
@@ -638,7 +652,9 @@ public class TopAnatAnalysis {
                 this.props.getTopAnatResultsWritingDirectory() + this.getGeneToAnatEntitiesFileName(),
                 this.props.getTopAnatResultsWritingDirectory() + this.getParamsOutputFileName(),
                 this.props.getTopAnatResultsWritingDirectory() + this.getAnatEntitiesRelationshipsFileName(),
-                this.props.getTopAnatResultsWritingDirectory() + this.getRScriptAnalysisFileName()
+                this.props.getTopAnatResultsWritingDirectory() + this.getRScriptAnalysisFileName(),
+                this.props.getTopAnatResultsWritingDirectory() + Paths.get(TopAnatAnalysis.class.getResource(
+                        this.props.getTopAnatFunctionFile()).getPath()).getFileName().toString()
         };
 
         // create byte buffer
@@ -679,28 +695,28 @@ public class TopAnatAnalysis {
     /**
      * 
      */
-    public String getResultFileName(){
+    protected String getResultFileName(){
         return TopAnatAnalysis.FILE_PREFIX + this.params.getKey() + ".tsv";
     }
 
     /**
      * 
      */
-    public String getRScriptConsoleFileName(){
+    protected String getRScriptConsoleFileName(){
         return TopAnatAnalysis.FILE_PREFIX + this.params.getKey() + ".R_console";
     }
 
     /**
      * 
      */
-    public String getResultPDFFileName(){
+    protected String getResultPDFFileName(){
         return TopAnatAnalysis.FILE_PREFIX + "PDF_" + this.params.getKey()  + ".pdf";
     }
 
     /**
      *
      */
-    public String getGeneToAnatEntitiesFileName(){
+    protected String getGeneToAnatEntitiesFileName(){
         return TopAnatAnalysis.FILE_PREFIX 
                 + "GeneToAnatEntities_" + this.params.getKey()  + ".tsv";
     }
@@ -708,7 +724,7 @@ public class TopAnatAnalysis {
     /**
      * @return
      */
-    public String getAnatEntitiesNamesFileName(){
+    protected String getAnatEntitiesNamesFileName(){
         return TopAnatAnalysis.FILE_PREFIX + "AnatEntitiesNames_" + this.params.getSpeciesId() 
         + ".tsv";
     }
@@ -716,7 +732,7 @@ public class TopAnatAnalysis {
     /**
      * 
      */
-    public String getAnatEntitiesRelationshipsFileName(){
+    protected String getAnatEntitiesRelationshipsFileName(){
         return TopAnatAnalysis.FILE_PREFIX 
                 + "AnatEntitiesRelationships_" + this.params.getSpeciesId() + ".tsv";
     }
@@ -724,7 +740,7 @@ public class TopAnatAnalysis {
     /**
      * 
      */
-    public String getRScriptAnalysisFileName(){
+    protected String getRScriptAnalysisFileName(){
         return TopAnatAnalysis.FILE_PREFIX 
                 + "RScript_" + this.params.getKey()  + ".R";
     }
@@ -732,7 +748,7 @@ public class TopAnatAnalysis {
     /**
      * 
      */
-    public String getParamsOutputFileName(){
+    protected String getParamsOutputFileName(){
         return TopAnatAnalysis.FILE_PREFIX 
                 + "Params_" + this.params.getKey() + ".txt";
     }
@@ -740,9 +756,29 @@ public class TopAnatAnalysis {
     /**
      * 
      */
-    public String getZipFileName(){
+    protected String getZipFileName(){
         return TopAnatAnalysis.FILE_PREFIX 
                 + this.params.getKey() + ".zip";
+    }
+
+    /**
+     * 
+     * @return
+     */
+    protected boolean isAnalysisDone(){
+        File file = new File(
+                this.props.getTopAnatResultsWritingDirectory(),
+                this.getResultFileName());
+        try{
+            this.controller.acquireReadLock(file.getPath());
+            if(file.exists()){
+                return true;
+            }
+        }
+        finally{
+            this.controller.releaseReadLock(file.getPath());
+        }
+        return false;
     }
 
     /**

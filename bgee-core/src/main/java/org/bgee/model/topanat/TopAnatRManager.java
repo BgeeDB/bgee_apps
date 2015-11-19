@@ -2,6 +2,7 @@ package org.bgee.model.topanat;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.Collection;
 
 import org.apache.logging.log4j.LogManager;
@@ -59,6 +60,7 @@ public class TopAnatRManager {
         caller.setRscriptExecutable(this.props.getTopAnatRScriptExecutable());
         
         code.clear();
+        code.addRCode("# Please check that you have installed the required packages");
         code.addRCode("packageExistRgraphviz<-require(Rgraphviz)");
         code.addRCode("if(!packageExistRgraphviz){");
         code.addRCode("source('http://bioconductor.org/biocLite.R')");
@@ -80,10 +82,11 @@ public class TopAnatRManager {
         code.addRCode("biocLite('rJava')}");
 
         code.addRCode("library(topGO)");
+        code.addRCode("# Please change the working directory to match your file system:");
         code.addRCode("setwd('" + this.props.getTopAnatRWorkingDirectory()
         + "')");
-        code.R_source(TopAnatAnalysis.class.getResource(this.props.getTopAnatFunctionFile()).getPath());
-
+        code.R_source(Paths.get(TopAnatAnalysis.class.getResource(
+                this.props.getTopAnatFunctionFile()).getPath()).getFileName().toString());
         code.addRCode("resultExist <- FALSE");
 
         String[] topOBOResultFile = { resultFileName };
@@ -190,7 +193,9 @@ public class TopAnatRManager {
     public void performRFunction(String consoleFileName) throws FileNotFoundException{
 
         log.info("Running statistical tests in R...");
-        assert(this.code != null);
+        if(this.code.toString().equals(new RCode().toString())){
+            throw new IllegalStateException("The R code was not set before the analysis");
+        }
         caller.redirectROutputToFile(
                 this.props.getTopAnatResultsWritingDirectory()+consoleFileName, true);
         caller.setRCode(code);

@@ -1,6 +1,7 @@
 package org.bgee.model.topanat;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -14,14 +15,14 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeProperties;
 import org.bgee.model.QueryTool;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.function.TriFunction;
+import org.bgee.model.function.QuadriFunction;
 
 /**
  * @author Mathieu Seppey
  */
 public class TopAnatController extends QueryTool {
     private final static Logger log = LogManager.getLogger(TopAnatController.class.getName()); 
-    
+
     /**
      * 
      */
@@ -37,18 +38,18 @@ public class TopAnatController extends QueryTool {
      * 
      */
     private final BgeeProperties props;
-    
+
     /**
      * 
      */
     private final ServiceFactory serviceFactory;
 
     /**
-     * A {@code TriFunction} allowing to obtain new {@code TopAnatAnalysis} instances.
+     * A {@code QuadriFunction} allowing to obtain new {@code TopAnatAnalysis} instances.
      */
-    private final TriFunction<TopAnatParams, BgeeProperties, ServiceFactory, TopAnatController, TopAnatAnalysis> 
-        topAnatAnalysisSupplier;
-    
+    private final QuadriFunction<TopAnatParams, BgeeProperties, ServiceFactory, TopAnatController, TopAnatAnalysis> 
+    topAnatAnalysisSupplier;
+
     /**
      * 
      * @param topAnatParams
@@ -65,17 +66,17 @@ public class TopAnatController extends QueryTool {
             ServiceFactory serviceFactory) {
         this(topAnatParams, props, serviceFactory, TopAnatAnalysis::new);
     }
-    
+
     /**
      * 
      * @param params
      */
     public TopAnatController(List<TopAnatParams> topAnatParams, BgeeProperties props, 
             ServiceFactory serviceFactory, 
-            TriFunction<TopAnatParams, BgeeProperties, ServiceFactory, TopAnatController, 
+            QuadriFunction<TopAnatParams, BgeeProperties, ServiceFactory, TopAnatController, 
             TopAnatAnalysis> topAnatAnalysisSupplier) {
         log.entry(topAnatParams, props, serviceFactory, topAnatAnalysisSupplier);
-        
+
         if (topAnatParams == null || topAnatParams.isEmpty() || 
                 topAnatParams.stream().anyMatch(Objects::isNull)) {
             throw log.throwing(new IllegalArgumentException("At least one TopAnatParams "
@@ -91,22 +92,22 @@ public class TopAnatController extends QueryTool {
         if (serviceFactory == null) {
             throw log.throwing(new IllegalArgumentException("A ServiceFactory must be provided."));
         }
-        this.topAnatParams = Collections.unmodifiableList(topAnatParams);
+        this.topAnatParams = Collections.unmodifiableList(new ArrayList<>(topAnatParams));
         this.topAnatAnalysisSupplier = topAnatAnalysisSupplier;
         this.props = props;
         this.serviceFactory = serviceFactory;
-        
+
         log.exit();
     }
-    
+
     /**
      * @throws IOException
      */
     public Stream<TopAnatResults> proceedToTopAnatAnalyses() {
         log.entry();
-                
+
         // Create TopAnatAnalysis for each TopAnatParams
-                
+
         return log.exit(this.topAnatParams.stream()
                 .map(params -> this.topAnatAnalysisSupplier.apply(params, this.props, 
                         this.serviceFactory, this))
@@ -120,7 +121,7 @@ public class TopAnatController extends QueryTool {
                     return null;
                 }));
     }
-    
+
     // *************************************************
     // FILE LOCKING
     // *************************************************
@@ -310,7 +311,7 @@ public class TopAnatController extends QueryTool {
      * 
      * @see #readWriteLocks
      */
-     ReentrantReadWriteLock getReadWriteLock(String fileName) {
+    ReentrantReadWriteLock getReadWriteLock(String fileName) {
         // check if there is already a lock stored for this key
         ReentrantReadWriteLock readWritelock = readWriteLocks.get(fileName);
 
@@ -332,7 +333,20 @@ public class TopAnatController extends QueryTool {
         }
         return readWritelock;
     }
-        
+
+    /**
+     * 
+     * @return
+     */
+    public boolean areAnalysesDone(){
+        log.entry();
+        if(this.topAnatParams.stream()
+                .map(params -> this.topAnatAnalysisSupplier.apply(params, this.props, 
+                        this.serviceFactory, this)).filter(a -> a.isAnalysisDone() == false).count() > 0)
+            return log.exit(false);
+        return log.exit(true);
+    }
+
     @Override
     protected Logger getLogger() {
         return log;

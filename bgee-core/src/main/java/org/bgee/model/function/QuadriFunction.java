@@ -16,6 +16,6 @@ package org.bgee.model.function;
  * @since Bgee 13 Oct. 2015
  */
 @FunctionalInterface
-public interface TriFunction<T, U, V, W, R> {
+public interface QuadriFunction<T, U, V, W, R> {
     public R apply(T t, U u, V v, W w);
 }

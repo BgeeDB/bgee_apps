@@ -163,6 +163,7 @@ public class TopAnatResults {
                 };
                 Map<String, Object> row;
                 if(header != null){
+                    // Stream all lines TODO
                     while( (row = mapReader.read(header, processors)) != null ) {
                         listToReturn.add(new TopAnatResults.TopAnatResultRow(row));
                     }

@@ -11,6 +11,8 @@ import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.controller.URLParameters;
 import org.bgee.model.file.DownloadFile;
+import org.bgee.model.topanat.TopAnatResults;
+import org.bgee.model.topanat.TopAnatResults.TopAnatResultRow;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -332,6 +334,65 @@ public class JsonHelper {
             throw log.throwing(new UnsupportedOperationException("No custom JSON reader for RequestParameters."));
         } 
     }
+    
+    private final class TopAnatResultsTypeAdapter extends TypeAdapter<TopAnatResults> {
+        /**
+         * The {@code BgeeProperties} to retrieve parameters from.
+         */
+        private final BgeeProperties props;
+        /**
+         * @param props The {@code BgeeProperties} to retrieve parameters from.
+         */
+        private TopAnatResultsTypeAdapter(BgeeProperties props) {
+            assert props != null;
+            this.props = props;
+        }
+        @Override
+        public void write(JsonWriter out, TopAnatResults results) throws IOException {
+            log.entry(out, results);
+            if (results == null) {
+                out.nullValue();
+                log.exit(); return;
+            }
+            log.trace("Start writing object TopAnatResults.");
+            out.beginObject();
+            
+            out.name("zipFile").value(this.props.getTopAnatResultsUrlDirectory() + results.getZipFileName());
+            out.name("devStageId").value(results.getTopAnatParams().getDevStageId());
+            out.name("callType").value(results.getTopAnatParams().getCallType().toString());
+            
+            out.name("results");
+            out.beginArray();
+            
+            for (TopAnatResultRow row: results.getRows()) {
+                out.beginObject();
+                
+                out.name("anatEntityId").value(row.getAnatEntitiesId());
+                out.name("anatEntityName").value(row.getAnatEntitiesName());
+                out.name("annotated").value(row.getAnnotated());
+                out.name("significant").value(row.getSignificant());
+                out.name("expected").value(row.getExpected());
+                out.name("foldEnrichment").value(row.getEnrich());
+                out.name("pValue").value(row.getPval());
+                out.name("FDR").value(row.getFdr());
+                
+                out.endObject();
+            }
+            
+            out.endArray();
+
+            log.trace("End writing object TopAnatResults.");
+            out.endObject();
+            log.exit();
+        }
+
+        @Override
+        public TopAnatResults read(JsonReader in) throws IOException {
+          //for now, we never read JSON values
+            throw log.throwing(new UnsupportedOperationException("No custom JSON reader for TopAnatResults."));
+        }
+        
+    }
 
     /**
      * The {@code Gson} used to dump JSON
@@ -365,6 +426,7 @@ public class JsonHelper {
         this.gson = new GsonBuilder()
                 .registerTypeAdapter(DownloadFile.class, new DownloadFileTypeAdapter(this.props))
                 .registerTypeAdapter(RequestParameters.class, new RequestParametersTypeAdapter())
+                .registerTypeAdapter(TopAnatResults.class, new TopAnatResultsTypeAdapter(this.props))
                 .registerTypeAdapterFactory(new BgeeTypeAdapterFactory())
                 .setPrettyPrinting()
                 .create();

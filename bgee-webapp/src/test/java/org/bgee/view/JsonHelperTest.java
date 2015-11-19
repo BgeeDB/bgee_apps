@@ -4,6 +4,8 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -20,10 +22,14 @@ import org.bgee.controller.exception.MultipleValuesNotAllowedException;
 import org.bgee.controller.exception.RequestParametersNotFoundException;
 import org.bgee.controller.exception.InvalidFormatException;
 import org.bgee.controller.servletutils.BgeeHttpServletRequest;
+import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.file.DownloadFile;
 import org.bgee.model.file.SpeciesDataGroup;
 import org.bgee.model.file.DownloadFile.CategoryEnum;
 import org.bgee.model.species.Species;
+import org.bgee.model.topanat.TopAnatController;
+import org.bgee.model.topanat.TopAnatParams;
+import org.bgee.model.topanat.TopAnatResults;
 import org.bgee.view.JsonHelper;
 import org.junit.Test;
 
@@ -211,5 +217,44 @@ public class JsonHelperTest extends TestAncestor {
                 + params.getParamPage().getName() + "\": \"mypage2\",\n"
                 + "      \"" + params.getParamAction().getName() + "\": \"myaction2\"\n    }\n  ]\n]", 
                 helper.toJson(Stream.of(Stream.of("a", "b"), Stream.of(rp1, rp2))));
+    }
+
+    /**
+     * Unit test of dumping a {@link TopAnatResults} object into JSON.
+     */
+    @Test
+    public void testTopAnatResultsToJson() {
+        //we use a file with results
+        
+        TopAnatParams params = mock(TopAnatParams.class);
+        when(params.getDevStageId()).thenReturn("stageId1");
+        when(params.getCallType()).thenReturn(CallType.Expression.EXPRESSED);
+        BgeeProperties props = mock(BgeeProperties.class);
+        when(props.getTopAnatResultsUrlDirectory()).thenReturn("top_anat/results/");
+        when(props.getTopAnatResultsWritingDirectory()).thenReturn(
+                this.getClass().getResource("/").getFile());
+        TopAnatController controller = mock(TopAnatController.class);
+        when(controller.getBgeeProperties()).thenReturn(props);
+        
+        TopAnatResults results = new TopAnatResults(params, "view/topAnatResults.tsv", 
+                null, null, null, null, null, null, null, "result_hash.zip", 
+                controller);
+        
+        JsonHelper helper = new JsonHelper(props);
+        String json = helper.toJson(results);
+        
+        String expected = "{\n  \"zipFile\": \"top_anat/results/result_hash.zip\",\n  "
+                + "\"devStageId\": \"stageId1\",\n  \"callType\": \"EXPRESSED\",\n  "
+                + "\"results\": [\n    {\n      \"anatEntityId\": \"A1\",\n      "
+                + "\"anatEntityName\": \"body\",\n      \"annotated\": 5.0,\n      "
+                + "\"significant\": 4.0,\n      \"expected\": 4.0,\n      "
+                + "\"foldEnrichment\": 1.0,\n      \"pValue\": 1.0,\n      "
+                + "\"FDR\": 1.0\n    },\n    {\n      \"anatEntityId\": \"A2\",\n      "
+                + "\"anatEntityName\": \"body2\",\n      \"annotated\": 5.0,\n      "
+                + "\"significant\": 4.0,\n      \"expected\": 4.0,\n      "
+                + "\"foldEnrichment\": 1.0,\n      \"pValue\": 3.42E-64,\n      "
+                + "\"FDR\": 7.53E-62\n    }\n  ]\n}";
+
+        assertEquals("Incorrect JSON generated from TopAnatResults", expected, json);
     }
 }

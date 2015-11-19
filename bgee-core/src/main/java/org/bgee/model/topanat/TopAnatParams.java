@@ -141,6 +141,11 @@ public class TopAnatParams {
      * 
      */
     private final String key;
+    
+    /**
+     * 
+     */
+    private final Boolean isWithZip;
 
     /**
      * 
@@ -217,6 +222,11 @@ public class TopAnatParams {
          * 
          */
         private Integer numberOfSignificantNode;
+        
+        /**
+         * 
+         */
+        private Boolean isWithZip;
 
         /**
          * @param submittedForegroundIds
@@ -240,7 +250,6 @@ public class TopAnatParams {
             this.submittedBackgroundIds = submittedBackgroundIds;
             this.speciesId = speciesId;
             this.callType = callType;
-
             log.exit();
         }
 
@@ -345,6 +354,17 @@ public class TopAnatParams {
 
         /**
          * 
+         * @param isWithZip
+         * @return
+         */
+        public Builder isWithZip(Boolean isWithZip){
+            log.entry(isWithZip);
+            this.isWithZip = isWithZip;
+            return log.exit(this);
+        }  
+
+        /**
+         * 
          * @return
          * @throws MissingParameterException 
          */
@@ -397,6 +417,7 @@ public class TopAnatParams {
         this.submittedBackgroundIds = builder.submittedBackgroundIds == null ? null :
             Collections.unmodifiableSet(new HashSet<>(builder.submittedBackgroundIds));
         this.key = this.generateKey();
+        this.isWithZip = builder.isWithZip == null ? true : builder.isWithZip;
         log.exit();
     }
 
@@ -499,6 +520,14 @@ public class TopAnatParams {
         return key;
     }
 
+    /**
+     * 
+     * @return
+     */
+    public Boolean isWithZip(){
+        return this.isWithZip;
+    }
+    
     /**
      * @return
      */

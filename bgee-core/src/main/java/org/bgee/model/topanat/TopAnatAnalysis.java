@@ -146,8 +146,10 @@ public class TopAnatAnalysis {
         // Run the R analysis
         this.runRcode();
 
-        // create the zip file
-        this.generateZipFile();
+        if(this.params.isWithZip()){
+            // create the zip file
+            this.generateZipFile();
+        }
 
         // return the result
 
@@ -164,7 +166,6 @@ public class TopAnatAnalysis {
                 this.getZipFileName(),
                 this.controller)
                 );
-
     }
 
     /***

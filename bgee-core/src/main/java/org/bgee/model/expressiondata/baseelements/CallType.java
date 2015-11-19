@@ -9,6 +9,8 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.BgeeEnum;
+import org.bgee.model.BgeeEnum.BgeeEnumField;
 import org.bgee.model.expressiondata.baseelements.DataPropagation.PropagationState;
 
 /**
@@ -39,7 +41,7 @@ public interface CallType {
      * @see DiffExpression
      * @since Bgee 13
      */
-    public static enum Expression implements CallType {
+    public static enum Expression implements CallType, BgeeEnumField {
         EXPRESSED(Collections.unmodifiableSet(EnumSet.allOf(DataType.class))), 
         NOT_EXPRESSED(Collections.unmodifiableSet(
                 EnumSet.of(DataType.AFFYMETRIX, DataType.IN_SITU, 
@@ -100,6 +102,31 @@ public interface CallType {
             }
             log.exit();
         }
+        
+        @Override
+        public String getStringRepresentation() {
+            log.entry();
+            return log.exit(this.name());
+        }
+        
+        /**
+         * Convert the {@code String} representation of a call type for baseline presence or 
+         * absence of expression (for instance, retrieved from request) into a
+         * {@code CallType.Expression}.
+         * Operation performed by calling {@link BgeeEnum#convert(Class, String)} with 
+         * {@code CallType.Expression} as the {@code Class} argument, and {@code representation} 
+         * as the {@code String} argument.
+         * 
+         * @param representation            A {@code String} representing a data quality.
+         * @return                          A {@code CallType.Expression} corresponding 
+         *                                  to {@code representation}.
+         * @throw IllegalArgumentException  If {@code representation} does not correspond 
+         *                                  to any {@code CallType.Expression}.
+         * @see #convert(Class, String)
+         */
+        public static final Expression convertToExpression(String representation) {
+            return BgeeEnum.convert(Expression.class, representation);
+        }
     }
     /**
      * An {@code enum} representing call types from differential expression analyses: 
@@ -124,7 +151,7 @@ public interface CallType {
      * @see Expression
      * @since Bgee 13
      */
-    public static enum DiffExpression implements CallType {
+    public static enum DiffExpression implements CallType, BgeeEnumField {
         DIFF_EXPRESSED(), OVER_EXPRESSED(), 
         UNDER_EXPRESSED(), NOT_DIFF_EXPRESSED();
         
@@ -155,6 +182,28 @@ public interface CallType {
                         + ": " + propagation));
             }
             log.exit();
+        }
+        @Override
+        public String getStringRepresentation() {
+            log.entry();
+            return log.exit(this.name());
+        }
+        /**
+         * Convert the {@code String} representation of a call type from differential expression
+         * analyses (for instance, retrieved from request) into a {@code CallType.DiffExpression}.
+         * Operation performed by calling {@link BgeeEnum#convert(Class, String)} with 
+         * {@code CallType.DiffExpression} as the {@code Class} argument, and {@code representation} 
+         * as the {@code String} argument.
+         * 
+         * @param representation            A {@code String} representing a data quality.
+         * @return                          A {@code CallType.DiffExpression} corresponding 
+         *                                  to {@code representation}.
+         * @throw IllegalArgumentException  If {@code representation} does not correspond 
+         *                                  to any {@code CallType.DiffExpression}.
+         * @see #convert(Class, String)
+         */
+        public static final DiffExpression convertToDiffExpression(String representation) {
+            return BgeeEnum.convert(DiffExpression.class, representation);
         }
     }
 

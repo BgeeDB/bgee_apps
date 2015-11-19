@@ -1,5 +1,10 @@
 package org.bgee.model.expressiondata.baseelements;
 
+import java.util.Set;
+
+import org.bgee.model.BgeeEnum;
+import org.bgee.model.BgeeEnum.BgeeEnumField;
+
 /**
  * An {@code enum} defining the expression data types used in Bgee:
  * <ul>
@@ -22,6 +27,29 @@ package org.bgee.model.expressiondata.baseelements;
  * @version Bgee 13 Sept. 2015
  * @since Bgee 13
  */
-public enum DataType {
+public enum DataType implements BgeeEnumField {
     AFFYMETRIX, EST, IN_SITU, RELAXED_IN_SITU, RNA_SEQ;
+
+    @Override
+    public String getStringRepresentation() {
+        return this.name();
+    }
+    
+    /**
+     * Convert the {@code Set} of {@code String}s that are string representations of data types
+     * into a {@code Set} of {@code DataType}s.
+     * Operation performed by calling {@link BgeeEnum#convertStringSetToEnumSet(Class, Set)} with 
+     * {@code DataType} as the {@code Class} argument, and {@code representation} 
+     * as the {@code String} argument.
+     * 
+     * @param representations           A {@code Set} of {@code String}s that are string
+     *                                  representations of data types.
+     * @return                          A {@code Set} of {@code DataType}s corresponding 
+     *                                  to {@code representations}.
+     * @throw IllegalArgumentException  If a representation does not correspond 
+     *                                  to any {@code DataType}.
+     */
+    public static final Set<DataType> convertToDataTypeSet(Set<String> representations) {
+        return BgeeEnum.convertStringSetToEnumSet(DataType.class, representations);
+    }
 }

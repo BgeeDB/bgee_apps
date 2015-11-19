@@ -12,6 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.TransferObject;
+import org.bgee.model.expressiondata.CallServiceTest;
 import org.junit.Rule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
@@ -117,33 +118,39 @@ public abstract class TestAncestor {
      * independently of the iteration order of the {@code Collection}s.
      */
     protected static class IsCollectionEqual<T> extends ArgumentMatcher<Collection<T>> {
+        private final static Logger log = LogManager.getLogger(IsCollectionEqual.class.getName());
         private final Collection<?> expectedCollection;
         
         IsCollectionEqual(Collection<?> expectedCollection) {
+            log.entry(expectedCollection);
             this.expectedCollection = expectedCollection;
+            log.exit();
         }
 
         @Override
         public boolean matches(Object argument) {
+            log.entry(argument);
+            log.trace("Trying to match expected Collection [" + expectedCollection + "] versus "
+                    + "provided argument [" + argument + "]");
             if (expectedCollection == argument) {
-                return true;
+                return log.exit(true);
             }
             if (expectedCollection == null) {
                 if (argument == null) {
-                    return true;
+                    return log.exit(true);
                 } 
-                return false;
+                return log.exit(false);
             } else if (argument == null) {
-                return false;
+                return log.exit(false);
             }
             if (!(argument instanceof Collection)) {
-                return false;
+                return log.exit(false);
             }
             Collection<?> arg = (Collection<?>) argument;
             if (arg.size() != expectedCollection.size()) {
-                return false;
+                return log.exit(false);
             }
-            return arg.containsAll(expectedCollection);
+            return log.exit(arg.containsAll(expectedCollection));
         }
     }
     /**

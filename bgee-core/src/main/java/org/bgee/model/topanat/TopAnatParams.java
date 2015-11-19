@@ -607,12 +607,10 @@ public class TopAnatParams {
         if(this.numberOfSignificantNodes != null)
             valueToHash.append(this.numberOfSignificantNodes.toString());
 
-        String keyToReturn = null;
-
-        if (StringUtils.isNotBlank(valueToHash)) {
-            keyToReturn = DigestUtils.sha1Hex(valueToHash.toString());
-        }
-
+        assert(StringUtils.isNotBlank(valueToHash));
+        
+        String keyToReturn = DigestUtils.sha1Hex(valueToHash.toString());
+        
         log.info("Key generated: {}", keyToReturn);
 
         return log.exit(keyToReturn);

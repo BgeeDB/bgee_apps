@@ -122,7 +122,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         BigDecimal.valueOf(12554.2), DataState.HIGHQUALITY, BigDecimal.valueOf(233.3),
                         DataState.HIGHQUALITY, BigDecimal.valueOf(200.0), DataState.LOWQUALITY, BigDecimal.valueOf(1243.2),
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("3", "ID1", "Anat_id6", "Stage_id7", gi, DataState.NODATA, null,
+                new ExpressionCallTO("3", "ID1", "Anat_id6", "Stage_id7", null, DataState.NODATA, null,
                         DataState.NODATA, null, DataState.NODATA, BigDecimal.valueOf(5.0), DataState.LOWQUALITY, null,
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
                 //retrieved thanks to second filter

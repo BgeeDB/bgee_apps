@@ -8,7 +8,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.TaskManager;
-import org.bgee.model.topanat.TopAnatResults;
 
 /**
  * Fake view used for tests related to topAnat display. 
@@ -46,13 +45,7 @@ public class FakeTopAnatDisplay extends FakeParentDisplay implements TopAnatDisp
     }
 
     @Override
-    public void sendNewJobResponse(int jobTrackingId) {
-        // TODO Auto-generated method stub
-        
-    }
-
-    @Override
-    public void sendResultResponse(TopAnatResults results) {
+    public void sendResultResponse(LinkedHashMap<String, Object> data, String msg) {
         // TODO Auto-generated method stub
         
     }

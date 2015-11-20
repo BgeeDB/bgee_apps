@@ -1,13 +1,8 @@
 package org.bgee.view;
 
 import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
 
 import org.bgee.model.TaskManager;
-import org.bgee.model.anatdev.DevStage;
-import org.bgee.model.species.Species;
-import org.bgee.model.topanat.TopAnatResults;
 
 /**
  * Interface defining the methods that views related to topAnat must implemented. 
@@ -42,18 +37,14 @@ public interface TopAnatDisplay {
     public void sendTopAnatParameters(String hash);
 
     /**
-     * Send the response following the submission of a new TopAnat job, with no cached results.
-     * 
-     * @param jobTrackingId A {@code int} that is the ID of the new TopAnat job.
-     */
-    public void sendNewJobResponse(int jobTrackingId);
-    
-    /**
      * Send the response following the end of a TopAnat job.
      * 
-     * @param results A {@code TopAnatResults} that is the results of a finished TopAnat job.
+     * @param data  A {@code LinkedHashMap} where keys are {@code String}s that are displayed 
+     *              object names, the associated values being a {@code Object} that are the object
+     *              to be displayed.
+     * @param msg   A {@code String} that is the text message resuming the response.
      */
-    public void sendResultResponse(TopAnatResults results);
+    public void sendResultResponse(LinkedHashMap<String, Object> data, String msg);
     
     /**
      * Send the response when a tracking job is requested.

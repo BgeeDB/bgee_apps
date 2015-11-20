@@ -1,5 +1,6 @@
 package org.bgee.model;
 
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -41,7 +42,7 @@ public abstract class BgeeEnum {
      * returned by {@link Enum#name()}, for each {@code Enum} element corresponding to 
      * {@code enumField}.
      * 
-     * @param enumField                 The {@code Class} that is the {@code Enum} class 
+     * @param enumClass                 The {@code Class} that is the {@code Enum} class 
      *                                  implementing {@code BgeeEnumField}, for which we want 
      *                                  to find an element corresponding to {@code representation}.
      * @param representation            A {@code String} representing an element of {@code enumField}.
@@ -51,40 +52,49 @@ public abstract class BgeeEnum {
      *                                  to any element of {@code enumField}.
      */
     public static final <T extends Enum<T> & BgeeEnumField> T convert(
-            Class<T> enumField, String representation) {
-        log.entry(enumField, representation);
+            Class<T> enumClass, String representation) {
+        log.entry(enumClass, representation);
         
         if (representation == null) {
             return log.exit(null);
         }
-        for (T element: enumField.getEnumConstants()) {
+        for (T element: enumClass.getEnumConstants()) {
             if (element.getStringRepresentation().equals(representation) || 
                     element.name().equals(representation)) {
                 return log.exit(element);
             }
         }
         throw log.throwing(new IllegalArgumentException("\"" + representation + 
-                "\" does not correspond to any element of " + enumField.getName()));
+                "\" does not correspond to any element of " + enumClass.getName()));
     }
     
     /**
      * Convert a {@code Set} of {@code String}s into a {@code Set} of {@code BgeeEnumField}s, 
      * using the method {@link BgeeEnum#convert()}.
      * 
-     * @param enumField The {@code Class} that is the {@code Enum} class 
-     *                  implementing {@code BgeeEnumField}, for which we want 
-     *                  to find an element corresponding to {@code representation}.
-     * @param enums     A {@code Set} of {@code String}s to be converted.
-     * @return          The {@code Set} of {@code BgeeEnumField}s that are the representation of 
-     *                  the {@code BgeeEnumField}s contained in {@code enums}.
-     * @param T         The type of {@code BgeeEnumField}
+     * @param enumClass         The {@code Class} that is the {@code Enum} class 
+     *                          implementing {@code BgeeEnumField}, for which we want 
+     *                          to find an element corresponding to {@code representation}.
+     * @param representations   A {@code Set} of {@code String}s to be converted.
+     * @return                  The {@code Set} of {@code BgeeEnumField}s that are the 
+     *                          representation of the {@code BgeeEnumField}s contained in 
+     *                          {@code enums}.
+     * @param T The type of {@code BgeeEnumField}
      */
     public static final <T extends Enum<T> & BgeeEnumField> Set<T> 
-        convertStringSetToEnumSet(Class<T> enumField, Set<String> representations) {
+        convertStringSetToEnumSet(Class<T> enumClass, Set<String> representations) {
         log.entry(representations);
+
+        if (representations == null || representations.isEmpty()) {
+            return log.exit(null);
+        }
+
         Set<T> enumSet = new HashSet<>();
         for (String repr: representations) {
-            enumSet.add(convert(enumField, repr));
+            T convertedRep = convert(enumClass, repr);
+            if (convertedRep != null) {
+                enumSet.add(convertedRep);
+            }
         }
         return log.exit(enumSet);
     }
@@ -98,16 +108,50 @@ public abstract class BgeeEnum {
      * @param enums A {@code Set} of {@code BgeeEnumField}s to be converted.
      * @return      A {@code Set} of {@code String}s that are the representation of 
      *              the {@code BgeeEnumField}s contained in {@code enums}.
-     * @param T     The type of {@code BgeeEnumField}
-     * 
+     * @param T The type of {@code BgeeEnumField}
      */
     public static final <T extends Enum<T> & BgeeEnumField> Set<String> 
         convertEnumSetToStringSet(Set<T> enums) {
         log.entry(enums);
         Set<String> stringSet = new HashSet<String>();
         for (T bgeeEnum: enums) {
-            stringSet.add(bgeeEnum.getStringRepresentation());
+            if (bgeeEnum != null) {
+                stringSet.add(bgeeEnum.getStringRepresentation());
+            }
         }
         return log.exit(stringSet);
+    }
+    
+    /**
+     * @param enumClass
+     * @param representation
+     * @return
+     */
+    public static final <T extends Enum<T> & BgeeEnumField> boolean isInEnum(
+            Class<T> enumClass, String representation) {
+        log.entry(enumClass, representation);
+        for (BgeeEnumField bgeeEnum: EnumSet.allOf(enumClass)) {
+            if (bgeeEnum.getStringRepresentation().equals(representation)) {
+                return log.exit(true);
+            }
+        }
+        return log.exit(false);
+    }
+    
+    /**
+     * @param enumClass
+     * @param representations
+     * @return
+     * @param T The type of {@code BgeeEnumField}
+     */
+    public static final <T extends Enum<T> & BgeeEnumField> boolean areAllInEnum(
+            Class<T> enumClass, Set<String> representations) {
+        log.entry(enumClass, representations);
+        for (String representation: representations) {
+            if (!BgeeEnum.isInEnum(enumClass, representation)) {
+                return log.exit(false);
+            }
+        }
+        return log.exit(true);
     }
 }

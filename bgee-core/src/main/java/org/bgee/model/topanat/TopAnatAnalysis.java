@@ -131,19 +131,23 @@ public class TopAnatAnalysis {
         // Generate R code and write it on the disk
         this.generateRCodeFile();
 
-        // Copy the Rscript file to the working directory
-        try{
-            this.controller.acquireWriteLock("");
-            this.controller.acquireReadLock("");
-            Path source = Paths.get(
-                    TopAnatAnalysis.class.getResource(this.props.getTopAnatFunctionFile()).getPath());
-            Path target = Paths.get(
-                    this.props.getTopAnatResultsWritingDirectory()+source.getFileName());
-            Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
-        }
-        finally{
-            this.controller.releaseReadLock("");
-            this.controller.releaseWriteLock("");
+        // Copy the Rscript file to the working directory, if it dosn't already exists
+        String sourceFunctionFileName = TopAnatAnalysis.class.getResource(
+                this.props.getTopAnatFunctionFile()).getPath();
+        Path source = Paths.get(sourceFunctionFileName);
+        File targetFunctionFile = new File(
+                this.props.getTopAnatResultsWritingDirectory() + 
+                source.getFileName());
+        Path target = Paths.get(targetFunctionFile.getPath());
+        if (!targetFunctionFile.exists()) {
+            try{
+                this.controller.acquireReadLock(sourceFunctionFileName);
+                this.controller.acquireWriteLock(targetFunctionFile.getPath());
+                Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+            } finally{
+                this.controller.releaseReadLock(sourceFunctionFileName);
+                this.controller.releaseWriteLock(targetFunctionFile.getPath());
+            }
         }
 
         // Run the R analysis

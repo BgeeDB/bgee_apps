@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -12,14 +13,14 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeProperties;
-import org.bgee.model.QueryTool;
 import org.bgee.model.ServiceFactory;
+import org.bgee.model.TaskManager;
 import org.bgee.model.function.PentaFunction;
 
 /**
  * @author Mathieu Seppey
  */
-public class TopAnatController extends QueryTool {
+public class TopAnatController {
     private final static Logger log = LogManager.getLogger(TopAnatController.class.getName()); 
 
     /**
@@ -48,6 +49,8 @@ public class TopAnatController extends QueryTool {
      */
     private final PentaFunction<TopAnatParams, BgeeProperties, ServiceFactory, TopAnatRManager,TopAnatController, TopAnatAnalysis> 
     topAnatAnalysisSupplier;
+    
+    private final Optional<TaskManager> taskManager;
 
     /**
      * 
@@ -63,7 +66,18 @@ public class TopAnatController extends QueryTool {
      */
     public TopAnatController(List<TopAnatParams> topAnatParams, BgeeProperties props, 
             ServiceFactory serviceFactory) {
-        this(topAnatParams, props, serviceFactory,TopAnatAnalysis::new);
+        this(topAnatParams, props, serviceFactory, TopAnatAnalysis::new);
+    }
+    public TopAnatController(List<TopAnatParams> topAnatParams, BgeeProperties props, 
+            ServiceFactory serviceFactory, TaskManager taskManager) {
+        this(topAnatParams, props, serviceFactory, TopAnatAnalysis::new, taskManager);
+    }
+    
+    public TopAnatController(List<TopAnatParams> topAnatParams, BgeeProperties props, 
+            ServiceFactory serviceFactory, 
+            PentaFunction<TopAnatParams, BgeeProperties, ServiceFactory, TopAnatRManager, TopAnatController,
+            TopAnatAnalysis> topAnatAnalysisSupplier) {
+        this(topAnatParams, props, serviceFactory, topAnatAnalysisSupplier, null);
     }
 
     /**
@@ -73,8 +87,8 @@ public class TopAnatController extends QueryTool {
     public TopAnatController(List<TopAnatParams> topAnatParams, BgeeProperties props, 
             ServiceFactory serviceFactory, 
             PentaFunction<TopAnatParams, BgeeProperties, ServiceFactory, TopAnatRManager, TopAnatController,
-            TopAnatAnalysis> topAnatAnalysisSupplier) {
-        log.entry(topAnatParams, props, serviceFactory, topAnatAnalysisSupplier);
+            TopAnatAnalysis> topAnatAnalysisSupplier, TaskManager taskManager) {
+        log.entry(topAnatParams, props, serviceFactory, topAnatAnalysisSupplier, taskManager);
 
         if (topAnatParams == null || topAnatParams.isEmpty() || 
                 topAnatParams.stream().anyMatch(Objects::isNull)) {
@@ -95,6 +109,7 @@ public class TopAnatController extends QueryTool {
         this.topAnatAnalysisSupplier = topAnatAnalysisSupplier;
         this.props = props;
         this.serviceFactory = serviceFactory;
+        this.taskManager = Optional.ofNullable(taskManager);
 
         log.exit();
     }
@@ -112,9 +127,24 @@ public class TopAnatController extends QueryTool {
                         this.serviceFactory, new TopAnatRManager(this.props, params),this))
                 .map(analysis -> {
                     try {
-                        return analysis.proceedToAnalysis();
+                        if (this.taskManager.map(t -> !t.isStarted()).orElse(false)) {
+                            this.taskManager.ifPresent(t -> 
+                                t.startQuery("Proceeding to " + this.topAnatParams.size() + 
+                                    (this.topAnatParams.size() > 1? " analyses": " analysis"), 
+                                    this.topAnatParams.size(), ""));
+                        } else {
+                            this.taskManager.ifPresent(t -> t.nextSubTask(""));
+                        }
+                        TopAnatResults results = analysis.proceedToAnalysis();
+                        this.taskManager.ifPresent(t -> t.endSubTask());
+                        if (this.taskManager.map(t -> t.getCurrentSubTaskIndex()).orElse(-1) == 
+                                (this.topAnatParams.size() - 1)) {
+                            this.taskManager.ifPresent(t -> t.endQuery(true));
+                        }
+                        return results;
                     } catch (Throwable e) {
                         log.catching(e);
+                        this.taskManager.ifPresent(t -> t.endQuery(false));
                         log.throwing(new RuntimeException(e));
                     }
                     return null;
@@ -123,6 +153,9 @@ public class TopAnatController extends QueryTool {
     
     public BgeeProperties getBgeeProperties() {
         return this.props;
+    }
+    public Optional<TaskManager> getTaskManager() {
+        return taskManager;
     }
 
     // *************************************************
@@ -343,16 +376,9 @@ public class TopAnatController extends QueryTool {
      */
     public boolean areAnalysesDone(){
         log.entry();
-        if(this.topAnatParams.stream()
+        return log.exit(this.topAnatParams.stream()
                 .map(params -> this.topAnatAnalysisSupplier.apply(params, this.props, 
-                        this.serviceFactory, new TopAnatRManager(this.props,params), this))
-                .filter(a -> a.isAnalysisDone() == false).count() > 0)
-            return log.exit(false);
-        return log.exit(true);
-    }
-
-    @Override
-    protected Logger getLogger() {
-        return log;
+                        this.serviceFactory, new TopAnatRManager(this.props, params), this))
+                .allMatch(a -> a.isAnalysisDone()));
     }
 }

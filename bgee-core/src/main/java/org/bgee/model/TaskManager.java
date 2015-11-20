@@ -210,6 +210,9 @@ public class TaskManager {
 		this.currentSubTaskIndex = 0;
 	}
 	
+	public long getId() {
+	    return id;
+	}
 
 	/**
 	 * Method called to indicate that the task was completed with success. 

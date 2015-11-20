@@ -380,6 +380,7 @@ public class TopAnatAnalysis {
         String namesTmpFileName = namesFileName + ".tmp";
         Path namesTmpFile = Paths.get(namesTmpFileName);
         Path finalNamesFile = Paths.get(namesFileName);
+        log.debug("Absolute path to name file: {}", namesTmpFile.toAbsolutePath());
         String relsTmpFileName = relsFileName + ".tmp";
         Path relsTmpFile = Paths.get(relsTmpFileName);
         Path finalRelsFile = Paths.get(relsFileName);
@@ -679,6 +680,7 @@ public class TopAnatAnalysis {
         for (int i=0; i < srcFiles.length; i++) {
 
             File srcFile = new File(srcFiles[i]);
+            srcFile.createNewFile();
 
             FileInputStream fis = new FileInputStream(srcFile);
 

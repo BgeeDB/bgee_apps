@@ -207,7 +207,7 @@ public class RequestParameters {
      * (see {@link URLParameters#getParamAction()}) when a result is requested.
      * Value of the parameter page should be {@link #PAGE_TOP_ANAT}.
      */
-    public static final String ACTION_TOP_ANAT_GET_RESULT = "get_result";
+    public static final String ACTION_TOP_ANAT_GET_RESULT = "get_results";
     /**
      * A {@code String} that is the anchor to use in the hash part of an URL 
      * to link to the single-species part, in the documentation about gene expression calls.

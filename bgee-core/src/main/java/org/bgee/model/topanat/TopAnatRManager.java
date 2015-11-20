@@ -86,6 +86,8 @@ public class TopAnatRManager {
         code.addRCode("# Please change the working directory to match your file system:");
         code.addRCode("setwd('" + this.props.getTopAnatRWorkingDirectory()
         + "')");
+        log.debug("Location of TopAnat functions file: {} - {}", this.props.getTopAnatFunctionFile(), 
+                this.getClass().getResource(this.props.getTopAnatFunctionFile()).getPath());
         code.R_source(Paths.get(TopAnatAnalysis.class.getResource(
                 this.props.getTopAnatFunctionFile()).getPath()).getFileName().toString());
         code.addRCode("resultExist <- FALSE");

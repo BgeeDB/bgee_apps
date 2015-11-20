@@ -1,0 +1,1 @@
+This folder is meant to host results of TopAnat analyses.

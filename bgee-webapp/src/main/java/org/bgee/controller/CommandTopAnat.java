@@ -15,7 +15,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -30,6 +29,7 @@ import org.bgee.model.BgeeEnum;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.TaskManager;
 import org.bgee.model.anatdev.DevStage;
+import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
@@ -40,7 +40,6 @@ import org.bgee.model.topanat.TopAnatController;
 import org.bgee.model.topanat.TopAnatParams;
 import org.bgee.model.topanat.TopAnatResults;
 import org.bgee.model.topanat.exception.MissingParameterException;
-import org.bgee.view.JsonHelper;
 import org.bgee.view.TopAnatDisplay;
 import org.bgee.view.ViewFactory;
 
@@ -58,9 +57,6 @@ public class CommandTopAnat extends CommandParent {
      */
     private final static Logger log = LogManager.getLogger(CommandTopAnat.class.getName());
     
-    //TODO Remove, it's for live tests
-    private volatile static int nbJobTrackingTries = 0;
-    
     /**
      * An {@code int} that is the level to be used to filter retrieved dev. stages. 
      */
@@ -76,10 +72,6 @@ public class CommandTopAnat extends CommandParent {
      */
     private final static String JOB_RESPONSE_LABEL = "job_response";
     
-    /**
-     * An {@code int} that is the number of try to create a task manager with a job ID. 
-     */
-    private final static int MAX_TASK_MANAGER_RETRY = 10000;
     
     /**
      * An {@code enum} defining the job status. 
@@ -136,7 +128,42 @@ public class CommandTopAnat extends CommandParent {
         // New job submission
         } else if (this.requestParameters.isATopAnatSubmitJob()) {
             
-            this.submitNewJob(display);
+            //launch analysis in a different thread, otherwise the response will not be sent.
+            //And we need to provide it with a fresh DAOManager, because this Thread will close it.
+            //We will assign an ID to the TaskManager from this thread, otherwise we won't be able 
+            //to provide the ID
+            final long jobId = Thread.currentThread().getId();
+            log.trace("Job ID: {}" + jobId);
+            Runnable job = () -> {
+                TopAnatController controller;
+                try {
+                    log.trace("Executor thread ID: {}", Thread.currentThread().getId());
+                    //We need to acquire the controller from the other thread, 
+                    //to be able to acquire a different DAOManager than the one used by this thread, 
+                    //that will be closed when it terminates. 
+                    CommandTopAnat command = new CommandTopAnat(this.response, this.requestParameters, this.prop, 
+                            this.viewFactory, 
+                            //FIXME: but we should have a way to "clone" the serviceFactory, 
+                            //we have no guarantee that the DAOManager will have the same configuration here
+                            new ServiceFactory(DAOManager.getDAOManager()));
+                    controller = command.loadTopAnatController(jobId);
+                } catch (Exception e) {
+                    log.catching(e);
+                    throw log.throwing(new IllegalStateException(e));
+                }
+                //we need to consume the Stream to actually launch the analysis
+                controller.proceedToTopAnatAnalyses().collect(Collectors.toSet());
+            };
+            Thread newThread = new Thread(job);
+            newThread.start();
+            
+            // Job ID if available, add hash
+            LinkedHashMap<String, Object> data = new LinkedHashMap<>();
+            data.put(JOB_RESPONSE_LABEL, new JobResponse(
+                    jobId, JobStatus.RUNNING.name(), 
+                    this.requestParameters.getDataKey()));
+            display.sendTrackingJobResponse(data, "Job is " + JobStatus.RUNNING.name());
+            
 
         // Job tracking
         } else if (this.requestParameters.isATopAnatTrackingJob()) {
@@ -149,21 +176,11 @@ public class CommandTopAnat extends CommandParent {
             }
             
             // Retrieve task manager associated to the provided ID
-//            TaskManager taskManager = TaskManager.getTaskManager(jobID);
-            JobStatus jobStatus;
-            //TODO Remove, it's for live tests
-            if (nbJobTrackingTries % 3 == 0) {
-                jobStatus = JobStatus.UNDEFINED;
-            } else {
-                jobStatus = JobStatus.RUNNING;                
-            }
-//            if (taskManager == null || taskManager.isTerminated()) {
-//                jobStatus = JobStatus.UNDEFINED;
-//            } else {
-//                jobStatus = JobStatus.RUNNING;
-//                // TODO nice complete message
-//            }
-            nbJobTrackingTries++;
+            TaskManager taskManager = TaskManager.getTaskManager(jobID);
+            JobStatus jobStatus = JobStatus.UNDEFINED;
+            if (taskManager != null && !taskManager.isTerminated()) {
+                jobStatus = JobStatus.RUNNING;
+            } 
             LinkedHashMap<String, Object> data = new LinkedHashMap<>();
 
             data.put(JOB_RESPONSE_LABEL, new JobResponse(jobID, jobStatus.name(), keyParam));
@@ -177,24 +194,22 @@ public class CommandTopAnat extends CommandParent {
         // Get results
         } else if (this.requestParameters.isATopAnatGetResult()) {
             
-            // TODO get allTopAnatParams
-            TopAnatController controller = new TopAnatController(
-                    null, prop, serviceFactory);
+            TopAnatController controller = this.loadTopAnatController(0);
+            if (!controller.areAnalysesDone()) {
+                throw log.throwing(new InvalidRequestException(
+                        "No results available for the provided parameters."));
+            }
             Stream<TopAnatResults> topAnatResults = controller.proceedToTopAnatAnalyses();
-
-//            topAnatResults
-//                .map(TopAnatResults::getRows)
-//                .collect(Collectors.toSet());
 
             LinkedHashMap<String, Object> data = new LinkedHashMap<>();
             if (this.requestParameters.getGeneInfo() != null &&
                     this.requestParameters.getGeneInfo()) {
                 data.putAll(this.getGeneResponses());
             }
-            
-            
-            
-//            data.put("results", results);
+
+            //FIXME: I don't know why, but I don't manage to make the Stream to be printed.
+            //Collecting the results while waiting for a fix.
+            data.put("topAnatResults", topAnatResults.collect(Collectors.toSet()));
             display.sendResultResponse(data, "");
 
         // Home page, empty
@@ -459,8 +474,9 @@ public class CommandTopAnat extends CommandParent {
      * @throws InvalidRequestException
      * @throws MissingParameterException
      */
-    private void submitNewJob(TopAnatDisplay display) throws InvalidRequestException, MissingParameterException {
-        log.entry(display);
+    private TopAnatController loadTopAnatController(long jobId) 
+            throws InvalidRequestException, MissingParameterException {
+        log.entry(jobId);
 
         // Get submitted params
         // Fg gene list cannot be null
@@ -534,12 +550,12 @@ public class CommandTopAnat extends CommandParent {
         }
         
         final Double subFdrThr = this.requestParameters.getFdrThreshold(); 
-        if (subFdrThr != null && subFdrThr <= 0) {
+        if (subFdrThr != null && subFdrThr < 0) {
             throw log.throwing(new InvalidRequestException("A FDR threshold must be positive"));
         }
         
         final Double subPValueThr = this.requestParameters.getPValueThreshold();
-        if (subPValueThr != null && subPValueThr <= 0) {
+        if (subPValueThr != null && subPValueThr < 0) {
             throw log.throwing(new InvalidRequestException("A p-value threshold must be positive"));
         }
         
@@ -622,39 +638,19 @@ public class CommandTopAnat extends CommandParent {
             }
         }
 
-        // Create the ID to track job creating a random int
-        Integer jobTrackingId = null;
-        boolean hasCreateTaskManager = false;
-        for (int i = 0; i < MAX_TASK_MANAGER_RETRY ; i++) {
-            try {
-                // We want only positive job ID
-                jobTrackingId = Math.abs(ThreadLocalRandom.current().nextInt());
-                TaskManager.registerTaskManager(jobTrackingId);
-            } catch (IllegalArgumentException | IllegalStateException e) {
-                continue;
+        TaskManager manager = null;
+        if (jobId > 0) {
+            TaskManager.registerTaskManager(jobId);
+            manager = TaskManager.getTaskManager();
+            if (manager == null) {
+                throw log.throwing(new RuntimeException("Failed to get task manager"));
             }
-            hasCreateTaskManager = true;
-            break;
+            log.trace("Job ID defined: {}", jobId);
         }
         
-        if (!hasCreateTaskManager) {
-            throw log.throwing(new RuntimeException("Failed to get task manager after " +
-                    MAX_TASK_MANAGER_RETRY + " tries"));
-        }
-        log.trace("Job ID defined: {}", jobTrackingId);
-        
-        TopAnatController controller = new TopAnatController(allTopAnatParams, prop, serviceFactory);
-        
-        // Job ID if available, add hash
-    
-        LinkedHashMap<String, Object> data = new LinkedHashMap<>();
-        data.put(JOB_RESPONSE_LABEL, new JobResponse(
-                jobTrackingId, JobStatus.RUNNING.name(), this.requestParameters.getDataKey()));
-
-        display.sendTrackingJobResponse(data, "Job is " + JobStatus.RUNNING.name());
-
-        // Launch the TopAnat analysis
-        controller.proceedToTopAnatAnalyses();
+        TopAnatController controller = new TopAnatController(allTopAnatParams, this.prop, 
+                this.serviceFactory, manager);
+        return log.exit(controller);
     }
 
     /**
@@ -878,7 +874,7 @@ public class CommandTopAnat extends CommandParent {
         /**
          * See {@link #getJobId()}.
          */
-        private final Integer jobId;
+        private final long jobId;
         /**
          * See {@link #getJobStatus()}.
          */
@@ -891,11 +887,11 @@ public class CommandTopAnat extends CommandParent {
         /**
          * Constructor of {@code JobResponse}.
          * 
-         * @param jobId     An {@code Integer} representing the ID of the job (task).
+         * @param jobId     A {@code long} representing the ID of the job (task).
          * @param jobStatus A {@code String} representing the status of the job.
          * @param data      A {@code String} representing the key of the parameters.
          */
-        public JobResponse(Integer jobId, String jobStatus, String data) {
+        public JobResponse(long jobId, String jobStatus, String data) {
             log.entry(jobId, jobStatus, data);
             this.jobId = jobId;
             this.jobStatus = jobStatus;
@@ -904,9 +900,9 @@ public class CommandTopAnat extends CommandParent {
         }
         
         /**
-         * @return  The {@code Integer} representing the ID of the job (task).
+         * @return  The {@code long} representing the ID of the job (task).
          */
-        public Integer getJobId() {
+        public long getJobId() {
             return this.jobId;
         }
         /**
@@ -926,37 +922,43 @@ public class CommandTopAnat extends CommandParent {
         public int hashCode() {
             final int prime = 31;
             int result = 1;
-            result = prime * result + ((jobId == null) ? 0 : jobId.hashCode());
-            result = prime * result + ((jobStatus == null) ? 0 : jobStatus.hashCode());
             result = prime * result + ((data == null) ? 0 : data.hashCode());
+            result = prime * result + (int) (jobId ^ (jobId >>> 32));
+            result = prime * result + ((jobStatus == null) ? 0 : jobStatus.hashCode());
             return result;
         }
         @Override
         public boolean equals(Object obj) {
-            if (this == obj)
+            if (this == obj) {
                 return true;
-            if (obj == null)
+            }
+            if (obj == null) {
                 return false;
-            if (getClass() != obj.getClass())
+            }
+            if (getClass() != obj.getClass()) {
                 return false;
+            }
             JobResponse other = (JobResponse) obj;
-            if (jobId == null) {
-                if (other.jobId != null)
-                    return false;
-            } else if (!jobId.equals(other.jobId))
-                return false;
-            if (jobStatus == null) {
-                if (other.jobStatus != null)
-                    return false;
-            } else if (!jobStatus.equals(other.jobStatus))
-                return false;
             if (data == null) {
-                if (other.data != null)
+                if (other.data != null) {
                     return false;
-            } else if (!data.equals(other.data))
+                }
+            } else if (!data.equals(other.data)) {
                 return false;
+            }
+            if (jobId != other.jobId) {
+                return false;
+            }
+            if (jobStatus == null) {
+                if (other.jobStatus != null) {
+                    return false;
+                }
+            } else if (!jobStatus.equals(other.jobStatus)) {
+                return false;
+            }
             return true;
         }
+
         @Override
         public String toString() {
             return "Job ID: " + getJobId() + " - Job status: "

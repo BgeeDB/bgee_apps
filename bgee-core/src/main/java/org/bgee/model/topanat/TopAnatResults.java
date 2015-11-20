@@ -290,6 +290,21 @@ public class TopAnatResults {
     public String getZipFileName() {
         return zipFileName;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("TopAnatResults [topAnatParams=").append(topAnatParams).append(", resultFileName=")
+                .append(resultFileName).append(", resultPDFFileName=").append(resultPDFFileName)
+                .append(", rScriptAnalysisFileName=").append(rScriptAnalysisFileName).append(", paramsOutputFileName=")
+                .append(paramsOutputFileName).append(", anatEntitiesFilename=").append(anatEntitiesFilename)
+                .append(", anatEntitiesRelationshipsFileName=").append(anatEntitiesRelationshipsFileName)
+                .append(", geneToAnatEntitiesFileName=").append(geneToAnatEntitiesFileName)
+                .append(", rScriptConsoleFileName=").append(rScriptConsoleFileName).append(", zipFileName=")
+                .append(zipFileName).append(", controller=").append(controller).append(", props=").append(props)
+                .append("]");
+        return builder.toString();
+    }
  
 }
 

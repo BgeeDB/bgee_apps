@@ -103,7 +103,7 @@ public class BgeeProperties {
      * @see #TOP_ANAT_R_WORKING_DIRECTORY_KEY
      */
     public final static String TOP_ANAT_R_WORKING_DIRECTORY_DEFAULT = 
-            "TopAnatFiles/results";
+            "TopAnatFiles/results/";
     
     /**
      * A {@code String} that is the key to access to the System property that contains the name of 

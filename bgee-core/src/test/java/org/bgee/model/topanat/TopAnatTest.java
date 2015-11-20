@@ -29,9 +29,12 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeProperties;
 import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
+import org.bgee.model.TestAncestor;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
@@ -57,13 +60,18 @@ import org.junit.Test;
  * @version Bgee 13, June 2015
  * @since Bgee 13
  */
-public class TopAnatTest {
+public class TopAnatTest extends TestAncestor {
+    private final static Logger log = LogManager.getLogger(TopAnatRealTest.class.getName());
+    @Override
+    protected Logger getLogger() {
+        return log;
+    } 
 
     private TopAnatController topAnatController;
 
     private BgeeProperties props;
 
-    private String hashKey = "24d69e8007c9e89000ec54f0f84ce5e938e37144";
+    private String hashKey;
 
     /**
      * This method inits every mock and real objects needed to run the tests
@@ -90,6 +98,7 @@ public class TopAnatTest {
         topAnatParamsBuilder.fdrThreshold(1000d); // extreme value to produce results easily with false data
         topAnatParamsBuilder.pvalueThreshold(1d);
         TopAnatParams topAnatParams = topAnatParamsBuilder.build();
+        this.hashKey = topAnatParams.getKey();
         // End of the params definition;
 
         // Mock objects and methods
@@ -276,6 +285,7 @@ public class TopAnatTest {
         // It also proves that the new analysis did not replace an existing one
         List<TopAnatResultRow> results = 
                 this.topAnatController.proceedToTopAnatAnalyses().findFirst().get().getRows();
+        log.debug("Results retrieved: {}", results);
         TopAnatResultRow first  = results.get(0);
         TopAnatResultRow second  = results.get(1);
         assertEquals("A1",first.getAnatEntitiesId());

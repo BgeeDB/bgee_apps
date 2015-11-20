@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeProperties;
 import org.supercsv.cellprocessor.Optional;
 import org.supercsv.cellprocessor.ParseDouble;
@@ -18,6 +20,8 @@ import org.supercsv.io.ICsvMapReader;
 import org.supercsv.prefs.CsvPreference;
 
 public class TopAnatResults {
+    private final static Logger log = LogManager
+            .getLogger(TopAnatResults.class.getName());
 
     public static class TopAnatResultRow{
 
@@ -208,6 +212,7 @@ public class TopAnatResults {
      */
     public List<TopAnatResults.TopAnatResultRow> getRows() throws FileNotFoundException,
     IOException{
+        log.entry();
             File resultFile = new File(
                     this.props.getTopAnatResultsWritingDirectory(),
                     this.getResultFileName());
@@ -242,7 +247,7 @@ public class TopAnatResults {
 
             this.controller.releaseReadLock(resultFile.getPath());
 
-            return listToReturn;
+            return log.exit(listToReturn);
    
     }
 

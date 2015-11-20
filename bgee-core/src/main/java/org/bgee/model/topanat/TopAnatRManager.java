@@ -3,6 +3,7 @@ package org.bgee.model.topanat;
 import java.io.FileNotFoundException;
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -53,8 +54,9 @@ public class TopAnatRManager {
     protected String generateRCode(String resultFileName, String resultPdfFileName, 
             String anatEntitiesNamesFileName, String anatEntitiesRelationshipsFileName,
             String geneToAnatEntitiesFileName,
-            Collection<String> backgroundIds) {
-        log.entry();
+            Set<String> foregroundIds) {
+        log.entry(resultFileName, resultPdfFileName, anatEntitiesNamesFileName, 
+                anatEntitiesRelationshipsFileName, geneToAnatEntitiesFileName, foregroundIds);
 
         caller.setRscriptExecutable(this.props.getTopAnatRScriptExecutable());
         
@@ -121,9 +123,7 @@ public class TopAnatRManager {
         code.addRCode("  print('OrganNames:')");
         code.addRCode("  head(organNames)");
 
-        code.addStringArray("StringIDs",
-                backgroundIds == null ? params.getSubmittedBackgroundIds().toArray(new String[0]) :
-                    backgroundIds.toArray(new String[0]));
+        code.addStringArray("StringIDs", foregroundIds.toArray(new String[0]));
         code.addRCode("  geneList <- factor(as.integer(names(gene2anatomy) %in% StringIDs))");
         code.addRCode("  names(geneList) <- names(gene2anatomy)");
         code.addRCode("  print('GeneList:')");

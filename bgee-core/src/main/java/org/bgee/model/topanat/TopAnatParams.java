@@ -45,7 +45,7 @@ public class TopAnatParams {
     /**
      * 
      */
-    private final static DataQuality DATA_QUALITY_DEFAULT = DataQuality.HIGH;
+    private final static DataQuality DATA_QUALITY_DEFAULT = DataQuality.LOW;
 
     /**
      * 
@@ -166,7 +166,7 @@ public class TopAnatParams {
         /**
          * 
          */
-        private final Set<String> submittedForegroundIds;
+        private final Collection<String> submittedForegroundIds;
 
         /**
          * 
@@ -176,7 +176,7 @@ public class TopAnatParams {
         /**
          * 
          */
-        private Set<String> submittedBackgroundIds;
+        private Collection<String> submittedBackgroundIds;
 
         /**
          * 
@@ -237,7 +237,7 @@ public class TopAnatParams {
          * @param submittedForegroundIds
          * @param callType
          */
-        public Builder(Set<String> submittedForegroundIds, String speciesId, CallType callType){
+        public Builder(Collection<String> submittedForegroundIds, String speciesId, CallType callType){
             this(submittedForegroundIds, null, speciesId, callType);
         }
 
@@ -247,9 +247,8 @@ public class TopAnatParams {
          * @param speciesId
          * @param callType
          */
-        public Builder(Set<String> submittedForegroundIds, Set<String> submittedBackgroundIds,
-                String speciesId,
-                CallType callType) {
+        public Builder(Collection<String> submittedForegroundIds, Collection<String> submittedBackgroundIds,
+                String speciesId, CallType callType) {
             log.entry(submittedForegroundIds,submittedBackgroundIds,speciesId,callType);
             this.submittedForegroundIds = submittedForegroundIds;
             this.submittedBackgroundIds = submittedBackgroundIds;
@@ -540,7 +539,8 @@ public class TopAnatParams {
                     //gene filter 
                     this.submittedBackgroundIds != null? new GeneFilter(this.submittedBackgroundIds): null, 
                     //condition filter
-                    Arrays.asList(new ConditionFilter(null, Arrays.asList(this.devStageId))), 
+                    StringUtils.isBlank(this.devStageId)? null: 
+                        Arrays.asList(new ConditionFilter(null, Arrays.asList(this.devStageId))), 
                     //data propagation
                     new DataPropagation(PropagationState.SELF, PropagationState.SELF_OR_DESCENDANT), 
                     this.getExpressionCallData()

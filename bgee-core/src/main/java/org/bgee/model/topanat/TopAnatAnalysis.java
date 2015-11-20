@@ -14,6 +14,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -23,6 +24,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeProperties;
 import org.bgee.model.ServiceFactory;
+import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.gene.Gene;
@@ -46,6 +48,9 @@ public class TopAnatAnalysis {
      * 
      */
     private final static String FILE_PREFIX = "topAnat_";
+    
+    protected final static AnatEntity FAKE_ANAT_ENTITY_ROOT = new AnatEntity("BGEE:0", "root", 
+            "A root added on top of all orphan terms.");
 
     /**
      * 
@@ -259,7 +264,11 @@ public class TopAnatAnalysis {
             this.rManager.performRFunction(this.getRScriptConsoleFileName());
 
             this.move(tmpFile, finalFile, false);
-            this.move(tmpPdfFile, finalPdfFile, false);
+            //maybe it was not requested to generate the pdf, or there was no results 
+            //and this file was not generated
+            if (Files.exists(tmpPdfFile)) {
+                this.move(tmpPdfFile, finalPdfFile, false);
+            }
 
         } finally {
             Files.deleteIfExists(tmpFile);
@@ -303,12 +312,11 @@ public class TopAnatAnalysis {
             this.controller.acquireWriteLock(tmpFileName);
             this.controller.acquireWriteLock(fileName);
 
-            //check, AFTER having acquired the locks, that the final files do not 
-            //already exist (maybe another thread generated the files before this one 
-            //acquires the lock)
+            //if the file already exists, we remove it, because we need anyway to call writeRcodeFile, 
+            //to set the R code (bad design)
             if (Files.exists(finalFile)) {
-                log.info("R code file already generated.");
-                log.exit(); return;
+                log.info("R code file already generated, removing it to reload the R code.");
+                Files.delete(finalFile);
             }
 
             this.writeRcodeFile(tmpFileName);
@@ -334,13 +342,15 @@ public class TopAnatAnalysis {
 
         try (PrintWriter out = new PrintWriter(new BufferedWriter(
                 new FileWriter(RcodeFile)))) {
+            //TODO: not good to manually add the ".tmp" here, maybe the method could take 
+            //these two file names as argument
             out.println(this.rManager.generateRCode(
                     this.getResultFileName()+".tmp",
                     this.getResultPDFFileName()+".tmp",
                     this.getAnatEntitiesNamesFileName(),
                     this.getAnatEntitiesRelationshipsFileName(),
                     this.getGeneToAnatEntitiesFileName(),
-                    this.params.getSubmittedBackgroundIds()));
+                    this.params.getSubmittedForegroundIds()));
         }
 
         log.exit();
@@ -419,9 +429,11 @@ public class TopAnatAnalysis {
 
         try (PrintWriter out = new PrintWriter(new BufferedWriter(
                 new FileWriter(AnatEntitiesNameFile)))) {
-            this.anatEntityService.getAnatEntities(this.params.getSpeciesId())
+            this.anatEntityService.loadAnatEntitiesBySpeciesIds(Arrays.asList(this.params.getSpeciesId()))
             .forEach(entity 
                     -> out.println(entity.getId() + "\t" + entity.getName().replaceAll("'", "")));
+            //We add a fake root, TopAnat doesn't manage multiple root
+            out.println(FAKE_ANAT_ENTITY_ROOT.getId() + "\t" + FAKE_ANAT_ENTITY_ROOT.getName());
         }
 
         log.exit();
@@ -433,10 +445,25 @@ public class TopAnatAnalysis {
             throws IOException {
         log.entry(AnatEntitiesRelFile);
 
+        Map<String, Set<String>> relations = this.anatEntityService.loadDirectIsAPartOfRelationships(
+                Arrays.asList(this.params.getSpeciesId()));
+        
+        //We add a fake root, and we map all orphan terms to it: TopAnat don't manage multiple roots. 
+        //Search for parent terms never seen as child of another term.
+        Set<String> allChildIds = relations.values().stream()
+                .flatMap(Set::stream).collect(Collectors.toSet());
+        Set<String> roots = relations.keySet().stream()
+                .filter(termId -> !allChildIds.contains(termId))
+                .collect(Collectors.toSet());
+        log.trace("Roots identified in the graph: " + roots);
+        assert roots.size() > 0;
+        if (roots.size() > 1) {
+            relations.put(FAKE_ANAT_ENTITY_ROOT.getId(), roots);
+        }
+        
         try (PrintWriter out = new PrintWriter(new BufferedWriter(
                 new FileWriter(AnatEntitiesRelFile)))) {
-            this.anatEntityService.getAnatEntitiesRelationships(this.params.getSpeciesId())
-            .forEach(
+            relations.forEach(
                     (id,descentIds) -> descentIds.forEach(
                             (descentId) -> out.println(descentId + '\t' + id)));
         }

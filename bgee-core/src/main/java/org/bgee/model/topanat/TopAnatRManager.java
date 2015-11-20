@@ -147,7 +147,7 @@ public class TopAnatRManager {
         //code.addRCode("resFis.under <- getSigGroups(myData, test.stat)");
 
         code.addRCode("    tableOver <- makeTable(myData,score(resFis), "+this.params.getFdrThreshold() + " , organNames)");
-        code.addRCode("    tableOver <- tableOver[order(tableOver[,7]),]");
+        //Do NOT sort the table again here. Already sorted by makeTable
 
         code.addRCode("    print(nrow(tableOver))");
         code.addRCode("    print(ncol(tableOver))");

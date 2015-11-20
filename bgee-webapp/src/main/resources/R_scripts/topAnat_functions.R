@@ -306,7 +306,7 @@ makeTable <- function(myData, scores, cutoff, names){
     topTerms <- cbind(odds, foldEnrichment , topTerms, fdr[row.names(topTerms)])
     topTable <- merge(names, topTerms, by.x=0, by.y=0)
     names(topTable) <- c("OrganId", "OrganName", "Annotated", "Significant", "Expected", "foldEnrichment" , "p", "fdr")
-    topTable <- topTable[order(topTable$p), ]
+    topTable <- topTable[order(as.numeric(topTable$p)), ]
 
     return(topTable)
   } else{

@@ -193,7 +193,7 @@ public class TopAnatTest extends TestAncestor {
      * Check that all files are written on the disk
      * @throws IOException 
      */
-    @Test
+    //@Test
     public void testFiles() throws IOException{
 
         this.topAnatController.proceedToTopAnatAnalyses().forEach(System.out::println);
@@ -255,7 +255,7 @@ public class TopAnatTest extends TestAncestor {
      * Test the behavior of areAnalysesDone()
      * @throws IOException 
      */
-    @Test
+    //@Test
     public void testAreAnalysesDone(){
         assertFalse(this.topAnatController.areAnalysesDone());
         this.topAnatController.proceedToTopAnatAnalyses().forEach(System.out::println);
@@ -266,7 +266,7 @@ public class TopAnatTest extends TestAncestor {
      * Test that the results are correctly parsed from the file on the disk
      * @throws IOException 
      */
-    @Test
+    //@Test
     public void testParseResult() throws IOException{
         // Run the analysis to ensure that all needed files are created
         this.topAnatController.proceedToTopAnatAnalyses().forEach(System.out::println);

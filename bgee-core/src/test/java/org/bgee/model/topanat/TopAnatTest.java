@@ -115,8 +115,8 @@ public class TopAnatTest {
                 new HashMap<String,Set<String>>();
         anatEntitiesRelationships.put("A1", new HashSet<String>(Arrays.asList("A2","A3")));
         anatEntitiesRelationships.put("A3", new HashSet<String>(Arrays.asList("A4")));        
-        when(mockAnatEntityService.getAnatEntities(any(String.class))).thenReturn(anatEntities);
-        when(mockAnatEntityService.getAnatEntitiesRelationships(any(String.class)))
+        when(mockAnatEntityService.loadAnatEntitiesBySpeciesIds(anyCollectionOf(String.class))).thenReturn(anatEntities);
+        when(mockAnatEntityService.loadDirectIsAPartOfRelationships(anyCollectionOf(String.class)))
         .thenReturn(anatEntitiesRelationships);
         when(mockGene1.getId()).thenReturn("G1");
         when(mockGene2.getId()).thenReturn("G2");
@@ -149,7 +149,7 @@ public class TopAnatTest {
         when(mockExpressionCall3.getGeneId()).thenReturn("G3");
         when(mockExpressionCall4.getGeneId()).thenReturn("G4");
         when(mockExpressionCall5.getGeneId()).thenReturn("G5");
-        when(mockAnatEntityService.getAnatEntities(any(String.class))).thenReturn(anatEntities);
+        when(mockAnatEntityService.loadAnatEntitiesBySpeciesIds(anyCollectionOf(String.class))).thenReturn(anatEntities);
         when(mockCondition.getAnatEntityId())
         .thenReturn("A1").thenReturn("A2").thenReturn("A3").thenReturn("A4").thenReturn("A4");      
 

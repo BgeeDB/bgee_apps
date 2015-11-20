@@ -114,6 +114,8 @@ public class RequestParameters {
      * An {@code int} that is the maximum total length of the parameters, 
      * whether provided by POST or GET method, for security reasons.
      */
+    // XXX: could be moved to URLParameters, in which case we should add a getter method to
+    // URLParameters class to access this parameter
     private static final int SECURE_MAX_URL_LENGTH = 100000000;
 
     /**
@@ -763,6 +765,8 @@ public class RequestParameters {
                                   return Integer.parseInt(value);
                               } else if (parameter.getType().equals(Boolean.class)){
                                   return castToBoolean(value);
+                              } else if (parameter.getType().equals(Double.class)){
+                                  return Double.parseDouble(value);
                               } else {
                                   throw log.throwing(new IllegalStateException(
                                           "Unsupported parameter type: " + parameter.getType()));
@@ -2030,10 +2034,10 @@ public class RequestParameters {
      * {@link URLParameters#getParamFdrThreshold()}. Equivalent to calling 
      * {@link #getFirstValue(Parameter)} for this parameter.
      * 
-     * @return  An {@code Float} that is the value of the {@code fdr_thr} URL parameter.
+     * @return  An {@code Double} that is the value of the {@code fdr_thr} URL parameter.
      *          Can be {@code null}. 
      */
-    public Float getFdrThreshold() {
+    public Double getFdrThreshold() {
         return this.getFirstValue(this.getUrlParametersInstance().getParamFdrThreshold());
     }
     /**
@@ -2041,10 +2045,10 @@ public class RequestParameters {
      * {@link URLParameters#getParamPValueThreshold()}. Equivalent to calling 
      * {@link #getFirstValue(Parameter)} for this parameter.
      * 
-     * @return  An {@code Float} that is the value of the {@code pvalue_thr} URL parameter.
+     * @return  An {@code Double} that is the value of the {@code p_value_thr} URL parameter.
      *          Can be {@code null}. 
      */
-    public Float getPValueThreshold() {
+    public Double getPValueThreshold() {
         return this.getFirstValue(this.getUrlParametersInstance().getParamPValueThreshold());
     }
     /**

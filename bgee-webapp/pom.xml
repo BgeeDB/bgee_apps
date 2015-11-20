@@ -245,6 +245,19 @@
                                  relative to the root of the WAR file -->
                             <targetPath>WEB-INF/classes</targetPath>
                         </resource>
+                        <!-- R resources -->
+                        <resource>
+                            <!-- this is relative to the pom.xml directory -->
+                            <directory>src/main/resources/</directory>
+                            <includes>
+                                <include>R_scripts/</include>
+                            </includes>
+                            <filtering>false</filtering>
+                            <!-- override the destination directory for this resource, 
+                                 relative to the root of the WAR file -->
+                            <targetPath>WEB-INF/classes</targetPath>
+                        </resource>
+                        
                     </webResources>
                     
                     <attachClasses>true</attachClasses>

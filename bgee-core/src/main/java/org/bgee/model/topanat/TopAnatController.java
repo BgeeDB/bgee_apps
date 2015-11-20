@@ -157,6 +157,10 @@ public class TopAnatController {
     public Optional<TaskManager> getTaskManager() {
         return taskManager;
     }
+    
+    public List<TopAnatParams> getTopAnatParams() {
+        return this.topAnatParams;
+    }
 
     // *************************************************
     // FILE LOCKING

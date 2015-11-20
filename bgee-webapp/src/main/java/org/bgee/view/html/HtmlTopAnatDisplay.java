@@ -2,8 +2,6 @@ package org.bgee.view.html;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -12,9 +10,6 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.TaskManager;
-import org.bgee.model.anatdev.DevStage;
-import org.bgee.model.species.Species;
-import org.bgee.model.topanat.TopAnatResults;
 import org.bgee.view.TopAnatDisplay;
 
 /**
@@ -77,7 +72,7 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
     }
     
     @Override
-    public void sendResultResponse(TopAnatResults results) {
+    public void sendResultResponse(LinkedHashMap<String, Object> data, String msg) {
         throw log.throwing(new UnsupportedOperationException("Not available for HTML display"));
     }
 
@@ -99,26 +94,6 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
     @Override
     public void sendTopAnatParameters(String hash) {
         throw log.throwing(new UnsupportedOperationException("Not available for HTML display"));
-    }
-
-    @Override
-    public void sendNewJobResponse(int jobTrackingId) {
-        throw log.throwing(new UnsupportedOperationException("Not available for HTML display"));
-    }
-
-    private String getForm(boolean isActive) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    private String getJobInfo() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    private String getResults() {
-        // TODO Auto-generated method stub
-        return null;
     }
 
     @Override

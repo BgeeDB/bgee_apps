@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.controller.CommandTopAnat.GeneListResponse;
 
 /**
  * This class is designed to declare and provide all {@code Parameter<T>} that
@@ -192,7 +191,7 @@ public class URLParameters {
      */
     private static final Parameter<String> FOREGROUND_LIST = new Parameter<String>("fg_list",
             false, true, DEFAULT_SEPARATORS, true, DEFAULT_IS_SECURE, 
-            DEFAULT_MAX_SIZE, DEFAULT_LIST_FORMAT, String.class);
+            1000000, DEFAULT_LIST_FORMAT, String.class);
     /**
      * A {@code Parameter<String>} that contains the foreground gene ID file to be used 
      * for TopAnat analysis.
@@ -200,7 +199,7 @@ public class URLParameters {
      */
     private static final Parameter<String> FOREGROUND_FILE = new Parameter<String>("fg_file",
             false, false, null, false, true, 
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+            1000000, DEFAULT_FORMAT, String.class);
     /**
      * A {@code Parameter<String>} that contains the background gene IDs to be used 
      * for TopAnat analysis.
@@ -274,20 +273,20 @@ public class URLParameters {
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Integer.class);
 
     /**
-     * A {@code Parameter<Float>} that contains the FDR threshold to be used for TopAnat analysis.
+     * A {@code Parameter<Double>} that contains the FDR threshold to be used for TopAnat analysis.
      * Corresponds to the URL parameter "fdr_thr".
      */
-    private static final Parameter<Float> FDR_THRESHOLD = new Parameter<Float>("fdr_thr",
+    private static final Parameter<Double> FDR_THRESHOLD = new Parameter<Double>("fdr_thr",
             false, false, null, true, DEFAULT_IS_SECURE, 
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Float.class);
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Double.class);
     /**
-     * A {@code Parameter<Float>} that contains the p-value threshold to be used
+     * A {@code Parameter<Double>} that contains the p-value threshold to be used
      * for TopAnat analysis.
-     * Corresponds to the URL parameter "pvalue_thr".
+     * Corresponds to the URL parameter "p_value_thr".
      */
-    private static final Parameter<Float> P_VALUE_THRESHOLD = new Parameter<Float>("pvalue_thr",
+    private static final Parameter<Double> P_VALUE_THRESHOLD = new Parameter<Double>("p_value_thr",
             false, false, null, true, DEFAULT_IS_SECURE, 
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Float.class);
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Double.class);
     /**
      * A {@code Parameter<Integer>} that contains the job ID to be used to track a job.
      * Corresponds to the URL parameter "jobId".
@@ -584,18 +583,18 @@ public class URLParameters {
         return NB_NODE;
     }
     /**
-     * @return  A {@code Parameter<Float>} defining a FDR threshold to be used for TopAnat analysis.
+     * @return  A {@code Parameter<Double>} defining a FDR threshold to be used for TopAnat analysis.
      *          Corresponds to the URL parameter "fdr_thr".
      */
-    public Parameter<Float> getParamFdrThreshold() {
+    public Parameter<Double> getParamFdrThreshold() {
         return FDR_THRESHOLD;
     }
     /**
-     * @return  A {@code Parameter<Float>} defining a p-value threshold to be used 
+     * @return  A {@code Parameter<Double>} defining a p-value threshold to be used 
      *          for TopAnat analysis.
-     *          Corresponds to the URL parameter "pvalue_thr".
+     *          Corresponds to the URL parameter "p_value_thr".
      */
-    public Parameter<Float> getParamPValueThreshold() {
+    public Parameter<Double> getParamPValueThreshold() {
         return P_VALUE_THRESHOLD;
     }
     /**

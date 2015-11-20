@@ -10,7 +10,6 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.TaskManager;
-import org.bgee.model.topanat.TopAnatResults;
 import org.bgee.view.JsonHelper;
 import org.bgee.view.TopAnatDisplay;
 
@@ -66,19 +65,6 @@ public class JsonTopAnatDisplay extends JsonParentDisplay implements TopAnatDisp
     }
 
     @Override
-    public void sendNewJobResponse(int jobTrackingId) {
-        log.entry(jobTrackingId);
-        
-        LinkedHashMap<String, Object> data = new LinkedHashMap<>();
-        data.put(this.getRequestParameters().getUrlParametersInstance().getParamJobId().getName(),
-                jobTrackingId);
-        
-        this.sendResponse("New TopAnat analyze launch", data);
-        
-        log.exit();
-    }
-
-    @Override
     public void sendTrackingJobResponse(LinkedHashMap<String, Object> data, String msg) {
         log.entry(data, msg);        
         this.sendResponse(msg, data);
@@ -86,8 +72,10 @@ public class JsonTopAnatDisplay extends JsonParentDisplay implements TopAnatDisp
     }
 
     @Override
-    public void sendResultResponse(TopAnatResults results) {
-        // TODO Auto-generated method stub
+    public void sendResultResponse(LinkedHashMap<String, Object> data, String msg) {
+        log.entry(data, msg);        
+        this.sendResponse(msg, data);
+        log.exit();
     }
 
     @Override

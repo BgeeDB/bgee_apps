@@ -21,10 +21,12 @@ import java.util.stream.Stream;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.PageNotFoundException;
+import org.bgee.model.BgeeEnum;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.TaskManager;
 import org.bgee.model.anatdev.DevStage;
@@ -134,109 +136,7 @@ public class CommandTopAnat extends CommandParent {
         // New job submission
         } else if (this.requestParameters.isATopAnatSubmitJob()) {
             
-            // TODO geneinfo?
-            // Get submitted params
-            List<String> subFgIds = this.requestParameters.getForegroundList();
-            List<String> subBgIds = this.requestParameters.getBackgroundList(); 
-            List<String> subCallTypes = this.requestParameters.getExprType(); 
-            String subDataQuality = this.requestParameters.getDataQuality();
-            // XXX: We cannot use convert of DataQuality because
-            //      "all" does not equivalent to "low", non?
-            DataQuality dataQuality = DataQuality.HIGH; 
-            if (subDataQuality != null && subDataQuality.equals("all")) {
-                dataQuality = DataQuality.LOW;
-            }
-            List<String> subDataTypes = this.requestParameters.getDataType();
-            List<String> subDevStages = this.requestParameters.getDevStage(); 
-            String subDecorrType = this.requestParameters.getDecorrelationType(); 
-            Integer subNodeSize = this.requestParameters.getNodeSize(); 
-            Integer subNbNodes = this.requestParameters.getNbNode(); 
-            Float subFdrThr = this.requestParameters.getFdrThreshold(); 
-            Float subPValueThr = this.requestParameters.getPValueThreshold();
-
-            // Define species ID
-            GeneListResponse fgGeneListResponse = this.getGeneResponse(subFgIds, null);
-            GeneListResponse bgGeneListResponse; 
-            String speciesId = fgGeneListResponse.getSelectedSpecies();
-            if (subBgIds != null && !subBgIds.isEmpty()) {
-                bgGeneListResponse = this.getGeneResponse(subBgIds, null);
-                // We take selected species ID of background if not empty.
-                speciesId = bgGeneListResponse.getSelectedSpecies();
-            }
-            
-            // enlever les gene de la bonne espece
-            // check fg no in bg
-            // cleanner les list avant de les envoyer à top anat
-            // fg: keep genes valid in the goog species
-            // We do not check parameters, because it's done by the builder            
-            // XXX: Do we need to check that subFgIds and subBgIds (if subBgIds not null) 
-            //      have the same selected species
-            // XXX: Do we need to check that subFgIds are contains in subBgIds (if subBgIds not null)
-            // XXX: Do we need to check that subCallTypes
-            
-            // One TopAnat analyze has one call type and one dev. stage
-            List<TopAnatParams> allTopAnatParams = new ArrayList<TopAnatParams>();
-            for (String callType: subCallTypes) {
-                for (String devStage: subDevStages) {
-                    CallType foundCallType = CallType.Expression.convertToExpression(callType);
-                    if (foundCallType == null) {
-                        foundCallType = CallType.DiffExpression.convertToDiffExpression(callType);
-                    }
-                    TopAnatParams.Builder builder = new TopAnatParams.Builder(
-                            new HashSet<>(subFgIds), new HashSet<>(subBgIds),
-                            speciesId, foundCallType);
-                    builder.dataQuality(dataQuality);
-                    builder.dataTypes(DataType.convertToDataTypeSet(new HashSet<>(subDataTypes)));
-                    builder.devStageId(devStage);
-                    builder.decorelationType(DecorelationType.convertToDecorelationType(subDecorrType));
-                    builder.nodeSize(subNodeSize);
-                    builder.numberOfSignificantNode(subNbNodes);
-                    builder.fdrThreshold(subFdrThr.doubleValue());
-                    builder.pvalueThreshold(subPValueThr.doubleValue());
-                    allTopAnatParams.add(builder.build());
-                }
-            }
-
-            // Create the ID to track job creating a random int
-            Integer jobTrackingId = null;
-            boolean hasCreateTaskManager = false;
-            for (int i = 0; i < MAX_TASK_MANAGER_RETRY ; i++) {
-                try {
-                    jobTrackingId = ThreadLocalRandom.current().nextInt();
-                    TaskManager.registerTaskManager(jobTrackingId);
-                } catch (IllegalArgumentException | IllegalStateException e) {
-                    continue;
-                }
-                log.debug("New job ID: {}", jobTrackingId);
-                hasCreateTaskManager = true;
-                break;
-            }
-            
-            if (!hasCreateTaskManager) {
-                throw log.throwing(new RuntimeException("Failed to get task manager after" +
-                        MAX_TASK_MANAGER_RETRY + " tries"));
-            }
-            
-            TopAnatController controller = new TopAnatController(allTopAnatParams, prop, serviceFactory);
-            
-            // Job ID if available, add hash, add page, add action
-//            display.sendTrakingJobResponse(null);
-
-            // Launch the TopAnat analysis
-            Stream<TopAnatResults> results = controller.proceedToTopAnatAnalyses();
-            
-            // Check if results are already cached
-            boolean isCached = false;
-            // TODO boolean cached = controller.hasResult();
-            if (isCached) {
-                // We retrieve immediately results
-                LinkedHashMap<String, Object> data = new LinkedHashMap<>();
-                // TODO add hash
-                // TODO add url
-                // TODO add results if available.
-//                display.sendResultResponse(data);
-            } else {
-            }
+            this.submitNewJob(display);
 
         // Job tracking
         } else if (this.requestParameters.isATopAnatTrackingJob()) {
@@ -249,7 +149,7 @@ public class CommandTopAnat extends CommandParent {
             }
             
             // Retrieve task manager associated to the provided ID
-            TaskManager taskManager = TaskManager.getTaskManager(jobID);
+//            TaskManager taskManager = TaskManager.getTaskManager(jobID);
             JobStatus jobStatus;
             //TODO Remove, it's for live tests
             if (nbJobTrackingTries % 3 == 0) {
@@ -272,17 +172,30 @@ public class CommandTopAnat extends CommandParent {
                     this.requestParameters.getGeneInfo()) {
                 data.putAll(this.getGeneResponses());
             }
-            display.sendTrackingJobResponse(data, jobStatus.name() + " job");
+            display.sendTrackingJobResponse(data, "Job is " + jobStatus.name());
 
-        // Get result 
+        // Get results
         } else if (this.requestParameters.isATopAnatGetResult()) {
+            
+            // TODO get allTopAnatParams
+            TopAnatController controller = new TopAnatController(
+                    null, prop, serviceFactory);
+            Stream<TopAnatResults> topAnatResults = controller.proceedToTopAnatAnalyses();
+
+//            topAnatResults
+//                .map(TopAnatResults::getRows)
+//                .collect(Collectors.toSet());
+
             LinkedHashMap<String, Object> data = new LinkedHashMap<>();
-//            data.put("results", results);
             if (this.requestParameters.getGeneInfo() != null &&
                     this.requestParameters.getGeneInfo()) {
-                // We add gene info response
                 data.putAll(this.getGeneResponses());
             }
+            
+            
+            
+//            data.put("results", results);
+            display.sendResultResponse(data, "");
 
         // Home page, empty
         } else if (this.requestParameters.getAction() == null) {
@@ -297,6 +210,10 @@ public class CommandTopAnat extends CommandParent {
         log.exit();
     }
     
+    /**
+     * @return
+     * @throws InvalidRequestException
+     */
     private LinkedHashMap<String, Object> getGeneResponses() throws InvalidRequestException {
         log.entry();
 
@@ -535,6 +452,256 @@ public class CommandTopAnat extends CommandParent {
         return log.exit(devStages.stream()
                 .filter(e -> e.getLevel() == level)
                 .collect(Collectors.toSet()));
+    }
+
+    /**
+     * @param display
+     * @throws InvalidRequestException
+     * @throws MissingParameterException
+     */
+    private void submitNewJob(TopAnatDisplay display) throws InvalidRequestException, MissingParameterException {
+        log.entry(display);
+
+        // Get submitted params
+        // Fg gene list cannot be null
+        final List<String> subFgIds = Collections.unmodifiableList(Optional.ofNullable(
+                this.requestParameters.getForegroundList()).orElse(new ArrayList<>()));
+        if (subFgIds.isEmpty()) {
+            throw log.throwing(new InvalidRequestException(
+                    "A foreground gene ID list must be provided"));
+        }
+    
+        // Bg gene list can be null if the default species background should be used
+        final List<String> subBgIds = Collections.unmodifiableList(Optional.ofNullable(
+                this.requestParameters.getBackgroundList()).orElse(new ArrayList<>())); 
+        boolean hasBgList = !subBgIds.isEmpty();
+    
+        // Data quality cannot be null
+        final List<String> subCallTypes = Collections.unmodifiableList(Optional.ofNullable(
+                this.requestParameters.getExprType()).orElse(new ArrayList<>()));
+        if (subCallTypes.isEmpty()) {
+            throw log.throwing(new InvalidRequestException("A expression type must be provided"));
+        }
+        Set<String> callTypes = new HashSet<>(subCallTypes);
+        // TODO remove when "ALL" call type is removed from web app
+        if (callTypes.contains("ALL")) {
+            callTypes.remove("ALL");
+            callTypes.add(CallType.Expression.EXPRESSED.name());
+            callTypes.add(CallType.DiffExpression.DIFF_EXPRESSED.name());
+        }
+        
+        // Data quality can be null if there is no filter to be applied
+        final String subDataQuality = this.requestParameters.getDataQuality();
+        DataQuality dataQuality = null; 
+        if (subDataQuality != null) {
+            if (subDataQuality.equalsIgnoreCase(DataQuality.HIGH.name())) {
+                dataQuality = DataQuality.HIGH;
+            } else {
+                dataQuality = DataQuality.LOW;
+            }
+        }
+
+        // Data types can be null if there is no filter to be applied
+        final List<String> subDataTypes = Collections.unmodifiableList(Optional.ofNullable(
+                this.requestParameters.getDataType()).orElse(new ArrayList<>()));
+        Set<String> dataTypes = null; 
+        if (!subDataTypes.isEmpty()) {
+            dataTypes = new HashSet<>(subDataTypes);
+        }
+    
+        // Dev. stages can be null if all selected species stages should be used
+        final List<String> subDevStages = Collections.unmodifiableList(Optional.ofNullable(
+                this.requestParameters.getDevStage()).orElse(new ArrayList<>()));
+        Set<String> devStageIds = null; 
+        if (!subDevStages.isEmpty()) {
+            devStageIds = new HashSet<>(subDevStages);
+        }
+
+        // Decorrelation type can be null if all selected species stages should be used
+        final String subDecorrType = this.requestParameters.getDecorrelationType();
+        if (StringUtils.isBlank(subDecorrType)) {
+            throw log.throwing(new InvalidRequestException("A decorrelation type must be provided"));
+        }
+        
+        final Integer subNodeSize = this.requestParameters.getNodeSize(); 
+        if (subNodeSize != null && subNodeSize <= 0) {
+            throw log.throwing(new InvalidRequestException("A node size must be positive"));
+        }
+        
+        final Integer subNbNodes = this.requestParameters.getNbNode(); 
+        if (subNbNodes != null && subNbNodes <= 0) {
+            throw log.throwing(new InvalidRequestException("A number of nodes must be positive"));
+        }
+        
+        final Double subFdrThr = this.requestParameters.getFdrThreshold(); 
+        if (subFdrThr != null && subFdrThr <= 0) {
+            throw log.throwing(new InvalidRequestException("A FDR threshold must be positive"));
+        }
+        
+        final Double subPValueThr = this.requestParameters.getPValueThreshold();
+        if (subPValueThr != null && subPValueThr <= 0) {
+            throw log.throwing(new InvalidRequestException("A p-value threshold must be positive"));
+        }
+        
+        Set<String> cleanFgIds = new HashSet<>(subFgIds);
+        Set<String> cleanBgIds = null;
+        String speciesId = null;
+        // If a bg list is provided, we do a gene validation on it and clean both lists
+        if (hasBgList) {
+            GeneListResponse bgGeneResponse = this.getGeneResponse(subBgIds, null);
+            speciesId = bgGeneResponse.getSelectedSpecies();
+            devStageIds = this.cleanDevStages(bgGeneResponse, devStageIds);
+            cleanBgIds = new HashSet<>(subBgIds);
+            // Remove in fg gene IDs that are not in bg list
+            cleanFgIds.retainAll(subBgIds);
+            if (cleanFgIds.isEmpty()) {
+                throw log.throwing(new InvalidRequestException("No gene IDs of foreground "
+                        + "are in background gene ID list"));
+            }
+            cleanFgIds = this.cleanGeneIds(bgGeneResponse, cleanFgIds);
+            cleanBgIds = this.cleanGeneIds(bgGeneResponse, cleanBgIds);
+        }
+        
+        // Get gene response for clean fg gene IDs
+        GeneListResponse fgGeneResponse = this.getGeneResponse(new ArrayList<>(cleanFgIds), null);
+        
+        // If a bg list is NOT provided, we clean fg list and get data according to fgGeneResponse
+        if (!hasBgList) {
+            cleanFgIds = this.cleanGeneIds(fgGeneResponse, cleanFgIds);
+            devStageIds = this.cleanDevStages(fgGeneResponse, devStageIds);
+            speciesId = fgGeneResponse.getSelectedSpecies();
+        }
+
+        assert cleanFgIds != null && !cleanFgIds.isEmpty();
+        assert devStageIds != null && !devStageIds.isEmpty();
+        assert StringUtils.isNotBlank(speciesId);
+        assert callTypes == null || callTypes.isEmpty();
+
+        // One TopAnat analyze has one call type and one dev. stage
+        List<TopAnatParams> allTopAnatParams = new ArrayList<TopAnatParams>();
+        for (String callType: callTypes) {
+            if (callType.isEmpty()) {
+                continue;
+            }
+            for (String devStageId: devStageIds) {
+                log.debug("Iteration: callType={} - devStageId={}", callType, devStageId);
+                if (StringUtils.isBlank(devStageId)) {
+                    continue;
+                }
+                CallType callTypeEnum = null;
+                
+                if (BgeeEnum.isInEnum(CallType.Expression.class, callType)) {
+                    callTypeEnum = CallType.Expression.convertToExpression(callType);
+                } else if (BgeeEnum.isInEnum(CallType.DiffExpression.class, callType)) {
+                    callTypeEnum = CallType.DiffExpression.convertToDiffExpression(callType);
+                } else {
+                    throw log.throwing(new InvalidRequestException("Unkown call type: " + callType));
+                }
+
+                TopAnatParams.Builder builder = new TopAnatParams.Builder(
+                        cleanFgIds, cleanBgIds, speciesId, callTypeEnum);
+                builder.dataQuality(dataQuality);
+                if (dataTypes == null || BgeeEnum.areAllInEnum(DataType.class, dataTypes)) {
+                    builder.dataTypes(DataType.convertToDataTypeSet(dataTypes));
+                } else {
+                    throw log.throwing(new InvalidRequestException("Error in data types: " + 
+                            subDecorrType));
+                }
+                builder.devStageId(devStageId);
+                if (BgeeEnum.isInEnum(DecorelationType.class, subDecorrType)) {
+                    builder.decorelationType(DecorelationType.convertToDecorelationType(subDecorrType));
+                } else {
+                    throw log.throwing(new InvalidRequestException("Unkown decorrelation type: " + 
+                            subDecorrType));
+                }
+                builder.nodeSize(subNodeSize);
+                builder.numberOfSignificantNode(subNbNodes);
+                builder.fdrThreshold(subFdrThr);
+                builder.pvalueThreshold(subPValueThr);
+                allTopAnatParams.add(builder.build());
+            }
+        }
+
+        // Create the ID to track job creating a random int
+        Integer jobTrackingId = null;
+        boolean hasCreateTaskManager = false;
+        for (int i = 0; i < MAX_TASK_MANAGER_RETRY ; i++) {
+            try {
+                // We want only positive job ID
+                jobTrackingId = Math.abs(ThreadLocalRandom.current().nextInt());
+                TaskManager.registerTaskManager(jobTrackingId);
+            } catch (IllegalArgumentException | IllegalStateException e) {
+                continue;
+            }
+            hasCreateTaskManager = true;
+            break;
+        }
+        
+        if (!hasCreateTaskManager) {
+            throw log.throwing(new RuntimeException("Failed to get task manager after " +
+                    MAX_TASK_MANAGER_RETRY + " tries"));
+        }
+        log.trace("Job ID defined: {}", jobTrackingId);
+        
+        TopAnatController controller = new TopAnatController(allTopAnatParams, prop, serviceFactory);
+        
+        // Job ID if available, add hash
+    
+        LinkedHashMap<String, Object> data = new LinkedHashMap<>();
+        data.put(JOB_RESPONSE_LABEL, new JobResponse(
+                jobTrackingId, JobStatus.RUNNING.name(), this.requestParameters.getDataKey()));
+
+        display.sendTrackingJobResponse(data, "Job is " + JobStatus.RUNNING.name());
+
+        // Launch the TopAnat analysis
+        controller.proceedToTopAnatAnalyses();
+    }
+
+    /**
+     * @param geneResponse
+     * @param geneIds
+     * @return
+     */
+    private Set<String> cleanGeneIds(GeneListResponse geneResponse, Set<String> geneIds) {
+        log.entry(geneResponse, geneIds);
+        
+        Set<String> cleanGeneIds = new HashSet<>(geneIds);
+        
+        // Remove gene IDs that are not in bg selected species.
+        cleanGeneIds.removeAll(geneResponse.getNotInSelectedSpeciesGeneIds());
+        // Remove gene IDs that are in bg undetermined gene IDs
+        cleanGeneIds.removeAll(geneResponse.getUndeterminedGeneIds());
+        
+        if (cleanGeneIds.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("No gene IDs of foreground "
+                    + "are in selected species from background gene ID list"));
+        }
+        
+        return log.exit(cleanGeneIds);
+    }
+
+    /**
+     * @param geneResponse
+     * @param devStageIds
+     * @return
+     */
+    private Set<String> cleanDevStages(GeneListResponse geneResponse, Set<String> devStageIds) {
+        log.entry(geneResponse, devStageIds);
+
+        Set<String> allDevStageIds = geneResponse.getStages().stream()
+                .map(DevStage::getId)
+                .collect(Collectors.toSet()); 
+        if (devStageIds == null) {
+            // We need stages to be able to build all TopAnatParams
+            return log.exit(allDevStageIds);
+        }
+        Set<String> cleanDevStageIds = new HashSet<>(devStageIds);
+        if (!allDevStageIds.containsAll(cleanDevStageIds)) {
+            throw log.throwing(new IllegalArgumentException("Provided developmental stages " +
+                    "are not from selected species"));
+        }
+        
+        return log.exit(cleanDevStageIds);
     }
 
     /**

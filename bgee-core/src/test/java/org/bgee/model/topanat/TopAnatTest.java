@@ -60,6 +60,11 @@ import org.junit.Test;
  * @version Bgee 13, June 2015
  * @since Bgee 13
  */
+//TODO Mathieu: You should have one TopAnatControllerTest (test launching of analyses on mock objects, 
+//of areAnalysesDone, etc), one TopAnatAnalysisTest (with a mock TopAnatRManager creating files 
+//for TopAnatAnalysis to move them, etc), one TopAnatPAramsTest (test the generation of the hash 
+//and of the CallFilters, ...), one TopAnatResultsTest (checking the parsing of a result file), 
+//and one TopAnatRManagerIT, doing an actual analysis with R (class already created, see comments)
 public class TopAnatTest extends TestAncestor {
     private final static Logger log = LogManager.getLogger(TopAnatRealTest.class.getName());
     @Override

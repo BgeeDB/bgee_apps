@@ -66,6 +66,33 @@
                     <reuseForks>false</reuseForks>
                 </configuration>
             </plugin>
+            
+            <!-- Integration tests -->
+            <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-failsafe-plugin</artifactId>
+
+               <configuration>
+                   <!-- Default value of enableAssertions is true, but just to make clear... -->
+                   <enableAssertions>true</enableAssertions>
+                   <!-- See parent pom.xml for explanation about the skipITs variable -->
+                   <skipTests>${skipITs}</skipTests>
+                   <systemPropertyVariables>
+                       <!-- Properties for running R -->
+                       <org.bgee.core.topAnatRScriptExecutable>${it.org.bgee.core.topAnatRScriptExecutable}</org.bgee.core.topAnatRScriptExecutable>
+                   </systemPropertyVariables>
+               </configuration>
+
+               <executions>
+                   <execution>
+                       <id>integration-test</id>
+                       <goals>
+                           <goal>integration-test</goal>
+                           <goal>verify</goal>
+                       </goals>
+                   </execution>
+               </executions>
+           </plugin>
         </plugins>
 
         <finalName>bgee-core-${project.version}</finalName>

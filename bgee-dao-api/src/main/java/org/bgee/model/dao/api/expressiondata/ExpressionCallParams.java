@@ -28,6 +28,8 @@ import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
  * to modify the methods merge, canMerge, hasDataRestrictions, and 
  * getDifferentParametersCount.
  */
+//deprecated because a new CallFilter design is being implemented
+@Deprecated
 public class ExpressionCallParams extends CallParams {
     
     /**

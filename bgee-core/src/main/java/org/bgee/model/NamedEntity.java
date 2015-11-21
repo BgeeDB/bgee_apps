@@ -111,6 +111,9 @@ public abstract class NamedEntity extends Entity {
 		}
 		return true;
 	}
-    
-    
+	
+    @Override
+    public String toString() {
+        return "ID: "+ getId() + " - Name: " + getName() + " - Description: " + getDescription();
+    }
 }

@@ -36,12 +36,12 @@ BEGIN
                (7,'HOG:VALEWID',11,12,511);
 
         INSERT INTO species (speciesId,genus,species,speciesCommonName,taxonId,genomeFilePath,genomeSpeciesId,fakeGeneIdPrefix) 
-        VALUES (11,'gen11','sp11','spCName11',111,'path/genome11',0,''),
-               (21,'gen21','sp21','spCName21',211,'path/genome21',51,'PREFIX51'),
-               (31,'gen31','sp31','spCName31',311,'path/genome31',0,''),
-               (41,'gen41','sp41','spCName41',411,'path/genome41',0,''),
-               (42,'gen41','sp42','spCName42',411,'path/genome42',41,'PREFIX41'),
-               (51,'gen51','sp51','spCName51',511,'path/genome51',0,'');
+        VALUES (11,'gen11','sp11','spCName11',111,'gen11_sp11/gen11_sp11.genome11',0,''),
+               (21,'gen21','sp21','spCName21',211,'gen51_sp51/gen51_sp51.genome51',51,'PREFIX51'),
+               (31,'gen31','sp31','spCName31',311,'gen31_sp31/gen31_sp31.genome31',0,''),
+               (41,'gen41','sp41','spCName41',411,'gen41_sp41/gen41_sp41.genome41',0,''),
+               (42,'gen41','sp42','spCName42',411,'gen41_sp41/gen41_sp41.genome41',41,'PREFIX41'),
+               (51,'gen51','sp51','spCName51',511,'gen51_sp51/gen51_sp51.genome51',0,'');
 
         INSERT INTO gene (geneId,geneName,geneDescription,speciesId,geneBioTypeId,OMAParentNodeId,ensemblGene) 
         VALUES ('ID1','genN1','genDesc1',11,12,5,true),
@@ -192,19 +192,19 @@ BEGIN
                (22,31),
                (23,null);
 
-        INSERT INTO expression(expressionId,geneId,anatEntityId,stageId,estData,affymetrixData,inSituData,rnaSeqData)
-        VALUES (1,'ID3','Anat_id1','Stage_id1','no data','poor quality','high quality','high quality'), 
-               (10,'ID1','Anat_id6','Stage_id8','high quality','high quality','no data','no data'),
-               (2,'ID1','Anat_id6','Stage_id6','high quality','poor quality','high quality','poor quality'),
-               (3,'ID1','Anat_id6','Stage_id7','no data','no data','no data','poor quality'),
-               (4,'ID2','Anat_id2','Stage_id18','high quality','high quality','high quality','high quality'),
-               (5,'ID1','Anat_id7','Stage_id10','poor quality','poor quality','poor quality','poor quality'),
-               (6,'ID2','Anat_id11','Stage_id12','poor quality','high quality','no data','high quality'),
-               (7,'ID2','Anat_id11','Stage_id13','high quality','no data','poor quality','no data'),
-               (8,'ID3','Anat_id3','Stage_id1','high quality','no data','poor quality','no data'),
-               (9,'ID2','Anat_id1','Stage_id9','poor quality','high quality','no data','high quality'),
-               (11,'ID2','Anat_id1','Stage_id2','high quality','no data','poor quality','no data'),
-               (12,'ID1','Anat_id1','Stage_id1','no data','no data','poor quality','no data');
+        INSERT INTO expression(expressionId,geneId,anatEntityId,stageId,estData,affymetrixData,inSituData,rnaSeqData, estMeanRank, affymetrixMeanRank, rnaSeqMeanRank, inSituMeanRank)
+        VALUES (1,'ID3','Anat_id1','Stage_id1','no data','poor quality','high quality','high quality', null, 234.33, 2500.01, 123.2),
+               (10,'ID1','Anat_id6','Stage_id8','high quality','high quality','no data','no data', 122.3, 1222.5, null, null ),
+               (2,'ID1','Anat_id6','Stage_id6','high quality','poor quality','high quality','poor quality', 233.3, 12554.2, 1243.2, 200.0),
+               (3,'ID1','Anat_id6','Stage_id7','no data','no data','no data','poor quality', null, null, null, 5.0),
+               (4,'ID2','Anat_id2','Stage_id18','high quality','high quality','high quality','high quality', 42.1, 234.5, 4321.5, 241.13412),
+               (5,'ID1','Anat_id7','Stage_id10','poor quality','poor quality','poor quality','poor quality', 2343.0, 9032.3, 12003.0, 2353.1),
+               (6,'ID2','Anat_id11','Stage_id12','poor quality','high quality','no data','high quality', 2341.0, 4325.0, 4352.4,252.3),
+               (7,'ID2','Anat_id11','Stage_id13','high quality','no data','poor quality','no data', 2341.0, null, 6533.1, null),
+               (8,'ID3','Anat_id3','Stage_id1','high quality','no data','poor quality','no data', 214.2, null, 23421.1, null),
+               (9,'ID2','Anat_id1','Stage_id9','poor quality','high quality','no data','high quality', 4321.1, 241.5, null, 123.4),
+               (11,'ID2','Anat_id1','Stage_id2','high quality','no data','poor quality','no data', 12.2, null, 4214.2, null),
+               (12,'ID1','Anat_id1','Stage_id1','no data','no data','poor quality','no data', null, null, 14422.1 ,null);
 
         INSERT INTO globalExpression(globalExpressionId,geneId,anatEntityId,stageId,estData,affymetrixData,inSituData,rnaSeqData,originOfLine)
         VALUES (1,'ID3','Anat_id1','Stage_id1','no data','poor quality','high quality','high quality','self'),

@@ -144,7 +144,11 @@ public class TaskManager {
 	 * is killed. 
 	 */
 	private final Thread executor;
-	
+
+    /**
+     * A {@code boolean} indicating whether the task has been started.
+     */
+    private volatile boolean started;
 	/**
 	 * A {@code boolean} indicating whether the task is terminated (successfully 
 	 * or not). Whether it was successfully completed is stored in the attribute 
@@ -206,6 +210,9 @@ public class TaskManager {
 		this.currentSubTaskIndex = 0;
 	}
 	
+	public long getId() {
+	    return id;
+	}
 
 	/**
 	 * Method called to indicate that the task was completed with success. 
@@ -249,6 +256,12 @@ public class TaskManager {
 	public boolean isSuccessful() {
 		return this.successful;
 	}
+    /**
+     * @return  A {@code boolean} indicating whether this task has been started.
+     */
+    public boolean isStarted() {
+        return this.started;
+    }
 	
 	/**
 	 * @return A {@code String} representing the name of the task.
@@ -381,5 +394,88 @@ public class TaskManager {
     	managers.remove(this.id);
     	threadIdsToManagers.remove(this.executor.getId());
     	//this.executor = null;
+    }
+    
+    
+    //***********************
+    // HELPER METHODS
+    //***********************
+
+    /**
+     * Called at the start of a query, by providing the name of the task, 
+     * and the total number of sub-tasks (meaning, "big steps") that it will involve, 
+     * as well as the name of the first sub-task (not mandatory). See {@link 
+     * org.bgee.model.TaskManager to get a definition of tasks and sub-tasks}.
+     * <p>
+     * If a {@code TaskManager} is used, it needs to be registered prior to calling 
+     * this method (see {@link org.bgee.model.TaskManager#registerTaskManager(long)}). 
+     * 
+     * @param taskName              a {@code String} representing the name of the task.
+     * @param totalSubTaskCount     an {@code int} defining the total number of sub-tasks 
+     *                              (meaning, "big steps") that this task will involve.
+     * @param firstSubTaskName      a {@code String} that is the name of the first 
+     *                              sub-task. Can be {@code null} or empty.
+     */
+    //TODO: to change, the first subtask should be set when calling nextSubTask, 
+    //and the index increased when calling endSubTask
+    public void startQuery(String taskName, int totalSubTaskCount, 
+            String firstSubTaskName) {
+        log.entry(taskName, totalSubTaskCount, firstSubTaskName);
+        log.info("Start of the query: {} - first sub-task: {}", 
+                taskName, firstSubTaskName);
+        this.started = true;
+        this.setTaskName(taskName);
+        this.setTotalSubTaskCount(totalSubTaskCount);
+        this.setCurrentSubTaskIndex(0);
+        this.setCurrentSubTaskName(firstSubTaskName);
+        log.exit();
+    }
+
+    /**
+     * Called when a {@code QueryTool} ends its current sub-task
+     * (same concept than {@link org.bgee.model.TaskManager#getCurrentSubTaskName()}), 
+     * to notify a {@code TaskManager}, and for logging purpose.
+     */
+    public void endSubTask() {
+        log.entry();
+        log.debug("Ending sub-task {}", this.currentSubTaskName);
+        log.exit();
+    }
+    /**
+     * Called when the {@code QueryTool} starts its next sub-task
+     * (same concept than {@link org.bgee.model.TaskManager#getCurrentSubTaskName()}), 
+     * to notify a {@code TaskManager}, and for logging purpose.
+     * 
+     * @param subTaskName   A {@code String} that is the name of the next 
+     *                      sub-task starting.
+     */
+    public void nextSubTask(String subTaskName) {
+        log.entry(subTaskName);
+        log.debug("Starting new sub-task {}", subTaskName);
+        this.incrementCurrentSubTaskIndex();
+        this.setCurrentSubTaskName(subTaskName);
+        log.exit();
+    }
+
+    /**
+     * Called when a {@code QueryTool} ends its overall task, to notify 
+     * a {@code TaskManager}, and for logging purpose. This method should
+     * be called by the {@code QueryTool} within a {@code finally} block.
+     * 
+     * @param success   {@code true} if the task was completed with success, 
+     *                  {@code false} if an error occurred or the task was 
+     *                  interrupted. 
+     */
+    public void endQuery(boolean success) {
+        log.entry(success);
+        if (success) {
+           log.info("Query {} completed with success", this.taskName);
+            this.taskCompletedWithSuccess();
+        } else {
+            log.info("Query {} interrupted or terminated with errors", 
+                    this.taskName);
+            this.taskNotCompleted();
+        }
+        log.exit();
     }
 }

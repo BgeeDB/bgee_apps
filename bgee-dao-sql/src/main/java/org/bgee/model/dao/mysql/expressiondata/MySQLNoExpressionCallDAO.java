@@ -247,8 +247,6 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
             label = "noExpressionAffymetrixData";
         } else if (attribute.equals(NoExpressionCallDAO.Attribute.IN_SITU_DATA)) {
             label = "noExpressionInSituData";
-        } else if (attribute.equals(NoExpressionCallDAO.Attribute.RELAXED_IN_SITU_DATA)) {
-            label = "noExpressionRelaxedInSituData";
         } else if (attribute.equals(NoExpressionCallDAO.Attribute.RNA_SEQ_DATA)) {
             label = "noExpressionRnaSeqData";
         } else if (attribute.equals(NoExpressionCallDAO.Attribute.ORIGIN_OF_LINE)) {

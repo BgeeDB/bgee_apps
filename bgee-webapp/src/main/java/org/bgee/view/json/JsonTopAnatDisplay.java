@@ -1,6 +1,7 @@
 package org.bgee.view.json;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -8,12 +9,21 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
+import org.bgee.model.TaskManager;
+import org.bgee.view.JsonHelper;
 import org.bgee.view.TopAnatDisplay;
 
+/**
+ * This class generates the JSON views relative to topAnat.
+ * 
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13, Nov 2015
+ * @since   Bgee 13
+ */
 public class JsonTopAnatDisplay extends JsonParentDisplay implements TopAnatDisplay {
     
     private final static Logger log = LogManager.getLogger(JsonTopAnatDisplay.class.getName());
-
+    
     /**
      * Constructor providing the necessary dependencies. 
      * 
@@ -23,20 +33,53 @@ public class JsonTopAnatDisplay extends JsonParentDisplay implements TopAnatDisp
      *                          current request.
      * @param prop              A {@code BgeeProperties} instance that contains the properties
      *                          to use.
-     * @param factory           The {@code HtmlFactory} that instantiated this object.
+     * @param jsonHelper        A {@code JsonHelper} used to dump variables into Json.
+     * @param factory           The {@code JsonFactory} that was used to instantiate this object.
+     * 
+     * @throws IllegalArgumentException If {@code factory} or {@code jsonHelper} is {@code null}.
      * @throws IOException      If there is an issue when trying to get or to use the
      *                          {@code PrintWriter} 
      */
     public JsonTopAnatDisplay(HttpServletResponse response,
             RequestParameters requestParameters, BgeeProperties prop,
-            JsonFactory factory) throws IllegalArgumentException, IOException {
-        super(response, requestParameters, prop, factory);
+            JsonHelper jsonHelper, JsonFactory factory) throws IllegalArgumentException, IOException {
+        super(response, requestParameters, prop, jsonHelper, factory);
     }
 
     @Override
-    public void displayTopAnatPage() {
+    public void displayTopAnatHomePage() {
+        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
+    }
+
+    @Override
+    public void sendGeneListReponse(LinkedHashMap<String, Object> data, String msg) {
+        log.entry(data, msg);        
+        this.sendResponse(msg, data);
+        log.exit();
+    }
+
+    @Override
+    public void sendTopAnatParameters(String hash) {
         // TODO Auto-generated method stub
         
     }
-    
+
+    @Override
+    public void sendTrackingJobResponse(LinkedHashMap<String, Object> data, String msg) {
+        log.entry(data, msg);        
+        this.sendResponse(msg, data);
+        log.exit();
+    }
+
+    @Override
+    public void sendResultResponse(LinkedHashMap<String, Object> data, String msg) {
+        log.entry(data, msg);        
+        this.sendResponse(msg, data);
+        log.exit();
+    }
+
+    @Override
+    public void sendJobErrorResponse(TaskManager taskManager) {
+        // TODO Auto-generated method stub
+    }
 }

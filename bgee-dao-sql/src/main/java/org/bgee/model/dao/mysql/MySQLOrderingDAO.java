@@ -26,8 +26,8 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
  *              with this {@code OrderingDAO}, to define what attributes to use 
  *              to order the results of a query to this {@code OrderingDAO}.
  */
-public class MySQLOrderingDAO <T extends Enum<?> & DAO.Attribute, 
-                               U extends Enum<?> & OrderingDAO.OrderingAttribute
+public class MySQLOrderingDAO <T extends Enum<T> & DAO.Attribute, 
+                               U extends Enum<U> & OrderingDAO.OrderingAttribute
                               > extends MySQLDAO<T> 
                               implements OrderingDAO<T, U> {
     

@@ -97,6 +97,14 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
+        
+        <!-- Filter for topanat-dev, enabling cross-domain queries 
+             (will make local development easier), 
+             see http://stackoverflow.com/a/30319456/1768736  -->
+        <dependency>
+            <groupId>com.thetransactioncompany</groupId>
+            <artifactId>cors-filter</artifactId>
+        </dependency>
 
     </dependencies>
 
@@ -237,6 +245,19 @@
                                  relative to the root of the WAR file -->
                             <targetPath>WEB-INF/classes</targetPath>
                         </resource>
+                        <!-- R resources -->
+                        <resource>
+                            <!-- this is relative to the pom.xml directory -->
+                            <directory>src/main/resources/</directory>
+                            <includes>
+                                <include>R_scripts/</include>
+                            </includes>
+                            <filtering>false</filtering>
+                            <!-- override the destination directory for this resource, 
+                                 relative to the root of the WAR file -->
+                            <targetPath>WEB-INF/classes</targetPath>
+                        </resource>
+                        
                     </webResources>
                     
                     <attachClasses>true</attachClasses>

@@ -273,6 +273,11 @@ alter table expressedSequenceTag
 add primary key (estId);
 /*!40000 ALTER TABLE `expressedSequenceTag` ENABLE KEYS */;
 
+/*!40000 ALTER TABLE `estRank` DISABLE KEYS */;
+alter table estRank
+add primary key (estLibraryId, geneId);
+/*!40000 ALTER TABLE `estRank` ENABLE KEYS */;
+
 --  ****************************************************
 --  RAW AFFYMETRIX DATA
 --  ****************************************************

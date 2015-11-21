@@ -1,18 +1,22 @@
 package org.bgee.model;
 
+import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.TransferObject;
+import org.bgee.model.expressiondata.CallServiceTest;
 import org.junit.Rule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
+import org.mockito.ArgumentMatcher;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -106,6 +110,57 @@ public abstract class TestAncestor {
         when(rs.getAllTOs()).thenReturn(clonedValues);
         
         return rs;
+    }
+    
+    /**
+     * An {@code ArgumentMatcher} allowing to determine whether two {@code Collection}s 
+     * contains the same elements (as considered by their {@code equals} method), 
+     * independently of the iteration order of the {@code Collection}s.
+     */
+    protected static class IsCollectionEqual<T> extends ArgumentMatcher<Collection<T>> {
+        private final static Logger log = LogManager.getLogger(IsCollectionEqual.class.getName());
+        private final Collection<?> expectedCollection;
+        
+        IsCollectionEqual(Collection<?> expectedCollection) {
+            log.entry(expectedCollection);
+            this.expectedCollection = expectedCollection;
+            log.exit();
+        }
+
+        @Override
+        public boolean matches(Object argument) {
+            log.entry(argument);
+            log.trace("Trying to match expected Collection [" + expectedCollection + "] versus "
+                    + "provided argument [" + argument + "]");
+            if (expectedCollection == argument) {
+                return log.exit(true);
+            }
+            if (expectedCollection == null) {
+                if (argument == null) {
+                    return log.exit(true);
+                } 
+                return log.exit(false);
+            } else if (argument == null) {
+                return log.exit(false);
+            }
+            if (!(argument instanceof Collection)) {
+                return log.exit(false);
+            }
+            Collection<?> arg = (Collection<?>) argument;
+            if (arg.size() != expectedCollection.size()) {
+                return log.exit(false);
+            }
+            return log.exit(arg.containsAll(expectedCollection));
+        }
+    }
+    /**
+     * Helper method to obtain a {@link IsCollectionEqual} {@code ArgumentMatcher}, 
+     * for readability. 
+     * @param expectedCollection    The {@code Collection} that is expected, to be used 
+     *                              in stub or verify methods. 
+     */
+    protected static <T> Collection<T> collectionEq(Collection<T> expectedCollection) {
+        return argThat(new IsCollectionEqual<>(expectedCollection));
     }
     
 	/**

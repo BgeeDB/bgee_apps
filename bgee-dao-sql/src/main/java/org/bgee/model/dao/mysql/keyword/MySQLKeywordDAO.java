@@ -37,25 +37,25 @@ public class MySQLKeywordDAO extends MySQLDAO<KeywordDAO.Attribute> implements K
     /**
      * A {@code String} that is name of the MySQL table containing keywords.
      */
-    private static final String keywordTable = "keyword";
+    private static final String KEYWORD_TABLE = "keyword";
     /**
      * A {@code String} that is name of the MySQL table containing mapping between 
      * species IDs and keyword IDs.
      */
-    private static final String keywordToSpeciesTable = "speciesToKeyword";
+    private static final String KEYWORD_TO_SPECIES_TABLE = "speciesToKeyword";
     
     /**
      * A {@code Map} allowing to map column names of a result set to {@code Attribute}s, 
      * see {@link org.bgee.model.dao.mysql.MySQLDAO#getAttributeFromColName(String, Map)} 
      * for more details.
      */
-    private static final Map<String, KeywordDAO.Attribute> colNamesToAttributes;
+    private static final Map<String, KeywordDAO.Attribute> COL_NAMES_TO_ATTRS;
     
     static {
         Map<String, KeywordDAO.Attribute> tempMap = new HashMap<String, KeywordDAO.Attribute>();
         tempMap.put("keywordId", KeywordDAO.Attribute.ID);
         tempMap.put("keyword", KeywordDAO.Attribute.NAME);
-        colNamesToAttributes = Collections.unmodifiableMap(tempMap);
+        COL_NAMES_TO_ATTRS = Collections.unmodifiableMap(tempMap);
     }
 
     /**
@@ -80,14 +80,14 @@ public class MySQLKeywordDAO extends MySQLDAO<KeywordDAO.Attribute> implements K
             Set<String> filteredSpeciesIds = 
                     new HashSet<String>(speciesIds != null ? speciesIds: Arrays.asList());
             
-            String sql = this.generateSelectClause(keywordTable, colNamesToAttributes, true);
+            String sql = this.generateSelectClause(KEYWORD_TABLE, COL_NAMES_TO_ATTRS, true);
             
-            sql += "FROM " + keywordTable 
-                 + " INNER JOIN " + keywordToSpeciesTable + " ON "
-                 + keywordTable + ".keywordId = " + keywordToSpeciesTable + ".keywordId";
+            sql += "FROM " + KEYWORD_TABLE 
+                 + " INNER JOIN " + KEYWORD_TO_SPECIES_TABLE + " ON "
+                 + KEYWORD_TABLE + ".keywordId = " + KEYWORD_TO_SPECIES_TABLE + ".keywordId";
             
             if (!filteredSpeciesIds.isEmpty()) {
-                sql += " WHERE " + keywordToSpeciesTable + ".speciesId IN (" + 
+                sql += " WHERE " + KEYWORD_TO_SPECIES_TABLE + ".speciesId IN (" + 
                            BgeePreparedStatement.generateParameterizedQueryString(
                                    filteredSpeciesIds.size()) + ")";
             }
@@ -114,10 +114,10 @@ public class MySQLKeywordDAO extends MySQLDAO<KeywordDAO.Attribute> implements K
             Set<String> filteredSpeciesIds = 
                     new HashSet<String>(speciesIds != null ? speciesIds : Arrays.asList());
             
-            String sql = "SELECT keywordId, speciesId FROM " + keywordToSpeciesTable;
+            String sql = "SELECT keywordId, speciesId FROM " + KEYWORD_TO_SPECIES_TABLE;
             
             if (!filteredSpeciesIds.isEmpty()) {
-                sql += " WHERE " + keywordToSpeciesTable + ".speciesId IN (" + 
+                sql += " WHERE " + KEYWORD_TO_SPECIES_TABLE + ".speciesId IN (" + 
                            BgeePreparedStatement.generateParameterizedQueryString(
                                    filteredSpeciesIds.size()) + ")";
             }
@@ -159,7 +159,7 @@ public class MySQLKeywordDAO extends MySQLDAO<KeywordDAO.Attribute> implements K
                 for (Map.Entry<Integer, String> col : this.getColumnLabels().entrySet()) {
                     String columnName = col.getValue();
                     KeywordDAO.Attribute attr = MySQLKeywordDAO.this.getAttributeFromColName(
-                            columnName, colNamesToAttributes);
+                            columnName, COL_NAMES_TO_ATTRS);
                     switch (attr) {
                     case ID:
                         id = currentResultSet.getString(col.getKey());

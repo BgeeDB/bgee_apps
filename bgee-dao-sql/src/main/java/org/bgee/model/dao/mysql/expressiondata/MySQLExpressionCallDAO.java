@@ -1132,19 +1132,27 @@ implements ExpressionCallDAO {
                              EnumSet.noneOf(ExpressionCallDAO.Attribute.class)));
                 //use for dividing afterwards, don't want a division by 0 :p
                 assert attributesForRank.size() > 0;
-                
-                sql += attributesForRank.stream()
+                Set<String> sqlRanks = attributesForRank.stream()
                         .map(dataType -> {
-                                String rankSql = dataTypeToSql.get(dataType);
-                                if (rankSql == null) {
-                                    throw log.throwing(new IllegalStateException(
-                                            "No rank clause associated to data type: " + dataType));
-                                }
-                                return rankSql;
-                            })
-                        .collect(Collectors.joining("+ ", "((", 
-                                ") / " + attributesForRank.size() + ") AS globalMeanRank "));
-                
+                            String rankSql = dataTypeToSql.get(dataType);
+                            if (rankSql == null) {
+                                throw log.throwing(new IllegalStateException(
+                                        "No rank clause associated to data type: " + dataType));
+                            }
+                            return rankSql;
+                        }).collect(Collectors.toSet());
+
+                // use if expressions to handle the case where a mean rank is null
+                sql +=
+                        sqlRanks.stream()
+                                .map(r -> "if ("+r+" is null, 0,"+r+")")
+                                .collect(Collectors.joining("+ ", "((",
+                                ")")) +
+                        sqlRanks.stream()
+                                .map(r -> "if ("+r+" is null, 0, 1)")
+                                .collect(Collectors.joining("+ ", "/ (",
+                                                ")) AS globalMeanRank "));
+
             } else if (attribute.equals(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA)) {
                 if (!groupByClause) {
                     sql += "(affymetrixData + 0) ";

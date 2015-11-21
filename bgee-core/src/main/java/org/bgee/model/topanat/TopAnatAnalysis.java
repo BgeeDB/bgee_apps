@@ -118,44 +118,48 @@ public class TopAnatAnalysis {
 
         // Validate and load the gene in the foreground and background
         this.validateForegroundAndBackground();
-
-        // Generate anatomic entities data
-        this.generateAnatEntitiesFiles();
-
-        // Generate call data
-        this.generateGenesToAnatEntitiesAssociationFile();
-
-        // Write the params on the disk
-        this.generateTopAnatParamsFile();
-
-        // Generate R code and write it on the disk
-        this.generateRCodeFile();
-
-        // Copy the Rscript file to the working directory, if it dosn't already exists
-        String sourceFunctionFileName = TopAnatAnalysis.class.getResource(
-                this.props.getTopAnatFunctionFile()).getPath();
-        Path source = Paths.get(sourceFunctionFileName);
-        File targetFunctionFile = new File(
-                this.props.getTopAnatResultsWritingDirectory() + 
-                source.getFileName());
-        Path target = Paths.get(targetFunctionFile.getPath());
-        if (!targetFunctionFile.exists()) {
-            try{
-                this.controller.acquireReadLock(sourceFunctionFileName);
-                this.controller.acquireWriteLock(targetFunctionFile.getPath());
-                Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
-            } finally{
-                this.controller.releaseReadLock(sourceFunctionFileName);
-                this.controller.releaseWriteLock(targetFunctionFile.getPath());
+        
+        //Do the analysis/file creation only if results don't already exist
+        if (!this.isAnalysisDone()) {
+            
+            // Generate anatomic entities data
+            this.generateAnatEntitiesFiles();
+            
+            // Generate call data
+            this.generateGenesToAnatEntitiesAssociationFile();
+            
+            // Write the params on the disk
+            this.generateTopAnatParamsFile();
+            
+            // Generate R code and write it on the disk
+            this.generateRCodeFile();
+            
+            // Copy the Rscript file to the working directory, if it doesn't already exists
+            String sourceFunctionFileName = TopAnatAnalysis.class.getResource(
+                    this.props.getTopAnatFunctionFile()).getPath();
+            Path source = Paths.get(sourceFunctionFileName);
+            File targetFunctionFile = new File(
+                    this.props.getTopAnatResultsWritingDirectory() + 
+                    source.getFileName());
+            Path target = Paths.get(targetFunctionFile.getPath());
+            if (!targetFunctionFile.exists()) {
+                try{
+                    this.controller.acquireReadLock(sourceFunctionFileName);
+                    this.controller.acquireWriteLock(targetFunctionFile.getPath());
+                    Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+                } finally{
+                    this.controller.releaseReadLock(sourceFunctionFileName);
+                    this.controller.releaseWriteLock(targetFunctionFile.getPath());
+                }
             }
-        }
-
-        // Run the R analysis
-        this.runRcode();
-
-        if(this.params.isWithZip()){
-            // create the zip file
-            this.generateZipFile();
+            
+            // Run the R analysis
+            this.runRcode();
+            
+            if(this.params.isWithZip()){
+                // create the zip file
+                this.generateZipFile();
+            }
         }
 
         // return the result
@@ -784,19 +788,31 @@ public class TopAnatAnalysis {
      * @return
      */
     protected boolean isAnalysisDone(){
+        log.entry();
         File file = new File(
                 this.props.getTopAnatResultsWritingDirectory(),
                 this.getResultFileName());
-        try{
-            this.controller.acquireReadLock(file.getPath());
-            if(file.exists()){
-                return true;
-            }
+        //if it was requested to generate a zip, then we check for existence of the zip, 
+        //that is generated last
+        if (this.params.isWithZip()) {
+            log.trace("Using zip file for checking for presence of results.");
+            file = new File(
+                    this.props.getTopAnatResultsWritingDirectory(),
+                    this.getZipFileName());
         }
-        finally{
-            this.controller.releaseReadLock(file.getPath());
+        //At this point, if the analysis is being run by another thread, we don't want 
+        //to wait for the lock on the file: results are not generated, period.
+        //TODO: here, we should have a way to ensure that the String used for acquiring the lock
+        //is the same in the methods generating these files, like, having a method 
+        //creating the File and returning file.getPath().
+        if (this.controller.getReadWriteLock(file.getPath()).isWriteLocked()) {
+            return log.exit(false);
         }
-        return false;
+        //no need to acquire read lock to test for file existence, as it has been written already.
+        if (file.exists()) {
+            return log.exit(true);
+        }
+        return log.exit(false);
     }
 
     /**

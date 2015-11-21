@@ -217,6 +217,8 @@ public class CommandTopAnat extends CommandParent {
 
         // Job tracking
         } else if (this.requestParameters.isATopAnatTrackingJob()) {
+            //TODO: use the more detailed information provided by the TaskManager. 
+            //Maybe we can even actually provide the TaskManager in JSON?
             // Get params
             Integer jobID = this.requestParameters.getJobId(); 
             String keyParam = this.requestParameters.getDataKey(); 

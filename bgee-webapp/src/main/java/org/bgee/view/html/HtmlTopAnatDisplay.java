@@ -57,7 +57,8 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
             "browser</a> to improve your experience.</p>" +
         "<![endif]-->");
 
-        this.writeln("<div style='padding: 90px 0 0 0;margin-left: 20px; margin-right: 20px' ng-view=''>" +
+        //this.writeln("<div class='corner-ribbon top-left sticky red shadow'>Development version</div>");
+        this.writeln("<div style='margin-left: 20px; margin-right: 20px' ng-view=''>" +
 
         "</div>");
 
@@ -114,17 +115,20 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
         this.includeJs("lib/jquery_plugins/bootstrap.min.js");
         this.includeJs("lib/angular_modules/angular-file-upload.min.js");
         this.includeJs("lib/jquery_plugins/toastr.min.js");
+        this.includeJs("lib/angular_modules/angular-location-update.min.js");
         
         //TopAnat JS files
         this.includeJs("topanat/topanat.js");
         this.includeJs("topanat/services/logger.module.js");
         this.includeJs("topanat/services/logger.js");
         this.includeJs("topanat/controllers/main.js");
+        this.includeJs("topanat/controllers/result.js");
         this.includeJs("topanat/services/bgeedataservice.js");
         this.includeJs("topanat/services/bgeejobservice.js");
         this.includeJs("topanat/services/helpservice.js");
         this.includeJs("topanat/services/datatypefactory.js");
         this.includeJs("topanat/services/config.js");
+        this.includeJs("topanat/services/lang.js");
         this.includeJs("topanat/services/constants.js");
         log.exit();
     }
@@ -132,10 +136,12 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
     protected void includeCss() {
         log.entry();
         //CSS files of AngularJS modules only used by TopAnat
-        this.includeCss("lib/angular_modules/ui-grid.min.css");
+        this.includeCss("lib/angular_modules/ui_grid/ui-grid.min.css");
         //CSS files of jQuery plugins only used by TopAnat
         this.includeCss("lib/jquery_plugins/bootstrap.min.css");
         this.includeCss("lib/jquery_plugins/toastr.min.css");
+        //font-awesome
+        this.includeCss("lib/font_awesome/css/font-awesome.min.css");
         //CSS files specific to TopAnat
         this.includeCss("topanat.css");
         //we need to add the Bgee CSS files at the end, to override CSS file from bootstrap

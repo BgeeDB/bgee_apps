@@ -9,14 +9,15 @@
     function DataTypeFactory($http, logger) {
         var DataTypes = {};
         DataTypes.names =  [
-            { key: "RNA_SEQ", name: 'RNA-Seq' },
-            { key: "AFFYMETRIX", name:'Affymetrix data' },
-            { key: "IN_SITU", name:'In situ hybridization' },
-            { key: "EST", name: 'EST' }
+            { id: "RNA_SEQ", name: 'RNA-Seq' },
+            { id: "AFFYMETRIX", name:'Affymetrix data' },
+            { id: "IN_SITU", name:'In situ hybridization' },
+            { id: "EST", name: 'EST' }
         ];
 
         var CallTypes = {};
         CallTypes = {
+            ALL: {allowed : ['AFFYMETRIX', 'EST', 'IN_SITU', 'RNA_SEQ'] },
             //any type of baseline present/absent expression calls
             EXPRESSION: {allowed : ['AFFYMETRIX', 'EST', 'IN_SITU', 'RNA_SEQ'] },
             //baseline present expression calls (presence of expression)

@@ -876,7 +876,7 @@
 
             // check for status every 5 secs
             timer = $interval(function(){
-                console.info("Calling jobstatus");
+                console.info("Calling jobstatus, jobId = " + vm.jobId);
 
                 bgeejobservice.getJobStatus(vm.hash, vm.jobId)
 
@@ -886,12 +886,13 @@
 
                         // move this into function
                         //if(data.status == "DONE" && data.result && !vm.jobDone){
-                        if(data.status == "UNDEFINED" && !vm.jobDone){
+                        if(data.data.jobResponse.jobStatus == "UNDEFINED" && !vm.jobDone){
 
                             vm.jobDone = true;
                             $interval.cancel(timer);
-
-                            displayResults();
+                            //XXX: again, should we rather send the results immediately 
+                            //in the job tracking response?
+                            getResults();
 
                         } else {
 

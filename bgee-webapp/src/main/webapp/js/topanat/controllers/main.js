@@ -1041,11 +1041,30 @@
             //vm.gridOptions.data = result.data.topAnatResults[0].results;
             //vm.jobStatus = result.status;
             parseResults(result);
-            vm.message = 'TopAnat request successful. Found ' + result.data.topAnatResults[0].results.length + ' records.';
+            //count number of result over all analyses
+            var analysisCount = result.data.topAnatResults.length;
+            var analysisWithResults = 0;
+            var resultCount = 0;
+            for (var i = 0; i < analysisCount; i++) {
+            	var iterateCount = result.data.topAnatResults[i].results.length;
+            	resultCount += iterateCount;
+            	if (iterateCount > 0) {
+            		analysisWithResults++;
+            	}
+            }
+            //TODO: the 'formSubmitted = true' is a hack to display the message when retrieving 
+            //already existing results, and not only following a form submission, this sould be improved
+            vm.formSubmitted = true;
+            vm.message = 'TopAnat request successful. Found ' + resultCount + ' records, from ' 
+                         + analysisWithResults + (analysisWithResults > 1? " analyses": " analysis") 
+                         + ' with results, over ' 
+                         + analysisCount + (analysisCount > 1? " analyses": " analysis") + ' launched.';
             vm.messageSeverity = "success";
+            console.log("Message generated from results: " + vm.message);
 
 
             // change URL only if we have submitted the job
+            //TODO?
             //if (!jobStatus.hash) {
 
                 vm.hash = result.requestParameters.data;

@@ -807,18 +807,22 @@
                 console.log("submit response");
                 console.log(data.data.data);
                     // move this into function
-                    if(data.data.result){
-
+                    vm.hash = data.data.data.jobResponse.data;
+                    //if the results already exist, a jobId = 0 is returned
+                    if(data.data.data.jobResponse.jobId == 0 && data.data.data.jobResponse.data){
+                    	//XXX: Should we rather send the results immediately if they already exist?
+                    	//I thought it was more convenient for you, but it is easy to change. 
+                    	//See same remarks when retrieving results from a 'jab completed' response. 
+                        console.log("Results already exist.");
                         vm.jobDone = true;
-                        displayResults(data);
+                        vm.resultUrl = '/result/'+vm.hash;
+                        getResults(data);
 
                     } else if(data.data.data.jobResponse.jobId && data.data.data.jobResponse.data) {
 
+                        console.log("Job launched.");
                         vm.jobId = data.data.data.jobResponse.jobId;
-                        vm.hash = data.data.data.jobResponse.data
                         vm.resultUrl = '/result/'+vm.hash+'/'+vm.jobId;
-                        $location.update_path(vm.resultUrl, false);
-                        console.log("processing post resultUrl: "+vm.resultUrl);
 
                         vm.jobStatus = data.data.data.jobResponse.jobStatus;
                         logger.success('TopAnat request successful', 'TopAnat ok');
@@ -829,7 +833,14 @@
                         checkJobStatus();
                         //vm.getFilteredRows();
 
+                    } else {
+                    	//Don't know how you manage illegal states ;)
+                    	console.log("Error");
                     }
+                    $location.update_path(vm.resultUrl, false);
+                    console.log("processing post resultUrl: "+vm.resultUrl);
+
+                    console.log("end promise");
 
 
 

@@ -124,6 +124,20 @@
                 if(key == "data"){
                     vm['hash'] = val;
                 }
+                
+                if ((key == "fg_list" || key == "bg_list") && val) {
+                	//the gene list is returned as an array in the requestParameters object, 
+                	//AngularJS will translate it as a comma-separated list in the textarea. 
+                	//XXX: is there a way to tell AngularJS to translate as list with line return?
+                	//XXX: is this the place to manage this replacement? I don't see such a handling 
+                	//of other parameters...
+                	var newVal = "";
+                	var listLength = val.length;
+                	for (var i = 0; i < listLength; i++) {
+                		newVal += val[i] + "\n";
+                	}
+                	val = newVal;
+                }
 
                 vm[key] = val;
 

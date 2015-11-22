@@ -177,10 +177,14 @@
                 if(jobStatus.data.topAnatResults || (jobStatus.data.jobResponse.jobStatus && jobStatus.data.jobResponse.jobStatus.toLowerCase() == "undefined")){
 
                     console.log("job is done, either get result or display it");
-                    if(jobStatus.data.topAnatResults || (jobStatus.data.jobResponse.jobStatus && jobStatus.data.jobResponse.jobStatus.toLowerCase() == "undefined")){
+                    //XXX: I see that it is easy for you to display the results at any moment, 
+                    //would you like to disable the 'get_results' query, and to always retrieve 
+                    //the results from a 'tracking_job' or 'form_prefill' query directly?
+                    if(!jobStatus.data.topAnatResults){
+                    	console.log("Get results");
                         getResults();
                     } else {
-                        console.log(jobStatus.data.topAnatResults);
+                        console.log("Display results: " + jobStatus.data.topAnatResults);
                         displayResults(jobStatus);
                     }
 

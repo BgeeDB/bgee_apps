@@ -121,6 +121,8 @@ public class TopAnatAnalysis {
         
         //Do the analysis/file creation only if results don't already exist
         if (!this.isAnalysisDone()) {
+            //TODO: actually, it would be better if the files were created in a directory 
+            //named as the hash, and with standard file names (not including the hash)
             
             // Generate anatomic entities data
             this.generateAnatEntitiesFiles();
@@ -269,7 +271,21 @@ public class TopAnatAnalysis {
                 log.exit();return;
             }
 
-            this.rManager.performRFunction(this.getRScriptConsoleFileName());
+            try {
+                this.rManager.performRFunction(this.getRScriptConsoleFileName());
+            } catch (rcaller.exception.ParseException e) {
+                log.catching(e);
+                //RCaller throws an exception when there is no result. 
+                //Just to be sure this exception was really thrown because there was no result, 
+                //we check the exception message. This is highly version specific, but we should add 
+                //an IT to make sure this test is always in sync with the actual message thrown by RCaller. 
+                if (!e.getMessage().matches("^.*?Can not parse output: The generated file .+? is empty.*$")) {
+                    //Not the excepted exception, rethrow
+                    throw log.throwing(e);
+                }
+                //we create an empty result file, so that we don't re-run the analysis for nothing
+                Files.createFile(tmpFile);
+            }
 
             this.move(tmpFile, finalFile, false);
             //maybe it was not requested to generate the pdf, or there was no results 

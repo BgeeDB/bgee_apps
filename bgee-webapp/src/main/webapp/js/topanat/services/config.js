@@ -1,16 +1,16 @@
 angular.module('services.config', [])
     .constant('configuration', {
-        mockupUrl: 'http://localhost:8080',
+        mockupUrl: '/',
         expr_type: 'EXPRESSED',
         data_type: ['RNA-Seq', 'Affymetrix data', 'In situ hybridization', 'EST'],
         selectedDataTypes: ['RNA-Seq', 'Affymetrix data', 'In situ hybridization', 'EST'],
         data_qual: 'all',
-        decorr_type: 'parentchild',
+        decorr_type: 'elim',
         node_size: 20,
 	nb_node: 20,
-        fdr_thr: '0.99',
-        pvalueThreshold: 'e-10',
-        p_value_thr: 10
+        fdr_thr: '1',
+        pvalueThreshold: '1',
+        p_value_thr: 1
     });
 
 

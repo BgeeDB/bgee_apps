@@ -12,39 +12,50 @@
     <packaging>jar</packaging>
     <name>bgee-core</name>
 
-  <dependencies>
-  
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>bgee-dao-api</artifactId>
-      <version>${project.version}</version>
-      <scope>compile</scope>
-    </dependency>
-            
-    <dependency>
-      <groupId>rcaller</groupId>
-      <artifactId>RCaller</artifactId>
-    </dependency>
-    
-  </dependencies>
+    <dependencies>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>bgee-dao-api</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>bgee-dao-sql</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.bgee.log4jdbc-log4j2</groupId>
+            <artifactId>log4jdbc-log4j2-jdbc4.1</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>rcaller</groupId>
+            <artifactId>RCaller</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>net.sf.supercsv</groupId>
+            <artifactId>super-csv</artifactId>
+        </dependency>
+
+    </dependencies>
 
     <build>
         <plugins>
-            <!-- Not needed anymore for now 
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>2.4</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>test-jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            -->
-            
+            <!-- Not needed anymore for now <plugin> <groupId>org.apache.maven.plugins</groupId> 
+                <artifactId>maven-jar-plugin</artifactId> <version>2.4</version> <executions> 
+                <execution> <goals> <goal>test-jar</goal> </goals> </execution> </executions> 
+                </plugin> -->
+
             <!-- In order to properly test the class BgeeProperties, we need 
                 to ensure that tests are run one at a time. -->
             <plugin>
@@ -55,6 +66,33 @@
                     <reuseForks>false</reuseForks>
                 </configuration>
             </plugin>
+            
+            <!-- Integration tests -->
+            <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-failsafe-plugin</artifactId>
+
+               <configuration>
+                   <!-- Default value of enableAssertions is true, but just to make clear... -->
+                   <enableAssertions>true</enableAssertions>
+                   <!-- See parent pom.xml for explanation about the skipITs variable -->
+                   <skipTests>${skipITs}</skipTests>
+                   <systemPropertyVariables>
+                       <!-- Properties for running R -->
+                       <org.bgee.core.topAnatRScriptExecutable>${it.org.bgee.core.topAnatRScriptExecutable}</org.bgee.core.topAnatRScriptExecutable>
+                   </systemPropertyVariables>
+               </configuration>
+
+               <executions>
+                   <execution>
+                       <id>integration-test</id>
+                       <goals>
+                           <goal>integration-test</goal>
+                           <goal>verify</goal>
+                       </goals>
+                   </execution>
+               </executions>
+           </plugin>
         </plugins>
 
         <finalName>bgee-core-${project.version}</finalName>

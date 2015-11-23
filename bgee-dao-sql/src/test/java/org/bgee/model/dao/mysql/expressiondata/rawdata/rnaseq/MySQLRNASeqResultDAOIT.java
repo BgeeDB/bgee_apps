@@ -54,26 +54,28 @@ public class MySQLRNASeqResultDAOIT  extends MySQLITAncestor {
 
             try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
                     prepareStatement("SELECT 1 FROM rnaSeqResult WHERE rnaSeqLibraryId = ? AND " +
-                            "geneId = ? AND log2RPKM = ? AND readsCount = ? AND " +
+                            "geneId = ? AND rpkm = ? AND tpm = ? AND readsCount = ? AND " +
                             "expressionId is null AND noExpressionId is null " +
                             "AND detectionFlag = ? AND rnaSeqData = ? AND reasonForExclusion = ?")) {
                 stmt.setString(1, "GSM1015161");
                 stmt.setString(2, "ID2");
-                stmt.setFloat(3, -1.687530f);
-                stmt.setInt(4, 31);
-                stmt.setString(5, DetectionFlag.ABSENT.getStringRepresentation());
-                stmt.setString(6, DataState.HIGHQUALITY.getStringRepresentation());
-                stmt.setString(7, ExclusionReason.NOEXPRESSIONCONFLICT.getStringRepresentation());
+                stmt.setBigDecimal(3, "22.65");
+                stmt.setBigDecimal(4, "54.3");
+                stmt.setInt(5, 31);
+                stmt.setString(6, DetectionFlag.ABSENT.getStringRepresentation());
+                stmt.setString(7, DataState.HIGHQUALITY.getStringRepresentation());
+                stmt.setString(8, ExclusionReason.NOEXPRESSIONCONFLICT.getStringRepresentation());
                 assertTrue("RNASeqResultTO incorrectly updated", 
                         stmt.getRealPreparedStatement().executeQuery().next());
 
                 stmt.setString(1, "GSM1015162");
                 stmt.setString(2, "ID3");
-                stmt.setFloat(3, -2.462678f);
-                stmt.setInt(4, 31);
-                stmt.setString(5, DetectionFlag.ABSENT.getStringRepresentation());
-                stmt.setString(6, DataState.LOWQUALITY.getStringRepresentation());
-                stmt.setString(7, ExclusionReason.NOEXPRESSIONCONFLICT.getStringRepresentation());
+                stmt.setBigDecimal(3, "10000");
+                stmt.setBigDecimal(4, "9955.3223");
+                stmt.setInt(5, 31);
+                stmt.setString(6, DetectionFlag.ABSENT.getStringRepresentation());
+                stmt.setString(7, DataState.LOWQUALITY.getStringRepresentation());
+                stmt.setString(8, ExclusionReason.NOEXPRESSIONCONFLICT.getStringRepresentation());
                 assertTrue("RNASeqResultTO incorrectly updated", 
                         stmt.getRealPreparedStatement().executeQuery().next());
             }
@@ -83,6 +85,30 @@ public class MySQLRNASeqResultDAOIT  extends MySQLITAncestor {
             dao.updateNoExpressionConflicts(noExprIds);
         } finally {
             this.emptyAndUseDefaultDB();
+        }
+    }
+    
+
+    /**
+     * Regression test for rpkm/tpm fields using decimal type: we use to set these values 
+     * using {@code setFloat} instead of {@code setBigDecimal}, and this was incorrectly 
+     * truncating/rounding values.
+     */
+    @Test
+    public void regressionTestForDecimalField() throws SQLException {
+        this.useSelectDB();
+        
+        try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+                prepareStatement("SELECT 1 FROM rnaSeqResult WHERE rnaSeqLibraryId = ? AND " +
+                        "geneId = ? AND rpkm = ? AND tpm = ?")) {
+
+            stmt.setString(1, "GSM1015162");
+            stmt.setString(2, "ID3");
+            stmt.setBigDecimal(3, "10000");
+            //this is the value that allowed to detect the bug when using setFloat
+            stmt.setBigDecimal(4, "9955.3223");
+            assertTrue("RNASeqResultTO incorrectly retrieved", 
+                    stmt.getRealPreparedStatement().executeQuery().next());
         }
     }
 }

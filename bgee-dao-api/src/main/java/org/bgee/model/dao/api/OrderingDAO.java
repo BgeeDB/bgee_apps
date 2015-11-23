@@ -20,50 +20,12 @@ import java.util.Map.Entry;
  *              with this {@code OrderingDAO}, to define what attributes to use 
  *              to order the results of a query to this {@code OrderingDAO}.
  */
-public interface OrderingDAO<T extends Enum<?> & DAO.Attribute, 
-                             U extends Enum<?> & OrderingDAO.OrderingAttribute
+//deprecated, as it was decided that each DAO method should accept OrderingAttributes when needed, 
+//and that DAOs should be immutable. As a result, this interface is now pointless.
+@Deprecated
+public interface OrderingDAO<T extends Enum<T> & DAO.Attribute, 
+                             U extends Enum<U> & DAO.OrderingAttribute
                             > extends DAO<T> {
-    
-    /**
-     * {@code Enum} used to specify the direction of the ordering, 
-     * for a given {@link OrderingAttribute} a query is sorted by.
-     * <ul>
-     * <li>{@code ASC}: order by ascending order.
-     * <li>{@code DESC}: order by descending order.
-     * </ul>
-     * @see #setOrderingAttributes(LinkedHashMap)
-     * @see #setOrderingAttributes(Entry[])
-     * @see #getOrderingAttributes()
-     */
-    public enum Direction {
-        ASC, DESC;
-    }
-    /**
-     * Interface implemented by {@code Enum} classes allowing to select 
-     * the attributes used to order the results of a query to a {@code DAO}. 
-     * This is a separate interface from {@link DAO.Attribute}, because 
-     * the attributes to retrieve from a query, and the attributes to use to order 
-     * the results of a query, are often different, and some attributes used for ordering 
-     * can even be absent from the set of attributes retrievable from a query.
-     * <p>
-     * Note that implementations can still decide that the attributes to retrieve from a query
-     * and the attributes used to order results are the same, in which case 
-     * a same {@code Enum} class would be defined as implementing both {@code DAO.Attribute} 
-     * and {@code OrderingDAO.OrderingAttribute}.
-     * 
-     * @author Frederic Bastian
-     * @version Bgee 13 Jul 2015
-     * @see #setOrderingAttributes(LinkedHashMap)
-     * @see #setOrderingAttributes(List)
-     * @see #setOrderingAttributes(Entry[])
-     * @see #setOrderingAttributes(Enum[])
-     * @see #clearOrderingAttributes()
-     * @see #getOrderingAttributes()
-     * @since Bgee 13
-     */
-    public interface OrderingAttribute {
-        //nothing here, it is only used for typing the Enum classes.
-    }
     
     /**
      * Defines the attributes to use to order results of queries to this {@code DAO}, 
@@ -86,7 +48,10 @@ public interface OrderingDAO<T extends Enum<?> & DAO.Attribute,
      * @see #setOrderingAttributes(Enum[])
      * @see #clearOrderingAttributes()
      */
-    public void setOrderingAttributes(LinkedHashMap<U, Direction> attributesWithDir) 
+    //deprecated, as it was decided that each DAO method should accept OrderingAttributes when needed, 
+    //and that DAOs should be immutable.
+    @Deprecated
+    public void setOrderingAttributes(LinkedHashMap<U, DAO.Direction> attributesWithDir) 
         throws IllegalArgumentException;
     /**
      * Defines the attributes to use to order results of queries to this {@code DAO}, 
@@ -109,6 +74,9 @@ public interface OrderingDAO<T extends Enum<?> & DAO.Attribute,
      * @see #setOrderingAttributes(Enum[])
      * @see #clearOrderingAttributes()
      */
+    //deprecated, as it was decided that each DAO method should accept OrderingAttributes when needed, 
+    //and that DAOs should be immutable.
+    @Deprecated
     public void setOrderingAttributes(List<U> attributes) throws IllegalArgumentException;
     
     /**
@@ -131,7 +99,10 @@ public interface OrderingDAO<T extends Enum<?> & DAO.Attribute,
     //to make the method robust to heap pollution, and to add the @SafeVarargs 
     //annotation. See http://docs.oracle.com/javase/7/docs/technotes/guides/language/non-reifiable-varargs.html
     @SuppressWarnings("unchecked")
-    public void setOrderingAttributes(Entry<U, Direction>... attributes);
+    //deprecated, as it was decided that each DAO method should accept OrderingAttributes when needed, 
+    //and that DAOs should be immutable.
+    @Deprecated
+    public void setOrderingAttributes(Entry<U, DAO.Direction>... attributes);
     
 
     /**
@@ -152,6 +123,9 @@ public interface OrderingDAO<T extends Enum<?> & DAO.Attribute,
     //to make the method robust to heap pollution, and to add the @SafeVarargs 
     //annotation. See http://docs.oracle.com/javase/7/docs/technotes/guides/language/non-reifiable-varargs.html
     @SuppressWarnings("unchecked")
+    //deprecated, as it was decided that each DAO method should accept OrderingAttributes when needed, 
+    //and that DAOs should be immutable.
+    @Deprecated
     public void setOrderingAttributes(U... attributes);
     
     /**
@@ -164,7 +138,10 @@ public interface OrderingDAO<T extends Enum<?> & DAO.Attribute,
      *          with {@code OrderingAttribute}s as keys, associated to 
      *          their ordering {@code Direction} as values. 
      */
-    public LinkedHashMap<U, Direction> getOrderingAttributes();
+    //deprecated, as it was decided that each DAO method should accept OrderingAttributes when needed, 
+    //and that DAOs should be immutable.
+    @Deprecated
+    public LinkedHashMap<U, DAO.Direction> getOrderingAttributes();
 
     /**
      * Resets the attributes used to order results obtained from this {@code DAO}, for all 
@@ -177,5 +154,8 @@ public interface OrderingDAO<T extends Enum<?> & DAO.Attribute,
      * @see #setOrderingAttributes(Entry[])
      * @see #setOrderingAttributes(Enum[])
      */
+    //deprecated, as it was decided that each DAO method should accept OrderingAttributes when needed, 
+    //and that DAOs should be immutable.
+    @Deprecated
     public void clearOrderingAttributes();
 }

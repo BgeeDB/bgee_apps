@@ -35,10 +35,17 @@ public class MySQLStageDAO extends MySQLDAO<StageDAO.Attribute> implements Stage
     @Override
     public StageTOResultSet getStagesBySpeciesIds(Set<String> speciesIds) throws DAOException {
         log.entry(speciesIds);       
+        return log.exit(getStagesBySpeciesIds(speciesIds, null));
+    }
+
+    @Override
+    public StageTOResultSet getStagesBySpeciesIds(Set<String> speciesIds, Boolean isGroupingStage)
+            throws DAOException {
+        log.entry(speciesIds, isGroupingStage);
         
         String tableName = "stage";
 
-        String sql = new String(); 
+        String sql = new String();
         Collection<StageDAO.Attribute> attributes = this.getAttributes();
         if (attributes == null || attributes.size() == 0) {
             sql += "SELECT DISTINCT " + tableName + ".*";
@@ -54,22 +61,38 @@ public class MySQLStageDAO extends MySQLDAO<StageDAO.Attribute> implements Stage
         }
         sql += " FROM " + tableName;
         String stageTaxConstTabName = "stageTaxonConstraint";
-        if (speciesIds != null && speciesIds.size() > 0) {
+        boolean filterBySpecies = speciesIds != null && speciesIds.size() > 0;
+        boolean filterByGroupingStage = isGroupingStage != null;
+        if (filterBySpecies) {
              sql += " INNER JOIN " + stageTaxConstTabName + " ON (" +
                           stageTaxConstTabName + ".stageId = " + tableName + ".stageId)" +
-                    " WHERE " + stageTaxConstTabName + ".speciesId IS NULL" +
+                    " WHERE (" + stageTaxConstTabName + ".speciesId IS NULL" +
                     " OR " + stageTaxConstTabName + ".speciesId IN (" + 
                     BgeePreparedStatement.generateParameterizedQueryString(speciesIds.size()) + 
-                    ")";
-         }
+                    "))";
+        }
+        if (filterByGroupingStage) {
+            if (filterBySpecies) {
+                sql += " AND ";
+            } else {
+                sql += " WHERE ";
+            }
+            sql += tableName + ".groupingStage= ? ";
+        }
 
          //we don't use a try-with-resource, because we return a pointer to the results, 
          //not the actual results, so we should not close this BgeePreparedStatement.
          try {
              BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
-             if (speciesIds != null && speciesIds.size() > 0) {
+             if (filterBySpecies) {
                  stmt.setStringsToIntegers(1, speciesIds, true);
-             }             
+             }
+
+             int offsetParamIndex = (filterBySpecies ? speciesIds.size() + 1 : 1);
+             if (filterByGroupingStage) {
+                 stmt.setBoolean(offsetParamIndex, isGroupingStage);
+             }
+             
              return log.exit(new MySQLStageTOResultSet(stmt));
          } catch (SQLException e) {
              throw log.throwing(new DAOException(e));

@@ -379,7 +379,7 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
             return this.targetId;
         }
         /**
-         * @return  A {@code String} that is the OBO-like ID of the parent term of this relation.
+         * @return  A {@code String} that is the OBO-like ID of the child term of this relation.
          *          For instance, if {@code GO:0000080 "mitotic G1 phase" part_of 
          *          GO:0051329 "mitotic interphase"}, then this {@code sourceId} is 
          *          {@code GO:0000080}.

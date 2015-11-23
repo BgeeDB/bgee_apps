@@ -13,10 +13,10 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.dao.api.OrderingDAO;
+import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
-import org.bgee.model.dao.mysql.MySQLOrderingDAO;
+import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
@@ -31,8 +31,7 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
  * @version Bgee 13 Oct. 2015
  * @since Bgee 13
  */
-public class MySQLSpeciesDataGroupDAO 
-extends MySQLOrderingDAO<SpeciesDataGroupDAO.Attribute, SpeciesDataGroupDAO.OrderingAttribute> 
+public class MySQLSpeciesDataGroupDAO extends MySQLDAO<SpeciesDataGroupDAO.Attribute> 
 implements SpeciesDataGroupDAO {
 
     /**
@@ -128,12 +127,12 @@ implements SpeciesDataGroupDAO {
     @Override
     public SpeciesDataGroupTOResultSet getAllSpeciesDataGroup(
         Collection<SpeciesDataGroupDAO.Attribute> attributes, 
-        LinkedHashMap<SpeciesDataGroupDAO.OrderingAttribute, OrderingDAO.Direction> orderingAttributes) 
+        LinkedHashMap<SpeciesDataGroupDAO.OrderingAttribute, SpeciesDataGroupDAO.Direction> orderingAttributes) 
                 throws DAOException {
         log.entry(attributes, orderingAttributes);
         
         final Set<SpeciesDataGroupDAO.Attribute> clonedAttrs = attributes == null? null: new HashSet<>(attributes);
-        final LinkedHashMap<SpeciesDataGroupDAO.OrderingAttribute, OrderingDAO.Direction> clonedOrderingAttrs = 
+        final LinkedHashMap<SpeciesDataGroupDAO.OrderingAttribute, DAO.Direction> clonedOrderingAttrs = 
                 orderingAttributes == null? null: new LinkedHashMap<>(orderingAttributes);
         
         //for now we still use the setAttributes method to be able to use generateSelectAllStatement, 
@@ -159,7 +158,7 @@ implements SpeciesDataGroupDAO {
             sql += " ORDER BY " + columnToAttributesMap.entrySet().stream()
                     .filter(e -> e.getValue() == SpeciesDataGroupDAO.Attribute.PREFERRED_ORDER)
                     .map(e -> e.getKey()).findFirst().get();
-            if (clonedOrderingAttrs.values().iterator().next() == OrderingDAO.Direction.DESC) {
+            if (clonedOrderingAttrs.values().iterator().next() == DAO.Direction.DESC) {
                 sql += " DESC";
             }
         }
@@ -305,10 +304,10 @@ implements SpeciesDataGroupDAO {
 
     @Override
     public SpeciesToDataGroupTOResultSet getAllSpeciesToDataGroup(
-            LinkedHashMap<SpeciesToGroupOrderingAttribute, OrderingDAO.Direction> orderingAttributes) {
+            LinkedHashMap<SpeciesToGroupOrderingAttribute, DAO.Direction> orderingAttributes) {
         log.entry(orderingAttributes);
         
-        final LinkedHashMap<SpeciesToGroupOrderingAttribute, OrderingDAO.Direction> clonedOrderingAttrs = 
+        final LinkedHashMap<SpeciesToGroupOrderingAttribute, DAO.Direction> clonedOrderingAttrs = 
                 orderingAttributes == null? null: new LinkedHashMap<>(orderingAttributes);
         
         StringBuilder sb = new StringBuilder("SELECT t1.* FROM speciesToDataGroup AS t1 ");
@@ -333,7 +332,7 @@ implements SpeciesDataGroupDAO {
             
             sb.append("ORDER BY ");
             int i = 0;
-            for (Entry<SpeciesToGroupOrderingAttribute, OrderingDAO.Direction> attr: clonedOrderingAttrs.entrySet()) {
+            for (Entry<SpeciesToGroupOrderingAttribute, DAO.Direction> attr: clonedOrderingAttrs.entrySet()) {
                 if (i > 0) {
                     sb.append(", "); 
                 }

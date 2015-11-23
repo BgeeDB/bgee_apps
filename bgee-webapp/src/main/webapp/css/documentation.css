@@ -92,10 +92,6 @@ div.doc_content p, div.doc_content ul {
     font-size: 0.9em;
 }
 
-span.list_element_title {
-	text-decoration: underline;
-}
-
 a.backlink, a.backlink:visited {
     color: #626262;
 }

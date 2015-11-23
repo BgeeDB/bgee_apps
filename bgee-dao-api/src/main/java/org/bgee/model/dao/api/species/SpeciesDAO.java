@@ -1,6 +1,5 @@
 package org.bgee.model.dao.api.species;
 
-import java.util.Collection;
 import java.util.Set;
 
 import org.bgee.model.dao.api.DAO;
@@ -28,6 +27,7 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
      * <li>{@code SPECIES_NAME}: corresponds to {@link SpeciesTO#getSpeciesName()}.
      * <li>{@code PARENT_TAXON_ID}: corresponds to {@link SpeciesTO#getParentTaxonId()}.
      * <li>{@code GENOME_FILE_PATH}: corresponds to {@link SpeciesTO#getGenomeFilePath()}.
+     * <li>{@code GENOME_VERSION}: corresponds to {@link SpeciesTO#getGenomeVersion()}.
      * <li>{@code GENOME_SPECIES_ID}: corresponds to {@link SpeciesTO#getGenomeSpeciesId()}.
      * <li>{@code FAKE_GENE_ID_PREFIX}: corresponds to {@link SpeciesTO#getFakeGeneIdPrefix()}.
      * </ul>
@@ -37,7 +37,9 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
      */
     public enum Attribute implements DAO.Attribute {
         ID, COMMON_NAME, GENUS, SPECIES_NAME, PARENT_TAXON_ID, GENOME_FILE_PATH, 
-        GENOME_SPECIES_ID, FAKE_GENE_ID_PREFIX;
+        GENOME_SPECIES_ID, FAKE_GENE_ID_PREFIX, 
+        // TODO currently this info is not present in the table
+        GENOME_VERSION;
     }
     
     /**
@@ -128,6 +130,12 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
         private final String genomeFilePath;
         
         /**
+         * A {@code String} that is the genome version we use for this species.
+         * For instance, for human, this attribute would contain: {@code Homo_sapiens.GRCh37}.
+         */
+        private final String genomeVersion;
+
+        /**
          * A {@code String} that is the ID of the species whose the genome was used 
          * for this species. This is used when a genome is not in Ensembl, but genome 
          * of a close species is. For instance, for bonobo (ID 9597), we use the chimp genome 
@@ -152,25 +160,34 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
          * are not meant to be instantiated by clients, but only by the application, 
          * so we do not really care about having non-friendly constructors.
          * 
-         * @param id            A {@code String} that is the ID.
-         * @param commonName    A {@code String} that is the common name. 
-         * @param genus         A {@code String} that is the genus of the species 
-         *                      (for instance, <i>homo</i>).
-         * @param speciesName   A {@code String} that is the species name of the species 
-         *                      (for instance, <i>sapiens</i>).
-         * @param parentTaxonId A {@code String} that is the NCBI ID of the parent taxon 
-         *                      of this species (for instance, {@code 9605} for <i>homo</i>, 
-         *                      the parent taxon of human).
+         * @param id                A {@code String} that is the ID.
+         * @param commonName        A {@code String} that is the common name. 
+         * @param genus             A {@code String} that is the genus of the species 
+         *                          (for instance, <i>homo</i>).
+         * @param speciesName       A {@code String} that is the species name of the species 
+         *                          (for instance, <i>sapiens</i>).
+         * @param parentTaxonId     A {@code String} that is the NCBI ID of the parent taxon 
+         *                          of this species (for instance, {@code 9605} for <i>homo</i>, 
+         *                          the parent taxon of human).
+         * @param genomeFilePath    A {@code String} that is the path to retrieve the genome file 
+         *                          we use for this species.
+         * @param genomeVersion     A {@code String} that is the genome version 
+         *                          we use for this species.
+         * @param genomeSpeciesId   A {@code String} that is the ID of the species whose 
+         *                          the genome was used for this species.
+         * @param fakeGeneIdPrefix  A {@code String} that is the prefix of gene IDs for this
+         *                          species, if its genome was not in Ensembl.
          */
         public SpeciesTO(String id, String commonName, String genus, String speciesName, 
-                String parentTaxonId, String genomeFilePath, String genomeSpeciesId, 
-                String fakeGeneIdPrefix) {
+                String parentTaxonId, String genomeFilePath, String genomeVersion, 
+                String genomeSpeciesId, String fakeGeneIdPrefix) {
             super(id, commonName);
             
             this.genus = genus;
             this.speciesName = speciesName;
             this.parentTaxonId = parentTaxonId;
             this.genomeFilePath = genomeFilePath;
+            this.genomeVersion = genomeVersion;
             this.genomeSpeciesId = genomeSpeciesId;
             this.fakeGeneIdPrefix = fakeGeneIdPrefix;
         }
@@ -223,6 +240,13 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
         }
 
         /**
+         * @return  {@code String} that is the genome version we use for this species.
+         */
+        public String getGenomeVersion() {
+            return genomeVersion;
+        }
+
+        /**
          * @return  A {@code String} that is the ID of the species whose the genome was used 
          *          for this species. This is used when a genome is not in Ensembl, 
          *          but genome of a close species is. 
@@ -247,8 +271,8 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
             return "ID: " + this.getId() + " - Common name: " + this.getName() + 
                     " - Genus: " + this.getGenus() + " - Species name: " + this.getSpeciesName() + 
                     " - Parent taxon ID: " + this.getParentTaxonId() + " - Description: " + 
-                    this.getDescription() + " - Genome file path: " + 
-                    this.getGenomeFilePath() + " - Genome species ID: " + 
+                    this.getDescription() + " - Genome file path: " + this.getGenomeFilePath() + 
+                    " - Genome version: " + this.getGenomeFilePath() + " - Genome species ID: " + 
                     this.getGenomeSpeciesId() + " - Fake gene ID prefix: " + 
                     this.getFakeGeneIdPrefix();
         }

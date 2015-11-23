@@ -13,7 +13,7 @@ import java.util.Map.Entry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.TOComparator;
-import org.bgee.model.dao.api.OrderingDAO.Direction;
+import org.bgee.model.dao.api.DAO.Direction;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO;

@@ -721,6 +721,12 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
                     this.currentStep == this.stepCount || 
                     //or if we did not configure the number of iterations, and there were 
                     //no results at the previous one.
+                    //FIXME: actually, this is wrong. If the LIMIT is in a subquery, 
+                    //maybe there was no result in the main query for the current iteration of the subquery, 
+                    //but there might be results in the main query at the next iteration of the subquery...
+                    //In that case, maybe we should provide a query (that would actually be the subquery 
+                    //in the example above) to be performed each time this method is called, 
+                    //to formally know whether there are no more result to iterate. 
                     (this.stepCount == 0 && resultSetIterationCount == 0)) {
                 log.trace("Try to move to next statement");
                 //currentStep is set to 0 when calling closeCurrentPreparedStatement

@@ -73,7 +73,7 @@ public class MySQLAffymetrixProbesetDAOIT extends MySQLITAncestor {
                 stmt.setString(1, "1006_at");
                 stmt.setInt(2, 12359);
                 stmt.setString(3, "ID2");
-                stmt.setFloat(4, 2.21f);
+                stmt.setBigDecimal(4, "2.21");
                 stmt.setString(5, DetectionFlag.ABSENT.getStringRepresentation());
                 stmt.setString(6, DataState.HIGHQUALITY.getStringRepresentation());
                 stmt.setString(7, ExclusionReason.NOEXPRESSIONCONFLICT.getStringRepresentation());
@@ -83,7 +83,7 @@ public class MySQLAffymetrixProbesetDAOIT extends MySQLITAncestor {
                 stmt.setString(1, "1041_xx");
                 stmt.setInt(2, 12361);
                 stmt.setString(3, "ID2");
-                stmt.setFloat(4, 2.24f);
+                stmt.setBigDecimal(4, "2.24");
                 stmt.setString(5, DetectionFlag.ABSENT.getStringRepresentation());
                 stmt.setString(6, DataState.HIGHQUALITY.getStringRepresentation());
                 stmt.setString(7, ExclusionReason.NOEXPRESSIONCONFLICT.getStringRepresentation());

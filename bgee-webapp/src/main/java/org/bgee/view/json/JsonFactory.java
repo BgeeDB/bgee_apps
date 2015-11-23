@@ -13,6 +13,8 @@ import org.bgee.view.DocumentationDisplay;
 import org.bgee.view.DownloadDisplay;
 import org.bgee.view.ErrorDisplay;
 import org.bgee.view.GeneralDisplay;
+import org.bgee.view.JsonHelper;
+import org.bgee.view.SpeciesDisplay;
 import org.bgee.view.TopAnatDisplay;
 import org.bgee.view.ViewFactory;
 
@@ -20,7 +22,8 @@ import org.bgee.view.ViewFactory;
  * {@code ViewFactory} returning objects generating JSON views.
  * 
  * @author  Frederic Bastian
- * @version Bgee 13 Jul 2015
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13 Nov 2015
  * @since   Bgee 13
  */
 public class JsonFactory extends ViewFactory { 
@@ -28,8 +31,11 @@ public class JsonFactory extends ViewFactory {
     private final static Logger log = LogManager.getLogger(JsonFactory.class.getName());
     
     /**
-     * Constructor providing the necessary dependencies. 
-     * 
+     * A {@code JsonHelper} to be passed to Json views, to dump variables into Json.
+     */
+    private final JsonHelper jsonHelper;
+    
+    /**
      * @param response          A {@code HttpServletResponse} that will be used to display the page to 
      *                          the client
      * @param requestParameters The {@code RequestParameters} that handles the parameters of the 
@@ -39,21 +45,36 @@ public class JsonFactory extends ViewFactory {
      */
     public JsonFactory(HttpServletResponse response, RequestParameters requestParameters, 
             BgeeProperties prop) {
+        this(response, requestParameters, prop, new JsonHelper(prop));
+    }
+    /**
+     * Constructor providing all dependencies. 
+     * 
+     * @param response          A {@code HttpServletResponse} that will be used to display the page to 
+     *                          the client
+     * @param requestParameters The {@code RequestParameters} that handles the parameters of the 
+     *                          current request.
+     * @param prop              An instance of {@code BgeeProperties} to provide the all 
+     *                          the properties values
+     */
+    public JsonFactory(HttpServletResponse response, RequestParameters requestParameters, 
+            BgeeProperties prop, JsonHelper jsonHelper) {
         super(response, requestParameters, prop);
+        this.jsonHelper = jsonHelper;
     }
 
     @Override
     public ErrorDisplay getErrorDisplay() throws IOException {
         log.entry();
         return log.exit(new JsonErrorDisplay(this.response, this.requestParameters,
-            this.prop, this));
+            this.prop, this.jsonHelper, this));
     }
 
     @Override
     public TopAnatDisplay getTopAnatDisplay() throws IOException {
         log.entry();
         return log.exit(new JsonTopAnatDisplay(this.response, this.requestParameters,
-            this.prop, this));
+            this.prop, this.jsonHelper, this));
     }
 
     @Override
@@ -75,5 +96,11 @@ public class JsonFactory extends ViewFactory {
     public AboutDisplay getAboutDisplay() throws IOException {
         throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
     }
-    
+
+    @Override
+    public SpeciesDisplay getSpeciesDisplay() throws IOException {
+        log.entry();
+        return log.exit(new JsonSpeciesDisplay(this.response, this.requestParameters,
+            this.prop, this.jsonHelper, this));
+    }
 }

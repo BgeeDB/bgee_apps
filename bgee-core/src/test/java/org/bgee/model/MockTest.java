@@ -3,6 +3,7 @@ package org.bgee.model;
 import static org.junit.Assert.*;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -54,5 +55,20 @@ public class MockTest extends TestAncestor {
         
         mockRs = getMockResultSet(KeywordTOResultSet.class, expectedTOs);
         assertEquals("Incorrect TOs obtained through getAllTOs", expectedTOs, mockRs.getAllTOs());
+    }
+    
+    /**
+     * Test {@link TestAncestor#collectionEq(Collection)};
+     */
+    @Test
+    public void shouldGetCollectionArgumentMarcher() {
+        Collection<String> expectedCollection = Arrays.asList("a", "b");
+        Collection<String> actualCollection = Arrays.asList("b", "a");
+        assertTrue(new IsCollectionEqual<>(expectedCollection).matches(actualCollection));
+        
+        actualCollection = Arrays.asList("c", "a");
+        assertFalse(new IsCollectionEqual<>(expectedCollection).matches(actualCollection));
+        actualCollection = Arrays.asList("a", "b", "c");
+        assertFalse(new IsCollectionEqual<>(expectedCollection).matches(actualCollection));
     }
 }

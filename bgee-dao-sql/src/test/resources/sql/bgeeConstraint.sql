@@ -273,6 +273,11 @@ alter table expressedSequenceTag
 add primary key (estId);
 /*!40000 ALTER TABLE `expressedSequenceTag` ENABLE KEYS */;
 
+/*!40000 ALTER TABLE `estRank` DISABLE KEYS */;
+alter table estRank
+add primary key (estLibraryId, geneId);
+/*!40000 ALTER TABLE `estRank` ENABLE KEYS */;
+
 --  ****************************************************
 --  RAW AFFYMETRIX DATA
 --  ****************************************************
@@ -378,6 +383,11 @@ add primary key (rnaSeqRunId);
 alter table rnaSeqResult 
 add primary key (geneId, rnaSeqLibraryId);
 /*!40000 ALTER TABLE `rnaSeqResult` ENABLE KEYS */;
+
+/*!40000 ALTER TABLE `rnaSeqFeatureLength` DISABLE KEYS */;
+alter table rnaSeqFeatureLength 
+add primary key (geneId);
+/*!40000 ALTER TABLE `rnaSeqFeatureLength` ENABLE KEYS */;
 
 -- ****** for diff expression ********
 

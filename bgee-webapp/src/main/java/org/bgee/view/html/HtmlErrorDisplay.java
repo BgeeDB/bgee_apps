@@ -8,6 +8,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
+import org.bgee.controller.exception.InvalidFormatException;
+import org.bgee.controller.exception.InvalidRequestException;
+import org.bgee.controller.exception.MultipleValuesNotAllowedException;
+import org.bgee.controller.exception.PageNotFoundException;
+import org.bgee.controller.exception.RequestParametersNotFoundException;
+import org.bgee.controller.exception.RequestParametersNotStorableException;
+import org.bgee.controller.exception.RequestSizeExceededException;
+import org.bgee.controller.exception.ValueSizeExceededException;
 import org.bgee.view.ErrorDisplay;
 
 public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay {
@@ -39,37 +47,10 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
 
         this.startDisplay("Service unavailable for maintenance");
 
-        this.writeln("<p class='alert'>Due to technical problems, Bgee is currently unavailable. " +
-                "We are working to restore Bgee as soon as possible. " +
+        this.writeln("<p class='alert'>Due to technical problems, Bgee is currently unavailable.</p> " +
+                "<p>We are working to restore Bgee as soon as possible. " +
                 "We apologize for any inconvenience.</p>");
 
-        this.endDisplay();
-        log.exit();
-    }
-
-    @Override
-    public void displayRequestParametersNotFound(String key) {
-        log.entry(key);
-        this.sendBadRequestHeaders();
-        this.startDisplay("Request parameters not found");
-        this.writeln("<p class='alert'>Woops, something wrong happened</p>");
-        this.writeln("<p>You tried to use in your query some parameters supposed to be stored on our server, " +
-                "but we could not find them. Either the key you used was wrong, " +
-                "or we were not able to save these parameters. " +
-                "Your query should be rebuilt by setting all the parameters from scratch. " +
-                "We apologize for any inconvenience.</p>");
-        this.endDisplay();
-        log.exit();
-    }
-
-    @Override
-    public void displayPageNotFound(String message) {
-        log.entry(message);
-        this.sendPageNotFoundHeaders();
-        this.startDisplay("404 not found");
-        this.writeln("<p class='alert'>Woops, something wrong happened</p>");
-        this.writeln("<p>404 not found. We could not understand your query, see details below:</p> " +
-                "<p>" + htmlEntities(message) + "</p>");
         this.endDisplay();
         log.exit();
     }
@@ -79,7 +60,7 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
         log.entry();
         this.sendInternalErrorHeaders();
         this.startDisplay("500 internal server error");
-        this.writeln("<p class='alert'>Woops, something wrong happened</p>");
+        this.writeln("<p class='alert'>Woops, something wrong happened.</p>");
         this.writeln("<p>500 internal server error. " +
                 "An error occurred on our side. This error was logged and will be investigated. " +
                 "We apologize for any inconvenience.</p>");
@@ -88,52 +69,128 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
     }
 
     @Override
-    public void displayMultipleParametersNotAllowed(String message) {
-        log.entry(message);
-        this.sendBadRequestHeaders();
-        this.startDisplay("Multiple values not allowed");
-        this.writeln("<p class='alert'>Woops, something wrong happened</p>");
-        this.writeln("<p>"+ message
-                + "</p>"
-                + "Please check the URL and retry.</p>");
-        this.endDisplay();  
-        log.exit();
-    }
+    public void displayControllerException(InvalidFormatException e) {
+        log.entry(e);
 
-    @Override
-    public void displayRequestParametersNotStorable(String message) {
-        log.entry(message);
         this.sendBadRequestHeaders();
-        this.startDisplay("A parameter is not storable or the key is missing");
-        this.writeln("<p class='alert'>Woops, something wrong happened</p>");
-        this.writeln("<p>"+ message
-                + "</p>");
+
+        this.startDisplay("Invalid request!");
+
+        this.writeln("<p class='alert'>One of the request parameters has an incorrect format.</p>");
+        this.writeln("<p>Incorrect parameter: " + htmlEntities(e.getURLParameter().getName()) + "</p>");
+
         this.endDisplay();
         log.exit();
     }
 
     @Override
-    public void displayWrongFormat(String message) {
-        log.entry(message);
+    public void displayControllerException(InvalidRequestException e) {
+        log.entry(e);
+
         this.sendBadRequestHeaders();
-        this.startDisplay("Wrong format for a parameter");
-        this.writeln("<p class='alert'>Woops, something wrong happened</p>");
-        this.writeln("<p>"+ message
-                + "</p>"
-                + "Please check the URL and retry.</p>");
-        this.endDisplay();  
+
+        this.startDisplay("Invalid request!");
+
+        this.writeln("<p class='alert'>" + htmlEntities(e.getMessage()) + "</p>");
+        
         log.exit();
     }
 
     @Override
-    public void displayUnsupportedOperationException(String message) {
-        log.entry(message);
+    public void displayControllerException(MultipleValuesNotAllowedException e) {
+        log.entry(e);
+
         this.sendBadRequestHeaders();
-        this.startDisplay("Wrong format for a parameter");
-        this.writeln("<p class='alert'>Woops, something wrong happened</p>");
-        this.writeln("<p>The following operation is not supported: "+ message
-                + "</p>");
-        this.endDisplay();  
+
+        this.startDisplay("Invalid request!");
+
+        this.writeln("<p class='alert'>One of the request parameters was incorrectly assigned "
+                + "multiple values.</p>");
+        this.writeln("<p>Incorrect parameter: " + htmlEntities(e.getURLParameter().getName()) + "</p>");
+
+        this.endDisplay();
+        log.exit();
+    }
+
+    @Override
+    public void displayControllerException(RequestSizeExceededException e) {
+        log.entry(e);
+
+        this.sendBadRequestHeaders();
+
+        this.startDisplay("Invalid request!");
+
+        this.writeln("<p class='alert'>Request maximum size exceeded.</p>");
+        
+        log.exit();
+    }
+
+    @Override
+    public void displayControllerException(ValueSizeExceededException e) {
+        log.entry(e);
+
+        this.sendBadRequestHeaders();
+
+        this.startDisplay("Invalid request!");
+
+        this.writeln("<p class='alert'>One of the request parameters exceeded "
+                + "its maximum allowed length.</p>");
+        this.writeln("<p>Incorrect parameter: " + htmlEntities(e.getURLParameter().getName()) + "</p>");
+        
+        log.exit();
+    }
+
+    @Override
+    public void displayControllerException(PageNotFoundException e) {
+        log.entry(e);
+        
+        this.sendPageNotFoundHeaders();
+        this.startDisplay("404 not found");
+        this.writeln("<p class='alert'>Something wrong happened!</p>");
+        this.writeln("<p>404 not found. We could not understand your query.</p> ");
+        
+        log.exit();
+    }
+
+    @Override
+    public void displayControllerException(RequestParametersNotFoundException e) {
+        log.entry(e);
+        
+        this.sendBadRequestHeaders();
+        this.startDisplay("Invalid request!");
+        this.writeln("<p class='alert'>Something wrong happened!</p>");
+        this.writeln("<p>You tried to use in your query some parameters supposed to be stored "
+                + "on our server, but we could not find them. Either the key you used was wrong, "
+                + "or we were not able to save these parameters. Your query should be rebuilt "
+                + "by setting all the parameters again. We apologize for any inconvenience.</p>");
+        this.writeln("<p>Invalid key: " + htmlEntities(e.getKey()) + "</p>");
+        
+        log.exit();
+    }
+
+    @Override
+    public void displayControllerException(RequestParametersNotStorableException e) {
+        log.entry(e);
+        
+        this.sendInternalErrorHeaders();
+        this.startDisplay("500 internal server error");
+        this.writeln("<p class='alert'>Something wrong happened!</p>");
+        this.writeln("<p>We could not store your parameters, or a key could not be generated to retrieve them. "
+                + "We apologize for any inconvenience.</p>");
+        
+        log.exit();
+    }
+
+    @Override
+    public void displayUnsupportedOperationException() {
+        log.entry();
+        
+        this.sendBadRequestHeaders();
+        this.startDisplay("Invalid request!");
+        this.writeln("<p class='alert'>Something wrong happened!</p>");
+        this.writeln("<p>This operation is not supported "
+                + "for the requesed view or the requested parameters..</p>");
+        
         log.exit();
     }
 

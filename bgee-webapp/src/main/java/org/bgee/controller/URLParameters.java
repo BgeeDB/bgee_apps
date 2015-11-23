@@ -1,7 +1,13 @@
 package org.bgee.controller;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,11 +39,14 @@ import org.apache.logging.log4j.Logger;
  * The list is accessible through the method {@link #getList()}.
  *
  * @author Mathieu Seppey
- * @version Bgee 13, Jul 2014
- * @since Bgee 13
+ * @author Valentine Rech de Laval
+ * @author Frederic Bastian
+ * @version Bgee 13, Nov 2015
+ * @since Bgee 13 Nov. 2014
  * @see URLParameters.Parameter
  * @see	RequestParameters
  */
+//XXX: I think we should add support for Enum types, e.g., for expression type
 public class URLParameters {
 
     private final static Logger log = LogManager.getLogger(URLParameters.class.getName());
@@ -53,6 +62,13 @@ public class URLParameters {
      * {@link URLParameters.Parameter#allowsMultipleValues}
      */
     protected static final boolean DEFAULT_ALLOWS_MULTIPLE_VALUES = false;
+
+    /**
+     * A {@code List} of {@code String}s that are the default values to use to separate values
+     * of one parameter. Contains: "\r\n", "\r", "\n", ",".
+     * ({@see URLParameters.Parameter#allowsSeparatedValues}).
+     */
+    protected static final List<String> DEFAULT_SEPARATORS = Arrays.asList("\r\n", "\r", "\n", ",");
 
     /**
      * A {@code boolean} that contains the default value for {@link URLParameters.Parameter#isStorable}
@@ -72,7 +88,15 @@ public class URLParameters {
     /**
      * A {@code String} that contains the default value for {@link URLParameters.Parameter#format}
      */
-    protected static final String DEFAULT_FORMAT = null;
+    protected static final String DEFAULT_FORMAT = "^[\\w,.;:\\-_']*$";
+
+    /**
+     * A {@code String} that contains the default value for {@link URLParameters.Parameter#format}
+     * of a list.
+     */
+    protected static final String DEFAULT_LIST_FORMAT = 
+            "^[\\w ,.;:\\-_'" + DEFAULT_SEPARATORS.stream()
+                    .map(Pattern::quote).collect(Collectors.joining()) + "]*$";
 
     // *************************************
     //
@@ -94,9 +118,8 @@ public class URLParameters {
      * Corresponds to the URL parameter "page".
      */
     private static final Parameter<String> PAGE = new Parameter<String>("page",
-            DEFAULT_ALLOWS_MULTIPLE_VALUES, false, DEFAULT_IS_SECURE, 
-            DEFAULT_MAX_SIZE, 
-            DEFAULT_FORMAT,String.class);
+            DEFAULT_ALLOWS_MULTIPLE_VALUES, false, null, false, DEFAULT_IS_SECURE, 
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
 
     /**
      * A {@code Parameter<String>} defining what action should take the selected controller.
@@ -104,7 +127,7 @@ public class URLParameters {
      * parameter "action".
      */
     private static final Parameter<String> ACTION = new Parameter<String>("action",
-            DEFAULT_ALLOWS_MULTIPLE_VALUES, false, DEFAULT_IS_SECURE, 
+            DEFAULT_ALLOWS_MULTIPLE_VALUES, false, null, false, DEFAULT_IS_SECURE, 
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
 
     /**
@@ -113,7 +136,7 @@ public class URLParameters {
      * and has to be reset before adding a value.
      */
     private static final Parameter<String> DATA = new Parameter<String>("data",
-            false, false , DEFAULT_IS_SECURE, 
+            false, false, null, false , DEFAULT_IS_SECURE, 
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
 
     /**
@@ -122,19 +145,157 @@ public class URLParameters {
      * Corresponds to the URL parameter "display_type".
      */
     private static final Parameter<String> DISPLAY_TYPE = new Parameter<String>("display_type",
-            false, false, DEFAULT_IS_SECURE, 
-            DEFAULT_MAX_SIZE, 
-            DEFAULT_FORMAT,String.class);
+            false, false, null, false, DEFAULT_IS_SECURE, 
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
     
     /**
-     * A {@code Parameter<String>} appended to all AJAX queries to detect them.
+     * A {@code Parameter<Boolean>} appended to all AJAX queries to detect them.
      * Category of the parameter: controller parameter.
      * Corresponds to the URL parameter "ajax".
      */
     private static final Parameter<Boolean> AJAX = new Parameter<Boolean>("ajax",
-            false, false, false, 5, DEFAULT_FORMAT, Boolean.class);
+            false, false, null, false, false, 5, DEFAULT_FORMAT, Boolean.class);
+    /**
+     * A {@code Parameter<Boolean>} defining whether to display the {@code RequestParameters} 
+     * corresponding to a request as part of its response.
+     * Corresponds to the URL parameter "display_rp".
+     */
+    private static final Parameter<Boolean> DISPLAY_REQUEST_PARAMS = 
+            new Parameter<Boolean>("display_rp",
+            false, false, null, false, false, 5, DEFAULT_FORMAT, Boolean.class);
     
-//    /**
+    /**
+     * A {@code Parameter<String>} that contains the species IDs used 
+     * as key to store parameters on the disk.
+     * Corresponds to the URL parameter "species_list".
+     */
+    //XXX: Do we really need this parameter. Maybe we could simply allow species_id 
+    //to provide multiple values. And we could keep the word "list" for textarea upload, 
+    //where multiple values are separated by a specific separator in a same parameter value.
+    private static final Parameter<String> SPECIES_LIST = new Parameter<String>("species_list",
+            true, false, null, true, DEFAULT_IS_SECURE, 
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+
+    /**
+     * A {@code Parameter<Boolean>} defining whether to display the {@code GeneListResponse} 
+     * corresponding to gene validation response.
+     * Corresponds to the URL parameter "gene_info".
+     */
+    private static final Parameter<Boolean> GENE_INFO = new Parameter<Boolean>("gene_info",
+            false, false, null, false, false, 5, DEFAULT_FORMAT, Boolean.class);
+   
+    /**
+     * A {@code Parameter<String>} that contains the foreground gene IDs to be used 
+     * for TopAnat analysis.
+     * Corresponds to the URL parameter "fg_list".
+     */
+    private static final Parameter<String> FOREGROUND_LIST = new Parameter<String>("fg_list",
+            false, true, DEFAULT_SEPARATORS, true, DEFAULT_IS_SECURE, 
+            1000000, DEFAULT_LIST_FORMAT, String.class);
+    /**
+     * A {@code Parameter<String>} that contains the foreground gene ID file to be used 
+     * for TopAnat analysis.
+     * Corresponds to the URL parameter "fg_file".
+     */
+    private static final Parameter<String> FOREGROUND_FILE = new Parameter<String>("fg_file",
+            false, false, null, false, true, 
+            1000000, DEFAULT_FORMAT, String.class);
+    /**
+     * A {@code Parameter<String>} that contains the background gene IDs to be used 
+     * for TopAnat analysis.
+     * Corresponds to the URL parameter "bg_list".
+     */
+    private static final Parameter<String> BACKGROUND_LIST = new Parameter<String>("bg_list",
+            false, true, DEFAULT_SEPARATORS, true, DEFAULT_IS_SECURE, 
+            1000000, DEFAULT_LIST_FORMAT, String.class);
+    /**
+     * A {@code Parameter<String>} that contains the background gene ID file to be used 
+     * for TopAnat analysis.
+     * Corresponds to the URL parameter "bg_file".
+     */
+    private static final Parameter<String> BACKGROUND_FILE = new Parameter<String>("bg_file",
+            false, false, null, false, true, 
+            1000000, DEFAULT_FORMAT, String.class);
+    /**
+     * A {@code Parameter<String>} that contains the expression types to be used 
+     * for TopAnat analysis.
+     * Corresponds to the URL parameter "expr_type".
+     */
+    private static final Parameter<String> EXPRESSION_TYPE = new Parameter<String>("expr_type",
+            true, false, null, true, DEFAULT_IS_SECURE, 
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+    /**
+     * A {@code Parameter<String>} that contains the data quality to be used 
+     * for TopAnat analysis.
+     * Corresponds to the URL parameter "data_qual".
+     */
+    private static final Parameter<String> DATA_QUALITY = new Parameter<String>("data_qual",
+            false, false, null, true, DEFAULT_IS_SECURE, 
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+    /**
+     * A {@code Parameter<String>} that contains the data quality to be used 
+     * for TopAnat analysis.
+     * Corresponds to the URL parameter "data_type".
+     */
+    private static final Parameter<String> DATA_TYPE = new Parameter<String>("data_type",
+            true, false, null, true, DEFAULT_IS_SECURE, 
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+    /**
+     * A {@code Parameter<String>} that contains the developmental stages to be used 
+     * for TopAnat analysis.
+     * Corresponds to the URL parameter "stage_id".
+     */
+    private static final Parameter<String> DEV_STAGE = new Parameter<String>("stage_id",
+            true, false, null, true, DEFAULT_IS_SECURE, 
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+    /**
+     * A {@code Parameter<String>} that contains the decorrelation type to be used 
+     * for TopAnat analysis.
+     * Corresponds to the URL parameter "decorr_type".
+     */
+    private static final Parameter<String> DECORRELATION_TYPE = new Parameter<String>("decorr_type",
+            false, false, null, true, DEFAULT_IS_SECURE, 
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+    /**
+     * A {@code Parameter<Integer>} that contains the node size to be used for TopAnat analysis.
+     * Corresponds to the URL parameter "node_size".
+     */
+    private static final Parameter<Integer> NODE_SIZE = new Parameter<Integer>("node_size",
+            false, false, null, true, DEFAULT_IS_SECURE, 
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Integer.class);
+    /**
+     * A {@code Parameter<Integer>} that contains the number of nodes to be used
+     * for TopAnat analysis.
+     * Corresponds to the URL parameter "nb_node".
+     */
+    private static final Parameter<Integer> NB_NODE = new Parameter<Integer>("nb_node",
+            false, false, null, true, DEFAULT_IS_SECURE, 
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Integer.class);
+
+    /**
+     * A {@code Parameter<Double>} that contains the FDR threshold to be used for TopAnat analysis.
+     * Corresponds to the URL parameter "fdr_thr".
+     */
+    private static final Parameter<Double> FDR_THRESHOLD = new Parameter<Double>("fdr_thr",
+            false, false, null, true, DEFAULT_IS_SECURE, 
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Double.class);
+    /**
+     * A {@code Parameter<Double>} that contains the p-value threshold to be used
+     * for TopAnat analysis.
+     * Corresponds to the URL parameter "p_value_thr".
+     */
+    private static final Parameter<Double> P_VALUE_THRESHOLD = new Parameter<Double>("p_value_thr",
+            false, false, null, true, DEFAULT_IS_SECURE, 
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Double.class);
+    /**
+     * A {@code Parameter<Integer>} that contains the job ID to be used to track a job.
+     * Corresponds to the URL parameter "jobId".
+     */
+    private static final Parameter<Integer> JOB_ID = new Parameter<Integer>("job_id",
+            false, false, null, false, DEFAULT_IS_SECURE, 
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Integer.class);
+
+    //    /**
 //     * A {@code Parameter<Boolean>} to determine whether all anatomical structures of 
 //     * an ontology should be displayed. (and not only structures with the parent manually
 //     * expanded by the user). Category of the parameter: ontology display parameter.
@@ -195,12 +356,20 @@ public class URLParameters {
     private final List<Parameter<?>> list = Arrays.<Parameter<?>>asList(
             PAGE,
             ACTION,
+            // Species request
+            SPECIES_LIST,
+            // TopAnat analyze params
+            FOREGROUND_LIST, FOREGROUND_FILE, BACKGROUND_LIST, BACKGROUND_FILE,
+            EXPRESSION_TYPE, DATA_QUALITY, DATA_TYPE, DEV_STAGE, DECORRELATION_TYPE,
+            NODE_SIZE, FDR_THRESHOLD, P_VALUE_THRESHOLD, NB_NODE, JOB_ID,
+            GENE_INFO,
 //            ALL_ORGANS,
 //            CHOSEN_DATA_TYPE,
 //            EMAIL,
 //            STAGE_CHILDREN,
             DISPLAY_TYPE,
             DATA, 
+            DISPLAY_REQUEST_PARAMS, 
             AJAX
             );
 
@@ -314,11 +483,133 @@ public class URLParameters {
     }
 
     /**
-     * @return  A {@code Parameter<Boolean>} defining whether the request is made 
-     *          through an AJAX call. 
+     * @return  A {@code Parameter<Boolean>} defining whether to display the {@code RequestParameters} 
+     *          corresponding to a request as part of its response.
+     *          Corresponds to the URL parameter "display_rp".
+     */
+    public Parameter<Boolean> getParamDisplayRequestParams(){
+        return DISPLAY_REQUEST_PARAMS;
+    }
+    /**
+     * @return  A {@code Parameter<Boolean>} appended to all AJAX queries to detect them.
+     *          Corresponds to the URL parameter "ajax".
      */
     public Parameter<Boolean> getParamAjax(){
         return AJAX;
+    }
+    
+    /**
+     * @return  A {@code Parameter<String>} defining a species ID list.
+     *          Corresponds to the URL parameter "species_list".
+     */
+    public Parameter<String> getParamSpeciesList(){
+        return SPECIES_LIST;
+    }
+    /**
+     * @return  A {@code Parameter<String>} defining a foreground gene ID list.
+     *          Corresponds to the URL parameter "fg_list".
+     */
+    public Parameter<String> getParamForegroundList() {
+        return FOREGROUND_LIST;
+    }
+    /**
+     * @return  A {@code Parameter<String>} defining a foreground gene ID file.
+     *          Corresponds to the URL parameter "fg_file".
+     */
+    public Parameter<String> getParamForegroundFile() {
+        return FOREGROUND_FILE;
+    }
+    /**
+     * @return  A {@code Parameter<String>} defining a background gene ID list.
+     *          Corresponds to the URL parameter "bg_list".
+     */
+    public Parameter<String> getParamBackgroundList() {
+        return BACKGROUND_LIST;
+    }
+    /**
+     * @return  A {@code Parameter<String>} defining a background gene ID file.
+     *          Corresponds to the URL parameter "bg_file".
+     */
+    public Parameter<String> getParamBackgroundFile() {
+        return BACKGROUND_FILE;
+    }
+    /**
+     * @return  A {@code Parameter<String>} defining an expression type.
+     *          Corresponds to the URL parameter "expr_type".
+     */
+    public Parameter<String> getParamExprType() {
+        return EXPRESSION_TYPE;
+    }
+    /**
+     * @return  A {@code Parameter<String>} defining a data quality.
+     *          Corresponds to the URL parameter "data_qual".
+     */
+    public Parameter<String> getParamDataQuality() {
+        return DATA_QUALITY;
+    }
+    /**
+     * @return  A {@code Parameter<String>} defining a data type.
+     *          Corresponds to the URL parameter "data_type".
+     */
+    public Parameter<String> getParamDataType() {
+        return DATA_TYPE;
+    }
+    /**
+     * @return  A {@code Parameter<String>} defining a developmental stage.
+     *          Corresponds to the URL parameter "dev_stage".
+     */
+    public Parameter<String> getParamDevStage() {
+        return DEV_STAGE;
+    }
+    /**
+     * @return  A {@code Parameter<String>} defining a decorrelation type.
+     *          Corresponds to the URL parameter "decorr_type".
+     */
+    public Parameter<String> getParamDecorrelationType() {
+        return DECORRELATION_TYPE;
+    }
+    /**
+     * @return  A {@code Parameter<Integer>} defining a  node size to be used for TopAnat analysis.
+     *          Corresponds to the URL parameter "node_size".
+     */
+    public Parameter<Integer> getParamNodeSize() {
+        return NODE_SIZE;
+    }
+    /**
+     * @return  A {@code Parameter<Integer>} defining a number of nodes to be used for TopAnat analysis.
+     *          Corresponds to the URL parameter "nb_node".
+     */
+    public Parameter<Integer> getParamNbNode() {
+        return NB_NODE;
+    }
+    /**
+     * @return  A {@code Parameter<Double>} defining a FDR threshold to be used for TopAnat analysis.
+     *          Corresponds to the URL parameter "fdr_thr".
+     */
+    public Parameter<Double> getParamFdrThreshold() {
+        return FDR_THRESHOLD;
+    }
+    /**
+     * @return  A {@code Parameter<Double>} defining a p-value threshold to be used 
+     *          for TopAnat analysis.
+     *          Corresponds to the URL parameter "p_value_thr".
+     */
+    public Parameter<Double> getParamPValueThreshold() {
+        return P_VALUE_THRESHOLD;
+    }
+    /**
+     * @return  A {@code Parameter<Integer>} defining a job ID to be used to track a job.
+     *          Corresponds to the URL parameter "job_id".
+     */
+    public Parameter<Integer> getParamJobId() {
+        return JOB_ID;
+    }
+    /**
+     * @return  A {@code Parameter<Boolean>} defining whether to display the {@code GeneListResponse} 
+     *          corresponding to gene validation response.
+     */
+    public Parameter<Boolean> getParamGeneInfo() {
+        return GENE_INFO;
     }
 
     /**
@@ -335,7 +626,8 @@ public class URLParameters {
      * only by an instance of {@link URLParameters} or a class that extends it.
      * 
      * @author Mathieu Seppey
-     * @version Bgee 13, Jul 2014
+     * @author Valentine Rech de Laval
+     * @version Bgee 13, Nov 2014
      * @see RequestParameters
      * @see URLParameters
      * @since Bgee 13
@@ -352,7 +644,19 @@ public class URLParameters {
         /**
          * A {@code Boolean} that indicates whether the parameter accepts multiple values.
          */
-        private final boolean allowsMultipleValues ;
+        private final boolean allowsMultipleValues;
+
+        /**
+         * A {@code Boolean} that indicates whether the parameter accepts separated values, 
+         * i.e. contains several values in one parameter, separated by {@code separator}.
+         */
+        private final boolean allowsSeparatedValues;
+
+        /**
+         * A {@code List} of {@code String}s that are separators to
+         * separate values ordered by preference of use.
+         */
+        private final List<String> separators;
 
         /**
          * A {@code boolean} that indicates whether the parameter is storable or not.
@@ -386,12 +690,19 @@ public class URLParameters {
         /**
          * Protected constructor to allow only {@link URLParameters} to create instances 
          * of this class.
+         * <p>
+         * Note that if {@code allowsSeparatedValues} is {@code true} and some separators 
+         * are provided, the regex {@code format} must accept these separators. 
          * 
          * @param name                    A {@code String} that is the name of the parameter 
          *                                as seen in an URL
-         * @param allowsMultipleValues    A {@code Boolean} that indicates whether 
+         * @param allowsMultipleValues    A {@code boolean} that indicates whether 
          *                                the parameter accepts multiple values.
-         * @param isStorable              A {@code boolean} defining whether the parameter 
+         * @param allowsSeparatedValues   A {@code Boolean} that indicates whether
+         *                                the parameter accepts separated values.
+         * @param separators              A {@code List} of {@code String}s that are separators to
+         *                                separate values ordered by preference of use.
+         * @param isStorable              A {@code boolean} defining whether the parameter
          *                                is storable.
          * @param isSecure		          A {@code boolean} defining whether the parameter 
          *                                is secure.
@@ -400,20 +711,44 @@ public class URLParameters {
          * @param format                  A {@code String} that contains the regular expression 
          *                                that this parameter has to fit to.
          * @param type                    A {@code Class<T>} that is the data type of the value 
-         *                                to be store by this parameter.
+         *                                (or values if {@code allowsSeparatedValues} is
+         *                                {@code true}) to be store by this parameter.
+         * @throws IllegalArgumentException If no separators are provided for a separated-value 
+         *                                  parameter, or if the separators are not contained 
+         *                                  in {@code format}.
          */
-        protected Parameter(String name, Boolean allowsMultipleValues,boolean isStorable, 
-                boolean isSecure,int maxSize,String format,Class<T> type){
+        protected Parameter(String name, boolean allowsMultipleValues, boolean allowsSeparatedValues,
+                List<String> separators, boolean isStorable, boolean isSecure, int maxSize,
+                String format, Class<T> type) throws IllegalArgumentException {
 
-            log.entry(name,allowsMultipleValues,isStorable,isSecure,maxSize,format,type);
+            log.entry(name, allowsMultipleValues, isStorable, isSecure, maxSize, format, type);
+            
+            if (format == null) {
+                throw log.throwing(new IllegalArgumentException("A format for validation "
+                        + "must be provided."));
+            }
 
             this.name = name ;
             this.allowsMultipleValues = allowsMultipleValues;
+            this.allowsSeparatedValues = allowsSeparatedValues;
+            this.separators = Collections.unmodifiableList(Optional.ofNullable(separators)
+                    .orElse(new ArrayList<>()));
             this.isStorable = isStorable ;
             this.isSecure = isSecure ;
             this.maxSize = maxSize ;
             this.format = format ;
             this.type = type ;
+            
+            if (this.allowsSeparatedValues) {
+                if (this.separators.isEmpty() || this.separators.stream().anyMatch(Objects::isNull)) {
+                    throw log.throwing(new IllegalArgumentException("Separators must be provided "
+                            + "for separated-values parameters."));
+                }
+                if (this.separators.stream().anyMatch(sep -> !this.format.contains(Pattern.quote(sep)))) {
+                    throw log.throwing(new IllegalArgumentException("Separators must be part of "
+                            + "the String allowing to validate input format."));
+                }
+            }
             
             log.exit();
         }
@@ -426,10 +761,25 @@ public class URLParameters {
         }
 
         /**
-         * @return	A {@code Boolean} that indicates whether the parameter accepts multiple values.
+         * @return  A {@code Boolean} that indicates whether the parameter accepts multiple values.
          */
         public boolean allowsMultipleValues() {
             return allowsMultipleValues;
+        }
+
+        /**
+         * @return  A {@code Boolean} that indicates whether the parameter accepts separated values.
+         */
+        public boolean allowsSeparatedValues() {
+            return allowsSeparatedValues;
+        }
+
+        /**
+         * @return  A {@code List} of {@code String}s that are separators to
+         *          separate values ordered by preference of use.
+         */
+        public List<String> getSeparators() {
+            return separators;
         }
 
         /**
@@ -475,9 +825,64 @@ public class URLParameters {
             return name;
         }
 
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + (allowsMultipleValues ? 1231 : 1237);
+            result = prime * result + (allowsSeparatedValues ? 1231 : 1237);
+            result = prime * result + ((format == null) ? 0 : format.hashCode());
+            result = prime * result + (isSecure ? 1231 : 1237);
+            result = prime * result + (isStorable ? 1231 : 1237);
+            result = prime * result + maxSize;
+            result = prime * result + ((name == null) ? 0 : name.hashCode());
+            result = prime * result + ((separators == null) ? 0 : separators.hashCode());
+            result = prime * result + ((type == null) ? 0 : type.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            Parameter<?> other = (Parameter<?>) obj;
+            if (allowsMultipleValues != other.allowsMultipleValues)
+                return false;
+            if (allowsSeparatedValues != other.allowsSeparatedValues)
+                return false;
+            if (format == null) {
+                if (other.format != null)
+                    return false;
+            } else if (!format.equals(other.format))
+                return false;
+            if (isSecure != other.isSecure)
+                return false;
+            if (isStorable != other.isStorable)
+                return false;
+            if (maxSize != other.maxSize)
+                return false;
+            if (name == null) {
+                if (other.name != null)
+                    return false;
+            } else if (!name.equals(other.name))
+                return false;
+            if (separators == null) {
+                if (other.separators != null)
+                    return false;
+            } else if (!separators.equals(other.separators))
+                return false;
+            if (type == null) {
+                if (other.type != null)
+                    return false;
+            } else if (!type.equals(other.type))
+                return false;
+            return true;
+        }
     }
-
-
 }
 
 

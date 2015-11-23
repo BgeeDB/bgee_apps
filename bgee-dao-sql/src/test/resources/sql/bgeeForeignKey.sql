@@ -234,6 +234,11 @@ add foreign key (geneId) references gene(geneId) on delete cascade,
 add foreign key (expressionId) references expression(expressionId) on delete set null;
 /*!40000 ALTER TABLE `expressedSequenceTag` ENABLE KEYS */;
 
+/*!40000 ALTER TABLE `estRank` DISABLE KEYS */;
+alter table estRank
+add foreign key (estLibraryId) references estLibrary(estLibraryId) on delete cascade,
+add foreign key (geneId) references gene(geneId) on delete cascade;
+/*!40000 ALTER TABLE `estRank` ENABLE KEYS */;
 --  ****************************************************
 --  RAW AFFYMETRIX DATA
 --  ****************************************************
@@ -348,6 +353,11 @@ add foreign key (geneId) references gene(geneId) on delete cascade,
 add foreign key (expressionId) references expression(expressionId) on delete set null, 
 add foreign key (noExpressionId) references noExpression(noExpressionId) on delete set null;
 /*!40000 ALTER TABLE `rnaSeqResult` ENABLE KEYS */;
+
+/*!40000 ALTER TABLE `rnaSeqFeatureLength` DISABLE KEYS */;
+alter table rnaSeqFeatureLength 
+add foreign key (geneId) references gene(geneId) on delete cascade;
+/*!40000 ALTER TABLE `rnaSeqFeatureLength` ENABLE KEYS */;
 
 -- ****** for diff expression ********
 

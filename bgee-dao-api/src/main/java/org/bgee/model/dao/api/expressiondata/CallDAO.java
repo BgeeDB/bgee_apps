@@ -1,9 +1,16 @@
 package org.bgee.model.dao.api.expressiondata;
 
+import java.util.EnumMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.TransferObject;
+import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 
 /**
  * DAO defining queries using or retrieving {@link CallTO}s. 
@@ -13,29 +20,42 @@ import org.bgee.model.dao.api.TransferObject;
  * @see CallTO
  * @since Bgee 13
  */
-public interface CallDAO extends DAO<CallDAO.Attribute> {
+public interface CallDAO<T extends Enum<T> & CallDAO.Attribute> extends DAO<T> {
     
     /**
-     * {@code Enum} used to define the attributes to populate in the {@code CallTO}s 
-     * obtained from this {@code CallDAO}.
-     * <ul>
-     * <li>{@code ID}: corresponds to {@link CallTO#getId()}.
-     * <li>{@code GENEID}: corresponds to {@link CallTO#getGeneId()}.
-     * <li>{@code STAGEID}: corresponds to {@link CallTO#getStageId()}.
-     * <li>{@code ANATENTITYID}: corresponds to {@link CallTO#getAnatEntityId()}.
-     * <li>{@code AFFYMETRIXDATA}: corresponds to {@link CallTO#getAffymetrixData()}.
-     * <li>{@code ESTDATA}: corresponds to {@link CallTO#getESTData()}.
-     * <li>{@code INSITUDATA}: corresponds to {@link CallTO#getInSituData()}.
-     * <li>{@code RELAXEDINSITUDATA}: corresponds to {@link CallTO#getRelaxedInSituData()}.
-     * <li>{@code RNASEQDATA}: corresponds to {@link CallTO#getRNASeqData()}.
-     * </ul>
-     * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
-     * @see org.bgee.model.dao.api.DAO#setAttributes(Enum[])
-     * @see org.bgee.model.dao.api.DAO#clearAttributes()
+     * Interface implemented by {@code Enum} classes allowing to select 
+     * what are the attributes to populate in the {@code CallTO}s obtained 
+     * from a {@code CallDAO}.
+     * 
+     * @author Frederic Bastian
+     * @version Bgee 13
+     * @since Bgee 13
      */
-    public enum Attribute implements DAO.Attribute {
-        ID, GENE_ID, STAGE_ID, ANAT_ENTITY_ID, 
-        AFFYMETRIX_DATA, EST_DATA, IN_SITU_DATA, RELAXED_IN_SITU_DATA, RNA_SEQ_DATA;
+    public static interface Attribute extends DAO.Attribute {
+        /**
+         * @return  A {@code boolean} allowing to determine whether this {@code Attribute} 
+         *          is related to a data type, meaning that the method related to 
+         *          this {@code Attribute} in an {@code CallTO} returns a {@code DataState}.
+         */
+        public boolean isDataTypeAttribute();
+    }
+    /**
+     * The attributes available to order retrieved {@code CallTO}s
+     * <ul>
+     * <li>{@code GENE_ID}: corresponds to {@link CallTO#getGeneId()}.
+     * <li>{@code STAGE_ID}: corresponds to {@link CallTO#getStageId()}.
+     * <li>{@code ANAT_ENTITY_ID}: corresponds to {@link CallTO#getAnatEntityId()}.
+     * <li>{@code OMA_GROUP_ID}: order results by the OMA group genes belong to. 
+     * If this {@code OrderingAttribute} is used in a query not specifying any targeted taxon 
+     * for gene orthology, then the {@code OMAParentNodeId} of the gene is used (see 
+     * {@link org.bgee.model.dao.api.gene.GeneDAO.GeneTO.getOMAParentNodeId()}); otherwise, 
+     * the OMA group the gene belongs to at the level of the targeted taxon is used. 
+     * <li>{@code MEAN_RANK}: order results by mean rank of the gene in the corresponding condition. 
+     * Only the mean ranks computed from the data types requested in the query are considered. 
+     * </ul>
+     */
+    enum OrderingAttribute implements DAO.OrderingAttribute {
+        GENE_ID, STAGE_ID, ANAT_ENTITY_ID, OMA_GROUP_ID;
     }
 
     /**
@@ -54,11 +74,12 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
      * @author Frederic Bastian
      * @version Bgee 13
      * @since Bgee 13
+     * 
+     * @param T The type of {@code Attribute} associated to this {@code CallTO}.
      */
-    public abstract class CallTO extends TransferObject {
+    public static abstract class CallTO<T extends Enum<T> & CallDAO.Attribute> extends TransferObject {
         // TODO modify the class to be immutable. Use a Builder pattern?
         private static final long serialVersionUID = 2157139618099008406L;
-        
         /**
          * {@code Logger} of the class. 
          */
@@ -230,6 +251,77 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
             this.relaxedInSituData = relaxedInSituData;
             this.rnaSeqData = rnaSeqData;
         }
+        
+        /**
+         * Map the {@code Attribute}s of type {@code T} related to data types 
+         * to their corresponding {@code DataState} defined in this {@code CallTO}.
+         * For instance, if the method {@code getAffymetrixData} returns {@code DataState.HIGHQUALITY}, 
+         * then the returned {@code Map} will contain an entry 
+         * {@code AFFYMETRIX_DATA} -> {@code DataState.HIGHQUALITY}. Values can be {@code null}.
+         * 
+         * @return          A {@code Map} where keys are {@code T}s related to data types (see 
+         *                  {@link CallDAO.Attribute#isDataTypeAttribute()}), 
+         *                  the associated value being the corresponding {@code DataState} 
+         *                  defined in this {@code ExpressionCallTO}.
+         */
+        public abstract Map<T, DataState> extractDataTypesToDataStates();
+        
+
+        
+        /**
+         * Retrieve from this {@code CallTO} the data types with a filtering requested, 
+         * allowing to parameterize queries to the data source. For instance, to only retrieve 
+         * calls with an Affymetrix data state equal to {@code HIGHQUALITY}, or with some RNA-Seq data 
+         * of any quality (minimal data state {@code LOWQUALITY}).
+         * <p>
+         * The data types are represented as {@code Attribute}s allowing to request a data type parameter 
+         * (see {@link CallDAO.Attribute#isDataTypeAttribute()}). The {@code DataState}s 
+         * associated to each data type are retrieved using {@link CallTO#extractDataTypesToDataStates()}. 
+         * A check is then performed to ensure that the {@code CallTO} will actually result 
+         * in a filtering of the data. For instance, if all data qualities are {@code null},  
+         * then it is equivalent to requesting no filtering at all, and the {@code EnumMap} returned 
+         * by this method will be empty. 
+         * <p>
+         * Each quality associated to a data type in a same {@code CallTO} is considered 
+         * as an AND condition (for instance, "affymetrixData >= HIGH_QUALITY AND 
+         * rnaSeqData >= HIGH_QUALITY"). To configure OR conditions, (for instance, 
+         * "affymetrixData >= HIGH_QUALITY OR rnaSeqData >= HIGH_QUALITY"), several {@code CallTO}s 
+         * must be provided to this {@code CallDAOFilter}. So for instance, if the quality 
+         * of all data types of {@code callTO} are set to {@code LOW_QUALITY}, it will only allow 
+         * to retrieve calls with data in all data types. 
+         *  
+         * @return          An {@code EnumMap} where keys are {@code Attribute}s associated to a data type, 
+         *                  the associated value being a {@code DataState} to be used 
+         *                  to parameterize queries to the data source (results should have 
+         *                  a data state equal to or higher than this value for this data type).
+         *                  Returned as an {@code EnumMap} for consistent iteration order 
+         *                  when setting parameters in a query. 
+         */
+        protected EnumMap<T, DataState> extractFilteringDataTypes(Class<T> attributeType) {
+            log.entry();
+            
+            final Map<T, DataState> typesToStates = this.extractDataTypesToDataStates();
+            
+            Set<DataState> states = new HashSet<>(typesToStates.values());
+            //if we only have null and/or DataState.NODATA values, 
+            //it is equivalent to having no filtering for data types.
+            if ((states.size() == 1 && 
+                    (states.contains(null) || states.contains(DataState.NODATA))) || 
+                (states.size() == 2 && states.contains(null) && 
+                states.contains(DataState.NODATA))) {
+                
+                return log.exit(new EnumMap<>(attributeType));
+            }
+            
+            //otherwise, get the data types with a filtering requested
+            return log.exit(typesToStates.entrySet().stream()
+                    .filter(entry -> entry.getValue() != null && entry.getValue() != DataState.NODATA)
+                    .collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue(), 
+                            (k, v) -> {throw log.throwing(
+                                    new IllegalArgumentException("Key used more than once: " + k));}, 
+                            //Cannot write EnumMap<>, Eclipse manages to infer the correct type, but not javac. 
+                            () -> new EnumMap<T, DataState>(attributeType))));
+        }
 
         //**************************************
         // GETTERS/SETTERS
@@ -244,6 +336,8 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
         /**
          * @param id    the {@code String} representing the ID of this call.
          */
+        //deprecated because all TOs should now be immutable. 
+        @Deprecated
         void setId(String id) {
             this.id = id;
         }
@@ -258,6 +352,8 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
          * @param geneId    the {@code String} representing the ID of the gene associated to 
          *                  this call.
          */
+        //deprecated because all TOs should now be immutable. 
+        @Deprecated
         void setGeneId(String geneId) {
             this.geneId = geneId;
         }
@@ -272,6 +368,8 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
          * @param stageId    the {@code String} representing the ID of the 
          *                      developmental stage associated to this call.
          */
+        //deprecated because all TOs should now be immutable. 
+        @Deprecated
         void setStageId(String stageId) {
             this.stageId = stageId;
         }
@@ -286,6 +384,8 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
          * @param anatEntityId  the {@code String} representing the ID of the 
          *                      anatomical entity associated to this call.
          */
+        //deprecated because all TOs should now be immutable. 
+        @Deprecated
         void setAnatEntityId(String anatEntityId) {
             this.anatEntityId = anatEntityId;
         }
@@ -302,6 +402,8 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
          * @param affymetrixData    the {@code DataState} defining the contribution 
          *                          of Affymetrix data to the generation of this call.
          */
+        //deprecated because all TOs should now be immutable. 
+        @Deprecated
         void setAffymetrixData(DataState affymetrixData) {
             this.affymetrixData = affymetrixData;
         }
@@ -316,6 +418,8 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
          * @param estData   the {@code DataState} defining the contribution 
          *                  of EST data to the generation of this call.
          */
+        //deprecated because all TOs should now be immutable. 
+        @Deprecated
         void setESTData(DataState estData) {
             this.estData = estData;
         }
@@ -330,6 +434,8 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
          * @param inSituData    the {@code DataState} defining the contribution 
          *                      of <em>in situ</em> data to the generation of this call.
          */
+        //deprecated because all TOs should now be immutable. 
+        @Deprecated
         void setInSituData(DataState inSituData) {
             this.inSituData = inSituData;
         }
@@ -355,6 +461,8 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
          *                      of relaxed <em>in situ</em> data to the generation 
          *                      of this call.
          */
+        //deprecated because all TOs should now be immutable. 
+        @Deprecated
         void setRelaxedInSituData(DataState inSituData) {
             this.relaxedInSituData = inSituData;
         }
@@ -369,6 +477,8 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
          * @param rnaSeqData    the {@code DataState} defining the contribution 
          *                      of RNA-Seq data to the generation of this call.
          */
+        //deprecated because all TOs should now be immutable. 
+        @Deprecated
         void setRNASeqData(DataState rnaSeqData) {
             this.rnaSeqData = rnaSeqData;
         }
@@ -454,7 +564,7 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
             if (!(obj instanceof CallTO)) {
                 return false;
             }
-            CallTO other = (CallTO) obj;
+            CallTO<?> other = (CallTO<?>) obj;
             
             if (id == null) {
                 if (other.id != null) {

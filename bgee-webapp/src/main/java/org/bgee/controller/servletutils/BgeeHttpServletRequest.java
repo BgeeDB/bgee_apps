@@ -96,14 +96,6 @@ public class BgeeHttpServletRequest implements HttpServletRequest {
     private String method;
 
     /**
-     * Default constructor, 
-     * used to simulate a request with no parameters set (empty query string).
-     */
-    public BgeeHttpServletRequest() {
-        this("");
-    }
-
-    /**
      * A public constructor taking as a parameter a {@code String}, 
      * that should be a regular query string of a URL. 
      * It will be used to set the {@code queryString} attribute of this class. 
@@ -146,7 +138,8 @@ public class BgeeHttpServletRequest implements HttpServletRequest {
         if (queryStringMatcher.matches()) {
             this.setQueryString(queryStringMatcher.group(2));
         } else {
-            assert false: "Error, could not match query string: " + queryString;
+            throw log.throwing(new IllegalArgumentException("Error, could not match query string: " 
+                + queryString));
         }
         log.exit();
     }
@@ -173,8 +166,7 @@ public class BgeeHttpServletRequest implements HttpServletRequest {
      * @see #getParameterMap()
      * @see #queryString
      */
-    private void loadParameterMap()
-    {
+    private void loadParameterMap() {
         log.entry();
         this.parameterMap = new HashMap<String, String[]>();
         if (StringUtils.isBlank(this.queryString)){
@@ -198,7 +190,17 @@ public class BgeeHttpServletRequest implements HttpServletRequest {
                     values = new ArrayList<String>();
                     mapOfLists.put(pair.getName(), values);
                 }
-                values.add(pair.getValue());
+                try {
+                    //the methods getParameter and getParameterValues usually return 
+                    //the decoded values, so we store them decoded in the Map. 
+                    String decodedVal = java.net.URLDecoder.decode(pair.getValue(), 
+                            this.getCharacterEncoding());
+                    log.trace("Storing decoded value in parameterMap: {}", decodedVal);
+                    values.add(decodedVal);
+                } catch (UnsupportedEncodingException e) {
+                    //we're confident that our encoding is supported
+                    throw log.throwing(new IllegalStateException(e));
+                }
             }
         }
 
@@ -243,19 +245,21 @@ public class BgeeHttpServletRequest implements HttpServletRequest {
 
     @Override
     public String[] getParameterValues(String parameterName) {
+        log.entry(parameterName);
         String[] vals = this.parameterMap.get(parameterName);
-        return vals == null? null: vals.clone();
+        return log.exit(vals == null? null: vals.clone());
     }
 
     @Override
     public Map<String, String[]> getParameterMap() {
+        log.entry();
         if (this.parameterMap == null) {
-            return null;
+            return log.exit(null);
         }
         //deep cloning the map
-        return this.parameterMap.entrySet().stream()
+        return log.exit(this.parameterMap.entrySet().stream()
                 .collect(Collectors.toMap(e -> e.getKey(), 
-                                          e -> e.getValue() == null ? null: e.getValue().clone()));
+                                          e -> e.getValue() == null ? null: e.getValue().clone())));
     }
 
     @Override

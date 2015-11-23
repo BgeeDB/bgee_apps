@@ -98,6 +98,12 @@ public abstract class ConcreteDisplayParent {
     }
 
     /**
+     * @return  The {@code PrintWriter} that produces the output.
+     */
+    protected PrintWriter getOut() {
+        return out;
+    }
+    /**
      * Write the provided {@code String} on the output of the {@code HttpServletResponse}
      * using the {@code PrintWriter}, with a line return at the end.
      * @param stringToWrite
@@ -140,8 +146,8 @@ public abstract class ConcreteDisplayParent {
             log.exit(); return;
         }
         if (!this.headersAlreadySent) {
-            log.trace("Set content type to {}", this.getContentType());
-            this.response.setContentType(this.getContentType());
+            this.response.setStatus(HttpServletResponse.SC_OK);
+            this.setContentTypeAndEncoding();
             
             if (this.getRequestParameters().isAnAjaxRequest()) {
                 this.response.setDateHeader("Expires", 1);
@@ -155,6 +161,20 @@ public abstract class ConcreteDisplayParent {
         }
         log.exit();
     }
+    
+    /**
+     * Set on {@link #response} the content type (using the method {@code getContentType} 
+     * on {@link #requestParameters}) and the character encoding (using the method 
+     * {@code getCharacterEncoding} on {@link #requestParameters}).
+     */
+    private void setContentTypeAndEncoding() {
+        log.entry();
+        log.trace("Set content type to {}", this.getContentType());
+        this.response.setContentType(this.getContentType());
+        log.trace("Set character encoding to {}", this.requestParameters.getCharacterEncoding());
+        this.response.setCharacterEncoding(this.requestParameters.getCharacterEncoding());
+        log.exit();
+    }
 
     /**
      * Send the header in case of HTTP 503 error, with MIME content type defined 
@@ -166,8 +186,7 @@ public abstract class ConcreteDisplayParent {
             return;
         }
         if (!this.headersAlreadySent) {
-            log.trace("Set content type to {}", this.getContentType());
-            this.response.setContentType(this.getContentType());
+            this.setContentTypeAndEncoding();
             this.response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
             this.headersAlreadySent = true;
         }
@@ -184,8 +203,7 @@ public abstract class ConcreteDisplayParent {
             return;
         }
         if (!this.headersAlreadySent) {
-            log.trace("Set content type to {}", this.getContentType());
-            this.response.setContentType(this.getContentType());
+            this.setContentTypeAndEncoding();
             this.response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             this.headersAlreadySent = true;
         }
@@ -202,8 +220,7 @@ public abstract class ConcreteDisplayParent {
             return;
         }
         if (!this.headersAlreadySent) {
-            log.trace("Set content type to {}", this.getContentType());
-            this.response.setContentType(this.getContentType());
+            this.setContentTypeAndEncoding();
             this.response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             this.headersAlreadySent = true;
         }
@@ -220,8 +237,7 @@ public abstract class ConcreteDisplayParent {
             return;
         }
         if (!this.headersAlreadySent) {
-            log.trace("Set content type to {}", this.getContentType());
-            this.response.setContentType(this.getContentType());
+            this.setContentTypeAndEncoding();
             this.response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             this.headersAlreadySent = true;
         }

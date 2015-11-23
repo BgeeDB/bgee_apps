@@ -9,6 +9,8 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.BgeeEnum;
+import org.bgee.model.BgeeEnum.BgeeEnumField;
 import org.bgee.model.expressiondata.baseelements.DataPropagation.PropagationState;
 
 /**
@@ -39,11 +41,10 @@ public interface CallType {
      * @see DiffExpression
      * @since Bgee 13
      */
-    public static enum Expression implements CallType {
+    public static enum Expression implements CallType, BgeeEnumField {
         EXPRESSED(Collections.unmodifiableSet(EnumSet.allOf(DataType.class))), 
         NOT_EXPRESSED(Collections.unmodifiableSet(
-                EnumSet.of(DataType.AFFYMETRIX, DataType.IN_SITU, 
-                        DataType.RELAXED_IN_SITU, DataType.RNA_SEQ)));
+                EnumSet.of(DataType.AFFYMETRIX, DataType.IN_SITU, DataType.RNA_SEQ)));
         /**
          * {@code Logger} of the class. 
          */
@@ -71,20 +72,20 @@ public interface CallType {
             if (this.equals(EXPRESSED)) {
                 //no propagation from parents allowed for expression calls, 
                 //all other propagations allowed. 
-                if (anatPropagation == PropagationState.PARENT || 
-                        anatPropagation == PropagationState.SELF_AND_PARENT || 
-                        anatPropagation == PropagationState.SELF_OR_PARENT || 
-                        devStagePropagation == PropagationState.PARENT || 
-                        devStagePropagation == PropagationState.SELF_AND_PARENT || 
-                        devStagePropagation == PropagationState.SELF_OR_PARENT) {
+                if (anatPropagation == PropagationState.ANCESTOR || 
+                        anatPropagation == PropagationState.SELF_AND_ANCESTOR || 
+                        anatPropagation == PropagationState.SELF_OR_ANCESTOR || 
+                        devStagePropagation == PropagationState.ANCESTOR || 
+                        devStagePropagation == PropagationState.SELF_AND_ANCESTOR || 
+                        devStagePropagation == PropagationState.SELF_OR_ANCESTOR) {
                     incorrectPropagation = true;
                 }
             } else if (this.equals(NOT_EXPRESSED)) {
                 //for no-expression calls, propagation from parents for anat. entities allowed, 
                 //no propagation for dev. stage allowed. 
-                if (anatPropagation == PropagationState.CHILD || 
-                        anatPropagation == PropagationState.SELF_AND_CHILD || 
-                        anatPropagation == PropagationState.SELF_OR_CHILD || 
+                if (anatPropagation == PropagationState.DESCENDANT || 
+                        anatPropagation == PropagationState.SELF_AND_DESCENDANT || 
+                        anatPropagation == PropagationState.SELF_OR_DESCENDANT || 
                         devStagePropagation != PropagationState.SELF) {
                     incorrectPropagation = true;
                 }
@@ -99,6 +100,31 @@ public interface CallType {
                         + ": " + propagation));
             }
             log.exit();
+        }
+        
+        @Override
+        public String getStringRepresentation() {
+            log.entry();
+            return log.exit(this.name());
+        }
+        
+        /**
+         * Convert the {@code String} representation of a call type for baseline presence or 
+         * absence of expression (for instance, retrieved from request) into a
+         * {@code CallType.Expression}.
+         * Operation performed by calling {@link BgeeEnum#convert(Class, String)} with 
+         * {@code CallType.Expression} as the {@code Class} argument, and {@code representation} 
+         * as the {@code String} argument.
+         * 
+         * @param representation            A {@code String} representing a data quality.
+         * @return                          A {@code CallType.Expression} corresponding 
+         *                                  to {@code representation}.
+         * @throw IllegalArgumentException  If {@code representation} does not correspond 
+         *                                  to any {@code CallType.Expression}.
+         * @see #convert(Class, String)
+         */
+        public static final Expression convertToExpression(String representation) {
+            return BgeeEnum.convert(Expression.class, representation);
         }
     }
     /**
@@ -124,7 +150,7 @@ public interface CallType {
      * @see Expression
      * @since Bgee 13
      */
-    public static enum DiffExpression implements CallType {
+    public static enum DiffExpression implements CallType, BgeeEnumField {
         DIFF_EXPRESSED(), OVER_EXPRESSED(), 
         UNDER_EXPRESSED(), NOT_DIFF_EXPRESSED();
         
@@ -155,6 +181,28 @@ public interface CallType {
                         + ": " + propagation));
             }
             log.exit();
+        }
+        @Override
+        public String getStringRepresentation() {
+            log.entry();
+            return log.exit(this.name());
+        }
+        /**
+         * Convert the {@code String} representation of a call type from differential expression
+         * analyses (for instance, retrieved from request) into a {@code CallType.DiffExpression}.
+         * Operation performed by calling {@link BgeeEnum#convert(Class, String)} with 
+         * {@code CallType.DiffExpression} as the {@code Class} argument, and {@code representation} 
+         * as the {@code String} argument.
+         * 
+         * @param representation            A {@code String} representing a data quality.
+         * @return                          A {@code CallType.DiffExpression} corresponding 
+         *                                  to {@code representation}.
+         * @throw IllegalArgumentException  If {@code representation} does not correspond 
+         *                                  to any {@code CallType.DiffExpression}.
+         * @see #convert(Class, String)
+         */
+        public static final DiffExpression convertToDiffExpression(String representation) {
+            return BgeeEnum.convert(DiffExpression.class, representation);
         }
     }
 
@@ -224,7 +272,7 @@ public interface CallType {
      *                                  for this {@code CallType.}
      * @see DataPropagation
      */
-    public void checkDataPropagation(DataPropagation propagation);
+    public void checkDataPropagation(DataPropagation propagation) throws IllegalArgumentException;
     
     /**
      * Returns the {@code DataType}s capable of producing this {@code CallType}. 

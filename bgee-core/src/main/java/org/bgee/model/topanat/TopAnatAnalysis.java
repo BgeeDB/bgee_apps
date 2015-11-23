@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -27,6 +28,8 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.expressiondata.CallService;
+import org.bgee.model.expressiondata.baseelements.DataQuality;
+import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneService;
 import org.bgee.model.topanat.exception.InvalidForegroundException;
@@ -754,9 +757,35 @@ public class TopAnatAnalysis {
     /**
      *
      */
+    //TODO: unit test this logic, of different file names depending on parameters
     protected String getGeneToAnatEntitiesFileName(){
-        return TopAnatAnalysis.FILE_PREFIX 
-                + "GeneToAnatEntities_" + this.params.getKey()  + ".tsv";
+        
+        //for the background file, if there is no custom background requested, 
+        //we take into account only some info
+        if (this.params.getSubmittedBackgroundIds() == null || 
+                this.params.getSubmittedBackgroundIds().isEmpty()) {
+            
+            //TODO: use some kind of encoding of the Strings for file name (see replacement for stage ID)
+            final StringBuilder sb = new StringBuilder();
+            sb.append(this.params.getSpeciesId());
+            sb.append("_").append(this.params.getCallType().toString());
+            Optional.ofNullable(this.params.getDevStageId())
+                //replace column in IDs
+                .ifPresent(e -> sb.append("_").append(e.replace(":", "_")));
+            //use EnumSet for consistent ordering
+            Optional.ofNullable(this.params.getDataTypes()).map(e -> EnumSet.copyOf(e))
+            .orElse(EnumSet.allOf(DataType.class))
+            .stream()
+            .forEach(e -> sb.append("_").append(e.toString()));
+            sb.append("_").append(Optional.ofNullable(this.params.getDataQuality()).orElse(DataQuality.LOW)
+                    .toString());
+            
+            return log.exit(TopAnatAnalysis.FILE_PREFIX 
+                    + "GeneToAnatEntities_" + sb.toString()  + ".tsv");
+        }
+        //custom background provided, use the hash
+        return log.exit(TopAnatAnalysis.FILE_PREFIX 
+                + "GeneToAnatEntities_" + this.params.getKey()  + ".tsv");
     }
 
     /**

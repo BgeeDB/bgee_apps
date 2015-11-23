@@ -52,6 +52,13 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         
         //TODO: manage the version either from database, or from bgee-webapp.properties file.
         this.writeln("<h1>Welcome to Bgee release 13.1</h1>");
+
+        RequestParameters topAnatGenerator = this.getNewRequestParameters();
+        topAnatGenerator.setPage(RequestParameters.PAGE_TOP_ANAT);
+        this.writeln("<div id='home_important_info'>Please checkout our exclusive new tool, "
+                + "<a href='" + topAnatGenerator.getRequestURL() + "' title='Test our new TopAnat tool'>"
+                + "TopAnat</a>, allowing to perform enrichment analyses of expression localization, "
+                + "from the expression patterns of provided gene lists.</div>");
         
         if (groups.stream().anyMatch(SpeciesDataGroup::isMultipleSpecies)) {
             throw log.throwing(new IllegalArgumentException(

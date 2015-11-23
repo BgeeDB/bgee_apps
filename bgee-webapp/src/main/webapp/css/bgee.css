@@ -323,6 +323,13 @@ span.list_element_title {
 	border: 2px solid red;
 }
 
+#home_important_info {
+    border-top: 3px solid red;
+	border-bottom: 3px solid red;
+	margin: 1em 6em;
+	padding: 1em;
+}
+
 /****SIB FOOTER****/
 footer {
     position: absolute;

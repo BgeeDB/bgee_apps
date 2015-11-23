@@ -193,6 +193,27 @@
                                      </fileset>
                                      <mapper type="glob" from="*.js" to="*${js.version}.js"/>
                                  </copy>
+                                 <!-- We also need to include the partial views used for, 
+                                      e.g., AngularJS, but we don't rename them, there is 
+                                      no cache issue for these files queried through AJAX calls. 
+                                      We need to do it here, as we have excluded the js and css directories 
+                                      from the maven-war-plugin build.
+                                      We also need the .json files, the .woff2 files for css...
+                                      FIXME: so here we copy all files in js/ and css/ directories 
+                                      by laziness. The versioned css and js files will stil be included 
+                                      and used by the webapp. But this increase the size of the war... -->
+                                 <copy todir="${rename.tmp.directory}/js/">
+                                     <fileset dir="${basedir}/src/main/webapp/js/">
+                                         <include name="**/*" />
+                                     </fileset>
+                                     <mapper type="identity" />
+                                 </copy>
+                                 <copy todir="${rename.tmp.directory}/css/">
+                                     <fileset dir="${basedir}/src/main/webapp/css/">
+                                         <include name="**/*" />
+                                     </fileset>
+                                     <mapper type="identity" />
+                                 </copy>
                              </target>
                         </configuration>
                     </execution>

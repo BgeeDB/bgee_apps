@@ -425,9 +425,11 @@
             ]
         };
 
-        vm.filteredRows=[];
         vm.getFilteredRows=function(){
+            vm.filteredRows=[];
+            vm.gridApi.grid.refresh();
             vm.filteredRows = vm.gridApi.core.getVisibleRows(vm.gridApi.grid);
+            console.log("Filtered rows: " + vm.filteredRows.length);
         }
 
         vm.filter = function() {
@@ -713,6 +715,19 @@
             vm.filterByStage = '';
             vm.filterbyExpression = '';
             vm.filterValue = '';
+            //clear URL, otherwise results from a previous analyses might be retrieved, 
+            //from the hash in the URL. 
+            //XXX: maybe there is a better way to handle this.
+            vm.resultUrl = '/';
+            $location.update_path("/", false);
+            //also reinit resul table, otherwise, if the new analysis give no results, 
+            //we will still see the results from the previous analysis
+            //XXX: maybe we should reinit the results only when pressing "submit job"? 
+            //Or when modifying the form?
+            vm.filteredRows = [];
+            //Doing "vm.gridOptions.data = ''" would not work, the grid will keep its pointer 
+            //to the previous results, see https://github.com/angular-ui/ui-grid/issues/1302
+            vm.gridOptions.data.length = 0;
         }
 
         function cancelJob(){
@@ -1047,6 +1062,7 @@
             var resultCount = 0;
             for (var i = 0; i < analysisCount; i++) {
             	var iterateCount = result.data.topAnatResults[i].results.length;
+            	console.log("Number of results in analysis " + (i + 1) + ": " + iterateCount);
             	resultCount += iterateCount;
             	if (iterateCount > 0) {
             		analysisWithResults++;

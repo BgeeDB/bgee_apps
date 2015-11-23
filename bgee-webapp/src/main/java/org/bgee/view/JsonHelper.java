@@ -371,8 +371,18 @@ public class JsonHelper {
                 out.name("anatEntityName").value(row.getAnatEntitiesName());
                 out.name("annotated").value(row.getAnnotated());
                 out.name("significant").value(row.getSignificant());
-                out.name("expected").value(row.getExpected());
-                out.name("foldEnrichment").value(row.getEnrich());
+                out.name("expected");
+                if (Double.isInfinite(row.getExpected())) {
+                    out.value("NA");
+                } else {
+                    out.value(row.getExpected());
+                }
+                out.name("foldEnrichment");
+                if (Double.isInfinite(row.getEnrich())) {
+                    out.value("NA");
+                } else {
+                    out.value(row.getEnrich());
+                }
                 out.name("pValue").value(row.getPval());
                 out.name("FDR").value(row.getFdr());
                 

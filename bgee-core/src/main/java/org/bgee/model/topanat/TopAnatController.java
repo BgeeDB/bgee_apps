@@ -127,20 +127,27 @@ public class TopAnatController {
                         this.serviceFactory, new TopAnatRManager(this.props, params),this))
                 .map(analysis -> {
                     try {
+                        //if task in TaskManager not yet started (first analysis), start it.
                         if (this.taskManager.map(t -> !t.isStarted()).orElse(false)) {
                             this.taskManager.ifPresent(t -> 
                                 t.startQuery("Proceeding to " + this.topAnatParams.size() + 
                                     (this.topAnatParams.size() > 1? " analyses": " analysis"), 
                                     this.topAnatParams.size(), ""));
                         } else {
+                            //otherwise, move to next subtask
                             this.taskManager.ifPresent(t -> t.nextSubTask(""));
                         }
+                        
                         TopAnatResults results = analysis.proceedToAnalysis();
+                        
+                        //end subtask in TaskManager
                         this.taskManager.ifPresent(t -> t.endSubTask());
+                        //end main task in TaskManager if last analysis
                         if (this.taskManager.map(t -> t.getCurrentSubTaskIndex()).orElse(-1) == 
                                 (this.topAnatParams.size() - 1)) {
                             this.taskManager.ifPresent(t -> t.endQuery(true));
                         }
+                        
                         return results;
                     } catch (Throwable e) {
                         log.catching(e);

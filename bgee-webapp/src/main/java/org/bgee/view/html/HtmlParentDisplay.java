@@ -312,6 +312,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     private String getNavBar() {
         log.entry();
         
+        RequestParameters topAnatGenerator = this.getNewRequestParameters();
+        topAnatGenerator.setPage(RequestParameters.PAGE_TOP_ANAT);
+        
         RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
         urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
 
@@ -344,6 +347,12 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<div id='nav'>");
         
         navbar.append("<ul id='bgee_links'>");
+        
+        navbar.append("<li>");
+        navbar.append("<a title='TopAnat: Enrichment analyses of expression localization' href='" + 
+                topAnatGenerator.getRequestURL() + "'>TopAnat</a>");
+        navbar.append("</li>");
+        
         navbar.append("<li>");
         navbar.append("<a title='Expression data page' href='" + 
                 urlDownloadGenerator.getRequestURL() + "'>Expression data" + this.getCaret() 

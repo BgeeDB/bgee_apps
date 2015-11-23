@@ -32,7 +32,7 @@ public abstract class URLParameterException extends RuntimeException implements 
      * @param e         Underlying exception thrown.
      */
     protected URLParameterException(URLParameters.Parameter<?> parameter, Throwable e) {
-        super(e);
+        super("Incorrect parameter: " + parameter.getName(), e);
         this.urlParameter = parameter;
     }
     
@@ -42,5 +42,10 @@ public abstract class URLParameterException extends RuntimeException implements 
      */
     public URLParameters.Parameter<?> getURLParameter() {
         return urlParameter;
+    }
+    
+    @Override
+    public String getMessage() {
+        return "Incorrect parameter: " + this.getURLParameter().getName();
     }
 }

@@ -1,13 +1,21 @@
 (function () {
 
-'use strict';
-angular
-    .module('app')
-    .factory('bgeedataservice', bgeedataservice);
+    'use strict';
+    angular
+        .module('app')
+        .config(function($httpProvider) {
+            $httpProvider.defaults.headers.put['Content-Type'] =
+                'application/x-www-form-urlencoded';
+            $httpProvider.defaults.headers.post['Content-Type'] =
+                'application/x-www-form-urlencoded';
+        })
+        .factory('bgeedataservice', bgeedataservice);
 
-    bgeedataservice.$inject = ['$http', '$q', 'logger'];
 
-    function bgeedataservice($http, $q, logger) {
+
+    bgeedataservice.$inject = ['$http', '$q', 'logger', '$httpParamSerializer'];
+
+    function bgeedataservice($http, $q, logger, $httpParamSerializer) {
 
 
         var service = {
@@ -16,9 +24,14 @@ angular
         };
 
         return service;
-        
-        function getDevStages(url) {
-            return $http.get(url)
+
+        function getDevStages(url, data) {
+
+            console.log($httpParamSerializer(data));
+            var config = "{headers: { 'Content-Type': 'application/x-www-form-urlencoded;'}}";
+            return $http.post(url, $httpParamSerializer(data), config)
+            //return $http.post(url, data)
+            //return $http.post(url+"?page="+data.page, $httpParamSerializer(data))
                 .then(getDevStagesResults)
 
 
@@ -35,15 +48,18 @@ angular
         function postGeneData(url, data) {
             var canceller = $q.defer();
 
-            var cancel = function(reason){
+            var cancel = function (reason) {
                 canceller.resolve(reason);
             };
 
-            var promise = $http.post(url, data, {timeout: canceller.promise})
+            var config = "{headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}";
+
+            //var promise = $http.post(url, $httpParamSerializer(data), config)
+            var promise = $http.post(url, $httpParamSerializer(data))
                 .then(getResults);
 
             function getResults(response) {
-                console.log('getresults'+response)
+                console.log('getresults' + response)
                 return response;
             }
 
@@ -54,9 +70,6 @@ angular
         }
 
     }
-
-
-
 
 
 })();

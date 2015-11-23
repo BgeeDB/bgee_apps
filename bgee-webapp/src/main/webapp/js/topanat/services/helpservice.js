@@ -8,14 +8,15 @@
         .module('app')
         .factory('helpservice', helpservice);
 
-    helpservice.$inject = ['$cookies'];
+    helpservice.$inject = ['$http', '$cookies'];
 
-    function helpservice($cookies) {
+    function helpservice($http, $cookies) {
 
 
         var service = {
             getHelpCookie : getHelpCookie,
-            setHelpCookie: setHelpCookie
+            setHelpCookie: setHelpCookie,
+            getOnlineHelp: getOnlineHelp
         };
 
         return service;
@@ -48,6 +49,15 @@
             $cookies.put('topanat-show-help', flag);
         }
 
+        function getOnlineHelp(url) {
+            return $http.get(url)
+                .then(getResults)
+
+            function getResults(response) {
+                console.log(response.data)
+                return response.data
+            }
+        }
     }
 })();
 

@@ -65,6 +65,9 @@ import org.junit.Test;
 //for TopAnatAnalysis to move them, etc), one TopAnatPAramsTest (test the generation of the hash 
 //and of the CallFilters, ...), one TopAnatResultsTest (checking the parsing of a result file), 
 //and one TopAnatRManagerIT, doing an actual analysis with R (class already created, see comments)
+//TODO Mathieu: do a test of TopAnatAnalysis where the mock TopAnatRManager throws a rcaller.exception.ParseException, 
+//with a message containing "Can not parse output: The generated file xxx is empty" (important, this message is expected); 
+//An empty result file should be created, and execution of TopAnatAnalysis should continue normally. 
 public class TopAnatTest extends TestAncestor {
     private final static Logger log = LogManager.getLogger(TopAnatRealTest.class.getName());
     @Override

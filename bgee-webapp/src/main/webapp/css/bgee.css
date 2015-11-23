@@ -310,6 +310,19 @@ have the same vertical alignment?*/
 	text-decoration: none;
 }
 
+span.list_element_title {
+    text-decoration: underline;
+}
+
+.bgee_alert {
+	color: red;
+	font-weight: bold;
+}
+
+.bgee_alert_container {
+	border: 2px solid red;
+}
+
 /****SIB FOOTER****/
 footer {
     position: absolute;

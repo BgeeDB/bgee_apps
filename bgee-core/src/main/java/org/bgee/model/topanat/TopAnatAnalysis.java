@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -27,6 +28,8 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.expressiondata.CallService;
+import org.bgee.model.expressiondata.baseelements.DataQuality;
+import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneService;
 import org.bgee.model.topanat.exception.InvalidForegroundException;
@@ -121,6 +124,8 @@ public class TopAnatAnalysis {
         
         //Do the analysis/file creation only if results don't already exist
         if (!this.isAnalysisDone()) {
+            //TODO: actually, it would be better if the files were created in a directory 
+            //named as the hash, and with standard file names (not including the hash)
             
             // Generate anatomic entities data
             this.generateAnatEntitiesFiles();
@@ -269,7 +274,21 @@ public class TopAnatAnalysis {
                 log.exit();return;
             }
 
-            this.rManager.performRFunction(this.getRScriptConsoleFileName());
+            try {
+                this.rManager.performRFunction(this.getRScriptConsoleFileName());
+            } catch (rcaller.exception.ParseException e) {
+                log.catching(e);
+                //RCaller throws an exception when there is no result. 
+                //Just to be sure this exception was really thrown because there was no result, 
+                //we check the exception message. This is highly version specific, but we should add 
+                //an IT to make sure this test is always in sync with the actual message thrown by RCaller. 
+                if (!e.getMessage().matches("^.*?Can not parse output: The generated file .+? is empty.*$")) {
+                    //Not the excepted exception, rethrow
+                    throw log.throwing(e);
+                }
+                //we create an empty result file, so that we don't re-run the analysis for nothing
+                Files.createFile(tmpFile);
+            }
 
             this.move(tmpFile, finalFile, false);
             //maybe it was not requested to generate the pdf, or there was no results 
@@ -738,9 +757,35 @@ public class TopAnatAnalysis {
     /**
      *
      */
+    //TODO: unit test this logic, of different file names depending on parameters
     protected String getGeneToAnatEntitiesFileName(){
-        return TopAnatAnalysis.FILE_PREFIX 
-                + "GeneToAnatEntities_" + this.params.getKey()  + ".tsv";
+        
+        //for the background file, if there is no custom background requested, 
+        //we take into account only some info
+        if (this.params.getSubmittedBackgroundIds() == null || 
+                this.params.getSubmittedBackgroundIds().isEmpty()) {
+            
+            //TODO: use some kind of encoding of the Strings for file name (see replacement for stage ID)
+            final StringBuilder sb = new StringBuilder();
+            sb.append(this.params.getSpeciesId());
+            sb.append("_").append(this.params.getCallType().toString());
+            Optional.ofNullable(this.params.getDevStageId())
+                //replace column in IDs
+                .ifPresent(e -> sb.append("_").append(e.replace(":", "_")));
+            //use EnumSet for consistent ordering
+            Optional.ofNullable(this.params.getDataTypes()).map(e -> EnumSet.copyOf(e))
+            .orElse(EnumSet.allOf(DataType.class))
+            .stream()
+            .forEach(e -> sb.append("_").append(e.toString()));
+            sb.append("_").append(Optional.ofNullable(this.params.getDataQuality()).orElse(DataQuality.LOW)
+                    .toString());
+            
+            return log.exit(TopAnatAnalysis.FILE_PREFIX 
+                    + "GeneToAnatEntities_" + sb.toString()  + ".tsv");
+        }
+        //custom background provided, use the hash
+        return log.exit(TopAnatAnalysis.FILE_PREFIX 
+                + "GeneToAnatEntities_" + this.params.getKey()  + ".tsv");
     }
 
     /**

@@ -1,15 +1,16 @@
 angular.module('services.config', [])
     .constant('configuration', {
-        mockupUrl: 'http://swt-dev.vital-it.ch/bgee/topanat_mockup_srv/topanat_mockup.php',
-        expressionType: 'EXPRESSION',
-        dataTypes: ['RNA-Seq', 'Affymetrix data', 'In situ hybridization', 'EST'],
+        mockupUrl: '/',
+        expr_type: 'EXPRESSED',
+        data_type: ['RNA-Seq', 'Affymetrix data', 'In situ hybridization', 'EST'],
         selectedDataTypes: ['RNA-Seq', 'Affymetrix data', 'In situ hybridization', 'EST'],
-        dataQuality: 'all',
-        decorrelationType: 'parent-child',
-        nodeSize: 20,
-        fdrThreshold: '0.99',
-        pvalueThreshold: 'e-10',
-        nbNodes: 10
+        data_qual: 'all',
+        decorr_type: 'elim',
+        node_size: 20,
+	nb_node: 20,
+        fdr_thr: '1',
+        pvalueThreshold: '1',
+        p_value_thr: 1
     });
 
 

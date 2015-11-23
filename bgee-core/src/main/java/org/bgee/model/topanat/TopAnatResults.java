@@ -11,13 +11,15 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeProperties;
-import org.supercsv.cellprocessor.Optional;
+import org.supercsv.cellprocessor.CellProcessorAdaptor;
 import org.supercsv.cellprocessor.ParseDouble;
 import org.supercsv.cellprocessor.constraint.NotNull;
 import org.supercsv.cellprocessor.ift.CellProcessor;
+import org.supercsv.cellprocessor.ift.DoubleCellProcessor;
 import org.supercsv.io.CsvMapReader;
 import org.supercsv.io.ICsvMapReader;
 import org.supercsv.prefs.CsvPreference;
+import org.supercsv.util.CsvContext;
 
 public class TopAnatResults {
     private final static Logger log = LogManager
@@ -40,9 +42,9 @@ public class TopAnatResults {
 
         private final double enrich;
 
-        private final Double pval;
+        private final double pval;
 
-        private final Double fdr;
+        private final double fdr;
 
         public TopAnatResultRow(Map<String, Object> line){
             this.anatEntitiesId = (String) line.get("OrganId");
@@ -107,8 +109,10 @@ public class TopAnatResults {
             result = prime * result + (int) (temp ^ (temp >>> 32));
             temp = Double.doubleToLongBits(expected);
             result = prime * result + (int) (temp ^ (temp >>> 32));
-            result = prime * result + ((fdr == null) ? 0 : fdr.hashCode());
-            result = prime * result + ((pval == null) ? 0 : pval.hashCode());
+            temp = Double.doubleToLongBits(fdr);
+            result = prime * result + (int) (temp ^ (temp >>> 32));
+            temp = Double.doubleToLongBits(pval);
+            result = prime * result + (int) (temp ^ (temp >>> 32));
             temp = Double.doubleToLongBits(significant);
             result = prime * result + (int) (temp ^ (temp >>> 32));
             return result;
@@ -116,49 +120,52 @@ public class TopAnatResults {
 
         @Override
         public boolean equals(Object obj) {
-            if (this == obj)
+            if (this == obj) {
                 return true;
-            if (obj == null)
+            }
+            if (obj == null) {
                 return false;
-            if (getClass() != obj.getClass())
+            }
+            if (getClass() != obj.getClass()) {
                 return false;
+            }
             TopAnatResultRow other = (TopAnatResultRow) obj;
             if (anatEntitiesId == null) {
-                if (other.anatEntitiesId != null)
+                if (other.anatEntitiesId != null) {
                     return false;
-            } else if (!anatEntitiesId.equals(other.anatEntitiesId))
+                }
+            } else if (!anatEntitiesId.equals(other.anatEntitiesId)) {
                 return false;
+            }
             if (anatEntitiesName == null) {
-                if (other.anatEntitiesName != null)
+                if (other.anatEntitiesName != null) {
                     return false;
-            } else if (!anatEntitiesName.equals(other.anatEntitiesName))
+                }
+            } else if (!anatEntitiesName.equals(other.anatEntitiesName)) {
                 return false;
-            if (Double.doubleToLongBits(annotated) != Double.doubleToLongBits(other.annotated))
+            }
+            if (Double.doubleToLongBits(annotated) != Double.doubleToLongBits(other.annotated)) {
                 return false;
-            if (Double.doubleToLongBits(enrich) != Double.doubleToLongBits(other.enrich))
+            }
+            if (Double.doubleToLongBits(enrich) != Double.doubleToLongBits(other.enrich)) {
                 return false;
-            if (Double.doubleToLongBits(expected) != Double.doubleToLongBits(other.expected))
+            }
+            if (Double.doubleToLongBits(expected) != Double.doubleToLongBits(other.expected)) {
                 return false;
-            if (fdr == null) {
-                if (other.fdr != null)
-                    return false;
-            } else if (!fdr.equals(other.fdr))
+            }
+            if (Double.doubleToLongBits(fdr) != Double.doubleToLongBits(other.fdr)) {
                 return false;
-            if (pval == null) {
-                if (other.pval != null)
-                    return false;
-            } else if (!pval.equals(other.pval))
+            }
+            if (Double.doubleToLongBits(pval) != Double.doubleToLongBits(other.pval)) {
                 return false;
-            if (Double.doubleToLongBits(significant) != Double.doubleToLongBits(other.significant))
+            }
+            if (Double.doubleToLongBits(significant) != Double.doubleToLongBits(other.significant)) {
                 return false;
+            }
             return true;
         }
-
-     
-        
-        
-
     }
+    
 
     private final TopAnatParams topAnatParams; 
 
@@ -203,6 +210,42 @@ public class TopAnatResults {
         this.controller = controller;
         this.props = controller.getBgeeProperties();
     }
+    
+    //TODO: javadoc. CellProcessor needed because R returns "Inf" in case of division by 0.
+    //TODO: unit tests for this CellProcessor
+    //TODO: regression test that TopAnatResults can now handle such a file with 'Inf' 
+    //in the columns using CustomParseDouble.
+    private static class CustomParseDouble extends CellProcessorAdaptor {
+        private CustomParseDouble() {
+            super();
+        }
+        public CustomParseDouble(DoubleCellProcessor next) {
+                // this constructor allows other processors to be chained after ParseDay
+                super(next);
+        }
+
+        @Override
+        public Object execute(Object value, CsvContext context) {
+            log.entry(value, context);
+            //throws an Exception if the input is null, as all CellProcessors usually do.
+            validateInputNotNull(value, context);  
+            
+            if (value.toString().contains("-Inf")) {
+                return log.exit(next.execute(Double.NEGATIVE_INFINITY, context));
+            } else if (value.toString().contains("Inf")) {
+                return log.exit(next.execute(Double.POSITIVE_INFINITY, context));
+            }
+            
+            //passes result to a ParseDouble, chained with the next processor in the chain if possible
+            ParseDouble parse = null;
+            if (next instanceof DoubleCellProcessor) {
+                parse = new ParseDouble((DoubleCellProcessor) next);
+            } else {
+                parse = new ParseDouble();
+            } 
+            return log.exit(parse.execute(value, context));
+        }
+    }
 
     /**
      * 
@@ -228,11 +271,11 @@ public class TopAnatResults {
                 String[] header = mapReader.getHeader(true);
                 CellProcessor[] processors = new CellProcessor[] { 
                         new NotNull(), // AnatEntity Id
-                        new Optional(), // AnatEntity Name
+                        new org.supercsv.cellprocessor.Optional(), // AnatEntity Name
                         new NotNull(new ParseDouble()), // Annotated
                         new NotNull(new ParseDouble()), // Significant
-                        new NotNull(new ParseDouble()), // Expected
-                        new NotNull(new ParseDouble()), // fold enrich
+                        new NotNull(new CustomParseDouble()), // Expected
+                        new NotNull(new CustomParseDouble()), // fold enrich
                         new NotNull(new ParseDouble()), // p
                         new NotNull(new ParseDouble()) // fdr
                 };

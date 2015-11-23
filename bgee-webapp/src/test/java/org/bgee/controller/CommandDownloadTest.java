@@ -34,9 +34,10 @@ import org.junit.Test;
 /**
  * Unit tests for {@link CommandDownload}.
  * 
- * @author Frederic Bastian
- * @version Bgee 13 Oct. 2015
- * @since Bgee 13 Oct. 2015
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13 Nov. 2015
+ * @since   Bgee 13 Oct. 2015
  */
 public class CommandDownloadTest extends TestAncestor {
     
@@ -64,7 +65,7 @@ public class CommandDownloadTest extends TestAncestor {
         List<SpeciesDataGroup> groups = getTestGroups();
         when(groupService.loadAllSpeciesDataGroup()).thenReturn(groups);
         when(keywordService.getKeywordForAllSpecies()).thenReturn(getTestSpeToKeywords());
-        
+
         //mock view
         ViewFactory viewFac = mock(ViewFactory.class);
         DownloadDisplay display = mock(DownloadDisplay.class);
@@ -97,10 +98,10 @@ public class CommandDownloadTest extends TestAncestor {
     public static List<SpeciesDataGroup> getTestGroups() {
         log.entry();
         //Species:
-        Species spe1 = new Species("9606", "human", null, "Homo", "sapiens");
-        Species spe2 = new Species("10090", "mouse", null, "Mus", "musculus");
-        Species spe3 = new Species("7955", "zebrafish", null, "Danio", "rerio");
-        Species spe4 = new Species("7227", "fly", null, "Drosophila", "melanogaster");
+        Species spe1 = new Species("9606", "human", null, "Homo", "sapiens", "hsap1");
+        Species spe2 = new Species("10090", "mouse", null, "Mus", "musculus", "mmus1");
+        Species spe3 = new Species("7955", "zebrafish", null, "Danio", "rerio", "dre1");
+        Species spe4 = new Species("7227", "fly", null, "Drosophila", "melanogaster", "dmel1");
         
         //make all file types available for at least one species
         Set<DownloadFile> dlFileGroup1 = new HashSet<DownloadFile>();

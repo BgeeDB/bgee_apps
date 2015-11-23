@@ -34,12 +34,20 @@ public class ConditionFilter {
      * @param devStageIds       A {@code Collection} of {@code String}s that are the IDs 
      *                          of the developmental stages that this {@code ConditionFilter} 
      *                          will specify to use.
+     * @throws IllegalArgumentException If no anatomical entity IDs and no developmental stage IDs 
+     *                                  are provided. 
      */
-    public ConditionFilter(Collection<String> anatEntitieIds, Collection<String> devStageIds) {
-        this.anatEntitieIds = Collections.unmodifiableSet(
-            anatEntitieIds == null ? new HashSet<>(): new HashSet<>(anatEntitieIds));
-        this.devStageIds = Collections.unmodifiableSet(
-                devStageIds == null ? new HashSet<>(): new HashSet<>(devStageIds));
+    public ConditionFilter(Collection<String> anatEntitieIds, Collection<String> devStageIds) 
+            throws IllegalArgumentException {
+        if ((anatEntitieIds == null || anatEntitieIds.isEmpty()) && 
+                (devStageIds == null || devStageIds.isEmpty())) {
+            throw log.throwing(new IllegalArgumentException(
+                    "Some anatatomical entity IDs or developmental stage IDs must be provided."));
+        }
+        this.anatEntitieIds = Collections.unmodifiableSet(anatEntitieIds == null ? 
+                new HashSet<>(): new HashSet<>(anatEntitieIds));
+        this.devStageIds = Collections.unmodifiableSet(devStageIds == null? 
+                new HashSet<>(): new HashSet<>(devStageIds));
     }
 
     /**

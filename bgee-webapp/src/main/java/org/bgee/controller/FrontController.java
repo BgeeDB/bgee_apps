@@ -13,7 +13,10 @@ import org.bgee.controller.exception.MultipleValuesNotAllowedException;
 import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.controller.exception.RequestParametersNotFoundException;
 import org.bgee.controller.exception.RequestParametersNotStorableException;
-import org.bgee.controller.exception.WrongFormatException;
+import org.bgee.controller.exception.RequestSizeExceededException;
+import org.bgee.controller.exception.ValueSizeExceededException;
+import org.bgee.controller.exception.InvalidFormatException;
+import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.model.ServiceFactory;
 import org.bgee.view.ErrorDisplay;
 import org.bgee.view.ViewFactory;
@@ -152,12 +155,11 @@ public class FrontController extends HttpServlet {
             //can be thrown.
             ViewFactory factory = this.viewFactoryProvider.getFactory(response, requestParameters);
             errorDisplay = factory.getErrorDisplay();
-            
             //OK, now we try to get the view requested. If an error occurred, 
             //the HTML view will allow to display an error message anyway
             requestParameters = new RequestParameters(request, this.urlParameters, this.prop,
                     true, "&");
-            log.info("Analyzed URL: " + requestParameters.getRequestURL());
+            log.debug("Analyzed URL: " + requestParameters.getRequestURL());
             factory = this.viewFactoryProvider.getFactory(response, requestParameters);
             errorDisplay = factory.getErrorDisplay();
             
@@ -175,7 +177,9 @@ public class FrontController extends HttpServlet {
             } else if (requestParameters.isAnAboutPageCategory()) {
                 controller = new CommandAbout(response, requestParameters, this.prop, factory);
             } else if (requestParameters.isATopAnatPageCategory()) {
-                controller = new CommandTopAnat(response, requestParameters, this.prop, factory);
+                controller = new CommandTopAnat(response, requestParameters, this.prop, factory, serviceFactory);
+            } else if (requestParameters.isASpeciesPageCategory()) {
+                controller = new CommandTopAnat(response, requestParameters, this.prop, factory, serviceFactory);
             } else if (requestParameters.isAGenePageCategory()){
             	controller = new CommandGene(response, requestParameters, this.prop, factory, serviceFactory);
             } else {
@@ -184,25 +188,33 @@ public class FrontController extends HttpServlet {
             controller.processRequest();
             
         //=== process errors ===
-        } catch(RequestParametersNotFoundException e) {
+        } catch(InvalidFormatException e) {
             log.catching(e);
-            errorDisplay.displayRequestParametersNotFound(requestParameters.getFirstValue(
-                    this.urlParameters.getParamData()));
-        } catch(PageNotFoundException e) {
+            errorDisplay.displayControllerException(e);
+        } catch(InvalidRequestException e) {
             log.catching(e);
-            errorDisplay.displayPageNotFound(e.getMessage());
-        } catch(RequestParametersNotStorableException e) {
-            log.catching(e);
-            errorDisplay.displayRequestParametersNotStorable(e.getMessage());
+            errorDisplay.displayControllerException(e);
         } catch(MultipleValuesNotAllowedException e) {
             log.catching(e);
-            errorDisplay.displayMultipleParametersNotAllowed(e.getMessage());
-        } catch(WrongFormatException e) {
+            errorDisplay.displayControllerException(e);
+        } catch(PageNotFoundException e) {
             log.catching(e);
-            errorDisplay.displayWrongFormat(e.getMessage());
+            errorDisplay.displayControllerException(e);
+        } catch(RequestParametersNotFoundException e) {
+            log.catching(e);
+            errorDisplay.displayControllerException(e);
+        } catch(RequestParametersNotStorableException e) {
+            log.catching(e);
+            errorDisplay.displayControllerException(e);
+        } catch(RequestSizeExceededException e) {
+            log.catching(e);
+            errorDisplay.displayControllerException(e);
+        } catch(ValueSizeExceededException e) {
+            log.catching(e);
+            errorDisplay.displayControllerException(e);
         } catch(UnsupportedOperationException e) {
             log.catching(e);
-            errorDisplay.displayUnsupportedOperationException(e.getMessage());
+            errorDisplay.displayUnsupportedOperationException();
         } catch(Exception e) {
             log.catching(e);
             if (errorDisplay != null) {
@@ -217,6 +229,7 @@ public class FrontController extends HttpServlet {
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) {
         log.entry(request, response);
+        log.debug("doGet");
         doRequest(request, response, false);
         log.exit();
     }
@@ -224,6 +237,7 @@ public class FrontController extends HttpServlet {
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) {
         log.entry(request, response);
+        log.debug("doPost");
         doRequest(request, response, true);
         log.exit();
     }

@@ -48,6 +48,8 @@ import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressio
  * to modify the methods merge, canMerge, hasDataRestrictions, and 
  * getDifferentParametersCount.
  */
+//deprecated because a new CallFilter design is being implemented
+@Deprecated
 public class DiffExpressionCallParams extends CallParams {
         
 //    /**

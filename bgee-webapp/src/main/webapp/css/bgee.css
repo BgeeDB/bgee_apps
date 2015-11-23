@@ -7,6 +7,13 @@ html, body {
     font: 100% Helvetica, Verdana, sans-serif;
 }
 
+/*
+bootstrap.css defines this property, and I guess we cannot simply override it. 
+So we include it from scratch in all our pages, to adapt element sizes to it. 
+*/
+* {
+	box-sizing: border-box;
+}
 /****SIB CONTAINER****/
 #sib_container {
     position: relative;
@@ -76,12 +83,13 @@ header img {
 #nav {
     position: absolute;
     bottom: 0;
-    height: 25px;
+    height: 2em;
     width: 100%;
-    margin: 0;
+    margin: 5px 0 0 0;
     display: block;
     background-color: #ABBDC4;
-    border-bottom: 4px solid #920209;
+    border-bottom: 0.25em solid #920209;
+    padding: 0.2em 0 0 0;
 }
 
 #nav ul {
@@ -94,7 +102,7 @@ header img {
 	position: relative;
     float: left;
     width: 13em;
-    height: 19px;
+    height: 1.5em;
     padding-top: 0.3em;
     text-align: center;
 }
@@ -300,6 +308,19 @@ have the same vertical alignment?*/
 
 .feature_list a {
 	text-decoration: none;
+}
+
+span.list_element_title {
+    text-decoration: underline;
+}
+
+.bgee_alert {
+	color: red;
+	font-weight: bold;
+}
+
+.bgee_alert_container {
+	border: 2px solid red;
 }
 
 /****SIB FOOTER****/

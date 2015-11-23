@@ -60,6 +60,24 @@ public interface StageDAO extends DAO<StageDAO.Attribute> {
     public StageTOResultSet getStagesBySpeciesIds(Set<String> speciesIds) throws DAOException;
     
     /**
+     * Retrieves stages from data source according to a {@code Set} of {@code String}s
+     * that are the IDs of species allowing to filter the entities to use.
+     * <p>
+     * The stages are retrieved and returned as a {@code StageTOResultSet}. It is the
+     * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
+     * 
+     * @param speciesIds        A {@code Set} of {@code String}s that are the IDs of species 
+     *                          allowing to filter the stages to use.
+     * @param isGroupingStage   A {@code Boolean} defining whether this stage is a grouping stage, 
+     *                          broad enough to allow comparisons of anatomical features. 
+     *                          If {@code null}, no filter is apply.
+     * @return              An {@code StageTOResultSet} containing all stages from data source.
+     * @throws DAOException If an error occurred when accessing the data source. 
+     */
+    public StageTOResultSet getStagesBySpeciesIds(Set<String> speciesIds, Boolean isGroupingStage)
+            throws DAOException;
+
+    /**
      * Inserts the provided stages into the Bgee database, represented as 
      * a {@code Collection} of {@code StageTO}s.
      * 

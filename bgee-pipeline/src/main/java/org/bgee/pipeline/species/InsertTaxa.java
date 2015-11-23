@@ -110,6 +110,13 @@ public class InsertTaxa extends MySQLDAOUser {
      */
     public static final String SPECIES_GENOME_FILE_KEY= "genomeFilePath";
     /**
+     * A {@code String} that is the key to retrieve the genome version for a species
+     * used in Bgee, from the {@code Map}s returned by {@link #getSpeciesFromFile(String)},
+     * and that is also the name of the column to retrieve these values from 
+     * the TSV file storing the species used in Bgee.
+     */
+    public static final String SPECIES_GENOME_VERSION_KEY= "genomeVersion";
+    /**
      * A {@code String} that is the key to retrieve the ID of the species whose the genome 
      * was used for a species used in Bgee, from the {@code Map}s returned by 
      * {@link #getSpeciesFromFile(String)}, and that is also the name of the column 
@@ -160,8 +167,8 @@ public class InsertTaxa extends MySQLDAOUser {
      * to modify to add/remove a species. The first line should be a header line, 
      * defining 7 columns, named exactly as: {@link #SPECIES_ID_KEY}, 
      * {@link #SPECIES_GENUS_KEY}, {@link #SPECIES_NAME_KEY}, {@link #SPECIES_COMMON_NAME_KEY}, 
-     * {@link #SPECIES_GENOME_FILE_KEY}, {@link #SPECIES_GENOME_ID_KEY}, 
-     * {@link #SPECIES_FAKE_GENE_PREFIX_KEY} (in whatever order).
+     * {@link #SPECIES_GENOME_FILE_KEY}, {@link SPECIES_GENOME_VERSION_KEY},
+     * {@link #SPECIES_GENOME_ID_KEY}, {@link #SPECIES_FAKE_GENE_PREFIX_KEY} (in whatever order).
      * the IDs should correspond to the NCBI taxonomy ID (e.g., 9606 for human).
      * <li>path to the tsv files containing the IDs of the taxa to be inserted in Bgee, 
      * corresponding to the NCBI taxonomy ID (e.g., 9605 for homo). Whatever the values 
@@ -212,8 +219,8 @@ public class InsertTaxa extends MySQLDAOUser {
      * to modify to add/remove a species. The first line should be a header line, 
      * defining 7 columns, named exactly as: {@link #SPECIES_ID_KEY}, 
      * {@link #SPECIES_GENUS_KEY}, {@link #SPECIES_NAME_KEY}, {@link #SPECIES_COMMON_NAME_KEY}, 
-     * {@link #SPECIES_GENOME_FILE_KEY}, {@link #SPECIES_GENOME_ID_KEY}, 
-     * {@link #SPECIES_FAKE_GENE_PREFIX_KEY} (in whatever order).
+     * {@link #SPECIES_GENOME_FILE_KEY}, {@link SPECIES_GENOME_VERSION_KEY},
+     * {@link #SPECIES_GENOME_ID_KEY}, {@link #SPECIES_FAKE_GENE_PREFIX_KEY} (in whatever order).
      * the IDs should correspond to the NCBI taxonomy ID (e.g., 9606 for human).
      * <li>the path to a TSV file containing the NCBI taxonomy IDs of additional taxa 
      * to be inserted. Whatever the values in this file are, the branches which 
@@ -263,8 +270,8 @@ public class InsertTaxa extends MySQLDAOUser {
      * TSV file. The first line of this file should be a header line, 
      * defining 7 columns, named exactly as: {@link #SPECIES_ID_KEY}, 
      * {@link #SPECIES_GENUS_KEY}, {@link #SPECIES_NAME_KEY}, {@link #SPECIES_COMMON_NAME_KEY}, 
-     * {@link #SPECIES_GENOME_FILE_KEY}, {@link #SPECIES_GENOME_ID_KEY}, 
-     * {@link #SPECIES_FAKE_GENE_PREFIX_KEY} (in whatever order). 
+     * {@link #SPECIES_GENOME_FILE_KEY}, {@link SPECIES_GENOME_VERSION_KEY},
+     * {@link #SPECIES_GENOME_ID_KEY}, {@link #SPECIES_FAKE_GENE_PREFIX_KEY} (in whatever order). 
      * This method returns a {@code Collection} where each 
      * species is represented by a {@code Map}, containing information mapped 
      * to the keys listed above. In these {@code Map}s, the value associated to 
@@ -293,7 +300,7 @@ public class InsertTaxa extends MySQLDAOUser {
             String unexpectedFormat = "The provided TSV species file is not " +
             		"in the expected format";
             String[] header = mapReader.getHeader(true);
-            if (header.length != 7) {
+            if (header.length != 8) {
                 throw log.throwing(new IllegalArgumentException(unexpectedFormat));
             }
             
@@ -308,6 +315,8 @@ public class InsertTaxa extends MySQLDAOUser {
                 } else if (header[i].equalsIgnoreCase(SPECIES_COMMON_NAME_KEY)) {
                     processors[i] = new UniqueHashCode(new NotNull());
                 } else if (header[i].equalsIgnoreCase(SPECIES_GENOME_FILE_KEY)) {
+                    processors[i] = new NotNull();
+                } else if (header[i].equalsIgnoreCase(SPECIES_GENOME_VERSION_KEY)) {
                     processors[i] = new NotNull();
                 } else if (header[i].equalsIgnoreCase(SPECIES_GENOME_ID_KEY)) {
                     processors[i] = new Optional(new ParseInt());
@@ -477,11 +486,16 @@ public class InsertTaxa extends MySQLDAOUser {
                 throw log.throwing(new IllegalArgumentException(
                         "Missing path to genome file for species: " + commonName));
             }
+            String genomeVersion = (String) species.get(SPECIES_GENOME_VERSION_KEY);
+            if (StringUtils.isBlank(genomeVersion)) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Missing path to genome version for species: " + commonName));
+            }
             Integer genomeSpeciesId = (Integer) species.get(SPECIES_GENOME_ID_KEY);
             String fakeGeneIdPrefix = (String) species.get(SPECIES_FAKE_GENE_PREFIX_KEY);
             
             speciesTOs.add(new SpeciesTO(String.valueOf(speciesId), commonName, genus, 
-                    speciesName, parentTaxonId, genomeFilePath, 
+                    speciesName, parentTaxonId, genomeFilePath, genomeVersion,
                     (genomeSpeciesId == null ? null: String.valueOf(genomeSpeciesId)), 
                     fakeGeneIdPrefix));
         }

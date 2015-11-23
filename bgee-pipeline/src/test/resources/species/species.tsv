@@ -1,5 +1,5 @@
-taxon ID	genus	species	speciesCommonName	genomeFilePath	genomeSpeciesId	fakeGeneIdPrefix
-8	my genusA	my speciesA	my common nameA	file/pathA		
-13	my genusB	my speciesB	my common nameB	file/pathB	20	PREFIX
-15	my genusC	my speciesC	my common nameC	file/pathC		
+taxon ID	genus	species	speciesCommonName	genomeFilePath	genomeVersion	genomeSpeciesId	fakeGeneIdPrefix
+8	my genusA	my speciesA	my common nameA	file/pathA	versionA		
+13	my genusB	my speciesB	my common nameB	file/pathB	versionB	20	PREFIX
+15	my genusC	my speciesC	my common nameC	file/pathC	versionC		
 

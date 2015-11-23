@@ -859,8 +859,8 @@ public class InsertGlobalCallsTest extends TestAncestor {
         // We need a mock MySQLSpeciesTOResultSet to mock the return of getAllSpecies().
         MySQLSpeciesTOResultSet mockSpeciesTORs = createMockDAOResultSet(
                 Arrays.asList(
-                        new SpeciesTO("11", null, null, null, null, null, null, null),
-                        new SpeciesTO("21", null, null, null, null, null, null, null)),
+                        new SpeciesTO("11", null, null, null, null, null, null, null, null),
+                        new SpeciesTO("21", null, null, null, null, null, null, null, null)),
                 MySQLSpeciesTOResultSet.class);
         when(mockManager.mockSpeciesDAO.getAllSpecies()).thenReturn(mockSpeciesTORs);
         

@@ -15,12 +15,12 @@ import java.util.stream.Collectors;
  * A {@link Service} to obtain {@link Species} objects. 
  * Users should use the {@link ServiceFactory} to obtain {@code SpeciesService}s.
  * 
- * @author Philippe Moret
- * @author Frederic Bastian
- * @version Bgee 13 Sept. 2015
- * @since Bgee 13 Sept. 2015
+ * @author  Philippe Moret
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13 Nov. 2015
+ * @since   Bgee 13 Sept. 2015
  */
-//TODO: unit tests, injecting a mock DAOManager, that will return mock DAOs, etc.
 public class SpeciesService extends Service {
     
     private static final Logger log = LogManager.getLogger(SpeciesService.class.getName());
@@ -61,6 +61,23 @@ public class SpeciesService extends Service {
     }
 
     /**
+     * Loads species for a given set of species IDs .
+     * 
+     * @param speciesIds    A {@code Set} of {@code String}s that are IDs of species 
+     *                      for which to return the {@code Species}s.
+     * @return              A {@code Set} containing the {@code Species} with one of the 
+     *                      provided species IDs.
+     * @throws DAOException                 If an error occurred while accessing a {@code DAO}.
+     * @throws QueryInterruptedException    If a query to a {@code DAO} was intentionally interrupted.
+     */
+    public Set<Species> loadSpeciesByIds(Set<String> speciesIds) throws DAOException, QueryInterruptedException {
+        log.entry(speciesIds);
+        return log.exit(this.getDaoManager().getSpeciesDAO().getSpeciesByIds(speciesIds).stream()
+                .map(SpeciesService::mapFromTO)
+                .collect(Collectors.toSet()));
+    }
+
+    /**
      * Maps a {@code SpeciesTO} to a {@code Species} instance (Can be passed as a {@code Function}). 
      * 
      * @param speciesTO The {@code SpeciesTO} to be mapped
@@ -69,7 +86,7 @@ public class SpeciesService extends Service {
     private static Species mapFromTO(SpeciesDAO.SpeciesTO speciesTO) {
         log.entry(speciesTO);
         return log.exit(new Species(speciesTO.getId(), speciesTO.getName(), 
-                speciesTO.getDescription(), speciesTO.getGenus(), speciesTO.getSpeciesName()));
+                speciesTO.getDescription(), speciesTO.getGenus(), speciesTO.getSpeciesName(), 
+                speciesTO.getGenomeVersion()));
     }
-
 }

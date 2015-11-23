@@ -1,0 +1,30 @@
+[
+{
+   "topic": "Custom background",
+   "help": "By default, the gene universe considered for the enrichment analysis is all genes with data in Bgee for the selected species. It is possible to provide a custom gene universe, as a list of Ensembl gene IDs. All gene IDs present in the foreground must be present in the background."
+},
+{
+    "topic": "Data quality",
+    "help": "For each data type, Bgee applies dedicated analysis to generate calls of baseline presence/absence of expression, and of over-/under-expression, and to assign a level of confidence to the data: low or high. This field allows to specify whether the analysis should be based on data of any quality level, or on data of high quality level only."
+},
+{
+    "topic": "Decorrelation type",
+    "help": "Algorithm used to take into account the topology of the anatomical ontology, to decrease the number of false positives and highly general terms in the results, owing to the inheritance problem. A precise description of these algorithms can be found in the topGO documentation."
+},
+{
+    "topic": "Node size",
+    "help": "Parameter allowing to prune the anatomical ontology from the terms which have a number of genes with data lower than this cutoff."
+},
+{
+    "topic": "Number of nodes",
+    "help": "Number of significant nodes to be displayed in the generated graph of results (visualization purpose only, no impact on the results of the analysis)."
+},
+{
+    "topic": "FDR threshold",
+    "help": "Anatomical terms with a FDR higher than this threshold will not be considered as significant."
+},
+{
+    "topic": "p-value threshold",
+    "help": "Anatomical terms with a p-value higher than this threshold will not be considered as significant."
+}
+]

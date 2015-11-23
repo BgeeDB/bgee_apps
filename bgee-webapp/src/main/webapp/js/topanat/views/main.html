@@ -20,19 +20,45 @@
                     <div class="panel-heading">
                         <h3 class="panel-title">TopAnat - Quickstart</h3>
                     </div>
+                    <div class="panel-body bgee_alert_container">
+                        <span class="bgee_alert">Warning: </span>TopAnat is currently 
+                         a <strong>very early and experimental</strong> development build. Our aim is to have rapid development 
+                         iterations, to allow you to test the capabilities of this new tool immediately. 
+                         Some features might not be working properly yet, or not be fully designed. 
+                         The use of TopAnat currently comes <span class="bgee_alert">at no warranty</span>, 
+                         and, at present, we do not guarantee to store your results for later use. 
+                         But everything should be usable and should allow you to have a taste of it!
+                     </div>
 
+                    <div class="panel-body">
+                        <p>TopAnat is a tool to identify and visualize enriched anatomical terms,
+                            from the expression patterns of a list of genes.
+                        </p>
+                        <p>It allows to discover where genes from a set are preferentially expressed,
+                            as compared to a background, represented by default by all expression data in Bgee 
+                            for the requested species. It is is similar to a Gene Ontology enrichment test, 
+                            except that it analyzes the anatomical structures where genes are expressed, 
+                            rather than their GO functional annotations.
+                        </p>
+                     </div>
                     <div class="row panel-body">
                         <div class="col-sm-6">
-                            <p>TopAnat is a tool to identify and visualize enriched anatomical terms,
-                                from the expression patterns of a list of genes.
-                                It allows to discover where genes from a set are preferentially expressed,
-                                as compared to a background, represented by default by all the expression data of all genes.
+                            <p><span class="list_element_title">See an example: </span>
+                               <ul>
+                                 <li>See the <a href="/?page=top_anat#/result/39a9caea61be777b8a9d402b5ba3258b78b37ee8" 
+                                 title="TopAnat example">expression localization enrichment</a> 
+                                 for the human genes mapped to the GO term "spermatogenesis", 
+                                 with RNA-Seq data, during the post-embryonic stage.</li>
+                               </ul>
+                            </p>
+                            <p>
                                 <!-- To be resurrected once we have a link to a comprehensive doc -->
                                 <!--<a href="">More...</a>-->
                             </p>
                         </div>
 
                         <div class="col-sm-6">
+                            <span class="list_element_title">How to use: </span>
                             <ul class="help">
                                 <li>Enter a list of Ensembl identifiers into the first form field,</li>
                                 <li>Optionally, enter a list of background genes,</li>
@@ -41,6 +67,13 @@
                             </ul>
                         </div>
                     </div>
+                    <div class="panel-body">
+                        <p>TopAnat is based on 
+                           <a href="http://www.bioconductor.org/packages/release/bioc/html/topGO.html" 
+                           title="TopGO package in Bioconductor" target="_blank">topGO</a>. 
+                           Adaptation of topGO courtesy of Adrian Alexa.  
+                        </p>
+                     </div>
                 </div>
             </div>
         </div>
@@ -292,7 +325,7 @@
                         </li>
 
                         <li class="list-group-item">
-                            <label>Anaylsis options:</label>
+                            <label>Analysis options:</label>
                             <table class="table">
                                 <tr>
                                     <td>

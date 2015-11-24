@@ -117,8 +117,8 @@
         <!-- WARNING: never removes these properties, otherwise your files will be named, e.g., 
              *${css.version}.css. If you want to disable versioning of CSS and JS files, 
              just leave the css.version and js.version empty. -->
-        <css.version>${project.version}i</css.version>
-        <js.version>${project.version}i</js.version>
+        <css.version>${project.version}j</css.version>
+        <js.version>${project.version}j</js.version>
         <!-- We will rename css and javascript files with version number using 
              maven-antrun-plugin. The files will be copied in a temp directory, 
              and added by maven-war-plugin to the WAR file in the standard directory. -->

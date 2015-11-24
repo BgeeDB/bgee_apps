@@ -452,50 +452,47 @@ public class TopAnatAnalysis {
      * @param AnatEntitiesNameFile
      * @throws IOException
      */
-    private void writeAnatEntitiesNamesToFile(String AnatEntitiesNameFile) throws IOException {
-        log.entry(AnatEntitiesNameFile);
+    //TODO: do a regression test, with the relations between anatomical entities 
+    //defining several roots to the ontology, and including anatomical entities 
+    //with no relation at all (no ancestors nor descendants)
+    private void writeAnatEntitiesAndRelationsToFiles(String anatEntitiesNameFile, 
+            String anatEntitiesRelFile) throws IOException {
+        log.entry(anatEntitiesNameFile, anatEntitiesRelFile);
 
+        //we need to get the anat. entities, both for anatEntitiesNameFile, and for 
+        //correct generation of the anatEntitiesRelFile
+        Set<AnatEntity> entities = this.anatEntityService.loadAnatEntitiesBySpeciesIds(
+                Arrays.asList(this.params.getSpeciesId())).collect(Collectors.toSet());
         try (PrintWriter out = new PrintWriter(new BufferedWriter(
-                new FileWriter(AnatEntitiesNameFile)))) {
-            this.anatEntityService.loadAnatEntitiesBySpeciesIds(Arrays.asList(this.params.getSpeciesId()))
-            .forEach(entity 
+                new FileWriter(anatEntitiesNameFile)))) {
+            entities.stream().forEach(entity 
                     -> out.println(entity.getId() + "\t" + entity.getName().replaceAll("'", "")));
             //We add a fake root, TopAnat doesn't manage multiple root
             out.println(FAKE_ANAT_ENTITY_ROOT.getId() + "\t" + FAKE_ANAT_ENTITY_ROOT.getName());
         }
-
-        log.exit();
-    }
-
-    /**
-     */
-    private void writeAnatEntitiesRelationsToFile(String AnatEntitiesRelFile)
-            throws IOException {
-        log.entry(AnatEntitiesRelFile);
-
+        
+        //relations
         Map<String, Set<String>> relations = this.anatEntityService.loadDirectIsAPartOfRelationships(
                 Arrays.asList(this.params.getSpeciesId()));
         
         //We add a fake root, and we map all orphan terms to it: TopAnat don't manage multiple roots. 
-        //Search for parent terms never seen as child of another term.
+        //Search for terms never seen as child of another term.
         Set<String> allChildIds = relations.values().stream()
                 .flatMap(Set::stream).collect(Collectors.toSet());
-        Set<String> roots = relations.keySet().stream()
+        //we need to examine all terms, not only those present in the relation Map, because maybe 
+        //some terms have no ancestors and no descendants, and are not in the Map.
+        Set<String> roots = entities.stream()
+                .map(term -> term.getId())
                 .filter(termId -> !allChildIds.contains(termId))
                 .collect(Collectors.toSet());
         log.trace("Roots identified in the graph: " + roots);
         assert roots.size() > 0;
         if (roots.size() > 1) {
-            //FIXME: actually, we need to consider all genes in the geneToOrgan file, 
-            //because there might be structures in there with no ancestors nor descendants, 
-            //so we wouldn't see them in the relation Map.
-            //Or, we could request the "identity" relations, to be sure to get all necessay organs, 
-            //but that would need to filter them afterwards.
             relations.put(FAKE_ANAT_ENTITY_ROOT.getId(), roots);
         }
         
         try (PrintWriter out = new PrintWriter(new BufferedWriter(
-                new FileWriter(AnatEntitiesRelFile)))) {
+                new FileWriter(anatEntitiesRelFile)))) {
             relations.forEach(
                     (id,descentIds) -> descentIds.forEach(
                             (descentId) -> out.println(descentId + '\t' + id)));

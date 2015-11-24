@@ -21,7 +21,8 @@ angular
         'services.lang',
         'angularFileUpload',
         'ui.bootstrap',
-        'ngLocationUpdate'
+        'ngLocationUpdate', 
+        'ngFileSaver'
     ])
 
     //.value('DataType', DataType)

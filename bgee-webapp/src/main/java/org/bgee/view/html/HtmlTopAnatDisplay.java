@@ -116,6 +116,9 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
         this.includeJs("lib/angular_modules/angular-file-upload.min.js");
         this.includeJs("lib/jquery_plugins/toastr.min.js");
         this.includeJs("lib/angular_modules/angular-location-update.min.js");
+        this.includeJs("lib/Blob.js");
+        this.includeJs("lib/FileSaver.min.js");
+        this.includeJs("lib/angular_modules/angular-file-saver.bundle.min.js");
         
         //TopAnat JS files
         this.includeJs("topanat/topanat.js");

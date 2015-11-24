@@ -415,10 +415,10 @@
                        disabling this until it's fixed. 
                 <span style="font-size: small; color: red;" ng-show="vm.filteredRows.length > 0">&nbsp;{{vm.filteredRows.length}} results</span>
                 -->
-                <!-- FIXME: the download link doesn't work anymore, certainly following my fix 
-                            for the lack of grid update. Disabling it for now.
-                <span ng-show="vm.filteredRows.length > 0" style="font-size: small;">&nbsp;[<a href="" ng-click="vm.downloadFilteredResults()">Download</a>]</span>
-                -->
+                
+                <!-- Download results -->
+                <span ng-show="vm.filteredRows.length > 0" style="font-size: small;">
+                &nbsp;[<a href="" ng-click="vm.downloadFilteredResults()">Download</a>]</span>
                 
                 <span style="font-size: small; color: red;" ng-show="vm.filteredRows.length == 0">&nbsp;No result.</span>
 

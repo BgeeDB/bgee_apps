@@ -10,11 +10,16 @@
      */
 
     angular.module('app')
-        .controller('MainCtrl', MainCtrl, ['ui.bootstrap', 'angularFileUpload', 'ngLocationUpdate']);
+        .controller('MainCtrl', MainCtrl, ['ui.bootstrap', 'angularFileUpload', 'ngLocationUpdate', 
+                                           'ngFileSaver']);
 
-    MainCtrl.$inject = ['$scope', '$sce', 'bgeedataservice', 'bgeejobservice', 'helpservice', 'DataTypeFactory', 'configuration', 'logger', 'FileUploader', '$timeout', '$location', '$interval', 'lang', 'jobStatus', '$filter'];
+    MainCtrl.$inject = ['$scope', '$sce', 'bgeedataservice', 'bgeejobservice', 'helpservice', 
+                        'DataTypeFactory', 'configuration', 'logger', 'FileUploader', '$timeout', 
+                        '$location', '$interval', 'lang', 'jobStatus', '$filter', 'FileSaver', 'Blob'];
 
-    function MainCtrl ($scope, $sce, bgeedataservice, bgeejobservice, helpservice, DataTypeFactory, configuration, logger, FileUploader, $timeout, $location, $interval, lang, jobStatus, $filter) {
+    function MainCtrl ($scope, $sce, bgeedataservice, bgeejobservice, helpservice, DataTypeFactory, 
+    		configuration, logger, FileUploader, $timeout, $location, $interval, lang, jobStatus, 
+    		$filter, FileSaver, Blob) {
 
         var vm = this;
 
@@ -626,13 +631,14 @@
         }
 
         vm.downloadFilteredResults = function() {
-            var textArray = getFilteredRowsAsText();
-            var myBlob = new Blob(textArray, {type: 'plain/text'})
-            var blobURL = (window.URL || window.webkitURL).createObjectURL(myBlob);
-            var anchor = document.createElement("a");
-            anchor.download = getFileName();
-            anchor.href = blobURL;
-            anchor.click();
+        	if (window.navigator.userAgent.indexOf("Safari") != -1 && window.navigator.userAgent.indexOf("Chrome") == -1) {
+        	    logger.info("Download not supported by Safari. Please try another browser.");
+        	} else {
+        	    var fileName = getFileName();
+        	    var textArray = getFilteredRowsAsText();
+        	    var data = new Blob(textArray, { type: 'text/plain;charset=utf-8' });
+        	    FileSaver.saveAs(data, fileName);
+        	}
         }
 
         function getFileName() {

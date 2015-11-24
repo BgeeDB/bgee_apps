@@ -331,9 +331,9 @@
                             <label>Decorrelation type:&nbsp;<span class="glyphicon glyphicon-question-sign" uib-tooltip="{{vm.help}}" ng-mouseover="vm.getOnlineHelpForItem('Decorrelation type')"></span></label>
                             <div>
                                 <span ng-class="{'highlighted': vm.decorr_type === 'classic'}">&nbsp;&nbsp;<input type="radio" name="decorr_type" ng-model="vm.decorr_type" value="classic">No decorrelation</span>
-                                <span ng-class="{'highlighted': vm.decorr_type === 'elim'}">&nbsp;&nbsp;<input type="radio" name="decorr_type" ng-model="vm.decorr_type" value="elim">Elim</span>
+                                <span>&nbsp;&nbsp;<input type="radio" name="decorr_type" ng-model="vm.decorr_type" value="elim">Elim</span>
                                 <span ng-class="{'highlighted': vm.decorr_type === 'weight'}">&nbsp;&nbsp;<input type="radio" name="decorr_type" ng-model="vm.decorr_type" value="weight">Weigth</span>
-                                <span>&nbsp;&nbsp;<input type="radio" name="decorr_type" ng-model="vm.decorr_type" value="parentchild">Parent-child</span>
+                                <span ng-class="{'highlighted': vm.decorr_type === 'parentchild'}">&nbsp;&nbsp;<input type="radio" name="decorr_type" ng-model="vm.decorr_type" value="parentchild">Parent-child</span>
                             </div>
                         </li>
 

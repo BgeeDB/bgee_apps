@@ -12,6 +12,19 @@
                 <a style="margin-right: 4px;" class="btn btn-default btn-xs pull-right" href="" role="button" ng-click="vm.updateShowHelpCookie(!vm.showHelp)">{{vm.quickstart}} quickstart</a>
             </div>
         </div>
+        
+        <!-- WARNING PANEL -->
+        <div class="row">
+            <div class="panel-body alert alert-danger">
+                TopAnat is currently a <strong>very early and experimental</strong> 
+                development build. Our aim is to have rapid development iterations, 
+                to allow you to test the capabilities of this new tool immediately. 
+                Some features might not be working properly yet, or not be fully designed. 
+                The use of TopAnat currently comes <span class="bgee_alert">at no warranty</span>, 
+                and, at present, we do not guarantee to store your results for later use. 
+                But everything should be usable and should allow you to have a taste of it!
+            </div>
+        </div>
 
         <!-- HELP panel -->
         <div class="row">
@@ -20,15 +33,6 @@
                     <div class="panel-heading">
                         <h3 class="panel-title">TopAnat - Quickstart</h3>
                     </div>
-                    <div class="panel-body bgee_alert_container">
-                        <span class="bgee_alert">Warning: </span>TopAnat is currently 
-                         a <strong>very early and experimental</strong> development build. Our aim is to have rapid development 
-                         iterations, to allow you to test the capabilities of this new tool immediately. 
-                         Some features might not be working properly yet, or not be fully designed. 
-                         The use of TopAnat currently comes <span class="bgee_alert">at no warranty</span>, 
-                         and, at present, we do not guarantee to store your results for later use. 
-                         But everything should be usable and should allow you to have a taste of it!
-                     </div>
 
                     <div class="panel-body">
                         <p>TopAnat is a tool to identify and visualize enriched anatomical terms,
@@ -41,24 +45,23 @@
                             rather than their GO functional annotations.
                         </p>
                         <p><strong>Please note that the results can be slow to compute</strong>, 
-                           typically from 1 to 10 minutes, depending on the amount of data to process. 
+                           typically from 1 to 30 minutes, depending on the amount of data to process. 
                         </p>
                      </div>
                     <div class="row panel-body">
                         <div class="col-sm-6">
-                            <p><span class="list_element_title">See examples (please note that 
-                               the pages can take a few seconds to load): </span>
+                            <p><span class="list_element_title">See examples (the pages can take 
+                               a few seconds to load): </span>
                                <ul>
                                  <li><a href="/?page=top_anat#/result/39a9caea61be777b8a9d402b5ba3258b78b37ee8" 
-                                 title="TopAnat example">Expression localization enrichment</a> 
-                                 for the human genes mapped to the GO term "spermatogenesis", 
+                                 title="TopAnat example">Human genes mapped to the GO term "spermatogenesis"</a>, 
                                  with RNA-Seq data, during the post-embryonic stage.</li>
                                  <li><a href="/?page=top_anat#/result/bb083e8845722242d66395c7ac2a61ec9d5d2767" 
-                                 title="TopAnat example">Enrichment</a> 
-                                 for the mouse genes mapped to the GO term "neurological system process".</li>
+                                 title="TopAnat example">Mouse genes mapped to the GO term "neurological system process"</a>.</li>
                                  <li><a href="/?page=top_anat#/result/e9983b5fddace4e616a85612675596c05f6b9f78" 
-                                 title="TopAnat example">Enrichment</a> 
-                                 for the mouse genes mapped to the GO term "spermatogenesis".</li>
+                                 title="TopAnat example">Mouse genes mapped to the GO term "spermatogenesis"</a>.</li>
+                                 <li><a href="/?page=top_anat#/result/577fc92690e48352a34368bcb5adef8168ebd6ea" 
+                                 title="TopAnat example">Platypus genes located on X chromosome</a>.</li>
                                </ul>
                             </p>
                             <p>
@@ -328,9 +331,9 @@
                             <label>Decorrelation type:&nbsp;<span class="glyphicon glyphicon-question-sign" uib-tooltip="{{vm.help}}" ng-mouseover="vm.getOnlineHelpForItem('Decorrelation type')"></span></label>
                             <div>
                                 <span ng-class="{'highlighted': vm.decorr_type === 'classic'}">&nbsp;&nbsp;<input type="radio" name="decorr_type" ng-model="vm.decorr_type" value="classic">No decorrelation</span>
-                                <span ng-class="{'highlighted': vm.decorr_type === 'elim'}">&nbsp;&nbsp;<input type="radio" name="decorr_type" ng-model="vm.decorr_type" value="elim">Elim</span>
+                                <span>&nbsp;&nbsp;<input type="radio" name="decorr_type" ng-model="vm.decorr_type" value="elim">Elim</span>
                                 <span ng-class="{'highlighted': vm.decorr_type === 'weight'}">&nbsp;&nbsp;<input type="radio" name="decorr_type" ng-model="vm.decorr_type" value="weight">Weigth</span>
-                                <span>&nbsp;&nbsp;<input type="radio" name="decorr_type" ng-model="vm.decorr_type" value="parentchild">Parent-child</span>
+                                <span ng-class="{'highlighted': vm.decorr_type === 'parentchild'}">&nbsp;&nbsp;<input type="radio" name="decorr_type" ng-model="vm.decorr_type" value="parentchild">Parent-child</span>
                             </div>
                         </li>
 
@@ -401,22 +404,21 @@
 
         <nav class="navbar navbar-default">
             <div class="vert-offset">
-                <!-- To be resurrected asap! -->
-                <!--View
                 <select name="viewSelector" id="viewSelector"
                         ng-options="option.name for option in vm.viewSelectorData.availableOptions track by option.id"
                         ng-model="vm.viewSelectorData.selectedOption"
                         ng-change="vm.filterResultFromViewSelector()">
-                </select>-->
+                </select>
+                
                 <!-- 
                 FIXME: the line count is incorrect when results are retrieved following form submission, 
                        disabling this until it's fixed. 
                 <span style="font-size: small; color: red;" ng-show="vm.filteredRows.length > 0">&nbsp;{{vm.filteredRows.length}} results</span>
                 -->
-                <!-- FIXME: the download link doesn't work anymore, certainly following my fix 
-                            for the lack of grid update. Disabling it for now.
-                <span ng-show="vm.filteredRows.length > 0" style="font-size: small;">&nbsp;[<a href="" ng-click="vm.downloadFilteredResults()">Download</a>]</span>
-                -->
+                
+                <!-- Download results -->
+                <span ng-show="vm.filteredRows.length > 0" style="font-size: small;">
+                &nbsp;[<a href="" ng-click="vm.downloadFilteredResults()">Download</a>]</span>
                 
                 <span style="font-size: small; color: red;" ng-show="vm.filteredRows.length == 0">&nbsp;No result.</span>
 

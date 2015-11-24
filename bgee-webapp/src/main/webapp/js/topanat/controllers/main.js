@@ -10,11 +10,16 @@
      */
 
     angular.module('app')
-        .controller('MainCtrl', MainCtrl, ['ui.bootstrap', 'angularFileUpload', 'ngLocationUpdate']);
+        .controller('MainCtrl', MainCtrl, ['ui.bootstrap', 'angularFileUpload', 'ngLocationUpdate', 
+                                           'ngFileSaver']);
 
-    MainCtrl.$inject = ['$scope', '$sce', 'bgeedataservice', 'bgeejobservice', 'helpservice', 'DataTypeFactory', 'configuration', 'logger', 'FileUploader', '$timeout', '$location', '$interval', 'lang', 'jobStatus', '$filter'];
+    MainCtrl.$inject = ['$scope', '$sce', 'bgeedataservice', 'bgeejobservice', 'helpservice', 
+                        'DataTypeFactory', 'configuration', 'logger', 'FileUploader', '$timeout', 
+                        '$location', '$interval', 'lang', 'jobStatus', '$filter', 'FileSaver', 'Blob'];
 
-    function MainCtrl ($scope, $sce, bgeedataservice, bgeejobservice, helpservice, DataTypeFactory, configuration, logger, FileUploader, $timeout, $location, $interval, lang, jobStatus, $filter) {
+    function MainCtrl ($scope, $sce, bgeedataservice, bgeejobservice, helpservice, DataTypeFactory, 
+    		configuration, logger, FileUploader, $timeout, $location, $interval, lang, jobStatus, 
+    		$filter, FileSaver, Blob) {
 
         var vm = this;
 
@@ -238,25 +243,17 @@
                 var object = {};
                 if (stage.checked) {
                     /* SD: The correspondence between expressionType and their values should probably be stored somewhere */
-                    if (vm.expr_type === 'ALL') {
-                        combined = stage.name + ' stage, expression type "Present"';
+                	//Problem of comparison when using '===', I guess we're dealing with 
+                	//a String object, so with a different reference.
+                    if (vm.expr_type == 'ALL' || vm.expr_type == 'EXPRESSED') {
+                        combined = stage.name + ', expression type "Present"';
                         object = {};
-                        object.id = stage.id + " ; EXPRESSED";
+                        object.id = stage.id + " ; " + vm.expr_type;
                         object.name = combined;
                         vm.viewSelectorData.availableOptions.push(object);
-
-                        index++;
-
-                        combined = stage.name + ' stage, expression type "Over/Under expression"';
-                        object = {};
-                        object.id = stage.id + " ; DIFF_EXPRESSION";
-                        object.name = combined;
-                        vm.viewSelectorData.availableOptions.push(object);
-
                     }
-                    else {
-                        var expr = vm.expr_type === 'EXPRESSED' ? 'Present' : 'Over/Under expression';
-                        combined = stage.name + ' stage, expression type "' + expr + '"';
+                    if (vm.expr_type == 'ALL' || vm.expr_type == 'OVER_EXPRESSED') {
+                        combined = stage.name + ', expression type "Over-/Under-expression"';
                         object = {};
                         object.id = stage.id + " ; " + vm.expr_type;
                         object.name = combined;
@@ -634,13 +631,14 @@
         }
 
         vm.downloadFilteredResults = function() {
-            var textArray = getFilteredRowsAsText();
-            var myBlob = new Blob(textArray, {type: 'plain/text'})
-            var blobURL = (window.URL || window.webkitURL).createObjectURL(myBlob);
-            var anchor = document.createElement("a");
-            anchor.download = getFileName();
-            anchor.href = blobURL;
-            anchor.click();
+        	if (window.navigator.userAgent.indexOf("Safari") != -1 && window.navigator.userAgent.indexOf("Chrome") == -1) {
+        	    logger.info("Download not supported by Safari. Please try another browser.");
+        	} else {
+        	    var fileName = getFileName();
+        	    var textArray = getFilteredRowsAsText();
+        	    var data = new Blob(textArray, { type: 'text/plain;charset=utf-8' });
+        	    FileSaver.saveAs(data, fileName);
+        	}
         }
 
         function getFileName() {
@@ -752,7 +750,6 @@
         vm.postForm = function() {
 
             disableForm();
-            getCombinedDevStageAndExpressionType();
 
             vm.jobDone = false; /* When true -> Show the "New job" button */
 
@@ -1002,23 +999,38 @@
 
             // for the filtering (the dev stage and data types are not the results anymore, see above)
             vm.gridOptionsByAnalysis = [];
-
+            // for sorting all results from all analyses by p-values, to get correct ordering 
+            // when displaying all results
+            var allResultArr = [];
             for (var i = 0; i < data.data.topAnatResults.length; i++) {
                 var devStageId = data.data.topAnatResults[i].devStageId;
                 var callType = data.data.topAnatResults[i].callType;
 
                 vm.gridOptionsByAnalysis[devStageId] = [];
                 vm.gridOptionsByAnalysis[devStageId][callType] = data.data.topAnatResults[i].results;
-
+                Array.prototype.push.apply(allResultArr, data.data.topAnatResults[i].results);
+            }
+            //sort all results by p-val and FDR
+            allResultArr.sort(function(a, b){
+                if (a.pValue !== b.pValue) {
+                	return a.pValue - b.pValue;
+                }
+                if (a.FDR !== b.FDR) {
+                	return a.FDR - b.FDR;
+                }
+                return 0;
+            });
+            var allResultCount = allResultArr.length;
+            for (var i = 0; i < allResultCount; i++) {
+                
                 // SD: Ugly! There should be a better way
                 // no time to investigate right now!
-                var topAnat = data.data.topAnatResults[i].results;
                 var grid = vm.gridOptions.data;
                 if (typeof grid !== 'undefined') {
-                    vm.gridOptions.data = grid.concat(topAnat); // show all
+                    vm.gridOptions.data = grid.concat(allResultArr[i]); // show all
                 }
                 else {
-                    vm.gridOptions.data = data.data.topAnatResults[i].results;
+                    vm.gridOptions.data = allResultArr[i];
                 }
             }
             vm.getFilteredRows(); // In order to get the total number of rows before filtering of results
@@ -1027,31 +1039,12 @@
         }
 
         function displayResults(result) {
-            /*
-            "topAnatResults": [
-                {
-                    "zipFile": "bgee/TopAnatFiles/results/topAnat_d2ce16b29eabcea98217b5c3aa43b03b7162cb54.zip",
-                    "devStageId": "UBERON:0000068",
-                    "callType": "EXPRESSED",
-                    "results": [
-                        {
-                            "anatEntityId": "UBERON:0000073",
-                            "anatEntityName": "regional part of nervous system",
-                            "annotated": 14917.0,
-                            "significant": 265.0,
-                            "expected": 254.68,
-                            "foldEnrichment": 1.04,
-                            "pValue": 0.134,
-                            "FDR": 0.936
-                        },
-
-            */
-
 
             vm.jobStatus = "DONE";
 
             console.info("Job done, displaying results");
             console.info(result);
+            getCombinedDevStageAndExpressionType();
 
             //vm.gridOptions.data = result.data.topAnatResults[0].results;
             //vm.jobStatus = result.status;

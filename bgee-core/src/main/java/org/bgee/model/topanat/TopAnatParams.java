@@ -317,7 +317,7 @@ public class TopAnatParams {
          * @param nodeSize
          * @return
          */
-        public Builder nodeSize(Integer nodeSize){
+        public Builder nodeSize(int nodeSize){
             log.entry(nodeSize);
             this.nodeSize = nodeSize;
             return log.exit(this);
@@ -328,7 +328,7 @@ public class TopAnatParams {
          * @param fdrThreshold
          * @return
          */
-        public Builder fdrThreshold(Double fdrThreshold){
+        public Builder fdrThreshold(double fdrThreshold){
             log.entry(fdrThreshold);
             this.fdrThreshold = fdrThreshold;
             return log.exit(this);
@@ -339,7 +339,7 @@ public class TopAnatParams {
          * @param pvalueThreshold
          * @return
          */
-        public Builder pvalueThreshold(Double pvalueThreshold){
+        public Builder pvalueThreshold(double pvalueThreshold){
             log.entry(pvalueThreshold);
             this.pvalueThreshold = pvalueThreshold;
             return log.exit(this);
@@ -350,7 +350,7 @@ public class TopAnatParams {
          * @param numberOfSignificantNode
          * @return
          */
-        public Builder numberOfSignificantNode(Integer numberOfSignificantNode){
+        public Builder numberOfSignificantNode(int numberOfSignificantNode){
             log.entry(numberOfSignificantNode);
             this.numberOfSignificantNode = numberOfSignificantNode;
             return log.exit(this);
@@ -361,7 +361,7 @@ public class TopAnatParams {
          * @param isWithZip
          * @return
          */
-        public Builder isWithZip(Boolean isWithZip){
+        public Builder isWithZip(boolean isWithZip){
             log.entry(isWithZip);
             this.isWithZip = isWithZip;
             return log.exit(this);

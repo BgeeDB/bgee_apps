@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -169,6 +170,8 @@ public class TopAnatResults {
 
     private final TopAnatParams topAnatParams; 
 
+    private final String resultDirectory;
+    
     private final String resultFileName;
 
     private final String resultPDFFileName;
@@ -191,13 +194,13 @@ public class TopAnatResults {
 
     private final BgeeProperties props;
 
-    public TopAnatResults(
-            TopAnatParams topAnatParams,String resultFileName,
+    public TopAnatResults(TopAnatParams topAnatParams, String resultDirectory, String resultFileName,
             String resultPDFFileName, String rScriptAnalysisFileName, String  paramsOutputFileName,
             String anatEntitiesFilename, String anatEntitiesRelationshipsFileName, 
             String geneToAnatEntitiesFileName, String rScriptConsoleFileName,
             String zipFileName, TopAnatController controller){
         this.topAnatParams = topAnatParams;
+        this.resultDirectory = resultDirectory;
         this.resultFileName = resultFileName;
         this.resultPDFFileName = resultPDFFileName;
         this.rScriptAnalysisFileName = rScriptAnalysisFileName;
@@ -260,9 +263,9 @@ public class TopAnatResults {
     public List<TopAnatResults.TopAnatResultRow> getRows() throws FileNotFoundException,
     IOException{
         log.entry();
-            File resultFile = new File(
-                    this.props.getTopAnatResultsWritingDirectory(),
-                    this.getResultFileName());
+            File resultFile = Paths.get(this.props.getTopAnatResultsWritingDirectory(), 
+                    this.getResultDirectory(), 
+                    this.getResultFileName()).toFile();
 
             this.controller.acquireReadLock(resultFile.getPath());
 
@@ -296,6 +299,10 @@ public class TopAnatResults {
 
             return log.exit(listToReturn);
    
+    }
+    
+    public String getResultDirectory() {
+        return resultDirectory;
     }
 
     public TopAnatParams getTopAnatParams() {

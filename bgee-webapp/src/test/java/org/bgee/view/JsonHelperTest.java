@@ -234,7 +234,7 @@ public class JsonHelperTest extends TestAncestor {
         TopAnatController controller = mock(TopAnatController.class);
         when(controller.getBgeeProperties()).thenReturn(props);
         
-        TopAnatResults results = new TopAnatResults(params, "view/topAnatResults.tsv", 
+        TopAnatResults results = new TopAnatResults(params, "view", "topAnatResults.tsv", 
                 null, null, null, null, null, null, null, "result_hash.zip", 
                 controller);
         

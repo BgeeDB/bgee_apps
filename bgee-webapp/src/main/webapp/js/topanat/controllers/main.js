@@ -238,25 +238,17 @@
                 var object = {};
                 if (stage.checked) {
                     /* SD: The correspondence between expressionType and their values should probably be stored somewhere */
-                    if (vm.expr_type === 'ALL') {
-                        combined = stage.name + ' stage, expression type "Present"';
+                	//Problem of comparison when using '===', I guess we're dealing with 
+                	//a String object, so with a different reference.
+                    if (vm.expr_type == 'ALL' || vm.expr_type == 'EXPRESSED') {
+                        combined = stage.name + ', expression type "Present"';
                         object = {};
-                        object.id = stage.id + " ; EXPRESSED";
+                        object.id = stage.id + " ; " + vm.expr_type;
                         object.name = combined;
                         vm.viewSelectorData.availableOptions.push(object);
-
-                        index++;
-
-                        combined = stage.name + ' stage, expression type "Over/Under expression"';
-                        object = {};
-                        object.id = stage.id + " ; DIFF_EXPRESSION";
-                        object.name = combined;
-                        vm.viewSelectorData.availableOptions.push(object);
-
                     }
-                    else {
-                        var expr = vm.expr_type === 'EXPRESSED' ? 'Present' : 'Over/Under expression';
-                        combined = stage.name + ' stage, expression type "' + expr + '"';
+                    if (vm.expr_type == 'ALL' || vm.expr_type == 'OVER_EXPRESSED') {
+                        combined = stage.name + ', expression type "Over-/Under-expression"';
                         object = {};
                         object.id = stage.id + " ; " + vm.expr_type;
                         object.name = combined;

@@ -211,7 +211,7 @@ public class TopAnatResults {
         this.props = controller.getBgeeProperties();
     }
     
-    //TODO: javadoc. CellProcessor needed because R returns "Inf" in case of division by 0.
+    //TODO: javadoc. CellProcessor needed because R returns "Inf" or "NaN" in case of division by 0.
     //TODO: unit tests for this CellProcessor
     //TODO: regression test that TopAnatResults can now handle such a file with 'Inf' 
     //in the columns using CustomParseDouble.
@@ -234,7 +234,11 @@ public class TopAnatResults {
                 return log.exit(next.execute(Double.NEGATIVE_INFINITY, context));
             } else if (value.toString().contains("Inf")) {
                 return log.exit(next.execute(Double.POSITIVE_INFINITY, context));
-            }
+            } 
+            //actually, Double seems to manage "NaN" values
+            /*else if (value.toString().contains("NaN")) {
+                return log.exit(next.execute(Double.NaN, context));
+            }*/
             
             //passes result to a ParseDouble, chained with the next processor in the chain if possible
             ParseDouble parse = null;

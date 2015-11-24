@@ -246,10 +246,10 @@ public class JsonHelperTest extends TestAncestor {
                 + "\"results\": [\n    {\n      \"anatEntityId\": \"A1\",\n      "
                 + "\"anatEntityName\": \"body\",\n      \"annotated\": 5.0,\n      "
                 + "\"significant\": 4.0,\n      \"expected\": 4.0,\n      "
-                + "\"foldEnrichment\": 1.0,\n      \"pValue\": 1.0,\n      "
+                + "\"foldEnrichment\": \"NA\",\n      \"pValue\": 1.0,\n      "
                 + "\"FDR\": 1.0\n    },\n    {\n      \"anatEntityId\": \"A2\",\n      "
                 + "\"anatEntityName\": \"body2\",\n      \"annotated\": 5.0,\n      "
-                + "\"significant\": 4.0,\n      \"expected\": 4.0,\n      "
+                + "\"significant\": 4.0,\n      \"expected\": \"NA\",\n      "
                 + "\"foldEnrichment\": 1.0,\n      \"pValue\": 3.42E-64,\n      "
                 + "\"FDR\": 7.53E-62\n    }\n  ]\n}";
 

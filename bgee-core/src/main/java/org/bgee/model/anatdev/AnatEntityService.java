@@ -65,6 +65,23 @@ public class AnatEntityService extends Service {
                 ).stream()
                 .map(AnatEntityService::mapFromTO);
     }
+    
+    /**
+     * Retrieve {@code AnatEntity}s for a given anatomical entities IDs.
+     * 
+     * @param anatEntitiesIds   A {@code Collection} of {@code String}s that are IDs of anatomical
+     *                          entities for which to return the {@code AnatEntity}s.
+     * @return                  A {@code Stream} over the {@code AnatEntity}s that are the
+     *                          anatomical entities for the given anatomical entities IDs.
+     */
+    public Stream<AnatEntity> loadAnatEntitiesByIds(Collection<String> anatEntitiesIds) {
+        log.entry(anatEntitiesIds);
+        return log.exit(this.getDaoManager().getAnatEntityDAO().getAnatEntitiesByIds(
+                    Optional.ofNullable(anatEntitiesIds)
+                    .map(e -> new HashSet<>(e)).orElse(new HashSet<>()))
+                ).stream()
+                .map(AnatEntityService::mapFromTO);
+    }
 
     //FIXME: we should have a proper 'Relation' class
     //TODO: at least, unit test

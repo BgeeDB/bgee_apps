@@ -43,10 +43,24 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
         super(manager);
     }
 
+    
+    @Override
+    public AnatEntityTOResultSet getAnatEntitiesByIds(Set<String> anatEntitiesIds) {
+        log.entry(anatEntitiesIds);
+        return log.exit(this.getAnatEntities(null, anatEntitiesIds));
+    }
+
     @Override
     public AnatEntityTOResultSet getAnatEntitiesBySpeciesIds(Set<String> speciesIds) 
             throws DAOException {
-        log.entry(speciesIds);      
+        log.entry(speciesIds);
+        return log.exit(this.getAnatEntities(speciesIds, null));
+    }
+    
+    @Override
+    public AnatEntityTOResultSet getAnatEntities(Set<String> speciesIds, Set<String> anatEntitiesIds)
+            throws DAOException {
+        log.entry(speciesIds, anatEntitiesIds);
         
         String tableName = "anatEntity";
 
@@ -66,26 +80,47 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
         }
         sql += " FROM " + tableName;
         String anatEntTaxConstTabName = "anatEntityTaxonConstraint";
-        if (speciesIds != null && speciesIds.size() != 0) {
-             sql += " INNER JOIN " + anatEntTaxConstTabName + " ON (" +
-                          anatEntTaxConstTabName + ".anatEntityId = " + tableName + ".anatEntityId)" +
-                    " WHERE " + anatEntTaxConstTabName + ".speciesId IS NULL" +
-                    " OR " + anatEntTaxConstTabName + ".speciesId IN (" + 
-                        BgeePreparedStatement.generateParameterizedQueryString(
-                                speciesIds.size()) + ")";
-         }
+        boolean filterBySpecies = speciesIds != null && speciesIds.size() > 0;
+        boolean filterByIds = anatEntitiesIds != null && anatEntitiesIds.size() > 0;
 
-         //we don't use a try-with-resource, because we return a pointer to the results, 
-         //not the actual results, so we should not close this BgeePreparedStatement.
-         try {
-             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
-             if (speciesIds != null && speciesIds.size() != 0) {
-                 stmt.setStringsToIntegers(1, speciesIds, true);
-             }             
-             return log.exit(new MySQLAnatEntityTOResultSet(stmt));
-         } catch (SQLException e) {
-             throw log.throwing(new DAOException(e));
-         }
+        if (filterBySpecies) {
+             sql += " INNER JOIN " + anatEntTaxConstTabName + " ON (" +
+                          anatEntTaxConstTabName + ".anatEntityId = " + tableName + ".anatEntityId)";
+        }
+        if (filterBySpecies || filterByIds) {
+            sql += " WHERE ";
+        }
+        if (filterBySpecies) {
+            sql += "(" + anatEntTaxConstTabName + ".speciesId IS NULL" +
+                    " OR " + anatEntTaxConstTabName + ".speciesId IN (" + 
+                    BgeePreparedStatement.generateParameterizedQueryString(
+                            speciesIds.size()) + "))";
+        }
+        if (filterBySpecies && filterByIds) {
+            sql += " AND ";
+        }
+        if (filterByIds) {
+            sql += tableName + ".anatEntityId IN (" + 
+                    BgeePreparedStatement.generateParameterizedQueryString(
+                            anatEntitiesIds.size()) + ")";
+        }
+
+        //we don't use a try-with-resource, because we return a pointer to the results, 
+        //not the actual results, so we should not close this BgeePreparedStatement.
+        try {
+            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
+            if (filterBySpecies) {
+                stmt.setStringsToIntegers(1, speciesIds, true);
+            }
+            if (filterByIds) {
+                int offsetParamIndex = (filterBySpecies ? speciesIds.size() + 1 : 1);
+                stmt.setStrings(offsetParamIndex, anatEntitiesIds, true);
+            }
+
+            return log.exit(new MySQLAnatEntityTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
     }
     
     @Override

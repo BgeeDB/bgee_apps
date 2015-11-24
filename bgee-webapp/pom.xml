@@ -101,10 +101,12 @@
         <!-- Filter for topanat-dev, enabling cross-domain queries 
              (will make local development easier), 
              see http://stackoverflow.com/a/30319456/1768736  -->
+        <!-- 
         <dependency>
             <groupId>com.thetransactioncompany</groupId>
             <artifactId>cors-filter</artifactId>
         </dependency>
+        -->
 
     </dependencies>
 
@@ -115,8 +117,8 @@
         <!-- WARNING: never removes these properties, otherwise your files will be named, e.g., 
              *${css.version}.css. If you want to disable versioning of CSS and JS files, 
              just leave the css.version and js.version empty. -->
-        <css.version>${project.version}h</css.version>
-        <js.version>${project.version}h</js.version>
+        <css.version>${project.version}i</css.version>
+        <js.version>${project.version}i</js.version>
         <!-- We will rename css and javascript files with version number using 
              maven-antrun-plugin. The files will be copied in a temp directory, 
              and added by maven-war-plugin to the WAR file in the standard directory. -->

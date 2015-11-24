@@ -290,7 +290,7 @@ setMethod("GOFisherTestUnder", "classicCount",
 
 makeTable <- function(myData, scores, cutoff, names){
   fdr <- p.adjust(p=scores, method = "fdr")
-  topTerms <- sort(scores[fdr < cutoff])
+  topTerms <- sort(scores[fdr <= cutoff])
   topTerms <- as.data.frame(topTerms)
 
   if(nrow(topTerms) != 0){

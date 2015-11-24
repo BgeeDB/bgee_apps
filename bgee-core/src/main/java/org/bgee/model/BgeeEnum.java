@@ -8,6 +8,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
+ * This class provides convenient methods for Bgee {@code Enum}s.
+ * 
  * @author  Valentine Rech de Laval
  * @version Bgee 13, Nov 2015
  * @since   Bgee 13, Nov 2015
@@ -36,7 +38,8 @@ public abstract class BgeeEnum {
     
     /**
      * Convert the {@code String} representation corresponding to an {@link BgeeEnumField} 
-     * (for instance, retrieved from request) into the proper {@code Enum} element. 
+     * (for instance, retrieved from request) into the proper {@code Enum} element.
+     * <p>
      * This method compares {@code representation} to the value returned by 
      * {@link BgeeEnumField#getStringRepresentation()}, as well as to the value 
      * returned by {@link Enum#name()}, for each {@code Enum} element corresponding to 
@@ -47,7 +50,8 @@ public abstract class BgeeEnum {
      *                                  to find an element corresponding to {@code representation}.
      * @param representation            A {@code String} representing an element of {@code enumField}.
      * @return                          An element of the {@code Enum} class {@code enumField}, 
-     *                                  corresponding to {@code representation}.
+     *                                  corresponding to {@code representation}. Can be {@code null}
+     *                                  if {@code representation} is {@code null}.
      * @throw IllegalArgumentException  If {@code representation} does not correspond 
      *                                  to any element of {@code enumField}.
      */
@@ -78,7 +82,9 @@ public abstract class BgeeEnum {
      * @param representations   A {@code Set} of {@code String}s to be converted.
      * @return                  The {@code Set} of {@code BgeeEnumField}s that are the 
      *                          representation of the {@code BgeeEnumField}s contained in 
-     *                          {@code enums}.
+     *                          {@code enums}. Can be {@code null} if {@code representations} is
+     *                          {@code null}. An element can be {@code null} if 
+     *                          {@code representations} has an element {@code null}.
      * @param T The type of {@code BgeeEnumField}
      */
     public static final <T extends Enum<T> & BgeeEnumField> Set<T> 
@@ -92,9 +98,7 @@ public abstract class BgeeEnum {
         Set<T> enumSet = new HashSet<>();
         for (String repr: representations) {
             T convertedRep = convert(enumClass, repr);
-            if (convertedRep != null) {
-                enumSet.add(convertedRep);
-            }
+            enumSet.add(convertedRep);
         }
         return log.exit(enumSet);
     }
@@ -107,12 +111,19 @@ public abstract class BgeeEnum {
      * 
      * @param enums A {@code Set} of {@code BgeeEnumField}s to be converted.
      * @return      A {@code Set} of {@code String}s that are the representation of 
-     *              the {@code BgeeEnumField}s contained in {@code enums}.
+     *              the {@code BgeeEnumField}s contained in {@code enums}. Can be {@code null} if 
+     *              {@code enums} is {@code null}. An element can be {@code null} if
+     *              {@code enums} has an element {@code null}.
      * @param T The type of {@code BgeeEnumField}
      */
     public static final <T extends Enum<T> & BgeeEnumField> Set<String> 
         convertEnumSetToStringSet(Set<T> enums) {
         log.entry(enums);
+        
+        if (enums == null || enums.isEmpty()) {
+            return log.exit(null);
+        }
+
         Set<String> stringSet = new HashSet<String>();
         for (T bgeeEnum: enums) {
             if (bgeeEnum != null) {

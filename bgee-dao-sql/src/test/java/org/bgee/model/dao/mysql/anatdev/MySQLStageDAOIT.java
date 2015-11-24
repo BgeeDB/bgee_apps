@@ -130,25 +130,47 @@ public class MySQLStageDAOIT extends MySQLITAncestor {
                 " - but was: " + retrievedStageTOs,
                 TOComparator.areTOCollectionsEqual(retrievedStageTOs, expectedStages));
         
-        // Test recovery of all attributes with filter on species IDs and groupingStage
+        // Test recovery of all attributes with filter on species IDs and grouping stage
         speciesIds = new HashSet<String>(Arrays.asList("11","44"));
         expectedStages = Arrays.asList(
                 new StageTO("Stage_id1", "stageN1", "stage Desc 1", 1, 36, 1, false, true), 
                 new StageTO("Stage_id8", "stageN8", "stage Desc 8", 12, 13, 4, false, true), 
                 new StageTO("Stage_id15", "stageN15", "stage Desc 15", 27, 32, 3, false, true));
-        retrievedStageTOs = dao.getStagesBySpeciesIds(speciesIds, true).getAllTOs();
+        retrievedStageTOs = dao.getStagesBySpeciesIds(speciesIds, true, null).getAllTOs();
         assertTrue("StageTOs incorrectly retrieved, expected " + expectedStages + 
                 " - but was: " + retrievedStageTOs,
                 TOComparator.areTOCollectionsEqual(expectedStages, retrievedStageTOs));
         
-        // Test recovery of all attributes with filter on groupingStage only
+        // Test recovery of all attributes with filter on grouping stage only
         expectedStages = allStageTOs.stream()
                 .filter(s -> s.isGroupingStage() == false)
                 .collect(Collectors.toList());
-        retrievedStageTOs = dao.getStagesBySpeciesIds(null, false).getAllTOs();
+        retrievedStageTOs = dao.getStagesBySpeciesIds(null, false, null).getAllTOs();
         assertTrue("StageTOs incorrectly retrieved, expected " + expectedStages + 
                 " - but was: " + retrievedStageTOs,
                 TOComparator.areTOCollectionsEqual(expectedStages, retrievedStageTOs));
+        
+        // Test recovery of all attributes with filter on species IDs, groupingStage and level
+        expectedStages = Arrays.asList(
+                new StageTO("Stage_id15", "stageN15", "stage Desc 15", 27, 32, 3, false, true));
+
+        retrievedStageTOs = dao.getStagesBySpeciesIds(speciesIds, true, 3).getAllTOs();
+        assertTrue("StageTOs incorrectly retrieved, expected " + expectedStages + 
+                " - but was: " + retrievedStageTOs,
+                TOComparator.areTOCollectionsEqual(expectedStages, retrievedStageTOs));
+
+        // Test recovery of all attributes with filter on level only
+        expectedStages = allStageTOs.stream()
+                .filter(s -> s.getLevel() == 2)
+                .collect(Collectors.toList());
+        retrievedStageTOs = dao.getStagesBySpeciesIds(null, null, 2).getAllTOs();
+
+        // Test recovery of all attributes with filter on grouping stage and level
+        expectedStages = allStageTOs.stream()
+                .filter(s -> s.isGroupingStage() == true)
+                .filter(s -> s.getLevel() == 1)
+                .collect(Collectors.toList());
+        retrievedStageTOs = dao.getStagesBySpeciesIds(null, true, 1).getAllTOs();
     }
     
     /**

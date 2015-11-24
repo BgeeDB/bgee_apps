@@ -52,6 +52,8 @@ public class TopAnatAnalysis {
      */
     private final static String FILE_PREFIX = "topAnat_";
     
+    private final static String TMP_FILE_SUFFIX = ".tmp";
+    
     protected final static AnatEntity FAKE_ANAT_ENTITY_ROOT = new AnatEntity("BGEE:0", "root", 
             "A root added on top of all orphan terms.");
 
@@ -117,15 +119,15 @@ public class TopAnatAnalysis {
     protected TopAnatResults proceedToAnalysis() throws IOException, InvalidForegroundException, 
     InvalidSpeciesGenesException{
         log.entry();
-        log.info("Result File: {}", this.getResultFileName());
+        log.info("Result directory: {}", this.getResultDirectory());
 
         // Validate and load the gene in the foreground and background
         this.validateForegroundAndBackground();
         
         //Do the analysis/file creation only if results don't already exist
         if (!this.isAnalysisDone()) {
-            //TODO: actually, it would be better if the files were created in a directory 
-            //named as the hash, and with standard file names (not including the hash)
+            //create write directory for this analysis
+            this.createWriteDirectoryIfNotExist();
             
             // Generate anatomic entities data
             this.generateAnatEntitiesFiles();
@@ -144,7 +146,7 @@ public class TopAnatAnalysis {
                     this.props.getTopAnatFunctionFile()).getPath();
             Path source = Paths.get(sourceFunctionFileName);
             File targetFunctionFile = new File(
-                    this.props.getTopAnatResultsWritingDirectory() + 
+                    this.getResultDirectoryPath() + 
                     source.getFileName());
             Path target = Paths.get(targetFunctionFile.getPath());
             if (!targetFunctionFile.exists()) {
@@ -170,15 +172,16 @@ public class TopAnatAnalysis {
         // return the result
         return log.exit(new TopAnatResults(
                 this.params,
-                this.getResultFileName(),
-                this.getResultPDFFileName(),
-                this.getRScriptAnalysisFileName(),
-                this.getParamsOutputFileName(),
-                this.getAnatEntitiesNamesFileName(),
-                this.getAnatEntitiesRelationshipsFileName(),
-                this.getGeneToAnatEntitiesFileName(),
+                this.getResultDirectory(), 
+                this.getResultFileName(false),
+                this.getResultPDFFileName(false),
+                this.getRScriptAnalysisFileName(false),
+                this.getParamsOutputFileName(false),
+                this.getAnatEntitiesNamesFileName(false),
+                this.getAnatEntitiesRelationshipsFileName(false),
+                this.getGeneToAnatEntitiesFileName(false),
                 this.getRScriptConsoleFileName(),
-                this.getZipFileName(),
+                this.getZipFileName(false),
                 this.controller)
                 );
     }
@@ -224,35 +227,21 @@ public class TopAnatAnalysis {
 
         log.info("Run R code...");
 
-        File file = new File(
-                this.props.getTopAnatResultsWritingDirectory(),
-                this.getResultFileName());
-        String fileName = file.getPath();
-
-        File pdfFile = new File(
-                this.props.getTopAnatResultsWritingDirectory(),
-                this.getResultPDFFileName());
-        String pdfFileName = pdfFile.getPath();
+        String fileName = this.getResultFilePath(false);
+        String tmpFileName = this.getResultFilePath(true);
+        String pdfFileName = this.getResultPDFFilePath(false);
+        String tmpPdfFileName = this.getResultPDFFilePath(true);
 
         //we will write results into a tmp file, moved at the end if everything 
         //went fine.
-        String tmpFileName = fileName + ".tmp";
         Path tmpFile = Paths.get(tmpFileName);
         Path finalFile = Paths.get(fileName);
-
-        String tmpPdfFileName = pdfFileName + ".tmp";
         Path tmpPdfFile = Paths.get(tmpPdfFileName);
         Path finalPdfFile = Paths.get(pdfFileName);
 
-        String namesFileName = new File(
-                this.props.getTopAnatResultsWritingDirectory(),
-                this.getAnatEntitiesNamesFileName()).getPath();
-        String relsFileName = new File(
-                this.props.getTopAnatResultsWritingDirectory(),
-                this.getAnatEntitiesRelationshipsFileName()).getPath();
-        String geneToAnatEntitiesFile = new File(
-                this.props.getTopAnatResultsWritingDirectory(),
-                this.getGeneToAnatEntitiesFileName()).getPath();
+        String namesFileName = this.getAnatEntitiesNamesFilePath(false);
+        String relsFileName = this.getAnatEntitiesRelationshipsFilePath(false);
+        String geneToAnatEntitiesFile = this.getGeneToAnatEntitiesFilePath(false);
 
         try {
 
@@ -275,7 +264,7 @@ public class TopAnatAnalysis {
             }
 
             try {
-                this.rManager.performRFunction(this.getRScriptConsoleFileName());
+                this.rManager.performRFunction(this.getRScriptConsoleFilePath());
             } catch (rcaller.exception.ParseException e) {
                 log.catching(e);
                 //RCaller throws an exception when there is no result. 
@@ -309,8 +298,7 @@ public class TopAnatAnalysis {
             this.controller.releaseReadLock(geneToAnatEntitiesFile);   
         }
 
-        log.info("Result file name: {}", 
-                this.getResultFileName());
+        log.info("Result file path: {}", this.getResultFilePath(false));
 
         log.exit();
     }
@@ -324,14 +312,11 @@ public class TopAnatAnalysis {
 
         log.info("Generating R code file...");
 
-        File file = new File(
-                this.props.getTopAnatResultsWritingDirectory(),
-                this.getRScriptAnalysisFileName());
-        String fileName = file.getPath();
+        String fileName = this.getRScriptAnalysisFilePath(false);
+        String tmpFileName = this.getRScriptAnalysisFilePath(true);
 
         //we will write results into a tmp file, moved at the end if everything 
         //went fine.
-        String tmpFileName = fileName + ".tmp";
         Path tmpFile = Paths.get(tmpFileName);
         Path finalFile = Paths.get(fileName);
 
@@ -356,8 +341,8 @@ public class TopAnatAnalysis {
             this.controller.releaseWriteLock(fileName);
         }
 
-        log.info("Rcode file name: {}", 
-                this.getRScriptAnalysisFileName());
+        log.info("Rcode file path: {}", 
+                this.getRScriptAnalysisFilePath(false));
         log.exit();
     }
 
@@ -369,20 +354,35 @@ public class TopAnatAnalysis {
 
         try (PrintWriter out = new PrintWriter(new BufferedWriter(
                 new FileWriter(RcodeFile)))) {
-            //TODO: not good to manually add the ".tmp" here, maybe the method could take 
-            //these two file names as argument
             out.println(this.rManager.generateRCode(
-                    this.getResultFileName()+".tmp",
-                    this.getResultPDFFileName()+".tmp",
-                    this.getAnatEntitiesNamesFileName(),
-                    this.getAnatEntitiesRelationshipsFileName(),
-                    this.getGeneToAnatEntitiesFileName(),
+                    this.getResultDirectoryPath(), 
+                    this.getResultFileName(true),
+                    this.getResultPDFFileName(true),
+                    this.getAnatEntitiesNamesFileName(false),
+                    this.getAnatEntitiesRelationshipsFileName(false),
+                    this.getGeneToAnatEntitiesFileName(false),
                     this.params.getSubmittedForegroundIds()));
         }
 
         log.exit();
     }
 
+    private void createWriteDirectoryIfNotExist() {
+        log.entry();
+        //acquire the write lock before checking if the directory exists, 
+        //so that we can create it immediately. 
+        String dir = this.getResultDirectoryPath();
+        try {
+            this.controller.acquireWriteLock(dir);
+            File newDir = new File(dir);
+            if (!newDir.exists()) {
+                newDir.mkdirs();
+            }
+        } finally {
+            this.controller.releaseWriteLock(dir);
+        }
+        log.exit();
+    }
     /**
      * 
      * @throws IOException
@@ -392,95 +392,104 @@ public class TopAnatAnalysis {
 
         log.info("Generating AnatEntities files...");
 
-        File namesFile = new File(
-                this.props.getTopAnatResultsWritingDirectory(),
-                this.getAnatEntitiesNamesFileName());
-        String namesFileName = namesFile.getPath();
-
-        File relsFile = new File(
-                this.props.getTopAnatResultsWritingDirectory(),
-                this.getAnatEntitiesRelationshipsFileName());
-        String relsFileName = relsFile.getPath();
+        //These files are general and are created in the general directory to be cached, 
+        //before being copied to the analysis result directory
+        String namesFileName = this.getAnatEntitiesNamesFileName(false);
+        String namesTmpFileName = this.getAnatEntitiesNamesFileName(true);
+        String relsFileName = this.getAnatEntitiesRelationshipsFileName(false);
+        String relsTmpFileName = this.getAnatEntitiesRelationshipsFileName(true);
 
         //we will write results into a tmp file, moved at the end if everything 
         //went fine.
-        String namesTmpFileName = namesFileName + ".tmp";
-        Path namesTmpFile = Paths.get(namesTmpFileName);
-        Path finalNamesFile = Paths.get(namesFileName);
+        Path namesTmpFile = Paths.get(this.props.getTopAnatResultsWritingDirectory(), 
+                namesTmpFileName);
+        Path finalNamesFile = Paths.get(this.props.getTopAnatResultsWritingDirectory(), 
+                namesFileName);
         log.debug("Absolute path to name file: {}", namesTmpFile.toAbsolutePath());
-        String relsTmpFileName = relsFileName + ".tmp";
-        Path relsTmpFile = Paths.get(relsTmpFileName);
-        Path finalRelsFile = Paths.get(relsFileName);
+        Path relsTmpFile = Paths.get(this.props.getTopAnatResultsWritingDirectory(), 
+                relsTmpFileName);
+        Path finalRelsFile = Paths.get(this.props.getTopAnatResultsWritingDirectory(), 
+                relsFileName);
 
         try {
-            this.controller.acquireWriteLock(namesTmpFileName);
-            this.controller.acquireWriteLock(namesFileName);
-            this.controller.acquireWriteLock(relsTmpFileName);
-            this.controller.acquireWriteLock(relsFileName);
+            this.controller.acquireWriteLock(namesTmpFile.toString());
+            this.controller.acquireWriteLock(finalNamesFile.toString());
+            this.controller.acquireWriteLock(relsTmpFile.toString());
+            this.controller.acquireWriteLock(finalRelsFile.toString());
 
             //check, AFTER having acquired the locks, that the final files do not 
             //already exist (maybe another thread generated the files before this one 
             //acquires the lock)
-            if (Files.exists(finalNamesFile) && Files.exists(finalRelsFile)) {
-                log.info("AnatEntities files already generated.");
-                log.exit(); return;
+            if (!Files.exists(finalNamesFile) || !Files.exists(finalRelsFile)) {
+                log.info("AnatEntities files not already generated.");
+
+                this.writeAnatEntitiesAndRelationsToFiles(namesTmpFile.toString(), relsTmpFile.toString());
+                
+                this.move(namesTmpFile, finalNamesFile, true);
+                this.move(relsTmpFile, finalRelsFile, true);
             }
 
-            this.writeAnatEntitiesNamesToFile(namesTmpFileName);
-            this.writeAnatEntitiesRelationsToFile(relsTmpFileName);
-
-            this.move(namesTmpFile, finalNamesFile, true);
-            this.move(relsTmpFile, finalRelsFile, true);
+            //Now, we copy them to the analysis result directory, if they don't already exist
+            Path namesPath = Paths.get(this.getAnatEntitiesNamesFilePath(false));
+            if (!Files.exists(namesPath)) {
+                Files.copy(finalNamesFile, namesPath, StandardCopyOption.REPLACE_EXISTING);
+            }
+            Path relsPath = Paths.get(this.getAnatEntitiesRelationshipsFilePath(false));
+            if (!Files.exists(relsPath)) {
+                Files.copy(finalRelsFile, relsPath, StandardCopyOption.REPLACE_EXISTING);
+            }
 
         } finally {
             Files.deleteIfExists(namesTmpFile);
             Files.deleteIfExists(relsTmpFile);
-            this.controller.releaseWriteLock(namesTmpFileName);
-            this.controller.releaseWriteLock(namesFileName);
-            this.controller.releaseWriteLock(relsTmpFileName);
-            this.controller.releaseWriteLock(relsFileName);
+            this.controller.releaseWriteLock(namesTmpFile.toString());
+            this.controller.releaseWriteLock(finalNamesFile.toString());
+            this.controller.releaseWriteLock(relsTmpFile.toString());
+            this.controller.releaseWriteLock(finalRelsFile.toString());
         }
 
-        log.info("AnatEntitiesNamesFileName: {} - relationshipsFileName: {}", 
-                this.getAnatEntitiesNamesFileName(), this.getAnatEntitiesRelationshipsFileName());
+        log.info("anatEntitiesNamesFilePath: {} - relationshipsFilePath: {}", 
+                this.getAnatEntitiesNamesFilePath(false), 
+                this.getAnatEntitiesRelationshipsFilePath(false));
         log.exit();
     }
-
 
     /**
      * 
      * @param AnatEntitiesNameFile
      * @throws IOException
      */
-    private void writeAnatEntitiesNamesToFile(String AnatEntitiesNameFile) throws IOException {
-        log.entry(AnatEntitiesNameFile);
+    //TODO: do a regression test, with the relations between anatomical entities 
+    //defining several roots to the ontology, and including anatomical entities 
+    //with no relation at all (no ancestors nor descendants)
+    private void writeAnatEntitiesAndRelationsToFiles(String anatEntitiesNameFile, 
+            String anatEntitiesRelFile) throws IOException {
+        log.entry(anatEntitiesNameFile, anatEntitiesRelFile);
 
+        //we need to get the anat. entities, both for anatEntitiesNameFile, and for 
+        //correct generation of the anatEntitiesRelFile
+        Set<AnatEntity> entities = this.anatEntityService.loadAnatEntitiesBySpeciesIds(
+                Arrays.asList(this.params.getSpeciesId())).collect(Collectors.toSet());
         try (PrintWriter out = new PrintWriter(new BufferedWriter(
-                new FileWriter(AnatEntitiesNameFile)))) {
-            this.anatEntityService.loadAnatEntitiesBySpeciesIds(Arrays.asList(this.params.getSpeciesId()))
-            .forEach(entity 
+                new FileWriter(anatEntitiesNameFile)))) {
+            entities.stream().forEach(entity 
                     -> out.println(entity.getId() + "\t" + entity.getName().replaceAll("'", "")));
             //We add a fake root, TopAnat doesn't manage multiple root
             out.println(FAKE_ANAT_ENTITY_ROOT.getId() + "\t" + FAKE_ANAT_ENTITY_ROOT.getName());
         }
-
-        log.exit();
-    }
-
-    /**
-     */
-    private void writeAnatEntitiesRelationsToFile(String AnatEntitiesRelFile)
-            throws IOException {
-        log.entry(AnatEntitiesRelFile);
-
+        
+        //relations
         Map<String, Set<String>> relations = this.anatEntityService.loadDirectIsAPartOfRelationships(
                 Arrays.asList(this.params.getSpeciesId()));
         
         //We add a fake root, and we map all orphan terms to it: TopAnat don't manage multiple roots. 
-        //Search for parent terms never seen as child of another term.
+        //Search for terms never seen as child of another term.
         Set<String> allChildIds = relations.values().stream()
                 .flatMap(Set::stream).collect(Collectors.toSet());
-        Set<String> roots = relations.keySet().stream()
+        //we need to examine all terms, not only those present in the relation Map, because maybe 
+        //some terms have no ancestors and no descendants, and are not in the Map.
+        Set<String> roots = entities.stream()
+                .map(term -> term.getId())
                 .filter(termId -> !allChildIds.contains(termId))
                 .collect(Collectors.toSet());
         log.trace("Roots identified in the graph: " + roots);
@@ -490,7 +499,7 @@ public class TopAnatAnalysis {
         }
         
         try (PrintWriter out = new PrintWriter(new BufferedWriter(
-                new FileWriter(AnatEntitiesRelFile)))) {
+                new FileWriter(anatEntitiesRelFile)))) {
             relations.forEach(
                     (id,descentIds) -> descentIds.forEach(
                             (descentId) -> out.println(descentId + '\t' + id)));
@@ -530,41 +539,56 @@ public class TopAnatAnalysis {
         log.entry();
         log.info("Generating Gene to AnatEntities Association file...");
 
-        File geneToAnatEntitiesAssociationFile = new File(
-                this.props.getTopAnatResultsWritingDirectory(),
-                this.getGeneToAnatEntitiesFileName());
-        String geneToAnatEntitiesAssociationFilePath = geneToAnatEntitiesAssociationFile
-                .getPath();
-
-        //we will write results into a tmp file, moved at the end if everything 
+        //These files are general and are created in the general directory to be cached, 
+        //before being copied to the analysis result directory.
+        //We will write results into a tmp file, moved at the end if everything 
         //went fine.
-        String tmpFileName = geneToAnatEntitiesAssociationFilePath + ".tmp";
-        Path tmpFile = Paths.get(tmpFileName);
-        Path finalGeneToAnatEntitiesFile = Paths.get(geneToAnatEntitiesAssociationFilePath);
+        Path finalGeneToAnatEntitiesFile = Paths.get(this.props.getTopAnatResultsWritingDirectory(), 
+                this.getGeneToAnatEntitiesFileName(false));
+        Path tmpFile = Paths.get(this.props.getTopAnatResultsWritingDirectory(), 
+                this.getGeneToAnatEntitiesFileName(true));
+        //If there is a custom background requested, then we create the file directly 
+        //in the result directory, it will not be cached for reuse in the parent directory
+        boolean inResultDir = false;
+        if (this.params.getSubmittedBackgroundIds() != null && 
+                !this.params.getSubmittedBackgroundIds().isEmpty()) {
+            finalGeneToAnatEntitiesFile = Paths.get(this.getGeneToAnatEntitiesFilePath(false));
+            tmpFile = Paths.get(this.getGeneToAnatEntitiesFilePath(true));
+            inResultDir = true;
+        }
 
         try {
-            this.controller.acquireWriteLock(geneToAnatEntitiesAssociationFilePath);
-            this.controller.acquireWriteLock(tmpFileName);
+            this.controller.acquireWriteLock(finalGeneToAnatEntitiesFile.toString());
+            this.controller.acquireWriteLock(tmpFile.toString());
 
             //check, AFTER having acquired the locks, that the final file does not 
             //already exist (maybe another thread generated the files before this one 
             //acquired the lock)
-            if (Files.exists(finalGeneToAnatEntitiesFile)) {
-                log.info("Gene to AnatEntities association file already generated.");
-                log.exit(); return;
+            if (!Files.exists(finalGeneToAnatEntitiesFile)) {
+                log.info("Gene to AnatEntities association file not already generated.");
+
+                this.writeToGeneToAnatEntitiesFile(tmpFile.toString());
+                //move tmp file if successful
+                this.move(tmpFile, finalGeneToAnatEntitiesFile, false);
             }
 
-            this.writeToGeneToAnatEntitiesFile(tmpFileName);
-            //move tmp file if successful
-            this.move(tmpFile, finalGeneToAnatEntitiesFile, false);
+            //Now, we copy the file to the analysis result directory, if it was not directly 
+            //written in it.
+            if (!inResultDir) {
+                Path finalPath = Paths.get(this.getGeneToAnatEntitiesFilePath(false));
+                if (!Files.exists(finalPath)) {
+                    Files.copy(finalGeneToAnatEntitiesFile, finalPath, StandardCopyOption.REPLACE_EXISTING);
+                }
+            }
 
         } finally {
             Files.deleteIfExists(tmpFile);
-            this.controller.releaseWriteLock(geneToAnatEntitiesAssociationFilePath);
-            this.controller.releaseWriteLock(tmpFileName);
+            this.controller.releaseWriteLock(finalGeneToAnatEntitiesFile.toString());
+            this.controller.releaseWriteLock(tmpFile.toString());
         }
 
-        log.info("GeneToAnatEntitiesAssociationFile: {}", this.getGeneToAnatEntitiesFileName());
+
+        log.info("GeneToAnatEntitiesAssociationFilePath: {}", this.getGeneToAnatEntitiesFilePath(false));
         log.exit();
     }    
 
@@ -594,15 +618,11 @@ public class TopAnatAnalysis {
         log.entry();
         log.info("Generating TopAnatParams file...");
 
-        File topAnatParamsFile = new File(
-                this.props.getTopAnatResultsWritingDirectory(),
-                this.getParamsOutputFileName());
-        String topAnatParamsFilePath = topAnatParamsFile
-                .getPath();
+        String topAnatParamsFilePath = this.getParamsOutputFilePath(false);
+        String tmpFileName = this.getParamsOutputFilePath(true);
 
         //we will write results into a tmp file, moved at the end if everything 
         //went fine.
-        String tmpFileName = topAnatParamsFilePath + ".tmp";
         Path tmpFile = Paths.get(tmpFileName);
         Path finalTopAnatParamsFile = Paths.get(topAnatParamsFilePath);
 
@@ -628,7 +648,7 @@ public class TopAnatAnalysis {
             this.controller.releaseWriteLock(tmpFileName);
         }
 
-        log.info("TopAnatParamsFile: {}", this.getParamsOutputFileName());
+        log.info("TopAnatParamsFilePath: {}", this.getParamsOutputFilePath(false));
         log.exit();
     }  
 
@@ -636,15 +656,11 @@ public class TopAnatAnalysis {
         log.entry();
         log.info("Generating Zip file...");
 
-        File zipFile = new File(
-                this.props.getTopAnatResultsWritingDirectory(),
-                this.getZipFileName());
-        String zipFilePath = zipFile
-                .getPath();
+        String zipFilePath = this.getZipFilePath(false);
+        String tmpFileName = this.getZipFilePath(true);
 
         //we will write into a tmp file, moved at the end if everything 
         //went fine.
-        String tmpFileName = zipFilePath + ".tmp";
         Path tmpFile = Paths.get(tmpFileName);
         Path finalZipFile = Paths.get(zipFilePath);
 
@@ -670,7 +686,7 @@ public class TopAnatAnalysis {
             this.controller.releaseWriteLock(tmpFileName);
         }
 
-        log.info("TopAnatParamsFile: {}", this.getParamsOutputFileName());
+        log.info("ZIP file path: {}", getZipFilePath(false));
         log.exit();
     }
 
@@ -684,16 +700,15 @@ public class TopAnatAnalysis {
 
         String zipFile = path;
 
-        String[] srcFiles = { 
-                this.props.getTopAnatResultsWritingDirectory() + this.getResultFileName(),
-                this.props.getTopAnatResultsWritingDirectory() + this.getResultPDFFileName(),
-                this.props.getTopAnatResultsWritingDirectory() + this.getRScriptConsoleFileName(),
-                this.props.getTopAnatResultsWritingDirectory() + this.getAnatEntitiesNamesFileName(),
-                this.props.getTopAnatResultsWritingDirectory() + this.getGeneToAnatEntitiesFileName(),
-                this.props.getTopAnatResultsWritingDirectory() + this.getParamsOutputFileName(),
-                this.props.getTopAnatResultsWritingDirectory() + this.getAnatEntitiesRelationshipsFileName(),
-                this.props.getTopAnatResultsWritingDirectory() + this.getRScriptAnalysisFileName(),
-                this.props.getTopAnatResultsWritingDirectory() + Paths.get(TopAnatAnalysis.class.getResource(
+        String[] srcFiles = {this.getResultFilePath(false),
+                             this.getResultPDFFilePath(false), 
+                             this.getRScriptConsoleFilePath(), 
+                             this.getAnatEntitiesNamesFilePath(false), 
+                             this.getGeneToAnatEntitiesFilePath(false), 
+                             this.getParamsOutputFilePath(false), 
+                             this.getAnatEntitiesRelationshipsFilePath(false), 
+                             this.getRScriptAnalysisFilePath(false),
+                             this.getResultDirectoryPath() + Paths.get(TopAnatAnalysis.class.getResource(
                         this.props.getTopAnatFunctionFile()).getPath()).getFileName().toString()
         };
 
@@ -734,32 +749,76 @@ public class TopAnatAnalysis {
 
 
     /**
+     * @return  A {@code String} that is the path to the directory where results of this analysis 
+     *          are written.
+     */
+    protected String getResultDirectory() {
+        log.entry();
+        return log.exit(this.params.getKey() + File.separator);
+    }
+    protected String getResultDirectoryPath() {
+        log.entry();
+        return log.exit(this.props.getTopAnatResultsWritingDirectory() + this.getResultDirectory());
+    }
+    
+    //TODO: refactor all the getXXXName and getXXXPath methods
+    /**
      * 
      */
-    protected String getResultFileName(){
-        return TopAnatAnalysis.FILE_PREFIX + this.params.getKey() + ".tsv";
+    protected String getResultFileName(boolean tmpFile){
+        log.entry(tmpFile);
+        String fileName = TopAnatAnalysis.FILE_PREFIX + "results.tsv";
+        if (tmpFile) {
+            fileName += TMP_FILE_SUFFIX;
+        }
+        return log.exit(fileName);
+    }
+    /**
+     * Return the path to the result file of this analysis.
+     * @param tmpFile   A {@code boolean} defining whether the path links to the definitive file 
+     *                  of a completed analysis, of the temporary file of an ongoing analysis.
+     * @return          A {@code String} that is the path to the result file.
+     */
+    protected String getResultFilePath(boolean tmpFile){
+        log.entry(tmpFile);
+        return log.exit(this.getResultDirectoryPath() + this.getResultFileName(tmpFile));
     }
 
     /**
      * 
      */
     protected String getRScriptConsoleFileName(){
-        return TopAnatAnalysis.FILE_PREFIX + this.params.getKey() + ".R_console";
+        return TopAnatAnalysis.FILE_PREFIX + "log.R_console";
+    }
+    protected String getRScriptConsoleFilePath(){
+        log.entry();
+        return log.exit(this.getResultDirectoryPath() + this.getRScriptConsoleFileName());
     }
 
     /**
      * 
      */
-    protected String getResultPDFFileName(){
-        return TopAnatAnalysis.FILE_PREFIX + "PDF_" + this.params.getKey()  + ".pdf";
+    protected String getResultPDFFileName(boolean tmpFile){
+        log.entry(tmpFile);
+        String fileName = TopAnatAnalysis.FILE_PREFIX + "results.pdf";
+        if (tmpFile) {
+            fileName += TMP_FILE_SUFFIX;
+        }
+        return log.exit(fileName);
+    }
+    protected String getResultPDFFilePath(boolean tmpFile){
+        log.entry(tmpFile);
+        return log.exit(this.getResultDirectoryPath() + this.getResultPDFFileName(tmpFile));
     }
 
     /**
      *
      */
     //TODO: unit test this logic, of different file names depending on parameters
-    protected String getGeneToAnatEntitiesFileName(){
+    protected String getGeneToAnatEntitiesFileName(boolean tmpFile){
+        log.entry(tmpFile);
         
+        String paramsEncoded = "";
         //for the background file, if there is no custom background requested, 
         //we take into account only some info
         if (this.params.getSubmittedBackgroundIds() == null || 
@@ -780,52 +839,103 @@ public class TopAnatAnalysis {
             sb.append("_").append(Optional.ofNullable(this.params.getDataQuality()).orElse(DataQuality.LOW)
                     .toString());
             
-            return log.exit(TopAnatAnalysis.FILE_PREFIX 
-                    + "GeneToAnatEntities_" + sb.toString()  + ".tsv");
+            paramsEncoded = sb.toString();
+        } else {
+            //custom background provided, use the hash
+            paramsEncoded = this.params.getKey();
         }
-        //custom background provided, use the hash
-        return log.exit(TopAnatAnalysis.FILE_PREFIX 
-                + "GeneToAnatEntities_" + this.params.getKey()  + ".tsv");
+        String fileName = TopAnatAnalysis.FILE_PREFIX + "GeneToAnatEntities_" 
+            + paramsEncoded + ".tsv";
+        if (tmpFile) {
+            fileName += TMP_FILE_SUFFIX;
+        }
+        return log.exit(fileName);
+    }
+    protected String getGeneToAnatEntitiesFilePath(boolean tmpFile){
+        log.entry(tmpFile);
+        return log.exit(this.getResultDirectoryPath() + this.getGeneToAnatEntitiesFileName(tmpFile));
     }
 
     /**
      * @return
      */
-    protected String getAnatEntitiesNamesFileName(){
-        return TopAnatAnalysis.FILE_PREFIX + "AnatEntitiesNames_" + this.params.getSpeciesId() 
-        + ".tsv";
+    protected String getAnatEntitiesNamesFileName(boolean tmpFile){
+        log.entry(tmpFile);
+        String fileName = TopAnatAnalysis.FILE_PREFIX + "AnatEntitiesNames_" + this.params.getSpeciesId() 
+            + ".tsv";
+        if (tmpFile) {
+            fileName += TMP_FILE_SUFFIX;
+        }
+        return log.exit(fileName);
+    }
+    protected String getAnatEntitiesNamesFilePath(boolean tmpFile){
+        log.entry(tmpFile);
+        return log.exit(this.getResultDirectoryPath() + this.getAnatEntitiesNamesFileName(tmpFile));
     }
 
     /**
      * 
      */
-    protected String getAnatEntitiesRelationshipsFileName(){
-        return TopAnatAnalysis.FILE_PREFIX 
+    protected String getAnatEntitiesRelationshipsFileName(boolean tmpFile){
+        log.entry(tmpFile);
+        String fileName = TopAnatAnalysis.FILE_PREFIX 
                 + "AnatEntitiesRelationships_" + this.params.getSpeciesId() + ".tsv";
+        if (tmpFile) {
+            fileName += TMP_FILE_SUFFIX;
+        }
+        return log.exit(fileName);
+    }
+    protected String getAnatEntitiesRelationshipsFilePath(boolean tmpFile){
+        log.entry(tmpFile);
+        return log.exit(this.getResultDirectoryPath() + this.getAnatEntitiesRelationshipsFileName(tmpFile));
     }
 
     /**
      * 
      */
-    protected String getRScriptAnalysisFileName(){
-        return TopAnatAnalysis.FILE_PREFIX 
-                + "RScript_" + this.params.getKey()  + ".R";
+    protected String getRScriptAnalysisFileName(boolean tmpFile){
+        log.entry(tmpFile);
+        String fileName = TopAnatAnalysis.FILE_PREFIX + "script.R";
+        if (tmpFile) {
+            fileName += TMP_FILE_SUFFIX;
+        }
+        return log.exit(fileName);
+    }
+    protected String getRScriptAnalysisFilePath(boolean tmpFile){
+        log.entry(tmpFile);
+        return log.exit(this.getResultDirectoryPath() + this.getRScriptAnalysisFileName(tmpFile));
     }
 
     /**
      * 
      */
-    protected String getParamsOutputFileName(){
-        return TopAnatAnalysis.FILE_PREFIX 
-                + "Params_" + this.params.getKey() + ".txt";
+    protected String getParamsOutputFileName(boolean tmpFile){
+        log.entry(tmpFile);
+        String fileName = TopAnatAnalysis.FILE_PREFIX + "Params.txt";
+        if (tmpFile) {
+            fileName += TMP_FILE_SUFFIX;
+        }
+        return log.exit(fileName);
+    }
+    protected String getParamsOutputFilePath(boolean tmpFile){
+        log.entry(tmpFile);
+        return log.exit(this.getResultDirectoryPath() + this.getParamsOutputFileName(tmpFile));
     }
 
     /**
      * 
      */
-    protected String getZipFileName(){
-        return TopAnatAnalysis.FILE_PREFIX 
-                + this.params.getKey() + ".zip";
+    protected String getZipFileName(boolean tmpFile){
+        log.entry(tmpFile);
+        String fileName = TopAnatAnalysis.FILE_PREFIX + "results.zip";
+        if (tmpFile) {
+            fileName += TMP_FILE_SUFFIX;
+        }
+        return log.exit(fileName);
+    }
+    protected String getZipFilePath(boolean tmpFile){
+        log.entry(tmpFile);
+        return log.exit(this.getResultDirectoryPath() + this.getZipFileName(tmpFile));
     }
 
     /**
@@ -834,25 +944,24 @@ public class TopAnatAnalysis {
      */
     protected boolean isAnalysisDone(){
         log.entry();
-        File file = new File(
-                this.props.getTopAnatResultsWritingDirectory(),
-                this.getResultFileName());
+        
+        String finalFilePath = this.getResultFilePath(false);
+        String tmpFilePath = this.getResultFilePath(true);
         //if it was requested to generate a zip, then we check for existence of the zip, 
         //that is generated last
         if (this.params.isWithZip()) {
             log.trace("Using zip file for checking for presence of results.");
-            file = new File(
-                    this.props.getTopAnatResultsWritingDirectory(),
-                    this.getZipFileName());
+            finalFilePath = this.getZipFilePath(false);
+            tmpFilePath = this.getZipFilePath(true);
         }
+        
         //At this point, if the analysis is being run by another thread, we don't want 
         //to wait for the lock on the file: results are not generated, period.
-        //TODO: here, we should have a way to ensure that the String used for acquiring the lock
-        //is the same in the methods generating these files, like, having a method 
-        //creating the File and returning file.getPath().
-        if (this.controller.getReadWriteLock(file.getPath()).isWriteLocked()) {
+        if (this.controller.getReadWriteLock(finalFilePath).isWriteLocked() || 
+                this.controller.getReadWriteLock(tmpFilePath).isWriteLocked()) {
             return log.exit(false);
         }
+        File file = new File(finalFilePath);
         //no need to acquire read lock to test for file existence, as it has been written already.
         if (file.exists()) {
             return log.exit(true);

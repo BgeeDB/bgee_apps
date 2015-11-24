@@ -3,7 +3,7 @@ package org.bgee.model.expressiondata.baseelements;
 import org.bgee.model.BgeeEnum;
 import org.bgee.model.BgeeEnum.BgeeEnumField;
 
-public enum DecorelationType implements BgeeEnumField {
+public enum DecorrelationType implements BgeeEnumField {
     
     NONE ("classic"), 
     ELIM ("elim"), 
@@ -12,7 +12,7 @@ public enum DecorelationType implements BgeeEnumField {
     
     private final String code;
     
-    DecorelationType(String code){
+    DecorrelationType(String code){
         this.code = code;
     }
 
@@ -30,19 +30,19 @@ public enum DecorelationType implements BgeeEnumField {
     
     /**
      * Convert the {@code String} representation of a decorrelation type (for instance, 
-     * retrieved from request) into a {@code DecorelationType}.
+     * retrieved from request) into a {@code DecorrelationType}.
      * Operation performed by calling {@link BgeeEnum#convert(Class, String)} with 
-     * {@code DecorelationType} as the {@code Class} argument, and {@code representation} 
+     * {@code DecorrelationType} as the {@code Class} argument, and {@code representation} 
      * as the {@code String} argument.
      * 
      * @param representation            A {@code String} representing a decorrelation type.
-     * @return                          A {@code DecorelationType} corresponding 
+     * @return                          A {@code DecorrelationType} corresponding 
      *                                  to {@code representation}.
      * @throw IllegalArgumentException  If {@code representation} does not correspond 
-     *                                  to any {@code DecorelationType}.
+     *                                  to any {@code DecorrelationType}.
      * @see #convert(Class, String)
      */
-    public static final DecorelationType convertToDecorelationType(String representation) {
-        return BgeeEnum.convert(DecorelationType.class, representation);
+    public static final DecorrelationType convertToDecorrelationType(String representation) {
+        return BgeeEnum.convert(DecorrelationType.class, representation);
     }
 }

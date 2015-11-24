@@ -20,6 +20,15 @@ import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 
+/**
+ * A {@link Service} to obtain {@link AnatEntity} objects. 
+ * Users should use the {@link org.bgee.model.ServiceFactory} to obtain {@code AnatEntityService}s.
+ * 
+ * @author Frederic Bastian
+ * @author Valentine Rech de Laval
+ * @version Bgee 13, Nov. 2015
+ * @since   Bgee 13, Nov. 2015
+*/
 public class AnatEntityService extends Service {
     private final static Logger log = LogManager.getLogger(AnatEntityService.class.getName());
 
@@ -41,11 +50,35 @@ public class AnatEntityService extends Service {
         super(daoManager);
     }
     
-    //TODO: unit test
+    /**
+     * Retrieve {@code AnatEntity}s for a given species IDs.
+     *      
+     * @param speciesIds    A {@code Collection} of {@code String}s that are IDs of species 
+     *                      for which to return the {@code AnatEntity}s.
+     * @return              A {@code Stream} over the {@code AnatEntity}s that are the
+     *                      anatomical entities for the given species IDs.
+     */
     public Stream<AnatEntity> loadAnatEntitiesBySpeciesIds(Collection<String> speciesIds) {
         log.entry(speciesIds);
         return log.exit(this.getDaoManager().getAnatEntityDAO().getAnatEntitiesBySpeciesIds(
                     Optional.ofNullable(speciesIds).map(e -> new HashSet<>(e)).orElse(new HashSet<>()))
+                ).stream()
+                .map(AnatEntityService::mapFromTO);
+    }
+    
+    /**
+     * Retrieve {@code AnatEntity}s for a given anatomical entities IDs.
+     * 
+     * @param anatEntitiesIds   A {@code Collection} of {@code String}s that are IDs of anatomical
+     *                          entities for which to return the {@code AnatEntity}s.
+     * @return                  A {@code Stream} over the {@code AnatEntity}s that are the
+     *                          anatomical entities for the given anatomical entities IDs.
+     */
+    public Stream<AnatEntity> loadAnatEntitiesByIds(Collection<String> anatEntitiesIds) {
+        log.entry(anatEntitiesIds);
+        return log.exit(this.getDaoManager().getAnatEntityDAO().getAnatEntitiesByIds(
+                    Optional.ofNullable(anatEntitiesIds)
+                    .map(e -> new HashSet<>(e)).orElse(new HashSet<>()))
                 ).stream()
                 .map(AnatEntityService::mapFromTO);
     }

@@ -372,13 +372,13 @@ public class JsonHelper {
                 out.name("annotated").value(row.getAnnotated());
                 out.name("significant").value(row.getSignificant());
                 out.name("expected");
-                if (Double.isInfinite(row.getExpected())) {
+                if (Double.isInfinite(row.getExpected()) || Double.isNaN(row.getExpected())) {
                     out.value("NA");
                 } else {
                     out.value(row.getExpected());
                 }
                 out.name("foldEnrichment");
-                if (Double.isInfinite(row.getEnrich())) {
+                if (Double.isInfinite(row.getEnrich()) || Double.isNaN(row.getEnrich())) {
                     out.value("NA");
                 } else {
                     out.value(row.getEnrich());

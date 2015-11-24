@@ -497,8 +497,8 @@ public class CommandTopAnat extends CommandParent {
      * 
      * @param speciesId     A {@code String}s that are ID of species 
      *                      for which to return the {@code DevStage}s.
-     * @param level         As {@code Integer} that is the level of dev. stages 
-     *                      for which to return the {@code DevStage}s.
+     * @param level         An {@code Integer} that is the level of dev. stages 
+     *                      allowing to filter the dev. stages.
      * @return              A {@List} of {@code DevStage}s that are dev. stages in the 
      *                      provided species at the provided level.
      * @throws IllegalStateException    If the {@code DevStageService} obtained from the 
@@ -509,16 +509,13 @@ public class CommandTopAnat extends CommandParent {
             throws IllegalStateException {
         log.entry(speciesId, level);
         List<DevStage> devStages = serviceFactory.getDevStageService().
-                loadGroupingDevStages(new HashSet<String>(Arrays.asList(speciesId)));
+                loadGroupingDevStages(new HashSet<String>(Arrays.asList(speciesId)), level);
 
         if (devStages.isEmpty()) {
             throw log.throwing(new IllegalStateException("A DevStageService did not allow "
                     + "to obtain any DevStage."));
         }
-        // TODO filter level in DAO
-        return log.exit(devStages.stream()
-                .filter(e -> e.getLevel() == level)
-                .collect(Collectors.toSet()));
+        return log.exit(new HashSet<>(devStages));
     }
 
     /**

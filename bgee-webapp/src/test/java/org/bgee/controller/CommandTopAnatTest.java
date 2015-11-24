@@ -95,9 +95,11 @@ public class CommandTopAnatTest extends TestAncestor {
         List<DevStage> devStages = Arrays.asList(
                 new DevStage("25", "embryo", "embryo desc", 2, 3, 2, false, true),
                 new DevStage("26", "adult", "adult desc", 4, 5, 2, false, true));
-        when(devStageService.loadGroupingDevStages(new HashSet<>(Arrays.asList(fgSelectedSpeciesId))))
+        when(devStageService.loadGroupingDevStages(
+                new HashSet<>(Arrays.asList(fgSelectedSpeciesId)), 2))
             .thenReturn(devStages);
-        when(devStageService.loadGroupingDevStages(new HashSet<>(Arrays.asList(bgSelectedSpeciesId))))
+        when(devStageService.loadGroupingDevStages(
+                new HashSet<>(Arrays.asList(bgSelectedSpeciesId)), 2))
             .thenReturn(devStages);
 
         List<Species> fgSpecies = Arrays.asList(

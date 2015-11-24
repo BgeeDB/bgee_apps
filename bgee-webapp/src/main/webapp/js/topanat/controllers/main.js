@@ -752,7 +752,6 @@
         vm.postForm = function() {
 
             disableForm();
-            getCombinedDevStageAndExpressionType();
 
             vm.jobDone = false; /* When true -> Show the "New job" button */
 
@@ -1027,31 +1026,12 @@
         }
 
         function displayResults(result) {
-            /*
-            "topAnatResults": [
-                {
-                    "zipFile": "bgee/TopAnatFiles/results/topAnat_d2ce16b29eabcea98217b5c3aa43b03b7162cb54.zip",
-                    "devStageId": "UBERON:0000068",
-                    "callType": "EXPRESSED",
-                    "results": [
-                        {
-                            "anatEntityId": "UBERON:0000073",
-                            "anatEntityName": "regional part of nervous system",
-                            "annotated": 14917.0,
-                            "significant": 265.0,
-                            "expected": 254.68,
-                            "foldEnrichment": 1.04,
-                            "pValue": 0.134,
-                            "FDR": 0.936
-                        },
-
-            */
-
 
             vm.jobStatus = "DONE";
 
             console.info("Job done, displaying results");
             console.info(result);
+            getCombinedDevStageAndExpressionType();
 
             //vm.gridOptions.data = result.data.topAnatResults[0].results;
             //vm.jobStatus = result.status;

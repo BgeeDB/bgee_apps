@@ -993,23 +993,38 @@
 
             // for the filtering (the dev stage and data types are not the results anymore, see above)
             vm.gridOptionsByAnalysis = [];
-
+            // for sorting all results from all analyses by p-values, to get correct ordering 
+            // when displaying all results
+            var allResultArr = [];
             for (var i = 0; i < data.data.topAnatResults.length; i++) {
                 var devStageId = data.data.topAnatResults[i].devStageId;
                 var callType = data.data.topAnatResults[i].callType;
 
                 vm.gridOptionsByAnalysis[devStageId] = [];
                 vm.gridOptionsByAnalysis[devStageId][callType] = data.data.topAnatResults[i].results;
-
+                Array.prototype.push.apply(allResultArr, data.data.topAnatResults[i].results);
+            }
+            //sort all results by p-val and FDR
+            allResultArr.sort(function(a, b){
+                if (a.pValue !== b.pValue) {
+                	return a.pValue - b.pValue;
+                }
+                if (a.FDR !== b.FDR) {
+                	return a.FDR - b.FDR;
+                }
+                return 0;
+            });
+            var allResultCount = allResultArr.length;
+            for (var i = 0; i < allResultCount; i++) {
+                
                 // SD: Ugly! There should be a better way
                 // no time to investigate right now!
-                var topAnat = data.data.topAnatResults[i].results;
                 var grid = vm.gridOptions.data;
                 if (typeof grid !== 'undefined') {
-                    vm.gridOptions.data = grid.concat(topAnat); // show all
+                    vm.gridOptions.data = grid.concat(allResultArr[i]); // show all
                 }
                 else {
-                    vm.gridOptions.data = data.data.topAnatResults[i].results;
+                    vm.gridOptions.data = allResultArr[i];
                 }
             }
             vm.getFilteredRows(); // In order to get the total number of rows before filtering of results

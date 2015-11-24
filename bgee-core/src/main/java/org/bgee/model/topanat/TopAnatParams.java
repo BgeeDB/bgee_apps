@@ -24,7 +24,7 @@ import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
-import org.bgee.model.expressiondata.baseelements.DecorelationType;
+import org.bgee.model.expressiondata.baseelements.DecorrelationType;
 import org.bgee.model.expressiondata.baseelements.DiffExpressionFactor;
 import org.bgee.model.expressiondata.baseelements.StatisticTest;
 import org.bgee.model.expressiondata.baseelements.CallType.DiffExpression;
@@ -50,7 +50,7 @@ public class TopAnatParams {
     /**
      * 
      */
-    private final static DecorelationType DECORLATION_TYPE_DEFAULT = DecorelationType.WEIGTH;
+    private final static DecorrelationType DECORLATION_TYPE_DEFAULT = DecorrelationType.WEIGTH;
 
     /**
      * 
@@ -115,7 +115,7 @@ public class TopAnatParams {
     /**
      * 
      */
-    private final DecorelationType decorelationType;
+    private final DecorrelationType decorrelationType;
 
     /**
      * 
@@ -201,7 +201,7 @@ public class TopAnatParams {
         /**
          * 
          */
-        private DecorelationType decorelationType;
+        private DecorrelationType decorrelationType;
 
         /**
          * 
@@ -292,12 +292,12 @@ public class TopAnatParams {
 
         /**
          * 
-         * @param decorelationType
+         * @param decorrelationType
          * @return
          */
-        public Builder decorelationType(DecorelationType decorelationType){
-            log.entry(decorelationType);
-            this.decorelationType = decorelationType;
+        public Builder decorrelationType(DecorrelationType decorrelationType){
+            log.entry(decorrelationType);
+            this.decorrelationType = decorrelationType;
             return log.exit(this);
         } 
 
@@ -399,8 +399,8 @@ public class TopAnatParams {
         // optional params
         this.dataTypes = builder.dataTypes == null ? null :
             Collections.unmodifiableSet(new HashSet<>(builder.dataTypes));
-        this.decorelationType = builder.decorelationType == null ? TopAnatParams.DECORLATION_TYPE_DEFAULT :
-            builder.decorelationType;
+        this.decorrelationType = builder.decorrelationType == null ? TopAnatParams.DECORLATION_TYPE_DEFAULT :
+            builder.decorrelationType;
         this.statisticTest = builder.statisticTest == null ? TopAnatParams.STATISTIC_TEST_DEFAULT : 
             builder.statisticTest;
         this.devStageId = builder.devStageId;
@@ -473,10 +473,10 @@ public class TopAnatParams {
     }
 
     /**
-     * @return the decorelationType
+     * @return the decorrelationType
      */
-    public DecorelationType getDecorelationType() {
-        return decorelationType;
+    public DecorrelationType getDecorrelationType() {
+        return decorrelationType;
     }
 
     /**
@@ -617,8 +617,8 @@ public class TopAnatParams {
             valueToHash.append(EnumSet.copyOf(this.dataTypes).toString());
         if(this.devStageId != null)
             valueToHash.append(this.devStageId.toString());
-        if(this.decorelationType != null)
-            valueToHash.append(this.decorelationType.toString());
+        if(this.decorrelationType != null)
+            valueToHash.append(this.decorrelationType.toString());
         if(this.statisticTest != null)
             valueToHash.append(this.statisticTest.toString());
         if(this.nodeSize != null)
@@ -689,10 +689,10 @@ public class TopAnatParams {
         if(this.devStageId != null)
             ret.append(this.devStageId.toString());
         ret.append("\r\n");
-        ret.append("decorelationType:");
+        ret.append("decorrelationType:");
         ret.append(sep);
-        if(this.decorelationType != null)
-            ret.append(this.decorelationType.toString());
+        if(this.decorrelationType != null)
+            ret.append(this.decorrelationType.toString());
         ret.append("\r\n");
         ret.append("statisticTest:");
         ret.append(sep);

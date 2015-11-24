@@ -139,7 +139,7 @@ public class TopAnatRManager {
         //then: code.addRCode("if (is.character(myData)) {...}");
 
         code.addRCode("    resFis <- runTest(myData, algorithm = '"
-                + this.params.getDecorelationType().getCode() +"', statistic = '"
+                + this.params.getDecorrelationType().getCode() +"', statistic = '"
                 + this.params.getStatisticTest().getCode() +"')");
 
         //under-representation disabled

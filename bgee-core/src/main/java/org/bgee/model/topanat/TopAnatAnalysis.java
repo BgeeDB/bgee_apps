@@ -486,6 +486,11 @@ public class TopAnatAnalysis {
         log.trace("Roots identified in the graph: " + roots);
         assert roots.size() > 0;
         if (roots.size() > 1) {
+            //FIXME: actually, we need to consider all genes in the geneToOrgan file, 
+            //because there might be structures in there with no ancestors nor descendants, 
+            //so we wouldn't see them in the relation Map.
+            //Or, we could request the "identity" relations, to be sure to get all necessay organs, 
+            //but that would need to filter them afterwards.
             relations.put(FAKE_ANAT_ENTITY_ROOT.getId(), roots);
         }
         

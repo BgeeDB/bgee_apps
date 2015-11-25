@@ -1,5 +1,10 @@
 package org.bgee.view;
 
+import java.util.List;
+
+import org.bgee.model.expressiondata.Call.ExpressionCall;
+import org.bgee.model.gene.Gene;
+
 /**
  * 
  * @author Philippe Moret
@@ -10,6 +15,6 @@ public interface GeneDisplay {
 
 	void displayGenePage();
 	
-	void displayGene(String geneId);
+	void displayGene(Gene gene, List<ExpressionCall> calls);
 	
 }

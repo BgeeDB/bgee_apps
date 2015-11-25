@@ -1,11 +1,15 @@
 package org.bgee.view.html;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
 
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
+import org.bgee.model.expressiondata.Call.ExpressionCall;
+import org.bgee.model.gene.Gene;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.JsonHelper;
 
@@ -37,15 +41,44 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
 	@Override
 	public void displayGenePage() {
-		this.startDisplay("Gene Page");
-
+		this.startDisplay("Gene Information");
+		
 		this.endDisplay();
 	}
 
+	private static String getExpressionHTML(ExpressionCall call) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("<td>").append(call.getCondition().getAnatEntityId()).append("</td>");
+		sb.append("<td>").append(call.getCondition().getDevStageId()).append("</td>");
+		sb.append("<td>").append(call.getSummaryQuality().getStringRepresentation()).append("</td>");
+		return sb.toString();
+	}
+
+	private  String getGeneInfo(Gene gene) {
+		final StringBuilder table = new StringBuilder("<table style='margin: 1em 1em 2em 5em'>");
+		table.append("<tr><td>").append("<strong>Ensembl Id</strong></td><td>").append(gene.getId()).append("</td></tr>");
+		table.append("<tr><td>").append("<strong>Name</strong></td><td>").append(gene.getName()).append("</td></tr>");
+		table.append("<tr><td>").append("<strong>Description</strong></td><td>").append(gene.getDescription()).append("</td></tr>");
+		table.append("<tr><td>").append("<strong>Organism</strong></td><td><em>").append(gene.getSpecies().getScientificName()).append("</em> (")
+			 .append(gene.getSpecies().getName()).append(")</td></tr>");
+
+		return table.append("</table>").toString();
+
+	}
+	
 	@Override
-	public void displayGene(String geneId) {
-		this.startDisplay("Gene: "+geneId);
-		this.writeln("<h1>Gene: "+geneId+"<h1>");
+	public void displayGene(Gene gene, List<ExpressionCall> calls) {
+		this.startDisplay("Gene: "+gene.getId());
+		this.writeln("<h1>Gene: "+gene.getId()+"</h1>");
+		this.write("<h2>Gene Information</h2>");
+		this.writeln("<div>"+getGeneInfo(gene)+"</div>");
+		this.write("<h2>Expression</h2>");
+		final StringBuilder table = new StringBuilder("<center><table style='width:80%;margin: 1em 1em 2em 5em;'>");
+		table.append("<tr><td><strong>AnatEntity</strong></td><td><strong>Stage</strong></td><td><strong>Quality</strong></td></tr>");
+		table.append(calls.stream().map(HtmlGeneDisplay::getExpressionHTML).collect(Collectors.joining("</tr><tr>", "<tr>", "</tr>")));
+		table.append("</table></center>");
+		this.writeln(table.toString());
+		
 		this.endDisplay();
 	}
 

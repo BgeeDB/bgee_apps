@@ -2,6 +2,7 @@ package org.bgee.model.dao.mysql.anatdev;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -19,9 +20,7 @@ import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.anatdev.StageDAO.StageTO;
 import org.bgee.model.dao.mysql.MySQLITAncestor;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 /**
  * Integration tests for {@link MySQLStageDAO}, performed on a real MySQL database. 
@@ -43,40 +42,19 @@ public class MySQLStageDAOIT extends MySQLITAncestor {
         return log;
     }
     
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
-
     /**
-     * Test the select method {@link MySQLStageDAO#getStages()}.
+     * Test the select methods {@link MySQLStageDAO#getStagesBySpeciesIds(Set)}
+     * and {@link MySQLStageDAO#getStagesBySpeciesIds(Set, Boolean, Integer)} .
      */
     @Test
-    public void shouldGetStages() throws SQLException {
+    public void shouldGetStagesBySpeciesIds() throws SQLException {
 
         this.useSelectDB();
 
         MySQLStageDAO dao = new MySQLStageDAO(this.getMySQLDAOManager());
-        List<StageTO> allStageTOs = Arrays.asList(
-                new StageTO("Stage_id1", "stageN1", "stage Desc 1", 1, 36, 1, false, true), 
-                new StageTO("Stage_id2", "stageN2", "stage Desc 2", 2, 7, 2, false, false), 
-                new StageTO("Stage_id3", "stageN3", "stage Desc 3", 3, 4, 3, true, false), 
-                new StageTO("Stage_id4", "stageN4", "stage Desc 4", 5, 6, 3, false, false), 
-                new StageTO("Stage_id5", "stageN5", "stage Desc 5", 8, 17, 2, false, false), 
-                new StageTO("Stage_id6", "stageN6", "stage Desc 6", 9, 10, 3, false, false), 
-                new StageTO("Stage_id7", "stageN7", "stage Desc 7", 11, 16, 3, false, false), 
-                new StageTO("Stage_id8", "stageN8", "stage Desc 8", 12, 13, 4, false, true), 
-                new StageTO("Stage_id9", "stageN9", "stage Desc 9", 14, 15, 4, false, false), 
-                new StageTO("Stage_id10", "stageN10", "stage Desc 10", 18, 25, 2, false, true), 
-                new StageTO("Stage_id11", "stageN11", "stage Desc 11", 19, 20, 3, false, true), 
-                new StageTO("Stage_id12", "stageN12", "stage Desc 12", 21, 22, 3, false, true), 
-                new StageTO("Stage_id13", "stageN13", "stage Desc 13", 23, 24, 3, false, true), 
-                new StageTO("Stage_id14", "stageN14", "stage Desc 14", 26, 35, 2, false, false), 
-                new StageTO("Stage_id15", "stageN15", "stage Desc 15", 27, 32, 3, false, true), 
-                new StageTO("Stage_id16", "stageN16", "stage Desc 16", 28, 29, 4, false, false), 
-                new StageTO("Stage_id17", "stageN17", "stage Desc 17", 30, 31, 4, false, false), 
-                new StageTO("Stage_id18", "stageN18", "stage Desc 18", 33, 34, 3, false, false));
         
         // Test recovery of all attributes without filter on species IDs
-        List<StageTO> expectedStages = allStageTOs;
+        List<StageTO> expectedStages = this.getAllStageTOs();
         assertTrue("StageTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(dao.getStagesBySpeciesIds(null).getAllTOs(), expectedStages));
         
@@ -106,49 +84,200 @@ public class MySQLStageDAOIT extends MySQLITAncestor {
 
         // Test recovery of all attributes with filter on species IDs
         dao.clearAttributes();
-        Set<String> speciesIds = new HashSet<String>(Arrays.asList("11","44"));
-        expectedStages = Arrays.asList(
-                new StageTO("Stage_id1", "stageN1", "stage Desc 1", 1, 36, 1, false, true), 
-                new StageTO("Stage_id2", "stageN2", "stage Desc 2", 2, 7, 2, false, false), 
-                new StageTO("Stage_id5", "stageN5", "stage Desc 5", 8, 17, 2, false, false), 
-                new StageTO("Stage_id6", "stageN6", "stage Desc 6", 9, 10, 3, false, false), 
-                new StageTO("Stage_id7", "stageN7", "stage Desc 7", 11, 16, 3, false, false), 
-                new StageTO("Stage_id8", "stageN8", "stage Desc 8", 12, 13, 4, false, true), 
-                new StageTO("Stage_id14", "stageN14", "stage Desc 14", 26, 35, 2, false, false), 
-                new StageTO("Stage_id15", "stageN15", "stage Desc 15", 27, 32, 3, false, true), 
-                new StageTO("Stage_id16", "stageN16", "stage Desc 16", 28, 29, 4, false, false), 
-                new StageTO("Stage_id18", "stageN18", "stage Desc 18", 33, 34, 3, false, false));
+        Set<String> speciesIds = this.getSpeciesFilter();
+        expectedStages = this.getFilteredStageTOsBySpecies();
         assertTrue("StageTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(
                         dao.getStagesBySpeciesIds(speciesIds).getAllTOs(), expectedStages));
         
         dao.clearAttributes();
         speciesIds = new HashSet<String>(Arrays.asList("11", "21", "31", "44"));
-        expectedStages = allStageTOs;
+        expectedStages = this.getAllStageTOs();
         List<StageTO> retrievedStageTOs = dao.getStagesBySpeciesIds(speciesIds).getAllTOs();
         assertTrue("StageTOs incorrectly retrieved, expected " + expectedStages + 
                 " - but was: " + retrievedStageTOs,
                 TOComparator.areTOCollectionsEqual(retrievedStageTOs, expectedStages));
         
-        // Test recovery of all attributes with filter on species IDs and groupingStage
+        // Test recovery of all attributes with filter on species IDs and grouping stage
         speciesIds = new HashSet<String>(Arrays.asList("11","44"));
         expectedStages = Arrays.asList(
                 new StageTO("Stage_id1", "stageN1", "stage Desc 1", 1, 36, 1, false, true), 
                 new StageTO("Stage_id8", "stageN8", "stage Desc 8", 12, 13, 4, false, true), 
                 new StageTO("Stage_id15", "stageN15", "stage Desc 15", 27, 32, 3, false, true));
-        retrievedStageTOs = dao.getStagesBySpeciesIds(speciesIds, true).getAllTOs();
+        retrievedStageTOs = dao.getStagesBySpeciesIds(speciesIds, true, null).getAllTOs();
         assertTrue("StageTOs incorrectly retrieved, expected " + expectedStages + 
                 " - but was: " + retrievedStageTOs,
                 TOComparator.areTOCollectionsEqual(expectedStages, retrievedStageTOs));
         
-        // Test recovery of all attributes with filter on groupingStage only
-        expectedStages = allStageTOs.stream()
+        // Test recovery of all attributes with filter on grouping stage only
+        expectedStages = this.getAllStageTOs().stream()
                 .filter(s -> s.isGroupingStage() == false)
                 .collect(Collectors.toList());
-        retrievedStageTOs = dao.getStagesBySpeciesIds(null, false).getAllTOs();
+        retrievedStageTOs = dao.getStagesBySpeciesIds(null, false, null).getAllTOs();
         assertTrue("StageTOs incorrectly retrieved, expected " + expectedStages + 
                 " - but was: " + retrievedStageTOs,
                 TOComparator.areTOCollectionsEqual(expectedStages, retrievedStageTOs));
+        
+        // Test recovery of all attributes with filter on species IDs, groupingStage and level
+        expectedStages = Arrays.asList(
+                new StageTO("Stage_id15", "stageN15", "stage Desc 15", 27, 32, 3, false, true));
+
+        retrievedStageTOs = dao.getStagesBySpeciesIds(speciesIds, true, 3).getAllTOs();
+        assertTrue("StageTOs incorrectly retrieved, expected " + expectedStages + 
+                " - but was: " + retrievedStageTOs,
+                TOComparator.areTOCollectionsEqual(expectedStages, retrievedStageTOs));
+
+        // Test recovery of all attributes with filter on level only
+        expectedStages = this.getAllStageTOs().stream()
+                .filter(s -> s.getLevel() == 2)
+                .collect(Collectors.toList());
+        retrievedStageTOs = dao.getStagesBySpeciesIds(null, null, 2).getAllTOs();
+
+        // Test recovery of all attributes with filter on grouping stage and level
+        expectedStages = this.getAllStageTOs().stream()
+                .filter(s -> s.isGroupingStage() == true)
+                .filter(s -> s.getLevel() == 1)
+                .collect(Collectors.toList());
+        retrievedStageTOs = dao.getStagesBySpeciesIds(null, true, 1).getAllTOs();
+    }
+    /**
+     * Test the select method {@link MySQLStageDAO#getStagesByIds(Set)}.
+     */
+    @Test
+    public void shouldGetStagesByIds() throws SQLException {
+
+        this.useSelectDB();
+
+        MySQLStageDAO dao = new MySQLStageDAO(this.getMySQLDAOManager());
+        
+        // Test recovery of all attributes without filter on stage IDs
+        List<StageTO> expectedStages = this.getAllStageTOs();
+        assertTrue("StageTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(
+                        dao.getStagesByIds(new HashSet<String>()).getAllTOs(),
+                        expectedStages));
+        
+        final Set<String> stageIds = this.getStageFilter();
+
+        expectedStages = this.getAllStageTOs().stream()
+                .filter(s -> stageIds.contains(s.getId()))
+                .collect(Collectors.toList());
+        assertTrue("StageTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(dao.getStagesByIds(stageIds).getAllTOs(),
+                        expectedStages));
+    }
+    
+    /**
+     * Test the select method {@link MySQLStageDAO#getStages(Set, Set, Boolean, Integer)}.
+     */
+    @Test
+    public void shouldGetStages() throws SQLException {
+
+        this.useSelectDB();
+
+        MySQLStageDAO dao = new MySQLStageDAO(this.getMySQLDAOManager());
+        
+        // Test recovery of all attributes without any filter
+        List<StageTO> expectedStages = this.getAllStageTOs();
+        assertTrue("StageTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(
+                        dao.getStages(null, null, null, null).getAllTOs(),
+                        expectedStages));
+        
+        // Test recovery TO filtered by stage IDs and grouping stage
+        final Set<String> stageIds = this.getStageFilter();
+        expectedStages = this.getAllStageTOs().stream()
+                .filter(s -> stageIds.contains(s.getId()))
+                .filter(s -> !s.isGroupingStage())
+                .collect(Collectors.toList());
+        assertTrue("StageTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(
+                        dao.getStages(null, stageIds, false, null).getAllTOs(),
+                        expectedStages));
+
+        // Test recovery nothing with all filters
+        final Set<String> speciesIds = this.getSpeciesFilter();
+        assertTrue("StageTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(
+                        dao.getStages(speciesIds, stageIds, true, 4).getAllTOs(),
+                        new ArrayList<>()));
+        
+        // Test recovery one TO (due to DISCTINCT) with all filters
+        dao.setAttributes(StageDAO.Attribute.LEVEL, StageDAO.Attribute.GRANULAR, StageDAO.Attribute.GROUPING);
+        speciesIds.add("21");
+        dao.setAttributes(StageDAO.Attribute.LEVEL, StageDAO.Attribute.GRANULAR, StageDAO.Attribute.GROUPING);
+        expectedStages = Arrays.asList(
+                new StageTO(null, null, null, null, null, 4, false, false));
+        assertTrue("StageTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(
+                        dao.getStages(speciesIds, stageIds, false, 4).getAllTOs(),
+                        expectedStages));
+
+    }
+    
+    /**
+     * @return The {@code List} of all {@code StageTO}s of the data test 
+     *          with all {@code StageDAO.Attribute}.
+     */
+    private List<StageTO> getAllStageTOs() {
+        return Arrays.asList(
+                new StageTO("Stage_id1", "stageN1", "stage Desc 1", 1, 36, 1, false, true),
+                new StageTO("Stage_id2", "stageN2", "stage Desc 2", 2, 7, 2, false, false),
+                new StageTO("Stage_id3", "stageN3", "stage Desc 3", 3, 4, 3, true, false),
+                new StageTO("Stage_id4", "stageN4", "stage Desc 4", 5, 6, 3, false, false),
+                new StageTO("Stage_id5", "stageN5", "stage Desc 5", 8, 17, 2, false, false),
+                new StageTO("Stage_id6", "stageN6", "stage Desc 6", 9, 10, 3, false, false),
+                new StageTO("Stage_id7", "stageN7", "stage Desc 7", 11, 16, 3, false, false),
+                new StageTO("Stage_id8", "stageN8", "stage Desc 8", 12, 13, 4, false, true),
+                new StageTO("Stage_id9", "stageN9", "stage Desc 9", 14, 15, 4, false, false),
+                new StageTO("Stage_id10", "stageN10", "stage Desc 10", 18, 25, 2, false, true),
+                new StageTO("Stage_id11", "stageN11", "stage Desc 11", 19, 20, 3, false, true),
+                new StageTO("Stage_id12", "stageN12", "stage Desc 12", 21, 22, 3, false, true),
+                new StageTO("Stage_id13", "stageN13", "stage Desc 13", 23, 24, 3, false, true),
+                new StageTO("Stage_id14", "stageN14", "stage Desc 14", 26, 35, 2, false, false),
+                new StageTO("Stage_id15", "stageN15", "stage Desc 15", 27, 32, 3, false, true),
+                new StageTO("Stage_id16", "stageN16", "stage Desc 16", 28, 29, 4, false, false),
+                new StageTO("Stage_id17", "stageN17", "stage Desc 17", 30, 31, 4, false, false),
+                new StageTO("Stage_id18", "stageN18", "stage Desc 18", 33, 34, 3, false, false));
+    }
+    
+    /**
+     * @return  The {@code List} of {@code StageTO}s of the data test filtered by species IDs
+     *          returned by {@link #getSpeciesFilter()} with all {@code StageDAO.Attribute}s.  
+     */
+    private List<StageTO> getFilteredStageTOsBySpecies() {
+        return Arrays.asList(
+                new StageTO("Stage_id1", "stageN1", "stage Desc 1", 1, 36, 1, false, true),
+                new StageTO("Stage_id2", "stageN2", "stage Desc 2", 2, 7, 2, false, false),
+                new StageTO("Stage_id5", "stageN5", "stage Desc 5", 8, 17, 2, false, false),
+                new StageTO("Stage_id6", "stageN6", "stage Desc 6", 9, 10, 3, false, false),
+                new StageTO("Stage_id7", "stageN7", "stage Desc 7", 11, 16, 3, false, false),
+                new StageTO("Stage_id8", "stageN8", "stage Desc 8", 12, 13, 4, false, true),
+                new StageTO("Stage_id14", "stageN14", "stage Desc 14", 26, 35, 2, false, false),
+                new StageTO("Stage_id15", "stageN15", "stage Desc 15", 27, 32, 3, false, true),
+                new StageTO("Stage_id16", "stageN16", "stage Desc 16", 28, 29, 4, false, false),
+                new StageTO("Stage_id18", "stageN18", "stage Desc 18", 33, 34, 3, false, false));
+    }
+    
+    /**
+     * @return
+     */
+    private Set<String> getStageFilter() {
+        final Set<String> stageIds = new HashSet<String>();
+        stageIds.add("Stage_id1");
+        stageIds.add("Stage_id9");
+        stageIds.add("Stage_id16");
+        stageIds.add("Fake");
+        return stageIds;
+    }
+    
+    /**
+     * @return  The {@code Set} of {@code String}s that are species IDs used as filter.
+     * @see #getFilteredStageTOsBySpecies()
+     */
+    private Set<String> getSpeciesFilter() {
+        Set<String> speciesIds = new HashSet<String>(Arrays.asList("11","44"));
+        return speciesIds;
     }
     
     /**
@@ -212,8 +341,12 @@ public class MySQLStageDAOIT extends MySQLITAncestor {
                         stmt.getRealPreparedStatement().executeQuery().next());
             }
             
-            this.thrown.expect(IllegalArgumentException.class);
-            dao.insertStages(new HashSet<StageTO>());
+            try {
+                dao.insertStages(new HashSet<StageTO>());
+                fail("An IllegalArgumentException should be thrown");
+            } catch (IllegalArgumentException e) {
+                // Test passed
+            }
         } finally {
             this.emptyAndUseDefaultDB();
         }

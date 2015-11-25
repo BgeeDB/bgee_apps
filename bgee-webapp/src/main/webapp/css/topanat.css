@@ -307,6 +307,11 @@ textarea {
 
 /* Custom styles */
 
+.panel .panel-body {
+	padding-top: 0.6em;
+    padding-bottom: 0.6em;
+}
+
 .corner-ribbon.sticky{
     position: fixed;
 }

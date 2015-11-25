@@ -51,11 +51,12 @@ public class TopAnatRManager {
 
     }
 
-    protected String generateRCode(String resultFileName, String resultPdfFileName, 
+    protected String generateRCode(String resultFilePath, 
+            String resultFileName, String resultPdfFileName, 
             String anatEntitiesNamesFileName, String anatEntitiesRelationshipsFileName,
             String geneToAnatEntitiesFileName,
             Set<String> foregroundIds) {
-        log.entry(resultFileName, resultPdfFileName, anatEntitiesNamesFileName, 
+        log.entry(resultFilePath, resultFileName, resultPdfFileName, anatEntitiesNamesFileName, 
                 anatEntitiesRelationshipsFileName, geneToAnatEntitiesFileName, foregroundIds);
 
         caller.setRscriptExecutable(this.props.getTopAnatRScriptExecutable());
@@ -84,8 +85,7 @@ public class TopAnatRManager {
 
         code.addRCode("library(topGO)");
         code.addRCode("# Please change the working directory to match your file system:");
-        code.addRCode("setwd('" + this.props.getTopAnatRWorkingDirectory()
-        + "')");
+        code.addRCode("setwd('" + resultFilePath + "')");
         log.debug("Location of TopAnat functions file: {} - {}", this.props.getTopAnatFunctionFile(), 
                 this.getClass().getResource(this.props.getTopAnatFunctionFile()).getPath());
         code.R_source(Paths.get(TopAnatAnalysis.class.getResource(
@@ -139,7 +139,7 @@ public class TopAnatRManager {
         //then: code.addRCode("if (is.character(myData)) {...}");
 
         code.addRCode("    resFis <- runTest(myData, algorithm = '"
-                + this.params.getDecorelationType().getCode() +"', statistic = '"
+                + this.params.getDecorrelationType().getCode() +"', statistic = '"
                 + this.params.getStatisticTest().getCode() +"')");
 
         //under-representation disabled
@@ -197,8 +197,7 @@ public class TopAnatRManager {
         if(this.code.toString().equals(new RCode().toString())){
             throw new IllegalStateException("The R code was not set before the analysis");
         }
-        caller.redirectROutputToFile(
-                this.props.getTopAnatResultsWritingDirectory()+consoleFileName, true);
+        caller.redirectROutputToFile(consoleFileName, true);
         caller.setRCode(code);
         caller.runAndReturnResult("tableOver");
         log.exit();

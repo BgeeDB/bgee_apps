@@ -35,13 +35,26 @@ public class MySQLStageDAO extends MySQLDAO<StageDAO.Attribute> implements Stage
     @Override
     public StageTOResultSet getStagesBySpeciesIds(Set<String> speciesIds) throws DAOException {
         log.entry(speciesIds);       
-        return log.exit(getStagesBySpeciesIds(speciesIds, null));
+        return log.exit(getStagesBySpeciesIds(speciesIds, null, null));
     }
 
     @Override
-    public StageTOResultSet getStagesBySpeciesIds(Set<String> speciesIds, Boolean isGroupingStage)
-            throws DAOException {
-        log.entry(speciesIds, isGroupingStage);
+    public StageTOResultSet getStagesBySpeciesIds(Set<String> speciesIds, Boolean isGroupingStage,
+            Integer level) throws DAOException {
+        log.entry(speciesIds, isGroupingStage, level);
+        return log.exit(getStages(speciesIds, null, isGroupingStage, level));
+    }
+
+    @Override
+    public StageTOResultSet getStagesByIds(Set<String> stagesIds) throws DAOException {
+        log.entry(stagesIds);
+        return log.exit(getStages(null, stagesIds, null, null));
+    }
+
+    @Override
+    public StageTOResultSet getStages(Set<String> speciesIds, Set<String> stageIds, 
+            Boolean isGroupingStage, Integer level) throws DAOException {
+        log.entry(speciesIds, stageIds, isGroupingStage, level);
         
         String tableName = "stage";
 
@@ -60,43 +73,74 @@ public class MySQLStageDAO extends MySQLDAO<StageDAO.Attribute> implements Stage
             }
         }
         sql += " FROM " + tableName;
-        String stageTaxConstTabName = "stageTaxonConstraint";
+
         boolean filterBySpecies = speciesIds != null && speciesIds.size() > 0;
+        boolean filterByStages = stageIds != null && stageIds.size() > 0;
         boolean filterByGroupingStage = isGroupingStage != null;
+        boolean filterByLevel = level != null;
+        
+        String stageTaxConstTabName = "stageTaxonConstraint";
         if (filterBySpecies) {
              sql += " INNER JOIN " + stageTaxConstTabName + " ON (" +
-                          stageTaxConstTabName + ".stageId = " + tableName + ".stageId)" +
-                    " WHERE (" + stageTaxConstTabName + ".speciesId IS NULL" +
+                          stageTaxConstTabName + ".stageId = " + tableName + ".stageId)";
+        }
+        if (filterByGroupingStage || filterBySpecies || filterByLevel || filterByStages) {
+            sql += " WHERE ";
+        }
+        if (filterBySpecies) {
+            sql += "(" + stageTaxConstTabName + ".speciesId IS NULL" +
                     " OR " + stageTaxConstTabName + ".speciesId IN (" + 
                     BgeePreparedStatement.generateParameterizedQueryString(speciesIds.size()) + 
                     "))";
         }
-        if (filterByGroupingStage) {
+        if (filterByStages) {
             if (filterBySpecies) {
                 sql += " AND ";
-            } else {
-                sql += " WHERE ";
+            }
+            sql += "(" + tableName + ".stageId IN (" + 
+                    BgeePreparedStatement.generateParameterizedQueryString(stageIds.size()) + "))";
+        }
+
+        if (filterByGroupingStage) {
+            if (filterBySpecies || filterByStages) {
+                sql += " AND ";
             }
             sql += tableName + ".groupingStage= ? ";
         }
+        if (filterByLevel) {
+            if (filterBySpecies || filterByStages || filterByGroupingStage) {
+                sql += " AND ";
+            }
+            sql += tableName + ".stageLevel= ? ";
+        }
 
-         //we don't use a try-with-resource, because we return a pointer to the results, 
-         //not the actual results, so we should not close this BgeePreparedStatement.
-         try {
-             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
-             if (filterBySpecies) {
-                 stmt.setStringsToIntegers(1, speciesIds, true);
-             }
+        //we don't use a try-with-resource, because we return a pointer to the results, 
+        //not the actual results, so we should not close this BgeePreparedStatement.
+        try {
+            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
+            if (filterBySpecies) {
+                stmt.setStringsToIntegers(1, speciesIds, true);
+            }
 
-             int offsetParamIndex = (filterBySpecies ? speciesIds.size() + 1 : 1);
-             if (filterByGroupingStage) {
-                 stmt.setBoolean(offsetParamIndex, isGroupingStage);
-             }
-             
-             return log.exit(new MySQLStageTOResultSet(stmt));
-         } catch (SQLException e) {
-             throw log.throwing(new DAOException(e));
-         }
+            int offsetParamIndex = (filterBySpecies ? speciesIds.size() + 1 : 1);
+            if (filterByStages) {
+                stmt.setStrings(offsetParamIndex, stageIds, true);
+                offsetParamIndex += stageIds.size();
+            }
+
+            if (filterByGroupingStage) {
+                stmt.setBoolean(offsetParamIndex, isGroupingStage);
+                offsetParamIndex ++;
+            }
+
+            if (filterByLevel) {
+                stmt.setInt(offsetParamIndex, level);
+            }
+
+            return log.exit(new MySQLStageTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
     }
 
     /** 

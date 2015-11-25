@@ -41,7 +41,7 @@ header {
 header h1, header h2  {
     position: relative;
     margin: 0 auto;
-    width: 430px;
+    width: 15em;
     color: #282828;
     text-align: center;
     font-weight: normal;
@@ -49,7 +49,7 @@ header h1, header h2  {
 }
 
 header h1 {
-    top: 20px;
+    top: 1em;
     font-size: 1.7em;
 }
 
@@ -101,10 +101,16 @@ header img {
 #nav ul#bgee_links li {
 	position: relative;
     float: left;
-    width: 13em;
     height: 1.5em;
     padding-top: 0.3em;
     text-align: center;
+}
+ul#bgee_links > li {
+    padding-left: 2em;
+    padding-right: 2em;
+}
+ul#bgee_links > li:first-child {
+    padding-left: 3em;
 }
 
 #nav ul#bgee_links li:hover {
@@ -117,8 +123,6 @@ header img {
     color: #29516A;
     text-decoration: none;
     display: inline-block;
-    padding-left: 5%;
-    padding-right: 5%;
 }
 #nav a:hover, #nav :hover>a {
     color: white;
@@ -201,6 +205,7 @@ header img {
     min-height: 340px;
     color: #626262;
     z-index: 1;
+    font-size: 95%;
 }
 
 #sib_body h1 {
@@ -215,6 +220,10 @@ header img {
     color: #920209;
     font-size: 1.2em;
     font-weight: normal;
+}
+
+#sib_body li {
+	margin-top: 0.4em;
 }
 
 /****LINKS****/
@@ -321,6 +330,13 @@ span.list_element_title {
 
 .bgee_alert_container {
 	border: 2px solid red;
+}
+
+#home_important_info {
+    border-top: 3px solid red;
+	border-bottom: 3px solid red;
+	margin: 1em 6em;
+	padding: 1em;
 }
 
 /****SIB FOOTER****/

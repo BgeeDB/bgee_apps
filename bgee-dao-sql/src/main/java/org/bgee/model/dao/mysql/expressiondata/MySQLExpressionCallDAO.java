@@ -644,10 +644,10 @@ implements ExpressionCallDAO {
                     }
                     switch(entry.getValue()) {
                     case DESC: 
-                        orderBy = " desc";
+                        orderBy += " desc";
                         break;
                     case ASC: 
-                        orderBy = " asc";
+                        orderBy += " asc";
                         break;
                     default: 
                         throw log.throwing(new IllegalStateException("Unsupported Direction: " 

@@ -25,6 +25,9 @@ import org.junit.Test;
  */
 public class DevStageServiceTest extends TestAncestor {
 
+    /**
+     * Test the method {@link DevStageService#loadGroupingDevStages(Set, Integer)}.
+     */
     @Test
     public void shouldLoadGroupingDevStages() {
         // initialize mocks
@@ -55,5 +58,36 @@ public class DevStageServiceTest extends TestAncestor {
         DevStageService service = new DevStageService(managerMock);
         assertEquals("Incorrect dev stages",
                 expectedDevStage, service.loadGroupingDevStages(speciesIds1, 3));
+    }
+    
+    /**
+     * Test the method {@link DevStageService#loadDevStagesByIds(Set)}.
+     */
+    @Test
+    public void shouldLoadDevStagesByIds() {
+        // initialize mocks
+        DAOManager managerMock = mock(DAOManager.class);
+        StageDAO dao = mock(StageDAO.class);
+        when(managerMock.getStageDAO()).thenReturn(dao);
+        
+        List<StageTO> stageTOs = Arrays.asList(
+                new StageTO("Stage_id3", "stageN3", "stage Desc 3", 3, 4, 3, true, false),
+                new StageTO("Stage_id12", "stageN12", "stage Desc 12", 21, 22, 3, false, true));
+
+        // Filter on species IDs is not tested here (tested in StageDAO)
+        // but we need a variable to mock DAO answer
+        Set<String> stageIds = new HashSet<String>();
+        stageIds.add("Stage_id12");
+        stageIds.add("Stage_id3");
+
+        StageTOResultSet mockStageRs = getMockResultSet(StageTOResultSet.class, stageTOs);
+        when(dao.getStagesByIds(stageIds)).thenReturn(mockStageRs);
+        
+        // Test without defined level
+        List<DevStage> expectedDevStage = Arrays.asList(
+                new DevStage("Stage_id3", "stageN3", "stage Desc 3", 3, 4, 3, true, false),
+                new DevStage("Stage_id12", "stageN12", "stage Desc 12", 21, 22, 3, false, true));
+        DevStageService service = new DevStageService(managerMock);
+        assertEquals("Incorrect dev stages", expectedDevStage, service.loadDevStagesByIds(stageIds));
     }
 }

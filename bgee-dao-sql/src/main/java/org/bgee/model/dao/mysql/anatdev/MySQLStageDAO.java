@@ -42,6 +42,19 @@ public class MySQLStageDAO extends MySQLDAO<StageDAO.Attribute> implements Stage
     public StageTOResultSet getStagesBySpeciesIds(Set<String> speciesIds, Boolean isGroupingStage,
             Integer level) throws DAOException {
         log.entry(speciesIds, isGroupingStage, level);
+        return log.exit(getStages(speciesIds, null, isGroupingStage, level));
+    }
+
+    @Override
+    public StageTOResultSet getStagesByIds(Set<String> stagesIds) throws DAOException {
+        log.entry(stagesIds);
+        return log.exit(getStages(null, stagesIds, null, null));
+    }
+
+    @Override
+    public StageTOResultSet getStages(Set<String> speciesIds, Set<String> stageIds, 
+            Boolean isGroupingStage, Integer level) throws DAOException {
+        log.entry(speciesIds, stageIds, isGroupingStage, level);
         
         String tableName = "stage";
 
@@ -60,15 +73,18 @@ public class MySQLStageDAO extends MySQLDAO<StageDAO.Attribute> implements Stage
             }
         }
         sql += " FROM " + tableName;
-        String stageTaxConstTabName = "stageTaxonConstraint";
+
         boolean filterBySpecies = speciesIds != null && speciesIds.size() > 0;
+        boolean filterByStages = stageIds != null && stageIds.size() > 0;
         boolean filterByGroupingStage = isGroupingStage != null;
         boolean filterByLevel = level != null;
+        
+        String stageTaxConstTabName = "stageTaxonConstraint";
         if (filterBySpecies) {
              sql += " INNER JOIN " + stageTaxConstTabName + " ON (" +
                           stageTaxConstTabName + ".stageId = " + tableName + ".stageId)";
         }
-        if (filterByGroupingStage || filterBySpecies || filterByLevel) {
+        if (filterByGroupingStage || filterBySpecies || filterByLevel || filterByStages) {
             sql += " WHERE ";
         }
         if (filterBySpecies) {
@@ -77,16 +93,24 @@ public class MySQLStageDAO extends MySQLDAO<StageDAO.Attribute> implements Stage
                     BgeePreparedStatement.generateParameterizedQueryString(speciesIds.size()) + 
                     "))";
         }
-        if (filterBySpecies && filterByGroupingStage) {
-            sql += " AND ";
+        if (filterByStages) {
+            if (filterBySpecies) {
+                sql += " AND ";
+            }
+            sql += "(" + tableName + ".stageId IN (" + 
+                    BgeePreparedStatement.generateParameterizedQueryString(stageIds.size()) + "))";
         }
+
         if (filterByGroupingStage) {
+            if (filterBySpecies || filterByStages) {
+                sql += " AND ";
+            }
             sql += tableName + ".groupingStage= ? ";
         }
-        if ((filterByGroupingStage || filterBySpecies) && filterByLevel) {
-            sql += " AND ";
-        }
         if (filterByLevel) {
+            if (filterBySpecies || filterByStages || filterByGroupingStage) {
+                sql += " AND ";
+            }
             sql += tableName + ".stageLevel= ? ";
         }
 
@@ -99,6 +123,11 @@ public class MySQLStageDAO extends MySQLDAO<StageDAO.Attribute> implements Stage
             }
 
             int offsetParamIndex = (filterBySpecies ? speciesIds.size() + 1 : 1);
+            if (filterByStages) {
+                stmt.setStrings(offsetParamIndex, stageIds, true);
+                offsetParamIndex += stageIds.size();
+            }
+
             if (filterByGroupingStage) {
                 stmt.setBoolean(offsetParamIndex, isGroupingStage);
                 offsetParamIndex ++;

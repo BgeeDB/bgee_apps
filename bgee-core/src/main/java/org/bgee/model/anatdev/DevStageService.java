@@ -43,20 +43,34 @@ public class DevStageService extends Service {
     }
 
     /**
-     * Retrieve grouping {@code DevStage}s for a given set of species IDs and the given level.
+     * Retrieve grouping {@code DevStage}s for the given species IDs and level.
      * 
      * @param speciesIds    A {@code Set} of {@code String}s that are IDs of species 
      *                      for which to return the {@code DevStage}s.
      * @param level         An {@code Integer} that is the level of dev. stages 
-     *                      allowing to filter the dev. stages.
+     *                      for which to return the {@code DevStage}s.
      * @return              A {@code List} of {@code DevStage}s that are the grouping 
-     *                      dev. stages for the given set of species IDs and the given level.
+     *                      dev. stages for {@code speciesIds} and {@code level}.
      */
     public List<DevStage> loadGroupingDevStages(Set<String> speciesIds, Integer level) {
         log.entry(speciesIds, level);
-
         return log.exit(getDaoManager().getStageDAO()
                 .getStagesBySpeciesIds(speciesIds, true, level).stream()
+                .map(DevStageService::mapFromTO)
+                .collect(Collectors.toList()));
+    }
+
+    /**
+     * Retrieve {@code DevStage}s for a given set of dev. stage IDs.
+     * 
+     * @param stageIds  A {@code Set} of {@code String}s that are IDs of dev. stages 
+     *                  for which to return the {@code DevStage}s.
+     * @return          The {@code List} of {@code DevStage}s that are the 
+     *                  dev. stages for the given set of stage IDs.
+     */
+    public List<DevStage> loadDevStagesByIds(Set<String> stageIds) {
+        log.entry(stageIds);
+        return log.exit(getDaoManager().getStageDAO().getStagesByIds(stageIds).stream()
                 .map(DevStageService::mapFromTO)
                 .collect(Collectors.toList()));
     }

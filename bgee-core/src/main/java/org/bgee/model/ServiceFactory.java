@@ -101,7 +101,7 @@ public class ServiceFactory implements AutoCloseable {
      */
     public GeneService getGeneService() {
         log.entry();
-        return log.exit(new GeneService(this.daoManager));
+        return log.exit(new GeneService(this.daoManager, getSpeciesService()));
     }
 
     /**

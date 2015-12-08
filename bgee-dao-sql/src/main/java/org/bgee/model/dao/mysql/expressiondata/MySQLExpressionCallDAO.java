@@ -910,9 +910,9 @@ implements ExpressionCallDAO {
         
         //Ranks: 
         Map<ExpressionCallDAO.Attribute, String> dataTypeToSql = new HashMap<>();
-        String affyRank = exprTableName + ".affymetrixMeanRank ";
+        String affyRank = exprTableName + ".affymetrixMeanRankNorm ";
         if (groupByClause) {
-            affyRank = "AVG(" + exprTableName + ".affymetrixMeanRank) ";
+            affyRank = "AVG(" + exprTableName + ".affymetrixMeanRankNorm) ";
         }
         dataTypeToSql.put(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA, affyRank);
         //for the global mean rank clause, we don't want the AS part, but we need it for the main query
@@ -920,9 +920,9 @@ implements ExpressionCallDAO {
             affyRank += "AS affymetrixMeanRank ";
         }
         
-        String estRank = exprTableName + ".estMeanRank ";
+        String estRank = exprTableName + ".estMeanRankNorm ";
         if (groupByClause) {
-            estRank = "AVG(" + exprTableName + ".estMeanRank) ";
+            estRank = "AVG(" + exprTableName + ".estMeanRankNorm) ";
         }
         dataTypeToSql.put(ExpressionCallDAO.Attribute.EST_DATA, estRank);
         //for the global mean rank clause, we don't want the AS part, but we need it for the main query
@@ -930,9 +930,9 @@ implements ExpressionCallDAO {
             estRank += "AS estMeanRank ";
         }
         
-        String inSituRank = exprTableName + ".inSituMeanRank ";
+        String inSituRank = exprTableName + ".inSituMeanRankNorm ";
         if (groupByClause) {
-            inSituRank = "AVG(" + exprTableName + ".inSituMeanRank) ";
+            inSituRank = "AVG(" + exprTableName + ".inSituMeanRankNorm) ";
         }
         dataTypeToSql.put(ExpressionCallDAO.Attribute.IN_SITU_DATA, inSituRank);
         //for the global mean rank clause, we don't want the AS part, but we need it for the main query
@@ -940,9 +940,9 @@ implements ExpressionCallDAO {
             inSituRank += "AS inSituMeanRank ";
         }
         
-        String rnaSeqRank = exprTableName + ".rnaSeqMeanRank ";
+        String rnaSeqRank = exprTableName + ".rnaSeqMeanRankNorm ";
         if (groupByClause) {
-            rnaSeqRank = "AVG(" + exprTableName + ".rnaSeqMeanRank) ";
+            rnaSeqRank = "AVG(" + exprTableName + ".rnaSeqMeanRankNorm) ";
         }
         dataTypeToSql.put(ExpressionCallDAO.Attribute.RNA_SEQ_DATA, rnaSeqRank);
         //for the global mean rank clause, we don't want the AS part, but we need it for the main query
@@ -1812,25 +1812,25 @@ implements ExpressionCallDAO {
             if (colName.equals("affymetrixData")) {
                 return log.exit(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA);
             } 
-            if (colName.equals("affymetrixMeanRank")) {
+            if (colName.equals("affymetrixMeanRankNorm")) {
                 return log.exit(ExpressionCallDAO.Attribute.AFFYMETRIX_MEAN_RANK);
             } 
             if (colName.equals("estData")) {
                 return log.exit(ExpressionCallDAO.Attribute.EST_DATA);
             } 
-            if (colName.equals("estMeanRank")) {
+            if (colName.equals("estMeanRankNorm")) {
                 return log.exit(ExpressionCallDAO.Attribute.EST_MEAN_RANK);
             } 
             if (colName.equals("inSituData")) {
                 return log.exit(ExpressionCallDAO.Attribute.IN_SITU_DATA);
             } 
-            if (colName.equals("inSituMeanRank")) {
+            if (colName.equals("inSituMeanRankNorm")) {
                 return log.exit(ExpressionCallDAO.Attribute.IN_SITU_MEAN_RANK);
             } 
             if (colName.equals("rnaSeqData")) {
                 return log.exit(ExpressionCallDAO.Attribute.RNA_SEQ_DATA);
             } 
-            if (colName.equals("rnaSeqMeanRank")) {
+            if (colName.equals("rnaSeqMeanRankNorm")) {
                 return log.exit(ExpressionCallDAO.Attribute.RNA_SEQ_MEAN_RANK);
             } 
             if (colName.equals("originOfLine") || colName.equals("anatOriginOfLine")) {

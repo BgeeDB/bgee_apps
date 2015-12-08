@@ -3,6 +3,7 @@ package org.bgee.view.html;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
@@ -51,9 +52,11 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
 	private static String getExpressionHTML(ExpressionCall call, AnatEntity a, DevStage d) {
 		StringBuilder sb = new StringBuilder();
-		sb.append("<td>").append(a.getName()).append("</td>");
-		sb.append("<td>").append(d.getName()).append("</td>");
-		sb.append("<td>").append(call.getSummaryQuality().getStringRepresentation()).append("</td>");
+		sb.append("<td>").append("[").append(a.getId()).append("] ").append(a.getName()).append("</td>");
+		sb.append("<td>").append("[").append(d.getId()).append("] ").append(d.getName()).append("</td>");
+		String qual = call.getCallData().stream().map(data -> data.getDataType()+":"+data.getDataQuality().toString())
+		.collect(Collectors.joining(" | ", "[ ", " ]"));
+		sb.append("<td>").append(qual/*call.getSummaryQuality().getStringRepresentation()*/).append("</td>");
 		return sb.toString();
 	}
 
@@ -72,17 +75,18 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 	@Override
 	public void displayGene(Gene gene, List<ExpressionCall> calls, Map<String, AnatEntity> anatEntitiesMap, 
 			Map<String, DevStage> devStageMap) {
-		this.startDisplay("Gene: "+gene.getId());
-		this.writeln("<h1>Gene: "+gene.getId()+"</h1>");
-		this.write("<h2>Gene Information</h2>");
+		this.startDisplay("Gene: "+gene.getName());
+		this.writeln("<h1>Gene: "+gene.getName()+"</h1>");
+		this.writeln("<h2>Gene Information</h2>");
 		this.writeln("<div>"+getGeneInfo(gene)+"</div>");
-		this.write("<h2>Expression</h2>");
-		final StringBuilder table = new StringBuilder("<center><table style='width:80%;margin: 1em 1em 2em 5em;'>");
+		this.writeln("<h2>Expression</h2>");
+		final StringBuilder table = new StringBuilder("<table style='width:100%; margin: 1em 1em 2em 5em;'>");
 		table.append("<tr><td><strong>AnatEntity</strong></td><td><strong>Stage</strong></td><td><strong>Quality</strong></td></tr>");
-		table.append(calls.stream()
+		
+		table.append(calls.stream()/*.limit(20)*/
 				.map(c -> getExpressionHTML(c, anatEntitiesMap.get(c.getCondition().getAnatEntityId()), devStageMap.get(c.getCondition().getDevStageId())))
 						.collect(Collectors.joining("</tr><tr>", "<tr>", "</tr>")));
-		table.append("</table></center>");
+		table.append("</table>");
 		this.writeln(table.toString());
 		
 		this.endDisplay();

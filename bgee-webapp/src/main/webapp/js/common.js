@@ -73,4 +73,15 @@ $(document).ready(function() {
     	$( this ).addClass("external_link");
     });
     
+    $(".expandable").click(function() {
+        $(this).next().toggle(200);
+        var t = $(this).text();
+        var t2 = t.replace('+','-');
+        if (t != t2) {
+           $(this).text(t2);
+        } else {
+          $(this).text(t.replace('-','+'));
+        }
+    });
+    
 });

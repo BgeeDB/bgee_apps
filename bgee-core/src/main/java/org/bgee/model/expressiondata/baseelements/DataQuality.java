@@ -16,7 +16,7 @@ public enum DataQuality implements BgeeEnumField {
     //WARNING: these Enums must be declared in order, from the lowest quality 
     //to the highest quality. This is because the compareTo implementation 
     //of the Enum class will be used.
-    LOW, HIGH;
+    NODATA, LOW, HIGH;
 
     @Override
     public String getStringRepresentation() {

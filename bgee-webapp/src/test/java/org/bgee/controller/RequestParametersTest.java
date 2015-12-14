@@ -736,9 +736,8 @@ public class RequestParametersTest extends TestAncestor {
         when(mockHttpServletRequest.getParameterMap())
         .thenReturn(parameterMap1);
 
-        new RequestParameters(
-                mockHttpServletRequest,
-                RequestParametersTest.testURLParameters,BgeeProperties.getBgeeProperties(),true,"&");
+        new RequestParameters(mockHttpServletRequest, RequestParametersTest.testURLParameters, 
+                BgeeProperties.getBgeeProperties(), true, "&");
     }
 
     /**

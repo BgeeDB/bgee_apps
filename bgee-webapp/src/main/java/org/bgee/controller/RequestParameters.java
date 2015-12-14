@@ -733,50 +733,49 @@ public class RequestParameters {
                 }
                 
                 //process the parameter and store it into this RequestParameters
-                Arrays.stream(valuesFromUrl)
-                      //secure the String value
-                      .map(value -> this.secureString(value, parameter))
-                      //split into multiple values if the parameter is a separated-value parameter.
-                      .flatMap(value -> {
-                          List<String> values = new ArrayList<>();
-                          if (!parameter.allowsSeparatedValues()) {
-                              values.add(value);
-                          } else {
-                              String splitPattern = "";
-                              for (String separator: parameter.getSeparators()) {
-                                  if (!splitPattern.equals("")) {
-                                      splitPattern += "|";
-                                  }
-                                  splitPattern += Pattern.quote(separator);
-                              }
-                              values.addAll(Arrays.asList(value.split(splitPattern)));
-                          }
-                          return values.stream();
-                      })
-                      //filter
-                      .filter(StringUtils::isNotBlank)
-                      //cast to the parameter requested type
-                      .map(value -> {
-                          value = value.trim();
-                          try {
-                              if(parameter.getType().equals(String.class)){
-                                  return value;
-                              } else if (parameter.getType().equals(Integer.class)){
-                                  return Integer.parseInt(value);
-                              } else if (parameter.getType().equals(Boolean.class)){
-                                  return castToBoolean(value);
-                              } else if (parameter.getType().equals(Double.class)){
-                                  return Double.parseDouble(value);
-                              } else {
-                                  throw log.throwing(new IllegalStateException(
-                                          "Unsupported parameter type: " + parameter.getType()));
-                              }
-                          } catch (NumberFormatException e) {
-                              throw log.throwing(new InvalidFormatException(parameter, e));
-                          }
-                      })
-                      //store to this RequestParameters
-                      .forEach(value -> this.addAnyValue(parameter, value));
+                this.addAnyValues(parameter, Arrays.stream(valuesFromUrl)
+                    //secure the String value
+                    .map(value -> this.secureString(value, parameter))
+                    //split into multiple values if the parameter is a separated-value parameter.
+                    .flatMap(value -> {
+                        List<String> values = new ArrayList<>();
+                        if (!parameter.allowsSeparatedValues()) {
+                            values.add(value);
+                        } else {
+                            String splitPattern = "";
+                            for (String separator: parameter.getSeparators()) {
+                                if (!splitPattern.equals("")) {
+                                    splitPattern += "|";
+                                }
+                                splitPattern += Pattern.quote(separator);
+                            }
+                            values.addAll(Arrays.asList(value.split(splitPattern)));
+                        }
+                        return values.stream();
+                    })
+                    //filter
+                    .filter(StringUtils::isNotBlank)
+                    //cast to the parameter requested type
+                    .map(value -> {
+                        value = value.trim();
+                        try {
+                            if(parameter.getType().equals(String.class)){
+                                return value;
+                            } else if (parameter.getType().equals(Integer.class)){
+                                return Integer.parseInt(value);
+                            } else if (parameter.getType().equals(Boolean.class)){
+                                return castToBoolean(value);
+                            } else if (parameter.getType().equals(Double.class)){
+                                return Double.parseDouble(value);
+                            } else {
+                                throw log.throwing(new IllegalStateException(
+                                        "Unsupported parameter type: " + parameter.getType()));
+                            }
+                        } catch (NumberFormatException e) {
+                            throw log.throwing(new InvalidFormatException(parameter, e));
+                        }
+                    })
+                    .collect(Collectors.toList()));
             }
         }
 
@@ -1596,18 +1595,45 @@ public class RequestParameters {
             throws MultipleValuesNotAllowedException, InvalidFormatException {
         log.entry(parameter, value);
 
-        this.addAnyValue(parameter, value);
+        if (value == null) {
+            log.exit(); return;
+        }
+        this.addValues(parameter, Arrays.asList(value));
         
         log.exit();
     }
     /**
-     * Add a value associated to the {@code URLParameters.Parameter}.
+     * Add values to the given {@code URLParameters.Parameter<T>}
+     *
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept
+     * consistent as much as possible if the method evolves.
+     * 
+     * @param parameter The {@code URLParameters.Parameter<T>} to add the value to
+     * @param values    A {@code List} of {@code T}s, the values to set
+     * @throws MultipleValuesNotAllowedException    If more than one value is present in the
+     *                                              {@code request} for a
+     *                                              {@link URLParameters.Parameter} that
+     *                                              does not allow multiple values.
+     * @throws InvalidFormatException                 A value in the {@code request} does not
+     *                                              fit the format requirement for related
+     *                                              {@link URLParameters.Parameter}
+     */
+    public <T> void addValues(URLParameters.Parameter<T> parameter, List<T> values)
+            throws MultipleValuesNotAllowedException, InvalidFormatException {
+        log.entry(parameter, values);
+    
+        this.addAnyValues(parameter, values);
+    
+        log.exit();
+    }
+    /**
+     * Add values associated to the {@code URLParameters.Parameter}.
      *  
      * @param parameter The {@code URLParameters.Parameter} to add the value to.
-     * @param value     An {@code Object} that is the value to set.
+     * @param values    A {@code List} of {@code Object}s to associate to {@code parameter}.
      * 
-     * @throws IllegalArgumentException             If the type of {@code value} is different 
-     *                                              from the type returned by 
+     * @throws IllegalArgumentException             If the type of any object in {@code value}s 
+     *                                              is different from the type returned by 
      *                                              {@code URLParameters.Parameter.getType()}.
      * @throws InvalidFormatException               If the value in the {@code request} does not
      *                                              fit the format requirement for {parameter}.
@@ -1618,39 +1644,50 @@ public class RequestParameters {
      *                                              the max allowed size, following the addition 
      *                                              of this parameter value.
      */
-    private void addAnyValue(URLParameters.Parameter<?> parameter, Object value) 
+    private void addAnyValues(URLParameters.Parameter<?> parameter, List<?> values) 
             throws IllegalArgumentException, InvalidFormatException, MultipleValuesNotAllowedException, 
             RequestSizeExceededException {
-        log.entry(parameter, value);
+        log.entry(parameter, values);
 
-        if (value == null || StringUtils.isBlank(value.toString())) {
+        if (values == null || values.isEmpty()) {
             log.exit(); return;
         }
-        if (!parameter.getType().equals(value.getClass())) {
-            throw log.throwing(new IllegalArgumentException("The class of the provided value ("
-                    + value.getClass().getSimpleName() + ") is incompatible with "
+        if (values.stream().anyMatch(e -> !parameter.getType().equals(e.getClass()))) {
+            throw log.throwing(new IllegalArgumentException("The class of one of the provided value ("
+                    + values + ") is incompatible with "
                     + "the parameter (" + parameter.getType().getSimpleName()));
         }
 
-        Object valueToUse = value;
-        if (parameter.getType().equals(String.class)) {
-            valueToUse = this.secureString(value.toString(), parameter);
+        //map the values to add 
+        List<Object> newVals = values.stream().map(e -> {
+            if (parameter.getType().equals(String.class)) {
+                return this.secureString(e.toString(), parameter);
+            }
+            return e;
+        }).filter(e -> e != null && 
+                (!parameter.getType().equals(String.class) || 
+                 StringUtils.isNotBlank(e.toString())))
+        .collect(Collectors.toList());
+        
+        if (newVals.isEmpty()) {
+            log.exit(); return;
         }
+        
         // fetch the existing values for the given parameter and try to add the value
         List<Object> parameterValues = this.values.get(parameter);
         // Throw an exception if the param does not allow 
-        // multiple values and has already one
-        if (parameterValues != null && 
-                !parameter.allowsMultipleValues() && !parameter.allowsSeparatedValues() && 
-                !parameterValues.isEmpty()){
+        // multiple values and has already one, or contains several values
+        if (!parameter.allowsMultipleValues() && !parameter.allowsSeparatedValues() && 
+                (parameterValues != null && !parameterValues.isEmpty() || newVals.size() > 1)) {
             throw(new MultipleValuesNotAllowedException(parameter));
         }
+        
         //OK, add value
         if (parameterValues == null) {
             parameterValues = new ArrayList<>();
             this.values.put(parameter, parameterValues);
         }
-        parameterValues.add(valueToUse);
+        parameterValues.addAll(newVals);
         
         //Now, we check whether all parameters considered together exceed the global 
         //max request length defined, following the addition of this parameter. 
@@ -1676,33 +1713,6 @@ public class RequestParameters {
             this.throwIfParamValueTooLong(parameter, urlFragment.substring(fragmentStart.length()));
         }
         
-        log.exit();
-    }
-
-    /**
-     * Add values to the given {@code URLParameters.Parameter<T>}
-     *
-     * This method has a js counterpart in {@code requestparameters.js} that should be kept
-     * consistent as much as possible if the method evolves.
-     * 
-     * @param parameter The {@code URLParameters.Parameter<T>} to add the value to
-     * @param values    A {@code List} of {@code T}s, the values to set
-     * @throws MultipleValuesNotAllowedException    If more than one value is present in the
-     *                                              {@code request} for a
-     *                                              {@link URLParameters.Parameter} that
-     *                                              does not allow multiple values.
-     * @throws InvalidFormatException                 A value in the {@code request} does not
-     *                                              fit the format requirement for related
-     *                                              {@link URLParameters.Parameter}
-     */
-    public <T> void addValues(URLParameters.Parameter<T> parameter, List<T> values)
-            throws MultipleValuesNotAllowedException, InvalidFormatException {
-        log.entry(parameter,values);
-
-        for (T value: values) {
-            this.addValue(parameter, value);
-        }
-
         log.exit();
     }
 

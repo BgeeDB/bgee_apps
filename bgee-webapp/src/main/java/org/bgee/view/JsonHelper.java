@@ -345,12 +345,13 @@ public class JsonHelper {
          *                          to the webapp.
          */
         private TopAnatResultsTypeAdapter(RequestParameters requestParameters) {
-            assert requestParameters != null;
-            this.requestParameters = requestParameters.cloneWithStorableParameters();
-            this.requestParameters.setPage(RequestParameters.PAGE_TOP_ANAT);
-            this.requestParameters.setAction(RequestParameters.ACTION_TOP_ANAT_DOWNLOAD);
-            this.requestParameters.resetValues(this.requestParameters.getUrlParametersInstance().getParamDisplayType());
-            this.requestParameters.resetValues(this.requestParameters.getUrlParametersInstance().getParamAjax());
+            if (requestParameters == null) {
+                this.requestParameters = null;
+            } else {
+                this.requestParameters = requestParameters.cloneWithStorableParameters();
+                this.requestParameters.setPage(RequestParameters.PAGE_TOP_ANAT);
+                this.requestParameters.setAction(RequestParameters.ACTION_TOP_ANAT_DOWNLOAD);
+            }
         }
         @Override
         public void write(JsonWriter out, TopAnatResults results) throws IOException {
@@ -359,6 +360,11 @@ public class JsonHelper {
                 out.nullValue();
                 log.exit(); return;
             }
+            if (this.requestParameters == null) {
+                throw log.throwing(new IllegalStateException("It is not possible to determine "
+                        + "the URL for downloading result file."));
+            }
+            
             log.trace("Start writing object TopAnatResults.");
             out.beginObject();
             
@@ -452,7 +458,7 @@ public class JsonHelper {
             this.props = props;
         }
         if (requestParameters == null) {
-            this.requestParameters = new RequestParameters();
+            this.requestParameters = null;
         } else {
             this.requestParameters = requestParameters.cloneWithAllParameters();
         }

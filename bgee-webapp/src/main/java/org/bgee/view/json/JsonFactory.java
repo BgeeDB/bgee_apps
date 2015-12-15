@@ -45,7 +45,7 @@ public class JsonFactory extends ViewFactory {
      */
     public JsonFactory(HttpServletResponse response, RequestParameters requestParameters, 
             BgeeProperties prop) {
-        this(response, requestParameters, prop, new JsonHelper(prop));
+        this(response, requestParameters, prop, new JsonHelper(prop, requestParameters));
     }
     /**
      * Constructor providing all dependencies. 

@@ -74,7 +74,7 @@ public class JsonHelperTest extends TestAncestor {
         
         BgeeProperties props = mock(BgeeProperties.class);
         when(props.getDownloadRootDirectory()).thenReturn("/myrootpath/");
-        JsonHelper helper = new JsonHelper(props);
+        JsonHelper helper = new JsonHelper(props, null);
         String json = helper.toJson(group);
         String expected = "{\n  \"members\": [\n    {\n      \"genus\": \"Homo\",\n      "
                 + "\"speciesName\": \"sapiens\",\n      "
@@ -227,6 +227,7 @@ public class JsonHelperTest extends TestAncestor {
         TopAnatParams params = mock(TopAnatParams.class);
         when(params.getDevStageId()).thenReturn("stageId1");
         when(params.getCallType()).thenReturn(CallType.Expression.EXPRESSED);
+        when(params.getKey()).thenReturn("mykey");
         BgeeProperties props = mock(BgeeProperties.class);
         when(props.getTopAnatResultsUrlDirectory()).thenReturn("top_anat/results/");
         when(props.getTopAnatResultsWritingDirectory()).thenReturn(
@@ -238,10 +239,10 @@ public class JsonHelperTest extends TestAncestor {
                 null, null, null, null, null, null, null, "result_hash.zip", 
                 controller);
         
-        JsonHelper helper = new JsonHelper(props);
+        JsonHelper helper = new JsonHelper(props, new RequestParameters());
         String json = helper.toJson(results);
         
-        String expected = "{\n  \"zipFile\": \"top_anat/results/result_hash.zip\",\n  "
+        String expected = "{\n  \"zipFile\": \"/?page=top_anat&action=download&analysis_id=mykey\",\n  "
                 + "\"devStageId\": \"stageId1\",\n  \"callType\": \"EXPRESSED\",\n  "
                 + "\"results\": [\n    {\n      \"anatEntityId\": \"A1\",\n      "
                 + "\"anatEntityName\": \"body\",\n      \"annotated\": 5.0,\n      "

@@ -36,7 +36,7 @@
 			            <img class="img-topanat-xsmall" uib-tooltip="Species: {{job.species}}"
                             ng-src="{{vm.species_img(job.taxid)}}"> |
                         {{job.creationDate}} |
-                        <a class="btn-xs btn-success" style="text-decoration: none;" ng-href="/#/result/{{job.hash}}">View Job</a>
+                        <a class="btn-xs btn-success" style="text-decoration: none;" ng-href="#/result/{{job.hash}}">View Job</a>
                         <a class="btn-xs btn-danger" style="text-decoration: none;" href="#" ng-click="vm.removeJob(job);" style="margin-left: 6px;">Remove job</a></li>
                 </ul>
             </div>

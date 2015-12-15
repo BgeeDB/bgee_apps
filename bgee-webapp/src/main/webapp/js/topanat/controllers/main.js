@@ -868,6 +868,7 @@
                 p_value_thr: vm.p_value_thr,
                 nb_node: vm.nb_node,
                 submitted: true,
+                job_title: vm.job_title, 
                 display_type: "json",
                 action: "submit_job",
                 ajax: 1

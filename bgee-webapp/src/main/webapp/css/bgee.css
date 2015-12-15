@@ -381,51 +381,6 @@ footer {
 }
 
 
-table.expression {
-	width: 80%;
-	margin: 1em 1em 2em 5em;
-}
-
-
-div.invisible {
-    display: none;
-}
-
-div.details {
-	font-size: .7em;
-	margin-left: 1em;
-}
-
-span.quality {
-	padding: .2em .5em;
-	margin: .15em;
-	border-radius: 30%; 
-	width: 1em;
-	height: 1em;
-	border-width: 1px;
-	border-style: solid;
-	font-size: .8em;
-	font-family: monospace;
-}
-
-.high {
-	background: #9efa9e; 
-	border-color: #0df20d;
-	color: #067906;
-}
-
-.low {
-	background: #fae39e;
-	border-color:  #f2b90d;
-	color:   #795c06;
-}
-
-.nodata {
-	background: #dedede;
-	color: #b8b8b8;
-	border-color: #b8b8b8;
-}
-
 /*! jQuery UI - v1.11.0 - 2014-06-26
 * http://jqueryui.com
 * Includes part of: core.css, autocomplete.css, menu.css, theme.css

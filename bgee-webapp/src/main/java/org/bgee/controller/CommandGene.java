@@ -40,6 +40,18 @@ public class CommandGene extends CommandParent {
 
     private final static Logger log = LogManager.getLogger(CommandGene.class.getName());
 
+    /**
+     * Constructor
+     * 
+     * @param response          A {@code HttpServletResponse} that will be used to display the 
+     *                          page to the client
+     * @param requestParameters The {@code RequestParameters} that handles the parameters of the 
+     *                          current request.
+     * @param prop              A {@code BgeeProperties} instance that contains the properties
+     *                          to use.
+     * @param viewFactory       A {@code ViewFactory} that provides the display type to be used.
+     * @param serviceFactory    A {@code ServiceFactory} that provides bgee services.
+     */
 	public CommandGene(HttpServletResponse response, RequestParameters requestParameters, BgeeProperties prop,
 	        ViewFactory viewFactory, ServiceFactory serviceFactory) {
 		super(response, requestParameters, prop, viewFactory, serviceFactory);
@@ -61,11 +73,21 @@ public class CommandGene extends CommandParent {
 		log.exit();
 	}
 
+	/**
+	 * Gets the {@code Gene} instance from its id
+	 * @param geneId A {@code String} containing the gene id.
+	 * @return       The {@code Gene} instance.
+	 */
 	private Gene getGene(String geneId) {
 		Gene gene = serviceFactory.getGeneService().loadGeneById(geneId);
 		return gene;
 	}
 	
+	/**
+	 * Retrieves the {@code AnatEntity} contained in a collection of {@code ExpressionCall}
+	 * @param calls
+	 * @return
+	 */
 	private Map<String, AnatEntity> getEntitiesForCalls(Collection<ExpressionCall> calls) {
 		log.entry(calls);
 		return log.exit(serviceFactory.getAnatEntityService()
@@ -73,6 +95,12 @@ public class CommandGene extends CommandParent {
 		.collect(Collectors.toMap(AnatEntity::getId, Function.identity())));
 	}
 
+
+	/**
+	 * Retrieves the {@code DevStage} contained in a collection of {@code ExpressionCall}
+	 * @param calls
+	 * @return
+	 */
 	private Map<String, DevStage> getDevStagesForCalls(Collection<ExpressionCall> calls) {
 		log.entry(calls);
 		return log.exit(serviceFactory.getDevStageService()
@@ -80,6 +108,11 @@ public class CommandGene extends CommandParent {
 		.collect(Collectors.toMap(DevStage::getId, Function.identity())));
 	}
 	
+	/**
+	 * Retrieves the sorted list of {@code ExpressionCall} associated to this gene.
+	 * @param gene The {@code Gene}
+	 * @return     The {@code List} of {@code ExpressionCall} associated to this gene, ordered by relevance.
+	 */
 	private List<ExpressionCall> getExpressions(Gene gene) {
 		 LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
 	                new LinkedHashMap<>();

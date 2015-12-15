@@ -470,13 +470,6 @@ label.radio-inline.checked, label.checkbox-inline.checked {
 
 }*/
 
-/* Custom styles */
-
-.panel .panel-body {
-    padding-top: 0.6em;
-    padding-bottom: 0.6em;
-}
-
 /* The ribbons */
 .corner-ribbon {
     width: 150px;
@@ -492,6 +485,7 @@ label.radio-inline.checked, label.checkbox-inline.checked {
     z-index: -1;
 }
 
+/* Custom styles */
 .corner-ribbon.sticky {
     position: fixed;
 }
@@ -502,9 +496,9 @@ box-shadow: 0 0 3px rgba(0,0,0,.3);
 
 /* Different positions */
 .corner-ribbon.top-left {
-    top: 85px;
-    left: -55px;
-    transform: rotate(-45deg);
+    left: -45px;
+    top: 125px;
+        transform: rotate(-45deg);
     -webkit-transform: rotate(-45deg);
 }
 
@@ -548,4 +542,60 @@ box-shadow: 0 0 3px rgba(0,0,0,.3);
 
 .corner-ribbon.yellow {
     background: #ec0;
+}
+
+div.loader {
+    position: fixed ;
+}
+div.loader div.anim-cover {
+    background-color: #333333 ;
+    bottom: 0px ;
+    right: 0px ;
+
+
+    top: 50% !important;
+    left: 50% !important;
+    margin-top: -100px;
+    margin-left: -100px;
+    opacity: 0.75 ;
+    position: fixed ;
+
+    z-index: 999999 ;
+
+    width: 200px;
+    height: 200px;
+
+    border-radius: 10px;
+    border: 2px solid #000;
+
+}
+/* Used to initialize the ng-leave animation state. */
+div.loader div.anim-cover.ng-leave {
+    opacity: 0.75 ;
+    transition: all linear 200ms ;
+    -webkit-transition: all linear 200ms ;
+}
+/* Used to set the end properties of the ng-leave animation state. */
+div.loader div.anim-cover.ng-leave-active {
+    opacity: 0 ;
+}
+div.loader div.messaging {
+    color: #FFFFFF !important;
+    font-family: monospace ;
+    left: 0px ;
+    margin-top: -37px ;
+    position: absolute ;
+    right: 0px ;
+    text-align: center ;
+    top: 50% ;
+}
+div.loader h1 {
+    font-size: 24px ;
+    line-height: 35px ;
+    margin: 0px 0px 20px 0px ;
+}
+div.loader p {
+    font-size: 18px ;
+    line-height: 14px ;
+    margin: 0px 0px 0px 0px ;
 }

@@ -49,15 +49,29 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
         
         this.startDisplay("Bgee TopAnat page");
         
+        
         //AngularJS module container
         this.writeln("<div ng-app='app'>");
 
+        
+        this.writeln("<div id='appLoading' class='loader'>" + 
+        		"<!-- BEGIN: Actual animated container. -->" + 
+        		"<div class='anim-cover'>" + 
+        			"<div class='messaging'>" +
+        				"<h1>" + 
+        					"<li class='fa fa-circle-o-notch fa-spin'></li> TopAnat is Loading" +
+        				"</h1>" + 
+        			"</div>" + 
+        		"</div>" +
+        	"</div>");
+    
         this.writeln("<!--[if lt IE 7]>" +
         "<p class='browsehappy'>You are using an <strong>outdated</strong> browser. Please <a href='http://browsehappy.com/'>upgrade your" +
             "browser</a> to improve your experience.</p>" +
         "<![endif]-->");
 
-        //this.writeln("<div class='corner-ribbon top-left sticky red shadow'>Development version</div>");
+        this.writeln("<div class='corner-ribbon top-left sticky red shadow'>Beta</div>");
+        
         this.writeln("<div style='margin-left: 20px; margin-right: 20px' ng-view=''>" +
 
         "</div>");

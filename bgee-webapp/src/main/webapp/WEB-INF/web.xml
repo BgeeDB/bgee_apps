@@ -66,6 +66,33 @@
         <filter-name>setCharacterEncodingFilter</filter-name>
         <url-pattern>/*</url-pattern>
     </filter-mapping>
+    
+    
+    <!-- A Filter to specify the expiration date of files in js/ folder 
+         (HTML views used by AngularJS should not be put in cache as we don't version them) -->
+    <filter>
+        <filter-name>ExpiresFilter</filter-name>
+        <filter-class>org.apache.catalina.filters.ExpiresFilter</filter-class>
+        <!-- We don't version HTMl and JSON files, so we don't allow cache -->
+        <init-param>
+            <param-name>ExpiresByType text/html</param-name>
+            <param-value>access plus 1 minutes</param-value>
+        </init-param>
+        <init-param>
+            <param-name>ExpiresByType application/json</param-name>
+            <param-value>access plus 1 minutes</param-value>
+        </init-param>
+        <!-- Other files are versioned, we can let the clients cache them -->
+        <init-param>
+            <param-name>ExpiresDefault</param-name>
+            <param-value>access plus 1 years</param-value>
+        </init-param>
+    </filter>
+    <filter-mapping>
+        <filter-name>ExpiresFilter</filter-name>
+        <url-pattern>/js/*</url-pattern>
+        <dispatcher>REQUEST</dispatcher>
+    </filter-mapping>
 
     <!-- Add a filter to cache the pages using ehcache -->
     <!-- 

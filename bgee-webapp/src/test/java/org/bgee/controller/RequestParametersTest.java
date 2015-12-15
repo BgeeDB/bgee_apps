@@ -770,24 +770,6 @@ public class RequestParametersTest extends TestAncestor {
             //test passed
         }
         
-        //test that spaces are accepted in separated-values parameters, not in the others
-        mockHttpServletRequest = mock(BgeeHttpServletRequest.class);
-        parameterMap5 = new HashMap<>();
-        parameterMap5.put(RequestParametersTest.testURLParameters.getParamTestString().getName(), 
-                new String[]{"string 1"});
-        when(mockHttpServletRequest.getParameterMap())
-        .thenReturn(parameterMap5);
-        
-        try {
-            new RequestParameters(
-                mockHttpServletRequest,
-                RequestParametersTest.testURLParameters, BgeeProperties.getBgeeProperties(),
-                true,"&");
-            fail("An InvalidFormatException should have been thrown.");
-        } catch (InvalidFormatException e) {
-            //test passed
-        }
-        
         //do not encode parameters, a HttpServletRequest returns the parameter decoded
         String separatedValues = "s1 " + testURLParameters.getParamTestStringList().getSeparators().get(0)
                 + " s2";

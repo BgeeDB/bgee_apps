@@ -88,7 +88,7 @@ public class URLParameters {
     /**
      * A {@code String} that contains the default value for {@link URLParameters.Parameter#format}
      */
-    protected static final String DEFAULT_FORMAT = "^[\\w,.;:\\-_']*$";
+    protected static final String DEFAULT_FORMAT = "^[\\w ,.;:\\-_']*$";
 
     /**
      * A {@code String} that contains the default value for {@link URLParameters.Parameter#format}
@@ -288,12 +288,25 @@ public class URLParameters {
             false, false, null, true, DEFAULT_IS_SECURE, 
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Double.class);
     /**
+     * A {@code Parameter<String>} containing the key associated to one TopAnat analysis. 
+     */
+    private static final Parameter<String> ANALYSIS_ID = new Parameter<String>("analysis_id",
+            false, false, null, true , DEFAULT_IS_SECURE, 
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+    /**
      * A {@code Parameter<Integer>} that contains the job ID to be used to track a job.
-     * Corresponds to the URL parameter "jobId".
+     * Corresponds to the URL parameter "job_id".
      */
     private static final Parameter<Integer> JOB_ID = new Parameter<Integer>("job_id",
             false, false, null, false, DEFAULT_IS_SECURE, 
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Integer.class);
+    /**
+     * A {@code Parameter<String>} that contains the title given to a job, for user-friendliness.
+     * Corresponds to the URL parameter "job_title". This is a storable parameter.
+     */
+    private static final Parameter<String> JOB_TITLE = new Parameter<String>("job_title",
+            false, false, null, true, DEFAULT_IS_SECURE, 
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
 
     //    /**
 //     * A {@code Parameter<Boolean>} to determine whether all anatomical structures of 
@@ -361,12 +374,14 @@ public class URLParameters {
             // TopAnat analyze params
             FOREGROUND_LIST, FOREGROUND_FILE, BACKGROUND_LIST, BACKGROUND_FILE,
             EXPRESSION_TYPE, DATA_QUALITY, DATA_TYPE, DEV_STAGE, DECORRELATION_TYPE,
-            NODE_SIZE, FDR_THRESHOLD, P_VALUE_THRESHOLD, NB_NODE, JOB_ID,
-            GENE_INFO,
+            NODE_SIZE, FDR_THRESHOLD, P_VALUE_THRESHOLD, NB_NODE, 
+            GENE_INFO, ANALYSIS_ID, 
 //            ALL_ORGANS,
 //            CHOSEN_DATA_TYPE,
 //            EMAIL,
 //            STAGE_CHILDREN,
+            // Job params
+            JOB_TITLE, JOB_ID, 
             DISPLAY_TYPE,
             DATA, 
             DISPLAY_REQUEST_PARAMS, 
@@ -598,11 +613,25 @@ public class URLParameters {
         return P_VALUE_THRESHOLD;
     }
     /**
+     * @return  A {@code Parameter<String>} containing the key associated to one TopAnat analysis.
+     *          Corresponds to the URL parameter "analysis_id".
+     */
+    public Parameter<String> getParamAnalysisId() {
+        return ANALYSIS_ID;
+    }
+    /**
      * @return  A {@code Parameter<Integer>} defining a job ID to be used to track a job.
      *          Corresponds to the URL parameter "job_id".
      */
     public Parameter<Integer> getParamJobId() {
         return JOB_ID;
+    }
+    /**
+     * @return  A {@code Parameter<String>} defining the title of a job, for convenience.
+     *          Corresponds to the URL parameter "job_title".
+     */
+    public Parameter<String> getParamJobTitle() {
+        return JOB_TITLE;
     }
     /**
      * @return  A {@code Parameter<Boolean>} defining whether to display the {@code GeneListResponse} 

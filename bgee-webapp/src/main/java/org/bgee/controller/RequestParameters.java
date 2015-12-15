@@ -209,6 +209,12 @@ public class RequestParameters {
      */
     public static final String ACTION_TOP_ANAT_GET_RESULT = "get_results";
     /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link URLParameters#getParamAction()}) when the downloading of a result file is requested.
+     * Value of the parameter page should be {@link #PAGE_TOP_ANAT}.
+     */
+    public static final String ACTION_TOP_ANAT_DOWNLOAD = "download";
+    /**
      * A {@code String} that is the anchor to use in the hash part of an URL 
      * to link to the single-species part, in the documentation about gene expression calls.
      */
@@ -2322,6 +2328,18 @@ public class RequestParameters {
         log.entry();
         if (isATopAnatPageCategory() &&
                 this.getAction() != null && this.getAction().equals(ACTION_TOP_ANAT_GET_RESULT)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    /**
+     * @return  A {@code boolean} defining whether it is requested to send to client a result file 
+     *          from TopAnat.
+     */
+    public boolean isATopAnatDownloadFile() {
+        log.entry();
+        if (isATopAnatPageCategory() &&
+                this.getAction() != null && this.getAction().equals(ACTION_TOP_ANAT_DOWNLOAD)) {
             return log.exit(true);
         }
         return log.exit(false);

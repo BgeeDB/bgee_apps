@@ -49,15 +49,31 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
         
         this.startDisplay("Bgee TopAnat page");
         
+        
         //AngularJS module container
         this.writeln("<div ng-app='app'>");
 
+        
+        this.writeln("<div id='appLoading' class='loader'>" + 
+        		"<!-- BEGIN: Actual animated container. -->" + 
+        		"<div class='anim-cover'>" + 
+        			"<div class='messaging'>" +
+        				"<h1>" + 
+        					"<li class='fa fa-circle-o-notch fa-spin'></li> TopAnat is Loading" +
+        				"</h1>" + 
+        			"</div>" + 
+        		"</div>" +
+        	"</div>");
+    
         this.writeln("<!--[if lt IE 7]>" +
         "<p class='browsehappy'>You are using an <strong>outdated</strong> browser. Please <a href='http://browsehappy.com/'>upgrade your" +
             "browser</a> to improve your experience.</p>" +
         "<![endif]-->");
 
-        //this.writeln("<div class='corner-ribbon top-left sticky red shadow'>Development version</div>");
+        //FB: I really hate this ribbon :p
+        //this.writeln("<div class='corner-ribbon top-left sticky red shadow'>Beta</div>");
+        this.writeln("<h1>TopAnat - Gene Expression Enrichment <span class='alert'>(BETA VERSION)</span></h1>");
+        
         this.writeln("<div style='margin-left: 20px; margin-right: 20px' ng-view=''>" +
 
         "</div>");
@@ -104,7 +120,6 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
         //external libs used only by TopAnat
         this.includeJs("lib/angular.min.js");
         this.includeJs("lib/angular_modules/angular-animate.min.js");
-        this.includeJs("lib/angular_modules/angular-cookies.min.js");
         this.includeJs("lib/angular_modules/angular-messages.min.js");
         this.includeJs("lib/angular_modules/angular-resource.min.js");
         this.includeJs("lib/angular_modules/angular-route.min.js");
@@ -133,6 +148,7 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
         this.includeJs("topanat/services/config.js");
         this.includeJs("topanat/services/lang.js");
         this.includeJs("topanat/services/constants.js");
+        this.includeJs("topanat/directives/loading.js");
         log.exit();
     }
     @Override

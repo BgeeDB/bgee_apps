@@ -15,7 +15,6 @@
 /* ui-grid */
 .grid {
   width: 100%;
-  height: 250px;
 }
 
 /* Navigation bar -> Advanced options */
@@ -203,8 +202,12 @@ http://bootsnipp.com/snippets/featured/large-dropdown-menu
 }
 
 .img-topanat-small {
-  width: 50px;
-  height: 50px;
+  height: 60px;
+}
+
+.img-topanat-xsmall {
+  width: 30px;
+  height: 30px;
 }
 
 .navbar-brand {
@@ -290,54 +293,291 @@ textarea {
   resize: none;
 }
 
+.horiz-offset {
+  padding-left: 15px;
+  padding-right: 15px;
+}
+
+.gl-sizetransformable {
+    -webkit-transition: font-size 300ms linear;
+    -moz-transition: font-size 300ms linear;
+    -o-transition: font-size 300ms linear;
+    -ms-transition: font-size 300ms linear;
+    transition: font-size 300ms linear;
+
+}
+
+.gl-label {
+    height: 60px;
+    margin-bottom: 5px;
+
+    background: rgba(255,255,255,1);
+    background: -moz-linear-gradient(45deg, rgba(255,255,255,1) 0%, rgba(253,253,253,1) 63%, rgba(252,252,252,1) 78%, rgba(245,245,245,1) 100%);
+    background: -webkit-gradient(left bottom, right top, color-stop(0%, rgba(255,255,255,1)), color-stop(63%, rgba(253,253,253,1)), color-stop(78%, rgba(252,252,252,1)), color-stop(100%, rgba(245,245,245,1)));
+    background: -webkit-linear-gradient(45deg, rgba(255,255,255,1) 0%, rgba(253,253,253,1) 63%, rgba(252,252,252,1) 78%, rgba(245,245,245,1) 100%);
+    background: -o-linear-gradient(45deg, rgba(255,255,255,1) 0%, rgba(253,253,253,1) 63%, rgba(252,252,252,1) 78%, rgba(245,245,245,1) 100%);
+    background: -ms-linear-gradient(45deg, rgba(255,255,255,1) 0%, rgba(253,253,253,1) 63%, rgba(252,252,252,1) 78%, rgba(245,245,245,1) 100%);
+    background: linear-gradient(45deg, rgba(255,255,255,1) 0%, rgba(253,253,253,1) 63%, rgba(252,252,252,1) 78%, rgba(245,245,245,1) 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#f5f5f5', GradientType=1 );
+
+    border-radius: 5px 5px 0px 0px;
+    -moz-border-radius: 5px 5px 0px 0px;
+    -webkit-border-radius: 5px 5px 0px 0px;
+    border: 1px solid #f4f6f7;
+
+}
+
+.smaller_head {
+    font-size: 18px;
+    font-weight: bold;
+    margin: 10px 0 0 10px;
+}
+
+.smallest_head {
+    font-size: 16px;
+    font-weight: bold;
+    margin: 10px 0 0 10px;
+}
+
+.smaller {
+    font-size: 13px;
+    margin: 0 0 0 10px;
+}
+
+.bigger {
+    font-size: 22px;
+    font-weight: bold;
+    vertical-align: bottom;
+    margin: 10px 0 0 10px;
+}
+
+.btn, .btn-xs {
+    outline: 0 !important;
+}
+
+.nav, .pagination, .carousel,
+.panel-title a { cursor: pointer; }
+
+.rotate {
+    vertical-align:top;
+    margin-top:23px;
+    width:80px;height:30px;
+    transform:rotate(7deg);
+    -ms-transform:rotate(90deg); /* IE 9 */
+    -moz-transform:rotate(90deg); /* Firefox */
+    -webkit-transform:rotate(90deg); /* Safari and Chrome */
+    -o-transform:rotate(90deg); /* Opera */}
+
+.rotate input:hover{ box-shadow:0px 0px 4px #fff; }
+.inputWrapper {
+    cursor: pointer;
+    overflow: hidden;
+    position: relative;
+}
+.btn-file {
+    position: relative;
+    overflow: hidden;
+}
+.btn-file input[type=file] {
+    position: absolute;
+    top: 0;
+    right: 0;
+    min-width: 100%;
+    min-height: 100%;
+    font-size: 100px;
+    text-align: right;
+    filter: alpha(opacity=0);
+    opacity: 0;
+    outline: none;
+    background: white;
+    cursor: inherit;
+    display: block;
+}
+
+.progress {
+    position: relative;
+    height: 12px;
+}
+
+.slide.ng-enter, .slide.ng-leave {
+    -webkit-transition:0.5s linear all;
+    transition:0.5s linear all;
+}
+
+.ng-cloak {
+    display: none !important;
+}
+
+.nav-pills > li.active > a {
+    background-color:#eee;
+    color:#0a0a0a;
+}
+
+[ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
+    display: none !important;
+}
+
+/*label.radio-inline, label.checkbox-inline {
+    background-color: #f8f8f8;
+    border-color: #BCE8F1 !important;
+
+    border: 1px solid;
+    color: #5B749D !important;
+    cursor: pointer;
+    font-weight: 400;
+    margin-bottom: 8px !important;
+    margin-right: 8px;
+    margin-left:0;
+    padding: 8px 8px 8px 28px;
+    border-radius: 3px;
+}
+label.radio-inline.checked, label.checkbox-inline.checked {
+    background-color: #D9EDF7;
+    border-color: #BCE8F1;
+    border: 1px solid;
+    color: #5B749D !important;
+    //text-shadow: 1px 1px 2px #000 !important;
+    border-radius: 3px;
+
+}
+.checkbox-inline + .checkbox-inline, .radio-inline + .radio-inline {
+    margin-left: 0;
+
+}
+
+.columns label.radio-inline, .columns label.checkbox-inline {
+    min-width: 150px;
+    vertical-align: top;
+    width: 50%;
+
+}*/
 
 /* The ribbons */
-.corner-ribbon{
-    width: 200px;
+.corner-ribbon {
+    width: 150px;
     background: #e43;
     position: absolute;
     text-align: center;
-    line-height: 50px;
+    line-height: 40px;
+    font-weight: bold;
     letter-spacing: 1px;
     color: #f0f0f0;
     transform: rotate(-45deg);
     -webkit-transform: rotate(-45deg);
-    z-index:-1;
+    z-index: -1;
 }
 
 /* Custom styles */
-
-.panel .panel-body {
-	padding-top: 0.6em;
-    padding-bottom: 0.6em;
-}
-
-.corner-ribbon.sticky{
+.corner-ribbon.sticky {
     position: fixed;
 }
 
 /*.corner-ribbon.shadow{
-    box-shadow: 0 0 3px rgba(0,0,0,.3);
+box-shadow: 0 0 3px rgba(0,0,0,.3);
 }*/
 
 /* Different positions */
-
-.corner-ribbon.top-left{
-    top: 100px;
-    left: -50px;
-    transform: rotate(-45deg);
+.corner-ribbon.top-left {
+    left: -45px;
+    top: 125px;
+        transform: rotate(-45deg);
     -webkit-transform: rotate(-45deg);
 }
 
 /* Colors */
+.corner-ribbon.white {
+    background: #f0f0f0;
+    color: #555;
+}
 
-.corner-ribbon.white{background: #f0f0f0; color: #555;}
-.corner-ribbon.black{background: #333;}
-.corner-ribbon.grey{background: #999;}
-.corner-ribbon.blue{background: #39d;}
-.corner-ribbon.green{background: #2c7;}
-.corner-ribbon.turquoise{background: #1b9;}
-.corner-ribbon.purple{background: #95b;}
-.corner-ribbon.red{background: #e43;}
-.corner-ribbon.orange{background: #e82;}
-.corner-ribbon.yellow{background: #ec0;}
+.corner-ribbon.black {
+    background: #333;
+}
+
+.corner-ribbon.grey {
+    background: #999;
+}
+
+.corner-ribbon.blue {
+    background: #39d;
+}
+
+.corner-ribbon.green {
+    background: #2c7;
+}
+
+.corner-ribbon.turquoise {
+    background: #1b9;
+}
+
+.corner-ribbon.purple {
+    background: #95b;
+}
+
+.corner-ribbon.red {
+    background: #e43;
+}
+
+.corner-ribbon.orange {
+    background: #e82;
+}
+
+.corner-ribbon.yellow {
+    background: #ec0;
+}
+
+div.loader {
+    position: fixed ;
+}
+div.loader div.anim-cover {
+    background-color: #333333 ;
+    bottom: 0px ;
+    right: 0px ;
+
+
+    top: 50% !important;
+    left: 50% !important;
+    margin-top: -100px;
+    margin-left: -100px;
+    opacity: 0.75 ;
+    position: fixed ;
+
+    z-index: 999999 ;
+
+    width: 200px;
+    height: 200px;
+
+    border-radius: 10px;
+    border: 2px solid #000;
+
+}
+/* Used to initialize the ng-leave animation state. */
+div.loader div.anim-cover.ng-leave {
+    opacity: 0.75 ;
+    transition: all linear 200ms ;
+    -webkit-transition: all linear 200ms ;
+}
+/* Used to set the end properties of the ng-leave animation state. */
+div.loader div.anim-cover.ng-leave-active {
+    opacity: 0 ;
+}
+div.loader div.messaging {
+    color: #FFFFFF !important;
+    font-family: monospace ;
+    left: 0px ;
+    margin-top: -37px ;
+    position: absolute ;
+    right: 0px ;
+    text-align: center ;
+    top: 50% ;
+}
+div.loader h1 {
+    font-size: 24px ;
+    line-height: 35px ;
+    margin: 0px 0px 20px 0px ;
+}
+div.loader p {
+    font-size: 18px ;
+    line-height: 14px ;
+    margin: 0px 0px 0px 0px ;
+}

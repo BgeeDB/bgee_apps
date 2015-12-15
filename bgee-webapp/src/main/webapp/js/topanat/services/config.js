@@ -5,12 +5,14 @@ angular.module('services.config', [])
         data_type: ['RNA-Seq', 'Affymetrix data', 'In situ hybridization', 'EST'],
         selectedDataTypes: ['RNA-Seq', 'Affymetrix data', 'In situ hybridization', 'EST'],
         data_qual: 'all',
-        decorr_type: 'elim',
+        decorr_type: 'classic',
         node_size: 20,
-	nb_node: 20,
-        fdr_thr: '1',
-        pvalueThreshold: '1',
-        p_value_thr: 1
+	    nb_node: 20,
+        fdr_thr: 0.2,
+        pvalueThreshold: 1.0,
+        p_value_thr: 1.0,
+        nb_rows: 20,
+        row_height: 30
     });
 
 

@@ -27,6 +27,7 @@
 
         function getDevStages(url, data) {
 
+            console.time("getdevstages");
             console.log($httpParamSerializer(data));
             var config = "{headers: { 'Content-Type': 'application/x-www-form-urlencoded;'}}";
             return $http.post(url, $httpParamSerializer(data), config)
@@ -36,8 +37,11 @@
 
 
             function getDevStagesResults(response) {
-                console.log(response.data)
-                return response.data
+                console.log("getdevstageresults:");
+
+                console.log(response);
+                console.timeEnd("getdevstages");
+                return response.data;
             }
 
         }
@@ -46,6 +50,7 @@
         // Inspired from:
         // http://odetocode.com/blogs/scott/archive/2014/04/24/canceling-http-requests-in-angularjs.aspx
         function postGeneData(url, data) {
+            console.time("postgenedata");
             var canceller = $q.defer();
 
             var cancel = function (reason) {
@@ -60,6 +65,7 @@
 
             function getResults(response) {
                 console.log('getresults' + response)
+                console.timeEnd("postgenedata");
                 return response;
             }
 

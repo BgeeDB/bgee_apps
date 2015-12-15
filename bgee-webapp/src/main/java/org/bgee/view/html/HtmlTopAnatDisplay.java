@@ -104,7 +104,6 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
         //external libs used only by TopAnat
         this.includeJs("lib/angular.min.js");
         this.includeJs("lib/angular_modules/angular-animate.min.js");
-        this.includeJs("lib/angular_modules/angular-cookies.min.js");
         this.includeJs("lib/angular_modules/angular-messages.min.js");
         this.includeJs("lib/angular_modules/angular-resource.min.js");
         this.includeJs("lib/angular_modules/angular-route.min.js");
@@ -133,6 +132,7 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
         this.includeJs("topanat/services/config.js");
         this.includeJs("topanat/services/lang.js");
         this.includeJs("topanat/services/constants.js");
+        this.includeJs("topanat/directives/loading.js");
         log.exit();
     }
     @Override

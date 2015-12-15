@@ -12,7 +12,6 @@ angular
     .module('app', [
         'ngRoute',
         'ngAnimate',
-        'ngCookies',
         'logger',
         'ui.grid',
         'ui.grid.resizeColumns',
@@ -21,14 +20,11 @@ angular
         'services.lang',
         'angularFileUpload',
         'ui.bootstrap',
-        'ngLocationUpdate', 
-        'ngFileSaver'
+        'ngLocationUpdate',
+        'ngFileSaver',
+        'bgeeLoading'
     ])
 
-    //.value('DataType', DataType)
-    //.value('CallType', CallType)
-
-    //.config(function($locationProvider) { $locationProvider.html5Mode(true); })
 
     .config(function ($routeProvider) {
         $routeProvider
@@ -37,6 +33,9 @@ angular
                 controller: 'MainCtrl',
                 controllerAs: 'vm',
                 resolve: {
+                    appInit: function(){console.log("appinit = true");return true;},
+                    loading: function(){console.log("loading = 1");return 1;},
+                    whatIsLoading: function(){return ' jobstatus';},
                     "jobStatus": function() {
                         return null;
                     }
@@ -46,28 +45,37 @@ angular
 
             .when("/result/:hash/:jobid", {
                 templateUrl: 'js/topanat/views/main.html',
-                /*templateUrl:'views/bgeeResult.html',*/
                 controller:'MainCtrl',
                 controllerAs: 'vm',
-                /* controller:'resultController', */
                 reloadOnSearch: false,
                 resolve:
 
                 {
-                    //FIXME: Of note, when the URL is updated following a form submission, 
-                    //it triggers this routing, but AngularJS can't be aware of  
-                	//the hash and jobid vars
-                    //(see second comment of this answer: http://stackoverflow.com/a/16266601/1768736) 
-                	//This generates an error on our server (query to server 
-                    //with 'undefined' as value for jobid and hash, see log below). 
-                	//The triggering of this routing is not even needed at this point, 
-                	//after form submission there is already a tracking of job advancement activated.
-                	//Is there a way to prevent this routing to be triggered when URL updated 
-                	//following job submission?
+
+                    appInit: function(){console.log("appinit = true");return true;},
+                    loading: function(){console.log("loading = true");return true;},
+
+                    //FIXME: Of note, when the URL is updated following a form submission,
+                    //it triggers this routing, but AngularJS can't be aware of
+                    //the hash and jobid vars
+                    //(see second comment of this answer: http://stackoverflow.com/a/16266601/1768736)
+                    //This generates an error on our server (query to server
+                    //with 'undefined' as value for jobid and hash, see log below).
+                    //The triggering of this routing is not even needed at this point,
+                    //after form submission there is already a tracking of job advancement activated.
+                    //Is there a way to prevent this routing to be triggered when URL updated
+                    //following job submission?
                     jobStatus: function($q, $route, bgeejobservice){
+
                         var deferred = $q.defer();
+                        console.log($route.current.params);
                         var jobid = $route.current.params.jobid;
                         var hash = $route.current.params.hash;
+                        if(typeof jobid == 'undefined' || typeof hash == 'undefined'){
+                            console.log("jobid or hash Parameter missing from jobStatus")
+                            return deferred.reject("jobid or hash Parameter missing from jobStatus");
+                        }
+
                         console.log("Tracking job page, jobId = " + jobid + " - hash = " + hash);
                         bgeejobservice.getJobStatus(hash, jobid, true)
                             .then(function(data, status){
@@ -92,11 +100,30 @@ angular
                 resolve:
 
                 {
-                	//FIXME: same problem of routing triggering as described above
+                    appInit: function(){return true;},
+                    loading: function(){return true;},
+                    whatIsLoading: function(){console.log("whatIsLoading = results");return 'results.';},
+
                     jobStatus: function($q, $route, bgeejobservice){
+
                         var deferred = $q.defer();
                         var hash = $route.current.params.hash;
-                        bgeejobservice.getJobData(hash)
+
+                        if(typeof hash == 'undefined'){
+                            console.log("Hash parameter missing from jobStatus")
+                            return deferred.reject("hash parameter missing from jobStatus");
+                        }
+
+                        console.time("getJobResultService");
+//                        bgeejobservice.getJobData(hash)
+//                        .then(function(data, status){
+//                            //console.log(data);
+//                            deferred.resolve(data)
+//                        })
+//                        .catch(function(data, status){
+//                            deferred.reject(data)
+//                        });
+                        bgeejobservice.getJobResult(hash)
                             .then(function(data, status){
                                 //console.log(data);
                                 deferred.resolve(data)
@@ -104,6 +131,7 @@ angular
                             .catch(function(data, status){
                                 deferred.reject(data)
                             });
+                        console.timeEnd("getJobResultService");
                         return deferred.promise;
                     }
                 }

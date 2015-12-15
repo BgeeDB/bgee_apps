@@ -26,5 +26,13 @@
 {
     "topic": "p-value threshold",
     "help": "Anatomical terms with a p-value higher than this threshold will not be considered as significant."
+},
+{
+    "topic": "email",
+    "help": "Enter your email to be notified when the job is completed (Optional)."
+},
+{
+    "topic": "job name",
+    "help": "Title or short description of an analysis (Optional)."
 }
 ]

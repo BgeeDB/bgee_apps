@@ -8,45 +8,42 @@
         .module('app')
         .factory('helpservice', helpservice);
 
-    helpservice.$inject = ['$http', '$cookies'];
+    helpservice.$inject = ['$http','logger'];
 
-    function helpservice($http, $cookies) {
+    function helpservice($http, logger) {
 
 
         var service = {
-            getHelpCookie : getHelpCookie,
-            setHelpCookie: setHelpCookie,
+            getHelp : getHelp,
+            setHelp: setHelp,
             getOnlineHelp: getOnlineHelp
         };
 
         return service;
 
-        function getHelpCookie () {
-            var valueFromCookieKey = readTopAnatCookie('topanat-show-help');
+        function getHelp () {
+            var value = readTopAnatLocalStorage('topanat-show-help');
 
-            if (typeof valueFromCookieKey !== 'undefined') {
+            if (typeof value !== 'undefined') {
                 /* SD: We need booleans in order to show/hide the panel whereas we get strings!
                  * Hence the hack... */
-                if (valueFromCookieKey === 'true') {
+                if (value === 'true') {
                     return true;
                 }
-                else if (valueFromCookieKey === 'false') {
+                else if (value === 'false') {
                     return false;
-                }
-                else {
-                    logger.error("getShowHelpCookie - Problem with cookies: " + valueFromCookieKey + " not recognized");
-                    return true;
                 }
             }
             return true;
         }
 
-        function readTopAnatCookie(name) {
-            return $cookies.get(name);
+        function readTopAnatLocalStorage(name) {
+            var value = localStorage.getItem('topanat-show-help');
+            return value;
         }
 
-        function setHelpCookie(flag) {
-            $cookies.put('topanat-show-help', flag);
+        function setHelp(flag) {
+            localStorage.setItem('topanat-show-help', flag);
         }
 
         function getOnlineHelp(url) {
@@ -54,7 +51,6 @@
                 .then(getResults)
 
             function getResults(response) {
-                console.log(response.data)
                 return response.data
             }
         }

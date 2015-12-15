@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.logging.log4j.Logger;
@@ -30,6 +31,7 @@ public abstract class TestAncestor {
     public static HttpServletResponse getMockHttpServletResponse() throws IOException {
         HttpServletResponse mockResponse = mock(HttpServletResponse.class);
         when(mockResponse.getWriter()).thenReturn(mock(PrintWriter.class));
+        when(mockResponse.getOutputStream()).thenReturn(mock(ServletOutputStream.class));
         return mockResponse;
     }
 	/**

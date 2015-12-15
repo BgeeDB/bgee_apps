@@ -326,7 +326,8 @@ public class CommandTopAnat extends CommandParent {
                 result.getResultDirectory(), result.getZipFileName());
         Function<TopAnatResults, String> generateFileName = result -> 
             result.getTopAnatParams().toString("_", "_", false)
-            .replace(' ', '_').replace(':', '_') + ".zip";
+            .replace(' ', '_').replace(':', '_') 
+            + "_" + result.getTopAnatParams().getKey() + ".zip";
             
         String globalFileName = "";
         String jobTitle = this.requestParameters.getFirstValue(

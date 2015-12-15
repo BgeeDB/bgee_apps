@@ -644,81 +644,102 @@ public class TopAnatParams {
      * 
      */
     public String toString(){
-        return this.toString(false);
+        return this.toString(": ", System.lineSeparator(), true);
     }
 
     /**
      * 
      */
-    public String toString(boolean prettyPrinting){
-        String sep =" ";
-        if(prettyPrinting == true)
-            sep ="\t";
+    public String toString(String valSep, String paramSep, boolean displayDetails){
         StringBuffer ret = new StringBuffer();
-        ret.append("submittedForegroundIds:");
-        ret.append(sep);
-        ret.append(this.submittedForegroundIds.toString());
-        ret.append("\r\n");
-        ret.append("submittedBackgroundIds:");
-        ret.append(sep);
-        if(this.submittedBackgroundIds != null)
-            ret.append(this.submittedBackgroundIds.toString());
-        ret.append("\r\n");
-        ret.append("speciesId:");
-        ret.append(sep);
-        if(this.speciesId != null)
+        if (displayDetails) {
+            ret.append("submittedForegroundIds");
+            ret.append(valSep);
+            ret.append(this.submittedForegroundIds.toString());
+            ret.append(paramSep);
+            ret.append("submittedBackgroundIds");
+            ret.append(valSep);
+            if(this.submittedBackgroundIds != null)
+                ret.append(this.submittedBackgroundIds.toString());
+            ret.append(paramSep);
+        }
+        
+        if(this.speciesId != null) {
+            ret.append("speciesId");
+            ret.append(valSep);
             ret.append(this.speciesId);
-        ret.append("\r\n");
-        ret.append("callType:");
-        ret.append(sep);
+            ret.append(paramSep);
+        }
+        
+        if(this.devStageId != null) {
+            ret.append("devStageId");
+            ret.append(valSep);
+            ret.append(this.devStageId.toString());
+            ret.append(paramSep);
+        }
+        
+        if (displayDetails) {
+            ret.append("callType");
+            ret.append(valSep);
+        }
         if(this.callType != null)
             ret.append(this.callType.toString());
-        ret.append("\r\n");
-        ret.append("dataQuality:");
-        ret.append(sep);
+        ret.append(paramSep);
+        
+        if (displayDetails) {
+            ret.append("dataQuality");
+            ret.append(valSep);
+        }
         if(this.dataQuality != null)
             ret.append(this.dataQuality.toString());
-        ret.append("\r\n");
-        ret.append("dataTypes:");
-        ret.append(sep);
+        ret.append(paramSep);
+        
+        if (displayDetails) {
+            ret.append("dataTypes");
+            ret.append(valSep);
+        }
         if(this.dataTypes != null)
-            ret.append(this.dataTypes.toString());
-        ret.append("\r\n");
-        ret.append("devStageId:");
-        ret.append(sep);
-        if(this.devStageId != null)
-            ret.append(this.devStageId.toString());
-        ret.append("\r\n");
-        ret.append("decorrelationType:");
-        ret.append(sep);
-        if(this.decorrelationType != null)
+            ret.append(this.dataTypes.stream().sorted()
+                    .map(Object::toString).collect(Collectors.joining(valSep)));
+        ret.append(paramSep);
+        
+        if (displayDetails) {
+            ret.append("decorrelationType");
+            ret.append(valSep);
+        }
+        if(this.decorrelationType != null) {
             ret.append(this.decorrelationType.toString());
-        ret.append("\r\n");
-        ret.append("statisticTest:");
-        ret.append(sep);
-        if(this.statisticTest != null)
-            ret.append(this.statisticTest.toString());
-        ret.append("\r\n");
-        ret.append("nodeSize:");
-        ret.append(sep);
-        if(this.nodeSize != null)
-            ret.append(this.nodeSize.toString());
-        ret.append("\r\n");
-        ret.append("fdrThreshold:");
-        ret.append(sep);
-        if(this.fdrThreshold != null)
-            ret.append(this.fdrThreshold.toString());
-        ret.append("\r\n");
-        ret.append("pvalueThreshold:");
-        ret.append(sep);
-        if(this.pvalueThreshold != null)
-            ret.append(this.pvalueThreshold.toString());
-        ret.append("\r\n");
-        ret.append("numberOfSignificantNodes:");
-        ret.append(sep);
-        if(this.numberOfSignificantNodes != null)
-            ret.append(this.numberOfSignificantNodes.toString());
-        ret.append("\r\n");
+        }
+        
+        if (displayDetails) {
+            ret.append(paramSep);
+            
+            ret.append("statisticTest");
+            ret.append(valSep);
+            if(this.statisticTest != null)
+                ret.append(this.statisticTest.toString());
+            ret.append(paramSep);
+            ret.append("nodeSize");
+            ret.append(valSep);
+            if(this.nodeSize != null)
+                ret.append(this.nodeSize.toString());
+            ret.append(paramSep);
+            ret.append("fdrThreshold");
+            ret.append(valSep);
+            if(this.fdrThreshold != null)
+                ret.append(this.fdrThreshold.toString());
+            ret.append(paramSep);
+            ret.append("pvalueThreshold");
+            ret.append(valSep);
+            if(this.pvalueThreshold != null)
+                ret.append(this.pvalueThreshold.toString());
+            ret.append(paramSep);
+            ret.append("numberOfSignificantNodes");
+            ret.append(valSep);
+            if(this.numberOfSignificantNodes != null)
+                ret.append(this.numberOfSignificantNodes.toString());
+        }
+        
         return ret.toString();
     }
 

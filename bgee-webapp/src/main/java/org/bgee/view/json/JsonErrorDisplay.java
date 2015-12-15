@@ -88,7 +88,7 @@ public class JsonErrorDisplay extends JsonParentDisplay implements ErrorDisplay 
         LinkedHashMap<String, Object> data = new LinkedHashMap<>();
         data.put(EXCEPTION_TYPE_KEY, "UnsupportedOperationException");
         this.sendResponse(HttpServletResponse.SC_BAD_REQUEST, "This operation is not supported "
-                + "for the requesed view or the requested parameters.", data);
+                + "for the requested view or the requested parameters.", data);
         
         log.exit();
     }

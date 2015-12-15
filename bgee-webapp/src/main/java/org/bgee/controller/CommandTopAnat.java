@@ -1,6 +1,12 @@
 package org.bgee.controller;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -15,9 +21,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
@@ -102,10 +112,13 @@ public class CommandTopAnat extends CommandParent {
      * @param viewFactory       A {@code ViewFactory} providing the views of the appropriate 
      *                          display type.
      * @param serviceFactory    A {@code ServiceFactory} that provides bgee services.
+     * @param context           The {@code ServletContext} of the servlet using this object. 
+     *                          Notably used when forcing file download.
      */
     public CommandTopAnat(HttpServletResponse response, RequestParameters requestParameters, 
-            BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory) {
-        super(response, requestParameters, prop, viewFactory, serviceFactory);
+            BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory, 
+            ServletContext context) {
+        super(response, requestParameters, prop, viewFactory, serviceFactory, context);
         messages = new ArrayList<>();
     }
 
@@ -114,7 +127,13 @@ public class CommandTopAnat extends CommandParent {
             MissingParameterException {
         log.entry();
         
-        TopAnatDisplay display = this.viewFactory.getTopAnatDisplay();
+        //we initialize the display only if there is no file to download requested, 
+        //otherwise we could not obtain the response outputstream to directly print 
+        //the file to send to it.
+        TopAnatDisplay display = null;
+        if (!this.requestParameters.isATopAnatDownloadFile()) {
+            display = this.viewFactory.getTopAnatDisplay();
+        }
         
         // Gene list validation 
         if (this.requestParameters.isATopAnatGeneUpload()) {
@@ -264,6 +283,12 @@ public class CommandTopAnat extends CommandParent {
             data.put("topAnatResults", topAnatResults.collect(Collectors.toSet()));
             display.sendResultResponse(data, "");
 
+            
+         // Download result zip file
+        } else if (this.requestParameters.isATopAnatDownloadFile()) {
+            
+            this.launchExportDownload();
+            
         // Home page, empty
         } else if (this.requestParameters.getAction() == null) {
             display.displayTopAnatHomePage();
@@ -274,6 +299,97 @@ public class CommandTopAnat extends CommandParent {
                 + " parameter value."));
         }
 
+        log.exit();
+    }
+    
+    /**
+     * Launch the downloading of a TopAnat result files from the server to the client.
+     * 
+     * @throws InvalidRequestException
+     * @throws MissingParameterException
+     * @throws UnsupportedEncodingException
+     * @throws IOException
+     */
+    private void launchExportDownload() throws InvalidRequestException, MissingParameterException, 
+        UnsupportedEncodingException, IOException {
+        log.entry();
+        
+        final TopAnatController controller = this.loadTopAnatController();
+        if (!controller.areAnalysesDone()) {
+            throw log.throwing(new InvalidRequestException(
+                    "No results available for the provided parameters."));
+        }
+        List<TopAnatResults> topAnatResults = controller.proceedToTopAnatAnalyses()
+                .collect(Collectors.toList());
+        Function<TopAnatResults, Path> generateFilePath = result -> 
+            Paths.get(controller.getBgeeProperties().getTopAnatResultsWritingDirectory(), 
+                result.getResultDirectory(), result.getZipFileName());
+        Function<TopAnatResults, String> generateFileName = result -> 
+            result.getTopAnatParams().toString("_", "_", false)
+            .replace(' ', '_').replace(':', '_') + ".zip";
+            
+        String globalFileName = "";
+        String jobTitle = this.requestParameters.getFirstValue(
+                this.requestParameters.getUrlParametersInstance().getParamJobTitle());
+        if (StringUtils.isNotBlank(jobTitle)) {
+            globalFileName += jobTitle + "_";
+        }
+        globalFileName += this.requestParameters.getDataKey() + ".zip";
+        
+        //If several results are requested, then we will generate a zip of the result zips, 
+        //that will be directly printed to the response outputstream. 
+        //Otherwise, we simply send the already existing zip file of one analysis result
+        String requestedAnalysisId = this.requestParameters.getFirstValue(
+                this.requestParameters.getUrlParametersInstance().getParamAnalysisId());
+        
+        if (StringUtils.isNotBlank(requestedAnalysisId) || topAnatResults.size() == 1) {
+            for (TopAnatResults result: topAnatResults) {
+                if (topAnatResults.size() != 1 && 
+                        !result.getTopAnatParams().getKey().equals(requestedAnalysisId)) {
+                    continue;
+                }
+                String filePath = generateFilePath.apply(result).toString();
+                String fileName = URLEncoder.encode(generateFileName.apply(result), "UTF-8");
+                //if there is only one result, and the user gave a title to its analysis, 
+                //then this is what we use. 
+                if (topAnatResults.size() == 1 && StringUtils.isNotBlank(jobTitle)) {
+                    fileName = globalFileName;
+                }
+                this.launchFileDownload(filePath, fileName);
+                //OK, we stop here, we have sent the requested file
+                log.exit(); return;
+            }
+        }
+        
+        //If several analysis results are requested:  
+        //update response for sending the file to the client. We will write directly 
+        //to the response outputstream. 
+        response.setContentType("application/zip");
+        //we don't send the length to not have to first generate the file
+        //response.setContentLength((int) downloadFile.length());
+        response.setHeader("Content-Disposition", "attachment; filename=\"" 
+            + URLEncoder.encode(globalFileName, "UTF-8") + '"');
+
+        // create byte buffer
+        byte[] buffer = new byte[1024];
+        ZipOutputStream zos = new ZipOutputStream(this.response.getOutputStream());
+
+        for (TopAnatResults result: topAnatResults) {
+            File srcFile = generateFilePath.apply(result).toFile();
+            FileInputStream fis = new FileInputStream(srcFile);
+            // begin writing a new ZIP entry, positions the stream to the start of the entry data
+            zos.putNextEntry(new ZipEntry(URLEncoder.encode(generateFileName.apply(result), "UTF-8")));
+            int length;
+            while ((length = fis.read(buffer)) > 0) {
+                zos.write(buffer, 0, length);
+            }
+            zos.closeEntry();
+            // close the InputStream
+            fis.close();
+        }
+        // close the ZipOutputStream
+        zos.close();
+        
         log.exit();
     }
     

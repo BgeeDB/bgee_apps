@@ -127,7 +127,7 @@ public class CommandTopAnatTest extends TestAncestor {
         log.info("Generated query URL: " + params.getRequestURL());
 
         CommandTopAnat controller = new CommandTopAnat(mock(HttpServletResponse.class),
-                params, mock(BgeeProperties.class), viewFac, serviceFac);
+                params, mock(BgeeProperties.class), viewFac, serviceFac, null);
         controller.processRequest();
 
         LinkedHashMap<String, Long> fgSpToGeneCount = new LinkedHashMap<>();
@@ -207,7 +207,7 @@ public class CommandTopAnatTest extends TestAncestor {
         log.info("Generated query URL: " + params.getRequestURL());
 
         CommandTopAnat controller = new CommandTopAnat(mock(HttpServletResponse.class),
-                params, mock(BgeeProperties.class), viewFac, serviceFac);
+                params, mock(BgeeProperties.class), viewFac, serviceFac, null);
         controller.processRequest();
 
         JobResponse response1 = new JobResponse(jobId, "DONE", keyParam);

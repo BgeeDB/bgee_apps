@@ -1016,6 +1016,8 @@ public class RequestParameters {
         log.entry(parametersSeparator, searchOrHashParams, areSearchParams);
 
         // If there is a key already present, continue to work with a key
+        String previousKey = this.getDataKey();
+        boolean toStore = false;
         if(StringUtils.isNotBlank(this.getDataKey())){
             // Regenerate the key in case a storable param has changed
             // Always use & as separator to generate the key, so the key is the same for 
@@ -1027,6 +1029,10 @@ public class RequestParameters {
             // the key parameter
             this.parametersQuery = generateParametersQuery(null, false, true,parametersSeparator, 
                     searchOrHashParams, areSearchParams);
+            //if the key has changed, we need to store again this RequestParameters
+            if (StringUtils.isNotBlank(this.getDataKey()) && !this.getDataKey().equals(previousKey)) {
+                toStore = true;
+            }
         } else{
             // No key for the moment, generate the query and then evaluate if its
             // length is still under the threshold at which the key is used
@@ -1040,11 +1046,14 @@ public class RequestParameters {
                 // are always in the search part of the URL to generate the key.
                 this.generateKey(this.generateParametersQuery(null, true, false,"&", null, false));
                 if(StringUtils.isNotBlank(this.getDataKey())){
-                    this.store();
-                    this.generateParametersQuery(parametersSeparator, 
-                            searchOrHashParams, areSearchParams);
+                    toStore = true;
                 }
             }    
+        }
+        if (toStore) {
+            this.store();
+            this.generateParametersQuery(parametersSeparator, 
+                    searchOrHashParams, areSearchParams);
         }
 
         log.exit();

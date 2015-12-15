@@ -3,6 +3,7 @@ package org.bgee.model.anatdev;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.NestedSetModelEntity;
+import org.bgee.model.ontology.OntologyElement;
 
 /**
  * Class describing developmental stages.
@@ -12,7 +13,7 @@ import org.bgee.model.NestedSetModelEntity;
  * @version Bgee 13, Nov. 2015
  * @since   Bgee 13
  */ 
-public class DevStage extends NestedSetModelEntity {
+public class DevStage extends NestedSetModelEntity implements OntologyElement<DevStage> {
     private final static Logger log = LogManager.getLogger(DevStage.class.getName());
     
     /**

@@ -63,6 +63,12 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
             Set<RelationType> relationTypes, Set<RelationStatus> relationStatus) throws DAOException;
 
     /**
+     * TODO
+     */
+    public RelationTOResultSet getAnatEntityRelations(Set<String> speciesIds, Set<String> anatEntityIds, 
+            Set<RelationType> relationTypes, Set<RelationStatus> relationStatus) throws DAOException;
+
+    /**
      * Retrieve all relations between stages from data source. The relations 
      * can be filtered by species IDs or {@code RelationStatus} (the only parenthood 
      * relations between stages are "is_a" relations).
@@ -79,6 +85,12 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
      * @throws DAOException If an error occurred when accessing the data source. 
      */
     public RelationTOResultSet getStageRelationsBySpeciesIds(Set<String> speciesIds, 
+            Set<RelationStatus> relationStatus) throws DAOException;
+
+    /**
+     * TODO
+     */
+    public RelationTOResultSet getStageRelations(Set<String> speciesIds, Set<String> stageIds,
             Set<RelationStatus> relationStatus) throws DAOException;
 
     /**

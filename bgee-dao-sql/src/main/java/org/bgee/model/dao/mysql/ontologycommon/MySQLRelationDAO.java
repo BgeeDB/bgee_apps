@@ -49,10 +49,15 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         super(manager);
     }
 
-    @Override
-    public RelationTOResultSet getAnatEntityRelationsBySpeciesIds(Set<String> speciesIds, 
+    public RelationTOResultSet getAnatEntityRelations(Set<String> speciesIds, Set<String> anatEntityIds, 
             Set<RelationType> relationTypes, Set<RelationStatus> relationStatus) {
-        log.entry(speciesIds, relationTypes, relationStatus);    
+        log.entry(speciesIds, anatEntityIds, relationTypes, relationStatus);
+        
+        // TODO manage anatEntityIds
+        if (anatEntityIds != null) {
+            throw log.throwing(new UnsupportedOperationException(
+                    "Filtering by anat. entity IDs is not already implemented"));
+        }
 
         String tableName = "anatEntityRelation";
         
@@ -75,16 +80,17 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
             }
         }
         sql += " FROM " + tableName;
-        
+
         if (isSpeciesFilter) {
             sql += " INNER JOIN anatEntityRelationTaxonConstraint ON (" +
                     "anatEntityRelationTaxonConstraint.anatEntityRelationId = "
                     + tableName + ".anatEntityRelationId)";
         }
-        
+
         if (isSpeciesFilter || isRelationTypeFilter || isRelationStatusFilter) {
             sql += " WHERE ";
         }
+        
         if (isSpeciesFilter) {
             sql += "(anatEntityRelationTaxonConstraint.speciesId IS NULL" +
                    " OR anatEntityRelationTaxonConstraint.speciesId IN (" +
@@ -103,45 +109,55 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
                 sql += " AND ";
             }
             sql += " relationStatus IN (" + 
-            BgeePreparedStatement.generateParameterizedQueryString(relationStatus.size()) + ")";
+                    BgeePreparedStatement.generateParameterizedQueryString(relationStatus.size()) + ")";
         }
-        
-//        sql += " ORDER BY " + tableName + ".anatEntitySourceId, " + 
-//                              tableName + ".anatEntityTargetId";
 
-         //we don't use a try-with-resource, because we return a pointer to the results, 
-         //not the actual results, so we should not close this BgeePreparedStatement.
-         try {
-             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
-             int startIndex = 1;
-             if (isSpeciesFilter) {
-                 stmt.setStringsToIntegers(startIndex, speciesIds, true);
-                 startIndex += speciesIds.size();
-             }
-             if (isRelationTypeFilter) {
-                 stmt.setEnumDAOFields(startIndex, relationTypes, true);
-                 startIndex += relationTypes.size();
-             }
-             if (isRelationStatusFilter) {
-                 stmt.setEnumDAOFields(startIndex, relationStatus, true);
-                 startIndex += relationStatus.size();
-             }
-             return log.exit(new MySQLRelationTOResultSet(stmt));
-         } catch (SQLException e) {
-             throw log.throwing(new DAOException(e));
-         }
+        //we don't use a try-with-resource, because we return a pointer to the results, 
+        //not the actual results, so we should not close this BgeePreparedStatement.
+        try {
+            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
+            int startIndex = 1;
+            if (isSpeciesFilter) {
+                stmt.setStringsToIntegers(startIndex, speciesIds, true);
+                startIndex += speciesIds.size();
+            }
+            if (isRelationTypeFilter) {
+                stmt.setEnumDAOFields(startIndex, relationTypes, true);
+                startIndex += relationTypes.size();
+            }
+            if (isRelationStatusFilter) {
+                stmt.setEnumDAOFields(startIndex, relationStatus, true);
+                startIndex += relationStatus.size();
+            }
+            return log.exit(new MySQLRelationTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+    
+    @Override
+    public RelationTOResultSet getAnatEntityRelationsBySpeciesIds(Set<String> speciesIds, 
+            Set<RelationType> relationTypes, Set<RelationStatus> relationStatus) {
+        log.entry(speciesIds, relationTypes, relationStatus);    
+
+        return log.exit(this.getAnatEntityRelations(speciesIds, null, relationTypes, relationStatus));
     }
      
     @Override
-    public RelationTOResultSet getStageRelationsBySpeciesIds(Set<String> speciesIds, 
+    public RelationTOResultSet getStageRelations(Set<String> speciesIds, Set<String> stageIds, 
             Set<RelationStatus> relationStatus) {
         //NOTE: there is no relation table for stages, as they are represented 
         //as a nested set model. So, this method will emulate the existence of such a table, 
         //so that retrieval of relations between stages will be consistent with retrieval 
         //of relations between anatomical entities.
-        
-        log.entry(speciesIds, relationStatus); 
-        
+        log.entry(speciesIds, stageIds, relationStatus);    
+
+        // TODO manage stageIds
+        if (stageIds != null) {
+            throw log.throwing(new UnsupportedOperationException(
+                    "Filtering by stage IDs is not already implemented"));
+        }
+
         boolean isSpeciesFilter = speciesIds != null && speciesIds.size() > 0;
         boolean isRelationStatusFilter = relationStatus != null && relationStatus.size() > 0;
         
@@ -166,7 +182,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         sql += 
             // no relationId, provide 0 for all
             "(SELECT DISTINCT 0 AS stageRelationId, " +
-        	"t3.stageId AS stageSourceId, " +
+            "t3.stageId AS stageSourceId, " +
             "t1.stageId AS stageTargetId, " +
             //no other parenthood relations between stages other than is_a
             "'" + RelationType.ISA_PARTOF.getStringRepresentation() + "' AS relationType, " +
@@ -230,6 +246,13 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
          } catch (SQLException e) {
              throw log.throwing(new DAOException(e));
          }
+    }
+
+    @Override
+    public RelationTOResultSet getStageRelationsBySpeciesIds(Set<String> speciesIds, 
+            Set<RelationStatus> relationStatus) {
+        log.entry(speciesIds, relationStatus);
+        return log.exit(this.getStageRelations(speciesIds, null, relationStatus));        
     }
 
     /** 

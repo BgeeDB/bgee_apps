@@ -298,16 +298,6 @@ textarea {
   padding-right: 15px;
 }
 
-
-html {
-    position: relative;
-    min-height: 100%;
-}
-body {
-    /* Margin bottom by footer height */
-    margin-bottom: 60px;
-}
-
 .gl-sizetransformable {
     -webkit-transition: font-size 300ms linear;
     -moz-transition: font-size 300ms linear;
@@ -407,14 +397,6 @@ body {
 .progress {
     position: relative;
     height: 12px;
-}
-#footer {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    /* Set the fixed height of the footer here */
-    height: 60px;
-    background-color: #f5f5f5;
 }
 
 .slide.ng-enter, .slide.ng-leave {

@@ -70,7 +70,9 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
             "browser</a> to improve your experience.</p>" +
         "<![endif]-->");
 
-        this.writeln("<div class='corner-ribbon top-left sticky red shadow'>Beta</div>");
+        //FB: I really hate this ribbon :p
+        //this.writeln("<div class='corner-ribbon top-left sticky red shadow'>Beta</div>");
+        this.writeln("<h1>TopAnat - Gene Expression Enrichment <span class='alert'>(BETA VERSION)</span></h1>");
         
         this.writeln("<div style='margin-left: 20px; margin-right: 20px' ng-view=''>" +
 

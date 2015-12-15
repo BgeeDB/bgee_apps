@@ -352,7 +352,7 @@
         console.timeEnd("getonlineHelp");
 
         function getAllOnlineHelpItems() {
-            return helpservice.getOnlineHelp('/json/help.json')
+            return helpservice.getOnlineHelp('js/topanat/json/help.json')
                 .then(function (data) {
                     vm.onlineHelp = data;
                     showMessage($scope, false);

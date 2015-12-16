@@ -3,6 +3,7 @@ package org.bgee.model.ontology;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -38,16 +39,17 @@ public class OntologyTest extends TestAncestor {
         Ontology<AnatEntity> ontology = new Ontology<>(elements, relations);
         System.out.println(ontology);
         
-        Set<AnatEntity> ancestors = ontology.getAncestors(ae3);
+        Set<AnatEntity> ancestors = ontology.getAncestors(ae3, EnumSet.allOf(RelationType.class));
         Set<AnatEntity> expAncestors = new HashSet<>(Arrays.asList(ae1, ae2, ae2p));
         assertEquals("Incorrects ancestors", expAncestors, ancestors);
         
-        ancestors = ontology.getAncestors(ae2p);
+        ancestors = ontology.getAncestors(ae2p, EnumSet.allOf(RelationType.class));
         expAncestors = new HashSet<>(Arrays.asList(ae1));
         assertEquals("Incorrects ancestors", expAncestors, ancestors);
 
-        ancestors = ontology.getAncestors(ae1);
-        assertEquals("Incorrects ancestors", null, ancestors);
+        ancestors = ontology.getAncestors(ae1, EnumSet.allOf(RelationType.class));
+        expAncestors = new HashSet<>();
+        assertEquals("Incorrects ancestors", expAncestors, ancestors);
     }
     
     /**
@@ -64,16 +66,17 @@ public class OntologyTest extends TestAncestor {
 
         Ontology<AnatEntity> ontology = new Ontology<>(elements, relations);
         
-        Set<AnatEntity> descendants = ontology.getDescendants(ae1);
-        Set<AnatEntity> expDescendants = new HashSet<>(Arrays.asList(ae2, ae2p, ae3));
+        Set<AnatEntity> descendants = ontology.getDescendants(ae1, EnumSet.of(RelationType.ISA_PARTOF));
+        Set<AnatEntity> expDescendants = new HashSet<>(Arrays.asList(ae2, ae3));
         assertEquals("Incorrects descendants", expDescendants, descendants);
 
-        descendants = ontology.getDescendants(ae2);
+        descendants = ontology.getDescendants(ae2, EnumSet.allOf(RelationType.class));
         expDescendants = new HashSet<>(Arrays.asList(ae3));
         assertEquals("Incorrects descendants", expDescendants, descendants);
 
-        descendants = ontology.getDescendants(ae3);
-        assertEquals("Incorrects descendants", null, descendants);
+        descendants = ontology.getDescendants(ae3, EnumSet.allOf(RelationType.class));
+        expDescendants = new HashSet<>();
+        assertEquals("Incorrects descendants", expDescendants, descendants);
     }
 
     /**
@@ -92,6 +95,7 @@ public class OntologyTest extends TestAncestor {
                 new RelationTO("2", "UBERON:0002p", "UBERON:0001", RelationType.DEVELOPSFROM, RelationStatus.DIRECT),
                 new RelationTO("3", "UBERON:0003", "UBERON:0002", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
                 new RelationTO("4", "UBERON:0003", "UBERON:0002p", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-                new RelationTO("5", "UBERON:0003", "UBERON:0001", RelationType.ISA_PARTOF, RelationStatus.INDIRECT)));
+                new RelationTO("5", "UBERON:0003", "UBERON:0001", RelationType.ISA_PARTOF, RelationStatus.INDIRECT),
+                new RelationTO("6", "totoA", "totoB", RelationType.ISA_PARTOF, RelationStatus.DIRECT)));
     }
 }

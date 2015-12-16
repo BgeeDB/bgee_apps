@@ -2,22 +2,23 @@ package org.bgee.model.ontology;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Entity;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType;
 
 /**
  * Class allowing to describe an ontology. 
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Dec. 2013
- * @since   Bgee 13, Dec. 2013
+ * @version Bgee 13, Dec. 2015
+ * @since   Bgee 13, Dec. 2015
  * @param <T>
  */
 public class Ontology<T extends Entity & OntologyElement<T>> {
@@ -60,10 +61,12 @@ public class Ontology<T extends Entity & OntologyElement<T>> {
      * are target elements of the relations, the associated value being a {@code Set} that are
      * the elements of their associated sources.
      * 
-     * @param childrenToParents     A {@code boolean} defining whether the returned {@code Map} 
-     *                              will associate a source to its targets, or a target 
-     *                              to its sources. If {@code true}, it will associate 
-     *                              a source to its targets.
+     * @param element               A {@code T} that is the element for which relatives are recovered. 
+     * @param isAncestors           A {@code boolean} defining whether the returned {@code Set}
+     *                              are ancestors or descendants. If {@code true},
+     *                              it will retrieved ancestors.
+     * @param relationTypes         A {@code Set} of {@code RelationType}s that are the relation 
+     *                              types allowing to filter the relations to retrieve.
      * @return                      A {@code Map} where keys are {@code String}s representing the  
      *                              {@code T}s of either the sources or the targets of relations,   
      *                              the associated value being {@code Set} of {@code T}s that are  
@@ -74,34 +77,32 @@ public class Ontology<T extends Entity & OntologyElement<T>> {
      *                                  a relation of the ontology.
      */
     // TODO DRY in BgeeUtils.getIsAPartOfRelativesFromDb()
-    private Map<T, Set<T>> getRelatives(boolean childrenToParents) {
-        log.entry(childrenToParents);
+    private Set<T> getRelatives(T element, boolean isAncestors, Set<RelationType> relationTypes) {
+        log.entry(element, isAncestors, relationTypes);
 
-        Map<T, Set<T>> relativesMap = new HashMap<>();
+        Set<T> relatives = new HashSet<>();
+        
+        Set<RelationType> usedRelationTypes = relationTypes == null? 
+                new HashSet<>(EnumSet.allOf(RelationType.class)): new HashSet<>(relationTypes);
 
-        for (RelationTO relTO: this.relations) {
-            T key = null;
-            T value = null;
-            if (childrenToParents) {
-                key = this.getElement(relTO.getSourceId());
-                value = this.getElement(relTO.getTargetId());
-            } else {
-                key = this.getElement(relTO.getTargetId());
-                value = this.getElement(relTO.getSourceId());
-            }
-            if (key == null || value == null) {
-                throw log.throwing(new IllegalStateException(
-                        "Source [" + relTO.getSourceId() + "] and/or target [" + relTO.getTargetId() +
-                        "] elements not found in the ontology"));
-            }
-            Set<T> relatives = relativesMap.get(key);
-            if (relatives == null) {
-                relatives = new HashSet<>();
-                relativesMap.put(key, relatives);
-            }
-            relatives.add(value);
+        Set<RelationTO> filteredRelations = this.relations.stream()
+                .filter(r -> usedRelationTypes.contains(r.getRelationType()))
+                .collect(Collectors.toSet());
+        
+        if (isAncestors) {
+            relatives = filteredRelations.stream()
+                    .filter(r -> r.getSourceId().equals(element.getId()))
+                    .map(r -> this.getElement(r.getTargetId()))
+                    .filter(e -> e != null)
+                    .collect(Collectors.toSet());
+        } else {
+            relatives = filteredRelations.stream()
+                    .filter(r-> r.getTargetId().equals(element.getId()))
+                    .map(r -> this.getElement(r.getSourceId()))
+                    .filter(e -> e != null)
+                    .collect(Collectors.toSet());
         }
-        return log.exit(relativesMap);
+        return log.exit(relatives);
     }
 
     /**
@@ -111,7 +112,7 @@ public class Ontology<T extends Entity & OntologyElement<T>> {
      * @return      A {@code T} that is the element corresponding to the given {@code id}.
      *              Return {@code null} if the element is not found in the ontology.
      */
-    private T getElement(String id) {
+    public T getElement(String id) {
         log.entry(id);
         for (T t: elements) {
             if (t.getId().equals(id))
@@ -123,33 +124,37 @@ public class Ontology<T extends Entity & OntologyElement<T>> {
     /**
      * Get ancestors of the given {@code element}.
      * 
-     * @param element   A {@code T} that is the element for which ancestors are recovered. 
-     * @return          A {@code Set} of {@code T}s that are the ancestors
-     *                  of the given {@code element}.
+     * @param element       A {@code T} that is the element for which ancestors are recovered. 
+     * @param relationTypes A {@code Set} of {@code RelationType}s that are the relation 
+     *                      types allowing to filter the relations to retrieve.
+     * @return              A {@code Set} of {@code T}s that are the ancestors
+     *                      of the given {@code element}.
      * @throws IllegalArgumentException If {@code element} is {@code null}.
      */
-    public Set<T> getAncestors(T element) {
-        log.entry(element);
+    public Set<T> getAncestors(T element, Set<RelationType> relationTypes) {
+        log.entry(element, relationTypes);
         if (element == null) {
             throw log.throwing(new IllegalArgumentException("Element is null"));
         }
-        return log.exit(getRelatives(true).get(element));
+        return log.exit(this.getRelatives(element, true, relationTypes));
     }
 
     /**
      * Get descendants of the given {@code element}.
      * 
-     * @param element   A {@code T} that is the element for which descendants are recovered. 
-     * @return          A {@code Set} of {@code T}s that are the descendants
-     *                  of the given {@code element}.
+     * @param element       A {@code T} that is the element for which descendants are recovered. 
+     * @param relationTypes A {@code Set} of {@code RelationType}s that are the relation 
+     *                      types allowing to filter the relations to retrieve.
+     * @return              A {@code Set} of {@code T}s that are the descendants
+     *                      of the given {@code element}.
      * @throws IllegalArgumentException If {@code element} is {@code null}.
      */
-    public Set<T> getDescendants(T element) {
-        log.entry(element);
+    public Set<T> getDescendants(T element, Set<RelationType> relationTypes) {
+        log.entry(element, relationTypes);
         if (element == null) {
             throw log.throwing(new IllegalArgumentException("Element is null"));
         }
-        return log.exit(getRelatives(false).get(element));
+        return log.exit(this.getRelatives(element, false, relationTypes));
     }
 
     @Override

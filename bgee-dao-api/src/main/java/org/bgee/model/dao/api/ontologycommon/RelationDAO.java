@@ -16,9 +16,9 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType
  * DAO defining queries using or retrieving {@link RelationTO}s. 
  * 
  * @author Valentine Rech de Laval
- * @version Bgee 13
- * @see RelationTO
+ * @version Bgee 13, Dec. 2015
  * @since Bgee 13
+ * @see RelationTO
  */
 public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
     /**

@@ -25,9 +25,9 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType
  * A {@code RelationDAO} for MySQL. 
  * 
  * @author Valentine Rech de Laval
- * @version Bgee 13
- * @see org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO
+ * @version Bgee 13, Dec. 2015
  * @since Bgee 13
+ * @see org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO
  */
 //TODO: add a boolean to the methods, to define whether to retrieve relations valid 
 //in any requested species, or in all requested species.
@@ -53,15 +53,10 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
             Set<RelationType> relationTypes, Set<RelationStatus> relationStatus) {
         log.entry(speciesIds, anatEntityIds, relationTypes, relationStatus);
         
-        // TODO manage anatEntityIds
-        if (anatEntityIds != null) {
-            throw log.throwing(new UnsupportedOperationException(
-                    "Filtering by anat. entity IDs is not already implemented"));
-        }
-
         String tableName = "anatEntityRelation";
         
         boolean isSpeciesFilter = speciesIds != null && speciesIds.size() > 0;
+        boolean isAnatEntityFilter = anatEntityIds != null && anatEntityIds.size() > 0;
         boolean isRelationTypeFilter = relationTypes != null && relationTypes.size() > 0;
         boolean isRelationStatusFilter = relationStatus != null && relationStatus.size() > 0;
         
@@ -87,7 +82,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
                     + tableName + ".anatEntityRelationId)";
         }
 
-        if (isSpeciesFilter || isRelationTypeFilter || isRelationStatusFilter) {
+        if (isSpeciesFilter || isAnatEntityFilter || isRelationTypeFilter || isRelationStatusFilter) {
             sql += " WHERE ";
         }
         
@@ -97,15 +92,24 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
                    BgeePreparedStatement.generateParameterizedQueryString(
                            speciesIds.size()) + "))";
         }
-        if (isRelationTypeFilter) {
+        if (isAnatEntityFilter) {
             if (isSpeciesFilter) {
+                sql += " AND ";
+            }
+            sql += " (anatEntitySourceId IN (" + 
+            BgeePreparedStatement.generateParameterizedQueryString(anatEntityIds.size()) + 
+            ") OR anatEntityTargetId IN (" + 
+            BgeePreparedStatement.generateParameterizedQueryString(anatEntityIds.size()) + ")) ";
+        }
+        if (isRelationTypeFilter) {
+            if (isSpeciesFilter || isAnatEntityFilter) {
                 sql += " AND ";
             }
             sql += " relationType IN (" + 
             BgeePreparedStatement.generateParameterizedQueryString(relationTypes.size()) + ")";
         }
         if (isRelationStatusFilter) {
-            if (isSpeciesFilter || isRelationTypeFilter) {
+            if (isSpeciesFilter || isAnatEntityFilter || isRelationTypeFilter) {
                 sql += " AND ";
             }
             sql += " relationStatus IN (" + 
@@ -120,6 +124,12 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
             if (isSpeciesFilter) {
                 stmt.setStringsToIntegers(startIndex, speciesIds, true);
                 startIndex += speciesIds.size();
+            }
+            if (isAnatEntityFilter) {
+                stmt.setStrings(startIndex, anatEntityIds, true);
+                startIndex += anatEntityIds.size();
+                stmt.setStrings(startIndex, anatEntityIds, true);
+                startIndex += anatEntityIds.size();
             }
             if (isRelationTypeFilter) {
                 stmt.setEnumDAOFields(startIndex, relationTypes, true);
@@ -152,13 +162,8 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         //of relations between anatomical entities.
         log.entry(speciesIds, stageIds, relationStatus);    
 
-        // TODO manage stageIds
-        if (stageIds != null) {
-            throw log.throwing(new UnsupportedOperationException(
-                    "Filtering by stage IDs is not already implemented"));
-        }
-
         boolean isSpeciesFilter = speciesIds != null && speciesIds.size() > 0;
+        boolean isStageFilter = stageIds != null && stageIds.size() > 0;
         boolean isRelationStatusFilter = relationStatus != null && relationStatus.size() > 0;
         
         String sql = null;
@@ -216,8 +221,20 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         }
         sql += ") AS tempTable ";
         
+        if (isStageFilter || isRelationStatusFilter) {
+            sql += " WHERE "; 
+        }
+        if (isStageFilter) {
+            sql += "(stageSourceId IN (" + 
+            BgeePreparedStatement.generateParameterizedQueryString(stageIds.size()) + 
+            ") OR stageTargetId IN (" + 
+            BgeePreparedStatement.generateParameterizedQueryString(stageIds.size()) + ")) ";
+        }
         if (isRelationStatusFilter) {
-            sql += " WHERE relationStatus IN (" + 
+            if (isStageFilter) {
+                sql += " AND ";
+            }
+            sql += "relationStatus IN (" + 
             BgeePreparedStatement.generateParameterizedQueryString(relationStatus.size()) + ")";
         }
 
@@ -237,6 +254,12 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
                  //once for the child stages
                  stmt.setIntegers(startIndex, orderedSpeciesIds, false);
                  startIndex += orderedSpeciesIds.size();
+             }
+             if (isStageFilter) {
+                 stmt.setStrings(startIndex, stageIds, true);
+                 startIndex += stageIds.size();
+                 stmt.setStrings(startIndex, stageIds, true);
+                 startIndex += stageIds.size();
              }
              if (isRelationStatusFilter) {
                  stmt.setEnumDAOFields(startIndex, relationStatus, true);

@@ -43,9 +43,6 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
      * Retrieve all anatomical entity relations from data source. The relations 
      * can be filtered by species IDs, by {@code RelationType}s, and {@code RelationStatus}.
      * <p>
-     * The relations are ordered by source ID and target ID, the only common columns to 
-     * all relation tables. 
-     * <p>
      * The relations are retrieved and returned as a {@code RelationTOResultSet}. It is the 
      * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
@@ -55,15 +52,31 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
      *                          types allowing to filter the relations to retrieve.
      * @param relationStatus    A {@code Set} of {@code RelationStatus} that are the status
      *                          allowing to filter the relations to retrieve.
-     * @return              A {@code RelationTOResultSet} allowing to retrieve anatomical 
-     *                      entity relations from data source.
+     * @return                  A {@code RelationTOResultSet} allowing to retrieve anatomical 
+     *                          entity relations from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
     public RelationTOResultSet getAnatEntityRelationsBySpeciesIds(Set<String> speciesIds,
             Set<RelationType> relationTypes, Set<RelationStatus> relationStatus) throws DAOException;
 
     /**
-     * TODO
+     * Retrieve all anatomical entity relations from data source. The relations can be filtered  
+     * by species IDs, anatomical entity IDs, {@code RelationType}s, and {@code RelationStatus}.
+     * <p>
+     * The relations are retrieved and returned as a {@code RelationTOResultSet}. It is the 
+     * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
+     * 
+     * @param speciesIds        A {@code Set} of {@code String}s that are the IDs of species 
+     *                          to retrieve relations for.
+     * @param anatEntityIds     A {@code Set} of {@code String}s that are the IDs of anat. entities 
+     *                          to retrieve relations for.
+     * @param relationTypes     A {@code Set} of {@code RelationType}s that are the relation 
+     *                          types allowing to filter the relations to retrieve.
+     * @param relationStatus    A {@code Set} of {@code RelationStatus} that are the status
+     *                          allowing to filter the relations to retrieve.
+     * @return                  A {@code RelationTOResultSet} allowing to retrieve anatomical 
+     *                          entity relations from data source.
+     * @throws DAOException If an error occurred when accessing the data source. 
      */
     public RelationTOResultSet getAnatEntityRelations(Set<String> speciesIds, Set<String> anatEntityIds, 
             Set<RelationType> relationTypes, Set<RelationStatus> relationStatus) throws DAOException;
@@ -88,7 +101,22 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
             Set<RelationStatus> relationStatus) throws DAOException;
 
     /**
-     * TODO
+     * Retrieve all relations between stages from data source. The relations 
+     * can be filtered by species IDs, stage IDs or {@code RelationStatus} (the only parenthood 
+     * relations between stages are "is_a" relations).
+     * <p>
+     * The relations are retrieved and returned as a {@code RelationTOResultSet}. It is the 
+     * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
+     * 
+     * @param speciesIds        A {@code Set} of {@code String}s that are the IDs of species 
+     *                          to retrieve relations for.
+     * @param stageIds          A {@code Set} of {@code String}s that are the IDs of stages 
+     *                          to retrieve relations for.
+     * @param relationStatus    A {@code Set} of {@code RelationStatus} that are the status
+     *                          allowing to filter the relations to retrieve.
+     * @return              A {@code RelationTOResultSet} allowing to retrieve stage relations 
+     *                      from data source.
+     * @throws DAOException If an error occurred when accessing the data source. 
      */
     public RelationTOResultSet getStageRelations(Set<String> speciesIds, Set<String> stageIds,
             Set<RelationStatus> relationStatus) throws DAOException;

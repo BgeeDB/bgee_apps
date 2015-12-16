@@ -36,7 +36,8 @@ public class OntologyTest extends TestAncestor {
         Set<AnatEntity> elements = new HashSet<>(Arrays.asList(ae1, ae2, ae2p, ae3));
         Set<RelationTO> relations = this.getRelations();
 
-        Ontology<AnatEntity> ontology = new Ontology<>(elements, relations);
+        Ontology<AnatEntity> ontology = new Ontology<>(elements, relations, 
+                EnumSet.allOf(RelationType.class), EnumSet.allOf(RelationStatus.class));
         System.out.println(ontology);
         
         Set<AnatEntity> ancestors = ontology.getAncestors(ae3, EnumSet.allOf(RelationType.class));
@@ -64,7 +65,8 @@ public class OntologyTest extends TestAncestor {
         Set<AnatEntity> elements = new HashSet<>(Arrays.asList(ae1, ae2, ae2p, ae3));
         Set<RelationTO> relations = this.getRelations();
 
-        Ontology<AnatEntity> ontology = new Ontology<>(elements, relations);
+        Ontology<AnatEntity> ontology = new Ontology<>(elements, relations, 
+                EnumSet.allOf(RelationType.class), EnumSet.allOf(RelationStatus.class));
         
         Set<AnatEntity> descendants = ontology.getDescendants(ae1, EnumSet.of(RelationType.ISA_PARTOF));
         Set<AnatEntity> expDescendants = new HashSet<>(Arrays.asList(ae2, ae3));

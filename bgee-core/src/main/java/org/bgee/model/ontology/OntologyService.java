@@ -1,5 +1,6 @@
 package org.bgee.model.ontology;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -21,7 +22,7 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStat
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType;
 
 /**
- * A {@link Service} to obtain {@link Ontology} objects. 
+ * A {@link Service} to obtain {@link Ontology} objects.
  * Users should use the {@link ServiceFactory} to obtain {@code OntologyService}s.
  * 
  * @author  Valentine Rech de Laval
@@ -34,8 +35,8 @@ public class OntologyService extends Service {
     private static final Logger log = LogManager.getLogger(OntologyService.class.getName());
 
     /**
-     * 0-arg constructor that will cause this {@code OntologyService} to use 
-     * the default {@code DAOManager} returned by {@link DAOManager#getDAOManager()}. 
+     * 0-arg constructor that will cause this {@code OntologyService} to use
+     * the default {@code DAOManager} returned by {@link DAOManager#getDAOManager()}.
      * 
      * @see #OntologyService(DAOManager)
      */
@@ -46,7 +47,7 @@ public class OntologyService extends Service {
     /**
      * Constructs a {@code OntologyService}.
      * 
-     * @param daoManager                The {@code DAOManager} to be used by this 
+     * @param daoManager                The {@code DAOManager} to be used by this
      *                                  {@code OntologyService} to obtain {@code DAO}s.
      * @throws IllegalArgumentException If {@code daoManager} is {@code null}.
      */
@@ -55,18 +56,23 @@ public class OntologyService extends Service {
     }
         
     /**
-     * Retrieve the {@code Ontology} of the anatomical entities for given anat. entities,
-     * {@code RelationType}s, and {@code RelationStatus}.
+     * Retrieve the {@code Ontology} of {@code AnatEntity}s for given anatomical entity IDs,
+     * relations types, and relation status.
+     * <p>
+     * Return {@code Ontology} contains ancestors and/or descendants according to
+     * {@code getAncestors} and {@code getDescendants}, respectively.
      * 
-     * @param anatEntities      A {@code Collection} of {@code AnatEntity}s that are anatomical 
-     *                          entities of the {@code Ontology}.
-     * @param relationTypes     A {@code Collection} of {@code RelationType}s that are the relation 
+     * @param anatEntityIds     A {@code Collection} of {@code String}s that are anat.
+     *                          entity IDs of the {@code Ontology} to retrieve.
+     * @param relationTypes     A {@code Collection} of {@code RelationType}s that are the relation
      *                          types allowing to filter the relations between elements
      *                          of the {@code Ontology}.
      * @param getAncestors      A {@code boolean} defining whether ancestors are retrieved.
      * @param getDescendants    A {@code boolean} defining whether descendants are retrieved.
      * @param service           An {@code AnatEntityService} that provides bgee services.
-     * @return                  The {@code Ontology} of the anatomical entities.
+     * @return                  The {@code Ontology} of the {@code AnatEntity}s for given
+     *                          anat. entity IDs, relations types, and relation status.
+     * @throw IllegalArgumentException  If {@code anatEntityIds} is {@code null} or {@code empty}.
      */
     public Ontology<AnatEntity> getAnatEntityOntology(Collection<String> anatEntityIds,
             Collection<RelationType> relationTypes, boolean getAncestors, boolean getDescendants,
@@ -74,50 +80,38 @@ public class OntologyService extends Service {
         log.entry(anatEntityIds, getAncestors, getDescendants, relationTypes, service);
         
         if (anatEntityIds == null || anatEntityIds.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException("No IDs for anatamical entities"));            
+            throw log.throwing(new IllegalArgumentException("No anatomical entity IDs"));
         }
+        
+        Set<RelationStatus> relationStatus = EnumSet.complementOf(EnumSet.of(RelationStatus.REFLEXIVE));
         
         // Currently, we do not manage RelationStatus. We retrieve all non reflexive relations.
         Stream<RelationTO> relations = getDaoManager().getRelationDAO().
-                    getAnatEntityRelations(
-                            null, new HashSet<>(anatEntityIds), new HashSet<>(relationTypes), 
-                            EnumSet.complementOf(EnumSet.of(RelationStatus.REFLEXIVE))).stream();
+                    getAnatEntityRelations(null, new HashSet<>(anatEntityIds),
+                            new HashSet<>(relationTypes), relationStatus).stream();
         
-        Set<RelationTO> filteredRelations;
-        if (getAncestors && getDescendants) {
-            // Get relations between provided entities and their relatives (no filter)
-            filteredRelations = relations.collect(Collectors.toSet());
-        } else if (getAncestors) {
-            // Get relations between provided entities and their ancestors (sourceId in anatEntityIds)
-            filteredRelations = relations
-                    .filter(e -> anatEntityIds.contains(e.getSourceId()))
-                    .collect(Collectors.toSet());
-        } else if (getDescendants) {
-            // Get relations between provided entities and their descendants (targetId in anatEntityIds)
-            filteredRelations = relations
-                    .filter(e -> anatEntityIds.contains(e.getTargetId()))
-                    .collect(Collectors.toSet());
-        } else {
-            // Get relations between provided entities (sourceId and targetId in anatEntityIds)
-            filteredRelations = relations
-                    .filter(e -> anatEntityIds.contains(e.getTargetId()) 
-                            && anatEntityIds.contains(e.getSourceId()))
-                    .collect(Collectors.toSet());
-        }
+        Set<RelationTO> filteredRelations = this.filterRelations(anatEntityIds, relations,
+                getAncestors, getDescendants);
+
+        Set<String> filteredAnatEntityIds = this.getElementIds(filteredRelations);
         
-        
-        Set<AnatEntity> anatEntities = 
-                service.loadAnatEntitiesByIds(anatEntityIds).collect(Collectors.toSet());
-        
-        Set<AnatEntity> filteredEntities = anatEntities == null? 
-                new HashSet<>(): new HashSet<>(anatEntities);
-        return log.exit(new Ontology<AnatEntity>(anatEntities, filteredRelations));
+        return log.exit(new Ontology<AnatEntity>(
+                service.loadAnatEntitiesByIds(filteredAnatEntityIds).collect(Collectors.toSet()),
+                filteredRelations, relationTypes, relationStatus));
     }
     
-    /** TODO add javadoc
-     * @param anatEntityIds
-     * @param service
-     * @return
+    /**
+     * Retrieve the {@code Ontology} of {@code AnatEntity}s for given anatomical entity IDs.
+     * <p>
+     * Return {@code Ontology} contains only {@code AnatEntity}s for given anat. entities IDs. 
+     * Only relations with a {@code RelationType} {@code ISA_PARTOF} are considered. 
+     * 
+     * @param anatEntityIds     A {@code Collection} of {@code String}s that are anat.
+     *                          entity IDs of the {@code Ontology} to retrieve.
+     * @param service           An {@code AnatEntityService} that provides bgee services.
+     * @return                  The {@code Ontology} of the {@code AnatEntity}s for given
+     *                          anat. entity IDs.
+     * @throw IllegalArgumentException  If {@code anatEntityIds} is {@code null} or {@code empty}.
      */
     public Ontology<AnatEntity> getAnatEntityOntology(
             Collection<String> anatEntityIds, AnatEntityService service) {
@@ -126,32 +120,113 @@ public class OntologyService extends Service {
                 EnumSet.of(RelationType.ISA_PARTOF), false, false, service));
     }
     
-    /** TODO fix javadoc
-     * Retrieve the {@code Ontology} of the developmental stages for given dev. stages,
-     * and {@code RelationStatus}.
+    /**
+     * Retrieve the {@code Ontology} of {@code DevStage}s for given developmental stages IDs.
+     * <p>
+     * Return {@code Ontology} contains ancestors and/or descendants according to
+     * {@code getAncestors} and {@code getDescendants}, respectively.
      * 
-     * @param devStages         A {@code Collection} of {@code DevStage}s that are dev. stages 
-     *                          of the {@code Ontology}.
-     * @return                  The {@code Ontology} of the developmental stages.
+     * @param devStageIds       A {@code Collection} of {@code String}s that are dev. stages IDs
+     *                          of the {@code Ontology} to retrieve.
+     * @param getAncestors      A {@code boolean} defining whether ancestors are retrieved.
+     * @param getDescendants    A {@code boolean} defining whether descendants are retrieved.
+     * @param service           An {@code DevStageService} that provides bgee services.
+     * @return                  The {@code Ontology} of the {@code DevStage}s for given
+     *                          dev. stages IDs.
+     * @throw IllegalArgumentException  If {@code devStageIds} is {@code null} or {@code empty}.
      */
     public Ontology<DevStage> getDevStageOntology(Collection<String> devStageIds,
             boolean getAncestors, boolean getDescendants, DevStageService service) {
         log.entry(devStageIds, getAncestors, getDescendants, service);
         
-        Set<RelationTO> relations = getDaoManager().getRelationDAO().
-                    getStageRelations(null, new HashSet<>(devStageIds), null).stream()
-                    .collect(Collectors.toSet()); 
+        if (devStageIds == null || devStageIds.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("No developmental stages IDs"));
+        }
+        
+        Set<RelationStatus> relationStatus = EnumSet.complementOf(EnumSet.of(RelationStatus.REFLEXIVE));
+        
+        // Currently, we do not manage RelationStatus. We retrieve all non reflexive relations.
+        Stream<RelationTO> relations = getDaoManager().getRelationDAO().
+                    getStageRelations(null, new HashSet<>(devStageIds), null).stream();
+        
+        Set<RelationTO> filteredRelations = this.filterRelations(devStageIds, relations,
+                getAncestors, getDescendants);
 
-        return new Ontology<DevStage>(null, relations);
+        Set<String> filteredDevStageIds = this.getElementIds(filteredRelations);
+        
+        return log.exit(new Ontology<DevStage>(
+                service.loadDevStagesByIds(filteredDevStageIds).stream().collect(Collectors.toSet()),
+                filteredRelations, null, relationStatus));
     }
-    
-    /** TODO add javadoc
-     * @param devStageIds
-     * @param service
-     * @return
+
+    /**
+     * Retrieve the {@code Ontology} of {@code DevStage}s for given developmental stages IDs.
+     * <p>
+     * Return {@code Ontology} contains only {@code DevStage}s for given dev. stages IDs. 
+     * 
+     * @param devStageIds       A {@code Collection} of {@code String}s that are dev. stages IDs
+     *                          of the {@code Ontology} to retrieve.
+     * @param service           An {@code DevStageService} that provides bgee services.
+     * @return                  The {@code Ontology} of the {@code DevStage}s for given
+     *                          dev. stages IDs.
+     * @throw IllegalArgumentException  If {@code devStageIds} is {@code null} or {@code empty}.
      */
     public Ontology<DevStage> getDevStageOntology(Collection<String> devStageIds, DevStageService service) {
         log.entry(devStageIds, service);
         return this.getDevStageOntology(devStageIds, false, false, service);
+    }
+
+
+    /**
+     * Get element IDs (source and target IDs) defining {@code relations}.
+     * 
+     * @param relations A {@code Set} of {@code RelationTO}s that are relations for which
+     *                  element IDs are retrieved.
+     * @return          A {@code Set} of {@code String}s that are element IDs
+     *                  defining {@code relations}.
+     */
+    private Set<String> getElementIds(Set<RelationTO> relations) {
+        return relations.stream()
+                .flatMap(r -> Arrays.asList(r.getSourceId(), r.getTargetId()).stream())
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * Filter relations to keep only ancestors and or descendants.
+     * 
+     * @param ids               A {@code Collection} of {@code String}s that are element IDs
+     *                          to be kept.
+     * @param relations         A {@code Stream} of {@code RelationTO}s that are relations
+     *                           to be filtered.
+     * @param getAncestors      A {@code boolean} defining whether ancestors are kept.
+     * @param getDescendants    A {@code boolean} defining whether descendants are kept.
+     * @return                  A Set of {@code RelationTO}s that are filtered relations.
+     */
+    private Set<RelationTO> filterRelations(Collection<String> ids, Stream<RelationTO> relations, 
+            boolean getAncestors, boolean getDescendants) {
+        log.entry(ids, relations, getAncestors, getDescendants);
+        
+        Set<RelationTO> filteredRelations;
+        if (getAncestors && getDescendants) {
+            // Get relations between provided entities and their relatives (no filter)
+            filteredRelations = relations.collect(Collectors.toSet());
+        } else if (getAncestors) {
+            // Get relations between provided entities and their ancestors (sourceId in ids)
+            filteredRelations = relations
+                    .filter(e -> ids.contains(e.getSourceId()))
+                    .collect(Collectors.toSet());
+        } else if (getDescendants) {
+            // Get relations between provided entities and their descendants (targetId in ids)
+            filteredRelations = relations
+                    .filter(e -> ids.contains(e.getTargetId()))
+                    .collect(Collectors.toSet());
+        } else {
+            // Get relations between provided entities (sourceId and targetId in ids)
+            filteredRelations = relations
+                    .filter(e -> ids.contains(e.getTargetId())
+                            && ids.contains(e.getSourceId()))
+                    .collect(Collectors.toSet());
+        }
+        return log.exit(filteredRelations);
     }
 }

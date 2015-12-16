@@ -69,7 +69,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		this.startDisplay("Gene: " + gene.getName());
 		this.writeln("<h1>Gene: " + gene.getName() + "</h1>");
 		this.writeln("<h2>Gene Information</h2>");
-		this.writeln("<div>" + getGeneInfo(gene) + "</div>");
+		this.writeln("<div class='gene'>" + getGeneInfo(gene) + "</div>");
 		this.writeln("<h2>Expression</h2>");
 		this.writeln(getExpressionHTMLByAnat(byAnatEntity(calls), anatEntitiesMap, devStageMap));
 		this.endDisplay();

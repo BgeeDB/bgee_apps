@@ -203,6 +203,16 @@ public class TopAnatAnalysis {
             throw new InvalidForegroundException("All foreground Ids are not included "
                     + "in the background",notIncludedIds);
         }
+        
+        //Check that there are more genes in the custom background than the node size parameter, 
+        //otherwise it is impossible to get results. 
+        if(this.params.getSubmittedBackgroundIds() != null && 
+                !this.params.getSubmittedBackgroundIds().isEmpty() && 
+                this.params.getNodeSize() > this.params.getSubmittedBackgroundIds().size()) {
+            throw log.throwing(new IllegalStateException("It is impossible to obtain results "
+                    + "if the node size parameter is greater than the number of genes "
+                    + "in the background."));
+        }
 
         Set<String> allGeneIds = new HashSet<String>(this.params.getSubmittedForegroundIds());
         if (this.params.getSubmittedBackgroundIds() != null) {

@@ -131,8 +131,10 @@ public class TopAnatRManager {
         code.addRCode("  print('GeneList:')");
         code.addRCode("  head(geneList)");
         //maybe all submitted genes are part of the background, or none of them, 
-        //in that case we cannot proceed to the tests
-        code.addRCode("  if (length(geneList) > 0 & length(levels(geneList)) == 2) {");
+        //in that case we cannot proceed to the tests. Or maybe there is less genes 
+        //with data in the background than the threshold on node size.
+        code.addRCode("  if (length(geneList) > 0 & length(levels(geneList)) == 2 & length(geneList) >= " 
+            + params.getNodeSize() + ") {");
 
         code.addRCode("    myData <- maketopGOdataObject(parentMapping = relations,allGenes = geneList,nodeSize = "+ params.getNodeSize() + ",gene2Nodes = gene2anatomy)");
         //maybe make maketopGOdataObject to return an error code rather than using 'stop'?

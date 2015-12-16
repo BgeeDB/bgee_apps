@@ -742,6 +742,11 @@ public class CommandTopAnat extends CommandParent {
             }
             cleanFgIds = this.cleanGeneIds(bgGeneResponse, cleanFgIds);
             cleanBgIds = this.cleanGeneIds(bgGeneResponse, cleanBgIds);
+            if (subNodeSize > cleanBgIds.size()) {
+                throw log.throwing(new InvalidRequestException("It is impossible to obtain results "
+                        + "if the node size parameter is greater than the number of *valid* genes "
+                        + "in the background."));
+            }
         }
         
         // Get gene response for clean fg gene IDs

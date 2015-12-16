@@ -54,7 +54,7 @@ import org.bgee.view.TopAnatDisplay;
 import org.bgee.view.ViewFactory;
 
 /**
- * Controller handling requests relative to topAnat.
+ * Controller handling requests related to topAnat.
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval

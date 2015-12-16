@@ -147,6 +147,11 @@ public class RequestParameters {
      * (see {@link URLParameters#getParamPage()}) when a page related to topAnat is requested.
      */
     public static final String PAGE_TOP_ANAT = "top_anat";
+    /**
+     * A {@code String} that is the value taken by the {@code page} parameter 
+     * (see {@link URLParameters#getParamPage()}) when a page related to job management is requested.
+     */
+    public static final String PAGE_JOB = "job";
 
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
@@ -214,6 +219,13 @@ public class RequestParameters {
      * Value of the parameter page should be {@link #PAGE_TOP_ANAT}.
      */
     public static final String ACTION_TOP_ANAT_DOWNLOAD = "download";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link URLParameters#getParamAction()}) when the canceling of a job is requested.
+     * Value of the parameter page should be {@link #PAGE_JOB}.
+     */
+    public static final String ACTION_CANCEL_JOB = "cancel";
+    
     /**
      * A {@code String} that is the anchor to use in the hash part of an URL 
      * to link to the single-species part, in the documentation about gene expression calls.
@@ -2230,6 +2242,29 @@ public class RequestParameters {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
                 this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_ABOUT)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
+     * @return  A {@code boolean} to tell whether the request is related to job management.
+     */
+    public boolean isAJobPageCategory() {
+        log.entry();
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
+            this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_JOB)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    /**
+     * @return  A {@code boolean} to tell whether it is requested to cancel a job.
+     */
+    public boolean isACancelJob() {
+        log.entry();
+        if (this.isAJobPageCategory() &&
+                this.getAction() != null && this.getAction().equals(ACTION_CANCEL_JOB)) {
             return log.exit(true);
         }
         return log.exit(false);

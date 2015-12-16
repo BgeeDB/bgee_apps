@@ -1,5 +1,6 @@
 package org.bgee.model.ontology;
 
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
@@ -57,26 +58,29 @@ public class OntologyService extends Service {
      * Retrieve the {@code Ontology} of the anatomical entities for given anat. entities,
      * {@code RelationType}s, and {@code RelationStatus}.
      * 
-     * @param anatEntities      A {@code Set} of {@code AnatEntity}s that are anatomical entities 
-     *                          of the {@code Ontology}.
-     * @param relationTypes     A {@code Set} of {@code RelationType}s that are the relation 
+     * @param anatEntities      A {@code Collection} of {@code AnatEntity}s that are anatomical 
+     *                          entities of the {@code Ontology}.
+     * @param relationTypes     A {@code Collection} of {@code RelationType}s that are the relation 
      *                          types allowing to filter the relations between elements
      *                          of the {@code Ontology}.
-     * @param service
+     * @param getAncestors      A {@code boolean} defining whether ancestors are retrieved.
+     * @param getDescendants    A {@code boolean} defining whether descendants are retrieved.
+     * @param service           An {@code AnatEntityService} that provides bgee services.
      * @return                  The {@code Ontology} of the anatomical entities.
      */
-    public Ontology<AnatEntity> getAnatEntityOntology(Set<String> anatEntityIds,
-            Set<RelationType> relationTypes, boolean getAncestors, boolean getDescendants,
+    public Ontology<AnatEntity> getAnatEntityOntology(Collection<String> anatEntityIds,
+            Collection<RelationType> relationTypes, boolean getAncestors, boolean getDescendants,
             AnatEntityService service) {
-        log.entry(anatEntityIds, service, relationTypes);
+        log.entry(anatEntityIds, getAncestors, getDescendants, relationTypes, service);
         
         if (anatEntityIds == null || anatEntityIds.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("No IDs for anatamical entities"));            
         }
         
-        // 
+        // Currently, we do not manage RelationStatus. We retrieve all non reflexive relations.
         Stream<RelationTO> relations = getDaoManager().getRelationDAO().
-                    getAnatEntityRelations(null, anatEntityIds, relationTypes, 
+                    getAnatEntityRelations(
+                            null, new HashSet<>(anatEntityIds), new HashSet<>(relationTypes), 
                             EnumSet.complementOf(EnumSet.of(RelationStatus.REFLEXIVE))).stream();
         
         Set<RelationTO> filteredRelations;
@@ -101,6 +105,7 @@ public class OntologyService extends Service {
                     .collect(Collectors.toSet());
         }
         
+        
         Set<AnatEntity> anatEntities = 
                 service.loadAnatEntitiesByIds(anatEntityIds).collect(Collectors.toSet());
         
@@ -109,36 +114,44 @@ public class OntologyService extends Service {
         return log.exit(new Ontology<AnatEntity>(anatEntities, filteredRelations));
     }
     
+    /** TODO add javadoc
+     * @param anatEntityIds
+     * @param service
+     * @return
+     */
     public Ontology<AnatEntity> getAnatEntityOntology(
-            Set<String> anatEntityIds, AnatEntityService service) {
+            Collection<String> anatEntityIds, AnatEntityService service) {
         log.entry(anatEntityIds, service);
         return log.exit(this.getAnatEntityOntology(anatEntityIds,
                 EnumSet.of(RelationType.ISA_PARTOF), false, false, service));
     }
     
-    /**
+    /** TODO fix javadoc
      * Retrieve the {@code Ontology} of the developmental stages for given dev. stages,
      * and {@code RelationStatus}.
      * 
-     * @param devStages         A {@code Set} of {@code DevStage}s that are dev. stages 
-     *                          of the {@code Ontology}.
-     * @param relationStatus    A {@code Set} of {@code RelationStatus}s that are the relation 
-     *                          status allowing to filter the relations between elements
+     * @param devStages         A {@code Collection} of {@code DevStage}s that are dev. stages 
      *                          of the {@code Ontology}.
      * @return                  The {@code Ontology} of the developmental stages.
      */
-    public Ontology<DevStage> getStageOntology(Set<String> devStageIds,
+    public Ontology<DevStage> getDevStageOntology(Collection<String> devStageIds,
             boolean getAncestors, boolean getDescendants, DevStageService service) {
         log.entry(devStageIds, getAncestors, getDescendants, service);
         
         Set<RelationTO> relations = getDaoManager().getRelationDAO().
-                    getStageRelations(null, devStageIds, null).stream().collect(Collectors.toSet()); 
+                    getStageRelations(null, new HashSet<>(devStageIds), null).stream()
+                    .collect(Collectors.toSet()); 
 
         return new Ontology<DevStage>(null, relations);
     }
     
-    public Ontology<DevStage> getStageOntology(Set<String> devStageIds, DevStageService service) {
+    /** TODO add javadoc
+     * @param devStageIds
+     * @param service
+     * @return
+     */
+    public Ontology<DevStage> getDevStageOntology(Collection<String> devStageIds, DevStageService service) {
         log.entry(devStageIds, service);
-        return this.getStageOntology(devStageIds, false, false, service);
+        return this.getDevStageOntology(devStageIds, false, false, service);
     }
 }

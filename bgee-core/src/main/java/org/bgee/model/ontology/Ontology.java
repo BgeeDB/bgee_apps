@@ -51,8 +51,8 @@ public class Ontology<T extends Entity & OntologyElement<T>> {
                 relations == null? new HashSet<>(): new HashSet<>(relations));
     }
 
-    /**
-     * Get relatives from the {@code Ontology}. The returned {@code Map} contains 
+    /** TODO fix javadoc
+     * Get relatives from the {@code Ontology}. The returned {@code Set} contains 
      * either elements of the ontology retrieved from {@code relations} of the ontology.
      * If {@code childrenFromParents} is {@code true}, the keys in the returned {@code Map} are
      * source elements of the relations, the associated value being a {@code Set} that are the
@@ -65,8 +65,8 @@ public class Ontology<T extends Entity & OntologyElement<T>> {
      * @param isAncestors           A {@code boolean} defining whether the returned {@code Set}
      *                              are ancestors or descendants. If {@code true},
      *                              it will retrieved ancestors.
-     * @param relationTypes         A {@code Set} of {@code RelationType}s that are the relation 
-     *                              types allowing to filter the relations to retrieve.
+     * @param relationTypes         A {@code Collection} of {@code RelationType}s that are the 
+     *                              relation types allowing to filter the relations to retrieve.
      * @return                      A {@code Map} where keys are {@code String}s representing the  
      *                              {@code T}s of either the sources or the targets of relations,   
      *                              the associated value being {@code Set} of {@code T}s that are  
@@ -77,7 +77,7 @@ public class Ontology<T extends Entity & OntologyElement<T>> {
      *                                  a relation of the ontology.
      */
     // TODO DRY in BgeeUtils.getIsAPartOfRelativesFromDb()
-    private Set<T> getRelatives(T element, boolean isAncestors, Set<RelationType> relationTypes) {
+    private Set<T> getRelatives(T element, boolean isAncestors, Collection<RelationType> relationTypes) {
         log.entry(element, isAncestors, relationTypes);
 
         Set<T> relatives = new HashSet<>();
@@ -122,16 +122,17 @@ public class Ontology<T extends Entity & OntologyElement<T>> {
     }
 
     /**
-     * Get ancestors of the given {@code element}.
+     * Get ancestors of the given {@code element} filtered by {@code relationTypes}
+     * in this ontology.
      * 
      * @param element       A {@code T} that is the element for which ancestors are recovered. 
-     * @param relationTypes A {@code Set} of {@code RelationType}s that are the relation 
+     * @param relationTypes A {@code Collection} of {@code RelationType}s that are the relation 
      *                      types allowing to filter the relations to retrieve.
-     * @return              A {@code Set} of {@code T}s that are the ancestors
-     *                      of the given {@code element}.
+     * @return              A {@code Collection} of {@code T}s that are the ancestors
+     *                      of the given {@code element} in this ontology.
      * @throws IllegalArgumentException If {@code element} is {@code null}.
      */
-    public Set<T> getAncestors(T element, Set<RelationType> relationTypes) {
+    public Set<T> getAncestors(T element, Collection<RelationType> relationTypes) {
         log.entry(element, relationTypes);
         if (element == null) {
             throw log.throwing(new IllegalArgumentException("Element is null"));
@@ -140,22 +141,56 @@ public class Ontology<T extends Entity & OntologyElement<T>> {
     }
 
     /**
-     * Get descendants of the given {@code element}.
+     * Get ancestors of the given {@code element} in this ontology.
      * 
-     * @param element       A {@code T} that is the element for which descendants are recovered. 
-     * @param relationTypes A {@code Set} of {@code RelationType}s that are the relation 
-     *                      types allowing to filter the relations to retrieve.
-     * @return              A {@code Set} of {@code T}s that are the descendants
+     * @param element       A {@code T} that is the element for which ancestors are recovered. 
+     * @return              A {@code Set} of {@code T}s that are the ancestors
      *                      of the given {@code element}.
      * @throws IllegalArgumentException If {@code element} is {@code null}.
      */
-    public Set<T> getDescendants(T element, Set<RelationType> relationTypes) {
+    public Set<T> getAncestors(T element) {
+        log.entry(element);
+        if (element == null) {
+            throw log.throwing(new IllegalArgumentException("Element is null"));
+        }
+        return log.exit(this.getRelatives(element, true, null));
+    }
+
+    /**
+     * Get descendants of the given {@code element} filtered by {@code relationTypes}
+     * in this ontology.
+     * 
+     * @param element       A {@code T} that is the element for which descendants are recovered. 
+     * @param relationTypes A {@code Collection} of {@code RelationType}s that are the relation 
+     *                      types allowing to filter the relations to retrieve.
+     * @return              A {@code Collection} of {@code T}s that are the descendants
+     *                      of the given {@code element}.
+     * @throws IllegalArgumentException If {@code element} is {@code null}.
+     */
+    public Set<T> getDescendants(T element, Collection<RelationType> relationTypes) {
         log.entry(element, relationTypes);
         if (element == null) {
             throw log.throwing(new IllegalArgumentException("Element is null"));
         }
         return log.exit(this.getRelatives(element, false, relationTypes));
     }
+    
+    /**
+     * Get descendants of the given {@code element} in this ontology.
+     * 
+     * @param element       A {@code T} that is the element for which descendants are recovered. 
+     * @return              A {@code Set} of {@code T}s that are the descendants
+     *                      of the given {@code element} in this ontology.
+     * @throws IllegalArgumentException If {@code element} is {@code null}.
+     */
+    public Set<T> getDescendants(T element) {
+        log.entry(element);
+        if (element == null) {
+            throw log.throwing(new IllegalArgumentException("Element is null"));
+        }
+        return log.exit(this.getRelatives(element, false, null));
+    }
+
 
     @Override
     public int hashCode() {

@@ -11,7 +11,6 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
-import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.anatdev.DevStage;
@@ -19,7 +18,7 @@ import org.bgee.model.anatdev.DevStageService;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
-import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType;
+import org.bgee.model.ontology.Ontology.RelationType;
 
 /**
  * A {@link Service} to obtain {@link Ontology} objects.
@@ -60,7 +59,9 @@ public class OntologyService extends Service {
      * relations types, and relation status.
      * <p>
      * Return {@code Ontology} contains ancestors and/or descendants according to
-     * {@code getAncestors} and {@code getDescendants}, respectively.
+     * {@code getAncestors} and {@code getDescendants}, respectively. 
+     * If both {@code getAncestors} and {@code getDescendants} are {@code false}, 
+     * then only relations between provided anatomical entities are considered.
      * 
      * @param anatEntityIds     A {@code Collection} of {@code String}s that are anat.
      *                          entity IDs of the {@code Ontology} to retrieve.
@@ -82,13 +83,17 @@ public class OntologyService extends Service {
         if (anatEntityIds == null || anatEntityIds.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("No anatomical entity IDs"));
         }
-        
+
+        // Currently, we use all non reflexive relations.
         Set<RelationStatus> relationStatus = EnumSet.complementOf(EnumSet.of(RelationStatus.REFLEXIVE));
         
-        // Currently, we do not manage RelationStatus. We retrieve all non reflexive relations.
         Stream<RelationTO> relations = getDaoManager().getRelationDAO().
                     getAnatEntityRelations(null, new HashSet<>(anatEntityIds),
-                            new HashSet<>(relationTypes), relationStatus).stream();
+                            relationTypes.stream()
+                                .map(Ontology::convertRelationType)
+                                .collect(Collectors.toCollection(() -> 
+                                    EnumSet.noneOf(RelationTO.RelationType.class))), 
+                            relationStatus).stream();
         
         Set<RelationTO> filteredRelations = this.filterRelations(anatEntityIds, relations,
                 getAncestors, getDescendants);
@@ -97,7 +102,7 @@ public class OntologyService extends Service {
         
         return log.exit(new Ontology<AnatEntity>(
                 service.loadAnatEntitiesByIds(filteredAnatEntityIds).collect(Collectors.toSet()),
-                filteredRelations, relationTypes, relationStatus));
+                filteredRelations, relationTypes));
     }
     
     /**
@@ -124,7 +129,9 @@ public class OntologyService extends Service {
      * Retrieve the {@code Ontology} of {@code DevStage}s for given developmental stages IDs.
      * <p>
      * Return {@code Ontology} contains ancestors and/or descendants according to
-     * {@code getAncestors} and {@code getDescendants}, respectively.
+     * {@code getAncestors} and {@code getDescendants}, respectively. 
+     * If both {@code getAncestors} and {@code getDescendants} are {@code false}, 
+     * then only relations between provided developmental stages are considered.
      * 
      * @param devStageIds       A {@code Collection} of {@code String}s that are dev. stages IDs
      *                          of the {@code Ontology} to retrieve.
@@ -142,12 +149,12 @@ public class OntologyService extends Service {
         if (devStageIds == null || devStageIds.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("No developmental stages IDs"));
         }
-        
+
+        // Currently, we use all non reflexive relations.
         Set<RelationStatus> relationStatus = EnumSet.complementOf(EnumSet.of(RelationStatus.REFLEXIVE));
         
-        // Currently, we do not manage RelationStatus. We retrieve all non reflexive relations.
         Stream<RelationTO> relations = getDaoManager().getRelationDAO().
-                    getStageRelations(null, new HashSet<>(devStageIds), null).stream();
+                    getStageRelations(null, new HashSet<>(devStageIds), relationStatus).stream();
         
         Set<RelationTO> filteredRelations = this.filterRelations(devStageIds, relations,
                 getAncestors, getDescendants);
@@ -156,7 +163,7 @@ public class OntologyService extends Service {
         
         return log.exit(new Ontology<DevStage>(
                 service.loadDevStagesByIds(filteredDevStageIds).stream().collect(Collectors.toSet()),
-                filteredRelations, null, relationStatus));
+                filteredRelations, EnumSet.of(RelationType.ISA_PARTOF)));
     }
 
     /**
@@ -192,15 +199,19 @@ public class OntologyService extends Service {
     }
 
     /**
-     * Filter relations to keep only ancestors and or descendants.
+     * Filter relations based on the provided element IDs and {@code boolean}s. 
+     * Notably, if both {@code getAncestors} and {@code getDescendants} are {@code false}, 
+     * then only {@code RelationTO}s with both their target and source IDs 
+     * present in {@code ids} are kept.
      * 
      * @param ids               A {@code Collection} of {@code String}s that are element IDs
-     *                          to be kept.
+     *                          to consider.
      * @param relations         A {@code Stream} of {@code RelationTO}s that are relations
-     *                           to be filtered.
-     * @param getAncestors      A {@code boolean} defining whether ancestors are kept.
-     * @param getDescendants    A {@code boolean} defining whether descendants are kept.
-     * @return                  A Set of {@code RelationTO}s that are filtered relations.
+     *                          to be filtered.
+     * @param getAncestors      A {@code boolean} defining whether {@code RelationTO}s 
+     *                          having a source ID present in {@code ids} should be kept.
+     * @param getDescendants    A {@code boolean} defining whether {@code RelationTO}s 
+     *                          having a target ID present in {@code ids} should be kept.
      */
     private Set<RelationTO> filterRelations(Collection<String> ids, Stream<RelationTO> relations, 
             boolean getAncestors, boolean getDescendants) {

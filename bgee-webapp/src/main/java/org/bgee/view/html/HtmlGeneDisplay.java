@@ -128,16 +128,14 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		sb.append("<div class='gene'>");
 		sb.append("<span>Total: " + byAnatEntityId.size() + " anatomical structure(s)</span>");
 		if (extraCount.get() > 0) {
-			sb.append("<span class='show_extra expression' title='Show/Hide more elements, by default the top"
-			        + ELEMENT_LIMIT + " elements are displayed.' >Show " + extraCount.get()
-			        + " supplementary elements</span>  ");
+			sb.append("<span class='show_more expression' title='Show/Hide more elements, by default the top"
+			        + ELEMENT_LIMIT + " elements are displayed.' >Show supplementary elements</span>  ");
 		}
 
-		if (maskedCount.get() > 0) {
+		/*if (maskedCount.get() > 0) {
 			sb.append(
-			        "<span title='Show/Hide anatomic structures containing structures that are already displayed higher in the list.' class='show_masked expression'>Show "
-			                + maskedCount.get() + " redundant elements</span>");
-		}
+			        "<span title='Show/Hide anatomic structures containing structures that are already displayed higher in the list.' class='show_masked expression'>Show redundant elements</span>");
+		}*/
 		sb.append("</div>");
 
 		sb.append("<table class='expression'>")
@@ -206,7 +204,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		        .append("<tr><td><strong>A</strong></td><td>Affymetrix</td><td><span class='quality high'>high quality</span></td><td></td></tr>")
 		        .append("<tr><td><strong>E</strong></td><td>EST (Expressed Sequence Tag)</td><td><span class='quality low'>low quality</span></td></tr>")
 		        .append("<tr><td><strong>I</strong></td><td>In Situ</td><td><span class='quality nodata'>no data</span></td></tr>")
-		        .append("<tr><td><strong>R</strong></td><td>RNA-Seq</td></tr></table></div>");
+		        .append("<tr><td><strong>R</stƒrong></td><td>RNA-Seq</td></tr></table></div>");
 		return sb.toString();
 
 	}

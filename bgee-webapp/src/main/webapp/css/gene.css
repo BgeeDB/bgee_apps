@@ -96,6 +96,12 @@ span.show_masked {
 	margin-left: 7em;	
 }
 
+span.show_more {
+	font-size: .85em;
+	text-decoration: underline;
+	margin-left: 2em;	
+}
+
 .masked {
 	font-style: italic;
 }

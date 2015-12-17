@@ -21,15 +21,30 @@ $( document ).ready( function(){
 	        }
 	    });
 	    
+	   $(".show_more").click(function() {
+		   if (extraHidden) {
+			   extraHidden = false;
+		    	$("tr.aggregate.extra").filter($(":not(.masked)")).show(250);
+		    	$(this).text("Show redundant elements");
+		   } else {
+			   if (maskedHidden) {
+				   maskedHidden = false;
+		    		$("tr.aggregate.masked.extra").show(250);
+				   $(this).text("Hide redundant and supplementary elements");
+			   } else {
+				   $("tr.aggregate.extra").hide(250);
+				   $("tr.aggregate.masked").hide(250);
+				   maskedHidden = true;
+				   extraHidden = true;
+		    	   $(this).text("Show more elements");
+		      }
+		   }
+		   
+	   });
+	   
 	   // show extra element of the expression table
 	    $(".show_extra").click(function() {
-	    	if (maskedHidden) {
-	    		$("tr.aggregate.extra").filter($(":not(.masked)")).toggle(250);
-	    		$("tr.aggregate.extra.masked").hide(250);
-
-	    	} else {
-	    		$("tr.aggregate.extra").toggle(250);
-	    	}
+	    	
 	        extraHidden = !extraHidden;
 	        var t = $(this).text();
 		    var t2 = t.replace('Show','Hide');

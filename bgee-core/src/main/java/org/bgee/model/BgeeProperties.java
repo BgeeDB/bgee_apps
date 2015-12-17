@@ -345,12 +345,51 @@ public class BgeeProperties {
             Properties fileProps, String key, int defaultValue) {
         log.entry(prop, fileProps, sysProps, key, defaultValue);
     
-        String propValue = getStringOption(prop,sysProps, fileProps, key, null);
+        String propValue = getStringOption(prop, sysProps, fileProps, key, null);
         int val = defaultValue;
         if (propValue != null) {
             val= Integer.valueOf(propValue);
         }
     
+        return log.exit(val);
+    }
+    /**
+     * Try to retrieve the property corresponding to {@code key}, 
+     * first from the injected {@code Properties} ({@code prop}), then from the System properties 
+     * ({@code SYS_PROPS}), then, if undefined or empty, from properties retrieved from the 
+     * Bgee property file ({@code FILE_PROPS}). If the property is still undefined or empty 
+     * return {@code defaultValue}.
+     *
+     * @param prop          A {@code java.util.Properties} instance that contains the system 
+     *                      properties to look for {@code key} first
+     * @param SYS_PROPS     {@code java.util.Properties} retrieved from System properties, 
+     *                      where {@code key} is searched in second
+     * @param FILE_PROPS    {@code java.util.Properties} retrieved 
+     *                      from the Bgee properties file, 
+     *                      where {@code key} is searched in if {@code prop} and {@code SYS_PROPS}
+     *                      were undefined or empty for {@code key}. 
+     *                      Can be {@code null} if no properties file was found.
+     * @param defaultValue  default value that will be returned if the property 
+     *                      is undefined or empty in all {@code Properties}.
+     *
+     * @return             A {@code boolean} corresponding to the value
+     *                     for that property key.
+     *                     Or {@code defaultValue} if not defined or empty.
+     */
+    protected static boolean getBooleanOption(Properties prop, Properties sysProps, 
+            Properties fileProps, String key, boolean defaultValue) {
+        log.entry(prop, sysProps, fileProps, key, defaultValue);
+        
+        String propValue = getStringOption(prop, sysProps, fileProps, key, null);
+        boolean val = defaultValue;
+        if (StringUtils.isNotBlank(propValue)) {
+            String trimLowCase = propValue.trim().toLowerCase();
+            val= "true".equals(trimLowCase) ||
+                 "yes".equals(trimLowCase) || 
+                 "on".equals(trimLowCase) || 
+                 "1".equals(trimLowCase);
+        }
+        
         return log.exit(val);
     }
 

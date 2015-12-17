@@ -38,6 +38,23 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      * {@code Logger} of the class. 
      */
     private final static Logger log = LogManager.getLogger(BgeeProperties.class.getName());
+    
+    /**
+     * A {@code String} that is the key to access to the property that is read at the 
+     * initialization of {@code BgeeProperties} to determine whether CSS and JS files were minified.
+     * 
+     * @see #MINIFY_DEFAULT
+     * @see #isMinify()
+     */
+    public final static String MINIFY_KEY = "org.bgee.webapp.minify";
+    /**
+     * A {@code boolean} that is the default value of the property to determine whether 
+     * CSS and JS files were minified.
+     * 
+     * @see #MINIFY_KEY
+     * @see #isMinify()
+     */
+    public final static boolean MINIFY_DEFAULT = false;
         
     /**
      * A {@code String} that is the key to access to the System property that is read at the 
@@ -436,6 +453,10 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
     }
 
     /**
+     * {@code boolean} defining whether CSS and JS files were minified. 
+     */
+    private final boolean minify;
+    /**
      * {@code String} that defines the directory where query strings holding storable parameters  
      * from previous large queries are stored. 
      */
@@ -599,6 +620,7 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
         // Initialize all properties using the injected prop first, alternatively the System
         // properties and then the file. The default value provided will be use if none of the
         // previous solutions contain the property
+        minify = getBooleanOption(prop, SYS_PROPS, FILE_PROPS, MINIFY_KEY, MINIFY_DEFAULT);
         requestParametersStorageDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY,  
                 REQUEST_PARAMETERS_STORAGE_DIRECTORY_DEFAULT);
@@ -650,6 +672,12 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
         log.exit();
     }
 
+    /**
+     * @return  A {@code boolean} defining whether CSS and JS files were minified.
+     */
+    public boolean isMinify() {
+        return minify;
+    }
     /**
      * @return  A {@code String} that defines the directory where query strings holding storable 
      *          parameters from previous large queries are stored. 

@@ -6,6 +6,7 @@ import java.util.Map;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
+import org.bgee.model.expressiondata.ConditionUtils;
 import org.bgee.model.gene.Gene;
 
 /**
@@ -31,7 +32,10 @@ public interface GeneDisplay {
 	 * @param devStageMap      The {@code Map} of {@code DevStage} expected to contain all {@code DevStage}
 	 * 						   referenced in the calls 
 	 */
+	@Deprecated
 	void displayGene(Gene gene, List<ExpressionCall> calls, Map<String, AnatEntity> anatEntitiesMap, 
 			Map<String, DevStage> devStageMap);
+	
+	void displayGene(Gene gene, List<ExpressionCall> calls, ConditionUtils conditionUtils);
 	
 }

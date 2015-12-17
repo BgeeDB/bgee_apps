@@ -7,6 +7,7 @@ import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -22,6 +23,8 @@ import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
+import org.bgee.model.expressiondata.Condition;
+import org.bgee.model.expressiondata.ConditionUtils;
 import org.bgee.model.expressiondata.baseelements.CallType.Expression;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataType;
@@ -68,11 +71,15 @@ public class CommandGene extends CommandParent {
 			Gene gene = getGene(geneId);
 			List<ExpressionCall> calls = getExpressions(gene);
 			log.info("Expressions:" + calls.size()+" "+calls);
-			display.displayGene(gene, calls, getEntitiesForCalls(calls), getDevStagesForCalls(calls));
+			Set<Condition> conditions = calls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet());
+			ConditionUtils conditionUtils = new ConditionUtils(conditions, serviceFactory);
+			display.displayGene(gene, calls, conditionUtils);
+			//display.displayGene(gene, calls, getEntitiesForCalls(calls), getDevStagesForCalls(calls));
 		}
 		log.exit();
 	}
 
+	
 	/**
 	 * Gets the {@code Gene} instance from its id
 	 * @param geneId A {@code String} containing the gene id.
@@ -88,6 +95,7 @@ public class CommandGene extends CommandParent {
 	 * @param calls
 	 * @return
 	 */
+	@Deprecated
 	private Map<String, AnatEntity> getEntitiesForCalls(Collection<ExpressionCall> calls) {
 		log.entry(calls);
 		return log.exit(serviceFactory.getAnatEntityService()
@@ -101,6 +109,7 @@ public class CommandGene extends CommandParent {
 	 * @param calls
 	 * @return
 	 */
+	@Deprecated
 	private Map<String, DevStage> getDevStagesForCalls(Collection<ExpressionCall> calls) {
 		log.entry(calls);
 		return log.exit(serviceFactory.getDevStageService()

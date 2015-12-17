@@ -1,8 +1,20 @@
 
+table#geneinfo {
+	margin: 1em;
+}
+
 table.expression {
 	width: 80%;
 	margin: 1em;
 	table-layout: fixed;
+}
+
+table.legend {
+	border: 1px solid #ccc;
+	padding: 1em;
+}
+table.legend td {
+	padding: .1em;
 }
 
 td.col10 {
@@ -63,7 +75,7 @@ td.right {
 span.quality {
 	padding: .2em .5em;
 	margin: .15em;
-	border-radius: 30%; 
+	border-radius: .4em; 
 	width: 1em;
 	height: 1em;
 	border-width: 1px;
@@ -77,6 +89,17 @@ span.show_extra {
 	text-decoration: underline;
 	margin-left: 7em;	
 }
+
+span.show_masked {
+	font-size: .85em;
+	text-decoration: underline;
+	margin-left: 7em;	
+}
+
+.masked {
+	font-style: italic;
+}
+
 .high {
 	background: #9efa9e; 
 	border-color: #0df20d;

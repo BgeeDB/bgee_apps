@@ -118,9 +118,9 @@ public class DevStage extends NestedSetModelEntity implements OntologyElement<De
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("DevStage [tooGranular=").append(tooGranular)
+        builder.append("DevStage [").append(super.toString())
+        .append(", tooGranular=").append(tooGranular)
         .append(", groupingStage=").append(groupingStage)
-        .append(", super NestedSetModelEntity=").append(super.toString())
         .append("]");
         return builder.toString();
     }

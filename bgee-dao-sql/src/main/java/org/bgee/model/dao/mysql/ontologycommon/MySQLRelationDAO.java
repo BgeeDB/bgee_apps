@@ -444,9 +444,13 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
             
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
-                    if (column.getValue().equals("anatEntityRelationId") || 
-                            column.getValue().equals("stageRelationId")) {
+                    if (column.getValue().equals("anatEntityRelationId")) {
                         relationId = this.getCurrentResultSet().getString(column.getKey());
+                    } else if (column.getValue().equals("stageRelationId")) {
+                        //XXX: for now, we don't generate any stageRelationId (always set to 0), 
+                        //so we don't retrieve it. If we needed stageRelationId to be set, 
+                        //we would need to edit the query.
+                        //relationId = this.getCurrentResultSet().getString(column.getKey());
                     } else if (column.getValue().equals("anatEntitySourceId") || 
                             column.getValue().equals("goAllSourceId") || 
                             column.getValue().equals("stageSourceId")) {

@@ -531,13 +531,18 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected void includeJs() {
         log.entry();
-        this.includeJs("lib/jquery.min.js");
-        this.includeJs("lib/jquery_plugins/jquery.visible.min.js");
-        this.includeJs("lib/jquery_plugins/jquery-ui.min.js");
-        this.includeJs("bgeeproperties.js");
-        this.includeJs("urlparameters.js");
-        this.includeJs("requestparameters.js");
-        this.includeJs("common.js");
+        if (!this.prop.isMinify()) {
+            this.includeJs("lib/jquery.min.js");
+            this.includeJs("lib/jquery_plugins/jquery.visible.min.js");
+            this.includeJs("lib/jquery_plugins/jquery-ui.min.js");
+            this.includeJs("bgeeproperties.js");
+            this.includeJs("urlparameters.js");
+            this.includeJs("requestparameters.js");
+            this.includeJs("common.js");
+        } else {
+            this.includeJs("vendor_common.min.js");
+            this.includeJs("script_common.min.js");
+        }
         log.exit();
     }
     /**

@@ -102,6 +102,33 @@ public class ConditionUtils {
         return log.exit(true);
     }
     
+    /**
+     * Retrieve an {@code AnatEntity} present in a {@code Condition} provided at instantiation, 
+     * based on its ID.
+     * 
+     * @param anatEntityId  A {@code String} that is the ID of the {@code AnatEntity} to retrieve.
+     * @return              The corresponding {@code AnatEntity}. {@code null} if no corresponding 
+     *                      {@code AnatEntity} was present in the {@code Condition}s provided 
+     *                      at instantiation.
+     */
+    public AnatEntity getAnatEntity(String anatEntityId) {
+        log.entry(anatEntityId);
+        return log.exit(this.getAnatEntityOntology().getElement(anatEntityId));
+    }
+    /**
+     * Retrieve a {@code DevStage} present in a {@code Condition} provided at instantiation, 
+     * based on its ID.
+     * 
+     * @param devStageId    A {@code String} that is the ID of the {@code DevStage} to retrieve.
+     * @return              The corresponding {@code DevStage}. {@code null} if no corresponding 
+     *                      {@code DevStage} was present in the {@code Condition}s provided 
+     *                      at instantiation.
+     */
+    public DevStage getDevStage(String devStageId) {
+        log.entry(devStageId);
+        return log.exit(this.getDevStageOntology().getElement(devStageId));
+    }
+    
     //*********************************
     //  GETTERS/SETTERS
     //*********************************

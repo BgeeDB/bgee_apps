@@ -113,6 +113,9 @@ public class ConditionUtilsTest extends TestAncestor {
         assertFalse("Incorrect determination of precision for condition with dev. stage as precise", 
                 utils.isConditionMorePrecise(cond1, cond4));
         
+        assertEquals("Incorrect AnatEntity retrieved", anatEntity1, utils.getAnatEntity(anatEntityId1));
+        assertEquals("Incorrect DevStage retrieved", devStage1, utils.getDevStage(devStageId1));
+        
         //check that an Exception is correctly thrown if a condition used was not provided at instantiation
         try {
             utils.isConditionMorePrecise(cond1, new Condition(anatEntityId1, devStageId2));

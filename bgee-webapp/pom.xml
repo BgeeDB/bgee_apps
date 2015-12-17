@@ -121,13 +121,18 @@
              maven-antrun-plugin. The files will be copied in a temp directory, 
              and added by maven-war-plugin to the WAR file in the standard directory. -->
         <rename.tmp.directory>${project.build.directory}/rename_tmp</rename.tmp.directory>
+        <!-- we minify and merge css and js scripts, but only if not run from within Eclipse, 
+             for easier debugging. The property "m2e.version" is set only when m2e in Eclipse is used -->
+        <bgee.minify>true</bgee.minify>
     </properties>
     
     <!-- There is a problem when running the webapp from Eclipse: m2e-wtp acquires 
          the web-resources before any lifecycle can be launched, so, before 
          maven-antrun-plugin can rename the files. We define a profile so that 
          maven-antrun-plugin copies files directly into the m2e-wtp web-resources directory, 
-         when running from Eclipse. -->
+         when running from Eclipse. 
+         We also use this profile for NOT using minified CSS and JS files when the webapp 
+         is run from within Eclipse, for easier debugging. -->
     <profiles>
         <profile>
             <id>m2e</id>
@@ -144,6 +149,7 @@
                 <rename.tmp.directory>${project.build.directory}/m2e-wtp/web-resources/</rename.tmp.directory>
                 <!-- In order to have no extension in URLs, change tomcat context root -->
                 <m2eclipse.wtp.contextRoot></m2eclipse.wtp.contextRoot>
+                <bgee.minify>false</bgee.minify>
             </properties>
         </profile>
     </profiles>
@@ -153,6 +159,48 @@
         <finalName>bgee-webapp-${project.version}</finalName>
         
         <plugins>
+            <!-- Minify CSS and JS files before maven-antrun-plugin rename them with version number -->
+            <plugin>
+                <groupId>com.samaxes.maven</groupId>
+                <artifactId>minify-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>minify_common_vendor</id>
+                        <goals>
+                            <!-- Binds by default to the lifecycle phase: process-resources -->
+                            <goal>minify</goal>
+                        </goals>
+                        <configuration>
+                            <jsSourceDir>js/</jsSourceDir>
+                            <jsSourceFiles>
+                                <jsSourceFile>lib/jquery.min.js</jsSourceFile>
+                                <jsSourceFile>lib/jquery_plugins/jquery.visible.min.js</jsSourceFile>
+                                <jsSourceFile>lib/jquery_plugins/jquery-ui.min.js</jsSourceFile>
+                            </jsSourceFiles>
+                            <jsFinalFile>vendor_common.js</jsFinalFile>
+                            <suffix>min${js.version}</suffix>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>minify_common_bgee</id>
+                        <goals>
+                            <!-- Binds by default to the lifecycle phase: process-resources -->
+                            <goal>minify</goal>
+                        </goals>
+                        <configuration>
+                            <jsSourceDir>js/</jsSourceDir>
+                            <jsSourceFiles>
+                                <jsSourceFile>bgeeproperties.js</jsSourceFile>
+                                <jsSourceFile>urlparameters.js</jsSourceFile>
+                                <jsSourceFile>requestparameters.js</jsSourceFile>
+                                <jsSourceFile>common.js</jsSourceFile>
+                            </jsSourceFiles>
+                            <jsFinalFile>script_common.js</jsFinalFile>
+                            <suffix>min${js.version}</suffix>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         
             <!-- We use the maven-antrun-plugin to rename css and javascript files 
                  with version number, to avoid caching issues with proxis/web browsers. 
@@ -321,6 +369,24 @@
                                         <versionRange>[1.0.0,)</versionRange>
                                         <goals>
                                             <goal>run</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <execute>
+                                            <!-- set to true, otherwise changes are not seen, 
+                                            e.g., to a css file, and you would need to perform 
+                                            a project update each time. -->
+                                            <runOnIncremental>true</runOnIncremental>
+                                        </execute >
+                                    </action>
+                                </pluginExecution>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>com.samaxes.maven</groupId>
+                                        <artifactId>minify-maven-plugin</artifactId>
+                                        <versionRange>[1.0.0,)</versionRange>
+                                        <goals>
+                                            <goal>minify</goal>
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>

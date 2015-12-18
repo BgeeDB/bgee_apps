@@ -1100,8 +1100,8 @@
             // Array of URLs used to get the job zip files
             vm.zipFileByAnalysis = [];
             // First add the zip of zips to the array
-            vm.zipFileByAnalysis['ALL'] = configuration.mockupUrl + '/?page=top_anat&action=download&data=' + vm.hash;
-
+            //vm.zipFileByAnalysis['ALL'] = configuration.mockupUrl + '/?page=top_anat&action=download&data=' + vm.hash;
+            vm.zipFileByAnalysis['ALL'] = '/?page=top_anat&action=download&data=' + vm.hash;
             for (var i = 0; i < data.data.topAnatResults.length; i++) {
                 var devStageId = data.data.topAnatResults[i].devStageId;
                 var callType = data.data.topAnatResults[i].callType;
@@ -1114,7 +1114,8 @@
                 Array.prototype.push.apply(allResultArr, data.data.topAnatResults[i].results);
 
                 // zip files by analysis
-                vm.zipFileByAnalysis[devStageId + " ; " + callType] = configuration.mockupUrl + data.data.topAnatResults[i].zipFile;
+                //vm.zipFileByAnalysis[devStageId + " ; " + callType] = configuration.mockupUrl + data.data.topAnatResults[i].zipFile;
+                vm.zipFileByAnalysis[devStageId + " ; " + callType] = data.data.topAnatResults[i].zipFile;
             }
 
             //sort all results by p-val and FDR

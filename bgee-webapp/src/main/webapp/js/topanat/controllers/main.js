@@ -229,6 +229,8 @@
                     vm.background_species = vm.selected_species;
                     vm.background_selected_taxid = vm.selected_taxid;
                     vm.isBackgroundChecked = '';
+                    vm.isValidBackground = true;
+                    vm.isValidBackgroundMessage = '';
                     // Issue 108
                     vm.max_node_size = getGeneCount(jobStatus, 'bg_list');
                 }
@@ -835,10 +837,12 @@
             vm.formSubmitted = false;
             vm.jobDone = false;
             vm.jobStatus = false;
+           
             /* Reset the filters of the results */
             vm.filterByStage = '';
             vm.filterbyExpression = '';
             vm.filterValue = '';
+            
             //clear URL, otherwise results from a previous analyses might be retrieved,
             //from the hash in the URL.
             //XXX: maybe there is a better way to handle this.

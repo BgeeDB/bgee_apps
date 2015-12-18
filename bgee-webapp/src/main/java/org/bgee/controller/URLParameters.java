@@ -306,7 +306,7 @@ public class URLParameters {
      */
     private static final Parameter<String> JOB_TITLE = new Parameter<String>("job_title",
             false, false, null, true, DEFAULT_IS_SECURE, 
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+            255, DEFAULT_FORMAT, String.class);
 
     //    /**
 //     * A {@code Parameter<Boolean>} to determine whether all anatomical structures of 

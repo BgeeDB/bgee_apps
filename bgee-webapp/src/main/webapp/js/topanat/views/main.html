@@ -500,9 +500,9 @@
                     <!-- end -->
                     <div class="input-group">
                         <span class="input-group-addon" id="description-addon"><i class="glyphicon glyphicon-file" uib-popover="{{vm.help}}" popover-trigger="mouseenter" popover-placement="top" popover-append-to-body="true" popover-title="Job description" ng-mouseover="vm.getOnlineHelpForItem('job name')"></i></span>
-                        <input type="text" class="form-control" placeholder="Job description" aria-describedby="description-addon" ng-disabled="vm.formSubmitted" ng-model="vm.job_title" ng-maxlength="128" name="description">
+                        <input type="text" class="form-control" placeholder="Job description" aria-describedby="description-addon" ng-disabled="vm.formSubmitted" ng-model="vm.job_title" ng-maxlength="255" name="description">
                     </div>
-                    <p ng-show="queryForm.description.$error.maxlength" class="alert-danger">Max. 128 characters for the job description!</p>
+                    <p ng-show="queryForm.description.$error.maxlength" class="alert-danger">Max. 255 characters for the job description!</p>
                 </div>
             </div>
         </div>

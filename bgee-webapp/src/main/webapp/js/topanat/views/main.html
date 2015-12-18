@@ -37,11 +37,7 @@
                             ng-src="{{vm.species_img(job.taxid)}}"> |
                         {{job.creationDate}} |
                         <span ng-show="job.title">{{job.title}} |</span>
-                        <!-- webapp: <a class="btn-xs btn-success" style="text-decoration: none;" ng-href="#/result/{{job.hash}}">View Job</a> -->
-                        <!-- topanat: <a class="btn-xs btn-success" style="text-decoration: none;" ng-href="/#/result/{{job.hash}}">View Job</a> -->
                         <a class="btn-xs btn-success" style="text-decoration: none;" ng-href="#/result/{{job.hash}}">View Job</a>
-                        <!-- webapp: <a class="btn-xs btn-danger" style="text-decoration: none;" href="#" ng-click="vm.removeJob(job);" style="margin-left: 6px;">Remove job</a></li> -->
-                        <!-- topanat: <a class="btn-xs btn-danger" style="text-decoration: none;" href="" ng-click="vm.removeJob(job);" style="margin-left: 6px;">Remove job</a></li> -->
                         <a class="btn-xs btn-danger" style="text-decoration: none;" href="" ng-click="vm.removeJob(job);" style="margin-left: 6px;">Remove job</a></li>
                 </ul>
             </div>
@@ -276,12 +272,14 @@
 
                 </textarea>
 -->
+                <!-- XXX add the following message at the end of placeholder when file upload enabled:
+                     "Use same format for file upload. "-->
                 <textarea name="bg_list"
                                          class="form-control"
                                          ng-model="vm.bg_list"
                                          ng-trim="false"
                                          ng-show="(vm.isBackgroundChecked === '') || (vm.isBackgroundChecked === 'checked' && !vm.isValidBackground && vm.bg_list !== '')"
-                                         placeholder="Ensembl identifiers from {{vm.selected_species}} genome, one ID per line (no quotes, no comma). Use same format for file upload."
+                                         placeholder="Ensembl identifiers from {{vm.selected_species}} genome, one ID per line (no quotes, no comma)."
                                          ng-class="{'error': !vm.isValidSpecies}"
                                          ng-change="vm.getDevStages('bg', vm.bg_list)"
                                          ng-model-options="{ updateOn: 'default blur', debounce: { 'default': 600, 'blur': 0 } }"
@@ -511,56 +509,74 @@
 
     </form>
 
-    <div class="vert-offset" ng-show="vm.formSubmitted">
+    <div id="resultContainer">
+        <div class="vert-offset" ng-show="vm.formSubmitted">
 
-        <div class="alert alert-info repeat-animation hide-fade show-fade" ng-show="vm.message" ng-class="{'alert-warning': vm.messageSeverity == 'warning', 'alert-success': vm.messageSeverity == 'success'}">
-            <i class="fa fa-spinner fa-spin" data-ng-show="!vm.jobDone && vm.formSubmitted && vm.jobStatus != 'DONE'" data-ng-hide="vm.jobStatus == 'DONE'"></i>
-            <span ng-bind-html="to_trusted(vm.message)"></span>
-        </div>
-    </div>
-
-    <div id="resultContainer" ng-show="vm.jobDone && vm.gridOptions.data.length > 0">
-
-        <div class="vert-offset horiz-offset">
-            <div class="row">
-                <div class="col-md-6">
-                    <span class="h5">View:</span>
-
-                    <div ng-repeat="analysis in vm.analysisList">
-                        <span ng-show="vm.getResultNumber(analysis.id) > 0" ng-class="{highlighted: vm.isActive == analysis.id}">
-                            <a href="" ng-click="vm.getResultByAnalysis(analysis.id)">{{analysis.name}}</a> ({{vm.getResultNumber(analysis.id)}})
-                            <a href="{{vm.zipFileByAnalysis[analysis.id]}}" type="button" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-download" style="margin-right: 3px;"></span>Download Job Archive</a>
-                        </span>
-                        <span ng-show="vm.getResultNumber(analysis.id) == 0">{{analysis.name}} (0)</span>
-                    </div>
-                </div>
-
-                <div class="col-md-3">
-                    <span class="h5">Search:</span>
-                    <div class="input-group">
-                        <input type="text" class="form-control" ng-model='vm.filterValue'>
-                        <span class="input-group-btn"><button class="btn btn-default" type="button" ng-click='vm.searchResults()'><span class="glyphicon glyphicon-search"></span></button></span>
-                    </div>
-
-                    <button type="button" class="btn btn-default btn-xs" ng-click="vm.downloadFilteredResults()"><span class="glyphicon glyphicon-download" style="margin-right: 3px;"></span>Download Selected {{vm.filteredRows.length}} Results</button>
-                </div>
-
-                <div class="col-md-3">
-                    <span class="h5">Show:</span>
-
-                    <div><select name="nbRowSelector" id="nbRowSelector"
-                                 ng-options="option.name for option in vm.nbRows.availableOptions track by option.id"
-                                 ng-model="vm.nbRows.selectedOption"
-                                 ng-change="vm.changeNumberOfRowsToShow()">
-                    </select> rows</div>
-                </div>
+            <div class="alert alert-info repeat-animation hide-fade show-fade" ng-show="vm.message" ng-class="{'alert-warning': vm.messageSeverity == 'warning', 'alert-success': vm.messageSeverity == 'success'}">
+                <i class="fa fa-spinner fa-spin" data-ng-show="!vm.jobDone && vm.formSubmitted && vm.jobStatus != 'DONE'" data-ng-hide="vm.jobStatus == 'DONE'"></i>
+                <span ng-bind-html="to_trusted(vm.message)"></span>
             </div>
         </div>
 
-        <div class="row vert-offset">
-            <div id="grid1" ui-grid="vm.gridOptions" class="grid" ui-grid-auto-resize></div>
-        </div>
+		<div ng-show="vm.jobDone && vm.gridOptions.data.length > 0">
+			<div class="vert-offset horiz-offset">
+				<div class="row">
+					<div class="col-md-6">
+						<span class="h5">View:</span>
 
-    </div>
+						<div ng-repeat="analysis in vm.analysisList">
+							<span ng-show="vm.getResultNumber(analysis.id) > 0"
+								ng-class="{highlighted: vm.isActive == analysis.id}"> <a
+								href="" ng-click="vm.getResultByAnalysis(analysis.id)">{{analysis.name}}</a>
+								({{vm.getResultNumber(analysis.id)}}) <a
+								href="{{vm.zipFileByAnalysis[analysis.id]}}" type="button"
+								class="btn btn-default btn-xs"><span
+									class="glyphicon glyphicon-download" style="margin-right: 3px;"></span>Download
+									Job Archive</a>
+							</span> <span ng-show="vm.getResultNumber(analysis.id) == 0">{{analysis.name}}
+								(0)</span>
+						</div>
+					</div>
+
+					<div class="col-md-3">
+						<span class="h5">Search:</span>
+						<div class="input-group">
+							<input type="text" class="form-control" ng-model='vm.filterValue'>
+							<span class="input-group-btn"><button
+									class="btn btn-default" type="button"
+									ng-click='vm.searchResults()'>
+									<span class="glyphicon glyphicon-search"></span>
+								</button></span>
+						</div>
+
+						<button type="button" class="btn btn-default btn-xs"
+							ng-click="vm.downloadFilteredResults()">
+							<span class="glyphicon glyphicon-download"
+								style="margin-right: 3px;"></span>Download Selected
+							{{vm.filteredRows.length}} Results
+						</button>
+					</div>
+
+					<div class="col-md-3">
+						<span class="h5">Show:</span>
+
+						<div>
+							<select name="nbRowSelector" id="nbRowSelector"
+								ng-options="option.name for option in vm.nbRows.availableOptions track by option.id"
+								ng-model="vm.nbRows.selectedOption"
+								ng-change="vm.changeNumberOfRowsToShow()">
+							</select> rows
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="row vert-offset">
+				<div id="grid1" ui-grid="vm.gridOptions" class="grid"
+					ui-grid-auto-resize></div>
+			</div>
+
+		</div>
+	</div>
 
 </div>

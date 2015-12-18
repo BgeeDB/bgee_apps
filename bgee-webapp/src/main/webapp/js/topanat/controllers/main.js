@@ -891,6 +891,7 @@
 
             vm.message = lang.jobProgressStart;
             vm.messageSeverity = "warning";
+            $window.document.getElementById('resultContainer').scrollIntoView();
             //logger.info('Posting...');
             $timeout(vm.sendForm, 3000);
 
@@ -954,6 +955,7 @@
                         logger.success('TopAnat request successful', 'TopAnat ok');
                         vm.message = lang.jobProgressBookmark+"<br/>"+lang.jobProgress+vm.jobId+'. ('+vm.jobStatus+') ';
                         vm.jobDone = false;
+                        $window.document.getElementById('resultContainer').scrollIntoView();
 
                         console.log("calling checkJobStatus");
                         checkJobStatus();
@@ -1030,6 +1032,12 @@
                             statuscounter = statuscounter + 1;
                             vm.jobStatus = data.status;
                             vm.message = lang.jobProgressBookmark+"<br/>"+lang.jobProgress+vm.jobId+'. ('+vm.jobStatus+') ';
+                            
+                            //scroll to result container with information about job, 
+                            //otherwise it is possible to miss it.
+                            if (statuscounter == 1) {
+                                $window.document.getElementById('resultContainer').scrollIntoView();
+                            }
 
                         }
                     },
@@ -1105,7 +1113,7 @@
             vm.zipFileByAnalysis = [];
             // First add the zip of zips to the array
             //vm.zipFileByAnalysis['ALL'] = configuration.mockupUrl + '/?page=top_anat&action=download&data=' + vm.hash;
-            vm.zipFileByAnalysis['ALL'] = '/?page=top_anat&action=download&data=' + vm.hash;
+            vm.zipFileByAnalysis['ALL'] = '?page=top_anat&action=download&data=' + vm.hash;
             for (var i = 0; i < data.data.topAnatResults.length; i++) {
                 var devStageId = data.data.topAnatResults[i].devStageId;
                 var callType = data.data.topAnatResults[i].callType;

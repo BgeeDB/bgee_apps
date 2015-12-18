@@ -33,8 +33,6 @@
                 return defer.reject("Error, no jobId nor data hash provided.");
             }
 
-            var url = configuration.mockupUrl;
-
             console.log("jobid: "+jobid);
 
             var params = "?page=top_anat&ajax=1&action=tracking_job&display_type=json";
@@ -53,7 +51,7 @@
 
             // TODO handle error states, return $q.reject(response.data.message)
 
-            return $http.get(url+params)
+            return $http.get(params)
                 .then(function(response){
                     console.log("response ok");
                     console.timeEnd("getJobStatus");
@@ -80,8 +78,7 @@
                 return $defer.reject("Error, no data hash provided.");
             }
 
-            var url = configuration.mockupUrl;
-            $http.get(url+"?page=top_anat&gene_info=1&display_rp=1&ajax=1&action=get_results&display_type=json&data="+hash)
+            $http.get("?page=top_anat&gene_info=1&display_rp=1&ajax=1&action=get_results&display_type=json&data="+hash)
                 //.then(getJobData);
                 .then(function(response){
                     console.log("thenresponse");

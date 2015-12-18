@@ -29,6 +29,8 @@ angular
     .config(function ($routeProvider) {
         $routeProvider
             .when('/', {
+                /*webapp: templateUrl: 'js/topanat/views/main.html',*/
+                /*topanat: templateUrl: 'views/main.html',*/
                 templateUrl: 'js/topanat/views/main.html',
                 controller: 'MainCtrl',
                 controllerAs: 'vm',
@@ -44,6 +46,8 @@ angular
             })
 
             .when("/result/:hash/:jobid", {
+                /*webapp: templateUrl: 'js/topanat/views/main.html',*/
+                /*topanat: templateUrl: 'views/main.html',*/
                 templateUrl: 'js/topanat/views/main.html',
                 controller:'MainCtrl',
                 controllerAs: 'vm',
@@ -81,8 +85,9 @@ angular
                             .then(function(data, status){
                                 //console.log(data);
                                 deferred.resolve(data)
-                            })
-                            .catch(function(data, status){
+                            },
+                            function(data){
+                            //.catch(function(data, status){
                                 deferred.reject(data)
                             });
                         return deferred.promise;
@@ -91,6 +96,8 @@ angular
             })
 
             .when("/result/:hash", {
+                /*webapp: templateUrl: 'js/topanat/views/main.html',*/
+                /*topanat: templateUrl: 'views/main.html',*/
                 templateUrl: 'js/topanat/views/main.html',
                 /*templateUrl:'views/bgeeResult.html',*/
                 controller:'MainCtrl',
@@ -111,25 +118,30 @@ angular
 
                         if(typeof hash == 'undefined'){
                             console.log("Hash parameter missing from jobStatus")
+                            console.timeEnd("getJobResultService");
                             return deferred.reject("hash parameter missing from jobStatus");
                         }
 
                         console.time("getJobResultService");
-//                        bgeejobservice.getJobData(hash)
-//                        .then(function(data, status){
-//                            //console.log(data);
-//                            deferred.resolve(data)
-//                        })
-//                        .catch(function(data, status){
-//                            deferred.reject(data)
-//                        });
+
                         bgeejobservice.getJobResult(hash)
-                            .then(function(data, status){
-                                //console.log(data);
+                            .then(function(data){
+                                console.log("thendata");
+                                console.log(data);
+                                console.timeEnd("getJobResultService");
                                 deferred.resolve(data)
-                            })
-                            .catch(function(data, status){
-                                deferred.reject(data)
+                            },
+                            function(data){
+                                console.log("catchdata");
+                                console.log(data);
+                                console.timeEnd("getJobResultService");
+                                bgeejobservice.getJobStatus(hash, 999999, true)
+                                    .then(function(data, status){
+                                        //console.log(data);
+                                        deferred.resolve(data)
+                                    }
+                                    );
+                                //deferred.resolve(data)
                             });
                         console.timeEnd("getJobResultService");
                         return deferred.promise;

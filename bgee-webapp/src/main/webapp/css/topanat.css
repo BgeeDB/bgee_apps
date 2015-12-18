@@ -399,6 +399,15 @@ textarea {
     height: 12px;
 }
 
+#footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    /* Set the fixed height of the footer here */
+    height: 60px;
+    background-color: #f5f5f5;
+}
+
 .slide.ng-enter, .slide.ng-leave {
     -webkit-transition:0.5s linear all;
     transition:0.5s linear all;
@@ -452,7 +461,8 @@ label.radio-inline.checked, label.checkbox-inline.checked {
 
 }*/
 
-/* The ribbons */
+/* not used anymore
+/* The ribbons
 .corner-ribbon {
     width: 150px;
     background: #e43;
@@ -467,16 +477,16 @@ label.radio-inline.checked, label.checkbox-inline.checked {
     z-index: -1;
 }
 
-/* Custom styles */
+/* Custom styles
 .corner-ribbon.sticky {
     position: fixed;
 }
 
 /*.corner-ribbon.shadow{
 box-shadow: 0 0 3px rgba(0,0,0,.3);
-}*/
+}
 
-/* Different positions */
+/* Different positions
 .corner-ribbon.top-left {
     left: -45px;
     top: 125px;
@@ -484,7 +494,7 @@ box-shadow: 0 0 3px rgba(0,0,0,.3);
     -webkit-transform: rotate(-45deg);
 }
 
-/* Colors */
+/* Colors
 .corner-ribbon.white {
     background: #f0f0f0;
     color: #555;
@@ -524,6 +534,29 @@ box-shadow: 0 0 3px rgba(0,0,0,.3);
 
 .corner-ribbon.yellow {
     background: #ec0;
+}
+*/
+
+.row-no-padding > [class*="col-"] {
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+.highlighted {
+    background-color: #ffffcc;
+}
+
+.notdefault {
+    background-color: rgb(249,198,103);
+}
+
+.active {
+    background-color: #cce5ff !important;
+    color: #17A8E4 !important;
+    border-color: #b3b3b3 !important;
+    letter-spacing: 1px !important;
 }
 
 div.loader {
@@ -581,3 +614,14 @@ div.loader p {
     line-height: 14px ;
     margin: 0px 0px 0px 0px ;
 }
+/*
+//for swt-dev
+html {
+    position: relative;
+    min-height: 100%;
+}
+body {
+// Margin bottom by footer height
+    margin-bottom: 60px;
+}
+*/

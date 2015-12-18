@@ -81,11 +81,12 @@
             }
 
             var url = configuration.mockupUrl;
-            return $http.get(url+"?page=top_anat&gene_info=1&display_rp=1&ajax=1&action=get_results&display_type=json&data="+hash)
+            $http.get(url+"?page=top_anat&gene_info=1&display_rp=1&ajax=1&action=get_results&display_type=json&data="+hash)
                 //.then(getJobData);
                 .then(function(response){
-
-                    return response.data;
+                    console.log("thenresponse");
+                    console.log(response.data);
+                    return defer.resolve(response.data);
 
                 },
                 function(response){
@@ -101,10 +102,11 @@
                     console.log("error, no valid response");
                     // TODO handle this better. Is it serious enough to create a label in the UI, or is toast enough?
                     logger.error("Job does not exist or it has expired");
-                    return defer.reject("Job does not exist or it has expired");
+                    return defer.reject(response);
 
                 });
 
+            return defer.promise;
         }
 
         function removeJobFromHistory (job) {
@@ -119,7 +121,7 @@
             }
         }
 
-        function storeJobData (hash, species, taxid) {
+        function storeJobData (hash, species, taxid, title) {
             var history = getJobHistory(); // history is an array of Jobs
 
             if (history == null || jobNotFound(history, hash)) { // First job/new job
@@ -127,7 +129,7 @@
                 var now = date.toLocaleString();
 
                 // use hash as the key, easier to search
-                var newObj = { hash: hash,  creationDate: now, species: species, taxid: taxid};
+                var newObj = { hash: hash,  creationDate: now, species: species, taxid: taxid, title: title};
 
                 if (history == null) {
                     history = [];

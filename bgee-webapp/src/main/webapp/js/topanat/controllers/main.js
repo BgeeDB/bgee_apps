@@ -12,9 +12,9 @@
     angular.module('app')
         .controller('MainCtrl', MainCtrl, ['ui.bootstrap', 'angularFileUpload', 'ngLocationUpdate', 'ngFileSaver']);
 
-    MainCtrl.$inject = ['$scope', '$sce', 'bgeedataservice', 'bgeejobservice', 'helpservice', 'DataTypeFactory', 'configuration', 'logger', 'FileUploader', '$timeout', '$location', '$interval', 'lang', 'jobStatus', '$filter', 'FileSaver', 'Blob', '$route', '$anchorScroll'];
+    MainCtrl.$inject = ['$scope', '$sce', 'bgeedataservice', 'bgeejobservice', 'helpservice', 'DataTypeFactory', 'configuration', 'logger', 'FileUploader', '$timeout', '$location', '$interval', 'lang', 'jobStatus', '$filter', 'FileSaver', 'Blob', '$route', '$window'];
 
-    function MainCtrl ($scope, $sce, bgeedataservice, bgeejobservice, helpservice, DataTypeFactory, configuration, logger, FileUploader, $timeout, $location, $interval, lang, jobStatus, $filter, FileSaver, Blob, $route, $anchorScroll) {
+    function MainCtrl ($scope, $sce, bgeedataservice, bgeejobservice, helpservice, DataTypeFactory, configuration, logger, FileUploader, $timeout, $location, $interval, lang, jobStatus, $filter, FileSaver, Blob, $route, $window) {
 
         var vm = this;
 
@@ -76,9 +76,10 @@
         // we have to set species to something (in this case None)
         // in order to hide the message+spinner
         vm.isValidSpecies = false;
+        vm.isValidBackground = false;
         vm.dataTypeMissing = false;
         vm.devStageMissing = false;
-
+        vm.showDevStageError = false;
 
         /* Help panel: Remember whether the panel is shown or not */
         vm.showHelp = getShowHelp();
@@ -99,6 +100,17 @@
         // message from the gene validation query.
         // Filled only when more than one species detected in fg
         vm.geneValidationMessage = '';
+
+        // getDevStage checks whether all the FG genes are in the BG.
+        // In case of issue, isValidBackground is set to FALSE
+        // BUT as we had to get rid of the return statement
+        // to fix issue #112, the handleDevStage function
+        // gets executed. And if the species are the same, then the
+        // BG is considered as valid. In such cases, we have to check
+        // whether the BG is really valid by checking whether isValidBackgroundMessage
+        // is empty or not.
+        // TODO: This should be revised once we refactor the getDevStages/handleDevStages functions
+        vm.isValidBackgroundMessage = '';
 
         // We have to use an array for the selected
         // stages - See:
@@ -122,8 +134,10 @@
         vm.isActive = 'ALL'; // selected analysis to show
 
         /************** Default values ***********************/
-        vm.data_qual = configuration.data_qual;
-        vm.decorr_type = configuration.decorr_type;
+        vm.data_qual = vm.data_qualDefault = configuration.data_qual;
+        vm.data_qualities = configuration.data_qualities;
+        vm.decorrelation_types = configuration.decorrelation_types;
+        vm.decorr_type = vm.decorr_typeDefault = configuration.decorr_type;
         vm.expr_type = configuration.expr_type;
 
         vm.fdr_thr = vm.fdrThresholdDefault = configuration.fdr_thr;
@@ -150,9 +164,7 @@
             console.info("got jobstatus");
             console.info(jobStatus);
 
-
             angular.forEach(jobStatus.requestParameters, function(val, key) {
-
 
                 if(key == "nb_node" || key == "node_size"){
                     val = parseInt(val);
@@ -204,20 +216,37 @@
 
             var gotDevStages = getDevStages('fg', vm.fg_list);
 
+
             showMessage($scope, "development stages");
 
             gotDevStages.then(function(){
+                // Issue #109
+                // In case we load an existing result page, the background selected species
+                // and checked flag were not assigned any value.
+                // We assume that, because the job exists, the bg and fg species are the same.
+                // We don't want to run another call to the server or to parse the server's response.
+                if (vm.bg_list) {
+                    vm.background_species = vm.selected_species;
+                    vm.background_selected_taxid = vm.selected_taxid;
+                    vm.isBackgroundChecked = '';
+                    // Issue 108
+                    vm.max_node_size = getGeneCount(jobStatus, 'bg_list');
+                }
+
 
                 $timeout(function(){
 
                     console.log("get, display or submit");
                     console.log(jobStatus);
 
-                    if(typeof jobStatus.code !== 'undefined' &&
+                    // jobId check is a magic number we use to get used parameters when result is not available
+                    // prevents us getting results again when we already know it's missing
+
+                    if(vm.jobId != 999999 && (typeof jobStatus.code !== 'undefined' &&
                         jobStatus.code !== 400 &&
                         typeof jobStatus.data.topAnatResults !== 'undefined' ||
                         (typeof jobStatus.data.jobResponse !== 'undefined' &&
-                        jobStatus.data.jobResponse.jobStatus.toLowerCase() == "undefined")
+                        jobStatus.data.jobResponse.jobStatus.toLowerCase() == "undefined"))
                     ){
 
                         console.log(jobStatus.data);
@@ -237,15 +266,17 @@
 
                     } else {
 
-                        console.log("no result, send form o checkJobstatus");
+                        console.log("no result, send form or check Jobstatus");
 
                         // no result, check if we have requestParameters and resubmit
-                        if(typeof jobStatus.requestParameters !== 'undefined' && jobStatus.code == 400) {
+                        if(vm.jobId == 999999 || (typeof jobStatus.requestParameters !== 'undefined' && jobStatus.code == 400)) {
                             console.log("no result or job found for the parameters, resubmit");
                             logger.info("Job result was missing, resubmitting job");
                             vm.sendForm();
                         } else {
                             console.log("job is not done, checkjobstatus");
+                            // This fixes issue #111
+                            vm.resultUrl = '/result/'+vm.hash+'/'+vm.jobId;
                             vm.formSubmitted = true;
                             checkJobStatus();
                         }
@@ -266,6 +297,7 @@
             vm.selected_species = '';
             vm.background_species = '';
             vm.selected_taxid = ''; // for the picture (see Issue #27)
+
 
         }
 
@@ -352,6 +384,8 @@
         console.timeEnd("getonlineHelp");
 
         function getAllOnlineHelpItems() {
+            //webapp: return helpservice.getOnlineHelp('js/topanat/json/help.json')
+            //topanat: return helpservice.getOnlineHelp('json/help.json')
             return helpservice.getOnlineHelp('js/topanat/json/help.json')
                 .then(function (data) {
                     vm.onlineHelp = data;
@@ -411,10 +445,11 @@
             // by default check all datatype boxes
             } else if(angular.isArray(vm.allowedDataTypes) && !angular.isArray(vm.selectedDataTypes)) {
 
-                console.log("all is allowed");
+                console.log("No selected datatypes, check all.");
                 vm.selectedDataTypes = vm.allowedDataTypes.slice(0);
 
             } else {
+
                 console.log("vm.selectedDataTypes");
                 console.log(vm.selectedDataTypes);
 
@@ -423,8 +458,11 @@
                     console.log("obj");
                     console.log(obj);
 
-                    obj.checked = vm.allowedDataTypes.indexOf(obj.id) !== -1;
-
+                    if (vm.selectedDataTypes.indexOf(obj.id) === -1) {
+                        obj.checked = false;
+                    } else {
+                        obj.checked = true;
+                    }
                     console.log(obj);
 
                 });
@@ -658,6 +696,7 @@
 
         vm.selectBackground = function(value) {
             vm.isBackgroundChecked = value;
+            checkFgBg();
         };
 
         function checkConsistency()
@@ -667,16 +706,23 @@
 
             if (vm.selected_species === vm.background_species) {
                 logger.success("Foreground/background species are identical.");
+                // Valid background only of checkFgBG return true
+                // See comments and TODOs about the variable isValidBackgroundMessage
+                if (vm.isValidBackgroundMessage === '') {
+                    vm.isValidBackground = true;
+                }
             }
             else {
                 logger.error("Foreground and background species differ. You can either change your background or the" +
                 " default one will be used.",'',"Error");
                 // Issue 60: In case there is a discrepancy btw FG and BG, the BG list should not be reset. The
                 // default BG should be selected.
-                // BG checked takes precedence over BG list.
-                //vm.background_species = vm.bg_list = '';
+                // BG checked takes precedence over BG list (see sendForm function).
                 vm.background_species = '';
                 vm.isBackgroundChecked = 'checked';
+                vm.isValidBackground = false;
+                vm.isValidBackgroundMessage = 'Species differ between your gene list and your custom background. Please, check your data.';
+                // TODO
             }
         }
 
@@ -776,10 +822,10 @@
                 if(!isIn(lines[i], vm.bg_list)) {
                     console.log(lines[i]+' was not found in background!');
                     found = false;
+                    vm.isValidBackground = false;
                     break;
                 }
             }
-
             return found;
         }
 
@@ -867,8 +913,8 @@
                 fdr_thr: vm.fdr_thr,
                 p_value_thr: vm.p_value_thr,
                 nb_node: vm.nb_node,
+                job_title: vm.job_title,
                 submitted: true,
-                job_title: vm.job_title, 
                 display_type: "json",
                 action: "submit_job",
                 ajax: 1
@@ -1000,6 +1046,7 @@
                 .then(function (data) {
                     displayResults(data);
                     storeJob();
+                    updateRecentJobs();
                 },
 
                 function(data){
@@ -1018,11 +1065,7 @@
 
         function storeJob(){
             // store the hash in the local storage
-            bgeejobservice.storeJobData(vm.hash, vm.selected_species, vm.selected_taxid).
-            then(function(){
-                updateRecentJobs();
-                showMessage($scope, false);
-            });
+            bgeejobservice.storeJobData(vm.hash, vm.selected_species, vm.selected_taxid, vm.job_title);
         }
 
         function parseResults(data) {
@@ -1053,14 +1096,25 @@
             var allResultArr = [];
             vm.gridOptionsByAnalysis = [];
 
+            // Issue #99:
+            // Array of URLs used to get the job zip files
+            vm.zipFileByAnalysis = [];
+            // First add the zip of zips to the array
+            vm.zipFileByAnalysis['ALL'] = configuration.mockupUrl + '/?page=top_anat&action=download&data=' + vm.hash;
+
             for (var i = 0; i < data.data.topAnatResults.length; i++) {
                 var devStageId = data.data.topAnatResults[i].devStageId;
                 var callType = data.data.topAnatResults[i].callType;
 
+                // we could probably use the sanme logic as for the zip file and put a composed key
+                // no time for now
                 vm.gridOptionsByAnalysis[devStageId] = [];
                 vm.gridOptionsByAnalysis[devStageId][callType] = data.data.topAnatResults[i].results;
 
                 Array.prototype.push.apply(allResultArr, data.data.topAnatResults[i].results);
+
+                // zip files by analysis
+                vm.zipFileByAnalysis[devStageId + " ; " + callType] = configuration.mockupUrl + data.data.topAnatResults[i].zipFile;
             }
 
             //sort all results by p-val and FDR
@@ -1116,13 +1170,6 @@
                 }
             }
 
-
-            if ($location.hash() !== 'resultContainer') {
-                $location.hash('resultContainer');
-            } else {
-                $anchorScroll();
-            }
-
             showMessage($scope, false);
 
             //TODO: the 'formSubmitted = true' is a hack to display the message when retrieving
@@ -1135,24 +1182,21 @@
             vm.messageSeverity = "success";
             console.log("Message generated from results: " + vm.message);
 
-            // change URL only if we have submitted the job
-            // I don't think this is needed
-            /*
-             if (!vm.hash) {
-
-             vm.hash = result.requestParameters.data;
-
-             }
-             */
             vm.resultUrl = '/result/' + vm.hash;
             console.log("ready resultUrl: " + vm.resultUrl);
 
             if($location.path() !== vm.resultUrl) {
+                console.info("updating path...");
                 $location.update_path(vm.resultUrl, false);
             }
 
             showMessage($scope, false);
             vm.jobDone = vm.jobStatus;
+
+            $timeout(function(){
+                $window.document.getElementById('resultContainer').scrollIntoView();
+            }, 500);
+
         }
 
         /********************** End Action buttons *********************/
@@ -1167,10 +1211,23 @@
                 console.log("fg and bg did not match");
                 // fg must be in bg
                 logger.error("Genelist contains genes not found in background genes");
-                return false;
+
+                // Issue 112: same behavior as in issue 60
+                vm.background_species = '';
+                vm.isBackgroundChecked = 'checked';
+                vm.isValidBackgroundMessage = 'One or more genes not found in the background. Please, check your data.';
+
+                // See comment about isValidBackgroundMessage variable at the begining of the code.
+                // TODO refactor and make this work slightly better
+                // return false;
+            }
+            else {
+                vm.isValidBackgroundMessage = '';
             }
 
             console.log("getting dev stages");
+            vm.showDevStageError = false;
+
             if(list == ""){ return false;}
             if (type && list) {
 
@@ -1187,17 +1244,45 @@
                     data['bg_list'] = list;
                 }
 
-                console.log("data to getdevstages");
+                console.log("data to getdevstages with type: " + type);
                 console.log(data);
 
                 return bgeedataservice.getDevStages(configuration.mockupUrl, data)
                     .then(function (data) {
                         handleDevStages(data, type);
-
                         getAllDataTypes();
                         vm.allowedDataTypes = getAllowedDataTypes(vm.expr_type);
-                    }
-                );
+                    },
+
+                    function(data){
+                        showMessage($scope, false);
+                        console.info("could not get result");
+                        console.info(data);
+                        vm.selected_species = '';
+
+                        if (typeof data.message !== 'undefined') {
+                            logger.error('Getting result failed. error: ' + data.message, 'TopAnat fail');
+                            vm.message = data.message;
+                        } else if (typeof data.topAnatResults === 'undefined' && typeof data !== 'undefined' && vm.jobStatus === 'UNDEFINED') {
+                            // job is done, but the result is missing,
+                            // data probably had a message for us too, but we already show it
+                            logger.error('Getting result failed. Result may have been deleted. Resubmitting job, please stand by.', 'TopAnat fail')
+                            vm.message = data;
+                            vm.showDevStageError = data;
+                            vm.sendForm();
+                        } else {
+                            if(data.data.message !== 'undefined'){
+                                logger.error(data.data.message, 'TopAnat fail');
+                                vm.message = data.data.message;
+                                vm.showDevStageError = data.data.message;
+                            } else {
+                                logger.error('Getting development stages failed. Unknown error.', 'TopAnat fail');
+                                vm.message = 'Getting development stages failed. Unknown error.';
+                                vm.showDevStageError = 'Getting development stages failed. Unknown error.';
+                            }
+
+                        }
+                    });
             }
 
             //showMessage($scope, false);
@@ -1222,6 +1307,19 @@
             return number;
         }*/
 
+        function getGeneCount(data, type) {
+
+
+            var geneCountObj = type === 'fg_list' ? data.data.fg_list.geneCount : data.data.bg_list.geneCount;
+            var count = 0;
+            angular.forEach(geneCountObj, function(value, key) {
+                if (key == vm.background_selected_taxid) {
+                    count = value;
+                }
+            });
+            return count;
+        }
+
         function mapIdtoName(data, type){
 
             var speciesName = "Not defined";
@@ -1239,6 +1337,7 @@
         }
 
         // Probably needs refactoring and renaming!
+        // TODO: separate btw species and dev stages
         function handleDevStages(data, type){
 
             // Should pop up only when the gene list is checked
@@ -1287,6 +1386,12 @@
 
                 vm.background_selected_taxid = data.data.bg_list.selectedSpecies;
                 vm.background_species = mapIdtoName(data, type + "_list");
+
+                // Issue 108: The number of nodes cannot be bigger than the
+                // number of bg genes submitted
+                vm.max_node_size = getGeneCount(data, type + "_list");
+                vm.node_size = vm.max_node_size;
+
                 checkConsistency();
             }
         }

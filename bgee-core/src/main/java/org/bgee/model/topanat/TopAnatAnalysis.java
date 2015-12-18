@@ -290,7 +290,7 @@ public class TopAnatAnalysis {
                 try (ReversedLinesFileReader reverseReader = new ReversedLinesFileReader(
                         new File(this.getRScriptConsoleFilePath()))) {
                     String lastLine = reverseReader.readLine();
-                    if (lastLine == null || !lastLine.startsWith(TopAnatRManager.NO_RESULT_MESSAGE_PREFIX)) {
+                    if (lastLine == null || !lastLine.contains(TopAnatRManager.NO_RESULT_MESSAGE_PREFIX)) {
                         throw log.throwing(new RAnalysisException("The R analysis threw "
                                 + "an Exception for unknown reason. Last line of the R console: "
                                 + lastLine, e));

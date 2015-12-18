@@ -164,7 +164,7 @@ public class TopAnatRManager {
         code.addRCode("    print(ncol(tableOver))");
 
         //if we get results, save the results and generate a graph visualization
-        code.addRCode("    if(nrow(tableOver)!=0  & ncol(tableOver)==8){");
+        code.addRCode("    if(!is.null(nrow(tableOver)) && nrow(tableOver) != 0  && ncol(tableOver) == 8) {");
         code.addRCode("      print('RESULTS!')");
         code.addRCode("      write.table(tableOver, file=topOBOResultFile, sep='\t', row.names=F, col.names=T, quote=F)");
         code.addRCode("      resultExist <- TRUE");

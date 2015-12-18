@@ -2,7 +2,6 @@ package org.bgee.model.topanat;
 
 import java.io.FileNotFoundException;
 import java.nio.file.Paths;
-import java.util.Collection;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -15,6 +14,16 @@ import rcaller.RCode;
 public class TopAnatRManager {
 
     private final static Logger log = LogManager.getLogger(TopAnatRManager.class.getName());
+    
+    /**
+     * A {@code String} that is the prefix of the message printed in the R console 
+     * when an analysis produces no result and an empty result file is created. 
+     * Because RCaller throws an exception when a result file is empty 
+     * (with a message matching the regex "^.*?Can not parse output: The generated file .+? is empty.*$"), 
+     * and because it also throws this exception for some real types of errors, 
+     * we use this message to formally check whether the exception was caused by an absence of results.
+     */
+    public static final String NO_RESULT_MESSAGE_PREFIX = "No result, creating an empty result file";
 
     private final RCaller caller;
 
@@ -183,7 +192,7 @@ public class TopAnatRManager {
 
         //if there is no result, but no error occurred, we create an empty result file
         code.addRCode("if (!resultExist) {");
-        code.addRCode("  cat('No result, creating an empty result file: ', topOBOResultFile, '\n')");
+        code.addRCode("  cat('" + NO_RESULT_MESSAGE_PREFIX + ": ', topOBOResultFile, '\n')");
         code.addRCode("  file.create(topOBOResultFile)");
         //we need a tableOver object for RCaller to perform the commands
         code.addRCode("    tableOver <- data.frame(1, 8)");

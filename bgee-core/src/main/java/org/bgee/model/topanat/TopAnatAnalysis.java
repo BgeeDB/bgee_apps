@@ -23,6 +23,7 @@ import java.util.zip.ZipOutputStream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.commons.io.input.ReversedLinesFileReader;
 import org.bgee.model.BgeeProperties;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
@@ -34,6 +35,7 @@ import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneService;
 import org.bgee.model.topanat.exception.InvalidForegroundException;
 import org.bgee.model.topanat.exception.InvalidSpeciesGenesException;
+import org.bgee.model.topanat.exception.RAnalysisException;
 
 /**
  * @author Mathieu Seppey
@@ -117,7 +119,7 @@ public class TopAnatAnalysis {
      * @throws InvalidSpeciesException 
      */
     protected TopAnatResults proceedToAnalysis() throws IOException, InvalidForegroundException, 
-    InvalidSpeciesGenesException{
+    InvalidSpeciesGenesException, RAnalysisException {
         log.entry();
         log.info("Result directory: {}", this.getResultDirectory());
 
@@ -232,7 +234,7 @@ public class TopAnatAnalysis {
      * 
      * @throws IOException
      */
-    private void runRcode() throws IOException {
+    private void runRcode() throws IOException, RAnalysisException {
         log.entry();
 
         log.info("Run R code...");
@@ -277,16 +279,28 @@ public class TopAnatAnalysis {
                 this.rManager.performRFunction(this.getRScriptConsoleFilePath());
             } catch (rcaller.exception.ParseException e) {
                 log.catching(e);
-                //RCaller throws an exception when there is no result. 
-                //Just to be sure this exception was really thrown because there was no result, 
-                //we check the exception message. This is highly version specific, but we should add 
-                //an IT to make sure this test is always in sync with the actual message thrown by RCaller. 
-                if (!e.getMessage().matches("^.*?Can not parse output: The generated file .+? is empty.*$")) {
-                    //Not the excepted exception, rethrow
-                    throw log.throwing(e);
+                //RCaller throws an exception when there is no result, with a message 
+                //corresponding to the regex: 
+                //"^.*?Can not parse output: The generated file .+? is empty.*$". 
+                //The problem is, it can also throw this exception for some other types of errors. 
+                //So we check the last line of the R console log: if it does not contain  
+                //"No result, creating an empty result file", then we have an error. 
+                //TODO: unit test a case when the ParseException is launched because of no result, 
+                //and a case when it is for an actual problem (e.g., package not installable)
+                try (ReversedLinesFileReader reverseReader = new ReversedLinesFileReader(
+                        new File(this.getRScriptConsoleFilePath()))) {
+                    String lastLine = reverseReader.readLine();
+                    if (lastLine == null || !lastLine.startsWith(TopAnatRManager.NO_RESULT_MESSAGE_PREFIX)) {
+                        throw log.throwing(new RAnalysisException("The R analysis threw "
+                                + "an Exception for unknown reason. Last line of the R console: "
+                                + lastLine, e));
+                    }
                 }
-                //we create an empty result file, so that we don't re-run the analysis for nothing
-                Files.createFile(tmpFile);
+                //we don't create an empty result file: either it was created by R if there was no result, 
+                //or, if there was an error, then we don't want to prevent re-runnning the analysis.
+                
+            } catch (rcaller.exception.ExecutionException e) {
+                throw log.throwing(new RAnalysisException("The R analysis threw an Exception ", e));
             }
 
             this.move(tmpFile, finalFile, false);

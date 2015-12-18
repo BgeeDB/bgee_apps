@@ -333,7 +333,7 @@ public class CommandTopAnat extends CommandParent {
         String jobTitle = this.requestParameters.getFirstValue(
                 this.requestParameters.getUrlParametersInstance().getParamJobTitle());
         if (StringUtils.isNotBlank(jobTitle)) {
-            globalFileName += jobTitle + "_";
+            globalFileName += jobTitle.replace(' ', '_') + "_";
         }
         globalFileName += this.requestParameters.getDataKey() + ".zip";
         

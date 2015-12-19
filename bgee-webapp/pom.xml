@@ -113,25 +113,28 @@
              to avoid caching issues with proxis/web browers. Corresponds by default 
              to the project version number, but we might have additional updates of these files. -->
         <!-- WARNING: never removes these properties, otherwise your files will be named, e.g., 
-             *${css.version}.css. If you want to disable versioning of CSS and JS files, 
-             just leave the css.version and js.version empty. -->
-        <css.version>${project.version}i</css.version>
-        <js.version>${project.version}i</js.version>
-        <!-- We will rename css and javascript files with version number using 
-             maven-antrun-plugin. The files will be copied in a temp directory, 
-             and added by maven-war-plugin to the WAR file in the standard directory. -->
-        <rename.tmp.directory>${project.build.directory}/rename_tmp</rename.tmp.directory>
-        <!-- we minify and merge css and js scripts, but only if not run from within Eclipse, 
-             for easier debugging. The property "m2e.version" is set only when m2e in Eclipse is used -->
-        <bgee.minify>true</bgee.minify>
+             *${filter.org.bgee.webapp.css.version.extension}.css. If you want to disable 
+             versioning of CSS and JS files, just leave these properties empty. -->
+        <filter.org.bgee.webapp.css.version.extension>${project.version}i</filter.org.bgee.webapp.css.version.extension>
+        <filter.org.bgee.webapp.javascript.version.extension>${project.version}i</filter.org.bgee.webapp.javascript.version.extension>
+        <!-- This property defines where the minified CSS and JS files will be stored. 
+             This is useful to be able to change this setting when running the webapp from within Eclipse 
+             (Eclipse acquires its resources before any plugin can process them, so we modify 
+             this property when running the webapp from within Eclipse, to write the minified files 
+             directly into the m2e-wtp 'web-resources' folder) -->
+        <minify.webappTargetDir>${project.build.directory}/${project.build.finalName}</minify.webappTargetDir>
+        <!-- These property specify whether minified CSS and JS files will be used by the webapp. 
+             This allows to use the original files for easier debugging, notably when running the webapp 
+             from within Eclipse.  -->
+        <filter.org.bgee.webapp.minify>true</filter.org.bgee.webapp.minify>
     </properties>
     
     <!-- There is a problem when running the webapp from Eclipse: m2e-wtp acquires 
          the web-resources before any lifecycle can be launched, so, before 
-         maven-antrun-plugin can rename the files. We define a profile so that 
-         maven-antrun-plugin copies files directly into the m2e-wtp web-resources directory, 
+         minify-maven-plugin can minify the files. We define a profile so that 
+         minify-maven-plugin copies the files directly into the m2e-wtp web-resources directory, 
          when running from Eclipse. 
-         We also use this profile for NOT using minified CSS and JS files when the webapp 
+         We also use this profile to be able to NOT use the minified CSS and JS files when the webapp 
          is run from within Eclipse, for easier debugging. -->
     <profiles>
         <profile>
@@ -145,11 +148,15 @@
                 </property>
             </activation>
             <properties>
-                <!-- change path where maven-antrun-plugin renames static files -->
-                <rename.tmp.directory>${project.build.directory}/m2e-wtp/web-resources/</rename.tmp.directory>
-                <!-- In order to have no extension in URLs, change tomcat context root -->
+                <!-- change paths where minify-maven-plugin minifies files -->
+                <minify.webappTargetDir>${project.build.directory}/m2e-wtp/web-resources/</minify.webappTargetDir>
+                <!-- Disable minify for easier debugging. Just change this property 
+                     to use minified files, to properly test a release as it will be 
+                     in production server. -->
+                <filter.org.bgee.webapp.minify>false</filter.org.bgee.webapp.minify>
+                <!-- In order to have no extension in URLs, change tomcat context root 
+                     (this is buggy in Eclipse) -->
                 <m2eclipse.wtp.contextRoot></m2eclipse.wtp.contextRoot>
-                <bgee.minify>false</bgee.minify>
             </properties>
         </profile>
     </profiles>
@@ -158,8 +165,49 @@
     <build>
         <finalName>bgee-webapp-${project.version}</finalName>
         
+        <!-- When running server from Eclipse, we need to tell m2e to execute 
+             minify-maven-plugin, to properly minify css and js files, by default it doesn't. 
+             We need to modify the life cycle mapping, see 
+             https://www.eclipse.org/m2e/documentation/m2e-execution-not-covered.html. -->
+        <pluginManagement>
+            <plugins>
+                <!-- This plugin is not a real one, it is only used by m2e to obtain 
+                     config information. This is why it needs to be put in the section 
+                     pluginManagement, otherwise Maven would try to download it. -->
+                <plugin>
+                    <groupId>org.eclipse.m2e</groupId>
+                    <artifactId>lifecycle-mapping</artifactId>
+                    <version>1.0.0</version>
+                    <configuration>
+                        <lifecycleMappingMetadata>
+                            <pluginExecutions>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>com.samaxes.maven</groupId>
+                                        <artifactId>minify-maven-plugin</artifactId>
+                                        <versionRange>[1.0.0,)</versionRange>
+                                        <goals>
+                                            <goal>minify</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <execute>
+                                            <!-- set to true, otherwise changes are not seen, 
+                                            e.g., to a css file, and you would need to perform 
+                                            a project update each time. -->
+                                            <runOnIncremental>true</runOnIncremental>
+                                        </execute >
+                                    </action>
+                                </pluginExecution>
+                            </pluginExecutions>
+                        </lifecycleMappingMetadata>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        
         <plugins>
-            <!-- Minify CSS and JS files before maven-antrun-plugin rename them with version number -->
+            <!-- Minify CSS and JS files -->
             <plugin>
                 <groupId>com.samaxes.maven</groupId>
                 <artifactId>minify-maven-plugin</artifactId>
@@ -171,14 +219,16 @@
                             <goal>minify</goal>
                         </goals>
                         <configuration>
+                            <webappTargetDir>${minify.webappTargetDir}</webappTargetDir>
                             <jsSourceDir>js/</jsSourceDir>
+                            <jsTargetDir>js/minify/</jsTargetDir>
                             <jsSourceFiles>
                                 <jsSourceFile>lib/jquery.min.js</jsSourceFile>
                                 <jsSourceFile>lib/jquery_plugins/jquery.visible.min.js</jsSourceFile>
                                 <jsSourceFile>lib/jquery_plugins/jquery-ui.min.js</jsSourceFile>
                             </jsSourceFiles>
                             <jsFinalFile>vendor_common.js</jsFinalFile>
-                            <suffix>min${js.version}</suffix>
+                            <suffix>min${filter.org.bgee.webapp.javascript.version.extension}</suffix>
                         </configuration>
                     </execution>
                     <execution>
@@ -188,7 +238,9 @@
                             <goal>minify</goal>
                         </goals>
                         <configuration>
+                            <webappTargetDir>${minify.webappTargetDir}</webappTargetDir>
                             <jsSourceDir>js/</jsSourceDir>
+                            <jsTargetDir>js/minify/</jsTargetDir>
                             <jsSourceFiles>
                                 <jsSourceFile>bgeeproperties.js</jsSourceFile>
                                 <jsSourceFile>urlparameters.js</jsSourceFile>
@@ -196,73 +248,7 @@
                                 <jsSourceFile>common.js</jsSourceFile>
                             </jsSourceFiles>
                             <jsFinalFile>script_common.js</jsFinalFile>
-                            <suffix>min${js.version}</suffix>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        
-            <!-- We use the maven-antrun-plugin to rename css and javascript files 
-                 with version number, to avoid caching issues with proxis/web browsers. 
-                 I couldn't find any other convenient way to rename files. 
-                 Other solutions included: renaming the css and javascript directories, 
-                 but this would need reconfiguring the server firewall at each release; adding 
-                 a sub-directory with version number in css and javascript directories, 
-                 but this causes problems of relative paths (e.g., images included in css files 
-                 from the img/ directory). -->
-            <plugin>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <id>rename-resources</id>
-                        <!-- perform copy before the package phase, 
-                             when maven-war-plugin builds the WAR file -->
-                        <phase>process-resources</phase>
-                        <configuration>
-                            <target>
-                                <!-- Copy renamed files in a temp directory. 
-                                     We will configure the maven-war-plugin to not copy 
-                                     files in src/main/webapp/css/ and src/main/webapp/js/ itself, 
-                                     and to rather include these renamed files. -->
-                                 <!-- Explanation to select files to copy/rename: 
-                                      http://stackoverflow.com/a/16092997/1768736 -->
-                                 <copy todir="${rename.tmp.directory}/css/">
-                                     <fileset dir="${basedir}/src/main/webapp/css/">
-                                         <include name="**/*.css" />
-                                     </fileset>
-                                     <mapper type="glob" from="*.css" to="*${css.version}.css"/>
-                                 </copy>
-                                 <copy todir="${rename.tmp.directory}/js/">
-                                     <fileset dir="${basedir}/src/main/webapp/js/">
-                                         <include name="**/*.js" />
-                                     </fileset>
-                                     <mapper type="glob" from="*.js" to="*${js.version}.js"/>
-                                 </copy>
-                                 <!-- We also need to include the partial views used for, 
-                                      e.g., AngularJS, but we don't rename them, there is 
-                                      no cache issue for these files queried through AJAX calls. 
-                                      We need to do it here, as we have excluded the js and css directories 
-                                      from the maven-war-plugin build.
-                                      We also need the .json files, the .woff2 files for css...
-                                      FIXME: so here we copy all files in js/ and css/ directories 
-                                      by laziness. The versioned css and js files will stil be included 
-                                      and used by the webapp. But this increase the size of the war... -->
-                                 <copy todir="${rename.tmp.directory}/js/">
-                                     <fileset dir="${basedir}/src/main/webapp/js/">
-                                         <include name="**/*" />
-                                     </fileset>
-                                     <mapper type="identity" />
-                                 </copy>
-                                 <copy todir="${rename.tmp.directory}/css/">
-                                     <fileset dir="${basedir}/src/main/webapp/css/">
-                                         <include name="**/*" />
-                                     </fileset>
-                                     <mapper type="identity" />
-                                 </copy>
-                             </target>
+                            <suffix>min${filter.org.bgee.webapp.javascript.version.extension}</suffix>
                         </configuration>
                     </execution>
                 </executions>
@@ -273,19 +259,25 @@
                 <artifactId>maven-war-plugin</artifactId>
                 <configuration>
                     
-                    <!-- We do no let the maven-war-plugin take care of the css and 
-                         javascript files, they are renamed with version number 
-                         by maven-antrun-plugin, see above. -->
-                    <warSourceExcludes>css/,js/</warSourceExcludes>
+                    <!-- We do no exclude source CSS and JS files from the WAR: 
+                         this will make a larger archive, but it will allow to easily 
+                         activate/deactivate the use of minified files, for easier debugging. -->
+                    
                     <webResources>
-                        <!-- include the resources renamed by maven-antrun-plugin, 
-                             at the root of the WAR file -->
+                        <!-- We have a problem with m2e-wtp, the resources in src/main/webapp/ 
+                             are not considered. We need to explicitly list this folder 
+                             in the webResources to fix the problem (we shouldn't have to)  -->
                         <resource>
-                            <directory>${rename.tmp.directory}</directory>
+                            <!-- this is relative to the pom.xml directory -->
+                            <directory>src/main/webapp/</directory>
                             <includes>
-                                <include>**/*</include>
+                                <include>**</include>
                             </includes>
+                            <!-- override the destination directory for this resource, 
+                                 relative to the root of the WAR file -->
+                            <targetPath>/</targetPath>
                         </resource>
+                        
                         <!-- We filter bgee-webapp.properties so that css version number 
                              and javacript version number are configured. 
                              bgee.dao.properties is filtered to add database connection parameters -->
@@ -344,66 +336,6 @@
                 </configuration>
             </plugin>
         </plugins>
-        
-        
-        <!-- When running server from Eclipse, we need to tell m2e to execute 
-             maven-antrun-plugin, to properly rename css and js files, by default it doesn't. 
-             We need to modify the life cycle mapping, see 
-             https://www.eclipse.org/m2e/documentation/m2e-execution-not-covered.html. -->
-        <pluginManagement>
-            <plugins>
-                <!-- This plugin is not a real one, it is only used by m2e to obtain 
-                     config information. This is why it needs to be put in the section 
-                     pluginManagement, otherwise Maven would try to download it. -->
-                <plugin>
-                    <groupId>org.eclipse.m2e</groupId>
-                    <artifactId>lifecycle-mapping</artifactId>
-                    <version>1.0.0</version>
-                    <configuration>
-                        <lifecycleMappingMetadata>
-                            <pluginExecutions>
-                                <pluginExecution>
-                                    <pluginExecutionFilter>
-                                        <groupId>org.apache.maven.plugins</groupId>
-                                        <artifactId>maven-antrun-plugin</artifactId>
-                                        <versionRange>[1.0.0,)</versionRange>
-                                        <goals>
-                                            <goal>run</goal>
-                                        </goals>
-                                    </pluginExecutionFilter>
-                                    <action>
-                                        <execute>
-                                            <!-- set to true, otherwise changes are not seen, 
-                                            e.g., to a css file, and you would need to perform 
-                                            a project update each time. -->
-                                            <runOnIncremental>true</runOnIncremental>
-                                        </execute >
-                                    </action>
-                                </pluginExecution>
-                                <pluginExecution>
-                                    <pluginExecutionFilter>
-                                        <groupId>com.samaxes.maven</groupId>
-                                        <artifactId>minify-maven-plugin</artifactId>
-                                        <versionRange>[1.0.0,)</versionRange>
-                                        <goals>
-                                            <goal>minify</goal>
-                                        </goals>
-                                    </pluginExecutionFilter>
-                                    <action>
-                                        <execute>
-                                            <!-- set to true, otherwise changes are not seen, 
-                                            e.g., to a css file, and you would need to perform 
-                                            a project update each time. -->
-                                            <runOnIncremental>true</runOnIncremental>
-                                        </execute >
-                                    </action>
-                                </pluginExecution>
-                            </pluginExecutions>
-                        </lifecycleMappingMetadata>
-                    </configuration>
-                </plugin>
-            </plugins>
-        </pluginManagement>
         
         
         <!-- In order to correctly filter bgee.properties even outside of the WAR file -->

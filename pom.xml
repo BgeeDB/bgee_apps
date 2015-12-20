@@ -485,6 +485,14 @@
                     <version>1.8</version>
                 </plugin>
                 
+                
+                <!-- *******Used to minify CSS and JS files in bgee-webapp******** -->
+                <plugin>
+                    <groupId>com.samaxes.maven</groupId>
+                    <artifactId>minify-maven-plugin</artifactId>
+                    <version>1.7.4</version>
+                </plugin>
+                
 
                 <!-- ******************** Needed for integration tests in bgee-dao-sql *********************** -->
                 <plugin>

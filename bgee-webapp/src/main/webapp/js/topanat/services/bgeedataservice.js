@@ -20,7 +20,7 @@
 
         var service = {
             getDevStages: getDevStages,
-            postGeneData: postGeneData,
+            postGeneData: postGeneData
         };
 
         return service;

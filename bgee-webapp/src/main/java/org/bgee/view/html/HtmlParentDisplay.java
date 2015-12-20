@@ -540,6 +540,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             this.includeJs("requestparameters.js");
             this.includeJs("common.js");
         } else {
+            //If you ever add new files, you need to edit bgee-webapp/pom.xml 
+            //to correctly merge/minify them.
             this.includeJs("vendor_common.js");
             this.includeJs("script_common.js");
         }
@@ -617,6 +619,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             //we need to add the Bgee CSS files at the end, to override CSS file from bootstrap
             this.includeCss("bgee.css");  
         } else {
+            //If you ever add new files, you need to edit bgee-webapp/pom.xml 
+            //to correctly merge/minify them.
             //we need to add the Bgee CSS files at the end, to override CSS file from bootstrap
             this.includeCss("common.css"); 
         }

@@ -241,6 +241,8 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     protected void includeJs() {
         log.entry();
         super.includeJs();
+        //If you ever add new files, you need to edit bgee-webapp/pom.xml 
+        //to correctly merge/minify them.
         this.includeJs("general.js");
         log.exit();
     }
@@ -249,6 +251,8 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     protected void includeCss() {
         log.entry();
         super.includeCss();
+        //If you ever add new files, you need to edit bgee-webapp/pom.xml 
+        //to correctly merge/minify them.
         this.includeCss("general.css");
         log.exit();
     }

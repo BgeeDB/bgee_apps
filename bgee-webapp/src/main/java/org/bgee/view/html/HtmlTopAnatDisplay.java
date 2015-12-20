@@ -150,6 +150,8 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
             this.includeJs("topanat/services/constants.js");
             this.includeJs("topanat/directives/loading.js");
         } else {
+            //If you ever add new files, you need to edit bgee-webapp/pom.xml 
+            //to correctly merge/minify them.
             this.includeJs("vendor_topanat.js");
             this.includeJs("script_topanat.js");
         }
@@ -174,6 +176,8 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
             this.includeCss("lib/font_awesome/css/font-awesome.min.css");
             
         } else {
+            //If you ever add new files, you need to edit bgee-webapp/pom.xml 
+            //to correctly merge/minify them.
             //the CSS files need to keep their relative location to other paths the same, 
             //this is why we keep their location and don't merge them all
             this.includeCss("lib/jquery_plugins/vendor_common.css");

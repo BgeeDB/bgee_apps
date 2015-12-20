@@ -211,7 +211,10 @@
         </pluginManagement>
         
         <plugins>
-            <!-- Minify CSS and JS files -->
+            <!-- Merge and minify CSS and JS files. 
+                 IMPORTANT NOTE: if you get an error for merging a newly added file, 
+                 this might be due to a bug when a file ends with a comment line, 
+                 see https://github.com/samaxes/minify-maven-plugin/issues/105 -->
             <plugin>
                 <groupId>com.samaxes.maven</groupId>
                 <artifactId>minify-maven-plugin</artifactId>

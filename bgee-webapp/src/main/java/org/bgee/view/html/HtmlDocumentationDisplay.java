@@ -316,6 +316,8 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
     protected void includeCss() {
         log.entry();
         super.includeCss();
+        //If you ever add new files, you need to edit bgee-webapp/pom.xml 
+        //to correctly merge/minify them.
         this.includeCss("documentation.css");
         log.exit();
     }

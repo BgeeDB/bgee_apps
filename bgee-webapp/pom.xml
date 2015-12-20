@@ -447,7 +447,7 @@
                                 <jsSourceFile>topanat/services/constants.js</jsSourceFile>
                                 <jsSourceFile>topanat/directives/loading.js</jsSourceFile>
                             </jsSourceFiles>
-                            <jsFinalFile>script_topanat.${filter.org.bgee.webapp.javascript.version.extension}.js</jsFinalFile>
+                            <jsFinalFile>script_topanat.js</jsFinalFile>
                             <suffix>${filter.org.bgee.webapp.javascript.version.extension}</suffix>
                             
                             <!-- topanat.css is minified in execution with ID minify_no_merge_bgee, 

@@ -115,8 +115,8 @@
         <!-- WARNING: never removes these properties, otherwise your files will be named, e.g., 
              *${filter.org.bgee.webapp.css.version.extension}.css. If you want to disable 
              versioning of CSS and JS files, just leave these properties empty. -->
-        <filter.org.bgee.webapp.css.version.extension>${project.version}i</filter.org.bgee.webapp.css.version.extension>
-        <filter.org.bgee.webapp.javascript.version.extension>${project.version}i</filter.org.bgee.webapp.javascript.version.extension>
+        <filter.org.bgee.webapp.css.version.extension>min${project.version}i</filter.org.bgee.webapp.css.version.extension>
+        <filter.org.bgee.webapp.javascript.version.extension>min${project.version}i</filter.org.bgee.webapp.javascript.version.extension>
         <!-- This property defines where the minified CSS and JS files will be stored. 
              This is useful to be able to change this setting when running the webapp from within Eclipse 
              (Eclipse acquires its resources before any plugin can process them, so we modify 
@@ -127,6 +127,8 @@
              This allows to use the original files for easier debugging, notably when running the webapp 
              from within Eclipse.  -->
         <filter.org.bgee.webapp.minify>true</filter.org.bgee.webapp.minify>
+        <!-- property used to activate/deactivate maven-minify-plugin -->
+        <skip.minify.plugin>false</skip.minify.plugin>
     </properties>
     
     <!-- There is a problem when running the webapp from Eclipse: m2e-wtp acquires 
@@ -150,10 +152,12 @@
             <properties>
                 <!-- change paths where minify-maven-plugin minifies files -->
                 <minify.webappTargetDir>${project.build.directory}/m2e-wtp/web-resources/</minify.webappTargetDir>
-                <!-- Disable minify for easier debugging. Just change this property 
+                <!-- Disable minify for easier debugging. Just change the two following properties 
                      to use minified files, to properly test a release as it will be 
                      in production server. -->
                 <filter.org.bgee.webapp.minify>false</filter.org.bgee.webapp.minify>
+                <!-- activate/deactivate minify plugin -->
+                <skip.minify.plugin>true</skip.minify.plugin>
                 <!-- In order to have no extension in URLs, change tomcat context root 
                      (this is buggy in Eclipse) -->
                 <m2eclipse.wtp.contextRoot></m2eclipse.wtp.contextRoot>
@@ -212,25 +216,36 @@
                 <groupId>com.samaxes.maven</groupId>
                 <artifactId>minify-maven-plugin</artifactId>
                 <executions>
+                
+                    <!-- merge files from external libraries already minified, 
+                         common to all pages. -->
                     <execution>
-                        <id>minify_common_vendor</id>
+                        <id>common_minified_vendor</id>
                         <goals>
                             <!-- Binds by default to the lifecycle phase: process-resources -->
                             <goal>minify</goal>
                         </goals>
                         <configuration>
                             <webappTargetDir>${minify.webappTargetDir}</webappTargetDir>
+                            <skipMinify>true</skipMinify>
+                            <!-- We always skip the merge and minify if requested -->
+                            <skipMerge>${skip.minify.plugin}</skipMerge>
+                            <jsEngine>CLOSURE</jsEngine>
+                            
                             <jsSourceDir>js/</jsSourceDir>
-                            <jsTargetDir>js/minify/</jsTargetDir>
+                            <jsTargetDir>js/</jsTargetDir>
                             <jsSourceFiles>
                                 <jsSourceFile>lib/jquery.min.js</jsSourceFile>
                                 <jsSourceFile>lib/jquery_plugins/jquery.visible.min.js</jsSourceFile>
                                 <jsSourceFile>lib/jquery_plugins/jquery-ui.min.js</jsSourceFile>
                             </jsSourceFiles>
-                            <jsFinalFile>vendor_common.js</jsFinalFile>
-                            <suffix>min${filter.org.bgee.webapp.javascript.version.extension}</suffix>
+                            <!-- Files already provided minified. The suffix will then not be added  -->
+                            <jsFinalFile>vendor_common.${filter.org.bgee.webapp.javascript.version.extension}.js</jsFinalFile>
+                            <!-- <suffix>${filter.org.bgee.webapp.javascript.version.extension}</suffix> -->
                         </configuration>
                     </execution>
+                    
+                    <!-- merge and minify all Bgee files common to all pages -->
                     <execution>
                         <id>minify_common_bgee</id>
                         <goals>
@@ -239,8 +254,13 @@
                         </goals>
                         <configuration>
                             <webappTargetDir>${minify.webappTargetDir}</webappTargetDir>
+                            <jsEngine>CLOSURE</jsEngine>
+                            <!-- We always skip the merge and minify if requested -->
+                            <skipMinify>${skip.minify.plugin}</skipMinify>
+                            <skipMerge>${skip.minify.plugin}</skipMerge>
+                            
                             <jsSourceDir>js/</jsSourceDir>
-                            <jsTargetDir>js/minify/</jsTargetDir>
+                            <jsTargetDir>js/</jsTargetDir>
                             <jsSourceFiles>
                                 <jsSourceFile>bgeeproperties.js</jsSourceFile>
                                 <jsSourceFile>urlparameters.js</jsSourceFile>
@@ -248,7 +268,195 @@
                                 <jsSourceFile>common.js</jsSourceFile>
                             </jsSourceFiles>
                             <jsFinalFile>script_common.js</jsFinalFile>
-                            <suffix>min${filter.org.bgee.webapp.javascript.version.extension}</suffix>
+                            <suffix>${filter.org.bgee.webapp.javascript.version.extension}</suffix>
+                            
+                            <cssSourceDir>css/</cssSourceDir>
+                            <cssTargetDir>css/</cssTargetDir>
+                            <cssSourceFiles>
+                                <cssSourceFile>bgee.css</cssSourceFile>
+                            </cssSourceFiles>
+                            <cssFinalFile>common.css</cssFinalFile>
+                            <suffix>${filter.org.bgee.webapp.css.version.extension}</suffix>
+                        </configuration>
+                    </execution>
+                    
+                    <!-- files that we only want to minify, not to merge: 
+                         they are the only Bgee file used on their respective page -->
+                    <execution>
+                        <id>minify_no_merge_bgee</id>
+                        <goals>
+                            <!-- Binds by default to the lifecycle phase: process-resources -->
+                            <goal>minify</goal>
+                        </goals>
+                        <configuration>
+                            <webappTargetDir>${minify.webappTargetDir}</webappTargetDir>
+                            <skipMerge>true</skipMerge>
+                            <!-- We always skip the merge and minify if requested -->
+                            <skipMinify>${skip.minify.plugin}</skipMinify>
+                            <jsEngine>CLOSURE</jsEngine>
+                            
+                            <jsSourceDir>js/</jsSourceDir>
+                            <jsTargetDir>js/</jsTargetDir>
+                            <jsSourceFiles>
+                                <jsSourceFile>general.js</jsSourceFile>
+                                <jsSourceFile>download.js</jsSourceFile>
+                            </jsSourceFiles>
+                            <suffix>${filter.org.bgee.webapp.javascript.version.extension}</suffix>
+                            
+                            <cssSourceDir>css/</cssSourceDir>
+                            <cssTargetDir>css/</cssTargetDir>
+                            <cssSourceFiles>
+                                <cssSourceFile>documentation.css</cssSourceFile>
+                                <cssSourceFile>download.css</cssSourceFile>
+                                <cssSourceFile>general.css</cssSourceFile>
+                                <cssSourceFile>topanat.css</cssSourceFile>
+                            </cssSourceFiles>
+                            <suffix>${filter.org.bgee.webapp.css.version.extension}</suffix>
+                        </configuration>
+                    </execution>
+                    
+                    <!-- Files that we only want to rename, not to merge nor to minify 
+                         (they are already minified) -->
+                    <execution>
+                        <id>no_merge_no_minify_1</id>
+                        <goals>
+                            <!-- Binds by default to the lifecycle phase: process-resources -->
+                            <goal>minify</goal>
+                        </goals>
+                        <configuration>
+                            <webappTargetDir>${minify.webappTargetDir}</webappTargetDir>
+                            <!-- we pretend to merge the file so that it is renamed -->
+                            <skipMinify>true</skipMinify>
+                            <!-- We always skip the merge and minify if requested -->
+                            <skipMerge>${skip.minify.plugin}</skipMerge>
+                            
+                            <cssSourceDir>css/</cssSourceDir>
+                            <cssTargetDir>css/lib/angular_modules/ui_grid/</cssTargetDir>
+                            <cssSourceFiles>
+                                <cssSourceFile>lib/angular_modules/ui_grid/ui-grid.min.css</cssSourceFile>
+                            </cssSourceFiles>
+                            <cssFinalFile>ui-grid.${filter.org.bgee.webapp.css.version.extension}.css</cssFinalFile>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>no_merge_no_minify_2</id>
+                        <goals>
+                            <!-- Binds by default to the lifecycle phase: process-resources -->
+                            <goal>minify</goal>
+                        </goals>
+                        <configuration>
+                            <webappTargetDir>${minify.webappTargetDir}</webappTargetDir>
+                            <!-- we pretend to merge the file so that it is renamed -->
+                            <skipMinify>true</skipMinify>
+                            <!-- We always skip the merge and minify if requested -->
+                            <skipMerge>${skip.minify.plugin}</skipMerge>
+                            
+                            <cssSourceDir>css/</cssSourceDir>
+                            <cssTargetDir>css/lib/font_awesome/css/</cssTargetDir>
+                            <cssSourceFiles>
+                                <cssSourceFile>lib/font_awesome/css/font-awesome.min.css</cssSourceFile>
+                            </cssSourceFiles>
+                            <cssFinalFile>font-awesome.${filter.org.bgee.webapp.css.version.extension}.css</cssFinalFile>
+                        </configuration>
+                    </execution>
+                    
+                    
+                    <!-- merge files from external libraries already minified, 
+                         specific to TopAnat pages. -->
+                    <execution>
+                        <id>topanat_minified_vendor</id>
+                        <goals>
+                            <!-- Binds by default to the lifecycle phase: process-resources -->
+                            <goal>minify</goal>
+                        </goals>
+                        <configuration>
+                            <webappTargetDir>${minify.webappTargetDir}</webappTargetDir>
+                            <skipMinify>true</skipMinify>
+                            <!-- We always skip the merge and minify if requested -->
+                            <skipMerge>${skip.minify.plugin}</skipMerge>
+                            <jsEngine>CLOSURE</jsEngine>
+                            
+                            <jsSourceDir>js/</jsSourceDir>
+                            <jsTargetDir>js/</jsTargetDir>
+                            <jsSourceFiles>
+                                <jsSourceFile>lib/jquery_plugins/bootstrap.min.js</jsSourceFile>
+                                <jsSourceFile>lib/jquery_plugins/toastr.min.js</jsSourceFile>
+                                <jsSourceFile>lib/angular.min.js</jsSourceFile>
+                                <jsSourceFile>lib/angular_modules/angular-animate.min.js</jsSourceFile>
+                                <jsSourceFile>lib/angular_modules/angular-messages.min.js</jsSourceFile>
+                                <jsSourceFile>lib/angular_modules/angular-resource.min.js</jsSourceFile>
+                                <jsSourceFile>lib/angular_modules/angular-route.min.js</jsSourceFile>
+                                <jsSourceFile>lib/angular_modules/angular-sanitize.min.js</jsSourceFile>
+                                <jsSourceFile>lib/angular_modules/angular-touch.min.js</jsSourceFile>
+                                <jsSourceFile>lib/angular_modules/ui_modules/ui-grid.min.js</jsSourceFile>
+                                <jsSourceFile>lib/angular_modules/ui_modules/ui-bootstrap-tpls.min.js</jsSourceFile>
+                                <jsSourceFile>lib/angular_modules/angular-file-upload.min.js</jsSourceFile>
+                                <jsSourceFile>lib/angular_modules/angular-location-update.min.js</jsSourceFile>
+                                <jsSourceFile>lib/Blob.js</jsSourceFile>
+                                <jsSourceFile>lib/FileSaver.min.js</jsSourceFile>
+                                <jsSourceFile>lib/angular_modules/angular-file-saver.bundle.min.js</jsSourceFile>
+                            </jsSourceFiles>
+                            <!-- Files already provided minified. The suffix will then not be added  -->
+                            <jsFinalFile>vendor_topanat.${filter.org.bgee.webapp.javascript.version.extension}.js</jsFinalFile>
+                            
+                            <cssSourceDir>css/</cssSourceDir>
+                            <cssTargetDir>css/lib/jquery_plugins/</cssTargetDir>
+                            <cssSourceFiles>
+                                <cssSourceFile>lib/jquery_plugins/bootstrap.min.css</cssSourceFile>
+                                <cssSourceFile>lib/jquery_plugins/jquery-ui.min.css</cssSourceFile>
+                                <cssSourceFile>lib/jquery_plugins/jquery-ui.structure.min.css</cssSourceFile>
+                                <cssSourceFile>lib/jquery_plugins/jquery-ui.theme.min.css</cssSourceFile>
+                                <cssSourceFile>lib/jquery_plugins/toastr.min.css</cssSourceFile>
+                            </cssSourceFiles>
+                            <!-- Files already provided minified. The suffix will then not be added  -->
+                            <cssFinalFile>vendor_common.${filter.org.bgee.webapp.css.version.extension}.css</cssFinalFile>
+                        </configuration>
+                    </execution>
+                    
+                    <!-- merge and minify all Bgee files specific to TopAnat -->
+                    <execution>
+                        <id>minify_topanat_bgee</id>
+                        <goals>
+                            <!-- Binds by default to the lifecycle phase: process-resources -->
+                            <goal>minify</goal>
+                        </goals>
+                        <configuration>
+                            <webappTargetDir>${minify.webappTargetDir}</webappTargetDir>
+                            <!-- We always skip the merge and minify if requested -->
+                            <skipMinify>${skip.minify.plugin}</skipMinify>
+                            <skipMerge>${skip.minify.plugin}</skipMerge>
+                            <jsEngine>CLOSURE</jsEngine>
+                            
+                            <jsSourceDir>js/</jsSourceDir>
+                            <jsTargetDir>js/</jsTargetDir>
+                            <jsSourceFiles>
+                                <jsSourceFile>topanat/topanat.js</jsSourceFile>
+                                <jsSourceFile>topanat/services/logger.module.js</jsSourceFile>
+                                <jsSourceFile>topanat/services/logger.js</jsSourceFile>
+                                <jsSourceFile>topanat/controllers/main.js</jsSourceFile>
+                                <jsSourceFile>topanat/controllers/result.js</jsSourceFile>
+                                <jsSourceFile>topanat/services/bgeedataservice.js</jsSourceFile>
+                                <jsSourceFile>topanat/services/bgeejobservice.js</jsSourceFile>
+                                <jsSourceFile>topanat/services/helpservice.js</jsSourceFile>
+                                <jsSourceFile>topanat/services/datatypefactory.js</jsSourceFile>
+                                <jsSourceFile>topanat/services/config.js</jsSourceFile>
+                                <jsSourceFile>topanat/services/lang.js</jsSourceFile>
+                                <jsSourceFile>topanat/services/constants.js</jsSourceFile>
+                                <jsSourceFile>topanat/directives/loading.js</jsSourceFile>
+                            </jsSourceFiles>
+                            <jsFinalFile>script_topanat.${filter.org.bgee.webapp.javascript.version.extension}.js</jsFinalFile>
+                            <suffix>${filter.org.bgee.webapp.javascript.version.extension}</suffix>
+                            
+                            <!-- topanat.css is minified in execution with ID minify_no_merge_bgee, 
+                                 this should be changed if there are more than one CSS file 
+                                 specific to Bgee used.  -->
+                            <!-- <cssSourceDir>css/</cssSourceDir>
+                            <cssTargetDir>css/</cssTargetDir>
+                            <cssSourceFiles>
+                                <cssSourceFile>topanat.css</cssSourceFile>
+                            </cssSourceFiles>
+                            <cssFinalFile>topanat.css</cssFinalFile>
+                            <suffix>${filter.org.bgee.webapp.css.version.extension}</suffix> -->
                         </configuration>
                     </execution>
                 </executions>

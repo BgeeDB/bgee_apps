@@ -24,21 +24,23 @@ public class HtmlParentDisplayTest {
     @Test
     public void shouldGetVersionedJsFileName() throws IOException {
         BgeeProperties props = mock(BgeeProperties.class);
+        when(props.isMinify()).thenReturn(true);
         HtmlFactory factory = mock(HtmlFactory.class);
-        when(props.getJavascriptVersionExtension()).thenReturn("-js13");
+        when(props.getJavascriptVersionExtension()).thenReturn("js13");
         HtmlParentDisplay display = new HtmlParentDisplay(null, null, props, factory);
         assertEquals("Incorrect versioned javascript file name generated", 
-                "common-js13.js", display.getVersionedJsFileName("common.js"));
+                "common.js13.js", display.getVersionedJsFileName("common.js"));
     }
     
     @Test
     public void shouldGetVersionedCssFileName() throws IOException {
         BgeeProperties props = mock(BgeeProperties.class);
+        when(props.isMinify()).thenReturn(true);
         HtmlFactory factory = mock(HtmlFactory.class);
-        when(props.getCssVersionExtension()).thenReturn("-css13");
+        when(props.getCssVersionExtension()).thenReturn("css13");
         HtmlParentDisplay display = new HtmlParentDisplay(null, null, props, factory);
         assertEquals("Incorrect versioned CSS file name generated", 
-                "bgee-css13.css", display.getVersionedCssFileName("bgee.css"));
+                "bgee.css13.css", display.getVersionedCssFileName("bgee.css"));
     }
 
     /**

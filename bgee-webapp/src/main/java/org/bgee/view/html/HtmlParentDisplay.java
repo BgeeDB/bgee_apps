@@ -540,8 +540,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             this.includeJs("requestparameters.js");
             this.includeJs("common.js");
         } else {
-            this.includeJs("vendor_common.min.js");
-            this.includeJs("script_common.min.js");
+            this.includeJs("vendor_common.js");
+            this.includeJs("script_common.js");
         }
         log.exit();
     }
@@ -588,11 +588,14 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             throw log.throwing(new IllegalArgumentException("The provided file name "
                     + "must end with an extension '.js'."));
         }
-        if (StringUtils.isBlank(this.prop.getJavascriptVersionExtension())) {
+        //if no version info was provided, or if we don't want to use the minified files, 
+        //return original name.
+        if (StringUtils.isBlank(this.prop.getJavascriptVersionExtension()) || 
+                !this.prop.isMinify()) {
             return log.exit(originalFileName);
         }
         return log.exit(originalFileName.replaceAll("(.+?)\\.js", 
-                "$1" + this.prop.getJavascriptVersionExtension() + ".js"));
+                "$1." + this.prop.getJavascriptVersionExtension() + ".js"));
     }
     
     /**
@@ -610,7 +613,13 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * @see #includeCss(String)
      */
     protected void includeCss() {
-        this.includeCss("bgee.css"); 
+        if (!this.prop.isMinify()) {
+            //we need to add the Bgee CSS files at the end, to override CSS file from bootstrap
+            this.includeCss("bgee.css");  
+        } else {
+            //we need to add the Bgee CSS files at the end, to override CSS file from bootstrap
+            this.includeCss("common.css"); 
+        }
     }
     /**
      * Write the HTML code allowing to include the CSS file named {@code fileName}. 
@@ -655,11 +664,14 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             throw log.throwing(new IllegalArgumentException("The provided file name "
                     + "must end with an extension '.css'."));
         }
-        if (StringUtils.isBlank(this.prop.getCssVersionExtension())) {
+        //if no version info was provided, or if we don't want to use the minified files, 
+        //return original name.
+        if (StringUtils.isBlank(this.prop.getCssVersionExtension()) || 
+                !this.prop.isMinify()) {
             return log.exit(originalFileName);
         }
         return log.exit(originalFileName.replaceAll("(.+?)\\.css", 
-                "$1" + this.prop.getCssVersionExtension() + ".css"));
+                "$1." + this.prop.getCssVersionExtension() + ".css"));
     }
 
     /**

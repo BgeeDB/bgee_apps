@@ -26,7 +26,7 @@ angular
     ])
 
 
-    .config(function ($routeProvider) {
+    .config(['$routeProvider', function ($routeProvider) {
         $routeProvider
             .when('/', {
                 /*webapp: templateUrl: 'js/topanat/views/main.html',*/
@@ -69,7 +69,7 @@ angular
                     //after form submission there is already a tracking of job advancement activated.
                     //Is there a way to prevent this routing to be triggered when URL updated
                     //following job submission?
-                    jobStatus: function($q, $route, bgeejobservice){
+                    jobStatus: ["$q","$route","bgeejobservice", function($q, $route, bgeejobservice){
 
                         var deferred = $q.defer();
                         console.log($route.current.params);
@@ -91,7 +91,7 @@ angular
                                 deferred.reject(data)
                             });
                         return deferred.promise;
-                    }
+                    }]
                 }
             })
 
@@ -111,7 +111,7 @@ angular
                     loading: function(){return true;},
                     whatIsLoading: function(){console.log("whatIsLoading = results");return 'results.';},
 
-                    jobStatus: function($q, $route, bgeejobservice){
+                    jobStatus: ["$q","$route","bgeejobservice", function($q, $route, bgeejobservice){
 
                         var deferred = $q.defer();
                         var hash = $route.current.params.hash;
@@ -145,7 +145,7 @@ angular
                             });
                         console.timeEnd("getJobResultService");
                         return deferred.promise;
-                    }
+                    }]
                 }
             })
 
@@ -153,4 +153,4 @@ angular
                 redirectTo: '/'
             });
 
-    });
+    }]);

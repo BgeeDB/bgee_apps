@@ -137,6 +137,10 @@
         <filter.org.bgee.webapp.minify>true</filter.org.bgee.webapp.minify>
         <!-- property used to activate/deactivate maven-minify-plugin -->
         <skip.minify.plugin>false</skip.minify.plugin>
+        
+        <!-- Default the parameter to send mail to empty string. 
+             This parameter should be overriden in settings.xml if needed -->
+        <filter.org.bgee.webapp.mailUri></filter.org.bgee.webapp.mailUri>
     </properties>
     
     <!-- There is a problem when running the webapp from Eclipse: m2e-wtp acquires 

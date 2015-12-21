@@ -411,12 +411,29 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
     /**
      * A {@code String} that is the default value of the name of the path to be used in URL 
      * to link to a file stored in the TopAnat result directory
-     * (see {@code org.bgee.model.BgeeProperties##topAnatResultsWritingDirectory}).
+     * (see {@code org.bgee.model.BgeeProperties#topAnatResultsWritingDirectory}).
      * 
      * @see #TOP_ANAT_RESULTS_URL_DIRECTORY_KEY
      */
     public final static String TOP_ANAT_RESULTS_URL_DIRECTORY_DEFAULT = 
-            "bgee/TopAnatFiles/results/";     
+            "bgee/TopAnatFiles/results/";   
+
+    /**
+     * A {@code String} that is the key to access to the property containing 
+     * the URI providing the parameters to send emails.
+     * 
+     * @see #MAIL_URI_DEFAULT
+     * @see #getMailUri()
+     */
+    public final static String MAIL_URI_KEY = "org.bgee.webapp.mailUri";
+    /**
+     * A {@code String} that is the default value of the property containing 
+     * the URI providing the parameters to send emails.
+     * 
+     * @see #MAIL_URI_KEY
+     * @see #getMailUri()
+     */
+    public final static String MAIL_URI_DEFAULT = null;  
 
     /**
      * @return  An instance of {@code BgeeProperties} with values based on the System properties
@@ -599,6 +616,11 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      * @see org.bgee.model.BgeeProperties#topAnatRWorkingDirectory
      */
     private final String topAnatResultsUrlDirectory; 
+    
+    /**
+     * @see #getMailUri()
+     */
+    private final String mailUri;
 
     /**
      * Private constructor, can be only called through the use of one of the
@@ -668,6 +690,8 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
         topAnatResultsUrlDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 TOP_ANAT_RESULTS_URL_DIRECTORY_KEY,
                 TOP_ANAT_RESULTS_URL_DIRECTORY_DEFAULT);
+        mailUri = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
+                MAIL_URI_KEY, MAIL_URI_DEFAULT);
         log.debug("Initialization done.");
         log.exit();
     }
@@ -864,4 +888,25 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
     public String getTopAnatResultsUrlDirectory() {
         return topAnatResultsUrlDirectory;
     }    
+    
+    /**
+     * Gets the URI providing the parameters for sending emails. This URI is used for convenience, 
+     * and is not an URI used in a protocol. The URI must be of the form: 
+     * {@code <protocol>://<server>:<port>/?<queryString>}. The query string provides 
+     * additional parameters besides protocol, server and port, that must be properties 
+     * defined by the {@code javax.mail} API, for instance, {@code mail.smtp.auth}, 
+     * or {@code mail.smtp.starttls.enable}. If the default port of the protocol is used, 
+     * it is not needed to provide it.
+     * <p>
+     * Additional parameters not part of the {@code javax.mail} API can be provided: 
+     * {@code username}, and {@code password}, used to create a {@code PasswordAuthentication} object).
+     * <p>
+     * Example URI: {@code smtp://smtp.unil.ch:465/?username=user&password=pass
+     * &mail.smtp.auth=true&mail.smtp.ssl.enable=true&mail.smtp.starttls.enable=true}.
+     * 
+     * @return  A {@code String} that is the URI providing the parameters for sending emails.
+     */
+    public String getMailUri() {
+        return mailUri;
+    }
 }

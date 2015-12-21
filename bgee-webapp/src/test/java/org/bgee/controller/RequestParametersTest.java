@@ -800,7 +800,7 @@ public class RequestParametersTest extends TestAncestor {
         BgeeHttpServletRequest mockHttpServletRequest = mock(BgeeHttpServletRequest.class);
         Map<String, String[]> parameterMap5 = new HashMap<>();
         parameterMap5.put(RequestParametersTest.testURLParameters.getParamTestString().getName(), 
-                new String[]{"string ~ @ # $ ^ & * ( ) / - _ + = [ ] { } | \\ , . ? : ;"});
+                new String[]{"string ~ @ # $ ^ & * ( ) / - _ + = [ ] { } | \\ , . ! ? : ; ' \""});
         when(mockHttpServletRequest.getParameterMap())
         .thenReturn(parameterMap5);
         new RequestParameters(

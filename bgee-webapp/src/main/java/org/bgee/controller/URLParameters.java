@@ -87,9 +87,9 @@ public class URLParameters {
 
     /**
      * A {@code String} that contains the default value for {@link URLParameters.Parameter#format}. 
-     * Chars allowed: {@code ~ @ # $ ^ & * ( ) - _ + = [ ] { } | \ / , ; . ? :}
+     * Chars allowed: {@code ~ @ # $ ^ & * ( ) - _ + = [ ] { } | \ / , ; . ? ! : ' "}
      */
-    protected static final String DEFAULT_FORMAT = "^[\\w~@#&$^*/()_+=\\[\\]{}|\\\\,;.?: \\-]*$";
+    protected static final String DEFAULT_FORMAT = "^[\\w~@#&$^*/()_+=\\[\\]{}|\\\\,;.?!'\": \\-]*$";
 
     /**
      * A {@code String} that contains the default value for {@link URLParameters.Parameter#format}

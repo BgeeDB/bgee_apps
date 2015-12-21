@@ -213,8 +213,8 @@
                     <div class="media-body ng-cloak">
 
                         <span class="pull-right btn-group btn-group-xs" style="padding: 10px 5px 0 0;">
-                        <button type="button" class="btn" ng-model="vm.isBackgroundChecked" ng-click="vm.selectBackground('checked')" ng-disabled="vm.formSubmitted" ng-class="{'btn-primary': vm.isBackgroundChecked === 'checked', 'btn-default': vm.isBackgroundChecked === ''}">Bgee data for {{vm.selected_species}}</button>
-                        <button type="button" class="btn" ng-model="vm.isBackgroundChecked" ng-click="vm.selectBackground('')" ng-disabled="vm.formSubmitted" ng-class="{'btn-primary': vm.isBackgroundChecked === '', 'btn-default': vm.isBackgroundChecked === 'checked'}">Custom data</button>
+                        <button type="button" class="btn" ng-model="vm.isBackgroundChecked" ng-click="vm.selectBackground('checked')" ng-disabled="vm.formSubmitted" ng-class="{'active': vm.isBackgroundChecked === 'checked', 'btn-default': vm.isBackgroundChecked === ''}">Bgee data for {{vm.selected_species}}</button>
+                        <button type="button" class="btn" ng-model="vm.isBackgroundChecked" ng-click="vm.selectBackground('')" ng-disabled="vm.formSubmitted" ng-class="{'active': vm.isBackgroundChecked === '', 'btn-default': vm.isBackgroundChecked === 'checked'}">Custom data</button>
                         </span>
 
                         <h4 class="media-heading smaller_head">Background<span style="padding-left: 10px; font-size: 13px;" class="glyphicon glyphicon-question-sign" uib-popover="{{vm.help}}" popover-trigger="mouseenter" popover-placement="bottom" popover-append-to-body="true" popover-title="Custom background" ng-mouseover="vm.getOnlineHelpForItem('Custom background')"></span></h4>

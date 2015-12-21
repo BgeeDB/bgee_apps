@@ -703,9 +703,6 @@
 
         function checkConsistency()
         {
-            /*vm.background_species = 'mouse';
-             vm.background_selected_taxid = '10090';*/
-
             if (vm.selected_species === vm.background_species) {
                 logger.success("Foreground/background species are identical.");
                 // Valid background only of checkFgBG return true
@@ -1271,8 +1268,21 @@
                         showMessage($scope, false);
                         console.info("could not get result");
                         console.info(data);
-                        vm.selected_species = '';
-
+                        
+                        // Issue 117: I don't see why the species for FG should
+                        // be reset when BG is incorrect.
+                        if (type == 'fg') {
+                        	vm.selected_species = '';
+                        	vm.isValidSpecies = false;
+                        }
+                        else
+                        {
+                        	vm.background_species = '';
+                        	vm.isBackgroundChecked = 'checked';
+                        	vm.isValidBackground = false;
+                        	vm.isValidBackgroundMessage = 'Error with your custom background. Please, check your data.';
+                        }
+                        
                         if (typeof data.message !== 'undefined') {
                             logger.error('Getting result failed. error: ' + data.message, 'TopAnat fail');
                             vm.message = data.message;

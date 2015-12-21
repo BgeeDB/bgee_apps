@@ -42,6 +42,14 @@
             <artifactId>gson</artifactId>
             <version>2.3.1</version>
         </dependency>
+        
+        
+        <!-- To send Mails -->
+        <dependency>
+            <groupId>com.sun.mail</groupId>
+            <artifactId>javax.mail</artifactId>
+        </dependency>
+            
         <!-- Remove these dependencies as long as the webapp does not use 
             the actual Bgee API <dependency> <groupId>${project.groupId}</groupId> <artifactId>bgee-core</artifactId> 
             <version>${project.version}</version> <scope>compile</scope> </dependency> 

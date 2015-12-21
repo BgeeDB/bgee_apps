@@ -548,14 +548,14 @@
                 vm.gridApi.grid.registerRowsProcessor(vm.resultFilter, 200);
             },
             columnDefs: [
-                {field: 'anatEntityId', width: "15%", cellTemplate: '<div><a href="http://purl.obolibrary.org/obo/{{row.entity[col.field].replace(\':\',\'_\')}}" target="_blank">{{row.entity[col.field]}}</a></div>' },
+                {field: 'anatEntityId', width: "10%", cellTemplate: '<div><a href="http://purl.obolibrary.org/obo/{{row.entity[col.field].replace(\':\',\'_\')}}" target="_blank">{{row.entity[col.field]}}</a></div>' },
                 {field: 'anatEntityName', width: "30%" },
                 {field: 'annotated', width: "10%" },
                 {field: 'significant', width: "10%" },
                 {field: 'expected', width: "10%" },
                 {field: 'foldEnrichment', width: "10%" },
                 {field: 'pValue', width: "10%" },
-                {field: 'FDR', width: "5%" }
+                {field: 'FDR', width: "10%" }
             ]
         };
 

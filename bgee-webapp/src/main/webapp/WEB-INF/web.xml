@@ -76,11 +76,11 @@
         <!-- We don't version HTMl and JSON files, so we don't allow cache -->
         <init-param>
             <param-name>ExpiresByType text/html</param-name>
-            <param-value>access plus 1 minutes</param-value>
+            <param-value>access plus 60 minutes</param-value>
         </init-param>
         <init-param>
             <param-name>ExpiresByType application/json</param-name>
-            <param-value>access plus 1 minutes</param-value>
+            <param-value>access plus 60 minutes</param-value>
         </init-param>
         <!-- Other files are versioned, we can let the clients cache them -->
         <init-param>
@@ -92,6 +92,29 @@
         <filter-name>ExpiresFilter</filter-name>
         <url-pattern>/js/*</url-pattern>
         <dispatcher>REQUEST</dispatcher>
+    </filter-mapping>
+    
+    <!-- Add a filter for gziping responses. Maybe we would need to disable it 
+         when we enable ehcache?
+         We use a servlet filter rather than the servlet connector, to be able 
+         to configure it directly from the webapp -->
+    <filter>
+	    <filter-name>CompressionFilter</filter-name>
+	    <filter-class>net.sf.ehcache.constructs.web.filter.GzipFilter</filter-class>
+    </filter>
+    <!-- these mappings will compress response from the webapp, 
+         and files in js/ and css/ folders, but not in the img/* folder. -->
+    <filter-mapping>
+        <filter-name>CompressionFilter</filter-name>
+        <url-pattern>/</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>CompressionFilter</filter-name>
+        <url-pattern>/js/*</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>CompressionFilter</filter-name>
+        <url-pattern>/css/*</url-pattern>
     </filter-mapping>
 
     <!-- Add a filter to cache the pages using ehcache -->

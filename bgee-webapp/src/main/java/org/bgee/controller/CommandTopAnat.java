@@ -345,12 +345,11 @@ public class CommandTopAnat extends CommandParent {
                   .append("your analysis again by using the following link: ")
                   .append(this.resultUrl).append(". ")
                   .append("If the error persists, please do not hesitate to contact us ")
-                  .append("by replying to this message. \n");
-                sb.append("Best regards, \n\n");
+                  .append("by replying to this message. \n\n");
+                sb.append("Best regards, \n");
                 sb.append("The Bgee team. \n\n");
                 
-                sb.append("Details about the error: \n")
-                  .append(exceptionThrown.toString()).append("\n");
+                sb.append("Details about the error: \n");
                 StringWriter sw = new StringWriter();
                 exceptionThrown.printStackTrace(new PrintWriter(sw));
                 sb.append(sw.toString());

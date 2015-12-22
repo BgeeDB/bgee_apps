@@ -133,6 +133,9 @@ public class MailSender {
     /**
      * Instantiate a {@code MailSender} using the default {@code Transport#send(Message)} 
      * method to send mails.
+     * <p>
+     * Please note that the value returned by {@code getMailWaitTime} on {@code props} 
+     * will have no effect, it is needed to call {@link #setWaitTimeInMs(int)}.
      * 
      * @param props The {@code BgeeProperties} which to retrieve parameters to connect to the mail server from.
      * @throws IllegalArgumentException If {@code props} is {@code null} or does not allow to send mails.
@@ -147,6 +150,9 @@ public class MailSender {
         });
     }
     /**
+     * Please note that the value returned by {@code getMailWaitTime} on {@code props} 
+     * will have no effect, it is needed to call {@link #setWaitTimeInMs(int)}.
+     * 
      * @param props             The {@code BgeeProperties} which to retrieve parameters to connect 
      *                          to the mail server from.
      * @param transportSender   A {@code Consumer} of {@code Message} responsible for sending it. 

@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.TestAncestor;
+import org.bgee.controller.utils.MailSender;
 import org.bgee.model.ServiceFactory;
 import org.bgee.view.ViewFactory;
 import org.junit.Test;
@@ -48,8 +49,8 @@ public class CommandParentTest extends TestAncestor {
 
             public FakeCommand(HttpServletResponse response, RequestParameters requestParameters, 
                     BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory, 
-                    ServletContext context) {
-                super(response, requestParameters, prop, viewFactory, serviceFactory, context);
+                    ServletContext context, MailSender mailSender) {
+                super(response, requestParameters, prop, viewFactory, serviceFactory, context, mailSender);
             }
 
             @Override
@@ -67,7 +68,7 @@ public class CommandParentTest extends TestAncestor {
         when(context.getMimeType(filePath)).thenReturn("application/zip");
         
         FakeCommand command = new FakeCommand(response, null, BgeeProperties.getBgeeProperties(), 
-                null, null, context);
+                null, null, context, null);
         command.launchFileDownload(filePath, "myFile");
         
         verify(response).setContentType("application/zip");

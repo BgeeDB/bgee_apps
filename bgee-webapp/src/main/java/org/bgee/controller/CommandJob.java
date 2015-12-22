@@ -1,6 +1,5 @@
 package org.bgee.controller;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.logging.log4j.LogManager;
@@ -37,13 +36,10 @@ public class CommandJob extends CommandParent {
      * @param viewFactory       A {@code ViewFactory} providing the views of the appropriate 
      *                          display type.
      * @param serviceFactory    A {@code ServiceFactory} that provides bgee services.
-     * @param context           The {@code ServletContext} of the servlet using this object. 
-     *                          Notably used when forcing file download.
      */
     public CommandJob(HttpServletResponse response, RequestParameters requestParameters, 
-            BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory, 
-            ServletContext context) {
-        super(response, requestParameters, prop, viewFactory, serviceFactory, context);
+            BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory) {
+        super(response, requestParameters, prop, viewFactory, serviceFactory);
     }
 
 

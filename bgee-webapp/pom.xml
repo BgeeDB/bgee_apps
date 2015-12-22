@@ -141,6 +141,8 @@
         <!-- Default the parameter to send mail to empty string. 
              This parameter should be overriden in settings.xml if needed -->
         <filter.org.bgee.webapp.mailUri></filter.org.bgee.webapp.mailUri>
+        <!-- "From" address when sending mails at TopAnat job completions -->
+        <filter.org.bgee.webapp.topAnatFromAddress></filter.org.bgee.webapp.topAnatFromAddress>
     </properties>
     
     <!-- There is a problem when running the webapp from Eclipse: m2e-wtp acquires 

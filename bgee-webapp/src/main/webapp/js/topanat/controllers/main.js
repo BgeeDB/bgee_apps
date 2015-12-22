@@ -548,12 +548,12 @@
                 vm.gridApi.grid.registerRowsProcessor(vm.resultFilter, 200);
             },
             columnDefs: [
-                {field: 'anatEntityId', width: "10%", cellTemplate: '<div><a href="http://purl.obolibrary.org/obo/{{row.entity[col.field].replace(\':\',\'_\')}}" target="_blank">{{row.entity[col.field]}}</a></div>' },
-                {field: 'anatEntityName', width: "30%" },
-                {field: 'annotated', width: "10%" },
-                {field: 'significant', width: "10%" },
-                {field: 'expected', width: "10%" },
-                {field: 'foldEnrichment', width: "10%" },
+                {field: 'anatEntityId', width: "14%", cellTemplate: '<div><a href="http://purl.obolibrary.org/obo/{{row.entity[col.field].replace(\':\',\'_\')}}" target="_blank">{{row.entity[col.field]}}</a></div>' },
+                {field: 'anatEntityName', width: "34%" },
+                {field: 'annotated', width: "8%" },
+                {field: 'significant', width: "8%" },
+                {field: 'expected', width: "8%" },
+                {field: 'foldEnrichment', width: "8%" },
                 {field: 'pValue', width: "10%" },
                 {field: 'FDR', width: "10%" }
             ]
@@ -1005,7 +1005,7 @@
             $location.update_path(vm.resultUrl, false);
             //$location.path(vm.resultUrl, false);
 
-            // check for status every 5 secs
+            // check for status every 10 secs
             timer = $interval(function(){
                 console.info("Calling jobstatus, jobId = " + vm.jobId);
 
@@ -1046,7 +1046,7 @@
                     }
                 );
 
-            }, 4000);
+            }, 10000);
         }
 
         function getResults() {

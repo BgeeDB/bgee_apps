@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
 import javax.mail.Authenticator;
@@ -27,7 +29,8 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 
 /**
- * A utility class to send mails.
+ * A utility class to send mails. This class notably uses locks internally to ensure 
+ * that it cannot be used for email flooding (in case our webapp is compromised...).
  * 
  * @author Frederic Bastian
  * @version Bgee 13 Dec. 2015
@@ -36,17 +39,62 @@ import org.bgee.controller.BgeeProperties;
 public class MailSender {
     private final static Logger log = LogManager.getLogger(MailSender.class.getName());
     
+    //***************************
+    //  STATIC FINAL VARIABLES
+    //***************************
     /**
      * A {@code String} that is the name of the parameter in {@code BgeeProperties} mail URI 
      * providing the username to connect to the mail server.
      */
-    public final static String USERNAME_PARAM_NAME = "username";
+    public static final String USERNAME_PARAM_NAME = "username";
     /**
      * A {@code String} that is the name of the parameter in {@code BgeeProperties} mail URI 
      * providing the password to connect to the mail server.
      */
-    public final static String PASSWORD_PARAM_NAME = "password";
+    public static final String PASSWORD_PARAM_NAME = "password";
+
+    /**
+     * A {@code long} that is the default waiting time in milliseconds between 2 mails are sent.
+     */
+    public static final long DEFAULT_WAIT_TIME_IN_MS = 10000;
+    /**
+     * A fair {@code Lock} used to ensure that only one mail is sent at a time.
+     */
+    private static final Lock LOCK  = new ReentrantLock(true);
     
+    //**************************
+    // STATIC VARS AND METHODS
+    //**************************
+    /**
+     * A {@code long} that is the time in milliseconds when the last mail was sent. 
+     * Note that this variable will be read and modified solely inside {@code lock}/{@code unlock} blocks 
+     * using {@link #LOCK}, so it doesn't need to be further synchronized.
+     */
+    private static long lastSendTime = 0;
+    /**
+     * A {@code long} that is the waiting time in milliseconds between 2 mails are sent. 
+     * As this variable can be accessed outside of any lock mechanism, it needs to be {@code volatile} 
+     * (we don't care about atomicity). Default value of {@link #DEFAULT_WAIT_TIME_IN_MS}.
+     */
+    private static volatile long waitTimeInMs = DEFAULT_WAIT_TIME_IN_MS;
+    
+    /**
+     * @return  A {@code long} that is the waiting time in milliseconds between 2 mails are sent.
+     */
+    public static long getWaitTimeInMs() {
+        return waitTimeInMs;
+    }
+    /**
+     * @param waitTimeInMs  A {@code long} that will define the waiting time in milliseconds 
+     *                      between 2 mails are sent.
+     */
+    public static void setWaitTimeInMs(long waitTimeInMs) {
+        MailSender.waitTimeInMs = waitTimeInMs;
+    }
+    
+    //***************************
+    // INSTANCE VARS AND METHODS
+    //***************************
     /**
      * A {@code BgeeProperties} providing the parameters to connect to the mail server.
      */
@@ -164,6 +212,8 @@ public class MailSender {
      * @param toPersonal    A {@code String} that is the display name of the receiver.
      * @param subject       A {@code String} that is the subject of the mail.
      * @param msgBody       A {@code String} that is the message body of the mail.
+     * @throws InterruptedException         If this {@code Thread} was interrupted while waiting 
+     *                                      for the permission to send a mail (anti-flood system).
      * @throws UnsupportedEncodingException If the encoding of the provided arguments is not supported.
      * @throws MessagingException           If an error occurred while trying to send a mail.
      * @throws SendFailedException          If a mail was not delivered to the recipient.
@@ -171,7 +221,7 @@ public class MailSender {
      */
     public void sendMessage(String fromAddress, String fromPersonal, 
             String toAddress, String toPersonal, String subject, String msgBody) 
-                    throws UnsupportedEncodingException, MessagingException {
+                    throws UnsupportedEncodingException, MessagingException, InterruptedException {
         log.entry(fromAddress, fromPersonal, toAddress, toPersonal, subject, msgBody);
         Map<String, String> to = new HashMap<>();
         to.put(toAddress, toPersonal);
@@ -187,6 +237,8 @@ public class MailSender {
      *                      of the receivers, the associated values being their display name.
      * @param subject       A {@code String} that is the subject of the mail.
      * @param msgBody       A {@code String} that is the message body of the mail.
+     * @throws InterruptedException         If this {@code Thread} was interrupted while waiting 
+     *                                      for the permission to send a mail (anti-flood system).
      * @throws UnsupportedEncodingException If the encoding of the provided arguments is not supported.
      * @throws MessagingException           If an error occurred while trying to send a mail.
      * @throws SendFailedException          If a mail was not delivered to one or several of the recipients.
@@ -194,7 +246,7 @@ public class MailSender {
      */
     public void sendMessage(String fromAddress, String fromPersonal, 
             Map<String, String> recipients, String subject, String msgBody) 
-                    throws UnsupportedEncodingException, MessagingException {
+                    throws UnsupportedEncodingException, MessagingException, InterruptedException {
         log.entry(fromAddress, fromPersonal, recipients, subject, msgBody);
         
         Session session = null;
@@ -208,7 +260,7 @@ public class MailSender {
                 });
         } else {
             log.trace("Using default Session.");
-            session = Session.getDefaultInstance(this.mailProps);
+            session = Session.getInstance(this.mailProps);
         }
         
         Message msg = new MimeMessage(session);
@@ -226,10 +278,14 @@ public class MailSender {
         msg.setSubject(subject);
         msg.setText(msgBody);
         
+        boolean mailSent = false;
         //as we have used a functional interface to send message for easier unit testing, 
         //we had to send a RuntimeException with potential checked Exception as cause.
         //We try to get the checked exception back.
         try {
+            this.acquireLock();
+            //we consider that we have sent a mail even in case of failure.
+            mailSent = true;
             this.transportSender.accept(msg);
         } catch (RuntimeException e) {
             if (e.getCause() != null && e.getCause() instanceof MessagingException) {
@@ -238,7 +294,56 @@ public class MailSender {
                 throw log.throwing((SendFailedException) e.getCause());
             }
             throw log.throwing(e);
+        } finally {
+            this.releaseLock(mailSent);
         }
+        
+        log.exit();
+    }
+    
+    /**
+     * Lock mechanism to ensure that this class is not used for enail flooding. 
+     * Will ensure that only one mail is sent at a time, and that there is a waiting time 
+     * corresponding to {@link #getWaitTimeInMs()} between two mails are sent.
+     * 
+     * @throws InterruptedException     In case the current {@code Thread} is interrupted while 
+     *                                  waiting for the lock.
+     * @see #releaseLock(boolean)
+     */
+    private void acquireLock() throws InterruptedException {
+        log.entry();
+        
+        LOCK.lock();
+        //now that we have acquire the lock, we make sure we don't send another mail too fast
+        long toWaitInMs = getWaitTimeInMs() - (System.currentTimeMillis() - MailSender.lastSendTime);
+        long waitUntilInMs = System.currentTimeMillis() + toWaitInMs;
+        //good old synchronized/wait, because if we were to use a Condition, the Lock would be released 
+        //during the wait, but we want to hold the Lock while we wait for the permission 
+        //to send a mail again.
+        synchronized (LOCK) {
+            while (toWaitInMs > 0) {
+                LOCK.wait(toWaitInMs);
+                // in case of spurious wake up
+                toWaitInMs = waitUntilInMs - System.currentTimeMillis();
+            }
+        }
+        
+        log.exit();
+    }
+    /**
+     * Release lock, and save the current time where a mail was sent if {@code mailSent} is {@code true}.
+     * 
+     * @param mailSent  A {@code boolean} defining whether a mail was actually tried to be sent 
+     *                  by the current {@code Thread}, before calling this method.
+     * @see #acquireLock()
+     */
+    private void releaseLock(boolean mailSent) {
+        log.entry();
+        
+        if (mailSent) {
+            MailSender.lastSendTime = System.currentTimeMillis();
+        }
+        LOCK.unlock();
         
         log.exit();
     }

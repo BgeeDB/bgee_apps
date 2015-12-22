@@ -434,6 +434,56 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      * @see #getMailUri()
      */
     public final static String MAIL_URI_DEFAULT = null;  
+    /**
+     * A {@code String} that is the key to access to the property containing 
+     * the minimum waiting time between sending two mails.
+     * 
+     * @see #MAIL_WAIT_TIME_DEFAULT
+     * @see #getMailWaitTime()
+     */
+    public final static String MAIL_WAIT_TIME_KEY = "org.bgee.webapp.mailWaitTime";
+    /**
+     * An {@code int} that is the default value of the property containing 
+     * the minimum waiting time between sending two mails.
+     * 
+     * @see #MAIL_WAIT_TIME_KEY
+     * @see #getMailWaitTime()
+     */
+    public final static int MAIL_WAIT_TIME_DEFAULT = 10000;  
+
+    /**
+     * A {@code String} that is the key to access to the property containing 
+     * the mail address which to send mails related to TopAnat from.
+     * 
+     * @see #TOPANAT_FROM_ADDRESS_DEFAULT
+     * @see #getTopAnatFromAddress()
+     */
+    public final static String TOPANAT_FROM_ADDRESS_KEY = "org.bgee.webapp.topAnatFromAddress";
+    /**
+     * A {@code String} that is the default value of the property containing 
+     * the mail address which to send mails related to TopAnat from.
+     * 
+     * @see #TOPANAT_FROM_ADDRESS_KEY
+     * @see #getTopAnatFromAddress()
+     */
+    public final static String TOPANAT_FROM_ADDRESS_DEFAULT = null;  
+
+    /**
+     * A {@code String} that is the key to access to the property containing 
+     * the mail personal which to send mails related to TopAnat from.
+     * 
+     * @see #TOPANAT_FROM_PERSONAL_DEFAULT
+     * @see #getTopAnatFromPersonal()
+     */
+    public final static String TOPANAT_FROM_PERSONAL_KEY = "org.bgee.webapp.topAnatFromPersonal";
+    /**
+     * A {@code String} that is the default value of the property containing 
+     * the mail personal which to send mails related to TopAnat from.
+     * 
+     * @see #TOPANAT_FROM_PERSONAL_KEY
+     * @see #getTopAnatFromPersonal()
+     */
+    public final static String TOPANAT_FROM_PERSONAL_DEFAULT = null;  
 
     /**
      * @return  An instance of {@code BgeeProperties} with values based on the System properties
@@ -621,6 +671,19 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      * @see #getMailUri()
      */
     private final String mailUri;
+    /**
+     * @see #getMailWaitTime()
+     */
+    private final int mailWaitTime;
+    
+    /**
+     * @see #getTopAnatFromAddress()
+     */
+    private final String topAnatFromAddress;
+    /**
+     * @see #getTopAnatFromPersonal()
+     */
+    private final String topAnatFromPersonal;
 
     /**
      * Private constructor, can be only called through the use of one of the
@@ -692,6 +755,12 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
                 TOP_ANAT_RESULTS_URL_DIRECTORY_DEFAULT);
         mailUri = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 MAIL_URI_KEY, MAIL_URI_DEFAULT);
+        mailWaitTime = getIntegerOption(prop, SYS_PROPS, FILE_PROPS, 
+                MAIL_WAIT_TIME_KEY, MAIL_WAIT_TIME_DEFAULT);
+        topAnatFromAddress = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
+                TOPANAT_FROM_ADDRESS_KEY, TOPANAT_FROM_ADDRESS_DEFAULT);
+        topAnatFromPersonal = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
+                TOPANAT_FROM_PERSONAL_KEY, TOPANAT_FROM_PERSONAL_DEFAULT);
         log.debug("Initialization done.");
         log.exit();
     }
@@ -905,8 +974,35 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      * &mail.smtp.auth=true&mail.smtp.ssl.enable=true&mail.smtp.starttls.enable=true}.
      * 
      * @return  A {@code String} that is the URI providing the parameters for sending emails.
+     * @see #MAIL_URI_KEY
+     * @see #MAIL_URI_DEFAULT
      */
     public String getMailUri() {
         return mailUri;
+    }
+    /**
+     * @return  An {@code int} that is the minimum waiting time between sending two mails.
+     * @see #MAIL_WAIT_TIME_KEY
+     * @see #MAIL_WAIT_TIME_DEFAULT
+     */
+    public int getMailWaitTime() {
+        return mailWaitTime;
+    }
+
+    /**
+     * @return  A {@code String} that is the mail address which to send mails related to TopAnat from.
+     * @see #TOPANAT_FROM_ADDRESS_KEY
+     * @see #TOPANAT_FROM_ADDRESS_DEFAULT
+     */
+    public String getTopAnatFromAddress() {
+        return topAnatFromAddress;
+    }
+    /**
+     * @return  A {@code String} that is the mail personal which to send mails related to TopAnat from.
+     * @see #TOPANAT_FROM_PERSONAL_KEY
+     * @see #TOPANAT_FROM_PERSONAL_DEFAULT
+     */
+    public String getTopAnatFromPersonal() {
+        return topAnatFromPersonal;
     }
 }

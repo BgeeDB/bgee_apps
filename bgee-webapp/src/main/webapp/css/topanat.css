@@ -608,9 +608,8 @@ div.loader p {
 .truncate {
     white-space: nowrap;
     text-overflow: ellipsis;
-    width: 250px;
+    width: 150px;
     overflow: hidden;
-    /*font-size: smaller;*/
 }
 
 .truncate-parent {

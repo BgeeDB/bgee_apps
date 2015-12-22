@@ -916,6 +916,7 @@
                 p_value_thr: vm.p_value_thr,
                 nb_node: vm.nb_node,
                 job_title: vm.job_title,
+                email: vm.email,
                 submitted: true,
                 display_type: "json",
                 action: "submit_job",
@@ -1413,13 +1414,12 @@
                 // Issue 108: The number of nodes cannot be bigger than the
                 // number of bg genes submitted
                 vm.max_node_size = getGeneCount(data, type + "_list");
-                if (vm.max_node_size < vm.nodeSizeDefault) {
+                if ((vm.max_node_size > 0 && vm.max_node_size < vm.node_size) || vm.node_size == 0) {
                 	vm.node_size = vm.max_node_size;
+                	vm.isAdvancedOptionsChecked = 'checked';
+                	logger.info(vm.node_size + " valid genes in custom background. Updating the node size.");
                 }
-                else {
-                	vm.node_size = vm.nodeSizeDefault;
-                }
-
+                
                 checkConsistency();
             }
         }

@@ -435,7 +435,13 @@ public class RequestParameters {
      * {@code encodeUrl}, value "&" for {@code parametersSeparator}.
      */
     public RequestParameters() {
-        this(new URLParameters(), BgeeProperties.getBgeeProperties(), true, "&");
+        this(BgeeProperties.getBgeeProperties());
+    }
+    /**
+     * @param props The {@code BgeeProperties} used by this {@code RequestParameters}.
+     */
+    public RequestParameters(BgeeProperties props) {
+        this(new URLParameters(), props, true, "&");
     }
     /**
      * @param urlParametersInstance     A instance of {@code URLParameters} that 

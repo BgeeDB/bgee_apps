@@ -143,6 +143,12 @@
         <filter.org.bgee.webapp.mailUri></filter.org.bgee.webapp.mailUri>
         <!-- "From" address when sending mails at TopAnat job completions -->
         <filter.org.bgee.webapp.topAnatFromAddress></filter.org.bgee.webapp.topAnatFromAddress>
+        
+        <!-- Set the host we want to link to. For instance, we might want to link to bgee.org 
+             while the current host is bgee.unil.ch. This is important for generating links in emails.
+             Simply set to point to the server root by default, This parameter should be overriden 
+             in settings.xml if needed -->
+        <filter.org.bgee.webapp.bgeeRootDirectory>/</filter.org.bgee.webapp.bgeeRootDirectory>
     </properties>
     
     <!-- There is a problem when running the webapp from Eclipse: m2e-wtp acquires 

@@ -232,6 +232,8 @@ public class JsonHelperTest extends TestAncestor {
         when(props.getTopAnatResultsUrlDirectory()).thenReturn("top_anat/results/");
         when(props.getTopAnatResultsWritingDirectory()).thenReturn(
                 this.getClass().getResource("/").getFile());
+        when(props.getBgeeRootDirectory()).thenReturn("/");
+        when(props.getUrlMaxLength()).thenReturn(1000);
         TopAnatController controller = mock(TopAnatController.class);
         when(controller.getBgeeProperties()).thenReturn(props);
         
@@ -239,7 +241,7 @@ public class JsonHelperTest extends TestAncestor {
                 null, null, null, null, null, null, null, "result_hash.zip", 
                 controller);
         
-        JsonHelper helper = new JsonHelper(props, new RequestParameters());
+        JsonHelper helper = new JsonHelper(props, new RequestParameters(props));
         String json = helper.toJson(results);
         
         String expected = "{\n  \"zipFile\": \"/?page=top_anat&action=download&analysis_id=mykey\",\n  "

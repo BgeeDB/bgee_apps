@@ -1413,7 +1413,12 @@
                 // Issue 108: The number of nodes cannot be bigger than the
                 // number of bg genes submitted
                 vm.max_node_size = getGeneCount(data, type + "_list");
-                vm.node_size = vm.max_node_size;
+                if (vm.max_node_size < vm.nodeSizeDefault) {
+                	vm.node_size = vm.max_node_size;
+                }
+                else {
+                	vm.node_size = vm.nodeSizeDefault;
+                }
 
                 checkConsistency();
             }

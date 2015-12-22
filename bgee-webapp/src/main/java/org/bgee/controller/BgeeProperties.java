@@ -633,7 +633,7 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      * @param prop  A {@code java.util.Properties} instance that contains the system properties
      *              to use.
      */
-    private BgeeProperties(Properties prop) {
+    public BgeeProperties(Properties prop) {
         // First called the parent constructor, which loads the properties defined in bgee-core
         super(prop);
         log.entry(prop);

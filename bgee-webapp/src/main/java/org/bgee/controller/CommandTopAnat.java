@@ -118,6 +118,8 @@ public class CommandTopAnat extends CommandParent {
         public TopAnatJobRunner(List<TopAnatParams> topAnatParams, String resultUrl, 
                 String jobTitle, long jobId, String sendToAddress, BgeeProperties props, 
                 MailSender mailSender, Supplier<ServiceFactory> serviceFactoryProvider) {
+            log.entry(topAnatParams, resultUrl, jobTitle, jobId, sendToAddress, props, mailSender, 
+                    serviceFactoryProvider);
             this.topAnatParams = topAnatParams;
             
             this.resultUrl = resultUrl;
@@ -128,6 +130,7 @@ public class CommandTopAnat extends CommandParent {
             this.props = props;
             this.mailSender = mailSender;
             this.serviceFactoryProvider = serviceFactoryProvider;
+            log.exit();
         }
         
         @Override
@@ -160,6 +163,7 @@ public class CommandTopAnat extends CommandParent {
                 TaskManager.registerTaskManager(this.jobId);
                 TaskManager manager = TaskManager.getTaskManager();
                 
+                log.debug("Launching TopAnat job");
                 TopAnatController controller2 = new TopAnatController(this.topAnatParams, 
                         this.props, 
                         //For properly loading the ServiceFactory, 
@@ -186,6 +190,7 @@ public class CommandTopAnat extends CommandParent {
                             analysesWithResultCount++;
                         }
                     }
+                    log.trace("{} results in {} analyses", resultCount, analysesWithResultCount);
                 }
                 
             } catch (Exception e) {
@@ -194,11 +199,19 @@ public class CommandTopAnat extends CommandParent {
                 //The exception will be thrown after sending the mail. We cannot simply 
                 //send the mail in the finally clause, otherwise we won't have access to this exception.
             } finally {
-                TaskManager manager = TaskManager.getTaskManager();
-                if (manager != null) {
-                    manager.release();
+                try {
+                    DAOManager daoManager = DAOManager.getDAOManager();
+                    if (daoManager != null) {
+                        daoManager.close();
+                    }
+                } finally {
+                    TaskManager manager = TaskManager.getTaskManager();
+                    if (manager != null) {
+                        manager.release();
+                    }
                 }
             }
+            log.debug("TopAnat job completed.");
             
             if (sendMail) {
                 try {
@@ -261,12 +274,18 @@ public class CommandTopAnat extends CommandParent {
             }
             
             long duration = System.currentTimeMillis() - startTimeInMs;
+            log.trace("Duration: {}", duration);
             String timeFormat = "HHhmm";
             if (duration < 3600000) {
                 timeFormat = "mm";
             }
-            sb.append("started ").append(DurationFormatUtils.formatDuration(
-                    System.currentTimeMillis() - startTimeInMs, timeFormat)).append(" mn ago");
+            String formattedDuration = DurationFormatUtils.formatDuration(duration, timeFormat);
+            log.trace("Formatted duration: {}", formattedDuration);
+            if (duration < 60000) {
+                sb.append("started a minute ago");
+            } else {
+                sb.append("started ").append(formattedDuration).append(" mn ago");
+            }
             String subject = sb.toString();
             
             //build mail body
@@ -289,23 +308,23 @@ public class CommandTopAnat extends CommandParent {
                 }
                 sb.append(", from ").append(analysesWithResultCount);
                 if (analysesWithResultCount > 1) {
-                    sb.append("analyses");
+                    sb.append(" analyses");
                 } else {
-                    sb.append("analysis");
+                    sb.append(" analysis");
                 }
                 sb.append(" with results, over ").append(this.topAnatParams.size());
                 if (this.topAnatParams.size() > 1) {
-                    sb.append("analyses");
+                    sb.append(" analyses");
                 } else {
-                    sb.append("analysis");
+                    sb.append(" analysis");
                 }
                 sb.append(" launched. \n\n");
                 
                 sb.append("You can visualize your analysis by using the following link: ")
                   .append(this.resultUrl).append("\n\n");
                 sb.append("We hope that you appreciate TopAnat, and we thank you for using it. ")
-                  .append("Do not hesitate to contact us, should you have any questions. \n\n");
-                sb.append("Best regards, \n");
+                  .append("Do not hesitate to contact us, should you have any questions. \n");
+                sb.append("Best regards, \n\n");
                 sb.append("The Bgee team.");
             } else {
                 sb.append("was interrupted by an unexpected error (details follow). ")
@@ -313,8 +332,8 @@ public class CommandTopAnat extends CommandParent {
                   .append("your analysis again by using the following link: ")
                   .append(this.resultUrl).append(". ")
                   .append("If the error persists, please do not hesitate to contact us ")
-                  .append("by replying to this message. \n\n");
-                sb.append("Best regards, \n");
+                  .append("by replying to this message. \n");
+                sb.append("Best regards, \n\n");
                 sb.append("The Bgee team. \n\n");
                 
                 sb.append("Details about the error: \n")

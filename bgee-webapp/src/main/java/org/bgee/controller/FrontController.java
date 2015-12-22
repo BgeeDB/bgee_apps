@@ -139,6 +139,7 @@ public class FrontController extends HttpServlet {
         } else {
             try {
                 checkMailSender = new MailSender(this.prop);
+                log.debug("Got parameters to send mails.");
             } catch (IllegalArgumentException e) {
                 //if the properties does not allow to send mail, it's fine, swallow the exception
                 log.catching(Level.DEBUG, e);

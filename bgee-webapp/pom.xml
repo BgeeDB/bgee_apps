@@ -42,6 +42,14 @@
             <artifactId>gson</artifactId>
             <version>2.3.1</version>
         </dependency>
+        
+        
+        <!-- To send Mails -->
+        <dependency>
+            <groupId>com.sun.mail</groupId>
+            <artifactId>javax.mail</artifactId>
+        </dependency>
+            
         <!-- Remove these dependencies as long as the webapp does not use 
             the actual Bgee API <dependency> <groupId>${project.groupId}</groupId> <artifactId>bgee-core</artifactId> 
             <version>${project.version}</version> <scope>compile</scope> </dependency> 
@@ -129,6 +137,12 @@
         <filter.org.bgee.webapp.minify>true</filter.org.bgee.webapp.minify>
         <!-- property used to activate/deactivate maven-minify-plugin -->
         <skip.minify.plugin>false</skip.minify.plugin>
+        
+        <!-- Default the parameter to send mail to empty string. 
+             This parameter should be overriden in settings.xml if needed -->
+        <filter.org.bgee.webapp.mailUri></filter.org.bgee.webapp.mailUri>
+        <!-- "From" address when sending mails at TopAnat job completions -->
+        <filter.org.bgee.webapp.topAnatFromAddress></filter.org.bgee.webapp.topAnatFromAddress>
     </properties>
     
     <!-- There is a problem when running the webapp from Eclipse: m2e-wtp acquires 

@@ -18,6 +18,7 @@ import java.util.Properties;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.bgee.controller.utils.MailSender;
 import org.bgee.model.ServiceFactory;
 import org.bgee.view.FakeFactoryProvider;
 import org.bgee.view.ViewFactoryProvider;
@@ -106,13 +107,14 @@ public class ControllerTest {
         // 4) A Supplier of ServiceFactories
         // 3) ViewFactoryProvider : only a FakeFactoryProvider can lead to the correct output
         final List<ServiceFactory> mockFactories = new ArrayList<ServiceFactory>();
+        MailSender mailSender = mock(MailSender.class);
         FrontController front = new FrontController(this.testProperties, new TestURLParameters(), 
                 () -> {
                     ServiceFactory mockFactory = mock(ServiceFactory.class); 
                     mockFactories.add(mockFactory);
                     return mockFactory;
                 }, 
-                this.testFactoryProvider);
+                this.testFactoryProvider, mailSender);
         
         front.doRequest(mockHttpServletRequest, mockHttpServletResponse, false);
         verify(this.mockPrintWriter, times(1)).println(eq("Test page is good !"));

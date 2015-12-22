@@ -96,7 +96,7 @@ public class URLParameters {
      * of a list.
      */
     protected static final String DEFAULT_LIST_FORMAT = 
-            "^[\\w ,.;:\\-_'" + DEFAULT_SEPARATORS.stream()
+            "^[\\w ,.;:\\-_'@" + DEFAULT_SEPARATORS.stream()
                     .map(Pattern::quote).collect(Collectors.joining()) + "]*$";
 
     // *************************************
@@ -308,6 +308,13 @@ public class URLParameters {
     private static final Parameter<String> JOB_TITLE = new Parameter<String>("job_title",
             false, false, null, true, DEFAULT_IS_SECURE, 
             255, DEFAULT_FORMAT, String.class);
+    /**
+     * A {@code Parameter<String>} defining the email of a user.
+     * Corresponds to the URL parameter "email". This is a non-storable parameter.
+     */
+    private static final Parameter<String> EMAIL = new Parameter<String>("email",
+            false, false, null, false, true, DEFAULT_MAX_SIZE, DEFAULT_FORMAT, 
+            String.class);
 
     //    /**
 //     * A {@code Parameter<Boolean>} to determine whether all anatomical structures of 
@@ -338,17 +345,6 @@ public class URLParameters {
 //            DEFAULT_ALLOWS_MULTIPLE_VALUES, DEFAULT_IS_STORABLE, DEFAULT_IS_SECURE, 
 //            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Integer.class);
 //
-//    /**
-//     * A {@code Parameter<String>} defining the email of a user, 
-//     * used at registration time.
-//     * Category of the parameter: user registration.
-//     * Corresponds to the URL parameter "email".
-//     */
-//    private static final Parameter<String> EMAIL = new Parameter<String>("email",
-//            DEFAULT_ALLOWS_MULTIPLE_VALUES, DEFAULT_IS_STORABLE, DEFAULT_IS_SECURE, 
-//            DEFAULT_MAX_SIZE, 
-//            "^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$",
-//            String.class);
 //
 //
 //    /**
@@ -382,7 +378,7 @@ public class URLParameters {
 //            EMAIL,
 //            STAGE_CHILDREN,
             // Job params
-            JOB_TITLE, JOB_ID, 
+            JOB_TITLE, JOB_ID, EMAIL, 
             DISPLAY_TYPE,
             DATA, 
             DISPLAY_REQUEST_PARAMS, 
@@ -400,16 +396,6 @@ public class URLParameters {
     public List<Parameter<?>> getList() {
         return list;
     }
-
-    //    /**
-    //     * @return  A {@code Parameter<String>} defining the email of a user, 
-    //     *          used at registration time.
-    //     *          Category of the parameter: user registration.
-    //     *          Corresponds to the URL parameter "email".
-    //     */
-    //    public Parameter<String> getParamEmail(){
-    //        return EMAIL;
-    //    }
     
     /**
      * @return  A {@code Parameter<String>} defining which controller should take care of the 
@@ -633,7 +619,15 @@ public class URLParameters {
      */
     public Parameter<String> getParamJobTitle() {
         return JOB_TITLE;
+    }        
+    /**
+     * @return  A {@code Parameter<String>} defining the email of a user.
+     *          Corresponds to the URL parameter "email".
+     */
+    public Parameter<String> getParamEmail(){
+        return EMAIL;
     }
+    
     /**
      * @return  A {@code Parameter<Boolean>} defining whether to display the {@code GeneListResponse} 
      *          corresponding to gene validation response.

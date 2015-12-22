@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.controller.utils.MailSender;
 import org.bgee.model.ServiceFactory;
 import org.bgee.view.ViewFactory;
 
@@ -43,6 +44,11 @@ abstract class CommandParent {
      */
     protected final ViewFactory viewFactory;
     protected final ServiceFactory serviceFactory;
+    /**
+     * The {@code MailSender} used to send emails.
+     */
+    protected final MailSender mailSender;
+    
     protected final HttpServletResponse response;
     /**
      * The {@code ServletContext} of the servlet using this object.
@@ -76,17 +82,19 @@ abstract class CommandParent {
      * @param serviceFactory    A {@code ServiceFactory} that provides the services (might be null)
      * @param context           The {@code ServletContext} of the servlet using this object. 
      *                          Notably used when forcing file download.
+     * @param mailSender        A {@code MailSender} instance used to send mails to users.
      */
     public CommandParent(HttpServletResponse response, RequestParameters requestParameters,
                          BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory, 
-                         ServletContext context) {
-        log.entry(response, requestParameters, prop, viewFactory, context);
+                         ServletContext context, MailSender mailSender) {
+        log.entry(response, requestParameters, prop, viewFactory, context, mailSender);
         this.response = response;
         this.context = context;
         this.requestParameters = requestParameters;
         this.prop = prop;
         this.viewFactory = viewFactory;
         this.serviceFactory = serviceFactory;
+        this.mailSender = mailSender;
         this.serverRoot = prop.getBgeeRootDirectory();
         this.homePage   = prop.getBgeeRootDirectory();
         this.bgeeRoot   = prop.getBgeeRootDirectory();
@@ -107,7 +115,7 @@ abstract class CommandParent {
      */
     public CommandParent(HttpServletResponse response, RequestParameters requestParameters,
                          BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory) {
-        this(response, requestParameters, prop, viewFactory, serviceFactory, null);
+        this(response, requestParameters, prop, viewFactory, serviceFactory, null, null);
     }
 
     /**

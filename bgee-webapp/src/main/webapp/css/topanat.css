@@ -605,6 +605,18 @@ div.loader p {
     line-height: 14px ;
     margin: 0px 0px 0px 0px ;
 }
+.truncate {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    width: 250px;
+    overflow: hidden;
+    /*font-size: smaller;*/
+}
+
+.truncate-parent {
+    display: inline-flex;
+}
+
 /*
 //for swt-dev
 html {

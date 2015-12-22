@@ -916,6 +916,7 @@
                 p_value_thr: vm.p_value_thr,
                 nb_node: vm.nb_node,
                 job_title: vm.job_title,
+                job_creation_date: new Date().toLocaleString(), 
                 email: vm.email,
                 submitted: true,
                 display_type: "json",

@@ -98,6 +98,10 @@ public class CommandTopAnat extends CommandParent {
          */
         private final long jobId;
         /**
+         * A {@code String} that is the creation date of the job, as formatted on the client environment.
+         */
+        private final String jobCreationDate;
+        /**
          * A {@code String} that is the email address of the user, to be notified on job completion.
          */
         private final String sendToAddress;
@@ -116,15 +120,16 @@ public class CommandTopAnat extends CommandParent {
         private final MailSender mailSender;
         
         public TopAnatJobRunner(List<TopAnatParams> topAnatParams, String resultUrl, 
-                String jobTitle, long jobId, String sendToAddress, BgeeProperties props, 
-                MailSender mailSender, Supplier<ServiceFactory> serviceFactoryProvider) {
-            log.entry(topAnatParams, resultUrl, jobTitle, jobId, sendToAddress, props, mailSender, 
-                    serviceFactoryProvider);
+                String jobTitle, long jobId, String jobCreationDate, String sendToAddress, 
+                BgeeProperties props, MailSender mailSender, Supplier<ServiceFactory> serviceFactoryProvider) {
+            log.entry(topAnatParams, resultUrl, jobTitle, jobId, jobCreationDate, sendToAddress, 
+                    props, mailSender, serviceFactoryProvider);
             this.topAnatParams = topAnatParams;
             
             this.resultUrl = resultUrl;
             this.jobTitle = jobTitle;
             this.jobId = jobId;
+            this.jobCreationDate = jobCreationDate;
             this.sendToAddress = sendToAddress;
             
             this.props = props;
@@ -192,7 +197,6 @@ public class CommandTopAnat extends CommandParent {
                     }
                     log.trace("{} results in {} analyses", resultCount, analysesWithResultCount);
                 }
-                
             } catch (Exception e) {
                 log.catching(e);
                 exceptionThrown = e;
@@ -216,7 +220,8 @@ public class CommandTopAnat extends CommandParent {
             if (sendMail) {
                 try {
                     log.debug("Sending mail on job completion...");
-                    this.sendMail(startTimeInMs, resultCount, analysesWithResultCount, exceptionThrown);
+                    this.sendMail(startTimeInMs, this.jobCreationDate, 
+                            resultCount, analysesWithResultCount, exceptionThrown);
                     log.debug("Mail sent.");
                 } catch (UnsupportedEncodingException | MessagingException | InterruptedException e) {
                     log.catching(e);
@@ -241,6 +246,9 @@ public class CommandTopAnat extends CommandParent {
          * 
          * @param startTimeInMs                 An {@code long} that is the time in ms 
          *                                      when the job was started.
+         * @param jobCreationDate               A {@code String} that is the creation date of the job, 
+         *                                      as formatted on the client environment. Can be {@code null} 
+         *                                      or empty.
          * @param resultCount                   An {@code int} that is the number of significant results 
          *                                      from the job.
          * @param analysesWithResultCount       An {@code int} that is the number of analyses with results
@@ -253,10 +261,10 @@ public class CommandTopAnat extends CommandParent {
          * @throws InterruptedException         If this Thread was interrupted while waiting 
          *                                      for the permission to send a mail (anti-flood system).
          */
-        private void sendMail(long startTimeInMs, int resultCount, int analysesWithResultCount, 
-                Exception exceptionThrown) throws UnsupportedEncodingException, MessagingException, 
-                    InterruptedException {
-            log.entry(startTimeInMs, resultCount, analysesWithResultCount, exceptionThrown);
+        private void sendMail(long startTimeInMs, String jobCreationDate, 
+                int resultCount, int analysesWithResultCount, Exception exceptionThrown) 
+                        throws UnsupportedEncodingException, MessagingException, InterruptedException {
+            log.entry(startTimeInMs, jobCreationDate, resultCount, analysesWithResultCount, exceptionThrown);
             assert this.mailSender != null && StringUtils.isNotBlank(this.sendToAddress): "Cannot send mail";
             
             //build mail subject
@@ -273,18 +281,23 @@ public class CommandTopAnat extends CommandParent {
                 sb.append("job ");
             }
             
-            long duration = System.currentTimeMillis() - startTimeInMs;
-            log.trace("Duration: {}", duration);
-            String timeFormat = "HHhmm";
-            if (duration < 3600000) {
-                timeFormat = "mm";
-            }
-            String formattedDuration = DurationFormatUtils.formatDuration(duration, timeFormat);
-            log.trace("Formatted duration: {}", formattedDuration);
-            if (duration < 60000) {
-                sb.append("started a minute ago");
+            if (StringUtils.isNotBlank(jobCreationDate)) {
+                log.trace("Creation date: {}", jobCreationDate);
+                sb.append("started on ").append(jobCreationDate);
             } else {
-                sb.append("started ").append(formattedDuration).append(" mn ago");
+                long duration = System.currentTimeMillis() - startTimeInMs;
+                log.trace("Duration: {}", duration);
+                String timeFormat = "HHhmm";
+                if (duration < 3600000) {
+                    timeFormat = "mm";
+                }
+                String formattedDuration = DurationFormatUtils.formatDuration(duration, timeFormat);
+                log.trace("Formatted duration: {}", formattedDuration);
+                if (duration < 60000) {
+                    sb.append("started a minute ago");
+                } else {
+                    sb.append("started ").append(formattedDuration).append(" mn ago");
+                }
             }
             String subject = sb.toString();
             
@@ -484,6 +497,8 @@ public class CommandTopAnat extends CommandParent {
                         resultUrl, this.requestParameters.getFirstValue(
                                 this.requestParameters.getUrlParametersInstance().getParamJobTitle()), 
                         finalJobId, this.requestParameters.getFirstValue(
+                                this.requestParameters.getUrlParametersInstance().getParamJobCreationDate()), 
+                        this.requestParameters.getFirstValue(
                                 this.requestParameters.getUrlParametersInstance().getParamEmail()), 
                         this.prop, this.mailSender, 
                         //Also, for properly loading the ServiceFactory, 

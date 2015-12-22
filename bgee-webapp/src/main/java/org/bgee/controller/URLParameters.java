@@ -309,6 +309,15 @@ public class URLParameters {
             false, false, null, true, DEFAULT_IS_SECURE, 
             255, DEFAULT_FORMAT, String.class);
     /**
+     * A {@code Parameter<String>} that contains the creation date of a job, as formatted 
+     * on the client environment. It is useful for, e.g., send a mail with the start time 
+     * of the job as expected by the user. 
+     * Corresponds to the URL parameter "job_creation_date". This is a non-storable parameter.
+     */
+    private static final Parameter<String> JOB_CREATION_DATE = new Parameter<String>("job_creation_date",
+            false, false, null, false, DEFAULT_IS_SECURE, 
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+    /**
      * A {@code Parameter<String>} defining the email of a user.
      * Corresponds to the URL parameter "email". This is a non-storable parameter.
      */
@@ -378,7 +387,7 @@ public class URLParameters {
 //            EMAIL,
 //            STAGE_CHILDREN,
             // Job params
-            JOB_TITLE, JOB_ID, EMAIL, 
+            JOB_TITLE, JOB_ID, EMAIL, JOB_CREATION_DATE, 
             DISPLAY_TYPE,
             DATA, 
             DISPLAY_REQUEST_PARAMS, 
@@ -619,6 +628,15 @@ public class URLParameters {
      */
     public Parameter<String> getParamJobTitle() {
         return JOB_TITLE;
+    }  
+    /**
+     * @return  A {@code Parameter<String>} that contains the creation date of a job, as formatted 
+     *          on the client environment. It is useful for, e.g., send a mail with the start time 
+     *          of the job, as expected by the user. 
+     *          Corresponds to the URL parameter "job_creation_date". 
+     */
+    public Parameter<String> getParamJobCreationDate() {
+        return JOB_CREATION_DATE;
     }        
     /**
      * @return  A {@code Parameter<String>} defining the email of a user.

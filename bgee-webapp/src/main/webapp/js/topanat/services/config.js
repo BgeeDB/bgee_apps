@@ -11,7 +11,7 @@ angular.module('services.config', [])
         data_type: ['RNA-Seq', 'Affymetrix data', 'In situ hybridization', 'EST'],
         selectedDataTypes: ['RNA-Seq', 'Affymetrix data', 'In situ hybridization', 'EST'],
         data_qualities: [{"id":"all", "name":"All"},{"id":"highConfidence", "name":"High confidence"}],
-        decorrelation_types: [{"id":"classic", "name":"No decorrelation"},{"id":"elim", "name":"Elim"}, {"id":"weight", "name":"Weigth"},{"id":"parentchild", "name":"Parent-child"}],
+        decorrelation_types: [{"id":"classic", "name":"No decorrelation"},{"id":"elim", "name":"Elim"}, {"id":"weight", "name":"Weight"},{"id":"parentchild", "name":"Parent-child"}],
         data_qual: 'all',
         decorr_type: 'classic',
         node_size: 20,

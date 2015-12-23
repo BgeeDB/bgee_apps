@@ -727,7 +727,7 @@
 
         function disableForm() {
             vm.formSubmitted = true; /* Shows the image + message panel - locks the form */
-            vm.isAdvancedOptionsChecked = false; /* SD: Close the Advanced option panel */
+            // vm.isAdvancedOptionsChecked = false; /* SD: Close the Advanced option panel */
             vm.showHelp = false; /* SD: Close the help panel - not remembered */
         }
 

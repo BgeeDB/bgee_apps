@@ -3,14 +3,21 @@ package org.bgee.controller;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.expressiondata.baseelements.CallType;
+import org.bgee.model.expressiondata.baseelements.DataQuality;
+import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.DecorrelationType;
 
 /**
  * This class is designed to declare and provide all {@code Parameter<T>} that
@@ -98,6 +105,12 @@ public class URLParameters {
     protected static final String DEFAULT_LIST_FORMAT = 
             "^[\\w ,.;:\\-_'@" + DEFAULT_SEPARATORS.stream()
                     .map(Pattern::quote).collect(Collectors.joining()) + "]*$";
+    
+    /**
+     * A {@code String} that is a magic value to select all possible values of a parameter 
+     * accepting multiple values from an {@code Enum}.
+     */
+    private static final String ALL_VALUE = "all";
 
     // *************************************
     //
@@ -224,7 +237,14 @@ public class URLParameters {
      */
     private static final Parameter<String> EXPRESSION_TYPE = new Parameter<String>("expr_type",
             true, false, null, true, DEFAULT_IS_SECURE, 
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+            Stream.of(ALL_VALUE, CallType.Expression.EXPRESSED.getStringRepresentation(), 
+                    CallType.DiffExpression.DIFF_EXPRESSED.getStringRepresentation())
+                .map(e -> e.length()).max(Comparator.naturalOrder()).get(), 
+            "(?i:" + ALL_VALUE + "|" 
+                + Stream.of(CallType.Expression.EXPRESSED, CallType.DiffExpression.DIFF_EXPRESSED)
+                    .map(e -> e.getStringRepresentation())
+                    .collect(Collectors.joining("|")) + ")", 
+             String.class);
     /**
      * A {@code Parameter<String>} that contains the data quality to be used 
      * for TopAnat analysis.
@@ -232,7 +252,13 @@ public class URLParameters {
      */
     private static final Parameter<String> DATA_QUALITY = new Parameter<String>("data_qual",
             false, false, null, true, DEFAULT_IS_SECURE, 
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+            Math.max(ALL_VALUE.length(), EnumSet.allOf(DataQuality.class).stream()
+                    .map(e -> e.getStringRepresentation().length())
+                    .max(Comparator.naturalOrder()).get()), 
+            "(?i:" + ALL_VALUE + "|" + EnumSet.allOf(DataQuality.class).stream()
+                .map(e -> e.getStringRepresentation())
+                .collect(Collectors.joining("|")) + ")", 
+            String.class);
     /**
      * A {@code Parameter<String>} that contains the data quality to be used 
      * for TopAnat analysis.
@@ -240,7 +266,13 @@ public class URLParameters {
      */
     private static final Parameter<String> DATA_TYPE = new Parameter<String>("data_type",
             true, false, null, true, DEFAULT_IS_SECURE, 
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+            Math.max(ALL_VALUE.length(), EnumSet.allOf(DataType.class).stream()
+                    .map(e -> e.getStringRepresentation().length())
+                    .max(Comparator.naturalOrder()).get()), 
+            "(?i:" + ALL_VALUE + "|" + EnumSet.allOf(DataType.class).stream()
+                .map(e -> e.getStringRepresentation())
+                .collect(Collectors.joining("|")) + ")", 
+            String.class);
     /**
      * A {@code Parameter<String>} that contains the developmental stages to be used 
      * for TopAnat analysis.
@@ -256,7 +288,13 @@ public class URLParameters {
      */
     private static final Parameter<String> DECORRELATION_TYPE = new Parameter<String>("decorr_type",
             false, false, null, true, DEFAULT_IS_SECURE, 
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+            Math.max(ALL_VALUE.length(), EnumSet.allOf(DecorrelationType.class).stream()
+                    .map(e -> e.getStringRepresentation().length())
+                    .max(Comparator.naturalOrder()).get()), 
+            "(?i:" + ALL_VALUE + "|" + EnumSet.allOf(DecorrelationType.class).stream()
+                .map(e -> e.getStringRepresentation())
+                .collect(Collectors.joining("|")) + ")", 
+            String.class);
     /**
      * A {@code Parameter<Integer>} that contains the node size to be used for TopAnat analysis.
      * Corresponds to the URL parameter "node_size".

@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -954,7 +955,8 @@ public class CommandTopAnat extends CommandParent {
         if (subCallTypes.isEmpty()) {
             throw log.throwing(new InvalidRequestException("A expression type must be provided"));
         }
-        Set<String> callTypes = new HashSet<>(subCallTypes);
+        Set<String> callTypes = subCallTypes.stream().map(s -> s.toUpperCase(Locale.ROOT))
+                .collect(Collectors.toSet());
         // TODO remove when "ALL" call type is removed from web app
         if (callTypes.contains("ALL")) {
             callTypes.remove("ALL");

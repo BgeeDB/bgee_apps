@@ -307,7 +307,7 @@ public class URLParameters {
      */
     private static final Parameter<String> JOB_TITLE = new Parameter<String>("job_title",
             false, false, null, true, DEFAULT_IS_SECURE, 
-            255, DEFAULT_FORMAT, String.class);
+            255, null, String.class);
     /**
      * A {@code Parameter<String>} that contains the creation date of a job, as formatted 
      * on the client environment. It is useful for, e.g., send a mail with the start time 
@@ -316,7 +316,7 @@ public class URLParameters {
      */
     private static final Parameter<String> JOB_CREATION_DATE = new Parameter<String>("job_creation_date",
             false, false, null, false, DEFAULT_IS_SECURE, 
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+            DEFAULT_MAX_SIZE, null, String.class);
     /**
      * A {@code Parameter<String>} defining the email of a user.
      * Corresponds to the URL parameter "email". This is a non-storable parameter.
@@ -751,7 +751,8 @@ public class URLParameters {
          * @param maxSize                 An {@code int} that represents the maximum number 
          *                                of characters allowed for this {@code Parameter}.
          * @param format                  A {@code String} that contains the regular expression 
-         *                                that this parameter has to fit to.
+         *                                that this parameter has to fit to. Can be {@code null} 
+         *                                if any format is accepted.
          * @param type                    A {@code Class<T>} that is the data type of the value 
          *                                (or values if {@code allowsSeparatedValues} is
          *                                {@code true}) to be store by this parameter.
@@ -764,11 +765,6 @@ public class URLParameters {
                 String format, Class<T> type) throws IllegalArgumentException {
 
             log.entry(name, allowsMultipleValues, isStorable, isSecure, maxSize, format, type);
-            
-            if (format == null) {
-                throw log.throwing(new IllegalArgumentException("A format for validation "
-                        + "must be provided."));
-            }
 
             this.name = name ;
             this.allowsMultipleValues = allowsMultipleValues;

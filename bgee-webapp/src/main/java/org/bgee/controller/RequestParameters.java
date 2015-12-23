@@ -2651,7 +2651,7 @@ public class RequestParameters {
             log.exit(); return;
         }
         log.trace("Trying to validate {} against format {}", value, parameter.getFormat());
-        if (!value.matches(parameter.getFormat())) {
+        if (parameter.getFormat() != null && !value.matches(parameter.getFormat())) {
             log.error("The string {} does not match the format {}", value, parameter.getFormat());
             //do not provide the accepted format in the exception, we don't need to provide 
             //too much information to potential hackers :p

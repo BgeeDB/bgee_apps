@@ -855,11 +855,13 @@
             //XXX: maybe there is a better way to handle this.
             vm.resultUrl = '/';
             $location.update_path("/", false);
-            //also reinit resul table, otherwise, if the new analysis give no results,
+            //also reinit result table, otherwise, if the new analysis give no results,
             //we will still see the results from the previous analysis
             //XXX: maybe we should reinit the results only when pressing "submit job"?
             //Or when modifying the form?
             vm.filteredRows = [];
+            //reinit displayed messages
+            vm.message = '';
             //Doing "vm.gridOptions.data = ''" would not work, the grid will keep its pointer
             //to the previous results, see https://github.com/angular-ui/ui-grid/issues/1302
             vm.gridOptions.data.length = 0;

@@ -274,6 +274,9 @@
                         if(vm.jobId == 999999 || (typeof jobStatus.requestParameters !== 'undefined' && jobStatus.code == 400)) {
                             console.log("no result or job found for the parameters, resubmit");
                             logger.info("Job result was missing, resubmitting job");
+                            $timeout(function(){
+                                $window.document.getElementById('resultContainer').scrollIntoView();
+                            }, 500);
                             vm.sendForm();
                         } else {
                             console.log("job is not done, checkjobstatus");
@@ -888,9 +891,12 @@
 
             vm.message = lang.jobProgressStart;
             vm.messageSeverity = "warning";
-            $window.document.getElementById('resultContainer').scrollIntoView();
+            $timeout(function(){
+                $window.document.getElementById('resultContainer').scrollIntoView();
+            }, 500);
             //logger.info('Posting...');
-            $timeout(vm.sendForm, 3000);
+            //$timeout(vm.sendForm, 3000);
+            vm.sendForm();
 
         };
 
@@ -954,7 +960,6 @@
                         logger.success('TopAnat request successful', 'TopAnat ok');
                         vm.message = lang.jobProgressBookmark+"<br/>"+lang.jobProgress+vm.jobId+'. ('+vm.jobStatus+') ';
                         vm.jobDone = false;
-                        $window.document.getElementById('resultContainer').scrollIntoView();
 
                         console.log("calling checkJobStatus");
                         checkJobStatus();
@@ -1035,7 +1040,9 @@
                             //scroll to result container with information about job, 
                             //otherwise it is possible to miss it.
                             if (statuscounter == 1) {
-                                $window.document.getElementById('resultContainer').scrollIntoView();
+                                $timeout(function(){
+                                    $window.document.getElementById('resultContainer').scrollIntoView();
+                                }, 500);
                             }
 
                         }
@@ -1294,6 +1301,9 @@
                             logger.error('Getting result failed. Result may have been deleted. Resubmitting job, please stand by.', 'TopAnat fail')
                             vm.message = data;
                             vm.showDevStageError = data;
+                            $timeout(function(){
+                                $window.document.getElementById('resultContainer').scrollIntoView();
+                            }, 500);
                             vm.sendForm();
                         } else {
                             if(data.data.message !== 'undefined'){

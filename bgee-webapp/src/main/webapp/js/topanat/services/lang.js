@@ -3,7 +3,9 @@
 
 angular.module('services.lang', [])
     .constant('lang', {
-        jobProgressStart: 'Processing job, waiting for a job id. Please do not close this window.',
+        jobProgressStart: 'Processing job, waiting for a job id. Please stand by until the job is started, ' 
+        	            + 'or until results are retrieved, if they already exist on our server ' 
+        	            + '(in that case, we won\'t send you a notification email, if you provided your address)',
         jobProgress: 'Job has been submitted as jobid: ',
         jobProgressBookmark: 'After bookmarking this page, it is safe to close this window. ' 
                             + 'Your analysis is being run on our server, and the results will appear '

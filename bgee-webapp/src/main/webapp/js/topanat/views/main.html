@@ -75,17 +75,18 @@
                             </p>
                         </div>
                         <div class="col-sm-6">
-                            <p><span class="list_element_title">See examples (the pages can take
-                               a few seconds to load): </span>
+                            <p><span class="list_element_title">See examples (wait a few seconds 
+                            if nothing seems to happen when clicking): </span>
                             <ul>
-                                <li><a href="/?page=top_anat#/result/39a9caea61be777b8a9d402b5ba3258b78b37ee8"
-                                       title="TopAnat example">Human genes mapped to the GO term "spermatogenesis"</a>,
-                                    with RNA-Seq data, during the post-embryonic stage.</li>
-                                <li><a href="/?page=top_anat#/result/bb083e8845722242d66395c7ac2a61ec9d5d2767"
-                                       title="TopAnat example">Mouse genes mapped to the GO term "neurological system process"</a>.</li>
-                                <li><a href="/?page=top_anat#/result/e9983b5fddace4e616a85612675596c05f6b9f78"
+                                <li><a href="?page=top_anat#/result/7919f27d143667bc6c137401ce0c91b51e257538"
                                        title="TopAnat example">Mouse genes mapped to the GO term "spermatogenesis"</a>.</li>
-                                <li><a href="/?page=top_anat#/result/577fc92690e48352a34368bcb5adef8168ebd6ea"
+                                <li><a href="?page=top_anat#/result/e37009ba698919c75d06e81b3eca5d48f78210a0"
+                                       title="TopAnat example">Mouse genes mapped to the GO term "neurological system process", 
+                                       with decorrelation and high quality data only</a>.</li>
+                                <li><a href="?page=top_anat#/result/7e8c74c073be03be4c40810c16c6be06c0bef1be"
+                                       title="TopAnat example">Cow genes with the keyword "muscle" 
+                                       in their UniProtKB/Swiss-Prot description</a>.</li>
+                                <li><a href="?page=top_anat#/result/5fc8ff1fcfed7cfba0f82f82a67b418ce8a709b6"
                                        title="TopAnat example">Platypus genes located on X chromosome</a>.</li>
                             </ul>
                             </p>
@@ -104,6 +105,20 @@
                                 <li>Optionally, change the program parameters with the dropdown menu.</li>
                                 <li>Click the 'Submit your job' button.</li>
                             </ul>
+                        </div>
+
+                        <div class="col-sm-12">
+                            <p>A note of caution: in your analyses, you should be extremely careful 
+                               about the definition of your universe (i.e., your background genes). 
+                               The cases where it is correct to use the default background (i.e., all genes 
+                               with data in Bgee for the selected species) should be actually rare. 
+                               For instance, if you are studying a list of genes assigned to a specific 
+                               GO category, then your universe should be "all genes with a GO annotation", 
+                               and not "all genes with data in Bgee". Of course, it is still useful 
+                               to use the default background, for preliminary analyses, or when 
+                               the biological signal extracted from your gene list is very strong. 
+                               But it should often be more rigorously defined for data used in publications.
+                            </p>
                         </div>
 
                         <div class="col-sm-12">
@@ -494,7 +509,7 @@
     </form>
 
     <div id="resultContainer">
-        <div class="vert-offset" ng-show="vm.formSubmitted">
+        <div class="vert-offset" ng-show="vm.formSubmitted || vm.message">
 
             <div class="alert alert-info repeat-animation hide-fade show-fade" ng-show="vm.message" ng-class="{'alert-warning': vm.messageSeverity == 'warning', 'alert-success': vm.messageSeverity == 'success'}">
                 <i class="fa fa-spinner fa-spin" data-ng-show="!vm.jobDone && vm.formSubmitted && vm.jobStatus != 'DONE'" data-ng-hide="vm.jobStatus == 'DONE'"></i>

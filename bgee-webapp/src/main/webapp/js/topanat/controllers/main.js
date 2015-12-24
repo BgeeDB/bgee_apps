@@ -23,12 +23,18 @@
         $scope.$on('$routeChangeStart', function() {
             console.log("route changed");
             showMessage($scope, "bgee app");
+            //this only works thanks to the "hack" of the trailing slash (see topanat.js): 
+            //there is a route change only when clicking on the recent job or example links, 
+            //because there is no trailing slash in them. 
+            $('#appLoading').show();
         });
         $scope.$on('$routeChangeSuccess', function() {
             showMessage($scope, false);
+            $('#appLoading').hide();
         });
         $scope.$on('$routeChangeError', function() {
             showMessage($scope, false);
+            $('#appLoading').hide();
         });
 
 
@@ -281,7 +287,8 @@
                         } else {
                             console.log("job is not done, checkjobstatus");
                             // This fixes issue #111
-                            vm.resultUrl = '/result/'+vm.hash+'/'+vm.jobId;
+                            // Do not remove the trailing slash, see comments in topanat.js
+                            vm.resultUrl = '/result/'+vm.hash+'/'+vm.jobId + '/';
                             vm.formSubmitted = true;
                             checkJobStatus();
                         }
@@ -947,14 +954,16 @@
                         //See same remarks when retrieving results from a 'jab completed' response.
                         console.log("Results already exist.");
                         vm.jobDone = true;
-                        vm.resultUrl = '/result/'+vm.hash;
+                        // Do not remove the trailing slash, see comments in topanat.js
+                        vm.resultUrl = '/result/'+vm.hash+'/';
                         getResults(data);
 
                     } else if(data.data.data.jobResponse.jobId && data.data.data.jobResponse.data) {
 
                         console.log("Job launched.");
                         vm.jobId = data.data.data.jobResponse.jobId;
-                        vm.resultUrl = '/result/'+vm.hash+'/'+vm.jobId;
+                        // Do not remove the trailing slash, see comments in topanat.js
+                        vm.resultUrl = '/result/'+vm.hash+'/'+vm.jobId+'/';
 
                         vm.jobStatus = data.data.data.jobResponse.jobStatus;
                         logger.success('TopAnat request successful', 'TopAnat ok');
@@ -1201,7 +1210,8 @@
             vm.messageSeverity = "success";
             console.log("Message generated from results: " + vm.message);
 
-            vm.resultUrl = '/result/' + vm.hash;
+            // Do not remove the trailing slash, see comments in topanat.js
+            vm.resultUrl = '/result/' + vm.hash + "/";
             console.log("ready resultUrl: " + vm.resultUrl);
 
             if($location.path() !== vm.resultUrl) {

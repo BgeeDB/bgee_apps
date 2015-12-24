@@ -86,6 +86,9 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         RequestParameters urlCallDocGenerator = this.getNewRequestParameters();
         urlCallDocGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
         urlCallDocGenerator.setAction(RequestParameters.ACTION_DOC_CALL_DOWLOAD_FILES);
+
+        RequestParameters urlTopAnatGenerator = this.getNewRequestParameters();
+        urlTopAnatGenerator.setPage(RequestParameters.PAGE_TOP_ANAT);
         
 
         this.writeln("<div class='feature_list'>");
@@ -99,6 +102,14 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                      "<span class='header_details'>(features are being added incrementally)</span>");
         this.writeln("<div id='bgee_news' class='bgee_section'>");
         this.writeln("<ul>");
+        this.writeln("<li>2015-12-24: major update of <a href='" + urlTopAnatGenerator.getRequestURL() 
+                + "' title='Perform gene expression enrichment tests with TopAnat'>TopAnat</a>. "
+                + "Happy Christmas!</li>");
+        this.writeln("<li>2015-11-24: we are happy to release of our new exclusive tool "
+                + "for gene expression enrichment analyses: <a href='" + urlTopAnatGenerator.getRequestURL() 
+                + "' title='Perform gene expression enrichment tests with TopAnat'>TopAnat</a>. "
+                + "This is a tool with absolutely no equivalent, developped in collaboration with "
+                + "the Web-Team  of the Swiss Institute of Bioinformatics. Check it out!</li>");
         this.writeln("<li>2015-08-26: update of the home page.</li>");
         this.writeln("<li>2015-06-08: release of Bgee release 13.1: "
                 + "<ul>"

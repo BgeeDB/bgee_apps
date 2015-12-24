@@ -38,7 +38,7 @@
                         {{job.creationDate}} |
 						<span class="truncate-parent"><span ng-show="job.title" uib-tooltip="{{job.title}}" class="truncate">{{job.title}}</span> |</span>
 						<!-- Do not add a trailing slash to the job URL, see comments in topanat.js -->
-                        <a class="btn-xs btn-success" style="text-decoration: none;" ng-href="#/result/{{job.hash}}">View Job</a>
+                        <a class="btn-xs btn-success bgee-loading" style="text-decoration: none;" ng-href="#/result/{{job.hash}}">View Job</a>
                         <a class="btn-xs btn-danger" style="text-decoration: none;" href="" ng-click="vm.removeJob(job);" style="margin-left: 6px;">Remove job</a></li>
                 </ul>
             </div>
@@ -80,15 +80,15 @@
                             if nothing seems to happen when clicking): </span>
                             <ul>
                                 <!-- Do not add a trailing slash to the example URLs, see comments in topanat.js -->
-                                <li><a href="?page=top_anat#/result/7919f27d143667bc6c137401ce0c91b51e257538"
+                                <li><a class="bgee-loading" href="?page=top_anat#/result/7919f27d143667bc6c137401ce0c91b51e257538"
                                        title="TopAnat example">Mouse genes mapped to the GO term "spermatogenesis"</a>.</li>
-                                <li><a href="?page=top_anat#/result/e37009ba698919c75d06e81b3eca5d48f78210a0"
+                                <li><a class="bgee-loading" href="?page=top_anat#/result/e37009ba698919c75d06e81b3eca5d48f78210a0"
                                        title="TopAnat example">Mouse genes mapped to the GO term "neurological system process", 
                                        with decorrelation and high quality data only</a>.</li>
-                                <li><a href="?page=top_anat#/result/7e8c74c073be03be4c40810c16c6be06c0bef1be"
+                                <li><a class="bgee-loading" href="?page=top_anat#/result/7e8c74c073be03be4c40810c16c6be06c0bef1be"
                                        title="TopAnat example">Cow genes with the keyword "muscle" 
                                        in their UniProtKB/Swiss-Prot description</a>.</li>
-                                <li><a href="?page=top_anat#/result/5fc8ff1fcfed7cfba0f82f82a67b418ce8a709b6"
+                                <li><a class="bgee-loading" href="?page=top_anat#/result/5fc8ff1fcfed7cfba0f82f82a67b418ce8a709b6"
                                        title="TopAnat example">Platypus genes located on X chromosome</a>.</li>
                             </ul>
                             </p>

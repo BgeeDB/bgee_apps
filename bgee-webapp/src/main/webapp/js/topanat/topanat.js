@@ -21,10 +21,8 @@ angular
         'angularFileUpload',
         'ui.bootstrap',
         'ngLocationUpdate',
-        'ngFileSaver',
-        'bgeeLoading'
+        'ngFileSaver'
     ])
-
 
     .config(['$routeProvider', function ($routeProvider) {
         $routeProvider

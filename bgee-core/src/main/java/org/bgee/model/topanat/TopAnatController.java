@@ -286,12 +286,12 @@ public class TopAnatController {
      */
     void releaseLock(String fileName, boolean readLock) {
         ReentrantReadWriteLock lock = this.getReadWriteLock(fileName);
+        this.removeLockIfPossible(fileName, readLock? 1: 0);
         if (readLock) {
             lock.readLock().unlock();
         } else {
             lock.writeLock().unlock();
         }
-        this.removeLockIfPossible(fileName);
     }
 
     /**
@@ -316,7 +316,8 @@ public class TopAnatController {
      *            it.
      * @see #readWriteLocks
      */
-    void removeLockIfPossible(String fileName) {
+    void removeLockIfPossible(String fileName, int expectedReadLockCount) {
+        log.entry(fileName, expectedReadLockCount);
         // check if there is already a lock stored for this key
         ReentrantReadWriteLock lock = readWriteLocks.get(fileName);
 
@@ -324,8 +325,8 @@ public class TopAnatController {
         if (lock != null) {
             // there is no thread with write lock, or read lock, or waiting to
             // acquire a lock
-            if (!lock.isWriteLocked() && lock.getReadLockCount() == 0
-                    && !lock.hasQueuedThreads()) {
+            if (lock.getReadLockCount() <= expectedReadLockCount && !lock.hasQueuedThreads()) {
+                log.trace("Removing Lock from Map");
                 // there might be here a race, where another thread acquired the
                 // lock and
                 // actually locked it, just after the precedent condition test,
@@ -337,6 +338,7 @@ public class TopAnatController {
                 readWriteLocks.remove(fileName);
             }
         }
+        log.exit();
     }
 
     /**

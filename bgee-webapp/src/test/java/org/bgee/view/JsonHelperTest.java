@@ -74,7 +74,7 @@ public class JsonHelperTest extends TestAncestor {
         
         BgeeProperties props = mock(BgeeProperties.class);
         when(props.getDownloadRootDirectory()).thenReturn("/myrootpath/");
-        JsonHelper helper = new JsonHelper(props);
+        JsonHelper helper = new JsonHelper(props, null);
         String json = helper.toJson(group);
         String expected = "{\n  \"members\": [\n    {\n      \"genus\": \"Homo\",\n      "
                 + "\"speciesName\": \"sapiens\",\n      "
@@ -122,7 +122,8 @@ public class JsonHelperTest extends TestAncestor {
                     + "ID3.3&"
                 + params.getParamAjax().getName() + "=1&"
                 + params.getParamNbNode().getName() + "=10&"
-                + params.getParamExprType().getName() + "=expr&"
+                + params.getParamExprType().getName() + "=" 
+                    + CallType.Expression.EXPRESSED.getStringRepresentation() + "&"
                 //this parameter should never be considered in the JSON generated
                 + params.getParamDisplayRequestParams() + "=1";
         RequestParameters rqParams = new RequestParameters(new BgeeHttpServletRequest(queryString, 
@@ -136,7 +137,8 @@ public class JsonHelperTest extends TestAncestor {
                 + "\": [\n    \"ID:1\",\n    \"ID:2\",\n    \"ID:3\"\n  ],\n  "
                 + "\"" + params.getParamBackgroundList().getName() + "\": [\n    "
                 + "\"ID1.1\",\n    \"ID2.2\",\n    \"ID3.3\"\n  ],\n  "
-                + "\"" + params.getParamExprType().getName() + "\": [\n    \"expr\"\n  ],\n  "
+                + "\"" + params.getParamExprType().getName() + "\": [\n    \"" 
+                + CallType.Expression.EXPRESSED.getStringRepresentation() + "\"\n  ],\n  "
                 + "\"" + params.getParamNbNode().getName() + "\": \"10\",\n  "
                 + "\"" + params.getParamAjax().getName() + "\": \"true\"\n}";
 
@@ -227,10 +229,13 @@ public class JsonHelperTest extends TestAncestor {
         TopAnatParams params = mock(TopAnatParams.class);
         when(params.getDevStageId()).thenReturn("stageId1");
         when(params.getCallType()).thenReturn(CallType.Expression.EXPRESSED);
+        when(params.getKey()).thenReturn("mykey");
         BgeeProperties props = mock(BgeeProperties.class);
         when(props.getTopAnatResultsUrlDirectory()).thenReturn("top_anat/results/");
         when(props.getTopAnatResultsWritingDirectory()).thenReturn(
                 this.getClass().getResource("/").getFile());
+        when(props.getBgeeRootDirectory()).thenReturn("/");
+        when(props.getUrlMaxLength()).thenReturn(1000);
         TopAnatController controller = mock(TopAnatController.class);
         when(controller.getBgeeProperties()).thenReturn(props);
         
@@ -238,10 +243,10 @@ public class JsonHelperTest extends TestAncestor {
                 null, null, null, null, null, null, null, "result_hash.zip", 
                 controller);
         
-        JsonHelper helper = new JsonHelper(props);
+        JsonHelper helper = new JsonHelper(props, new RequestParameters(props));
         String json = helper.toJson(results);
         
-        String expected = "{\n  \"zipFile\": \"top_anat/results/result_hash.zip\",\n  "
+        String expected = "{\n  \"zipFile\": \"/?page=top_anat&action=download&analysis_id=mykey\",\n  "
                 + "\"devStageId\": \"stageId1\",\n  \"callType\": \"EXPRESSED\",\n  "
                 + "\"results\": [\n    {\n      \"anatEntityId\": \"A1\",\n      "
                 + "\"anatEntityName\": \"body\",\n      \"annotated\": 5.0,\n      "

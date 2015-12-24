@@ -69,7 +69,7 @@ public class HtmlFactory extends ViewFactory {
     	super(response, requestParameters, prop);
     	
     	if (jsonHelper == null) {
-    	    this.jsonHelper = new JsonHelper(prop);
+    	    this.jsonHelper = new JsonHelper(prop, requestParameters);
     	} else {
     	    this.jsonHelper = jsonHelper;
 	    }

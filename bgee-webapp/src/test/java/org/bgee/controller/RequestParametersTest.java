@@ -736,9 +736,8 @@ public class RequestParametersTest extends TestAncestor {
         when(mockHttpServletRequest.getParameterMap())
         .thenReturn(parameterMap1);
 
-        new RequestParameters(
-                mockHttpServletRequest,
-                RequestParametersTest.testURLParameters,BgeeProperties.getBgeeProperties(),true,"&");
+        new RequestParameters(mockHttpServletRequest, RequestParametersTest.testURLParameters, 
+                BgeeProperties.getBgeeProperties(), true, "&");
     }
 
     /**
@@ -758,27 +757,9 @@ public class RequestParametersTest extends TestAncestor {
         //for testLoadWrongFormatValue
         Map<String, String[]> parameterMap5 = new HashMap<>();
         parameterMap5.put(RequestParametersTest.testURLParameters.getParamTestString().getName(), 
-                new String[]{"string^1"});
+                new String[]{"stringºº∆"});
         when(mockHttpServletRequest.getParameterMap())
         .thenReturn(parameterMap5);
-        try {
-            new RequestParameters(
-                mockHttpServletRequest,
-                RequestParametersTest.testURLParameters, BgeeProperties.getBgeeProperties(),
-                true,"&");
-            fail("An InvalidFormatException should have been thrown.");
-        } catch (InvalidFormatException e) {
-            //test passed
-        }
-        
-        //test that spaces are accepted in separated-values parameters, not in the others
-        mockHttpServletRequest = mock(BgeeHttpServletRequest.class);
-        parameterMap5 = new HashMap<>();
-        parameterMap5.put(RequestParametersTest.testURLParameters.getParamTestString().getName(), 
-                new String[]{"string 1"});
-        when(mockHttpServletRequest.getParameterMap())
-        .thenReturn(parameterMap5);
-        
         try {
             new RequestParameters(
                 mockHttpServletRequest,
@@ -798,6 +779,30 @@ public class RequestParametersTest extends TestAncestor {
                 new String[]{separatedValues});
         when(mockHttpServletRequest.getParameterMap()).thenReturn(parameterMap5);
         //that should work, spaces permitted
+        new RequestParameters(
+                mockHttpServletRequest,
+                RequestParametersTest.testURLParameters, BgeeProperties.getBgeeProperties(),
+                true,"&");
+    }
+
+    /**
+     * Check loading value with correct format.
+     * @throws MultipleValuesNotAllowedException 
+     * @throws RequestParametersNotFoundException 
+     * @throws InvalidFormatException 
+     */
+    //suppress warning, the objects are created solely to check that exceptions are thrown
+    @SuppressWarnings("unused")
+    @Test
+    public void testLoadCorrectFormatValue() throws MultipleValuesNotAllowedException, 
+    RequestParametersNotFoundException {
+
+        BgeeHttpServletRequest mockHttpServletRequest = mock(BgeeHttpServletRequest.class);
+        Map<String, String[]> parameterMap5 = new HashMap<>();
+        parameterMap5.put(RequestParametersTest.testURLParameters.getParamTestString().getName(), 
+                new String[]{"string ~ @ # $ ^ & * ( ) / - _ + = [ ] { } | \\ , . ! ? : ; ' \""});
+        when(mockHttpServletRequest.getParameterMap())
+        .thenReturn(parameterMap5);
         new RequestParameters(
                 mockHttpServletRequest,
                 RequestParametersTest.testURLParameters, BgeeProperties.getBgeeProperties(),

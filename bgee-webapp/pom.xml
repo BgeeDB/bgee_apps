@@ -42,6 +42,14 @@
             <artifactId>gson</artifactId>
             <version>2.3.1</version>
         </dependency>
+        
+        
+        <!-- To send Mails -->
+        <dependency>
+            <groupId>com.sun.mail</groupId>
+            <artifactId>javax.mail</artifactId>
+        </dependency>
+            
         <!-- Remove these dependencies as long as the webapp does not use 
             the actual Bgee API <dependency> <groupId>${project.groupId}</groupId> <artifactId>bgee-core</artifactId> 
             <version>${project.version}</version> <scope>compile</scope> </dependency> 
@@ -115,21 +123,43 @@
              to avoid caching issues with proxis/web browers. Corresponds by default 
              to the project version number, but we might have additional updates of these files. -->
         <!-- WARNING: never removes these properties, otherwise your files will be named, e.g., 
-             *${css.version}.css. If you want to disable versioning of CSS and JS files, 
-             just leave the css.version and js.version empty. -->
-        <css.version>${project.version}j</css.version>
-        <js.version>${project.version}j</js.version>
-        <!-- We will rename css and javascript files with version number using 
-             maven-antrun-plugin. The files will be copied in a temp directory, 
-             and added by maven-war-plugin to the WAR file in the standard directory. -->
-        <rename.tmp.directory>${project.build.directory}/rename_tmp</rename.tmp.directory>
+             *${filter.org.bgee.webapp.css.version.extension}.css. If you want to disable 
+             versioning of CSS and JS files, just leave these properties empty. -->
+        <filter.org.bgee.webapp.css.version.extension>min${project.version}k</filter.org.bgee.webapp.css.version.extension>
+        <filter.org.bgee.webapp.javascript.version.extension>min${project.version}k</filter.org.bgee.webapp.javascript.version.extension>
+        <!-- This property defines where the minified CSS and JS files will be stored. 
+             This is useful to be able to change this setting when running the webapp from within Eclipse 
+             (Eclipse acquires its resources before any plugin can process them, so we modify 
+             this property when running the webapp from within Eclipse, to write the minified files 
+             directly into the m2e-wtp 'web-resources' folder) -->
+        <minify.webappTargetDir>${project.build.directory}/${project.build.finalName}</minify.webappTargetDir>
+        <!-- These property specify whether minified CSS and JS files will be used by the webapp. 
+             This allows to use the original files for easier debugging, notably when running the webapp 
+             from within Eclipse.  -->
+        <filter.org.bgee.webapp.minify>true</filter.org.bgee.webapp.minify>
+        <!-- property used to activate/deactivate maven-minify-plugin -->
+        <skip.minify.plugin>false</skip.minify.plugin>
+        
+        <!-- Default the parameter to send mail to empty string. 
+             This parameter should be overriden in settings.xml if needed -->
+        <filter.org.bgee.webapp.mailUri></filter.org.bgee.webapp.mailUri>
+        <!-- "From" address when sending mails at TopAnat job completions -->
+        <filter.org.bgee.webapp.topAnatFromAddress></filter.org.bgee.webapp.topAnatFromAddress>
+        
+        <!-- Set the host we want to link to. For instance, we might want to link to bgee.org 
+             while the current host is bgee.unil.ch. This is important for generating links in emails.
+             Simply set to point to the server root by default, This parameter should be overriden 
+             in settings.xml if needed -->
+        <filter.org.bgee.webapp.bgeeRootDirectory>/</filter.org.bgee.webapp.bgeeRootDirectory>
     </properties>
     
     <!-- There is a problem when running the webapp from Eclipse: m2e-wtp acquires 
          the web-resources before any lifecycle can be launched, so, before 
-         maven-antrun-plugin can rename the files. We define a profile so that 
-         maven-antrun-plugin copies files directly into the m2e-wtp web-resources directory, 
-         when running from Eclipse. -->
+         minify-maven-plugin can minify the files. We define a profile so that 
+         minify-maven-plugin copies the files directly into the m2e-wtp web-resources directory, 
+         when running from Eclipse. 
+         We also use this profile to be able to NOT use the minified CSS and JS files when the webapp 
+         is run from within Eclipse, for easier debugging. -->
     <profiles>
         <profile>
             <id>m2e</id>
@@ -142,9 +172,16 @@
                 </property>
             </activation>
             <properties>
-                <!-- change path where maven-antrun-plugin renames static files -->
-                <rename.tmp.directory>${project.build.directory}/m2e-wtp/web-resources/</rename.tmp.directory>
-                <!-- In order to have no extension in URLs, change tomcat context root -->
+                <!-- change paths where minify-maven-plugin minifies files -->
+                <minify.webappTargetDir>${project.build.directory}/m2e-wtp/web-resources/</minify.webappTargetDir>
+                <!-- Disable minify for easier debugging. Just change the two following properties 
+                     to use minified files, to properly test a release as it will be 
+                     in production server. -->
+                <filter.org.bgee.webapp.minify>false</filter.org.bgee.webapp.minify>
+                <!-- activate/deactivate minify plugin -->
+                <skip.minify.plugin>true</skip.minify.plugin>
+                <!-- In order to have no extension in URLs, change tomcat context root 
+                     (this is buggy in Eclipse) -->
                 <m2eclipse.wtp.contextRoot></m2eclipse.wtp.contextRoot>
             </properties>
         </profile>
@@ -154,69 +191,297 @@
     <build>
         <finalName>bgee-webapp-${project.version}</finalName>
         
-        <plugins>
+        <!-- When running server from Eclipse, we need to tell m2e to execute 
+             minify-maven-plugin, to properly minify css and js files, by default it doesn't. 
+             We need to modify the life cycle mapping, see 
+             https://www.eclipse.org/m2e/documentation/m2e-execution-not-covered.html. -->
+        <pluginManagement>
+            <plugins>
+                <!-- This plugin is not a real one, it is only used by m2e to obtain 
+                     config information. This is why it needs to be put in the section 
+                     pluginManagement, otherwise Maven would try to download it. -->
+                <plugin>
+                    <groupId>org.eclipse.m2e</groupId>
+                    <artifactId>lifecycle-mapping</artifactId>
+                    <version>1.0.0</version>
+                    <configuration>
+                        <lifecycleMappingMetadata>
+                            <pluginExecutions>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>com.samaxes.maven</groupId>
+                                        <artifactId>minify-maven-plugin</artifactId>
+                                        <versionRange>[1.0.0,)</versionRange>
+                                        <goals>
+                                            <goal>minify</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <execute>
+                                            <!-- set to true, otherwise changes are not seen, 
+                                            e.g., to a css file, and you would need to perform 
+                                            a project update each time. -->
+                                            <runOnIncremental>true</runOnIncremental>
+                                        </execute >
+                                    </action>
+                                </pluginExecution>
+                            </pluginExecutions>
+                        </lifecycleMappingMetadata>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         
-            <!-- We use the maven-antrun-plugin to rename css and javascript files 
-                 with version number, to avoid caching issues with proxis/web browsers. 
-                 I couldn't find any other convenient way to rename files. 
-                 Other solutions included: renaming the css and javascript directories, 
-                 but this would need reconfiguring the server firewall at each release; adding 
-                 a sub-directory with version number in css and javascript directories, 
-                 but this causes problems of relative paths (e.g., images included in css files 
-                 from the img/ directory). -->
+        <plugins>
+            <!-- Merge and minify CSS and JS files. 
+                 IMPORTANT NOTE: if you get an error for merging a newly added file, 
+                 this might be due to a bug when a file ends with a comment line, 
+                 see https://github.com/samaxes/minify-maven-plugin/issues/105 -->
             <plugin>
-                <artifactId>maven-antrun-plugin</artifactId>
+                <groupId>com.samaxes.maven</groupId>
+                <artifactId>minify-maven-plugin</artifactId>
                 <executions>
+                
+                    <!-- merge files from external libraries already minified, 
+                         common to all pages. -->
                     <execution>
+                        <id>common_minified_vendor</id>
                         <goals>
-                            <goal>run</goal>
+                            <!-- Binds by default to the lifecycle phase: process-resources -->
+                            <goal>minify</goal>
                         </goals>
-                        <id>rename-resources</id>
-                        <!-- perform copy before the package phase, 
-                             when maven-war-plugin builds the WAR file -->
-                        <phase>process-resources</phase>
                         <configuration>
-                            <target>
-                                <!-- Copy renamed files in a temp directory. 
-                                     We will configure the maven-war-plugin to not copy 
-                                     files in src/main/webapp/css/ and src/main/webapp/js/ itself, 
-                                     and to rather include these renamed files. -->
-                                 <!-- Explanation to select files to copy/rename: 
-                                      http://stackoverflow.com/a/16092997/1768736 -->
-                                 <copy todir="${rename.tmp.directory}/css/">
-                                     <fileset dir="${basedir}/src/main/webapp/css/">
-                                         <include name="**/*.css" />
-                                     </fileset>
-                                     <mapper type="glob" from="*.css" to="*${css.version}.css"/>
-                                 </copy>
-                                 <copy todir="${rename.tmp.directory}/js/">
-                                     <fileset dir="${basedir}/src/main/webapp/js/">
-                                         <include name="**/*.js" />
-                                     </fileset>
-                                     <mapper type="glob" from="*.js" to="*${js.version}.js"/>
-                                 </copy>
-                                 <!-- We also need to include the partial views used for, 
-                                      e.g., AngularJS, but we don't rename them, there is 
-                                      no cache issue for these files queried through AJAX calls. 
-                                      We need to do it here, as we have excluded the js and css directories 
-                                      from the maven-war-plugin build.
-                                      We also need the .json files, the .woff2 files for css...
-                                      FIXME: so here we copy all files in js/ and css/ directories 
-                                      by laziness. The versioned css and js files will stil be included 
-                                      and used by the webapp. But this increase the size of the war... -->
-                                 <copy todir="${rename.tmp.directory}/js/">
-                                     <fileset dir="${basedir}/src/main/webapp/js/">
-                                         <include name="**/*" />
-                                     </fileset>
-                                     <mapper type="identity" />
-                                 </copy>
-                                 <copy todir="${rename.tmp.directory}/css/">
-                                     <fileset dir="${basedir}/src/main/webapp/css/">
-                                         <include name="**/*" />
-                                     </fileset>
-                                     <mapper type="identity" />
-                                 </copy>
-                             </target>
+                            <webappTargetDir>${minify.webappTargetDir}</webappTargetDir>
+                            <skipMinify>true</skipMinify>
+                            <!-- We always skip the merge and minify if requested -->
+                            <skipMerge>${skip.minify.plugin}</skipMerge>
+                            <jsEngine>CLOSURE</jsEngine>
+                            
+                            <jsSourceDir>js/</jsSourceDir>
+                            <jsTargetDir>js/</jsTargetDir>
+                            <jsSourceFiles>
+                                <jsSourceFile>lib/jquery.min.js</jsSourceFile>
+                                <jsSourceFile>lib/jquery_plugins/jquery.visible.min.js</jsSourceFile>
+                                <jsSourceFile>lib/jquery_plugins/jquery-ui.min.js</jsSourceFile>
+                            </jsSourceFiles>
+                            <!-- Files already provided minified. The suffix will then not be added  -->
+                            <jsFinalFile>vendor_common.${filter.org.bgee.webapp.javascript.version.extension}.js</jsFinalFile>
+                            <!-- <suffix>${filter.org.bgee.webapp.javascript.version.extension}</suffix> -->
+                        </configuration>
+                    </execution>
+                    
+                    <!-- merge and minify all Bgee files common to all pages -->
+                    <execution>
+                        <id>minify_common_bgee</id>
+                        <goals>
+                            <!-- Binds by default to the lifecycle phase: process-resources -->
+                            <goal>minify</goal>
+                        </goals>
+                        <configuration>
+                            <webappTargetDir>${minify.webappTargetDir}</webappTargetDir>
+                            <jsEngine>CLOSURE</jsEngine>
+                            <!-- We always skip the merge and minify if requested -->
+                            <skipMinify>${skip.minify.plugin}</skipMinify>
+                            <skipMerge>${skip.minify.plugin}</skipMerge>
+                            
+                            <jsSourceDir>js/</jsSourceDir>
+                            <jsTargetDir>js/</jsTargetDir>
+                            <jsSourceFiles>
+                                <jsSourceFile>bgeeproperties.js</jsSourceFile>
+                                <jsSourceFile>urlparameters.js</jsSourceFile>
+                                <jsSourceFile>requestparameters.js</jsSourceFile>
+                                <jsSourceFile>common.js</jsSourceFile>
+                            </jsSourceFiles>
+                            <jsFinalFile>script_common.js</jsFinalFile>
+                            <suffix>${filter.org.bgee.webapp.javascript.version.extension}</suffix>
+                            
+                            <cssSourceDir>css/</cssSourceDir>
+                            <cssTargetDir>css/</cssTargetDir>
+                            <cssSourceFiles>
+                                <cssSourceFile>bgee.css</cssSourceFile>
+                            </cssSourceFiles>
+                            <cssFinalFile>common.css</cssFinalFile>
+                            <suffix>${filter.org.bgee.webapp.css.version.extension}</suffix>
+                        </configuration>
+                    </execution>
+                    
+                    <!-- files that we only want to minify, not to merge: 
+                         they are the only Bgee file used on their respective page -->
+                    <execution>
+                        <id>minify_no_merge_bgee</id>
+                        <goals>
+                            <!-- Binds by default to the lifecycle phase: process-resources -->
+                            <goal>minify</goal>
+                        </goals>
+                        <configuration>
+                            <webappTargetDir>${minify.webappTargetDir}</webappTargetDir>
+                            <skipMerge>true</skipMerge>
+                            <!-- We always skip the merge and minify if requested -->
+                            <skipMinify>${skip.minify.plugin}</skipMinify>
+                            <jsEngine>CLOSURE</jsEngine>
+                            
+                            <jsSourceDir>js/</jsSourceDir>
+                            <jsTargetDir>js/</jsTargetDir>
+                            <jsSourceFiles>
+                                <jsSourceFile>general.js</jsSourceFile>
+                                <jsSourceFile>download.js</jsSourceFile>
+                            </jsSourceFiles>
+                            <suffix>${filter.org.bgee.webapp.javascript.version.extension}</suffix>
+                            
+                            <cssSourceDir>css/</cssSourceDir>
+                            <cssTargetDir>css/</cssTargetDir>
+                            <cssSourceFiles>
+                                <cssSourceFile>documentation.css</cssSourceFile>
+                                <cssSourceFile>download.css</cssSourceFile>
+                                <cssSourceFile>general.css</cssSourceFile>
+                                <cssSourceFile>topanat.css</cssSourceFile>
+                            </cssSourceFiles>
+                            <suffix>${filter.org.bgee.webapp.css.version.extension}</suffix>
+                        </configuration>
+                    </execution>
+                    
+                    <!-- Files that we only want to rename, not to merge nor to minify 
+                         (they are already minified) -->
+                    <execution>
+                        <id>no_merge_no_minify_1</id>
+                        <goals>
+                            <!-- Binds by default to the lifecycle phase: process-resources -->
+                            <goal>minify</goal>
+                        </goals>
+                        <configuration>
+                            <webappTargetDir>${minify.webappTargetDir}</webappTargetDir>
+                            <!-- we pretend to merge the file so that it is renamed -->
+                            <skipMinify>true</skipMinify>
+                            <!-- We always skip the merge and minify if requested -->
+                            <skipMerge>${skip.minify.plugin}</skipMerge>
+                            
+                            <cssSourceDir>css/</cssSourceDir>
+                            <cssTargetDir>css/lib/angular_modules/ui_grid/</cssTargetDir>
+                            <cssSourceFiles>
+                                <cssSourceFile>lib/angular_modules/ui_grid/ui-grid.min.css</cssSourceFile>
+                            </cssSourceFiles>
+                            <cssFinalFile>ui-grid.${filter.org.bgee.webapp.css.version.extension}.css</cssFinalFile>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>no_merge_no_minify_2</id>
+                        <goals>
+                            <!-- Binds by default to the lifecycle phase: process-resources -->
+                            <goal>minify</goal>
+                        </goals>
+                        <configuration>
+                            <webappTargetDir>${minify.webappTargetDir}</webappTargetDir>
+                            <!-- we pretend to merge the file so that it is renamed -->
+                            <skipMinify>true</skipMinify>
+                            <!-- We always skip the merge and minify if requested -->
+                            <skipMerge>${skip.minify.plugin}</skipMerge>
+                            
+                            <cssSourceDir>css/</cssSourceDir>
+                            <cssTargetDir>css/lib/font_awesome/css/</cssTargetDir>
+                            <cssSourceFiles>
+                                <cssSourceFile>lib/font_awesome/css/font-awesome.min.css</cssSourceFile>
+                            </cssSourceFiles>
+                            <cssFinalFile>font-awesome.${filter.org.bgee.webapp.css.version.extension}.css</cssFinalFile>
+                        </configuration>
+                    </execution>
+                    
+                    
+                    <!-- merge files from external libraries already minified, 
+                         specific to TopAnat pages. -->
+                    <execution>
+                        <id>topanat_minified_vendor</id>
+                        <goals>
+                            <!-- Binds by default to the lifecycle phase: process-resources -->
+                            <goal>minify</goal>
+                        </goals>
+                        <configuration>
+                            <webappTargetDir>${minify.webappTargetDir}</webappTargetDir>
+                            <skipMinify>true</skipMinify>
+                            <!-- We always skip the merge and minify if requested -->
+                            <skipMerge>${skip.minify.plugin}</skipMerge>
+                            <jsEngine>CLOSURE</jsEngine>
+                            
+                            <jsSourceDir>js/</jsSourceDir>
+                            <jsTargetDir>js/</jsTargetDir>
+                            <jsSourceFiles>
+                                <jsSourceFile>lib/jquery_plugins/bootstrap.min.js</jsSourceFile>
+                                <jsSourceFile>lib/jquery_plugins/toastr.min.js</jsSourceFile>
+                                <jsSourceFile>lib/angular.min.js</jsSourceFile>
+                                <jsSourceFile>lib/angular_modules/angular-animate.min.js</jsSourceFile>
+                                <jsSourceFile>lib/angular_modules/angular-messages.min.js</jsSourceFile>
+                                <jsSourceFile>lib/angular_modules/angular-resource.min.js</jsSourceFile>
+                                <jsSourceFile>lib/angular_modules/angular-route.min.js</jsSourceFile>
+                                <jsSourceFile>lib/angular_modules/angular-sanitize.min.js</jsSourceFile>
+                                <jsSourceFile>lib/angular_modules/angular-touch.min.js</jsSourceFile>
+                                <jsSourceFile>lib/angular_modules/ui_modules/ui-grid.min.js</jsSourceFile>
+                                <jsSourceFile>lib/angular_modules/ui_modules/ui-bootstrap-tpls.min.js</jsSourceFile>
+                                <jsSourceFile>lib/angular_modules/angular-file-upload.min.js</jsSourceFile>
+                                <jsSourceFile>lib/angular_modules/angular-location-update.min.js</jsSourceFile>
+                                <jsSourceFile>lib/Blob.js</jsSourceFile>
+                                <jsSourceFile>lib/FileSaver.min.js</jsSourceFile>
+                                <jsSourceFile>lib/angular_modules/angular-file-saver.bundle.min.js</jsSourceFile>
+                            </jsSourceFiles>
+                            <!-- Files already provided minified. The suffix will then not be added  -->
+                            <jsFinalFile>vendor_topanat.${filter.org.bgee.webapp.javascript.version.extension}.js</jsFinalFile>
+                            
+                            <cssSourceDir>css/</cssSourceDir>
+                            <cssTargetDir>css/lib/jquery_plugins/</cssTargetDir>
+                            <cssSourceFiles>
+                                <cssSourceFile>lib/jquery_plugins/bootstrap.min.css</cssSourceFile>
+                                <cssSourceFile>lib/jquery_plugins/jquery-ui.min.css</cssSourceFile>
+                                <cssSourceFile>lib/jquery_plugins/jquery-ui.structure.min.css</cssSourceFile>
+                                <cssSourceFile>lib/jquery_plugins/jquery-ui.theme.min.css</cssSourceFile>
+                                <cssSourceFile>lib/jquery_plugins/toastr.min.css</cssSourceFile>
+                            </cssSourceFiles>
+                            <!-- Files already provided minified. The suffix will then not be added  -->
+                            <cssFinalFile>vendor_common.${filter.org.bgee.webapp.css.version.extension}.css</cssFinalFile>
+                        </configuration>
+                    </execution>
+                    
+                    <!-- merge and minify all Bgee files specific to TopAnat -->
+                    <execution>
+                        <id>minify_topanat_bgee</id>
+                        <goals>
+                            <!-- Binds by default to the lifecycle phase: process-resources -->
+                            <goal>minify</goal>
+                        </goals>
+                        <configuration>
+                            <webappTargetDir>${minify.webappTargetDir}</webappTargetDir>
+                            <!-- We always skip the merge and minify if requested -->
+                            <skipMinify>${skip.minify.plugin}</skipMinify>
+                            <skipMerge>${skip.minify.plugin}</skipMerge>
+                            <jsEngine>CLOSURE</jsEngine>
+                            
+                            <jsSourceDir>js/</jsSourceDir>
+                            <jsTargetDir>js/</jsTargetDir>
+                            <jsSourceFiles>
+                                <jsSourceFile>topanat/topanat.js</jsSourceFile>
+                                <jsSourceFile>topanat/services/logger.module.js</jsSourceFile>
+                                <jsSourceFile>topanat/services/logger.js</jsSourceFile>
+                                <jsSourceFile>topanat/controllers/main.js</jsSourceFile>
+                                <jsSourceFile>topanat/controllers/result.js</jsSourceFile>
+                                <jsSourceFile>topanat/services/bgeedataservice.js</jsSourceFile>
+                                <jsSourceFile>topanat/services/bgeejobservice.js</jsSourceFile>
+                                <jsSourceFile>topanat/services/helpservice.js</jsSourceFile>
+                                <jsSourceFile>topanat/services/datatypefactory.js</jsSourceFile>
+                                <jsSourceFile>topanat/services/config.js</jsSourceFile>
+                                <jsSourceFile>topanat/services/lang.js</jsSourceFile>
+                                <jsSourceFile>topanat/services/constants.js</jsSourceFile>
+                                <jsSourceFile>topanat/directives/loading.js</jsSourceFile>
+                            </jsSourceFiles>
+                            <jsFinalFile>script_topanat.js</jsFinalFile>
+                            <suffix>${filter.org.bgee.webapp.javascript.version.extension}</suffix>
+                            
+                            <!-- topanat.css is minified in execution with ID minify_no_merge_bgee, 
+                                 this should be changed if there are more than one CSS file 
+                                 specific to Bgee used.  -->
+                            <!-- <cssSourceDir>css/</cssSourceDir>
+                            <cssTargetDir>css/</cssTargetDir>
+                            <cssSourceFiles>
+                                <cssSourceFile>topanat.css</cssSourceFile>
+                            </cssSourceFiles>
+                            <cssFinalFile>topanat.css</cssFinalFile>
+                            <suffix>${filter.org.bgee.webapp.css.version.extension}</suffix> -->
                         </configuration>
                     </execution>
                 </executions>
@@ -227,19 +492,25 @@
                 <artifactId>maven-war-plugin</artifactId>
                 <configuration>
                     
-                    <!-- We do no let the maven-war-plugin take care of the css and 
-                         javascript files, they are renamed with version number 
-                         by maven-antrun-plugin, see above. -->
-                    <warSourceExcludes>css/,js/</warSourceExcludes>
+                    <!-- We do no exclude source CSS and JS files from the WAR: 
+                         this will make a larger archive, but it will allow to easily 
+                         activate/deactivate the use of minified files, for easier debugging. -->
+                    
                     <webResources>
-                        <!-- include the resources renamed by maven-antrun-plugin, 
-                             at the root of the WAR file -->
+                        <!-- We have a problem with m2e-wtp, the resources in src/main/webapp/ 
+                             are not considered. We need to explicitly list this folder 
+                             in the webResources to fix the problem (we shouldn't have to)  -->
                         <resource>
-                            <directory>${rename.tmp.directory}</directory>
+                            <!-- this is relative to the pom.xml directory -->
+                            <directory>src/main/webapp/</directory>
                             <includes>
-                                <include>**/*</include>
+                                <include>**</include>
                             </includes>
+                            <!-- override the destination directory for this resource, 
+                                 relative to the root of the WAR file -->
+                            <targetPath>/</targetPath>
                         </resource>
+                        
                         <!-- We filter bgee-webapp.properties so that css version number 
                              and javacript version number are configured. 
                              bgee.dao.properties is filtered to add database connection parameters -->
@@ -298,48 +569,6 @@
                 </configuration>
             </plugin>
         </plugins>
-        
-        
-        <!-- When running server from Eclipse, we need to tell m2e to execute 
-             maven-antrun-plugin, to properly rename css and js files, by default it doesn't. 
-             We need to modify the life cycle mapping, see 
-             https://www.eclipse.org/m2e/documentation/m2e-execution-not-covered.html. -->
-        <pluginManagement>
-            <plugins>
-                <!-- This plugin is not a real one, it is only used by m2e to obtain 
-                     config information. This is why it needs to be put in the section 
-                     pluginManagement, otherwise Maven would try to download it. -->
-                <plugin>
-                    <groupId>org.eclipse.m2e</groupId>
-                    <artifactId>lifecycle-mapping</artifactId>
-                    <version>1.0.0</version>
-                    <configuration>
-                        <lifecycleMappingMetadata>
-                            <pluginExecutions>
-                                <pluginExecution>
-                                    <pluginExecutionFilter>
-                                        <groupId>org.apache.maven.plugins</groupId>
-                                        <artifactId>maven-antrun-plugin</artifactId>
-                                        <versionRange>[1.0.0,)</versionRange>
-                                        <goals>
-                                            <goal>run</goal>
-                                        </goals>
-                                    </pluginExecutionFilter>
-                                    <action>
-                                        <execute>
-                                            <!-- set to true, otherwise changes are not seen, 
-                                            e.g., to a css file, and you would need to perform 
-                                            a project update each time. -->
-                                            <runOnIncremental>true</runOnIncremental>
-                                        </execute >
-                                    </action>
-                                </pluginExecution>
-                            </pluginExecutions>
-                        </lifecycleMappingMetadata>
-                    </configuration>
-                </plugin>
-            </plugins>
-        </pluginManagement>
         
         
         <!-- In order to correctly filter bgee.properties even outside of the WAR file -->

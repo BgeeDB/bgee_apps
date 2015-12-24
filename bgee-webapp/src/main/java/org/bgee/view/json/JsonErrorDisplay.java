@@ -88,7 +88,7 @@ public class JsonErrorDisplay extends JsonParentDisplay implements ErrorDisplay 
         LinkedHashMap<String, Object> data = new LinkedHashMap<>();
         data.put(EXCEPTION_TYPE_KEY, "UnsupportedOperationException");
         this.sendResponse(HttpServletResponse.SC_BAD_REQUEST, "This operation is not supported "
-                + "for the requesed view or the requested parameters.", data);
+                + "for the requested view or the requested parameters.", data);
         
         log.exit();
     }
@@ -99,7 +99,7 @@ public class JsonErrorDisplay extends JsonParentDisplay implements ErrorDisplay 
         
         LinkedHashMap<String, Object> data = new LinkedHashMap<>();
         data.put(EXCEPTION_TYPE_KEY, e.getClass().getSimpleName());
-        data.put("incorrectParameter", e.getURLParameter());
+        data.put("incorrectParameter", e.getURLParameter().getName());
         this.sendResponse(HttpServletResponse.SC_BAD_REQUEST, 
                 "One of the request parameters has an incorrect format.", 
                 data);
@@ -125,7 +125,7 @@ public class JsonErrorDisplay extends JsonParentDisplay implements ErrorDisplay 
         
         LinkedHashMap<String, Object> data = new LinkedHashMap<>();
         data.put(EXCEPTION_TYPE_KEY, e.getClass().getSimpleName());
-        data.put("incorrectParameter", e.getURLParameter());
+        data.put("incorrectParameter", e.getURLParameter().getName());
         this.sendResponse(HttpServletResponse.SC_BAD_REQUEST, 
                 "One of the request parameters was incorrectly assigned multiple values.", 
                 data);
@@ -152,7 +152,7 @@ public class JsonErrorDisplay extends JsonParentDisplay implements ErrorDisplay 
         
         LinkedHashMap<String, Object> data = new LinkedHashMap<>();
         data.put(EXCEPTION_TYPE_KEY, e.getClass().getSimpleName());
-        data.put("incorrectParameter", e.getURLParameter());
+        data.put("incorrectParameter", e.getURLParameter().getName());
         this.sendResponse(HttpServletResponse.SC_BAD_REQUEST, 
                 "One of the request parameters exceeded its maximum allowed length.", 
                 data);

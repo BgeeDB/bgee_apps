@@ -38,6 +38,23 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      * {@code Logger} of the class. 
      */
     private final static Logger log = LogManager.getLogger(BgeeProperties.class.getName());
+    
+    /**
+     * A {@code String} that is the key to access to the property that is read at the 
+     * initialization of {@code BgeeProperties} to determine whether CSS and JS files were minified.
+     * 
+     * @see #MINIFY_DEFAULT
+     * @see #isMinify()
+     */
+    public final static String MINIFY_KEY = "org.bgee.webapp.minify";
+    /**
+     * A {@code boolean} that is the default value of the property to determine whether 
+     * CSS and JS files were minified.
+     * 
+     * @see #MINIFY_KEY
+     * @see #isMinify()
+     */
+    public final static boolean MINIFY_DEFAULT = false;
         
     /**
      * A {@code String} that is the key to access to the System property that is read at the 
@@ -394,12 +411,79 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
     /**
      * A {@code String} that is the default value of the name of the path to be used in URL 
      * to link to a file stored in the TopAnat result directory
-     * (see {@code org.bgee.model.BgeeProperties##topAnatResultsWritingDirectory}).
+     * (see {@code org.bgee.model.BgeeProperties#topAnatResultsWritingDirectory}).
      * 
      * @see #TOP_ANAT_RESULTS_URL_DIRECTORY_KEY
      */
     public final static String TOP_ANAT_RESULTS_URL_DIRECTORY_DEFAULT = 
-            "bgee/TopAnatFiles/results/";     
+            "bgee/TopAnatFiles/results/";   
+
+    /**
+     * A {@code String} that is the key to access to the property containing 
+     * the URI providing the parameters to send emails.
+     * 
+     * @see #MAIL_URI_DEFAULT
+     * @see #getMailUri()
+     */
+    public final static String MAIL_URI_KEY = "org.bgee.webapp.mailUri";
+    /**
+     * A {@code String} that is the default value of the property containing 
+     * the URI providing the parameters to send emails.
+     * 
+     * @see #MAIL_URI_KEY
+     * @see #getMailUri()
+     */
+    public final static String MAIL_URI_DEFAULT = null;  
+    /**
+     * A {@code String} that is the key to access to the property containing 
+     * the minimum waiting time between sending two mails.
+     * 
+     * @see #MAIL_WAIT_TIME_DEFAULT
+     * @see #getMailWaitTime()
+     */
+    public final static String MAIL_WAIT_TIME_KEY = "org.bgee.webapp.mailWaitTime";
+    /**
+     * An {@code int} that is the default value of the property containing 
+     * the minimum waiting time between sending two mails.
+     * 
+     * @see #MAIL_WAIT_TIME_KEY
+     * @see #getMailWaitTime()
+     */
+    public final static int MAIL_WAIT_TIME_DEFAULT = 10000;  
+
+    /**
+     * A {@code String} that is the key to access to the property containing 
+     * the mail address which to send mails related to TopAnat from.
+     * 
+     * @see #TOPANAT_FROM_ADDRESS_DEFAULT
+     * @see #getTopAnatFromAddress()
+     */
+    public final static String TOPANAT_FROM_ADDRESS_KEY = "org.bgee.webapp.topAnatFromAddress";
+    /**
+     * A {@code String} that is the default value of the property containing 
+     * the mail address which to send mails related to TopAnat from.
+     * 
+     * @see #TOPANAT_FROM_ADDRESS_KEY
+     * @see #getTopAnatFromAddress()
+     */
+    public final static String TOPANAT_FROM_ADDRESS_DEFAULT = null;  
+
+    /**
+     * A {@code String} that is the key to access to the property containing 
+     * the mail personal which to send mails related to TopAnat from.
+     * 
+     * @see #TOPANAT_FROM_PERSONAL_DEFAULT
+     * @see #getTopAnatFromPersonal()
+     */
+    public final static String TOPANAT_FROM_PERSONAL_KEY = "org.bgee.webapp.topAnatFromPersonal";
+    /**
+     * A {@code String} that is the default value of the property containing 
+     * the mail personal which to send mails related to TopAnat from.
+     * 
+     * @see #TOPANAT_FROM_PERSONAL_KEY
+     * @see #getTopAnatFromPersonal()
+     */
+    public final static String TOPANAT_FROM_PERSONAL_DEFAULT = null;  
 
     /**
      * @return  An instance of {@code BgeeProperties} with values based on the System properties
@@ -435,6 +519,10 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
         return log.exit(bgeeProp);
     }
 
+    /**
+     * {@code boolean} defining whether CSS and JS files were minified. 
+     */
+    private final boolean minify;
     /**
      * {@code String} that defines the directory where query strings holding storable parameters  
      * from previous large queries are stored. 
@@ -578,6 +666,24 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      * @see org.bgee.model.BgeeProperties#topAnatRWorkingDirectory
      */
     private final String topAnatResultsUrlDirectory; 
+    
+    /**
+     * @see #getMailUri()
+     */
+    private final String mailUri;
+    /**
+     * @see #getMailWaitTime()
+     */
+    private final int mailWaitTime;
+    
+    /**
+     * @see #getTopAnatFromAddress()
+     */
+    private final String topAnatFromAddress;
+    /**
+     * @see #getTopAnatFromPersonal()
+     */
+    private final String topAnatFromPersonal;
 
     /**
      * Private constructor, can be only called through the use of one of the
@@ -590,7 +696,7 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      * @param prop  A {@code java.util.Properties} instance that contains the system properties
      *              to use.
      */
-    private BgeeProperties(Properties prop) {
+    public BgeeProperties(Properties prop) {
         // First called the parent constructor, which loads the properties defined in bgee-core
         super(prop);
         log.entry(prop);
@@ -599,6 +705,7 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
         // Initialize all properties using the injected prop first, alternatively the System
         // properties and then the file. The default value provided will be use if none of the
         // previous solutions contain the property
+        minify = getBooleanOption(prop, SYS_PROPS, FILE_PROPS, MINIFY_KEY, MINIFY_DEFAULT);
         requestParametersStorageDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY,  
                 REQUEST_PARAMETERS_STORAGE_DIRECTORY_DEFAULT);
@@ -646,10 +753,24 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
         topAnatResultsUrlDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 TOP_ANAT_RESULTS_URL_DIRECTORY_KEY,
                 TOP_ANAT_RESULTS_URL_DIRECTORY_DEFAULT);
+        mailUri = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
+                MAIL_URI_KEY, MAIL_URI_DEFAULT);
+        mailWaitTime = getIntegerOption(prop, SYS_PROPS, FILE_PROPS, 
+                MAIL_WAIT_TIME_KEY, MAIL_WAIT_TIME_DEFAULT);
+        topAnatFromAddress = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
+                TOPANAT_FROM_ADDRESS_KEY, TOPANAT_FROM_ADDRESS_DEFAULT);
+        topAnatFromPersonal = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
+                TOPANAT_FROM_PERSONAL_KEY, TOPANAT_FROM_PERSONAL_DEFAULT);
         log.debug("Initialization done.");
         log.exit();
     }
 
+    /**
+     * @return  A {@code boolean} defining whether CSS and JS files were minified.
+     */
+    public boolean isMinify() {
+        return minify;
+    }
     /**
      * @return  A {@code String} that defines the directory where query strings holding storable 
      *          parameters from previous large queries are stored. 
@@ -836,4 +957,52 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
     public String getTopAnatResultsUrlDirectory() {
         return topAnatResultsUrlDirectory;
     }    
+    
+    /**
+     * Gets the URI providing the parameters for sending emails. This URI is used for convenience, 
+     * and is not an URI used in a protocol. The URI must be of the form: 
+     * {@code <protocol>://<server>:<port>/?<queryString>}. The query string provides 
+     * additional parameters besides protocol, server and port, that must be properties 
+     * defined by the {@code javax.mail} API, for instance, {@code mail.smtp.auth}, 
+     * or {@code mail.smtp.starttls.enable}. If the default port of the protocol is used, 
+     * it is not needed to provide it.
+     * <p>
+     * Additional parameters not part of the {@code javax.mail} API can be provided: 
+     * {@code username}, and {@code password}, used to create a {@code PasswordAuthentication} object).
+     * <p>
+     * Example URI: {@code smtp://smtp.unil.ch:465/?username=user&password=pass
+     * &mail.smtp.auth=true&mail.smtp.ssl.enable=true&mail.smtp.starttls.enable=true}.
+     * 
+     * @return  A {@code String} that is the URI providing the parameters for sending emails.
+     * @see #MAIL_URI_KEY
+     * @see #MAIL_URI_DEFAULT
+     */
+    public String getMailUri() {
+        return mailUri;
+    }
+    /**
+     * @return  An {@code int} that is the minimum waiting time between sending two mails.
+     * @see #MAIL_WAIT_TIME_KEY
+     * @see #MAIL_WAIT_TIME_DEFAULT
+     */
+    public int getMailWaitTime() {
+        return mailWaitTime;
+    }
+
+    /**
+     * @return  A {@code String} that is the mail address which to send mails related to TopAnat from.
+     * @see #TOPANAT_FROM_ADDRESS_KEY
+     * @see #TOPANAT_FROM_ADDRESS_DEFAULT
+     */
+    public String getTopAnatFromAddress() {
+        return topAnatFromAddress;
+    }
+    /**
+     * @return  A {@code String} that is the mail personal which to send mails related to TopAnat from.
+     * @see #TOPANAT_FROM_PERSONAL_KEY
+     * @see #TOPANAT_FROM_PERSONAL_DEFAULT
+     */
+    public String getTopAnatFromPersonal() {
+        return topAnatFromPersonal;
+    }
 }

@@ -1,9 +1,17 @@
 package org.bgee.controller;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.URLEncoder;
+
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.controller.utils.MailSender;
 import org.bgee.model.ServiceFactory;
 import org.bgee.view.ViewFactory;
 
@@ -36,7 +44,16 @@ abstract class CommandParent {
      */
     protected final ViewFactory viewFactory;
     protected final ServiceFactory serviceFactory;
+    /**
+     * The {@code MailSender} used to send emails.
+     */
+    protected final MailSender mailSender;
+    
     protected final HttpServletResponse response;
+    /**
+     * The {@code ServletContext} of the servlet using this object.
+     */
+    protected final ServletContext context;
     /**
      * Stores the parameters of the current request.
      */
@@ -63,19 +80,42 @@ abstract class CommandParent {
      *                          to use.
      * @param viewFactory       A {@code ViewFactory} that provides the display type to be used.
      * @param serviceFactory    A {@code ServiceFactory} that provides the services (might be null)
+     * @param context           The {@code ServletContext} of the servlet using this object. 
+     *                          Notably used when forcing file download.
+     * @param mailSender        A {@code MailSender} instance used to send mails to users.
      */
     public CommandParent(HttpServletResponse response, RequestParameters requestParameters,
-                         BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory) {
-        log.entry(response, requestParameters, prop, viewFactory);
+                         BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory, 
+                         ServletContext context, MailSender mailSender) {
+        log.entry(response, requestParameters, prop, viewFactory, context, mailSender);
         this.response = response;
+        this.context = context;
         this.requestParameters = requestParameters;
         this.prop = prop;
         this.viewFactory = viewFactory;
         this.serviceFactory = serviceFactory;
+        this.mailSender = mailSender;
         this.serverRoot = prop.getBgeeRootDirectory();
         this.homePage   = prop.getBgeeRootDirectory();
         this.bgeeRoot   = prop.getBgeeRootDirectory();
         log.exit();
+    }
+
+    /**
+     * Constructor
+     * 
+     * @param response          A {@code HttpServletResponse} that will be used to display the 
+     *                          page to the client
+     * @param requestParameters The {@code RequestParameters} that handles the parameters of the 
+     *                          current request.
+     * @param prop              A {@code BgeeProperties} instance that contains the properties
+     *                          to use.
+     * @param viewFactory       A {@code ViewFactory} that provides the display type to be used.
+     * @param serviceFactory    A {@code ServiceFactory} that provides the services (might be null)
+     */
+    public CommandParent(HttpServletResponse response, RequestParameters requestParameters,
+                         BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory) {
+        this(response, requestParameters, prop, viewFactory, serviceFactory, null, null);
     }
 
     /**
@@ -134,5 +174,54 @@ abstract class CommandParent {
      * @see 	FrontController#doRequest(HttpServletRequest, HttpServletResponse, boolean)
      */
     public abstract void processRequest() throws Exception;
+    
+    /**
+     * Trigger the download of a file, from the client point of view. This is useful 
+     * when the files to send are stored on the webapp server, but not within the webapp directory. 
+     * <p>
+     * The response output stream will be closed following a call to this method.
+     * <p>
+     * Code from http://www.codejava.net/java-ee/servlet/java-servlet-download-file-example. 
+     * 
+     * @param filePath          A {@code String} that is the path to a file to send to the client.
+     * @param downloadFileName  A {@code String} that is the name of the file, as displayed to the client.
+     * @throws IOException      If the file is not found, or {@code downloadFileName} could not be encoded 
+     *                          in UTF-8, or the response output stream could not be obtained. 
+     */
+    protected void launchFileDownload(String filePath, String downloadFileName) throws IOException {
+        log.entry(filePath, downloadFileName);
+        
+        File downloadFile = new File(filePath);
+        FileInputStream inStream = new FileInputStream(downloadFile);
+
+        // gets MIME type of the file
+        String mimeType = context.getMimeType(filePath);
+        if (mimeType == null) {        
+            // set to binary type if MIME mapping not found
+            mimeType = "application/octet-stream";
+        }
+        log.debug("MIME type of download file: {}", mimeType);
+        
+        // modifies response
+        response.setContentType(mimeType);
+        response.setContentLength((int) downloadFile.length());
+        response.setHeader("Content-Disposition", "attachment; filename=\"" 
+            + URLEncoder.encode(downloadFileName, "UTF-8") + '"');
+        
+        // obtains response's output stream
+        OutputStream outStream = response.getOutputStream();
+         
+        byte[] buffer = new byte[4096];
+        int bytesRead = -1;
+         
+        while ((bytesRead = inStream.read(buffer)) != -1) {
+            outStream.write(buffer, 0, bytesRead);
+        }
+         
+        inStream.close();
+        outStream.close();
+        
+        log.exit();
+    }
 
 }

@@ -337,15 +337,21 @@ public class JsonHelper {
     
     private final class TopAnatResultsTypeAdapter extends TypeAdapter<TopAnatResults> {
         /**
-         * The {@code BgeeProperties} to retrieve parameters from.
+         * The {@code RequestParameters} corresponding to the current request to the webapp.
          */
-        private final BgeeProperties props;
+        private final RequestParameters requestParameters;
         /**
-         * @param props The {@code BgeeProperties} to retrieve parameters from.
+         * @param requestParameters The {@code RequestParameters} corresponding to the current request 
+         *                          to the webapp.
          */
-        private TopAnatResultsTypeAdapter(BgeeProperties props) {
-            assert props != null;
-            this.props = props;
+        private TopAnatResultsTypeAdapter(RequestParameters requestParameters) {
+            if (requestParameters == null) {
+                this.requestParameters = null;
+            } else {
+                this.requestParameters = requestParameters.cloneWithStorableParameters();
+                this.requestParameters.setPage(RequestParameters.PAGE_TOP_ANAT);
+                this.requestParameters.setAction(RequestParameters.ACTION_TOP_ANAT_DOWNLOAD);
+            }
         }
         @Override
         public void write(JsonWriter out, TopAnatResults results) throws IOException {
@@ -354,10 +360,18 @@ public class JsonHelper {
                 out.nullValue();
                 log.exit(); return;
             }
+            if (this.requestParameters == null) {
+                throw log.throwing(new IllegalStateException("It is not possible to determine "
+                        + "the URL for downloading result file."));
+            }
+            
             log.trace("Start writing object TopAnatResults.");
             out.beginObject();
             
-            out.name("zipFile").value(this.props.getTopAnatResultsUrlDirectory() + results.getZipFileName());
+            RequestParameters clonedRps = this.requestParameters.cloneWithAllParameters();
+            clonedRps.addValue(this.requestParameters.getUrlParametersInstance().getParamAnalysisId(), 
+                    results.getTopAnatParams().getKey());
+            out.name("zipFile").value(clonedRps.getRequestURL());
             out.name("devStageId").value(results.getTopAnatParams().getDevStageId());
             out.name("callType").value(results.getTopAnatParams().getCallType().toString());
             
@@ -412,6 +426,10 @@ public class JsonHelper {
      * A {@code BgeeProperties} to retrieve parameters from.
      */
     private final BgeeProperties props;
+    /**
+     * A {@code RequestParameters} corresponding to the current request to the webapp.
+     */
+    private final RequestParameters requestParameters;
     
     /**
      * Default constructor delegating to {@link #JsonHelper(BgeeProperties)} with null arguments.
@@ -419,26 +437,41 @@ public class JsonHelper {
      * @see #JsonHelper(BgeeProperties)
      */
     public JsonHelper() {
-        this(null);
+        this(null, null);
     }
     /**
      * @param props The {@code BgeeProperties} to retrieve parameters from. If {@code null}, 
      *              the value returned by {@link BgeeProperties#getBgeeProperties()} is used.
      */
     public JsonHelper(BgeeProperties props) {
+        this(props, null);
+    }
+    /**
+     * @param props             The {@code BgeeProperties} to retrieve parameters from. 
+     *                          If {@code null}, the value returned by {@link BgeeProperties#getBgeeProperties()} is used.
+     * @param requestParameters The {@code RequestParameters} corresponding to the current request to the webapp.
+     */
+    public JsonHelper(BgeeProperties props, RequestParameters requestParameters) {
         if (props == null) {
             this.props = BgeeProperties.getBgeeProperties();
         } else {
             this.props = props;
         }
+        if (requestParameters == null) {
+            this.requestParameters = null;
+        } else {
+            this.requestParameters = requestParameters.cloneWithAllParameters();
+        }
+        
         //we do not allow the Gson object to be injected, so that signatures of this class 
         //are not dependent of a specific JSON library. 
         this.gson = new GsonBuilder()
                 .registerTypeAdapter(DownloadFile.class, new DownloadFileTypeAdapter(this.props))
                 .registerTypeAdapter(RequestParameters.class, new RequestParametersTypeAdapter())
-                .registerTypeAdapter(TopAnatResults.class, new TopAnatResultsTypeAdapter(this.props))
+                .registerTypeAdapter(TopAnatResults.class, new TopAnatResultsTypeAdapter(this.requestParameters))
                 .registerTypeAdapterFactory(new BgeeTypeAdapterFactory())
                 .setPrettyPrinting()
+                .disableHtmlEscaping()
                 .create();
     }
 

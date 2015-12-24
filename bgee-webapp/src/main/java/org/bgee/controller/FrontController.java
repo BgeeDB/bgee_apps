@@ -1,5 +1,6 @@
 package org.bgee.controller;
 
+import java.io.IOException;
 import java.util.Properties;
 import java.util.function.Supplier;
 
@@ -7,6 +8,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.MultipleValuesNotAllowedException;
@@ -15,12 +17,15 @@ import org.bgee.controller.exception.RequestParametersNotFoundException;
 import org.bgee.controller.exception.RequestParametersNotStorableException;
 import org.bgee.controller.exception.RequestSizeExceededException;
 import org.bgee.controller.exception.ValueSizeExceededException;
+import org.bgee.controller.servletutils.BgeeHttpServletRequest;
+import org.bgee.controller.utils.MailSender;
 import org.bgee.controller.exception.InvalidFormatException;
 import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.model.ServiceFactory;
 import org.bgee.view.ErrorDisplay;
 import org.bgee.view.ViewFactory;
 import org.bgee.view.ViewFactoryProvider;
+import org.bgee.view.ViewFactoryProvider.DisplayType;
 
 /**
  * This is the entry point of bgee-webapp. It can be directly mapped as the main servlet in
@@ -29,7 +34,7 @@ import org.bgee.view.ViewFactoryProvider;
  * @author Mathieu Seppey
  * @author Frederic Bastian
  *
- * @version Bgee 13, Oct. 2015
+ * @version Bgee 13, Dec. 2015
  * @since Bgee 13
  */
 public class FrontController extends HttpServlet {
@@ -62,6 +67,10 @@ public class FrontController extends HttpServlet {
      * {@code ViewFactory} depending on the display type
      */
     private final ViewFactoryProvider viewFactoryProvider ;
+    /**
+     * The {@code MailSender} used to send emails.
+     */
+    private final MailSender mailSender;
     
 
     /**
@@ -81,7 +90,7 @@ public class FrontController extends HttpServlet {
      *              {@code BgeeProperties}
      */
     public FrontController(Properties prop) {
-        this(BgeeProperties.getBgeeProperties(prop), null, null, null);
+        this(BgeeProperties.getBgeeProperties(prop), null, null, null, null);
     }
 
     /**
@@ -101,10 +110,12 @@ public class FrontController extends HttpServlet {
      * @param viewFactoryProvider       A {@code ViewFactoryProvider} instance to provide 
      *                                  the appropriate {@code ViewFactory} depending on the
      *                                  display type. 
+     * @param mailSender                A {@code MailSender} instance used to send mails to users.
      */
     public FrontController(BgeeProperties prop, URLParameters urlParameters, 
-            Supplier<ServiceFactory> serviceFactoryProvider, ViewFactoryProvider viewFactoryProvider) {
-        log.entry(prop, urlParameters, serviceFactoryProvider, viewFactoryProvider);
+            Supplier<ServiceFactory> serviceFactoryProvider, ViewFactoryProvider viewFactoryProvider, 
+            MailSender mailSender) {
+        log.entry(prop, urlParameters, serviceFactoryProvider, viewFactoryProvider, mailSender);
 
         // If the URLParameters object is null, just use a new instance
         this.urlParameters = urlParameters != null? urlParameters: new URLParameters();
@@ -121,6 +132,22 @@ public class FrontController extends HttpServlet {
         //If serviceFactoryProvider is null, use default constructor of ServiceFactory
         this.serviceFactoryProvider = serviceFactoryProvider != null? serviceFactoryProvider: 
             ServiceFactory::new;
+        
+        MailSender checkMailSender = null;
+        if (mailSender != null) {
+            checkMailSender = mailSender;
+        } else {
+            try {
+                checkMailSender = new MailSender(this.prop);
+                log.debug("Got parameters to send mails.");
+            } catch (IllegalArgumentException e) {
+                //if the properties does not allow to send mail, it's fine, swallow the exception
+                log.catching(Level.DEBUG, e);
+                log.debug("No parameter allowing to send mails.");
+            }
+        }
+        MailSender.setWaitTimeInMs(this.prop.getMailWaitTime());
+        this.mailSender = checkMailSender;
         
         log.exit();
     }
@@ -139,34 +166,22 @@ public class FrontController extends HttpServlet {
             boolean postData) { 
         log.entry(request, response, postData);
         
-        //in order to display error message in catch clauses
-        //we get  "fake" RequestParameters so that no exception is thrown already.
-        RequestParameters requestParameters = new RequestParameters(
-                this.urlParameters, this.prop, true, "&");
-        //in this variable, we will first store the default HTML ErrorDisplay, 
-        //in case we cannot acquire an ErrorDisplay for the requested view, 
-        //then we will try to acquire the appropriate ErrorDisplay. 
-        ErrorDisplay errorDisplay = null;
+        //default display type in case of error before we can do anything.
+        DisplayType displayType = DisplayType.HTML;
 
         try (ServiceFactory serviceFactory = this.serviceFactoryProvider.get()) {
-            //in order to display error message in catch clauses. 
-            //we do it in the try clause, because getting a view can throw an IOException.
-            //so here we get the default view from the default factory before any exception 
-            //can be thrown.
-            ViewFactory factory = this.viewFactoryProvider.getFactory(response, requestParameters);
-            errorDisplay = factory.getErrorDisplay();
-            //OK, now we try to get the view requested. If an error occurred, 
-            //the HTML view will allow to display an error message anyway
-            requestParameters = new RequestParameters(request, this.urlParameters, this.prop,
-                    true, "&");
+            //First, to handle errors, we "manually" determine the display type, 
+            //because loading all the parameters in RequestParameters could throw an exception.
+            displayType = this.getRequestedDisplayType(request);
+
+            //OK, now we try to get the view requested.
+            request.setCharacterEncoding("UTF-8"); 
+            RequestParameters requestParameters = new RequestParameters(request, this.urlParameters, 
+                    this.prop, true, "&");
             log.debug("Analyzed URL: " + requestParameters.getRequestURL());
-            factory = this.viewFactoryProvider.getFactory(response, requestParameters);
-            errorDisplay = factory.getErrorDisplay();
+            ViewFactory factory = this.viewFactoryProvider.getFactory(response, requestParameters);
             
-            //Set character encoding after acquiring an ErrorDisplay, 
-            //this can throw an Exception.
-            request.setCharacterEncoding("UTF-8");
-            
+            //now we process the request
             CommandParent controller = null;
             if (requestParameters.isTheHomePage()) {
                 controller = new CommandHome(response, requestParameters, this.prop, factory, serviceFactory);
@@ -177,50 +192,63 @@ public class FrontController extends HttpServlet {
             } else if (requestParameters.isAnAboutPageCategory()) {
                 controller = new CommandAbout(response, requestParameters, this.prop, factory);
             } else if (requestParameters.isATopAnatPageCategory()) {
-                controller = new CommandTopAnat(response, requestParameters, this.prop, factory, serviceFactory);
-            } else if (requestParameters.isASpeciesPageCategory()) {
-                controller = new CommandTopAnat(response, requestParameters, this.prop, factory, serviceFactory);
+                controller = new CommandTopAnat(response, requestParameters, this.prop, factory, 
+                        serviceFactory, this.getServletContext(), this.mailSender);
+            } else if (requestParameters.isAJobPageCategory()) {
+                controller = new CommandJob(response, requestParameters, this.prop, factory, 
+                        serviceFactory);
             } else {
                 throw log.throwing(new PageNotFoundException("Request not recognized."));
             }
             controller.processRequest();
             
         //=== process errors ===
-        } catch(InvalidFormatException e) {
+        } catch (Exception e) {
             log.catching(e);
-            errorDisplay.displayControllerException(e);
-        } catch(InvalidRequestException e) {
-            log.catching(e);
-            errorDisplay.displayControllerException(e);
-        } catch(MultipleValuesNotAllowedException e) {
-            log.catching(e);
-            errorDisplay.displayControllerException(e);
-        } catch(PageNotFoundException e) {
-            log.catching(e);
-            errorDisplay.displayControllerException(e);
-        } catch(RequestParametersNotFoundException e) {
-            log.catching(e);
-            errorDisplay.displayControllerException(e);
-        } catch(RequestParametersNotStorableException e) {
-            log.catching(e);
-            errorDisplay.displayControllerException(e);
-        } catch(RequestSizeExceededException e) {
-            log.catching(e);
-            errorDisplay.displayControllerException(e);
-        } catch(ValueSizeExceededException e) {
-            log.catching(e);
-            errorDisplay.displayControllerException(e);
-        } catch(UnsupportedOperationException e) {
-            log.catching(e);
-            errorDisplay.displayUnsupportedOperationException();
-        } catch(Exception e) {
-            log.catching(e);
-            if (errorDisplay != null) {
-                errorDisplay.displayUnexpectedError();
-            } else {
-                log.error("Could not display error message to caller.");
+            //get an ErrorDisplay of the appropriate display type. 
+            //We don't acquire the ErrorDisplay before any Exception is thrown, 
+            //because we might need to use the response outputstream directly; 
+            //acquiring a view calls 'getWriter', which prevents further use 
+            //of 'getOutputStream'.
+            //this is also why we don't use multiple try-catch clauses.
+            ErrorDisplay errorDisplay = null;
+            try {
+                //default request parameters
+                RequestParameters rp = new RequestParameters(this.urlParameters, 
+                        this.prop, true, "&");
+                errorDisplay = this.viewFactoryProvider.getFactory(response, displayType, rp)
+                        .getErrorDisplay();
+            } catch (IOException e1) {
+                e1.initCause(e);
+                e = e1;
             }
+            if (errorDisplay == null) {
+                log.error("Could not display error message to caller: {}", e);
+            }
+            
+            if (e instanceof InvalidFormatException) {
+                errorDisplay.displayControllerException((InvalidFormatException) e);
+            } else if (e instanceof InvalidRequestException) {
+                errorDisplay.displayControllerException((InvalidRequestException) e);
+            } else if (e instanceof MultipleValuesNotAllowedException) {
+                errorDisplay.displayControllerException((MultipleValuesNotAllowedException) e);
+            } else if (e instanceof PageNotFoundException) {
+                errorDisplay.displayControllerException((PageNotFoundException) e);
+            } else if (e instanceof RequestParametersNotFoundException) {
+                errorDisplay.displayControllerException((RequestParametersNotFoundException) e);
+            } else if (e instanceof RequestParametersNotStorableException) {
+                errorDisplay.displayControllerException((RequestParametersNotStorableException) e);
+            } else if (e instanceof RequestSizeExceededException) {
+                errorDisplay.displayControllerException((RequestSizeExceededException) e);
+            } else if (e instanceof ValueSizeExceededException) {
+                errorDisplay.displayControllerException((ValueSizeExceededException) e);
+            } else if (e instanceof UnsupportedOperationException) {
+                errorDisplay.displayUnsupportedOperationException();
+            } else {
+                errorDisplay.displayUnexpectedError();
+            } 
         } 
+        
         log.exit();
     }
 
@@ -240,4 +268,50 @@ public class FrontController extends HttpServlet {
         log.exit();
     }
 
+    /**
+     * Retrieve from {@code request} the requested display type. This methods only tries 
+     * to retrieve the display type, and do not examine/validate other parameters, 
+     * which could throw an exception before acquiring any view. Default display type 
+     * is HTML.
+     * 
+     * @param request   A {@code HttpServletRequest} that is the request coming from the client
+     * @return          The requested {@code DisplayType}, or {@code null} if no specific one 
+     *                  was requested.
+     * @throws InvalidRequestException  If several display types were requested. 
+     */
+    private DisplayType getRequestedDisplayType(HttpServletRequest request) throws InvalidRequestException {
+        log.entry(request);
+        
+        String[] paramValues = request.getParameterValues(
+                this.urlParameters.getParamDisplayType().getName());
+        if (paramValues == null || paramValues.length == 0) {
+            return log.exit(null);
+        }
+        if (paramValues.length > 1) {
+            throw log.throwing(new InvalidRequestException("It is not possible to request "
+                    + "several display types"));
+        }
+        
+        String fakeQueryString = this.urlParameters.getParamDisplayType().getName() + 
+                "=" + paramValues[0];
+        HttpServletRequest fakeRequest = new BgeeHttpServletRequest(fakeQueryString, 
+                RequestParameters.CHAR_ENCODING);
+        try {
+            RequestParameters fakeParams = new RequestParameters(fakeRequest, this.urlParameters, 
+                    this.prop, true, "&");
+            if (fakeParams.isXmlDisplayType()) {
+                return log.exit(DisplayType.XML);
+            } else if (fakeParams.isTsvDisplayType()) {
+                return log.exit(DisplayType.TSV);
+            } else if (fakeParams.isCsvDisplayType()) {
+                return log.exit(DisplayType.CSV);
+            } else if (fakeParams.isJsonDisplayType()) {
+                return log.exit(DisplayType.JSON);
+            } else {
+                return log.exit(DisplayType.HTML);
+            }
+        } catch (MultipleValuesNotAllowedException | RequestParametersNotFoundException e) {
+            throw log.throwing(new AssertionError("Error, code block supposed to be unreachable", e));
+        }
+    }
 }

@@ -2,7 +2,6 @@ package org.bgee.model.topanat;
 
 import java.io.FileNotFoundException;
 import java.nio.file.Paths;
-import java.util.Collection;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -15,6 +14,16 @@ import rcaller.RCode;
 public class TopAnatRManager {
 
     private final static Logger log = LogManager.getLogger(TopAnatRManager.class.getName());
+    
+    /**
+     * A {@code String} that is the prefix of the message printed in the R console 
+     * when an analysis produces no result and an empty result file is created. 
+     * Because RCaller throws an exception when a result file is empty 
+     * (with a message matching the regex "^.*?Can not parse output: The generated file .+? is empty.*$"), 
+     * and because it also throws this exception for some real types of errors, 
+     * we use this message to formally check whether the exception was caused by an absence of results.
+     */
+    public static final String NO_RESULT_MESSAGE_PREFIX = "No result, creating an empty result file";
 
     private final RCaller caller;
 
@@ -131,8 +140,10 @@ public class TopAnatRManager {
         code.addRCode("  print('GeneList:')");
         code.addRCode("  head(geneList)");
         //maybe all submitted genes are part of the background, or none of them, 
-        //in that case we cannot proceed to the tests
-        code.addRCode("  if (length(geneList) > 0 & length(levels(geneList)) == 2) {");
+        //in that case we cannot proceed to the tests. Or maybe there is less genes 
+        //with data in the background than the threshold on node size.
+        code.addRCode("  if (length(geneList) > 0 & length(levels(geneList)) == 2 & length(geneList) >= " 
+            + params.getNodeSize() + ") {");
 
         code.addRCode("    myData <- maketopGOdataObject(parentMapping = relations,allGenes = geneList,nodeSize = "+ params.getNodeSize() + ",gene2Nodes = gene2anatomy)");
         //maybe make maketopGOdataObject to return an error code rather than using 'stop'?
@@ -153,7 +164,7 @@ public class TopAnatRManager {
         code.addRCode("    print(ncol(tableOver))");
 
         //if we get results, save the results and generate a graph visualization
-        code.addRCode("    if(nrow(tableOver)!=0  & ncol(tableOver)==8){");
+        code.addRCode("    if(!is.null(nrow(tableOver)) && nrow(tableOver) != 0  && ncol(tableOver) == 8) {");
         code.addRCode("      print('RESULTS!')");
         code.addRCode("      write.table(tableOver, file=topOBOResultFile, sep='\t', row.names=F, col.names=T, quote=F)");
         code.addRCode("      resultExist <- TRUE");
@@ -181,7 +192,7 @@ public class TopAnatRManager {
 
         //if there is no result, but no error occurred, we create an empty result file
         code.addRCode("if (!resultExist) {");
-        code.addRCode("  cat('No result, creating an empty result file: ', topOBOResultFile, '\n')");
+        code.addRCode("  cat('" + NO_RESULT_MESSAGE_PREFIX + ": ', topOBOResultFile, '\n')");
         code.addRCode("  file.create(topOBOResultFile)");
         //we need a tableOver object for RCaller to perform the commands
         code.addRCode("    tableOver <- data.frame(1, 8)");

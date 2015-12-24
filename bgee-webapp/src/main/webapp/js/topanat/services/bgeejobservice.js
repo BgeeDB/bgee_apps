@@ -12,31 +12,26 @@
 
         var service = {
             getJobStatus: getJobStatus,
-            getJobData: getJobData
+            getJobResult: getJobResult,
+            storeJobData: storeJobData,
+            getJobHistory: getJobHistory,
+            removeJobFromHistory: removeJobFromHistory
         };
 
         return service;
 
-        /* as a promise
-        function getJobStatus(jobid) {
-            var deferred = $q.defer();
-            var url = configuration.mockupUrl;
-            return $http.get(url+"?action=status&jobid="+jobid)
-                .success(function(data) { deferred.resolve(data); });
-            return deferred.promise;
-        }
-
-        */
-
         function getJobStatus(hash, jobid, full) {
 
+            console.time("getJobStatus");
+
+            var defer = $q.defer();
+
             if(!hash || !jobid){
-                // TODO return real error object. Return null in the mean time, 
-            	// avoid to log an error server side
-            	console.log("Problem, no jobId nor data hash provided.");
-            	return null;
+                // TODO return real error object. Return null in the mean time,
+                // avoid to log an error server side
+                console.log("Problem, no jobId nor data hash provided. "+hash+" : "+jobid);
+                return defer.reject("Error, no jobId nor data hash provided.");
             }
-            var url = configuration.mockupUrl;
 
             console.log("jobid: "+jobid);
 
@@ -44,9 +39,9 @@
             // we don't want geneinfo on jobstatus after submit
             if(full){
                 params += "&display_rp=1&gene_info=1";
-            } 
+            }
             if (hash) {
-            	params += "&data=" + hash;
+                params += "&data=" + hash;
             }
             if(jobid){
                 params += "&job_id="+jobid;
@@ -54,36 +49,104 @@
 
             console.log("getJobstatus params: "+params);
 
-            return $http.get(url+params)
-                .then(getStatus)
+            // TODO handle error states, return $q.reject(response.data.message)
 
-            function getStatus(response) {
-                console.log(response.data);
-                return response.data;
-            }
+            return $http.get(params)
+                .then(function(response){
+                    console.log("response ok");
+                    console.timeEnd("getJobStatus");
+                    return response.data;
+                },
+                function(){
+                    console.log("response not ok");
+                    return defer.reject("Error, no job tracking data available");
+                }
 
+            );
+
+            return defer.promise;
         }
 
-        function getJobData(hash){
-        	if(!hash){
-                // TODO return real error object. Return null in the mean time, 
-            	// avoid to log an error server side
-            	console.log("Problem, no data hash provided.");
-            	return null;
-            }
-            var url = configuration.mockupUrl;
-            return $http.get(url+"?page=top_anat&gene_info=1&display_rp=1&ajax=1&action=get_results&display_type=json&data="+hash)
-                .then(getJobData);
+        function getJobResult(hash){
 
+            var defer = $q.defer();
 
-            function getJobData(response) {
-                console.log(response.data);
-                return response.data
+            if(!hash){
+                // TODO return real error object. Return null in the mean time,
+                // avoid to log an error server side
+                console.log("Problem, no data hash provided.");
+                return $defer.reject("Error, no data hash provided.");
             }
 
+            $http.get("?page=top_anat&gene_info=1&display_rp=1&ajax=1&action=get_results&display_type=json&data="+hash)
+                //.then(getJobData);
+                .then(function(response){
+                    console.log("thenresponse");
+                    console.log(response.data);
+                    return defer.resolve(response.data);
+
+                },
+                function(response){
+                    console.log("error, server did not find result");
+                    console.log(response);
+
+                    // try to fill missing job's parameters
+                    if(typeof response.data.requestParameters !== 'undefined' && response.data.code == 400 && response.data.requestParameters !== null) {
+                        console.debug(response.data.requestParameters);
+                        return response.data;
+                    }
+
+                    console.log("error, no valid response");
+                    // TODO handle this better. Is it serious enough to create a label in the UI, or is toast enough?
+                    logger.error("Job does not exist or it has expired");
+                    return defer.reject(response);
+
+                });
+
+            return defer.promise;
+        }
+
+        function removeJobFromHistory (job) {
+            var history = getJobHistory(); // history is an array of Objects
+            var hash = job.hash;
+
+            for(var i=0; i < history.length ; i++) {
+                if (history[i].hash == hash) {
+                    history.splice(i, 1);
+                    localStorage.setItem('topanat-history', JSON.stringify(history));
+                }
+            }
+        }
+
+        function storeJobData (hash, species, taxid, title) {
+            var history = getJobHistory(); // history is an array of Jobs
+
+            if (history == null || jobNotFound(history, hash)) { // First job/new job
+                var date = new Date();
+                var now = date.toLocaleString();
+
+                // use hash as the key, easier to search
+                var newObj = { hash: hash,  creationDate: now, species: species, taxid: taxid, title: title};
+
+                if (history == null) {
+                    history = [];
+                }
+                history.push(newObj);
+                localStorage.setItem('topanat-history', JSON.stringify(history))
+            }
+        }
+
+        function getJobHistory () {
+            return JSON.parse(localStorage.getItem('topanat-history'));
+        }
+
+        function jobNotFound (history, hash) {
+            for(var i=0; i < history.length ; i++) {
+                if (history[i].hash == hash) {
+                    return false;
+                }
+            }
+            return true;
         }
     }
-
-
-
 })();

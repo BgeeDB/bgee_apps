@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.MultipleValuesNotAllowedException;
@@ -17,6 +18,7 @@ import org.bgee.controller.exception.RequestParametersNotStorableException;
 import org.bgee.controller.exception.RequestSizeExceededException;
 import org.bgee.controller.exception.ValueSizeExceededException;
 import org.bgee.controller.servletutils.BgeeHttpServletRequest;
+import org.bgee.controller.utils.MailSender;
 import org.bgee.controller.exception.InvalidFormatException;
 import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.model.ServiceFactory;
@@ -32,7 +34,7 @@ import org.bgee.view.ViewFactoryProvider.DisplayType;
  * @author Mathieu Seppey
  * @author Frederic Bastian
  *
- * @version Bgee 13, Oct. 2015
+ * @version Bgee 13, Dec. 2015
  * @since Bgee 13
  */
 public class FrontController extends HttpServlet {
@@ -65,6 +67,10 @@ public class FrontController extends HttpServlet {
      * {@code ViewFactory} depending on the display type
      */
     private final ViewFactoryProvider viewFactoryProvider ;
+    /**
+     * The {@code MailSender} used to send emails.
+     */
+    private final MailSender mailSender;
     
 
     /**
@@ -84,7 +90,7 @@ public class FrontController extends HttpServlet {
      *              {@code BgeeProperties}
      */
     public FrontController(Properties prop) {
-        this(BgeeProperties.getBgeeProperties(prop), null, null, null);
+        this(BgeeProperties.getBgeeProperties(prop), null, null, null, null);
     }
 
     /**
@@ -104,10 +110,12 @@ public class FrontController extends HttpServlet {
      * @param viewFactoryProvider       A {@code ViewFactoryProvider} instance to provide 
      *                                  the appropriate {@code ViewFactory} depending on the
      *                                  display type. 
+     * @param mailSender                A {@code MailSender} instance used to send mails to users.
      */
     public FrontController(BgeeProperties prop, URLParameters urlParameters, 
-            Supplier<ServiceFactory> serviceFactoryProvider, ViewFactoryProvider viewFactoryProvider) {
-        log.entry(prop, urlParameters, serviceFactoryProvider, viewFactoryProvider);
+            Supplier<ServiceFactory> serviceFactoryProvider, ViewFactoryProvider viewFactoryProvider, 
+            MailSender mailSender) {
+        log.entry(prop, urlParameters, serviceFactoryProvider, viewFactoryProvider, mailSender);
 
         // If the URLParameters object is null, just use a new instance
         this.urlParameters = urlParameters != null? urlParameters: new URLParameters();
@@ -124,6 +132,22 @@ public class FrontController extends HttpServlet {
         //If serviceFactoryProvider is null, use default constructor of ServiceFactory
         this.serviceFactoryProvider = serviceFactoryProvider != null? serviceFactoryProvider: 
             ServiceFactory::new;
+        
+        MailSender checkMailSender = null;
+        if (mailSender != null) {
+            checkMailSender = mailSender;
+        } else {
+            try {
+                checkMailSender = new MailSender(this.prop);
+                log.debug("Got parameters to send mails.");
+            } catch (IllegalArgumentException e) {
+                //if the properties does not allow to send mail, it's fine, swallow the exception
+                log.catching(Level.DEBUG, e);
+                log.debug("No parameter allowing to send mails.");
+            }
+        }
+        MailSender.setWaitTimeInMs(this.prop.getMailWaitTime());
+        this.mailSender = checkMailSender;
         
         log.exit();
     }
@@ -169,7 +193,10 @@ public class FrontController extends HttpServlet {
                 controller = new CommandAbout(response, requestParameters, this.prop, factory);
             } else if (requestParameters.isATopAnatPageCategory()) {
                 controller = new CommandTopAnat(response, requestParameters, this.prop, factory, 
-                        serviceFactory, this.getServletContext());
+                        serviceFactory, this.getServletContext(), this.mailSender);
+            } else if (requestParameters.isAJobPageCategory()) {
+                controller = new CommandJob(response, requestParameters, this.prop, factory, 
+                        serviceFactory);
             } else {
                 throw log.throwing(new PageNotFoundException("Request not recognized."));
             }

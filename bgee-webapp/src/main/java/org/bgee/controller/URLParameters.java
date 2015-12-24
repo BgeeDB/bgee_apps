@@ -3,14 +3,21 @@ package org.bgee.controller;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.expressiondata.baseelements.CallType;
+import org.bgee.model.expressiondata.baseelements.DataQuality;
+import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.DecorrelationType;
 
 /**
  * This class is designed to declare and provide all {@code Parameter<T>} that
@@ -86,17 +93,24 @@ public class URLParameters {
     protected static final int DEFAULT_MAX_SIZE = 128;
 
     /**
-     * A {@code String} that contains the default value for {@link URLParameters.Parameter#format}
+     * A {@code String} that contains the default value for {@link URLParameters.Parameter#format}. 
+     * Chars allowed: {@code ~ @ # $ ^ & * ( ) - _ + = [ ] { } | \ / , ; . ? ! : ' "}
      */
-    protected static final String DEFAULT_FORMAT = "^[\\w ,.;:\\-_']*$";
+    protected static final String DEFAULT_FORMAT = "^[\\w~@#&$^*/()_+=\\[\\]{}|\\\\,;.?!'\": \\-]*$";
 
     /**
      * A {@code String} that contains the default value for {@link URLParameters.Parameter#format}
      * of a list.
      */
     protected static final String DEFAULT_LIST_FORMAT = 
-            "^[\\w ,.;:\\-_'" + DEFAULT_SEPARATORS.stream()
+            "^[\\w ,.;:\\-_'@" + DEFAULT_SEPARATORS.stream()
                     .map(Pattern::quote).collect(Collectors.joining()) + "]*$";
+    
+    /**
+     * A {@code String} that is a magic value to select all possible values of a parameter 
+     * accepting multiple values from an {@code Enum}.
+     */
+    private static final String ALL_VALUE = "all";
 
     // *************************************
     //
@@ -223,7 +237,14 @@ public class URLParameters {
      */
     private static final Parameter<String> EXPRESSION_TYPE = new Parameter<String>("expr_type",
             true, false, null, true, DEFAULT_IS_SECURE, 
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+            Stream.of(ALL_VALUE, CallType.Expression.EXPRESSED.getStringRepresentation(), 
+                    CallType.DiffExpression.DIFF_EXPRESSED.getStringRepresentation())
+                .map(e -> e.length()).max(Comparator.naturalOrder()).get(), 
+            "(?i:" + ALL_VALUE + "|" 
+                + Stream.of(CallType.Expression.EXPRESSED, CallType.DiffExpression.DIFF_EXPRESSED)
+                    .map(e -> e.getStringRepresentation())
+                    .collect(Collectors.joining("|")) + ")", 
+             String.class);
     /**
      * A {@code Parameter<String>} that contains the data quality to be used 
      * for TopAnat analysis.
@@ -231,7 +252,13 @@ public class URLParameters {
      */
     private static final Parameter<String> DATA_QUALITY = new Parameter<String>("data_qual",
             false, false, null, true, DEFAULT_IS_SECURE, 
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+            Math.max(ALL_VALUE.length(), EnumSet.allOf(DataQuality.class).stream()
+                    .map(e -> e.getStringRepresentation().length())
+                    .max(Comparator.naturalOrder()).get()), 
+            "(?i:" + ALL_VALUE + "|" + EnumSet.allOf(DataQuality.class).stream()
+                .map(e -> e.getStringRepresentation())
+                .collect(Collectors.joining("|")) + ")", 
+            String.class);
     /**
      * A {@code Parameter<String>} that contains the data quality to be used 
      * for TopAnat analysis.
@@ -239,7 +266,13 @@ public class URLParameters {
      */
     private static final Parameter<String> DATA_TYPE = new Parameter<String>("data_type",
             true, false, null, true, DEFAULT_IS_SECURE, 
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+            Math.max(ALL_VALUE.length(), EnumSet.allOf(DataType.class).stream()
+                    .map(e -> e.getStringRepresentation().length())
+                    .max(Comparator.naturalOrder()).get()), 
+            "(?i:" + ALL_VALUE + "|" + EnumSet.allOf(DataType.class).stream()
+                .map(e -> e.getStringRepresentation())
+                .collect(Collectors.joining("|")) + ")", 
+            String.class);
     /**
      * A {@code Parameter<String>} that contains the developmental stages to be used 
      * for TopAnat analysis.
@@ -255,7 +288,13 @@ public class URLParameters {
      */
     private static final Parameter<String> DECORRELATION_TYPE = new Parameter<String>("decorr_type",
             false, false, null, true, DEFAULT_IS_SECURE, 
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+            Math.max(ALL_VALUE.length(), EnumSet.allOf(DecorrelationType.class).stream()
+                    .map(e -> e.getStringRepresentation().length())
+                    .max(Comparator.naturalOrder()).get()), 
+            "(?i:" + ALL_VALUE + "|" + EnumSet.allOf(DecorrelationType.class).stream()
+                .map(e -> e.getStringRepresentation())
+                .collect(Collectors.joining("|")) + ")", 
+            String.class);
     /**
      * A {@code Parameter<Integer>} that contains the node size to be used for TopAnat analysis.
      * Corresponds to the URL parameter "node_size".
@@ -306,7 +345,23 @@ public class URLParameters {
      */
     private static final Parameter<String> JOB_TITLE = new Parameter<String>("job_title",
             false, false, null, true, DEFAULT_IS_SECURE, 
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+            255, null, String.class);
+    /**
+     * A {@code Parameter<String>} that contains the creation date of a job, as formatted 
+     * on the client environment. It is useful for, e.g., send a mail with the start time 
+     * of the job as expected by the user. 
+     * Corresponds to the URL parameter "job_creation_date". This is a non-storable parameter.
+     */
+    private static final Parameter<String> JOB_CREATION_DATE = new Parameter<String>("job_creation_date",
+            false, false, null, false, DEFAULT_IS_SECURE, 
+            DEFAULT_MAX_SIZE, null, String.class);
+    /**
+     * A {@code Parameter<String>} defining the email of a user.
+     * Corresponds to the URL parameter "email". This is a non-storable parameter.
+     */
+    private static final Parameter<String> EMAIL = new Parameter<String>("email",
+            false, false, null, false, true, DEFAULT_MAX_SIZE, DEFAULT_FORMAT, 
+            String.class);
 
     //    /**
 //     * A {@code Parameter<Boolean>} to determine whether all anatomical structures of 
@@ -337,17 +392,6 @@ public class URLParameters {
 //            DEFAULT_ALLOWS_MULTIPLE_VALUES, DEFAULT_IS_STORABLE, DEFAULT_IS_SECURE, 
 //            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Integer.class);
 //
-//    /**
-//     * A {@code Parameter<String>} defining the email of a user, 
-//     * used at registration time.
-//     * Category of the parameter: user registration.
-//     * Corresponds to the URL parameter "email".
-//     */
-//    private static final Parameter<String> EMAIL = new Parameter<String>("email",
-//            DEFAULT_ALLOWS_MULTIPLE_VALUES, DEFAULT_IS_STORABLE, DEFAULT_IS_SECURE, 
-//            DEFAULT_MAX_SIZE, 
-//            "^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$",
-//            String.class);
 //
 //
 //    /**
@@ -381,7 +425,7 @@ public class URLParameters {
 //            EMAIL,
 //            STAGE_CHILDREN,
             // Job params
-            JOB_TITLE, JOB_ID, 
+            JOB_TITLE, JOB_ID, EMAIL, JOB_CREATION_DATE, 
             DISPLAY_TYPE,
             DATA, 
             DISPLAY_REQUEST_PARAMS, 
@@ -399,16 +443,6 @@ public class URLParameters {
     public List<Parameter<?>> getList() {
         return list;
     }
-
-    //    /**
-    //     * @return  A {@code Parameter<String>} defining the email of a user, 
-    //     *          used at registration time.
-    //     *          Category of the parameter: user registration.
-    //     *          Corresponds to the URL parameter "email".
-    //     */
-    //    public Parameter<String> getParamEmail(){
-    //        return EMAIL;
-    //    }
     
     /**
      * @return  A {@code Parameter<String>} defining which controller should take care of the 
@@ -632,7 +666,24 @@ public class URLParameters {
      */
     public Parameter<String> getParamJobTitle() {
         return JOB_TITLE;
+    }  
+    /**
+     * @return  A {@code Parameter<String>} that contains the creation date of a job, as formatted 
+     *          on the client environment. It is useful for, e.g., send a mail with the start time 
+     *          of the job, as expected by the user. 
+     *          Corresponds to the URL parameter "job_creation_date". 
+     */
+    public Parameter<String> getParamJobCreationDate() {
+        return JOB_CREATION_DATE;
+    }        
+    /**
+     * @return  A {@code Parameter<String>} defining the email of a user.
+     *          Corresponds to the URL parameter "email".
+     */
+    public Parameter<String> getParamEmail(){
+        return EMAIL;
     }
+    
     /**
      * @return  A {@code Parameter<Boolean>} defining whether to display the {@code GeneListResponse} 
      *          corresponding to gene validation response.
@@ -738,7 +789,8 @@ public class URLParameters {
          * @param maxSize                 An {@code int} that represents the maximum number 
          *                                of characters allowed for this {@code Parameter}.
          * @param format                  A {@code String} that contains the regular expression 
-         *                                that this parameter has to fit to.
+         *                                that this parameter has to fit to. Can be {@code null} 
+         *                                if any format is accepted.
          * @param type                    A {@code Class<T>} that is the data type of the value 
          *                                (or values if {@code allowsSeparatedValues} is
          *                                {@code true}) to be store by this parameter.
@@ -751,11 +803,6 @@ public class URLParameters {
                 String format, Class<T> type) throws IllegalArgumentException {
 
             log.entry(name, allowsMultipleValues, isStorable, isSecure, maxSize, format, type);
-            
-            if (format == null) {
-                throw log.throwing(new IllegalArgumentException("A format for validation "
-                        + "must be provided."));
-            }
 
             this.name = name ;
             this.allowsMultipleValues = allowsMultipleValues;

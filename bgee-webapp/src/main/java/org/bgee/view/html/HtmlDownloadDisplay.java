@@ -767,6 +767,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
   	protected void includeJs() {
   		log.entry();
   		super.includeJs();
+        //If you ever add new files, you need to edit bgee-webapp/pom.xml 
+        //to correctly merge/minify them.
   		this.includeJs("download.js");
   		log.exit();
   	}
@@ -775,6 +777,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     protected void includeCss() {
         log.entry();
         super.includeCss();
+        //If you ever add new files, you need to edit bgee-webapp/pom.xml 
+        //to correctly merge/minify them.
         this.includeCss("download.css");
         log.exit();
     }

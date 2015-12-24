@@ -210,7 +210,7 @@ var general = {
             // Update the URL with the id, to allow the link to be copied and sent
             // Add "id" in front to avoid the automatic anchor behavior that would mess up the scroll
             window.location.hash = '#' + hashToUse; 
-        },
+        }
 
 };
 // Call the init function when the document is ready()

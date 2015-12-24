@@ -147,6 +147,11 @@ public class RequestParameters {
      * (see {@link URLParameters#getParamPage()}) when a page related to topAnat is requested.
      */
     public static final String PAGE_TOP_ANAT = "top_anat";
+    /**
+     * A {@code String} that is the value taken by the {@code page} parameter 
+     * (see {@link URLParameters#getParamPage()}) when a page related to job management is requested.
+     */
+    public static final String PAGE_JOB = "job";
 
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
@@ -214,6 +219,13 @@ public class RequestParameters {
      * Value of the parameter page should be {@link #PAGE_TOP_ANAT}.
      */
     public static final String ACTION_TOP_ANAT_DOWNLOAD = "download";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link URLParameters#getParamAction()}) when the canceling of a job is requested.
+     * Value of the parameter page should be {@link #PAGE_JOB}.
+     */
+    public static final String ACTION_CANCEL_JOB = "cancel";
+    
     /**
      * A {@code String} that is the anchor to use in the hash part of an URL 
      * to link to the single-species part, in the documentation about gene expression calls.
@@ -423,7 +435,13 @@ public class RequestParameters {
      * {@code encodeUrl}, value "&" for {@code parametersSeparator}.
      */
     public RequestParameters() {
-        this(new URLParameters(), BgeeProperties.getBgeeProperties(), true, "&");
+        this(BgeeProperties.getBgeeProperties());
+    }
+    /**
+     * @param props The {@code BgeeProperties} used by this {@code RequestParameters}.
+     */
+    public RequestParameters(BgeeProperties props) {
+        this(new URLParameters(), props, true, "&");
     }
     /**
      * @param urlParametersInstance     A instance of {@code URLParameters} that 
@@ -2236,6 +2254,29 @@ public class RequestParameters {
     }
 
     /**
+     * @return  A {@code boolean} to tell whether the request is related to job management.
+     */
+    public boolean isAJobPageCategory() {
+        log.entry();
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
+            this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_JOB)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    /**
+     * @return  A {@code boolean} to tell whether it is requested to cancel a job.
+     */
+    public boolean isACancelJob() {
+        log.entry();
+        if (this.isAJobPageCategory() &&
+                this.getAction() != null && this.getAction().equals(ACTION_CANCEL_JOB)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
      * This method has a js counterpart in {@code requestparameters.js} that should be kept 
      * consistent as much as possible if the method evolves.
      * 
@@ -2610,7 +2651,7 @@ public class RequestParameters {
             log.exit(); return;
         }
         log.trace("Trying to validate {} against format {}", value, parameter.getFormat());
-        if (!value.matches(parameter.getFormat())) {
+        if (parameter.getFormat() != null && !value.trim().matches(parameter.getFormat())) {
             log.error("The string {} does not match the format {}", value, parameter.getFormat());
             //do not provide the accepted format in the exception, we don't need to provide 
             //too much information to potential hackers :p

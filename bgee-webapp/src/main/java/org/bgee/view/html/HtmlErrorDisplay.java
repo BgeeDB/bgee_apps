@@ -198,6 +198,8 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
     protected void includeCss() {
         log.entry();
         super.includeCss();
+        //If you ever add new files, you need to edit bgee-webapp/pom.xml 
+        //to correctly merge/minify them.
         this.includeCss("general.css");
         log.exit();
     }

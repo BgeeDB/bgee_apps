@@ -19,6 +19,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.TestAncestor;
 import org.bgee.controller.CommandTopAnat.GeneListResponse;
 import org.bgee.controller.CommandTopAnat.JobResponse;
+import org.bgee.controller.utils.MailSender;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.TaskManager;
 import org.bgee.model.anatdev.DevStage;
@@ -117,6 +118,8 @@ public class CommandTopAnatTest extends TestAncestor {
         ViewFactory viewFac = mock(ViewFactory.class);
         TopAnatDisplay display = mock(TopAnatDisplay.class);
         when(viewFac.getTopAnatDisplay()).thenReturn(display);
+        //mock mail
+        MailSender mailSender = mock(MailSender.class);
         
         // Launch tests
         RequestParameters params = new RequestParameters();
@@ -127,7 +130,7 @@ public class CommandTopAnatTest extends TestAncestor {
         log.info("Generated query URL: " + params.getRequestURL());
 
         CommandTopAnat controller = new CommandTopAnat(mock(HttpServletResponse.class),
-                params, mock(BgeeProperties.class), viewFac, serviceFac, null);
+                params, mock(BgeeProperties.class), viewFac, serviceFac, null, mailSender);
         controller.processRequest();
 
         LinkedHashMap<String, Long> fgSpToGeneCount = new LinkedHashMap<>();
@@ -197,6 +200,8 @@ public class CommandTopAnatTest extends TestAncestor {
         ViewFactory viewFac = mock(ViewFactory.class);
         TopAnatDisplay display = mock(TopAnatDisplay.class);
         when(viewFac.getTopAnatDisplay()).thenReturn(display);
+        //mock mail
+        MailSender mailSender = mock(MailSender.class);
         
         // Launch tests
         RequestParameters params = new RequestParameters();
@@ -207,7 +212,7 @@ public class CommandTopAnatTest extends TestAncestor {
         log.info("Generated query URL: " + params.getRequestURL());
 
         CommandTopAnat controller = new CommandTopAnat(mock(HttpServletResponse.class),
-                params, mock(BgeeProperties.class), viewFac, serviceFac, null);
+                params, mock(BgeeProperties.class), viewFac, serviceFac, null, mailSender);
         controller.processRequest();
 
         JobResponse response1 = new JobResponse(jobId, "DONE", keyParam);

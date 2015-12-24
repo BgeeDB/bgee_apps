@@ -236,6 +236,14 @@
                 <scope>compile</scope>
             </dependency>
             
+            <!-- To send Mails -->
+            <dependency>
+                <groupId>com.sun.mail</groupId>
+                <artifactId>javax.mail</artifactId>
+                <version>1.5.5</version>
+                <scope>compile</scope>
+            </dependency>
+            
             <!-- Filter for topanat-dev, enabling cross-domain queries 
                  (will make local development easier), 
                  see http://stackoverflow.com/a/30319456/1768736 -->
@@ -289,6 +297,14 @@
                 <version>2.5</version>
                 <scope>compile</scope>
             </dependency>
+            
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>2.4</version>
+                <scope>compile</scope>
+            </dependency>
+            
 
             <!-- End for the core layer -->
 
@@ -475,6 +491,14 @@
                 <plugin>
                     <artifactId>maven-antrun-plugin</artifactId>
                     <version>1.8</version>
+                </plugin>
+                
+                
+                <!-- *******Used to minify CSS and JS files in bgee-webapp******** -->
+                <plugin>
+                    <groupId>com.samaxes.maven</groupId>
+                    <artifactId>minify-maven-plugin</artifactId>
+                    <version>1.7.4</version>
                 </plugin>
                 
 

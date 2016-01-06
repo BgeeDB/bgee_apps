@@ -207,6 +207,8 @@ public class MailSender {
         this.password = password;
         
         this.mailProps = mailProps;
+        
+        log.debug("Prefer ipv4: {}", System.getProperty("java.net.preferIPv4Stack"));
     }
     
     /**

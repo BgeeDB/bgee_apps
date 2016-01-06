@@ -1,7 +1,9 @@
 package org.bgee.view.html;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -12,6 +14,8 @@ import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.anatdev.AnatEntity;
@@ -35,6 +39,7 @@ import org.bgee.view.JsonHelper;
  * @since   Bgee 13, Oct. 2015
  */
 public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
+    private final static Logger log = LogManager.getLogger(HtmlGeneDisplay.class.getName());
 
 	private static final int ELEMENT_LIMIT = 15;
 
@@ -75,7 +80,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		this.writeln("<div class='gene'>" + getGeneInfo(gene) + "</div>");
 		this.writeln("<h2>Expression</h2>");
 		this.writeln("<div id='table-container'>");
-		this.writeln(getExpressionHTMLByAnat(byAnatEntity(calls), conditionUtils));
+		this.writeln(getExpressionHTMLByAnat(byAnatEntity(filterCalls(calls, conditionUtils)), conditionUtils));
 		this.writeln("</div>");
 		this.endDisplay();
 	}
@@ -98,24 +103,11 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
 		StringBuilder sb = new StringBuilder();
 
-		final Set<Condition> shownConditions = new HashSet<>();
-
 		String elements = byAnatEntityId.entrySet().stream().map(e -> {
 			final AnatEntity a = conditionUtils.getAnatEntity(e.getKey());
 			final List<ExpressionCall> calls = e.getValue();
-			Set<Condition> conditions = calls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet());
-			
-			// Redundant conditions
-			boolean masked = shownConditions.size() > 0
-		            && conditions.stream().limit(1).anyMatch(newCondition -> shownConditions.stream().anyMatch(
-		                    oldCondition -> conditionUtils.isConditionMorePrecise(newCondition, oldCondition)));
-			if (masked) {
-				return "";
-			}
-			
-			shownConditions.addAll(conditions);
 
-			return getExpressionRowsForAnatEntity(a, conditionUtils, e.getValue());
+			return getExpressionRowsForAnatEntity(a, conditionUtils, calls);
 		}).collect(Collectors.joining("\n"));
 
 		sb.append("<table class='expression stripe'>")
@@ -381,6 +373,40 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 	private Map<String, List<ExpressionCall>> byAnatEntity(List<ExpressionCall> calls) {
 		return calls.stream().collect(Collectors.groupingBy(ec -> ec.getCondition().getAnatEntityId(),
 		        LinkedHashMap::new, Collectors.toList()));
+	}
+	
+	/**
+	 * Filter {@code calls} for redundant calls with higher ranks. This method creates
+	 * a new {@code List} of {@code ExpressionCall}s, based on {@code calls}, 
+	 * by discarding all {@code ExpressionCall}s for which there exists a more precise call 
+	 * (i.e., with a more precise condition) at a better rank (i.e., with a lower index in the list). 
+	 * 
+	 * @param calls            The original {@code List} of {@code ExpressionCall}s to be filtered.
+	 * @param conditionUtils   A {@code ConditionUtils} containing all the {@code Condition}s 
+	 *                         related to {@code calls}.
+	 * @return                 A new filtered {@code List} of {@code ExpressionCall}s, 
+	 *                         corresponding to {@code calls}, with redundant calls removed.
+	 */
+	private static List<ExpressionCall> filterCalls(List<ExpressionCall> calls, ConditionUtils conditionUtils) {
+	    log.entry(calls);
+
+        long startFilteringTimeInMs = System.currentTimeMillis();
+        
+        List<ExpressionCall> filteredCalls = new ArrayList<>();
+        Set<Condition> validatedConditions = new HashSet<>();
+        for (ExpressionCall call: calls) {
+            //Check whether this call is less precise than another call with a better rank. 
+            Condition cond = call.getCondition();
+            if (Collections.disjoint(validatedConditions, conditionUtils.getDescendantConditions(cond))) {
+                validatedConditions.add(cond);
+                filteredCalls.add(call);
+            } else {
+                log.trace("Redundant call identified with condition: {}", cond);
+            }
+        }
+        log.trace("Redundant calls filtered in {} ms", System.currentTimeMillis() - startFilteringTimeInMs);
+        
+        return log.exit(filteredCalls);
 	}
 
 	@Override

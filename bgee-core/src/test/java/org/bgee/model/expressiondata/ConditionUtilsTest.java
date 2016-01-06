@@ -57,6 +57,10 @@ public class ConditionUtilsTest extends TestAncestor {
         Condition cond3 = new Condition(anatEntityId3, devStageId3);
         Condition cond4 = new Condition(anatEntityId2, devStageId1);
         Condition cond5 = new Condition(anatEntityId1, devStageId3);
+        Condition cond6 = new Condition(anatEntityId2, devStageId3);
+        Condition cond7 = new Condition(anatEntityId2, devStageId2);
+        Condition cond8 = new Condition(anatEntityId2, devStageId2);
+        Condition cond9 = new Condition(anatEntityId3, devStageId2);
         
         ServiceFactory mockFact = mock(ServiceFactory.class);
         OntologyService ontService = mock(OntologyService.class);
@@ -95,7 +99,8 @@ public class ConditionUtilsTest extends TestAncestor {
         when(devStageOnt.getAncestors(devStage2)).thenReturn(new HashSet<>(Arrays.asList(devStage1)));
         when(devStageOnt.getAncestors(devStage3)).thenReturn(new HashSet<>(Arrays.asList(devStage1)));
         
-        ConditionUtils utils = new ConditionUtils(Arrays.asList(cond1, cond2, cond3, cond4, cond5), 
+        ConditionUtils utils = new ConditionUtils(Arrays.asList(cond1, cond2, cond3, cond4, cond5, 
+                cond6, cond7, cond8, cond9), 
                 mockFact);
         assertTrue("Incorrect determination of precision for more precise condition", 
                 utils.isConditionMorePrecise(cond1, cond2));
@@ -109,8 +114,12 @@ public class ConditionUtilsTest extends TestAncestor {
                 utils.isConditionMorePrecise(cond2, cond3));
 
         assertFalse("Incorrect determination of precision for condition with anat. entity as precise", 
+                utils.isConditionMorePrecise(cond6, cond7));
+        assertTrue("Incorrect determination of precision for condition with anat. entity as precise", 
                 utils.isConditionMorePrecise(cond1, cond5));
         assertFalse("Incorrect determination of precision for condition with dev. stage as precise", 
+                utils.isConditionMorePrecise(cond8, cond9));
+        assertTrue("Incorrect determination of precision for condition with dev. stage as precise", 
                 utils.isConditionMorePrecise(cond1, cond4));
         
         assertEquals("Incorrect AnatEntity retrieved", anatEntity1, utils.getAnatEntity(anatEntityId1));

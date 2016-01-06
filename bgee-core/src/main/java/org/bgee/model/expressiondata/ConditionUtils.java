@@ -86,16 +86,23 @@ public class ConditionUtils {
                     + "are not registered to this ConditionUtils. First condition: " + firstCond 
                     + " - Second condition: " + secondCond));
         }
-        
-        Set<DevStage> parentDevStages = this.devStageOnt.getAncestors(
-                this.devStageOnt.getElement(secondCond.getDevStageId()));
-        if (parentDevStages.stream().noneMatch(e -> e.getId().equals(firstCond.getDevStageId()))) {
+        if (firstCond.equals(secondCond)) {
             return log.exit(false);
         }
         
-        Set<AnatEntity> parentAnatEntities = this.anatEntityOnt.getAncestors(
-                this.anatEntityOnt.getElement(secondCond.getAnatEntityId()));
-        if (parentAnatEntities.stream().noneMatch(e -> e.getId().equals(firstCond.getAnatEntityId()))) {
+        //Of note, computations are three times faster when checking stages before anat. entities. 
+        
+        if (!firstCond.getDevStageId().equals(secondCond.getDevStageId()) && 
+                !this.devStageOnt.getAncestors(
+                        this.devStageOnt.getElement(secondCond.getDevStageId()))
+                .contains(this.devStageOnt.getElement(firstCond.getDevStageId()))) {
+            return log.exit(false);
+        }
+        
+        if (!firstCond.getAnatEntityId().equals(secondCond.getAnatEntityId()) && 
+                !this.anatEntityOnt.getAncestors(
+                        this.anatEntityOnt.getElement(secondCond.getAnatEntityId()))
+                .contains(this.anatEntityOnt.getElement(firstCond.getAnatEntityId()))) {
             return log.exit(false);
         }
         

@@ -35,13 +35,12 @@ import org.bgee.view.JsonHelper;
  * 
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
+ * @author  Frederic Bastian
  * @version Bgee 13, Jan. 2016
  * @since   Bgee 13, Oct. 2015
  */
 public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
     private final static Logger log = LogManager.getLogger(HtmlGeneDisplay.class.getName());
-
-	private static final int ELEMENT_LIMIT = 15;
 
 	/**
 	 * Constructor
@@ -68,12 +67,16 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
 	@Override
 	public void displayGenePage() {
+	    log.entry();
 		this.startDisplay("Gene Information");
 		this.endDisplay();
+		log.exit();
 	}
 
 	@Override
 	public void displayGene(Gene gene, List<ExpressionCall> calls, ConditionUtils conditionUtils) {
+	    log.entry(gene, calls, conditionUtils);
+	    
 		this.startDisplay("Gene: " + gene.getName());
 		this.writeln("<h1>Gene: " + gene.getName() + "</h1>");
 		this.writeln("<h2>Gene Information</h2>");
@@ -83,23 +86,24 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		this.writeln(getExpressionHTMLByAnat(byAnatEntity(filterCalls(calls, conditionUtils)), conditionUtils));
 		this.writeln("</div>");
 		this.endDisplay();
+		
+		log.exit();
 	}
 
-	@Override
-	@Deprecated
-	public void displayGene(Gene gene, List<ExpressionCall> calls, Map<String, AnatEntity> anatEntitiesMap,
-	        Map<String, DevStage> devStageMap) {
-		this.startDisplay("Gene: " + gene.getName());
-		this.writeln("<h1>Gene: " + gene.getName() + "</h1>");
-		this.writeln("<h2>Gene Information</h2>");
-		this.writeln("<div class='gene'>" + getGeneInfo(gene) + "</div>");
-		this.writeln("<h2>Expression</h2>");
-		this.writeln(getExpressionHTMLByAnat(byAnatEntity(calls), anatEntitiesMap, devStageMap));
-		this.endDisplay();
-	}
-
+	/**
+	 * Generates the HTML code displaying information about expression calls.
+	 * 
+	 * @param byAnatEntityId   A {@code Map} where keys are {@code String}s representing 
+	 *                         anatomical entity IDs, the associated value being a {@code List} 
+	 *                         of {@code ExpressionCall}s for this anatomical entity, 
+	 *                         ordered by biological relevance. 
+	 * @param conditionUtils   A {@code ConditionUtils} containing information about all {@code Condition}s 
+     *                         retrieved from the {@code ExpressionCall}s in {@code byAnatEntityId}.
+	 * @return                 A {@code String} that is the generated HTML.
+	 */
 	private static String getExpressionHTMLByAnat(Map<String, List<ExpressionCall>> byAnatEntityId,
 	        final ConditionUtils conditionUtils) {
+	    log.entry(byAnatEntityId, conditionUtils);
 
 		StringBuilder sb = new StringBuilder();
 
@@ -122,114 +126,25 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		        .append("<tr><td><strong>E</strong></td><td>EST (Expressed Sequence Tag)</td><td><span class='quality low'>low quality</span></td></tr>")
 		        .append("<tr><td><strong>I</strong></td><td>In Situ</td><td><span class='quality nodata'>no data</span></td></tr>")
 		        .append("<tr><td><strong>R</strong></td><td>RNA-Seq</td></tr></table></div>");
-		return sb.toString();
+		return log.exit(sb.toString());
 
 	}
 
 	/**
-	 * Build a table from a collection of {@code ExpressionCall} group by
-	 * anatomic entity id.
+	 * Generates the HTML code to display information about expression calls occurring  
+	 * in one specific anatomical entity. 
 	 * 
-	 * @param byAnatEntityId
-	 *            A {@code Map} associating anatomic entities ids to a sorted
-	 *            list of expression calls.
-	 * @param anatEntitiesMap
-	 *            A {@code Map} associating anatomic entities ids to their
-	 *            {@code AnatEntity} instance.
-	 * @param devStageMap
-	 *            A {@code Map} associating development stage ids to their
-	 *            {@code DevStage} instance.
-	 * @return A {@code String} containing the HTML code of the table
+	 * @param anatEntity       The {@code AnatEntity} for which the expression calls will be displayed.
+     * @param conditionUtils   A {@code ConditionUtils} containing information about all {@code Condition}s 
+     *                         retrieved from the {@code calls}.
+	 * @param calls            A {@code List} of {@code ExpressionCall}s related to {@code anatEntity}, 
+     *                         ordered by biological relevance. 
+	 * @return                 A {@code String} that is the generated HTML.
 	 */
-	@Deprecated
-	private static String getExpressionHTMLByAnat(Map<String, List<ExpressionCall>> byAnatEntityId,
-	        Map<String, AnatEntity> anatEntitiesMap, Map<String, DevStage> devStageMap) {
-
-		StringBuilder sb = new StringBuilder();
-		sb.append("<div class='gene details'><table class='expression'>")
-		        .append("<tr><td class='col15'></td><td class='col25'><strong>AnatEntity</strong></td>")
-		        .append("<td class='col50'><strong>Stage</strong></td><td class='col10'>")
-		        .append("<strong>Quality</strong></td></tr>\n</div>");
-		int size = byAnatEntityId.size();
-
-		String elements = byAnatEntityId.entrySet().stream().limit(ELEMENT_LIMIT).map(e -> {
-			final AnatEntity a = anatEntitiesMap.get(e.getKey());
-			return getExpressionRowsForAnatEntity(a, devStageMap, e.getValue(), false, false);
-		}).collect(Collectors.joining("\n"));
-		sb.append(elements);
-
-		if (size > ELEMENT_LIMIT) {
-			String extraElements = byAnatEntityId.entrySet().stream().skip(ELEMENT_LIMIT).map(e -> {
-				final AnatEntity a = anatEntitiesMap.get(e.getKey());
-				return getExpressionRowsForAnatEntity(a, devStageMap, e.getValue(), true, false);
-			}).collect(Collectors.joining("\n"));
-			sb.append(extraElements);
-		}
-
-		sb.append("</table>");
-
-		if (size > ELEMENT_LIMIT) {
-			sb.append("<span class='show_extra expression'>show more</span>");
-		}
-		sb.append("<table class='legend'>")
-		        .append("<tr><td></td><td><strong>Sources</strong></td><td><strong>Quality</strong></td></tr>")
-		        .append("<tr><td><strong>A</strong></td><td>Affymetrix</td><td><span class='quality high'>high quality</span></td><td></td></tr>")
-		        .append("<tr><td><strong>E</strong></td><td>EST (Expressed Sequence Tag)</td><td><span class='quality low'>low quality</span></td></tr>")
-		        .append("<tr><td><strong>I</strong></td><td>In Situ</td><td><span class='quality nodata'>no data</span></td></tr>")
-		        .append("<tr><td><strong>R</stƒrong></td><td>RNA-Seq</td></tr></table></div>");
-		return sb.toString();
-
-	}
-
-	/**
-	 * Gets the rows ({@code tr}) element for the given anatomic entity
-	 * 
-	 * @param anatEntity
-	 *            The {@code AnatEntity}
-	 * @param stages
-	 *            The {@code Map} associating development stage ids to their
-	 * @param calls
-	 *            A {@code List} of {@code ExpressionCall} associated to the
-	 *            {@code AnatEntity}
-	 * @param isExtra
-	 *            True if the row is "extra", i.e., to be invisible on page
-	 *            load.
-	 * @return The HTML code containing the rows.
-	 */
-	@Deprecated
-	private static String getExpressionRowsForAnatEntity(AnatEntity anatEntity, Map<String, DevStage> stages,
-	        List<ExpressionCall> calls, boolean isExtra, boolean isMasked) {
-		StringBuilder sb = new StringBuilder();
-		sb.append("<tr class='aggregate ");
-		if (isExtra)
-			sb.append("extra ");
-		if (isMasked)
-			sb.append("masked ");
-		if (isExtra || isMasked)
-			sb.append("invisible");
-		sb.append("'>");
-		sb.append("<td class='details right small'>").append(anatEntity.getId()).append("</td><td>")
-		        .append(anatEntity.getName()).append("</td>");
-		sb.append("<td><span class='expandable' title='click to expand'>[+] ").append(calls.size())
-		        .append(" development stage(s)</span>").append("</td>");
-		sb.append("<td>")
-		        .append(getQualitySpans(
-		                calls.stream().flatMap(e -> e.getCallData().stream()).collect(Collectors.toList())))
-		        .append("</td></tr>");
-		sb.append(calls.stream().map(call -> {
-			DevStage stage = stages.get(call.getCondition().getDevStageId());
-			StringBuilder sb2 = new StringBuilder();
-			sb2.append("<tr class='invisible'><td></td><td></td><td class='small'><span class='details'>")
-		            .append(stage.getId()).append(" </span> ");
-			sb2.append(stage.getName()).append("</td><td>").append(getQualitySpans(call.getCallData()));
-			return sb2.toString();
-		}).collect(Collectors.joining("\n")));
-
-		return sb.toString();
-	}
-
 	private static String getExpressionRowsForAnatEntity(AnatEntity anatEntity, ConditionUtils conditionUtils,
 	        List<ExpressionCall> calls) {
+	    log.entry(anatEntity, conditionUtils, calls);
+	    
 		StringBuilder sb = new StringBuilder();
 		sb.append("<tr class='localaggregate'>");
 		
@@ -265,18 +180,18 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		
 		sb.append("</tr>");
 
-		return sb.toString();
+		return log.exit(sb.toString());
 	}
 
 	/**
-	 * Create a table containing information for {@code Gene}
+	 * Create a table containing general information for {@code Gene}
 	 * 
-	 * @param gene
-	 *            The {@code Gene} for which to display information
-	 * @return A {@code String} containing the HTML table containing the
-	 *         information.
+	 * @param gene     The {@code Gene} for which to display information
+	 * @return         A {@code String} containing the HTML table containing the information.
 	 */
-	private String getGeneInfo(Gene gene) {
+	private static String getGeneInfo(Gene gene) {
+	    log.entry(gene);
+	    
 		final StringBuilder table = new StringBuilder("<table id='geneinfo'>");
 		table.append("<tr><td>").append("<strong>Ensembl Id</strong></td><td>").append(gene.getId())
 		        .append("</td></tr>");
@@ -287,21 +202,22 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		        .append(gene.getSpecies().getScientificName()).append("</em> (").append(gene.getSpecies().getName())
 		        .append(")</td></tr>");
 
-		return table.append("</table>").toString();
+		return log.exit(table.append("</table>").toString());
 	}
 
 	/**
 	 * Builds the quality "span" elements for the given expression calls
 	 * 
-	 * @param callData
-	 *            A {@code Collection} of {@code ExpressionCallData} as input
-	 * @return A {@String} containing the HTML code of the span
+	 * @param callData     A {@code Collection} of {@code ExpressionCallData} as input
+	 * @return             A {@String} containing the HTML code of the span
 	 */
 	private static String getQualitySpans(Collection<ExpressionCallData> callData) {
+	    log.entry(callData);
+	    
 		final Map<DataType, Set<DataQuality>> qualities = callData.stream()
 		        .collect(Collectors.groupingBy(ExpressionCallData::getDataType,
 		                Collectors.mapping(ExpressionCallData::getDataQuality, Collectors.toSet())));
-		return EnumSet.allOf(DataType.class).stream().map(type -> {
+		return log.exit(EnumSet.allOf(DataType.class).stream().map(type -> {
 			Set<DataQuality> quals = qualities.get(type);
 			DataQuality quality = DataQuality.NODATA;
 			if (quals != null) {
@@ -311,21 +227,20 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 					quality = DataQuality.LOW;
 			}
 			return getSpan(quality, type);
-		}).collect(Collectors.joining());
+		}).collect(Collectors.joining()));
 
 	}
 
 	/**
-	 * Builds a 'span' element representing the quality for a given
-	 * {@code DataType}
+	 * Builds a 'span' element representing the quality for a given {@code DataType}
 	 * 
-	 * @param quality
-	 *            The {@code DataQuality}
-	 * @param type
-	 *            The {@code DataType}
-	 * @return A {@code String} containing the HTML code for the quality 'span'.
+	 * @param quality  The {@code DataQuality}
+	 * @param type     The {@code DataType}
+	 * @return         A {@code String} containing the HTML code for the quality 'span'.
 	 */
 	private static String getSpan(DataQuality quality, DataType type) {
+	    log.entry(quality, type);
+	    
 		StringBuilder sb = new StringBuilder();
 		sb.append("<span class='quality ");
 
@@ -340,7 +255,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 			sb.append("nodata");
 		}
 
-		sb.append("' title='").append(type.getStringRepresentation()).append(" : ")
+		sb.append("' title='").append(type.getStringRepresentation()).append(": ")
 		        .append(quality.getStringRepresentation()).append("'>");
 
 		switch (type) {
@@ -358,7 +273,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 			break;
 		}
 		sb.append("</span>");
-		return sb.toString();
+		return log.exit(sb.toString());
 	}
 
 	/**
@@ -366,13 +281,13 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 	 * of associated {@code ExpressionCall}, the order of the input list is
 	 * preserved.
 	 * 
-	 * @param calls
-	 *            A {@code List} of {@code ExpressionCall} as input
-	 * @return The @{code {@link LinkedHashMap} containing the association.
+	 * @param calls    A {@code List} of {@code ExpressionCall} as input
+	 * @return         The @{code {@link LinkedHashMap} containing the association.
 	 */
-	private Map<String, List<ExpressionCall>> byAnatEntity(List<ExpressionCall> calls) {
-		return calls.stream().collect(Collectors.groupingBy(ec -> ec.getCondition().getAnatEntityId(),
-		        LinkedHashMap::new, Collectors.toList()));
+	private static Map<String, List<ExpressionCall>> byAnatEntity(List<ExpressionCall> calls) {
+	    log.entry(calls);
+		return log.exit(calls.stream().collect(Collectors.groupingBy(ec -> ec.getCondition().getAnatEntityId(),
+		        LinkedHashMap::new, Collectors.toList())));
 	}
 	
 	/**
@@ -388,7 +303,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 	 *                         corresponding to {@code calls}, with redundant calls removed.
 	 */
 	private static List<ExpressionCall> filterCalls(List<ExpressionCall> calls, ConditionUtils conditionUtils) {
-	    log.entry(calls);
+	    log.entry(calls, conditionUtils);
 
         long startFilteringTimeInMs = System.currentTimeMillis();
         
@@ -404,22 +319,26 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 log.trace("Redundant call identified with condition: {}", cond);
             }
         }
-        log.trace("Redundant calls filtered in {} ms", System.currentTimeMillis() - startFilteringTimeInMs);
+        log.debug("Redundant calls filtered in {} ms", System.currentTimeMillis() - startFilteringTimeInMs);
         
         return log.exit(filteredCalls);
 	}
 
 	@Override
 	protected void includeCss() {
+	    log.entry();
 		super.includeCss();
 		this.includeCss("gene.css");
         this.includeCss("lib/jquery_plugins/jquery.dataTables.min.css");
+        log.exit();
 	}
 
 	@Override
 	protected void includeJs() {
+	    log.entry();
 		super.includeJs();
 		this.includeJs("gene.js");
         this.includeJs("lib/jquery_plugins/jquery.dataTables.min.js");
+        log.exit();
 	}
 }

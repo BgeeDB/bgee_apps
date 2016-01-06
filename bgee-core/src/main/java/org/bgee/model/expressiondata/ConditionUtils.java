@@ -3,6 +3,7 @@ package org.bgee.model.expressiondata;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -107,6 +108,38 @@ public class ConditionUtils {
         }
         
         return log.exit(true);
+    }
+    
+    /**
+     * Get all the {@code Conditions} that are more precise than {@code cond}, 
+     * among the {@code Condition}s provided at instantiation. 
+     * 
+     * @param cond  A {@code Condition} for which we want to retrieve descendant {@code Condition}s.
+     * @return      A {@code Set} of {@code Condition}s that are descendants of {@code cond}.
+     * @throws IllegalArgumentException If {@code cond} is not registered to this {@code ConditionUtils}.
+     */
+    public Set<Condition> getDescendantConditions(Condition cond) {
+        log.entry(cond);
+        if (!this.getConditions().contains(cond)) {
+            throw log.throwing(new IllegalArgumentException("The provided condition "
+                    + "is not registered to this ConditionUtils: " + cond));
+        }
+        
+        Set<String> devStageIds = this.devStageOnt.getDescendants(
+                    this.devStageOnt.getElement(cond.getDevStageId()))
+                .stream().map(e -> e.getId()).collect(Collectors.toSet());
+        devStageIds.add(cond.getDevStageId());
+        
+        Set<String> anatEntityIds = this.anatEntityOnt.getDescendants(
+                    this.anatEntityOnt.getElement(cond.getAnatEntityId()))
+                .stream().map(e -> e.getId()).collect(Collectors.toSet());
+        anatEntityIds.add(cond.getAnatEntityId());
+        
+        return log.exit(this.conditions.stream()
+                .filter(e -> !e.equals(cond) && 
+                             devStageIds.contains(e.getDevStageId()) && 
+                             anatEntityIds.contains(e.getAnatEntityId()))
+                .collect(Collectors.toSet()));
     }
     
     /**

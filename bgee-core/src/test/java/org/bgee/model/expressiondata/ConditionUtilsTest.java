@@ -6,6 +6,9 @@ import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,6 +20,7 @@ import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.DevStageService;
 import org.bgee.model.ontology.Ontology;
 import org.bgee.model.ontology.OntologyService;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -33,12 +37,12 @@ public class ConditionUtilsTest extends TestAncestor {
     protected Logger getLogger() {
         return log;
     } 
-
-    /**
-     * Test the method {@link ConditionUtils#isConditionMorePrecise(Condition, Condition)}.
-     */
-    @Test
-    public void testIsConditionMorePrecise() {
+    
+    private ConditionUtils conditionUtils;
+    private List<Condition> conditions;
+    
+    @Before
+    public void loadConditionUtils() {
         String anatEntityId1 = "anat1";
         AnatEntity anatEntity1 = new AnatEntity(anatEntityId1);
         String anatEntityId2 = "anat2";
@@ -58,9 +62,8 @@ public class ConditionUtilsTest extends TestAncestor {
         Condition cond4 = new Condition(anatEntityId2, devStageId1);
         Condition cond5 = new Condition(anatEntityId1, devStageId3);
         Condition cond6 = new Condition(anatEntityId2, devStageId3);
-        Condition cond7 = new Condition(anatEntityId2, devStageId2);
-        Condition cond8 = new Condition(anatEntityId2, devStageId2);
-        Condition cond9 = new Condition(anatEntityId3, devStageId2);
+        Condition cond7 = new Condition(anatEntityId3, devStageId2);
+        this.conditions = Arrays.asList(cond1, cond2, cond3, cond4, cond5, cond6, cond7);
         
         ServiceFactory mockFact = mock(ServiceFactory.class);
         OntologyService ontService = mock(OntologyService.class);
@@ -99,40 +102,81 @@ public class ConditionUtilsTest extends TestAncestor {
         when(devStageOnt.getAncestors(devStage2)).thenReturn(new HashSet<>(Arrays.asList(devStage1)));
         when(devStageOnt.getAncestors(devStage3)).thenReturn(new HashSet<>(Arrays.asList(devStage1)));
         
-        ConditionUtils utils = new ConditionUtils(Arrays.asList(cond1, cond2, cond3, cond4, cond5, 
-                cond6, cond7, cond8, cond9), 
+        when(anatEntityOnt.getDescendants(anatEntity1)).thenReturn(
+                new HashSet<>(Arrays.asList(anatEntity2, anatEntity3)));
+        when(devStageOnt.getDescendants(devStage1)).thenReturn(
+                new HashSet<>(Arrays.asList(devStage2, devStage3)));
+        
+        this.conditionUtils = new ConditionUtils(Arrays.asList(cond1, cond2, cond3, cond4, cond5, 
+                cond6, cond7), 
                 mockFact);
+    }
+
+    /**
+     * Test the method {@link ConditionUtils#isConditionMorePrecise(Condition, Condition)}.
+     */
+    @Test
+    public void testIsConditionMorePrecise() {
         assertTrue("Incorrect determination of precision for more precise condition", 
-                utils.isConditionMorePrecise(cond1, cond2));
+                this.conditionUtils.isConditionMorePrecise(this.conditions.get(0), this.conditions.get(1)));
         assertTrue("Incorrect determination of precision for more precise condition", 
-                utils.isConditionMorePrecise(cond1, cond3));
+                this.conditionUtils.isConditionMorePrecise(this.conditions.get(0), this.conditions.get(2)));
         assertFalse("Incorrect determination of precision for less precise condition", 
-                utils.isConditionMorePrecise(cond2, cond1));
+                this.conditionUtils.isConditionMorePrecise(this.conditions.get(1), this.conditions.get(0)));
         assertFalse("Incorrect determination of precision for less precise condition", 
-                utils.isConditionMorePrecise(cond3, cond1));
+                this.conditionUtils.isConditionMorePrecise(this.conditions.get(2), this.conditions.get(0)));
         assertFalse("Incorrect determination of precision for as precise conditions", 
-                utils.isConditionMorePrecise(cond2, cond3));
+                this.conditionUtils.isConditionMorePrecise(this.conditions.get(1), this.conditions.get(2)));
 
         assertFalse("Incorrect determination of precision for condition with anat. entity as precise", 
-                utils.isConditionMorePrecise(cond6, cond7));
+                this.conditionUtils.isConditionMorePrecise(this.conditions.get(5), this.conditions.get(1)));
         assertTrue("Incorrect determination of precision for condition with anat. entity as precise", 
-                utils.isConditionMorePrecise(cond1, cond5));
+                this.conditionUtils.isConditionMorePrecise(this.conditions.get(0), this.conditions.get(4)));
         assertFalse("Incorrect determination of precision for condition with dev. stage as precise", 
-                utils.isConditionMorePrecise(cond8, cond9));
+                this.conditionUtils.isConditionMorePrecise(this.conditions.get(1), this.conditions.get(1)));
         assertTrue("Incorrect determination of precision for condition with dev. stage as precise", 
-                utils.isConditionMorePrecise(cond1, cond4));
+                this.conditionUtils.isConditionMorePrecise(this.conditions.get(0), this.conditions.get(3)));
         
-        assertEquals("Incorrect AnatEntity retrieved", anatEntity1, utils.getAnatEntity(anatEntityId1));
-        assertEquals("Incorrect DevStage retrieved", devStage1, utils.getDevStage(devStageId1));
+        AnatEntity anatEntity1 = new AnatEntity(this.conditions.get(0).getAnatEntityId());
+        assertEquals("Incorrect AnatEntity retrieved", anatEntity1, this.conditionUtils.getAnatEntity(
+                this.conditions.get(0).getAnatEntityId()));
+        DevStage devStage1 = new DevStage(this.conditions.get(0).getDevStageId());
+        assertEquals("Incorrect DevStage retrieved", devStage1, this.conditionUtils.getDevStage(
+                this.conditions.get(0).getDevStageId()));
         
         //check that an Exception is correctly thrown if a condition used was not provided at instantiation
         try {
-            utils.isConditionMorePrecise(cond1, new Condition(anatEntityId1, devStageId2));
+            this.conditionUtils.isConditionMorePrecise(this.conditions.get(0), 
+                    new Condition("test1", "test2"));
             //test fail
             fail("An exception should be thrown when a Condition was not provided at instantiation.");
         } catch (IllegalArgumentException e) {
             //test passed
         }
         
+    }
+    
+    /**
+     * Test the method {@link ConditionUtils#getDescendantConditions(Condition)}.
+     */
+    @Test
+    public void shouldGetDescendantConditions() {
+        Set<Condition> expectedDescendants = conditions.stream()
+                .filter(e -> !e.equals(this.conditions.get(0)))
+                .collect(Collectors.toSet());
+        assertEquals("Incorrect descendants retrieved", expectedDescendants, 
+                this.conditionUtils.getDescendantConditions(this.conditions.get(0)));
+        
+        expectedDescendants = new HashSet<>(Arrays.asList(this.conditions.get(1), this.conditions.get(5)));
+        assertEquals("Incorrect descendants retrieved", expectedDescendants, 
+                this.conditionUtils.getDescendantConditions(this.conditions.get(3)));
+        
+        expectedDescendants = new HashSet<>(Arrays.asList(this.conditions.get(2), this.conditions.get(5)));
+        assertEquals("Incorrect descendants retrieved", expectedDescendants, 
+                this.conditionUtils.getDescendantConditions(this.conditions.get(4)));
+        
+        expectedDescendants = new HashSet<>();
+        assertEquals("Incorrect descendants retrieved", expectedDescendants, 
+                this.conditionUtils.getDescendantConditions(this.conditions.get(6)));
     }
 }

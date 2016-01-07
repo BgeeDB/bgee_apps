@@ -11,6 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
@@ -306,10 +307,14 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 	 * @param calls    A {@code List} of {@code ExpressionCall} as input
 	 * @return         The @{code {@link LinkedHashMap} containing the association.
 	 */
-	private static Map<String, List<ExpressionCall>> byAnatEntity(List<ExpressionCall> calls) {
+	private static LinkedHashMap<String, List<ExpressionCall>> byAnatEntity(List<ExpressionCall> calls) {
 	    log.entry(calls);
-		return log.exit(calls.stream().collect(Collectors.groupingBy(ec -> ec.getCondition().getAnatEntityId(),
-		        LinkedHashMap::new, Collectors.toList())));
+	    //we explicitly define the Collector, otherwise javac has a bug preventing to infer correct type.
+	    Collector<ExpressionCall, ?, LinkedHashMap<String, List<ExpressionCall>>> collector = 
+	            Collectors.groupingBy(ec -> ec.getCondition().getAnatEntityId(), 
+	                    LinkedHashMap::new, Collectors.toList());
+	    
+		return log.exit(calls.stream().collect(collector));
 	}
 	
 	/**

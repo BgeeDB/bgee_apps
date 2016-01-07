@@ -66,7 +66,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         }
         this.writeln(this.displayHomePageSpecies(groups));
 
-        this.writeln("<h2>Browse Bgee content</h2>");
+        this.writeln("<h2 class='box_title'>Browse Bgee content</h2>");
         this.writeln("<div class='bgee_section'>");
 
         RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
@@ -95,7 +95,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
         this.writeln("</div>"); // close Browse Bgee content
 
-        this.writeln("<h2>News</h2>" +
+        this.writeln("<h2 class='box_title'>News</h2>" +
                      "<span class='header_details'>(features are being added incrementally)</span>");
         this.writeln("<div id='bgee_news' class='bgee_section'>");
         this.writeln("<ul>");

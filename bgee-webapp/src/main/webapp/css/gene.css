@@ -1,6 +1,6 @@
 h1.gene_title {
 	text-align: left !important;
-	margin-bottom: 1em;
+	margin: 0;
 }
 h1.gene_title span#species_img {
 	display: inline-block;
@@ -16,7 +16,7 @@ h1.gene_title span.gene_title {
 }
 
 table#geneinfo {
-	margin: 1em 0 1em 2em;
+	margin: 1em 0;
 }
 
 table#geneinfo th {
@@ -28,6 +28,9 @@ table#geneinfo td {
     padding: 0 0 0.5em 0;
 }
 
+div#expr_intro {
+	margin: 1em 2%;
+}
 div#table-container {
 	margin: 1em 2%;
 }
@@ -76,7 +79,7 @@ table.stage {
 }
 
 div.gene {
-	margin-top: 1em;
+	margin: 1em 2%;
 }
 
 td.right {

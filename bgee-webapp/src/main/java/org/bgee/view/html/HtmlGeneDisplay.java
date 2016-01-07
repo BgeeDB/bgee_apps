@@ -78,17 +78,17 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 	public void displayGene(Gene gene, List<ExpressionCall> calls, ConditionUtils conditionUtils) {
 	    log.entry(gene, calls, conditionUtils);
 	    
-	    String title = "Gene: " + htmlEntities(gene.getName()) + " - " + htmlEntities(gene.getId()) 
-	        + " - <em>" + htmlEntities(gene.getSpecies().getScientificName()) + "</em> ("
-            + htmlEntities(gene.getSpecies().getName()) + ")";
-		this.startDisplay(title);
+	    String titleStart = "Gene: " + gene.getName() + " - " + gene.getId(); 
+		this.startDisplay(titleStart);
 		this.writeln("<h1 class='gene_title'><span id='species_img'><img height='75' width='75' src='" 
 		        + this.prop.getSpeciesImagesRootDirectory() + htmlEntities(gene.getSpeciesId()) + "_light.jpg' alt='" 
 		        + htmlEntities(gene.getSpecies().getShortName()) + "' /></span><span class='gene_title'>" 
-		        + title + "</span></h1>");
+		        + htmlEntities(titleStart) + " - <em>" + htmlEntities(gene.getSpecies().getScientificName()) + "</em> ("
+                + htmlEntities(gene.getSpecies().getName()) + ")</span></h1>");
 		this.writeln("<h2>Gene Information</h2>");
 		this.writeln("<div class='gene'>" + getGeneInfo(gene) + "</div>");
 		this.writeln("<h2>Expression</h2>");
+		this.writeln("<div id='expr_intro'>Expression calls ordered by biological relevance: </div>");
 		this.writeln("<div id='table-container'>");
 		this.writeln(getExpressionHTMLByAnat(byAnatEntity(filterCalls(calls, conditionUtils)), conditionUtils));
 		this.writeln("</div>");
@@ -211,7 +211,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 	    log.entry(gene);
 	    
 		final StringBuilder table = new StringBuilder("<table id='geneinfo'>");
-		table.append("<tr><th>").append("Ensembl Id</th><td>").append(htmlEntities(gene.getId()))
+		table.append("<tr><th>").append("Ensembl ID</th><td>").append(htmlEntities(gene.getId()))
 		        .append("</td></tr>");
 		table.append("<tr><th>").append("Name</th><td>").append(htmlEntities(gene.getName())).append("</td></tr>");
 		table.append("<tr><th>").append("Description</th><td>").append(htmlEntities(gene.getDescription()))

@@ -54,7 +54,7 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
     public ExpectedException thrown = ExpectedException.none();
 
     /**
-     * Test the select method {@link MySQLRelationDAO#getAnatEntityRelationsBySpeciesIds()}.
+     * Test the method {@link MySQLRelationDAO#getAnatEntityRelationsBySpeciesIds(Set, Set, Set)}.
      */
     @Test
     public void shouldGetAnatEntityRelationsBySpeciesIds() throws SQLException {
@@ -200,6 +200,163 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
         dao.clearAttributes();
         expectedRelations = allRelTOs;
         resultSet = dao.getAnatEntityRelationsBySpeciesIds(speciesIds, null, null);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+    }
+
+    /**
+     * Test the method {@link MySQLRelationDAO#getAnatEntityRelations(Collection, boolean, 
+     * Collection, Collection, boolean, Collection, Collection, Collection)}.
+     */
+    @Test
+    public void shouldGetAnatEntityRelations() throws SQLException {
+
+        this.useSelectDB();
+
+        MySQLRelationDAO dao = new MySQLRelationDAO(this.getMySQLDAOManager());
+        Collection<RelationTO> allRelTOs = Arrays.asList(
+        new RelationTO("1", "Anat_id1", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO("10", "Anat_id10", "Anat_id10", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO("23", "Anat_id11", "Anat_id10", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+        new RelationTO("11", "Anat_id11", "Anat_id11", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO("12", "Anat_id2", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+        new RelationTO("2", "Anat_id2", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO("14", "Anat_id4", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+        new RelationTO("4", "Anat_id4", "Anat_id4", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO("15", "Anat_id5", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+        new RelationTO("5", "Anat_id5", "Anat_id5", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO("18", "Anat_id6", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+        new RelationTO("19", "Anat_id7", "Anat_id6", RelationType.DEVELOPSFROM, RelationStatus.DIRECT),
+        new RelationTO("7", "Anat_id7", "Anat_id7", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO("8", "Anat_id8", "Anat_id8", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO("21", "Anat_id9", "Anat_id5", RelationType.ISA_PARTOF, RelationStatus.DIRECT));
+                
+        // Retrieve relations with several species IDs, any species requested
+        Collection<RelationTO> expectedRelations = allRelTOs;
+        RelationTOResultSet resultSet = dao.getAnatEntityRelations(Arrays.asList("11", "21"), 
+                true, null, null, null, null, null, null);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+        
+        //now, relations existing in all requested species
+        expectedRelations = Arrays.asList(
+                new RelationTO("1", "Anat_id1", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO("10", "Anat_id10", "Anat_id10", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO("23", "Anat_id11", "Anat_id10", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO("12", "Anat_id2", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO("2", "Anat_id2", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO("15", "Anat_id5", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO("5", "Anat_id5", "Anat_id5", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO("18", "Anat_id6", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO("19", "Anat_id7", "Anat_id6", RelationType.DEVELOPSFROM, RelationStatus.DIRECT));
+        resultSet = dao.getAnatEntityRelations(Arrays.asList("11", "21"), 
+                false, null, null, null, null, null, null);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+        
+        //test with only one species
+        expectedRelations = Arrays.asList(
+                new RelationTO("1", "Anat_id1", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO("10", "Anat_id10", "Anat_id10", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO("23", "Anat_id11", "Anat_id10", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO("12", "Anat_id2", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO("2", "Anat_id2", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO("14", "Anat_id4", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO("4", "Anat_id4", "Anat_id4", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO("15", "Anat_id5", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO("5", "Anat_id5", "Anat_id5", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO("18", "Anat_id6", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO("19", "Anat_id7", "Anat_id6", RelationType.DEVELOPSFROM, RelationStatus.DIRECT),
+                new RelationTO("8", "Anat_id8", "Anat_id8", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE));
+        resultSet = dao.getAnatEntityRelations(Arrays.asList("11"), 
+                null, null, null, null, null, null, null);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+        
+        //Now, we stop requesting the relation ID
+        Collection<RelationDAO.Attribute> attrs = EnumSet.complementOf(
+                EnumSet.of(RelationDAO.Attribute.RELATION_ID));
+        expectedRelations = Arrays.asList(
+                new RelationTO(null, "Anat_id1", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO(null, "Anat_id10", "Anat_id10", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO(null, "Anat_id11", "Anat_id10", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO(null, "Anat_id2", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO(null, "Anat_id2", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO(null, "Anat_id5", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO(null, "Anat_id5", "Anat_id5", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO(null, "Anat_id6", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO(null, "Anat_id7", "Anat_id6", RelationType.DEVELOPSFROM, RelationStatus.DIRECT));
+        resultSet = dao.getAnatEntityRelations(Arrays.asList("11", "21"), 
+                false, null, null, null, null, null, attrs);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+        
+        //now we add filtering on sources/targets
+        //filtering on sources only
+        expectedRelations = Arrays.asList(
+                new RelationTO(null, "Anat_id10", "Anat_id10", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO(null, "Anat_id2", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO(null, "Anat_id2", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE));
+        resultSet = dao.getAnatEntityRelations(Arrays.asList("11", "21"), 
+                false, Arrays.asList("Anat_id2", "Anat_id10"), null, null, null, null, attrs);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+
+        //filtering on targets only
+        expectedRelations = Arrays.asList(
+                new RelationTO(null, "Anat_id10", "Anat_id10", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO(null, "Anat_id11", "Anat_id10", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO(null, "Anat_id2", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO(null, "Anat_id5", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.DIRECT));
+        resultSet = dao.getAnatEntityRelations(Arrays.asList("11", "21"), 
+                false, null, Arrays.asList("Anat_id2", "Anat_id10"), null, null, null, attrs);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+
+        //OR condition on sources and targets
+        expectedRelations = Arrays.asList(
+                new RelationTO(null, "Anat_id10", "Anat_id10", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO(null, "Anat_id11", "Anat_id10", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO(null, "Anat_id2", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO(null, "Anat_id2", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO(null, "Anat_id5", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO(null, "Anat_id7", "Anat_id6", RelationType.DEVELOPSFROM, RelationStatus.DIRECT));
+        resultSet = dao.getAnatEntityRelations(Arrays.asList("11", "21"), false, 
+                Arrays.asList("Anat_id2", "Anat_id10"), 
+                Arrays.asList("Anat_id2", "Anat_id10", "Anat_id6"), true, null, null, attrs);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+
+        //AND condition on sources and targets
+        expectedRelations = Arrays.asList(
+                new RelationTO(null, "Anat_id10", "Anat_id10", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO(null, "Anat_id2", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO(null, "Anat_id7", "Anat_id6", RelationType.DEVELOPSFROM, RelationStatus.DIRECT));
+        resultSet = dao.getAnatEntityRelations(Arrays.asList("11", "21"), false, 
+                Arrays.asList("Anat_id2", "Anat_id10", "Anat_id7"), 
+                Arrays.asList("Anat_id2", "Anat_id10", "Anat_id6"), false, null, null, attrs);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+        
+        //add filter on relation types
+        expectedRelations = Arrays.asList(
+                new RelationTO(null, "Anat_id10", "Anat_id10", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO(null, "Anat_id2", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE));
+        resultSet = dao.getAnatEntityRelations(Arrays.asList("11", "21"), false, 
+                Arrays.asList("Anat_id2", "Anat_id10", "Anat_id7"), 
+                Arrays.asList("Anat_id2", "Anat_id10", "Anat_id6"), false, 
+                Arrays.asList(RelationType.ISA_PARTOF, RelationType.TRANSFORMATIONOF), null, attrs);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+        
+        //filter on relation types and status
+        expectedRelations = Arrays.asList(
+                new RelationTO(null, "Anat_id7", "Anat_id6", RelationType.DEVELOPSFROM, RelationStatus.DIRECT));
+        resultSet = dao.getAnatEntityRelations(Arrays.asList("11", "21"), false, 
+                Arrays.asList("Anat_id2", "Anat_id10", "Anat_id7"), 
+                Arrays.asList("Anat_id2", "Anat_id10", "Anat_id6"), false, 
+                Arrays.asList(RelationType.DEVELOPSFROM, RelationType.ISA_PARTOF), 
+                Arrays.asList(RelationStatus.DIRECT, RelationStatus.INDIRECT), attrs);
         assertTrue("RelationTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
     }

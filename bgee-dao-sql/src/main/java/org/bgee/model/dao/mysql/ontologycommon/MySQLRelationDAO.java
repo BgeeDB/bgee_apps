@@ -3,7 +3,10 @@ package org.bgee.model.dao.mysql.ontologycommon;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
@@ -25,7 +28,8 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType
  * A {@code RelationDAO} for MySQL. 
  * 
  * @author Valentine Rech de Laval
- * @version Bgee 13, Dec. 2015
+ * @author Frederic Bastian
+ * @version Bgee 13, Jan. 2016
  * @since Bgee 13
  * @see org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO
  */
@@ -49,23 +53,53 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         super(manager);
     }
 
-    public RelationTOResultSet getAnatEntityRelations(Set<String> speciesIds, Set<String> anatEntityIds, 
-            Set<RelationType> relationTypes, Set<RelationStatus> relationStatus) {
-        log.entry(speciesIds, anatEntityIds, relationTypes, relationStatus);
+    @Override
+    public RelationTOResultSet getAnatEntityRelations(Collection<String> speciesIds, Boolean anySpecies, 
+            Collection<String> sourceAnatEntityIds, Collection<String> targetAnatEntityIds, Boolean sourceOrTarget, 
+            Collection<RelationType> relationTypes, Collection<RelationStatus> relationStatus, 
+            Collection<RelationDAO.Attribute> attributes) {
+        log.entry(speciesIds, anySpecies, sourceAnatEntityIds, targetAnatEntityIds, sourceOrTarget, 
+                relationTypes, relationStatus, attributes);
         
         String tableName = "anatEntityRelation";
         
-        boolean isSpeciesFilter = speciesIds != null && speciesIds.size() > 0;
-        boolean isAnatEntityFilter = anatEntityIds != null && anatEntityIds.size() > 0;
-        boolean isRelationTypeFilter = relationTypes != null && relationTypes.size() > 0;
-        boolean isRelationStatusFilter = relationStatus != null && relationStatus.size() > 0;
+        //*******************************
+        // FILTER ARGUMENTS
+        //*******************************
+        //Species
+        Set<String> clonedSpeIds = Optional.ofNullable(speciesIds)
+                .map(c -> new HashSet<String>(c)).orElse(null);
+        boolean isSpeciesFilter = clonedSpeIds != null && !clonedSpeIds.isEmpty();
+        boolean realAnySpecies = isSpeciesFilter && 
+                (Boolean.TRUE.equals(anySpecies) || clonedSpeIds.size() == 1);
         
+        //Sources and targets
+        Set<String> clonedSourceFilter = Optional.ofNullable(sourceAnatEntityIds)
+                .map(c -> new HashSet<String>(c)).orElse(null);
+        boolean isSourceAnatEntityFilter = clonedSourceFilter != null && !clonedSourceFilter.isEmpty();
+        Set<String> clonedTargetFilter = Optional.ofNullable(targetAnatEntityIds)
+                .map(c -> new HashSet<String>(c)).orElse(null);
+        boolean isTargetAnatEntityFilter = clonedTargetFilter != null && !clonedTargetFilter.isEmpty();
+        boolean isAnatEntityFilter = isSourceAnatEntityFilter || isTargetAnatEntityFilter;
+        
+        //Relation types and status
+        Set<RelationType> clonedRelTypes = Optional.ofNullable(relationTypes)
+                .map(c -> c.isEmpty()? null: EnumSet.copyOf(c)).orElse(null);
+        boolean isRelationTypeFilter = clonedRelTypes != null && !clonedRelTypes.isEmpty();
+        Set<RelationStatus> clonedRelStatus = Optional.ofNullable(relationStatus)
+                .map(c -> c.isEmpty()? null: EnumSet.copyOf(c)).orElse(null);
+        boolean isRelationStatusFilter = clonedRelStatus != null && !clonedRelStatus.isEmpty();
+
+        //*******************************
+        // SELECT CLAUSE
+        //*******************************
         String sql = null;
-        Collection<RelationDAO.Attribute> attributes = this.getAttributes();
-        if (attributes == null || attributes.isEmpty()) {
+        EnumSet<RelationDAO.Attribute> clonedAttrs = Optional.ofNullable(attributes)
+                .map(e -> e.isEmpty()? null: EnumSet.copyOf(e)).orElse(null);
+        if (clonedAttrs == null || clonedAttrs.isEmpty()) {
             sql = "SELECT DISTINCT " + tableName + ".*";
         } else {
-            for (RelationDAO.Attribute attribute: attributes) {
+            for (RelationDAO.Attribute attribute: clonedAttrs) {
                 if (StringUtils.isEmpty(sql)) {
                     sql = "SELECT DISTINCT ";
                 } else {
@@ -74,70 +108,111 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
                 sql += tableName + "." + this.attributeAnatEntityRelationToString(attribute);
             }
         }
+        //*******************************
+        // FROM CLAUSE
+        //*******************************
         sql += " FROM " + tableName;
 
-        if (isSpeciesFilter) {
+        if (realAnySpecies) {
             sql += " INNER JOIN anatEntityRelationTaxonConstraint ON (" +
                     "anatEntityRelationTaxonConstraint.anatEntityRelationId = "
                     + tableName + ".anatEntityRelationId)";
         }
 
+        //*******************************
+        // WHERE CLAUSE
+        //*******************************
         if (isSpeciesFilter || isAnatEntityFilter || isRelationTypeFilter || isRelationStatusFilter) {
             sql += " WHERE ";
         }
         
+        //Species
         if (isSpeciesFilter) {
-            sql += "(anatEntityRelationTaxonConstraint.speciesId IS NULL" +
-                   " OR anatEntityRelationTaxonConstraint.speciesId IN (" +
-                   BgeePreparedStatement.generateParameterizedQueryString(
-                           speciesIds.size()) + "))";
+            if  (realAnySpecies) {
+                sql += "(anatEntityRelationTaxonConstraint.speciesId IS NULL " +
+                        "OR anatEntityRelationTaxonConstraint.speciesId IN (" +
+                        BgeePreparedStatement.generateParameterizedQueryString(
+                                clonedSpeIds.size()) + ")) ";
+            } else {
+                String existsPart = "SELECT 1 FROM anatEntityRelationTaxonConstraint AS tc WHERE "
+                        + "tc.anatEntityRelationId = " 
+                        + tableName + ".anatEntityRelationId AND tc.speciesId ";
+                sql += "(EXISTS(" + existsPart + " IS NULL) OR (" 
+                        + clonedSpeIds.stream().map(id -> "EXISTS(" + existsPart + " = ?)")
+                                             .collect(Collectors.joining(" AND "))
+                        + ")) ";
+            }
         }
+        
+        //Sources and targets
         if (isAnatEntityFilter) {
             if (isSpeciesFilter) {
-                sql += " AND ";
+                sql += "AND ";
             }
-            sql += " (anatEntitySourceId IN (" + 
-            BgeePreparedStatement.generateParameterizedQueryString(anatEntityIds.size()) + 
-            ") OR anatEntityTargetId IN (" + 
-            BgeePreparedStatement.generateParameterizedQueryString(anatEntityIds.size()) + ")) ";
+            sql += "(";
+            if (isSourceAnatEntityFilter) {
+                sql += "anatEntitySourceId IN (" 
+                       + BgeePreparedStatement.generateParameterizedQueryString(clonedSourceFilter.size()) 
+                       + ")";
+            }
+            if (isTargetAnatEntityFilter) {
+                if (isSourceAnatEntityFilter) {
+                    if (Boolean.TRUE.equals(sourceOrTarget)) {
+                        sql += " OR ";
+                    } else {
+                        sql += " AND ";
+                    }
+                }
+                sql += "anatEntityTargetId IN (" 
+                        + BgeePreparedStatement.generateParameterizedQueryString(clonedTargetFilter.size()) 
+                        + ")";
+            }
+            sql += ") ";
         }
+        
+        //Relation types and status
         if (isRelationTypeFilter) {
             if (isSpeciesFilter || isAnatEntityFilter) {
-                sql += " AND ";
+                sql += "AND ";
             }
-            sql += " relationType IN (" + 
-            BgeePreparedStatement.generateParameterizedQueryString(relationTypes.size()) + ")";
+            sql += "relationType IN (" + 
+            BgeePreparedStatement.generateParameterizedQueryString(clonedRelTypes.size()) + ") ";
         }
         if (isRelationStatusFilter) {
             if (isSpeciesFilter || isAnatEntityFilter || isRelationTypeFilter) {
-                sql += " AND ";
+                sql += "AND ";
             }
-            sql += " relationStatus IN (" + 
-                    BgeePreparedStatement.generateParameterizedQueryString(relationStatus.size()) + ")";
+            sql += "relationStatus IN (" + 
+                    BgeePreparedStatement.generateParameterizedQueryString(clonedRelStatus.size()) + ") ";
         }
 
+        //*******************************
+        // PREPARE STATEMENT
+        //*******************************
         //we don't use a try-with-resource, because we return a pointer to the results, 
         //not the actual results, so we should not close this BgeePreparedStatement.
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             int startIndex = 1;
             if (isSpeciesFilter) {
-                stmt.setStringsToIntegers(startIndex, speciesIds, true);
-                startIndex += speciesIds.size();
+                stmt.setStringsToIntegers(startIndex, clonedSpeIds, true);
+                startIndex += clonedSpeIds.size();
             }
-            if (isAnatEntityFilter) {
-                stmt.setStrings(startIndex, anatEntityIds, true);
-                startIndex += anatEntityIds.size();
-                stmt.setStrings(startIndex, anatEntityIds, true);
-                startIndex += anatEntityIds.size();
+            if (isSourceAnatEntityFilter) {
+                stmt.setStrings(startIndex, clonedSourceFilter, true);
+                startIndex += clonedSourceFilter.size();
+            }
+            if (isTargetAnatEntityFilter) {
+                stmt.setStrings(startIndex, clonedTargetFilter, true);
+                startIndex += clonedTargetFilter.size();
             }
             if (isRelationTypeFilter) {
-                stmt.setEnumDAOFields(startIndex, relationTypes, true);
-                startIndex += relationTypes.size();
+                stmt.setEnumDAOFields(startIndex, clonedRelTypes, true);
+                startIndex += clonedRelTypes.size();
             }
             if (isRelationStatusFilter) {
-                stmt.setEnumDAOFields(startIndex, relationStatus, true);
-                startIndex += relationStatus.size();
+                stmt.setEnumDAOFields(startIndex, clonedRelStatus, true);
+                startIndex += clonedRelStatus.size();
             }
             return log.exit(new MySQLRelationTOResultSet(stmt));
         } catch (SQLException e) {
@@ -150,7 +225,8 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
             Set<RelationType> relationTypes, Set<RelationStatus> relationStatus) {
         log.entry(speciesIds, relationTypes, relationStatus);    
 
-        return log.exit(this.getAnatEntityRelations(speciesIds, null, relationTypes, relationStatus));
+        return log.exit(this.getAnatEntityRelations(speciesIds, true, null, null, true, 
+                relationTypes, relationStatus, this.getAttributes()));
     }
      
     @Override

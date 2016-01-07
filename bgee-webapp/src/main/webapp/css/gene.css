@@ -1,6 +1,31 @@
+h1.gene_title {
+	text-align: left !important;
+	margin-bottom: 1em;
+}
+h1.gene_title span#species_img {
+	display: inline-block;
+    vertical-align: middle;
+    width: 10%;
+    text-align: center;
+}
+h1.gene_title span.gene_title {
+    display: inline-block;
+    vertical-align: middle;
+    text-align: center;
+    width: 80%;
+}
 
 table#geneinfo {
-	margin: 1em;
+	margin: 1em 0 1em 2em;
+}
+
+table#geneinfo th {
+    text-align: left;
+    padding: 0 0.7em 0.5em 0;
+}
+table#geneinfo td {
+    text-align: left;
+    padding: 0 0 0.5em 0;
 }
 
 div#table-container {
@@ -81,6 +106,10 @@ span.quality {
 	border-style: solid;
 	font-size: .8em;
 	font-family: monospace;
+}
+
+span.expandable {
+	cursor: pointer;
 }
 
 span.show_extra {

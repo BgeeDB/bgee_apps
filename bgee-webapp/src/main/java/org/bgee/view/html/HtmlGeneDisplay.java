@@ -1,6 +1,7 @@
 package org.bgee.view.html;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -77,8 +78,14 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 	public void displayGene(Gene gene, List<ExpressionCall> calls, ConditionUtils conditionUtils) {
 	    log.entry(gene, calls, conditionUtils);
 	    
-		this.startDisplay("Gene: " + gene.getName());
-		this.writeln("<h1>Gene: " + gene.getName() + "</h1>");
+	    String title = "Gene: " + htmlEntities(gene.getName()) + " - " + htmlEntities(gene.getId()) 
+	        + " - <em>" + htmlEntities(gene.getSpecies().getScientificName()) + "</em> ("
+            + htmlEntities(gene.getSpecies().getName()) + ")";
+		this.startDisplay(title);
+		this.writeln("<h1 class='gene_title'><span id='species_img'><img height='75' width='75' src='" 
+		        + this.prop.getSpeciesImagesRootDirectory() + htmlEntities(gene.getSpeciesId()) + "_light.jpg' alt='" 
+		        + htmlEntities(gene.getSpecies().getShortName()) + "' /></span><span class='gene_title'>" 
+		        + title + "</span></h1>");
 		this.writeln("<h2>Gene Information</h2>");
 		this.writeln("<div class='gene'>" + getGeneInfo(gene) + "</div>");
 		this.writeln("<h2>Expression</h2>");
@@ -146,11 +153,21 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 	    log.entry(anatEntity, conditionUtils, calls);
 	    
 		StringBuilder sb = new StringBuilder();
-		sb.append("<tr class='localaggregate'>");
+		sb.append("<tr>");
 		
 		// Anat entity ID and Anat entity cells 
-		sb.append("<td class='details right small'>").append(anatEntity.getId()).append("</td><td>")
-			.append(anatEntity.getName()).append("</td>");
+		String anatEntityUrl = "http://purl.obolibrary.org/obo/";
+        try {
+            anatEntityUrl += java.net.URLEncoder.encode(anatEntity.getId().replace(':', '_'), "UTF-8");
+        } catch (UnsupportedEncodingException e1) {
+            //Nothing here, UTF-8 has to be supported...
+            throw log.throwing(new AssertionError("Unreachable code"));
+        }
+		sb.append("<td class='details right small'><a target='_blank' href='").append(anatEntityUrl)
+		    .append("' title='External link to ontology visualization'>")
+		    .append(htmlEntities(anatEntity.getId()))
+		    .append("</a></td><td>")
+			.append(htmlEntities(anatEntity.getName())).append("</td>");
 		
 		// Dev stage cell
 		sb.append("<td><span class='expandable' title='click to expand'>[+] ").append(calls.size())
@@ -159,8 +176,9 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 			.append(calls.stream().map(call -> {
 				DevStage stage = conditionUtils.getDevStage(call.getCondition().getDevStageId());
 				StringBuilder sb2 = new StringBuilder();
-				sb2.append("<li class='dev-stage'><span class='details small'>").append(stage.getId()).append("</span>")
-					.append(stage.getName()).append("</li>");
+				sb2.append("<li class='dev-stage'><span class='details small'>")
+				    .append(htmlEntities(stage.getId())).append("</span>")
+					.append(htmlEntities(stage.getName())).append("</li>");
 				return sb2.toString();
 			}).collect(Collectors.joining("\n")))      
 			.append("</ul></td>");
@@ -193,13 +211,14 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 	    log.entry(gene);
 	    
 		final StringBuilder table = new StringBuilder("<table id='geneinfo'>");
-		table.append("<tr><td>").append("<strong>Ensembl Id</strong></td><td>").append(gene.getId())
+		table.append("<tr><th>").append("Ensembl Id</th><td>").append(htmlEntities(gene.getId()))
 		        .append("</td></tr>");
-		table.append("<tr><td>").append("<strong>Name</strong></td><td>").append(gene.getName()).append("</td></tr>");
-		table.append("<tr><td>").append("<strong>Description</strong></td><td>").append(gene.getDescription())
+		table.append("<tr><th>").append("Name</th><td>").append(htmlEntities(gene.getName())).append("</td></tr>");
+		table.append("<tr><th>").append("Description</th><td>").append(htmlEntities(gene.getDescription()))
 		        .append("</td></tr>");
-		table.append("<tr><td>").append("<strong>Organism</strong></td><td><em>")
-		        .append(gene.getSpecies().getScientificName()).append("</em> (").append(gene.getSpecies().getName())
+		table.append("<tr><th>").append("Organism</th><td><em>")
+		        .append(htmlEntities(gene.getSpecies().getScientificName())).append("</em> (")
+		        .append(htmlEntities(gene.getSpecies().getName()))
 		        .append(")</td></tr>");
 
 		return log.exit(table.append("</table>").toString());
@@ -253,10 +272,13 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 			break;
 		case NODATA:
 			sb.append("nodata");
+			break;
+	    default: 
+	        throw log.throwing(new IllegalStateException("Unsupported quality: " + quality));
 		}
 
-		sb.append("' title='").append(type.getStringRepresentation()).append(": ")
-		        .append(quality.getStringRepresentation()).append("'>");
+		sb.append("' title='").append(htmlEntities(type.getStringRepresentation())).append(": ")
+		        .append(htmlEntities(quality.getStringRepresentation())).append("'>");
 
 		switch (type) {
 		case AFFYMETRIX:

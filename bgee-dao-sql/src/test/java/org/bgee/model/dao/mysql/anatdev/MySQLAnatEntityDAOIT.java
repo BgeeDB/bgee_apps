@@ -150,7 +150,7 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
     }
 
     /**
-     * Test the select method {@link MySQLAnatEntityDAO#getAnatEntities(Set, Set)}.
+     * Test the select method {@link MySQLAnatEntityDAO#getAnatEntities(Collection, Collection)}.
      */
     @Test
     public void shouldGetAnatEntities() throws SQLException {
@@ -195,6 +195,34 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
         assertTrue("AnatEntityTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(
                         dao.getAnatEntities(speciesIds, anatEntitiesIds).getAllTOs(),
+                        expectedAnatEntities));
+    }
+
+    /**
+     * Test the select method {@link MySQLAnatEntityDAO#getAnatEntities(Collection, Boolean, 
+     * Collection, Collection)}.
+     */
+    @Test
+    public void shouldGetAnatEntitiesAllSpecies() throws SQLException {
+
+        this.useSelectDB();
+
+        MySQLAnatEntityDAO dao = new MySQLAnatEntityDAO(this.getMySQLDAOManager());
+
+        // Test recovery of several attributes with filter on species IDs
+        dao.clearAttributes();
+        dao.setAttributes(this.getAttributesForDataTest());
+        Collection<String> speciesIds = Arrays.asList("11", "21");
+        
+        // Test recovery of all attributes with filter on species and anat. entities IDs.
+        Collection<AnatEntityTO> expectedAnatEntities = this.getAnatEntityTOsFilterdBySpeciesIds().stream()
+                .filter(ae -> ae.getId().equals("Anat_id1") || ae.getId().equals("Anat_id2") || ae.getId().equals("UBERON:0011606"))
+                .collect(Collectors.toList());
+        assertTrue("AnatEntityTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(
+                        dao.getAnatEntities(speciesIds, false, 
+                                Arrays.asList("Anat_id1", "Anat_id2", "Anat_id5", "UBERON:0011606"), 
+                                this.getAttributesForDataTest()).getAllTOs(),
                         expectedAnatEntities));
     }
 

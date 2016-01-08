@@ -10,7 +10,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -415,24 +414,6 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         log.entry(speciesIds, relationStatus);
         return log.exit(this.getStageRelations(speciesIds, true, null, null, true, relationStatus, 
                 this.getAttributes()));        
-    }
-    
-    /**
-     * Generates an EXISTS clause to identify entities existing in all requested species.
-     * 
-     * @param existsPart    A {@code String} that is the inner part of the EXISTS clause, e.g.: 
-     *                      "SELECT 1 FROM anatEntityRelationTaxonConstraint AS tc WHERE tc.anatEntityRelationId = " 
-     * @param speciesCount  An {@code int} that is the number of requested species.
-     * @return              A {@code String} that is the SQL EXISTS clause.
-     */
-    private String getAllSpeciesExistsClause(String existsPart, int speciesCount) {
-        log.entry(existsPart, speciesCount);
-        
-        return log.exit("(EXISTS(" + existsPart + " IS NULL) OR (" 
-                + IntStream.range(0, speciesCount)
-                        .mapToObj(i -> "EXISTS(" + existsPart + " = ?)")
-                        .collect(Collectors.joining(" AND "))
-                + ")) ");
     }
 
     /** 

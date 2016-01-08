@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -322,5 +323,27 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
         sb.append(generateSelectClause(tableName, columnToAttributesMap, distinct));
         sb.append(" FROM " + tableName);
         return log.exit(sb.toString());
+    }
+    
+
+    //*************************************************************
+    // OTHER HELPER METHODS
+    //*************************************************************
+    /**
+     * Generates an EXISTS clause to identify entities existing in all requested species.
+     * 
+     * @param existsPart    A {@code String} that is the inner part of the EXISTS clause, e.g.: 
+     *                      "SELECT 1 FROM anatEntityRelationTaxonConstraint AS tc WHERE tc.anatEntityRelationId = " 
+     * @param speciesCount  An {@code int} that is the number of requested species.
+     * @return              A {@code String} that is the SQL EXISTS clause.
+     */
+    protected String getAllSpeciesExistsClause(String existsPart, int speciesCount) {
+        log.entry(existsPart, speciesCount);
+        
+        return log.exit("(EXISTS(" + existsPart + " IS NULL) OR (" 
+                + IntStream.range(0, speciesCount)
+                        .mapToObj(i -> "EXISTS(" + existsPart + " = ?)")
+                        .collect(Collectors.joining(" AND "))
+                + ")) ");
     }
 }

@@ -126,25 +126,46 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
             Set<RelationStatus> relationStatus) throws DAOException;
 
     /**
-     * Retrieve all relations between stages from data source. The relations 
-     * can be filtered by species IDs, stage IDs or {@code RelationStatus} (the only parenthood 
-     * relations between stages are "is_a" relations).
+     * Retrieve developmental stage relations from data source. The relations can be filtered  
+     * by species IDs, source and/or target dev. stage IDs, and {@code RelationStatus}.
      * <p>
      * The relations are retrieved and returned as a {@code RelationTOResultSet}. It is the 
      * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesIds        A {@code Set} of {@code String}s that are the IDs of species 
-     *                          to retrieve relations for.
-     * @param stageIds          A {@code Set} of {@code String}s that are the IDs of stages 
-     *                          to retrieve relations for.
-     * @param relationStatus    A {@code Set} of {@code RelationStatus} that are the status
-     *                          allowing to filter the relations to retrieve.
-     * @return              A {@code RelationTOResultSet} allowing to retrieve stage relations 
-     *                      from data source.
+     * @param speciesIds            A {@code Collection} of {@code String}s that are the IDs of species 
+     *                              to retrieve relations for. Can be {@code null} or empty.
+     * @param anySpecies            A {@code Boolean} defining, when {@code speciesIds} contains several IDs, 
+     *                              whether the relations retrieved should be valid in any 
+     *                              of the requested species (if {@code true}), or in all 
+     *                              of the requested species (if {@code false} or {@code null}).
+     * @param sourceDevStageIds     A {@code Collection} of {@code String}s that are the IDs of dev. stages
+     *                              that should be the sources of the retrieved relations. 
+     *                              Can be {@code null} or empty.
+     * @param targetDevStageIds     A {@code Collection} of {@code String}s that are the IDs of dev. stages
+     *                              that should be the targets of the retrieved relations. 
+     *                              Can be {@code null} or empty.
+     * @param sourceOrTarget        A {@code Boolean} defining, when both {@code sourceDevStageIds} 
+     *                              and {@code targetDevStageIds} are not empty, 
+     *                              whether the relations retrieved should have one of {@code sourceDevStageIds} 
+     *                              as source <strong>and/or</strong> one of {@code targetDevStageIds} as target 
+     *                              (if {@code true}), or, one of {@code sourceDevStageIds} 
+     *                              as source <strong>and</strong> one of {@code targetDevStageIds} as target 
+     *                              (if {@code false} or {@code null}).
+     * @param relationStatus        A {@code Collection} of {@code RelationStatus} that are the status
+     *                              allowing to filter the relations to retrieve.
+     *                              Can be {@code null} or empty.
+     * @param attributes            A {@code Collection} of {@code RelationDAO.Attribute}s 
+     *                              defining the attributes to populate in the returned 
+     *                              {@code RelationTO}s. If {@code null} or empty, 
+     *                              all attributes are populated. 
+     * @return                      A {@code RelationTOResultSet} allowing to retrieve anatomical 
+     *                              entity relations from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public RelationTOResultSet getStageRelations(Set<String> speciesIds, Set<String> stageIds,
-            Set<RelationStatus> relationStatus) throws DAOException;
+    public RelationTOResultSet getStageRelations(Collection<String> speciesIds, Boolean anySpecies, 
+            Collection<String> sourceDevStageIds, Collection<String> targetDevStageIds, Boolean sourceOrTarget, 
+            Collection<RelationStatus> relationStatus, 
+            Collection<RelationDAO.Attribute> attributes) throws DAOException;
 
     /**
      * Inserts the provided anatomical entity relations into the Bgee database, represented as a 

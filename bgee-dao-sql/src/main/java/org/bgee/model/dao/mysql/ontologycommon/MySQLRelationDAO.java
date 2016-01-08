@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -33,8 +34,6 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType
  * @since Bgee 13
  * @see org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO
  */
-//TODO: add a boolean to the methods, to define whether to retrieve relations valid 
-//in any requested species, or in all requested species.
 public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute> 
                                     implements RelationDAO {
     /**
@@ -137,10 +136,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
                 String existsPart = "SELECT 1 FROM anatEntityRelationTaxonConstraint AS tc WHERE "
                         + "tc.anatEntityRelationId = " 
                         + tableName + ".anatEntityRelationId AND tc.speciesId ";
-                sql += "(EXISTS(" + existsPart + " IS NULL) OR (" 
-                        + clonedSpeIds.stream().map(id -> "EXISTS(" + existsPart + " = ?)")
-                                             .collect(Collectors.joining(" AND "))
-                        + ")) ";
+                sql += getAllSpeciesExistsClause(existsPart, clonedSpeIds.size());
             }
         }
         
@@ -230,24 +226,51 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
     }
      
     @Override
-    public RelationTOResultSet getStageRelations(Set<String> speciesIds, Set<String> stageIds, 
-            Set<RelationStatus> relationStatus) {
+    public RelationTOResultSet getStageRelations(Collection<String> speciesIds, Boolean anySpecies, 
+            Collection<String> sourceDevStageIds, Collection<String> targetDevStageIds, Boolean sourceOrTarget, 
+            Collection<RelationStatus> relationStatus, 
+            Collection<RelationDAO.Attribute> attributes) {
         //NOTE: there is no relation table for stages, as they are represented 
         //as a nested set model. So, this method will emulate the existence of such a table, 
         //so that retrieval of relations between stages will be consistent with retrieval 
         //of relations between anatomical entities.
-        log.entry(speciesIds, stageIds, relationStatus);    
+        log.entry(speciesIds, anySpecies, sourceDevStageIds, targetDevStageIds, sourceOrTarget, 
+                relationStatus, attributes);    
 
-        boolean isSpeciesFilter = speciesIds != null && speciesIds.size() > 0;
-        boolean isStageFilter = stageIds != null && stageIds.size() > 0;
-        boolean isRelationStatusFilter = relationStatus != null && relationStatus.size() > 0;
+        //*******************************
+        // FILTER ARGUMENTS
+        //*******************************
+        //Species
+        Set<String> clonedSpeIds = Optional.ofNullable(speciesIds)
+                .map(c -> new HashSet<String>(c)).orElse(null);
+        boolean isSpeciesFilter = clonedSpeIds != null && !clonedSpeIds.isEmpty();
+        boolean realAnySpecies = isSpeciesFilter && 
+                (Boolean.TRUE.equals(anySpecies) || clonedSpeIds.size() == 1);
         
+        //Sources and targets
+        Set<String> clonedSourceFilter = Optional.ofNullable(sourceDevStageIds)
+                .map(c -> new HashSet<String>(c)).orElse(null);
+        boolean isSourceFilter = clonedSourceFilter != null && !clonedSourceFilter.isEmpty();
+        Set<String> clonedTargetFilter = Optional.ofNullable(targetDevStageIds)
+                .map(c -> new HashSet<String>(c)).orElse(null);
+        boolean isTargetFilter = clonedTargetFilter != null && !clonedTargetFilter.isEmpty();
+        boolean isStageFilter = isSourceFilter || isTargetFilter;
+        
+        //Relation status
+        Set<RelationStatus> clonedRelStatus = Optional.ofNullable(relationStatus)
+                .map(c -> c.isEmpty()? null: EnumSet.copyOf(c)).orElse(null);
+        boolean isRelationStatusFilter = clonedRelStatus != null && !clonedRelStatus.isEmpty();
+        
+        //*******************************
+        // SELECT CLAUSE
+        //*******************************
         String sql = null;
-        Collection<RelationDAO.Attribute> attributes = this.getAttributes();
-        if (attributes == null || attributes.isEmpty()) {
+        EnumSet<RelationDAO.Attribute> clonedAttrs = Optional.ofNullable(attributes)
+                .map(e -> e.isEmpty()? null: EnumSet.copyOf(e)).orElse(null);
+        if (clonedAttrs == null || clonedAttrs.isEmpty()) {
             sql = "SELECT tempTable.*";
         } else {
-            for (RelationDAO.Attribute attribute: attributes) {
+            for (RelationDAO.Attribute attribute: clonedAttrs) {
                 if (sql == null) {
                     sql = "SELECT DISTINCT ";
                 } else {
@@ -256,6 +279,10 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
                 sql += this.attributeStageRelationToString(attribute);
             }
         }
+        
+        //*******************************
+        // FROM CLAUSE
+        //*******************************
         sql += " FROM ";
         
         //OK, we create a query that will emulate a temporary table similar to
@@ -283,44 +310,77 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
                 "ON t3.stageId = t4.stageId AND " +
                 "(t2.speciesId IS NULL OR t4.speciesId IS NULL OR t4.speciesId = t2.speciesId) ";
         if (isSpeciesFilter) {
-            //a case is not covered in this where clause: for instance, if we query relations 
-            //for species 1 or species 2, while stage 1 exists in species 1, and stqge2 
-            //in species 2. With only this where clause, we could retrieve 
-            //an incorrect relation between stage 1 an stage 2. But this is not possible 
-            //thanks to the join clause above between t4 and t2. 
-            sql += "WHERE (t2.speciesId IS NULL OR t2.speciesId IN (" +
-                   BgeePreparedStatement.generateParameterizedQueryString(
-                           speciesIds.size()) + ")) " +
-                   "AND (t4.speciesId IS NULL OR t4.speciesId IN (" +
-                   BgeePreparedStatement.generateParameterizedQueryString(
-                           speciesIds.size()) + ")) ";
+            sql += "WHERE ";
+            if  (realAnySpecies) {
+                //a case is not covered in this where clause: for instance, if we query relations 
+                //for species 1 or species 2, while stage 1 exists in species 1, and stqge2 
+                //in species 2. With only this where clause, we could retrieve 
+                //an incorrect relation between stage 1 an stage 2. But this is not possible 
+                //thanks to the join clause above between t4 and t2. 
+                sql += "(t2.speciesId IS NULL OR t2.speciesId IN (" +
+                            BgeePreparedStatement.generateParameterizedQueryString(
+                                clonedSpeIds.size()) + ")) " +
+                        "AND (t4.speciesId IS NULL OR t4.speciesId IN (" +
+                             BgeePreparedStatement.generateParameterizedQueryString(
+                                clonedSpeIds.size()) + ")) ";
+            } else {
+                String existsPart = "SELECT 1 FROM stageTaxonConstraint AS tc WHERE "
+                        + "tc.stageId = t1.stageId AND tc.speciesId ";
+                sql += getAllSpeciesExistsClause(existsPart, clonedSpeIds.size());
+                existsPart = "SELECT 1 FROM stageTaxonConstraint AS tc WHERE "
+                        + "tc.stageId = t3.stageId AND tc.speciesId ";
+                sql += "AND " + getAllSpeciesExistsClause(existsPart, clonedSpeIds.size());
+            }
         }
         sql += ") AS tempTable ";
-        
+
+        //*******************************
+        // WHERE CLAUSE (species already filtered in FROM clause subquery)
+        //*******************************
         if (isStageFilter || isRelationStatusFilter) {
             sql += " WHERE "; 
         }
         if (isStageFilter) {
-            sql += "(stageSourceId IN (" + 
-            BgeePreparedStatement.generateParameterizedQueryString(stageIds.size()) + 
-            ") OR stageTargetId IN (" + 
-            BgeePreparedStatement.generateParameterizedQueryString(stageIds.size()) + ")) ";
+            
+            sql += "(";
+            if (isSourceFilter) {
+                sql += "stageSourceId IN (" 
+                       + BgeePreparedStatement.generateParameterizedQueryString(clonedSourceFilter.size()) 
+                       + ")";
+            }
+            if (isTargetFilter) {
+                if (isSourceFilter) {
+                    if (Boolean.TRUE.equals(sourceOrTarget)) {
+                        sql += " OR ";
+                    } else {
+                        sql += " AND ";
+                    }
+                }
+                sql += "stageTargetId IN (" 
+                        + BgeePreparedStatement.generateParameterizedQueryString(clonedTargetFilter.size()) 
+                        + ")";
+            }
+            sql += ") ";
         }
+        
         if (isRelationStatusFilter) {
             if (isStageFilter) {
                 sql += " AND ";
             }
             sql += "relationStatus IN (" + 
-            BgeePreparedStatement.generateParameterizedQueryString(relationStatus.size()) + ")";
+            BgeePreparedStatement.generateParameterizedQueryString(clonedRelStatus.size()) + ")";
         }
 
+        //*******************************
+        // PREPARE STATEMENT
+        //*******************************
          //we don't use a try-with-resource, because we return a pointer to the results, 
          //not the actual results, so we should not close this BgeePreparedStatement.
          try {
              BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
              int startIndex = 1;
              if (isSpeciesFilter) {
-                 List<Integer> orderedSpeciesIds = speciesIds.stream()
+                 List<Integer> orderedSpeciesIds = clonedSpeIds.stream()
                          .map(e -> e == null? null: Integer.parseInt(e))
                          .collect(Collectors.toList());
                  Collections.sort(orderedSpeciesIds);
@@ -331,15 +391,17 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
                  stmt.setIntegers(startIndex, orderedSpeciesIds, false);
                  startIndex += orderedSpeciesIds.size();
              }
-             if (isStageFilter) {
-                 stmt.setStrings(startIndex, stageIds, true);
-                 startIndex += stageIds.size();
-                 stmt.setStrings(startIndex, stageIds, true);
-                 startIndex += stageIds.size();
+             if (isSourceFilter) {
+                 stmt.setStrings(startIndex, clonedSourceFilter, true);
+                 startIndex += clonedSourceFilter.size();
+             }
+             if (isTargetFilter) {
+                 stmt.setStrings(startIndex, clonedTargetFilter, true);
+                 startIndex += clonedTargetFilter.size();
              }
              if (isRelationStatusFilter) {
-                 stmt.setEnumDAOFields(startIndex, relationStatus, true);
-                 startIndex += relationStatus.size();
+                 stmt.setEnumDAOFields(startIndex, clonedRelStatus, true);
+                 startIndex += clonedRelStatus.size();
              }
              return log.exit(new MySQLRelationTOResultSet(stmt));
          } catch (SQLException e) {
@@ -351,7 +413,26 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
     public RelationTOResultSet getStageRelationsBySpeciesIds(Set<String> speciesIds, 
             Set<RelationStatus> relationStatus) {
         log.entry(speciesIds, relationStatus);
-        return log.exit(this.getStageRelations(speciesIds, null, relationStatus));        
+        return log.exit(this.getStageRelations(speciesIds, true, null, null, true, relationStatus, 
+                this.getAttributes()));        
+    }
+    
+    /**
+     * Generates an EXISTS clause to identify entities existing in all requested species.
+     * 
+     * @param existsPart    A {@code String} that is the inner part of the EXISTS clause, e.g.: 
+     *                      "SELECT 1 FROM anatEntityRelationTaxonConstraint AS tc WHERE tc.anatEntityRelationId = " 
+     * @param speciesCount  An {@code int} that is the number of requested species.
+     * @return              A {@code String} that is the SQL EXISTS clause.
+     */
+    private String getAllSpeciesExistsClause(String existsPart, int speciesCount) {
+        log.entry(existsPart, speciesCount);
+        
+        return log.exit("(EXISTS(" + existsPart + " IS NULL) OR (" 
+                + IntStream.range(0, speciesCount)
+                        .mapToObj(i -> "EXISTS(" + existsPart + " = ?)")
+                        .collect(Collectors.joining(" AND "))
+                + ")) ");
     }
 
     /** 

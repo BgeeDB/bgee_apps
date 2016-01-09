@@ -2,8 +2,7 @@ package org.bgee.model.anatdev;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -54,14 +53,14 @@ public class DevStageService extends Service {
      * @return              A {@code List} of {@code DevStage}s that are the grouping 
      *                      dev. stages for {@code speciesIds} and {@code level}.
      */
-    public List<DevStage> loadGroupingDevStages(Collection<String> speciesIds, Integer level) {
+    public Set<DevStage> loadGroupingDevStages(Collection<String> speciesIds, Integer level) {
         log.entry(speciesIds, level);
-        return log.exit(getDaoManager().getStageDAO().getStagesBySpeciesIds(
-                        Optional.ofNullable(speciesIds).map(e -> new HashSet<>(e)).orElse(new HashSet<>()),
-                        true, level)
+        return log.exit(getDaoManager().getStageDAO().getStages(
+                    speciesIds == null? null: new HashSet<>(speciesIds),
+                    true, null, true, level, null)
                 .stream()
                 .map(DevStageService::mapFromTO)
-                .collect(Collectors.toList()));
+                .collect(Collectors.toSet()));
     }
 
     /**
@@ -72,13 +71,17 @@ public class DevStageService extends Service {
      * @return          The {@code List} of {@code DevStage}s that are the 
      *                  dev. stages for the given set of stage IDs.
      */
-    public List<DevStage> loadDevStagesByIds(Collection<String> stageIds) {
-        log.entry(stageIds);
-        return log.exit(getDaoManager().getStageDAO().getStagesByIds(
-                Optional.ofNullable(stageIds).map(e -> new HashSet<>(e)).orElse(new HashSet<>()))
+    public Set<DevStage> loadDevStages(Collection<String> speciesIds, Boolean anySpecies, 
+            Collection<String> stageIds) {
+        log.entry(speciesIds, anySpecies, stageIds);
+        return log.exit(getDaoManager().getStageDAO().getStages(
+                    speciesIds == null? null: new HashSet<>(speciesIds), 
+                    anySpecies, 
+                    stageIds == null? null: new HashSet<>(stageIds), 
+                    null, null, null)
                 .stream()
                 .map(DevStageService::mapFromTO)
-                .collect(Collectors.toList()));
+                .collect(Collectors.toSet()));
     }
 
     /**

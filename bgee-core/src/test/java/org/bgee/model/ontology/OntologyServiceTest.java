@@ -58,14 +58,14 @@ public class OntologyServiceTest extends TestAncestor {
         ServiceFactory fac = new ServiceFactory(manager);
         OntologyService service = fac.getOntologyService();
         
-        Ontology<AnatEntity> anatOnt = service.getAnatEntityOntology(
+        Ontology<AnatEntity> anatOnt = service.getAnatEntityOntology(null, 
                 Arrays.asList("UBERON:0000061", "UBERON:0003037", "FBbt:00017000", "UBERON:0000465"), 
                 fac.getAnatEntityService());
         System.out.println(anatOnt.getAncestors(anatOnt.getElement("UBERON:0000061")));
         System.out.println(anatOnt.getDescendants(anatOnt.getElement("UBERON:0000061")));
         System.out.println(anatOnt.getDescendants(anatOnt.getElement("UBERON:0000465")));
         
-        Ontology<DevStage> stageOnt = service.getDevStageOntology(
+        Ontology<DevStage> stageOnt = service.getDevStageOntology(null, 
                 Arrays.asList("UBERON:0000104", "UBERON:0000068", "UBERON:0000106"), 
                 fac.getDevStageService());
         System.out.println(stageOnt.getAncestors(stageOnt.getElement("UBERON:0000106")));

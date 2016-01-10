@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -68,10 +69,10 @@ public class DevStageService extends Service {
      * 
      * @param stageIds  A {@code Collection} of {@code String}s that are IDs of dev. stages 
      *                  for which to return the {@code DevStage}s.
-     * @return          The {@code List} of {@code DevStage}s that are the 
+     * @return          A {@code Stream} of {@code DevStage}s that are the 
      *                  dev. stages for the given set of stage IDs.
      */
-    public Set<DevStage> loadDevStages(Collection<String> speciesIds, Boolean anySpecies, 
+    public Stream<DevStage> loadDevStages(Collection<String> speciesIds, Boolean anySpecies, 
             Collection<String> stageIds) {
         log.entry(speciesIds, anySpecies, stageIds);
         return log.exit(getDaoManager().getStageDAO().getStages(
@@ -80,8 +81,7 @@ public class DevStageService extends Service {
                     stageIds == null? null: new HashSet<>(stageIds), 
                     null, null, null)
                 .stream()
-                .map(DevStageService::mapFromTO)
-                .collect(Collectors.toSet()));
+                .map(DevStageService::mapFromTO));
     }
 
     /**

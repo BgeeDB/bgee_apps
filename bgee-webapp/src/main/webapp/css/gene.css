@@ -12,7 +12,7 @@ h1.gene_title span.gene_title {
     display: inline-block;
     vertical-align: middle;
     text-align: center;
-    width: 80%;
+    width: 90%;
 }
 
 table#geneinfo {
@@ -43,23 +43,19 @@ table.legend td {
 	padding: .1em;
 }
 
-td.col10 {
+th.col10 {
 	width: 10%;
 }
 
-td.col15 {
-	width: 15%;
+th.col17 {
+	width: 17%;
 }
 
-td.col20 {
-	width: 92px;
+th.col30 {
+	width: 30%;
 }
 
-td.col25 {
-	width: 33%;
-}
-
-td.col50 {
+td.col42 {
 	width: 42%;
 }
 

@@ -81,11 +81,13 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 	    
 	    String titleStart = "Gene: " + gene.getName() + " - " + gene.getId(); 
 		this.startDisplay(titleStart);
-		this.writeln("<h1 class='gene_title'><span id='species_img'><img height='75' width='75' src='" 
-		        + this.prop.getSpeciesImagesRootDirectory() + htmlEntities(gene.getSpeciesId()) + "_light.jpg' alt='" 
-		        + htmlEntities(gene.getSpecies().getShortName()) + "' /></span><span class='gene_title'>" 
-		        + htmlEntities(titleStart) + " - <em>" + htmlEntities(gene.getSpecies().getScientificName()) + "</em> ("
-                + htmlEntities(gene.getSpecies().getName()) + ")</span></h1>");
+		this.writeln("<h1 class='gene_title'><span class='gene_title'>" + htmlEntities(titleStart) 
+				+ " - <em>" + htmlEntities(gene.getSpecies().getScientificName()) + "</em> ("
+                + htmlEntities(gene.getSpecies().getName()) + ")</span>"
+                + "<span id='species_img'><img height='75' width='75' src='" 
+		        + this.prop.getSpeciesImagesRootDirectory() + htmlEntities(gene.getSpeciesId())
+		        + "_light.jpg' alt='" + htmlEntities(gene.getSpecies().getShortName()) 
+		        + "' /></span></h1>");
 		this.writeln("<h2>Gene Information</h2>");
 		this.writeln("<div class='gene'>" + getGeneInfo(gene) + "</div>");
 		this.writeln("<h2>Expression</h2>");
@@ -123,9 +125,10 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		}).collect(Collectors.joining("\n"));
 
 		sb.append("<table class='expression stripe'>")
-		        .append("<thead><tr><td class='col15'></td><td class='col25'><strong>AnatEntity</strong></td>")
-		        .append("<td class='col50'><strong>Stage</strong></td><td class='col10'>")
-		        .append("<strong>Quality</strong></td></tr></thead>\n");
+		        .append("<thead><tr><th class='col17'>Anatomical entity ID</th>")
+		        .append("<th class='col30'>Anatomical entity</th>")
+				.append("<th class='col42'><strong>Developmental stage</strong></th>")
+				.append("<th class='col10'><strong>Quality</strong></th></tr></thead>\n");
 		sb.append("<tbody>").append(elements).append("</tbody>");
 		sb.append("</table>");
 		sb.append("<div class='gene details'><table class='legend'>")
@@ -172,7 +175,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		
 		// Dev stage cell
 		sb.append("<td><span class='expandable' title='click to expand'>[+] ").append(calls.size())
-			.append(" development stage(s)</span>")
+			.append(" stage(s)</span>")
 			.append("<ul class='invisible dev-stage-list'>")
 			.append(calls.stream().map(call -> {
 				DevStage stage = conditionUtils.getDevStage(call.getCondition().getDevStageId());

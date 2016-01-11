@@ -225,7 +225,7 @@ ul#bgee_links > li:first-child {
     border-top: 0;
     border-left: 0;
     border-right: 0;
-    border-bottom: 3px #920209 solid; /* Set color for browsers that do not support gradients */
+    border-bottom: 2px #920209 solid; /* Set color for browsers that do not support gradients */
     border-image: linear-gradient(to right, rgba(146, 2, 9, 1) 70%, rgba(146, 2, 9, 0));
     border-image-slice: 1;
 }

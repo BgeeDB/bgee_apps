@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -92,14 +93,14 @@ public class CommandTopAnatTest extends TestAncestor {
                 .map(Gene::getId)
                 .collect(Collectors.toSet()));
 
-        List<DevStage> devStages = Arrays.asList(
+        Set<DevStage> devStages = new HashSet<>(Arrays.asList(
                 new DevStage("25", "embryo", "embryo desc", 2, 3, 2, false, true),
-                new DevStage("26", "adult", "adult desc", 4, 5, 2, false, true));
+                new DevStage("26", "adult", "adult desc", 4, 5, 2, false, true)));
         when(devStageService.loadGroupingDevStages(
-                new HashSet<>(Arrays.asList(fgSelectedSpeciesId)), 2))
+                Arrays.asList(fgSelectedSpeciesId), 2))
             .thenReturn(devStages);
         when(devStageService.loadGroupingDevStages(
-                new HashSet<>(Arrays.asList(bgSelectedSpeciesId)), 2))
+                Arrays.asList(bgSelectedSpeciesId), 2))
             .thenReturn(devStages);
 
         List<Species> fgSpecies = Arrays.asList(

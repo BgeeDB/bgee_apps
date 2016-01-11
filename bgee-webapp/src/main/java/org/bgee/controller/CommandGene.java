@@ -69,7 +69,7 @@ public class CommandGene extends CommandParent {
 			List<ExpressionCall> calls = getExpressions(gene);
 			log.info("Expressions: {} {}", calls.size(), calls);
 			Set<Condition> conditions = calls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet());
-			ConditionUtils conditionUtils = new ConditionUtils(conditions, serviceFactory);
+			ConditionUtils conditionUtils = new ConditionUtils(gene.getSpeciesId(), conditions, serviceFactory);
 			display.displayGene(gene, calls, conditionUtils);
 		}
 		log.exit();

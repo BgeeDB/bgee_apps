@@ -75,7 +75,7 @@ public class OntologyServiceTest extends TestAncestor {
         
         Condition cond1 = new Condition("UBERON:0000465", "UBERON:0000104");
         Condition cond2 = new Condition("UBERON:0000061", "UBERON:0000106");
-        ConditionUtils utils = new ConditionUtils(Arrays.asList(cond1, cond2), fac);
+        ConditionUtils utils = new ConditionUtils("9606", Arrays.asList(cond1, cond2), fac);
         assertTrue(utils.isConditionMorePrecise(cond1, cond2));
         assertFalse(utils.isConditionMorePrecise(cond2, cond1));
         System.out.println(utils.getAnatEntityOntology().getElement("UBERON:0000465"));

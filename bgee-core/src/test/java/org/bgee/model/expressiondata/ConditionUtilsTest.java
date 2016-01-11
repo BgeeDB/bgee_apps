@@ -79,18 +79,22 @@ public class ConditionUtilsTest extends TestAncestor {
         @SuppressWarnings("unchecked")
         Ontology<DevStage> devStageOnt = mock(Ontology.class);
         
-        when(ontService.getAnatEntityOntology(
+        when(ontService.getAnatEntityOntology(Arrays.asList("9606"), 
                 new HashSet<>(Arrays.asList(anatEntityId1, anatEntityId2, anatEntityId3)), 
                 anatEntityService))
         .thenReturn(anatEntityOnt);
-        when(ontService.getDevStageOntology(
+        when(ontService.getDevStageOntology(Arrays.asList("9606"), 
                 new HashSet<>(Arrays.asList(devStageId1, devStageId2, devStageId3)), 
                 devStageService))
         .thenReturn(devStageOnt);
         
+        when(anatEntityOnt.getElements()).thenReturn(
+                new HashSet<>(Arrays.asList(anatEntity1, anatEntity2, anatEntity3)));
         when(anatEntityOnt.getElement(anatEntityId1)).thenReturn(anatEntity1);
         when(anatEntityOnt.getElement(anatEntityId2)).thenReturn(anatEntity2);
         when(anatEntityOnt.getElement(anatEntityId3)).thenReturn(anatEntity3);
+        when(devStageOnt.getElements()).thenReturn(
+                new HashSet<>(Arrays.asList(devStage1, devStage2, devStage3)));
         when(devStageOnt.getElement(devStageId1)).thenReturn(devStage1);
         when(devStageOnt.getElement(devStageId2)).thenReturn(devStage2);
         when(devStageOnt.getElement(devStageId3)).thenReturn(devStage3);
@@ -107,8 +111,8 @@ public class ConditionUtilsTest extends TestAncestor {
         when(devStageOnt.getDescendants(devStage1)).thenReturn(
                 new HashSet<>(Arrays.asList(devStage2, devStage3)));
         
-        this.conditionUtils = new ConditionUtils(Arrays.asList(cond1, cond2, cond3, cond4, cond5, 
-                cond6, cond7), 
+        this.conditionUtils = new ConditionUtils("9606", 
+                Arrays.asList(cond1, cond2, cond3, cond4, cond5, cond6, cond7), 
                 mockFact);
     }
 

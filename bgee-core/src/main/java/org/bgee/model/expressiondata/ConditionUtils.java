@@ -1,10 +1,12 @@
 package org.bgee.model.expressiondata;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.ServiceFactory;
@@ -14,10 +16,10 @@ import org.bgee.model.ontology.Ontology;
 import org.bgee.model.ontology.OntologyService;
 
 /**
- * Class providing common operations on {@link Condition}s.
+ * Class providing convenience operations on {@link Condition}s.
  * 
  * @author Frederic Bastian
- * @version Bgee 13 Dec. 2015
+ * @version Bgee 13 Jan. 2016
  * @since Bgee 13 Dec. 2015
  */
 public class ConditionUtils {
@@ -42,8 +44,34 @@ public class ConditionUtils {
      */
     private final Ontology<DevStage> devStageOnt;
     
-    public ConditionUtils(Collection<Condition> conditions, ServiceFactory serviceFactory) 
-            throws IllegalArgumentException {
+    /**
+     * A {@code String} that is the ID of the species which the {@code Condition}s 
+     * should be valid in.
+     */
+    //XXX: maybe this will become a Set<String> for multi-species management. We'll see later. 
+    //We do not provide getter for now, we don't need it and the returned type might change.
+    private final String speciesId;
+    
+    /**
+     * Constructor accepting all required parameters. 
+     * 
+     * @param speciesId         A {@code String} that is the ID of the species which the {@code Condition}s 
+     *                          should be valid in.
+     * @param conditions        A {@code Collection} of {@code Condition}s that will be managed 
+     *                          by this {@code ConditionUtils}.
+     * @param serviceFactory    A {@code ServiceFactory} to acquire {@code Service}s from.
+     * @throws IllegalArgumentException If any of the arguments is {@code null} or empty, 
+     *                                  or if the anat. entity or dev. stage of a {@code Condition} 
+     *                                  does not exist in the requested species.
+     */
+    //XXX: we'll see what we'll do for multi-species later, for now we only accept a single species. 
+    //I guess multi-species would need a separate class, e.g., MultiSpeciesConditionUtils.
+    public ConditionUtils(String speciesId, Collection<Condition> conditions, 
+            ServiceFactory serviceFactory) throws IllegalArgumentException {
+        log.entry(speciesId, conditions, serviceFactory);
+        if (StringUtils.isBlank(speciesId)) {
+            throw log.throwing(new IllegalArgumentException("A species ID must be provided."));
+        }
         if (conditions == null || conditions.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Some conditions must be provided."));
         }
@@ -51,6 +79,7 @@ public class ConditionUtils {
             throw log.throwing(new IllegalArgumentException("A ServiceFactory must be provided."));
         }
         
+        this.speciesId = speciesId;
         this.conditions = new HashSet<>(conditions);
         this.serviceFactory = serviceFactory;
         
@@ -62,10 +91,39 @@ public class ConditionUtils {
         }
         
         OntologyService ontService = this.serviceFactory.getOntologyService();
-        this.anatEntityOnt = ontService.getAnatEntityOntology(anatEntityIds, 
-                this.serviceFactory.getAnatEntityService());
-        this.devStageOnt = ontService.getDevStageOntology(devStageIds, 
-                this.serviceFactory.getDevStageService());
+        this.anatEntityOnt = ontService.getAnatEntityOntology(Arrays.asList(this.speciesId), 
+                anatEntityIds, this.serviceFactory.getAnatEntityService());
+        this.devStageOnt = ontService.getDevStageOntology(Arrays.asList(this.speciesId), 
+                devStageIds, this.serviceFactory.getDevStageService());
+
+        this.checkEntityExistence(devStageIds, this.devStageOnt);
+        this.checkEntityExistence(anatEntityIds, this.anatEntityOnt);
+    }
+    
+    /**
+     * Check that all elements in {@code entityIds} are present in {@code ont}, 
+     * and only them.
+     * 
+     * @param entityIds A {@code Set} of {@code String}s that are the IDs of the entities 
+     *                  to check for existence in {@code ont}.
+     * @param ont       An {@code Ontology} that should contain all elements with their ID 
+     *                  in {@code entityIds}, and only them.
+     * @throws IllegalArgumentException If some elements in {@code entityIds} are not present in 
+     *                                  {@code ont}, or the other way around.
+     */
+    private void checkEntityExistence(Set<String> entityIds, Ontology<?> ont) throws IllegalArgumentException {
+        log.entry(entityIds, ont);
+        
+        Set<String> recognizedEntityIds = ont.getElements().stream()
+                .map(e -> e.getId()).collect(Collectors.toSet());
+        if (!recognizedEntityIds.equals(entityIds)) {
+            Set<String> unrecognizedIds = new HashSet<>(entityIds);
+            unrecognizedIds.removeAll(recognizedEntityIds);
+            throw log.throwing(new IllegalArgumentException("Some entities do not exist "
+                    + "in the requested species (" + this.speciesId + "): " + unrecognizedIds));
+        }
+        
+        log.exit();
     }
     
     /**
@@ -156,6 +214,22 @@ public class ConditionUtils {
         return log.exit(this.getAnatEntityOntology().getElement(anatEntityId));
     }
     /**
+     * Retrieve an {@code AnatEntity} from a {@code Condition}.
+     * 
+     * @param condition     The {@code Condition} which to retrieve the ID of the requested 
+     *                      {@code AnatEntity} from.
+     * @return              The {@code AnatEntity} corresponding to the ID provided by {@code condition}. 
+     * @throws IllegalArgumentException If {@code condition} was not part of the {@code Condition}s 
+     *                                  provided at instantiation of this {@code ConditionUtils}.
+     */
+    public AnatEntity getAnatEntity(Condition condition) {
+        log.entry(condition);
+        if (!this.conditions.contains(condition)) {
+            throw log.throwing(new IllegalArgumentException("Unrecognized condition: " + condition));
+        }
+        return log.exit(this.getAnatEntityOntology().getElement(condition.getAnatEntityId()));
+    }
+    /**
      * Retrieve a {@code DevStage} present in a {@code Condition} provided at instantiation, 
      * based on its ID.
      * 
@@ -167,6 +241,22 @@ public class ConditionUtils {
     public DevStage getDevStage(String devStageId) {
         log.entry(devStageId);
         return log.exit(this.getDevStageOntology().getElement(devStageId));
+    }
+    /**
+     * Retrieve a {@code DevStage} from a {@code Condition}.
+     * 
+     * @param condition     The {@code Condition} which to retrieve the ID of the requested 
+     *                      {@code DevStage} from.
+     * @return              The {@code DevStage} corresponding to the ID provided by {@code condition}. 
+     * @throws IllegalArgumentException If {@code condition} was not part of the {@code Condition}s 
+     *                                  provided at instantiation of this {@code ConditionUtils}.
+     */
+    public DevStage getDevStage(Condition condition) {
+        log.entry(condition);
+        if (!this.conditions.contains(condition)) {
+            throw log.throwing(new IllegalArgumentException("Unrecognized condition: " + condition));
+        }
+        return log.exit(this.getDevStageOntology().getElement(condition.getDevStageId()));
     }
     
     //*********************************

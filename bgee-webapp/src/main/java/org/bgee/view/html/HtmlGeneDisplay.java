@@ -81,20 +81,36 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 	    
 	    String titleStart = "Gene: " + gene.getName() + " - " + gene.getId(); 
 		this.startDisplay(titleStart);
-		this.writeln("<h1 class='gene_title'><span class='gene_title'>" + htmlEntities(titleStart) 
-				+ " - <em>" + htmlEntities(gene.getSpecies().getScientificName()) + "</em> ("
-                + htmlEntities(gene.getSpecies().getName()) + ")</span>"
-                + "<span id='species_img'><img height='75' width='75' src='" 
+		this.writeln("<h1 class='gene_title'><img height='50' width='50' src='" 
 		        + this.prop.getSpeciesImagesRootDirectory() + htmlEntities(gene.getSpeciesId())
 		        + "_light.jpg' alt='" + htmlEntities(gene.getSpecies().getShortName()) 
-		        + "' /></span></h1>");
+		        + "' />" + htmlEntities(titleStart) 
+				+ " - <em>" + htmlEntities(gene.getSpecies().getScientificName()) + "</em> ("
+                + htmlEntities(gene.getSpecies().getName()) + ")</h1>");
 		this.writeln("<h2>Gene Information</h2>");
 		this.writeln("<div class='gene'>" + getGeneInfo(gene) + "</div>");
 		this.writeln("<h2>Expression</h2>");
 		this.writeln("<div id='expr_intro'>Expression calls ordered by biological relevance: </div>");
+		
+		this.writeln("<div id='expr_data'>");
+		this.writeln("<div class='legend'>");
+		this.writeln("<table><caption>Sources</caption>" +
+				"<tr><th>A</th><td>Affymetrix</td></tr>" +
+				"<tr><th>E</th><td>EST</td></tr>" +
+				"<tr><th>I</th><td>In Situ</td></tr>" +
+				"<tr><th>R</th><td>RNA-Seq</li></td></tr></table>");
+		this.writeln("<table><caption>Qualities</caption>" +
+				"<tr><td><span class='quality high'>high quality</span></td></tr>" +
+				"<tr><td><span class='quality low'>low quality</span></td></tr>" +
+				"<tr><td><span class='quality nodata'>no data</span></td></tr></table>");
+		this.writeln("</div>"); // l
+
 		this.writeln("<div id='table-container'>");
 		this.writeln(getExpressionHTMLByAnat(byAnatEntity(filterCalls(calls, conditionUtils)), conditionUtils));
-		this.writeln("</div>");
+		this.writeln("</div>"); // table-container
+
+		this.writeln("</div>"); // expr_data
+
 		this.endDisplay();
 		
 		log.exit();
@@ -125,18 +141,12 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		}).collect(Collectors.joining("\n"));
 
 		sb.append("<table class='expression stripe'>")
-		        .append("<thead><tr><th class='col17'>Anatomical entity ID</th>")
-		        .append("<th class='col30'>Anatomical entity</th>")
-				.append("<th class='col42'><strong>Developmental stage</strong></th>")
-				.append("<th class='col10'><strong>Quality</strong></th></tr></thead>\n");
+		        .append("<thead><tr><th class='anat-entity-id'>Anat. entity ID</th>")
+		        .append("<th class='anat-entity'>Anatomical entity</th>")
+				.append("<th class='dev-stages'><strong>Developmental stage(s)</strong></th>")
+				.append("<th class='quality'><strong>Quality</strong></th></tr></thead>\n");
 		sb.append("<tbody>").append(elements).append("</tbody>");
 		sb.append("</table>");
-		sb.append("<div class='gene details'><table class='legend'>")
-		        .append("<tr><td></td><td><strong>Sources</strong></td><td><strong>Quality</strong></td></tr>")
-		        .append("<tr><td><strong>A</strong></td><td>Affymetrix</td><td><span class='quality high'>high quality</span></td><td></td></tr>")
-		        .append("<tr><td><strong>E</strong></td><td>EST (Expressed Sequence Tag)</td><td><span class='quality low'>low quality</span></td></tr>")
-		        .append("<tr><td><strong>I</strong></td><td>In Situ</td><td><span class='quality nodata'>no data</span></td></tr>")
-		        .append("<tr><td><strong>R</strong></td><td>RNA-Seq</td></tr></table></div>");
 		return log.exit(sb.toString());
 
 	}

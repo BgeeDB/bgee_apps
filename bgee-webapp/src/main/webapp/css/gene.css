@@ -1,18 +1,13 @@
 h1.gene_title {
-	text-align: left !important;
-	margin: 0;
-}
-h1.gene_title span#species_img {
-	display: inline-block;
-    vertical-align: middle;
-    width: 10%;
-    text-align: center;
-}
-h1.gene_title span.gene_title {
     display: inline-block;
     vertical-align: middle;
     text-align: center;
-    width: 90%;
+    width: 100%;
+	margin: 0;
+}
+h1.gene_title img {
+    margin-right: 20px;
+    vertical-align: middle;
 }
 
 table#geneinfo {
@@ -29,34 +24,58 @@ table#geneinfo td {
 }
 
 div#expr_intro {
-	margin: 1em 2%;
+	display: inline-flex;
+    margin: 0 2% 1.5em;
 }
+div#expr_data {
+    display: inline-flex;
+    align-items: baseline;
+    width: 100%;
+}
+
 div#table-container {
-	margin: 1em 2%;
+	width: 85%;
 }
 
-table.legend {
+div.legend {
+	width: 14%;
+    margin-right: 1%;
 	border: 1px solid #ccc;
-	padding: 0.5em;
+	font-size: 0.85em;
 }
-table.legend td {
-	padding: .1em;
+div.legend span.quality {
+	font-size: 1em;
+}
+div.legend table {
+    margin: 10%;
+    width: 80%;
+}
+div.legend table caption {
+    text-align: left;
+    font-weight: bold;
+    margin-bottom: 5px;
+    border-width: 0px 0px 1px;
+    border-style: solid;
+}
+div.legend table th {
+    min-width: 14%;
 }
 
-th.col10 {
-	width: 10%;
+table th, table td {
+    text-align: left;
+    padding: 0.2em;
 }
-
-th.col17 {
-	width: 17%;
+th.anat-entity-id {
+	width: 15%;
 }
-
-th.col30 {
-	width: 30%;
+th.anat-entity {
+	width: 33%;
 }
-
-td.col42 {
+th.dev-stages {
 	width: 42%;
+}
+th.quality {
+	width: 10%;
 }
 
 /* We need div#table-container to override datatables jquery plugin */

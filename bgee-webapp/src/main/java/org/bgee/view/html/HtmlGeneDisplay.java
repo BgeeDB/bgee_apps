@@ -1,7 +1,6 @@
 package org.bgee.view.html;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -82,7 +81,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 	    String titleStart = "Gene: " + gene.getName() + " - " + gene.getId(); 
 		this.startDisplay(titleStart);
 		this.writeln("<h1 class='gene_title'><img height='50' width='50' src='" 
-		        + this.prop.getSpeciesImagesRootDirectory() + htmlEntities(gene.getSpeciesId())
+		        + this.prop.getSpeciesImagesRootDirectory() + urlEncode(gene.getSpeciesId())
 		        + "_light.jpg' alt='" + htmlEntities(gene.getSpecies().getShortName()) 
 		        + "' />" + htmlEntities(titleStart) 
 				+ " - <em>" + htmlEntities(gene.getSpecies().getScientificName()) + "</em> ("
@@ -127,7 +126,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      *                         retrieved from the {@code ExpressionCall}s in {@code byAnatEntityId}.
 	 * @return                 A {@code String} that is the generated HTML.
 	 */
-	private static String getExpressionHTMLByAnat(Map<String, List<ExpressionCall>> byAnatEntityId,
+	private String getExpressionHTMLByAnat(Map<String, List<ExpressionCall>> byAnatEntityId,
 	        final ConditionUtils conditionUtils) {
 	    log.entry(byAnatEntityId, conditionUtils);
 
@@ -162,7 +161,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      *                         ordered by biological relevance. 
 	 * @return                 A {@code String} that is the generated HTML.
 	 */
-	private static String getExpressionRowsForAnatEntity(AnatEntity anatEntity, ConditionUtils conditionUtils,
+	private String getExpressionRowsForAnatEntity(AnatEntity anatEntity, ConditionUtils conditionUtils,
 	        List<ExpressionCall> calls) {
 	    log.entry(anatEntity, conditionUtils, calls);
 	    
@@ -170,13 +169,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		sb.append("<tr>");
 		
 		// Anat entity ID and Anat entity cells 
-		String anatEntityUrl = "http://purl.obolibrary.org/obo/";
-        try {
-            anatEntityUrl += java.net.URLEncoder.encode(anatEntity.getId().replace(':', '_'), "UTF-8");
-        } catch (UnsupportedEncodingException e1) {
-            //Nothing here, UTF-8 has to be supported...
-            throw log.throwing(new AssertionError("Unreachable code"));
-        }
+		String anatEntityUrl = "http://purl.obolibrary.org/obo/" 
+		    + this.urlEncode(anatEntity.getId().replace(':', '_'));
 		sb.append("<td class='details right small'><a target='_blank' href='").append(anatEntityUrl)
 		    .append("' title='External link to ontology visualization'>")
 		    .append(htmlEntities(anatEntity.getId()))

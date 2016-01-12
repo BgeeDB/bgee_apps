@@ -92,21 +92,22 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		this.writeln("<div id='expr_intro'>Expression calls ordered by biological relevance: </div>");
 		
 		this.writeln("<div id='expr_data'>");
-		this.writeln("<div class='legend'>");
-		this.writeln("<table><caption>Sources</caption>" +
-				"<tr><th>A</th><td>Affymetrix</td></tr>" +
-				"<tr><th>E</th><td>EST</td></tr>" +
-				"<tr><th>I</th><td>In Situ</td></tr>" +
-				"<tr><th>R</th><td>RNA-Seq</li></td></tr></table>");
-		this.writeln("<table><caption>Qualities</caption>" +
-				"<tr><td><span class='quality high'>high quality</span></td></tr>" +
-				"<tr><td><span class='quality low'>low quality</span></td></tr>" +
-				"<tr><td><span class='quality nodata'>no data</span></td></tr></table>");
-		this.writeln("</div>"); // l
 
 		this.writeln("<div id='table-container'>");
 		this.writeln(getExpressionHTMLByAnat(byAnatEntity(filterCalls(calls, conditionUtils)), conditionUtils));
 		this.writeln("</div>"); // table-container
+		
+        this.writeln("<div class='legend'>");
+        this.writeln("<table><caption>Sources</caption>" +
+                "<tr><th>A</th><td>Affymetrix</td></tr>" +
+                "<tr><th>E</th><td>EST</td></tr>" +
+                "<tr><th>I</th><td>In Situ</td></tr>" +
+                "<tr><th>R</th><td>RNA-Seq</li></td></tr></table>");
+        this.writeln("<table><caption>Qualities</caption>" +
+                "<tr><td><span class='quality high'>high quality</span></td></tr>" +
+                "<tr><td><span class='quality low'>low quality</span></td></tr>" +
+                "<tr><td><span class='quality nodata'>no data</span></td></tr></table>");
+        this.writeln("</div>"); // legend
 
 		this.writeln("</div>"); // expr_data
 

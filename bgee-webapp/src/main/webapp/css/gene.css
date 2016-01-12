@@ -29,18 +29,20 @@ div#expr_intro {
 }
 div#expr_data {
     display: inline-flex;
-    align-items: baseline;
+    /*align-items: baseline;*/
     width: 100%;
 }
 
 div#table-container {
 	width: 85%;
+	margin-left: 2%;
 }
 
 div.legend {
 	width: 14%;
-    margin-right: 1%;
-	border: 1px solid #ccc;
+    margin-left: 1%;
+    margin-top: 2em;
+	border-left: 1px solid #ccc;
 	font-size: 0.85em;
 }
 div.legend span.quality {

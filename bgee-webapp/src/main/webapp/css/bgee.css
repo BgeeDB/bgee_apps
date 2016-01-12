@@ -29,13 +29,15 @@ So we include it from scratch in all our pages, to adapt element sizes to it.
 
 /****SIB HEADER****/
 header {
-    position: relative;
+    position: fixed;
+    top: 0px;
     display: inline-block;
-    background: #F7F8FA url(../img/sib_header_bkgd.png) repeat-x top left;
-    height: 120px;
+    background-color: rgba(0, 0, 0, 0.61);
+    height: 45px;
     width: 100%;
     color: #282828;
     z-index: 2;
+    border-bottom: 0.15em solid #E2011B;
 }
 
 header h1, header h2  {
@@ -65,30 +67,24 @@ header img {
 
 #sib_logo {
     position: absolute;
-    width: 141px;
-    height: 75px;
+    height: 30px;
     top: 8px;
-    right: 2%;
+    right: 1%;
 }
 
 #sib_other_logo {
     position: absolute;
     top: 8px;
-    left: 2%;
-    width: 186px;
-    height: 75px;
+    left: 1%;
+    height: 30px;
 }
 
 /****NAVIGATION BAR****/
 #nav {
-    position: absolute;
     bottom: 0;
     height: 2em;
-    width: 100%;
-    margin: 5px 0 0 0;
+    margin: 8px 60px 0px;
     display: block;
-    background-color: #ABBDC4;
-    border-bottom: 0.25em solid #920209;
     padding: 0.2em 0 0 0;
 }
 
@@ -114,18 +110,18 @@ ul#bgee_links > li:first-child {
 }
 
 #nav ul#bgee_links li:hover {
-    background-color: #29516A;
+    background-color: white;
     z-index: 100;
 }
 
 /* style the links for the top level */
 #nav a, #nav a:visited {
-    color: #29516A;
+    color: white;
     text-decoration: none;
     display: inline-block;
 }
 #nav a:hover, #nav :hover>a {
-    color: white;
+    color: grey;
     height: 25px;
     margin-bottom: 3px;
 }
@@ -198,8 +194,7 @@ ul#bgee_links > li:first-child {
 /****SIB BODY****/
 #sib_body {
     position: relative;
-    padding: 10px 1% 50px 1%;
-    background: #F7F8FA url(../img/sib_body_bkgd.png) repeat-x top left;
+    padding: 50px 1% 50px 1%;
     background-size: 100% 100%;
     /*To be modified when multi-species files will be available*/
     min-height: 340px;

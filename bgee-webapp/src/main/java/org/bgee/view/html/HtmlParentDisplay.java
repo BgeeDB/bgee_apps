@@ -290,9 +290,6 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 this.prop.getLogoImagesRootDirectory() + "bgee13_logo.png' alt='Bgee logo' />");
         this.writeln("</a>");
     
-        // Title
-        this.writeln("<h1>Bgee: Gene Expression Evolution</h1>");
-    
         // SIB logo
         this.writeln("<a href='http://www.isb-sib.ch/' target='_blank' " +
                 "title='Link to the SIB Swiss Institute of Bioinformatics'>");

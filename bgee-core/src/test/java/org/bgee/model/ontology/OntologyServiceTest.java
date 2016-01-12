@@ -1,19 +1,32 @@
 package org.bgee.model.ontology;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.anatdev.DevStage;
+import org.bgee.model.anatdev.DevStageService;
 import org.bgee.model.dao.api.DAOManager;
+import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
+import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTO;
+import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTOResultSet;
+import org.bgee.model.dao.api.anatdev.StageDAO;
+import org.bgee.model.dao.api.anatdev.StageDAO.StageTO;
+import org.bgee.model.dao.api.anatdev.StageDAO.StageTOResultSet;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
@@ -28,7 +41,7 @@ import org.junit.Test;
  * This class holds the unit tests for the {@code OntologyService} class.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Dec. 2015
+ * @version Bgee 13, Jan. 2016
  * @since   Bgee 13, Dec. 2015
  */
 public class OntologyServiceTest extends TestAncestor {
@@ -40,40 +53,81 @@ public class OntologyServiceTest extends TestAncestor {
     @Test
     public void shouldGetAnatEntityOntology() {
         DAOManager managerMock = mock(DAOManager.class);
-        RelationDAO dao = mock(RelationDAO.class);
-        when(managerMock.getRelationDAO()).thenReturn(dao);
+        RelationDAO relationDao = mock(RelationDAO.class);
+        when(managerMock.getRelationDAO()).thenReturn(relationDao);
+        AnatEntityDAO anatEntityDao = mock(AnatEntityDAO.class);
+        when(managerMock.getAnatEntityDAO()).thenReturn(anatEntityDao);
         
-        RelationTOResultSet mockRelationRs = getMockResultSet(RelationTOResultSet.class, Arrays.asList(
-        		new RelationTO("22", "Anat_id10", "Anat_id5", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-        		new RelationTO("23", "Anat_id11", "Anat_id10", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+        Set<String> speciesIds = new HashSet<String>();
+        speciesIds.addAll(Arrays.asList("11", "22", "44"));
+        Set<String> anatEntityIds = new HashSet<String>();
+        anatEntityIds.addAll(Arrays.asList("Anat_id3", "Anat_id5"));
+
+        Set<String> sourceAnatEntityIds = new HashSet<String>();
+        sourceAnatEntityIds.addAll(anatEntityIds);
+        Set<String> targetAnatEntityIds = new HashSet<String>();
+        targetAnatEntityIds.addAll(anatEntityIds);
+        
+        boolean sourceOrTarget = true;
+        
+        Set<RelationTO.RelationType> daoRelationTypes = new HashSet<>();
+        daoRelationTypes.add(RelationTO.RelationType.ISA_PARTOF);
+        daoRelationTypes.add(RelationTO.RelationType.DEVELOPSFROM);
+
+        List<RelationTO> relationTOs = Arrays.asList(
         		new RelationTO("12", "Anat_id2", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
         		new RelationTO("13", "Anat_id3", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
         		new RelationTO("14", "Anat_id4", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
         		new RelationTO("15", "Anat_id5", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-        		new RelationTO("16", "Anat_id5", "Anat_id7", RelationType.DEVELOPSFROM, RelationStatus.INDIRECT),
-        		new RelationTO("17", "Anat_id5", "Anat_id8", RelationType.DEVELOPSFROM, RelationStatus.DIRECT),
-        		new RelationTO("18", "Anat_id6", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-        		new RelationTO("19", "Anat_id7", "Anat_id6", RelationType.DEVELOPSFROM, RelationStatus.DIRECT),
-        		new RelationTO("20", "Anat_id8", "Anat_id7", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
-        		new RelationTO("21", "Anat_id9", "Anat_id5", RelationType.ISA_PARTOF, RelationStatus.DIRECT)));
+        		new RelationTO("21", "Anat_id9", "Anat_id5", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+        		new RelationTO("22", "Anat_id10", "Anat_id5", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+        		new RelationTO("23", "Anat_id11", "Anat_id10", RelationType.DEVELOPSFROM, RelationStatus.DIRECT));
         
-        Set<String> speciesIds = new HashSet<String>();
-        speciesIds.addAll(Arrays.asList("11", "22", "44"));
-        
-//        when(dao.getAnatEntityRelations(speciesIds, true, sourceAnatEntityIds, targetAnatEntityIds,
-//                       sourceOrTarget, relationTypes, EnumSet.complementOf(EnumSet.of(RelationStatus.REFLEXIVE)), null)).thenReturn(mockRelationRs);
-//      relationTypes.stream()
-//      .map(Ontology::convertRelationType)
-//      .collect(Collectors.toCollection(() -> 
-//          EnumSet.noneOf(RelationTO.RelationType.class))), 
+        RelationTOResultSet mockRelationRs = getMockResultSet(RelationTOResultSet.class, relationTOs);
+        when(relationDao.getAnatEntityRelations(
+        		speciesIds, true, sourceAnatEntityIds, targetAnatEntityIds, sourceOrTarget, 
+        		daoRelationTypes, EnumSet.complementOf(EnumSet.of(RelationStatus.REFLEXIVE)), null))
+        	.thenReturn(mockRelationRs);
 
-//        Ontology<AnatEntity> expectedOntology = new Ontology<AnatEntity>(anatEntities, relations, relationTypes);
-//        
-//        OntologyService service = new OntologyService(managerMock);
-//        assertEquals("Incorrect anatomical ontology",
-//                expectedOntology, service.getAnatEntityOntology(speciesIds, anatEntityIds, 
-//                               relationTypes, getAncestors, getDescendants, service));
-     
+        AnatEntityTOResultSet mockAnatEntityRs = getMockResultSet(AnatEntityTOResultSet.class, Arrays.asList(
+        		new AnatEntityTO("1", "Anat_id1", "desc1", null, null, null),
+        		new AnatEntityTO("2", "Anat_id2", "desc2", null, null, null),
+        		new AnatEntityTO("3", "Anat_id3", "desc3", null, null, null),
+        		new AnatEntityTO("4", "Anat_id4", "desc4", null, null, null),
+        		new AnatEntityTO("5", "Anat_id5", "desc5", null, null, null),
+        		new AnatEntityTO("9", "Anat_id9", "desc9", null, null, null),
+        		new AnatEntityTO("10", "Anat_id10", "desc10", null, null, null),
+        		new AnatEntityTO("11", "Anat_id11", "desc11", null, null, null)));
+        Set<String> expAnatEntityIds = new HashSet<String>();
+        expAnatEntityIds.addAll(Arrays.asList("Anat_id1", "Anat_id2", "Anat_id3",
+        		"Anat_id4", "Anat_id5", "Anat_id9", "Anat_id10", "Anat_id11"));
+        when(anatEntityDao.getAnatEntities(speciesIds, true, expAnatEntityIds, null))
+        	.thenReturn(mockAnatEntityRs);
+
+        Set<AnatEntity> expAnatEntities = new HashSet<>();
+        expAnatEntities.addAll(Arrays.asList(
+        		new AnatEntity("1", "Anat_id1", "desc1"),
+        		new AnatEntity("2", "Anat_id2", "desc2"),
+        		new AnatEntity("3", "Anat_id3", "desc3"),
+        		new AnatEntity("4", "Anat_id4", "desc4"),
+        		new AnatEntity("5", "Anat_id5", "desc5"),
+        		new AnatEntity("9", "Anat_id9", "desc9"),
+        		new AnatEntity("10", "Anat_id10", "desc10"),
+        		new AnatEntity("11", "Anat_id11", "desc11")));
+        
+        Set<Ontology.RelationType> expRelationTypes = new HashSet<>();
+        expRelationTypes.add(Ontology.RelationType.ISA_PARTOF);
+        expRelationTypes.add(Ontology.RelationType.DEVELOPSFROM);
+
+        Ontology<AnatEntity> expectedOntology = 
+        		new Ontology<>(expAnatEntities, new HashSet<>(relationTOs), expRelationTypes);
+        
+        OntologyService service = new OntologyService(managerMock);
+        AnatEntityService anatEntityService = new AnatEntityService(managerMock);
+
+        assertEquals("Incorrect anatomical entity ontology",
+                expectedOntology, service.getAnatEntityOntology(speciesIds, anatEntityIds,
+                		expRelationTypes, true, true, anatEntityService));
     }
 
     /**
@@ -82,7 +136,63 @@ public class OntologyServiceTest extends TestAncestor {
      */
     @Test
     public void shouldGetStageOntology() {
+        DAOManager managerMock = mock(DAOManager.class);
+        RelationDAO relationDao = mock(RelationDAO.class);
+        when(managerMock.getRelationDAO()).thenReturn(relationDao);
+        StageDAO stageDao = mock(StageDAO.class);
+        when(managerMock.getStageDAO()).thenReturn(stageDao);
         
+        Set<String> speciesIds = new HashSet<String>();
+        speciesIds.addAll(Arrays.asList("11", "22", "44"));
+        Set<String> stageIds = new HashSet<String>();
+        stageIds.addAll(Arrays.asList("Stage_id1", "Stage_id2"));
+
+        Set<String> sourceStageIds = new HashSet<String>();
+        sourceStageIds.addAll(stageIds);
+        Set<String> targetStageIds = null;
+        
+        boolean sourceOrTarget = true;
+        
+        Set<RelationTO.RelationType> daoRelationTypes = new HashSet<>();
+        daoRelationTypes.add(RelationTO.RelationType.ISA_PARTOF);
+        List<RelationTO> relationTOs = Arrays.asList(
+        		new RelationTO("12", "Stage_id1", "Stage_id2", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+        		new RelationTO("13", "Stage_id2", "Stage_id3", RelationType.ISA_PARTOF, RelationStatus.INDIRECT));
+        
+        RelationTOResultSet mockRelationRs = getMockResultSet(RelationTOResultSet.class, relationTOs);
+        when(relationDao.getStageRelations(speciesIds, true, sourceStageIds, targetStageIds,
+        		sourceOrTarget, EnumSet.complementOf(EnumSet.of(RelationStatus.REFLEXIVE)), null))
+        	.thenReturn(mockRelationRs);
+
+        StageTOResultSet mockStageRs = getMockResultSet(StageTOResultSet.class, Arrays.asList(
+        		new StageTO("1", "Stage_id1", "desc1", 0, 0, 0, false, false),
+        		new StageTO("2", "Stage_id2", "desc2", 0, 0, 0, false, false),
+        		new StageTO("3", "Stage_id3", "desc3", 0, 0, 0, false, false)));
+        Set<String> expStageIds = new HashSet<String>();
+        expStageIds.addAll(Arrays.asList("Stage_id1", "Stage_id2", "Stage_id3"));
+        when(stageDao.getStages(speciesIds, true, expStageIds, null, null, null))
+        	.thenReturn(mockStageRs);
+
+        // TODO there is an error when leftBound of TO (Integer) is null
+        // because NestedSetModelEntity contains int leftBound
+        Set<DevStage> expDevStages= new HashSet<>();
+        expDevStages.addAll(Arrays.asList(
+        		new DevStage("1", "Stage_id1", "desc1", 0, 0, 0, false, false),
+        		new DevStage("2", "Stage_id2", "desc2", 0, 0, 0, false, false),
+        		new DevStage("3", "Stage_id3", "desc3", 0, 0, 0, false, false)));
+        
+        Set<Ontology.RelationType> expRelationTypes = new HashSet<>();
+        expRelationTypes.add(Ontology.RelationType.ISA_PARTOF);
+
+        Ontology<DevStage> expectedOntology = 
+        		new Ontology<>(expDevStages, new HashSet<>(relationTOs), expRelationTypes);
+        
+        OntologyService service = new OntologyService(managerMock);
+        DevStageService devStageService = new DevStageService(managerMock);
+
+        assertEquals("Incorrect dev. stage ontology",
+                expectedOntology, service.getDevStageOntology(speciesIds, stageIds,
+                		true, false, devStageService));
     }
     
     //TODO: to remove when proper unit tests are implemented

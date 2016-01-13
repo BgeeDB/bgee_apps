@@ -362,18 +362,35 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 	@Override
 	protected void includeCss() {
 	    log.entry();
-		super.includeCss();
-		this.includeCss("gene.css");
-        this.includeCss("lib/jquery_plugins/jquery.dataTables.min.css");
+	    
+        //If you ever add new files, you need to edit bgee-webapp/pom.xml 
+        //to correctly merge/minify them.
+        if (!this.prop.isMinify()) {
+            this.includeCss("lib/jquery_plugins/jquery.dataTables.min.css");
+        } else {
+            this.includeCss("lib/jquery_plugins/jquery.dataTables.css");
+        }
+        this.includeCss("gene.css");
+        //we need to add the Bgee CSS files at the end, to override CSS file from external libs
+        super.includeCss();
+        
         log.exit();
 	}
 
 	@Override
 	protected void includeJs() {
 	    log.entry();
+	    
 		super.includeJs();
-		this.includeJs("gene.js");
-        this.includeJs("lib/jquery_plugins/jquery.dataTables.min.js");
+        //If you ever add new files, you need to edit bgee-webapp/pom.xml 
+        //to correctly merge/minify them.
+        if (!this.prop.isMinify()) {
+            this.includeJs("lib/jquery_plugins/jquery.dataTables.min.js");
+        } else {
+            this.includeJs("lib/jquery_plugins/jquery.dataTables.js");
+        }
+        this.includeJs("gene.js");
+        
         log.exit();
 	}
 }

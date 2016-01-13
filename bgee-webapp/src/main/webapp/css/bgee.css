@@ -203,18 +203,40 @@ ul#bgee_links > li:first-child {
     font-size: 95%;
 }
 
+#sib_body h1, #sib_body h2, #sib_body h3 {
+    color: #920209;
+}
 #sib_body h1 {
     color: #920209;
     font-size: 1.5em;
     text-align: center;    
 }
-
 #sib_body h2 {
-    display: inline-block; 
-    margin: 0 0 0 2%;
-    color: #920209;
+    margin: 1em 0 1em 0;
     font-size: 1.2em;
+    font-weight: bold;
+    width: 100%; 
+    
+    border-top: 0;
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 2px #920209 solid; /* Set color for browsers that do not support gradients */
+    border-image: linear-gradient(to right, rgba(146, 2, 9, 1) 70%, rgba(146, 2, 9, 0));
+    border-image-slice: 1;
+}
+#sib_body h3 {
     font-weight: normal;
+    font-size: 1em;
+    margin: 2% 0 0 0;
+}
+h2.box_title {
+	display: inline-block !important;
+    margin: 1em 0px 0px 1em !important;
+    border: 0 !important;
+    width: auto !important;
+    color: #920209;
+    font-size: 1.2em !important;
+    font-weight: normal !important;
 }
 
 #sib_body li {

@@ -947,8 +947,12 @@ create table expression (
     rnaSeqData enum('no data', 'poor quality', 'high quality') default 'no data',
     estMeanRank decimal(9, 2) unsigned,
     affymetrixMeanRank decimal(9, 2) unsigned,
-    inSituMeanRank decimal(9, 2) unsigned, 
-    rnaSeqMeanRank decimal(9, 2) unsigned
+    inSituMeanRank decimal(9, 2) unsigned,
+    rnaSeqMeanRank decimal(9, 2) unsigned,
+    estMeanRankNorm decimal(9, 2) unsigned,
+    affymetrixMeanRankNorm decimal(9, 2) unsigned,
+    inSituMeanRankNorm decimal(9, 2) unsigned,
+    rnaSeqMeanRankNorm decimal(9, 2) unsigned
 ) engine = innodb;
 
 -- precomputed expression table where the expression of an organ and

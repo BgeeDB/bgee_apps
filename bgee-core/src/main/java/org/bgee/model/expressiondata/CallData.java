@@ -224,7 +224,8 @@ public abstract class CallData<T extends Enum<T> & CallType> {
 	        DataPropagation dataPropagation) throws IllegalArgumentException {
         log.entry(callType, dataQual, dataType, dataPropagation);
         
-        if (callType == null || dataQual == null || dataPropagation == null) {
+        if (callType == null || dataQual == null || DataQuality.NODATA.equals(dataQual) || 
+                dataPropagation == null) {
             throw log.throwing(new IllegalArgumentException("A CallType, a DataQuality, "
                     + "and a DataPropagation must be defined to instantiate a CallData."));
         }

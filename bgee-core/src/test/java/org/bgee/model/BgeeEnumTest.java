@@ -70,6 +70,11 @@ public class BgeeEnumTest extends TestAncestor {
         assertEquals("Incorrect decorrelation types",
                 qualities, BgeeEnum.convertStringSetToEnumSet(DataQuality.class, strings));
 
+        strings.add("NODATA");
+        qualities.add(DataQuality.NODATA);
+        assertEquals("Incorrect decorrelation types",
+                qualities, BgeeEnum.convertStringSetToEnumSet(DataQuality.class, strings));
+
         strings.add(null);
         qualities.add(null);
         assertEquals("Incorrect decorrelation types",

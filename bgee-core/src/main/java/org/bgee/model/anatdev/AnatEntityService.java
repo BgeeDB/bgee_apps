@@ -51,40 +51,50 @@ public class AnatEntityService extends Service {
     }
     
     /**
-     * Retrieve {@code AnatEntity}s for a given species IDs.
+     * Retrieve {@code AnatEntity}s for the requested species IDs. If several species IDs 
+     * are provided, the {@code AnatEntity}s existing in any of them are retrieved. 
      *      
      * @param speciesIds    A {@code Collection} of {@code String}s that are IDs of species 
      *                      for which to return the {@code AnatEntity}s.
-     * @return              A {@code Stream} over the {@code AnatEntity}s that are the
-     *                      anatomical entities for the given species IDs.
+     * @return              A {@code Stream} of {@code AnatEntity}s retrieved for the requested 
+     *                      species IDs.
      */
     public Stream<AnatEntity> loadAnatEntitiesBySpeciesIds(Collection<String> speciesIds) {
         log.entry(speciesIds);
-        return log.exit(this.getDaoManager().getAnatEntityDAO().getAnatEntitiesBySpeciesIds(
-                    Optional.ofNullable(speciesIds).map(e -> new HashSet<>(e)).orElse(new HashSet<>()))
-                ).stream()
-                .map(AnatEntityService::mapFromTO);
+        return log.exit(this.loadAnatEntities(speciesIds, true, null));
     }
     
     /**
-     * Retrieve {@code AnatEntity}s for a given anatomical entities IDs.
+     * Retrieve {@code AnatEntity}s for the requested species filtering and anatomical entity IDs. 
+     * If an entity in {@code anatEntitiesIds} does not exists according to the species filtering, 
+     * it will not be returned.
      * 
+     * @param speciesIds        A {@code Collection} of {@code String}s that are the IDs of species 
+     *                          to filter anatomical entities to retrieve. Can be {@code null} or empty.
+     * @param anySpecies        A {@code Boolean} defining, when {@code speciesIds} contains several IDs, 
+     *                          whether the entities retrieved should be valid in any 
+     *                          of the requested species (if {@code true}), or in all 
+     *                          of the requested species (if {@code false} or {@code null}).
      * @param anatEntitiesIds   A {@code Collection} of {@code String}s that are IDs of anatomical
-     *                          entities for which to return the {@code AnatEntity}s.
-     * @return                  A {@code Stream} over the {@code AnatEntity}s that are the
-     *                          anatomical entities for the given anatomical entities IDs.
+     *                          entities to retrieve. Can be {@code null} or empty.
+     * @return                  A {@code Stream} of {@code AnatEntity}s retrieved for the requested parameters.
      */
-    public Stream<AnatEntity> loadAnatEntitiesByIds(Collection<String> anatEntitiesIds) {
-        log.entry(anatEntitiesIds);
-        return log.exit(this.getDaoManager().getAnatEntityDAO().getAnatEntitiesByIds(
-                    Optional.ofNullable(anatEntitiesIds)
-                    .map(e -> new HashSet<>(e)).orElse(new HashSet<>()))
-                ).stream()
-                .map(AnatEntityService::mapFromTO);
+    public Stream<AnatEntity> loadAnatEntities(Collection<String> speciesIds, 
+            Boolean anySpecies, Collection<String> anatEntitiesIds) {
+        log.entry(speciesIds, anySpecies, anatEntitiesIds);
+        
+        return log.exit(this.getDaoManager().getAnatEntityDAO().getAnatEntities(
+                    speciesIds == null? null: new HashSet<>(speciesIds), 
+                    anySpecies, 
+                    anatEntitiesIds == null? null: new HashSet<>(anatEntitiesIds), 
+                    null)
+                .stream()
+                .map(AnatEntityService::mapFromTO));
     }
 
-    //FIXME: we should have a proper 'Relation' class
-    //TODO: at least, unit test
+    //FIXME: a similar method should be part of the Ontology or OntologyService classes, 
+    //with a better returned value. To be written.
+    @Deprecated
     public Map<String, Set<String>> loadDirectIsAPartOfRelationships(Collection<String> speciesIds) {
         log.entry(speciesIds);
         return log.exit(this.getDaoManager().getRelationDAO().getAnatEntityRelationsBySpeciesIds(

@@ -1,0 +1,188 @@
+h1.gene_title {
+    display: inline-block;
+    vertical-align: middle;
+    text-align: center;
+    width: 100%;
+	margin: 0;
+}
+h1.gene_title img {
+    margin-right: 20px;
+    vertical-align: middle;
+}
+
+table#geneinfo {
+	margin: 1em 0;
+}
+
+table#geneinfo th {
+    text-align: left;
+    padding: 0 0.7em 0.5em 0;
+}
+table#geneinfo td {
+    text-align: left;
+    padding: 0 0 0.5em 0;
+}
+
+div#expr_intro {
+	display: inline-flex;
+    margin: 0 2% 1.5em;
+}
+div#expr_data {
+    display: inline-flex;
+    /*align-items: baseline;*/
+    width: 100%;
+}
+
+div#table-container {
+	width: 85%;
+	margin-left: 2%;
+}
+
+div.legend {
+	width: 14%;
+    margin-left: 1%;
+    margin-top: 2em;
+	border-left: 1px solid #ccc;
+	font-size: 0.85em;
+}
+div.legend span.quality {
+	font-size: 1em;
+}
+div.legend table {
+    margin: 10%;
+    width: 80%;
+}
+div.legend table caption {
+    text-align: left;
+    font-weight: bold;
+    margin-bottom: 5px;
+    border-width: 0px 0px 1px;
+    border-style: solid;
+}
+div.legend table th {
+    min-width: 14%;
+}
+
+table th, table td {
+    text-align: left;
+    padding: 0.2em;
+}
+th.anat-entity-id {
+	width: 15%;
+}
+th.anat-entity {
+	width: 33%;
+}
+th.dev-stages {
+	width: 42%;
+}
+th.quality {
+	width: 10%;
+}
+
+/* We need div#table-container to override datatables jquery plugin */
+div#table-container table.expression thead td {
+    padding-left : 8px;
+}
+
+table.expression td {
+	vertical-align:text-top;
+}
+
+
+table.stage {
+	width: 100%;
+	table-layout: fixed;
+}
+
+div.gene {
+	margin: 1em 2%;
+}
+
+td.right {
+	text-align: right;
+	padding-right: .8em;
+	font-weight: 300;
+}
+
+td > ul {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+}
+
+ul.dev-stage-list {
+    padding-left: 1.1em;
+}
+
+span.quality {
+	padding: .2em .5em;
+	margin: .15em;
+	border-radius: .4em; 
+	width: 1em;
+	line-height: 1em;
+	vertical-align: middle;
+	border-width: 1px;
+	border-style: solid;
+	font-size: .8em;
+	font-family: monospace;
+}
+
+span.expandable {
+	cursor: pointer;
+}
+
+span.show_extra {
+	font-size: .85em;
+	text-decoration: underline;
+	margin-left: 7em;	
+}
+
+span.show_masked {
+	font-size: .85em;
+	text-decoration: underline;
+	margin-left: 7em;	
+}
+
+span.show_more {
+	font-size: .85em;
+	text-decoration: underline;
+	margin-left: 2em;	
+}
+
+.details {
+    padding-right: .5em;
+    padding-left: .2em;
+    color: #777;
+    font-weight: 300;   
+}
+
+.small {
+    font-size: .9em;
+}
+
+.invisible {
+    display: none;
+}
+
+.masked {
+	font-style: italic;
+}
+
+.high {
+	background: #9efa9e; 
+	border-color: #0df20d;
+	color: #067906;
+}
+
+.low {
+	background: #fae39e;
+	border-color:  #f2b90d;
+	color:   #795c06;
+}
+
+.nodata {
+	background: #dedede;
+	color: #b8b8b8;
+	border-color: #b8b8b8;
+}

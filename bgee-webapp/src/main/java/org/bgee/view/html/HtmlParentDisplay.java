@@ -48,6 +48,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     	try {                            
     	    return log.exit(StringEscapeUtils.escapeHtml4(stringToWrite).replaceAll("'", "&apos;"));
     	} catch (Exception e) {
+    	    log.catching(e);
     		return log.exit("");
     	}
     }
@@ -140,6 +141,11 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
       */
      private final JsonHelper jsonHelper;
 
+     /**
+      * A {@code String} defining the character encoding for encoding query strings.
+      */
+     private final String charEncoding;
+
      
      /**
       * Constructor providing the necessary dependencies, except the {@code JsonHelper}, 
@@ -182,6 +188,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             BgeeProperties prop, JsonHelper jsonHelper, HtmlFactory factory) 
                     throws IllegalArgumentException, IOException {
         super(response, requestParameters, prop, factory);
+        this.charEncoding = this.getRequestParameters().getCharacterEncoding();
         this.jsonHelper = jsonHelper;
     }
     
@@ -198,6 +205,22 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         log.exit();
     }
     
+    /**
+     * URL encode the provided {@code String}, with the character encoding used to generate URLs. 
+     * 
+     * @param stringToWrite A {@code String} to be encoded.
+     * @return              The encoded {@code String}.
+     */
+    protected String urlEncode(String stringToWrite) {
+        log.entry(stringToWrite);
+        try {                            
+            return log.exit(java.net.URLEncoder.encode(stringToWrite, this.charEncoding));
+        } catch (Exception e) {
+            log.catching(e);
+            return log.exit("");
+        }
+    }
+
     /**
      * Display the start of the HTML page (common to all pages).
      *

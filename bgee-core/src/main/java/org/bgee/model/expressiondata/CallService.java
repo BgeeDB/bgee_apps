@@ -343,7 +343,7 @@ public class CallService extends Service {
         case HIGHQUALITY:
             return log.exit(DataQuality.HIGH);
         case NODATA: 
-            return log.exit(null);
+            return log.exit(DataQuality.NODATA);
         default: 
             throw log.throwing(new IllegalStateException("Unsupported CallTO.DataState: " + state));
         }

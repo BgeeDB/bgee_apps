@@ -178,6 +178,15 @@ public class URLParameters {
             new Parameter<Boolean>("display_rp",
             false, false, null, false, false, 5, DEFAULT_FORMAT, Boolean.class);
     
+    
+    /**
+     * A {@code Parameter<String>} representing a gene id, typically for the gene page.
+     * Category of the parameter: controller parameter.
+     * Corresponds to the URL parameter "gene_id".
+     */
+    private static final Parameter<String> GENE_ID = 
+    		new Parameter<String>("gene_id", false,false, null, false, false, 50, DEFAULT_FORMAT, String.class);
+    
     /**
      * A {@code Parameter<String>} that contains the species IDs used 
      * as key to store parameters on the disk.
@@ -413,6 +422,7 @@ public class URLParameters {
     private final List<Parameter<?>> list = Arrays.<Parameter<?>>asList(
             PAGE,
             ACTION,
+            GENE_ID,
             // Species request
             SPECIES_LIST,
             // TopAnat analyze params
@@ -529,6 +539,13 @@ public class URLParameters {
      */
     public Parameter<String> getParamData(){
         return DATA;
+    }
+    
+   /**
+    * @return  A {@code Parameter<String>} that contains the gene id.
+    */
+    public Parameter<String> getParamGeneId() {
+    	return GENE_ID;
     }
 
     /**

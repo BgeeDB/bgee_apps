@@ -12,6 +12,7 @@ import org.bgee.view.AboutDisplay;
 import org.bgee.view.DocumentationDisplay;
 import org.bgee.view.DownloadDisplay;
 import org.bgee.view.ErrorDisplay;
+import org.bgee.view.GeneDisplay;
 import org.bgee.view.GeneralDisplay;
 import org.bgee.view.SpeciesDisplay;
 import org.bgee.view.TopAnatDisplay;
@@ -62,6 +63,11 @@ public class DsvFactory extends ViewFactory {
     public TopAnatDisplay getTopAnatDisplay() throws IOException {
         throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
     }
+
+	@Override
+	public GeneDisplay getGeneDisplay() throws IOException {
+        throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
+	}
 
     @Override
     public SpeciesDisplay getSpeciesDisplay() throws IOException {

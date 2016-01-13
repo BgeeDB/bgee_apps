@@ -54,7 +54,7 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
     public ExpectedException thrown = ExpectedException.none();
 
     /**
-     * Test the select method {@link MySQLRelationDAO#getAnatEntityRelationsBySpeciesIds()}.
+     * Test the method {@link MySQLRelationDAO#getAnatEntityRelationsBySpeciesIds(Set, Set, Set)}.
      */
     @Test
     public void shouldGetAnatEntityRelationsBySpeciesIds() throws SQLException {
@@ -205,7 +205,164 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
     }
 
     /**
-     * Test the select method {@link MySQLRelationDAO#getStageRelationsBySpeciesIds()}.
+     * Test the method {@link MySQLRelationDAO#getAnatEntityRelations(Collection, boolean, 
+     * Collection, Collection, boolean, Collection, Collection, Collection)}.
+     */
+    @Test
+    public void shouldGetAnatEntityRelations() throws SQLException {
+
+        this.useSelectDB();
+
+        MySQLRelationDAO dao = new MySQLRelationDAO(this.getMySQLDAOManager());
+        Collection<RelationTO> allRelTOs = Arrays.asList(
+        new RelationTO("1", "Anat_id1", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO("10", "Anat_id10", "Anat_id10", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO("23", "Anat_id11", "Anat_id10", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+        new RelationTO("11", "Anat_id11", "Anat_id11", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO("12", "Anat_id2", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+        new RelationTO("2", "Anat_id2", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO("14", "Anat_id4", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+        new RelationTO("4", "Anat_id4", "Anat_id4", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO("15", "Anat_id5", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+        new RelationTO("5", "Anat_id5", "Anat_id5", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO("18", "Anat_id6", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+        new RelationTO("19", "Anat_id7", "Anat_id6", RelationType.DEVELOPSFROM, RelationStatus.DIRECT),
+        new RelationTO("7", "Anat_id7", "Anat_id7", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO("8", "Anat_id8", "Anat_id8", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO("21", "Anat_id9", "Anat_id5", RelationType.ISA_PARTOF, RelationStatus.DIRECT));
+                
+        // Retrieve relations with several species IDs, any species requested
+        Collection<RelationTO> expectedRelations = allRelTOs;
+        RelationTOResultSet resultSet = dao.getAnatEntityRelations(Arrays.asList("11", "21"), 
+                true, null, null, null, null, null, null);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+        
+        //now, relations existing in all requested species
+        expectedRelations = Arrays.asList(
+                new RelationTO("1", "Anat_id1", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO("10", "Anat_id10", "Anat_id10", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO("23", "Anat_id11", "Anat_id10", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO("12", "Anat_id2", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO("2", "Anat_id2", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO("15", "Anat_id5", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO("5", "Anat_id5", "Anat_id5", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO("18", "Anat_id6", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO("19", "Anat_id7", "Anat_id6", RelationType.DEVELOPSFROM, RelationStatus.DIRECT));
+        resultSet = dao.getAnatEntityRelations(Arrays.asList("11", "21"), 
+                false, null, null, null, null, null, null);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+        
+        //test with only one species
+        expectedRelations = Arrays.asList(
+                new RelationTO("1", "Anat_id1", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO("10", "Anat_id10", "Anat_id10", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO("23", "Anat_id11", "Anat_id10", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO("12", "Anat_id2", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO("2", "Anat_id2", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO("14", "Anat_id4", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO("4", "Anat_id4", "Anat_id4", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO("15", "Anat_id5", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO("5", "Anat_id5", "Anat_id5", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO("18", "Anat_id6", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO("19", "Anat_id7", "Anat_id6", RelationType.DEVELOPSFROM, RelationStatus.DIRECT),
+                new RelationTO("8", "Anat_id8", "Anat_id8", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE));
+        resultSet = dao.getAnatEntityRelations(Arrays.asList("11"), 
+                null, null, null, null, null, null, null);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+        
+        //Now, we stop requesting the relation ID
+        Collection<RelationDAO.Attribute> attrs = EnumSet.complementOf(
+                EnumSet.of(RelationDAO.Attribute.RELATION_ID));
+        expectedRelations = Arrays.asList(
+                new RelationTO(null, "Anat_id1", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO(null, "Anat_id10", "Anat_id10", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO(null, "Anat_id11", "Anat_id10", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO(null, "Anat_id2", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO(null, "Anat_id2", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO(null, "Anat_id5", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO(null, "Anat_id5", "Anat_id5", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO(null, "Anat_id6", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO(null, "Anat_id7", "Anat_id6", RelationType.DEVELOPSFROM, RelationStatus.DIRECT));
+        resultSet = dao.getAnatEntityRelations(Arrays.asList("11", "21"), 
+                false, null, null, null, null, null, attrs);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+        
+        //now we add filtering on sources/targets
+        //filtering on sources only
+        expectedRelations = Arrays.asList(
+                new RelationTO(null, "Anat_id10", "Anat_id10", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO(null, "Anat_id2", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO(null, "Anat_id2", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE));
+        resultSet = dao.getAnatEntityRelations(Arrays.asList("11", "21"), 
+                false, Arrays.asList("Anat_id2", "Anat_id10"), null, null, null, null, attrs);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+
+        //filtering on targets only
+        expectedRelations = Arrays.asList(
+                new RelationTO(null, "Anat_id10", "Anat_id10", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO(null, "Anat_id11", "Anat_id10", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO(null, "Anat_id2", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO(null, "Anat_id5", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.DIRECT));
+        resultSet = dao.getAnatEntityRelations(Arrays.asList("11", "21"), 
+                false, null, Arrays.asList("Anat_id2", "Anat_id10"), null, null, null, attrs);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+
+        //OR condition on sources and targets
+        expectedRelations = Arrays.asList(
+                new RelationTO(null, "Anat_id10", "Anat_id10", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO(null, "Anat_id11", "Anat_id10", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO(null, "Anat_id2", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO(null, "Anat_id2", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO(null, "Anat_id5", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO(null, "Anat_id7", "Anat_id6", RelationType.DEVELOPSFROM, RelationStatus.DIRECT));
+        resultSet = dao.getAnatEntityRelations(Arrays.asList("11", "21"), false, 
+                Arrays.asList("Anat_id2", "Anat_id10"), 
+                Arrays.asList("Anat_id2", "Anat_id10", "Anat_id6"), true, null, null, attrs);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+
+        //AND condition on sources and targets
+        expectedRelations = Arrays.asList(
+                new RelationTO(null, "Anat_id10", "Anat_id10", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO(null, "Anat_id2", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO(null, "Anat_id7", "Anat_id6", RelationType.DEVELOPSFROM, RelationStatus.DIRECT));
+        resultSet = dao.getAnatEntityRelations(Arrays.asList("11", "21"), false, 
+                Arrays.asList("Anat_id2", "Anat_id10", "Anat_id7"), 
+                Arrays.asList("Anat_id2", "Anat_id10", "Anat_id6"), false, null, null, attrs);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+        
+        //add filter on relation types
+        expectedRelations = Arrays.asList(
+                new RelationTO(null, "Anat_id10", "Anat_id10", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO(null, "Anat_id2", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE));
+        resultSet = dao.getAnatEntityRelations(Arrays.asList("11", "21"), false, 
+                Arrays.asList("Anat_id2", "Anat_id10", "Anat_id7"), 
+                Arrays.asList("Anat_id2", "Anat_id10", "Anat_id6"), false, 
+                Arrays.asList(RelationType.ISA_PARTOF, RelationType.TRANSFORMATIONOF), null, attrs);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+        
+        //filter on relation types and status
+        expectedRelations = Arrays.asList(
+                new RelationTO(null, "Anat_id7", "Anat_id6", RelationType.DEVELOPSFROM, RelationStatus.DIRECT));
+        resultSet = dao.getAnatEntityRelations(Arrays.asList("11", "21"), false, 
+                Arrays.asList("Anat_id2", "Anat_id10", "Anat_id7"), 
+                Arrays.asList("Anat_id2", "Anat_id10", "Anat_id6"), false, 
+                Arrays.asList(RelationType.DEVELOPSFROM, RelationType.ISA_PARTOF), 
+                Arrays.asList(RelationStatus.DIRECT, RelationStatus.INDIRECT), attrs);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+    }
+
+    /**
+     * Test the select method {@link MySQLRelationDAO#getStageRelationsBySpeciesIds(Set, Set)}.
      */
     @Test
     public void shouldGetStageRelationsBySpeciesIds() throws SQLException {
@@ -213,61 +370,63 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
         this.useSelectDB();
 
         MySQLRelationDAO dao = new MySQLRelationDAO(this.getMySQLDAOManager());
+        //XXX: for now, we don't generate any stageRelationId (always set to 0), 
+        //so we don't retrieve it. This might change in the future.
         List<RelationTO> reflexiveRelTOs = Arrays.asList(
-        new RelationTO("0", "Stage_id1", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
-        new RelationTO("0", "Stage_id2", "Stage_id2", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
-        new RelationTO("0", "Stage_id3", "Stage_id3", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
-        new RelationTO("0", "Stage_id4", "Stage_id4", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
-        new RelationTO("0", "Stage_id5", "Stage_id5", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
-        new RelationTO("0", "Stage_id6", "Stage_id6", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
-        new RelationTO("0", "Stage_id7", "Stage_id7", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
-        new RelationTO("0", "Stage_id8", "Stage_id8", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
-        new RelationTO("0", "Stage_id9", "Stage_id9", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
-        new RelationTO("0", "Stage_id10", "Stage_id10", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
-        new RelationTO("0", "Stage_id11", "Stage_id11", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
-        new RelationTO("0", "Stage_id12", "Stage_id12", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
-        new RelationTO("0", "Stage_id13", "Stage_id13", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
-        new RelationTO("0", "Stage_id14", "Stage_id14", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
-        new RelationTO("0", "Stage_id15", "Stage_id15", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
-        new RelationTO("0", "Stage_id16", "Stage_id16", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
-        new RelationTO("0", "Stage_id17", "Stage_id17", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
-        new RelationTO("0", "Stage_id18", "Stage_id18", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE));
+        new RelationTO(null, "Stage_id1", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO(null, "Stage_id2", "Stage_id2", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO(null, "Stage_id3", "Stage_id3", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO(null, "Stage_id4", "Stage_id4", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO(null, "Stage_id5", "Stage_id5", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO(null, "Stage_id6", "Stage_id6", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO(null, "Stage_id7", "Stage_id7", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO(null, "Stage_id8", "Stage_id8", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO(null, "Stage_id9", "Stage_id9", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO(null, "Stage_id10", "Stage_id10", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO(null, "Stage_id11", "Stage_id11", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO(null, "Stage_id12", "Stage_id12", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO(null, "Stage_id13", "Stage_id13", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO(null, "Stage_id14", "Stage_id14", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO(null, "Stage_id15", "Stage_id15", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO(null, "Stage_id16", "Stage_id16", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO(null, "Stage_id17", "Stage_id17", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO(null, "Stage_id18", "Stage_id18", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE));
         List<RelationTO> directRelTOs = Arrays.asList(
-        new RelationTO("0", "Stage_id2", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
-        new RelationTO("0", "Stage_id5", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
-        new RelationTO("0", "Stage_id10", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
-        new RelationTO("0", "Stage_id14", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
-        new RelationTO("0", "Stage_id3", "Stage_id2", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
-        new RelationTO("0", "Stage_id4", "Stage_id2", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
-        new RelationTO("0", "Stage_id6", "Stage_id5", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
-        new RelationTO("0", "Stage_id7", "Stage_id5", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
-        new RelationTO("0", "Stage_id11", "Stage_id10", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
-        new RelationTO("0", "Stage_id12", "Stage_id10", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
-        new RelationTO("0", "Stage_id13", "Stage_id10", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
-        new RelationTO("0", "Stage_id15", "Stage_id14", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
-        new RelationTO("0", "Stage_id18", "Stage_id14", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
-        new RelationTO("0", "Stage_id8", "Stage_id7", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
-        new RelationTO("0", "Stage_id9", "Stage_id7", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
-        new RelationTO("0", "Stage_id16", "Stage_id15", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
-        new RelationTO("0", "Stage_id17", "Stage_id15", RelationType.ISA_PARTOF, RelationStatus.DIRECT));
+        new RelationTO(null, "Stage_id2", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+        new RelationTO(null, "Stage_id5", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+        new RelationTO(null, "Stage_id10", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+        new RelationTO(null, "Stage_id14", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+        new RelationTO(null, "Stage_id3", "Stage_id2", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+        new RelationTO(null, "Stage_id4", "Stage_id2", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+        new RelationTO(null, "Stage_id6", "Stage_id5", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+        new RelationTO(null, "Stage_id7", "Stage_id5", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+        new RelationTO(null, "Stage_id11", "Stage_id10", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+        new RelationTO(null, "Stage_id12", "Stage_id10", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+        new RelationTO(null, "Stage_id13", "Stage_id10", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+        new RelationTO(null, "Stage_id15", "Stage_id14", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+        new RelationTO(null, "Stage_id18", "Stage_id14", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+        new RelationTO(null, "Stage_id8", "Stage_id7", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+        new RelationTO(null, "Stage_id9", "Stage_id7", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+        new RelationTO(null, "Stage_id16", "Stage_id15", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+        new RelationTO(null, "Stage_id17", "Stage_id15", RelationType.ISA_PARTOF, RelationStatus.DIRECT));
         List<RelationTO> indirectRelTOs = Arrays.asList(
-        new RelationTO("0", "Stage_id3", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
-        new RelationTO("0", "Stage_id4", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
-        new RelationTO("0", "Stage_id6", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
-        new RelationTO("0", "Stage_id7", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
-        new RelationTO("0", "Stage_id8", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
-        new RelationTO("0", "Stage_id9", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
-        new RelationTO("0", "Stage_id11", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
-        new RelationTO("0", "Stage_id12", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
-        new RelationTO("0", "Stage_id13", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
-        new RelationTO("0", "Stage_id15", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
-        new RelationTO("0", "Stage_id16", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
-        new RelationTO("0", "Stage_id17", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
-        new RelationTO("0", "Stage_id18", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
-        new RelationTO("0", "Stage_id8", "Stage_id5", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
-        new RelationTO("0", "Stage_id9", "Stage_id5", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
-        new RelationTO("0", "Stage_id16", "Stage_id14", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
-        new RelationTO("0", "Stage_id17", "Stage_id14", RelationType.ISA_PARTOF, RelationStatus.INDIRECT));
+        new RelationTO(null, "Stage_id3", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+        new RelationTO(null, "Stage_id4", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+        new RelationTO(null, "Stage_id6", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+        new RelationTO(null, "Stage_id7", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+        new RelationTO(null, "Stage_id8", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+        new RelationTO(null, "Stage_id9", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+        new RelationTO(null, "Stage_id11", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+        new RelationTO(null, "Stage_id12", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+        new RelationTO(null, "Stage_id13", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+        new RelationTO(null, "Stage_id15", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+        new RelationTO(null, "Stage_id16", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+        new RelationTO(null, "Stage_id17", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+        new RelationTO(null, "Stage_id18", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+        new RelationTO(null, "Stage_id8", "Stage_id5", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+        new RelationTO(null, "Stage_id9", "Stage_id5", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+        new RelationTO(null, "Stage_id16", "Stage_id14", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+        new RelationTO(null, "Stage_id17", "Stage_id14", RelationType.ISA_PARTOF, RelationStatus.INDIRECT));
                 
         // Test recovery of all attributes without filters.
         List<RelationTO> expectedRels = new ArrayList<RelationTO>();
@@ -300,35 +459,35 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
         //filter on speciesIds
         expectedRels = Arrays.asList(
         //reflexive relations
-        new RelationTO("0", "Stage_id1", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
-        new RelationTO("0", "Stage_id2", "Stage_id2", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
-        new RelationTO("0", "Stage_id5", "Stage_id5", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
-        new RelationTO("0", "Stage_id6", "Stage_id6", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
-        new RelationTO("0", "Stage_id7", "Stage_id7", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
-        new RelationTO("0", "Stage_id8", "Stage_id8", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
-        new RelationTO("0", "Stage_id14", "Stage_id14", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
-        new RelationTO("0", "Stage_id15", "Stage_id15", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
-        new RelationTO("0", "Stage_id16", "Stage_id16", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
-        new RelationTO("0", "Stage_id18", "Stage_id18", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE), 
+        new RelationTO(null, "Stage_id1", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO(null, "Stage_id2", "Stage_id2", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO(null, "Stage_id5", "Stage_id5", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO(null, "Stage_id6", "Stage_id6", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO(null, "Stage_id7", "Stage_id7", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO(null, "Stage_id8", "Stage_id8", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO(null, "Stage_id14", "Stage_id14", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO(null, "Stage_id15", "Stage_id15", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO(null, "Stage_id16", "Stage_id16", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+        new RelationTO(null, "Stage_id18", "Stage_id18", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE), 
         //direct relations
-        new RelationTO("0", "Stage_id2", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
-        new RelationTO("0", "Stage_id5", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
-        new RelationTO("0", "Stage_id14", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
-        new RelationTO("0", "Stage_id6", "Stage_id5", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
-        new RelationTO("0", "Stage_id7", "Stage_id5", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
-        new RelationTO("0", "Stage_id15", "Stage_id14", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
-        new RelationTO("0", "Stage_id18", "Stage_id14", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
-        new RelationTO("0", "Stage_id8", "Stage_id7", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
-        new RelationTO("0", "Stage_id16", "Stage_id15", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+        new RelationTO(null, "Stage_id2", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+        new RelationTO(null, "Stage_id5", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+        new RelationTO(null, "Stage_id14", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+        new RelationTO(null, "Stage_id6", "Stage_id5", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+        new RelationTO(null, "Stage_id7", "Stage_id5", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+        new RelationTO(null, "Stage_id15", "Stage_id14", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+        new RelationTO(null, "Stage_id18", "Stage_id14", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+        new RelationTO(null, "Stage_id8", "Stage_id7", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+        new RelationTO(null, "Stage_id16", "Stage_id15", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
         //indirect relations
-        new RelationTO("0", "Stage_id6", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
-        new RelationTO("0", "Stage_id7", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
-        new RelationTO("0", "Stage_id8", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
-        new RelationTO("0", "Stage_id15", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
-        new RelationTO("0", "Stage_id16", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
-        new RelationTO("0", "Stage_id18", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
-        new RelationTO("0", "Stage_id8", "Stage_id5", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
-        new RelationTO("0", "Stage_id16", "Stage_id14", RelationType.ISA_PARTOF, RelationStatus.INDIRECT));
+        new RelationTO(null, "Stage_id6", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+        new RelationTO(null, "Stage_id7", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+        new RelationTO(null, "Stage_id8", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+        new RelationTO(null, "Stage_id15", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+        new RelationTO(null, "Stage_id16", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+        new RelationTO(null, "Stage_id18", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+        new RelationTO(null, "Stage_id8", "Stage_id5", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+        new RelationTO(null, "Stage_id16", "Stage_id14", RelationType.ISA_PARTOF, RelationStatus.INDIRECT));
         actualRels = dao.getStageRelationsBySpeciesIds(
                 new HashSet<String>(Arrays.asList("11")), null).getAllTOs();
         assertTrue("RelationTOs incorrectly retrieved, expected: " + expectedRels + " - " +
@@ -338,29 +497,29 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
         //filter on speciesIds and RelationStatus
         expectedRels = Arrays.asList(
         //direct relations
-        new RelationTO("0", "Stage_id2", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
-        new RelationTO("0", "Stage_id4", "Stage_id2", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
-        new RelationTO("0", "Stage_id5", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
-        new RelationTO("0", "Stage_id14", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
-        new RelationTO("0", "Stage_id6", "Stage_id5", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
-        new RelationTO("0", "Stage_id7", "Stage_id5", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
-        new RelationTO("0", "Stage_id15", "Stage_id14", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
-        new RelationTO("0", "Stage_id18", "Stage_id14", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
-        new RelationTO("0", "Stage_id8", "Stage_id7", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
-        new RelationTO("0", "Stage_id16", "Stage_id15", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
-        new RelationTO("0", "Stage_id17", "Stage_id15", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+        new RelationTO(null, "Stage_id2", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+        new RelationTO(null, "Stage_id4", "Stage_id2", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+        new RelationTO(null, "Stage_id5", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+        new RelationTO(null, "Stage_id14", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+        new RelationTO(null, "Stage_id6", "Stage_id5", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+        new RelationTO(null, "Stage_id7", "Stage_id5", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+        new RelationTO(null, "Stage_id15", "Stage_id14", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+        new RelationTO(null, "Stage_id18", "Stage_id14", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+        new RelationTO(null, "Stage_id8", "Stage_id7", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+        new RelationTO(null, "Stage_id16", "Stage_id15", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+        new RelationTO(null, "Stage_id17", "Stage_id15", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
         //indirect relations
-        new RelationTO("0", "Stage_id4", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
-        new RelationTO("0", "Stage_id6", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
-        new RelationTO("0", "Stage_id7", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
-        new RelationTO("0", "Stage_id8", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
-        new RelationTO("0", "Stage_id15", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
-        new RelationTO("0", "Stage_id16", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
-        new RelationTO("0", "Stage_id17", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
-        new RelationTO("0", "Stage_id18", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
-        new RelationTO("0", "Stage_id8", "Stage_id5", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
-        new RelationTO("0", "Stage_id16", "Stage_id14", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
-        new RelationTO("0", "Stage_id17", "Stage_id14", RelationType.ISA_PARTOF, RelationStatus.INDIRECT));
+        new RelationTO(null, "Stage_id4", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+        new RelationTO(null, "Stage_id6", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+        new RelationTO(null, "Stage_id7", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+        new RelationTO(null, "Stage_id8", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+        new RelationTO(null, "Stage_id15", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+        new RelationTO(null, "Stage_id16", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+        new RelationTO(null, "Stage_id17", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+        new RelationTO(null, "Stage_id18", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+        new RelationTO(null, "Stage_id8", "Stage_id5", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+        new RelationTO(null, "Stage_id16", "Stage_id14", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+        new RelationTO(null, "Stage_id17", "Stage_id14", RelationType.ISA_PARTOF, RelationStatus.INDIRECT));
         actualRels = dao.getStageRelationsBySpeciesIds(
                 new HashSet<String>(Arrays.asList("11", "31")), new HashSet<RelationStatus>(
                     Arrays.asList(RelationStatus.DIRECT, RelationStatus.INDIRECT))).getAllTOs();
@@ -376,6 +535,232 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
         assertTrue("RelationTOs incorrectly retrieved, expected: " + expectedRels + " - " +
                 "but was: " + actualRels, 
                 TOComparator.areTOCollectionsEqual(expectedRels, actualRels));
+    }
+    
+    /**
+     * Test the method {@link MySQLRelationDAO#getStageRelations(Collection, boolean, 
+     * Collection, Collection, boolean, Collection, Collection)}.
+     */
+    @Test
+    public void shouldGetStageRelations() throws SQLException {
+
+        this.useSelectDB();
+
+        MySQLRelationDAO dao = new MySQLRelationDAO(this.getMySQLDAOManager());
+        //XXX: for now, we don't generate any stageRelationId (always set to 0), 
+        //so we don't retrieve it. This might change in the future.
+                
+        // Retrieve relations with several species IDs, any species requested
+        Collection<RelationTO> expectedRelations = Arrays.asList(
+            new RelationTO(null, "Stage_id1", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id2", "Stage_id2", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id3", "Stage_id3", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id5", "Stage_id5", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id6", "Stage_id6", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id7", "Stage_id7", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id8", "Stage_id8", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id9", "Stage_id9", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id10", "Stage_id10", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id11", "Stage_id11", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id12", "Stage_id12", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id13", "Stage_id13", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id14", "Stage_id14", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id15", "Stage_id15", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id16", "Stage_id16", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id18", "Stage_id18", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE), 
+            new RelationTO(null, "Stage_id2", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id5", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id10", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id14", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id3", "Stage_id2", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id6", "Stage_id5", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id7", "Stage_id5", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id11", "Stage_id10", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id12", "Stage_id10", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id13", "Stage_id10", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id15", "Stage_id14", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id18", "Stage_id14", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id8", "Stage_id7", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id9", "Stage_id7", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id16", "Stage_id15", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id3", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+            new RelationTO(null, "Stage_id6", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+            new RelationTO(null, "Stage_id7", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+            new RelationTO(null, "Stage_id8", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+            new RelationTO(null, "Stage_id9", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+            new RelationTO(null, "Stage_id11", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+            new RelationTO(null, "Stage_id12", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+            new RelationTO(null, "Stage_id13", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+            new RelationTO(null, "Stage_id15", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+            new RelationTO(null, "Stage_id16", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+            new RelationTO(null, "Stage_id18", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+            new RelationTO(null, "Stage_id8", "Stage_id5", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+            new RelationTO(null, "Stage_id9", "Stage_id5", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+            new RelationTO(null, "Stage_id16", "Stage_id14", RelationType.ISA_PARTOF, RelationStatus.INDIRECT));
+        RelationTOResultSet resultSet = dao.getStageRelations(Arrays.asList("11", "21"), 
+                true, null, null, null, null, null);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+
+        //now, relations existing in all requested species
+        expectedRelations = Arrays.asList(
+            new RelationTO(null, "Stage_id1", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id2", "Stage_id2", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id5", "Stage_id5", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id6", "Stage_id6", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id7", "Stage_id7", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id14", "Stage_id14", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id15", "Stage_id15", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id2", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id5", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT),  
+            new RelationTO(null, "Stage_id14", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id6", "Stage_id5", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id7", "Stage_id5", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id15", "Stage_id14", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id6", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+            new RelationTO(null, "Stage_id7", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT),  
+            new RelationTO(null, "Stage_id15", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT));
+        resultSet = dao.getStageRelations(Arrays.asList("11", "21"), 
+                false, null, null, null, null, null);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+
+        //test with only one species
+        expectedRelations = Arrays.asList(
+            new RelationTO(null, "Stage_id1", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id2", "Stage_id2", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id5", "Stage_id5", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id6", "Stage_id6", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id7", "Stage_id7", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id8", "Stage_id8", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id14", "Stage_id14", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id15", "Stage_id15", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id16", "Stage_id16", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id18", "Stage_id18", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE), 
+            new RelationTO(null, "Stage_id2", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id5", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id14", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id6", "Stage_id5", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id7", "Stage_id5", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id15", "Stage_id14", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id18", "Stage_id14", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id8", "Stage_id7", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id16", "Stage_id15", RelationType.ISA_PARTOF, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id6", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+            new RelationTO(null, "Stage_id7", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+            new RelationTO(null, "Stage_id8", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+            new RelationTO(null, "Stage_id15", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+            new RelationTO(null, "Stage_id16", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+            new RelationTO(null, "Stage_id18", "Stage_id1", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+            new RelationTO(null, "Stage_id8", "Stage_id5", RelationType.ISA_PARTOF, RelationStatus.INDIRECT), 
+            new RelationTO(null, "Stage_id16", "Stage_id14", RelationType.ISA_PARTOF, RelationStatus.INDIRECT));
+        resultSet = dao.getStageRelations(Arrays.asList("11"), null, null, null, null, null, null);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+        
+        //Now, we stop requesting the relation type and ID
+        Collection<RelationDAO.Attribute> attrs = EnumSet.complementOf(
+                EnumSet.of(RelationDAO.Attribute.RELATION_ID, RelationDAO.Attribute.RELATION_TYPE));
+        expectedRelations = Arrays.asList(
+            new RelationTO(null, "Stage_id1", "Stage_id1", null, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id2", "Stage_id2", null, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id5", "Stage_id5", null, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id6", "Stage_id6", null, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id7", "Stage_id7", null, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id14", "Stage_id14", null, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id15", "Stage_id15", null, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id2", "Stage_id1", null, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id5", "Stage_id1", null, RelationStatus.DIRECT),  
+            new RelationTO(null, "Stage_id14", "Stage_id1", null, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id6", "Stage_id5", null, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id7", "Stage_id5", null, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id15", "Stage_id14", null, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id6", "Stage_id1", null, RelationStatus.INDIRECT), 
+            new RelationTO(null, "Stage_id7", "Stage_id1", null, RelationStatus.INDIRECT),  
+            new RelationTO(null, "Stage_id15", "Stage_id1", null, RelationStatus.INDIRECT));
+        resultSet = dao.getStageRelations(Arrays.asList("11", "21"), 
+                false, null, null, null, null, attrs);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+
+        //now we add filtering on sources/targets
+        //filtering on sources only
+        expectedRelations = Arrays.asList(
+            new RelationTO(null, "Stage_id1", "Stage_id1", null, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id5", "Stage_id5", null, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id6", "Stage_id6", null, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id15", "Stage_id15", null, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id5", "Stage_id1", null, RelationStatus.DIRECT),  
+            new RelationTO(null, "Stage_id6", "Stage_id5", null, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id15", "Stage_id14", null, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id6", "Stage_id1", null, RelationStatus.INDIRECT), 
+            new RelationTO(null, "Stage_id15", "Stage_id1", null, RelationStatus.INDIRECT));
+        resultSet = dao.getStageRelations(Arrays.asList("11", "21"), 
+                false, Arrays.asList("Stage_id1", "Stage_id5", "Stage_id6", "Stage_id15"), 
+                null, null, null, attrs);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+
+        //filtering on targets only
+        expectedRelations = Arrays.asList(
+            new RelationTO(null, "Stage_id1", "Stage_id1", null, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id2", "Stage_id1", null, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id5", "Stage_id1", null, RelationStatus.DIRECT),  
+            new RelationTO(null, "Stage_id14", "Stage_id1", null, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id6", "Stage_id1", null, RelationStatus.INDIRECT), 
+            new RelationTO(null, "Stage_id7", "Stage_id1", null, RelationStatus.INDIRECT),  
+            new RelationTO(null, "Stage_id15", "Stage_id1", null, RelationStatus.INDIRECT));
+        resultSet = dao.getStageRelations(Arrays.asList("11", "21"), 
+                false, null, Arrays.asList("Stage_id1"), null, null, attrs);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+
+        //OR condition on sources and targets
+        expectedRelations = Arrays.asList(
+            new RelationTO(null, "Stage_id1", "Stage_id1", null, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id5", "Stage_id5", null, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id6", "Stage_id6", null, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id15", "Stage_id15", null, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id2", "Stage_id1", null, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id5", "Stage_id1", null, RelationStatus.DIRECT),  
+            new RelationTO(null, "Stage_id6", "Stage_id5", null, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id14", "Stage_id1", null, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id15", "Stage_id14", null, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id6", "Stage_id1", null, RelationStatus.INDIRECT), 
+            new RelationTO(null, "Stage_id7", "Stage_id1", null, RelationStatus.INDIRECT),  
+            new RelationTO(null, "Stage_id15", "Stage_id1", null, RelationStatus.INDIRECT));
+        resultSet = dao.getStageRelations(Arrays.asList("11", "21"), 
+                false, Arrays.asList("Stage_id1", "Stage_id5", "Stage_id6", "Stage_id15"), 
+                Arrays.asList("Stage_id1"), true, null, attrs);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+
+        //AND condition on sources and targets
+        expectedRelations = Arrays.asList(
+            new RelationTO(null, "Stage_id1", "Stage_id1", null, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id15", "Stage_id15", null, RelationStatus.REFLEXIVE),
+            new RelationTO(null, "Stage_id5", "Stage_id1", null, RelationStatus.DIRECT),  
+            new RelationTO(null, "Stage_id15", "Stage_id14", null, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id6", "Stage_id1", null, RelationStatus.INDIRECT), 
+            new RelationTO(null, "Stage_id15", "Stage_id1", null, RelationStatus.INDIRECT));
+        resultSet = dao.getStageRelations(Arrays.asList("11", "21"), 
+                false, Arrays.asList("Stage_id1", "Stage_id5", "Stage_id6", "Stage_id15"), 
+                Arrays.asList("Stage_id1", "Stage_id14", "Stage_id15"), false, null, attrs);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
+
+        //add filter on relation status
+        expectedRelations = Arrays.asList(
+            new RelationTO(null, "Stage_id5", "Stage_id1", null, RelationStatus.DIRECT),  
+            new RelationTO(null, "Stage_id15", "Stage_id14", null, RelationStatus.DIRECT), 
+            new RelationTO(null, "Stage_id6", "Stage_id1", null, RelationStatus.INDIRECT), 
+            new RelationTO(null, "Stage_id15", "Stage_id1", null, RelationStatus.INDIRECT));
+        resultSet = dao.getStageRelations(Arrays.asList("11", "21"), 
+                false, Arrays.asList("Stage_id1", "Stage_id5", "Stage_id6", "Stage_id15"), 
+                Arrays.asList("Stage_id1", "Stage_id14", "Stage_id15"), false, 
+                Arrays.asList(RelationStatus.DIRECT, RelationStatus.INDIRECT), attrs);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
     }
 
     /**

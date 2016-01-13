@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -916,8 +917,8 @@ public class CommandTopAnat extends CommandParent {
     private Set<DevStage> getGroupingDevStages(String speciesId, Integer level) 
             throws IllegalStateException {
         log.entry(speciesId, level);
-        List<DevStage> devStages = serviceFactory.getDevStageService().
-                loadGroupingDevStages(new HashSet<String>(Arrays.asList(speciesId)), level);
+        Set<DevStage> devStages = serviceFactory.getDevStageService().
+                loadGroupingDevStages(Arrays.asList(speciesId), level);
 
         if (devStages.isEmpty()) {
             throw log.throwing(new IllegalStateException("A DevStageService did not allow "
@@ -1191,8 +1192,9 @@ public class CommandTopAnat extends CommandParent {
          *                              a {@code Long} that is the gene count on the species.
          * @param detectedSpecies       A {@code List} of {@code Species} detected in the gene list uploaded.
          * @param selectedSpecies       A {@code String} representing the ID of the selected species.
-         * @param stages                A {@code List} of {@code DevStage}s that are
-         *                              valid dev. stages for {@code selectedSpecies}.
+         * @param stages                A {@code Collection} of {@code DevStage}s that are
+         *                              valid dev. stages for {@code selectedSpecies}. 
+         *                              They will be ordered by their natural ordering.
          * @param notInSelectedSpeciesGeneIds      A {@code TreeSet} of {@code String}s that are 
          *                              submitted gene IDs that are not in the selected species.
          * @param undeterminedGeneIds   A {@code TreeSet} of {@code String}s that are gene IDs
@@ -1200,14 +1202,14 @@ public class CommandTopAnat extends CommandParent {
          */
         public GeneListResponse(LinkedHashMap<String, Long> geneCount,
                 TreeMap<String, Species> detectedSpecies,
-                String selectedSpecies, List<DevStage> stages, TreeSet<String> notInSelectedSpeciesGeneIds,
+                String selectedSpecies, Collection<DevStage> stages, TreeSet<String> notInSelectedSpeciesGeneIds,
                 TreeSet<String> undeterminedGeneIds) {
             log.entry(geneCount, detectedSpecies, selectedSpecies, stages,
                     notInSelectedSpeciesGeneIds, undeterminedGeneIds);
             this.geneCount= geneCount;
             this.detectedSpecies = detectedSpecies;
             this.selectedSpecies = selectedSpecies;
-            this.stages = stages;
+            this.stages = stages.stream().sorted().collect(Collectors.toList());
             this.notInSelectedSpeciesGeneIds = notInSelectedSpeciesGeneIds;
             this.undeterminedGeneIds = undeterminedGeneIds;
             log.exit();

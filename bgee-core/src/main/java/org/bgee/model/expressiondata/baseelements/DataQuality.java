@@ -16,7 +16,10 @@ public enum DataQuality implements BgeeEnumField {
     //WARNING: these Enums must be declared in order, from the lowest quality 
     //to the highest quality. This is because the compareTo implementation 
     //of the Enum class will be used.
-    LOW, HIGH;
+    //XXX: the NODATA Enum has been added to build quality legend on gene page, 
+    //but originally this class was intended to be used only when data exist. 
+    //Maybe this change will have unexpected side-effects.
+    NODATA, LOW, HIGH;
 
     @Override
     public String getStringRepresentation() {

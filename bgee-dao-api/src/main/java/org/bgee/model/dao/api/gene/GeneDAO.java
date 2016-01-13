@@ -12,6 +12,7 @@ import org.bgee.model.dao.api.exception.DAOException;
  * DAO defining queries using or retrieving {@link GeneTO}s. 
  * 
  * @author Valentine Rech de Laval
+ * @author Philippe Moret
  * @version Bgee 13
  * @see GeneTO
  * @since Bgee 13
@@ -48,6 +49,14 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      * @throws DAOException If an error occurred when accessing the data source. 
      */
     public GeneTOResultSet getAllGenes() throws DAOException;
+    
+    /**
+     * Retrieve genes by their ids.
+     * @param geneIds A {Set} of gene ids.
+     * @return  A {@code GeneTOResultSet} containing genes found from the data source.
+     * @throws DAOException
+     */
+    public GeneTOResultSet getGenesByIds(Set<String> geneIds) throws DAOException;
     
     /**
      * Retrieves genes from data source according to a {@code Set} of {@code String}s

@@ -323,6 +323,7 @@
                             <jsSourceFiles>
                                 <jsSourceFile>general.js</jsSourceFile>
                                 <jsSourceFile>download.js</jsSourceFile>
+                                <jsSourceFile>gene.js</jsSourceFile>
                             </jsSourceFiles>
                             <suffix>${filter.org.bgee.webapp.javascript.version.extension}</suffix>
                             
@@ -333,6 +334,7 @@
                                 <cssSourceFile>download.css</cssSourceFile>
                                 <cssSourceFile>general.css</cssSourceFile>
                                 <cssSourceFile>topanat.css</cssSourceFile>
+                                <cssSourceFile>gene.css</cssSourceFile>
                             </cssSourceFiles>
                             <suffix>${filter.org.bgee.webapp.css.version.extension}</suffix>
                         </configuration>
@@ -380,6 +382,34 @@
                                 <cssSourceFile>lib/font_awesome/css/font-awesome.min.css</cssSourceFile>
                             </cssSourceFiles>
                             <cssFinalFile>font-awesome.${filter.org.bgee.webapp.css.version.extension}.css</cssFinalFile>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>no_merge_no_minify_3</id>
+                        <goals>
+                            <!-- Binds by default to the lifecycle phase: process-resources -->
+                            <goal>minify</goal>
+                        </goals>
+                        <configuration>
+                            <webappTargetDir>${minify.webappTargetDir}</webappTargetDir>
+                            <!-- we pretend to merge the file so that it is renamed -->
+                            <skipMinify>true</skipMinify>
+                            <!-- We always skip the merge and minify if requested -->
+                            <skipMerge>${skip.minify.plugin}</skipMerge>
+                            
+                            <jsSourceDir>js/</jsSourceDir>
+                            <jsTargetDir>js/lib/jquery_plugins/</jsTargetDir>
+                            <jsSourceFiles>
+                                <jsSourceFile>lib/jquery_plugins/jquery.dataTables.min.js</jsSourceFile>
+                            </jsSourceFiles>
+                            <jsFinalFile>jquery.dataTables.${filter.org.bgee.webapp.javascript.version.extension}.js</jsFinalFile>
+                            
+                            <cssSourceDir>css/</cssSourceDir>
+                            <cssTargetDir>css/lib/jquery_plugins/</cssTargetDir>
+                            <cssSourceFiles>
+                                <cssSourceFile>lib/jquery_plugins/jquery.dataTables.min.css</cssSourceFile>
+                            </cssSourceFiles>
+                            <cssFinalFile>jquery.dataTables.${filter.org.bgee.webapp.css.version.extension}.css</cssFinalFile>
                         </configuration>
                     </execution>
                     

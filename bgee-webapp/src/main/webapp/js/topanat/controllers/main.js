@@ -304,8 +304,7 @@
                         } else {
                             console.log("job is not done, checkjobstatus");
                             // This fixes issue #111
-                            // Do not remove the trailing slash, see comments in topanat.js
-                            vm.resultUrl = '/result/'+vm.hash+'/'+vm.jobId + '/';
+                            vm.resultUrl = '/result/'+vm.hash+'/'+vm.jobId;
                             vm.formSubmitted = true;
                             checkJobStatus();
                         }
@@ -973,16 +972,14 @@
                         //See same remarks when retrieving results from a 'jab completed' response.
                         console.log("Results already exist.");
                         vm.jobDone = true;
-                        // Do not remove the trailing slash, see comments in topanat.js
-                        vm.resultUrl = '/result/'+vm.hash+'/';
+                        vm.resultUrl = '/result/'+vm.hash;
                         getResults(data);
 
                     } else if(data.data.data.jobResponse.jobId && data.data.data.jobResponse.data) {
 
                         console.log("Job launched.");
                         vm.jobId = data.data.data.jobResponse.jobId;
-                        // Do not remove the trailing slash, see comments in topanat.js
-                        vm.resultUrl = '/result/'+vm.hash+'/'+vm.jobId+'/';
+                        vm.resultUrl = '/result/'+vm.hash+'/'+vm.jobId;
 
                         vm.jobStatus = data.data.data.jobResponse.jobStatus;
                         logger.success('TopAnat request successful', 'TopAnat ok');
@@ -1026,7 +1023,6 @@
         };
 
         var timer = null;
-        var statuscounter = 0;
 
         function checkJobStatus(){
 
@@ -1061,18 +1057,8 @@
 
                         } else {
 
-                            statuscounter = statuscounter + 1;
                             vm.jobStatus = data.status;
                             vm.message = lang.jobProgressBookmark+"<br/>"+lang.jobProgress+vm.jobId+'. ('+vm.jobStatus+') ';
-                            
-                            //scroll to result container with information about job, 
-                            //otherwise it is possible to miss it.
-                            if (statuscounter == 1) {
-                                $timeout(function(){
-                                    $window.document.getElementById('resultContainer').scrollIntoView();
-                                }, 500);
-                            }
-
                         }
                     },
 
@@ -1229,8 +1215,7 @@
             vm.messageSeverity = "success";
             console.log("Message generated from results: " + vm.message);
 
-            // Do not remove the trailing slash, see comments in topanat.js
-            vm.resultUrl = '/result/' + vm.hash + "/";
+            vm.resultUrl = '/result/' + vm.hash;
             console.log("ready resultUrl: " + vm.resultUrl + " - current path: " + $location.path());
 
             if($location.path() !== vm.resultUrl) {

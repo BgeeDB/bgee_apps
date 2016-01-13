@@ -29,10 +29,9 @@ So we include it from scratch in all our pages, to adapt element sizes to it.
 
 /****SIB HEADER****/
 header {
-    position: fixed;
     top: 0px;
     display: inline-block;
-    background-color: rgba(0, 0, 0, 0.61);
+    background-color: rgb(61%, 61%, 61%);
     height: 45px;
     width: 100%;
     color: #282828;
@@ -186,15 +185,15 @@ ul#bgee_links > li:first-child {
 }
 
 #nav a.social-link img {
-    width: 22px;   
-    height: 22px;
+    width: 25px;   
+    height: 25px;
     padding-top: 2px;    
 }
 
 /****SIB BODY****/
 #sib_body {
     position: relative;
-    padding: 50px 1% 50px 1%;
+    padding: 10px 1% 50px;
     background-size: 100% 100%;
     /*To be modified when multi-species files will be available*/
     min-height: 340px;

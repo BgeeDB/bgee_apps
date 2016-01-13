@@ -411,12 +411,12 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<ul id='social_links'>");
         navbar.append("<li><a id='twitter' class='social-link' title='See @Bgeedb account' " +
                 "target='_blank' href='https://twitter.com/Bgeedb'>" + 
-                "<img alt='Twitter logo' src='" + this.prop.getImagesRootDirectory() + 
-                "Twitter.png'></a></li>");
+                "<img alt='Twitter logo' src='" + this.prop.getLogoImagesRootDirectory() + 
+                "twitter_logo.png'></a></li>");
         navbar.append("<li><a id='wordpress' class='social-link' title='See our blog' " + 
                 "target='_blank' href='https://bgeedb.wordpress.com'>" + 
-                "<img alt='Wordpress logo' src='" + this.prop.getImagesRootDirectory() + 
-                "wordpress.png'></a></li>");
+                "<img alt='Wordpress logo' src='" + this.prop.getLogoImagesRootDirectory() + 
+                "wordpress_logo.png'></a></li>");
         navbar.append("</ul>");  // end #social-links
 
         navbar.append("</div>"); // end #nav

@@ -1,7 +1,6 @@
 package org.bgee.model.dao.api.anatdev;
 
 import java.util.Collection;
-import java.util.Set;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
@@ -46,29 +45,27 @@ public interface StageDAO extends DAO<StageDAO.Attribute> {
     }
 
     /**
-     * Retrieves stages from data source according to a {@code Set} of {@code String}s
-     * that are the IDs of species allowing to filter the entities to use.
+     * Retrieves stages from data source existing in any of the requested species.
      * <p>
      * The stages are retrieved and returned as a {@code StageTOResultSet}. It is the
      * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
+     * @param speciesIds    A {@code Collection} of {@code String}s that are the IDs of species 
      *                      allowing to filter the stages to use.
      * @return              An {@code StageTOResultSet} containing all stages from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public StageTOResultSet getStagesBySpeciesIds(Set<String> speciesIds) throws DAOException;
+    public StageTOResultSet getStagesBySpeciesIds(Collection<String> speciesIds) throws DAOException;
     
     /**
-     * Retrieves stages from data source according to a {@code Set} of {@code String}s
-     * that are the IDs of species, a {@code Boolean} defining whether stages are grouping stages,
-     * and an {@code Integer} that is the level of dev. stages, allowing to filter the dev. stages
+     * Retrieves stages from data source existing in any of the requested species, 
+     * potentially filtered based on whether stages are grouping stages, and on the dev. stage levels.
      * to use. 
      * <p>
      * The stages are retrieved and returned as a {@code StageTOResultSet}. It is the
      * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesIds        A {@code Set} of {@code String}s that are the IDs of species 
+     * @param speciesIds        A {@code Collection} of {@code String}s that are the IDs of species 
      *                          allowing to filter the stages to use.
      * @param isGroupingStage   A {@code Boolean} defining whether this stage is a grouping stage, 
      *                          broad enough to allow comparisons of anatomical features. 
@@ -78,7 +75,7 @@ public interface StageDAO extends DAO<StageDAO.Attribute> {
      * @return                  The {@code StageTOResultSet} containing stages from data source.
      * @throws DAOException     If an error occurred when accessing the data source. 
      */
-    public StageTOResultSet getStagesBySpeciesIds(Set<String> speciesIds, Boolean isGroupingStage,
+    public StageTOResultSet getStagesBySpeciesIds(Collection<String> speciesIds, Boolean isGroupingStage,
             Integer level) throws DAOException;
 
     /**
@@ -88,25 +85,25 @@ public interface StageDAO extends DAO<StageDAO.Attribute> {
      * The stages are retrieved and returned as a {@code StageTOResultSet}. It is the
      * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of dev. stages 
+     * @param speciesIds    A {@code Collection} of {@code String}s that are the IDs of dev. stages 
      *                      allowing to filter the stages to use.
      * @return              An {@code StageTOResultSet} containing stages from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public StageTOResultSet getStagesByIds(Set<String> stagesIds) throws DAOException;
+    public StageTOResultSet getStagesByIds(Collection<String> stagesIds) throws DAOException;
 
     /**
-     * Retrieves stages from data source according to a {@code Set} of {@code String}s that
-     * are the IDs of species, a {@code Set} of {@code String}s that are the IDs of dev. stages,
-     * a {@code Boolean} defining whether stages are grouping stages, and an {@code Integer} 
-     * that is the level of dev. stages. allowing to filter the dev. stages to use. 
+     * Retrieves stages from data source according to species filtering, filtering on 
+     * dev. stages IDs, on whether stages are grouping stages, and on the dev. stage levels. 
+     * If an entity in {@code stageIds} does not exists in any of the requested species, 
+     * it will not be returned.
      * <p>
      * The stages are retrieved and returned as a {@code StageTOResultSet}. It is the
      * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesIds        A {@code Set} of {@code String}s that are the IDs of species 
+     * @param speciesIds        A {@code Collection} of {@code String}s that are the IDs of species 
      *                          allowing to filter the stages to use.
-     * @param stageIds          A {@code Set} of {@code String}s that are the IDs of dev. stages
+     * @param stageIds          A {@code Collection} of {@code String}s that are the IDs of dev. stages
      *                          allowing to filter the stages to use.
      * @param isGroupingStage   A {@code Boolean} defining whether this stage is a grouping stage, 
      *                          broad enough to allow comparisons of anatomical features. 
@@ -117,8 +114,42 @@ public interface StageDAO extends DAO<StageDAO.Attribute> {
      *                          from data source.
      * @throws DAOException     If an error occurred when accessing the data source. 
      */
-    public StageTOResultSet getStages(Set<String> speciesIds, Set<String> stagesIds,
+    public StageTOResultSet getStages(Collection<String> speciesIds, Collection<String> stagesIds,
             Boolean isGroupingStage, Integer level) throws DAOException;
+
+    /**
+     * Retrieves stages from data source according to species filtering, filtering on 
+     * dev. stages IDs, on whether stages are grouping stages, and on the dev. stage levels. 
+     * If an entity in {@code stageIds} does not exists according to the species filtering, 
+     * it will not be returned. 
+     * <p>
+     * The stages are retrieved and returned as a {@code StageTOResultSet}. It is the
+     * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
+     * 
+     * @param speciesIds        A {@code Collection} of {@code String}s that are the IDs of species 
+     *                          allowing to filter the stages to use.
+     * @param anySpecies        A {@code Boolean} defining, when {@code speciesIds} contains several IDs, 
+     *                          whether the entities retrieved should be valid in any 
+     *                          of the requested species (if {@code true}), or in all 
+     *                          of the requested species (if {@code false}).
+     * @param stageIds          A {@code Collection} of {@code String}s that are the IDs of dev. stages
+     *                          allowing to filter the stages to use.
+     * @param isGroupingStage   A {@code Boolean} defining whether this stage is a grouping stage, 
+     *                          broad enough to allow comparisons of anatomical features. 
+     *                          If {@code null}, no filter is apply.
+     * @param level             An {@code Integer} that is the level of dev. stages 
+     *                          allowing to filter the dev. stages.
+     * @param attributes        A {@code Collection} of {@code StageDAO.Attribute}s 
+     *                          defining the attributes to populate in the returned 
+     *                          {@code StageTO}s. If {@code null} or empty, 
+     *                          all attributes are populated. 
+     * @return                  The {@code StageTOResultSet} containing filtered stages
+     *                          from data source.
+     * @throws DAOException     If an error occurred when accessing the data source. 
+     */
+    public StageTOResultSet getStages(Collection<String> speciesIds, Boolean anySpecies, 
+            Collection<String> stagesIds, Boolean isGroupingStage, Integer level, 
+            Collection<StageDAO.Attribute> attributes) throws DAOException;
 
     /**
      * Inserts the provided stages into the Bgee database, represented as 

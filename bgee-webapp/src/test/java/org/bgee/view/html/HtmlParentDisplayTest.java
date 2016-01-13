@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.bgee.controller.BgeeProperties;
+import org.bgee.controller.RequestParameters;
 import org.junit.Test;
 
 /**
@@ -27,7 +28,7 @@ public class HtmlParentDisplayTest {
         when(props.isMinify()).thenReturn(true);
         HtmlFactory factory = mock(HtmlFactory.class);
         when(props.getJavascriptVersionExtension()).thenReturn("js13");
-        HtmlParentDisplay display = new HtmlParentDisplay(null, null, props, factory);
+        HtmlParentDisplay display = new HtmlParentDisplay(null, new RequestParameters(), props, factory);
         assertEquals("Incorrect versioned javascript file name generated", 
                 "common.js13.js", display.getVersionedJsFileName("common.js"));
     }
@@ -38,7 +39,7 @@ public class HtmlParentDisplayTest {
         when(props.isMinify()).thenReturn(true);
         HtmlFactory factory = mock(HtmlFactory.class);
         when(props.getCssVersionExtension()).thenReturn("css13");
-        HtmlParentDisplay display = new HtmlParentDisplay(null, null, props, factory);
+        HtmlParentDisplay display = new HtmlParentDisplay(null, new RequestParameters(), props, factory);
         assertEquals("Incorrect versioned CSS file name generated", 
                 "bgee.css13.css", display.getVersionedCssFileName("bgee.css"));
     }

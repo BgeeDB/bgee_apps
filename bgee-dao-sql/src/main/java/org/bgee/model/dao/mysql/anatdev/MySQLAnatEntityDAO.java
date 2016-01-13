@@ -2,6 +2,9 @@ package org.bgee.model.dao.mysql.anatdev;
 
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Optional;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -21,7 +24,8 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
  * An {@code AnatEntityDAO} for MySQL. 
  * 
  * @author Valentine Rech de Laval
- * @version Bgee 13
+ * @author Frederic Bastian
+ * @version Bgee 13 Jan. 2016
  * @see org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTO
  * @since Bgee 13
  */
@@ -45,31 +49,57 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
 
     
     @Override
-    public AnatEntityTOResultSet getAnatEntitiesByIds(Set<String> anatEntitiesIds) {
+    public AnatEntityTOResultSet getAnatEntitiesByIds(Collection<String> anatEntitiesIds) {
         log.entry(anatEntitiesIds);
         return log.exit(this.getAnatEntities(null, anatEntitiesIds));
     }
 
     @Override
-    public AnatEntityTOResultSet getAnatEntitiesBySpeciesIds(Set<String> speciesIds) 
+    public AnatEntityTOResultSet getAnatEntitiesBySpeciesIds(Collection<String> speciesIds) 
             throws DAOException {
         log.entry(speciesIds);
         return log.exit(this.getAnatEntities(speciesIds, null));
     }
     
     @Override
-    public AnatEntityTOResultSet getAnatEntities(Set<String> speciesIds, Set<String> anatEntitiesIds)
+    public AnatEntityTOResultSet getAnatEntities(Collection<String> speciesIds, Collection<String> anatEntitiesIds)
             throws DAOException {
         log.entry(speciesIds, anatEntitiesIds);
+        return log.exit(this.getAnatEntities(speciesIds, true, anatEntitiesIds, this.getAttributes()));
+    }
+    
+    @Override
+    public AnatEntityTOResultSet getAnatEntities(Collection<String> speciesIds, Boolean anySpecies, 
+            Collection<String> anatEntitiesIds, Collection<AnatEntityDAO.Attribute> attributes) 
+                    throws DAOException {
+        log.entry(speciesIds, anySpecies, anatEntitiesIds, attributes);
         
         String tableName = "anatEntity";
+        
+        //*******************************
+        // FILTER ARGUMENTS
+        //*******************************
+        //Species
+        Set<String> clonedSpeIds = Optional.ofNullable(speciesIds)
+                .map(c -> new HashSet<String>(c)).orElse(null);
+        boolean isSpeciesFilter = clonedSpeIds != null && !clonedSpeIds.isEmpty();
+        boolean realAnySpecies = isSpeciesFilter && 
+                (Boolean.TRUE.equals(anySpecies) || clonedSpeIds.size() == 1);
+        //anat. entity IDs
+        Set<String> clonedEntityIds = Optional.ofNullable(anatEntitiesIds)
+                .map(c -> new HashSet<String>(c)).orElse(null);
+        boolean isEntityFilter = clonedEntityIds != null && !clonedEntityIds.isEmpty();
 
-        String sql = new String(); 
-        Collection<AnatEntityDAO.Attribute> attributes = this.getAttributes();
-        if (attributes == null || attributes.size() == 0) {
+        //*******************************
+        // SELECT CLAUSE
+        //*******************************
+        String sql = "";
+        EnumSet<AnatEntityDAO.Attribute> clonedAttrs = Optional.ofNullable(attributes)
+                .map(e -> e.isEmpty()? null: EnumSet.copyOf(e)).orElse(null);
+        if (clonedAttrs == null || clonedAttrs.isEmpty()) {
             sql += "SELECT DISTINCT " + tableName + ".*";
         } else {
-            for (AnatEntityDAO.Attribute attribute: attributes) {
+            for (AnatEntityDAO.Attribute attribute: clonedAttrs) {
                 if (sql.length() == 0) {
                     sql += "SELECT DISTINCT ";
                 } else {
@@ -78,43 +108,59 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
                 sql += tableName + "." + this.attributeToString(attribute);
             }
         }
+        
+        //*******************************
+        // FROM CLAUSE
+        //*******************************
         sql += " FROM " + tableName;
         String anatEntTaxConstTabName = "anatEntityTaxonConstraint";
-        boolean filterBySpecies = speciesIds != null && speciesIds.size() > 0;
-        boolean filterByIds = anatEntitiesIds != null && anatEntitiesIds.size() > 0;
 
-        if (filterBySpecies) {
+        if (realAnySpecies) {
              sql += " INNER JOIN " + anatEntTaxConstTabName + " ON (" +
                           anatEntTaxConstTabName + ".anatEntityId = " + tableName + ".anatEntityId)";
         }
-        if (filterBySpecies || filterByIds) {
+
+        //*******************************
+        // WHERE CLAUSE
+        //*******************************
+        if (isSpeciesFilter || isEntityFilter) {
             sql += " WHERE ";
         }
-        if (filterBySpecies) {
-            sql += "(" + anatEntTaxConstTabName + ".speciesId IS NULL" +
-                    " OR " + anatEntTaxConstTabName + ".speciesId IN (" + 
-                    BgeePreparedStatement.generateParameterizedQueryString(
-                            speciesIds.size()) + "))";
+        //species
+        if (isSpeciesFilter) {
+            if  (realAnySpecies) {
+                sql += "(" + anatEntTaxConstTabName + ".speciesId IS NULL" +
+                        " OR " + anatEntTaxConstTabName + ".speciesId IN (" + 
+                        BgeePreparedStatement.generateParameterizedQueryString(
+                                clonedSpeIds.size()) + "))";
+            } else {
+                String existsPart = "SELECT 1 FROM " + anatEntTaxConstTabName + " AS tc WHERE "
+                        + "tc.anatEntityId = " + tableName + ".anatEntityId AND tc.speciesId ";
+                sql += getAllSpeciesExistsClause(existsPart, clonedSpeIds.size());
+            }
         }
-        if (filterBySpecies && filterByIds) {
-            sql += " AND ";
-        }
-        if (filterByIds) {
+        if (isEntityFilter) {
+            if (isSpeciesFilter) {
+                sql += " AND ";
+            }
             sql += tableName + ".anatEntityId IN (" + 
                     BgeePreparedStatement.generateParameterizedQueryString(
-                            anatEntitiesIds.size()) + ")";
+                            clonedEntityIds.size()) + ")";
         }
 
+        //*******************************
+        // PREPARE STATEMENT
+        //*******************************
         //we don't use a try-with-resource, because we return a pointer to the results, 
         //not the actual results, so we should not close this BgeePreparedStatement.
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
-            if (filterBySpecies) {
-                stmt.setStringsToIntegers(1, speciesIds, true);
+            if (isSpeciesFilter) {
+                stmt.setStringsToIntegers(1, clonedSpeIds, true);
             }
-            if (filterByIds) {
-                int offsetParamIndex = (filterBySpecies ? speciesIds.size() + 1 : 1);
-                stmt.setStrings(offsetParamIndex, anatEntitiesIds, true);
+            if (isEntityFilter) {
+                int offsetParamIndex = (isSpeciesFilter? clonedSpeIds.size() + 1: 1);
+                stmt.setStrings(offsetParamIndex, clonedEntityIds, true);
             }
 
             return log.exit(new MySQLAnatEntityTOResultSet(stmt));
@@ -124,11 +170,13 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
     }
     
     @Override
-    public AnatEntityTOResultSet getNonInformativeAnatEntitiesBySpeciesIds(Set<String> speciesIds) 
+    public AnatEntityTOResultSet getNonInformativeAnatEntitiesBySpeciesIds(Collection<String> speciesIds) 
             throws DAOException {
         log.entry(speciesIds);      
 
-        boolean isSpeciesFilter = speciesIds != null && speciesIds.size() > 0;
+        Set<String> clonedSpeIds = Optional.ofNullable(speciesIds)
+                .map(c -> new HashSet<String>(c)).orElse(null);
+        boolean isSpeciesFilter = clonedSpeIds != null && clonedSpeIds.size() > 0;
         String tableName = "anatEntity";
         
         String sql = new String(); 
@@ -167,7 +215,7 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
         if (isSpeciesFilter) {
             sql += " AND (" + anatEntTaxConstTabName + ".speciesId IS NULL" +
                    " OR " + anatEntTaxConstTabName + ".speciesId IN (" +
-                   BgeePreparedStatement.generateParameterizedQueryString(speciesIds.size()) + 
+                   BgeePreparedStatement.generateParameterizedQueryString(clonedSpeIds.size()) + 
                    "))";
         }
 //        sql += " ORDER BY " + tableName + ".anatEntityId";
@@ -177,7 +225,7 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             if (isSpeciesFilter) {
-                stmt.setStringsToIntegers(1, speciesIds, true);
+                stmt.setStringsToIntegers(1, clonedSpeIds, true);
             }             
             return log.exit(new MySQLAnatEntityTOResultSet(stmt));
         } catch (SQLException e) {

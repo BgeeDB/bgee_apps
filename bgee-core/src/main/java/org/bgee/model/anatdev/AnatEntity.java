@@ -1,6 +1,7 @@
 package org.bgee.model.anatdev;
 
 import org.bgee.model.NamedEntity;
+import org.bgee.model.ontology.OntologyElement;
 
 /**
  * Class describing anatomical entities.
@@ -9,7 +10,7 @@ import org.bgee.model.NamedEntity;
  * @version Bgee 13.1
  *
  */
-public class AnatEntity extends NamedEntity {
+public class AnatEntity extends NamedEntity implements OntologyElement<AnatEntity> {
 
     /**
      * Default constructor not public, an ID must always be provided, 

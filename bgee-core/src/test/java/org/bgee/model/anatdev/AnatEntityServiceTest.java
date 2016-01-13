@@ -1,6 +1,8 @@
 package org.bgee.model.anatdev;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -47,6 +49,8 @@ public class AnatEntityServiceTest extends TestAncestor {
 
         AnatEntityTOResultSet mockAnatEntRs1 = 
                 getMockResultSet(AnatEntityTOResultSet.class, anatEntityTOs);
+        when(dao.getAnatEntities(eq(speciesIds), eq(true), anyObject(), anyObject()))
+            .thenReturn(mockAnatEntRs1);
         when(dao.getAnatEntitiesBySpeciesIds(speciesIds)).thenReturn(mockAnatEntRs1);
         
         // Test without defined level
@@ -57,6 +61,45 @@ public class AnatEntityServiceTest extends TestAncestor {
         AnatEntityService service = new AnatEntityService(managerMock);
         assertEquals("Incorrect anat. entities", expectedAnatEntity,
                 service.loadAnatEntitiesBySpeciesIds(speciesIds).collect(Collectors.toList()));
+    }
+
+    /**
+     * Test the method {@link AnatEntityService#loadAnatEntities(Collection, Boolean, Collection)}
+     */
+    @Test
+    public void shouldLoadAnatEntities() {
+        // initialize mocks
+        DAOManager managerMock = mock(DAOManager.class);
+        AnatEntityDAO dao = mock(AnatEntityDAO.class);
+        when(managerMock.getAnatEntityDAO()).thenReturn(dao);
+        List<AnatEntityTO> anatEntityTOs = Arrays.asList(
+                new AnatEntityTO("UBERON:0001687", "stapes bone",
+                        "stapes bone description", "Stage_id1", "Stage_id2", false),
+                new AnatEntityTO("UBERON:0001853", "utricle of membranous labyrinth", 
+                        "utricle of membranous labyrinth description", "Stage_id1", "Stage_id2", false),
+                new AnatEntityTO("UBERON:0011606", "hyomandibular bone", 
+                        "hyomandibular bone description", "Stage_id1", "Stage_id2", false));
+
+        // Filter on species IDs is not tested here (tested in AnatEntityDAO)
+        // but we need a variable to mock DAO answer
+        Set<String> speciesIds = new HashSet<String>();
+        speciesIds.add("11");
+        Set<String> anatEntityIds = new HashSet<>(Arrays.asList(
+                "UBERON:0001687", "UBERON:0001853", "UBERON:0011606"));
+
+        AnatEntityTOResultSet mockAnatEntRs1 = 
+                getMockResultSet(AnatEntityTOResultSet.class, anatEntityTOs);
+        when(dao.getAnatEntities(eq(speciesIds), eq(true), eq(anatEntityIds), anyObject()))
+            .thenReturn(mockAnatEntRs1);
+        
+        // Test without defined level
+        List<AnatEntity> expectedAnatEntity = Arrays.asList(
+                new AnatEntity("UBERON:0001687",  "stapes bone",  "stapes bone description"), 
+                new AnatEntity("UBERON:0001853", "utricle of membranous labyrinth", "utricle of membranous labyrinth description"), 
+                new AnatEntity("UBERON:0011606", "hyomandibular bone", "hyomandibular bone description"));
+        AnatEntityService service = new AnatEntityService(managerMock);
+        assertEquals("Incorrect anat. entities", expectedAnatEntity,
+                service.loadAnatEntities(speciesIds, true, anatEntityIds).collect(Collectors.toList()));
     }
 
 

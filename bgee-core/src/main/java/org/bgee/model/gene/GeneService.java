@@ -9,8 +9,11 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
+import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
+import org.bgee.model.species.Species;
+import org.bgee.model.species.SpeciesService;
 
 /**
  * A {@link Service} to obtain {@link Gene} objects. 
@@ -27,6 +30,12 @@ public class GeneService extends Service {
     private static final Logger log = LogManager.getLogger(GeneService.class.getName());
     
     /**
+     * The {@code SpeciesService} to obtain {@code Species} objects 
+     * used in {@code SpeciesDataGroup}.
+     */
+    private final SpeciesService speciesService;
+    
+    /**
      * 0-arg constructor that will cause this {@code GeneService} to use 
      * the default {@code DAOManager} returned by {@link DAOManager#getDAOManager()}. 
      * 
@@ -41,7 +50,12 @@ public class GeneService extends Service {
      * @throws IllegalArgumentException If {@code daoManager} is {@code null}.
      */
     public GeneService(DAOManager daoManager) {
-        super(daoManager);
+        this(daoManager, null);
+    }
+    
+    public GeneService(DAOManager daoManager, SpeciesService speciesService) {
+    	super(daoManager);
+    	this.speciesService = speciesService;
     }
 
     /**
@@ -68,6 +82,26 @@ public class GeneService extends Service {
                     .collect(Collectors.toList()));
     }
 
+    public Gene loadGeneById(String geneId) {
+    	log.entry(geneId);
+    	Set<String> geneIds = new HashSet<>();
+    	geneIds.add(geneId);
+    	Set<Gene> result = getDaoManager().getGeneDAO()
+    			.getGenesByIds(geneIds).stream().map(GeneService::mapFromTO).collect(Collectors.toSet());
+    	
+    	// there should be exactly one result here.
+    	if (result == null || result.size() != 1) {
+        	throw log.throwing(new IllegalStateException("Shoud get 1 element here" + result));
+    	}
+    	Gene gene = result.iterator().next();
+    	Set<String> speciesIds = new HashSet<>();
+    	assert gene.getSpeciesId() != null;
+    	speciesIds.add(gene.getSpeciesId());
+    	Species species = speciesService.loadSpeciesByIds(speciesIds).iterator().next();
+    	gene.setSpecies(species);
+		return log.exit(gene);  		
+    }
+    
     /**
      * Maps {@link GeneTO} to a {@link Gene}.
      * 
@@ -80,6 +114,6 @@ public class GeneService extends Service {
             return log.exit(null);
         }
         
-        return log.exit(new Gene(geneTO.getId(), String.valueOf(geneTO.getSpeciesId())));
+        return log.exit(new Gene(geneTO.getId(), String.valueOf(geneTO.getSpeciesId()), geneTO.getName(), geneTO.getDescription()));
     }
 }

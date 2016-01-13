@@ -12,6 +12,7 @@ import org.bgee.view.AboutDisplay;
 import org.bgee.view.DocumentationDisplay;
 import org.bgee.view.DownloadDisplay;
 import org.bgee.view.ErrorDisplay;
+import org.bgee.view.GeneDisplay;
 import org.bgee.view.GeneralDisplay;
 import org.bgee.view.JsonHelper;
 import org.bgee.view.SpeciesDisplay;
@@ -96,6 +97,11 @@ public class JsonFactory extends ViewFactory {
     public AboutDisplay getAboutDisplay() throws IOException {
         throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
     }
+
+	@Override
+	public GeneDisplay getGeneDisplay() throws IOException {
+        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
+	}
 
     @Override
     public SpeciesDisplay getSpeciesDisplay() throws IOException {

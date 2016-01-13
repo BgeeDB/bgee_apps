@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -168,7 +169,7 @@ public class MySQLStageDAOIT extends MySQLITAncestor {
     }
     
     /**
-     * Test the select method {@link MySQLStageDAO#getStages(Set, Set, Boolean, Integer)}.
+     * Test the select method {@link MySQLStageDAO#getStages(Collection, Collection, Boolean, Integer)}.
      */
     @Test
     public void shouldGetStages() throws SQLException {
@@ -213,6 +214,31 @@ public class MySQLStageDAOIT extends MySQLITAncestor {
                         dao.getStages(speciesIds, stageIds, false, 4).getAllTOs(),
                         expectedStages));
 
+    }
+    
+    /**
+     * Test the select method {@link MySQLStageDAO#getStages(Collection, Boolean, Collection, 
+     * Boolean, Integer, Collection)}.
+     */
+    @Test
+    public void shouldGetStagesAllSpecies() throws SQLException {
+
+        this.useSelectDB();
+
+        MySQLStageDAO dao = new MySQLStageDAO(this.getMySQLDAOManager());
+        
+        Collection<StageTO> expectedStages = Arrays.asList(
+                new StageTO("Stage_id2", "stageN2", null, null, null, null, null, null),
+                new StageTO("Stage_id5", "stageN5", null, null, null, null, null, null),
+                new StageTO("Stage_id6", "stageN6", null, null, null, null, null, null),
+                new StageTO("Stage_id7", "stageN7", null, null, null, null, null, null));
+        assertTrue("StageTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(
+                        dao.getStages(Arrays.asList("11", "21"), false, 
+                                Arrays.asList("Stage_id2", "Stage_id5", "Stage_id6", "Stage_id7"), 
+                                false, null, 
+                                EnumSet.of(StageDAO.Attribute.ID, StageDAO.Attribute.NAME)).getAllTOs(),
+                        expectedStages));
     }
     
     /**

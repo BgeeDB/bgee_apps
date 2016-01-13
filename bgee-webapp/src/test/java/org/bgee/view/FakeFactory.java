@@ -91,6 +91,11 @@ public class FakeFactory extends ViewFactory {
         return null;
     }
 
+	@Override
+	public GeneDisplay getGeneDisplay() throws IOException {
+		return null;
+	}
+
     @Override
     public SpeciesDisplay getSpeciesDisplay() throws IOException {
         if(prop.getUrlMaxLength() == 9999 && this.requestParameters.getFirstValue(

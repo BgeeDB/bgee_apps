@@ -32,6 +32,8 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
      */
     private final static Logger log = LogManager.getLogger(MySQLGeneDAO.class.getName());
 
+    private static final String GENE_TABLE_NAME = "gene";
+    
     /**
      * Constructor providing the {@code MySQLDAOManager} that this {@code MySQLDAO} 
      * will use to obtain {@code BgeeConnection}s.
@@ -48,11 +50,9 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         log.entry();
         
         //Construct sql query
-        String geneTableName = "gene";
+        String sql = this.generateSelectClause(this.getAttributes(), GENE_TABLE_NAME);
         
-        String sql = this.generateSelectClause(this.getAttributes(), geneTableName);
-        
-        sql += " FROM " + geneTableName;
+        sql += " FROM " + GENE_TABLE_NAME;
         //we don't use a try-with-resource, because we return a pointer to the results, 
         //not the actual results, so we should not close this BgeePreparedStatement.
         try {
@@ -69,17 +69,22 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         return log.exit(this.getGenesBySpeciesIds(speciesIds, null));
     }
     
+
+	@Override
+	public GeneTOResultSet getGenesByIds(Set<String> geneIds) throws DAOException {
+		log.entry(geneIds);
+		return log.exit(getGenesBySpeciesIds(null, geneIds));
+	}
+    
     @Override
     public GeneTOResultSet getGenesBySpeciesIds(Set<String> speciesIds, Set<String> geneIds)
             throws DAOException {
         log.entry(speciesIds, geneIds);
 
-        //Construct sql query
-        String geneTableName = "gene";
         
-        String sql = this.generateSelectClause(this.getAttributes(), geneTableName);
+        String sql = this.generateSelectClause(this.getAttributes(), GENE_TABLE_NAME);
         
-        sql += " FROM " + geneTableName;
+        sql += " FROM " + GENE_TABLE_NAME;
         
         boolean filterBySpeciesIDs = speciesIds != null && !speciesIds.isEmpty();
         boolean filterByGeneIDsFilter = geneIds != null && !geneIds.isEmpty();

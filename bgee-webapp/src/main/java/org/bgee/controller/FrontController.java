@@ -197,6 +197,8 @@ public class FrontController extends HttpServlet {
             } else if (requestParameters.isAJobPageCategory()) {
                 controller = new CommandJob(response, requestParameters, this.prop, factory, 
                         serviceFactory);
+            } else if (requestParameters.isAGenePageCategory()){
+            	controller = new CommandGene(response, requestParameters, this.prop, factory, serviceFactory);
             } else {
                 throw log.throwing(new PageNotFoundException("Request not recognized."));
             }

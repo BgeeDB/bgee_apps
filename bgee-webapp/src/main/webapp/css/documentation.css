@@ -35,24 +35,6 @@ div.documentationmenu li {
     margin-top: 0.3%;
 }
 
-#sib_body h1, #sib_body h2, #sib_body h3 {
-    color: #920209;
-}
-
-#sib_body h2 {
-    margin: 1em 0 0 0;
-    font-size: 1.2em;
-    font-weight: bold;
-    border-bottom: 2px #920209 solid;
-    width: 100%; 
-}
-
-#sib_body h3 {
-    font-weight: normal;
-	font-size: 1em;
-    margin: 2% 0 0 0;
-}
-
 table.call_download_file_desc, table.call_download_file_example {
 	width: 100%;
 	border-top: 1px solid black;

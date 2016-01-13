@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.CallData.DiffExpressionCallData;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
@@ -15,6 +17,7 @@ import org.bgee.model.expressiondata.baseelements.SummaryCallType.*;
 
 //XXX: and what if it was a multi-species query? Should we use something like a MultiSpeciesCondition?
 public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallData<?>> {
+    private final static Logger log = LogManager.getLogger(Call.class.getName());
 
     //**********************************************
     //   INNER CLASSES
@@ -95,6 +98,9 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
     protected Call(String geneId, Condition condition, DataPropagation dataPropagation, 
             T summaryCallType, DataQuality summaryQual, Collection<U> callData) {
         //TODO: sanity checks
+        if (DataQuality.NODATA.equals(summaryQual)) {
+            throw log.throwing(new IllegalArgumentException("An actual DataQuality must be provided."));
+        }
         this.geneId = geneId;
         this.condition = condition;
         this.dataPropagation = dataPropagation;

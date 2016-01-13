@@ -53,6 +53,33 @@ public class Gene extends NamedEntity {
         this.setSpeciesId(speciesId);
     }
 
+    /**
+     * Constructor providing the {@code id} of this {@code Gene} and of the species. 
+     * This {@code id} cannot be {@code null}, or blank,
+     * otherwise an {@code IllegalArgumentException} will be thrown.
+     * @param id        A {@code String} representing the ID of this object.
+     * @param speciesId A {@code String} representing the ID of the species.
+     * @throws IllegalArgumentException     if {@code id} is {@code null}, or blank.
+     */
+    public Gene(String id, String speciesId, String name) throws IllegalArgumentException {
+    	this(id, speciesId, name, null);
+    }
+    
+    /**
+     * Constructor providing the {@code id} of this {@code Gene} and of the species. 
+     * This {@code id} cannot be {@code null}, or blank,
+     * otherwise an {@code IllegalArgumentException} will be thrown.
+     * @param id        A {@code String} representing the ID of this object.
+     * @param speciesId A {@code String} representing the ID of the species.
+     * @param description A {@code String} representing the description of the gene.
+     * @throws IllegalArgumentException     if {@code id} is {@code null}, or blank.
+     */
+    public Gene(String id, String speciesId, String name, String description) throws IllegalArgumentException {
+    	super(id, name, description);
+    	this.setSpeciesId(speciesId);
+    }
+    
+    
 	/**
 	 * Returns the {@code Species} this {@code Gene} belongs to.
 	 * @return The {@code Species} this {@code Gene} belongs to.

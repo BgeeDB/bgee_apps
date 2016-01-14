@@ -1168,7 +1168,7 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
             List<Object> resumeQualities = new ArrayList<Object>();
             resumeQualities.add(GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY));
             resumeQualities.add(GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY));
-            resumeQualities.add(GenerateDiffExprFile.NA_VALUE);
+            resumeQualities.add(GenerateDownloadFile.NA_VALUE);
             
             List<Object> originValues = new ArrayList<Object>();
             for (ObservedData data : ObservedData.values()) {

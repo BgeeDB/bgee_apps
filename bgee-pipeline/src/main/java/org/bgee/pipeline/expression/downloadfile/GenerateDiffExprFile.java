@@ -223,7 +223,8 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
     public enum DiffExpressionData {
         NO_DATA("no data"), NOT_EXPRESSED("not expressed"), OVER_EXPRESSION("over-expression"), 
         UNDER_EXPRESSION("under-expression"), NOT_DIFF_EXPRESSION("no diff expression"), 
-        WEAK_AMBIGUITY("weak ambiguity"), STRONG_AMBIGUITY("high ambiguity");
+        WEAK_AMBIGUITY(GenerateDownloadFile.WEAK_AMBIGUITY), 
+        STRONG_AMBIGUITY(GenerateDownloadFile.STRONG_AMBIGUITY);
 
         private final String stringRepresentation;
 
@@ -974,10 +975,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         if (!fileType.isSimpleFileType()) {
             row.put(AFFYMETRIX_DATA_COLUMN_NAME, 
                     to.getDiffExprCallTypeAffymetrix().getStringRepresentation());
-            //TODO: OK, now I know why I didn't like the idea of using an Enum 
-            //directly from a TO...
             row.put(AFFYMETRIX_CALL_QUALITY_COLUMN_NAME, 
-                    //to.getAffymetrixData().getStringRepresentation());
                     GenerateDownloadFile.convertDataStateToString(to.getAffymetrixData()));
             
             row.put(AFFYMETRIX_P_VALUE_COLUMN_NAME, String.valueOf(to.getBestPValueAffymetrix()));
@@ -989,7 +987,6 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
             row.put(RNASEQ_DATA_COLUMN_NAME,
                     to.getDiffExprCallTypeRNASeq().getStringRepresentation());
             row.put(RNASEQ_CALL_QUALITY_COLUMN_NAME,
-                    //to.getRNASeqData().getStringRepresentation());
                     GenerateDownloadFile.convertDataStateToString(to.getRNASeqData()));
             
             row.put(RNASEQ_P_VALUE_COLUMN_NAME, String.valueOf(to.getBestPValueRNASeq()));
@@ -1089,12 +1086,8 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
                             "Both DiffExprCallType are set to 'no data' or 'not expressed'"));
             }
             if (allDataQuality.contains(DataState.HIGHQUALITY)) {
-                //TODO: OK, now I know why I didn't like the idea of using an Enum 
-                //directly from a TO...
-                //quality = GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY);
                 quality = GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY);
             } else {
-                //quality = GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY);
                 quality = GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY);
             }
 
@@ -1120,7 +1113,6 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         } else if (allType.contains(DiffExprCallType.NOT_EXPRESSED) && 
                 allType.contains(DiffExprCallType.UNDER_EXPRESSED)) {
             summary = DiffExpressionData.UNDER_EXPRESSION;
-            //quality = GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY);
             quality = GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY);
             
         } else {

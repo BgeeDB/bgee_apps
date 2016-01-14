@@ -224,7 +224,7 @@ public abstract class GenerateDownloadFile extends CallUser {
         if (DataState.LOWQUALITY.equals(dataState)) {
             return log.exit(LOW_QUALITY_TEXT);
         }
-        return log.exit(GenerateDiffExprFile.NA_VALUE);
+        return log.exit(NA_VALUE);
     }
 
     /**

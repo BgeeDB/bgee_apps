@@ -601,7 +601,7 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
             // in different places in the code if we change them 
             String highQuality = "high quality";
             String lowQuality = "low quality";
-            String noQuality = GenerateDiffExprFile.NA_VALUE;
+            String noQuality = GenerateDownloadFile.NA_VALUE;
             
             // Check that the headers are what we expect
             String[] expecteds = new String[] { 

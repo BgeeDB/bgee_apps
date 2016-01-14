@@ -520,7 +520,7 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     "222", "geneId6", "\"geneName6\"", "entityId4|entityId5", "\"entityName4|entityName5\"",
                     "stageId2", "\"stageName2\"", "Gorilla gorilla",  
                     DiffExpressionData.STRONG_AMBIGUITY.getStringRepresentation(), 
-                    GenerateDiffExprFile.NA_VALUE,  
+                    GenerateDownloadFile.NA_VALUE,  
                     DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(), 
                     GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), "0.3", "1", "0", 
                     DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 

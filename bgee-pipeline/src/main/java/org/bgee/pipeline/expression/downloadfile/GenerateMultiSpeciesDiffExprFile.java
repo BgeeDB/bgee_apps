@@ -192,7 +192,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     };
 
     /**
-     * A {@code Comparator} allowing to sort {@code List} of {@code String}s element by element.
+     * A case-insensitive {@code Comparator} of {@code List}s of {@code String}s.
      */
     private final static Comparator<List<String>> STRING_LIST_COMPARATOR = 
             new Comparator<List<String>>(){
@@ -1183,7 +1183,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     
     /**
      * A {@code Map} where keys are {@code String}s corresponding to CIO IDs,
-     * the associated values being {@code CIOStatementTO}s corresponding to CIO TOs.
+     * the associated values being the corresponding {@code CIOStatementTO}.
      */
     private Map<String, CIOStatementTO> cioStatementByIds;
     
@@ -2446,7 +2446,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         log.entry(bean);
         
         DiffExpressionData summary = DiffExpressionData.NO_DATA;
-        String quality = GenerateDiffExprFile.NA_VALUE;
+        String quality = GenerateDownloadFile.NA_VALUE;
     
         DiffExprCallType affymetrixType = 
                 DiffExprCallType.convertToDiffExprCallType(bean.getAffymetrixData()); 
@@ -2469,7 +2469,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         if ((allType.contains(DiffExprCallType.UNDER_EXPRESSED) &&
                 allType.contains(DiffExprCallType.OVER_EXPRESSED))) {
             summary = DiffExpressionData.STRONG_AMBIGUITY;
-            quality = GenerateDiffExprFile.NA_VALUE;
+            quality = GenerateDownloadFile.NA_VALUE;
     
         // Both data types are equals or only one is set to 'no data': 
         // we choose the data which is not 'no data'.
@@ -2523,7 +2523,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                         (allType.contains(DiffExprCallType.OVER_EXPRESSED)) || 
                         allType.contains(DiffExprCallType.NOT_DIFF_EXPRESSED))) {
             summary = DiffExpressionData.WEAK_AMBIGUITY;
-            quality = GenerateDiffExprFile.NA_VALUE;
+            quality = GenerateDownloadFile.NA_VALUE;
     
         // One call containing NOT_EXPRESSED and UNDER_EXPRESSED returns 
         // UNDER_EXPRESSION with LOWQUALITY 
@@ -2575,7 +2575,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         List<Object> resumeQualities = new ArrayList<Object>();
         resumeQualities.add(GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY));
         resumeQualities.add(GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY));
-        resumeQualities.add(GenerateDiffExprFile.NA_VALUE);
+        resumeQualities.add(GenerateDownloadFile.NA_VALUE);
         
         //Then, we build the CellProcessor
         CellProcessor[] processors = new CellProcessor[header.length];

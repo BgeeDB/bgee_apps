@@ -959,7 +959,7 @@ public class GenerateExprFile extends GenerateDownloadFile {
         List<Object> resumeQualities = new ArrayList<Object>();
         resumeQualities.add(convertDataStateToString(DataState.HIGHQUALITY));
         resumeQualities.add(convertDataStateToString(DataState.LOWQUALITY));
-        resumeQualities.add(GenerateDiffExprFile.NA_VALUE);
+        resumeQualities.add(GenerateDownloadFile.NA_VALUE);
 
         List<Object> originValues = new ArrayList<Object>();
         for (ObservedData data : ObservedData.values()) {

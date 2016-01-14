@@ -165,7 +165,8 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
      */
     public enum ExpressionData {
         NO_DATA("no data"), NO_EXPRESSION("absent"), EXPRESSION("expression"),
-        WEAK_AMBIGUITY("weak ambiguity"), HIGH_AMBIGUITY("high ambiguity");
+        WEAK_AMBIGUITY(GenerateDownloadFile.WEAK_AMBIGUITY), 
+        HIGH_AMBIGUITY(GenerateDownloadFile.STRONG_AMBIGUITY);
 
         private final String stringRepresentation;
 
@@ -601,7 +602,7 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
         List<Object> resumeQualities = new ArrayList<Object>();
         resumeQualities.add(GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY));
         resumeQualities.add(GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY));
-        resumeQualities.add(GenerateDiffExprFile.NA_VALUE);
+        resumeQualities.add(GenerateDownloadFile.NA_VALUE);
 
         List<Object> originValues = new ArrayList<Object>();
         for (ObservedData data : ObservedData.values()) {

@@ -520,33 +520,33 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                     "222", "geneId6", "\"geneName6\"", "entityId4|entityId5", "\"entityName4|entityName5\"",
                     "stageId2", "\"stageName2\"", "Gorilla gorilla",  
                     DiffExpressionData.STRONG_AMBIGUITY.getStringRepresentation(), 
-                    GenerateDiffExprFile.NA_VALUE,  
+                    GenerateDownloadFile.NA_VALUE,  
                     DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(), 
-                    DataState.LOWQUALITY.getStringRepresentation(), "0.3", "1", "0", 
+                    GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), "0.3", "1", "0", 
                     DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
-                    DataState.HIGHQUALITY.getStringRepresentation(), "0.001", "4", "1",
+                    GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), "0.001", "4", "1",
                     "cioId1", "\"cioName1\""));
             
             expectedRows.add(Arrays.asList(
                     "222", "geneId7", "\"geneName7\"", "entityId4|entityId5", "\"entityName4|entityName5\"", 
                     "stageId2", "\"stageName2\"", "GenusVR speciesVR", 
                     DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
-                    DataState.LOWQUALITY.getStringRepresentation(), 
+                    GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), 
                     DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
-                    DataState.LOWQUALITY.getStringRepresentation(), "0.1", "2", "2", 
+                    GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), "0.1", "2", "2", 
                     DiffExpressionData.NO_DATA.getStringRepresentation(), 
-                    DataState.NODATA.getStringRepresentation(), "1.0", "0", "0",
+                    GenerateDownloadFile.convertDataStateToString(DataState.NODATA), "1.0", "0", "0",
                     "cioId1", "\"cioName1\""));
           
             expectedRows.add(Arrays.asList(
                     "333", "geneId5", "\"\"", "entityId3", "\"entityName3\"", 
                     "stageId1", "\"stageName1\"", "Gorilla gorilla", 
                     DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
-                    DataState.LOWQUALITY.getStringRepresentation(), 
+                    GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), 
                     DiffExpressionData.NO_DATA.getStringRepresentation(), 
-                    DataState.NODATA.getStringRepresentation(), "1.0", "0", "0", 
+                    GenerateDownloadFile.convertDataStateToString(DataState.NODATA), "1.0", "0", "0", 
                     DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
-                    DataState.LOWQUALITY.getStringRepresentation(), "0.7", "2", "1", 
+                    GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), "0.7", "2", "1", 
                     "cioId2", "\"cioName2\""));
 
             // We removed entityId1 from simAnnotIdB because it was in two sim. annot. groups.
@@ -555,77 +555,77 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
 //                    "333", "geneId12", "\"geneName12\"", "entityId1|entityId3", "\"entityName1|entityName3\"", 
 //                    "stageId1", "\"stageName1\"", "Gorilla gorilla gorilla", 
 //                    DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
-//                    DataState.HIGHQUALITY.getStringRepresentation(),
+//                    GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY),
 //                    DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
-//                    DataState.LOWQUALITY.getStringRepresentation(), "0.7", "1", "0", 
+//                    GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), "0.7", "1", "0", 
 //                    DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
-//                    DataState.HIGHQUALITY.getStringRepresentation(), "0.008", "3", "1",
+//                    GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), "0.008", "3", "1",
 //                    "cioId2", "\"cioName2\""));
 
             expectedRows.add(Arrays.asList(
                     "333", "geneId4", "\"geneName4\"", "entityId3", "\"entityName3\"", 
                     "stageId1", "\"stageName1\"", "Gorilla gorilla gorilla", 
                     DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
-                    DataState.HIGHQUALITY.getStringRepresentation(), 
+                    GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), 
                     DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
-                    DataState.HIGHQUALITY.getStringRepresentation(), "0.007", "2", "0", 
+                    GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), "0.007", "2", "0", 
                     DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
-                    DataState.HIGHQUALITY.getStringRepresentation(), "0.008", "3", "1",
+                    GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), "0.008", "3", "1",
                     "cioId2", "\"cioName2\""));
 
             expectedRows.add(Arrays.asList(
                     "444", "geneId1", "\"geneName1\"", "entityId1|entityId2", "\"entityName1|entityName2\"", 
                     "stageId1", "\"stageName1\"", "Gorilla gorilla", 
                     DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
-                    DataState.HIGHQUALITY.getStringRepresentation(), 
+                    GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), 
                     DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
-                    DataState.LOWQUALITY.getStringRepresentation(), "0.9", "1", "2", 
+                    GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), "0.9", "1", "2", 
                     DiffExpressionData.OVER_EXPRESSION.getStringRepresentation(), 
-                    DataState.HIGHQUALITY.getStringRepresentation(), "0.008", "3", "0",
+                    GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), "0.008", "3", "0",
                     "cioId1", "\"cioName1\""));
 
             expectedRows.add(Arrays.asList(
                     "444", "geneId2", "\"geneName2\"", "entityId1|entityId2", "\"entityName1|entityName2\"", 
                     "stageId1", "\"stageName1\"", "GenusVR speciesVR", 
                     DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(), 
-                    DataState.LOWQUALITY.getStringRepresentation(), 
+                    GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), 
                     DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(), 
-                    DataState.LOWQUALITY.getStringRepresentation(), "0.5", "1", "0", 
+                    GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), "0.5", "1", "0", 
                     DiffExpressionData.NO_DATA.getStringRepresentation(), 
-                    DataState.NODATA.getStringRepresentation(), "1.0", "0", "0",
+                    GenerateDownloadFile.convertDataStateToString(DataState.NODATA), "1.0", "0", "0",
                     "cioId1", "\"cioName1\""));
 
             expectedRows.add(Arrays.asList(
                     "444", "geneId9", "\"null\"", "entityId1|entityId2", "\"entityName1|entityName2\"", 
                     "stageId1", "\"stageName1\"", "Gorilla gorilla gorilla", 
                     DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
-                    DataState.HIGHQUALITY.getStringRepresentation(), 
+                    GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), 
                     DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
-                    DataState.HIGHQUALITY.getStringRepresentation(), "0.077", "8", "1", 
+                    GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), "0.077", "8", "1", 
                     DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
-                    DataState.HIGHQUALITY.getStringRepresentation(), "0.066", "11", "2",
+                    GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), "0.066", "11", "2",
                     "cioId1", "\"cioName1\""));
             
             expectedRows.add(Arrays.asList(
                     "444", "geneId8", "\"geneName8\"", "entityId4", "\"entityName4\"", 
                     "stageId1", "\"stageName1\"", "Gorilla gorilla",  
                     DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
-                    DataState.HIGHQUALITY.getStringRepresentation(), 
+                    GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), 
                     DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
-                    DataState.HIGHQUALITY.getStringRepresentation(), "0.03", "1", "0", 
+                    GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), "0.03", "1", "0", 
                     DiffExpressionData.NOT_DIFF_EXPRESSION.getStringRepresentation(), 
-                    DataState.HIGHQUALITY.getStringRepresentation(), "0.002", "6", "0",
+                    GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), "0.002", "6", "0",
                     "cioId1", "\"cioName1\""));
 
             expectedRows.add(Arrays.asList(
                     "444", "geneId9", "\"null\"", "entityId4", "\"entityName4\"", 
                     "stageId1", "\"stageName1\"", "Gorilla gorilla gorilla", 
                     DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(), 
-                    DataState.LOWQUALITY.getStringRepresentation(), 
+                    GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), 
                     DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(), 
-                    DataState.LOWQUALITY.getStringRepresentation(), "0.55", "1", "0", 
+                    GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), "0.55", "1", "0", 
                     DiffExpressionData.UNDER_EXPRESSION.getStringRepresentation(), 
-                    DataState.LOWQUALITY.getStringRepresentation(), "0.44", "1", "0",
+                    GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), "0.44", "1", "0",
                     "cioId1", "\"cioName1\""));
 
             List<List<String>> actualRows = new ArrayList<List<String>>();

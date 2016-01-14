@@ -1161,14 +1161,14 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
             }
 
             List<Object> specificTypeQualities = new ArrayList<Object>();
-            specificTypeQualities.add(DataState.HIGHQUALITY.getStringRepresentation());
-            specificTypeQualities.add(DataState.LOWQUALITY.getStringRepresentation());
-            specificTypeQualities.add(DataState.NODATA.getStringRepresentation());
+            specificTypeQualities.add(GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY));
+            specificTypeQualities.add(GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY));
+            specificTypeQualities.add(GenerateDownloadFile.convertDataStateToString(DataState.NODATA));
             
             List<Object> resumeQualities = new ArrayList<Object>();
-            resumeQualities.add(DataState.HIGHQUALITY.getStringRepresentation());
-            resumeQualities.add(DataState.LOWQUALITY.getStringRepresentation());
-            resumeQualities.add(GenerateDiffExprFile.NA_VALUE);
+            resumeQualities.add(GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY));
+            resumeQualities.add(GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY));
+            resumeQualities.add(GenerateDownloadFile.NA_VALUE);
             
             List<Object> originValues = new ArrayList<Object>();
             for (ObservedData data : ObservedData.values()) {
@@ -1256,16 +1256,16 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                         if (!isSimplified) {
                             this.assertCompleteExprColumnRowEqual(geneId, 
                                 ExpressionData.NO_EXPRESSION, affymetrixData,
-                                DataState.HIGHQUALITY.getStringRepresentation(), affymetrixQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), affymetrixQual,
                                 ObservedData.OBSERVED, affymetrixObsData,
                                 ExpressionData.EXPRESSION, estData,
-                                DataState.LOWQUALITY.getStringRepresentation(), estQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), estQual,
                                 ObservedData.OBSERVED, estObsData,
                                 ExpressionData.EXPRESSION, inSituData,
-                                DataState.LOWQUALITY.getStringRepresentation(), inSituQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), inSituQual,
                                 ObservedData.OBSERVED, inSituObsData,
                                 ExpressionData.EXPRESSION, rnaSeqData,
-                                DataState.LOWQUALITY.getStringRepresentation(), rnaSeqQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), rnaSeqQual,
                                 ObservedData.OBSERVED, rnaSeqObsData,
                                 ObservedData.OBSERVED, observedData);
                         }
@@ -1274,22 +1274,22 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                         this.assertCommonColumnRowEqual(geneId, "\"genN1\"", geneName,
                                 "\"parentstageN1\"", stageName, "\"anatName1\"", anatEntityName, 
                                 ExpressionData.EXPRESSION.getStringRepresentation(), resume,
-                                DataState.LOWQUALITY.getStringRepresentation(), quality);
+                                GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), quality);
                         if (isSimplified && observedDataOnly) {
                             throw new IllegalStateException("This triplet should not be present in the simple file");
                         } else if (!isSimplified) {
                             this.assertCompleteExprColumnRowEqual(geneId,
                                     ExpressionData.NO_DATA, affymetrixData,
-                                    DataState.NODATA.getStringRepresentation(), affymetrixQual,
+                                    GenerateDownloadFile.convertDataStateToString(DataState.NODATA), affymetrixQual,
                                     ObservedData.NOT_OBSERVED, affymetrixObsData,
                                     ExpressionData.EXPRESSION, estData,
-                                    DataState.LOWQUALITY.getStringRepresentation(), estQual,
+                                    GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), estQual,
                                     ObservedData.NOT_OBSERVED, estObsData,
                                     ExpressionData.EXPRESSION, inSituData,
-                                    DataState.LOWQUALITY.getStringRepresentation(), inSituQual,
+                                    GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), inSituQual,
                                     ObservedData.NOT_OBSERVED, inSituObsData,
                                     ExpressionData.EXPRESSION, rnaSeqData,
-                                    DataState.LOWQUALITY.getStringRepresentation(), rnaSeqQual,
+                                    GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), rnaSeqQual,
                                     ObservedData.NOT_OBSERVED, rnaSeqObsData,
                                     ObservedData.NOT_OBSERVED, observedData);
                         }
@@ -1298,20 +1298,20 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                         this.assertCommonColumnRowEqual(geneId, "\"genN1\"", geneName,
                                 "\"parentstageN2\"", stageName, "\"anatName1\"", anatEntityName, 
                                 ExpressionData.EXPRESSION.getStringRepresentation(), resume,
-                                DataState.HIGHQUALITY.getStringRepresentation(), quality);
+                                GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), quality);
                         if (!isSimplified) {
                             this.assertCompleteExprColumnRowEqual(geneId, 
                                 ExpressionData.EXPRESSION, affymetrixData,
-                                DataState.HIGHQUALITY.getStringRepresentation(), affymetrixQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), affymetrixQual,
                                 ObservedData.OBSERVED, affymetrixObsData,
                                 ExpressionData.EXPRESSION, estData, 
-                                DataState.HIGHQUALITY.getStringRepresentation(), estQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), estQual,
                                 ObservedData.OBSERVED, estObsData,
                                 ExpressionData.EXPRESSION, inSituData, 
-                                DataState.LOWQUALITY.getStringRepresentation(), inSituQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), inSituQual,
                                 ObservedData.OBSERVED, inSituObsData,
                                 ExpressionData.NO_DATA, rnaSeqData,
-                                DataState.NODATA.getStringRepresentation(), rnaSeqQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.NODATA), rnaSeqQual,
                                 ObservedData.NOT_OBSERVED, rnaSeqObsData,
                                 ObservedData.OBSERVED, observedData);
                         }
@@ -1320,20 +1320,20 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                         this.assertCommonColumnRowEqual(geneId, "\"genN1\"", geneName,
                                 "\"stageN2\"", stageName, "\"anatName1\"", anatEntityName, 
                                 ExpressionData.EXPRESSION.getStringRepresentation(), resume,
-                                DataState.HIGHQUALITY.getStringRepresentation(), quality);
+                                GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), quality);
                         if (!isSimplified) {
                             this.assertCompleteExprColumnRowEqual(geneId, 
                                 ExpressionData.EXPRESSION, affymetrixData,
-                                DataState.HIGHQUALITY.getStringRepresentation(), affymetrixQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), affymetrixQual,
                                 ObservedData.OBSERVED, affymetrixObsData,
                                 ExpressionData.EXPRESSION, estData,
-                                DataState.LOWQUALITY.getStringRepresentation(), estQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), estQual,
                                 ObservedData.OBSERVED, estObsData,
                                 ExpressionData.EXPRESSION, inSituData,
-                                DataState.LOWQUALITY.getStringRepresentation(), inSituQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), inSituQual,
                                 ObservedData.OBSERVED, inSituObsData,
                                 ExpressionData.NO_DATA, rnaSeqData,
-                                DataState.NODATA.getStringRepresentation(), rnaSeqQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.NODATA), rnaSeqQual,
                                 ObservedData.NOT_OBSERVED, rnaSeqObsData,
                                 ObservedData.OBSERVED, observedData);
                         }
@@ -1349,16 +1349,16 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                         if (!isSimplified) {
                             this.assertCompleteExprColumnRowEqual(geneId, 
                                 ExpressionData.NO_DATA, affymetrixData,
-                                DataState.NODATA.getStringRepresentation(), affymetrixQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.NODATA), affymetrixQual,
                                 ObservedData.NOT_OBSERVED, affymetrixObsData,
                                 ExpressionData.EXPRESSION, estData,
-                                DataState.LOWQUALITY.getStringRepresentation(), estQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), estQual,
                                 ObservedData.OBSERVED, estObsData,
                                 ExpressionData.NO_DATA, inSituData,
-                                DataState.NODATA.getStringRepresentation(), inSituQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.NODATA), inSituQual,
                                 ObservedData.NOT_OBSERVED, inSituObsData,
                                 ExpressionData.NO_EXPRESSION, rnaSeqData,
-                                DataState.HIGHQUALITY.getStringRepresentation(), rnaSeqQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), rnaSeqQual,
                                 ObservedData.OBSERVED, rnaSeqObsData,
                                 ObservedData.OBSERVED, observedData);
                         }
@@ -1367,20 +1367,20 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                         this.assertCommonColumnRowEqual(geneId, "\"genN2\"", geneName,
                                 "\"parentstageN2\"", stageName, "\"anatName1\"", anatEntityName,
                                 ExpressionData.EXPRESSION.getStringRepresentation(), resume,
-                                DataState.HIGHQUALITY.getStringRepresentation(), quality);
+                                GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), quality);
                         if (!isSimplified) {
                             this.assertCompleteExprColumnRowEqual(geneId, 
                                     ExpressionData.EXPRESSION, affymetrixData,
-                                    DataState.HIGHQUALITY.getStringRepresentation(), affymetrixQual,
+                                    GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), affymetrixQual,
                                     ObservedData.NOT_OBSERVED, affymetrixObsData,
                                     ExpressionData.EXPRESSION, estData,
-                                    DataState.LOWQUALITY.getStringRepresentation(), estQual,
+                                    GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), estQual,
                                     ObservedData.NOT_OBSERVED, estObsData,
                                     ExpressionData.EXPRESSION, inSituData,
-                                    DataState.HIGHQUALITY.getStringRepresentation(), inSituQual,
+                                    GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), inSituQual,
                                     ObservedData.NOT_OBSERVED, inSituObsData,
                                     ExpressionData.NO_DATA, rnaSeqData,
-                                    DataState.NODATA.getStringRepresentation(), rnaSeqQual,
+                                    GenerateDownloadFile.convertDataStateToString(DataState.NODATA), rnaSeqQual,
                                     ObservedData.NOT_OBSERVED, rnaSeqObsData,
                                     ObservedData.OBSERVED, observedData);
                         }
@@ -1388,23 +1388,23 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                             stageId.equals("Stage_id2")) {
                         this.assertCommonColumnRowEqual(geneId, "\"genN2\"", geneName,
                                 "\"stageN2\"", stageName, "\"anatName2\"", anatEntityName,
-                                DataState.HIGHQUALITY.getStringRepresentation(), resume,
+                                GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), resume,
                                 GenerateDownloadFile.NA_VALUE, quality);
                         if (isSimplified) {
                             throw new IllegalStateException("This triplet should not be present in the simple file");
                         }
                         this.assertCompleteExprColumnRowEqual(geneId, 
                             ExpressionData.NO_DATA, affymetrixData,
-                            DataState.NODATA.getStringRepresentation(), affymetrixQual,
+                            GenerateDownloadFile.convertDataStateToString(DataState.NODATA), affymetrixQual,
                             ObservedData.NOT_OBSERVED, affymetrixObsData,
                             ExpressionData.NO_DATA, estData,
-                            DataState.NODATA.getStringRepresentation(), estQual,
+                            GenerateDownloadFile.convertDataStateToString(DataState.NODATA), estQual,
                             ObservedData.NOT_OBSERVED, estObsData,
                             ExpressionData.NO_DATA, inSituData,
-                            DataState.NODATA.getStringRepresentation(), inSituQual,
+                            GenerateDownloadFile.convertDataStateToString(DataState.NODATA), inSituQual,
                             ObservedData.NOT_OBSERVED, inSituObsData,
                             ExpressionData.NO_EXPRESSION, rnaSeqData,
-                            DataState.HIGHQUALITY.getStringRepresentation(), rnaSeqQual,
+                            GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), rnaSeqQual,
                             ObservedData.NOT_OBSERVED, rnaSeqObsData,
                             ObservedData.NOT_OBSERVED, observedData);
                     } else if (geneId.equals("ID2") && anatEntityId.equals("Anat_id2") && 
@@ -1412,22 +1412,22 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                         this.assertCommonColumnRowEqual(geneId, "\"genN2\"", geneName,
                                 "\"parentstageN2\"", stageName, "\"anatName2\"", anatEntityName,
                                 ExpressionData.EXPRESSION.getStringRepresentation(), resume,
-                                DataState.HIGHQUALITY.getStringRepresentation(), quality);
+                                GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), quality);
                         if (isSimplified) {
                             throw new IllegalStateException("This triplet should not be present in the simple file");
                         }
                         this.assertCompleteExprColumnRowEqual(geneId, 
                             ExpressionData.EXPRESSION, affymetrixData,
-                            DataState.HIGHQUALITY.getStringRepresentation(), affymetrixQual,
+                            GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), affymetrixQual,
                             ObservedData.NOT_OBSERVED, affymetrixObsData,
                             ExpressionData.NO_DATA, estData,
-                            DataState.NODATA.getStringRepresentation(), estQual,
+                            GenerateDownloadFile.convertDataStateToString(DataState.NODATA), estQual,
                             ObservedData.NOT_OBSERVED, estObsData,
                             ExpressionData.EXPRESSION, inSituData,
-                            DataState.HIGHQUALITY.getStringRepresentation(), inSituQual,
+                            GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), inSituQual,
                             ObservedData.NOT_OBSERVED, inSituObsData,
                             ExpressionData.NO_DATA, rnaSeqData,
-                            DataState.NODATA.getStringRepresentation(), rnaSeqQual,
+                            GenerateDownloadFile.convertDataStateToString(DataState.NODATA), rnaSeqQual,
                             ObservedData.NOT_OBSERVED, rnaSeqObsData,
                             ObservedData.NOT_OBSERVED, observedData);
                     } else if (geneId.equals("ID2") && anatEntityId.equals("Anat_id3") && 
@@ -1439,16 +1439,16 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                         if (!isSimplified) {
                             this.assertCompleteExprColumnRowEqual(geneId, 
                                 ExpressionData.EXPRESSION, affymetrixData,
-                                DataState.HIGHQUALITY.getStringRepresentation(), affymetrixQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), affymetrixQual,
                                 ObservedData.OBSERVED, affymetrixObsData,
                                 ExpressionData.NO_DATA, estData,
-                                DataState.NODATA.getStringRepresentation(), estQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.NODATA), estQual,
                                 ObservedData.NOT_OBSERVED, estObsData,
                                 ExpressionData.EXPRESSION, inSituData,
-                                DataState.HIGHQUALITY.getStringRepresentation(), inSituQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), inSituQual,
                                 ObservedData.OBSERVED, inSituObsData,
                                 ExpressionData.NO_EXPRESSION, rnaSeqData,
-                                DataState.HIGHQUALITY.getStringRepresentation(), rnaSeqQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), rnaSeqQual,
                                 ObservedData.OBSERVED, rnaSeqObsData,
                                 ObservedData.OBSERVED, observedData);
                         }
@@ -1464,20 +1464,20 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                         this.assertCommonColumnRowEqual(geneId, "\"genN3\"", geneName,
                                 "\"stageN2\"", stageName, "\"anatName1\"", anatEntityName,
                                 ExpressionData.EXPRESSION.getStringRepresentation(), resume,
-                                DataState.HIGHQUALITY.getStringRepresentation(), quality);
+                                GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), quality);
                         if (!isSimplified) {
                             this.assertCompleteExprColumnRowEqual(geneId, 
                                 ExpressionData.EXPRESSION, affymetrixData,
-                                DataState.LOWQUALITY.getStringRepresentation(), affymetrixQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), affymetrixQual,
                                 ObservedData.NOT_OBSERVED, affymetrixObsData,
                                 ExpressionData.EXPRESSION, estData,
-                                DataState.LOWQUALITY.getStringRepresentation(), estQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), estQual,
                                 ObservedData.OBSERVED, estObsData,
                                 ExpressionData.EXPRESSION, inSituData,
-                                DataState.HIGHQUALITY.getStringRepresentation(), inSituQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), inSituQual,
                                 ObservedData.OBSERVED, inSituObsData,
                                 ExpressionData.EXPRESSION, rnaSeqData,
-                                DataState.HIGHQUALITY.getStringRepresentation(), rnaSeqQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), rnaSeqQual,
                                 ObservedData.OBSERVED, rnaSeqObsData,
                                 ObservedData.OBSERVED, observedData);
                         }
@@ -1486,22 +1486,22 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                         this.assertCommonColumnRowEqual(geneId, "\"genN3\"", geneName,
                                 "\"stageN2\"", stageName, "\"anatName4\"", anatEntityName,
                                 ExpressionData.EXPRESSION.getStringRepresentation(), resume,
-                                DataState.HIGHQUALITY.getStringRepresentation(), quality);
+                                GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), quality);
                         if (isSimplified) {
                             throw new IllegalStateException("This triplet should not be present in the simple file");
                         }
                         this.assertCompleteExprColumnRowEqual(geneId, 
                             ExpressionData.EXPRESSION, affymetrixData,
-                            DataState.LOWQUALITY.getStringRepresentation(), affymetrixQual,
+                            GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), affymetrixQual,
                             ObservedData.NOT_OBSERVED, affymetrixObsData,
                             ExpressionData.EXPRESSION, estData,
-                            DataState.LOWQUALITY.getStringRepresentation(), estQual,
+                            GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), estQual,
                             ObservedData.NOT_OBSERVED, estObsData,
                             ExpressionData.EXPRESSION, inSituData,
-                            DataState.HIGHQUALITY.getStringRepresentation(), inSituQual,
+                            GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), inSituQual,
                             ObservedData.NOT_OBSERVED, inSituObsData,
                             ExpressionData.EXPRESSION, rnaSeqData,
-                            DataState.LOWQUALITY.getStringRepresentation(), rnaSeqQual,
+                            GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), rnaSeqQual,
                             ObservedData.NOT_OBSERVED, rnaSeqObsData,
                             ObservedData.NOT_OBSERVED, observedData);
                     } else if (geneId.equals("ID3") && anatEntityId.equals("Anat_id5") &&
@@ -1509,20 +1509,20 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                         this.assertCommonColumnRowEqual(geneId, "\"genN3\"", geneName,
                                 "\"stageN2\"", stageName, "\"anatName5\"", anatEntityName,
                                 ExpressionData.EXPRESSION.getStringRepresentation(), resume,
-                                DataState.HIGHQUALITY.getStringRepresentation(), quality);
+                                GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), quality);
                         if (!isSimplified) {
                             this.assertCompleteExprColumnRowEqual(geneId, 
                                 ExpressionData.EXPRESSION, affymetrixData,
-                                DataState.LOWQUALITY.getStringRepresentation(), affymetrixQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), affymetrixQual,
                                 ObservedData.OBSERVED, affymetrixObsData,
                                 ExpressionData.EXPRESSION, estData,
-                                DataState.LOWQUALITY.getStringRepresentation(), estQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), estQual,
                                 ObservedData.OBSERVED, estObsData,
                                 ExpressionData.EXPRESSION, inSituData,
-                                DataState.HIGHQUALITY.getStringRepresentation(), inSituQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), inSituQual,
                                 ObservedData.OBSERVED, inSituObsData,
                                 ExpressionData.EXPRESSION, rnaSeqData,
-                                DataState.LOWQUALITY.getStringRepresentation(), rnaSeqQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), rnaSeqQual,
                                 ObservedData.OBSERVED, rnaSeqObsData,
                                 ObservedData.OBSERVED, observedData);
                         }
@@ -1531,20 +1531,20 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                         this.assertCommonColumnRowEqual(geneId, "\"genN4\"", geneName,
                                 "\"stageN5\"", stageName, "\"anatName1\"", anatEntityName,
                                 ExpressionData.NO_EXPRESSION.getStringRepresentation(), resume,
-                                DataState.HIGHQUALITY.getStringRepresentation(), quality);
+                                GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), quality);
                         if (!isSimplified) {
                             this.assertCompleteExprColumnRowEqual(geneId, 
                                 ExpressionData.NO_DATA, affymetrixData,
-                                DataState.NODATA.getStringRepresentation(), affymetrixQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.NODATA), affymetrixQual,
                                 ObservedData.NOT_OBSERVED, affymetrixObsData,
                                 ExpressionData.NO_DATA, estData,
-                                DataState.NODATA.getStringRepresentation(), estQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.NODATA), estQual,
                                 ObservedData.NOT_OBSERVED, estObsData,
                                 ExpressionData.NO_EXPRESSION, inSituData,
-                                DataState.HIGHQUALITY.getStringRepresentation(), inSituQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), inSituQual,
                                 ObservedData.OBSERVED, inSituObsData,
                                 ExpressionData.NO_EXPRESSION, rnaSeqData,
-                                DataState.HIGHQUALITY.getStringRepresentation(), rnaSeqQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), rnaSeqQual,
                                 ObservedData.OBSERVED, rnaSeqObsData,
                                 ObservedData.OBSERVED, observedData);
                         }
@@ -1553,20 +1553,20 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                         this.assertCommonColumnRowEqual(geneId, "\"genN4\"", geneName,
                                 "\"stageN5\"", stageName, "\"anatName4\"", anatEntityName,
                                 ExpressionData.NO_EXPRESSION.getStringRepresentation(), resume,
-                                DataState.HIGHQUALITY.getStringRepresentation(), quality);
+                                GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), quality);
                         if (!isSimplified) {
                             this.assertCompleteExprColumnRowEqual(geneId, 
                                 ExpressionData.NO_EXPRESSION, affymetrixData,
-                                DataState.HIGHQUALITY.getStringRepresentation(), affymetrixQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), affymetrixQual,
                                 ObservedData.OBSERVED, affymetrixObsData,
                                 ExpressionData.NO_DATA, estData,
-                                DataState.NODATA.getStringRepresentation(), estQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.NODATA), estQual,
                                 ObservedData.NOT_OBSERVED, estObsData,
                                 ExpressionData.NO_EXPRESSION, inSituData,
-                                DataState.HIGHQUALITY.getStringRepresentation(), inSituQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), inSituQual,
                                 ObservedData.NOT_OBSERVED, inSituObsData,
                                 ExpressionData.NO_EXPRESSION, rnaSeqData,
-                                DataState.HIGHQUALITY.getStringRepresentation(), rnaSeqQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), rnaSeqQual,
                                 ObservedData.NOT_OBSERVED, rnaSeqObsData,
                                 ObservedData.OBSERVED, observedData);
                         }
@@ -1575,22 +1575,22 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                         this.assertCommonColumnRowEqual(geneId, "\"genN4\"", geneName,
                                 "\"stageN5\"", stageName, "\"anatName5\"", anatEntityName,
                                 ExpressionData.NO_EXPRESSION.getStringRepresentation(), resume,
-                                DataState.HIGHQUALITY.getStringRepresentation(), quality);
+                                GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), quality);
                         if (isSimplified) {
                             throw new IllegalStateException("This triplet should not be present in the simple file");
                         }
                         this.assertCompleteExprColumnRowEqual(geneId, 
                             ExpressionData.NO_EXPRESSION, affymetrixData,
-                            DataState.HIGHQUALITY.getStringRepresentation(), affymetrixQual,
+                            GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), affymetrixQual,
                             ObservedData.NOT_OBSERVED, affymetrixObsData,
                             ExpressionData.NO_DATA, estData,
-                            DataState.NODATA.getStringRepresentation(), estQual,
+                            GenerateDownloadFile.convertDataStateToString(DataState.NODATA), estQual,
                             ObservedData.NOT_OBSERVED, estObsData,
                             ExpressionData.NO_EXPRESSION, inSituData,
-                            DataState.HIGHQUALITY.getStringRepresentation(), inSituQual,
+                            GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), inSituQual,
                             ObservedData.NOT_OBSERVED, inSituObsData,
                             ExpressionData.NO_EXPRESSION, rnaSeqData,
-                            DataState.HIGHQUALITY.getStringRepresentation(), rnaSeqQual,
+                            GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), rnaSeqQual,
                             ObservedData.NOT_OBSERVED, rnaSeqObsData,
                             ObservedData.NOT_OBSERVED, observedData);
                     } else if (geneId.equals("ID5") && anatEntityId.equals("Anat_id1") &&
@@ -1598,22 +1598,22 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                         this.assertCommonColumnRowEqual(geneId, "\"genN5\"", geneName,
                                 "\"stageN5\"", stageName, "\"anatName1\"", anatEntityName,
                                 ExpressionData.EXPRESSION.getStringRepresentation(), resume,
-                                DataState.HIGHQUALITY.getStringRepresentation(), quality);
+                                GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), quality);
                         if (isSimplified) {
                             throw new IllegalStateException("This triplet should not be present in the simple file");
                         }
                         this.assertCompleteExprColumnRowEqual(geneId, 
                             ExpressionData.EXPRESSION, affymetrixData,
-                            DataState.HIGHQUALITY.getStringRepresentation(), affymetrixQual,
+                            GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), affymetrixQual,
                             ObservedData.NOT_OBSERVED, affymetrixObsData,
                             ExpressionData.EXPRESSION, estData,
-                            DataState.LOWQUALITY.getStringRepresentation(), estQual,
+                            GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), estQual,
                             ObservedData.NOT_OBSERVED, estObsData,
                             ExpressionData.EXPRESSION, inSituData,
-                            DataState.LOWQUALITY.getStringRepresentation(), inSituQual,
+                            GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), inSituQual,
                             ObservedData.NOT_OBSERVED, inSituObsData,
                             ExpressionData.NO_DATA, rnaSeqData,
-                            DataState.NODATA.getStringRepresentation(), rnaSeqQual,
+                            GenerateDownloadFile.convertDataStateToString(DataState.NODATA), rnaSeqQual,
                             ObservedData.NOT_OBSERVED, rnaSeqObsData,
                             ObservedData.NOT_OBSERVED, observedData);
                     } else if (geneId.equals("ID5") && anatEntityId.equals("Anat_id1") &&
@@ -1621,22 +1621,22 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                         this.assertCommonColumnRowEqual(geneId, "\"genN5\"", geneName,
                                 "\"parentstageN5\"", stageName, "\"anatName1\"", anatEntityName,
                                 ExpressionData.EXPRESSION.getStringRepresentation(), resume,
-                                DataState.HIGHQUALITY.getStringRepresentation(), quality);
+                                GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), quality);
                         if (isSimplified) {
                             throw new IllegalStateException("This triplet should not be present in the simple file");
                         }
                         this.assertCompleteExprColumnRowEqual(geneId, 
                             ExpressionData.EXPRESSION, affymetrixData,
-                            DataState.HIGHQUALITY.getStringRepresentation(), affymetrixQual,
+                            GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), affymetrixQual,
                             ObservedData.NOT_OBSERVED, affymetrixObsData,
                             ExpressionData.EXPRESSION, estData,
-                            DataState.LOWQUALITY.getStringRepresentation(), estQual,
+                            GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), estQual,
                             ObservedData.NOT_OBSERVED, estObsData,
                             ExpressionData.EXPRESSION, inSituData,
-                            DataState.LOWQUALITY.getStringRepresentation(), inSituQual,
+                            GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), inSituQual,
                             ObservedData.NOT_OBSERVED, inSituObsData,
                             ExpressionData.NO_DATA, rnaSeqData,
-                            DataState.NODATA.getStringRepresentation(), rnaSeqQual,
+                            GenerateDownloadFile.convertDataStateToString(DataState.NODATA), rnaSeqQual,
                             ObservedData.NOT_OBSERVED, rnaSeqObsData,
                             ObservedData.NOT_OBSERVED, observedData);
                     } else if (geneId.equals("ID5") && anatEntityId.equals("Anat_id4") &&
@@ -1650,16 +1650,16 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                         if (!isSimplified) {
                             this.assertCompleteExprColumnRowEqual(geneId, 
                                 ExpressionData.EXPRESSION, affymetrixData,
-                                DataState.HIGHQUALITY.getStringRepresentation(), affymetrixQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), affymetrixQual,
                                 ObservedData.OBSERVED, affymetrixObsData,
                                 ExpressionData.EXPRESSION, estData,
-                                DataState.LOWQUALITY.getStringRepresentation(), estQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), estQual,
                                 ObservedData.OBSERVED, estObsData,
                                 ExpressionData.EXPRESSION, inSituData,
-                                DataState.LOWQUALITY.getStringRepresentation(), inSituQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), inSituQual,
                                 ObservedData.OBSERVED, inSituObsData,
                                 ExpressionData.NO_EXPRESSION, rnaSeqData,
-                                DataState.HIGHQUALITY.getStringRepresentation(), rnaSeqQual,
+                                GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), rnaSeqQual,
                                 ObservedData.OBSERVED, rnaSeqObsData,
                                 ObservedData.OBSERVED, observedData);
                         }
@@ -1668,22 +1668,22 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                         this.assertCommonColumnRowEqual(geneId, "\"genN5\"", geneName,
                                 "\"parentstageN5\"", stageName, "\"anatName4\"", anatEntityName,
                                 ExpressionData.EXPRESSION.getStringRepresentation(), resume,
-                                DataState.HIGHQUALITY.getStringRepresentation(), quality);
+                                GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), quality);
                         if (isSimplified && observedDataOnly) {
                             throw new IllegalStateException("This triplet should not be present in the simple file");
                         } else if (!isSimplified) {
                             this.assertCompleteExprColumnRowEqual(geneId,
                                     ExpressionData.EXPRESSION, affymetrixData,
-                                    DataState.HIGHQUALITY.getStringRepresentation(), affymetrixQual,
+                                    GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), affymetrixQual,
                                     ObservedData.NOT_OBSERVED, affymetrixObsData,
                                     ExpressionData.EXPRESSION, estData,
-                                    DataState.LOWQUALITY.getStringRepresentation(), estQual,
+                                    GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), estQual,
                                     ObservedData.NOT_OBSERVED, estObsData,
                                     ExpressionData.EXPRESSION, inSituData,
-                                    DataState.LOWQUALITY.getStringRepresentation(), inSituQual,
+                                    GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY), inSituQual,
                                     ObservedData.NOT_OBSERVED, inSituObsData,
                                     ExpressionData.NO_DATA, rnaSeqData,
-                                    DataState.NODATA.getStringRepresentation(), rnaSeqQual,
+                                    GenerateDownloadFile.convertDataStateToString(DataState.NODATA), rnaSeqQual,
                                     ObservedData.NOT_OBSERVED, rnaSeqObsData,
                                     ObservedData.NOT_OBSERVED, observedData);
                         }
@@ -1692,20 +1692,20 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                         this.assertCommonColumnRowEqual(geneId, "\"genN6\"", geneName,
                                 "\"stageN7\"", stageName, "\"anatName9\"", anatEntityName,
                                 ExpressionData.NO_EXPRESSION.getStringRepresentation(), resume,
-                                DataState.HIGHQUALITY.getStringRepresentation(), quality);
+                                GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), quality);
                         if (!isSimplified) {
                             this.assertCompleteExprColumnRowEqual(geneId, 
                                     ExpressionData.NO_DATA, affymetrixData,
-                                    DataState.NODATA.getStringRepresentation(), affymetrixQual,
+                                    GenerateDownloadFile.convertDataStateToString(DataState.NODATA), affymetrixQual,
                                     ObservedData.NOT_OBSERVED, affymetrixObsData,
                                     ExpressionData.NO_DATA, estData,
-                                    DataState.NODATA.getStringRepresentation(), estQual,
+                                    GenerateDownloadFile.convertDataStateToString(DataState.NODATA), estQual,
                                     ObservedData.NOT_OBSERVED, estObsData,
                                     ExpressionData.NO_DATA, inSituData,
-                                    DataState.NODATA.getStringRepresentation(), inSituQual,
+                                    GenerateDownloadFile.convertDataStateToString(DataState.NODATA), inSituQual,
                                     ObservedData.NOT_OBSERVED, inSituObsData,
                                     ExpressionData.NO_EXPRESSION, rnaSeqData,
-                                    DataState.HIGHQUALITY.getStringRepresentation(), rnaSeqQual,
+                                    GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), rnaSeqQual,
                                     ObservedData.OBSERVED, rnaSeqObsData,
                                     ObservedData.OBSERVED, observedData);
                         }
@@ -1714,22 +1714,22 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                         this.assertCommonColumnRowEqual(geneId, "\"genN6\"", geneName,
                                 "\"stageN6\"", stageName, "\"anatName8\"", anatEntityName,
                                 ExpressionData.NO_EXPRESSION.getStringRepresentation(), resume,
-                                DataState.HIGHQUALITY.getStringRepresentation(), quality);
+                                GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), quality);
                         if (isSimplified) {
                             throw new IllegalStateException("This triplet should not be present in the simple file");
                         }
                         this.assertCompleteExprColumnRowEqual(geneId, 
                             ExpressionData.NO_DATA, affymetrixData,
-                            DataState.NODATA.getStringRepresentation(), affymetrixQual,
+                            GenerateDownloadFile.convertDataStateToString(DataState.NODATA), affymetrixQual,
                             ObservedData.NOT_OBSERVED, affymetrixObsData,
                             ExpressionData.NO_DATA, estData,
-                            DataState.NODATA.getStringRepresentation(), estQual,
+                            GenerateDownloadFile.convertDataStateToString(DataState.NODATA), estQual,
                             ObservedData.NOT_OBSERVED, estObsData,
                             ExpressionData.NO_DATA, inSituData,
-                            DataState.NODATA.getStringRepresentation(), inSituQual,
+                            GenerateDownloadFile.convertDataStateToString(DataState.NODATA), inSituQual,
                             ObservedData.NOT_OBSERVED, inSituObsData,
                             ExpressionData.NO_EXPRESSION, rnaSeqData,
-                            DataState.HIGHQUALITY.getStringRepresentation(), rnaSeqQual,
+                            GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY), rnaSeqQual,
                             ObservedData.NOT_OBSERVED, rnaSeqObsData,
                             ObservedData.NOT_OBSERVED, observedData);
                     } else {

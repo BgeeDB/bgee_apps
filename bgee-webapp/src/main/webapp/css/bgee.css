@@ -203,39 +203,28 @@ ul#bgee_links > li:first-child {
 }
 
 #sib_body h1, #sib_body h2, #sib_body h3 {
-    color: #920209;
+    color: #E2011B;
+    font-weight: normal;
 }
 #sib_body h1 {
-    color: #920209;
     font-size: 1.5em;
     text-align: center;    
 }
 #sib_body h2 {
     margin: 1em 0 1em 0;
     font-size: 1.2em;
-    font-weight: bold;
     width: 100%; 
-    
     border-top: 0;
     border-left: 0;
     border-right: 0;
-    border-bottom: 2px #920209 solid; /* Set color for browsers that do not support gradients */
-    border-image: linear-gradient(to right, rgba(146, 2, 9, 1) 70%, rgba(146, 2, 9, 0));
+    border-bottom: 2px #E2011B solid; /* Set color for browsers that do not support gradients */
+    border-image: linear-gradient(to right, #E2011B 70%, rgba(146, 2, 9, 0));
     border-image-slice: 1;
 }
 #sib_body h3 {
     font-weight: normal;
     font-size: 1em;
     margin: 2% 0 0 0;
-}
-h2.box_title {
-	display: inline-block !important;
-    margin: 1em 0px 0px 1em !important;
-    border: 0 !important;
-    width: auto !important;
-    color: #920209;
-    font-size: 1.2em !important;
-    font-weight: normal !important;
 }
 
 #sib_body li {
@@ -245,12 +234,12 @@ h2.box_title {
 /****LINKS****/
 a {
     cursor: pointer;
-    color: #BC161D;
+    color: #920209;
     text-decoration: underline;
 }
 
 a:visited, a:hover {
-    color: #6A1818;
+    color: #460209;
 }
 
 /****BGEE SPECIFIC STUFF****/
@@ -272,17 +261,15 @@ div.bgee_section {
     display: inline-block;
     width: 95%;
     margin: 0 2% 10px 2%;
-    border-width: 2px;
-    border-style: solid;
-    border-radius: 8px;
     padding: 0.5%;
     text-align: left;
-    border-color: #920209;
 }
 
 span.header_details {
-    font-size: 0.85em;
+    font-size: 0.8em;
+    font-weight: normal;
     margin-left: 0.5em;
+    color: #626262;
 }
 
 .feature_list {
@@ -348,18 +335,11 @@ span.list_element_title {
 	border: 2px solid red;
 }
 
-#home_important_info {
-    border-top: 3px solid red;
-	border-bottom: 3px solid red;
-	margin: 1em 6em;
-	padding: 1em;
-}
-
 /****SIB FOOTER****/
 footer {
     position: absolute;
     bottom: 0px;
-    height: 40px;
+    height: 20px;
     background-color: #1E2425;
     width: 100%;
     color: #F7F8FA;
@@ -379,7 +359,7 @@ footer {
 
 #sib_footer_content {
     position: relative;
-    padding: 9px 36px 0px 36px;
+    padding: 5px 36px 0px 36px;
     padding-right: 300px;
 }
 
@@ -387,7 +367,7 @@ footer {
     position: absolute;
     right: 2%;
     width: 400px;
-    top: 9px;
+    top: 5px;
     text-align: right;
 }
 

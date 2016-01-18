@@ -344,7 +344,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
         StringBuilder s = new StringBuilder(); 
         s.append("<div id='bgee_multi_species'>");
-        s.append("<h2 class='box_title'>Multi-species</h2>" +
+        s.append("<h2>Multi-species</h2>" +
                  "<span class='header_details'>(orthologous genes in homologous anatomical structures)</span>");
         s.append("<div class='bgee_section bgee_download_section'>");
         s.append(getMultiSpeciesFigures(pageType, groups));
@@ -619,15 +619,15 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         switch (pageType) {
         case HOME_PAGE: 
         case PROC_EXPR_VALUES:
-            s.append("<h2 class='box_title'>Species with data in Bgee</h2>");
+            s.append("<h2>Species with data in Bgee");
             break;
         case EXPR_CALLS: 
-            s.append("<h2 class='box_title'>Single-species</h2>");
+            s.append("<h2>Single-species");
             break; 
         default: 
             throw log.throwing(new IllegalArgumentException("DownloadPageType not supported: " + pageType));
         }
-        s.append("<span class='header_details'>(click on species to see more details)</span>");
+        s.append("<span class='header_details'>(click on species to see more details)</span></h2>");
         s.append("<div class='bgee_section bgee_download_section'>");
         s.append(getSingleSpeciesFigures(pageType, groups));
         s.append("</div>");

@@ -1,5 +1,6 @@
-div#bgee_news.bgee_section {
-    background-color: #E8DADB;
+#bgee_news th {
+	vertical-align: top;
+	padding-left: 10px;
 }
 
 #bgee_news ul {
@@ -11,7 +12,7 @@ div#bgee_news.bgee_section {
 }
 
 #bgee_more_info {
-	margin: 1% 2% 0;
+	margin: 1% 0 0;
 }
 
 /** WARNING: All following properties (copied and modified from download.css) added to insert 

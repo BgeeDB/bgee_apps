@@ -52,13 +52,6 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         
         //TODO: manage the version either from database, or from bgee-webapp.properties file.
         this.writeln("<h1>Welcome to Bgee release 13.1</h1>");
-
-        RequestParameters topAnatGenerator = this.getNewRequestParameters();
-        topAnatGenerator.setPage(RequestParameters.PAGE_TOP_ANAT);
-        this.writeln("<div id='home_important_info'>Please checkout our exclusive new tool, "
-                + "<a href='" + topAnatGenerator.getRequestURL() + "' title='Test our new TopAnat tool'>"
-                + "TopAnat</a>, allowing to perform enrichment analyses of expression localization, "
-                + "from the expression patterns of provided gene lists.</div>");
         
         if (groups.stream().anyMatch(SpeciesDataGroup::isMultipleSpecies)) {
             throw log.throwing(new IllegalArgumentException(
@@ -66,7 +59,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         }
         this.writeln(this.displayHomePageSpecies(groups));
 
-        this.writeln("<h2 class='box_title'>Browse Bgee content</h2>");
+        this.writeln("<h2>Browse Bgee content</h2>");
         this.writeln("<div class='bgee_section'>");
 
         RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
@@ -98,20 +91,20 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
         this.writeln("</div>"); // close Browse Bgee content
 
-        this.writeln("<h2 class='box_title'>News</h2>" +
-                     "<span class='header_details'>(features are being added incrementally)</span>");
+        this.writeln("<h2>News" +
+                     "<span class='header_details'>(features are being added incrementally)</span></h2>");
         this.writeln("<div id='bgee_news' class='bgee_section'>");
-        this.writeln("<ul>");
-        this.writeln("<li>2015-12-24: major update of <a href='" + urlTopAnatGenerator.getRequestURL() 
+        this.writeln("<table>");
+        this.writeln("<tr><th>2015-12-24</th><td>Major update of <a href='" + urlTopAnatGenerator.getRequestURL() 
                 + "' title='Perform gene expression enrichment tests with TopAnat'>TopAnat</a>. "
-                + "Happy Christmas!</li>");
-        this.writeln("<li>2015-11-24: we are happy to release of our new exclusive tool "
+                + "Happy Christmas!</td></tr>");
+        this.writeln("<tr><th>2015-11-24</th><td>We are happy to release of our new exclusive tool "
                 + "for gene expression enrichment analyses: <a href='" + urlTopAnatGenerator.getRequestURL() 
                 + "' title='Perform gene expression enrichment tests with TopAnat'>TopAnat</a>. "
                 + "This is a tool with absolutely no equivalent, developped in collaboration with "
-                + "the Web-Team  of the Swiss Institute of Bioinformatics. Check it out!</li>");
-        this.writeln("<li>2015-08-26: update of the home page.</li>");
-        this.writeln("<li>2015-06-08: release of Bgee release 13.1: "
+                + "the Web-Team  of the Swiss Institute of Bioinformatics. Check it out!</td></tr>");
+        this.writeln("<tr><th>2015-08-26</th><td>Update of the home page.</td></tr>");
+        this.writeln("<tr><th>2015-06-08</th><td>Release of Bgee release 13.1: "
                 + "<ul>"
                 + "<li>Update of the website interfaces.</li>"
                 + "<li><a href='" + urlDownloadProcValuesGenerator.getRequestURL() 
@@ -137,19 +130,19 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 + "<li>Improved filtering of propagated no-expression calls. As a result, "
                 + "complete expression calls files do not contain invalid conditions anymore.</li>"
                 + "<li>Filtering of invalid developmental stages for differential expression analyses.</li>"
-                + "</ul></li>");
-        this.writeln("<li>2015-04-16: release of the multi-species " +
+                + "</ul></td></tr>");
+        this.writeln("<tr><th>2015-04-16</th><td>Release of the multi-species " +
                 "differential expression data (across anatomy) for 6 groups, see <a href='" + 
                 urlDownloadGenerator.getRequestURL() + "' " + "title='Bgee download page'>" +
-                "download page</a>.</li>");
-        this.writeln("<li>2015-03-03: release of the single-species " +
+                "download page</a>.</td></tr>");
+        this.writeln("<tr><th>2015-03-03</th><td>Release of the single-species " +
                 "differential expression data for 11 species, see <a href='" + 
                 urlDownloadGenerator.getRequestURL() + "' " + "title='Bgee download page'>" +
-                "download page</a>.</li>");
-        this.writeln("<li>2014-12-19: release of the single-species " +
+                "download page</a>.</td></tr>");
+        this.writeln("<tr><th>2014-12-19</th><td>Release of the single-species " +
                 "expression data for 17 species, see <a href='" + 
                 urlDownloadGenerator.getRequestURL() + "' " + "title='Bgee download page'>" +
-                "download page</a>.</li></ul>");
+                "download page</a>.</td></tr></table>");
         this.writeln("</div>"); // end home_info
 
         this.writeln("<p id='bgee_more_info'>" +

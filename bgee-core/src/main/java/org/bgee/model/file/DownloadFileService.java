@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
  *
  * @author Philippe Moret
  */
-//TODO: unit tests, injecting a mock DAOManager, that will return mock DAOs, etc.
 public class DownloadFileService extends Service {
 
     private static final Logger log = LogManager.getLogger(DownloadFileService.class.getName());

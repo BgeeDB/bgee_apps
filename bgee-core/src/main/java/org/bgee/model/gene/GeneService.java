@@ -82,6 +82,7 @@ public class GeneService extends Service {
                     .collect(Collectors.toList()));
     }
 
+    // TODO javadoc, unit tests
     public Gene loadGeneById(String geneId) {
     	log.entry(geneId);
     	Set<String> geneIds = new HashSet<>();

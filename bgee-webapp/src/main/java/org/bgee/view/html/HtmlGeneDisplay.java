@@ -1,11 +1,8 @@
 package org.bgee.view.html;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,12 +15,12 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
+import org.bgee.controller.CommandGene.GeneResponse;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
-import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.ConditionUtils;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
@@ -44,22 +41,14 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
     private final static Logger log = LogManager.getLogger(HtmlGeneDisplay.class.getName());
 
 	/**
-	 * Constructor
-	 * 
-	 * @param response
-	 *            A {@code HttpServletResponse} that will be used to display the
-	 *            page to the client
-	 * @param requestParameters
-	 *            The {@code RequestParameters} that handles the parameters of
-	 *            the current request.
-	 * @param prop
-	 *            A {@code BgeeProperties} instance that contains the properties
-	 *            to use.
-	 * @param factory
-	 *            The {@code HtmlFactory} that instantiated this object.
-	 * @throws IOException
-	 *             If there is an issue when trying to get or to use the
-	 *             {@code PrintWriter}
+	 * @param response             A {@code HttpServletResponse} that will be used to display 
+	 *                             the page to the client.
+	 * @param requestParameters    The {@code RequestParameters} that handles the parameters of
+	 *                             the current request.
+	 * @param prop                 A {@code BgeeProperties} instance that contains the properties
+	 *                             to use.
+	 * @param factory              The {@code HtmlFactory} that instantiated this object.
+	 * @throws IOException         If there is an issue when trying to get or to use the {@code PrintWriter}.
 	 */
 	public HtmlGeneDisplay(HttpServletResponse response, RequestParameters requestParameters, BgeeProperties prop,
 	        JsonHelper jsonHelper, HtmlFactory factory) throws IllegalArgumentException, IOException {
@@ -75,28 +64,41 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 	}
 
 	@Override
-	public void displayGene(Gene gene, List<ExpressionCall> calls, ConditionUtils conditionUtils) {
-	    log.entry(gene, calls, conditionUtils);
+	public void displayGene(GeneResponse geneResponse) {
+	    log.entry(geneResponse);
+	    
+	    Gene gene = geneResponse.getGene();
 	    
 	    String titleStart = "Gene: " + gene.getName() + " - " + gene.getId(); 
 		this.startDisplay(titleStart);
+		//page title
 		this.writeln("<h1 class='gene_title'><img height='50' width='50' src='" 
 		        + this.prop.getSpeciesImagesRootDirectory() + urlEncode(gene.getSpeciesId())
 		        + "_light.jpg' alt='" + htmlEntities(gene.getSpecies().getShortName()) 
 		        + "' />" + htmlEntities(titleStart) 
 				+ " - <em>" + htmlEntities(gene.getSpecies().getScientificName()) + "</em> ("
                 + htmlEntities(gene.getSpecies().getName()) + ")</h1>");
+		
+		//Gene general information
 		this.writeln("<h2>Gene Information</h2>");
 		this.writeln("<div class='gene'>" + getGeneInfo(gene) + "</div>");
+
+		
+        //Expression data
 		this.writeln("<h2>Expression</h2>");
-		this.writeln("<div id='expr_intro'>Expression calls ordered by biological relevance: </div>");
+		this.writeln("<div id='expr_intro'>Expression calls ordered by the normalized ranks "
+		        + "of the gene in the conditions: </div>");
 		
 		this.writeln("<div id='expr_data'>");
-
-		this.writeln("<div id='table-container'>");
-		this.writeln(getExpressionHTMLByAnat(byAnatEntity(filterCalls(calls, conditionUtils)), conditionUtils));
-		this.writeln("</div>"); // table-container
 		
+		//table-container
+		this.writeln("<div id='table-container'>");
+		this.writeln(getExpressionHTMLByAnat(
+		        filterAndGroupByAnatEntity(geneResponse), 
+		        geneResponse.getConditionUtils()));
+		this.writeln("</div>"); // end table-container
+		
+		//legend
         this.writeln("<div class='legend'>");
         this.writeln("<table><caption>Sources</caption>" +
                 "<tr><th>A</th><td>Affymetrix</td></tr>" +
@@ -107,12 +109,11 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 "<tr><td><span class='quality high'>high quality</span></td></tr>" +
                 "<tr><td><span class='quality low'>low quality</span></td></tr>" +
                 "<tr><td><span class='quality nodata'>no data</span></td></tr></table>");
-        this.writeln("</div>"); // legend
-
-		this.writeln("</div>"); // expr_data
+        this.writeln("</div>"); // end legend
+        
+		this.writeln("</div>"); // end expr_data 
 
 		this.endDisplay();
-		
 		log.exit();
 	}
 
@@ -309,54 +310,26 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
 	/**
 	 * Build a {@code Map} associating anatomic entities ID to the {@code List}
-	 * of associated {@code ExpressionCall}, the order of the input list is
-	 * preserved.
+	 * of associated {@code ExpressionCall}s. The order of the input list is
+	 * preserved, and redundant {@code ExpressionCall}s are filtered out.
 	 * 
-	 * @param calls    A {@code List} of {@code ExpressionCall} as input
-	 * @return         The @{code {@link LinkedHashMap} containing the association.
+	 * @param geneResponse A {@code GeneResponse}, notably containing the {@code List} of 
+	 *                     {@code ExpressionCall}s, and {@code Set} of redundant {@code ExpressionCall}s.
+	 * @return             The @{code {@link LinkedHashMap} containing the association, 
+	 *                     with {@code String}s representing anat. entity ID as key, the associated value 
+	 *                     being a ranked {@code List} of {@code ExpressionCall}s.
 	 */
-	private static LinkedHashMap<String, List<ExpressionCall>> byAnatEntity(List<ExpressionCall> calls) {
-	    log.entry(calls);
+	private static LinkedHashMap<String, List<ExpressionCall>> filterAndGroupByAnatEntity(
+	        GeneResponse geneResponse) {
+	    log.entry(geneResponse);
 	    //we explicitly define the Collector, otherwise javac has a bug preventing to infer correct type.
 	    Collector<ExpressionCall, ?, LinkedHashMap<String, List<ExpressionCall>>> collector = 
 	            Collectors.groupingBy(ec -> ec.getCondition().getAnatEntityId(), 
 	                    LinkedHashMap::new, Collectors.toList());
 	    
-		return log.exit(calls.stream().collect(collector));
-	}
-	
-	/**
-	 * Filter {@code calls} for redundant calls with higher ranks. This method creates
-	 * a new {@code List} of {@code ExpressionCall}s, based on {@code calls}, 
-	 * by discarding all {@code ExpressionCall}s for which there exists a more precise call 
-	 * (i.e., with a more precise condition) at a better rank (i.e., with a lower index in the list). 
-	 * 
-	 * @param calls            The original {@code List} of {@code ExpressionCall}s to be filtered.
-	 * @param conditionUtils   A {@code ConditionUtils} containing all the {@code Condition}s 
-	 *                         related to {@code calls}.
-	 * @return                 A new filtered {@code List} of {@code ExpressionCall}s, 
-	 *                         corresponding to {@code calls}, with redundant calls removed.
-	 */
-	private static List<ExpressionCall> filterCalls(List<ExpressionCall> calls, ConditionUtils conditionUtils) {
-	    log.entry(calls, conditionUtils);
-
-        long startFilteringTimeInMs = System.currentTimeMillis();
-        
-        List<ExpressionCall> filteredCalls = new ArrayList<>();
-        Set<Condition> validatedConditions = new HashSet<>();
-        for (ExpressionCall call: calls) {
-            //Check whether this call is less precise than another call with a better rank. 
-            Condition cond = call.getCondition();
-            if (Collections.disjoint(validatedConditions, conditionUtils.getDescendantConditions(cond))) {
-                validatedConditions.add(cond);
-                filteredCalls.add(call);
-            } else {
-                log.trace("Redundant call identified with condition: {}", cond);
-            }
-        }
-        log.debug("Redundant calls filtered in {} ms", System.currentTimeMillis() - startFilteringTimeInMs);
-        
-        return log.exit(filteredCalls);
+		return log.exit(geneResponse.getExprCalls().stream()
+		        .filter(call -> !geneResponse.getRedundantExprCalls().contains(call))
+		        .collect(collector));
 	}
 
 	@Override

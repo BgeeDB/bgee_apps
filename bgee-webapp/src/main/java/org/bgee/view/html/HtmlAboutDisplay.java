@@ -1,6 +1,8 @@
 package org.bgee.view.html;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -134,7 +136,8 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
         super.includeCss();
         //If you ever add new files, you need to edit bgee-webapp/pom.xml 
         //to correctly merge/minify them.
-        this.includeCss("documentation.css");
+        List<String> files = Arrays.asList("documentation.css");
+        this.includeCss(files, files);
         log.exit();
     }
 }

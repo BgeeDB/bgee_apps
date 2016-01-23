@@ -131,12 +131,12 @@
              this property when running the webapp from within Eclipse, to write the minified files 
              directly into the m2e-wtp 'web-resources' folder) -->
         <minify.webappTargetDir>${project.build.directory}/${project.build.finalName}</minify.webappTargetDir>
-        <!-- These property specify whether minified CSS and JS files will be used by the webapp. 
+        <!-- This property specify whether minified CSS and JS files will be used by the webapp. 
              This allows to use the original files for easier debugging, notably when running the webapp 
              from within Eclipse.  -->
-        <filter.org.bgee.webapp.minify>true</filter.org.bgee.webapp.minify>
+        <filter.org.bgee.webapp.devMode>false</filter.org.bgee.webapp.devMode>
         <!-- property used to activate/deactivate maven-minify-plugin -->
-        <skip.minify.plugin>false</skip.minify.plugin>
+        <skip.minify.plugin>${filter.org.bgee.webapp.devMode}</skip.minify.plugin>
         
         <!-- Default the parameter to send mail to empty string. 
              This parameter should be overriden in settings.xml if needed -->
@@ -172,12 +172,14 @@
             <properties>
                 <!-- change paths where minify-maven-plugin minifies files -->
                 <minify.webappTargetDir>${project.build.directory}/m2e-wtp/web-resources/</minify.webappTargetDir>
-                <!-- Disable minify for easier debugging. Just change the two following properties 
+                
+                <!-- Disable minify for easier debugging. Just change the following property 
                      to use minified files, to properly test a release as it will be 
                      in production server. -->
-                <filter.org.bgee.webapp.minify>false</filter.org.bgee.webapp.minify>
+                <filter.org.bgee.webapp.devMode>false</filter.org.bgee.webapp.devMode>
                 <!-- activate/deactivate minify plugin -->
-                <skip.minify.plugin>true</skip.minify.plugin>
+                <skip.minify.plugin>${filter.org.bgee.webapp.devMode}</skip.minify.plugin>
+                
                 <!-- In order to have no extension in URLs, change tomcat context root 
                      (this is buggy in Eclipse) -->
                 <m2eclipse.wtp.contextRoot></m2eclipse.wtp.contextRoot>

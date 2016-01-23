@@ -2,6 +2,7 @@ package org.bgee.view.html;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -362,15 +363,11 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 	@Override
 	protected void includeCss() {
 	    log.entry();
-	    
         //If you ever add new files, you need to edit bgee-webapp/pom.xml 
         //to correctly merge/minify them.
-        if (!this.prop.isMinify()) {
-            this.includeCss("lib/jquery_plugins/jquery.dataTables.min.css");
-        } else {
-            this.includeCss("lib/jquery_plugins/jquery.dataTables.css");
-        }
-        this.includeCss("gene.css");
+	    this.includeCss(
+	            Arrays.asList("lib/jquery_plugins/jquery.dataTables.css", "gene.css"), 
+	            Arrays.asList("lib/jquery_plugins/jquery.dataTables.min.css", "gene.css"));
         //we need to add the Bgee CSS files at the end, to override CSS file from external libs
         super.includeCss();
         
@@ -384,12 +381,10 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		super.includeJs();
         //If you ever add new files, you need to edit bgee-webapp/pom.xml 
         //to correctly merge/minify them.
-        if (!this.prop.isMinify()) {
-            this.includeJs("lib/jquery_plugins/jquery.dataTables.min.js");
-        } else {
-            this.includeJs("lib/jquery_plugins/jquery.dataTables.js");
-        }
-        this.includeJs("gene.js");
+		this.includeJs(
+		        Arrays.asList("lib/jquery_plugins/jquery.dataTables.js", "gene.js"), 
+		        Arrays.asList("lib/jquery_plugins/jquery.dataTables.min.js", "gene.js"), 
+		        null);
         
         log.exit();
 	}

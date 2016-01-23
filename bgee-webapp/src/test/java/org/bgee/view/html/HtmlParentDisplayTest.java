@@ -25,7 +25,7 @@ public class HtmlParentDisplayTest {
     @Test
     public void shouldGetVersionedJsFileName() throws IOException {
         BgeeProperties props = mock(BgeeProperties.class);
-        when(props.isMinify()).thenReturn(true);
+        when(props.isDevMode()).thenReturn(false);
         HtmlFactory factory = mock(HtmlFactory.class);
         when(props.getJavascriptVersionExtension()).thenReturn("js13");
         HtmlParentDisplay display = new HtmlParentDisplay(null, new RequestParameters(), props, factory);
@@ -36,7 +36,7 @@ public class HtmlParentDisplayTest {
     @Test
     public void shouldGetVersionedCssFileName() throws IOException {
         BgeeProperties props = mock(BgeeProperties.class);
-        when(props.isMinify()).thenReturn(true);
+        when(props.isDevMode()).thenReturn(false);
         HtmlFactory factory = mock(HtmlFactory.class);
         when(props.getCssVersionExtension()).thenReturn("css13");
         HtmlParentDisplay display = new HtmlParentDisplay(null, new RequestParameters(), props, factory);

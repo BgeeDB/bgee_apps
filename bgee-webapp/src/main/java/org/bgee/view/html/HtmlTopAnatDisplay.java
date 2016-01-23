@@ -1,6 +1,7 @@
 package org.bgee.view.html;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 
 import javax.servlet.http.HttpServletResponse;
@@ -116,82 +117,81 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
     protected void includeJs() {
         log.entry();
         super.includeJs();
-        if (!this.prop.isMinify()) {
-            //external libs used only by TopAnat
-            this.includeJs("lib/angular.min.js");
-            this.includeJs("lib/angular_modules/angular-animate.min.js");
-            this.includeJs("lib/angular_modules/angular-messages.min.js");
-            this.includeJs("lib/angular_modules/angular-resource.min.js");
-            this.includeJs("lib/angular_modules/angular-route.min.js");
-            this.includeJs("lib/angular_modules/angular-sanitize.min.js");
-            this.includeJs("lib/angular_modules/angular-touch.min.js");
-            this.includeJs("lib/angular_modules/ui_modules/ui-grid.min.js");
-            this.includeJs("lib/angular_modules/ui_modules/ui-bootstrap-tpls.min.js");
-            this.includeJs("lib/jquery_plugins/bootstrap.min.js");
-            this.includeJs("lib/angular_modules/angular-file-upload.min.js");
-            this.includeJs("lib/jquery_plugins/toastr.min.js");
-            this.includeJs("lib/angular_modules/angular-location-update.min.js");
-            this.includeJs("lib/Blob.js");
-            this.includeJs("lib/FileSaver.min.js");
-            this.includeJs("lib/angular_modules/angular-file-saver.bundle.min.js");
+        
+        //If you ever add new files, you need to edit bgee-webapp/pom.xml 
+        //to correctly merge/minify them.
+        this.includeJs(
+            Arrays.asList("vendor_topanat.js", "script_topanat.js"), 
+            Arrays.asList(
+                //external libs used only by TopAnat
+                "lib/angular.min.js", 
+                "lib/angular_modules/angular-animate.min.js", 
+                "lib/angular_modules/angular-messages.min.js", 
+                "lib/angular_modules/angular-resource.min.js", 
+                "lib/angular_modules/angular-route.min.js", 
+                "lib/angular_modules/angular-sanitize.min.js", 
+                "lib/angular_modules/angular-touch.min.js", 
+                "lib/angular_modules/ui_modules/ui-grid.min.js", 
+                "lib/angular_modules/ui_modules/ui-bootstrap-tpls.min.js", 
+                "lib/jquery_plugins/bootstrap.min.js", 
+                "lib/angular_modules/angular-file-upload.min.js", 
+                "lib/jquery_plugins/toastr.min.js", 
+                "lib/angular_modules/angular-location-update.min.js", 
+                "lib/Blob.js", 
+                "lib/FileSaver.min.js", 
+                "lib/angular_modules/angular-file-saver.bundle.min.js", 
             
-            //TopAnat JS files
-            this.includeJs("topanat/topanat.js");
-            this.includeJs("topanat/services/logger.module.js");
-            this.includeJs("topanat/services/logger.js");
-            this.includeJs("topanat/controllers/main.js");
-            this.includeJs("topanat/controllers/result.js");
-            this.includeJs("topanat/services/bgeedataservice.js");
-            this.includeJs("topanat/services/bgeejobservice.js");
-            this.includeJs("topanat/services/helpservice.js");
-            this.includeJs("topanat/services/datatypefactory.js");
-            this.includeJs("topanat/services/config.js");
-            this.includeJs("topanat/services/lang.js");
-            this.includeJs("topanat/services/constants.js");
-            this.includeJs("topanat/directives/loading.js");
-        } else {
-            //If you ever add new files, you need to edit bgee-webapp/pom.xml 
-            //to correctly merge/minify them.
-            this.includeJs("vendor_topanat.js");
-            this.includeJs("script_topanat.js");
-        }
+                //TopAnat JS files
+                "topanat/topanat.js", 
+                "topanat/services/logger.module.js", 
+                "topanat/services/logger.js", 
+                "topanat/controllers/main.js", 
+                "topanat/controllers/result.js", 
+                "topanat/services/bgeedataservice.js", 
+                "topanat/services/bgeejobservice.js", 
+                "topanat/services/helpservice.js", 
+                "topanat/services/datatypefactory.js", 
+                "topanat/services/config.js", 
+                "topanat/services/lang.js", 
+                "topanat/services/constants.js", 
+                "topanat/directives/loading.js"), 
+            null);
+        
         log.exit();
     }
     @Override
     protected void includeCss() {
         log.entry();
+        
         //the CSS files need to keep their relative location to other paths the same, 
         //this is why we keep their location and don't merge them all. 
         //And all merged css files are already included by super.includeCss().
-        
-        if (!this.prop.isMinify()) {
-            this.includeCss("lib/jquery_plugins/bootstrap.min.css");
-            this.includeCss("lib/jquery_plugins/jquery-ui.min.css");
-            this.includeCss("lib/jquery_plugins/jquery-ui.structure.min.css");
-            this.includeCss("lib/jquery_plugins/jquery-ui.theme.min.css");
-            this.includeCss("lib/jquery_plugins/toastr.min.css");
-            //CSS files of AngularJS modules only used by TopAnat
-            this.includeCss("lib/angular_modules/ui_grid/ui-grid.min.css");
-            //font-awesome
-            this.includeCss("lib/font_awesome/css/font-awesome.min.css");
-            
-        } else {
-            //If you ever add new files, you need to edit bgee-webapp/pom.xml 
-            //to correctly merge/minify them.
-            //the CSS files need to keep their relative location to other paths the same, 
-            //this is why we keep their location and don't merge them all
-            this.includeCss("lib/jquery_plugins/vendor_common.css");
-            //CSS files of AngularJS modules only used by TopAnat
-            this.includeCss("lib/angular_modules/ui_grid/ui-grid.css");
-            //font-awesome
-            this.includeCss("lib/font_awesome/css/font-awesome.css");
-        }
-        
-        //CSS files specific to TopAnat
-        this.includeCss("topanat.css");
+        //If you ever add new files, you need to edit bgee-webapp/pom.xml 
+        //to correctly merge/minify them.
+        this.includeCss(
+                Arrays.asList("lib/jquery_plugins/vendor_common.css", 
+                        //CSS files of AngularJS modules only used by TopAnat
+                        "lib/angular_modules/ui_grid/ui-grid.css", 
+                        //font-awesome
+                        "lib/font_awesome/css/font-awesome.css", 
+                        //CSS files specific to TopAnat
+                        "topanat.css"), 
+                Arrays.asList(
+                        "lib/jquery_plugins/bootstrap.min.css", 
+                        "lib/jquery_plugins/jquery-ui.min.css", 
+                        "lib/jquery_plugins/jquery-ui.structure.min.css", 
+                        "lib/jquery_plugins/jquery-ui.theme.min.css", 
+                        "lib/jquery_plugins/toastr.min.css", 
+                        //CSS files of AngularJS modules only used by TopAnat
+                        "lib/angular_modules/ui_grid/ui-grid.min.css", 
+                        //font-awesome
+                        "lib/font_awesome/css/font-awesome.min.css", 
+                        //CSS files specific to TopAnat
+                        "topanat.css")); 
         
         //we need to add the Bgee CSS files at the end, to override CSS file from external libs
         super.includeCss();
+        
         log.exit();
     }
 

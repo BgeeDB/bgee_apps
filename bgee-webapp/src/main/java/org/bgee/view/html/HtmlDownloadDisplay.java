@@ -1,6 +1,7 @@
 package org.bgee.view.html;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -769,7 +770,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
   		super.includeJs();
         //If you ever add new files, you need to edit bgee-webapp/pom.xml 
         //to correctly merge/minify them.
-  		this.includeJs("download.js");
+        List<String> files = Arrays.asList("download.js");
+  		this.includeJs(files, files, null);
   		log.exit();
   	}
 
@@ -779,7 +781,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         super.includeCss();
         //If you ever add new files, you need to edit bgee-webapp/pom.xml 
         //to correctly merge/minify them.
-        this.includeCss("download.css");
+        List<String> files = Arrays.asList("download.css");
+        this.includeCss(files, files);
         log.exit();
     }
 }

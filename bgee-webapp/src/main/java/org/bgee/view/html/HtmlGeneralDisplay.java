@@ -1,6 +1,7 @@
 package org.bgee.view.html;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
@@ -254,7 +255,8 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         super.includeJs();
         //If you ever add new files, you need to edit bgee-webapp/pom.xml 
         //to correctly merge/minify them.
-        this.includeJs("general.js");
+        List<String> files = Arrays.asList("general.js");
+        this.includeJs(files, files, null);
         log.exit();
     }
 
@@ -264,7 +266,8 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         super.includeCss();
         //If you ever add new files, you need to edit bgee-webapp/pom.xml 
         //to correctly merge/minify them.
-        this.includeCss("general.css");
+        List<String> files = Arrays.asList("general.css");
+        this.includeCss(files, files);
         log.exit();
     }
 }

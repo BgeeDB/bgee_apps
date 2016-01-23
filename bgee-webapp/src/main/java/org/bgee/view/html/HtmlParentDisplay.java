@@ -1,7 +1,11 @@
 package org.bgee.view.html;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.BiConsumer;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -554,38 +558,62 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected void includeJs() {
         log.entry();
-        if (!this.prop.isMinify()) {
-            this.includeJs("lib/jquery.min.js");
-            this.includeJs("lib/jquery_plugins/jquery.visible.min.js");
-            this.includeJs("lib/jquery_plugins/jquery-ui.min.js");
-            this.includeJs("bgeeproperties.js");
-            this.includeJs("urlparameters.js");
-            this.includeJs("requestparameters.js");
-            this.includeJs("common.js");
-        } else {
-            //If you ever add new files, you need to edit bgee-webapp/pom.xml 
-            //to correctly merge/minify them.
-            this.includeJs("vendor_common.js");
-            this.includeJs("script_common.js");
-        }
+        this.includeJs(
+                //If you ever add new files, you need to edit bgee-webapp/pom.xml 
+                //to correctly merge/minify them.
+                Arrays.asList("vendor_common.js", "script_common.js"), 
+                Arrays.asList("lib/jquery.min.js", 
+                              "lib/jquery_plugins/jquery.visible.min.js", 
+                              "lib/jquery_plugins/jquery-ui.min.js", 
+                              "bgeeproperties.js", 
+                              "urlparameters.js", 
+                              "requestparameters.js", 
+                              "common.js"), 
+                null);
         log.exit();
     }
     /**
-     * Write the HTML code allowing to include the javascript file named {@code fileName}. 
+     * Write the HTML code allowing to declare the javascript files necessary for the page. 
      * This method will notably retrieve the directory hosting the files, and will 
-     * define the versioned file name corresponding to {@code fileName}, as hosted 
-     * on the server. HTML is written using {@link #writeln()}.
+     * define the versioned file names.
      * <strong>It should be called only within a {@link #includeJs()} method, whether overridden 
      * or not.</strong>.
      * 
-     * @param filename  The original name of the javascript file to include.
+     * @param prodModeJsfileNames       A {@code List} of {@code String}s corresponding to the names 
+     *                                  in production mode of the javascript files to include, 
+     *                                  in the order they should be included. Cannot be {@code null}.
+     * @param devModeJsFileNames        A {@code List} of {@code String}s corresponding to the names 
+     *                                  in development mode of the javascript files to include, 
+     *                                  in the order they should be included. They will be included 
+     *                                  before the Babel files in {@code devModeBabelFileNames}. 
+     *                                  If it is needed to mix the order of javascript and babel files, 
+     *                                  simply include the regular javascript files in the Babel list. 
+     *                                  Can be {@code null}.
+     * @param devModeBabelFileNames     A {@code List} of {@code String}s corresponding to the names 
+     *                                  in development mode of the Babel files to include, 
+     *                                  in the order they should be included. It is acceptable 
+     *                                  for this {@code List} to contain regular javascript file, 
+     *                                  as Babel will manage them as well. Can be {@code null}.
      * @see #getVersionedJsFileName(String)
      */
-    protected void includeJs(String fileName) {
-        log.entry(fileName);
-        this.writeln("<script type='text/javascript' src='" +
-                this.prop.getJavascriptFilesRootDirectory() + 
-                this.getVersionedJsFileName(fileName) + "'></script>");
+    protected void includeJs(List<String> prodModeJsfileNames, List<String> devModeJsFileNames, 
+            List<String> devModeBabelFileNames) {
+        log.entry(prodModeJsfileNames, devModeJsFileNames, devModeBabelFileNames);
+        
+        BiConsumer<Boolean, String> writeScript = (babel, fileName) -> 
+            this.writeln("<script type='" + (babel? "text/babel": "text/javascript") 
+                + "' src='" + this.prop.getJavascriptFilesRootDirectory() 
+                + this.getVersionedJsFileName(fileName) + "'></script>");
+        
+        if (!this.prop.isDevMode()) {
+            prodModeJsfileNames.stream().forEach(fileName -> writeScript.accept(false, fileName));
+        } else {
+            Optional.ofNullable(devModeJsFileNames).ifPresent(list -> list.stream().forEach(
+                    fileName -> writeScript.accept(false, fileName)));
+            Optional.ofNullable(devModeBabelFileNames).ifPresent(list -> list.stream().forEach(
+                    fileName -> writeScript.accept(true, fileName)));
+        }
+        
         log.exit();
     }
     /**
@@ -616,7 +644,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         //if no version info was provided, or if we don't want to use the minified files, 
         //return original name.
         if (StringUtils.isBlank(this.prop.getJavascriptVersionExtension()) || 
-                !this.prop.isMinify()) {
+                this.prop.isDevMode()) {
             return log.exit(originalFileName);
         }
         return log.exit(originalFileName.replaceAll("(.+?)\\.js", 
@@ -638,32 +666,36 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * @see #includeCss(String)
      */
     protected void includeCss() {
-        if (!this.prop.isMinify()) {
-            //we need to add the Bgee CSS files at the end, to override CSS file from bootstrap
-            this.includeCss("bgee.css");  
-        } else {
-            //If you ever add new files, you need to edit bgee-webapp/pom.xml 
-            //to correctly merge/minify them.
-            //we need to add the Bgee CSS files at the end, to override CSS file from bootstrap
-            this.includeCss("common.css"); 
-        }
+        log.entry();
+        //If you ever add new files, you need to edit bgee-webapp/pom.xml 
+        //to correctly merge/minify them.
+        //We need to add the Bgee CSS files at the end, to override CSS file from bootstrap
+        this.includeCss(Arrays.asList("common.css"), Arrays.asList("bgee.css"));
     }
     /**
-     * Write the HTML code allowing to include the CSS file named {@code fileName}. 
+     * Write the HTML code allowing to declare the CSS files necessary for the page. 
      * This method will notably retrieve the directory hosting the files, and will 
-     * define the versioned file name corresponding to {@code fileName}, as hosted 
-     * on the server. HTML is written using {@link #writeln()}.
+     * define the versioned file names.
      * <strong>It should be called only within a {@link #includeCss()} method, whether overridden 
      * or not.</strong>.
      * 
-     * @param fileName  The original name of the CSS file to include.
+     * @param prodModefileNames     A {@code List} of {@code String}s corresponding to the names 
+     *                              in production mode of the CSS files to include, 
+     *                              in the order they should be included.
+     * @param devModeFileNames      A {@code List} of {@code String}s corresponding to the names 
+     *                              in development mode of the CSS files to include, 
+     *                              in the order they should be included.
      * @see #getVersionedCssFileName(String)
      */
-    protected void includeCss(String fileName) {
-        log.entry(fileName);
-        this.writeln("<link rel='stylesheet' type='text/css' href='"
+    protected void includeCss(List<String> prodModefileNames, List<String> devModeFileNames) {
+        log.entry(prodModefileNames, devModeFileNames);
+        
+        List<String> toUse = this.prop.isDevMode()? devModeFileNames: prodModefileNames;
+        for (String fileName: toUse) {
+            this.writeln("<link rel='stylesheet' type='text/css' href='"
                 + this.prop.getCssFilesRootDirectory() 
                 + this.getVersionedCssFileName(fileName) + "'/>");
+        }
         log.exit();
     }
     /**
@@ -694,7 +726,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         //if no version info was provided, or if we don't want to use the minified files, 
         //return original name.
         if (StringUtils.isBlank(this.prop.getCssVersionExtension()) || 
-                !this.prop.isMinify()) {
+                this.prop.isDevMode()) {
             return log.exit(originalFileName);
         }
         return log.exit(originalFileName.replaceAll("(.+?)\\.css", 

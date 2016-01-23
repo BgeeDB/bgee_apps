@@ -1,6 +1,8 @@
 package org.bgee.view.html;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -200,7 +202,8 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
         super.includeCss();
         //If you ever add new files, you need to edit bgee-webapp/pom.xml 
         //to correctly merge/minify them.
-        this.includeCss("general.css");
+        List<String> files = Arrays.asList("general.css");
+        this.includeCss(files, files);
         log.exit();
     }
 }

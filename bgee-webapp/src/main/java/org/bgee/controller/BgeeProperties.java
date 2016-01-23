@@ -41,20 +41,21 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
     
     /**
      * A {@code String} that is the key to access to the property that is read at the 
-     * initialization of {@code BgeeProperties} to determine whether CSS and JS files were minified.
+     * initialization of {@code BgeeProperties} to determine whether the server is in development 
+     * or production mode.
      * 
-     * @see #MINIFY_DEFAULT
-     * @see #isMinify()
+     * @see #DEV_MODE_DEFAULT
+     * @see #isDevMode()
      */
-    public final static String MINIFY_KEY = "org.bgee.webapp.minify";
+    public final static String DEV_MODE_KEY = "org.bgee.webapp.devMode";
     /**
      * A {@code boolean} that is the default value of the property to determine whether 
-     * CSS and JS files were minified.
+     * the server is in development or production mode.
      * 
-     * @see #MINIFY_KEY
-     * @see #isMinify()
+     * @see #DEV_MODE_KEY
+     * @see #isDevMode()
      */
-    public final static boolean MINIFY_DEFAULT = false;
+    public final static boolean DEV_MODE_DEFAULT = false;
         
     /**
      * A {@code String} that is the key to access to the System property that is read at the 
@@ -520,9 +521,10 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
     }
 
     /**
-     * {@code boolean} defining whether CSS and JS files were minified. 
+     * A {@code boolean} defining whether the server is in development or production mode. 
+     * If {@code true}, the server is in development mode.
      */
-    private final boolean minify;
+    private final boolean devMode;
     /**
      * {@code String} that defines the directory where query strings holding storable parameters  
      * from previous large queries are stored. 
@@ -705,7 +707,7 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
         // Initialize all properties using the injected prop first, alternatively the System
         // properties and then the file. The default value provided will be use if none of the
         // previous solutions contain the property
-        minify = getBooleanOption(prop, SYS_PROPS, FILE_PROPS, MINIFY_KEY, MINIFY_DEFAULT);
+        devMode = getBooleanOption(prop, SYS_PROPS, FILE_PROPS, DEV_MODE_KEY, DEV_MODE_DEFAULT);
         requestParametersStorageDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY,  
                 REQUEST_PARAMETERS_STORAGE_DIRECTORY_DEFAULT);
@@ -766,10 +768,11 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
     }
 
     /**
-     * @return  A {@code boolean} defining whether CSS and JS files were minified.
+     * @return  A {@code boolean} defining whether the server is in development or production mode. 
+     *          If {@code true}, the server is in development mode.
      */
-    public boolean isMinify() {
-        return minify;
+    public boolean isDevMode() {
+        return devMode;
     }
     /**
      * @return  A {@code String} that defines the directory where query strings holding storable 

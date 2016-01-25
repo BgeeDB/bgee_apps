@@ -270,19 +270,19 @@ getLegend <- function(pval) {
 ################################################################################
 
 ## define the test statistic which will detect underrepresentation
-if(!isGeneric("GOFisherTestUnder"))
-  setGeneric("GOFisherTestUnder", function(object) standardGeneric("GOFisherTestUnder"))
-setMethod("GOFisherTestUnder", "classicCount",
-          function(object) {
-
-            contMat <- contTable(object)
-            if(all(contMat == 0))
-              p.value <- 1
-            else
-              p.value <- fisher.test(contMat, alternative = "less")$p.value
-            ## "greater" is for over-, "less" for under-, and "two-sided" is for both alternatives
-            return(p.value)
-          })
+#if(!isGeneric("GOFisherTestUnder"))
+#  setGeneric("GOFisherTestUnder", function(object) standardGeneric("GOFisherTestUnder"))
+#setMethod("GOFisherTestUnder", "classicCount",
+#          function(object) {#
+#
+#            contMat <- contTable(object)
+#            if(all(contMat == 0))
+#              p.value <- 1
+#            else
+#              p.value <- fisher.test(contMat, alternative = "less")$p.value
+#            ## "greater" is for over-, "less" for under-, and "two-sided" is for both alternatives
+#            return(p.value)
+#          })
 
 
 ###################################################################
@@ -458,5 +458,47 @@ generateGraph <- function(GOdata, termsP.value, firstSigNodes = 10, reverse = TR
 #cat(fileName, ' --- no of nodes: ', numNodes(gT$dag), '\n') 
 #}
 
-
-
+#########
+# Jan2016, Author mseppey
+# Perform the enrichment fisher test without TopGO
+#########
+runTestWithoutTopGO<-function(anatomy,geneList,test="fisher"){
+  foregroundExpressed <- length(subset(names(geneList),geneList==1 & names(geneList) %in% anatomy))
+  foregroundNotExpressed <- length(subset(names(geneList),geneList==1 & !(names(geneList) %in% anatomy)))
+  backgroundExpressed <- length(subset(names(geneList),names(geneList) %in% anatomy))
+  backgroundNotExpressed <- length(subset(names(geneList),!(names(geneList) %in% anatomy)))
+  data <- matrix(c(
+    foregroundExpressed,
+    backgroundExpressed,
+    foregroundNotExpressed,
+    backgroundNotExpressed),
+    nrow = 2,
+    dimnames =
+      list(c("foreground", "background"),
+           c("present", "absent")))
+  if(test=="fisher"){
+    fis <- fisher.test(data,alternative="greater")
+  }
+  annotated <- backgroundExpressed
+  significant <- foregroundExpressed
+  expected <- round(backgroundExpressed/(backgroundExpressed+backgroundNotExpressed)*(foregroundExpressed+foregroundNotExpressed),digits=2)
+  foldEnrichment <- round((significant/expected),digits=3)
+  return(cbind(annotated, significant , expected, foldEnrichment,pval=fis$p.value))
+}
+#########
+# Jan2016, Author mseppey
+#########
+makeTableWithoutTopGO <- function(data, cutoff, names){
+  data$fdr <- p.adjust(p=data$pval, method = "fdr")
+  topTerms <- data[with(data, order(fdr) & fdr <= cutoff), ]
+  if(nrow(topTerms) != 0){
+    topTerms$foldEnrichment <-format(topTerms$foldEnrichment,digits=3)
+    topTable <- merge(names, topTerms, by.x=0, by.y=0)
+    names(topTable) <- c("OrganId", "OrganName", "Annotated", "Significant", "Expected", "foldEnrichment" , "p", "fdr")
+    topTable <- topTable[order(as.numeric(topTable$p)), ]
+    return(topTable)
+  } else{
+    print(paste("There is no significant term with a FDR threshold of ", cutoff, sep=""))
+    return(NA)
+  }
+}

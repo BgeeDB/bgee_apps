@@ -31,6 +31,7 @@ import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.DecorrelationType;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneService;
 import org.bgee.model.topanat.exception.InvalidForegroundException;
@@ -305,8 +306,9 @@ public class TopAnatAnalysis {
 
             this.move(tmpFile, finalFile, false);
             //maybe it was not requested to generate the pdf, or there was no results 
-            //and this file was not generated
-            if (Files.exists(tmpPdfFile)) {
+            //and this file was not generated. Also, there is no pdf if the decorrelation type is NONE
+            if (Files.exists(tmpPdfFile) & this.params.getDecorrelationType() 
+                    != DecorrelationType.NONE) {
                 this.move(tmpPdfFile, finalPdfFile, false);
             }
 

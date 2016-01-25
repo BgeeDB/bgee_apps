@@ -542,7 +542,9 @@ public class TopAnatParams {
                     StringUtils.isBlank(this.devStageId)? null: 
                         Arrays.asList(new ConditionFilter(null, Arrays.asList(this.devStageId))), 
                     //data propagation
-                    new DataPropagation(PropagationState.SELF, PropagationState.SELF_OR_DESCENDANT), 
+                    (this.decorrelationType != DecorrelationType.NONE) ? 
+                            new DataPropagation(PropagationState.SELF, PropagationState.SELF_OR_DESCENDANT)
+                            : new DataPropagation(PropagationState.SELF_OR_DESCENDANT, PropagationState.SELF_OR_DESCENDANT), 
                     this.getExpressionCallData()
                 ));
         }

@@ -80,6 +80,25 @@ public class OntologyTest extends TestAncestor {
     }
 
     /**
+     * Test the method {@link Ontology#getElement(String)}.
+     */
+    @Test
+    public void shouldGetElement() {
+        AnatEntity ae1 = new AnatEntity("UBERON:0001", "A", "A description"); 
+        AnatEntity ae2 = new AnatEntity("UBERON:0002", "B", "B description"); 
+
+        Set<AnatEntity> elements = new HashSet<>(Arrays.asList(ae1, ae2));
+        Set<RelationTO> relations = this.getRelations();
+
+        Ontology<AnatEntity> ontology = new Ontology<>(elements, relations, 
+                EnumSet.allOf(Ontology.RelationType.class));
+        
+        assertEquals("Incorrect element", ae1, ontology.getElement("UBERON:0001"));
+        assertEquals("Incorrect element", ae2, ontology.getElement("UBERON:0002"));
+        assertEquals("Incorrect element", null, ontology.getElement("UBERON:XXXX"));
+    }
+
+    /**
      * Get relations for tests.
      * 
      * @return  The {@code Set} of {@code RelationTO}s that are the relations to be used for tests.

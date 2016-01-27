@@ -231,7 +231,7 @@ public class Ontology<T extends NamedEntity & OntologyElement<T>> {
      * @throws IllegalArgumentException If {@code element} is {@code null} or is not found 
      *                                  in this {@code Ontology}.
      */
-    // TODO DRY in BgeeUtils.getIsAPartOfRelativesFromDb()
+    // XXX could be used in BgeeDBUtils.getIsAPartOfRelativesFromDb()
     private Set<T> getRelatives(T element, boolean isAncestor, Collection<RelationType> relationTypes, 
             boolean directRelOnly) {
         log.entry(element, isAncestor, relationTypes, directRelOnly);

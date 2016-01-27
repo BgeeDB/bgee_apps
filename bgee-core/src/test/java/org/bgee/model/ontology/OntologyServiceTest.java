@@ -1,8 +1,6 @@
 package org.bgee.model.ontology;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -12,11 +10,9 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import org.bgee.model.ServiceFactory;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
@@ -28,9 +24,6 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTOResultSet;
-import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
-import org.bgee.model.expressiondata.Condition;
-import org.bgee.model.expressiondata.ConditionUtils;
 import org.junit.Test;
 
 /**
@@ -244,14 +237,10 @@ public class OntologyServiceTest extends TestAncestor {
         Set<String> expStageIds3 = new HashSet<String>(Arrays.asList("Stage_id1", "Stage_id2"));
         when(devStageService.loadDevStages(speciesIds, true, expStageIds3)).thenReturn(devStageStream3);
 
-        // TODO there is an error when leftBound of TO (Integer) is null
-        // because NestedSetModelEntity contains int leftBound
-        
         Set<Ontology.RelationType> expRelationTypes = new HashSet<>();
         expRelationTypes.add(Ontology.RelationType.ISA_PARTOF);
 
-        ServiceFactory fac = new ServiceFactory(managerMock);
-        OntologyService service = fac.getOntologyService();
+        OntologyService service = new OntologyService(managerMock);
 
         Ontology<DevStage> expectedOntology1 = 
         		new Ontology<>(devStages1, new HashSet<>(relationTOs1), expRelationTypes);
@@ -267,34 +256,5 @@ public class OntologyServiceTest extends TestAncestor {
         		new Ontology<>(devStages3, new HashSet<>(relationTOs3), expRelationTypes);
         assertEquals("Incorrect dev. stage ontology", expectedOntology3, 
         		service.getDevStageOntology(speciesIds, stageIds, false, false, devStageService));
-    }
-    
-    //TODO: remove when proper unit tests are implemented in ConditionUtilsTest
-    //@Test
-    public void it() {
-        Properties setProps = new Properties();
-        setProps.setProperty(MySQLDAOManager.USER_KEY, "bgee");
-        setProps.setProperty(MySQLDAOManager.PASSWORD_KEY, "bgee");
-        setProps.setProperty(MySQLDAOManager.JDBC_DRIVER_NAMES_KEY, 
-                "com.mysql.jdbc.Driver,net.sf.log4jdbc.sql.jdbcapi.DriverSpy");
-        setProps.setProperty(MySQLDAOManager.JDBC_URL_KEY, 
-                "jdbc:log4jdbc:mysql://altbioinfo.unil.ch:3306/bgee_v13");
-        
-        DAOManager manager = DAOManager.getDAOManager(setProps);
-        
-        ServiceFactory fac = new ServiceFactory(manager);
-                
-        Condition cond1 = new Condition("UBERON:0000465", "UBERON:0000104");
-        Condition cond2 = new Condition("UBERON:0000061", "UBERON:0000106");
-        ConditionUtils utils = new ConditionUtils("9606", Arrays.asList(cond1, cond2), fac);
-        assertTrue(utils.isConditionMorePrecise(cond1, cond2));
-        assertFalse(utils.isConditionMorePrecise(cond2, cond1));
-        System.out.println(utils.getAnatEntityOntology().getElement("UBERON:0000465"));
-        System.out.println(utils.getDevStageOntology().getElement("UBERON:0000104"));
-        
-        System.out.println(utils.getAnatEntityOntology().getElement("UBERON:0000061")
-                .getAncestors(utils.getAnatEntityOntology(), null));
-        System.out.println(utils.getDevStageOntology().getElement("UBERON:0000106")
-                .getAncestors(utils.getDevStageOntology(), null));
     }
 }

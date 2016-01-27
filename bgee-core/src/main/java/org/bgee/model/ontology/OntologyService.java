@@ -32,7 +32,6 @@ import org.bgee.model.ontology.Ontology.RelationType;
  * @since   Bgee 13, Dec. 2015
  * @param <T>
  */
-//TODO: unit tests
 public class OntologyService extends Service {
 
     private static final Logger log = LogManager.getLogger(OntologyService.class.getName());

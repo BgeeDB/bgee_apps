@@ -907,7 +907,6 @@ implements ExpressionCallDAO {
         String stageOriginIfClause = "IF(" + exprTableName + ".stageId =" + 
             propagatedStageTableName + ".stageId" + ", 1, 0)";
         
-        
         //Ranks: 
         Map<ExpressionCallDAO.Attribute, String> dataTypeToSql = new HashMap<>();
         String affyRank = exprTableName + ".affymetrixMeanRankNorm ";
@@ -950,6 +949,47 @@ implements ExpressionCallDAO {
             rnaSeqRank += "AS rnaSeqMeanRank ";
         }
         
+        //Max Ranks: 
+        Map<ExpressionCallDAO.Attribute, String> dataTypeToMaxRankSql = new HashMap<>();
+        String affyMaxRank = exprTableName + ".affymetrixMaxRank ";
+        if (groupByClause) {
+        	affyMaxRank = "AVG(" + exprTableName + ".affymetrixMaxRank) ";
+        }
+        dataTypeToMaxRankSql.put(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA, affyMaxRank);
+        //for the global mean rank clause, we don't want the AS part, but we need it for the main query
+        if (groupByClause) {
+        	affyMaxRank += "AS affymetrixMaxRank ";
+        }
+        
+        String estMaxRank = exprTableName + ".estMaxRank ";
+        if (groupByClause) {
+        	estMaxRank = "AVG(" + exprTableName + ".estMaxRank) ";
+        }
+        dataTypeToMaxRankSql.put(ExpressionCallDAO.Attribute.EST_DATA, estMaxRank);
+        //for the global mean rank clause, we don't want the AS part, but we need it for the main query
+        if (groupByClause) {
+        	estMaxRank += "AS estMaxRank ";
+        }
+        
+        String inSituMaxRank = exprTableName + ".inSituMaxRank ";
+        if (groupByClause) {
+        	inSituMaxRank = "AVG(" + exprTableName + ".inSituMaxRank) ";
+        }
+        dataTypeToMaxRankSql.put(ExpressionCallDAO.Attribute.IN_SITU_DATA, inSituMaxRank);
+        //for the global mean rank clause, we don't want the AS part, but we need it for the main query
+        if (groupByClause) {
+        	inSituMaxRank += "AS inSituMaxRank ";
+        }
+        
+        String rnaSeqMaxRank = exprTableName + ".rnaSeqMaxRank";
+        if (groupByClause) {
+        	rnaSeqMaxRank = "AVG(" + exprTableName + ".rnaSeqMaxRank) ";
+        }
+        dataTypeToMaxRankSql.put(ExpressionCallDAO.Attribute.RNA_SEQ_DATA, rnaSeqMaxRank);
+        //for the global mean rank clause, we don't want the AS part, but we need it for the main query
+        if (groupByClause) {
+        	rnaSeqMaxRank += "AS rnaSeqMaxRank ";
+        }
         
         for (ExpressionCallDAO.Attribute attribute: attributes) {
             if (sql.isEmpty()) {
@@ -1135,21 +1175,27 @@ implements ExpressionCallDAO {
                 Set<String> sqlRanks = attributesForRank.stream()
                         .map(dataType -> {
                             String rankSql = dataTypeToSql.get(dataType);
-                            if (rankSql == null) {
+                            String maxRankSql = dataTypeToMaxRankSql.get(dataType);
+                            if (rankSql == null || maxRankSql == null) {
                                 throw log.throwing(new IllegalStateException(
                                         "No rank clause associated to data type: " + dataType));
                             }
-                            return rankSql;
+                            return rankSql+" * "+maxRankSql;
                         }).collect(Collectors.toSet());
 
+                Set<String> sqlMaxRanks = attributesForRank.stream()
+                        .map(dataType -> {
+                        	return dataTypeToMaxRankSql.get(dataType);
+                }).collect(Collectors.toSet());
+                
                 // use if expressions to handle the case where a mean rank is null
                 sql +=
                         sqlRanks.stream()
                                 .map(r -> "if ("+r+" is null, 0,"+r+")")
                                 .collect(Collectors.joining("+ ", "((",
                                 ")")) +
-                        sqlRanks.stream()
-                                .map(r -> "if ("+r+" is null, 0, 1)")
+                        sqlMaxRanks.stream()
+                                .map(mr -> "if ("+mr+" is null, 0,"+mr+")")
                                 .collect(Collectors.joining("+ ", "/ (",
                                                 ")) AS globalMeanRank "));
 

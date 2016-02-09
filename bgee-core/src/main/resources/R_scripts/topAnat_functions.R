@@ -462,10 +462,13 @@ generateGraph <- function(GOdata, termsP.value, firstSigNodes = 10, reverse = TR
 # Jan2016, Author mseppey
 # Perform the enrichment fisher test without TopGO
 #########
-runTestWithoutTopGO<-function(anatomy,geneList,test="fisher"){
+runTestWithoutTopGO<-function(anatomy,geneList,test="fisher",nodeSize){
   foregroundExpressed <- length(subset(names(geneList),geneList==1 & names(geneList) %in% anatomy))
   foregroundNotExpressed <- length(subset(names(geneList),geneList==1 & !(names(geneList) %in% anatomy)))
   backgroundExpressed <- length(subset(names(geneList),names(geneList) %in% anatomy))
+  if(backgroundExpressed < nodeSize){
+    return(NULL)
+  }
   backgroundNotExpressed <- length(subset(names(geneList),!(names(geneList) %in% anatomy)))
   data <- matrix(c(
     foregroundExpressed,

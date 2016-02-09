@@ -179,7 +179,17 @@ public class TopAnatRManager {
         }else{
             // Run the tests with custom methods that do not use the topGO package
             // For the moment, only fisher is supported
-            code.addRCode("resTmp <- lapply(anatomy2gene,FUN=runTestWithoutTopGO,geneList=geneList)");
+            code.addRCode("resTmp <- lapply(anatomy2gene,FUN=runTestWithoutTopGO,geneList=geneList,nodeSize = "+ params.getNodeSize() + ")");
+            // Filter out NULL (=below nodeSize) values
+            code.addRCode("i=1");
+            code.addRCode("    while(i <= length(resTmp)){");
+            code.addRCode("        if(length(resTmp[[i]])!=5){");
+            code.addRCode("            resTmp[[i]]<-NULL");
+            code.addRCode("        }");
+            code.addRCode("        else{");
+            code.addRCode("            i<-i+1");
+            code.addRCode("        }");
+            code.addRCode("    }");
             code.addRCode("res <- data.frame(matrix(unlist(resTmp), nrow=length(resTmp), byrow=T))");
             code.addRCode("colnames(res) <- c('annotated','significant','expected','foldEnrichment','pval')");
             code.addRCode("rownames(res) <- names(resTmp)            ");

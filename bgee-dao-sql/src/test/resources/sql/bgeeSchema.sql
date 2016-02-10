@@ -952,7 +952,11 @@ create table expression (
     estMeanRankNorm decimal(9, 2) unsigned,
     affymetrixMeanRankNorm decimal(9, 2) unsigned,
     inSituMeanRankNorm decimal(9, 2) unsigned,
-    rnaSeqMeanRankNorm decimal(9, 2) unsigned
+    rnaSeqMeanRankNorm decimal(9, 2) unsigned,
+    estMaxRank decimal(9,2) unsigned,
+    affymetrixMaxRank decimal(9,2) unsigned,
+    inSituMaxRank decimal(9,2) unsigned,
+    rnaSeqMaxRank decimal(9,2) unsigned
 ) engine = innodb;
 
 -- precomputed expression table where the expression of an organ and

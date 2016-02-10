@@ -84,7 +84,7 @@ import org.bgee.controller.servletutils.BgeeHttpServletRequest;
  * @author Mathieu Seppey
  * @author Frederic Bastian
  * @author Valentine Rech de Laval
- * @version Bgee 13, Nov 2014
+ * @version Bgee 13, Feb. 2016
  * @since Bgee 1
  */
 public class RequestParameters {
@@ -236,7 +236,13 @@ public class RequestParameters {
      * Value of the parameter page should be {@link #PAGE_JOB}.
      */
     public static final String ACTION_CANCEL_JOB = "cancel";
-    
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link URLParameters#getParamAction()}) when auto-complete gene search is requested.
+     * Value of the parameter page should be {@link #PAGE_GENE}.
+     */
+    public static final String ACTION_AUTO_COMPLETE_GENE_SEARCH = "auto_complete_gene_search";
+
     /**
      * A {@code String} that is the anchor to use in the hash part of an URL 
      * to link to the single-species part, in the documentation about gene expression calls.
@@ -1920,6 +1926,13 @@ public class RequestParameters {
     	return this.getFirstValue(this.getUrlParametersInstance().getParamGeneId());
     }
     
+    /**
+     * @return the search parameter
+     */
+    public String getSearch() {
+    	return this.getFirstValue(this.getUrlParametersInstance().getParamSearch());
+    }
+
     /**
      * @return A {@code String} that will be used as the hash part of URLs returned by 
      *         the  {@code getRequestURL} methods. See {@link #setURLHash(String)} 

@@ -3,8 +3,8 @@
  * the user's actions, to proceed to update the display.
  * It is run when the document is fully loaded by using the jQuery method ready()
  * 
- * @author Valentine Rech de Laval
- * @version Bgee 13, Aug 2015
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13, Feb. 2016
  */
 // TODO: This file has been created to insert quickly species in the home page.
 // 		 Almost code come from download.js. It should be deleted or replaced 
@@ -214,4 +214,7 @@ var general = {
 
 };
 // Call the init function when the document is ready()
-$( document ).ready( function(){ general.init() } );
+$( document ).ready( function(){
+	general.init();
+	loadAutocompleteGene();
+});

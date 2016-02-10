@@ -13,7 +13,8 @@
  * initialized once by calling the method init() before being used.
  *
  * @author  Mathieu Seppey
- * @version Bgee 13 Aug 2014
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13, Feb. 2016
  * @since   Bgee 13
  **/
 var urlParameters = {
@@ -61,6 +62,10 @@ var urlParameters = {
             this.list.push(this.DATA);
             this.AJAX = new urlParameters.Parameter('ajax',false,false,false,5,null,'boolean');
             this.list.push(this.AJAX);
+            this.SEARCH = new urlParameters.Parameter('search',false,false,false,128,null,'string');
+            this.list.push(this.SEARCH);
+            this.GENE_ID = new urlParameters.Parameter('gene_id',false,false,false,128,null,'string');
+            this.list.push(this.GENE_ID);
         },
 
         /**
@@ -92,6 +97,18 @@ var urlParameters = {
          */
         getParamAjax: function(){
             return this.AJAX;
+        },
+        /**
+         * @return    The parameter search
+         */
+        getParamSearch: function(){
+        	return this.SEARCH;
+        },
+        /**
+         * @return    The parameter gene_id
+         */
+        getParamGeneId: function(){
+            return this.GENE_ID;
         },
         /**
          * @return An {@code Array} that lists all declared {@code Parameter}

@@ -87,56 +87,13 @@ img {
     font-size: 0.75em;
 }
 
-/****BGEE INTRODUCTION****/
-
-#bgee_introduction p {
-    margin: 0 0.5%;
-    font-size: 0.85em;
-    color: #515151;
-}
-
-#bgee_introduction p+p {
-	margin-top: 0.5%;
-}
-
 /****BGEE SEARCH BOX****/
-#bgee_search_box {
-    width: 690px;
-    height: 28px;
-    margin: 0 auto;
-    padding: 10px; 
-    background-color: #D9DDE1;
-    border-radius: 8px;
-}
-
-#bgee_search_box form {
-    display: inline-block;
-}
-
-#bgee_search_box label, #search_label{
-	margin-right: 10px;
-}
-
-input[type="image"] {
-    margin-top: -1px;
-    vertical-align: middle;
-    border-radius: 8px;
-}
-
-#sib_body input.sib_text {
-    width: 470px;
-    font-size: 0.7em;
-    background: #FFFFFF;
-    border-color: #7C7C7C #C3C3C3 #C3C3C3 #7C7C7C;
-    border-style: solid;
-    border-width: 1px;
-    color: #406981;
-}
 
 div#results_nb {
     width: 110px;
     font-size: 0.8em;
     text-align: center;
+    margin-top: -2px;
 }
 
 #bgee_more_results_up, #bgee_more_results_down  {

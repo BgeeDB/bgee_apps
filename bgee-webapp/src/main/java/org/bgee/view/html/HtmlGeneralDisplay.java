@@ -20,7 +20,7 @@ import org.bgee.view.html.HtmlDownloadDisplay.DownloadPageType;
  * @author Frederic Bastian
  * @author Valentine Rech de Laval
  * @author Philippe Moret
- * @version Bgee 13, August 2015
+ * @version Bgee 13, Feb. 2016
  * @since Bgee 13
  */
 public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisplay {
@@ -68,6 +68,8 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
         this.writeln("<h2 class='box_title'>Browse Bgee content</h2>");
         this.writeln("<div class='bgee_section'>");
+
+		this.writeln(getGeneSearchBox());
 
         RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
         urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
@@ -255,6 +257,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         //If you ever add new files, you need to edit bgee-webapp/pom.xml 
         //to correctly merge/minify them.
         this.includeJs("general.js");
+        this.includeJs("autoCompleteGene.js");
         log.exit();
     }
 

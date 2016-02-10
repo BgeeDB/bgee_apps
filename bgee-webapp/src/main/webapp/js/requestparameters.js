@@ -47,7 +47,8 @@
  * 
  * @author Mathieu Seppey
  * @author Frederic Bastian
- * @version Bgee 13, Jul 2015
+ * @author Valentine Rech de Laval
+ * @version Bgee 13, Feb. 2016
  * @since Bgee 13
  */
 
@@ -160,6 +161,37 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
     	return pageAbout;
     }
     /**
+     * A {@code String} that is the value taken by the {@code page} parameter  
+     * (see {@link #getParamPage()}) when a gene page is requested.
+     * This parameter will then be provided outside of this class through the method 
+     * {@link #PAGE_GENE()} (to get the behavior of a public final parameter).
+     */
+    var pageGene = 'gene';
+    /**
+     * A method to obtain the value taken by the {@code page} parameter  
+     * (see {@link #getParamPage()}) when a gene page is requested.
+     */
+    this.PAGE_GENE = function() {
+    	return pageGene;
+    }
+    /**
+     * A {@code String} that is the value taken by the {@code page} parameter  
+     * (see {@link #getParamPage()}) when a search page is requested.
+     * This parameter will then be provided outside of this class through the method 
+     * {@link #PAGE_SEARCH()} (to get the behavior of a public final parameter).
+     */
+    var pageSearch = 'search';
+
+    /**
+     * A method to obtain the value taken by the {@code page} parameter  
+     * (see {@link #getParamPage()}) when a search page is requested.
+     */
+    this.PAGE_SEARCH = function() {
+    	return pageSearch;
+    }
+
+
+    /**
      * A {@code String} that is the value taken by the {@code action} parameter 
      * (see {@link #getParamAction()}) when download page about files providing calls of 
      * expression is requested.
@@ -244,7 +276,21 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
     this.ACTION_DOC_HOW_TO_ACCESS = function() {
     	return actionDocHowToAccess;
     }
-    
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter
+     * (see {@link #getParamAction()}) when gene page about auto-completion is requested.
+     * This parameter will then be provided outside of this class through the method 
+     * {@link #ACTION_AUTO_COMPLETE_GENE_SEARCH()} (to get the behavior of a public final parameter).
+     */
+    var actionAutoCompleteGeneSearch = 'auto_complete_gene_search';
+    /**
+     * A method to obtain the value taken by the {@code action} parameter
+     * (see {@link #getParamAction()}) when gene page about auto-completion is requested.
+     */
+    this.ACTION_AUTO_COMPLETE_GENE_SEARCH = function() {
+    	return actionAutoCompleteGeneSearch;
+    }
+
 
     /**
      * A {@code String} that is the anchor to use in the hash part of an URL 

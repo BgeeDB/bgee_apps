@@ -34,7 +34,7 @@ import org.bgee.view.JsonHelper;
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 13, Jan. 2016
+ * @version Bgee 13, Feb. 2016
  * @since   Bgee 13, Oct. 2015
  */
 public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
@@ -55,10 +55,28 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		super(response, requestParameters, prop, jsonHelper, factory);
 	}
 
+	/*Genes: the terms you enter are searched in gene IDs from Ensembl, names, and synonyms.*/
 	@Override
-	public void displayGenePage() {
+	public void displayGeneHomePage() {
 	    log.entry();
-		this.startDisplay("Gene Information");
+		this.startDisplay("Gene information");
+		
+		this.writeln("<h1>Search gene information</h1>");
+
+        this.writeln("<div id='bgee_introduction' class='bgee_section bgee_download_section'>");
+        
+        this.writeln("<p>Bgee is a database to retrieve and compare gene expression patterns "
+                + "in multiple animal species, based exclusively on curated \"normal\" "
+                + "expression data (e.g., no gene knock-out, no treatment, no disease), "
+                + "from multiple data types, "
+                + "to provide a comparable reference of normal gene expression.</p>");
+        this.writeln("<p>This page alow you to search gene page from "
+        		+ "Ensembl gene IDs, gene names, and synonyms.<p>");
+
+        this.writeln("</div>");
+
+		this.writeln(getGeneSearchBox());
+		
 		this.endDisplay();
 		log.exit();
 	}
@@ -363,6 +381,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             this.includeJs("lib/jquery_plugins/jquery.dataTables.js");
         }
         this.includeJs("gene.js");
+        this.includeJs("autoCompleteGene.js");
+        this.includeJs("jquery_ui_autocomplete_modif.js");
         
         log.exit();
 	}

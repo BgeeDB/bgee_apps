@@ -8,7 +8,7 @@ package org.bgee.model.gene;
  */
 public class GeneMatch {
 
-	protected GeneMatch(Gene gene, String synonym) {
+	public GeneMatch(Gene gene, String synonym) {
 		this.gene = gene;
 		this.synonym = synonym;
 	}

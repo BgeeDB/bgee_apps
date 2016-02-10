@@ -22,7 +22,7 @@ import org.bgee.view.ViewFactory;
  * @author Frederic Bastian
  * @author Valentine Rech de Laval
  * @author Philippe Moret
- * @version Bgee 13, June 2015
+ * @version Bgee 13, Feb. 2016
  * @since   Bgee 13
  */
 public class HtmlParentDisplay extends ConcreteDisplayParent {
@@ -537,6 +537,26 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         log.entry(cat);
         return log.exit(this.displayHelpLink(cat, "[?]"));
     }
+    
+    /**
+     * Get the search box of a gene as a HTML 'div' element. 
+     *
+     * @return  the {@code String} that is the search box as HTML 'div' element.
+     */
+    protected String getGeneSearchBox() {
+        log.entry();
+    
+        return log.exit(
+                "<div id='bgee_gene_completion_search'>" +
+                        "<form action='/' method='get'>" +
+                            "<label for='completionBoxGene'>Search gene</label>" +
+                            "<input id='completionBoxGene' class='sib_text' type='text' " +
+                                "name='search'/>" +
+                            // TODO add "autocomplete='off'" ?
+                        "</form>" +
+                        "<span id='completionGeneCountLetters'></span>" +
+                "</div>");
+    }
 
     /**
      * Write HTML code allowing to include common javascript files. Subclasses needing to include 
@@ -568,6 +588,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             this.includeJs("vendor_common.js");
             this.includeJs("script_common.js");
         }
+        this.includeJs("autoCompleteGene.js");
+        this.includeJs("jquery_ui_autocomplete_modif.js");
         log.exit();
     }
     /**

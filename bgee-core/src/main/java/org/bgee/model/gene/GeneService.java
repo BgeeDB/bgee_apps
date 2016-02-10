@@ -1,5 +1,6 @@
 package org.bgee.model.gene;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -100,6 +101,12 @@ public class GeneService extends Service {
     	Species species = speciesService.loadSpeciesByIds(speciesIds).iterator().next();
     	gene.setSpecies(species);
 		return log.exit(gene);  		
+    }
+    
+    
+    //TODO:implement
+    public List<GeneMatch> searchByTerm(String term) {
+    	return new ArrayList<>();
     }
     
     /**

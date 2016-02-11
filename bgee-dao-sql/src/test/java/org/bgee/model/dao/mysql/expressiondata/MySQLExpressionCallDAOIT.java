@@ -31,6 +31,7 @@ import org.bgee.model.dao.mysql.MySQLITAncestor;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO.MySQLExpressionCallTOResultSet;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -76,6 +77,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
      * Collection, String, Collection, LinkedHashMap)}, when not needing a GROUP BY clause.
      */
     @Test
+    @Ignore
     public void shouldGetExpressionCallsNoSubStages() throws SQLException {
         
         this.useSelectDB();

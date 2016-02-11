@@ -28,6 +28,7 @@ import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.file.DownloadFileDAO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
+import org.bgee.model.dao.api.gene.GeneNameSynonymDAO;
 import org.bgee.model.dao.api.keyword.KeywordDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLAnatEntityDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO;
@@ -44,6 +45,7 @@ import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqResultD
 import org.bgee.model.dao.mysql.file.MySQLDownloadFileDAO;
 import org.bgee.model.dao.mysql.file.MySQLSpeciesDataGroupDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
+import org.bgee.model.dao.mysql.gene.MySQLGeneNameSynonymDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneOntologyDAO;
 import org.bgee.model.dao.mysql.gene.MySQLHierarchicalGroupDAO;
 import org.bgee.model.dao.mysql.keyword.MySQLKeywordDAO;
@@ -1085,6 +1087,12 @@ public class MySQLDAOManager extends DAOManager {
 	protected KeywordDAO getNewKeywordDAO() {
         log.entry();
         return log.exit(new MySQLKeywordDAO(this));
+	}
+
+	@Override
+	protected GeneNameSynonymDAO getNewGeneNameSynonymDAO() {
+		log.entry();
+        return log.exit(new MySQLGeneNameSynonymDAO(this));
 	}
 
 

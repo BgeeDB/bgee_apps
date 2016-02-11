@@ -146,6 +146,29 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
         assertTrue("GeneTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
     }
+    
+    /**
+     * 
+     */
+    @Test
+    //TODO: refine tests
+    public void shouldGetGeneBySearchTerm() throws SQLException {
+    	this.useSelectDB();
+    	
+    	  MySQLGeneDAO dao = new MySQLGeneDAO(this.getMySQLDAOManager());
+    	  
+    	  List<GeneTO> genes = dao.getGeneBySearchTerm("ID1", new HashSet<>(), 1,25).getAllTOs();
+    	  assertEquals(1, genes.size());
+    	  
+    	  genes = dao.getGeneBySearchTerm("gen", new HashSet<>(), 1,25).getAllTOs();
+    	  assertEquals(4, genes.size());
+    	  
+      	  genes = dao.getGeneBySearchTerm("gleich", new HashSet<>(), 1,25).getAllTOs();
+    	  assertEquals(1, genes.size());
+    	  
+    	  MySQLGeneNameSynonymDAO dao2 = new MySQLGeneNameSynonymDAO(this.getMySQLDAOManager());
+    	  assertEquals(3, dao2.getGeneNameSynonyms(genes.get(0).getId()).getAllTOs().size());
+    }
 
     /**
      * Test the update method {@link MySQLGeneDAO#updateGenes()}.

@@ -60,7 +60,8 @@ public class XmlSearchDisplay extends XmlParentDisplay implements SearchDisplay 
         			"label='" + XmlParentDisplay.xmlEntities(label) + "' " +
         			"label_source='" + labelSource + "' " +
         			"species_id='" + XmlParentDisplay.xmlEntities(gene.getGene().getSpeciesId()) + "' " +
-        			"species_name='" + XmlParentDisplay.xmlEntities(gene.getGene().getSpecies().getName()) + "' />");
+        			"species_name='" + XmlParentDisplay.xmlEntities(gene.getGene().getSpecies().getName())+"' "+ 
+        			"/>");
         }
 		this.writeln("</genes>");
 		

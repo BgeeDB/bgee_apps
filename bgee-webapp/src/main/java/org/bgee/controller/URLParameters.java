@@ -432,6 +432,7 @@ public class URLParameters {
             PAGE,
             ACTION,
             GENE_ID,
+            SEARCH,
             // Species request
             SPECIES_LIST,
             // TopAnat analyze params

@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.PageNotFoundException;
+import org.bgee.model.ServiceFactory;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneMatch;
 import org.bgee.view.SearchDisplay;
@@ -40,9 +41,9 @@ public class CommandSearch extends CommandParent {
      *                          to use.
      * @param viewFactory       A {@code ViewFactory} that provides the display type to be used.
      */
-    public CommandSearch(HttpServletResponse response, RequestParameters requestParameters, 
-            BgeeProperties prop, ViewFactory viewFactory) {
-        super(response, requestParameters, prop, viewFactory);
+	public CommandSearch(HttpServletResponse response, RequestParameters requestParameters, 
+            BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory) {
+        super(response, requestParameters, prop, viewFactory, serviceFactory);
     }
 
     @Override
@@ -53,14 +54,17 @@ public class CommandSearch extends CommandParent {
         
         if (this.requestParameters.getAction() != null &&
         		this.requestParameters.getAction().equals(RequestParameters.ACTION_AUTO_COMPLETE_GENE_SEARCH)) {
+        	String searchTerm = this.requestParameters.getSearch();
+        	
         	//TODO use service instead of fake GeneMatch
-        	Gene gene1 = new Gene("ID1","spID1", "name1");
+        	/*Gene gene1 = new Gene("ID1","spID1", "name1");
         	GeneMatch geneMatch1 = new GeneMatch(gene1, "syn1");
         	Gene gene2 = new Gene("ID2","spID2", "name2");
         	GeneMatch geneMatch2 = new GeneMatch(gene2, "syn2");
 
             List<GeneMatch> geneMatches = Arrays.asList(geneMatch1, geneMatch2);
-//            		serviceFactory.getGeneService().searchByTerm(this.requestParameters.getSearch());
+//            		serviceFactory.getGeneService().searchByTerm(this.requestParameters.getSearch());*/
+            List<GeneMatch> geneMatches = serviceFactory.getGeneService().searchByTerm(searchTerm);
             
             display.displayGeneCompletionByGeneList(geneMatches, this.requestParameters.getSearch());
         } else {

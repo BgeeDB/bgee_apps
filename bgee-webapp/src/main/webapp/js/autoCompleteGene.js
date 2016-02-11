@@ -14,9 +14,9 @@ function autocompleteGeneSelected(event, ui) {
  	//to the autocomplete input
  	event.preventDefault();
  	
- 	var selectedGene = ui.item;
+ 	var selectedGeneId = ui.item.id;
     // TODO Redirect to specific gene page
- 	
+ 	window.location.href="/?page=gene&gene_id="+selectedGeneId;
 	return this;
 }
 
@@ -129,7 +129,7 @@ function autocompleteGeneGenerateLabel(xmlGene, searchTerm) {
 	
 	//second "column": ID
 	//we display the match in the ID even if the match comes from another source
-	toDisplay += "<span>" + highlightEscape(xmlGene.attr("id"), searchTerm) + "</span>";
+	toDisplay += "<span class='ac_gene_id'>" + highlightEscape(xmlGene.attr("id"), searchTerm) + "</span>";
 	
 	//third "column": species name
 	//we escape html entities, and we do not hightlight search term
@@ -137,7 +137,26 @@ function autocompleteGeneGenerateLabel(xmlGene, searchTerm) {
 	
 	return toDisplay;
 }
-    
+
+function highlightEscape(string, searchTerm) 
+{
+    var newString = string;
+        //we modify the string to highlight the search term
+        //we do not use the tag <strong> yet, so that we can escape htmlentities after the replacement
+        //(if we escaped html entities BEFORE the replacement, 
+        //then it would not be possible to highlight a html entities term when used as a search term).
+        //why using ":myStrongOpeningTag:" and ":myStrongClosingTag:"? 
+        //Because it's unlikely to be present in the label :p
+        newString = newString.replace(new RegExp('(' + searchTerm + ')', 'gi'), 
+                                                             ':myStrongOpeningTag:$1:myStrongClosingTag:');
+        //then we escape html entities
+        newString = $('<div/>').text(newString).html();
+        //and then we replace the <strong> tag
+        return newString.replace(/:myStrongOpeningTag:/g, '<strong>')
+                        .replace(/:myStrongClosingTag:/g, '</strong>');
+}
+
+
 var textMinLength = 1; // some genes have a one-letter name (for instance, gene 'E')
 function loadAutocompleteGene() {
 	
@@ -179,4 +198,61 @@ function loadAutocompleteGene() {
         minLength   : textMinLength, 
         delay       : 300
     });
+}
+
+jQuery.fn.formatListToTable = function(pxToAddToSpan, pxBySpanToAddToContainer)
+{
+        var widthToAddToSpan = 0;
+        if (typeof pxToAddToSpan === "number") {
+                widthToAddToSpan = pxToAddToSpan;
+        }
+        var widthBySpanToAddToContainer = 0;
+        if (typeof pxBySpanToAddToContainer === "number") {
+                widthBySpanToAddToContainer = pxBySpanToAddToContainer;
+        }
+        //to store the max width of each "columns".
+        var maxWidths = [];
+    //get the  number of spam elements from the first li element, 
+        //and intialize maxWidths, which stores the max width at each of the span position
+        this.find("li").first().find("span").each(function() {
+                maxWidths.push(0);
+        })
+        
+        this.find("li").each(function() {
+        $(this).find("span").each(function(spanIndex) {
+                var $this = $(this);
+                //we check whether we have already attached the original width to this span element. 
+                var originalWidth = $this.data("originalWidth");
+                //If not, we set the original width of this spam element.
+                //This is because we add "widthToAddToSpan" to the width of this element 
+                //each time this method is called, that would lead to ever growing span widths.
+                //So we need to know the original width.
+                if (typeof originalWidth === "undefined") {
+                        originalWidth = parseInt($this.width());
+                        $this.data("originalWidth", originalWidth);
+                }
+                if (originalWidth + widthToAddToSpan > maxWidths[spanIndex]) {
+                        maxWidths[spanIndex] = originalWidth + widthToAddToSpan;
+                }
+        });
+    });
+
+        //now we get the max widths at each span position
+        //we give the container a width corresponding to the sum of the max widths
+        var maxWidth = 0;
+        for (var i = 0, count = maxWidths.length; i < count; i++) {
+                maxWidth += maxWidths[i];
+        }
+        this.width(maxWidth + (widthBySpanToAddToContainer * maxWidths.length));
+        
+        //then we give to all spans at a given position the corresponding max width
+        //(and we set the display as "inline-block" so that the width can be applied
+        this.find("li").each(function() {
+        $(this).find("span").each(function(spanIndex) {
+                $(this).css("display", "inline-block")
+                       .width(maxWidths[spanIndex]);
+        });
+    });
+        
+    return this;
 }

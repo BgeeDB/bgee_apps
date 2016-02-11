@@ -18,6 +18,7 @@ import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultDAO;
 import org.bgee.model.dao.api.file.DownloadFileDAO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
+import org.bgee.model.dao.api.gene.GeneNameSynonymDAO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
 import org.bgee.model.dao.api.keyword.KeywordDAO;
@@ -193,4 +194,10 @@ public class MockDAOManager extends DAOManager {
 	protected KeywordDAO getNewKeywordDAO() {
 		return this.instanceMockManager.getNewKeywordDAO();
 	}
+
+	@Override
+	protected GeneNameSynonymDAO getNewGeneNameSynonymDAO() {
+		return this.instanceMockManager.getNewGeneNameSynonymDAO();
+	}
+	
 }

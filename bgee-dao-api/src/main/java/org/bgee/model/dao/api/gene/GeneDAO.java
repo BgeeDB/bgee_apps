@@ -7,6 +7,7 @@ import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.EntityTO;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.gene.GeneDAO.GeneTOResultSet;
 
 /**
  * DAO defining queries using or retrieving {@link GeneTO}s. 
@@ -88,6 +89,10 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      */
     public GeneTOResultSet getGenesBySpeciesIds(Set<String> speciesIds, Set<String> geneIds) 
             throws DAOException;
+    
+    //TODO: doc
+    public GeneTOResultSet getGeneBySearchTerm(String searchTerm, Set<String> speciesIds, int limitStart,
+	        int resultPerPage);
 
     /**
      * Update {@code Attribute}s of the provided genes, which are represented as a 

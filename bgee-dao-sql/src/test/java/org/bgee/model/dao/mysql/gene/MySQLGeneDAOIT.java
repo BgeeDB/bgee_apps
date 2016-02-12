@@ -167,7 +167,9 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
     	  assertEquals(1, genes.size());
     	  
     	  MySQLGeneNameSynonymDAO dao2 = new MySQLGeneNameSynonymDAO(this.getMySQLDAOManager());
-    	  assertEquals(3, dao2.getGeneNameSynonyms(genes.get(0).getId()).getAllTOs().size());
+    	  Set<String> geneIds = new HashSet<>();
+    	  geneIds.add(genes.get(0).getId());
+    	  assertEquals(3, dao2.getGeneNameSynonyms(geneIds).getAllTOs().size());
     }
 
     /**

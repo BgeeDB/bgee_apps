@@ -7,7 +7,6 @@ import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.EntityTO;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.gene.GeneDAO.GeneTOResultSet;
 
 /**
  * DAO defining queries using or retrieving {@link GeneTO}s. 
@@ -90,7 +89,14 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
     public GeneTOResultSet getGenesBySpeciesIds(Set<String> speciesIds, Set<String> geneIds) 
             throws DAOException;
     
-    //TODO: doc
+    /**
+     * Returns genes according to a search term, matching gene name, id or one synonym.
+     * @param searchTerm A {@code String} containing the term to be searched
+     * @param speciesIds A {@code Set} of species Ids (may be empty to search on all species)
+     * @param limitStart An {@code int} representing the index of the first element to return.
+     * @param resultPerPage An {@code int} representing the number of elements to return
+     * @return A @{code {@link GeneTOResultSet} encapsulating the results.
+     */
     public GeneTOResultSet getGeneBySearchTerm(String searchTerm, Set<String> speciesIds, int limitStart,
 	        int resultPerPage);
 

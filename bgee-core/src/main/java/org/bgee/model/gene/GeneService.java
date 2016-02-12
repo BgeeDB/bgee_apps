@@ -1,6 +1,5 @@
 package org.bgee.model.gene;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -9,8 +8,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import javax.annotation.Generated;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
@@ -18,12 +15,10 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneDAO;
-import org.bgee.model.dao.api.gene.GeneNameSynonymDAO;
 import org.bgee.model.dao.api.gene.GeneNameSynonymDAO.GeneNameSynonymTO;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
 
-import com.mysql.jdbc.StringUtils;
 
 /**
  * A {@link Service} to obtain {@link Gene} objects. Users should use the
@@ -96,6 +91,11 @@ public class GeneService extends Service {
 		        .map(GeneService::mapFromTO).collect(Collectors.toList()));
 	}
 
+	/**
+	 * Loads a single gene by Id.
+	 * @param geneId The {@String} representation of the ID.
+	 * @return A {@code Gene} instance representing this gene.
+	 */
 	public Gene loadGeneById(String geneId) {
 		log.entry(geneId);
 		Set<String> geneIds = new HashSet<>();
@@ -116,7 +116,11 @@ public class GeneService extends Service {
 		return log.exit(gene);
 	}
 
-	// TODO:implement
+	/**
+	 * Search the genes by name, id and synonyms.
+	 * @param term A {@code String} containing the query 
+	 * @return A {@code List} of results (ordered).
+	 */
 	public List<GeneMatch> searchByTerm(final String term) {
 		log.entry(term);
 		GeneDAO dao = getDaoManager().getGeneDAO();
@@ -127,25 +131,29 @@ public class GeneService extends Service {
 		Map<String, Species> speciesMap = speciesService.loadSpeciesByIds(speciesIds).stream()
 				.collect(Collectors.toMap(Species::getId, Function.identity()));
 		
+		Set<String> geneIds = matchedGeneList.stream().map(Gene::getId).collect(Collectors.toSet());
 		for (Gene g: matchedGeneList) {
 			g.setSpecies(speciesMap.get(g.getSpeciesId()));
 		}
-		
+
+		final Map<String, List<String>> synonymMap = getDaoManager().getGeneNameSynonymDAO().getGeneNameSynonyms(geneIds)
+		        .stream()
+		        .collect(Collectors.groupingBy(GeneNameSynonymTO::getGeneId, 
+		        		Collectors.mapping(GeneNameSynonymTO::getGeneNameSynonym, Collectors.toList())));
+
 		// seems that Java 8 doesn't support Functions with more than 1 argument.
 		final Function<Gene, GeneMatch> f = new Function<Gene, GeneMatch>() {
 			@Override
 			public GeneMatch apply(Gene gene) {
-				return geneMatch(gene, term);
+				return geneMatch(gene, term, synonymMap.get(gene.getId()));
 			}
 			
 		};
-		
-		
-		
+
 		return log.exit(matchedGeneList.stream().map(f).collect(Collectors.toList()));
 	}
 
-	private GeneMatch geneMatch(final Gene gene, final String term) {
+	private GeneMatch geneMatch(final Gene gene, final String term, final List<String> synonymList) {
 		log.entry(gene, term);
 		// if the gene name or id match there is no synonym
 		if (gene.getName().toLowerCase().contains(term.toLowerCase())
@@ -154,14 +162,15 @@ public class GeneService extends Service {
 		}
 
 		// otherwise we fetch synonym and find the first match
-		List<GeneNameSynonymTO> synonyms = getDaoManager().getGeneNameSynonymDAO().getGeneNameSynonyms(gene.getId())
-		        .stream().filter(s -> s.getGeneNameSynonym().toLowerCase().contains(term.toLowerCase()))
-		        .collect(Collectors.toList());
+		List<String> synonyms=synonymList.stream().
+				filter(s -> s.toLowerCase().contains(term.toLowerCase()))
+				.collect(Collectors.toList());
+				
 		if (synonyms.size() < 1) {
 			throw new IllegalStateException("The term should match either the gene id/name "
 			        + "or one of its synonyms. Term: " + term + " Gene;" + gene);
 		}
-		return log.exit(new GeneMatch(gene, synonyms.get(0).getGeneNameSynonym()));
+		return log.exit(new GeneMatch(gene, synonyms.get(0)));
 	}
 
 

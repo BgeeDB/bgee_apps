@@ -137,6 +137,7 @@ public class CommandGene extends CommandParent {
 	    
 	    Gene gene = this.getGene(geneId);
 	    List<ExpressionCall> exprCalls = this.getExpressions(gene);
+	    if (!exprCalls.isEmpty()) {
 	    ConditionUtils conditionUtils = new ConditionUtils(gene.getSpeciesId(), 
 	            exprCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()), 
 	            serviceFactory);
@@ -145,6 +146,10 @@ public class CommandGene extends CommandParent {
 	    return log.exit(new GeneResponse(gene, exprCalls, 
 	            getRedundantCalls(exprCalls, conditionUtils),  
 	            conditionUtils));
+	    }
+	    
+	  	 log.info("No calls for gene "+geneId);
+	  	 return log.exit(new GeneResponse(gene, exprCalls, new HashSet<ExpressionCall>(), null));
 	}
 	
 	/**

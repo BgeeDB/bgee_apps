@@ -45,12 +45,12 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected static String htmlEntities(String stringToWrite) {
         log.entry(stringToWrite);
-    	try {                            
-    	    return log.exit(StringEscapeUtils.escapeHtml4(stringToWrite).replaceAll("'", "&apos;"));
-    	} catch (Exception e) {
-    	    log.catching(e);
-    		return log.exit("");
-    	}
+        try {                            
+            return log.exit(StringEscapeUtils.escapeHtml4(stringToWrite).replaceAll("'", "&apos;"));
+        } catch (Exception e) {
+            log.catching(e);
+            return log.exit("");
+        }
     }
 
     /**
@@ -547,14 +547,15 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         log.entry();
     
         return log.exit(
-                "<div id='bgee_gene_completion_search'>" +
-                        "<form action='/' method='get'>" +
-                            "<label for='completionBoxGene'>Search gene</label>" +
-                            "<input id='completionBoxGene' class='sib_text' type='text' " +
-                                "name='search'/>" +
-                            // TODO add "autocomplete='off'" ?
+        		"<div id='bgee_gene_search'>" +
+        		    "<div id='bgee_gene_search_completion'>" +
+                        "<form action='javascript:void(0);' method='get'>" +
+                    	    "<label for='bgee_gene_search_completion_box'>Search gene</label>" +
+                            "<input id='bgee_gene_search_completion_box' class='sib_text' autocomplete='off' " +
+                        	    "type='text' name='search'/>" +
                         "</form>" +
-                        "<span id='completionGeneCountLetters'></span>" +
+                    "</div>" +
+            	    "<span id='bgee_gene_search_text'></span>" +
                 "</div>");
     }
 

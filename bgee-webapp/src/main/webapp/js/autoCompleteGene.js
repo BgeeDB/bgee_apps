@@ -1,5 +1,5 @@
 //ID of the completion box for genes. 
-var completionBoxGeneId    = "#completionBoxGene";
+var completionBoxGeneId    = "#bgee_gene_search_completion_box";
 
 /**
  * Function called when a gene is selected from the autocompletion box. 
@@ -15,23 +15,10 @@ function autocompleteGeneSelected(event, ui) {
  	event.preventDefault();
  	
  	var selectedGeneId = ui.item.id;
-    // TODO Redirect to specific gene page
  	window.location.href="/?page=gene&gene_id="+selectedGeneId;
-	return this;
-}
 
-//global var to avoid instantiating this object at each key pressed. 
-//TODO DRY: use urlParameters.getParamPage(), urlParameters.getParamAction(), and urlParameters.getParamDisplayType()
-var autocompleteGeneRequestParameters = new requestParameters("", true, "&");
-autocompleteGeneRequestParameters.addValue(
-		new urlParameters.Parameter('page',false,false,false,128,null,'string'), 
-		autocompleteGeneRequestParameters.PAGE_SEARCH());
-autocompleteGeneRequestParameters.addValue(
-		new urlParameters.Parameter('action',false,false,false,128,null,'string'),
-		autocompleteGeneRequestParameters.ACTION_AUTO_COMPLETE_GENE_SEARCH());
-autocompleteGeneRequestParameters.addValue(
-		new urlParameters.Parameter('display_type',false,false,false,128,null,'string'),
-		autocompleteGeneRequestParameters.DISPLAY_TYPE_XML());
+ 	return this;
+}
 
 //to cache the last query
 var geneAutocompleteCache = {};
@@ -56,12 +43,10 @@ function autocompleteGeneSource(request, responseCallback) {
 		 return;
 	 }
 
-	//TODO use urlParameters.getParamSearch()
-	 var search = new urlParameters.Parameter('search',false,false,false,128,null,'string');
-	 autocompleteGeneRequestParameters.resetValues(search);
-	 autocompleteGeneRequestParameters.addValue(search, request.term);
+	 var autocompleteGeneRequestParameters = "?page=search&action=auto_complete_gene_search&" +
+	 		"display_type=xml&search=" + request.term;
 	 
-	 $.get(autocompleteGeneRequestParameters.getRequestURL(), function(xmlResponse) {
+	 $.get(autocompleteGeneRequestParameters, function(xmlResponse) {
 		//we remove regex special chars from the search term, 
 		//to be able to perform a 'replace all' with a regex, 
 		//to highlight the term in the matching result
@@ -164,21 +149,19 @@ function loadAutocompleteGene() {
         source: function(request, responseCallback) {
         	autocompleteGeneSource(request, responseCallback); 
         }, 
-        change: function(event, ui) {
-        	if ($(completionBoxGeneId).val().length < textMinLength) {
-        		var remainingCount = textMinLength - $(completionBoxGeneId).val().length;
-        		$('#completionGeneCountLetters').text('Type ' + remainingCount + 
-        				' letter' + ((remainingCount === 1) ? '': 's') + ': ');
-        	}
-        }, 
         search: function(event, ui) {
-        	$('#completionGeneCountLetters').text("Searching for '" + $(completionBoxGeneId).val() + "'...");
+            $('#bgee_gene_search_text').text("Searching for '" + $(completionBoxGeneId).val() + "' ")
+        						.append($("<img />").attr("class", 'ajax_waiting') 
+    				        	.attr("src", "img/wait.gif")
+                                .attr("alt", 'Loading'));
+        	$("ul.ui-autocomplete").hide();
         }, 
         response: function(event, ui) {
+        	$("ul.ui-autocomplete").show();
         	if (ui.content.length === 0) {
-        		$('#completionGeneCountLetters').text('No result');
+        		$('#bgee_gene_search_text').text('No result');
         	} else {
-        	    $('#completionGeneCountLetters').text('');
+        	    $('#bgee_gene_search_text').text('');
         	}
         }, 
         open: function() {

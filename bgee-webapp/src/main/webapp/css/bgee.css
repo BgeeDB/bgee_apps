@@ -374,7 +374,12 @@ span.list_element_title {
 }
 
 /****BGEE SEARCH BOX****/
-#bgee_search_box, #bgee_gene_completion_search {
+#bgee_gene_search {
+    text-align: center;
+    height: 60px;	
+}
+
+#bgee_search_box, #bgee_gene_search_completion {
     padding: 10px; 
     background-color: #D9DDE1;
     border-radius: 8px;
@@ -385,18 +390,14 @@ span.list_element_title {
 	width: 690px;
     height: 44px;
 }
-#bgee_gene_completion_search {
-    margin: 10px auto;
-	width: 600px;
-    margin-bottom: 10px;
-}
 
-#bgee_search_box form, #bgee_gene_completion_search form {
-    display: inline-block;
+#bgee_gene_search_completion {
+    width: 612px;
+    margin: 10px auto 2px auto;
 }
 
 #bgee_search_box label, #search_label,
-#bgee_gene_completion_search label, #completionBoxGene {
+#bgee_gene_search_completion label, #bgee_gene_search_completion_box {
     margin-right: 10px;
     color: #920209;
 }
@@ -415,6 +416,13 @@ input[type="image"] {
     border-style: solid;
     border-width: 1px;
     color: #406981;
+}
+
+img.ajax_waiting {
+    height: 15px;
+/*     margin-bottom: 2px; */
+/*     margin-left: 6px; */
+/*     vertical-align: bottom; */
 }
 
 /****SIB FOOTER****/

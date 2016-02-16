@@ -32,7 +32,7 @@ public class XmlSearchDisplay extends XmlParentDisplay implements SearchDisplay 
 	@Override
 	public void displayGeneCompletionByGeneList(Collection<GeneMatch> geneMatches, String searchTerm) {
 		log.entry(geneMatches, searchTerm);
-		log.fatal("geneMatches={}, searchTerm={}", geneMatches, searchTerm);
+
 		this.startDisplay(true);
 		
 		this.writeln("<genes>");

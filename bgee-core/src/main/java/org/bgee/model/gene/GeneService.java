@@ -125,7 +125,7 @@ public class GeneService extends Service {
 	public List<GeneMatch> searchByTerm(final String term) {
 		log.entry(term);
 		GeneDAO dao = getDaoManager().getGeneDAO();
-		List<Gene> matchedGeneList = dao.getGeneBySearchTerm(term, null, 1, 25).stream().map(GeneService::mapFromTO)
+		List<Gene> matchedGeneList = dao.getGeneBySearchTerm(term, null, 1, 100).stream().map(GeneService::mapFromTO)
 		        .collect(Collectors.toList());
 		
         // if result is empty, return an empty list

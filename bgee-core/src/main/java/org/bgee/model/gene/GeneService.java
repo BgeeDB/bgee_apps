@@ -2,6 +2,7 @@ package org.bgee.model.gene;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -127,11 +128,17 @@ public class GeneService extends Service {
 		List<Gene> matchedGeneList = dao.getGeneBySearchTerm(term, null, 1, 25).stream().map(GeneService::mapFromTO)
 		        .collect(Collectors.toList());
 		
+        // if result is empty, return an empty list
+		if (matchedGeneList.isEmpty()) {
+			return log.exit(new LinkedList<>());
+		}
+		
 		Set<String> speciesIds = matchedGeneList.stream().map(Gene::getSpeciesId).collect(Collectors.toSet());
 		Map<String, Species> speciesMap = speciesService.loadSpeciesByIds(speciesIds).stream()
 				.collect(Collectors.toMap(Species::getId, Function.identity()));
 		
 		Set<String> geneIds = matchedGeneList.stream().map(Gene::getId).collect(Collectors.toSet());
+		
 		for (Gene g: matchedGeneList) {
 			g.setSpecies(speciesMap.get(g.getSpeciesId()));
 		}

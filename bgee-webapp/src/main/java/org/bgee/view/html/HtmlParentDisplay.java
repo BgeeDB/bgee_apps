@@ -338,6 +338,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         RequestParameters topAnatGenerator = this.getNewRequestParameters();
         topAnatGenerator.setPage(RequestParameters.PAGE_TOP_ANAT);
         
+        RequestParameters geneSearchGenerator = this.getNewRequestParameters();
+        geneSearchGenerator.setPage(RequestParameters.PAGE_GENE);
+
         RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
         urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
 
@@ -374,6 +377,11 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<li>");
         navbar.append("<a title='TopAnat: Enrichment analyses of expression localization' href='" + 
                 topAnatGenerator.getRequestURL() + "'>TopAnat</a>");
+        navbar.append("</li>");
+        
+        navbar.append("<li>");
+        navbar.append("<a title='Search for gene page' href='" + 
+        		geneSearchGenerator.getRequestURL() + "'>Gene search</a>");
         navbar.append("</li>");
         
         navbar.append("<li>");

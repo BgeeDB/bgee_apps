@@ -11,10 +11,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -24,15 +27,30 @@ import java.util.zip.ZipOutputStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.commons.io.input.ReversedLinesFileReader;
+import org.apache.commons.lang3.StringUtils;
 import org.bgee.model.BgeeProperties;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
+import org.bgee.model.anatdev.DevStage;
+import org.bgee.model.anatdev.DevStageService;
+import org.bgee.model.expressiondata.Call.ExpressionCall;
+import org.bgee.model.expressiondata.CallData.ExpressionCallData;
+import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
+import org.bgee.model.expressiondata.ConditionFilter;
+import org.bgee.model.expressiondata.ConditionUtils;
+import org.bgee.model.expressiondata.baseelements.CallType;
+import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.DataPropagation.PropagationState;
 import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.gene.GeneService;
+import org.bgee.model.ontology.Ontology;
+import org.bgee.model.ontology.OntologyService;
+import org.bgee.model.ontology.Ontology.RelationType;
 import org.bgee.model.topanat.exception.InvalidForegroundException;
 import org.bgee.model.topanat.exception.InvalidSpeciesGenesException;
 import org.bgee.model.topanat.exception.RAnalysisException;
@@ -74,6 +92,7 @@ public class TopAnatAnalysis {
      */
     private final BgeeProperties props;
 
+    private final ServiceFactory serviceFactory;
     /**
      * 
      */
@@ -83,6 +102,7 @@ public class TopAnatAnalysis {
      * 
      */
     private final AnatEntityService anatEntityService;
+    private final DevStageService devStageService;
 
     /**
      * 
@@ -104,8 +124,9 @@ public class TopAnatAnalysis {
             ServiceFactory serviceFactory, TopAnatRManager rManager, TopAnatController controller) {
         log.entry(params, props, serviceFactory, rManager); 
         this.params = params;
-        this.anatEntityService = 
-                serviceFactory.getAnatEntityService(); 
+        this.serviceFactory = serviceFactory;
+        this.anatEntityService = serviceFactory.getAnatEntityService(); 
+        this.devStageService = serviceFactory.getDevStageService();
         this.callService = serviceFactory.getCallService();
         this.geneService = serviceFactory.getGeneService();
         this.rManager = rManager;
@@ -494,17 +515,60 @@ public class TopAnatAnalysis {
         //correct generation of the anatEntitiesRelFile
         Set<AnatEntity> entities = this.anatEntityService.loadAnatEntitiesBySpeciesIds(
                 Arrays.asList(this.params.getSpeciesId())).collect(Collectors.toSet());
+        Set<DevStage> stages = this.devStageService.loadDevStages(
+                Arrays.asList(this.params.getSpeciesId()), true, null).collect(Collectors.toSet());
         try (PrintWriter out = new PrintWriter(new BufferedWriter(
                 new FileWriter(anatEntitiesNameFile)))) {
-            entities.stream().forEach(entity 
-                    -> out.println(entity.getId() + "\t" + entity.getName().replaceAll("'", "")));
+            entities.stream().forEach(entity -> {
+                stages.stream().forEach(stage -> 
+                    out.println(entity.getId() + "-" + stage.getId() + "\t" 
+                              + entity.getName().replaceAll("'", "") + " - " 
+                              + stage.getName().replaceAll("'", ""))
+                );
+            });
             //We add a fake root, TopAnat doesn't manage multiple root
             out.println(FAKE_ANAT_ENTITY_ROOT.getId() + "\t" + FAKE_ANAT_ENTITY_ROOT.getName());
         }
         
         //relations
-        Map<String, Set<String>> relations = this.anatEntityService.loadDirectIsAPartOfRelationships(
-                Arrays.asList(this.params.getSpeciesId()));
+//        Map<String, Set<String>> relations = this.anatEntityService.loadDirectIsAPartOfRelationships(
+//                Arrays.asList(this.params.getSpeciesId()));
+//        OntologyService ontService = this.serviceFactory.getOntologyService();
+//        final Ontology<AnatEntity> anatEntityOnt = ontService.getAnatEntityOntology(Arrays.asList(this.params.getSpeciesId()), 
+//                null, EnumSet.of(RelationType.ISA_PARTOF), true, true, this.serviceFactory.getAnatEntityService());
+//        final Ontology<DevStage> devStageOnt = ontService.getDevStageOntology(Arrays.asList(this.params.getSpeciesId()), 
+//                null, true, true, this.serviceFactory.getDevStageService());
+        
+        //Retrieve all conditions used in expression calls of the selected species, 
+        //and load them into a ConditionUtils to infer a graph of Conditions.
+        final ConditionUtils conditionUtils = new ConditionUtils(this.params.getSpeciesId(), 
+                this.callService.loadCalls(this.params.getSpeciesId(), 
+                        Arrays.asList(new ExpressionCallFilter(
+                            //gene filter 
+                            null, 
+                            //condition filter
+                            null, 
+                            //data propagation
+                            new DataPropagation(PropagationState.SELF, PropagationState.SELF), 
+                            Arrays.asList(new ExpressionCallData(CallType.Expression.EXPRESSED,
+                                DataQuality.LOW, null, 
+                                new DataPropagation(PropagationState.SELF, PropagationState.SELF)))
+                        )), 
+                        EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID, CallService.Attribute.DEV_STAGE_ID), 
+                        null)
+                    .map(call -> call.getCondition()).collect(Collectors.toSet()), 
+                true, 
+                this.serviceFactory);
+        //create fake relation Map.
+        //for each combination of anatEntity/devStage (conditions), 
+        //we retrieve descendants conditions
+        Map<String, Set<String>> relations = conditionUtils.getConditions().stream()
+                .collect(Collectors.toMap(
+                        cond -> cond.getAnatEntityId() + "-" + cond.getDevStageId(), 
+                        cond -> conditionUtils.getDescendantConditions(cond, true).stream()
+                            .map(descCond -> descCond.getAnatEntityId() + "-" + descCond.getDevStageId())
+                            .collect(Collectors.toSet())));
+        
         
         //We add a fake root, and we map all orphan terms to it: TopAnat don't manage multiple roots. 
         //Search for terms never seen as child of another term.
@@ -512,8 +576,10 @@ public class TopAnatAnalysis {
                 .flatMap(Set::stream).collect(Collectors.toSet());
         //we need to examine all terms, not only those present in the relation Map, because maybe 
         //some terms have no ancestors and no descendants, and are not in the Map.
-        Set<String> roots = entities.stream()
-                .map(term -> term.getId())
+        Set<String> allConditionIds = entities.stream().flatMap(anatEntity -> 
+            stages.stream().map(stage -> anatEntity.getId() + "-" + stage.getId())
+        ).collect(Collectors.toSet());
+        Set<String> roots = allConditionIds.stream()
                 .filter(termId -> !allChildIds.contains(termId))
                 .collect(Collectors.toSet());
         log.trace("Roots identified in the graph: " + roots);
@@ -545,12 +611,13 @@ public class TopAnatAnalysis {
             this.callService.loadCalls(
                     this.params.getSpeciesId(), 
                     Arrays.asList(this.params.convertRawParametersToCallFilter()), 
-                    EnumSet.of(CallService.Attribute.GENE_ID, CallService.Attribute.ANAT_ENTITY_ID), 
+                    EnumSet.of(CallService.Attribute.GENE_ID, CallService.Attribute.ANAT_ENTITY_ID, 
+                            CallService.Attribute.DEV_STAGE_ID), 
                     null
                 ).forEach(
                     call -> out.println(
                         call.getGeneId() + '\t' + 
-                        call.getCondition().getAnatEntityId()
+                        call.getCondition().getAnatEntityId() + "-" + call.getCondition().getDevStageId()
                     )
                 );
         }

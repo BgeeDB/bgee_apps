@@ -2,6 +2,8 @@ package org.bgee.model.expressiondata;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -14,6 +16,7 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.ontology.Ontology;
 import org.bgee.model.ontology.OntologyService;
+import org.bgee.model.ontology.Ontology.RelationType;
 
 /**
  * Class providing convenience operations on {@link Condition}s.
@@ -51,7 +54,21 @@ public class ConditionUtils {
     //XXX: maybe this will become a Set<String> for multi-species management. We'll see later. 
     //We do not provide getter for now, we don't need it and the returned type might change.
     private final String speciesId;
-    
+
+    /**
+     * @param speciesId         A {@code String} that is the ID of the species which the {@code Condition}s 
+     *                          should be valid in.
+     * @param conditions        A {@code Collection} of {@code Condition}s that will be managed 
+     *                          by this {@code ConditionUtils}.
+     * @param serviceFactory    A {@code ServiceFactory} to acquire {@code Service}s from.
+     * @throws IllegalArgumentException If any of the arguments is {@code null} or empty, 
+     *                                  or if the anat. entity or dev. stage of a {@code Condition} 
+     *                                  does not exist in the requested species.
+     */
+    public ConditionUtils(String speciesId, Collection<Condition> conditions, 
+            ServiceFactory serviceFactory) {
+        this(speciesId, conditions, false, serviceFactory);
+    }
     /**
      * Constructor accepting all required parameters. 
      * 
@@ -66,9 +83,12 @@ public class ConditionUtils {
      */
     //XXX: we'll see what we'll do for multi-species later, for now we only accept a single species. 
     //I guess multi-species would need a separate class, e.g., MultiSpeciesConditionUtils.
-    public ConditionUtils(String speciesId, Collection<Condition> conditions, 
+    //TODO: update javadoc for inferAncestralConds
+    //TODO: unit test for ancestral condition inferrences
+    //TODO: refactor this constructor, methods getAncestorConditions and getDescendantConditions
+    public ConditionUtils(String speciesId, Collection<Condition> conditions, boolean inferAncestralConds, 
             ServiceFactory serviceFactory) throws IllegalArgumentException {
-        log.entry(speciesId, conditions, serviceFactory);
+        log.entry(speciesId, conditions, inferAncestralConds, serviceFactory);
         if (StringUtils.isBlank(speciesId)) {
             throw log.throwing(new IllegalArgumentException("A species ID must be provided."));
         }
@@ -80,21 +100,45 @@ public class ConditionUtils {
         }
         
         this.speciesId = speciesId;
-        this.conditions = new HashSet<>(conditions);
         this.serviceFactory = serviceFactory;
+        Set<Condition> tempConditions = new HashSet<>(conditions);
         
         Set<String> anatEntityIds = new HashSet<>();
         Set<String> devStageIds = new HashSet<>();
-        for (Condition cond: this.conditions) {
+        for (Condition cond: tempConditions) {
             anatEntityIds.add(cond.getAnatEntityId());
             devStageIds.add(cond.getDevStageId());
         }
         
         OntologyService ontService = this.serviceFactory.getOntologyService();
         this.anatEntityOnt = ontService.getAnatEntityOntology(Arrays.asList(this.speciesId), 
-                anatEntityIds, this.serviceFactory.getAnatEntityService());
+                anatEntityIds, EnumSet.of(RelationType.ISA_PARTOF), 
+                inferAncestralConds? true: false, false, this.serviceFactory.getAnatEntityService());
         this.devStageOnt = ontService.getDevStageOntology(Arrays.asList(this.speciesId), 
-                devStageIds, this.serviceFactory.getDevStageService());
+                devStageIds, inferAncestralConds? true: false, false, 
+                this.serviceFactory.getDevStageService());
+
+        if (inferAncestralConds) {
+            Set<Condition> ancConditions = tempConditions.stream().flatMap(cond -> {
+                Set<String> ancStageIds = this.devStageOnt.getAncestors(
+                        this.devStageOnt.getElement(cond.getDevStageId()))
+                    .stream().map(e -> e.getId()).collect(Collectors.toSet());
+                ancStageIds.add(cond.getDevStageId());
+                
+                Set<String> ancAnatEntityIds = this.anatEntityOnt.getAncestors(
+                            this.anatEntityOnt.getElement(cond.getAnatEntityId()))
+                        .stream().map(e -> e.getId()).collect(Collectors.toSet());
+                ancAnatEntityIds.add(cond.getAnatEntityId());
+                
+                return ancAnatEntityIds.stream().flatMap(ancAnatEntityId -> 
+                    ancStageIds.stream().map(ancStageId -> new Condition(ancAnatEntityId, ancStageId))
+                ).filter(ancCond -> !cond.equals(ancCond));
+                
+            }).collect(Collectors.toSet());
+            
+            tempConditions.addAll(ancConditions);
+        }
+        this.conditions = Collections.unmodifiableSet(tempConditions);
 
         this.checkEntityExistence(devStageIds, this.devStageOnt);
         this.checkEntityExistence(anatEntityIds, this.anatEntityOnt);
@@ -107,16 +151,16 @@ public class ConditionUtils {
      * @param entityIds A {@code Set} of {@code String}s that are the IDs of the entities 
      *                  to check for existence in {@code ont}.
      * @param ont       An {@code Ontology} that should contain all elements with their ID 
-     *                  in {@code entityIds}, and only them.
+     *                  in {@code entityIds}.
      * @throws IllegalArgumentException If some elements in {@code entityIds} are not present in 
-     *                                  {@code ont}, or the other way around.
+     *                                  {@code ont}.
      */
     private void checkEntityExistence(Set<String> entityIds, Ontology<?> ont) throws IllegalArgumentException {
         log.entry(entityIds, ont);
         
         Set<String> recognizedEntityIds = ont.getElements().stream()
                 .map(e -> e.getId()).collect(Collectors.toSet());
-        if (!recognizedEntityIds.equals(entityIds)) {
+        if (!recognizedEntityIds.containsAll(entityIds)) {
             Set<String> unrecognizedIds = new HashSet<>(entityIds);
             unrecognizedIds.removeAll(recognizedEntityIds);
             throw log.throwing(new IllegalArgumentException("Some entities do not exist "
@@ -168,6 +212,33 @@ public class ConditionUtils {
         return log.exit(true);
     }
     
+    //TODO: javadoc
+    //TODO: unit tests
+    //TODO: refactor this method, constructor and getDescendantConditions
+    public Set<Condition> getAncestorConditions(Condition cond, boolean directRelOnly) {
+        log.entry(cond, directRelOnly);
+        if (!this.getConditions().contains(cond)) {
+            throw log.throwing(new IllegalArgumentException("The provided condition "
+                    + "is not registered to this ConditionUtils: " + cond));
+        }
+        
+        Set<String> devStageIds = this.devStageOnt.getAncestors(
+                    this.devStageOnt.getElement(cond.getDevStageId()), directRelOnly)
+                .stream().map(e -> e.getId()).collect(Collectors.toSet());
+        devStageIds.add(cond.getDevStageId());
+        
+        Set<String> anatEntityIds = this.anatEntityOnt.getAncestors(
+                    this.anatEntityOnt.getElement(cond.getAnatEntityId()), directRelOnly)
+                .stream().map(e -> e.getId()).collect(Collectors.toSet());
+        anatEntityIds.add(cond.getAnatEntityId());
+        
+        return log.exit(this.conditions.stream()
+                .filter(e -> !e.equals(cond) && 
+                             devStageIds.contains(e.getDevStageId()) && 
+                             anatEntityIds.contains(e.getAnatEntityId()))
+                .collect(Collectors.toSet()));
+    }
+
     /**
      * Get all the {@code Conditions} that are more precise than {@code cond}, 
      * among the {@code Condition}s provided at instantiation. 
@@ -178,18 +249,31 @@ public class ConditionUtils {
      */
     public Set<Condition> getDescendantConditions(Condition cond) {
         log.entry(cond);
+        return log.exit(this.getDescendantConditions(cond, false));
+    }
+    /**
+     * Get all the {@code Conditions} that are more precise than {@code cond}, 
+     * among the {@code Condition}s provided at instantiation. 
+     * 
+     * @param cond  A {@code Condition} for which we want to retrieve descendant {@code Condition}s.
+     * @return      A {@code Set} of {@code Condition}s that are descendants of {@code cond}.
+     * @throws IllegalArgumentException If {@code cond} is not registered to this {@code ConditionUtils}.
+     */
+    //TODO: update javadoc for directRelOnly
+    public Set<Condition> getDescendantConditions(Condition cond, boolean directRelOnly) {
+        log.entry(cond, directRelOnly);
         if (!this.getConditions().contains(cond)) {
             throw log.throwing(new IllegalArgumentException("The provided condition "
                     + "is not registered to this ConditionUtils: " + cond));
         }
         
         Set<String> devStageIds = this.devStageOnt.getDescendants(
-                    this.devStageOnt.getElement(cond.getDevStageId()))
+                    this.devStageOnt.getElement(cond.getDevStageId()), directRelOnly)
                 .stream().map(e -> e.getId()).collect(Collectors.toSet());
         devStageIds.add(cond.getDevStageId());
         
         Set<String> anatEntityIds = this.anatEntityOnt.getDescendants(
-                    this.anatEntityOnt.getElement(cond.getAnatEntityId()))
+                    this.anatEntityOnt.getElement(cond.getAnatEntityId()), directRelOnly)
                 .stream().map(e -> e.getId()).collect(Collectors.toSet());
         anatEntityIds.add(cond.getAnatEntityId());
         

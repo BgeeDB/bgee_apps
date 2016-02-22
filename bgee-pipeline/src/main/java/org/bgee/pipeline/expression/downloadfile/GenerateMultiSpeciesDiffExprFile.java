@@ -98,7 +98,6 @@ import org.supercsv.io.dozer.ICsvDozerBeanWriter;
 // => Anyway, we can implement the first solution in any case. 
 // I think it is already implemented, right?
 
-//FIXME: use "low quality" instead of "poor quality"
 public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile 
                                                 implements GenerateMultiSpeciesDownloadFile {
 
@@ -145,12 +144,15 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     public final static String RNASEQ_INCONSISTENT_DEA_COUNT_COLUMN_NAME = 
             "RNA-Seq analysis count in conflict with RNA-Seq call";
     /**
-     * A {@code String} that is the name of the column containing merged differential expressions 
+     * A {@code String} that is the name of the column containing merged differential expressions
      * from different data types, in the download file.
      */
     public final static String DIFFEXPRESSION_COLUMN_NAME = "Differential expression";
 
-    //TODO: javadoc
+    /**
+     * A {@code Comparator} allowing to sort a {@code MultiSpeciesFileBean}s by OMA ID, entity IDs, 
+     * stage IDs, then by species ID, gene ID for complete files only.
+     */
     private final static Comparator<MultiSpeciesFileBean> MULTI_SPECIES_BEAN_COMPARATOR = 
             new Comparator<MultiSpeciesFileBean>(){
         @Override
@@ -189,7 +191,9 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         }
     };
 
-    //TODO: javadoc
+    /**
+     * A case-insensitive {@code Comparator} of {@code List}s of {@code String}s.
+     */
     private final static Comparator<List<String>> STRING_LIST_COMPARATOR = 
             new Comparator<List<String>>(){
         @Override
@@ -1178,6 +1182,12 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     private Map<String, Set<String>> providedGroups;
     
     /**
+     * A {@code Map} where keys are {@code String}s corresponding to CIO IDs,
+     * the associated values being the corresponding {@code CIOStatementTO}.
+     */
+    private Map<String, CIOStatementTO> cioStatementByIds;
+    
+    /**
      * Default constructor. 
      */
     //suppress warning as this default constructor should not be used.
@@ -1231,6 +1241,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             throw log.throwing(new IllegalArgumentException("No group is provided"));
         }
         this.providedGroups = providedGroups;
+        this.cioStatementByIds = new HashMap<String, CIOStatementTO>();
     }
     
     /**
@@ -1256,8 +1267,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         // We retrieve all CIO so it's common to all groups
         this.getCIOStatementDAO().setAttributes(CIOStatementDAO.Attribute.ID, 
                 CIOStatementDAO.Attribute.NAME, CIOStatementDAO.Attribute.TRUSTED);
-        Map<String, CIOStatementTO> cioNamesByIds = 
-                BgeeDBUtils.getCIOStatementTOsByIds(this.getCIOStatementDAO());
+        this.cioStatementByIds = BgeeDBUtils.getCIOStatementTOsByIds(this.getCIOStatementDAO());
         
         for (Entry<String, Set<String>> currentGroup : this.providedGroups.entrySet()) {
             Set<String> setSpecies = currentGroup.getValue();
@@ -1291,8 +1301,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 //XXX: maybe all the xxxByIds could be stored in class attributes, 
                 //to simplify this method signature
                 this.generateMultiSpeciesDiffExprFilesForOneGroup(currentPrefix, taxonId, 
-                        speciesNamesByIds, geneTOByIds, stageNamesByIds, anatEntityNamesByIds, 
-                        cioNamesByIds);
+                        speciesNamesByIds, geneTOByIds, stageNamesByIds, anatEntityNamesByIds);
             } finally {
                 // Release resources after each group. 
                 this.getManager().releaseResources();
@@ -1323,20 +1332,16 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * @param anatEntityNamesByIds  A {@code Map} where keys are {@code String}s corresponding  
      *                              to anatomical entity IDs, the associated values being 
      *                              {@code String}s corresponding to anatomical entity names.
-     * @param cioStatementsByIds    A {@code Map} where keys are {@code String}s corresponding  
-     *                              to CIO IDs, the associated values being {@code CIOStatementTO}s 
-     *                              corresponding to CIO TOs. 
      * @throws IOException              If an error occurred while trying to write generated files.
      * @throws IllegalArgumentException If all file types do not have the same comparison factor
      *                                  or file types defined with development comparison factor.
      */
     private void generateMultiSpeciesDiffExprFilesForOneGroup(String groupName, String taxonId, 
             Map<String, String> speciesNamesByIds, Map<String, GeneTO> geneTOsByIds, 
-            Map<String, String> stageNamesByIds, Map<String, String> anatEntityNamesByIds, 
-            Map<String, CIOStatementTO> cioStatementsByIds) 
+            Map<String, String> stageNamesByIds, Map<String, String> anatEntityNamesByIds) 
                     throws IOException, IllegalArgumentException {
         log.entry(groupName, taxonId, speciesNamesByIds, 
-                geneTOsByIds, stageNamesByIds, anatEntityNamesByIds, cioStatementsByIds);
+                geneTOsByIds, stageNamesByIds, anatEntityNamesByIds);
 
         Set<String> speciesFilter = speciesNamesByIds.keySet();
 
@@ -1538,7 +1543,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 
                         //We filter and write rows for one OMA node ID.
                         this.filterAndWriteOMANodeRows(geneTOsByIds, stageNamesByIds, 
-                                anatEntityNamesByIds, cioStatementsByIds, speciesNamesByIds, 
+                                anatEntityNamesByIds, speciesNamesByIds,
                                 writersUsed, processors, previousOMANodeId, 
                                 mapOMANodeGene.get(previousOMANodeId), mapGeneOMANode, 
                                 omaGroupCalls, mapSumSimCIO, mapSimAnnotToAnatEntities, 
@@ -2059,9 +2064,6 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
      * @param anatEntityNamesByIds      A {@code Map} where keys are {@code String}s corresponding  
      *                                  to anatomical entity IDs, the associated values being 
      *                                  {@code String}s corresponding to anatomical entity names.
-     * @param cioStatementByIds         A {@code Map} where keys are {@code String}s corresponding  
-     *                                  to CIO IDs, the associated values being 
-     *                                  {@code CIOStatementTO}s corresponding to CIO TOs.
      * @param speciesNamesByIds         A {@code Map} where keys are {@code String}s corresponding 
      *                                  to species IDs, the associated values being {@code String}s 
      *                                  corresponding to species names. 
@@ -2108,8 +2110,8 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
     //TODO: do we really need the mapSumSimCIO mapping? It is easy to retrieve it from cioStatementByIds...
     //TODO: no generate file with absolutely no data in it.
     private void filterAndWriteOMANodeRows(Map<String, GeneTO> geneTOsByIds, 
-            Map<String, String> stageNamesByIds, Map<String, String> anatEntityNamesByIds, 
-            Map<String, CIOStatementTO> cioStatementByIds, Map<String, String> speciesNamesByIds,
+            Map<String, String> stageNamesByIds, Map<String, String> anatEntityNamesByIds,
+            Map<String, String> speciesNamesByIds,
             Map<MultiSpeciesDiffExprFileType, ICsvDozerBeanWriter> writersUsed,
             Map<MultiSpeciesDiffExprFileType, CellProcessor[]> processors,
             String omaNodeId, Set<String> omaGeneIds, Map<String, String> mapGeneOMANode,
@@ -2119,7 +2121,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             Map<String, String> mapAnatEntityToSimAnnot, 
             Map<String, String> mapStageIdToStageGroup)
                     throws IllegalArgumentException, IOException {
-        log.entry(geneTOsByIds, stageNamesByIds, anatEntityNamesByIds, cioStatementByIds, 
+        log.entry(geneTOsByIds, stageNamesByIds, anatEntityNamesByIds,
                 speciesNamesByIds, writersUsed, processors, omaNodeId, omaGeneIds, mapGeneOMANode,  
                 calls, mapSumSimCIO, mapSimAnnotToAnatEntities, mapStageGroupToStageId, 
                 mapAnatEntityToSimAnnot, mapStageIdToStageGroup);
@@ -2211,15 +2213,15 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                         new MultiSpeciesCompleteDiffExprFileBean(
                                 omaNodeId, null, null, null, null, // organ and stage names and IDs
                                 to.getGeneId(), geneTOsByIds.get(to.getGeneId()).getName(), 
-                                cioId, cioStatementByIds.get(cioId).getName(),
+                                cioId, this.cioStatementByIds.get(cioId).getName(),
                                 speciesId, speciesNamesByIds.get(speciesId), 
                                 to.getDiffExprCallTypeAffymetrix().getStringRepresentation(), 
-                                to.getAffymetrixData().getStringRepresentation(), 
+                                GenerateDownloadFile.convertDataStateToString(to.getAffymetrixData()),
                                 Float.valueOf(to.getBestPValueAffymetrix()), 
                                 Long.valueOf(to.getConsistentDEACountAffymetrix()), 
                                 Long.valueOf(to.getInconsistentDEACountAffymetrix()), 
                                 to.getDiffExprCallTypeRNASeq().getStringRepresentation(), 
-                                to.getRNASeqData().getStringRepresentation(), 
+                                GenerateDownloadFile.convertDataStateToString(to.getRNASeqData()),
                                 Float.valueOf(to.getBestPValueRNASeq()), 
                                 Long.valueOf(to.getConsistentDEACountRNASeq()), 
                                 Long.valueOf(to.getInconsistentDEACountRNASeq()),
@@ -2294,7 +2296,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 }
             }
             
-            // We filter when there is no data in at least 2 species 
+            // We filter when there is no data in at least 2 species
             if (speciesIdsWithDataForComplete.size() < 2) {
                 log.trace("This OMA group with {} condition doesn't have data in at least 2 species",
                         condition);
@@ -2305,7 +2307,6 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             assert currentCompleteBeans != null && !currentCompleteBeans.isEmpty();
 
             // We get names of found stage and organ IDs.
-            //TODO see todo for gene IDs and names 
             List<String> orderedFoundStageIds = new ArrayList<String>(foundStageIds);
             Collections.sort(orderedFoundStageIds);
             List<String> orderedFoundStageNames = new ArrayList<String>();
@@ -2330,11 +2331,11 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                 bean.setEntityNames(orderedFoundOrganNames);
             }
 
-            // We filter, in simple file, poor quality homologous annotations (CIO), 
+            // We filter, in simple file, untrusted homologous annotations (CIO),
             // and conditions with 'no diff expressed' only,
             // and we do not have the same criteria for counting species with data 
             // as for the complete file.
-            if (cioStatementByIds.get(cioId).isTrusted() &&
+            if (this.cioStatementByIds.get(cioId).isTrusted() &&
                     speciesIdsWithDataForSimple.size() >= 2 && 
                     speciesIdsWithDiffExprForSimple.size() >= 1) {
                 MultiSpeciesSimpleDiffExprFileBean simpleBean = new MultiSpeciesSimpleDiffExprFileBean(
@@ -2445,7 +2446,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         log.entry(bean);
         
         DiffExpressionData summary = DiffExpressionData.NO_DATA;
-        String quality = GenerateDiffExprFile.NA_VALUE;
+        String quality = GenerateDownloadFile.NA_VALUE;
     
         DiffExprCallType affymetrixType = 
                 DiffExprCallType.convertToDiffExprCallType(bean.getAffymetrixData()); 
@@ -2468,7 +2469,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         if ((allType.contains(DiffExprCallType.UNDER_EXPRESSED) &&
                 allType.contains(DiffExprCallType.OVER_EXPRESSED))) {
             summary = DiffExpressionData.STRONG_AMBIGUITY;
-            quality = GenerateDiffExprFile.NA_VALUE;
+            quality = GenerateDownloadFile.NA_VALUE;
     
         // Both data types are equals or only one is set to 'no data': 
         // we choose the data which is not 'no data'.
@@ -2482,10 +2483,10 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             //store only quality of data different from NO_DATA
             Set<DataState> allDataQuality = EnumSet.noneOf(DataState.class);
             if (!affymetrixType.equals(DiffExprCallType.NO_DATA)) {
-                allDataQuality.add(DataState.convertToDataState(bean.getAffymetrixQuality()));
+                allDataQuality.add(GenerateDownloadFile.convertStringToDataState(bean.getAffymetrixQuality()));
             }
             if (!rnaSeqType.equals(DiffExprCallType.NO_DATA)) {
-                allDataQuality.add(DataState.convertToDataState(bean.getRNASeqQuality()));
+                allDataQuality.add(GenerateDownloadFile.convertStringToDataState(bean.getRNASeqQuality()));
             }
             assert allDataQuality.size() >=1 && allDataQuality.size() <= 2;
             
@@ -2504,9 +2505,9 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                             "Both DiffExprCallType are set to 'no data' or 'not expressed'"));
             }
             if (allDataQuality.contains(DataState.HIGHQUALITY)) {
-                quality = DataState.HIGHQUALITY.getStringRepresentation();
+                quality =  GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY);
             } else {
-                quality = DataState.LOWQUALITY.getStringRepresentation();
+                quality = GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY);
             }
     
         // All possible cases where the summary is WEAK_AMBIGUITY:
@@ -2522,7 +2523,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                         (allType.contains(DiffExprCallType.OVER_EXPRESSED)) || 
                         allType.contains(DiffExprCallType.NOT_DIFF_EXPRESSED))) {
             summary = DiffExpressionData.WEAK_AMBIGUITY;
-            quality = GenerateDiffExprFile.NA_VALUE;
+            quality = GenerateDownloadFile.NA_VALUE;
     
         // One call containing NOT_EXPRESSED and UNDER_EXPRESSED returns 
         // UNDER_EXPRESSION with LOWQUALITY 
@@ -2531,7 +2532,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         } else if (allType.contains(DiffExprCallType.NOT_EXPRESSED) && 
                 allType.contains(DiffExprCallType.UNDER_EXPRESSED)) {
             summary = DiffExpressionData.UNDER_EXPRESSION;
-            quality = DataState.LOWQUALITY.getStringRepresentation();
+            quality = GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY);
             
         } else {
             throw log.throwing(new AssertionError("All logical conditions should have been checked."));
@@ -2567,14 +2568,14 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
         }
         
         List<Object> specificTypeQualities = new ArrayList<Object>();
-        specificTypeQualities.add(DataState.HIGHQUALITY.getStringRepresentation());
-        specificTypeQualities.add(DataState.LOWQUALITY.getStringRepresentation());
-        specificTypeQualities.add(DataState.NODATA.getStringRepresentation());
+        specificTypeQualities.add(GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY));
+        specificTypeQualities.add(GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY));
+        specificTypeQualities.add(GenerateDownloadFile.NA_VALUE);
         
         List<Object> resumeQualities = new ArrayList<Object>();
-        resumeQualities.add(DataState.HIGHQUALITY.getStringRepresentation());
-        resumeQualities.add(DataState.LOWQUALITY.getStringRepresentation());
-        resumeQualities.add(GenerateDiffExprFile.NA_VALUE);
+        resumeQualities.add(GenerateDownloadFile.convertDataStateToString(DataState.HIGHQUALITY));
+        resumeQualities.add(GenerateDownloadFile.convertDataStateToString(DataState.LOWQUALITY));
+        resumeQualities.add(GenerateDownloadFile.NA_VALUE);
         
         //Then, we build the CellProcessor
         CellProcessor[] processors = new CellProcessor[header.length];
@@ -2606,7 +2607,6 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                     case GENE_ID_LIST_COLUMN_NAME: 
                         processors[i] = new Utils.FmtMultipleStringValues(new Trim()); 
                         break;
-                    //TODO: regression test with some blank gene names
                     case GENE_NAME_LIST_COLUMN_NAME: 
                         //gene names can be blank
                         processors[i] = new Utils.FmtMultipleStringValues(new Trim(), true); 

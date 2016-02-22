@@ -415,8 +415,9 @@ BEGIN
                (51, 2);
 
         INSERT INTO downloadFile(downloadFileId, downloadFileName, downloadFileRelativePath, downloadFileDescription, downloadFileCategory, speciesDataGroupId, downloadFileSize)
-        VALUES (1, 'file1.zip', '/dir/to/file1', 'this is file1', 'expr_simple',1, 0),
-               (2, 'file2.zip', '/dir/to/file2', 'this is file2', 'expr_simple',2, 0);
+        VALUES (1, 'file1.zip', '/dir/to/file1', 'this is file1', 'expr_simple', 1, 0),
+               (2, 'file2.zip', '/dir/to/file2', 'this is file2', 'expr_simple', 2, 0),
+               (3, 'file3.zip', '/dir/to/file3', null, 'diff_expr_anatomy_complete', 2, 10);
 
         -- Data for MySQLSummarySimilarityAnnotationDAOIT and MySQLRawSimilarityAnnotationDAOIT
         INSERT INTO summarySimilarityAnnotation (summarySimilarityAnnotationId,taxonId,negated,CIOId)

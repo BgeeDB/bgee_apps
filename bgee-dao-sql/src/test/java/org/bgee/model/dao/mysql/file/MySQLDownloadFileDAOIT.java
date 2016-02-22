@@ -26,7 +26,6 @@ import static org.junit.Assert.fail;
  * @author Philippe Moret
  * @author Valentine Rech de Laval
  */
-//TODO: test with non-0 size
 public class MySQLDownloadFileDAOIT extends MySQLITAncestor {
 
     private final static Logger log = LogManager.getLogger(MySQLDownloadFileDAOIT.class.getName());
@@ -51,7 +50,9 @@ public class MySQLDownloadFileDAOIT extends MySQLITAncestor {
                 new DownloadFileDAO.DownloadFileTO("1", "file1.zip", "this is file1", "/dir/to/file1", 0L, 
                         DownloadFileDAO.DownloadFileTO.CategoryEnum.EXPR_CALLS_SIMPLE,"1"),
                 new DownloadFileDAO.DownloadFileTO("2", "file2.zip", "this is file2", "/dir/to/file2", 0L, 
-                        DownloadFileDAO.DownloadFileTO.CategoryEnum.EXPR_CALLS_SIMPLE,"2")
+                        DownloadFileDAO.DownloadFileTO.CategoryEnum.EXPR_CALLS_SIMPLE,"2"),
+                new DownloadFileDAO.DownloadFileTO("3", "file3.zip", null, "/dir/to/file3", 10L, 
+                        DownloadFileDAO.DownloadFileTO.CategoryEnum.DIFF_EXPR_ANAT_COMPLETE,"2")
         );
 
         assertTrue("DownloadFileTOs are incorrectly retrieved\nGOT\n"+allDownloadFiles+"\nEXPECTED\n"+expectedDownloadFiles,
@@ -71,9 +72,9 @@ public class MySQLDownloadFileDAOIT extends MySQLITAncestor {
                 .Attribute.FILE_SIZE, DownloadFileDAO.Attribute.SPECIES_DATA_GROUP_ID});
         List<DownloadFileDAO.DownloadFileTO> allDownloadFiles = dao.getAllDownloadFiles().getAllTOs();
         List<DownloadFileDAO.DownloadFileTO> expectedDownloadFiles = Arrays.asList(
-                new DownloadFileDAO.DownloadFileTO(null, null, "this is file1", null, 0L,
-                        null,"1"),
-                new DownloadFileDAO.DownloadFileTO(null, null, "this is file2", null,  0L, null,"2")
+                new DownloadFileDAO.DownloadFileTO(null, null, "this is file1", null, 0L, null,"1"),
+                new DownloadFileDAO.DownloadFileTO(null, null, "this is file2", null, 0L, null, "2"),
+                new DownloadFileDAO.DownloadFileTO(null, null, null, null, 10L, null, "2")
         );
 
         assertTrue("DownloadFileTOs are incorrectly retrieved\nGOT\n"+allDownloadFiles+"\nEXPECTED\n"

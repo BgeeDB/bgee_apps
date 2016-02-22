@@ -152,9 +152,8 @@ public class TopAnatController {
                     } catch (Throwable e) {
                         log.catching(e);
                         this.taskManager.ifPresent(t -> t.endQuery(false));
-                        log.throwing(new RuntimeException(e));
+                        throw log.throwing(new RuntimeException(e));
                     }
-                    return null;
                 }));
     }
     

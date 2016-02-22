@@ -25,6 +25,7 @@ import org.bgee.pipeline.annotations.SimilarityAnnotation.CuratorAnnotationBean;
 import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.RawAnnotationBean;
 import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.SummaryAnnotationBean;
 import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.AncestralTaxaAnnotationBean;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -165,11 +166,12 @@ public class SimilarityAnnotationTest extends TestAncestor {
         log.exit();
     }
     
-//    @Test
-//    public void test() throws FileNotFoundException, IllegalArgumentException, IOException {
-//        SimilarityAnnotation.extractCuratorAnnotations(
-//                "/Users/admin/Desktop/bgee_trans_similarity_annotations_edit2.tsv");
-//    }
+    @Ignore
+    @Test
+    public void test() throws FileNotFoundException, IllegalArgumentException, IOException {
+        SimilarityAnnotation.extractCuratorAnnotations(
+                "/Users/admin/Desktop/bgee_trans_similarity_annotations_edit2.tsv");
+    }
     
     /**
      * Test {@link SimilarityAnnotation#writeAnnotations(List, String, Class)} 

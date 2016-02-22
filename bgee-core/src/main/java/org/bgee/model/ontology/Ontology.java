@@ -154,9 +154,41 @@ public class Ontology<T extends NamedEntity & OntologyElement<T>> {
      */
     public Set<T> getAncestors(T element, Collection<RelationType> relationTypes) {
         log.entry(element, relationTypes);
-        return log.exit(this.getRelatives(element, true, relationTypes, false));
+        return log.exit(this.getAncestors(element, relationTypes, false));
+    }
+    /**
+     * Get ancestors of {@code element} in this ontology based on relations of types {@code relationTypes}.
+     * 
+     * @param element       A {@code T} that is the element for which ancestors are retrieved.
+     * @param relationTypes A {@code Set} of {@code RelationType}s that are the relation
+     *                      types to consider.
+     * @return              A {@code Set} of {@code T}s that are the ancestors
+     *                      of {@code element} in this ontology. Can be empty if {@code element} 
+     *                      has no ancestors according to the requested parameters.
+     * @throws IllegalArgumentException If {@code element} is {@code null} or is not found 
+     *                                  in this {@code Ontology}.
+     */
+    //TODO: update javadoc for directRelOnly. 
+    //TODO: unit test
+    public Set<T> getAncestors(T element, Collection<RelationType> relationTypes, boolean directRelOnly) {
+        log.entry(element, relationTypes, directRelOnly);
+        return log.exit(this.getRelatives(element, true, relationTypes, directRelOnly));
     }
 
+    /**
+     * Get ancestors of {@code element} in this ontology based on any relations that were loaded.
+     * 
+     * @param element       A {@code T} that is the element for which ancestors are retrieved.
+     * @return              A {@code Set} of {@code T}s that are the ancestors
+     *                      of {@code element} in this ontology. Can be empty if {@code element} 
+     *                      has no ancestors according to the loaded information.
+     * @throws IllegalArgumentException If {@code element} is {@code null} or is not found 
+     *                                  in this {@code Ontology}.
+     */
+    public Set<T> getAncestors(T element) {
+        log.entry(element);
+        return log.exit(this.getAncestors(element, false));
+    }
     /**
      * Get ancestors of the given {@code element} in this ontology, according to 
      * any {@code RelationType}s that were considered to build this {@code Ontology}.
@@ -168,9 +200,10 @@ public class Ontology<T extends NamedEntity & OntologyElement<T>> {
      * @throws IllegalArgumentException If {@code element} is {@code null} or is not found 
      *                                  in this {@code Ontology}.
      */
-    public Set<T> getAncestors(T element) {
-        log.entry(element);
-        return log.exit(this.getAncestors(element, null));
+    //TODO: update javadoc for directRelOnly. 
+    public Set<T> getAncestors(T element, boolean directRelOnly) {
+        log.entry(element, directRelOnly);
+        return log.exit(this.getAncestors(element, null, directRelOnly));
     }
 
     /**
@@ -185,9 +218,26 @@ public class Ontology<T extends NamedEntity & OntologyElement<T>> {
      * @throws IllegalArgumentException If {@code element} is {@code null} or is not found 
      *                                  in this {@code Ontology}.
      */
+    //TODO: update javadoc for directRelOnly
+    public Set<T> getDescendants(T element, Collection<RelationType> relationTypes, boolean directRelOnly) {
+        log.entry(element, relationTypes, directRelOnly);
+        return log.exit(this.getRelatives(element, false, relationTypes, directRelOnly));
+    }
+    /**
+     * Get descendants of {@code element} in this ontology based on relations of types {@code relationTypes}.
+     * 
+     * @param element       A {@code T} that is the element for which descendants are retrieved.
+     * @param relationTypes A {@code Set} of {@code RelationType}s that are the relation
+     *                      types allowing to filter the relations to retrieve.
+     * @return              A {@code Collection} of {@code T}s that are the descendants
+     *                      of the given {@code element}. Can be empty if {@code element} 
+     *                      has no descendants according to the requested parameters.
+     * @throws IllegalArgumentException If {@code element} is {@code null} or is not found 
+     *                                  in this {@code Ontology}.
+     */
     public Set<T> getDescendants(T element, Collection<RelationType> relationTypes) {
         log.entry(element, relationTypes);
-        return log.exit(this.getRelatives(element, false, relationTypes, false));
+        return log.exit(this.getDescendants(element, relationTypes, false));
     }
     
     /**
@@ -203,7 +253,23 @@ public class Ontology<T extends NamedEntity & OntologyElement<T>> {
      */
     public Set<T> getDescendants(T element) {
         log.entry(element);
-        return log.exit(this.getDescendants(element, null));
+        return log.exit(this.getDescendants(element, false));
+    }
+    /**
+     * Get descendants of the given {@code element} in this ontology, according to 
+     * any {@code RelationType}s that were considered to build this {@code Ontology}.
+     * 
+     * @param element       A {@code T} that is the element for which descendants are retrieved.
+     * @return              A {@code Set} of {@code T}s that are the descendants
+     *                      of the given {@code element} in this ontology. Can be empty if {@code element} 
+     *                      has no descendants according to the requested parameters.
+     * @throws IllegalArgumentException If {@code element} is {@code null} or is not found 
+     *                                  in this {@code Ontology}.
+     */
+    //TODO: update javadoc for directRelOnly
+    public Set<T> getDescendants(T element, boolean directRelOnly) {
+        log.entry(element, directRelOnly);
+        return log.exit(this.getDescendants(element, null, directRelOnly));
     }
 
     /**
@@ -231,7 +297,7 @@ public class Ontology<T extends NamedEntity & OntologyElement<T>> {
      * @throws IllegalArgumentException If {@code element} is {@code null} or is not found 
      *                                  in this {@code Ontology}.
      */
-    // TODO DRY in BgeeUtils.getIsAPartOfRelativesFromDb()
+    // XXX could be used in BgeeDBUtils.getIsAPartOfRelativesFromDb()
     private Set<T> getRelatives(T element, boolean isAncestor, Collection<RelationType> relationTypes, 
             boolean directRelOnly) {
         log.entry(element, isAncestor, relationTypes, directRelOnly);

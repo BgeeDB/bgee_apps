@@ -463,13 +463,17 @@ generateGraph <- function(GOdata, termsP.value, firstSigNodes = 10, reverse = TR
 # Perform the enrichment fisher test without TopGO
 #########
 runTestWithoutTopGO<-function(anatomy,geneList,test="fisher",nodeSize){
+  # Count the gene of each category to generate the contingency table
   foregroundExpressed <- length(subset(names(geneList),geneList==1 & names(geneList) %in% anatomy))
   foregroundNotExpressed <- length(subset(names(geneList),geneList==1 & !(names(geneList) %in% anatomy)))
-  backgroundExpressed <- length(subset(names(geneList),names(geneList) %in% anatomy))
+  backgroundExpressed <- length(subset(names(geneList),geneList==0 & names(geneList) %in% anatomy))
+  backgroundNotExpressed <- length(subset(names(geneList),geneList==0 & !(names(geneList) %in% anatomy)))
+  # if the min node size is not reached, return null
   if(backgroundExpressed < nodeSize){
     return(NULL)
   }
-  backgroundNotExpressed <- length(subset(names(geneList),!(names(geneList) %in% anatomy)))
+  
+  # Generate the contingency table and run the test
   data <- matrix(c(
     foregroundExpressed,
     backgroundExpressed,
@@ -482,11 +486,12 @@ runTestWithoutTopGO<-function(anatomy,geneList,test="fisher",nodeSize){
   if(test=="fisher"){
     fis <- fisher.test(data,alternative="greater")
   }
-  annotated <- backgroundExpressed
+  # Generate and return the result values
+  annotated <- length(subset(names(geneList),names(geneList) %in% anatomy)) # =foreground+background
   significant <- foregroundExpressed
-  expected <- round(backgroundExpressed/(backgroundExpressed+backgroundNotExpressed)*(foregroundExpressed+foregroundNotExpressed),digits=2)
-  foldEnrichment <- round((significant/expected),digits=3)
-  return(cbind(annotated, significant , expected, foldEnrichment,pval=fis$p.value))
+  expected <- (foregroundExpressed+backgroundExpressed)/(backgroundNotExpressed+backgroundExpressed)*(foregroundExpressed+foregroundNotExpressed)
+  foldEnrichment <- significant/expected
+  return(cbind(annotated, significant , expected, foldEnrichment, pval=fis$p.value))
 }
 #########
 # Jan2016, Author mseppey
@@ -495,7 +500,7 @@ makeTableWithoutTopGO <- function(data, cutoff, names){
   data$fdr <- p.adjust(p=data$pval, method = "fdr")
   topTerms <- data[with(data, order(fdr) & fdr <= cutoff), ]
   if(nrow(topTerms) != 0){
-    topTerms$foldEnrichment <-format(topTerms$foldEnrichment,digits=3)
+    # Format and return the results
     topTable <- merge(names, topTerms, by.x=0, by.y=0)
     names(topTable) <- c("OrganId", "OrganName", "Annotated", "Significant", "Expected", "foldEnrichment" , "p", "fdr")
     topTable <- topTable[order(as.numeric(topTable$p)), ]

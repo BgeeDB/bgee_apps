@@ -169,8 +169,8 @@ var download = {
             this.$inSituDataComingSoon = $( "#insitudata_coming_soon" );
             this.$estDataComingSoon = $( "#estdata_coming_soon" );
             // Search box
-            this.$bgeeSearchForm = $( "#bgee_search_box form" );
-            this.$bgeeSearchBox = $( "#bgee_search_box input" );
+            this.$bgeeSearchForm = $( "#bgee_species_search form" );
+            this.$bgeeSearchBox = $( "#bgee_species_search input" );
             this.$bgeeSearchResults = $( "#results_nb" );
             this.$bgeeMoreResultsDown = $( "#bgee_more_results_down" );
             this.$bgeeMoreResultsUp = $( "#bgee_more_results_up" );

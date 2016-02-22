@@ -145,23 +145,25 @@ function highlightEscape(string, searchTerm)
 var textMinLength = 1; // some genes have a one-letter name (for instance, gene 'E')
 function loadAutocompleteGene() {
 	
+	var waitingElement = "#bgee_gene_search_waiting";
+	
 	$(completionBoxGeneId).autocomplete({
         source: function(request, responseCallback) {
         	autocompleteGeneSource(request, responseCallback); 
         }, 
         search: function(event, ui) {
-            $('#bgee_gene_search_text').text("Searching for '" + $(completionBoxGeneId).val() + "' ")
-        						.append($("<img />").attr("class", 'ajax_waiting') 
+            $(waitingElement).text('').append($("<img />").attr("class", 'ajax_waiting') 
     				        	.attr("src", "img/wait.gif")
                                 .attr("alt", 'Loading'));
         	$("ul.ui-autocomplete").hide();
         }, 
         response: function(event, ui) {
         	$("ul.ui-autocomplete").show();
+        	$(waitingElement).empty();
         	if (ui.content.length === 0) {
-        		$('#bgee_gene_search_text').text('No result');
+        		$(waitingElement).text('No result');
         	} else {
-        	    $('#bgee_gene_search_text').text('');
+        	    $(waitingElement).text('');
         	}
         }, 
         open: function() {
@@ -172,7 +174,10 @@ function loadAutocompleteGene() {
         	event.preventDefault();
         }, 
         select: function(event, ui) {
-        	autocompleteGeneSelected(event, ui);
+        	$(waitingElement).append($("<img />").attr("class", 'ajax_waiting') 
+		        	.attr("src", "img/wait.gif")
+                    .attr("alt", 'Loading'));
+        	autocompleteGeneSelected(event, ui).delay( 2000 );
         }, 
         //displayLabel is a custom option for Bgee, 
         //see the overridden version of $.ui.autocomplete.prototype._renderItem 

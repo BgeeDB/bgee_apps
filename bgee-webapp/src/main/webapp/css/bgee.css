@@ -374,30 +374,39 @@ span.list_element_title {
 }
 
 /****BGEE SEARCH BOX****/
-#bgee_gene_search {
-    text-align: center;
-    height: 60px;	
-}
 
-#bgee_search_box, #bgee_gene_search_completion {
+#bgee_species_search, #bgee_gene_search {
     padding: 10px; 
     background-color: #D9DDE1;
     border-radius: 8px;
 }
 
-#bgee_search_box {
+#bgee_species_search {
     margin: 0 auto;
 	width: 690px;
     height: 44px;
 }
 
-#bgee_gene_search_completion {
-    width: 612px;
+#bgee_gene_search {
+	width: 660px;
+    height: 40px;   
     margin: 10px auto 2px auto;
 }
 
-#bgee_search_box label, #search_label,
-#bgee_gene_search_completion label, #bgee_gene_search_completion_box {
+#bgee_gene_search form,
+#bgee_gene_search_waiting {
+    float: left;
+}
+
+img.ajax_waiting {
+    height: 15px;
+/*     margin-bottom: 2px; */
+/*     margin-left: 6px; */
+/*     vertical-align: bottom; */
+}
+
+#bgee_species_search label, #bgee_species_search_box,
+#bgee_gene_search label, #bgee_gene_search_completion_box {
     margin-right: 10px;
     color: #920209;
 }
@@ -416,13 +425,6 @@ input[type="image"] {
     border-style: solid;
     border-width: 1px;
     color: #406981;
-}
-
-img.ajax_waiting {
-    height: 15px;
-/*     margin-bottom: 2px; */
-/*     margin-left: 6px; */
-/*     vertical-align: bottom; */
 }
 
 /****SIB FOOTER****/

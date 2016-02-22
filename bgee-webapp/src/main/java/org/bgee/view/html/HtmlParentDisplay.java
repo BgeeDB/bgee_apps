@@ -556,14 +556,12 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     
         return log.exit(
         		"<div id='bgee_gene_search'>" +
-        		    "<div id='bgee_gene_search_completion'>" +
-                        "<form action='javascript:void(0);' method='get'>" +
-                    	    "<label for='bgee_gene_search_completion_box'>Search gene</label>" +
-                            "<input id='bgee_gene_search_completion_box' class='sib_text' autocomplete='off' " +
-                        	    "type='text' name='search'/>" +
-                        "</form>" +
-                    "</div>" +
-            	    "<span id='bgee_gene_search_text'></span>" +
+                    "<form action='javascript:void(0);' method='get'>" +
+                        "<label for='bgee_gene_search_completion_box'>Search gene</label>" +
+                        "<input id='bgee_gene_search_completion_box' class='sib_text' autocomplete='off' " +
+                            "type='text' name='search'/>" +
+                    "</form>" +
+                    "<span id='bgee_gene_search_waiting'></span>" +
                 "</div>");
     }
 

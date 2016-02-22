@@ -23,184 +23,100 @@ So we include it from scratch in all our pages, to adapt element sizes to it.
     left: 0;
     width: 100%;
     min-height: 100%;
-    background-color: #F7F8FA;
     overflow: hidden;
 }
 
-/****SIB HEADER****/
-header {
-    position: relative;
-    display: inline-block;
-    background: #F7F8FA url(../img/sib_header_bkgd.png) repeat-x top left;
-    height: 120px;
-    width: 100%;
-    color: #282828;
-    z-index: 2;
-}
-
-header h1, header h2  {
-    position: relative;
-    margin: 0 auto;
-    width: 15em;
-    color: #282828;
-    text-align: center;
-    font-weight: normal;
-    white-space: nowrap;
-}
-
-header h1 {
-    top: 1em;
-    font-size: 1.7em;
-}
-
-header h2 {
-    top: 25px;
-    font-size: 1.2em;
-}
-
-/****LOGOS****/
-header img {
+/****NAVIGATION BAR****/
+nav img {
+	height: 20px;
     border-radius: 0px;
 }
 
-#sib_logo {
-    position: absolute;
-    width: 141px;
-    height: 75px;
-    top: 8px;
-    right: 2%;
+.social-img {
+    width: 20px;   
+    height: 20px;
 }
 
-#sib_other_logo {
-    position: absolute;
-    top: 8px;
-    left: 2%;
-    width: 186px;
-    height: 75px;
+/*
+Bootstrap navbar changed with TWBScolor 
+See http://work.smarchal.com/twbscolor/css/999999555555ffffffffffff0
+*/
+
+.navbar-default {
+  background-color: #999999;
+  border: none;
+  border-radius: 0px;
+  margin-bottom: 0;
+}
+.navbar-default .navbar-brand {
+  color: #ffffff;
+}
+.navbar-default .navbar-brand:hover,
+.navbar-default .navbar-brand:focus {
+  color: #ffffff;
+}
+.navbar-default .navbar-text {
+  color: #ffffff;
+}
+.navbar-default .navbar-nav > li > a {
+  color: #ffffff;
+}
+.navbar-default .navbar-nav > li > a:hover,
+.navbar-default .navbar-nav > li > a:focus {
+  color: #ffffff;
+}
+.navbar-default .navbar-nav > .active > a,
+.navbar-default .navbar-nav > .active > a:hover,
+.navbar-default .navbar-nav > .active > a:focus {
+  color: #ffffff;
+  background-color: #555555;
+}
+.navbar-default .navbar-nav > .open > a,
+.navbar-default .navbar-nav > .open > a:hover,
+.navbar-default .navbar-nav > .open > a:focus {
+  color: #ffffff;
+  background-color: #555555;
+}
+.navbar-default .navbar-toggle {
+  border-color: #555555;
+}
+.navbar-default .navbar-toggle:hover,
+.navbar-default .navbar-toggle:focus {
+  background-color: #555555;
+}
+.navbar-default .navbar-toggle .icon-bar {
+  background-color: #ffffff;
+}
+.navbar-default .navbar-collapse,
+.navbar-default .navbar-form {
+  border-color: #ffffff;
+}
+.navbar-default .navbar-link {
+  color: #ffffff;
+}
+.navbar-default .navbar-link:hover {
+  color: #ffffff;
 }
 
-/****NAVIGATION BAR****/
-#nav {
-    position: absolute;
-    bottom: 0;
-    height: 2em;
-    width: 100%;
-    margin: 5px 0 0 0;
-    display: block;
-    background-color: #ABBDC4;
-    border-bottom: 0.25em solid #920209;
-    padding: 0.2em 0 0 0;
+@media (max-width: 767px) {
+  .navbar-default .navbar-nav .open .dropdown-menu > li > a {
+    color: #ffffff;
+  }
+  .navbar-default .navbar-nav .open .dropdown-menu > li > a:hover,
+  .navbar-default .navbar-nav .open .dropdown-menu > li > a:focus {
+    color: #ffffff;
+  }
+  .navbar-default .navbar-nav .open .dropdown-menu > .active > a,
+  .navbar-default .navbar-nav .open .dropdown-menu > .active > a:hover,
+  .navbar-default .navbar-nav .open .dropdown-menu > .active > a:focus {
+    color: #ffffff;
+    background-color: #555555;
+  }
 }
-
-#nav ul {
-    margin: 0;
-    padding: 0;
-    list-style: outside none none;
-}
-
-#nav ul#bgee_links li {
-	position: relative;
-    float: left;
-    height: 1.5em;
-    padding-top: 0.3em;
-    text-align: center;
-}
-ul#bgee_links > li {
-    padding-left: 2em;
-    padding-right: 2em;
-}
-ul#bgee_links > li:first-child {
-    padding-left: 3em;
-}
-
-#nav ul#bgee_links li:hover {
-    background-color: #29516A;
-    z-index: 100;
-}
-
-/* style the links for the top level */
-#nav a, #nav a:visited {
-    color: #29516A;
-    text-decoration: none;
-    display: inline-block;
-}
-#nav a:hover, #nav :hover>a {
-    color: white;
-    height: 25px;
-    margin-bottom: 3px;
-}
-
-/* style the second level links */
-#nav ul#bgee_links ul a.drop, #nav ul#bgee_links ul a.drop:visited {
-	background-color: #ABBDC4;
-}
-#nav ul#bgee_links ul a.drop:hover, #nav ul#bgee_links ul :hover>a.drop {
-    color: white;
-    background-color: #29516A;
-    margin-bottom: 0px;
-    height: auto;
-}
-
-/* hide the sub levels and give them a position absolute so that they take up no room */
-#nav ul#bgee_links ul {
-    visibility: hidden;
-    position: absolute;
-    height: auto;
-    top: 28px;
-    left: 0;
-    width: 100%;
-    border-bottom: none;
-}
-#nav ul#bgee_links ul li{
-    border-bottom: 1px solid #29516A;
-	width: 100%;
-    height: auto;
-}
-
-#nav ul#bgee_links ul li:hover {
-	background-color: #29516A;
-}
-
-/* make the second level visible when hover on first level list OR link */
-#nav ul#bgee_links li:hover ul, #nav ul#bgee_links a:hover ul {
-    visibility: visible;
-    margin-top: -4px;
-    background-color: #ABBDC4;
-}
-
-#nav .deploy {
-	margin-left: 0.3em;
-    height: 0.5em;
-}
-
-#nav #social_links {
-    float: right;
-	margin-right: 1em;
-}
-
-#nav ul#social_links li {
-    position: relative;
-    float: left;
-    margin-right: 1em;
-    text-align: center;
-}
-
-#nav a.social-link {
-    margin-left: 5px;
-}
-
-#nav a.social-link img {
-    width: 22px;   
-    height: 22px;
-    padding-top: 2px;    
-}
-
 /****SIB BODY****/
 #sib_body {
     position: relative;
     padding: 10px 1% 50px 1%;
-    background: #F7F8FA url(../img/sib_body_bkgd.png) repeat-x top left;
-    background-size: 100% 100%;
     /*To be modified when multi-species files will be available*/
     min-height: 340px;
     color: #626262;
@@ -249,13 +165,13 @@ h2.box_title {
 }
 
 /****LINKS****/
-a {
+#sib_body a {
     cursor: pointer;
     color: #BC161D;
     text-decoration: underline;
 }
 
-a:visited, a:hover {
+#sib_body a:visited, #sib_body a:hover {
     color: #6A1818;
 }
 
@@ -365,12 +281,11 @@ span.list_element_title {
 footer {
     position: absolute;
     bottom: 0px;
-    height: 40px;
-    background-color: #1E2425;
+    height: 30px;
+    background-color: #333333;
     width: 100%;
-    color: #F7F8FA;
-    letter-spacing: 1px;
-    font: 0.7em Verdana;
+    color: #96a1a3;
+    font: 0.9em;
     z-index: 2;
 }
 

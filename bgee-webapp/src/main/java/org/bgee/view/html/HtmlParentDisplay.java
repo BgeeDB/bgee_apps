@@ -335,8 +335,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         urlDocTopAnat.setPage(RequestParameters.PAGE_DOCUMENTATION);
         urlDocTopAnat.setAction(RequestParameters.ACTION_DOC_TOPANAT);
         
-        RequestParameters urlAbout = this.getNewRequestParameters();
-        urlAbout.setPage(RequestParameters.PAGE_ABOUT);
+//        RequestParameters urlAbout = this.getNewRequestParameters();
+//        urlAbout.setPage(RequestParameters.PAGE_ABOUT);
 
         // Navigation bar
         StringBuilder navbar = new StringBuilder();
@@ -397,12 +397,12 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<li><a title='See how to access to Bgee data' href='" + urlDocBgeeAccess.getRequestURL() + "'>How to access Bgee data</a></li>");
         navbar.append("<li><a title='Gene expression call files documentation' href='" + urlDocExprCallFiles.getRequestURL() + "'>" + GENE_EXPR_CALLS_PAGE_NAME + "</a></li>");
 //        navbar.append("<li><a title='Processed expression value files documentation' href='" + urlDocProcValueFiles.getRequestURL() + "'>" + PROCESSED_EXPR_VALUES_PAGE_NAME + "</a></li>");
-        navbar.append("<li><a title='TopAnat documentation' href='" + urlDocTopAnat.getRequestURL() + "'>" + TOP_ANAT_PAGE_NAME + "</a></li>");
+//        navbar.append("<li><a title='TopAnat documentation' href='" + urlDocTopAnat.getRequestURL() + "'>" + TOP_ANAT_PAGE_NAME + "</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
         
         // About
-        navbar.append("<li><a title='About page' href='" + urlAbout.getRequestURL() + "'>About</a></li>");
+//        navbar.append("<li><a title='About page' href='" + urlAbout.getRequestURL() + "'>About</a></li>");
         
         // Help
         navbar.append("<li>" + this.getObfuscateEmail() + "</li>");
@@ -540,6 +540,26 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     protected String displayHelpLink(String cat) {
         log.entry(cat);
         return log.exit(this.displayHelpLink(cat, "[?]"));
+    }
+
+    //FIXME: in branch issue77_2 but I need it for topanat-promotion
+    /**
+     * Get the search box of a gene as a HTML 'div' element.
+     *
+     * @return  the {@code String} that is the search box as HTML 'div' element.
+     */
+    protected String getGeneSearchBox() {
+        log.entry();
+        
+        return log.exit(
+                        "<div id='bgee_gene_search'>" +
+                        "<form action='javascript:void(0);' method='get'>" +
+                        "<label for='bgee_gene_search_completion_box'>Search gene</label>" +
+                        "<input id='bgee_gene_search_completion_box' class='sib_text' autocomplete='off' " +
+                        "type='text' name='search'/>" +
+                        "</form>" +
+                        "<span id='bgee_gene_search_waiting'></span>" +
+                        "</div>");
     }
 
     /**

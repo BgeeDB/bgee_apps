@@ -468,11 +468,11 @@ runTestWithoutTopGO<-function(anatomy,geneList,test="fisher",nodeSize){
   foregroundNotExpressed <- length(subset(names(geneList),geneList==1 & !(names(geneList) %in% anatomy)))
   backgroundExpressed <- length(subset(names(geneList),geneList==0 & names(geneList) %in% anatomy))
   backgroundNotExpressed <- length(subset(names(geneList),geneList==0 & !(names(geneList) %in% anatomy)))
+  totalExpressed <- length(subset(names(geneList),names(geneList) %in% anatomy))
   # if the min node size is not reached, return null
-  if(backgroundExpressed < nodeSize){
+  if(totalExpressed < nodeSize){
     return(NULL)
   }
-  
   # Generate the contingency table and run the test
   data <- matrix(c(
     foregroundExpressed,

@@ -96,7 +96,9 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	    });
 	
 	    this.writeln("<div id='bgee_species' class='row'>");
+        this.writeln("<div class='hidden-xs col-sm-12'>");
 	    this.writeln(homePageSpeciesSection.toString());
+	    this.writeln("</div>");
 	    this.writeln("</div>");
 	
 	    log.exit();
@@ -141,7 +143,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     	
         this.writeln("<div id='bgee_explanations' class='row'>");
 		
-        this.writeln("<div class='col-md-offset-3 col-md-2'>");
+        this.writeln("<div class='col-md-offset-2 col-md-2'>");
         this.writeln("<span>Lorem ipsum</span>");
         this.writeln("<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus. "
         		+ "Suspendisse lectus tortor, dignissim sit amet, adipiscing nec, ultricies sed, "
@@ -149,7 +151,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         		+ "congue, euismod non, mi.</p>");
         this.writeln("</div>");
         
-        this.writeln("<div class='col-md-2'>");
+        this.writeln("<div class='col-md-offset-1 col-md-2'>");
         this.writeln("<span>Lorem ipsum</span>");
         this.writeln("<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus. "
         		+ "Suspendisse lectus tortor, dignissim sit amet, adipiscing nec, ultricies sed, "
@@ -157,7 +159,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         		+ "congue, euismod non, mi.</p>");
         this.writeln("</div>");
 
-        this.writeln("<div class='col-md-2'>");
+        this.writeln("<div class='col-md-offset-1 col-md-2'>");
         this.writeln("<span>Lorem ipsum</span>");
         this.writeln("<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus. "
         		+ "Suspendisse lectus tortor, dignissim sit amet, adipiscing nec, ultricies sed, "

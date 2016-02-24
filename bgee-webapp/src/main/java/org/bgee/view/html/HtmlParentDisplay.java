@@ -273,6 +273,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("<noscript>Sorry, your browser does not support JavaScript!</noscript>");
         this.writeln("<div id='bgee_top'><span id='TOP'></span></div>");
         this.writeln("<div id='sib_container'>");
+        //FIXME: I noticed that this header disappear in printed version
         this.displayBgeeHeader();
         this.writeln("<div id='sib_body'>");
 
@@ -285,18 +286,26 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     protected void endDisplay() {
         log.entry();
 
-        this.writeln("</div>");
-        //FIXME: I noticed that this footer messes up print version on firefox
-        this.writeln("<footer>");
-        this.writeln("<div id='sib_footer_content'>");
-        this.writeln("<a href='http://www.sib.swiss'>SIB Swiss Institute of Bioinformatics</a>");
-        this.writeln("<div id='sib_footer_right'>");
-        this.writeln("<a href='#TOP' id='sib_footer_gototop'>"
-                + "<span style='padding-left: 10px'>Back to the Top</span></a>");
-        this.writeln("</div>");
-        this.writeln("</div>");
-        this.writeln("</footer>");
-        this.writeln("</div>");
+        this.writeln("</div>"); // close sib_body
+        
+        //FIXME: I noticed that this footer disappear in printed version
+        this.writeln("<nav id='bgee_footer' class='navbar navbar-default'>");
+        this.writeln("<div class='container-fluid'>");
+
+        this.writeln("<ul class='nav navbar-nav'>");
+        this.writeln("<li><a href='http://www.sib.swiss'>SIB Swiss Institute of Bioinformatics</a></li>");
+        this.writeln("</ul>");
+        
+
+        this.writeln("<ul class='nav navbar-nav navbar-right'>");
+        this.writeln("<li><a href='#TOP' id='sib_footer_gototop'>"
+        		+ "<span class='glyphicon glyphicon-menu-up'></span> Back to the top</a></li>");
+        this.writeln("</ul>");
+        
+        this.writeln("</div>"); // close container
+        this.writeln("</nav>"); // close bgee_footer nev
+
+        this.writeln("</div>"); // close sib_container
         
         this.writeln("</body>");
         this.writeln("</html>");
@@ -341,7 +350,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         // Navigation bar
         StringBuilder navbar = new StringBuilder();
 
-        navbar.append("<nav class='navbar navbar-default'>");
+        navbar.append("<nav id='bgee-menu' class='navbar navbar-default'>");
         navbar.append("<div class='container-fluid'>");
 
         // Brand and toggle get grouped for better mobile display
@@ -354,8 +363,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<span class='icon-bar'></span>");
         navbar.append("</button>");
         navbar.append("<a class='navbar-brand' href='" + this.getNewRequestParameters().getRequestURL() 
-                + "' title='Go to Bgee home page'><img src='" + this.prop.getLogoImagesRootDirectory() 
-                + "bgee13_logo.png' alt='Bgee logo'></a>");
+                + "' title='Go to Bgee home page'><img id='bgee_logo' src='" 
+        		+ this.prop.getLogoImagesRootDirectory() + "bgee13_hp_logo.png' alt='Bgee logo'></a>");
         navbar.append("</div>"); //close navbar-header
 
         // Nav links
@@ -424,8 +433,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         
         // SIB
         navbar.append("<li><a href='http://www.sib.swiss' target='_blank' "
-                + "title='Link to the SIB Swiss Institute of Bioinformatics'><img src='"
-        		+ this.prop.getLogoImagesRootDirectory() +
+                + "title='Link to the SIB Swiss Institute of Bioinformatics'>"
+                + "<img id='sib_logo' src='" + this.prop.getLogoImagesRootDirectory() +
                 "sib_logo.png' alt='SIB Swiss Institute of Bioinformatics' /></a></li>");
 
         navbar.append("</ul>");  // close right nav links

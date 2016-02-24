@@ -15,7 +15,7 @@
 }
 
 #bgee_start .mini_text {
-    font-size: 16px;
+    font-size: 1.2em;
     text-align: center;
     text-transform: uppercase;
     color: #FFF;
@@ -52,14 +52,14 @@
 
 #bgee_explanations span {
     color: #626262;
-    font-size: 24px;
+    font-size: 1.8em;
     font-weight: normal;
     text-transform: uppercase;
     line-height: 40px;
 }
 
 #bgee_explanations p {
-    font-size: 16px;
+    font-size: 1.2em;
 }
 
 #bgee_news {

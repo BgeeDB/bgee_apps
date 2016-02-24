@@ -617,6 +617,14 @@ div.loader p {
     display: inline-flex;
 }
 
+/* For examples in gene list media box*/
+#gene-list-media span.examples {
+	margin-left: 10px;
+}
+#gene-list-media h4 {
+	display: inline;
+}
+
 /*
 //for swt-dev
 html {

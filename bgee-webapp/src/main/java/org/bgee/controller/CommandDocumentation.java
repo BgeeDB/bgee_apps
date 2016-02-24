@@ -57,6 +57,9 @@ public class CommandDocumentation extends CommandParent {
                 RequestParameters.ACTION_DOC_PROC_EXPR_VALUE_DOWLOAD_FILES)) {
             display.displayRefExprDownloadFileDocumentation();
         } else if (this.requestParameters.getAction().equals(
+                RequestParameters.ACTION_DOC_TOP_ANAT)) {
+            display.displayTopAnatDocumentation();
+        } else if (this.requestParameters.getAction().equals(
                 RequestParameters.ACTION_DOC_HOW_TO_ACCESS)) {
             display.displayHowToAccessDataDocumentation();
         } else {

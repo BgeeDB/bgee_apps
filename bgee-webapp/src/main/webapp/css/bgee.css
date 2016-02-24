@@ -173,13 +173,14 @@ See http://work.smarchal.com/twbscolor/css/999999555555ffffffffffff0
     font-size: 95%;
 }
 
-#sib_body h1, #sib_body h2, #sib_body h3 {
+#sib_body h1, #sib_body h2, #sib_body h3, #sib_body h4 {
     color: #E2011B;
-    font-weight: normal;
+    font-weight: bold;
 }
 #sib_body h1 {
     font-size: 1.5em;
-    text-align: center;    
+    text-align: center;
+    margin-bottom: 20px;
 }
 #sib_body h2 {
     margin: 1em 0 1em 0;
@@ -193,11 +194,18 @@ See http://work.smarchal.com/twbscolor/css/999999555555ffffffffffff0
     border-image-slice: 1;
 }
 #sib_body h3 {
-    font-weight: normal;
     font-size: 1em;
-    margin: 2% 0 0 0;
+    margin: 2em 0 1em 0;
 }
-
+#sib_body h4 {
+    font-size: 1em;
+    margin: 2em 0 1em 0;
+	font-weight: normal;
+}
+#sib_body h5 {
+	font-size: 1em;
+	margin: 1em 0 1em 0;
+}
 #sib_body li {
     margin-top: 0.4em;
 }

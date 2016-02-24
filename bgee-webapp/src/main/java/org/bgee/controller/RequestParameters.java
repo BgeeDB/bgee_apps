@@ -200,7 +200,7 @@ public class RequestParameters {
      * providing processed expression values is requested. Value of the parameter page should be 
      * {@link #PAGE_DOCUMENTATION}.
      */
-    public static final String ACTION_DOC_TOPANAT = "top_anat";
+    public static final String ACTION_DOC_TOP_ANAT = "top_anat";
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
      * (see {@link URLParameters#getParamAction()}) when a species data is requested.

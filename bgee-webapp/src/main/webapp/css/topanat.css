@@ -344,11 +344,14 @@ textarea {
     margin: 0 0 0 10px;
 }
 
-.bigger {
+.bigger, #gene-list-media .bigger {
     font-size: 22px;
     font-weight: bold;
     vertical-align: bottom;
     margin: 10px 0 0 10px;
+}
+#gene-list-media {
+	color: #626262;
 }
 
 .btn, .btn-xs {

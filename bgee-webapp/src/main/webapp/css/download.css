@@ -47,7 +47,7 @@ img {
     box-shadow: 4px 4px 6px 0px #555;
 }
 #bgee_uniq_species figure:not(.selected) img.species_img:hover {
-    box-shadow: 0px 0px 10px 4px #920209;
+    box-shadow: 0px 0px 10px 1px #920209;
 }
 
 #bgee_multi_species img {
@@ -66,7 +66,7 @@ img {
 }
 
 #bgee_multi_species figure div {
-    border: 1px #920209 solid;
+    border: 1px #999 solid;
     border-radius: 8px;
     padding: 6px;
     margin-bottom: 6px;
@@ -77,7 +77,7 @@ img {
 }
 
 #bgee_multi_species figure:not(.selected) div:hover {
-    box-shadow: 0px 0px 10px 4px #920209;
+    box-shadow: 0px 0px 10px 1px #920209;
 }
 
 #bgee_multi_species figcaption {
@@ -91,7 +91,6 @@ img {
 
 #bgee_introduction p {
     margin: 0 0.5%;
-    font-size: 0.85em;
     color: #515151;
 }
 
@@ -100,43 +99,22 @@ img {
 }
 
 /****BGEE SEARCH BOX****/
-#bgee_search_box {
-    width: 690px;
-    height: 28px;
-    margin: 0 auto;
-    padding: 10px; 
-    background-color: #D9DDE1;
-    border-radius: 8px;
+
+#bgee_search_box label {
+    color: #626262;
 }
 
-#bgee_search_box form {
-    display: inline-block;
+#results_nb {
+    margin-left: 10px;
 }
 
-#bgee_search_box label, #search_label{
-	margin-right: 10px;
+#bgee_search_box .form-group {
+    margin-bottom: 0;
+    padding-left: 0px;
 }
 
-input[type="image"] {
-    margin-top: -1px;
-    vertical-align: middle;
-    border-radius: 8px;
-}
-
-#sib_body input.sib_text {
-    width: 470px;
-    font-size: 0.7em;
-    background: #FFFFFF;
-    border-color: #7C7C7C #C3C3C3 #C3C3C3 #7C7C7C;
-    border-style: solid;
-    border-width: 1px;
-    color: #406981;
-}
-
-div#results_nb {
-    width: 110px;
-    font-size: 0.8em;
-    text-align: center;
+#bgee_search_box button {
+    margin-top: 25px;
 }
 
 #bgee_more_results_up, #bgee_more_results_down  {
@@ -146,7 +124,7 @@ div#results_nb {
     border: 3px solid #F7F8FA;
     border-left: 0px;
     padding: 6px 0 6px 9px;
-    height: 15px;
+    height: 30px;
     width: 120px;
     left: 0%;
     color: white;
@@ -223,8 +201,8 @@ p.file_info a:hover {
     position: relative;
     background-color: #282828;
     padding: 30px;
-    left: -4%;
-    width: 103%;
+    left: -2.5%;
+    width: 100vw;
     clear: left;
     display: none;
 }
@@ -322,13 +300,13 @@ p.file_info a:hover {
     margin: 0px 0px 0px 30px;
 }
 
-.download_link, #bgee_data_selection p.no_data {
+#sib_body .download_link, #bgee_data_selection p.no_data {
 	padding: 5px;
 	font-size: 0.9em;
 	margin-right: 0.4em;
 }
 
-.download_link, .download_link:visited {
+#sib_body .download_link, #sib_body .download_link:visited {
     display:inline-block;
     background-color:#3E3E3E;
     border: 1px solid #141414;
@@ -338,11 +316,8 @@ p.file_info a:hover {
     color: #AAA;
 }
 
-.download_link:hover {
+#sib_body .download_link:hover {
     color: #141414;
-}
-
-.download_link:hover {
     text-decoration: none;
     background-color:#717171;
 }

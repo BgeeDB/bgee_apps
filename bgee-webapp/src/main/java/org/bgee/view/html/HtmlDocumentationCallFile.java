@@ -1387,7 +1387,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      */
     public static String getMultiSpeciesCompleteDiffExprFileExample() {
         log.entry();
-        return log.exit("<table class='call_download_file_example'>"
+        return log.exit("<div class='large-table'><table class='call_download_file_example'>"
                 + "<caption>Example lines for multi-species complete differential expression file</caption>"
                 + "<thead>" 
                 + getMultiSpeciesCompleteDiffExprFileHeader(false) 
@@ -1421,7 +1421,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "<td>8.741838E-4</td><td>1</td><td>0</td><td>CIO:0000004</td>"
                 + "<td>medium confidence from single evidence</td></tr>"
                 + "</tbody>"
-                + "</table>");
+                + "</table></div>");
     }
     /**
      * Get the header of multi-species complete differential expression file as a HTML 'tr' element, 

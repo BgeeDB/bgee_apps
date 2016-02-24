@@ -292,18 +292,22 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      */
     private String getSearchBox() {
         log.entry();
-    
-        return log.exit(
-                "<div id='bgee_search_box'>" +
-                        "<form action='/' method='get'>" +
-                            "<label for='search_label'>Search species</label>" +
-                            "<input id='search_label' class='sib_text' type='text' name='search' " +
-                                "value='Scientific name, common name...'/>" +
-                            "<input type='image' alt='Submit' " +
-                                "src='"+this.prop.getImagesRootDirectory()+"submit_button.png'/>" +
-                            "<div id='results_nb'></div>" +
-                        "</form>" +
-                "</div>");
+        
+        StringBuilder box = new StringBuilder();
+        box.append("<div class='row'>");
+        box.append("<div id='bgee_search_box' class='row well well-sm col-md-offset-3 col-md-6'>");
+        box.append("    <form  action='/' method='get'>");
+        box.append("        <div class='form-group col-md-10'>");
+        box.append("            <label for='search_label'>Search species</label>");
+        box.append("            <span id='results_nb'></span>");
+        box.append("            <input id='search_label' type='text' name='search' class='form-control' "+"value='Scientific name, common name...'/>");
+        box.append("        </div>");
+        box.append("        <button type='submit' class='btn btn-default col-md-2'>Submit</button>");
+        box.append("    </form>");
+        box.append("</div>");
+        box.append("</div>");
+        
+        return log.exit(box.toString());
     }
 
 
@@ -344,8 +348,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
         StringBuilder s = new StringBuilder(); 
         s.append("<div id='bgee_multi_species'>");
-        s.append("<h2>Multi-species</h2>" +
-                 "<span class='header_details'>(orthologous genes in homologous anatomical structures)</span>");
+        s.append("<h2>Multi-species" +
+                 "<span class='header_details'>(orthologous genes in homologous anatomical structures)</span></h2>");
         s.append("<div class='bgee_section bgee_download_section'>");
         s.append(getMultiSpeciesFigures(pageType, groups));
         s.append("</div>");
@@ -617,7 +621,6 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         }
         s.append("<div id='bgee_uniq_species'> ");
         switch (pageType) {
-        case HOME_PAGE: 
         case PROC_EXPR_VALUES:
             s.append("<h2>Species with data in Bgee");
             break;

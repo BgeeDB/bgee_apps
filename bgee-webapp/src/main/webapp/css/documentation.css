@@ -33,6 +33,10 @@ div.documentationmenu li {
     margin-top: 0.3%;
 }
 
+div.large-table {
+	overflow-x: scroll;
+}
+
 table.call_download_file_desc, table.call_download_file_example {
 	width: 100%;
 	border-top: 1px solid black;
@@ -43,6 +47,15 @@ table.call_download_file_desc, table.call_download_file_example {
     margin-bottom: 1em;
 }
 
+table.call_download_file_example {
+	font-size: 0.7em;
+}
+
+table.call_download_file_desc caption, table.call_download_file_example caption {
+    text-align: center;
+    font-weight: bold;
+}
+	
 table.call_download_file_desc thead, table.call_download_file_example thead {
 	border-bottom: 1px solid black;
 }
@@ -55,10 +68,6 @@ table.call_download_file_example td, table.call_download_file_example th {
     font-weight: normal;
 }
 
-table.call_download_file_example tr {
-    font-size: 0.8em;
-}
-
 ul.doc_content li:not(:first-child) {
     margin-top: 0.7em;
 }
@@ -66,10 +75,6 @@ ul.doc_content li:not(:first-child) {
 div.doc_content {
 	padding: 0 0.3em 0 0.3em;
 	text-align: justify;
-}
-
-div.doc_content p, div.doc_content ul {
-    font-size: 0.9em;
 }
 
 a.backlink, a.backlink:visited {

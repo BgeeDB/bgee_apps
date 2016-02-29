@@ -58,9 +58,9 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                     "Only single-species groups should be displayed on the home page."));
         }
 
-        this.displaySpeciesBanner(groups);
-
         this.displayStartBanner();
+
+        this.displaySpeciesBanner(groups);
 
         this.displayExplanation();
         
@@ -123,11 +123,14 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	            + "bgee13_hp_logo.png' alt='Bgee logo'></div>");
 	
 	    this.writeln("<div class='mini_text'>Gene expression database in animals</div>");
-	
+
 	    this.writeln("<div id='start_buttons'>");
-	    this.writeln("<a href='"+ urlTopAnat.getRequestURL() + "'>Start gene expression enrichment</a>");
-	    this.writeln("<a href='"+ urlGeneSearch.getRequestURL() + "'>Gene search</a>");
-	    this.writeln("<a href='"+ urlDownload.getRequestURL() + "'>Download</a>");
+	    this.writeln("<a href='"+ urlTopAnat.getRequestURL() + 
+	    		"'><span class='glyphicon glyphicon-stats'></span>Expression enrichment analysis</a>");
+	    this.writeln("<a href='"+ urlGeneSearch.getRequestURL() + 
+	    		"'><span class='glyphicon glyphicon-search'></span>Gene search</a>");
+	    this.writeln("<a href='"+ urlDownload.getRequestURL() + 
+	    		"'><span class='glyphicon glyphicon-download'></span>Download</a>");
 	    this.writeln("</div>"); // close start_buttons
 	
 	    this.writeln("</div>"); // close bgee_start row

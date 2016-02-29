@@ -46,6 +46,10 @@
     border: 1px solid #FFF;
 }
 
+#start_buttons span.glyphicon {
+    margin-right: 0.4em;
+}
+
 #bgee_explanations {
     margin: 50px 0;
 }

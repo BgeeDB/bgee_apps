@@ -291,14 +291,16 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         
         StringBuilder box = new StringBuilder();
         box.append("<div class='row'>");
-        box.append("<div id='bgee_search_box' class='row well well-sm col-md-offset-3 col-md-6'>");
+        box.append("<div id='bgee_search_box' class='row well well-sm "
+        								+ "col-xs-offset-1 col-xs-10 col-md-offset-3 col-md-6'>");
         box.append("    <form  action='/' method='get'>");
-        box.append("        <div class='form-group col-md-10'>");
+        box.append("        <div class='form-group col-xs-9 col-sm-10'>");
         box.append("            <label for='search_label'>Search species</label>");
         box.append("            <span id='results_nb'></span>");
-        box.append("            <input id='search_label' type='text' name='search' class='form-control' "+"value='Scientific name, common name...'/>");
+        box.append("            <input id='search_label' type='text' name='search' class='form-control' "
+        								+ "value='Scientific name, common name...'/>");
         box.append("        </div>");
-        box.append("        <button type='submit' class='btn btn-default col-md-2'>Submit</button>");
+        box.append("        <button type='submit' class='btn btn-default col-xs-3 col-sm-2'>Submit</button>");
         box.append("    </form>");
         box.append("</div>");
         box.append("</div>");

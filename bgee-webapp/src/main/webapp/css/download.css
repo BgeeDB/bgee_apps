@@ -1,12 +1,8 @@
-#bgee_title {
-    margin-top: -10px;	
-}
-
-#bgee_title img {
+h1 img {
     height: 1.7em;
     width: 1.7em;
     margin-right: 0.4em;
-    margin-bottom: -0.5em;
+    margin-bottom: 0.2em;
 }
 
 #sib_body img.page_img {

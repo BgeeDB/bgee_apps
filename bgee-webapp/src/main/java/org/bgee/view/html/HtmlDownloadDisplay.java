@@ -97,12 +97,10 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln(getKeywordScriptTag(keywords, groups, DownloadPageType.EXPR_CALLS));
         this.writeln("<div id='expr_calls'>");
 
-        this.writeln("<div id='bgee_title'>");
         this.writeln("<h1>");
         this.writeln("<img src='" + this.prop.getLogoImagesRootDirectory() + "expr_calls_logo.png' " + 
                 "alt='" + GENE_EXPR_CALLS_PAGE_NAME + " logo'/>" + GENE_EXPR_CALLS_PAGE_NAME);
         this.writeln("</h1>");
-        this.writeln("</div>");
         
         // Introduction
         this.writeln("<div id='bgee_introduction' class='bgee_section bgee_download_section'>");
@@ -145,13 +143,11 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
         this.writeln("<div id='proc_values'>");
     
-        this.writeln("<div id='bgee_title'>");
         this.writeln("<h1>");
         this.writeln("<img src='" + this.prop.getLogoImagesRootDirectory() + "proc_values_logo.png'" + 
                 "' alt='" + PROCESSED_EXPR_VALUES_PAGE_NAME + " logo'/>" + 
                 PROCESSED_EXPR_VALUES_PAGE_NAME);
         this.writeln("</h1>");
-        this.writeln("</div>");
 
         // Introduction
         this.writeln("<div id='bgee_introduction' class='bgee_section bgee_download_section'>");

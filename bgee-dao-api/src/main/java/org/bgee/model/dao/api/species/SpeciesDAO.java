@@ -28,6 +28,7 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
      * <li>{@code PARENT_TAXON_ID}: corresponds to {@link SpeciesTO#getParentTaxonId()}.
      * <li>{@code GENOME_FILE_PATH}: corresponds to {@link SpeciesTO#getGenomeFilePath()}.
      * <li>{@code GENOME_VERSION}: corresponds to {@link SpeciesTO#getGenomeVersion()}.
+     * <li>{@code DATA_SOURCE_ID}: corresponds to {@link SpeciesTO#getDataSourceId()}.
      * <li>{@code GENOME_SPECIES_ID}: corresponds to {@link SpeciesTO#getGenomeSpeciesId()}.
      * <li>{@code FAKE_GENE_ID_PREFIX}: corresponds to {@link SpeciesTO#getFakeGeneIdPrefix()}.
      * </ul>
@@ -37,9 +38,7 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
      */
     public enum Attribute implements DAO.Attribute {
         ID, COMMON_NAME, GENUS, SPECIES_NAME, PARENT_TAXON_ID, GENOME_FILE_PATH, 
-        GENOME_SPECIES_ID, FAKE_GENE_ID_PREFIX, 
-        // TODO currently this info is not present in the table
-        GENOME_VERSION;
+        GENOME_VERSION, DATA_SOURCE_ID, GENOME_SPECIES_ID, FAKE_GENE_ID_PREFIX;
     }
     
     /**
@@ -134,6 +133,11 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
          * For instance, for human, this attribute would contain: {@code Homo_sapiens.GRCh37}.
          */
         private final String genomeVersion;
+        
+        /**
+         * @see #getDataSourceId()
+         */
+        private final String dataSourceId;
 
         /**
          * A {@code String} that is the ID of the species whose the genome was used 
@@ -180,7 +184,7 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
          */
         public SpeciesTO(String id, String commonName, String genus, String speciesName, 
                 String parentTaxonId, String genomeFilePath, String genomeVersion, 
-                String genomeSpeciesId, String fakeGeneIdPrefix) {
+                String dataSourceId, String genomeSpeciesId, String fakeGeneIdPrefix) {
             super(id, commonName);
             
             this.genus = genus;
@@ -188,6 +192,7 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
             this.parentTaxonId = parentTaxonId;
             this.genomeFilePath = genomeFilePath;
             this.genomeVersion = genomeVersion;
+            this.dataSourceId = dataSourceId;
             this.genomeSpeciesId = genomeSpeciesId;
             this.fakeGeneIdPrefix = fakeGeneIdPrefix;
         }
@@ -245,6 +250,14 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
         public String getGenomeVersion() {
             return genomeVersion;
         }
+        
+        /**
+         * @return  A {@code String} that is the ID in the Bgee database of the data source 
+         *          for genome information.
+         */
+        public String getDataSourceId() {
+            return dataSourceId;
+        }
 
         /**
          * @return  A {@code String} that is the ID of the species whose the genome was used 
@@ -272,7 +285,8 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
                     " - Genus: " + this.getGenus() + " - Species name: " + this.getSpeciesName() + 
                     " - Parent taxon ID: " + this.getParentTaxonId() + " - Description: " + 
                     this.getDescription() + " - Genome file path: " + this.getGenomeFilePath() + 
-                    " - Genome version: " + this.getGenomeFilePath() + " - Genome species ID: " + 
+                    " - Genome version: " + this.getGenomeFilePath() + 
+                    " - Data source ID: " + this.getDataSourceId() + " - Genome species ID: " + 
                     this.getGenomeSpeciesId() + " - Fake gene ID prefix: " + 
                     this.getFakeGeneIdPrefix();
         }

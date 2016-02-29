@@ -122,9 +122,9 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
                 Arrays.asList(
                         // The order of species IDs is not the same 
                         // if they are ordered as Strings or as Integers
-                        new SpeciesTO("11", null, "Gorilla", "gorilla", null, null, null, null, null),
-                        new SpeciesTO("22", null, "GenusVR", "speciesVR", null, null, null, null, null),
-                        new SpeciesTO("1033", null, "Gorilla", "gorilla gorilla", null, null, null, null, null)),
+                        new SpeciesTO("11", null, "Gorilla", "gorilla", null, null, null, null, null, null),
+                        new SpeciesTO("22", null, "GenusVR", "speciesVR", null, null, null, null, null, null),
+                        new SpeciesTO("1033", null, "Gorilla", "gorilla gorilla", null, null, null, null, null, null)),
                 MySQLSpeciesTOResultSet.class);
         when(mockManager.mockSpeciesDAO.getSpeciesByIds(speciesIds1)).thenReturn(mockSpeciesTORs);
 

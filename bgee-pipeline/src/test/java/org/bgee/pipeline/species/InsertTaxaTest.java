@@ -2,6 +2,7 @@ package org.bgee.pipeline.species;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -9,14 +10,19 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.keyword.KeywordDAO;
+import org.bgee.model.dao.api.keyword.KeywordDAO.EntityToKeywordTO;
+import org.bgee.model.dao.api.keyword.KeywordDAO.KeywordTOResultSet;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
+import org.bgee.model.dao.mysql.keyword.MySQLKeywordDAO.MySQLKeywordTOResultSet;
 import org.bgee.pipeline.TestAncestor;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
 /**
@@ -92,6 +98,14 @@ public class InsertTaxaTest extends TestAncestor {
         //that the correct values were tried to be inserted into the database.
         MockDAOManager mockManager = new MockDAOManager();
         
+        Set<String> expectedKeywords = new HashSet<>(Arrays.asList("speB", "speC", "speC 2"));
+        KeywordTOResultSet mockRs = createMockDAOResultSet(Arrays.asList(
+                new KeywordDAO.KeywordTO("1", "speB"), 
+                new KeywordDAO.KeywordTO("2", "speC"), 
+                new KeywordDAO.KeywordTO("3", "speC 2")), 
+                MySQLKeywordTOResultSet.class);
+        when(mockManager.mockKeywordDAO.getKeywords(expectedKeywords)).thenReturn(mockRs);
+        
         InsertTaxa insert = new InsertTaxa(mockManager);
         insert.insertSpeciesAndTaxa(this.getClass().getResource(SPECIESFILE).getFile(), 
                 this.getClass().getResource(TAXONFILE).getFile(), 
@@ -102,13 +116,13 @@ public class InsertTaxaTest extends TestAncestor {
         Set<SpeciesTO> expectedSpeciesTOs = new HashSet<SpeciesTO>();
         expectedSpeciesTOs.add(
                 new SpeciesTO("8", "my common nameA", "my genusA", "my speciesA", "16", 
-                        "file/pathA", "versionA", null, null));
+                        "file/pathA", "versionA", "2", null, null));
         expectedSpeciesTOs.add(
                 new SpeciesTO("13", "my common nameB", "my genusB", "my speciesB", "12", 
-                        "file/pathB", "versionB", "20", "PREFIX"));
+                        "file/pathB", "versionB", "24", "20", "PREFIX"));
         expectedSpeciesTOs.add(
                 new SpeciesTO("15", "my common nameC", "my genusC", "my speciesC", "14", 
-                        "file/pathC", "versionC", null, null));
+                        "file/pathC", "versionC", "2", null, null));
         ArgumentCaptor<Set> speciesTOsArg = ArgumentCaptor.forClass(Set.class);
         verify(mockManager.mockSpeciesDAO).insertSpecies(speciesTOsArg.capture());
         if (!this.areSpeciesTOCollectionsEqual(
@@ -117,6 +131,20 @@ public class InsertTaxaTest extends TestAncestor {
             		"expected " + expectedSpeciesTOs.toString() + ", but was " + 
             		speciesTOsArg.getValue());
         }
+        
+        //keywords
+        ArgumentCaptor<Set> keywordArg = ArgumentCaptor.forClass(Set.class);
+        verify(mockManager.mockKeywordDAO).insertKeywords(keywordArg.capture());
+        assertEquals("Incorrect keywords inserted", expectedKeywords, keywordArg.getValue());
+        //species to keywords
+        ArgumentCaptor<Set> speToKeywordArg = ArgumentCaptor.forClass(Set.class);
+        Set<EntityToKeywordTO> expectedSpeToKeywordTOs = new HashSet<>(Arrays.asList(
+                new EntityToKeywordTO("13", "1"), new EntityToKeywordTO("15", "2"), 
+                new EntityToKeywordTO("15", "3")));
+        verify(mockManager.mockKeywordDAO).insertKeywordToSpecies(speToKeywordArg.capture());
+        assertEquals("Incorrect species-keywords relations inserted", expectedSpeToKeywordTOs, 
+                speToKeywordArg.getValue());
+        
         
 
         Set<TaxonTO> expectedTaxonTOs = new HashSet<TaxonTO>();

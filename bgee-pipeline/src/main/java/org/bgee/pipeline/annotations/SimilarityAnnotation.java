@@ -33,7 +33,6 @@ import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.Utils;
 import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.AncestralTaxaAnnotationBean;
 import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.AnnotationBean;
-import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.ParseMultipleStringValues;
 import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.ParseQualifier;
 import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.RawAnnotationBean;
 import org.bgee.pipeline.annotations.SimilarityAnnotationUtils.SummaryAnnotationBean;
@@ -635,7 +634,7 @@ public class SimilarityAnnotation {
             switch (header[i]) {
             // *** CellProcessors common to all AnnotationBean types ***
                 case SimilarityAnnotationUtils.ENTITY_COL_NAME: 
-                    processors[i] = new ParseMultipleStringValues();
+                    processors[i] = new AnnotationCommon.ParseMultipleStringValues();
                     break;
                 case SimilarityAnnotationUtils.TAXON_COL_NAME: 
                     processors[i] = new ParseInt();

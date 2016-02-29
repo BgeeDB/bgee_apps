@@ -37,6 +37,7 @@ import org.bgee.model.dao.mysql.file.MySQLSpeciesDataGroupDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneOntologyDAO;
 import org.bgee.model.dao.mysql.gene.MySQLHierarchicalGroupDAO;
+import org.bgee.model.dao.mysql.keyword.MySQLKeywordDAO;
 import org.bgee.model.dao.mysql.ontologycommon.MySQLCIOStatementDAO;
 import org.bgee.model.dao.mysql.ontologycommon.MySQLEvidenceOntologyDAO;
 import org.bgee.model.dao.mysql.ontologycommon.MySQLRelationDAO;
@@ -142,6 +143,9 @@ public abstract class TestAncestor
         // Determine the behavior of call to getAllTOs().
         when(mockResultSet.getAllTOs()).thenCallRealMethod();
         
+        // Determine the behavior of call to stream.
+        when(mockResultSet.stream()).thenReturn(resultSetContent.stream());
+        
         // Determine the behavior of call to close().
         doNothing().when(mockResultSet).close();
         
@@ -158,6 +162,7 @@ public abstract class TestAncestor
 	    public final BgeeConnection mockConnection = mock(BgeeConnection.class);
 	    public final MySQLSourceDAO mockSourceDAO = mock(MySQLSourceDAO.class);
         public final MySQLSpeciesDAO mockSpeciesDAO = mock(MySQLSpeciesDAO.class);
+        public final MySQLKeywordDAO mockKeywordDAO = mock(MySQLKeywordDAO.class);
         public final MySQLTaxonDAO mockTaxonDAO = mock(MySQLTaxonDAO.class);
         public final MySQLTaxonConstraintDAO mockTaxonConstraintDAO = 
                 mock(MySQLTaxonConstraintDAO.class);
@@ -228,6 +233,10 @@ public abstract class TestAncestor
         @Override
         protected MySQLSpeciesDAO getNewSpeciesDAO() {
             return this.mockSpeciesDAO;
+        }
+        @Override
+        protected MySQLKeywordDAO getNewKeywordDAO() {
+            return this.mockKeywordDAO;
         }
         @Override
         protected MySQLTaxonDAO getNewTaxonDAO() {

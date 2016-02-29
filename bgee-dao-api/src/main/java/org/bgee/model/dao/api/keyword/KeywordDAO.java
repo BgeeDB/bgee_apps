@@ -34,6 +34,21 @@ public interface KeywordDAO extends DAO<KeywordDAO.Attribute> {
     }
     
     /**
+     * Retrieve keywords from the data source matching exactly the provided {@code keywords}.
+     * <p>
+     * The keywords are returned using a {@code KeywordTOResultSet}. 
+     * It is the responsibility of the caller to close this {@code DAOResultSet} once 
+     * results are retrieved.
+     * 
+     * @param keywords      A {@code Collection} of {@code String}s representing keywords 
+     *                      to search in the data source. 
+     *                      If {@code null} or empty, all keywords are retrieved. 
+     * @return              An {@code KeywordTOResultSet} allowing to retrieve {@code KeywordTO}s.
+     * @throws DAOException If an error occurred when accessing the data source. 
+     */
+    public KeywordTOResultSet getKeywords(Collection<String> keywords) throws DAOException;
+    
+    /**
      * Retrieve keywords from the data source that are related to species. Keywords in that case 
      * represent mainly alternative common names (for instance, 'rhesus monkey', 'roundworm'), 
      * or alternative taxon names related to this species.

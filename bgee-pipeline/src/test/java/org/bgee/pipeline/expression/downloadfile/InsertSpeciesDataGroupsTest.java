@@ -78,9 +78,9 @@ public class InsertSpeciesDataGroupsTest extends TestAncestor {
 
         // Mock the call to MySQLSpeciesTO
         MySQLSpeciesTOResultSet mockSpeciesTORs = createMockDAOResultSet(Arrays.asList(
-                new SpeciesTO("sp1", null, null, null, null, null, null, null, null),
-                new SpeciesTO("sp2", null, null, null, null, null, null, null, null),
-                new SpeciesTO("sp3", null, null, null, null, null, null, null, null)),
+                new SpeciesTO("sp1", null, null, null, null, null, null, null, null, null),
+                new SpeciesTO("sp2", null, null, null, null, null, null, null, null, null),
+                new SpeciesTO("sp3", null, null, null, null, null, null, null, null, null)),
                 MySQLSpeciesTOResultSet.class);
         when(mockManager.mockSpeciesDAO.getAllSpecies()).thenReturn(mockSpeciesTORs);
 

@@ -6,7 +6,8 @@
 
 /*!40000 ALTER TABLE `species` DISABLE KEYS */;
 alter table species 
-add foreign key (taxonId) references taxon(taxonId) on delete cascade;
+add foreign key (taxonId) references taxon(taxonId) on delete cascade, 
+add foreign key (dataSourceId) references dataSource(dataSourceId) on delete cascade;
 /*!40000 ALTER TABLE `species` ENABLE KEYS */;
 
 /*!40000 ALTER TABLE `speciesToKeyword` DISABLE KEYS */;

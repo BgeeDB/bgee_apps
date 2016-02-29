@@ -70,6 +70,36 @@ public class MySQLKeywordDAO extends MySQLDAO<KeywordDAO.Attribute> implements K
     }
 
     @Override
+    public KeywordTOResultSet getKeywords(Collection<String> keywords) throws DAOException {
+        log.entry(keywords);
+        
+        //we don't use a try-with-resource, because we return a pointer to the results, 
+        //not the actual results, so we should not close this BgeePreparedStatement.
+        try {
+            Set<String> filteredKeywords = keywords == null? new HashSet<>(): new HashSet<>(keywords);
+            
+            String sql = this.generateSelectClause(KEYWORD_TABLE, COL_NAMES_TO_ATTRS, true);
+            
+            sql += "FROM " + KEYWORD_TABLE;
+            
+            if (!filteredKeywords.isEmpty()) {
+                sql += " WHERE " + KEYWORD_TABLE + ".keyword IN (" + 
+                           BgeePreparedStatement.generateParameterizedQueryString(
+                                   filteredKeywords.size()) + ")";
+            }
+            
+            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
+            if (!filteredKeywords.isEmpty()) {
+                stmt.setStrings(1, filteredKeywords, true);
+            }             
+            return log.exit(new MySQLKeywordTOResultSet(stmt));
+            
+        } catch (SQLException|IllegalArgumentException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+
+    @Override
     public KeywordTOResultSet getKeywordsRelatedToSpecies(Collection<String> speciesIds) 
             throws DAOException {
         log.entry(speciesIds);
@@ -133,6 +163,89 @@ public class MySQLKeywordDAO extends MySQLDAO<KeywordDAO.Attribute> implements K
         }
     }
     
+    
+    
+
+    //***************************************************************************
+    // METHODS NOT PART OF THE bgee-dao-api, USED BY THE PIPELINE AND NOT MEANT 
+    //TO BE EXPOSED TO THE PUBLIC API.
+    //***************************************************************************
+    /**
+     * Inserts the provided keywords into the Bgee database.
+     * 
+     * @param keywords  a {@code Collection} of {@code String}s to be inserted 
+     *                  into the database.
+     * @return          An {@code int} that is the number of keywords inserted 
+     *                  as a result of this method call.
+     * @throws DAOException     If a {@code SQLException} occurred while trying 
+     *                          to insert {@code keywords}. The {@code SQLException} 
+     *                          will be wrapped into a {@code DAOException} ({@code DAOs} 
+     *                          do not expose these kind of implementation details).
+     */
+    public int insertKeywords(Collection<String> keywords) throws DAOException {
+        log.entry(keywords);
+        
+        StringBuilder sql = new StringBuilder(); 
+        sql.append("INSERT INTO " + KEYWORD_TABLE + "(keyword) values (?)");
+        try (BgeePreparedStatement stmt = 
+                this.getManager().getConnection().prepareStatement(sql.toString())) {
+            int inserted = 0;
+            for (String keyword: keywords) {
+                stmt.setString(1, keyword);
+                try {
+                    stmt.executeUpdate();
+                    inserted++;
+                } catch (SQLException e) {
+                    //nothing here, the insert will fail if the keyword is already present in database
+                }
+            }
+            
+            return log.exit(inserted);
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+    /**
+     * Inserts the provided relations between keyword IDs and species IDs into the Bgee database.
+     * 
+     * @param speciesToKeywords     a {@code Collection} of {@code EntityToKeywordTO}s to be inserted 
+     *                              into the database.
+     * @return                      An {@code int} that is the number of relations inserted 
+     *                              as a result of this method call.
+     * @throws DAOException     If a {@code SQLException} occurred while trying 
+     *                          to insert {@code EntityToKeywordTO}s. The {@code SQLException} 
+     *                          will be wrapped into a {@code DAOException} ({@code DAOs} 
+     *                          do not expose these kind of implementation details).
+     */
+    public int insertKeywordToSpecies(Collection<EntityToKeywordTO> speciesToKeywords) throws DAOException {
+        log.entry(speciesToKeywords);
+        
+        StringBuilder sql = new StringBuilder(); 
+        sql.append("INSERT INTO " + KEYWORD_TO_SPECIES_TABLE + "(keywordId, speciesId) values ");
+        for (int i = 0; i < speciesToKeywords.size(); i++) {
+            if (i > 0) {
+                sql.append(", ");
+            }
+            sql.append("(?, ?) ");
+        }
+        try (BgeePreparedStatement stmt = 
+                this.getManager().getConnection().prepareStatement(sql.toString())) {
+            int paramIndex = 1;
+            for (EntityToKeywordTO speciesToKeyword: speciesToKeywords) {
+                stmt.setInt(paramIndex, Integer.parseInt(speciesToKeyword.getKeywordId()));
+                paramIndex++;
+                stmt.setInt(paramIndex, Integer.parseInt(speciesToKeyword.getEntityId()));
+                paramIndex++;
+            }
+            
+            return log.exit(stmt.executeUpdate());
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+    
+    
+    
     /**
      * A {@code MySQLDAOResultSet} specific to {@code KeywordTO}, allowing to fetch results 
      * of queries performed by this {@code MySQLKeywordDAO}, to populate {@code KeywordTO}s.
@@ -141,7 +254,7 @@ public class MySQLKeywordDAO extends MySQLDAO<KeywordDAO.Attribute> implements K
      * @version Bgee 13 August 2015
      * @since Bgee 13
      */
-    class MySQLKeywordTOResultSet extends MySQLDAOResultSet<KeywordTO> 
+    public class MySQLKeywordTOResultSet extends MySQLDAOResultSet<KeywordTO> 
             implements KeywordTOResultSet {
         /**
          * @param statement The {@code BgeePreparedStatement} to be executed.
@@ -186,7 +299,7 @@ public class MySQLKeywordDAO extends MySQLDAO<KeywordDAO.Attribute> implements K
      * @version Bgee 13 August 2015
      * @since Bgee 13
      */
-    class MySQLEntityToKeywordTOResultSet extends MySQLDAOResultSet<EntityToKeywordTO> 
+    public class MySQLEntityToKeywordTOResultSet extends MySQLDAOResultSet<EntityToKeywordTO> 
             implements EntityToKeywordTOResultSet {
         
         /**

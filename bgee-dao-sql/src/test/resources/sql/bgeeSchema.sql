@@ -115,6 +115,8 @@ create table species (
 -- This field is needed because we use for some species the genome of another species
 -- (for instance, chimp genome for bonobo species).
     genomeFilePath varchar(100) not null COMMENT 'GTF annotation path used to map this species in Ensembl FTP',
+    genomeVersion varchar(50) not null, 
+    dataSourceId smallInt unsigned not null COMMENT 'source for genome information', 
 -- ID of the species whose the genome was used for this species. This is used
 -- when a genome is not in Ensembl. For instance, for bonobo (ID 9597), we use the chimp
 -- genome (ID 9598), because bonobo is not in Ensembl.

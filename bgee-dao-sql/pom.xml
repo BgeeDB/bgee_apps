@@ -334,6 +334,7 @@
                            <autocommit>true</autocommit>
                            <srcFiles>
                                <srcFile>${bgee.database.file.schema}</srcFile>
+                               <srcFile>${bgee.database.file.constraint}</srcFile>
                            </srcFiles>
                        </configuration>
                    </execution>

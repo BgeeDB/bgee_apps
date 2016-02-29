@@ -28,14 +28,17 @@ import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.supercsv.cellprocessor.CellProcessorAdaptor;
 import org.supercsv.cellprocessor.constraint.NotNull;
 import org.supercsv.cellprocessor.ift.CellProcessor;
+import org.supercsv.exception.SuperCsvCellProcessorException;
 import org.supercsv.io.CsvListReader;
 import org.supercsv.io.CsvMapReader;
 import org.supercsv.io.CsvMapWriter;
 import org.supercsv.io.ICsvListReader;
 import org.supercsv.io.ICsvMapReader;
 import org.supercsv.io.ICsvMapWriter;
+import org.supercsv.util.CsvContext;
 
 import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
@@ -64,7 +67,7 @@ public class AnnotationCommon {
      */
     public static final List<String> TAXON_COL_NAMES = Collections.unmodifiableList(
             Arrays.asList(SimilarityAnnotationUtils.TAXON_COL_NAME, 
-                    "taxon ID", "species ID", "taxonID", "speciesID"));
+                    "taxon ID", "species ID", "taxonID", "speciesID", "speciesId"));
     
     /**
      * An unmodifiable {@code List} of {@code String}s that are the potential names 
@@ -105,6 +108,73 @@ public class AnnotationCommon {
      */
     public final static List<String> ENTITY_SEPARATORS = 
             Collections.unmodifiableList(Arrays.asList(DEFAULT_ENTITY_SEPARATOR, ","));
+    
+    /**
+     * A {@code CellProcessorAdaptor} capable of parsing cells allowing to optionally 
+     * contain multiple values, separated by one of the separator in 
+     * {@link org.bgee.pipeline.Utils#VALUE_SEPARATORS VALUE_SEPARATORS}. 
+     * This {@code CellProcessorAdaptor} will return the values as a {@code List} 
+     * of {@code String}s, in the same order as in the cell read.
+     * 
+     * @author Frederic Bastian
+     * @version Bgee 13 Mar. 2015
+     * @since Bgee 13
+     */
+    public static class ParseMultipleStringValues extends CellProcessorAdaptor {
+        /**
+         * A {@code String} that is the pattern to use to split values in a cell 
+         * potentially containing multiple values.
+         */
+        private final static String SPLIT_VALUE_PATTERN = generateSplitValuePattern();
+        /**
+         * Generate the pattern to split multiple values, based on {@link Utils#VALUE_SEPARATORS}.
+         * @return  A {@code String} that is the pattern to use to split values in a cell 
+         *          potentially containing multiple values.
+         */
+        private final static String generateSplitValuePattern() {
+            log.entry();
+            String splitPattern = "";
+            for (String separator: Utils.VALUE_SEPARATORS) {
+                if (!splitPattern.equals("")) {
+                    splitPattern += "|";
+                }
+                splitPattern += Pattern.quote(separator);
+            }
+            return log.exit(splitPattern);
+        }
+        
+        /**
+         * Default constructor, no other {@code CellProcessor} in the chain.
+         */
+        public ParseMultipleStringValues() {
+                super();
+        }
+        /**
+         * Constructor allowing other processors to be chained 
+         * after {@code ParseMultipleStringValues}.
+         * @param next  A {@code CellProcessor} that is the next to be called. 
+         */
+        public ParseMultipleStringValues(CellProcessor next) {
+            super(next);
+        }
+        
+        @Override
+        public Object execute(Object value, CsvContext context) 
+                throws SuperCsvCellProcessorException {
+            log.entry(value, context); 
+            //throws an Exception if the input is null, as all CellProcessors usually do.
+            validateInputNotNull(value, context);  
+            
+            List<String> values = new ArrayList<String>(
+                    Arrays.asList(((String) value).split(SPLIT_VALUE_PATTERN)));
+            if (values.isEmpty()) {
+                throw log.throwing(new SuperCsvCellProcessorException("Cell cannot be empty", 
+                        context, this));
+            }
+            //passes result to next processor in the chain
+            return log.exit(next.execute(values, context));
+        }
+    }
     
     /**
      * Actions that can be launched from this main method, depending on the first 

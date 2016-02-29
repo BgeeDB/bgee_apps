@@ -85,8 +85,8 @@ public abstract class GenerateDownloadFileTest extends TestAncestor {
     protected SpeciesTOResultSet mockGetSpecies(MockDAOManager mockManager, Set<String> speciesIds) {
         MySQLSpeciesTOResultSet mockSpeciesTORs = createMockDAOResultSet(
                 Arrays.asList(
-                        new SpeciesTO("11", null, "Genus11", "species11", null, null, null, null, null),
-                        new SpeciesTO("22", null, "Genus22", "species22", null, null, null, null, null)),
+                        new SpeciesTO("11", null, "Genus11", "species11", null, null, null, null, null, null),
+                        new SpeciesTO("22", null, "Genus22", "species22", null, null, null, null, null, null)),
                         MySQLSpeciesTOResultSet.class);
         when(mockManager.mockSpeciesDAO.getSpeciesByIds(speciesIds)).thenReturn(mockSpeciesTORs);
         return mockSpeciesTORs;

@@ -71,8 +71,8 @@ public class FilterNoExprCallsTest extends TestAncestor {
         //     MOCK DATA
         //*********************************************
         List<SpeciesTO> speciesTOs = Arrays.asList(
-                new SpeciesTO("11", null, null, null, null, null, null, null, null),
-                new SpeciesTO("21", null, null, null, null, null, null, null, null));
+                new SpeciesTO("11", null, null, null, null, null, null, null, null, null),
+                new SpeciesTO("21", null, null, null, null, null, null, null, null, null));
         //getAllSpecies will be called three times, once at the beginning, 
         //then once for each species
         MySQLSpeciesTOResultSet mockSpeciesTORS1 = createMockDAOResultSet(speciesTOs,

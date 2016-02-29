@@ -102,15 +102,8 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
         log.entry(attributes, speciesTableName);
         
         String sql = new String(); 
-        //TODO: remove once the genomve version will be in the table
-        String genomeVersion = "(SELECT SUBSTRING_INDEX(subSelectSpe.genomeFilePath, "
-                + "CONCAT(subSelectSpe.genus, '_', subSelectSpe.species, '.'), -1) "
-                + "FROM species as subSelectSpe WHERE subSelectSpe.speciesId = "
-                + "(IF (" + speciesTableName + ".genomeSpeciesId != 0, "
-                + speciesTableName + ".genomeSpeciesId, " + speciesTableName + ".speciesId))) "
-                + "AS genomeVersion";
         if (attributes == null || attributes.size() == 0) {
-            sql += "SELECT " + speciesTableName + ".*, " + genomeVersion;
+            sql += "SELECT " + speciesTableName + ".* ";
         } else {
             for (SpeciesDAO.Attribute attribute: attributes) {
                 if (sql.length() == 0) {
@@ -131,7 +124,9 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
                 } else if (attribute.equals(SpeciesDAO.Attribute.GENOME_FILE_PATH)) {
                     sql += speciesTableName + ".genomeFilePath";
                 } else if (attribute.equals(SpeciesDAO.Attribute.GENOME_VERSION)) {
-                    sql += genomeVersion;
+                    sql += speciesTableName + ".genomeVersion";
+                } else if (attribute.equals(SpeciesDAO.Attribute.DATA_SOURCE_ID)) {
+                    sql += speciesTableName + ".dataSourceId";
                 } else if (attribute.equals(SpeciesDAO.Attribute.GENOME_SPECIES_ID)) {
                     sql += speciesTableName + ".genomeSpeciesId";
                 } else if (attribute.equals(SpeciesDAO.Attribute.FAKE_GENE_ID_PREFIX)) {
@@ -172,12 +167,13 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
         StringBuilder sql = new StringBuilder(); 
         sql.append("INSERT INTO species" +  
                    "(speciesId, genus, species, speciesCommonName, taxonId, " + 
-                   "genomeFilePath, genomeSpeciesId, fakeGeneIdPrefix) values ");
+                   "genomeFilePath, genomeVersion, dataSourceId, " + 
+                   "genomeSpeciesId, fakeGeneIdPrefix) values ");
         for (int i = 0; i < specieTOs.size(); i++) {
             if (i > 0) {
                 sql.append(", ");
             }
-            sql.append("(?, ?, ?, ?, ?, ?, ?, ?) ");
+            sql.append("(?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ");
         }
         try (BgeePreparedStatement stmt = 
                 this.getManager().getConnection().prepareStatement(sql.toString())) {
@@ -195,9 +191,14 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
                 paramIndex++;
                 stmt.setString(paramIndex, speciesTO.getGenomeFilePath());
                 paramIndex++;
+                stmt.setString(paramIndex, speciesTO.getGenomeVersion());
+                paramIndex++;
+                stmt.setInt(paramIndex, Integer.parseInt(speciesTO.getDataSourceId()));
+                paramIndex++;
                 //TODO: handles default values in a better way
                 //We should create setter methods in BgeePreparedStatement, accepting a third argument, being the default value
-                if (speciesTO.getGenomeSpeciesId() != null) {
+                if (speciesTO.getGenomeSpeciesId() != null && 
+                        !speciesTO.getGenomeSpeciesId().equals(speciesTO.getId())) {
                     stmt.setInt(paramIndex, Integer.parseInt(speciesTO.getGenomeSpeciesId()));
                 } else {
                     stmt.setInt(paramIndex, 0);
@@ -247,7 +248,7 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
             log.entry();
             String speciesId = null, genus = null, species = null, speciesCommonName = null, 
                    taxonId = null, genomeFilePath = null, genomeVersion = null,
-                   genomeSpeciesId = null, fakeGeneIdPrefix=null;
+                   dataSourceId = null, genomeSpeciesId = null, fakeGeneIdPrefix=null;
             // Get results
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
@@ -272,6 +273,9 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
                     } else if (column.getValue().equals("genomeVersion")) {
                         genomeVersion = this.getCurrentResultSet().getString(column.getKey());
 
+                    } else if (column.getValue().equals("dataSourceId")) {
+                        dataSourceId = this.getCurrentResultSet().getString(column.getKey());
+
                     } else if (column.getValue().equals("genomeSpeciesId")) {
                         genomeSpeciesId = this.getCurrentResultSet().getString(column.getKey());
 
@@ -286,7 +290,8 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
             }
             //Set SpeciesTO
             return log.exit(new SpeciesTO(speciesId, speciesCommonName, genus, species,
-                    taxonId, genomeFilePath, genomeVersion, genomeSpeciesId, fakeGeneIdPrefix));
+                    taxonId, genomeFilePath, genomeVersion, dataSourceId, 
+                    genomeSpeciesId, fakeGeneIdPrefix));
         }
     }
 

@@ -329,7 +329,7 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
         MockDAOManager mockManager = new MockDAOManager();
                 
         MySQLSpeciesTOResultSet mockSpeciesTORs = createMockDAOResultSet(
-                Arrays.asList(new SpeciesTO("11", null, "Genus11", "species11", null, null, null, null, null)),
+                Arrays.asList(new SpeciesTO("11", null, "Genus11", "species11", null, null, null, null, null, null)),
                 MySQLSpeciesTOResultSet.class);
         when(mockManager.mockSpeciesDAO.getSpeciesByIds(speciesIds)).thenReturn(mockSpeciesTORs);
 
@@ -418,7 +418,7 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
         MockDAOManager mockManager = new MockDAOManager();
                 
         MySQLSpeciesTOResultSet mockSpeciesTORs = createMockDAOResultSet(
-                Arrays.asList(new SpeciesTO("22", null, "Genus22", "species22", null, null, null, null, null)),
+                Arrays.asList(new SpeciesTO("22", null, "Genus22", "species22", null, null, null, null, null, null)),
                 MySQLSpeciesTOResultSet.class);
         when(mockManager.mockSpeciesDAO.getSpeciesByIds(speciesIds)).thenReturn(mockSpeciesTORs);
 
@@ -503,7 +503,7 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
         Set<String> speciesIds = new HashSet<String>(Arrays.asList("11")); 
 
         MySQLSpeciesTOResultSet mockSpeciesTORs = createMockDAOResultSet(
-                Arrays.asList(new SpeciesTO("11", null, "Genus11", "species11", null, null, null, null, null)),
+                Arrays.asList(new SpeciesTO("11", null, "Genus11", "species11", null, null, null, null, null, null)),
                 MySQLSpeciesTOResultSet.class);
         when(mockManager.mockSpeciesDAO.getSpeciesByIds(speciesIds)).thenReturn(mockSpeciesTORs);
 

@@ -25,6 +25,7 @@ import org.bgee.model.dao.mysql.file.MySQLSpeciesDataGroupDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneOntologyDAO;
 import org.bgee.model.dao.mysql.gene.MySQLHierarchicalGroupDAO;
+import org.bgee.model.dao.mysql.keyword.MySQLKeywordDAO;
 import org.bgee.model.dao.mysql.ontologycommon.MySQLCIOStatementDAO;
 import org.bgee.model.dao.mysql.ontologycommon.MySQLEvidenceOntologyDAO;
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO;
@@ -116,7 +117,13 @@ public abstract class MySQLDAOUser {
             this.manager = providedManager;
         }
     }
-    
+
+    /**
+     * @return  A {@code MySQLKeywordDAO}.
+     */
+    protected MySQLKeywordDAO getKeywordDAO() {
+        return (MySQLKeywordDAO) this.manager.getKeywordDAO();
+    }
     /**
      * @return  A {@code MySQLSpeciesDAO}.
      */

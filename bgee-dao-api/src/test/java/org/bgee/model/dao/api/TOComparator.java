@@ -35,7 +35,6 @@ import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 
 /**
@@ -320,6 +319,7 @@ public class TOComparator {
                 StringUtils.equals(spTO1.getParentTaxonId(), spTO2.getParentTaxonId()) &&
                 StringUtils.equals(spTO1.getGenomeFilePath(), spTO2.getGenomeFilePath()) &&
                 StringUtils.equals(spTO1.getGenomeVersion(), spTO2.getGenomeVersion()) &&
+                StringUtils.equals(spTO1.getDataSourceId(), spTO2.getDataSourceId()) &&
                 StringUtils.equals(spTO1.getGenomeSpeciesId(), spTO2.getGenomeSpeciesId()) &&
                 StringUtils.equals(spTO1.getFakeGeneIdPrefix(), spTO2.getFakeGeneIdPrefix())) {
             return log.exit(true);

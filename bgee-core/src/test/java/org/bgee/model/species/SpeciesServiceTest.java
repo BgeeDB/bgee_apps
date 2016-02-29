@@ -34,9 +34,9 @@ public class SpeciesServiceTest extends TestAncestor {
 		// mock behavior
         SpeciesTOResultSet resultSetMock = getMockResultSet(SpeciesTOResultSet.class, Arrays.asList(
                 new SpeciesTO("9606", "human", "Homo", "sapiens", "4312", "3241",
-                        "version1", "321", null), 
+                        "version1", "321", "1", null), 
                 new SpeciesTO("1234", "name", "genus", "someSpecies", "1123", "3432241",
-                        "versionA", "1321", null)));
+                        "versionA", "1321", "1", null)));
 		when(speciesDAOMock.getSpeciesFromDataGroups()).thenReturn(resultSetMock);
 		when(managerMock.getSpeciesDAO()).thenReturn(speciesDAOMock);
 		
@@ -59,9 +59,9 @@ public class SpeciesServiceTest extends TestAncestor {
 	    Set<String> speciesIds = new HashSet<>(Arrays.asList("9606", "1234"));
 	    SpeciesTOResultSet resultSetMock = getMockResultSet(SpeciesTOResultSet.class, Arrays.asList(
 	            new SpeciesTO("9606", "human", "Homo", "sapiens", "4312", "3241",
-	                    "version1", "321", null), 
+	                    "version1", "1", "321", null), 
 	            new SpeciesTO("1234", "name", "genus", "someSpecies", "1123", "3432241",
-	                    "versionA", "1321", null)));
+	                    "versionA", "1", "1321", null)));
         when(speciesDAOMock.getSpeciesByIds(speciesIds)).thenReturn(resultSetMock);
 	    when(managerMock.getSpeciesDAO()).thenReturn(speciesDAOMock);
 

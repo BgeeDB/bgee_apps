@@ -74,7 +74,7 @@ public class InsertTaxa extends MySQLDAOUser {
      * and that is also the name of the column to retrieve these IDs from the TSV file 
      * storing the species used in Bgee.
      */
-    public static final String SPECIES_ID_KEY = "taxon ID";
+    public static final String SPECIES_ID_KEY = "speciesId";
     /**
      * A {@code String} that is the key to retrieve the genus name (for instance, 
      * "homo") of the species used in Bgee from the {@code Map}s returned by 
@@ -348,7 +348,8 @@ public class InsertTaxa extends MySQLDAOUser {
                 } else if (header[i].equalsIgnoreCase(SPECIES_KEYWORDS_KEY)) {
                     processors[i] = new Optional(new AnnotationCommon.ParseMultipleStringValues());
                 } else {
-                    throw log.throwing(new IllegalArgumentException(unexpectedFormat));
+                    throw log.throwing(new IllegalArgumentException(unexpectedFormat 
+                            + " - unrecognized column: " + header[i]));
                 }
             }
             

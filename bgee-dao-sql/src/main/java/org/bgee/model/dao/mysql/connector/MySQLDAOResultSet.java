@@ -860,43 +860,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
         }
         log.exit();
     }
-    
-//    /**
-//     * Add {@code stmt} at the tail of the {@code List} of {@code BgeePreparedStatement} 
-//     * that should be executed by this {@code MysqlDAOResultSet}.
-//     * 
-//     * @param stmt  A {@code BgeePreparedStatement} to add to this {@code MysqlDAOResultSet}.
-//     * @throws IllegalArgumentException If {@code executeQuery} has been already called 
-//     *                                  on {@code stmt}. 
-//     */
-//    protected void addStatement(BgeePreparedStatement stmt) throws IllegalArgumentException {
-//        this.addAllStatements(Arrays.asList(stmt));
-//    }
-//    
-//    /**
-//     * Add {@code statements} at the tail of the {@code List} of 
-//     * {@code BgeePreparedStatement} that should be executed by this 
-//     * {@code MysqlDAOResultSet}, in order.
-//     * 
-//     * @param statements  A {@code List} of {@code BgeePreparedStatement}s to be added 
-//     *              to the tail of the {@code List} held by this {@code MysqlDAOResultSet}, 
-//     *              to be executed in order.
-//     * @throws IllegalArgumentException If {@code executeQuery} has been already called 
-//     *                                  on any of the {@code BgeePreparedStatement}s 
-//     *                                  provided. 
-//     */
-//    protected void addAllStatements(List<BgeePreparedStatement> statements) 
-//            throws IllegalArgumentException {
-//        for (BgeePreparedStatement stmt: statements) {
-//            if (stmt.isExecuted()) {
-//                throw log.throwing(new IllegalArgumentException("A BgeePreparedStatement " +
-//                        "should not have been executed before being provided " +
-//                        "to the MySQLDAOResultSet"));
-//            }
-//        }
-//        this.statements.addAll(statements);
-//    }
-    
+        
     /**
      * @return  an {@code int} that is the number of {@code BgeePreparedStatement}s 
      *          currently held by this {@code MySQLDAOResultSet}.

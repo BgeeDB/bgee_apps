@@ -1,15 +1,12 @@
-#bgee_title {
-    margin-top: -10px;	
-}
-
-#bgee_title img {
+h1 img {
     height: 1.7em;
     width: 1.7em;
     margin-right: 0.4em;
-    margin-bottom: -0.5em;
+    margin-bottom: 0.2em;
 }
 
 #sib_body img.page_img {
+    position: absolute;
     height: 25px;
     width: 25px;
     margin: 0 0 0 -25px;
@@ -47,7 +44,7 @@ img {
     box-shadow: 4px 4px 6px 0px #555;
 }
 #bgee_uniq_species figure:not(.selected) img.species_img:hover {
-    box-shadow: 0px 0px 10px 4px #920209;
+    box-shadow: 0px 0px 10px 1px #920209;
 }
 
 #bgee_multi_species img {
@@ -66,7 +63,7 @@ img {
 }
 
 #bgee_multi_species figure div {
-    border: 1px #920209 solid;
+    border: 1px #999 solid;
     border-radius: 8px;
     padding: 6px;
     margin-bottom: 6px;
@@ -77,7 +74,7 @@ img {
 }
 
 #bgee_multi_species figure:not(.selected) div:hover {
-    box-shadow: 0px 0px 10px 4px #920209;
+    box-shadow: 0px 0px 10px 1px #920209;
 }
 
 #bgee_multi_species figcaption {
@@ -87,13 +84,34 @@ img {
     font-size: 0.75em;
 }
 
+/****BGEE INTRODUCTION****/
+
+#bgee_introduction p {
+    margin: 0 0.5%;
+    color: #515151;
+}
+
+#bgee_introduction p+p {
+	margin-top: 0.5%;
+}
+
 /****BGEE SEARCH BOX****/
 
-div#results_nb {
-    width: 110px;
-    font-size: 0.8em;
-    text-align: center;
-    margin-top: -2px;
+#bgee_search_box label {
+    color: #626262;
+}
+
+#results_nb {
+    margin-left: 10px;
+}
+
+#bgee_search_box .form-group {
+    margin-bottom: 0;
+    padding-left: 0px;
+}
+
+#bgee_search_box button {
+    margin-top: 25px;
 }
 
 #bgee_more_results_up, #bgee_more_results_down  {
@@ -103,7 +121,7 @@ div#results_nb {
     border: 3px solid #F7F8FA;
     border-left: 0px;
     padding: 6px 0 6px 9px;
-    height: 15px;
+    height: 30px;
     width: 120px;
     left: 0%;
     color: white;
@@ -180,8 +198,8 @@ p.file_info a:hover {
     position: relative;
     background-color: #282828;
     padding: 30px;
-    left: -4%;
-    width: 103%;
+    left: -3.45vw;
+    width: 100vw;
     clear: left;
     display: none;
 }
@@ -220,11 +238,15 @@ p.file_info a:hover {
     list-style-image: url(../img/arrow.png);
 }
 
-#bgee_data_selection_cross #switch_page_link, #bgee_data_selection_cross #switch_page_link:visited {
-    position: absolute;
-    top: 30px;
-    right: 60px;
+#bgee_data_selection_cross {
+	position: absolute;
+	top: 10px;
+	right: 10px;
     z-index: 2;
+}
+
+#bgee_data_selection_cross #switch_page_link, #bgee_data_selection_cross #switch_page_link:visited {
+    margin-right: 10px;
 	color: #717171;
 }
 
@@ -233,13 +255,9 @@ p.file_info a:hover {
 }
 
 #bgee_data_selection_cross img {
-    position: absolute;
     cursor: pointer;
-    top: 30px;
-    right: 30px;
     height: 20px;
     width: 20px;
-    z-index: 2;
 }
 
 #bgee_data_selection_img {
@@ -279,13 +297,14 @@ p.file_info a:hover {
     margin: 0px 0px 0px 30px;
 }
 
-.download_link, #bgee_data_selection p.no_data {
+#sib_body .download_link, #bgee_data_selection p.no_data {
 	padding: 5px;
 	font-size: 0.9em;
 	margin-right: 0.4em;
+	margin-top: 0.1em;
 }
 
-.download_link, .download_link:visited {
+#sib_body .download_link, #sib_body .download_link:visited {
     display:inline-block;
     background-color:#3E3E3E;
     border: 1px solid #141414;
@@ -295,11 +314,8 @@ p.file_info a:hover {
     color: #AAA;
 }
 
-.download_link:hover {
+#sib_body .download_link:hover {
     color: #141414;
-}
-
-.download_link:hover {
     text-decoration: none;
     background-color:#717171;
 }

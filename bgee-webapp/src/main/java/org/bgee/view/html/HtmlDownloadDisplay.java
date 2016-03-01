@@ -97,12 +97,10 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln(getKeywordScriptTag(keywords, groups, DownloadPageType.EXPR_CALLS));
         this.writeln("<div id='expr_calls'>");
 
-        this.writeln("<div id='bgee_title'>");
         this.writeln("<h1>");
         this.writeln("<img src='" + this.prop.getLogoImagesRootDirectory() + "expr_calls_logo.png' " + 
                 "alt='" + GENE_EXPR_CALLS_PAGE_NAME + " logo'/>" + GENE_EXPR_CALLS_PAGE_NAME);
         this.writeln("</h1>");
-        this.writeln("</div>");
         
         // Introduction
         this.writeln("<div id='bgee_introduction' class='bgee_section bgee_download_section'>");
@@ -145,13 +143,11 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
         this.writeln("<div id='proc_values'>");
     
-        this.writeln("<div id='bgee_title'>");
         this.writeln("<h1>");
         this.writeln("<img src='" + this.prop.getLogoImagesRootDirectory() + "proc_values_logo.png'" + 
                 "' alt='" + PROCESSED_EXPR_VALUES_PAGE_NAME + " logo'/>" + 
                 PROCESSED_EXPR_VALUES_PAGE_NAME);
         this.writeln("</h1>");
-        this.writeln("</div>");
 
         // Introduction
         this.writeln("<div id='bgee_introduction' class='bgee_section bgee_download_section'>");
@@ -292,18 +288,24 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      */
     private String getSearchBox() {
         log.entry();
-    
-        return log.exit(
-                "<div id='bgee_species_search'>" +
-                        "<form action='/' method='get'>" +
-                            "<label for='bgee_species_search_box'>Search species</label>" +
-                            "<input id='bgee_species_search_box' class='sib_text' type='text' name='search' " +
-                                "value='Scientific name, common name...'/>" +
-                            "<input type='image' alt='Submit' " +
-                                "src='"+this.prop.getImagesRootDirectory()+"submit_button.png'/>" +
-                            "<div id='results_nb'></div>" +
-                        "</form>" +
-                "</div>");
+        
+        StringBuilder box = new StringBuilder();
+        box.append("<div class='row'>");
+        box.append("<div id='bgee_search_box' class='row well well-sm "
+        								+ "col-xs-offset-1 col-xs-10 col-md-offset-3 col-md-6'>");
+        box.append("    <form  action='/' method='get'>");
+        box.append("        <div class='form-group col-xs-9 col-sm-10'>");
+        box.append("            <label for='search_label'>Search species</label>");
+        box.append("            <span id='results_nb'></span>");
+        box.append("            <input id='search_label' type='text' name='search' class='form-control' "
+        								+ "value='Scientific name, common name...'/>");
+        box.append("        </div>");
+        box.append("        <button type='submit' class='btn btn-default col-xs-3 col-sm-2'>Submit</button>");
+        box.append("    </form>");
+        box.append("</div>");
+        box.append("</div>");
+        
+        return log.exit(box.toString());
     }
 
 
@@ -344,8 +346,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
         StringBuilder s = new StringBuilder(); 
         s.append("<div id='bgee_multi_species'>");
-        s.append("<h2 class='box_title'>Multi-species</h2>" +
-                 "<span class='header_details'>(orthologous genes in homologous anatomical structures)</span>");
+        s.append("<h2>Multi-species" +
+                 "<span class='header_details'>(orthologous genes in homologous anatomical structures)</span></h2>");
         s.append("<div class='bgee_section bgee_download_section'>");
         s.append(getMultiSpeciesFigures(pageType, groups));
         s.append("</div>");
@@ -617,17 +619,16 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         }
         s.append("<div id='bgee_uniq_species'> ");
         switch (pageType) {
-        case HOME_PAGE: 
         case PROC_EXPR_VALUES:
-            s.append("<h2 class='box_title'>Species with data in Bgee</h2>");
+            s.append("<h2>Species with data in Bgee");
             break;
         case EXPR_CALLS: 
-            s.append("<h2 class='box_title'>Single-species</h2>");
+            s.append("<h2>Single-species");
             break; 
         default: 
             throw log.throwing(new IllegalArgumentException("DownloadPageType not supported: " + pageType));
         }
-        s.append("<span class='header_details'>(click on species to see more details)</span>");
+        s.append("<span class='header_details'>(click on species to see more details)</span></h2>");
         s.append("<div class='bgee_section bgee_download_section'>");
         s.append(getSingleSpeciesFigures(pageType, groups));
         s.append("</div>");

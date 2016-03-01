@@ -5,6 +5,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -20,6 +21,7 @@ import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.DevStageService;
 import org.bgee.model.ontology.Ontology;
 import org.bgee.model.ontology.OntologyService;
+import org.bgee.model.ontology.Ontology.RelationType;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -81,11 +83,11 @@ public class ConditionUtilsTest extends TestAncestor {
         
         when(ontService.getAnatEntityOntology(Arrays.asList("9606"), 
                 new HashSet<>(Arrays.asList(anatEntityId1, anatEntityId2, anatEntityId3)), 
-                anatEntityService))
+                EnumSet.of(RelationType.ISA_PARTOF), false, false, anatEntityService))
         .thenReturn(anatEntityOnt);
         when(ontService.getDevStageOntology(Arrays.asList("9606"), 
                 new HashSet<>(Arrays.asList(devStageId1, devStageId2, devStageId3)), 
-                devStageService))
+                false, false, devStageService))
         .thenReturn(devStageOnt);
         
         when(anatEntityOnt.getElements()).thenReturn(
@@ -99,6 +101,7 @@ public class ConditionUtilsTest extends TestAncestor {
         when(devStageOnt.getElement(devStageId2)).thenReturn(devStage2);
         when(devStageOnt.getElement(devStageId3)).thenReturn(devStage3);
         
+        //TODO: should add calls using the boolean directRelOnly
         when(anatEntityOnt.getAncestors(anatEntity1)).thenReturn(new HashSet<>());
         when(anatEntityOnt.getAncestors(anatEntity2)).thenReturn(new HashSet<>(Arrays.asList(anatEntity1)));
         when(anatEntityOnt.getAncestors(anatEntity3)).thenReturn(new HashSet<>(Arrays.asList(anatEntity1)));
@@ -106,9 +109,9 @@ public class ConditionUtilsTest extends TestAncestor {
         when(devStageOnt.getAncestors(devStage2)).thenReturn(new HashSet<>(Arrays.asList(devStage1)));
         when(devStageOnt.getAncestors(devStage3)).thenReturn(new HashSet<>(Arrays.asList(devStage1)));
         
-        when(anatEntityOnt.getDescendants(anatEntity1)).thenReturn(
+        when(anatEntityOnt.getDescendants(anatEntity1, false)).thenReturn(
                 new HashSet<>(Arrays.asList(anatEntity2, anatEntity3)));
-        when(devStageOnt.getDescendants(devStage1)).thenReturn(
+        when(devStageOnt.getDescendants(devStage1, false)).thenReturn(
                 new HashSet<>(Arrays.asList(devStage2, devStage3)));
         
         this.conditionUtils = new ConditionUtils("9606", 

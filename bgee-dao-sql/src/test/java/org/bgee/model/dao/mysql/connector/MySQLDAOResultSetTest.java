@@ -1,5 +1,18 @@
 package org.bgee.model.dao.mysql.connector;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.ResultSet;
@@ -13,30 +26,19 @@ import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.dao.api.DAOResultSet;
-import org.bgee.model.dao.api.EntityTO;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
-import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.mysql.TestAncestor;
-import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
-import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
-import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 import org.bgee.model.dao.mysql.ontologycommon.MySQLRelationDAO.MySQLRelationTOResultSet;
 import org.junit.Test;
 import org.mockito.Mockito;
 
 import com.mysql.jdbc.ResultSetMetaData;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
-
-import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
-import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
-
-public class MySQLDAOResultSetTest extends TestAncestor
-{
+public class MySQLDAOResultSetTest extends TestAncestor {
+	
     private final static Logger log = 
             LogManager.getLogger(MySQLDAOResultSetTest.class.getName());
     
@@ -1156,56 +1158,4 @@ public class MySQLDAOResultSetTest extends TestAncestor
             //test passed
         }
     }
-    
-//    /**
-//     * Test {@link MySQLDAOResultSet#addStatement(BgeePreparedStatement)} and 
-//     * {@link MySQLDAOResultSet#addAllStatements(List)}
-//     * @throws SQLException 
-//     */
-//    @Test
-//    public void shouldAddStatement() throws SQLException {
-//        BgeePreparedStatement mockStatement = mock(BgeePreparedStatement.class);
-//        ResultSet mockRs = mock(ResultSet.class);
-//        ResultSetMetaData metaData = mock(ResultSetMetaData.class);
-//        when(mockRs.getMetaData()).thenReturn(metaData);
-//        when(metaData.getColumnCount()).thenReturn(0);
-//        when(mockStatement.executeQuery()).thenReturn(mockRs);
-//        
-//        MySQLDAOResultSet<TransferObject> rs = new FakeDAOResultSet(mockStatement);
-//        //first statement is immediately executed, so we do not count it
-//        assertEquals("Incorrect number of BgeePreparedStatement", 0, 
-//                rs.getStatementCount());
-//        BgeePreparedStatement mockStatement2 = mock(BgeePreparedStatement.class);
-//        when(mockStatement2.executeQuery()).thenReturn(mockRs);
-//        rs.addStatement(mockStatement2);
-//        assertEquals("Incorrect number of BgeePreparedStatement", 1, 
-//                rs.getStatementCount());
-//        BgeePreparedStatement mockStatement3 = mock(BgeePreparedStatement.class);
-//        when(mockStatement3.executeQuery()).thenReturn(mockRs);
-//        BgeePreparedStatement mockStatement4 = mock(BgeePreparedStatement.class);
-//        when(mockStatement4.executeQuery()).thenReturn(mockRs);
-//        rs.addAllStatements(Arrays.asList(mockStatement3, mockStatement4));
-//        assertEquals("Incorrect number of BgeePreparedStatement", 3, 
-//                rs.getStatementCount());
-//        
-//        //test if it correctly detects when a BgeePreparedStatement was already executed
-//        BgeePreparedStatement mockStatementTested = mock(BgeePreparedStatement.class);
-//        when(mockStatementTested.isExecuted()).thenReturn(true);
-//        
-//        try {
-//            BgeePreparedStatement mockStatement6 = mock(BgeePreparedStatement.class);
-//            when(mockStatement6.executeQuery()).thenReturn(mockRs);
-//            BgeePreparedStatement mockStatement7 = mock(BgeePreparedStatement.class);
-//            when(mockStatement7.executeQuery()).thenReturn(mockRs);
-//            rs.addAllStatements(Arrays.asList(mockStatement6, 
-//                    mockStatementTested, 
-//                    mockStatement7));
-//            //if we reach that point, test failed
-//            throw new AssertionError("A BgeePreparedStatement already executed should not " +
-//            		"be accepted");
-//        } catch (IllegalArgumentException e) {
-//            //test passed
-//        }
-//    }
-    
 }

@@ -72,6 +72,7 @@ public class DevStageService extends Service {
      * @return          A {@code Stream} of {@code DevStage}s that are the 
      *                  dev. stages for the given set of stage IDs.
      */
+    //TODO: javadoc/method name consistency (see AnatEntityService)/parameter order
     public Stream<DevStage> loadDevStages(Collection<String> speciesIds, Boolean anySpecies, 
             Collection<String> stageIds) {
         log.entry(speciesIds, anySpecies, stageIds);

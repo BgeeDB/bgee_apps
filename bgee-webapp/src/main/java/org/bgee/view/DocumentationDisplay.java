@@ -4,7 +4,7 @@ package org.bgee.view;
  * Interface that defines methods displaying the documentation category, i.e. page=documentation
  *
  * @author  Valentine Rech de Laval
- * @version Bgee 13 May 2015
+ * @version Bgee 13, Feb 2016
  * @since   Bgee 13
  */
 public interface DocumentationDisplay {
@@ -22,7 +22,12 @@ public interface DocumentationDisplay {
      * Display the documentation about reference expression download files.
      */
     public void displayRefExprDownloadFileDocumentation();
-
+    
+    /**
+     * Display the documentation about TopAnat.
+     */
+    public void displayTopAnatDocumentation();
+    
     /**
      * Display the documentation about how to access to Bgee data.
      */

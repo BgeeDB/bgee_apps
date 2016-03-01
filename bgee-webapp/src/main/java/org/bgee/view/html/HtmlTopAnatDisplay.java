@@ -127,7 +127,6 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
             this.includeJs("lib/angular_modules/angular-touch.min.js");
             this.includeJs("lib/angular_modules/ui_modules/ui-grid.min.js");
             this.includeJs("lib/angular_modules/ui_modules/ui-bootstrap-tpls.min.js");
-            this.includeJs("lib/jquery_plugins/bootstrap.min.js");
             this.includeJs("lib/angular_modules/angular-file-upload.min.js");
             this.includeJs("lib/jquery_plugins/toastr.min.js");
             this.includeJs("lib/angular_modules/angular-location-update.min.js");

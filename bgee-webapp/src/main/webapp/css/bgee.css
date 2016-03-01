@@ -3,8 +3,6 @@ html, body {
     height: 100%;
     margin: 0;
     padding: 0;
-    min-width: 700px;
-    font: 100% Helvetica, Verdana, sans-serif;
 }
 
 /*
@@ -12,7 +10,7 @@ bootstrap.css defines this property, and I guess we cannot simply override it.
 So we include it from scratch in all our pages, to adapt element sizes to it. 
 */
 * {
-	box-sizing: border-box;
+    box-sizing: border-box;
 }
 /****SIB CONTAINER****/
 #sib_container {
@@ -23,239 +21,207 @@ So we include it from scratch in all our pages, to adapt element sizes to it.
     left: 0;
     width: 100%;
     min-height: 100%;
-    background-color: #F7F8FA;
     overflow: hidden;
 }
 
-/****SIB HEADER****/
-header {
-    position: relative;
-    display: inline-block;
-    background: #F7F8FA url(../img/sib_header_bkgd.png) repeat-x top left;
-    height: 120px;
-    width: 100%;
-    color: #282828;
-    z-index: 2;
-}
 
-header h1, header h2  {
-    position: relative;
-    margin: 0 auto;
-    width: 15em;
-    color: #282828;
-    text-align: center;
-    font-weight: normal;
-    white-space: nowrap;
-}
-
-header h1 {
-    top: 1em;
-    font-size: 1.7em;
-}
-
-header h2 {
-    top: 25px;
-    font-size: 1.2em;
-}
-
-/****LOGOS****/
-header img {
+/****NAVIGATION BAR*** */
+nav img {
     border-radius: 0px;
 }
-
+#bgee_logo {
+    height: 34px;
+    margin-top: -6px;
+}
 #sib_logo {
-    position: absolute;
-    width: 141px;
-    height: 75px;
-    top: 8px;
-    right: 2%;
+    height: 20px;
+}
+nav img.social-img {
+    width: 20px;   
+    height: 20px;
 }
 
-#sib_other_logo {
-    position: absolute;
-    top: 8px;
-    left: 2%;
-    width: 186px;
-    height: 75px;
-}
-
-/****NAVIGATION BAR****/
-#nav {
-    position: absolute;
-    bottom: 0;
-    height: 2em;
-    width: 100%;
-    margin: 5px 0 0 0;
-    display: block;
-    background-color: #ABBDC4;
-    border-bottom: 0.25em solid #920209;
-    padding: 0.2em 0 0 0;
-}
-
-#nav ul {
-    margin: 0;
-    padding: 0;
-    list-style: outside none none;
-}
-
-#nav ul#bgee_links li {
-	position: relative;
-    float: left;
-    height: 1.5em;
-    padding-top: 0.3em;
-    text-align: center;
-}
-ul#bgee_links > li {
-    padding-left: 2em;
-    padding-right: 2em;
-}
-ul#bgee_links > li:first-child {
-    padding-left: 3em;
-}
-
-#nav ul#bgee_links li:hover {
-    background-color: #29516A;
+#bgee-menu.navbar-default {
+    font-size: 1.1em;
+    background-color: rgba(51, 51, 51, 1);
+    margin-bottom: 0px;
+    border-width: 0px;
+    border-radius: 0px;
     z-index: 100;
 }
-
-/* style the links for the top level */
-#nav a, #nav a:visited {
-    color: #29516A;
-    text-decoration: none;
-    display: inline-block;
+#bgee-menu.navbar-default .navbar-nav > li {
+    margin-top: -1px;
 }
-#nav a:hover, #nav :hover>a {
-    color: white;
-    height: 25px;
-    margin-bottom: 3px;
+#bgee-menu.navbar-default .navbar-nav > li > a {
+    color: rgba(255, 255, 255, 1);
+    background-color: rgba(51, 51, 51, 1);
 }
-
-/* style the second level links */
-#nav ul#bgee_links ul a.drop, #nav ul#bgee_links ul a.drop:visited {
-	background-color: #ABBDC4;
-}
-#nav ul#bgee_links ul a.drop:hover, #nav ul#bgee_links ul :hover>a.drop {
-    color: white;
-    background-color: #29516A;
-    margin-bottom: 0px;
-    height: auto;
+#bgee-menu.navbar-default .navbar-nav > li > a:hover,
+#bgee-menu.navbar-default .navbar-nav > li > a:focus {
+    color: rgba(255, 255, 255, 1);
+    background-color: rgba(85, 85, 85, 1);
 }
 
-/* hide the sub levels and give them a position absolute so that they take up no room */
-#nav ul#bgee_links ul {
-    visibility: hidden;
-    position: absolute;
-    height: auto;
-    top: 28px;
-    left: 0;
-    width: 100%;
-    border-bottom: none;
-}
-#nav ul#bgee_links ul li{
-    border-bottom: 1px solid #29516A;
-	width: 100%;
-    height: auto;
+#bgee-menu .dropdown-menu > li > a:hover {
+	    background-color: rgba(227, 227, 227, 1);
 }
 
-#nav ul#bgee_links ul li:hover {
-	background-color: #29516A;
+#bgee-menu.navbar-default .navbar-nav > .active > a,
+#bgee-menu.navbar-default .navbar-nav > .active > a:hover,
+#bgee-menu.navbar-default .navbar-nav > .active > a:focus {
+    color: rgba(255, 255, 255, 1);
+    background-color: rgba(85, 85, 85, 1);
+}
+#bgee-menu.navbar-default .navbar-toggle {
+    border-color: rgba(85, 85, 85, 1);
+}
+#bgee-menu.navbar-default .navbar-toggle:hover,
+#bgee-menu.navbar-default .navbar-toggle:focus {
+    background-color: rgba(85, 85, 85, 1);
+}
+#bgee-menu.navbar-default .navbar-toggle .icon-bar {
+    background-color: rgba(85, 85, 85, 1);
+}
+#bgee-menu.navbar-default .navbar-toggle:hover .icon-bar,
+#bgee-menu.navbar-default .navbar-toggle:focus .icon-bar {
+    background-color: rgba(153, 153, 153, 1);
 }
 
-/* make the second level visible when hover on first level list OR link */
-#nav ul#bgee_links li:hover ul, #nav ul#bgee_links a:hover ul {
-    visibility: visible;
-    margin-top: -4px;
-    background-color: #ABBDC4;
+/*
+Bootstrap navbar changed with the help of TWBScolor 
+See http://work.smarchal.com/twbscolor/css/999999555555ffffffffffff0
+ */
+/* .navbar-default { */
+/*     font-size: 1.1em; */
+/*     background-color: #999999; */
+/*     border: none; */
+/*     border-radius: 0px; */
+/*     margin-bottom: 0; */
+/*     z-index: 100; */
+/* } */
+
+/* .navbar-default .navbar-text { */
+/*     color: #ffffff; */
+/* } */
+/* .navbar-default .navbar-nav > li > a { */
+/*     color: #ffffff; */
+/* } */
+/* .navbar-default .navbar-nav > li > a:hover, */
+/* .navbar-default .navbar-nav > li > a:focus  { */
+/*     color: #ffffff; */
+/* } */
+/* .navbar-default .navbar-nav > .active > a, */
+/* .navbar-default .navbar-nav > .active > a:hover, */
+/* .navbar-default .navbar-nav > .active > a:focus  { */
+/*     color: #ffffff; */
+/*     background-color: #555555; */
+/* } */
+/* .navbar-default .navbar-nav > .open > a, */
+/* .navbar-default .navbar-nav > .open > a:hover, */
+/* .navbar-default .navbar-nav > .open > a:focus  { */
+/*     color: #ffffff; */
+/*     background-color: #555555; */
+/* } */
+/* .navbar-default .navbar-toggle  { */
+/*     border-color: #555555; */
+/* } */
+/* .navbar-default .navbar-toggle:hover, */
+/* .navbar-default .navbar-toggle:focus  { */
+/*     background-color: #555555; */
+/* } */
+/* .navbar-default .navbar-toggle .icon-bar  { */
+/*     background-color: #ffffff; */
+/* } */
+/* .navbar-default .navbar-collapse, */
+/* .navbar-default .navbar-form  { */
+/*     border-color: #ffffff; */
+/* } */
+/* .navbar-default .navbar-link  { */
+/*     color: #ffffff; */
+/* } */
+/* .navbar-default .navbar-link:hover  { */
+/*     color: #ffffff; */
+/* } */
+#bgee-menu.navbar-default .caret {
+    border-top: 5px solid;
+    border-right: 5px solid transparent;
+    border-left: 5px solid transparent;
 }
 
-#nav .deploy {
-	margin-left: 0.3em;
-    height: 0.5em;
-}
-
-#nav #social_links {
-    float: right;
-	margin-right: 1em;
-}
-
-#nav ul#social_links li {
-    position: relative;
-    float: left;
-    margin-right: 1em;
-    text-align: center;
-}
-
-#nav a.social-link {
-    margin-left: 5px;
-}
-
-#nav a.social-link img {
-    width: 22px;   
-    height: 22px;
-    padding-top: 2px;    
-}
+/* @media (max-width: 767px) { */
+/*     .navbar-default  { */
+/*         box-shadow: 0px 0px 10px 2px #666; */
+/*     } */
+/*     .navbar-default .navbar-nav .open .dropdown-menu>li>a { */
+/*         color: #ffffff; */
+/*     } */
+/*     .navbar-default .navbar-nav .open .dropdown-menu>li>a:hover, */
+/*     .navbar-default .navbar-nav .open .dropdown-menu>li>a:focus { */
+/*         color: #ffffff; */
+/*     } */
+/*     .navbar-default .navbar-nav .open .dropdown-menu>.active>a, */
+/*     .navbar-default .navbar-nav .open .dropdown-menu>.active>a:hover, */
+/*     .navbar-default .navbar-nav .open .dropdown-menu>.active>a:focus { */
+/*         color: #ffffff; */
+/*         background-color: #555555; */
+/*     } */
+/* } */
 
 /****SIB BODY****/
 #sib_body {
     position: relative;
-    padding: 10px 1% 50px 1%;
-    background: #F7F8FA url(../img/sib_body_bkgd.png) repeat-x top left;
-    background-size: 100% 100%;
+    padding: 0 1% 40px 1%;
     /*To be modified when multi-species files will be available*/
     min-height: 340px;
     color: #626262;
     z-index: 1;
-    font-size: 95%;
 }
 
 #sib_body h1, #sib_body h2, #sib_body h3 {
-    color: #920209;
+    color: #E2011B;
+    font-weight: bold;
 }
 #sib_body h1 {
-    color: #920209;
     font-size: 1.5em;
-    text-align: center;    
+    text-align: center;
+    margin-bottom: 20px;
 }
 #sib_body h2 {
     margin: 1em 0 1em 0;
     font-size: 1.2em;
-    font-weight: bold;
     width: 100%; 
-    
     border-top: 0;
     border-left: 0;
     border-right: 0;
-    border-bottom: 2px #920209 solid; /* Set color for browsers that do not support gradients */
-    border-image: linear-gradient(to right, rgba(146, 2, 9, 1) 70%, rgba(146, 2, 9, 0));
+    border-bottom: 2px #E2011B solid; /* Set color for browsers that do not support gradients */
+    border-image: linear-gradient(to right, #E2011B 70%, rgba(146, 2, 9, 0));
     border-image-slice: 1;
 }
 #sib_body h3 {
-    font-weight: normal;
+    font-size: 1.1em;
+    margin: 2em 0 1em 0;
+}
+#sib_body h4 {
     font-size: 1em;
-    margin: 2% 0 0 0;
+	font-weight: bold;
+    margin: 2em 0 1em 0;
 }
-h2.box_title {
-	display: inline-block !important;
-    margin: 1em 0px 0px 1em !important;
-    border: 0 !important;
-    width: auto !important;
-    color: #920209;
-    font-size: 1.2em !important;
-    font-weight: normal !important;
+#sib_body h5 {
+	font-size: 1em;
+	margin: 1em 0 1em 0;
 }
-
 #sib_body li {
-	margin-top: 0.4em;
+    margin-top: 0.4em;
 }
 
 /****LINKS****/
-a {
+#sib_body a {
     cursor: pointer;
-    color: #BC161D;
+    color: #920209;
     text-decoration: underline;
 }
 
-a:visited, a:hover {
+#sib_body a:visited, #sib_body a:hover {
     color: #6A1818;
 }
 
@@ -278,25 +244,23 @@ div.bgee_section {
     display: inline-block;
     width: 95%;
     margin: 0 2% 10px 2%;
-    border-width: 2px;
-    border-style: solid;
-    border-radius: 8px;
     padding: 0.5%;
     text-align: left;
-    border-color: #920209;
 }
 
 span.header_details {
-    font-size: 0.85em;
+    font-size: 0.8em;
+    font-weight: normal;
     margin-left: 0.5em;
+    color: #626262;
 }
 
 .feature_list {
-	display: table;
-	width: 100%;
-	text-align: center;
-	table-layout: fixed;
-	margin-bottom: 30px;
+    display: table;
+    width: 100%;
+    text-align: center;
+    table-layout: fixed;
+    margin-bottom: 30px;
 }
 
 .feature_list figure {
@@ -338,7 +302,7 @@ have the same vertical alignment?*/
 }
 
 .feature_list a {
-	text-decoration: none;
+    text-decoration: none;
 }
 
 span.list_element_title {
@@ -346,19 +310,12 @@ span.list_element_title {
 }
 
 .bgee_alert {
-	color: red;
-	font-weight: bold;
+    color: red;
+    font-weight: bold;
 }
 
 .bgee_alert_container {
-	border: 2px solid red;
-}
-
-#home_important_info {
-    border-top: 3px solid red;
-	border-bottom: 3px solid red;
-	margin: 1em 6em;
-	padding: 1em;
+    border: 2px solid red;
 }
 
 /****BGEE INTRODUCTION****/
@@ -427,47 +384,28 @@ input[type="image"] {
     color: #406981;
 }
 
-/****SIB FOOTER****/
-footer {
+/**** FOOTER ****/
+#bgee_footer.navbar-default {
     position: absolute;
     bottom: 0px;
-    height: 40px;
-    background-color: #1E2425;
+	background-color: #000;
+    margin-bottom: 0px;
+    border-width: 0px;
+    border-radius: 0px;
+    z-index: 50;
+    min-height: 30px;
     width: 100%;
-    color: #F7F8FA;
-    letter-spacing: 1px;
-    font: 0.7em Verdana;
-    z-index: 2;
 }
 
-#sib_footer_content a, #sib_footer_right a {
+#bgee_footer a {
     color: #F7F8FA;
     text-decoration: none;
+    padding: 5px 15px 5px 0px;
 }
 
-#sib_footer_content a:hover, #sib_footer_right a:hover {
+#bgee_footer a:hover {
     text-decoration: underline;
 }
-
-#sib_footer_content {
-    position: relative;
-    padding: 9px 36px 0px 36px;
-    padding-right: 300px;
-}
-
-#sib_footer_right {
-    position: absolute;
-    right: 2%;
-    width: 400px;
-    top: 9px;
-    text-align: right;
-}
-
-#sib_footer_gototop {
-    background: transparent url(../img/triangle_hover.png) no-repeat top left;
-    padding-left: 10px;
-}
-
 
 /*! jQuery UI - v1.11.0 - 2014-06-26
 * http://jqueryui.com
@@ -565,9 +503,6 @@ footer {
 
 /* Component containers
 ----------------------------------*/
-.ui-widget {
-    font-size: 0.8em;
-}
 
 .ui-widget-content {
     border-color: #7C7C7C #C3C3C3 #C3C3C3 #7C7C7C;
@@ -580,9 +515,9 @@ footer {
 /* Interaction states
 ----------------------------------*/
 .ui-state-focus,.ui-widget-content .ui-state-focus {
-    border-color: #920209;
+    border-color: #E2011B;
     border-style: solid;
     border-width: 1px 0;
     background-color: #D9DDE1;
-    color: #920209;
+    color: #E2011B;
 }

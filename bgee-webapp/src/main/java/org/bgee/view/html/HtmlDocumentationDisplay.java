@@ -119,6 +119,11 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
      * about ref. expression download files (see {@link #displayRefExprDownloadFileDocumentation()}).
      */
     private final HtmlDocumentationRefExprFile refExprFileDoc;
+    /**
+     * A {@code HtmlDocumentationTopAnat} used to write the documentation 
+     * about TopAnat (see {@link #displayTopAnatDocumentation()}).
+     */
+    private final HtmlDocumentationTopAnat topAnatDoc;
 
     /**
      * Default constructor.
@@ -137,7 +142,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
     public HtmlDocumentationDisplay(HttpServletResponse response,
             RequestParameters requestParameters, BgeeProperties prop, HtmlFactory factory) 
                     throws IOException {
-        this(response, requestParameters, prop, factory, null, null);
+        this(response, requestParameters, prop, factory, null, null, null);
     }
     /**
      * Constructor providing other dependencies.
@@ -165,7 +170,8 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
      */
     public HtmlDocumentationDisplay(HttpServletResponse response,
             RequestParameters requestParameters, BgeeProperties prop, HtmlFactory factory,
-            HtmlDocumentationCallFile callFileDoc, HtmlDocumentationRefExprFile refExprFileDoc) 
+            HtmlDocumentationCallFile callFileDoc, HtmlDocumentationRefExprFile refExprFileDoc,
+            HtmlDocumentationTopAnat topAnatDoc) 
                     throws IOException {
         super(response, requestParameters, prop, factory);
         if (callFileDoc == null) {
@@ -179,6 +185,11 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
                     new HtmlDocumentationRefExprFile(response, requestParameters, prop, factory);
         } else {
             this.refExprFileDoc = refExprFileDoc;
+        }
+        if (topAnatDoc == null) {
+        	this.topAnatDoc = new HtmlDocumentationTopAnat(response, requestParameters, prop, factory);
+        } else {
+        	this.topAnatDoc = topAnatDoc;
         }
     }
     
@@ -258,6 +269,20 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
 
         log.exit();
     }
+
+    @Override
+    public void displayTopAnatDocumentation() {
+        log.entry();
+        
+        this.startDisplay(TOP_ANAT_PAGE_NAME + " documentation");
+        
+        this.topAnatDoc.writeDocumentation();
+        
+        this.endDisplay();
+
+        log.exit();
+    }
+
 
     @Override
     //TODO: use a different ID than 'feature_list', to provide a different look, 

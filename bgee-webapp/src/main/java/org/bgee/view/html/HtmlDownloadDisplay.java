@@ -226,46 +226,42 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     private String getIntroduction(DownloadPageType pageType) {
         log.entry(pageType);
         
-        String intro = "<p>Bgee is a database to retrieve and compare gene expression patterns "
-                + "in multiple animal species, based exclusively on curated \"normal\" "
-                + "expression data (e.g., no gene knock-out, no treatment, no disease), "
-                + "from multiple data types, "
-                + "to provide a comparable reference of normal gene expression.</p>";
+        StringBuilder intro = new StringBuilder();
         if (pageType == DownloadPageType.EXPR_CALLS) {
-            intro += "<p>This page provides calls of baseline "
+            intro.append("<p>This page provides calls of baseline "
                 + "presence/absence of expression, and of differential over-/under-expression, "
                 + "either in single species, or made comparable between multiple species. "
-                + "Click on a species or a group of species to browse files available for download. ";
+                + "Click on a species or a group of species to browse files available for download.");
         } else if (pageType == DownloadPageType.PROC_EXPR_VALUES) {
-            intro += "<p>This page provides annotations and experiment information "
+        	intro.append("<p>This page provides annotations and experiment information "
                     + "(e.g., annotations to anatomy and development, quality scores used in QCs, "
                     + "chip or library information), and processed expression values "
                     + "(e.g., read counts, RPKM values, log values of Affymetrix "
                     + "probeset normalized signal intensities). Click on a species "
-                    + "to browse files available for download. ";
+                    + "to browse files available for download.");
         } else {
             //pre-condition check in private method, use of assert allowed
             assert false: "Unknown DownloadPageType";
         }
-        intro += "See also ";
+        intro.append("See also ");
         if (pageType == DownloadPageType.EXPR_CALLS) {
             RequestParameters urlGenerator = this.getNewRequestParameters();
             urlGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
             urlGenerator.setAction(RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES);
-            intro += "<a href='" + urlGenerator.getRequestURL() 
-                    + "' title='See Bgee processed expression values'>processed expression values</a>";
+            intro.append("<a href='" + urlGenerator.getRequestURL() 
+                    + "' title='See Bgee processed expression values'>processed expression values</a>");
         } else {
             RequestParameters urlGenerator = this.getNewRequestParameters();
             urlGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
             urlGenerator.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
-            intro += "<a href='" + urlGenerator.getRequestURL() 
-                    + "' title='See Bgee gene expression calls'>gene expression calls</a>";
+            intro.append("<a href='" + urlGenerator.getRequestURL() 
+                    + "' title='See Bgee gene expression calls'>gene expression calls</a>");
         }
 
-        intro += ", and <a href='" + this.prop.getFTPRootDirectory() 
+        intro.append(", and <a href='" + this.prop.getFTPRootDirectory() 
                 + "statistics.tsv' title='Database statistics TSV file'>"
-                + "database statistics</a>.</p>";
-        return log.exit(intro);
+                + "database statistics</a>.</p>");
+        return log.exit(intro.toString());
     }
     
     /**
@@ -291,14 +287,15 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         
         StringBuilder box = new StringBuilder();
         box.append("<div class='row'>");
-        box.append("<div id='bgee_search_box' class='row well well-sm "
+        box.append("<div id='bgee_species_search' class='row well well-sm "
         								+ "col-xs-offset-1 col-xs-10 col-md-offset-3 col-md-6'>");
         box.append("    <form  action='/' method='get'>");
-        box.append("        <div class='form-group col-xs-9 col-sm-10'>");
-        box.append("            <label for='search_label'>Search species</label>");
-        box.append("            <span id='results_nb'></span>");
-        box.append("            <input id='search_label' type='text' name='search' class='form-control' "
-        								+ "value='Scientific name, common name...'/>");
+        box.append("        <div class='form col-xs-9 col-sm-10'>");
+        box.append("            <label for='bgee_species_search_completion_box'>Search species</label>");
+        box.append("            <span id='bgee_species_search_result'></span>");
+        box.append("            <input id='bgee_species_search_completion_box' type='text' "
+        							+ "name='search' class='form-control' autocomplete='off' "
+        							+ "value='Scientific name, common name...'/>");
         box.append("        </div>");
         box.append("        <button type='submit' class='btn btn-default col-xs-3 col-sm-2'>Submit</button>");
         box.append("    </form>");
@@ -619,16 +616,21 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         }
         s.append("<div id='bgee_uniq_species'> ");
         switch (pageType) {
-        case PROC_EXPR_VALUES:
-            s.append("<h2>Species with data in Bgee");
-            break;
-        case EXPR_CALLS: 
-            s.append("<h2>Single-species");
-            break; 
-        default: 
-            throw log.throwing(new IllegalArgumentException("DownloadPageType not supported: " + pageType));
+        	case HOME_PAGE:
+        		break;
+        	case PROC_EXPR_VALUES:
+        		s.append("<h2>Species with data in Bgee");
+        		break;
+        	case EXPR_CALLS: 
+        		s.append("<h2>Single-species");
+        		break; 
+        	default: 
+        		throw log.throwing(new IllegalArgumentException(
+        				"DownloadPageType not supported: " + pageType));
         }
-        s.append("<span class='header_details'>(click on species to see more details)</span></h2>");
+        if (!pageType.equals(DownloadPageType.HOME_PAGE)) {
+            s.append("<span class='header_details'>(click on species to see more details)</span></h2>");        	
+        }
         s.append("<div class='bgee_section bgee_download_section'>");
         s.append(getSingleSpeciesFigures(pageType, groups));
         s.append("</div>");

@@ -14,6 +14,7 @@ import org.bgee.controller.RequestParameters;
 import org.bgee.model.file.SpeciesDataGroup;
 import org.bgee.model.species.Species;
 import org.bgee.view.GeneralDisplay;
+import org.bgee.view.html.HtmlDownloadDisplay.DownloadPageType;
 
 /**
  * HTML View for the general category display
@@ -63,10 +64,20 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         this.displaySpeciesBanner(groups);
 
         this.displayExplanation();
+
+        this.writeln("<hr class='home-divider'/>");
+        
+        this.displayHomePageSpecies(groups);
         
         this.displayNews();
 
         this.displayMoreInfo();
+
+        this.writeln("<hr class='home-divider'/>");
+
+        this.displayStartButtons();
+
+        this.writeln("<hr class='home-divider'/>");
 
         this.writeln(getImageSources());
 
@@ -107,21 +118,32 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	 */
 	private void displayStartBanner() {
 		log.entry();
-	
-	    RequestParameters urlTopAnat = this.getNewRequestParameters();
-	    urlTopAnat.setPage(RequestParameters.PAGE_TOP_ANAT);
-	    RequestParameters urlGeneSearch = this.getNewRequestParameters();
-	    urlGeneSearch.setPage(RequestParameters.PAGE_GENE);
-	    RequestParameters urlDownload = this.getNewRequestParameters();
-	    urlDownload.setPage(RequestParameters.PAGE_DOWNLOAD);
-		
+			
 	    this.writeln("<div id='bgee_start' class='row'>");
 	    
+	    //TODO: manage the version either from database, or from bgee-webapp.properties file.
+	    this.writeln("<span id='bgee_version'>version 13.1</span>");
+
 	    this.writeln("<div id='bgee_hp_logo'><img src='" + this.prop.getLogoImagesRootDirectory() 
 	            + "bgee13_hp_logo.png' alt='Bgee logo'></div>");
 	
 	    this.writeln("<div class='mini_text'>Gene expression data in animals</div>");
 
+	    this.displayStartButtons();
+	
+	    this.writeln("</div>"); // close bgee_start row
+	
+	    log.exit();
+	}
+
+	private void displayStartButtons() {
+		RequestParameters urlTopAnat = this.getNewRequestParameters();
+	    urlTopAnat.setPage(RequestParameters.PAGE_TOP_ANAT);
+	    RequestParameters urlGeneSearch = this.getNewRequestParameters();
+	    urlGeneSearch.setPage(RequestParameters.PAGE_GENE);
+	    RequestParameters urlDownload = this.getNewRequestParameters();
+	    urlDownload.setPage(RequestParameters.PAGE_DOWNLOAD);
+	    
 	    this.writeln("<div id='start_buttons'>");
 	    this.writeln("<a href='"+ urlTopAnat.getRequestURL() + 
 	    		"'><span class='glyphicon glyphicon-stats'></span>Expression enrichment analysis</a>");
@@ -130,10 +152,6 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	    this.writeln("<a href='"+ urlDownload.getRequestURL() + 
 	    		"'><span class='glyphicon glyphicon-download'></span>Download</a>");
 	    this.writeln("</div>"); // close start_buttons
-	
-	    this.writeln("</div>"); // close bgee_start row
-	
-	    log.exit();
 	}
 
 	/**
@@ -142,25 +160,25 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     private void displayExplanation() {
     	log.entry();
     	
-        this.writeln("<div id='bgee_explanations' class='row'>");
+        this.writeln("<div id='bgee_explanations' class='row home_page_section'>");
 		
-        this.writeln("<div class='col-md-offset-2 col-md-2'>");
-        this.writeln("<span>Gene expression data</span>");
+        this.writeln("<div class='col-sm-4'>");
+        this.writeln("<h2>Gene expression data</h2>");
         this.writeln("<p>Bgee is a database to retrieve and compare gene expression patterns "
                 + "in multiple animal species. Bgee curates heterogeneous expression data "
                 + "(RNA-Seq, Affymetrix, <em>in situ</em> hybridization, and EST data), "
                 + "and performs analyses to extract meaningful and comparable signal of expression.</p>");
         this.writeln("</div>");
         
-        this.writeln("<div class='col-md-offset-1 col-md-2'>");
-        this.writeln("<span>Simply normal</span>");
+        this.writeln("<div class='col-sm-4'>");
+        this.writeln("<h2>Simply normal</h2>");
         this.writeln("<p>Bgee is based exclusively on curated \"normal\", healthy, expression data "
                 + "(e.g., no gene knock-out, no treatment, no disease), "
                 + "to provide a comparable reference of normal gene expression.</p>");
         this.writeln("</div>");
 
-        this.writeln("<div class='col-md-offset-1 col-md-2'>");
-        this.writeln("<span>Comparable between species</span>");
+        this.writeln("<div class='col-sm-4'>");
+        this.writeln("<h2>Comparable between species</h2>");
         this.writeln("<p>Bgee produces comparable calls of baseline presence/absence of expression, "
                 + "and of differential over-/under-expression, that are then "
                 + "integrated along with information of gene orthology, and of homology "
@@ -172,7 +190,88 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
         log.exit();
 	}
+    
+    /**TODO
+     * @param groups
+     */
+    private void displayHomePageSpecies(List<SpeciesDataGroup> groups) {
+    	log.entry(groups);
+    	
+	    this.writeln("<div id='bgee_data' class='panel panel-default'>");
+	    this.writeln("<div class='panel-heading'>");
+	    this.writeln("<span class='panel-title'>Species with data in Bgee"
+                + "    <span class='header_details'>(click on species to see more details)"
+                + "</span></span>");
+	    this.writeln("</div>"); // close panel-heading
+	    
+	    this.writeln("<div class='panel-body'>");
 
+	    // Single species part
+    	String homePageSpeciesSection;
+    	try {
+    		homePageSpeciesSection = ((HtmlDownloadDisplay) this.getFactory().getDownloadDisplay())
+    				.getSingleSpeciesSection(DownloadPageType.HOME_PAGE, groups, true);
+    	} catch (IOException|ClassCastException e) {
+        	return;
+    	}
+
+    	// Black banner when a species or a group is selected.
+    	homePageSpeciesSection += this.getDownloadBanner();
+
+    	this.writeln(homePageSpeciesSection);
+    	
+    	this.writeln("</div>");
+    	this.writeln("</div>");
+    	
+    	log.exit();
+    }
+
+    /**
+     * Get the banner of a download page as a HTML 'div' element, 
+     * according the provided page type.
+     *
+     * @return  the {@code String} that is the black banner of a download page 
+     *          as a HTML 'div' element according {@code pageType}.
+     */
+    // TODO: DRY: copy from HtmlDownloadDisplay  
+    private String getDownloadBanner() {
+    	log.entry();
+
+    	StringBuilder banner = new StringBuilder();
+    	// This section is empty, it will be filled by JavaScript.
+    	banner.append("<div id='bgee_data_selection'>");
+    	// Cross to close the banner
+    	banner.append("<div id='bgee_data_selection_cross'>");
+    	banner.append("<img src='" + this.prop.getImagesRootDirectory() + "cross.png' " +
+    			"title='Close banner' alt='Cross' />");
+    	banner.append("</div>");
+
+    	// Section on the right of the black banner
+    	banner.append("<div id='bgee_data_selection_text'>");
+    	banner.append("<h1 class='scientificname'></h1><h1 class='commonname'></h1>");
+
+    	RequestParameters urlProcExprValues = this.getNewRequestParameters();
+    	urlProcExprValues.setPage(RequestParameters.PAGE_DOWNLOAD);
+    	urlProcExprValues.setAction(RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES);
+    	RequestParameters urlGeneExprCalls = this.getNewRequestParameters();
+    	urlGeneExprCalls.setPage(RequestParameters.PAGE_DOWNLOAD);
+    	urlGeneExprCalls.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
+    	banner.append("<ul>");
+    	banner.append("<li><img class='bullet_point' src='" + this.prop.getImagesRootDirectory() + "arrow.png' alt='Arrow' />" +
+    			"<a id='processed_expression_values_link' class='data_page_link' href='" +
+    			urlProcExprValues.getRequestURL() + "' title='Bgee processed expression values'>" +
+    			"See RNA-Seq and Affymetrix data</a></li>");
+    	banner.append("<li><img class='bullet_point' src='" + this.prop.getImagesRootDirectory() + "arrow.png' alt='Arrow' />" +
+    			"<a id='gene_expression_calls_link' class='data_page_link' href='" +
+    			urlGeneExprCalls.getRequestURL() +
+    			"' title='Bgee gene expression calls'>See gene expression calls</a></li>");
+    	banner.append("</ul>");
+    	banner.append("</div>"); // close bgee_data_selection_text
+    	banner.append("</div>"); // close 
+
+    	return log.exit(banner.toString());
+    }
+    
 	/**
 	 * TODO
 	 */
@@ -199,9 +298,9 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	    
 	    this.writeln("<div id='bgee_news' class='panel panel-default'>");
 	    this.writeln("<div class='panel-heading'>");
-	    this.writeln("<span class='panel-title'>News</span>"
-//	                 + "<span class='header_details'>(features are being added incrementally)</span>"
-	            );
+	    this.writeln("<span class='panel-title'>News"
+	                 + "    <span class='header_details'>(features are being added incrementally)"
+	                 + "</span></span>");
 	    this.writeln("</div>"); // close panel-heading
 	    
 	    this.writeln("<div class='panel-body'>");
@@ -292,10 +391,10 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         log.entry(date, description);
         
         this.writeln("<div class='row'>");
-        this.writeln("<div class='col-md-offset-1 col-md-2 news-date'>");
+        this.writeln("<div class='col-sm-offset-1 col-sm-2 col-lg-1 news-date'>");
         this.writeln(date);
         this.writeln("</div>");
-        this.writeln("<div class='col-md-8 news-desc'>");
+        this.writeln("<div class='col-sm-9 col-lg-10 news-desc'>");
         this.writeln(description);
         this.writeln("</div>");
         this.writeln("</div>");

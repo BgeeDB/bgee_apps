@@ -1,13 +1,10 @@
-h1.gene_title {
-    display: inline-block;
-    vertical-align: middle;
-    text-align: center;
-    width: 100%;
-	margin: 0;
-}
+
 h1.gene_title img {
     margin-right: 20px;
     vertical-align: middle;
+    height: 50px;
+    width: 50px;
+    border-radius: 8px;
 }
 
 table#geneinfo {
@@ -132,24 +129,6 @@ span.expandable {
 	cursor: pointer;
 }
 
-span.show_extra {
-	font-size: .85em;
-	text-decoration: underline;
-	margin-left: 7em;	
-}
-
-span.show_masked {
-	font-size: .85em;
-	text-decoration: underline;
-	margin-left: 7em;	
-}
-
-span.show_more {
-	font-size: .85em;
-	text-decoration: underline;
-	margin-left: 2em;	
-}
-
 .details {
     padding-right: .5em;
     padding-left: .2em;
@@ -161,13 +140,10 @@ span.show_more {
     font-size: .9em;
 }
 
-.invisible {
+.masked {
     display: none;
 }
 
-.masked {
-	font-style: italic;
-}
 
 .high {
 	background: #9efa9e; 

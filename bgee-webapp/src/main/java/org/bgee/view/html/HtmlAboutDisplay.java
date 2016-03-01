@@ -53,21 +53,22 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
         
         this.startDisplay("Bgee release 13 about page");
 
-        this.writeln("<div>");
+        this.writeln("<h1>About</h1>");
+
+        this.writeln("<div class='row'>");
+
+        this.writeln("<div class='" + CENTERED_ELEMENT_CLASS + "'>");
         this.writeln("<h2>What is Bgee?</h2>");
-        this.writeln("<div class='documentationsubsection'>");
+
         this.writeln("<p>Bgee is a database to retrieve and compare gene expression patterns " + 
                 "between animal species.</p>");
         this.writeln("<p>Data can be retrieved by <a href='" + urlDownloadGenerator.getRequestURL() + 
                 "'>downloading data</a>.</p>");
         this.writeln("<p>More information is provided in the <a href='" + 
                 urlDocumentationGenerator.getRequestURL() + "'>documentation page</a>.</p>");
-        this.writeln("</div>");
-        this.writeln("</div>"); // end of 'What is Bgee?'
 
-        this.writeln("<div>");
         this.writeln("<h2>Who are we?</h2>");
-        this.writeln("<div class='documentationsubsection'>");
+
         this.writeln("<p>Bgee is developed by the " +
                 "<a href='http://bioinfo.unil.ch' title='External link to the Robinson-Rechavi " +
                 "group webpage' target='_blank'>Evolutionary Bioinformatics group</a>, part of " +
@@ -77,12 +78,9 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
                 "Our main interest is in the evolution of animal genomes in the context of " +
                 "organismal function and development. We have special interests in the early " +
                 "evolution of chordates and fishes.</p>");
-        this.writeln("</div>");
-        this.writeln("</div>"); // end of 'Who are we?'
 
-        this.writeln("<div>");
         this.writeln("<h2>How to cite us?</h2>");
-        this.writeln("<div class='documentationsubsection'>");
+
         this.writeln("<ul>");
         this.writeln("<li>For the use of Bgee: Bastian F., Parmentier G., Roux J., Moretti S., " +
                 "Laudet V., Robinson-Rechavi M. (2008)<br>Bgee: Integrating and Comparing " +
@@ -111,17 +109,15 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
                 "url</a>] <a href='" +
                 "ftp://lausanne.isb-sib.ch/pub/databases/Bgee/general/citation02.ris'>" +
                 "RIS</a></li></ul>");
-        this.writeln("</div>");
-        this.writeln("</div>"); // end of 'How to cite us?'
 
-        this.writeln("<div>");
         this.writeln("<h2>More</h2>");
-        this.writeln("<div class='documentationsubsection'>");
+
         this.writeln("<p>More information about data analyses and database content is available " +
                 "in the <a href='" + urlDocumentationGenerator.getRequestURL() + 
                 "'>documentation page</a>.</p>");
-        this.writeln("</div>");
-        this.writeln("</div>"); // end of 'More'
+
+        this.writeln("</div>"); // close specific class
+        this.writeln("</div>"); // close row
 
         this.endDisplay();
 

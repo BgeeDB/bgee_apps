@@ -228,6 +228,10 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         RequestParameters urlCallFilesGenerator = this.getNewRequestParameters();
         urlCallFilesGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
         urlCallFilesGenerator.setAction(RequestParameters.ACTION_DOC_CALL_DOWLOAD_FILES);
+        
+        RequestParameters urlTopAnatGenerator = this.getNewRequestParameters();
+        urlTopAnatGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
+        urlTopAnatGenerator.setAction(RequestParameters.ACTION_DOC_TOP_ANAT);
 
         StringBuilder logos = new StringBuilder(); 
 
@@ -238,6 +242,11 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         logos.append(HtmlParentDisplay.getSingleFeatureLogo(urlCallFilesGenerator.getRequestURL(), 
                 false, "Download file documentation page", "Download file documentation", 
                 this.prop.getLogoImagesRootDirectory() + "download_logo.png", null));
+
+        //TODO uncomment when top ant logo is created
+//        logos.append(HtmlParentDisplay.getSingleFeatureLogo(urlTopAnatGenerator.getRequestURL(), 
+//                false, "TopAnat documentation page", "TopAnat documentation", 
+//                this.prop.getLogoImagesRootDirectory() + "topAnat_logo.png", null));
 
         return log.exit(logos.toString());
     }
@@ -251,8 +260,12 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         
         this.startDisplay("Expression call download file documentation");
         
+        this.writeln("<div class='" + CENTERED_ELEMENT_CLASS + "'>");
+
         this.callFileDoc.writeDocumentation();
         
+        this.writeln("</div>");
+
         this.endDisplay();
 
         log.exit();
@@ -263,8 +276,12 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         
         this.startDisplay(PROCESSED_EXPR_VALUES_PAGE_NAME + " download file documentation");
         
+        this.writeln("<div class='" + CENTERED_ELEMENT_CLASS + "'>");
+
         this.refExprFileDoc.writeDocumentation();
         
+        this.writeln("</div>");
+
         this.endDisplay();
 
         log.exit();
@@ -275,9 +292,13 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         log.entry();
         
         this.startDisplay(TOP_ANAT_PAGE_NAME + " documentation");
+
+        this.writeln("<div class='" + CENTERED_ELEMENT_CLASS + "'>");
         
         this.topAnatDoc.writeDocumentation();
         
+        this.writeln("</div>");
+
         this.endDisplay();
 
         log.exit();

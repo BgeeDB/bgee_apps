@@ -60,7 +60,6 @@ public class HtmlDocumentationTopAnat extends HtmlDocumentationDownloadFile {
         this.writeln("<div class='row'>");
         
         // Introduction
-        this.writeln("<div class='" + LARGE_ELEMENT_HTML_CLASS + "'>");
         this.writeln("<p>TopAnat is a tool to identify and visualize enriched anatomical terms, "
         		+ "from the expression patterns of a list of genes.</p>");
         this.writeln("<p>It allows to discover where genes from a set are preferentially expressed, "
@@ -74,15 +73,11 @@ public class HtmlDocumentationTopAnat extends HtmlDocumentationDownloadFile {
         		+ "about TopAnat for more information.</p>");
         this.writeln("<p><strong>Please note that the results can be slow to compute</strong>, "
         		+ "typically from 1 to 30 minutes, depending on the amount of data to process.</p>");
-        this.writeln("</div>");
 
         // Quick start
-        this.writeln("<div class='" + LARGE_ELEMENT_HTML_CLASS + "'>");
         this.writeln("<h2>Quick start</h2>");
-        this.writeln("</div>");
         
         // How to use
-        this.writeln("<div class='" + LARGE_ELEMENT_HTML_CLASS + "'>");
         this.writeln("<h3>How to use</h3>");
         this.writeln("<ul class='help'>");
         this.writeln("<li>Enter a list of Ensembl identifiers into the first form field,</li>");
@@ -90,12 +85,9 @@ public class HtmlDocumentationTopAnat extends HtmlDocumentationDownloadFile {
         this.writeln("<li>Optionally, change the program parameters with the dropdown menu.</li>");
         this.writeln("<li>Click the 'Submit your job' button.</li>");
         this.writeln("</ul>");
-        this.writeln("</div>");
         
         // Examples
-        this.writeln("<div class='" + LARGE_ELEMENT_HTML_CLASS + "'>");
         this.writeln("<h3>Examples</h3>");
-        this.writeln("<ul>");
         // Do not add a trailing slash to the example URLs, see comments in topanat.js
         this.writeln("<li><a href='?page=top_anat#/result/7919f27d143667bc6c137401ce0c91b51e257538' "
         		+ "title='TopAnat example'>Mouse genes mapped to the GO term 'spermatogenesis'</a>.</li>");
@@ -108,13 +100,9 @@ public class HtmlDocumentationTopAnat extends HtmlDocumentationDownloadFile {
         this.writeln("<li><a href='?page=top_anat#/result/5fc8ff1fcfed7cfba0f82f82a67b418ce8a709b6' "
         		+ "title='TopAnat example'>Platypus genes located on X chromosome</a>.</li>");
         this.writeln("</ul>");
-        this.writeln("</div>");
         
         // Note of caution
-        this.writeln("<div class='" + LARGE_ELEMENT_HTML_CLASS + "'>");
         this.writeln("<h2>Note of caution</h2>");
-        this.writeln("</div>");
-        this.writeln("<div class='" + LARGE_ELEMENT_HTML_CLASS + "'>");
         this.writeln("In your analyses, you should be extremely careful "
         		+ "about the definition of your universe (i.e., your background genes). "
         		+ "The cases where it is correct to use the default background (i.e., all genes "
@@ -125,19 +113,14 @@ public class HtmlDocumentationTopAnat extends HtmlDocumentationDownloadFile {
         		+ "to use the default background, for preliminary analyses, or when "
         		+ "the biological signal extracted from your gene list is very strong. "
         		+ "But it should often be more rigorously defined for data used in publications.");
-        this.writeln("</div>");
 
         // More information
-        this.writeln("<div class='" + LARGE_ELEMENT_HTML_CLASS + "'>");
         this.writeln("<h2>More information</h2>");
-        this.writeln("</div>");
-        this.writeln("<div class='" + LARGE_ELEMENT_HTML_CLASS + "'>");
         this.writeln("<p>TopAnat is based on "
         		+ "<a href='http://www.bioconductor.org/packages/release/bioc/html/topGO.html' "
         		+ "title='TopGO package in Bioconductor' target='_blank'>topGO</a>. "
         		+ "Adaptation of topGO courtesy of Adrian Alexa.</p>");
-        this.writeln("</div>");
-        
+                
         this.writeln("</div>"); // close row
 
         log.exit();

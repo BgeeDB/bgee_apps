@@ -89,11 +89,6 @@ public abstract class HtmlDocumentationDownloadFile extends HtmlParentDisplay {
             + " column description";
 
     /**
-     * A {@code String} to be used in {@code class} attribute.
-     */
-    protected static final String LARGE_ELEMENT_HTML_CLASS = "col-xs-12 col-xs-offset-0 col-sm-offset-1 col-sm-10";
-
-    /**
      * @return  A {@code String} that is the description of the gene ID column 
      *          in download files (because we use it several times), formated in HTML 
      *          and HTML escaped if necessary.

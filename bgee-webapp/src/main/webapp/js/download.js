@@ -171,7 +171,7 @@ var download = {
             // Search box
             this.$bgeeSearchForm = $( "#bgee_species_search form" );
             this.$bgeeSearchBox = $( "#bgee_species_search input" );
-            this.$bgeeSearchResults = $( "#results_nb" );
+            this.$bgeeSearchResults = $( "#bgee_species_search_result" );
             this.$bgeeMoreResultsDown = $( "#bgee_more_results_down" );
             this.$bgeeMoreResultsUp = $( "#bgee_more_results_up" );
             // Creative commons

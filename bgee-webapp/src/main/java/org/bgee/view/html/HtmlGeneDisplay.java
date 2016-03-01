@@ -63,13 +63,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		
 		this.writeln("<h1>Search gene information</h1>");
 
-        this.writeln("<div id='bgee_introduction' class='bgee_section bgee_download_section'>");
+        this.writeln("<div id='bgee_introduction'>");
         
-        this.writeln("<p>Bgee is a database to retrieve and compare gene expression patterns "
-                + "in multiple animal species, based exclusively on curated \"normal\" "
-                + "expression data (e.g., no gene knock-out, no treatment, no disease), "
-                + "from multiple data types, "
-                + "to provide a comparable reference of normal gene expression.</p>");
         this.writeln("<p>This page alow you to search gene page from "
         		+ "Ensembl gene IDs, gene names, and synonyms.<p>");
 
@@ -90,7 +85,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 	    String titleStart = "Gene: " + gene.getName() + " - " + gene.getId(); 
 		this.startDisplay(titleStart);
 		//page title
-		this.writeln("<h1 class='gene_title'><img height='50' width='50' src='" 
+		this.writeln("<h1 class='gene_title'><img src='" 
 		        + this.prop.getSpeciesImagesRootDirectory() + urlEncode(gene.getSpeciesId())
 		        + "_light.jpg' alt='" + htmlEntities(gene.getSpecies().getShortName()) 
 		        + "' />" + htmlEntities(titleStart) 
@@ -200,7 +195,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		// Dev stage cell
 		sb.append("<td><span class='expandable' title='click to expand'>[+] ").append(calls.size())
 			.append(" stage(s)</span>")
-			.append("<ul class='invisible dev-stage-list'>")
+			.append("<ul class='masked dev-stage-list'>")
 			.append(calls.stream().map(call -> {
 				DevStage stage = conditionUtils.getDevStage(call.getCondition().getDevStageId());
 				StringBuilder sb2 = new StringBuilder();
@@ -215,7 +210,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		sb.append("<td>")
 		        .append(getQualitySpans(
 		                calls.stream().flatMap(e -> e.getCallData().stream()).collect(Collectors.toList())))
-				.append("<ul class='invisible quality-list'>")
+				.append("<ul class='masked quality-list'>")
 				.append(calls.stream().map(call -> {
 						StringBuilder sb2 = new StringBuilder();
 						sb2.append("<li class='qualities'>").append(getQualitySpans(call.getCallData())).append("</li>");

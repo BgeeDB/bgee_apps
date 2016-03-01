@@ -620,12 +620,14 @@ div.loader p {
     display: inline-flex;
 }
 
-/* For examples in gene list media box*/
-#gene-list-media span.examples {
-	margin-left: 10px;
-}
+/* For examples in gene list media box */
 #gene-list-media h4 {
 	display: inline;
+}
+
+/* Job description */
+#resultContainer span.h4 {
+    color: #E2011B;
 }
 
 /*

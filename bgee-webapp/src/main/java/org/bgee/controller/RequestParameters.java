@@ -1932,7 +1932,19 @@ public class RequestParameters {
     public String getGeneId() {
     	return this.getFirstValue(this.getUrlParametersInstance().getParamGeneId());
     }
-    
+    /**
+     * Convenient method to set value of the parameter returned by 
+     * {@link URLParameters#getParamGeneId()}. Equivalent to calling 
+     * {@link #addValue(Parameter, Object)} for this parameter.
+     * 
+     * @param action    A {@code String} that is the value of the {@code gene_id} URL parameter 
+     *                  to set.
+     */
+    public void setGeneId(String geneId) {
+        this.resetValues(this.getUrlParametersInstance().getParamGeneId());
+        this.addValue(this.getUrlParametersInstance().getParamGeneId(), geneId);
+    }
+
     /**
      * @return the search parameter
      */

@@ -2,6 +2,12 @@
 
     <h1>TopAnat - Gene Expression Enrichment</h1>
 
+    <div id='bgee_introduction'>
+	   <p>TopAnat is a tool to identify and visualize enriched anatomical terms,
+            from the expression patterns of a list of genes.</p>
+    </div>
+
+
     <form id="queryForm" style="font-size: 14px;" name="queryForm" ng-submit="vm.postForm()" novalidate>
 
         <input type="hidden" ng-model="vm.isFormValidDevStages" required/>
@@ -67,13 +73,13 @@
 							Examples:
 							<!-- Do not add a trailing slash to the example URLs, see comments in topanat.js -->
 							<a href="?page=top_anat#/result/7919f27d143667bc6c137401ce0c91b51e257538"
-								title="TopAnat example 1">1</a>
+								title="Mouse genes mapped to the GO term 'spermatogenesis'">1</a>
                             <a href="?page=top_anat#/result/e37009ba698919c75d06e81b3eca5d48f78210a0"
-								title="TopAnat example 2">2</a>
+								title="Mouse genes mapped to the GO term 'neurological system process', with decorrelation and high quality data only">2</a>
                             <a href="?page=top_anat#/result/7e8c74c073be03be4c40810c16c6be06c0bef1be"
-								title="TopAnat example 3">3</a>
+								title="Cow genes with the keyword 'muscle' in their UniProtKB/Swiss-Prot description">3</a>
                             <a href="?page=top_anat#/result/5fc8ff1fcfed7cfba0f82f82a67b418ce8a709b6"
-								title="TopAnat example 4">4</a>
+								title="Platypus genes located on X chromosome">4</a>
 						</span>
 
 						<p ng-show="(vm.uploader.isUploading || vm.fg_list !== '') && !vm.selected_species && !vm.showDevStageError" ng-hide="(!vm.uploader.isUploading && vm.fg_list == '') || vm.selected_species !== '' || vm.showDevStageError" class="smaller">

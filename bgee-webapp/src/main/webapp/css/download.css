@@ -2,7 +2,6 @@ h1 img {
     height: 1.7em;
     width: 1.7em;
     margin-right: 0.4em;
-    margin-bottom: 0.2em;
 }
 
 #sib_body img.page_img {
@@ -84,35 +83,7 @@ img {
     font-size: 0.75em;
 }
 
-/****BGEE INTRODUCTION****/
-
-#bgee_introduction p {
-    margin: 0 0.5%;
-    color: #515151;
-}
-
-#bgee_introduction p+p {
-	margin-top: 0.5%;
-}
-
-/****BGEE SEARCH BOX****/
-
-#bgee_search_box label {
-    color: #626262;
-}
-
-#results_nb {
-    margin-left: 10px;
-}
-
-#bgee_search_box .form-group {
-    margin-bottom: 0;
-    padding-left: 0px;
-}
-
-#bgee_search_box button {
-    margin-top: 25px;
-}
+/****BGEE SEARCH****/
 
 #bgee_more_results_up, #bgee_more_results_down  {
     position: fixed;
@@ -348,10 +319,6 @@ p.file_info a:hover {
     border-radius: 12px 12px 0 0;
     bottom: -20px;
     padding: 3px;
-}
-
-.invisible {
-    display: none;
 }
 
 /****BGEE CREATIVE COMMONS****/

@@ -43,6 +43,12 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     protected final static String TOP_ANAT_PAGE_NAME = "TopAnat";
     
     /**
+     * A {@code String} to be used in {@code class} attribute.
+     */
+    protected static final String CENTERED_ELEMENT_CLASS = 
+    		"col-xs-12 col-xs-offset-0 col-sm-offset-1 col-sm-10";
+
+    /**
      * Escape HTML entities in the provided {@code String}
      * @param stringToWrite A {@code String} that contains the HTML to escape
      * @return  The escaped HTML
@@ -344,8 +350,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         urlDocTopAnat.setPage(RequestParameters.PAGE_DOCUMENTATION);
         urlDocTopAnat.setAction(RequestParameters.ACTION_DOC_TOP_ANAT);
         
-//        RequestParameters urlAbout = this.getNewRequestParameters();
-//        urlAbout.setPage(RequestParameters.PAGE_ABOUT);
+        RequestParameters urlAbout = this.getNewRequestParameters();
+        urlAbout.setPage(RequestParameters.PAGE_ABOUT);
 
         // Navigation bar
         StringBuilder navbar = new StringBuilder();
@@ -411,7 +417,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("</li>");
         
         // About
-//        navbar.append("<li><a title='About page' href='" + urlAbout.getRequestURL() + "'>About</a></li>");
+        navbar.append("<li><a title='About page' href='" + urlAbout.getRequestURL() + "'>About</a></li>");
         
         // Help
         navbar.append("<li>" + this.getObfuscateEmail() + "</li>");
@@ -432,9 +438,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 "wordpress_logo.png'></a></li>");
         
         // SIB
-        navbar.append("<li><a href='http://www.sib.swiss' target='_blank' "
+        navbar.append("<li><a id='sib_brand' href='http://www.sib.swiss' target='_blank' "
                 + "title='Link to the SIB Swiss Institute of Bioinformatics'>"
-                + "<img id='sib_logo' src='" + this.prop.getLogoImagesRootDirectory() +
+                + "<img src='" + this.prop.getLogoImagesRootDirectory() +
                 "sib_logo.png' alt='SIB Swiss Institute of Bioinformatics' /></a></li>");
 
         navbar.append("</ul>");  // close right nav links
@@ -559,15 +565,32 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     protected String getGeneSearchBox() {
         log.entry();
     
-        return log.exit(
-        		"<div id='bgee_gene_search'>" +
-                    "<form action='javascript:void(0);' method='get'>" +
-                        "<label for='bgee_gene_search_completion_box'>Search gene</label>" +
-                        "<input id='bgee_gene_search_completion_box' class='sib_text' autocomplete='off' " +
-                            "type='text' name='search'/>" +
-                    "</form>" +
-                    "<span id='bgee_gene_search_waiting'></span>" +
-                "</div>");
+        RequestParameters urlExample1 = this.getNewRequestParameters();
+        urlExample1.setPage(RequestParameters.PAGE_GENE);
+        urlExample1.setGeneId("ENSMUSG00000038253");
+
+        StringBuilder example = new StringBuilder();
+        example.append("<span class='examples'>Examples:");
+        example.append("<a href='" + urlExample1.getRequestURL() + "'>ENSMUSG00000038253</a>");
+        example.append("</span>");
+        
+        StringBuilder box = new StringBuilder();
+        box.append("<div class='row'>");
+        box.append("<div id='bgee_gene_search' class='row well well-sm "
+        								+ "col-xs-offset-1 col-xs-10 col-md-offset-3 col-md-6'>");
+        box.append("    <form  action='javascript:void(0);' method='get'>");
+        box.append("        <div class='form'>");
+        box.append("            <label for='bgee_gene_search_completion_box'>Search gene</label>");
+        box.append(				example.toString());
+        box.append("    		<span id='bgee_gene_search_waiting'></span>");
+        box.append("            <input id='bgee_gene_search_completion_box' class='form-control' " +
+                            		"autocomplete='off' type='text' name='search'/>");
+        box.append("        </div>");
+        box.append("    </form>");
+        box.append("</div>");
+        box.append("</div>");
+
+        return log.exit(box.toString());
     }
 
     /**

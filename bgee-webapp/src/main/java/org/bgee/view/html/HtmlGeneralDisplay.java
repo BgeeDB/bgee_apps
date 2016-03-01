@@ -91,8 +91,6 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	        attrs.put("alt", htmlEntities(species.getShortName()));
 	        attrs.put("class", "species_img");
 	        homePageSpeciesSection.append(getHTMLTag("img", attrs));
-	        // FIXME: to be removed, it's to test larger number of species
-	        homePageSpeciesSection.append(getHTMLTag("img", attrs));
 	    });
 	
 	    this.writeln("<div id='bgee_species' class='row'>");
@@ -122,7 +120,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	    this.writeln("<div id='bgee_hp_logo'><img src='" + this.prop.getLogoImagesRootDirectory() 
 	            + "bgee13_hp_logo.png' alt='Bgee logo'></div>");
 	
-	    this.writeln("<div class='mini_text'>Gene expression database in animals</div>");
+	    this.writeln("<div class='mini_text'>Gene expression data in animals</div>");
 
 	    this.writeln("<div id='start_buttons'>");
 	    this.writeln("<a href='"+ urlTopAnat.getRequestURL() + 
@@ -147,27 +145,27 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         this.writeln("<div id='bgee_explanations' class='row'>");
 		
         this.writeln("<div class='col-md-offset-2 col-md-2'>");
-        this.writeln("<span>Lorem ipsum</span>");
-        this.writeln("<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus. "
-        		+ "Suspendisse lectus tortor, dignissim sit amet, adipiscing nec, ultricies sed, "
-        		+ "dolor. Cras elementum ultrices diam. Maecenas ligula massa, varius a, semper "
-        		+ "congue, euismod non, mi.</p>");
+        this.writeln("<span>Gene expression data</span>");
+        this.writeln("<p>Bgee is a database to retrieve and compare gene expression patterns "
+                + "in multiple animal species. Bgee curates heterogeneous expression data "
+                + "(RNA-Seq, Affymetrix, <em>in situ</em> hybridization, and EST data), "
+                + "and performs analyses to extract meaningful and comparable signal of expression.</p>");
         this.writeln("</div>");
         
         this.writeln("<div class='col-md-offset-1 col-md-2'>");
-        this.writeln("<span>Lorem ipsum</span>");
-        this.writeln("<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus. "
-        		+ "Suspendisse lectus tortor, dignissim sit amet, adipiscing nec, ultricies sed, "
-        		+ "dolor. Cras elementum ultrices diam. Maecenas ligula massa, varius a, semper "
-        		+ "congue, euismod non, mi.</p>");
+        this.writeln("<span>Simply normal</span>");
+        this.writeln("<p>Bgee is based exclusively on curated \"normal\", healthy, expression data "
+                + "(e.g., no gene knock-out, no treatment, no disease), "
+                + "to provide a comparable reference of normal gene expression.</p>");
         this.writeln("</div>");
 
         this.writeln("<div class='col-md-offset-1 col-md-2'>");
-        this.writeln("<span>Lorem ipsum</span>");
-        this.writeln("<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus. "
-        		+ "Suspendisse lectus tortor, dignissim sit amet, adipiscing nec, ultricies sed, "
-        		+ "dolor. Cras elementum ultrices diam. Maecenas ligula massa, varius a, semper "
-        		+ "congue, euismod non, mi.</p>");
+        this.writeln("<span>Comparable between species</span>");
+        this.writeln("<p>Bgee produces comparable calls of baseline presence/absence of expression, "
+                + "and of differential over-/under-expression, that are then "
+                + "integrated along with information of gene orthology, and of homology "
+                + "between organs. This allows comparisons of expression patterns "
+                + "between species.</p>");
         this.writeln("</div>");
 
         this.writeln("</div>"); // close bgee_explanations
@@ -201,8 +199,9 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	    
 	    this.writeln("<div id='bgee_news' class='panel panel-default'>");
 	    this.writeln("<div class='panel-heading'>");
-	    this.writeln("<span class='panel-title'>News</span>" +
-	                 "<span class='header_details'>(features are being added incrementally)</span>");
+	    this.writeln("<span class='panel-title'>News</span>"
+//	                 + "<span class='header_details'>(features are being added incrementally)</span>"
+	            );
 	    this.writeln("</div>"); // close panel-heading
 	    
 	    this.writeln("<div class='panel-body'>");

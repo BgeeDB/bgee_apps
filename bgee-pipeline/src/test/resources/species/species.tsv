@@ -1,5 +1,5 @@
-speciesId	genus	species	speciesCommonName	genomeFilePath	genomeVersion	dataSourceId	genomeSpeciesId	fakeGeneIdPrefix	keywords
-8	my genusA	my speciesA	my common nameA	file/pathA	versionA	2			
-13	my genusB	my speciesB	my common nameB	file/pathB	versionB	24	20	PREFIX	speB
-15	my genusC	my speciesC		file/pathC	versionC	2			speC|speC 2
+speciesId	genus	species	speciesCommonName	displayOrder	genomeFilePath	genomeVersion	dataSourceId	genomeSpeciesId	fakeGeneIdPrefix	keywords
+8	my genusA	my speciesA	my common nameA	2	file/pathA	versionA	2			
+13	my genusB	my speciesB	my common nameB	1	file/pathB	versionB	24	20	PREFIX	speB
+15	my genusC	my speciesC		3	file/pathC	versionC	2			speC|speC 2
 

@@ -31,6 +31,7 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
      * <li>{@code DATA_SOURCE_ID}: corresponds to {@link SpeciesTO#getDataSourceId()}.
      * <li>{@code GENOME_SPECIES_ID}: corresponds to {@link SpeciesTO#getGenomeSpeciesId()}.
      * <li>{@code FAKE_GENE_ID_PREFIX}: corresponds to {@link SpeciesTO#getFakeGeneIdPrefix()}.
+     * <li>{@code DISPLAY_ORDER}: corresponds to {@link SpeciesTO#getDisplayOrder()}.
      * </ul>
      * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
      * @see org.bgee.model.dao.api.DAO#setAttributes(Enum[])
@@ -38,7 +39,8 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
      */
     public enum Attribute implements DAO.Attribute {
         ID, COMMON_NAME, GENUS, SPECIES_NAME, PARENT_TAXON_ID, GENOME_FILE_PATH, 
-        GENOME_VERSION, DATA_SOURCE_ID, GENOME_SPECIES_ID, FAKE_GENE_ID_PREFIX;
+        GENOME_VERSION, DATA_SOURCE_ID, GENOME_SPECIES_ID, FAKE_GENE_ID_PREFIX, 
+        DISPLAY_ORDER;
     }
     
     /**
@@ -109,6 +111,10 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
          */
         private final String speciesName;
         /**
+         * An {@code Integer} allowing to sort species in preferred display order.
+         */
+        private final Integer displayOrder;
+        /**
          * A {@code String} that is the ID of the parent taxon of this species (for instance, 
          * {@code 9605} for <i>homo</i>, if this species was "human"). 
          * Corresponds to the DAO {@code Attribute} {@link SpeciesDAO.Attribute 
@@ -170,6 +176,7 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
          *                          (for instance, <i>homo</i>).
          * @param speciesName       A {@code String} that is the species name of the species 
          *                          (for instance, <i>sapiens</i>).
+         * @param displayOrder      An {@code Integer} allowing to sort species in preferred display order.
          * @param parentTaxonId     A {@code String} that is the NCBI ID of the parent taxon 
          *                          of this species (for instance, {@code 9605} for <i>homo</i>, 
          *                          the parent taxon of human).
@@ -183,12 +190,13 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
          *                          species, if its genome was not in Ensembl.
          */
         public SpeciesTO(String id, String commonName, String genus, String speciesName, 
-                String parentTaxonId, String genomeFilePath, String genomeVersion, 
+                Integer displayOrder, String parentTaxonId, String genomeFilePath, String genomeVersion, 
                 String dataSourceId, String genomeSpeciesId, String fakeGeneIdPrefix) {
             super(id, commonName);
             
             this.genus = genus;
             this.speciesName = speciesName;
+            this.displayOrder = displayOrder;
             this.parentTaxonId = parentTaxonId;
             this.genomeFilePath = genomeFilePath;
             this.genomeVersion = genomeVersion;
@@ -224,6 +232,12 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
          */
         public String getSpeciesName() {
             return speciesName;
+        }
+        /**
+         * @return  An {@code Integer} allowing to sort species in preferred display order.
+         */
+        public Integer getDisplayOrder() {
+            return displayOrder;
         }
         /**
          * @return  the {@code String} that is the ID of the parent taxon of this species 

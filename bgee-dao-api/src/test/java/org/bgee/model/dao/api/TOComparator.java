@@ -316,6 +316,9 @@ public class TOComparator {
         if (TOComparator.areEntityTOsEqual(spTO1, spTO2, compareId) && 
                 StringUtils.equals(spTO1.getGenus(), spTO2.getGenus()) &&
                 StringUtils.equals(spTO1.getSpeciesName(), spTO2.getSpeciesName()) &&
+                (spTO1.getDisplayOrder() == null && spTO2.getDisplayOrder() == null || 
+                    spTO1.getDisplayOrder() != null && 
+                    spTO1.getDisplayOrder().equals(spTO2.getDisplayOrder())) && 
                 StringUtils.equals(spTO1.getParentTaxonId(), spTO2.getParentTaxonId()) &&
                 StringUtils.equals(spTO1.getGenomeFilePath(), spTO2.getGenomeFilePath()) &&
                 StringUtils.equals(spTO1.getGenomeVersion(), spTO2.getGenomeVersion()) &&

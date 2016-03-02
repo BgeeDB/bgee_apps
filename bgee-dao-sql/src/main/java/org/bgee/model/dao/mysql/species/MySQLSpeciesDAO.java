@@ -119,6 +119,8 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
                     sql += speciesTableName + ".genus";
                 } else if (attribute.equals(SpeciesDAO.Attribute.SPECIES_NAME)) {
                     sql += speciesTableName + ".species";
+                } else if (attribute.equals(SpeciesDAO.Attribute.DISPLAY_ORDER)) {
+                    sql += speciesTableName + ".speciesDisplayOrder";
                 } else if (attribute.equals(SpeciesDAO.Attribute.PARENT_TAXON_ID)) {
                     sql += speciesTableName + ".taxonId";
                 } else if (attribute.equals(SpeciesDAO.Attribute.GENOME_FILE_PATH)) {
@@ -166,14 +168,14 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
         
         StringBuilder sql = new StringBuilder(); 
         sql.append("INSERT INTO species" +  
-                   "(speciesId, genus, species, speciesCommonName, taxonId, " + 
+                   "(speciesId, genus, species, speciesCommonName, speciesDisplayOrder, taxonId, " + 
                    "genomeFilePath, genomeVersion, dataSourceId, " + 
                    "genomeSpeciesId, fakeGeneIdPrefix) values ");
         for (int i = 0; i < specieTOs.size(); i++) {
             if (i > 0) {
                 sql.append(", ");
             }
-            sql.append("(?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ");
+            sql.append("(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ");
         }
         try (BgeePreparedStatement stmt = 
                 this.getManager().getConnection().prepareStatement(sql.toString())) {
@@ -186,6 +188,8 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
                 stmt.setString(paramIndex, speciesTO.getSpeciesName());
                 paramIndex++;
                 stmt.setString(paramIndex, speciesTO.getName());
+                paramIndex++;
+                stmt.setInt(paramIndex, speciesTO.getDisplayOrder());
                 paramIndex++;
                 stmt.setInt(paramIndex, Integer.parseInt(speciesTO.getParentTaxonId()));
                 paramIndex++;
@@ -249,6 +253,7 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
             String speciesId = null, genus = null, species = null, speciesCommonName = null, 
                    taxonId = null, genomeFilePath = null, genomeVersion = null,
                    dataSourceId = null, genomeSpeciesId = null, fakeGeneIdPrefix=null;
+            Integer displayOrder = null;
             // Get results
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
@@ -263,6 +268,9 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
                         
                     } else if (column.getValue().equals("speciesCommonName")) {
                         speciesCommonName = this.getCurrentResultSet().getString(column.getKey());
+                        
+                    } else if (column.getValue().equals("speciesDisplayOrder")) {
+                        displayOrder = this.getCurrentResultSet().getInt(column.getKey());
                         
                     } else if (column.getValue().equals("taxonId")) {
                         taxonId = this.getCurrentResultSet().getString(column.getKey());
@@ -290,7 +298,7 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
             }
             //Set SpeciesTO
             return log.exit(new SpeciesTO(speciesId, speciesCommonName, genus, species,
-                    taxonId, genomeFilePath, genomeVersion, dataSourceId, 
+                    displayOrder, taxonId, genomeFilePath, genomeVersion, dataSourceId, 
                     genomeSpeciesId, fakeGeneIdPrefix));
         }
     }

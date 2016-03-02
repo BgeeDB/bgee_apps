@@ -750,7 +750,7 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
 
         // Species 
         MySQLSpeciesTOResultSet mockSpeciesTORs33 = createMockDAOResultSet(
-                Arrays.asList(new SpeciesTO("33", null, "Genus33", "species33", null, null, null, null, null, null)),
+                Arrays.asList(new SpeciesTO("33", null, "Genus33", "species33", null, null, null, null, null, null, null)),
                 MySQLSpeciesTOResultSet.class);
         when(mockManager.mockSpeciesDAO.getSpeciesByIds(
                 new HashSet<String>(Arrays.asList("33")))).thenReturn(mockSpeciesTORs33);
@@ -926,7 +926,7 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
 
         // Species 
         MySQLSpeciesTOResultSet mockSpeciesTORs33 = createMockDAOResultSet(
-                Arrays.asList(new SpeciesTO("33", null, "Genus33", "species33", null, null, null, null, null, null)),
+                Arrays.asList(new SpeciesTO("33", null, "Genus33", "species33", null, null, null, null, null, null, null)),
                 MySQLSpeciesTOResultSet.class);
         when(mockManager.mockSpeciesDAO.getSpeciesByIds(
                 new HashSet<String>(Arrays.asList("33")))).thenReturn(mockSpeciesTORs33);

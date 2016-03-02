@@ -271,8 +271,8 @@ public class ParseOrthoXMLTest extends TestAncestor {
         when(mockSpeciesTORs.getTO()).thenReturn(
                 // if genomeSpeciesId is not "0" or equal to speciesID
                 // the fakeGeneIdPrefix shouldn't be empty
-                new SpeciesTO("9600", "orangutan", null, null, null, null, null, null, "9601", ""),
-                new SpeciesTO("6239", "c.elegans", null, null, null, null, null, null, "0", ""));
+                new SpeciesTO("9600", "orangutan", null, null, null, null, null, null, null, "9601", ""),
+                new SpeciesTO("6239", "c.elegans", null, null, null, null, null, null, null, "0", ""));
         // Determine the behavior of consecutive calls to next().
         when(mockSpeciesTORs.next()).thenAnswer(new Answer<Boolean>() {
             int counter = -1;
@@ -329,14 +329,14 @@ public class ParseOrthoXMLTest extends TestAncestor {
         when(mockSpeciesTORs.getTO()).thenReturn(
                 // if genomeSpeciesId is equal to "0" or speciesId 
                 // we don't take account fakeGeneIdPrefix
-                new SpeciesTO("9606", "human", null, null, null, null, null, null, null, ""),
-                new SpeciesTO("7955", "zebrafish", null, null, null, null, null, null, "7955", "TOTO"),
-                new SpeciesTO("7227", "fruitfly", null, null, null, null, null, null, "0", "TATA"),
-                new SpeciesTO("9598", "chimpanzee", null, null, null, null, null, null, "0", ""),
-                new SpeciesTO("9597", "bonobo", null, null, null, null, null, null, "9598", "PPAG"),
-                new SpeciesTO("9600", "orangutan", null, null, null, null, null, null, "9601", "PPYG"),
-                new SpeciesTO("28377", "anolis", null, null, null, null, null, null, "9598", "ACAG"),
-                new SpeciesTO("6239", "c.elegans", null, null, null, null, null, null, "0", ""));
+                new SpeciesTO("9606", "human", null, null, null, null, null, null, null, null, ""),
+                new SpeciesTO("7955", "zebrafish", null, null, null, null, null, null, null, "7955", "TOTO"),
+                new SpeciesTO("7227", "fruitfly", null, null, null, null, null, null, null, "0", "TATA"),
+                new SpeciesTO("9598", "chimpanzee", null, null, null, null, null, null, null, "0", ""),
+                new SpeciesTO("9597", "bonobo", null, null, null, null, null, null, null, "9598", "PPAG"),
+                new SpeciesTO("9600", "orangutan", null, null, null, null, null, null, null, "9601", "PPYG"),
+                new SpeciesTO("28377", "anolis", null, null, null, null, null, null, null, "9598", "ACAG"),
+                new SpeciesTO("6239", "c.elegans", null, null, null, null, null, null, null, "0", ""));
         // Determine the behavior of consecutive calls to next().
         when(mockSpeciesTORs.next()).thenAnswer(new Answer<Boolean>() {
             int counter = -1;

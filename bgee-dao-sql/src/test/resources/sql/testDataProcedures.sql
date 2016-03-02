@@ -35,13 +35,13 @@ BEGIN
                (6,'HOG:VALEWID',10,13,311),
                (7,'HOG:VALEWID',11,12,511);
 
-        INSERT INTO species (speciesId,genus,species,speciesCommonName, taxonId, genomeFilePath, genomeVersion, dataSourceId, genomeSpeciesId, fakeGeneIdPrefix) 
-        VALUES (11,'gen11','sp11','spCName11',111,'gen11_sp11/gen11_sp11.genome11', 'genome11', 1, 0, ''),
-               (21,'gen21','sp21','spCName21',211,'gen51_sp51/gen51_sp51.genome51', 'genome51', 1, 51,'PREFIX51'),
-               (31,'gen31','sp31','spCName31',311,'gen31_sp31/gen31_sp31.genome31', 'genome31', 1, 0,''),
-               (41,'gen41','sp41','spCName41',411,'gen41_sp41/gen41_sp41.genome41', 'genome41', 1, 0,''),
-               (42,'gen41','sp42','spCName42',411,'gen41_sp41/gen41_sp41.genome41', 'genome41', 1, 41,'PREFIX41'),
-               (51,'gen51','sp51','spCName51',511,'gen51_sp51/gen51_sp51.genome51', 'genome51', 1, 0,'');
+        INSERT INTO species (speciesId,genus,species,speciesCommonName, speciesDisplayOrder, taxonId, genomeFilePath, genomeVersion, dataSourceId, genomeSpeciesId, fakeGeneIdPrefix) 
+        VALUES (11,'gen11','sp11','spCName11', 4, 111,'gen11_sp11/gen11_sp11.genome11', 'genome11', 1, 0, ''),
+               (21,'gen21','sp21','spCName21', 3, 211,'gen51_sp51/gen51_sp51.genome51', 'genome51', 1, 51,'PREFIX51'),
+               (31,'gen31','sp31','spCName31', 1, 311,'gen31_sp31/gen31_sp31.genome31', 'genome31', 1, 0,''),
+               (41,'gen41','sp41','spCName41', 2, 411,'gen41_sp41/gen41_sp41.genome41', 'genome41', 1, 0,''),
+               (42,'gen41','sp42','spCName42', 5, 411,'gen41_sp41/gen41_sp41.genome41', 'genome41', 1, 41,'PREFIX41'),
+               (51,'gen51','sp51','spCName51', 6, 511,'gen51_sp51/gen51_sp51.genome51', 'genome51', 1, 0,'');
 
         INSERT INTO gene (geneId,geneName,geneDescription,speciesId,geneBioTypeId,OMAParentNodeId,ensemblGene) 
         VALUES ('ID1','genN1','genDesc1',11,12,5,true),

@@ -115,13 +115,13 @@ public class InsertTaxaTest extends TestAncestor {
         //made to the DAOs
         Set<SpeciesTO> expectedSpeciesTOs = new HashSet<SpeciesTO>();
         expectedSpeciesTOs.add(
-                new SpeciesTO("8", "my common nameA", "my genusA", "my speciesA", "16", 
+                new SpeciesTO("8", "my common nameA", "my genusA", "my speciesA", 2, "16", 
                         "file/pathA", "versionA", "2", null, null));
         expectedSpeciesTOs.add(
-                new SpeciesTO("13", "my common nameB", "my genusB", "my speciesB", "12", 
+                new SpeciesTO("13", "my common nameB", "my genusB", "my speciesB", 1, "12", 
                         "file/pathB", "versionB", "24", "20", "PREFIX"));
         expectedSpeciesTOs.add(
-                new SpeciesTO("15", "", "my genusC", "my speciesC", "14", 
+                new SpeciesTO("15", "", "my genusC", "my speciesC", 3, "14", 
                         "file/pathC", "versionC", "2", null, null));
         ArgumentCaptor<Set> speciesTOsArg = ArgumentCaptor.forClass(Set.class);
         verify(mockManager.mockSpeciesDAO).insertSpecies(speciesTOsArg.capture());

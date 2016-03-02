@@ -97,6 +97,12 @@ public class InsertTaxa extends MySQLDAOUser {
      */
     public static final String SPECIES_COMMON_NAME_KEY = "speciesCommonName";
     /**
+     * A {@code String} that is the key to retrieve the preferred display order of species, 
+     * and that is also the name of the column 
+     * to retrieve this display order from the TSV file storing the species used in Bgee.
+     */
+    public static final String SPECIES_DISPLAY_ORDER_KEY = "displayOrder";
+    /**
      * A {@code String} that is the key to retrieve the path to the genome file 
      * for a species used in Bgee, from the {@code Map}s returned by 
      * {@link #getSpeciesFromFile(String)}, and that is also the name of the column 
@@ -321,7 +327,7 @@ public class InsertTaxa extends MySQLDAOUser {
             String unexpectedFormat = "The provided TSV species file is not " +
             		"in the expected format";
             String[] header = mapReader.getHeader(true);
-            if (header.length != 10) {
+            if (header.length != 11) {
                 throw log.throwing(new IllegalArgumentException(unexpectedFormat));
             }
             
@@ -335,6 +341,8 @@ public class InsertTaxa extends MySQLDAOUser {
                     processors[i] = new NotNull();
                 } else if (header[i].equalsIgnoreCase(SPECIES_COMMON_NAME_KEY)) {
                     processors[i] = new Optional(new UniqueHashCode());
+                } else if (header[i].equalsIgnoreCase(SPECIES_DISPLAY_ORDER_KEY)) {
+                    processors[i] = new UniqueHashCode(new NotNull(new ParseInt()));
                 } else if (header[i].equalsIgnoreCase(SPECIES_GENOME_FILE_KEY)) {
                     processors[i] = new NotNull();
                 } else if (header[i].equalsIgnoreCase(SPECIES_GENOME_VERSION_KEY)) {
@@ -539,6 +547,13 @@ public class InsertTaxa extends MySQLDAOUser {
             if (commonName == null) {
                 commonName = "";
             }
+
+            //preferred display order
+            int displayOrder = (Integer) species.get(SPECIES_DISPLAY_ORDER_KEY);
+            if (displayOrder <= 0) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Incorrect display order: " + displayOrder));
+            }
             
             String genomeFilePath = (String) species.get(SPECIES_GENOME_FILE_KEY);
             if (StringUtils.isBlank(genomeFilePath)) {
@@ -556,7 +571,7 @@ public class InsertTaxa extends MySQLDAOUser {
             String fakeGeneIdPrefix = (String) species.get(SPECIES_FAKE_GENE_PREFIX_KEY);
             
             speciesTOs.add(new SpeciesTO(String.valueOf(speciesId), commonName, genus, 
-                    speciesName, parentTaxonId, genomeFilePath, genomeVersion, 
+                    speciesName, displayOrder, parentTaxonId, genomeFilePath, genomeVersion, 
                     (dataSourceId == null ? null: String.valueOf(dataSourceId)), 
                     (genomeSpeciesId == null ? null: String.valueOf(genomeSpeciesId)), 
                     fakeGeneIdPrefix));

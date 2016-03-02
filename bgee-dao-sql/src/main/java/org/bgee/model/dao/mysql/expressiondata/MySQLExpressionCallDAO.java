@@ -1182,11 +1182,6 @@ implements ExpressionCallDAO {
                             }
                             return rankSql+" * "+maxRankSql;
                         }).collect(Collectors.toSet());
-
-                Set<String> sqlMaxRanks = attributesForRank.stream()
-                        .map(dataType -> {
-                        	return dataTypeToMaxRankSql.get(dataType);
-                }).collect(Collectors.toSet());
                 
                 // use if expressions to handle the case where a mean rank is null
                 sql +=
@@ -1194,8 +1189,9 @@ implements ExpressionCallDAO {
                                 .map(r -> "if ("+r+" is null, 0,"+r+")")
                                 .collect(Collectors.joining("+ ", "((",
                                 ")")) +
-                        sqlMaxRanks.stream()
-                                .map(mr -> "if ("+mr+" is null, 0,"+mr+")")
+                        attributesForRank.stream()
+                                .map(attr -> "if ("+convertDataTypeAttrToColName(attr)+" = '" +DataState.NODATA+"', 0,"
+                                              +dataTypeToMaxRankSql.get(attr)+")")
                                 .collect(Collectors.joining("+ ", "/ (",
                                                 ")) AS globalMeanRank "));
 

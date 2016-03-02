@@ -165,9 +165,8 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         this.writeln("<div class='col-sm-4'>");
         this.writeln("<h2>Gene expression data</h2>");
         this.writeln("<p>Bgee is a database to retrieve and compare gene expression patterns "
-                + "in multiple animal species. Bgee curates heterogeneous expression data "
-                + "(RNA-Seq, Affymetrix, <em>in situ</em> hybridization, and EST data), "
-                + "and performs analyses to extract meaningful and comparable signal of expression.</p>");
+                + "in multiple animal species, produced from multiple data types "
+                + "(RNA-Seq, Affymetrix, <em>in situ</em> hybridization, and EST data).</p>");
         this.writeln("</div>");
         
         this.writeln("<div class='col-sm-4'>");
@@ -179,8 +178,8 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
         this.writeln("<div class='col-sm-4'>");
         this.writeln("<h2>Comparable between species</h2>");
-        this.writeln("<p>Bgee produces comparable calls of baseline presence/absence of expression, "
-                + "and of differential over-/under-expression, that are then "
+        this.writeln("<p>Bgee produces calls of presence/absence of expression, "
+                + "and of differential over-/under-expression, "
                 + "integrated along with information of gene orthology, and of homology "
                 + "between organs. This allows comparisons of expression patterns "
                 + "between species.</p>");

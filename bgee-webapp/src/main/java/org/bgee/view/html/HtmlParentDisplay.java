@@ -556,42 +556,6 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         log.entry(cat);
         return log.exit(this.displayHelpLink(cat, "[?]"));
     }
-    
-    /**
-     * Get the search box of a gene as a HTML 'div' element. 
-     *
-     * @return  the {@code String} that is the search box as HTML 'div' element.
-     */
-    protected String getGeneSearchBox() {
-        log.entry();
-    
-        RequestParameters urlExample1 = this.getNewRequestParameters();
-        urlExample1.setPage(RequestParameters.PAGE_GENE);
-        urlExample1.setGeneId("ENSMUSG00000038253");
-
-        StringBuilder example = new StringBuilder();
-        example.append("<span class='examples'>Examples:");
-        example.append("<a href='" + urlExample1.getRequestURL() + "'>ENSMUSG00000038253</a>");
-        example.append("</span>");
-        
-        StringBuilder box = new StringBuilder();
-        box.append("<div class='row'>");
-        box.append("<div id='bgee_gene_search' class='row well well-sm "
-        								+ "col-xs-offset-1 col-xs-10 col-md-offset-3 col-md-6'>");
-        box.append("    <form  action='javascript:void(0);' method='get'>");
-        box.append("        <div class='form'>");
-        box.append("            <label for='bgee_gene_search_completion_box'>Search gene</label>");
-        box.append(				example.toString());
-        box.append("    		<span id='bgee_gene_search_waiting'></span>");
-        box.append("            <input id='bgee_gene_search_completion_box' class='form-control' " +
-                            		"autocomplete='off' type='text' name='search'/>");
-        box.append("        </div>");
-        box.append("    </form>");
-        box.append("</div>");
-        box.append("</div>");
-
-        return log.exit(box.toString());
-    }
 
     /**
      * Write HTML code allowing to include common javascript files. Subclasses needing to include 

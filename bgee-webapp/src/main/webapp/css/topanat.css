@@ -202,12 +202,12 @@ http://bootsnipp.com/snippets/featured/large-dropdown-menu
 }
 
 .img-topanat-small {
-  height: 60px;
+  height: 60px !important;
 }
 
 .img-topanat-xsmall {
-  width: 30px;
-  height: 30px;
+  width: 30px !important;
+  height: 30px !important;
 }
 
 .navbar-brand {

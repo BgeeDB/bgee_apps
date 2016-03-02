@@ -61,12 +61,11 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 	    log.entry();
 		this.startDisplay("Gene information");
 		
-		this.writeln("<h1>Search gene information</h1>");
+		this.writeln("<h1>Gene search</h1>");
 
         this.writeln("<div id='bgee_introduction'>");
         
-        this.writeln("<p>This page alow you to search gene page from "
-        		+ "Ensembl gene IDs, gene names, and synonyms.<p>");
+        this.writeln("<p>Search for genes based on Ensembl gene IDs, gene names, and synonyms.<p>");
 
         this.writeln("</div>");
 
@@ -75,6 +74,48 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		this.endDisplay();
 		log.exit();
 	}
+    
+    /**
+     * Get the search box of a gene as a HTML 'div' element. 
+     *
+     * @return  the {@code String} that is the search box as HTML 'div' element.
+     */
+    protected String getGeneSearchBox() {
+        log.entry();
+    
+        RequestParameters urlExample = this.getNewRequestParameters();
+        urlExample.setPage(RequestParameters.PAGE_GENE);
+
+        StringBuilder example = new StringBuilder();
+        example.append("<span class='examples'>Examples: ");
+        urlExample.setGeneId("ENSG00000244734");
+        example.append("<a href='" + urlExample.getRequestURL() + "'>HBB</a> (human)");
+        urlExample.setGeneId("ENSMUSG00000040564");
+        example.append(", <a href='" + urlExample.getRequestURL() + "'>Apoc1</a> (mouse)");
+        urlExample.setGeneId("ENSG00000178104");
+        example.append(", <a href='" + urlExample.getRequestURL() + "'>PDE4DIP</a> (human)");
+        urlExample.setGeneId("ENSDARG00000035350");
+        example.append(", <a href='" + urlExample.getRequestURL() + "'>ins</a> (zebrafish)");
+        example.append("</span>");
+        
+        StringBuilder box = new StringBuilder();
+        box.append("<div class='row'>");
+        box.append("<div id='bgee_gene_search' class='row well well-sm "
+                                        + "col-xs-offset-1 col-xs-10 col-md-offset-3 col-md-6'>");
+        box.append("    <form  action='javascript:void(0);' method='get'>");
+        box.append("        <div class='form'>");
+        box.append("            <label for='bgee_gene_search_completion_box'>Search gene</label>");
+        box.append(             example.toString());
+        box.append("            <span id='bgee_gene_search_waiting'></span>");
+        box.append("            <input id='bgee_gene_search_completion_box' class='form-control' " +
+                                    "autocomplete='off' type='text' name='search'/>");
+        box.append("        </div>");
+        box.append("    </form>");
+        box.append("</div>");
+        box.append("</div>");
+
+        return log.exit(box.toString());
+    }
 
 	@Override
 	public void displayGene(GeneResponse geneResponse) {

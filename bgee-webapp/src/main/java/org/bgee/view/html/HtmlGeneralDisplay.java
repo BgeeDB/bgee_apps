@@ -419,7 +419,6 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         //If you ever add new files, you need to edit bgee-webapp/pom.xml 
         //to correctly merge/minify them.
         this.includeJs("general.js");
-        this.includeJs("autoCompleteGene.js");
         log.exit();
     }
 

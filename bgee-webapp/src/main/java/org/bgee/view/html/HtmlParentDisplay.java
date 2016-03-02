@@ -578,6 +578,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             this.includeJs("lib/jquery_plugins/bootstrap.min.js");
             this.includeJs("lib/jquery_plugins/jquery.visible.min.js");
             this.includeJs("lib/jquery_plugins/jquery-ui.min.js");
+            this.includeJs("lib/jquery_plugins/toastr.min.js");
             this.includeJs("bgeeproperties.js");
             this.includeJs("urlparameters.js");
             this.includeJs("requestparameters.js");
@@ -588,8 +589,6 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             this.includeJs("vendor_common.js");
             this.includeJs("script_common.js");
         }
-        this.includeJs("autoCompleteGene.js");
-        this.includeJs("jquery_ui_autocomplete_modif.js");
         log.exit();
     }
     /**
@@ -661,12 +660,19 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected void includeCss() {
         if (!this.prop.isMinify()) {
+            this.includeCss("lib/jquery_plugins/bootstrap.min.css");
+            this.includeCss("lib/jquery_plugins/jquery-ui.min.css");
+            this.includeCss("lib/jquery_plugins/jquery-ui.structure.min.css");
+            this.includeCss("lib/jquery_plugins/jquery-ui.theme.min.css");
+            this.includeCss("lib/jquery_plugins/toastr.min.css");
             //we need to add the Bgee CSS files at the end, to override CSS file from bootstrap
-        	this.includeCss("lib/jquery_plugins/bootstrap.min.css");
             this.includeCss("bgee.css");  
         } else {
             //If you ever add new files, you need to edit bgee-webapp/pom.xml 
             //to correctly merge/minify them.
+            //the CSS files need to keep their relative location to other paths the same, 
+            //this is why we keep their location and don't merge them all
+            this.includeCss("lib/jquery_plugins/vendor_common.css");
             //we need to add the Bgee CSS files at the end, to override CSS file from bootstrap
             this.includeCss("common.css"); 
         }

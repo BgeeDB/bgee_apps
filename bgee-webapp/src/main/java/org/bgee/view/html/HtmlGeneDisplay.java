@@ -413,12 +413,13 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         //to correctly merge/minify them.
         if (!this.prop.isMinify()) {
             this.includeJs("lib/jquery_plugins/jquery.dataTables.min.js");
+            this.includeJs("gene.js");
+            this.includeJs("autoCompleteGene.js");
+            this.includeJs("jquery_ui_autocomplete_modif.js");
         } else {
             this.includeJs("lib/jquery_plugins/jquery.dataTables.js");
+            this.includeJs("script_gene.js");
         }
-        this.includeJs("gene.js");
-        this.includeJs("autoCompleteGene.js");
-        this.includeJs("jquery_ui_autocomplete_modif.js");
         
         log.exit();
 	}

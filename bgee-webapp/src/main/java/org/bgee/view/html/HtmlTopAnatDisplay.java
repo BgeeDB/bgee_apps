@@ -128,7 +128,6 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
             this.includeJs("lib/angular_modules/ui_modules/ui-grid.min.js");
             this.includeJs("lib/angular_modules/ui_modules/ui-bootstrap-tpls.min.js");
             this.includeJs("lib/angular_modules/angular-file-upload.min.js");
-            this.includeJs("lib/jquery_plugins/toastr.min.js");
             this.includeJs("lib/angular_modules/angular-location-update.min.js");
             this.includeJs("lib/Blob.js");
             this.includeJs("lib/FileSaver.min.js");
@@ -164,11 +163,6 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
         //And all merged css files are already included by super.includeCss().
         
         if (!this.prop.isMinify()) {
-            this.includeCss("lib/jquery_plugins/bootstrap.min.css");
-            this.includeCss("lib/jquery_plugins/jquery-ui.min.css");
-            this.includeCss("lib/jquery_plugins/jquery-ui.structure.min.css");
-            this.includeCss("lib/jquery_plugins/jquery-ui.theme.min.css");
-            this.includeCss("lib/jquery_plugins/toastr.min.css");
             //CSS files of AngularJS modules only used by TopAnat
             this.includeCss("lib/angular_modules/ui_grid/ui-grid.min.css");
             //font-awesome
@@ -177,9 +171,6 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
         } else {
             //If you ever add new files, you need to edit bgee-webapp/pom.xml 
             //to correctly merge/minify them.
-            //the CSS files need to keep their relative location to other paths the same, 
-            //this is why we keep their location and don't merge them all
-            this.includeCss("lib/jquery_plugins/vendor_common.css");
             //CSS files of AngularJS modules only used by TopAnat
             this.includeCss("lib/angular_modules/ui_grid/ui-grid.css");
             //font-awesome

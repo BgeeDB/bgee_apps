@@ -35,8 +35,7 @@ add unique(taxonRightBound);
 /*!40000 ALTER TABLE `species` DISABLE KEYS */;
 alter table species 
 add primary key(speciesId), 
-add unique(species, genus), 
-add unique(speciesCommonName);
+add unique(species, genus);
 /*!40000 ALTER TABLE `species` ENABLE KEYS */;
 
 /*!40000 ALTER TABLE `speciesToKeyword` DISABLE KEYS */;

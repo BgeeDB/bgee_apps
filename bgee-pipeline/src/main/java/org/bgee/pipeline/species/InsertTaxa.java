@@ -334,7 +334,7 @@ public class InsertTaxa extends MySQLDAOUser {
                 } else if (header[i].equalsIgnoreCase(SPECIES_NAME_KEY)) {
                     processors[i] = new NotNull();
                 } else if (header[i].equalsIgnoreCase(SPECIES_COMMON_NAME_KEY)) {
-                    processors[i] = new UniqueHashCode(new NotNull());
+                    processors[i] = new Optional(new UniqueHashCode());
                 } else if (header[i].equalsIgnoreCase(SPECIES_GENOME_FILE_KEY)) {
                     processors[i] = new NotNull();
                 } else if (header[i].equalsIgnoreCase(SPECIES_GENOME_VERSION_KEY)) {
@@ -527,15 +527,19 @@ public class InsertTaxa extends MySQLDAOUser {
             String parentTaxonId = String.valueOf(OntologyUtils.getTaxNcbiId(
                     this.taxOntWrapper.getIdentifier(parents.iterator().next())));
             
-            String commonName  = (String) species.get(SPECIES_COMMON_NAME_KEY);
             String genus       = (String) species.get(SPECIES_GENUS_KEY);
             String speciesName = (String) species.get(SPECIES_NAME_KEY);
-            if (StringUtils.isBlank(commonName) || StringUtils.isBlank(genus) || 
-                    StringUtils.isBlank(speciesName)) {
+            if (StringUtils.isBlank(genus) || StringUtils.isBlank(speciesName)) {
                 throw log.throwing(new IllegalArgumentException("The provided species " +
-                        "contain incorrect information: " + commonName + " - " + 
+                        "contain incorrect information: " + 
                         genus + " - " + speciesName));
             }
+            //commonName not mandatory
+            String commonName  = (String) species.get(SPECIES_COMMON_NAME_KEY);
+            if (commonName == null) {
+                commonName = "";
+            }
+            
             String genomeFilePath = (String) species.get(SPECIES_GENOME_FILE_KEY);
             if (StringUtils.isBlank(genomeFilePath)) {
                 throw log.throwing(new IllegalArgumentException(

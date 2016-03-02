@@ -1172,28 +1172,27 @@ implements ExpressionCallDAO {
                              EnumSet.noneOf(ExpressionCallDAO.Attribute.class)));
                 //use for dividing afterwards, don't want a division by 0 :p
                 assert attributesForRank.size() > 0;
-                Set<String> sqlRanks = attributesForRank.stream()
-                        .map(dataType -> {
-                            String rankSql = dataTypeToSql.get(dataType);
-                            String maxRankSql = dataTypeToMaxRankSql.get(dataType);
-                            if (rankSql == null || maxRankSql == null) {
-                                throw log.throwing(new IllegalStateException(
-                                        "No rank clause associated to data type: " + dataType));
-                            }
-                            return rankSql+" * "+maxRankSql;
-                        }).collect(Collectors.toSet());
                 
                 // use if expressions to handle the case where a mean rank is null
-                sql +=
-                        sqlRanks.stream()
-                                .map(r -> "if ("+r+" is null, 0,"+r+")")
-                                .collect(Collectors.joining("+ ", "((",
-                                ")")) +
-                        attributesForRank.stream()
-                                .map(attr -> "if ("+convertDataTypeAttrToColName(attr)+" = '" +DataState.NODATA+"', 0,"
-                                              +dataTypeToMaxRankSql.get(attr)+")")
-                                .collect(Collectors.joining("+ ", "/ (",
-                                                ")) AS globalMeanRank "));
+                sql +=  attributesForRank.stream()
+                            .map(attr -> {
+                                String rankSql = dataTypeToSql.get(attr);
+                                String maxRankSql = dataTypeToMaxRankSql.get(attr);
+                                if (rankSql == null || maxRankSql == null) {
+                                    throw log.throwing(new IllegalStateException(
+                                        "No rank clause associated to data type: " + attr));
+                                }
+                                return "if (" + convertDataTypeAttrToColName(attr) + " + 0 = " 
+                                           + convertDataStateToInt(DataState.NODATA) + ", 0, "
+                                           + rankSql + " * " + maxRankSql + ")";
+                            })
+                            .collect(Collectors.joining(" + ", "((", ")")) 
+                            
+                      + attributesForRank.stream()
+                            .map(attr -> "if (" + convertDataTypeAttrToColName(attr) + " + 0 = " 
+                                                + convertDataStateToInt(DataState.NODATA) + ", 0, "
+                                         + dataTypeToMaxRankSql.get(attr) + ")")
+                            .collect(Collectors.joining(" + ", "/ (", ")) AS globalMeanRank "));
 
             } else if (attribute.equals(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA)) {
                 if (!groupByClause) {

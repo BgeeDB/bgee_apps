@@ -160,7 +160,14 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
     	  List<GeneTO> genes = dao.getGeneBySearchTerm("ID1", new HashSet<>(), 1,25).getAllTOs();
     	  assertEquals(1, genes.size());
     	  
+    	  //Test ordering based on speciesDisplayOrder
     	  genes = dao.getGeneBySearchTerm("gen", new HashSet<>(), 1,25).getAllTOs();
+          List<GeneTO> expectedGenes = Arrays.asList(
+                  new GeneTO("ID3", "genN3", "genDesc3", 31, 0, 3, false), 
+                  new GeneTO("ID2", "genN2", "genDesc2", 21, 0, 2, true), 
+                  new GeneTO("ID4", "genN4", "genDesc4", 21, 0, 0, true), 
+                  new GeneTO("ID1", "genN1", "genDesc1", 11, 12, 5, true)); 
+          assertEquals("Incorrect order of genes retrieved", expectedGenes, genes);
     	  assertEquals(4, genes.size());
     	  
       	  genes = dao.getGeneBySearchTerm("gleich", new HashSet<>(), 1,25).getAllTOs();

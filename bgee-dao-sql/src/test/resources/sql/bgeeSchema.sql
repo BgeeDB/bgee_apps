@@ -104,6 +104,8 @@ create table species (
     species varchar(70) not null COMMENT 'Species name',
 -- exemple: human
     speciesCommonName varchar(70) not null COMMENT 'NCBI species common name',
+-- integer allowing to sort the species in preferred display order
+    speciesDisplayOrder smallint unsigned not null, 
 -- ID of the taxon which this species belongs to, present in the table `taxonomy`.
 -- For instance, if this species is `human`, it belongs to the taxon `homo` (taxon ID 9605).
     taxonId mediumint unsigned not null COMMENT 'NCBI taxon id this species belongs to (most of the time genus taxon id)',

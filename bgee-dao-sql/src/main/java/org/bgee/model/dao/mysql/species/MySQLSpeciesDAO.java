@@ -171,17 +171,19 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
         
         StringBuilder sql = new StringBuilder(); 
         sql.append("INSERT INTO species" +  
-                   "(speciesId, genus, species, speciesCommonName, taxonId, " + 
+                   "(speciesId, genus, species, speciesCommonName, speciesDisplayOrder, taxonId, " + 
                    "genomeFilePath, genomeSpeciesId, fakeGeneIdPrefix) values ");
         for (int i = 0; i < specieTOs.size(); i++) {
             if (i > 0) {
                 sql.append(", ");
             }
-            sql.append("(?, ?, ?, ?, ?, ?, ?, ?) ");
+            sql.append("(?, ?, ?, ?, ?, ?, ?, ?, ?) ");
         }
         try (BgeePreparedStatement stmt = 
                 this.getManager().getConnection().prepareStatement(sql.toString())) {
             int paramIndex = 1;
+            //XXX: to be removed after merge of branch bgee_v14, managing speciesDisplayOrder
+            int speciesCount = 1;
             for (SpeciesTO speciesTO: specieTOs) {
                 stmt.setInt(paramIndex, Integer.parseInt(speciesTO.getId()));
                 paramIndex++;
@@ -190,6 +192,10 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
                 stmt.setString(paramIndex, speciesTO.getSpeciesName());
                 paramIndex++;
                 stmt.setString(paramIndex, speciesTO.getName());
+                paramIndex++;
+                //XXX: to be removed after merge of branch bgee_v14, managing speciesDisplayOrder
+                //For now, we use the fake value speciesCount, for the tests to pass
+                stmt.setInt(paramIndex, speciesCount);
                 paramIndex++;
                 stmt.setInt(paramIndex, Integer.parseInt(speciesTO.getParentTaxonId()));
                 paramIndex++;
@@ -211,6 +217,8 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
                     stmt.setString(paramIndex, "");
                 }
                 paramIndex++;
+                //XXX: to be removed after merge of branch bgee_v14, managing speciesDisplayOrder
+                speciesCount++;
             }
             
             return log.exit(stmt.executeUpdate());
@@ -262,6 +270,9 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
                         
                     } else if (column.getValue().equals("speciesCommonName")) {
                         speciesCommonName = this.getCurrentResultSet().getString(column.getKey());
+                        
+                    } else if (column.getValue().equals("speciesDisplayOrder")) {
+                        //XXX: nothing here for now, this was managed in branch bgee_v14
                         
                     } else if (column.getValue().equals("taxonId")) {
                         taxonId = this.getCurrentResultSet().getString(column.getKey());

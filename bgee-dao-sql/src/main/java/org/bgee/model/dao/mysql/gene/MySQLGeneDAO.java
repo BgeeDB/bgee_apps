@@ -83,12 +83,12 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 	public GeneTOResultSet getGeneBySearchTerm(String searchTerm, Set<String> speciesIds, int limitStart,
 	        int resultPerPage) {
 
-		String sql = "select SQL_CALC_FOUND_ROWS distinct t1.*" /*
-		        + "(select t100.geneNameSynonym from geneNameSynonym as t100 "
-		        + "where t100.geneId = t1.geneId and t100.geneNameSynonym like ? "
-		        + "order by t100.geneNameSynonym limit 1) as geneNameSynonym " */+ 
+		String sql = "select distinct t1.* " + 
 		        "from gene as t1 "
-		        + "left outer join geneNameSynonym as t2 " + "on t1.geneId = t2.geneId "
+		        + "INNER JOIN species ON t1.speciesId = species.speciesId "
+		        + "left outer join "
+		            + "(SELECT * FROM geneNameSynonym WHERE geneNameSynonym like ?) as t2 "
+		        + "on t1.geneId = t2.geneId "
 		        + "where (t1.geneId like ? or t1.geneName like ? or t2.geneNameSynonym like ?) ";
 
 		if (speciesIds != null && !speciesIds.isEmpty()) {
@@ -105,8 +105,9 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 		}
 
 		sql += "order by if (t1.geneId like ?, CHAR_LENGTH(t1.geneId), "
-		        + "if (t1.geneName like ?, CHAR_LENGTH(t1.geneName), " + "CHAR_LENGTH(t2.geneNameSynonym))), ";
-		sql += "if (t1.geneId like ?, t1.geneId, " + "if (t1.geneName like ?, t1.geneName, " + "t2.geneNameSynonym)) ";
+		        + "if (t1.geneName like ?, CHAR_LENGTH(t1.geneName), CHAR_LENGTH(t2.geneNameSynonym))), "
+                + "species.speciesDisplayOrder, "
+		        + "if (t1.geneId like ?, t1.geneId, if (t1.geneName like ?, t1.geneName, t2.geneNameSynonym))";
 
 		if (resultPerPage != 0) {
 			sql += "limit ?, ?";
@@ -114,11 +115,11 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 
 		try {
 			BgeePreparedStatement preparedStatement = this.getManager().getConnection().prepareStatement(sql);
-			preparedStatement.setString(1, "%" + searchTerm + "%");
-			preparedStatement.setString(2, searchTerm + "%");
+            preparedStatement.setString(1, "%" + searchTerm + "%");
+            preparedStatement.setString(2, searchTerm + "%");
 			preparedStatement.setString(3, "%" + searchTerm + "%");
-			//preparedStatement.setString(4, "%" + searchTerm + "%");
-			int i = 4;//5;
+			preparedStatement.setString(4, "%" + searchTerm + "%");
+			int i = 5;
 
 			if (speciesIds != null && !speciesIds.isEmpty()) {
 				Iterator<String> speciesIdIterator = speciesIds.iterator();

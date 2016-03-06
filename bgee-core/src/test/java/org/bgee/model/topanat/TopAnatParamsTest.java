@@ -4,19 +4,16 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.expressiondata.CallFilter;
 import org.bgee.model.expressiondata.baseelements.CallType;
-import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DecorrelationType;
 import org.bgee.model.expressiondata.baseelements.StatisticTest;
-import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.topanat.exception.MissingParameterException;
 import org.junit.Before;
 import org.junit.Test;

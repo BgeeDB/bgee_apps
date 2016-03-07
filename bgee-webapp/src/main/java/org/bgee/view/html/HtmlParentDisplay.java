@@ -40,7 +40,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     /**
      * A {@code String} that is the page name of the 'gene expression calls' download page.
      */
-    protected final static String TOP_ANAT_PAGE_NAME = "TopAnat";
+    protected final static String TOP_ANAT_PAGE_NAME = "Expression enrichment analysis";
     
     /**
      * A {@code String} to be used in {@code class} attribute.

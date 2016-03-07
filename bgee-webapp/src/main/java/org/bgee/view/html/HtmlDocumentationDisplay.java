@@ -291,7 +291,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
     public void displayTopAnatDocumentation() {
         log.entry();
         
-        this.startDisplay(TOP_ANAT_PAGE_NAME + " documentation");
+        this.startDisplay("TopAnat documentation");
 
         this.writeln("<div class='" + CENTERED_ELEMENT_CLASS + "'>");
         

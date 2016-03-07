@@ -71,7 +71,6 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         
         this.displayNews();
 
-        this.displayMoreInfo();
 
         this.writeln("<hr class='home-divider'/>");
 
@@ -79,7 +78,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
         this.writeln("<hr class='home-divider'/>");
 
-        this.writeln(getImageSources());
+        this.displayMoreInfo();
 
         this.endDisplay();
         
@@ -368,15 +367,16 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     	log.entry();
     	
         this.writeln("<div id='bgee_more_info' class='row'>");
-	    
-	    this.writeln("<p>The complete website remains available for the previous release of Bgee:</p>");
-	    
-	    this.writeln("<div class='feature_list'>");
-	    this.writeln(HtmlParentDisplay.getSingleFeatureLogo("http://bgee.org/bgee/bgee",
-	    		true, "Bgee 12 home page", "Bgee 12",
-	    		this.prop.getLogoImagesRootDirectory() + "bgee12_logo.png", null));
-	    this.writeln("</div>"); // close feature_list
-	    
+    	
+        this.writeln("<div class='col-xs-16 col-sm-6'>");
+        this.writeln(getImageSources());
+        this.writeln("</div>");
+
+        this.writeln("<div class='col-xs-16 col-sm-6'>");
+        this.writeln("<a id ='archive_site' title='Archive site' href='http://bgee.org/bgee/bgee' target='_blank'"
+	    		+ "title='Bgee 12 home page'>View archive site</a>");
+        this.writeln("</div>");
+        
         this.writeln("</div>"); // close bgee_more_info row
         
         log.exit();

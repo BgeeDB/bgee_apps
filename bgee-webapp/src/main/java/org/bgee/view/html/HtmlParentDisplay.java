@@ -410,9 +410,10 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Documentation <span class='caret'></span></a>");
         navbar.append("<ul class='dropdown-menu'>");
         navbar.append("<li><a title='See how to access to Bgee data' href='" + urlDocBgeeAccess.getRequestURL() + "'>How to access Bgee data</a></li>");
+        navbar.append("<li><a title='TopAnat documentation' href='" + urlDocTopAnat.getRequestURL() + "'>" + TOP_ANAT_PAGE_NAME + "</a></li>");
         navbar.append("<li><a title='Gene expression call files documentation' href='" + urlDocExprCallFiles.getRequestURL() + "'>" + GENE_EXPR_CALLS_PAGE_NAME + "</a></li>");
 //        navbar.append("<li><a title='Processed expression value files documentation' href='" + urlDocProcValueFiles.getRequestURL() + "'>" + PROCESSED_EXPR_VALUES_PAGE_NAME + "</a></li>");
-        navbar.append("<li><a title='TopAnat documentation' href='" + urlDocTopAnat.getRequestURL() + "'>" + TOP_ANAT_PAGE_NAME + "</a></li>");
+        navbar.append("<li><a title='Bgee blog' href='https://bgeedb.wordpress.com' target='_blank'>Bgee blog</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
         

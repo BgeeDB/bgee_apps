@@ -415,6 +415,7 @@
                             <jsTargetDir>js/lib/jquery_plugins/</jsTargetDir>
                             <jsSourceFiles>
                                 <jsSourceFile>lib/jquery_plugins/jquery.dataTables.min.js</jsSourceFile>
+                                <jsSourceFile>lib/jquery_plugins/dataTables.responsive.min.js</jsSourceFile>
                             </jsSourceFiles>
                             <jsFinalFile>jquery.dataTables.${filter.org.bgee.webapp.javascript.version.extension}.js</jsFinalFile>
                             
@@ -422,6 +423,7 @@
                             <cssTargetDir>css/lib/jquery_plugins/</cssTargetDir>
                             <cssSourceFiles>
                                 <cssSourceFile>lib/jquery_plugins/jquery.dataTables.min.css</cssSourceFile>
+                                <cssSourceFile>lib/jquery_plugins/responsive.dataTables.min.css</cssSourceFile>
                             </cssSourceFiles>
                             <cssFinalFile>jquery.dataTables.${filter.org.bgee.webapp.css.version.extension}.css</cssFinalFile>
                         </configuration>

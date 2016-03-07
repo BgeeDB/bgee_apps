@@ -69,7 +69,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
         this.writeln("</div>");
 
-		this.writeln(getGeneSearchBox());
+		this.writeln(getGeneSearchBox(false));
 		
 		this.endDisplay();
 		log.exit();
@@ -80,29 +80,35 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      *
      * @return  the {@code String} that is the search box as HTML 'div' element.
      */
-    protected String getGeneSearchBox() {
+    protected String getGeneSearchBox(boolean isSmallBox) {
         log.entry();
     
         RequestParameters urlExample = this.getNewRequestParameters();
         urlExample.setPage(RequestParameters.PAGE_GENE);
 
         StringBuilder example = new StringBuilder();
-        example.append("<span class='examples'>Examples: ");
-        urlExample.setGeneId("ENSG00000244734");
-        example.append("<a href='" + urlExample.getRequestURL() + "'>HBB</a> (human)");
-        urlExample.setGeneId("ENSMUSG00000040564");
-        example.append(", <a href='" + urlExample.getRequestURL() + "'>Apoc1</a> (mouse)");
-        urlExample.setGeneId("ENSG00000178104");
-        example.append(", <a href='" + urlExample.getRequestURL() + "'>PDE4DIP</a> (human)");
-        urlExample.setGeneId("ENSDARG00000035350");
-        example.append(", <a href='" + urlExample.getRequestURL() + "'>ins</a> (zebrafish)");
-        example.append("</span>");
+        String bgeeGeneSearchClass= "col-xs-11 small-search-box";
+        if (!isSmallBox) {
+        	example.append("<span class='examples'>Examples: ");
+        	urlExample.setGeneId("ENSG00000244734");
+        	example.append("<a href='" + urlExample.getRequestURL() + "'>HBB</a> (human)");
+        	urlExample.setGeneId("ENSMUSG00000040564");
+        	example.append(", <a href='" + urlExample.getRequestURL() + "'>Apoc1</a> (mouse)");
+        	urlExample.setGeneId("ENSG00000178104");
+        	example.append(", <a href='" + urlExample.getRequestURL() + "'>PDE4DIP</a> (human)");
+        	urlExample.setGeneId("ENSDARG00000035350");
+        	example.append(", <a href='" + urlExample.getRequestURL() + "'>ins</a> (zebrafish)");
+        	example.append("</span>");
+
+        	bgeeGeneSearchClass = "col-xs-offset-1 col-xs-10 "
+        			+ "col-md-offset-2 col-md-8 "
+        			+ "col-lg-offset-3 col-lg-6";
+        }
         
         StringBuilder box = new StringBuilder();
         box.append("<div class='row'>");
-        box.append("<div id='bgee_gene_search' class='row well well-sm "
-                                        + "col-xs-offset-1 col-xs-10 col-md-offset-3 col-md-6'>");
-        box.append("    <form  action='javascript:void(0);' method='get'>");
+        box.append("<div id='bgee_gene_search' class='row well well-sm " + bgeeGeneSearchClass + "'>");
+        box.append("    <form action='javascript:void(0);' method='get'>");
         box.append("        <div class='form'>");
         box.append("            <label for='bgee_gene_search_completion_box'>Search gene</label>");
         box.append(             example.toString());
@@ -125,14 +131,25 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 	    
 	    String titleStart = "Gene: " + gene.getName() + " - " + gene.getId(); 
 		this.startDisplay(titleStart);
+
+		this.writeln("<div class='row'>");
+
+		// Gene search
+		this.writeln("<div class='col-sm-3'>");
+		this.writeln(getGeneSearchBox(true));
+		this.writeln("</div>"); // close div
+
 		//page title
-		this.writeln("<h1 class='gene_title'><img src='" 
+		this.writeln("<h1 class='gene_title col-sm-9'><img src='" 
 		        + this.prop.getSpeciesImagesRootDirectory() + urlEncode(gene.getSpeciesId())
 		        + "_light.jpg' alt='" + htmlEntities(gene.getSpecies().getShortName()) 
 		        + "' />" + htmlEntities(titleStart) 
 				+ " - <em>" + htmlEntities(gene.getSpecies().getScientificName()) + "</em> ("
                 + htmlEntities(gene.getSpecies().getName()) + ")</h1>");
 		
+		
+		this.writeln("</div>"); // close row
+
 		//Gene general information
 		this.writeln("<h2>Gene Information</h2>");
 		this.writeln("<div class='gene'>" + getGeneInfo(gene) + "</div>");
@@ -143,23 +160,27 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		this.writeln("<div id='expr_intro'>Expression calls ordered by the normalized ranks "
 		        + "of the gene in the conditions: </div>");
 		
-		this.writeln("<div id='expr_data'>");
+		this.writeln("<div id='expr_data' class='row'>");
 		
 		//table-container
+		this.writeln("<div class='col-xs-12 col-md-10'>");
 		this.writeln("<div id='table-container'>");
 		this.writeln(getExpressionHTMLByAnat(
 		        filterAndGroupByAnatEntity(geneResponse), 
 		        geneResponse.getConditionUtils()));
 		this.writeln("</div>"); // end table-container
+		this.writeln("</div>"); // end class
 		
 		//legend
         this.writeln("<div class='legend'>");
-        this.writeln("<table><caption>Sources</caption>" +
+        this.writeln("<table class='col-xs-offset-1 col-xs-4 col-md-offset-0 col-md-2'>"
+        		+ "<caption>Sources</caption>" +
                 "<tr><th>A</th><td>Affymetrix</td></tr>" +
                 "<tr><th>E</th><td>EST</td></tr>" +
                 "<tr><th>I</th><td>In Situ</td></tr>" +
                 "<tr><th>R</th><td>RNA-Seq</li></td></tr></table>");
-        this.writeln("<table><caption>Qualities</caption>" +
+        this.writeln("<table class='col-xs-offset-2 col-xs-4 col-md-offset-0 col-md-2'>"
+        		+ "<caption>Qualities</caption>" +
                 "<tr><td><span class='quality high'>high quality</span></td></tr>" +
                 "<tr><td><span class='quality low'>low quality</span></td></tr>" +
                 "<tr><td><span class='quality nodata'>no data</span></td></tr></table>");
@@ -195,10 +216,10 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 			return getExpressionRowsForAnatEntity(a, conditionUtils, calls);
 		}).collect(Collectors.joining("\n"));
 
-		sb.append("<table class='expression stripe'>")
+		sb.append("<table class='expression stripe nowrap compact responsive'>")
 		        .append("<thead><tr><th class='anat-entity-id'>Anat. entity ID</th>")
 		        .append("<th class='anat-entity'>Anatomical entity</th>")
-				.append("<th class='dev-stages'><strong>Developmental stage(s)</strong></th>")
+				.append("<th class='dev-stages min-tablet-l'><strong>Developmental stage(s)</strong></th>")
 				.append("<th class='quality'><strong>Quality</strong></th></tr></thead>\n");
 		sb.append("<tbody>").append(elements).append("</tbody>");
 		sb.append("</table>");
@@ -227,7 +248,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		// Anat entity ID and Anat entity cells 
 		String anatEntityUrl = "http://purl.obolibrary.org/obo/" 
 		    + this.urlEncode(anatEntity.getId().replace(':', '_'));
-		sb.append("<td class='details right small'><a target='_blank' href='").append(anatEntityUrl)
+		sb.append("<td class='details small'><a target='_blank' href='").append(anatEntityUrl)
 		    .append("' title='External link to ontology visualization'>")
 		    .append(htmlEntities(anatEntity.getId()))
 		    .append("</a></td><td>")
@@ -394,10 +415,13 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         //to correctly merge/minify them.
         if (!this.prop.isMinify()) {
             this.includeCss("lib/jquery_plugins/jquery.dataTables.min.css");
+            this.includeCss("lib/jquery_plugins/responsive.dataTables.min.css");
         } else {
             this.includeCss("lib/jquery_plugins/jquery.dataTables.css");
+            this.includeCss("lib/jquery_plugins/responsive.dataTables.css");
         }
         this.includeCss("gene.css");
+
         //we need to add the Bgee CSS files at the end, to override CSS file from external libs
         super.includeCss();
         
@@ -413,14 +437,15 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         //to correctly merge/minify them.
         if (!this.prop.isMinify()) {
             this.includeJs("lib/jquery_plugins/jquery.dataTables.min.js");
+            this.includeJs("lib/jquery_plugins/dataTables.responsive.min.js");
             this.includeJs("gene.js");
             this.includeJs("autoCompleteGene.js");
             this.includeJs("jquery_ui_autocomplete_modif.js");
         } else {
             this.includeJs("lib/jquery_plugins/jquery.dataTables.js");
+            this.includeJs("lib/jquery_plugins/dataTables.responsive.js");
             this.includeJs("script_gene.js");
         }
-        
         log.exit();
 	}
 }

@@ -136,7 +136,11 @@ nav img.social-img {
     color: #626262;
     z-index: 1;
 }
-
+@media (max-width: 767px) {
+	#sib_body {
+	   padding-bottom: 85px;
+	}
+}
 #sib_body h1, #sib_body h2, #sib_body h3 {
     color: #E2011B;
     font-weight: bold;
@@ -316,6 +320,10 @@ span.examples {
 
 #bgee_gene_search button, #bgee_species_search button {
     margin-top: 25px;
+}
+
+.small-search-box {
+	margin: 20px 0 0 15px;
 }
 
 img.ajax_waiting {

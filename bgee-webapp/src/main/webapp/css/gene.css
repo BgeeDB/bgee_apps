@@ -24,31 +24,25 @@ div#expr_intro {
 	display: inline-flex;
     margin: 0 2% 1.5em;
 }
-div#expr_data {
-    display: inline-flex;
-    /*align-items: baseline;*/
-    width: 100%;
-}
 
 div#table-container {
-	width: 85%;
 	margin-left: 2%;
 }
 
 div.legend {
-	width: 14%;
-    margin-left: 1%;
-    margin-top: 2em;
 	border-left: 1px solid #ccc;
 	font-size: 0.85em;
 }
+@media (max-width: 1000px) {
+	div.legend {
+	   border: none;
+	}
+}
+
 div.legend span.quality {
 	font-size: 1em;
 }
-div.legend table {
-    margin: 10%;
-    width: 80%;
-}
+
 div.legend table caption {
     text-align: left;
     font-weight: bold;
@@ -56,8 +50,9 @@ div.legend table caption {
     border-width: 0px 0px 1px;
     border-style: solid;
 }
-div.legend table th {
-    min-width: 14%;
+
+#table-container table {
+	width: 100% !important;
 }
 
 table th, table td {
@@ -65,16 +60,16 @@ table th, table td {
     padding: 0.2em;
 }
 th.anat-entity-id {
-	width: 15%;
+	width: 15% !important;
 }
 th.anat-entity {
-	width: 33%;
+	width: 33% !important;
 }
 th.dev-stages {
-	width: 42%;
+	width: 42% !important;
 }
 th.quality {
-	width: 10%;
+	width: 10% !important;
 }
 
 /* We need div#table-container to override datatables jquery plugin */
@@ -144,6 +139,9 @@ span.expandable {
     display: none;
 }
 
+.dtr-modal ul.dev-stage-list {
+    display: inherit !important;
+}
 
 .high {
 	background: #9efa9e; 
@@ -161,4 +159,8 @@ span.expandable {
 	background: #dedede;
 	color: #b8b8b8;
 	border-color: #b8b8b8;
+}
+
+div.dtr-modal div.dtr-modal-display {
+    height: 95% !important;
 }

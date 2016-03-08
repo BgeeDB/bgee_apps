@@ -269,15 +269,6 @@ span.list_element_title {
     text-decoration: underline;
 }
 
-.bgee_alert {
-    color: red;
-    font-weight: bold;
-}
-
-.bgee_alert_container {
-    border: 2px solid red;
-}
-
 /****BGEE INTRODUCTION****/
 
 #bgee_introduction p {

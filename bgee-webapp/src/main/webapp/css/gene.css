@@ -72,29 +72,12 @@ th.quality {
 	width: 10% !important;
 }
 
-/* We need div#table-container to override datatables jquery plugin */
-div#table-container table.expression thead td {
-    padding-left : 8px;
-}
-
 table.expression td {
 	vertical-align:text-top;
 }
 
-
-table.stage {
-	width: 100%;
-	table-layout: fixed;
-}
-
 div.gene {
 	margin: 1em 2%;
-}
-
-td.right {
-	text-align: right;
-	padding-right: .8em;
-	font-weight: 300;
 }
 
 td > ul {

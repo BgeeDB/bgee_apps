@@ -1,18 +1,6 @@
-div.documentationsection, div.documentationmenu {
+div.documentationmenu {
     position: relative;
     display: inline-block;
-}
-
-div.documentationsection {
-    text-align: left;
-    margin: 0;
-}
-
-div.subsectiontext p {
-    margin: 1% 0;
-}
-
-div.documentationmenu {
     width: 100%;
     margin-bottom: 2%;
 }

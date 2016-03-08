@@ -30,12 +30,13 @@
     color: #FFF;
 }
 
-#start_buttons {
+#start_buttons, #end_buttons {
     margin-top: 40px;
     text-align: center;
 }   
 
-#start_buttons a, #start_buttons a:visited {
+#start_buttons a, #start_buttons a:visited,
+#end_buttons a, #end_buttons a:visited {
     display: inline-block;
     margin: 2px 10px;
     padding: 8px 16px;
@@ -51,11 +52,13 @@
     text-decoration: none;
 }
 
-#start_buttons a:hover {
-    border: 1px solid #FFF;
+#start_buttons a:hover,
+#end_buttons a:hover {
+	border: 1px solid #FFF;
 }
 
-#start_buttons span.glyphicon {
+#start_buttons span.glyphicon,
+#end_buttons  span.glyphicon {
     margin-right: 0.4em;
 }
 

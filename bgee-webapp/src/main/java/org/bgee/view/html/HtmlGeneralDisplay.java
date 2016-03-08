@@ -74,7 +74,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
         this.writeln("<hr class='home-divider'/>");
 
-        this.displayStartButtons();
+        this.displayBgeeButtons("end_buttons");
 
         this.writeln("<hr class='home-divider'/>");
 
@@ -128,14 +128,16 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	
 	    this.writeln("<div class='mini_text'>Gene expression data in animals</div>");
 
-	    this.displayStartButtons();
+	    this.displayBgeeButtons("start_buttons");
 	
 	    this.writeln("</div>"); // close bgee_start row
 	
 	    log.exit();
 	}
 
-	private void displayStartButtons() {
+	private void displayBgeeButtons(String divId) {
+		log.entry(divId);
+		
 		RequestParameters urlTopAnat = this.getNewRequestParameters();
 	    urlTopAnat.setPage(RequestParameters.PAGE_TOP_ANAT);
 	    RequestParameters urlGeneSearch = this.getNewRequestParameters();
@@ -143,7 +145,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	    RequestParameters urlDownload = this.getNewRequestParameters();
 	    urlDownload.setPage(RequestParameters.PAGE_DOWNLOAD);
 	    
-	    this.writeln("<div id='start_buttons'>");
+	    this.writeln("<div id='" + divId + "'>");
 	    this.writeln("<a href='"+ urlTopAnat.getRequestURL() + 
 	    		"'><span class='glyphicon glyphicon-stats'></span>Expression enrichment analysis</a>");
 	    this.writeln("<a href='"+ urlGeneSearch.getRequestURL() + 
@@ -151,6 +153,8 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	    this.writeln("<a href='"+ urlDownload.getRequestURL() + 
 	    		"'><span class='glyphicon glyphicon-download'></span>Download</a>");
 	    this.writeln("</div>"); // close start_buttons
+	    
+	    log.exit();
 	}
 
 	/**

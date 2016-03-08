@@ -56,8 +56,6 @@ public class HtmlDocumentationTopAnat extends HtmlDocumentationDownloadFile {
         log.entry();
         
         this.writeln("<h1>TopAnat documentation</h1>");
-
-        this.writeln("<div class='row'>");
         
         // Introduction
         this.writeln("<p>TopAnat is a tool to identify and visualize enriched anatomical terms, "
@@ -89,6 +87,7 @@ public class HtmlDocumentationTopAnat extends HtmlDocumentationDownloadFile {
         // Examples
         this.writeln("<h3>Examples</h3>");
         // Do not add a trailing slash to the example URLs, see comments in topanat.js
+        this.writeln("<ul class='help'>");
         this.writeln("<li><a href='?page=top_anat#/result/7919f27d143667bc6c137401ce0c91b51e257538' "
         		+ "title='TopAnat example'>Mouse genes mapped to the GO term 'spermatogenesis'</a>.</li>");
         this.writeln("<li><a href='?page=top_anat#/result/e37009ba698919c75d06e81b3eca5d48f78210a0' "
@@ -103,7 +102,7 @@ public class HtmlDocumentationTopAnat extends HtmlDocumentationDownloadFile {
         
         // Note of caution
         this.writeln("<h2>Note of caution</h2>");
-        this.writeln("In your analyses, you should be extremely careful "
+        this.writeln("<p>In your analyses, you should be extremely careful "
         		+ "about the definition of your universe (i.e., your background genes). "
         		+ "The cases where it is correct to use the default background (i.e., all genes "
         		+ "with data in Bgee for the selected species) should be actually rare. "
@@ -112,7 +111,7 @@ public class HtmlDocumentationTopAnat extends HtmlDocumentationDownloadFile {
         		+ "and not 'all genes with data in Bgee'. Of course, it is still useful "
         		+ "to use the default background, for preliminary analyses, or when "
         		+ "the biological signal extracted from your gene list is very strong. "
-        		+ "But it should often be more rigorously defined for data used in publications.");
+        		+ "But it should often be more rigorously defined for data used in publications.</p>");
 
         // More information
         this.writeln("<h2>More information</h2>");
@@ -120,8 +119,6 @@ public class HtmlDocumentationTopAnat extends HtmlDocumentationDownloadFile {
         		+ "<a href='http://www.bioconductor.org/packages/release/bioc/html/topGO.html' "
         		+ "title='TopGO package in Bioconductor' target='_blank'>topGO</a>. "
         		+ "Adaptation of topGO courtesy of Adrian Alexa.</p>");
-                
-        this.writeln("</div>"); // close row
 
         log.exit();
     }

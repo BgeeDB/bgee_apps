@@ -260,11 +260,13 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         
         this.startDisplay("Expression call download file documentation");
         
+        this.writeln("<div class='row'>");
         this.writeln("<div class='" + CENTERED_ELEMENT_CLASS + "'>");
 
         this.callFileDoc.writeDocumentation();
         
-        this.writeln("</div>");
+        this.writeln("</div>"); // close class
+        this.writeln("</div>");	// close row
 
         this.endDisplay();
 
@@ -276,11 +278,13 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         
         this.startDisplay(PROCESSED_EXPR_VALUES_PAGE_NAME + " download file documentation");
         
+        this.writeln("<div class='row'>");
         this.writeln("<div class='" + CENTERED_ELEMENT_CLASS + "'>");
 
         this.refExprFileDoc.writeDocumentation();
         
-        this.writeln("</div>");
+        this.writeln("</div>"); // close class
+        this.writeln("</div>");	// close row
 
         this.endDisplay();
 
@@ -292,12 +296,14 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         log.entry();
         
         this.startDisplay("TopAnat documentation");
-
+        
+        this.writeln("<div class='row'>");
         this.writeln("<div class='" + CENTERED_ELEMENT_CLASS + "'>");
         
         this.topAnatDoc.writeDocumentation();
         
-        this.writeln("</div>");
+        this.writeln("</div>"); // close class
+        this.writeln("</div>");	// close row
 
         this.endDisplay();
 

@@ -2,6 +2,7 @@ h1 img {
     height: 1.7em;
     width: 1.7em;
     margin-right: 0.4em;
+    border-radius: 8px;
 }
 
 #sib_body img.page_img {
@@ -12,48 +13,17 @@ h1 img {
     z-index: 10;
 }
 
-div.bgee_download_section figcaption p {
-    text-align: center;
-    color: #515151;
-    font-size: 0.75em;
-    margin: 0;
-}
-
-div.bgee_download_section figure {
-    cursor: pointer;
-    float: left;
-}
-
-div.bgee_download_section figure.selected {
-    border: 4px #282828 solid;
-    background: #282828;
-    border-radius: 12px 12px 0 0;
-    padding: 0px;
-}
-
-img {
-    border-radius: 8px;
+#bgee_uniq_species h1, #bgee_multi_species h1 {
+    font-size: 2em;
 }
 
 #bgee_uniq_species img {
-    width: 113px;
-}
-
-#bgee_uniq_species figure:not(.selected) img.species_img {
-    box-shadow: 4px 4px 6px 0px #555;
-}
-#bgee_uniq_species figure:not(.selected) img.species_img:hover {
-    box-shadow: 0px 0px 10px 1px #920209;
+	border-radius: 8px;
 }
 
 #bgee_multi_species img {
     width: 60px;
     margin: 0px 1px;
-}
-
-#bgee_uniq_species figure {
-    margin: 0;
-    padding: 4px;
 }
 
 #bgee_multi_species figure {
@@ -145,9 +115,6 @@ figure.highlight {
 }
 
 /****BGEE DATASELECTION****/
-label {
-    color: #920209;
-}
 
 p:not(.file_info) {
     margin: 0 2%;
@@ -165,57 +132,6 @@ p.file_info a:hover {
     color: #DBDBDB;
 }
 
-#bgee_data_selection {
-    position: relative;
-    background-color: #282828;
-    padding: 30px;
-    left: -3.45vw;
-    width: 100vw;
-    clear: left;
-    display: none;
-}
-
-#bgee_data_selection h1, #bgee_data_selection h2 {
-    display: inline-block;
-    white-space: nowrap;
-    text-align: left;
-    color: #DBDBDB;
-}
-
-#bgee_data_selection h1 {
-    display: inline;
-    font-weight: normal;
-    font-size: 2em;
-    margin: 0;
-}
-
-#bgee_data_selection h1.scientificname {
-    font-style: italic;
-    margin-right: 0.3em;
-}
-
-#bgee_data_selection h2 {
-    font-weight: normal;
-    margin: 1em 0.4em 0.2em 0;
-    font-size: 1.25em;
-    border: 0 !important;
-    width: auto !important;
-}
-
-#bgee_data_selection ul {
-    height: 15px;
-    width: 25px;
-    white-space: nowrap;
-    list-style-image: url(../img/arrow.png);
-}
-
-#bgee_data_selection_cross {
-	position: absolute;
-	top: 10px;
-	right: 10px;
-    z-index: 2;
-}
-
 #bgee_data_selection_cross #switch_page_link, #bgee_data_selection_cross #switch_page_link:visited {
     margin-right: 10px;
 	color: #717171;
@@ -224,26 +140,22 @@ p.file_info a:hover {
 #bgee_data_selection_cross #switch_page_link:hover {
     color: #DBDBDB;
 }
-
-#bgee_data_selection_cross img {
-    cursor: pointer;
-    height: 20px;
-    width: 20px;
-}
-
 #bgee_data_selection_img {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 320px;
-    margin: 30px 0px 0px 30px;
+    max-width: 290px;
+    max-height: 290px;    
+}
+@media ( max-width : 767px) {
+	#bgee_data_selection_img {
+		display: none;
+	}
 }
 
 #bgee_data_selection_img img {
+    width: 100%; 
+    height: auto; 
+    display: block;
     position: relative;
     float: left;
-    width: 320px;
-    height: 320px;
 }
 
 #bgee_multi_species #bgee_data_selection_img img {
@@ -252,10 +164,7 @@ p.file_info a:hover {
 }
 
 #bgee_data_selection_text {
-    padding-left: 350px;
-    height: 320px;
-    display: table-cell;
-    vertical-align:middle;
+	padding-top: 10px;
 }
 
 #bgee_data_selection p.groupdescription {
@@ -265,7 +174,14 @@ p.file_info a:hover {
 }
 
 #bgee_data_selection_text div.bgee_download_file_buttons {
-    margin: 0px 0px 0px 30px;
+    margin: 0px 0px 0px 15px;
+    padding: 0;
+}
+@media (max-width: 767px) {
+    #bgee_data_selection_text div.bgee_download_file_buttons {
+        margin: 0;
+        padding: 0;
+    }	
 }
 
 #sib_body .download_link, #bgee_data_selection p.no_data {
@@ -301,13 +217,6 @@ p.file_info a:hover {
     color: #717171;
 }
 
-#bgee_uniq_species figure.selected {
-    padding: 0px;
-}
-
-#bgee_uniq_species figure.selected p {
-    color: #282828;
-}
 #bgee_multi_species figure.selected div {
     border: 0;
 }
@@ -320,24 +229,6 @@ p.file_info a:hover {
     bottom: -20px;
     padding: 3px;
 }
-
-/****BGEE CREATIVE COMMONS****/
-#creativecommons_title {
-    color: #515151;
-    font-weight: bold;
-    font-size: 0.6em;
-}
-
-#creativecommons {
-    display: none;
-}
-
-#creativecommons p {
-    font-size: 0.6em;
-    margin: 2px 2%;
-    color: #515151;
-}
-
 .header_table {
     display: none;
 }

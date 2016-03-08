@@ -70,11 +70,6 @@ var download = {
         $exprNoData: null,
         $diffExprAnatomyNoData: null,
         $diffExprDevelopmentNoData: null,
-        $exprComingSoon: null,
-        $diffExprAnatomyComingSoon: null,
-        $diffExprDevelopmentComingSoon: null,
-        $inSituDataComingSoon: null,
-        $estDataComingSoon: null,
         // The search elements
         $bgeeSearchForm: null,
         $bgeeSearchBox: null,
@@ -106,20 +101,23 @@ var download = {
             this.$bgeeDataSelectionCross = $( "#bgee_data_selection_cross" );
             this.$bgeeDataSelectionImg = $( "#bgee_data_selection_img" );
             this.$bgeeDataSelectionTextScientific = 
-                $( "#bgee_data_selection_text h1.scientificname" );
+                $( "#bgee_data_selection_text span.scientificname" );
             this.$bgeeDataSelectionTextCommon = 
-                $( "#bgee_data_selection_text h1.commonname" );
+                $( "#bgee_data_selection_text span.commonname" );
             this.$switchPageLink = $( "#switch_page_link" );
             this.$bgeeGroupDescription = $( "#bgee_data_selection_text p.groupdescription" );
             // Data
             this.$orthologButtons = $( "#ortholog_file_buttons" );
             this.$orthologCvs = $( "#ortholog_csv" );
+            this.$exprButtons = $( "#expr_buttons" );
             this.$exprSimpleData = $( "#expr_data" );
             this.$exprSimpleCsv = $( "#expr_simple_csv" );
             this.$exprCompleteCsv = $( "#expr_complete_csv" );        
+            this.$diffExprAnatomyButtons = $( "#diffexpr_anatomy_buttons" );
             this.$diffExprAnatomyData = $( "#diffexpr_anatomy_data" );
             this.$diffExprAnatomySimpleCsv = $( "#diffexpr_anatomy_simple_csv" );
             this.$diffExprAnatomyCompleteCsv = $( "#diffexpr_anatomy_complete_csv" );   
+            this.$diffExprDevelopmentButtons = $( "#diffexpr_stage_buttons" );
             this.$diffExprDevelopmentData = $( "#diffexpr_development_data" );
             this.$diffExprDevelopmentSimpleCsv = $( "#diffexpr_development_simple_csv" );
             this.$diffExprDevelopmentCompleteCsv = $( "#diffexpr_development_complete_csv" );
@@ -162,16 +160,10 @@ var download = {
             this.$exprNoData = $( "#expr_no_data" );
             this.$diffExprAnatomyNoData = $( "#diffexpr_anatomy_no_data" );
             this.$diffExprDevelopmentNoData = $( "#diffexpr_development_no_data" );
-            // Coming soon
-            this.$exprComingSoon = $( "#expr_coming_soon" );
-            this.$diffExprAnatomyComingSoon = $( "#diffexpr_anatomy_coming_soon" );
-            this.$diffExprDevelopmentComingSoon = $( "#diffexpr_development_coming_soon" );
-            this.$inSituDataComingSoon = $( "#insitudata_coming_soon" );
-            this.$estDataComingSoon = $( "#estdata_coming_soon" );
             // Search box
             this.$bgeeSearchForm = $( "#bgee_species_search form" );
             this.$bgeeSearchBox = $( "#bgee_species_search input" );
-            this.$bgeeSearchResults = $( "#bgee_species_search_result" );
+            this.$bgeeSearchResults = $( "#bgee_species_search_msg" );
             this.$bgeeMoreResultsDown = $( "#bgee_more_results_down" );
             this.$bgeeMoreResultsUp = $( "#bgee_more_results_up" );
             // Creative commons
@@ -488,9 +480,9 @@ var download = {
                 download.$bgeeDataSelectionImg.append( $newElement );
                 // Calculate the height so it would allow the images to fit into the space.
                 // Divide the height by 1 for 1 image, by 2 for 2,3,4 img, by 3 for 5,6,7,8,9 and etc.
-                var newHeight = $newElement.height() / ( Math.ceil( Math.sqrt( numberOfSpecies ) ) ); 
+                var newHeight = 100 / ( Math.ceil( Math.sqrt( numberOfSpecies ) ) ); 
                 // Assume that the image is a square, so height and width are the same
-                $newElement.css( "height" , newHeight ).css( "width" , newHeight ); 
+                $newElement.css( "height" , newHeight + "%" ).css( "width" , newHeight + "%" ); 
                 // Add the species short name to the name of all species field
                 
                 namesOfAllSpecies = namesOfAllSpecies + $( this ).attr("alt") + ", ";
@@ -574,15 +566,14 @@ var download = {
             	this.$exprSimpleData.hide();
             	//TODO remove when multi-species expression files are computed
             	if( bgeeIsGroup ){
-            		this.$exprNoData.hide();
-            		this.$exprComingSoon.show();
-            		this.$exprHelp.hide();
+            		this.$exprButtons.hide();
             	} else {
+            		this.$exprButtons.show();
             		this.$exprNoData.show();
-            		this.$exprComingSoon.hide();
             		this.$exprHelp.show();
             	}
             } else {
+        		this.$exprButtons.show();
             	this.$exprSimpleData.show();
         		this.$exprHelp.show();
             	this.$exprSimpleCsv.attr( "href", bgeeExprSimpleFileUrl );
@@ -590,18 +581,15 @@ var download = {
             	this.$exprCompleteCsv.attr( "href", bgeeExprCompleteFileUrl );
             	this.$exprCompleteCsv.text( "Download complete file (" + bgeeExprCompleteFileSize + ")" );
             	this.$exprNoData.hide();
-            	this.$exprComingSoon.hide();
             }
 
             // Differential expression - anatomy comparison
             if (bgeeDiffExprAnatomySimpleFileUrl === undefined) {
             	this.$diffExprAnatomyData.hide(); 
             	this.$diffExprAnatomyNoData.show();
-            	this.$diffExprAnatomyComingSoon.hide();
             } else {
             	this.$diffExprAnatomyData.show(); 
             	this.$diffExprAnatomyNoData.hide();
-            	this.$diffExprAnatomyComingSoon.hide();
             	this.$diffExprAnatomySimpleCsv.attr( "href", bgeeDiffExprAnatomySimpleFileUrl );
             	this.$diffExprAnatomyCompleteCsv.attr( "href", bgeeDiffExprAnatomyCompleteFileUrl );
             	this.$diffExprAnatomySimpleCsv.text( 
@@ -615,19 +603,17 @@ var download = {
             	this.$diffExprDevelopmentData.hide();
             	//TODO remove when multi-species developmental diff. expression files are computed
                 if( bgeeIsGroup ){
-                	this.$diffExprDevelopmentNoData.hide();
-                	this.$diffExprDevelopmentComingSoon.show();
-                	this.$diffDevHelp.hide();
+            		this.$diffExprDevelopmentButtons.hide();
                 } else {
+            		this.$diffExprDevelopmentButtons.show();
                 	this.$diffExprDevelopmentNoData.show();
-                	this.$diffExprDevelopmentComingSoon.hide();
                 	this.$diffDevHelp.show();
                 }
             } else {
+            	this.$diffExprDevelopmentButtons.show();
             	this.$diffExprDevelopmentData.show(); 
             	this.$diffDevHelp.show();
             	this.$diffExprDevelopmentNoData.hide();
-            	this.$diffExprDevelopmentComingSoon.hide();
             	this.$diffExprDevelopmentSimpleCsv.attr( "href", bgeeDiffExprDevelopmentSimpleFileUrl );
             	this.$diffExprDevelopmentCompleteCsv.attr( "href", bgeeDiffExprDevelopmentCompleteFileUrl );
             	this.$diffExprDevelopmentSimpleCsv.text( 
@@ -669,7 +655,6 @@ var download = {
             	this.$inSituData.hide(); 
             	this.$inSituNoData.hide();
             	//TODO remove when in situ data files are computed
-        		this.$inSituDataComingSoon.show();
             } else {
             	this.$inSituData.show(); 
             	this.$inSituNoData.hide();
@@ -684,7 +669,6 @@ var download = {
             	this.$estData.hide(); 
             	this.$estNoData.hide();
             	//TODO remove when EST data files are computed
-        		this.$estDataComingSoon.show();
             } else {
             	this.$estData.show(); 
             	this.$estNoData.hide();

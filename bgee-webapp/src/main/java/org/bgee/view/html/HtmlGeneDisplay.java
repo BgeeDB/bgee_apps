@@ -34,7 +34,7 @@ import org.bgee.view.JsonHelper;
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 13, Feb. 2016
+ * @version Bgee 13, Mar. 2016
  * @since   Bgee 13, Oct. 2015
  */
 public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
@@ -112,7 +112,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         box.append("        <div class='form'>");
         box.append("            <label for='bgee_gene_search_completion_box'>Search gene</label>");
         box.append(             example.toString());
-        box.append("            <span id='bgee_gene_search_waiting'></span>");
+        box.append("            <span id='bgee_species_search_msg' class='search_msg'></span>");
         box.append("            <input id='bgee_gene_search_completion_box' class='form-control' " +
                                     "autocomplete='off' type='text' name='search'/>");
         box.append("        </div>");

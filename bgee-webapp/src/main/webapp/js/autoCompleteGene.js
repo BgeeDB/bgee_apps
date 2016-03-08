@@ -145,7 +145,7 @@ function highlightEscape(string, searchTerm)
 var textMinLength = 1; // some genes have a one-letter name (for instance, gene 'E')
 function loadAutocompleteGene() {
 	
-	var waitingElement = "#bgee_gene_search_waiting";
+	var waitingElement = "#bgee_species_search_msg";
 	
 	$(completionBoxGeneId).autocomplete({
         source: function(request, responseCallback) {

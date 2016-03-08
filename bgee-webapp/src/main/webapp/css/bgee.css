@@ -127,6 +127,7 @@ nav img.social-img {
         padding-bottom: 10px;
     }
 }
+
 /****SIB BODY****/
 #sib_body {
     position: relative;
@@ -190,6 +191,10 @@ nav img.social-img {
 }
 
 /****BGEE SPECIFIC STUFF****/
+.panel-body {
+    padding: 1%;
+}
+
 /* This class is automatically added with jQuery to each 'a[target=_blank]' element without 'img' inside */
 .external_link {
     background-position: right center;
@@ -201,15 +206,6 @@ nav img.social-img {
 
 figure img {
     margin: 0px auto 3px auto;
-}
-
-div.bgee_section {
-    position: relative;
-    display: inline-block;
-    width: 95%;
-    margin: 0 2% 10px 2%;
-    padding: 0.5%;
-    text-align: left;
 }
 
 span.header_details {
@@ -297,7 +293,7 @@ span.list_element_title {
 
 /****BGEE SEARCH BOXES****/
 
-#bgee_gene_search {
+div.bgee_search {
 	margin-top: 20px;
 }
 
@@ -305,20 +301,20 @@ span.examples {
     margin-left: 10px;
 }
 
-#bgee_gene_search label, #bgee_species_search label {
+div.bgee_search label {
     color: #626262;
 }
 
-#bgee_gene_search_waiting, #bgee_species_search_result {
+span.search_msg {
     margin-left: 10px;
 }
 
-#bgee_gene_search .form, #bgee_species_search .form {
+div.bgee_search .form {
     margin-bottom: 0;
     padding-left: 0px;
 }
 
-#bgee_gene_search button, #bgee_species_search button {
+div.bgee_search button {
     margin-top: 25px;
 }
 
@@ -466,4 +462,142 @@ img.ajax_waiting {
     border-width: 1px 0;
     background-color: #D9DDE1;
     color: #E2011B;
+}
+
+/**** SPECIES SECTION ****/
+/** All following properties are commons to home and download pages. **/
+             
+div.bgee_download_section figcaption p {
+    color: #515151;
+    font-size: 0.75em;
+    margin: 0;
+    text-align: center;
+}
+
+div.bgee_download_section figure {
+    cursor: pointer;
+    float: left;
+}
+div.bgee_download_section figure img {
+	border-radius: 8px;
+    width: 113px;
+}
+div.bgee_download_section figure.selected {
+    border: 4px #282828 solid;
+    background: #282828;
+    border-radius: 12px 12px 0 0;
+    padding: 0px;
+}
+
+#bgee_data figure,
+#bgee_uniq_species figure {
+	margin: 0;
+    padding: 4px;
+}
+
+#bgee_data figure:not(.selected) img.species_img,
+#bgee_uniq_species figure:not(.selected) img.species_img {
+    box-shadow: 4px 4px 6px 0px #555;
+}
+
+#bgee_data figure:not(.selected) img.species_img:hover,
+#bgee_uniq_species figure:not(.selected) img.species_img:hover {
+    box-shadow: 0px 0px 10px 4px #920209;
+ }
+  
+/**** BGEE DATASELECTION (banner) ****/
+#bgee_data_selection {
+    position: relative;
+    background-color: #282828;
+    padding: 20px;
+    left: -1%;   /* specific to home page */
+    width: 102%;  /* specific to home page */
+    clear: left;
+    display: none;
+    margin-right: 0;
+    margin-left: 0;
+}
+
+#bgee_data_selection h1, #bgee_data_selection h2 {
+    display: inline-block;
+    text-align: left;
+    color: #DBDBDB;
+    font-weight: normal;
+}
+
+#bgee_data_selection h1 {
+    margin: 0 0 10px 0;
+}
+
+#bgee_data_selection h1 span.scientificname {
+    font-style: italic;
+    margin-right: 0.3em;
+}
+
+#bgee_data_selection h2 {
+    font-weight: normal;
+    margin: 1em 0.4em 0.2em 0;
+    font-size: 1.25em;
+    border: 0 !important;
+    width: auto !important;
+}
+
+#bgee_data_selection ul {
+    white-space: nowrap;
+    list-style-image: url(../img/arrow.png);
+    margin: 0;
+}
+  
+#bgee_data_selection li {
+    display: inline;
+}
+ 
+#bgee_data_selection li img.bullet_point {
+    width: 25px;
+    height: 15px;
+    margin: 0px 5px 5px 15px;
+}
+ 
+ #bgee_data_selection_cross {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 2;
+}
+
+#bgee_data_selection_cross img {
+    cursor: pointer;
+    height: 20px !important;
+    width: 20px !important;
+}
+ 
+#bgee_data_selection a.data_page_link {
+    color: #AAA;
+}
+ 
+#bgee_data figure.selected,
+#bgee_uniq_species figure.selected {
+	padding: 0px;
+}
+ 
+#bgee_data figure.selected p,
+#bgee_uniq_species figure.selected p {
+    color: #282828;
+}
+
+/****BGEE CREATIVE COMMONS****/
+#creativecommons_title {
+    color: #515151;
+    font-weight: bold;
+    font-size: 0.6em;
+}
+
+#creativecommons {
+    display: none;
+}
+
+#creativecommons p {
+    font-size: 0.6em;
+    margin: 2px 2%;
+    color: #515151;
 }

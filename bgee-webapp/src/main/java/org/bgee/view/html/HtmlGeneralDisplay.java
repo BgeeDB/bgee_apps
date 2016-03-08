@@ -207,15 +207,6 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     private void displayHomePageSpecies(List<SpeciesDataGroup> groups) {
     	log.entry(groups);
     	
-	    this.writeln("<div id='bgee_data' class='panel panel-default'>");
-	    this.writeln("<div class='panel-heading'>");
-	    this.writeln("<span class='panel-title'>Species with data in Bgee"
-                + "    <span class='header_details'>(click on species to see more details)"
-                + "</span></span>");
-	    this.writeln("</div>"); // close panel-heading
-	    
-	    this.writeln("<div class='panel-body'>");
-
 	    // Single species part
     	String homePageSpeciesSection;
     	try {
@@ -226,12 +217,9 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     	}
 
     	// Black banner when a species or a group is selected.
-    	homePageSpeciesSection += this.getDownloadBanner();
+    	homePageSpeciesSection += this.getDownloadPageLinkBanner();
 
     	this.writeln(homePageSpeciesSection);
-    	
-    	this.writeln("</div>");
-    	this.writeln("</div>");
     	
     	log.exit();
     }
@@ -239,19 +227,20 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     /**
      * Get the banner of download page links as a HTML 'div' element.
      *
-     * @return  the {@code String} that is the black banner ofdownload page links, 
+     * @return  the {@code String} that is the black banner of download page links, 
      *          as a HTML 'div' element.
      */
-    // TODO: DRY: refactor with HtmlDownloadDisplay  
-    private String getDownloadBanner() {
+    private String getDownloadPageLinkBanner() {
     	log.entry();
 
     	StringBuilder banner = new StringBuilder();
     	// This section is empty, it will be filled by JavaScript.
     	banner.append("<div id='bgee_data_selection' class='row'>");
     	// Cross to close the banner
+        banner.append("<div id='bgee_data_selection_cross'>");
     	banner.append("<img class='closing_cross' src='" + this.prop.getImagesRootDirectory() + "cross.png' " +
     			"title='Close banner' alt='Cross' />");
+        banner.append("</div>");
 
     	// Section on the right of the black banner
     	banner.append("<h1 class='col-xs-12 col-md-4'>"

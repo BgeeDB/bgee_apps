@@ -53,9 +53,9 @@ var general = {
             this.$bgeeDataSelectionCross = $( "#bgee_data_selection_cross" );
             this.$bgeeDataSelectionImg = $( "#bgee_data_selection_img" );
             this.$bgeeDataSelectionTextScientific = 
-                $( "#bgee_data_selection_text h1.scientificname" );
+                $( "#bgee_data_selection h1 span.scientificname" );
             this.$bgeeDataSelectionTextCommon = 
-                $( "#bgee_data_selection_text h1.commonname" );
+                $( "#bgee_data_selection h1 span.commonname" );
             this.$geneExpressionCallsPageLink = $( "#gene_expression_calls_link" );
             this.$procExprValuesPageLink = $( "#processed_expression_values_link" );
  

@@ -143,12 +143,6 @@ div.bgee_download_section figure.selected {
     padding: 0px;
 }
 
-#bgee_uniq_species div.bgee_section {
-	width: 100%;   /* specific to home page */
-	margin: 0;
-	padding: 0;
-}
-
 #bgee_uniq_species img {
     border-radius: 8px;
     width: 113px;
@@ -180,28 +174,26 @@ label {
     width: 102%;  /* specific to home page */
     clear: left;
     display: none;
+    margin-right: 0;
+    margin-left: 0;
 }
 
 #bgee_data_selection h1 {
     white-space: nowrap;
     color: #DBDBDB;
-    display: inline;
     font-weight: normal;
-    margin: 0;
-    line-height: 35px;
+    margin: 0 0 10px 0;
+    text-align: left;
 }
 
-#bgee_data_selection h1.scientificname {
+#bgee_data_selection h1 span.scientificname {
     font-style: italic;
     margin-right: 0.3em;
 }
 
 #bgee_data_selection ul {
-    height: 15px;
-    width: 25px;
     white-space: nowrap;
     list-style-image: url(../img/arrow.png);
-    display: inline;
 }
   
 #bgee_data_selection li {
@@ -212,31 +204,19 @@ label {
     width: 25px;
     height: 15px;
     margin: 0px 5px 5px 15px;
-    vertical-align: middle;
 }
  
-#bgee_data_selection_cross img {
+#bgee_data_selection img.closing_cross {
     position: absolute;
     cursor: pointer;
-    top: 27px;
-    right: 30px;
+    top: 10px;
+    right: 10px;
     height: 20px;
     width: 20px;
     z-index: 2;
  }
  
-#bgee_data_selection_text {
-    padding-left: 40px;
-    display: inline-block;
-    vertical-align:middle;
-    height: 35px;
-}
- 
-#bgee_uniq_species a.data_page_link {
-    height: 18px;
-    width: 15px;
-    margin-right: 5px;
-    border-radius: 0;
+#bgee_data_selection a.data_page_link {
     color: #AAA;
 }
  

@@ -241,16 +241,15 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
     	StringBuilder banner = new StringBuilder();
     	// This section is empty, it will be filled by JavaScript.
-    	banner.append("<div id='bgee_data_selection'>");
+    	banner.append("<div id='bgee_data_selection' class='row'>");
     	// Cross to close the banner
-    	banner.append("<div id='bgee_data_selection_cross'>");
-    	banner.append("<img src='" + this.prop.getImagesRootDirectory() + "cross.png' " +
+    	banner.append("<img class='closing_cross' src='" + this.prop.getImagesRootDirectory() + "cross.png' " +
     			"title='Close banner' alt='Cross' />");
-    	banner.append("</div>");
 
     	// Section on the right of the black banner
-    	banner.append("<div id='bgee_data_selection_text'>");
-    	banner.append("<h1 class='scientificname'></h1><h1 class='commonname'></h1>");
+    	banner.append("<h1 class='col-xs-12 col-md-4'>"
+    			+ "<span class='scientificname'></span>"
+    			+ "<span class='commonname'></span></h1>");
 
     	RequestParameters urlProcExprValues = this.getNewRequestParameters();
     	urlProcExprValues.setPage(RequestParameters.PAGE_DOWNLOAD);
@@ -258,17 +257,16 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     	RequestParameters urlGeneExprCalls = this.getNewRequestParameters();
     	urlGeneExprCalls.setPage(RequestParameters.PAGE_DOWNLOAD);
     	urlGeneExprCalls.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
-    	banner.append("<ul>");
-    	banner.append("<li><img class='bullet_point' src='" + this.prop.getImagesRootDirectory() + "arrow.png' alt='Arrow' />" +
+    	banner.append("<ul class='col-xs-12 col-md-8 row'>");
+    	banner.append("<li class='col-xs-12 col-sm-6'><img class='bullet_point' src='" + this.prop.getImagesRootDirectory() + "arrow.png' alt='Arrow' />" +
     			"<a id='processed_expression_values_link' class='data_page_link' href='" +
     			urlProcExprValues.getRequestURL() + "' title='Bgee processed expression values'>" +
     			"See RNA-Seq and Affymetrix data</a></li>");
-    	banner.append("<li><img class='bullet_point' src='" + this.prop.getImagesRootDirectory() + "arrow.png' alt='Arrow' />" +
+    	banner.append("<li class='col-xs-12 col-sm-6'><img class='bullet_point' src='" + this.prop.getImagesRootDirectory() + "arrow.png' alt='Arrow' />" +
     			"<a id='gene_expression_calls_link' class='data_page_link' href='" +
     			urlGeneExprCalls.getRequestURL() +
     			"' title='Bgee gene expression calls'>See gene expression calls</a></li>");
     	banner.append("</ul>");
-    	banner.append("</div>"); // close bgee_data_selection_text
     	banner.append("</div>"); // close 
 
     	return log.exit(banner.toString());

@@ -23,7 +23,7 @@ import org.bgee.view.html.HtmlDownloadDisplay.DownloadPageType;
  * @author Frederic Bastian
  * @author Valentine Rech de Laval
  * @author Philippe Moret
- * @version Bgee 13, Feb. 2016
+ * @version Bgee 13, Mar. 2016
  * @since Bgee 13
  */
 public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisplay {
@@ -59,11 +59,11 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                     "Only single-species groups should be displayed on the home page."));
         }
 
-        this.displayStartBanner();
+        this.displayHeroUnit();
 
         this.displaySpeciesBanner(groups);
 
-        this.displayExplanation();
+        this.displayExplanations();
 
         this.writeln("<hr class='home-divider'/>");
         
@@ -85,9 +85,10 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         log.exit();
     }
     
-    
-    /**TODO
-	 * @param groups
+    /**
+     * Display the banner with species (without any interaction).
+     * 
+     * @param groups	A {@code List} of {@code SpeciesDataGroup} for which display the image.
 	 */
 	private void displaySpeciesBanner(List<SpeciesDataGroup> groups) {
 	    log.entry(groups);
@@ -113,12 +114,12 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	}
 
 	/**
-	 * TODO
+     * Display the Bgee hero unit.
 	 */
-	private void displayStartBanner() {
+	private void displayHeroUnit() {
 		log.entry();
 			
-	    this.writeln("<div id='bgee_start' class='row'>");
+	    this.writeln("<div id='bgee_hero' class='row'>");
 	    
 	    //TODO: manage the version either from database, or from bgee-webapp.properties file.
 	    this.writeln("<span id='bgee_version'>version 13.1</span>");
@@ -130,11 +131,16 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
 	    this.displayBgeeButtons("start_buttons");
 	
-	    this.writeln("</div>"); // close bgee_start row
+	    this.writeln("</div>"); // close bgee_hero row
 	
 	    log.exit();
 	}
 
+	/**
+     * Display the buttons that allow to access quickly to different pages of the Bgee web site.
+     * 
+     * @param divId	A {@code String} that is the ID of HTML 'div' element.
+	 */
 	private void displayBgeeButtons(String divId) {
 		log.entry(divId);
 		
@@ -158,9 +164,9 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	}
 
 	/**
-     * TODO
+     * Display explanations on Bgee web site.
      */
-    private void displayExplanation() {
+    private void displayExplanations() {
     	log.entry();
     	
         this.writeln("<div id='bgee_explanations' class='row home_page_section'>");
@@ -193,8 +199,10 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         log.exit();
 	}
     
-    /**TODO
-     * @param groups
+    /**
+     * Display species home page section with links to download pages.
+     * 
+     * @param groups	A {@code List} of {@code SpeciesDataGroup} for which display the image.
      */
     private void displayHomePageSpecies(List<SpeciesDataGroup> groups) {
     	log.entry(groups);
@@ -229,13 +237,12 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     }
 
     /**
-     * Get the banner of a download page as a HTML 'div' element, 
-     * according the provided page type.
+     * Get the banner of download page links as a HTML 'div' element.
      *
-     * @return  the {@code String} that is the black banner of a download page 
-     *          as a HTML 'div' element according {@code pageType}.
+     * @return  the {@code String} that is the black banner ofdownload page links, 
+     *          as a HTML 'div' element.
      */
-    // TODO: DRY: copy from HtmlDownloadDisplay  
+    // TODO: DRY: refactor with HtmlDownloadDisplay  
     private String getDownloadBanner() {
     	log.entry();
 
@@ -273,7 +280,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     }
     
 	/**
-	 * TODO
+	 * Display Bgee news.
 	 */
 	private void displayNews() {
 	    log.entry();
@@ -363,7 +370,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	}
 
 	/**
-     * TODO
+     * Display more information (for instance, image sources or 'view archive site' link).
      */
     private void displayMoreInfo() {
     	log.entry();
@@ -384,9 +391,11 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         log.exit();
 	}
 
-	/**TODO
-     * @param date
-     * @param description
+	/**
+	 * Display an unique news.
+	 * 
+     * @param date			A {@code String} that is the date of the news. 
+     * @param description	A {@code String} that is the description of the news.
      */
     private void writeOneNews(String date, String description) {
         log.entry(date, description);
@@ -400,17 +409,6 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         this.writeln("</div>");
         this.writeln("</div>");
         
-        log.exit();
-    }
-
-    @Override
-    public void displayAbout() {
-        log.entry();
-        this.startDisplay("Information about Bgee: a dataBase for Gene Expression Evolution");
-
-        this.writeln("<h1>What is Bgee?</h1>");
-
-        this.endDisplay();
         log.exit();
     }
     

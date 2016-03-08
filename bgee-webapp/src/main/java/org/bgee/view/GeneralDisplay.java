@@ -9,16 +9,12 @@ import org.bgee.model.file.SpeciesDataGroup;
  * that corresponds to another category) has to implements
  * 
  * @author  Mathieu Seppey
- * @author Frederic Bastian
- * @version Bgee 13 Aug 2014
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13, Mar. 2016
  * @since   Bgee 1
  */
 public interface GeneralDisplay {
-    /**
-     * Launch the display of the "about" page, using the {@code HttpServletResponse} 
-     * provided at instantiation.
-     */
-    public void displayAbout();
     
     /**
      * Launch the display of the home page, using the {@code HttpServletResponse} 

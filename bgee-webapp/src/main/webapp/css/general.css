@@ -2,7 +2,7 @@
     padding: 0;
 }
 
-#bgee_start {
+#bgee_hero {
     background-color: #999999;
     height: 300px;
     padding-top: 40px;
@@ -23,7 +23,7 @@
     margin-right: 15px;
 }
 
-#bgee_start .mini_text {
+#bgee_hero .mini_text {
     font-size: 1.2em;
     text-align: center;
     text-transform: uppercase;

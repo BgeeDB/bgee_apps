@@ -314,7 +314,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	                      + "for gene expression enrichment analyses: <a href='" + urlTopAnat.getRequestURL()
 	                      + "' title='Perform gene expression enrichment tests with TopAnat'>TopAnat</a>. "
 	                      + "This is a tool with absolutely no equivalent, developped in collaboration with "
-	                      + "the Web-Team  of the Swiss Institute of Bioinformatics. Check it out!");
+	                      + "the Web-Team  of the SIB Swiss Institute of Bioinformatics. Check it out!");
 	    this.writeOneNews("2015-08-26", "update of the home page.");
 	    
 	    this.writeOneNews("2015-06-08", "release of Bgee release 13.1: "

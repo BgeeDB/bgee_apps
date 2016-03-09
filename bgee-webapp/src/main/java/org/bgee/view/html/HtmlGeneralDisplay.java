@@ -291,7 +291,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	    urlCallDoc.setAction(RequestParameters.ACTION_DOC_CALL_DOWLOAD_FILES);
         
         RequestParameters urlGenePage = this.getNewRequestParameters();
-        urlCallDoc.setPage(RequestParameters.PAGE_GENE);
+        urlGenePage.setPage(RequestParameters.PAGE_GENE);
 	    
 	    this.writeln("<div id='bgee_news' class='panel panel-default'>");
 	    this.writeln("<div class='panel-heading'>");

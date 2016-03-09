@@ -76,8 +76,6 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
         this.displayBgeeButtons("end_buttons");
 
-        this.writeln("<hr class='home-divider'/>");
-
         this.displayMoreInfo();
 
         this.endDisplay();

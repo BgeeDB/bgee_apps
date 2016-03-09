@@ -35,6 +35,10 @@
     text-align: center;
 }   
 
+#end_buttons  {
+	margin-bottom: 40px;
+}
+
 #start_buttons a, #start_buttons a:visited,
 #end_buttons a, #end_buttons a:visited {
     display: inline-block;

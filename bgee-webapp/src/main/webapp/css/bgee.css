@@ -569,7 +569,7 @@ div.bgee_download_section figure.selected {
 #bgee_data_selection li img.bullet_point {
     width: 25px;
     height: 15px;
-    margin: 0px 5px 5px 15px;
+    margin: 0px 5px 5px 0;
 }
  
  #bgee_data_selection_cross {

@@ -398,18 +398,22 @@
                             <cssFinalFile>font-awesome.${filter.org.bgee.webapp.css.version.extension}.css</cssFinalFile>
                         </configuration>
                     </execution>
+                    
+                    
+                    <!-- merge files from external libraries already minified, 
+                         specific to gene pages. -->
                     <execution>
-                        <id>no_merge_no_minify_3</id>
+                        <id>gene_minified_vendor</id>
                         <goals>
                             <!-- Binds by default to the lifecycle phase: process-resources -->
                             <goal>minify</goal>
                         </goals>
                         <configuration>
                             <webappTargetDir>${minify.webappTargetDir}</webappTargetDir>
-                            <!-- we pretend to merge the file so that it is renamed -->
                             <skipMinify>true</skipMinify>
                             <!-- We always skip the merge and minify if requested -->
                             <skipMerge>${skip.minify.plugin}</skipMerge>
+                            <jsEngine>CLOSURE</jsEngine>
                             
                             <jsSourceDir>js/</jsSourceDir>
                             <jsTargetDir>js/lib/jquery_plugins/</jsTargetDir>
@@ -417,7 +421,8 @@
                                 <jsSourceFile>lib/jquery_plugins/jquery.dataTables.min.js</jsSourceFile>
                                 <jsSourceFile>lib/jquery_plugins/dataTables.responsive.min.js</jsSourceFile>
                             </jsSourceFiles>
-                            <jsFinalFile>jquery.dataTables.${filter.org.bgee.webapp.javascript.version.extension}.js</jsFinalFile>
+                            <!-- Files already provided minified. The suffix will then not be added  -->
+                            <jsFinalFile>vendor_gene.${filter.org.bgee.webapp.javascript.version.extension}.js</jsFinalFile>
                             
                             <cssSourceDir>css/</cssSourceDir>
                             <cssTargetDir>css/lib/jquery_plugins/</cssTargetDir>
@@ -425,10 +430,10 @@
                                 <cssSourceFile>lib/jquery_plugins/jquery.dataTables.min.css</cssSourceFile>
                                 <cssSourceFile>lib/jquery_plugins/responsive.dataTables.min.css</cssSourceFile>
                             </cssSourceFiles>
-                            <cssFinalFile>jquery.dataTables.${filter.org.bgee.webapp.css.version.extension}.css</cssFinalFile>
+                            <!-- Files already provided minified. The suffix will then not be added  -->
+                            <cssFinalFile>vendor_gene.${filter.org.bgee.webapp.css.version.extension}.css</cssFinalFile>
                         </configuration>
                     </execution>
-                    
                     
                     <!-- merge and minify all Bgee files specific to gene pages -->
                     <execution>

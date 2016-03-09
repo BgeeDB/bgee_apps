@@ -417,8 +417,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             this.includeCss("lib/jquery_plugins/jquery.dataTables.min.css");
             this.includeCss("lib/jquery_plugins/responsive.dataTables.min.css");
         } else {
-            this.includeCss("lib/jquery_plugins/jquery.dataTables.css");
-            this.includeCss("lib/jquery_plugins/responsive.dataTables.css");
+            this.includeCss("lib/jquery_plugins/vendor_gene.css");
         }
         this.includeCss("gene.css");
 
@@ -442,8 +441,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             this.includeJs("autoCompleteGene.js");
             this.includeJs("jquery_ui_autocomplete_modif.js");
         } else {
-            this.includeJs("lib/jquery_plugins/jquery.dataTables.js");
-            this.includeJs("lib/jquery_plugins/dataTables.responsive.js");
+            this.includeJs("lib/jquery_plugins/vendor_gene.js");
             this.includeJs("script_gene.js");
         }
         log.exit();

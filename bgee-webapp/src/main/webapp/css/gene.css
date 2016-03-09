@@ -29,11 +29,16 @@ div#table-container {
 	margin-left: 2%;
 }
 
+div#table-container label {
+    font-weight: normal;
+}
+
 div.legend {
 	border-left: 1px solid #ccc;
+	margin-top: 2em;
 	font-size: 0.85em;
 }
-@media (max-width: 1000px) {
+@media (max-width: 768px) {
 	div.legend {
 	   border: none;
 	}

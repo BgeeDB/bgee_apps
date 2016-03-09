@@ -140,7 +140,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		this.writeln("</div>"); // close div
 
 		//page title
-		this.writeln("<h1 class='gene_title col-sm-9'><img src='" 
+		this.writeln("<h1 class='gene_title col-sm-9 col-lg-7'><img src='" 
 		        + this.prop.getSpeciesImagesRootDirectory() + urlEncode(gene.getSpeciesId())
 		        + "_light.jpg' alt='" + htmlEntities(gene.getSpecies().getShortName()) 
 		        + "' />" + htmlEntities(titleStart) 
@@ -163,7 +163,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		this.writeln("<div id='expr_data' class='row'>");
 		
 		//table-container
-		this.writeln("<div class='col-xs-12 col-md-10'>");
+		this.writeln("<div class='col-xs-12 col-sm-10'>");
 		this.writeln("<div id='table-container'>");
 		this.writeln(getExpressionHTMLByAnat(
 		        filterAndGroupByAnatEntity(geneResponse), 
@@ -172,14 +172,14 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		this.writeln("</div>"); // end class
 		
 		//legend
-        this.writeln("<div class='legend'>");
-        this.writeln("<table class='col-xs-offset-1 col-xs-4 col-md-offset-0 col-md-2'>"
+        this.writeln("<div class='legend col-xs-offset-1 col-xs-10 col-sm-offset-0 col-sm-2 row'>");
+        this.writeln("<table class='col-xs-5 col-sm-12'>"
         		+ "<caption>Sources</caption>" +
                 "<tr><th>A</th><td>Affymetrix</td></tr>" +
                 "<tr><th>E</th><td>EST</td></tr>" +
                 "<tr><th>I</th><td>In Situ</td></tr>" +
                 "<tr><th>R</th><td>RNA-Seq</li></td></tr></table>");
-        this.writeln("<table class='col-xs-offset-2 col-xs-4 col-md-offset-0 col-md-2'>"
+        this.writeln("<table class='col-xs-offset-2 col-xs-5 col-sm-offset-0 col-sm-12'>"
         		+ "<caption>Qualities</caption>" +
                 "<tr><td><span class='quality high'>high quality</span></td></tr>" +
                 "<tr><td><span class='quality low'>low quality</span></td></tr>" +
@@ -219,7 +219,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		sb.append("<table class='expression stripe nowrap compact responsive'>")
 		        .append("<thead><tr><th class='anat-entity-id'>Anat. entity ID</th>")
 		        .append("<th class='anat-entity'>Anatomical entity</th>")
-				.append("<th class='dev-stages min-tablet-l'><strong>Developmental stage(s)</strong></th>")
+				.append("<th class='dev-stages desktop'><strong>Developmental stage(s)</strong></th>")
 				.append("<th class='quality'><strong>Quality</strong></th></tr></thead>\n");
 		sb.append("<tbody>").append(elements).append("</tbody>");
 		sb.append("</table>");

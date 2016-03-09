@@ -22,8 +22,8 @@ import org.bgee.view.ViewFactory;
  * @author Frederic Bastian
  * @author Valentine Rech de Laval
  * @author Philippe Moret
- * @version Bgee 13, June 2015
- * @since   Bgee 13
+ * @version Bgee 13, Feb. 2016
+ * @since   Bgee 13, Jul. 2014
  */
 public class HtmlParentDisplay extends ConcreteDisplayParent {
 
@@ -37,6 +37,16 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * A {@code String} that is the page name of the 'gene expression calls' download page.
      */
     protected final static String GENE_EXPR_CALLS_PAGE_NAME = "Gene expression calls";
+    /**
+     * A {@code String} that is the page name of the 'gene expression calls' download page.
+     */
+    protected final static String TOP_ANAT_PAGE_NAME = "Expression enrichment analysis";
+    
+    /**
+     * A {@code String} to be used in {@code class} attribute.
+     */
+    protected static final String CENTERED_ELEMENT_CLASS = 
+    		"col-xs-12 col-xs-offset-0 col-sm-offset-1 col-sm-10";
 
     /**
      * Escape HTML entities in the provided {@code String}
@@ -45,11 +55,12 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected static String htmlEntities(String stringToWrite) {
         log.entry(stringToWrite);
-    	try {                            
-    	    return log.exit(StringEscapeUtils.escapeHtml4(stringToWrite).replaceAll("'", "&apos;"));
-    	} catch (Exception e) {
-    		return log.exit("");
-    	}
+        try {                            
+            return log.exit(StringEscapeUtils.escapeHtml4(stringToWrite).replaceAll("'", "&apos;"));
+        } catch (Exception e) {
+            log.catching(e);
+            return log.exit("");
+        }
     }
 
     /**
@@ -140,6 +151,11 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
       */
      private final JsonHelper jsonHelper;
 
+     /**
+      * A {@code String} defining the character encoding for encoding query strings.
+      */
+     private final String charEncoding;
+
      
      /**
       * Constructor providing the necessary dependencies, except the {@code JsonHelper}, 
@@ -182,6 +198,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             BgeeProperties prop, JsonHelper jsonHelper, HtmlFactory factory) 
                     throws IllegalArgumentException, IOException {
         super(response, requestParameters, prop, factory);
+        this.charEncoding = this.getRequestParameters().getCharacterEncoding();
         this.jsonHelper = jsonHelper;
     }
     
@@ -198,6 +215,22 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         log.exit();
     }
     
+    /**
+     * URL encode the provided {@code String}, with the character encoding used to generate URLs. 
+     * 
+     * @param stringToWrite A {@code String} to be encoded.
+     * @return              The encoded {@code String}.
+     */
+    protected String urlEncode(String stringToWrite) {
+        log.entry(stringToWrite);
+        try {                            
+            return log.exit(java.net.URLEncoder.encode(stringToWrite, this.charEncoding));
+        } catch (Exception e) {
+            log.catching(e);
+            return log.exit("");
+        }
+    }
+
     /**
      * Display the start of the HTML page (common to all pages).
      *
@@ -246,6 +279,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("<noscript>Sorry, your browser does not support JavaScript!</noscript>");
         this.writeln("<div id='bgee_top'><span id='TOP'></span></div>");
         this.writeln("<div id='sib_container'>");
+        //FIXME: I noticed that this header disappear in printed version
         this.displayBgeeHeader();
         this.writeln("<div id='sib_body'>");
 
@@ -258,18 +292,26 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     protected void endDisplay() {
         log.entry();
 
-        this.writeln("</div>");
-        //FIXME: I noticed that this footer messes up print version on firefox
-        this.writeln("<footer>");
-        this.writeln("<div id='sib_footer_content'>");
-        this.writeln("<a href='http://www.isb-sib.ch'>SIB Swiss Institute of Bioinformatics</a>");
-        this.writeln("<div id='sib_footer_right'>");
-        this.writeln("<a href='#TOP' id='sib_footer_gototop'>"
-                + "<span style='padding-left: 10px'>Back to the Top</span></a>");
-        this.writeln("</div>");
-        this.writeln("</div>");
-        this.writeln("</footer>");
-        this.writeln("</div>");
+        this.writeln("</div>"); // close sib_body
+        
+        //FIXME: I noticed that this footer disappear in printed version
+        this.writeln("<nav id='bgee_footer' class='navbar navbar-default'>");
+        this.writeln("<div class='container-fluid'>");
+
+        this.writeln("<ul class='nav navbar-nav'>");
+        this.writeln("<li><a href='http://www.sib.swiss'>SIB Swiss Institute of Bioinformatics</a></li>");
+        this.writeln("</ul>");
+        
+
+        this.writeln("<ul class='nav navbar-nav navbar-right'>");
+        this.writeln("<li><a href='#TOP' id='sib_footer_gototop'>"
+        		+ "<span class='glyphicon glyphicon-menu-up'></span> Back to the top</a></li>");
+        this.writeln("</ul>");
+        
+        this.writeln("</div>"); // close container
+        this.writeln("</nav>"); // close bgee_footer nev
+
+        this.writeln("</div>"); // close sib_container
         
         this.writeln("</body>");
         this.writeln("</html>");
@@ -280,129 +322,138 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * Display the Bgee header of the HTML page.
      */
     private void displayBgeeHeader() {
-        log.entry();
-        this.writeln("<header>");
+    	log.entry();
+    	
+        RequestParameters urlTopAnat = this.getNewRequestParameters();
+        urlTopAnat.setPage(RequestParameters.PAGE_TOP_ANAT);
+
+        RequestParameters urlGeneSearch = this.getNewRequestParameters();
+        urlGeneSearch.setPage(RequestParameters.PAGE_GENE);
+
+        RequestParameters urlDownloadProcValueFile = this.getNewRequestParameters();
+        urlDownloadProcValueFile.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlDownloadProcValueFile.setAction(RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES);
         
-        // Bgee logo
-        this.writeln("<a href='" + this.getNewRequestParameters().getRequestURL() 
-                + "' title='Go to Bgee home page'>");
-        this.writeln("<img id='sib_other_logo' src='" + 
-                this.prop.getLogoImagesRootDirectory() + "bgee13_logo.png' alt='Bgee logo' />");
-        this.writeln("</a>");
-    
-        // Title
-        this.writeln("<h1>Bgee: Gene Expression Evolution</h1>");
-    
-        // SIB logo
-        this.writeln("<a href='http://www.isb-sib.ch/' target='_blank' " +
-                "title='Link to the SIB Swiss Institute of Bioinformatics'>");
-        this.writeln("<img id='sib_logo' src='"+this.prop.getLogoImagesRootDirectory() +
-                "sib_logo.png' alt='SIB Swiss Institute of Bioinformatics' />");
-        this.writeln("</a>");
-    
-        this.writeln(this.getNavBar());
+        RequestParameters urlDownloadExprCallFiles = this.getNewRequestParameters();
+        urlDownloadExprCallFiles.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlDownloadExprCallFiles.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
+
+        RequestParameters urlDocBgeeAccess = this.getNewRequestParameters();
+        urlDocBgeeAccess.setPage(RequestParameters.PAGE_DOCUMENTATION);
+        urlDocBgeeAccess.setAction(RequestParameters.ACTION_DOC_HOW_TO_ACCESS);
+
+        RequestParameters urlDocExprCallFiles = this.getNewRequestParameters();
+        urlDocExprCallFiles.setPage(RequestParameters.PAGE_DOCUMENTATION);
+        urlDocExprCallFiles.setAction(RequestParameters.ACTION_DOC_CALL_DOWLOAD_FILES);
+
+        RequestParameters urlDocTopAnat = this.getNewRequestParameters();
+        urlDocTopAnat.setPage(RequestParameters.PAGE_DOCUMENTATION);
+        urlDocTopAnat.setAction(RequestParameters.ACTION_DOC_TOP_ANAT);
         
-        this.writeln("</header>");
-        log.exit();
-    }
-    
-    /**
-     * @return  the {@code String} that is the HTML code of the navigation bar.
-     */
-    private String getNavBar() {
-        log.entry();
-        
-        RequestParameters topAnatGenerator = this.getNewRequestParameters();
-        topAnatGenerator.setPage(RequestParameters.PAGE_TOP_ANAT);
-        
-        RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
-        urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
-
-        RequestParameters urlDownloadRefExprGenerator = this.getNewRequestParameters();
-        urlDownloadRefExprGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
-        urlDownloadRefExprGenerator.setAction(RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES);
-        
-        RequestParameters urlDownloadCallsGenerator = this.getNewRequestParameters();
-        urlDownloadCallsGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
-        urlDownloadCallsGenerator.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
-
-        RequestParameters urlDocGenerator = this.getNewRequestParameters();
-        urlDocGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
-
-        RequestParameters urlBgeeAccessGenerator = this.getNewRequestParameters();
-        urlBgeeAccessGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
-        urlBgeeAccessGenerator.setAction(RequestParameters.ACTION_DOC_HOW_TO_ACCESS);
-
-        RequestParameters urlDownloadFilesDocGenerator = this.getNewRequestParameters();
-        urlDownloadFilesDocGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
-        urlDownloadFilesDocGenerator.setAction(RequestParameters.ACTION_DOC_CALL_DOWLOAD_FILES);
-
-        RequestParameters urlAboutGenerator = this.getNewRequestParameters();
-        urlAboutGenerator.setPage(RequestParameters.PAGE_ABOUT);
-
+        RequestParameters urlAbout = this.getNewRequestParameters();
+        urlAbout.setPage(RequestParameters.PAGE_ABOUT);
 
         // Navigation bar
         StringBuilder navbar = new StringBuilder();
 
-        navbar.append("<div id='nav'>");
+        navbar.append("<nav id='bgee-menu' class='navbar navbar-default'>");
+        navbar.append("<div class='container-fluid'>");
+
+        // Brand and toggle get grouped for better mobile display
+        navbar.append("<div class='navbar-header'>");
+        navbar.append("<button type='button' class='navbar-toggle collapsed' data-toggle='collapse' "
+        		+ "data-target='#bgee-navbar' aria-expanded='false'>");
+        navbar.append("<span class='sr-only'>Toggle navigation</span>");
+        navbar.append("<span class='icon-bar'></span>");
+        navbar.append("<span class='icon-bar'></span>");
+        navbar.append("<span class='icon-bar'></span>");
+        navbar.append("</button>");
+        navbar.append("<a class='navbar-brand' href='" + this.getNewRequestParameters().getRequestURL() 
+                + "' title='Go to Bgee home page'><img id='bgee_logo' src='" 
+        		+ this.prop.getLogoImagesRootDirectory() + "bgee13_hp_logo.png' alt='Bgee logo'></a>");
+        navbar.append("</div>"); //close navbar-header
+
+        // Nav links
+        navbar.append("<div id='bgee-navbar' class='collapse navbar-collapse'>");
         
-        navbar.append("<ul id='bgee_links'>");
+        // Left nav links
+        navbar.append("<ul class='nav navbar-nav'>");
         
-        navbar.append("<li>");
-        navbar.append("<a title='TopAnat: Enrichment analyses of expression localization' href='" + 
-                topAnatGenerator.getRequestURL() + "'>TopAnat</a>");
-        navbar.append("</li>");
-        
-        navbar.append("<li>");
-        navbar.append("<a title='Expression data page' href='" + 
-                urlDownloadGenerator.getRequestURL() + "'>Expression data" + this.getCaret() 
-                + "</a>");
-        navbar.append("<ul>");
-        navbar.append("<li><a class='drop' title='" + GENE_EXPR_CALLS_PAGE_NAME + "' href='" + 
-                urlDownloadCallsGenerator.getRequestURL() + "'>" + GENE_EXPR_CALLS_PAGE_NAME + 
-                "</a></li>");
-        navbar.append("<li><a class='drop' title='" + PROCESSED_EXPR_VALUES_PAGE_NAME + "' href='" + 
-                urlDownloadRefExprGenerator.getRequestURL() + "'>" + 
-                PROCESSED_EXPR_VALUES_PAGE_NAME + "</a></li>");
+        // Analysis
+        navbar.append("<li class='dropdown'>");
+        navbar.append("<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Analysis <span class='caret'></span></a>");
+        navbar.append("<ul class='dropdown-menu'>");
+        navbar.append("<li><a title='TopAnat: Enrichment analyses of expression localization' href='" + urlTopAnat.getRequestURL() + "'>" + TOP_ANAT_PAGE_NAME + "</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
-        navbar.append("<li>");
-        navbar.append("<a title='Documentation page' href='" + urlDocGenerator.getRequestURL() + 
-                "'>Documentation" + this.getCaret() 
-                + "</a>");
-        navbar.append("<ul>");
-        navbar.append("<li><a class='drop' title='See how to access to Bgee data' href='" + 
-                urlBgeeAccessGenerator.getRequestURL() + "'>How to access Bgee data</a></li>");
-        navbar.append("<li><a class='drop' title='' href='" + 
-                urlDownloadFilesDocGenerator.getRequestURL() 
-                + "'>Expression call file documentation</a></li>");
+
+        // Search
+        // For the moment, we only have gene search 
+        navbar.append("<li class='dropdown'>");
+        navbar.append("<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Search <span class='caret'></span></a>");
+        navbar.append("<ul class='dropdown-menu'>");
+        navbar.append("<li><a title='Gene search' href='" + urlGeneSearch.getRequestURL() + "'>Gene search</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
-//        navbar.append("<li>");
-//        navbar.append("<a id='about' rel='help' title='About page' href='" + 
-//                urlAboutGenerator.getRequestURL() + "'>About</a>");
-//        navbar.append("</li>");
-        navbar.append("<li id='help'>");
-        navbar.append(this.getObfuscateEmail());
+
+        // Download
+        navbar.append("<li class='dropdown'>");
+        navbar.append("<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Download <span class='caret'></span></a>");
+        navbar.append("<ul class='dropdown-menu'>");
+        navbar.append("<li><a href='" + urlDownloadExprCallFiles.getRequestURL() + "'>" + GENE_EXPR_CALLS_PAGE_NAME + "</a></li>");
+        navbar.append("<li><a href='" + urlDownloadProcValueFile.getRequestURL() + "'>" + PROCESSED_EXPR_VALUES_PAGE_NAME + "</a></li>");
+        navbar.append("</ul>");
+        navbar.append("</li>");
+
+        // Documentation
+        navbar.append("<li class='dropdown'>");
+        navbar.append("<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Documentation <span class='caret'></span></a>");
+        navbar.append("<ul class='dropdown-menu'>");
+        navbar.append("<li><a title='See how to access to Bgee data' href='" + urlDocBgeeAccess.getRequestURL() + "'>How to access Bgee data</a></li>");
+        navbar.append("<li><a title='TopAnat documentation' href='" + urlDocTopAnat.getRequestURL() + "'>" + TOP_ANAT_PAGE_NAME + "</a></li>");
+        navbar.append("<li><a title='Gene expression call files documentation' href='" + urlDocExprCallFiles.getRequestURL() + "'>" + GENE_EXPR_CALLS_PAGE_NAME + "</a></li>");
+//        navbar.append("<li><a title='Processed expression value files documentation' href='" + urlDocProcValueFiles.getRequestURL() + "'>" + PROCESSED_EXPR_VALUES_PAGE_NAME + "</a></li>");
+        navbar.append("<li><a title='Bgee blog' href='https://bgeedb.wordpress.com' target='_blank'>Bgee blog</a></li>");
+        navbar.append("</ul>");
         navbar.append("</li>");
         
-        navbar.append("</ul>"); //end of Bgee links
+        // About
+        navbar.append("<li><a title='About page' href='" + urlAbout.getRequestURL() + "'>About</a></li>");
+        
+        // Help
+        navbar.append("<li>" + this.getObfuscateEmail() + "</li>");
 
-        navbar.append("<ul id='social_links'>");
-        navbar.append("<li><a id='twitter' class='social-link' title='See @Bgeedb account' " +
-                "target='_blank' href='https://twitter.com/Bgeedb'>" + 
-                "<img alt='Twitter logo' src='" + this.prop.getImagesRootDirectory() + 
-                "Twitter.png'></a></li>");
-        navbar.append("<li><a id='wordpress' class='social-link' title='See our blog' " + 
-                "target='_blank' href='https://bgeedb.wordpress.com'>" + 
-                "<img alt='Wordpress logo' src='" + this.prop.getImagesRootDirectory() + 
-                "wordpress.png'></a></li>");
-        navbar.append("</ul>");  // end #social-links
+        navbar.append("</ul>"); // close left nav links
 
-        navbar.append("</div>"); // end #nav
+        // Right nav links
+        navbar.append("<ul class='nav navbar-nav navbar-right'>");
+        
+        // Twitter
+        navbar.append("<li><a title='See @Bgeedb account' target='_blank' href='https://twitter.com/Bgeedb'>" + 
+                "<img class='social-img' alt='Twitter logo' src='" + this.prop.getLogoImagesRootDirectory() + 
+                "twitter_logo.png'></a></li>");
 
-        return log.exit(navbar.toString());
-    }
+        // Blog
+        navbar.append("<li><a title='See our blog' target='_blank' href='https://bgeedb.wordpress.com'>" + 
+                "<img class='social-img' alt='Wordpress logo' src='" + this.prop.getLogoImagesRootDirectory() + 
+                "wordpress_logo.png'></a></li>");
+        
+        // SIB
+        navbar.append("<li><a id='sib_brand' href='http://www.sib.swiss' target='_blank' "
+                + "title='Link to the SIB Swiss Institute of Bioinformatics'>"
+                + "<img src='" + this.prop.getLogoImagesRootDirectory() +
+                "sib_logo.png' alt='SIB Swiss Institute of Bioinformatics' /></a></li>");
+
+        navbar.append("</ul>");  // close right nav links
+        
+        navbar.append("</div>"); // close nav links
+
+        navbar.append("</div>"); // close container-fluid
+        navbar.append("</nav>"); // close navbar navbar-default
+        
+        this.writeln(navbar.toString());
+        log.exit();
+	}
 
     /**
      * @param nbCalled  An {@code int} that is the different number every time 
@@ -414,14 +465,6 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         return "<script type='text/javascript'>eval(unescape('%66%75%6E%63%74%69%6F%6E%20%73%65%62%5F%74%72%61%6E%73%70%6F%73%65%32%28%68%29%20%7B%76%61%72%20%73%3D%27%61%6D%6C%69%6F%74%42%3A%65%67%40%65%73%69%2D%62%69%73%2E%62%68%63%27%3B%76%61%72%20%72%3D%27%27%3B%66%6F%72%28%76%61%72%20%69%3D%30%3B%69%3C%73%2E%6C%65%6E%67%74%68%3B%69%2B%2B%2C%69%2B%2B%29%7B%72%3D%72%2B%73%2E%73%75%62%73%74%72%69%6E%67%28%69%2B%31%2C%69%2B%32%29%2B%73%2E%73%75%62%73%74%72%69%6E%67%28%69%2C%69%2B%31%29%7D%68%2E%68%72%65%66%3D%72%3B%7D%64%6F%63%75%6D%65%6E%74%2E%77%72%69%74%65%28%27%3C%61%20%68%72%65%66%3D%22%23%22%20%6F%6E%4D%6F%75%73%65%4F%76%65%72%3D%22%6A%61%76%61%73%63%72%69%70%74%3A%73%65%62%5F%74%72%61%6E%73%70%6F%73%65%32%28%74%68%69%73%29%22%20%6F%6E%46%6F%63%75%73%3D%22%6A%61%76%61%73%63%72%69%70%74%3A%73%65%62%5F%74%72%61%6E%73%70%6F%73%65%32%28%74%68%69%73%29%22%3E%48%65%6C%70%3C%2F%61%3E%27%29%3B'));</script>";
     }
 
-    /**
-     * @return  the {@code String} that is the HTML code of the caret in navbar.
-     */
-    private String getCaret() {
-        return "<img class='deploy' src='" + 
-                this.prop.getImagesRootDirectory() + "arrow_down_dark.png' alt='Deploy'/>";
-    }
-    
     /**
      * Get the main logo of the documentation page, as HTML 'div' element.
      *
@@ -533,8 +576,10 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         log.entry();
         if (!this.prop.isMinify()) {
             this.includeJs("lib/jquery.min.js");
+            this.includeJs("lib/jquery_plugins/bootstrap.min.js");
             this.includeJs("lib/jquery_plugins/jquery.visible.min.js");
             this.includeJs("lib/jquery_plugins/jquery-ui.min.js");
+            this.includeJs("lib/jquery_plugins/toastr.min.js");
             this.includeJs("bgeeproperties.js");
             this.includeJs("urlparameters.js");
             this.includeJs("requestparameters.js");
@@ -616,11 +661,19 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected void includeCss() {
         if (!this.prop.isMinify()) {
+            this.includeCss("lib/jquery_plugins/bootstrap.min.css");
+            this.includeCss("lib/jquery_plugins/jquery-ui.min.css");
+            this.includeCss("lib/jquery_plugins/jquery-ui.structure.min.css");
+            this.includeCss("lib/jquery_plugins/jquery-ui.theme.min.css");
+            this.includeCss("lib/jquery_plugins/toastr.min.css");
             //we need to add the Bgee CSS files at the end, to override CSS file from bootstrap
             this.includeCss("bgee.css");  
         } else {
             //If you ever add new files, you need to edit bgee-webapp/pom.xml 
             //to correctly merge/minify them.
+            //the CSS files need to keep their relative location to other paths the same, 
+            //this is why we keep their location and don't merge them all
+            this.includeCss("lib/jquery_plugins/vendor_common.css");
             //we need to add the Bgee CSS files at the end, to override CSS file from bootstrap
             this.includeCss("common.css"); 
         }

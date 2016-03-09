@@ -1,6 +1,8 @@
 package org.bgee.model.anatdev;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -8,6 +10,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.bgee.model.TestAncestor;
 import org.bgee.model.dao.api.DAOManager;
@@ -47,24 +50,25 @@ public class DevStageServiceTest extends TestAncestor {
         speciesIds1.add("44");
 
         StageTOResultSet mockStageRs1 = getMockResultSet(StageTOResultSet.class, stageTOs);
-        when(dao.getStagesBySpeciesIds(speciesIds1, true, 3)).thenReturn(mockStageRs1);
+        when(dao.getStages(eq(speciesIds1), eq(true), anyObject(), eq(true), eq(3), anyObject()))
+            .thenReturn(mockStageRs1);
         
         // Test without defined level
-        List<DevStage> expectedDevStage = Arrays.asList(
+        Set<DevStage> expectedDevStage = new HashSet<>(Arrays.asList(
                 new DevStage("Stage_id11", "stageN11", "stage Desc 11", 19, 20, 3, false, true), 
                 new DevStage("Stage_id12", "stageN12", "stage Desc 12", 21, 22, 3, false, true), 
                 new DevStage("Stage_id13", "stageN13", "stage Desc 13", 23, 24, 3, false, true), 
-                new DevStage("Stage_id15", "stageN15", "stage Desc 15", 27, 32, 3, false, true));
+                new DevStage("Stage_id15", "stageN15", "stage Desc 15", 27, 32, 3, false, true)));
         DevStageService service = new DevStageService(managerMock);
         assertEquals("Incorrect dev stages",
                 expectedDevStage, service.loadGroupingDevStages(speciesIds1, 3));
     }
     
     /**
-     * Test the method {@link DevStageService#loadDevStagesByIds(Set)}.
+     * Test the method {@link DevStageService#loadDevStages(Collection, Boolean, Collection)}.
      */
     @Test
-    public void shouldLoadDevStagesByIds() {
+    public void shouldLoadDevStages() {
         // initialize mocks
         DAOManager managerMock = mock(DAOManager.class);
         StageDAO dao = mock(StageDAO.class);
@@ -74,20 +78,22 @@ public class DevStageServiceTest extends TestAncestor {
                 new StageTO("Stage_id3", "stageN3", "stage Desc 3", 3, 4, 3, true, false),
                 new StageTO("Stage_id12", "stageN12", "stage Desc 12", 21, 22, 3, false, true));
 
-        // Filter on species IDs is not tested here (tested in StageDAO)
-        // but we need a variable to mock DAO answer
         Set<String> stageIds = new HashSet<String>();
         stageIds.add("Stage_id12");
         stageIds.add("Stage_id3");
+        Set<String> speciesIds = new HashSet<String>();
+        speciesIds.add("44");
 
         StageTOResultSet mockStageRs = getMockResultSet(StageTOResultSet.class, stageTOs);
-        when(dao.getStagesByIds(stageIds)).thenReturn(mockStageRs);
+        when(dao.getStages(eq(speciesIds), eq(true), eq(stageIds), eq(null), eq(null), anyObject()))
+            .thenReturn(mockStageRs);
         
         // Test without defined level
-        List<DevStage> expectedDevStage = Arrays.asList(
+        Set<DevStage> expectedDevStage = new HashSet<>(Arrays.asList(
                 new DevStage("Stage_id3", "stageN3", "stage Desc 3", 3, 4, 3, true, false),
-                new DevStage("Stage_id12", "stageN12", "stage Desc 12", 21, 22, 3, false, true));
+                new DevStage("Stage_id12", "stageN12", "stage Desc 12", 21, 22, 3, false, true)));
         DevStageService service = new DevStageService(managerMock);
-        assertEquals("Incorrect dev stages", expectedDevStage, service.loadDevStagesByIds(stageIds));
+        assertEquals("Incorrect dev stages", expectedDevStage, service.loadDevStages(
+                speciesIds, true, stageIds).collect(Collectors.toSet()));
     }
 }

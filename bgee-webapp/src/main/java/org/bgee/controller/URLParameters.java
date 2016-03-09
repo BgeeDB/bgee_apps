@@ -48,7 +48,7 @@ import org.bgee.model.expressiondata.baseelements.DecorrelationType;
  * @author Mathieu Seppey
  * @author Valentine Rech de Laval
  * @author Frederic Bastian
- * @version Bgee 13, Nov 2015
+ * @version Bgee 13, Feb. 2016
  * @since Bgee 13 Nov. 2014
  * @see URLParameters.Parameter
  * @see	RequestParameters
@@ -178,6 +178,24 @@ public class URLParameters {
             new Parameter<Boolean>("display_rp",
             false, false, null, false, false, 5, DEFAULT_FORMAT, Boolean.class);
     
+    
+    /**
+     * A {@code Parameter<String>} representing a gene id, typically for the gene page.
+     * Category of the parameter: controller parameter.
+     * Corresponds to the URL parameter "gene_id".
+     */
+    private static final Parameter<String> GENE_ID = 
+    		new Parameter<String>("gene_id", false,false, null, false, false, 50, DEFAULT_FORMAT, String.class);
+    
+    /**
+     * A {@code Parameter<String>} representing a search, typically for the gene page.
+     * Category of the parameter: controller parameter.
+     * Corresponds to the URL parameter "search".
+     */
+    private static final Parameter<String> SEARCH = 
+    		new Parameter<String>("search", false,false, null, false, false, 
+    				DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+
     /**
      * A {@code Parameter<String>} that contains the species IDs used 
      * as key to store parameters on the disk.
@@ -413,6 +431,8 @@ public class URLParameters {
     private final List<Parameter<?>> list = Arrays.<Parameter<?>>asList(
             PAGE,
             ACTION,
+            GENE_ID,
+            SEARCH,
             // Species request
             SPECIES_LIST,
             // TopAnat analyze params
@@ -530,6 +550,20 @@ public class URLParameters {
     public Parameter<String> getParamData(){
         return DATA;
     }
+    
+   /**
+    * @return  A {@code Parameter<String>} that contains the gene id.
+    */
+    public Parameter<String> getParamGeneId() {
+    	return GENE_ID;
+    }
+    
+    /**
+     * @return  A {@code Parameter<String>} that contains the search text.
+     */
+     public Parameter<String> getParamSearch() {
+     	return SEARCH;
+     }    
 
     /**
      * @return  A {@code Parameter<Boolean>} defining whether to display the {@code RequestParameters} 

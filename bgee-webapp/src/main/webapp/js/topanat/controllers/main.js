@@ -577,12 +577,12 @@
             columnDefs: [
                 {field: 'anatEntityId', width: "14%", cellTemplate: '<div style="text-align:center;  position: relative;  top: 50%;  -webkit-transform: translateY(-50%);  -ms-transform: translateY(-50%);  transform: translateY(-50%);"><a href="http://purl.obolibrary.org/obo/{{row.entity[col.field].replace(\':\',\'_\')}}" target="_blank">{{row.entity[col.field]}}</a></div>' },
                 {field: 'anatEntityName', width: "34%" },
-                {field: 'annotated', width: "8%" },
-                {field: 'significant', width: "8%" },
-                {field: 'expected', width: "8%" },
-                {field: 'foldEnrichment', width: "8%" },
-                {field: 'pValue', width: "10%" },
-                {field: 'FDR', width: "10%" }
+                {field: 'annotated', width: "8%", type: 'number'},
+                {field: 'significant', width: "8%", type: 'number'},
+                {field: 'expected', width: "8%", type: 'number'},
+                {field: 'foldEnrichment', width: "8%", type: 'number'},
+                {field: 'pValue', width: "10%", type: 'number'},
+                {field: 'FDR', width: "10%", type: 'number'}
             ]
         };
 

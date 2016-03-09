@@ -39,7 +39,13 @@ public class FakeDocumentationDisplay extends FakeParentDisplay implements Docum
     }
 
     @Override
+    public void displayTopAnatDocumentation() {
+    	this.out.println("Test5");
+    }
+
+    @Override
     public void displayHowToAccessDataDocumentation() {
         this.out.println("Test3");
     }
+
 }

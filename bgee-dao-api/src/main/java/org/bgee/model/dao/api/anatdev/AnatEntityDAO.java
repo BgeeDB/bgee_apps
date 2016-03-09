@@ -1,7 +1,6 @@
 package org.bgee.model.dao.api.anatdev;
 
 import java.util.Collection;
-import java.util.Set;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
@@ -39,8 +38,7 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
     }
 
     /**
-     * Retrieves anatomical entities from data source according to a {@code Set} of 
-     * {@code String}s that are the IDs of species allowing to filter the entities to use.
+     * Retrieves anatomical entities from data source existing in any of the requested species.
      * <p>
      * The anatomical entities are retrieved and returned as a {@code AnatEntityTOResultSet}. It is 
      * the responsibility of the caller to close this {@code DAOResultSet} once results are 
@@ -52,7 +50,7 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
      *                      from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public AnatEntityTOResultSet getAnatEntitiesBySpeciesIds(Set<String> speciesIds) 
+    public AnatEntityTOResultSet getAnatEntitiesBySpeciesIds(Collection<String> speciesIds) 
             throws DAOException;
     
     /**
@@ -63,30 +61,67 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
      * It is the responsibility of the caller to close this {@code DAOResultSet} once results 
      * are retrieved.
      * 
-     * @param anatEntitiesIds   A {@code Set} of {@code String}s that are the IDs of anatomical 
+     * @param anatEntitiesIds   A {@code Collection} of {@code String}s that are the IDs of anatomical 
      *                          entities allowing to filter the anatomical entities to use.
      * @return                  An {@code AnatEntityTOResultSet} containing all anatomical entities
      *                          from data source.
      * @throws DAOException     If an error occurred when accessing the data source. 
      */
-    public AnatEntityTOResultSet getAnatEntitiesByIds(Set<String> anatEntitiesIds) 
+    public AnatEntityTOResultSet getAnatEntitiesByIds(Collection<String> anatEntitiesIds) 
             throws DAOException;
     
     /**
-     * Retrieves anatomical entities from data source according to the IDs of species and 
-     * IDs of anatomical entities allowing to filter the entities to use.
+     * Retrieves anatomical entities from data source existing in any of the requested species, 
+     * and potentially filtered based on the provided anatomical entity IDs. If an entity 
+     * in {@code anatEntitiesIds} does not exists in any of the requested species, 
+     * it will not be returned.
+     * <p>
+     * The anatomical entities are retrieved and returned as a {@code AnatEntityTOResultSet}. 
+     * It is the responsibility of the caller to close this {@code DAOResultSet} once results 
+     * are retrieved.
      * 
-     * @param speciesIds        A {@code Set} of {@code String}s that are the IDs of species 
+     * @param speciesIds        A {@code Collection} of {@code String}s that are the IDs of species 
      *                          allowing to filter the anatomical entities to use.
-     * @param anatEntitiesIds   A {@code Set} of {@code String}s that are the IDs of anatomical 
+     * @param anatEntitiesIds   A {@code Collection} of {@code String}s that are the IDs of anatomical 
      *                          entities allowing to filter the anatomical entities to use.
      * @return                  An {@code AnatEntityTOResultSet} containing anatomical entities
      *                          from data source according to {@code speciesIds} and
      *                          {@code anatEntitiesIds}.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public AnatEntityTOResultSet getAnatEntities(Set<String> speciesIds, Set<String> anatEntitiesIds)
-            throws DAOException;
+    public AnatEntityTOResultSet getAnatEntities(Collection<String> speciesIds, 
+            Collection<String> anatEntitiesIds) throws DAOException;
+
+    /**
+     * Retrieves anatomical entities from data source according to the IDs of species and 
+     * IDs of anatomical entities allowing to filter the entities to use. If an entity 
+     * in {@code anatEntitiesIds} does not exists according to the species filtering, 
+     * it will not be returned.
+     * <p>
+     * The anatomical entities are retrieved and returned as a {@code AnatEntityTOResultSet}. 
+     * It is the responsibility of the caller to close this {@code DAOResultSet} once results 
+     * are retrieved.
+     * 
+     * @param speciesIds        A {@code Collection} of {@code String}s that are the IDs of species 
+     *                          allowing to filter the anatomical entities to use.
+     * @param anySpecies        A {@code Boolean} defining, when {@code speciesIds} contains several IDs, 
+     *                          whether the entities retrieved should be valid in any 
+     *                          of the requested species (if {@code true}), or in all 
+     *                          of the requested species (if {@code false}).
+     * @param anatEntitiesIds   A {@code Collection} of {@code String}s that are the IDs of anatomical 
+     *                          entities allowing to filter the anatomical entities to use.
+     * @param attributes        A {@code Collection} of {@code AnatEntityDAO.Attribute}s 
+     *                          defining the attributes to populate in the returned 
+     *                          {@code AnatEntityTO}s. If {@code null} or empty, 
+     *                          all attributes are populated. 
+     * @return                  An {@code AnatEntityTOResultSet} containing anatomical entities
+     *                          from data source according to {@code speciesIds} and
+     *                          {@code anatEntitiesIds}.
+     * @throws DAOException If an error occurred when accessing the data source. 
+     */
+    public AnatEntityTOResultSet getAnatEntities(Collection<String> speciesIds, Boolean anySpecies, 
+            Collection<String> anatEntitiesIds, Collection<AnatEntityDAO.Attribute> attributes) 
+                    throws DAOException;
 
     /**
      * Retrieves non-informative anatomical entities without expression or no-expression call from 
@@ -97,13 +132,13 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
      * {@code AnatEntityTOResultSet}. It is the responsibility of the caller to close this 
      * {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
+     * @param speciesIds    A {@code Collection} of {@code String}s that are the IDs of species 
      *                      allowing to filter the non-informative anatomical entities to use
      * @return              An {@code AnatEntityTOResultSet} containing non-informative 
      *                      anatomical entities from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public AnatEntityTOResultSet getNonInformativeAnatEntitiesBySpeciesIds(Set<String> speciesIds) 
+    public AnatEntityTOResultSet getNonInformativeAnatEntitiesBySpeciesIds(Collection<String> speciesIds) 
             throws DAOException;
     
     /**

@@ -104,6 +104,8 @@ create table species (
     species varchar(70) not null COMMENT 'Species name',
 -- exemple: human
     speciesCommonName varchar(70) not null COMMENT 'NCBI species common name',
+-- integer allowing to sort the species in preferred display order
+    speciesDisplayOrder smallint unsigned not null, 
 -- ID of the taxon which this species belongs to, present in the table `taxonomy`.
 -- For instance, if this species is `human`, it belongs to the taxon `homo` (taxon ID 9605).
     taxonId mediumint unsigned not null COMMENT 'NCBI taxon id this species belongs to (most of the time genus taxon id)',
@@ -947,8 +949,16 @@ create table expression (
     rnaSeqData enum('no data', 'poor quality', 'high quality') default 'no data',
     estMeanRank decimal(9, 2) unsigned,
     affymetrixMeanRank decimal(9, 2) unsigned,
-    inSituMeanRank decimal(9, 2) unsigned, 
-    rnaSeqMeanRank decimal(9, 2) unsigned
+    inSituMeanRank decimal(9, 2) unsigned,
+    rnaSeqMeanRank decimal(9, 2) unsigned,
+    estMeanRankNorm decimal(9, 2) unsigned,
+    affymetrixMeanRankNorm decimal(9, 2) unsigned,
+    inSituMeanRankNorm decimal(9, 2) unsigned,
+    rnaSeqMeanRankNorm decimal(9, 2) unsigned,
+    estMaxRank decimal(9,2) unsigned,
+    affymetrixMaxRank decimal(9,2) unsigned,
+    inSituMaxRank decimal(9,2) unsigned,
+    rnaSeqMaxRank decimal(9,2) unsigned
 ) engine = innodb;
 
 -- precomputed expression table where the expression of an organ and

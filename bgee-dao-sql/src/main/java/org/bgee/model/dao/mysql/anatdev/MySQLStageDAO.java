@@ -2,6 +2,9 @@ package org.bgee.model.dao.mysql.anatdev;
 
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Optional;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -15,6 +18,15 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 
+/**
+ * A {@code StageDAO} for MySQL. 
+ * 
+ * @author Valentine Rech de Laval
+ * @author Frederic Bastian
+ * @version Bgee 13 Jan. 2016
+ * @see org.bgee.model.dao.api.anatdev.StageDAO.StageTO
+ * @since Bgee 13
+ */
 public class MySQLStageDAO extends MySQLDAO<StageDAO.Attribute> implements StageDAO {
     /**
      * {@code Logger} of the class. 
@@ -33,37 +45,67 @@ public class MySQLStageDAO extends MySQLDAO<StageDAO.Attribute> implements Stage
     }
 
     @Override
-    public StageTOResultSet getStagesBySpeciesIds(Set<String> speciesIds) throws DAOException {
+    public StageTOResultSet getStagesBySpeciesIds(Collection<String> speciesIds) throws DAOException {
         log.entry(speciesIds);       
         return log.exit(getStagesBySpeciesIds(speciesIds, null, null));
     }
 
     @Override
-    public StageTOResultSet getStagesBySpeciesIds(Set<String> speciesIds, Boolean isGroupingStage,
+    public StageTOResultSet getStagesBySpeciesIds(Collection<String> speciesIds, Boolean isGroupingStage,
             Integer level) throws DAOException {
         log.entry(speciesIds, isGroupingStage, level);
         return log.exit(getStages(speciesIds, null, isGroupingStage, level));
     }
 
     @Override
-    public StageTOResultSet getStagesByIds(Set<String> stagesIds) throws DAOException {
+    public StageTOResultSet getStagesByIds(Collection<String> stagesIds) throws DAOException {
         log.entry(stagesIds);
         return log.exit(getStages(null, stagesIds, null, null));
     }
 
     @Override
-    public StageTOResultSet getStages(Set<String> speciesIds, Set<String> stageIds, 
+    public StageTOResultSet getStages(Collection<String> speciesIds, Collection<String> stageIds, 
             Boolean isGroupingStage, Integer level) throws DAOException {
+        log.entry(speciesIds, stageIds, isGroupingStage, level);
+        return log.exit(this.getStages(speciesIds, true, stageIds, isGroupingStage, level, 
+                this.getAttributes()));
+    }
+
+    @Override
+    public StageTOResultSet getStages(Collection<String> speciesIds, Boolean anySpecies, 
+            Collection<String> stageIds, Boolean isGroupingStage, Integer level, 
+            Collection<StageDAO.Attribute> attributes) throws DAOException {
         log.entry(speciesIds, stageIds, isGroupingStage, level);
         
         String tableName = "stage";
+        
+        //*******************************
+        // FILTER ARGUMENTS
+        //*******************************
+        //Species
+        Set<String> clonedSpeIds = Optional.ofNullable(speciesIds)
+                .map(c -> new HashSet<String>(c)).orElse(null);
+        boolean isSpeciesFilter = clonedSpeIds != null && !clonedSpeIds.isEmpty();
+        boolean realAnySpecies = isSpeciesFilter && 
+                (Boolean.TRUE.equals(anySpecies) || clonedSpeIds.size() == 1);
+        //stage IDs
+        Set<String> clonedEntityIds = Optional.ofNullable(stageIds)
+                .map(c -> new HashSet<String>(c)).orElse(null);
+        boolean isEntityFilter = clonedEntityIds != null && !clonedEntityIds.isEmpty();
+        
+        boolean isGroupingStageFilter = isGroupingStage != null;
+        boolean isLevelFilter = level != null;
 
-        String sql = new String();
-        Collection<StageDAO.Attribute> attributes = this.getAttributes();
-        if (attributes == null || attributes.size() == 0) {
+        //*******************************
+        // SELECT CLAUSE
+        //*******************************
+        String sql = "";
+        EnumSet<StageDAO.Attribute> clonedAttrs = Optional.ofNullable(attributes)
+                .map(e -> e.isEmpty()? null: EnumSet.copyOf(e)).orElse(null);
+        if (clonedAttrs == null || clonedAttrs.isEmpty()) {
             sql += "SELECT DISTINCT " + tableName + ".*";
         } else {
-            for (StageDAO.Attribute attribute: attributes) {
+            for (StageDAO.Attribute attribute: clonedAttrs) {
                 if (sql.length() == 0) {
                     sql += "SELECT DISTINCT ";
                 } else {
@@ -72,68 +114,80 @@ public class MySQLStageDAO extends MySQLDAO<StageDAO.Attribute> implements Stage
                 sql += tableName + "." + this.attributeToString(attribute);
             }
         }
+        
+        //*******************************
+        // FROM CLAUSE
+        //*******************************
         sql += " FROM " + tableName;
-
-        boolean filterBySpecies = speciesIds != null && speciesIds.size() > 0;
-        boolean filterByStages = stageIds != null && stageIds.size() > 0;
-        boolean filterByGroupingStage = isGroupingStage != null;
-        boolean filterByLevel = level != null;
         
         String stageTaxConstTabName = "stageTaxonConstraint";
-        if (filterBySpecies) {
+        if (realAnySpecies) {
              sql += " INNER JOIN " + stageTaxConstTabName + " ON (" +
                           stageTaxConstTabName + ".stageId = " + tableName + ".stageId)";
         }
-        if (filterByGroupingStage || filterBySpecies || filterByLevel || filterByStages) {
+
+        //*******************************
+        // WHERE CLAUSE
+        //*******************************
+        if (isSpeciesFilter || isEntityFilter || isLevelFilter || isGroupingStageFilter) {
             sql += " WHERE ";
         }
-        if (filterBySpecies) {
-            sql += "(" + stageTaxConstTabName + ".speciesId IS NULL" +
-                    " OR " + stageTaxConstTabName + ".speciesId IN (" + 
-                    BgeePreparedStatement.generateParameterizedQueryString(speciesIds.size()) + 
-                    "))";
+        if (isSpeciesFilter) {
+            if  (realAnySpecies) {
+                sql += "(" + stageTaxConstTabName + ".speciesId IS NULL" +
+                        " OR " + stageTaxConstTabName + ".speciesId IN (" + 
+                        BgeePreparedStatement.generateParameterizedQueryString(clonedSpeIds.size()) + 
+                        "))";
+            } else {
+                String existsPart = "SELECT 1 FROM " + stageTaxConstTabName + " AS tc WHERE "
+                        + "tc.stageId = " + tableName + ".stageId AND tc.speciesId ";
+                sql += getAllSpeciesExistsClause(existsPart, clonedSpeIds.size());
+            }
         }
-        if (filterByStages) {
-            if (filterBySpecies) {
+        if (isEntityFilter) {
+            if (isSpeciesFilter) {
                 sql += " AND ";
             }
             sql += "(" + tableName + ".stageId IN (" + 
-                    BgeePreparedStatement.generateParameterizedQueryString(stageIds.size()) + "))";
+                    BgeePreparedStatement.generateParameterizedQueryString(clonedEntityIds.size()) + "))";
         }
 
-        if (filterByGroupingStage) {
-            if (filterBySpecies || filterByStages) {
+        if (isGroupingStageFilter) {
+            if (isSpeciesFilter || isEntityFilter) {
                 sql += " AND ";
             }
             sql += tableName + ".groupingStage= ? ";
         }
-        if (filterByLevel) {
-            if (filterBySpecies || filterByStages || filterByGroupingStage) {
+        if (isLevelFilter) {
+            if (isSpeciesFilter || isEntityFilter || isGroupingStageFilter) {
                 sql += " AND ";
             }
             sql += tableName + ".stageLevel= ? ";
         }
 
+        //*******************************
+        // PREPARE STATEMENT
+        //*******************************
         //we don't use a try-with-resource, because we return a pointer to the results, 
         //not the actual results, so we should not close this BgeePreparedStatement.
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
-            if (filterBySpecies) {
-                stmt.setStringsToIntegers(1, speciesIds, true);
+            if (isSpeciesFilter) {
+                stmt.setStringsToIntegers(1, clonedSpeIds, true);
             }
 
-            int offsetParamIndex = (filterBySpecies ? speciesIds.size() + 1 : 1);
-            if (filterByStages) {
-                stmt.setStrings(offsetParamIndex, stageIds, true);
-                offsetParamIndex += stageIds.size();
+            int offsetParamIndex = (isSpeciesFilter? clonedSpeIds.size() + 1: 1);
+            if (isEntityFilter) {
+                stmt.setStrings(offsetParamIndex, clonedEntityIds, true);
+                offsetParamIndex += clonedEntityIds.size();
             }
 
-            if (filterByGroupingStage) {
+            if (isGroupingStageFilter) {
                 stmt.setBoolean(offsetParamIndex, isGroupingStage);
                 offsetParamIndex ++;
             }
 
-            if (filterByLevel) {
+            if (isLevelFilter) {
                 stmt.setInt(offsetParamIndex, level);
             }
 

@@ -56,5 +56,23 @@ public class KeywordServiceTest extends TestAncestor {
         KeywordService service = new KeywordService(managerMock);
         assertEquals("Incorrect species IDs to keywords mapping", expectedMapping, 
                 service.getKeywordForSpecies(speIds));
+        
+        // Test with speciesIds is null
+        mockKeywordRs = getMockResultSet(KeywordTOResultSet.class, Arrays.asList(
+                new KeywordTO("1", "k1 k1"), 
+                new KeywordTO("2", "k2"), 
+                new KeywordTO("3", "k33 33")));
+        mockEntityToKeywordRs = getMockResultSet(EntityToKeywordTOResultSet.class, 
+                Arrays.asList(new EntityToKeywordTO("sp1", "1"), 
+                        	  new EntityToKeywordTO("sp1", "2"), 
+                              new EntityToKeywordTO("sp2", "3"), 
+                              new EntityToKeywordTO("sp3", "2")));
+        when(dao.getKeywordsRelatedToSpecies(null)).thenReturn(mockKeywordRs);
+        when(dao.getKeywordToSpecies(null)).thenReturn(mockEntityToKeywordRs);
+        
+        expectedMapping.put("sp3", new HashSet<>(Arrays.asList("k2")));
+        assertEquals("Incorrect species IDs to keywords mapping", expectedMapping, 
+                service.getKeywordForSpecies(null));
+
     }
 }

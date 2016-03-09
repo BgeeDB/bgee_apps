@@ -54,7 +54,7 @@ public class KeywordService extends Service {
 	 *                     and values are {@code Set}s of {@code String}s that are the associated keywords.
 	 */
 	public Map<String, Set<String>> getKeywordForSpecies(Collection<String> speciesIds) {
-		log.entry();
+		log.entry(speciesIds);
 		KeywordDAO dao = this.getDaoManager().getKeywordDAO();
         Map<String, String> keywordMap = dao.getKeywordsRelatedToSpecies(speciesIds)
                 .stream().collect(Collectors.toMap(EntityTO::getId, KeywordDAO.KeywordTO::getName));

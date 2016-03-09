@@ -69,7 +69,7 @@ $(document).ready(function() {
     });
     
     // Add external_link class automatically to each 'a[target=_blank]' element without 'img' inside.
-    $( "a[target=_blank]:not(:has(img))" ).each(function() {
+    $( "a[target=_blank]:not(:has(img))" ).not($( "#bgee-menu a" )).each(function() {
     	$( this ).addClass("external_link");
     });
     

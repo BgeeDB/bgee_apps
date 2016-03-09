@@ -125,8 +125,8 @@
         <!-- WARNING: never removes these properties, otherwise your files will be named, e.g., 
              *${filter.org.bgee.webapp.css.version.extension}.css. If you want to disable 
              versioning of CSS and JS files, just leave these properties empty. -->
-        <filter.org.bgee.webapp.css.version.extension>min${project.version}k</filter.org.bgee.webapp.css.version.extension>
-        <filter.org.bgee.webapp.javascript.version.extension>min${project.version}k</filter.org.bgee.webapp.javascript.version.extension>
+        <filter.org.bgee.webapp.css.version.extension>min${project.version}l</filter.org.bgee.webapp.css.version.extension>
+        <filter.org.bgee.webapp.javascript.version.extension>min${project.version}l</filter.org.bgee.webapp.javascript.version.extension>
         <!-- This property defines where the minified CSS and JS files will be stored. 
              This is useful to be able to change this setting when running the webapp from within Eclipse 
              (Eclipse acquires its resources before any plugin can process them, so we modify 
@@ -261,12 +261,27 @@
                             <jsTargetDir>js/</jsTargetDir>
                             <jsSourceFiles>
                                 <jsSourceFile>lib/jquery.min.js</jsSourceFile>
+                                <jsSourceFile>lib/jquery_plugins/bootstrap.min.js</jsSourceFile>
                                 <jsSourceFile>lib/jquery_plugins/jquery.visible.min.js</jsSourceFile>
                                 <jsSourceFile>lib/jquery_plugins/jquery-ui.min.js</jsSourceFile>
+                                <jsSourceFile>lib/jquery_plugins/toastr.min.js</jsSourceFile>
                             </jsSourceFiles>
                             <!-- Files already provided minified. The suffix will then not be added  -->
                             <jsFinalFile>vendor_common.${filter.org.bgee.webapp.javascript.version.extension}.js</jsFinalFile>
                             <!-- <suffix>${filter.org.bgee.webapp.javascript.version.extension}</suffix> -->
+                            
+                            <cssSourceDir>css/</cssSourceDir>
+                            <!-- the css files need to keep their relative location -->
+                            <cssTargetDir>css/lib/jquery_plugins/</cssTargetDir>
+                            <cssSourceFiles>
+                                <cssSourceFile>lib/jquery_plugins/bootstrap.min.css</cssSourceFile>
+                                <cssSourceFile>lib/jquery_plugins/jquery-ui.min.css</cssSourceFile>
+                                <cssSourceFile>lib/jquery_plugins/jquery-ui.structure.min.css</cssSourceFile>
+                                <cssSourceFile>lib/jquery_plugins/jquery-ui.theme.min.css</cssSourceFile>
+                                <cssSourceFile>lib/jquery_plugins/toastr.min.css</cssSourceFile>
+                            </cssSourceFiles>
+                            <!-- Files already provided minified. The suffix will then not be added  -->
+                            <cssFinalFile>vendor_common.${filter.org.bgee.webapp.css.version.extension}.css</cssFinalFile>
                         </configuration>
                     </execution>
                     
@@ -335,6 +350,7 @@
                                 <cssSourceFile>download.css</cssSourceFile>
                                 <cssSourceFile>general.css</cssSourceFile>
                                 <cssSourceFile>topanat.css</cssSourceFile>
+                                <cssSourceFile>gene.css</cssSourceFile>
                             </cssSourceFiles>
                             <suffix>${filter.org.bgee.webapp.css.version.extension}</suffix>
                         </configuration>
@@ -387,6 +403,78 @@
                     
                     
                     <!-- merge files from external libraries already minified, 
+                         specific to gene pages. -->
+                    <execution>
+                        <id>gene_minified_vendor</id>
+                        <goals>
+                            <!-- Binds by default to the lifecycle phase: process-resources -->
+                            <goal>minify</goal>
+                        </goals>
+                        <configuration>
+                            <webappTargetDir>${minify.webappTargetDir}</webappTargetDir>
+                            <skipMinify>true</skipMinify>
+                            <!-- We always skip the merge and minify if requested -->
+                            <skipMerge>${skip.minify.plugin}</skipMerge>
+                            <jsEngine>CLOSURE</jsEngine>
+                            
+                            <jsSourceDir>js/</jsSourceDir>
+                            <jsTargetDir>js/lib/jquery_plugins/</jsTargetDir>
+                            <jsSourceFiles>
+                                <jsSourceFile>lib/jquery_plugins/jquery.dataTables.min.js</jsSourceFile>
+                                <jsSourceFile>lib/jquery_plugins/dataTables.responsive.min.js</jsSourceFile>
+                            </jsSourceFiles>
+                            <!-- Files already provided minified. The suffix will then not be added  -->
+                            <jsFinalFile>vendor_gene.${filter.org.bgee.webapp.javascript.version.extension}.js</jsFinalFile>
+                            
+                            <cssSourceDir>css/</cssSourceDir>
+                            <cssTargetDir>css/lib/jquery_plugins/</cssTargetDir>
+                            <cssSourceFiles>
+                                <cssSourceFile>lib/jquery_plugins/jquery.dataTables.min.css</cssSourceFile>
+                                <cssSourceFile>lib/jquery_plugins/responsive.dataTables.min.css</cssSourceFile>
+                            </cssSourceFiles>
+                            <!-- Files already provided minified. The suffix will then not be added  -->
+                            <cssFinalFile>vendor_gene.${filter.org.bgee.webapp.css.version.extension}.css</cssFinalFile>
+                        </configuration>
+                    </execution>
+                    
+                    <!-- merge and minify all Bgee files specific to gene pages -->
+                    <execution>
+                        <id>minify_gene_bgee</id>
+                        <goals>
+                            <!-- Binds by default to the lifecycle phase: process-resources -->
+                            <goal>minify</goal>
+                        </goals>
+                        <configuration>
+                            <webappTargetDir>${minify.webappTargetDir}</webappTargetDir>
+                            <!-- We always skip the merge and minify if requested -->
+                            <skipMinify>${skip.minify.plugin}</skipMinify>
+                            <skipMerge>${skip.minify.plugin}</skipMerge>
+                            <jsEngine>CLOSURE</jsEngine>
+                            
+                            <jsSourceDir>js/</jsSourceDir>
+                            <jsTargetDir>js/</jsTargetDir>
+                            <jsSourceFiles>
+                                <jsSourceFile>gene.js</jsSourceFile>
+                                <jsSourceFile>autoCompleteGene.js</jsSourceFile>
+                                <jsSourceFile>jquery_ui_autocomplete_modif.js</jsSourceFile>
+                            </jsSourceFiles>
+                            <jsFinalFile>script_gene.js</jsFinalFile>
+                            <suffix>${filter.org.bgee.webapp.javascript.version.extension}</suffix>
+                            
+                            <!-- topanat.css is minified in execution with ID minify_no_merge_bgee, 
+                                 this should be changed if there are more than one CSS file 
+                                 specific to Bgee used.  -->
+                            <!-- <cssSourceDir>css/</cssSourceDir>
+                            <cssTargetDir>css/</cssTargetDir>
+                            <cssSourceFiles>
+                                <cssSourceFile>gene.css</cssSourceFile>
+                            </cssSourceFiles>
+                            <cssFinalFile>gene.css</cssFinalFile>
+                            <suffix>${filter.org.bgee.webapp.css.version.extension}</suffix> -->
+                        </configuration>
+                    </execution>
+                    
+                    <!-- merge files from external libraries already minified, 
                          specific to TopAnat pages. -->
                     <execution>
                         <id>topanat_minified_vendor</id>
@@ -404,8 +492,6 @@
                             <jsSourceDir>js/</jsSourceDir>
                             <jsTargetDir>js/</jsTargetDir>
                             <jsSourceFiles>
-                                <jsSourceFile>lib/jquery_plugins/bootstrap.min.js</jsSourceFile>
-                                <jsSourceFile>lib/jquery_plugins/toastr.min.js</jsSourceFile>
                                 <jsSourceFile>lib/angular.min.js</jsSourceFile>
                                 <jsSourceFile>lib/angular_modules/angular-animate.min.js</jsSourceFile>
                                 <jsSourceFile>lib/angular_modules/angular-messages.min.js</jsSourceFile>
@@ -423,18 +509,6 @@
                             </jsSourceFiles>
                             <!-- Files already provided minified. The suffix will then not be added  -->
                             <jsFinalFile>vendor_topanat.${filter.org.bgee.webapp.javascript.version.extension}.js</jsFinalFile>
-                            
-                            <cssSourceDir>css/</cssSourceDir>
-                            <cssTargetDir>css/lib/jquery_plugins/</cssTargetDir>
-                            <cssSourceFiles>
-                                <cssSourceFile>lib/jquery_plugins/bootstrap.min.css</cssSourceFile>
-                                <cssSourceFile>lib/jquery_plugins/jquery-ui.min.css</cssSourceFile>
-                                <cssSourceFile>lib/jquery_plugins/jquery-ui.structure.min.css</cssSourceFile>
-                                <cssSourceFile>lib/jquery_plugins/jquery-ui.theme.min.css</cssSourceFile>
-                                <cssSourceFile>lib/jquery_plugins/toastr.min.css</cssSourceFile>
-                            </cssSourceFiles>
-                            <!-- Files already provided minified. The suffix will then not be added  -->
-                            <cssFinalFile>vendor_common.${filter.org.bgee.webapp.css.version.extension}.css</cssFinalFile>
                         </configuration>
                     </execution>
                     

@@ -1,0 +1,154 @@
+
+h1.gene_title img {
+    margin-right: 20px;
+    vertical-align: middle;
+    height: 50px;
+    width: 50px;
+    border-radius: 8px;
+}
+
+table#geneinfo {
+	margin: 1em 0;
+}
+
+table#geneinfo th {
+    text-align: left;
+    padding: 0 0.7em 0.5em 0;
+}
+table#geneinfo td {
+    text-align: left;
+    padding: 0 0 0.5em 0;
+}
+
+div#expr_intro {
+	display: inline-flex;
+    margin: 0 2% 1.5em;
+}
+
+div#table-container {
+	margin-left: 2%;
+}
+
+div#table-container label {
+    font-weight: normal;
+}
+
+div.legend {
+	border-left: 1px solid #ccc;
+	margin-top: 2em;
+	font-size: 0.85em;
+}
+@media (max-width: 768px) {
+	div.legend {
+	   border: none;
+	}
+}
+
+div.legend span.quality {
+	font-size: 1em;
+}
+
+div.legend table caption {
+    text-align: left;
+    font-weight: bold;
+    margin-bottom: 5px;
+    border-width: 0px 0px 1px;
+    border-style: solid;
+}
+
+#table-container table {
+	width: 100% !important;
+}
+
+table th, table td {
+    text-align: left;
+    padding: 0.2em;
+}
+th.anat-entity-id {
+	width: 15% !important;
+}
+th.anat-entity {
+	width: 33% !important;
+}
+th.dev-stages {
+	width: 42% !important;
+}
+th.quality {
+	width: 10% !important;
+}
+
+table.expression td {
+	vertical-align:text-top;
+}
+
+div.gene {
+	margin: 1em 2%;
+}
+
+td > ul {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+}
+
+ul.dev-stage-list {
+    padding-left: 1.1em;
+}
+
+span.quality {
+	padding: .2em .5em;
+	margin: .15em;
+	border-radius: .4em; 
+	width: 1em;
+	line-height: 1em;
+	vertical-align: middle;
+	border-width: 1px;
+	border-style: solid;
+	font-size: .8em;
+	font-family: monospace;
+}
+
+span.expandable {
+	cursor: pointer;
+}
+
+.details {
+    padding-right: .5em;
+    padding-left: .2em;
+    color: #777;
+    font-weight: 300;   
+}
+
+.small {
+    font-size: .9em;
+}
+
+.masked {
+    display: none;
+}
+
+.dtr-modal ul.dev-stage-list {
+    display: inherit !important;
+}
+
+.high {
+	background: #9efa9e; 
+	border-color: #0df20d;
+	color: #067906;
+}
+
+.low {
+	background: #fae39e;
+	border-color:  #f2b90d;
+	color:   #795c06;
+}
+
+.nodata {
+	background: #dedede;
+	color: #b8b8b8;
+	border-color: #b8b8b8;
+}
+
+div.dtr-modal div.dtr-modal-display {
+    height: 95% !important;
+}

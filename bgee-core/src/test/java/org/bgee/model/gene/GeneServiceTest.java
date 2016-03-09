@@ -47,12 +47,28 @@ public class GeneServiceTest extends TestAncestor {
         when(dao.getGenesBySpeciesIds(speciesIds, geneIds)).thenReturn(mockGeneRs);
 
         List<Gene> expectedGenes= new ArrayList<Gene>();
-        expectedGenes.add(new Gene("ID1", "11"));
-        expectedGenes.add(new Gene("ID2", "22"));
-        expectedGenes.add(new Gene("ID4", "44"));
+        expectedGenes.add(new Gene("ID1", "11", "Name1"));
+        expectedGenes.add(new Gene("ID2", "22", "Name2"));
+        expectedGenes.add(new Gene("ID4", "44", "Name4"));
         
         GeneService service = new GeneService(managerMock);
         assertEquals("Incorrect gene to keywords mapping",
                 expectedGenes, service.loadGenesByIdsAndSpeciesIds(geneIds, speciesIds));
+    }
+    
+    @Test
+    //TODO: finish test
+    public void shouldFindByTerm() {
+    	DAOManager managerMock = mock(DAOManager.class);
+        GeneDAO dao = mock(GeneDAO.class);
+        when(managerMock.getGeneDAO()).thenReturn(dao);
+        
+        GeneTOResultSet mockGeneRs = getMockResultSet(GeneTOResultSet.class,
+                Arrays.asList(new GeneTO("ID1", "Name1", 11),
+                        new GeneTO("ID2", "Name2", 22),
+                        new GeneTO("ID4", "Name4", 44)));
+        
+        when(dao.getGeneBySearchTerm("Name", null, 1, 25)).thenReturn(mockGeneRs);
+        
     }
 }

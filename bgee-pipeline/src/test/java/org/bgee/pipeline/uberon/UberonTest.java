@@ -17,6 +17,7 @@ import org.bgee.pipeline.TestAncestor;
 import org.bgee.pipeline.Utils;
 import org.bgee.pipeline.ontologycommon.OntologyUtils;
 import org.bgee.pipeline.ontologycommon.OntologyUtilsTest;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -257,8 +258,8 @@ public class UberonTest extends TestAncestor {
                 wrapper.getOWLClassByIdentifier("UBERON:0000004")));
     }
 
-    
-    //@Test
+    @Ignore
+    @Test
     public void test() throws OBOFormatParserException, OWLOntologyCreationException, IOException {
         OWLOntology ont = OntologyUtils.loadOntology("/Users/admin/Desktop/composite-metazoan.owl");
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);

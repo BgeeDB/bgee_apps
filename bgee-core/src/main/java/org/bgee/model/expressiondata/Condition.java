@@ -11,7 +11,7 @@ import org.apache.logging.log4j.Logger;
  * the strain, or other experimental conditions (gene knock-out, drug treatment, etc).
  * 
  * @author Frederic Bastian
- * @version Bgee 13 Oct. 2015
+ * @version Bgee 13 Dec. 2015
  * @since Bgee 13 Sept. 2015
  */
 //XXX: how to manage multi-species conditions? Should we have a class SingleSpeciesCondition 
@@ -49,6 +49,29 @@ public class Condition {
     }
     
     /**
+     * Determine whether the other {@code Condition} is more precise than this {@code Condition}. 
+     * This method is only used for convenience, and actually delegates to 
+     * {@link ConditionUtils#isConditionMorePrecise(Condition, Condition)}, with this {@code Condition} 
+     * as first argument, and {@code other} as second argument. See this other method's description 
+     * for more information.
+     * 
+     * @param other     A {@code Condition} to be checked whether it is more precise 
+     *                  than this {@code Condition}.
+     * @param utils     A {@code ConditionUtils} used to determine relations between {@code Condition}s. 
+     *                  It should contain this {@code Condition} and {@code other}.
+     * @return          {@code true} if {@code other} is more precise than this {@code Condition}. 
+     * @throws IllegalArgumentException If this {@code Condition}, or {@code other}, are not registered to 
+     *                                  {@code utils}.
+     */
+    public boolean isConditionMorePrecise(Condition other, ConditionUtils utils) throws IllegalArgumentException {
+        log.entry(other, utils);
+        return log.exit(utils.isConditionMorePrecise(this, other));
+    }
+
+    //*********************************
+    //  GETTERS/SETTERS
+    //*********************************
+    /**
      * @return  A {@code String} that is the ID of the anatomical entity 
      *          used in this gene expression condition.
      */
@@ -62,7 +85,10 @@ public class Condition {
     public String getDevStageId() {
         return devStageId;
     }
-    
+
+    //*********************************
+    //  HASHCODE/EQUALS/TOSTRING
+    //*********************************
     @Override
     public int hashCode() {
         final int prime = 31;

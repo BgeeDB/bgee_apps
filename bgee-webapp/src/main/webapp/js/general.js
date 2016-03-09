@@ -3,8 +3,8 @@
  * the user's actions, to proceed to update the display.
  * It is run when the document is fully loaded by using the jQuery method ready()
  * 
- * @author Valentine Rech de Laval
- * @version Bgee 13, Aug 2015
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13, Feb. 2016
  */
 // TODO: This file has been created to insert quickly species in the home page.
 // 		 Almost code come from download.js. It should be deleted or replaced 
@@ -18,6 +18,7 @@ var general = {
 
         // Top level container, useful to play with the scroll height
         $container: null,
+        
         // All the figure tag that represent the species and groups
         $species: null,
         // The detail box and its sub elements
@@ -27,7 +28,11 @@ var general = {
         $bgeeDataSelectionTextScientific: null,
         $bgeeDataSelectionTextCommon: null,
         $geneExpressionCallsPageLink: null,
-        
+
+        // Species images
+        $speciesImg: null,
+        $speciesImgWidth: null,
+
         // The elements that are part of the image copyright in the bottom part
         $creativeCommonsTitleLink: null,
         $creativeCommons: null,
@@ -41,34 +46,49 @@ var general = {
         init: function() {
             // Fetch all needed elements from the DOM
             this.$container = $( "html, body" );
-            this.$species = $( "#bgee_uniq_species figure" );
+            
+            this.$species = $( "#bgee_data figure" );
             // bgee_data_selection
             this.$bgeeDataSelection = $( "#bgee_data_selection" );
             this.$bgeeDataSelectionCross = $( "#bgee_data_selection_cross" );
             this.$bgeeDataSelectionImg = $( "#bgee_data_selection_img" );
             this.$bgeeDataSelectionTextScientific = 
-                $( "#bgee_data_selection_text h1.scientificname" );
+                $( "#bgee_data_selection h1 span.scientificname" );
             this.$bgeeDataSelectionTextCommon = 
-                $( "#bgee_data_selection_text h1.commonname" );
+                $( "#bgee_data_selection h1 span.commonname" );
             this.$geneExpressionCallsPageLink = $( "#gene_expression_calls_link" );
             this.$procExprValuesPageLink = $( "#processed_expression_values_link" );
+ 
+            // Simple species images
+            this.$speciesImg = $( "#bgee_species .species_img" );
+            this.$speciesImgWidth = (100 / this.$speciesImg.length) + '%';
+
             // Creative commons
             this.$creativeCommonsTitleLink =  $( "#creativecommons_title a");
             this.$creativeCommons = $( "#creativecommons" );
 
-            // Add the event listeners to all elements that have a dynamic behavior
-
-            // Add a click listener to every species/group to load the corresponding details 
-            // or to hide it if already displayed
-            this.$species.click(function() {
-            	general.toggleDetail( $( this ) );
+            // Add width to species images
+            this.$speciesImg.each(function() {
+            	$( this ).css( "width", general.$speciesImgWidth );
             });
+            
+            // Add the event listeners to all elements that have a dynamic behavior
 
             // Add a listener to the cross to close the detail box
             this.$bgeeDataSelectionCross.click(function(){
             	general.closeDetailBox();
             });
-
+            // Add a click listener to every species/group to load the corresponding details 
+            // or to hide it if already displayed
+            this.$species.click(function() {
+            	general.toggleDetail( $( this ) );
+            });
+            
+            // Add a listener to the cross to close the detail box
+            this.$bgeeDataSelectionCross.click(function(){
+            	general.closeDetailBox();
+            });
+             
             // Add a listener to the link to show/hide the images copyright and change the text
             this.$creativeCommonsTitleLink.click( function(){
             	general.$creativeCommons.toggle( "blind" );
@@ -211,7 +231,10 @@ var general = {
             // Add "id" in front to avoid the automatic anchor behavior that would mess up the scroll
             window.location.hash = '#' + hashToUse; 
         }
-
 };
+
 // Call the init function when the document is ready()
-$( document ).ready( function(){ general.init() } );
+$( document ).ready( function(){
+	general.init();
+	loadAutocompleteGene();
+});

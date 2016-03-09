@@ -445,13 +445,31 @@ img.ajax_waiting {
     color: #333;
 }
 
+.ui-widget-content strong {
+    color: #E2011B;
+}
+
 /* Interaction states
 ----------------------------------*/
-.ui-state-focus,.ui-widget-content .ui-state-focus {
+.ui-state-hover,
+.ui-widget-content .ui-state-hover,
+.ui-widget-header .ui-state-hover,
+.ui-widget-content .ui-state-focus,
+.ui-widget-header .ui-state-focus {
     border-color: #E2011B;
     border-style: solid;
     border-width: 1px 0;
     background-color: #D9DDE1;
+    color: #E2011B;
+}
+.ui-state-hover a,
+.ui-state-hover a:hover,
+.ui-state-hover a:link,
+.ui-state-hover a:visited,
+.ui-state-focus a,
+.ui-state-focus a:hover,
+.ui-state-focus a:link,
+.ui-state-focus a:visited {
     color: #E2011B;
 }
 

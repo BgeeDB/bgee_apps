@@ -624,6 +624,16 @@ h4 {
     display: inline-block !important;
 }
 
+span.examples {
+	float: left;
+    margin-top: 0.4em;
+	padding: 10px 15px;
+}
+
+form ul {
+	float: left;
+}
+
 /* Job description */
 #resultContainer span.h4 {
     color: #E2011B;

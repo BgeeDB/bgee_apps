@@ -17,21 +17,37 @@
         </div>
 
         <!-- <div class="row vert-offset horiz-offset" style="padding-bottom: 20px;"> -->
-        <ul ng-cloak class="nav nav-pills">
-            <li ng-class="{'active': vm.showRecentJobsPanel}">
-                <a role="button" ng-click="vm.toggleRecentJobs();">
-                    <span class="glyphicon glyphicon-th-list" aria-hidden="true"></span>
-                    Recent Jobs
-                    <span ng-if="vm.recentJobs.length > 0" class="badge">{{vm.recentJobs.length}}</span>
-                </a>
-            </li>
-            <li>
-                <a href="?page=doc&action=top_anat" role="button">
-                    <span class="glyphicon glyphicon-education" aria-hidden="true"></span>
-                    Documentation
-                </a>
-            </li>
-        </ul>
+        <div class="row">
+	        <ul ng-cloak class="nav nav-pills">
+	            <li ng-class="{'active': vm.showRecentJobsPanel}">
+	                <a role="button" ng-click="vm.toggleRecentJobs();">
+	                    <span class="glyphicon glyphicon-th-list" aria-hidden="true"></span>
+	                    Recent Jobs
+	                    <span ng-if="vm.recentJobs.length > 0" class="badge">{{vm.recentJobs.length}}</span>
+	                </a>
+	            </li>
+	            <li>
+	                <a href="?page=doc&action=top_anat" role="button">
+	                    <span class="glyphicon glyphicon-education" aria-hidden="true"></span>
+	                    Documentation
+	                </a>
+	            </li>
+	        </ul>
+            <span class="examples">
+                <span class="glyphicon glyphicon-pushpin"></span> Examples 
+                <!-- Do not add a trailing slash to the example URLs, see comments in topanat.js -->
+                <a class="bgee-loading" href="?page=top_anat#/result/7919f27d143667bc6c137401ce0c91b51e257538"
+                   title='Mouse genes mapped to the GO term "spermatogenesis"'>1</a>
+                <a class="bgee-loading" href="?page=top_anat#/result/8fce889da7b4519c5792573ed3933032c8122819"
+                   title="Human genes involved in autism and epilepsy">2</a>
+                <a class="bgee-loading" href="?page=top_anat#/result/e37009ba698919c75d06e81b3eca5d48f78210a0"
+                   title='Mouse genes mapped to the GO term "neurological system process"'>3</a>
+                <a class="bgee-loading" href="?page=top_anat#/result/7e8c74c073be03be4c40810c16c6be06c0bef1be"
+                   title='Cow genes with the keyword "muscle" in their UniProtKB/Swiss-Prot description'>4</a>
+                <a class="bgee-loading" href="?page=top_anat#/result/5fc8ff1fcfed7cfba0f82f82a67b418ce8a709b6"
+                   title="Platypus genes located on X chromosome">5</a>
+            </span>
+        </div>
 
         <div uib-collapse="!vm.showRecentJobsPanel" id="recentjobs" >
 
@@ -67,21 +83,6 @@
                     <div id="gene-list-media" class="media-body ng-cloak">
 
                         <h4 class="media-heading gl-sizetransformable" ng-class="{'smaller_head':vm.selected_taxid, 'bigger':!vm.selected_taxid || ((vm.uploader.isUploading || vm.fg_list) && !vm.selected_species)}">Gene list</h4>
-
-						<span class="examples">
-							Examples:
-							<!-- Do not add a trailing slash to the example URLs, see comments in topanat.js -->
-							<a class="bgee-loading" href="?page=top_anat#/result/7919f27d143667bc6c137401ce0c91b51e257538"
-								title='Mouse genes mapped to the GO term "spermatogenesis"'>1</a>
-                            <a class="bgee-loading" href="?page=top_anat#/result/8fce889da7b4519c5792573ed3933032c8122819"
-                                title="Human genes involved in autism and epilepsy">2</a>
-                            <a class="bgee-loading" href="?page=top_anat#/result/e37009ba698919c75d06e81b3eca5d48f78210a0"
-								title='Mouse genes mapped to the GO term "neurological system process"'>3</a>
-                            <a class="bgee-loading" href="?page=top_anat#/result/7e8c74c073be03be4c40810c16c6be06c0bef1be"
-								title='Cow genes with the keyword "muscle" in their UniProtKB/Swiss-Prot description'>4</a>
-                            <a class="bgee-loading" href="?page=top_anat#/result/5fc8ff1fcfed7cfba0f82f82a67b418ce8a709b6"
-								title="Platypus genes located on X chromosome">5</a>
-						</span>
 
 						<p ng-show="(vm.uploader.isUploading || vm.fg_list !== '') && !vm.selected_species && !vm.showDevStageError" ng-hide="(!vm.uploader.isUploading && vm.fg_list == '') || vm.selected_species !== '' || vm.showDevStageError" class="smaller">
 

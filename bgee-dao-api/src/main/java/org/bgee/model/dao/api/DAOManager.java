@@ -34,6 +34,7 @@ import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultDAO;
 import org.bgee.model.dao.api.file.DownloadFileDAO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
+import org.bgee.model.dao.api.gene.GeneNameSynonymDAO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
 import org.bgee.model.dao.api.keyword.KeywordDAO;
@@ -1162,6 +1163,13 @@ public abstract class DAOManager implements AutoCloseable
 		this.checkClosed();
 		return log.exit(this.getNewKeywordDAO());
 	}
+	
+	public GeneNameSynonymDAO getGeneNameSynonymDAO() {
+		log.entry();
+		this.checkClosed();
+		return log.exit(this.getNewGeneNameSynonymDAO());
+	}
+	
     //*****************************************
     //  CORE ABSTRACT METHODS TO IMPLEMENT
     //*****************************************	
@@ -1449,5 +1457,11 @@ public abstract class DAOManager implements AutoCloseable
 	 * @return A new {@link KeywordDAO}
 	 */
 	protected abstract KeywordDAO getNewKeywordDAO();
+	
+	/**
+	 * Service provider must return a new {@link GeneNameSynonymDAO} instance when this method is called
+	 * @return A new {@link KeywordDAO}
+	 */
+	protected abstract GeneNameSynonymDAO getNewGeneNameSynonymDAO();
 
 }

@@ -14,6 +14,7 @@ import org.bgee.view.DownloadDisplay;
 import org.bgee.view.ErrorDisplay;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.GeneralDisplay;
+import org.bgee.view.SearchDisplay;
 import org.bgee.view.SpeciesDisplay;
 import org.bgee.view.TopAnatDisplay;
 import org.bgee.view.ViewFactory;
@@ -22,7 +23,7 @@ import org.bgee.view.ViewFactory;
  * {@code ViewFactory} that returns all displays for the DSV view.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13 Nov 2015
+ * @version Bgee 13, Feb. 2016
  * @since   Bgee 13
  */
 public class DsvFactory extends ViewFactory {	
@@ -73,4 +74,9 @@ public class DsvFactory extends ViewFactory {
     public SpeciesDisplay getSpeciesDisplay() throws IOException {
         throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
     }
+
+	@Override
+	public SearchDisplay getSearchDisplay() throws IOException {
+        throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
+	}
 }

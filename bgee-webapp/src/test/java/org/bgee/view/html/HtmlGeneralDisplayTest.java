@@ -54,7 +54,8 @@ public class HtmlGeneralDisplayTest extends TestAncestor {
         GeneralDisplay display = factory.getGeneralDisplay();
         display.displayHomePage(groups.stream().filter(e -> e.isSingleSpecies()).collect(Collectors.toList()));
         //verify that GeneralDisplay correctly used DownloadDisplay to display species with data. 
-        verify(factory).getDownloadDisplay();
+        //TODO: actually, the species are not display on current home page
+        //verify(factory).getDownloadDisplay();
         
         //test that an exception is thrown if multi-species groups are provided
         try {

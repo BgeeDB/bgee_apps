@@ -202,12 +202,12 @@ http://bootsnipp.com/snippets/featured/large-dropdown-menu
 }
 
 .img-topanat-small {
-  height: 60px;
+  height: 60px !important;
 }
 
 .img-topanat-xsmall {
-  width: 30px;
-  height: 30px;
+  width: 30px !important;
+  height: 30px !important;
 }
 
 .navbar-brand {
@@ -328,27 +328,30 @@ textarea {
 }
 
 .smaller_head {
-    font-size: 18px;
+    font-size: 18px !important;
     font-weight: bold;
     margin: 10px 0 0 10px;
 }
 
 .smallest_head {
-    font-size: 16px;
+    font-size: 16px !important;
     font-weight: bold;
     margin: 10px 0 0 10px;
 }
 
 .smaller {
-    font-size: 13px;
+    font-size: 13px !important;
     margin: 0 0 0 10px;
 }
 
-.bigger {
+.bigger, #gene-list-media .bigger {
     font-size: 22px;
     font-weight: bold;
     vertical-align: bottom;
     margin: 10px 0 0 10px;
+}
+#gene-list-media {
+	color: #626262;
 }
 
 .btn, .btn-xs {
@@ -615,6 +618,16 @@ div.loader p {
 
 .truncate-parent {
     display: inline-flex;
+}
+
+/* For examples in gene list media box */
+#gene-list-media h4 {
+	display: inline;
+}
+
+/* Job description */
+#resultContainer span.h4 {
+    color: #E2011B;
 }
 
 /*

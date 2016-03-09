@@ -91,10 +91,10 @@ public class HtmlDocumentationRefExprFile extends HtmlDocumentationDownloadFile 
         RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
         urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
         urlDownloadGenerator.setAction(RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES);
-        this.writeln("<p class='documentationintro'>Blabla. "
+        this.writeln("<div id='bgee_introduction'><p>Blabla. "
                 + "This documentation describes the format of these "
                 + "<a href='" + urlDownloadGenerator.getRequestURL()
-                + "' title='Bgee reference expression data page'>download files</a>.</p>");
+                + "' title='Bgee reference expression data page'>download files</a>.</p></div>");
         
         //Documentation menu
         this.writeDocMenuForRefExprDownloadFiles();

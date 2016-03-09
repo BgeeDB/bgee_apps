@@ -945,7 +945,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      */
     public static String getSingleSpeciesSimpleExprFileExample() {
         log.entry();
-        return log.exit("<table class='call_download_file_example'>"
+        return log.exit("<div class='large-table'>"
+        		+ "<table class='call_download_file_example'>"
                 + "<caption>Example lines for single species simple expression file</caption>"
                 + "<thead>" 
                 + getSingleSpeciesSimpleExprFileHeader(false) 
@@ -962,7 +963,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "<td>third instar larval stage (Drosophila)</td><td>absent</td>"
                 + "<td>high quality</td></tr>"
                 + "</tbody>"
-                + "</table>");
+                + "</table>"
+                + "</div>");
     }
     /**
      * Get the header of single species simple expression file as a HTML 'tr' element, 
@@ -1012,7 +1014,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      */
     public static String getSingleSpeciesCompleteExprFileExample() {
         log.entry();
-        return log.exit("<table class='call_download_file_example'>"
+        return log.exit("<div class='large-table'>"
+        		+ "<table class='call_download_file_example'>"
                 + "<caption>Example lines for single species complete expression file</caption>"
                 + "<thead>" 
                 + getSingleSpeciesCompleteExprFileHeader(false) 
@@ -1044,7 +1047,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "<td>present</td><td>high quality</td><td>no</td>"
                 + "<td>no data</td><td>no data</td><td>no</td></tr>"
                 + "</tbody>"
-                + "</table>");
+                + "</table>"
+                + "</div>");
     }
     /**
      * Get the header of single species complete expression file as a HTML 'tr' element, 
@@ -1105,7 +1109,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      */
     public static String getSingleSpeciesSimpleDiffExprFileExample() {
         log.entry();
-        return log.exit("<table class='call_download_file_example'>"
+        return log.exit("<div class='large-table'>"
+        		+ "<table class='call_download_file_example'>"
                 + "<caption>Example lines for single species simple differential expression file</caption>"
                 + "<thead>" 
                 + getSingleSpeciesSimpleDiffExprFileHeader(false) 
@@ -1121,7 +1126,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "<td>blood</td><td>HsapDv:0000094</td><td>65-79 year-old human stage (human)</td>"
                 + "<td>over-expression</td><td>low quality</td></tr>"
                 + "</tbody>"
-                + "</table>");
+                + "</table>"
+                + "</div>");
     }
     /*
     /**
@@ -1171,7 +1177,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      */
     public static String getSingleSpeciesCompleteDiffExprFileExample() {
         log.entry();
-        return log.exit("<table class='call_download_file_example'>"
+        return log.exit("<div class='large-table'>"
+        		+ "<table class='call_download_file_example'>"
                 + "<caption>Example lines for single species complete differential expression file</caption>"
                 + "<thead>" 
                 + getSingleSpeciesCompleteDiffExprFileHeader(false) 
@@ -1197,7 +1204,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "<td>2</td><td>0</td><td>no data</td><td>no data</td><td>1.0</td>"
                 + "<td>0</td><td>0</td></tr>"
                 + "</tbody>"
-                + "</table>");
+                + "</table>"
+                + "</div>");
     }
     /**
      * Get the header of single species simple over-/under-expression file as a HTML 'tr' element, 
@@ -1324,7 +1332,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      */
     public static String getMultiSpeciesSimpleDiffExprFileExample() {
         log.entry();
-        return log.exit("<table class='call_download_file_example'>"
+        return log.exit("<div class='large-table'>"
+        		+ "<table class='call_download_file_example'>"
                 + "<caption>Example lines for multi-species simple differential expression file</caption>"
                 + "<thead>" 
                 + "<tr>"
@@ -1362,7 +1371,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "<td>0</td><td>1</td><td>0</td><td>0</td>"
                 + "<td>ENSG00000162512|ENSMUSG00000025743</td><td>SDC3|Sdc3</td></tr>"
                 + "</tbody>"
-                + "</table>");
+                + "</table>"
+                + "</div>");
     }
     /**
      * @return  a {@code String} containing the HTML to create a table containing the description 
@@ -1387,7 +1397,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      */
     public static String getMultiSpeciesCompleteDiffExprFileExample() {
         log.entry();
-        return log.exit("<table class='call_download_file_example'>"
+        return log.exit("<div class='large-table'>"
+        		+ "<table class='call_download_file_example'>"
                 + "<caption>Example lines for multi-species complete differential expression file</caption>"
                 + "<thead>" 
                 + getMultiSpeciesCompleteDiffExprFileHeader(false) 
@@ -1421,7 +1432,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "<td>8.741838E-4</td><td>1</td><td>0</td><td>CIO:0000004</td>"
                 + "<td>medium confidence from single evidence</td></tr>"
                 + "</tbody>"
-                + "</table>");
+                + "</table>"
+                + "</div>");
     }
     /**
      * Get the header of multi-species complete differential expression file as a HTML 'tr' element, 
@@ -1497,12 +1509,12 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
         urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
         urlDownloadGenerator.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
-        this.writeln("<p class='documentationintro'>Bgee provides calls of baseline "
+        this.writeln("<div id='bgee_introduction'><p>Bgee provides calls of baseline "
                 + "presence/absence of expression, and of differential over-/under-expression, "
                 + "either for single species, or compared between species (orthologous genes "
                 + "in homologous organs). This documentation describes the format of these "
                 + "<a href='" + urlDownloadGenerator.getRequestURL()
-                + "' title='Bgee expression data page'>download files</a>.</p>");
+                + "' title='Bgee expression data page'>download files</a>.</p></div>");
         
         //Documentation menu
         this.writeDocMenuForCallDownloadFiles();

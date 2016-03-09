@@ -12,6 +12,9 @@ import org.bgee.model.TaskManager;
  * @version Bgee 13 Nov 2015
  * @since   Bgee 13
  */
+//XXX, FB: Actually, I think these methods should not take Maps as arguments, 
+//they were designed with JSON responses in mind. An HTML response would not use such Maps.
+//The Maps should be created by the JSON view, the arguments should be the various response objects.
 public interface TopAnatDisplay {
     /**
      * Display the topAnat home page.

@@ -84,7 +84,7 @@ import org.bgee.controller.servletutils.BgeeHttpServletRequest;
  * @author Mathieu Seppey
  * @author Frederic Bastian
  * @author Valentine Rech de Laval
- * @version Bgee 13, Nov 2014
+ * @version Bgee 13, Feb. 2016
  * @since Bgee 1
  */
 public class RequestParameters {
@@ -196,6 +196,13 @@ public class RequestParameters {
     public static final String ACTION_DOC_PROC_EXPR_VALUE_DOWLOAD_FILES = "proc_value_files";
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link URLParameters#getParamAction()}) when documentation about download files 
+     * providing processed expression values is requested. Value of the parameter page should be 
+     * {@link #PAGE_DOCUMENTATION}.
+     */
+    public static final String ACTION_DOC_TOP_ANAT = "top_anat";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
      * (see {@link URLParameters#getParamAction()}) when a species data is requested.
      * Value of the parameter page should be {@link #PAGE_SPECIES}.
      */
@@ -236,7 +243,13 @@ public class RequestParameters {
      * Value of the parameter page should be {@link #PAGE_JOB}.
      */
     public static final String ACTION_CANCEL_JOB = "cancel";
-    
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link URLParameters#getParamAction()}) when auto-complete gene search is requested.
+     * Value of the parameter page should be {@link #PAGE_GENE}.
+     */
+    public static final String ACTION_AUTO_COMPLETE_GENE_SEARCH = "auto_complete_gene_search";
+
     /**
      * A {@code String} that is the anchor to use in the hash part of an URL 
      * to link to the single-species part, in the documentation about gene expression calls.
@@ -1919,7 +1932,26 @@ public class RequestParameters {
     public String getGeneId() {
     	return this.getFirstValue(this.getUrlParametersInstance().getParamGeneId());
     }
-    
+    /**
+     * Convenient method to set value of the parameter returned by 
+     * {@link URLParameters#getParamGeneId()}. Equivalent to calling 
+     * {@link #addValue(Parameter, Object)} for this parameter.
+     * 
+     * @param action    A {@code String} that is the value of the {@code gene_id} URL parameter 
+     *                  to set.
+     */
+    public void setGeneId(String geneId) {
+        this.resetValues(this.getUrlParametersInstance().getParamGeneId());
+        this.addValue(this.getUrlParametersInstance().getParamGeneId(), geneId);
+    }
+
+    /**
+     * @return the search parameter
+     */
+    public String getSearch() {
+    	return this.getFirstValue(this.getUrlParametersInstance().getParamSearch());
+    }
+
     /**
      * @return A {@code String} that will be used as the hash part of URLs returned by 
      *         the  {@code getRequestURL} methods. See {@link #setURLHash(String)} 

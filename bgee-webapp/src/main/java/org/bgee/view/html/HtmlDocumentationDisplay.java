@@ -119,6 +119,11 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
      * about ref. expression download files (see {@link #displayRefExprDownloadFileDocumentation()}).
      */
     private final HtmlDocumentationRefExprFile refExprFileDoc;
+    /**
+     * A {@code HtmlDocumentationTopAnat} used to write the documentation 
+     * about TopAnat (see {@link #displayTopAnatDocumentation()}).
+     */
+    private final HtmlDocumentationTopAnat topAnatDoc;
 
     /**
      * Default constructor.
@@ -137,7 +142,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
     public HtmlDocumentationDisplay(HttpServletResponse response,
             RequestParameters requestParameters, BgeeProperties prop, HtmlFactory factory) 
                     throws IOException {
-        this(response, requestParameters, prop, factory, null, null);
+        this(response, requestParameters, prop, factory, null, null, null);
     }
     /**
      * Constructor providing other dependencies.
@@ -165,7 +170,8 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
      */
     public HtmlDocumentationDisplay(HttpServletResponse response,
             RequestParameters requestParameters, BgeeProperties prop, HtmlFactory factory,
-            HtmlDocumentationCallFile callFileDoc, HtmlDocumentationRefExprFile refExprFileDoc) 
+            HtmlDocumentationCallFile callFileDoc, HtmlDocumentationRefExprFile refExprFileDoc,
+            HtmlDocumentationTopAnat topAnatDoc) 
                     throws IOException {
         super(response, requestParameters, prop, factory);
         if (callFileDoc == null) {
@@ -179,6 +185,11 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
                     new HtmlDocumentationRefExprFile(response, requestParameters, prop, factory);
         } else {
             this.refExprFileDoc = refExprFileDoc;
+        }
+        if (topAnatDoc == null) {
+        	this.topAnatDoc = new HtmlDocumentationTopAnat(response, requestParameters, prop, factory);
+        } else {
+        	this.topAnatDoc = topAnatDoc;
         }
     }
     
@@ -217,6 +228,10 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         RequestParameters urlCallFilesGenerator = this.getNewRequestParameters();
         urlCallFilesGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
         urlCallFilesGenerator.setAction(RequestParameters.ACTION_DOC_CALL_DOWLOAD_FILES);
+        
+        RequestParameters urlTopAnatGenerator = this.getNewRequestParameters();
+        urlTopAnatGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
+        urlTopAnatGenerator.setAction(RequestParameters.ACTION_DOC_TOP_ANAT);
 
         StringBuilder logos = new StringBuilder(); 
 
@@ -227,6 +242,11 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         logos.append(HtmlParentDisplay.getSingleFeatureLogo(urlCallFilesGenerator.getRequestURL(), 
                 false, "Download file documentation page", "Download file documentation", 
                 this.prop.getLogoImagesRootDirectory() + "download_logo.png", null));
+
+        //TODO uncomment when top ant logo is created
+//        logos.append(HtmlParentDisplay.getSingleFeatureLogo(urlTopAnatGenerator.getRequestURL(), 
+//                false, "TopAnat documentation page", "TopAnat documentation", 
+//                this.prop.getLogoImagesRootDirectory() + "topAnat_logo.png", null));
 
         return log.exit(logos.toString());
     }
@@ -240,8 +260,14 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         
         this.startDisplay("Expression call download file documentation");
         
+        this.writeln("<div class='row'>");
+        this.writeln("<div class='" + CENTERED_ELEMENT_CLASS + "'>");
+
         this.callFileDoc.writeDocumentation();
         
+        this.writeln("</div>"); // close class
+        this.writeln("</div>");	// close row
+
         this.endDisplay();
 
         log.exit();
@@ -252,12 +278,38 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         
         this.startDisplay(PROCESSED_EXPR_VALUES_PAGE_NAME + " download file documentation");
         
+        this.writeln("<div class='row'>");
+        this.writeln("<div class='" + CENTERED_ELEMENT_CLASS + "'>");
+
         this.refExprFileDoc.writeDocumentation();
         
+        this.writeln("</div>"); // close class
+        this.writeln("</div>");	// close row
+
         this.endDisplay();
 
         log.exit();
     }
+
+    @Override
+    public void displayTopAnatDocumentation() {
+        log.entry();
+        
+        this.startDisplay("TopAnat documentation");
+        
+        this.writeln("<div class='row'>");
+        this.writeln("<div class='" + CENTERED_ELEMENT_CLASS + "'>");
+        
+        this.topAnatDoc.writeDocumentation();
+        
+        this.writeln("</div>"); // close class
+        this.writeln("</div>");	// close row
+
+        this.endDisplay();
+
+        log.exit();
+    }
+
 
     @Override
     //TODO: use a different ID than 'feature_list', to provide a different look, 

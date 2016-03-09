@@ -330,18 +330,18 @@ textarea {
 .smaller_head {
     font-size: 18px !important;
     font-weight: bold;
-    margin: 10px 0 0 10px;
+    margin: 10px 0 0 10px !important;
 }
 
 .smallest_head {
     font-size: 16px !important;
     font-weight: bold;
-    margin: 10px 0 0 10px;
+    margin: 10px 0 0 10px !important;
 }
 
 .smaller {
     font-size: 13px !important;
-    margin: 0 0 0 10px;
+    margin: 0 0 0 10px !important;
 }
 
 .bigger, #gene-list-media .bigger {
@@ -620,9 +620,8 @@ div.loader p {
     display: inline-flex;
 }
 
-/* For examples in gene list media box */
-#gene-list-media h4 {
-	display: inline;
+h4 {
+    display: inline-block !important;
 }
 
 /* Job description */

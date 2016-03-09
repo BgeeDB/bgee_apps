@@ -327,19 +327,19 @@ textarea {
 
 }
 
-.smaller_head {
+.smaller_head, #top_anat_options .smaller_head {
     font-size: 18px;
     font-weight: bold;
     margin: 10px 0 0 10px;
 }
 
-.smallest_head {
+.smallest_head, #top_anat_options .smallest_head {
     font-size: 16px;
     font-weight: bold;
     margin: 10px 0 0 10px;
 }
 
-.smaller {
+.smaller, #top_anat_options .smaller {
     font-size: 13px;
     margin: 0 0 0 10px;
 }

@@ -289,6 +289,9 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	    RequestParameters urlCallDoc = this.getNewRequestParameters();
 	    urlCallDoc.setPage(RequestParameters.PAGE_DOCUMENTATION);
 	    urlCallDoc.setAction(RequestParameters.ACTION_DOC_CALL_DOWLOAD_FILES);
+        
+        RequestParameters urlGenePage = this.getNewRequestParameters();
+        urlCallDoc.setPage(RequestParameters.PAGE_GENE);
 	    
 	    this.writeln("<div id='bgee_news' class='panel panel-default'>");
 	    this.writeln("<div class='panel-heading'>");
@@ -298,6 +301,10 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	    this.writeln("</div>"); // close panel-heading
 	    
 	    this.writeln("<div class='panel-body'>");
+        
+        this.writeOneNews("2016-03-09", "Release of our new <a href='" + urlGenePage.getRequestURL()
+                          + "'>gene page</a>, allowing to discover the most relevant conditions where a gene is expressed. "
+                          + "This update also includes an important revamping of our interfaces.");
 	    
 	    this.writeOneNews("2015-12-24", "major update of <a href='" + urlTopAnat.getRequestURL()
 	                      + "' title='Perform gene expression enrichment tests with TopAnat'>TopAnat</a>. "

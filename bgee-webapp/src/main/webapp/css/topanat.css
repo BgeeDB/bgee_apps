@@ -327,20 +327,20 @@ textarea {
 
 }
 
-.smaller_head, #top_anat_options .smaller_head {
-    font-size: 18px;
+.smaller_head {
+    font-size: 18px !important;
     font-weight: bold;
     margin: 10px 0 0 10px;
 }
 
-.smallest_head, #top_anat_options .smallest_head {
-    font-size: 16px;
+.smallest_head {
+    font-size: 16px !important;
     font-weight: bold;
     margin: 10px 0 0 10px;
 }
 
-.smaller, #top_anat_options .smaller {
-    font-size: 13px;
+.smaller {
+    font-size: 13px !important;
     margin: 0 0 0 10px;
 }
 

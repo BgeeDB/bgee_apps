@@ -538,6 +538,10 @@ div.bgee_download_section figure.selected {
     margin: 0 0 10px 0;
 }
 
+#bgee_data #bgee_data_selection h1 {
+    max-width: 400px;
+}
+
 #bgee_data_selection h1 span.scientificname {
     font-style: italic;
     margin-right: 0.3em;
@@ -559,6 +563,7 @@ div.bgee_download_section figure.selected {
   
 #bgee_data_selection li {
     display: inline;
+    max-width: 400px;
 }
  
 #bgee_data_selection li img.bullet_point {

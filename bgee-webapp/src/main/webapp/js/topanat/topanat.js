@@ -43,8 +43,8 @@ angular
                 }
             })
 
-            //Don't remove the trailing slash, it is to correctly reload the view 
-            //when clicking on a TopAnat link with no trailing slash (as recent job or example links), 
+            //Don't remove the trailing slash, it is to correctly reload the view
+            //when clicking on a TopAnat link with no trailing slash (as recent job or example links),
             //see http://stackoverflow.com/a/17588833/1768736
             .when("/result/:hash/:jobid/", {
                 /*webapp: templateUrl: 'js/topanat/views/main.html',*/
@@ -96,8 +96,8 @@ angular
                 }
             })
 
-            //Don't remove the trailing slash, it is to correctly reload the view 
-            //when clicking on a TopAnat link with no trailing slash (as recent job or example links), 
+            //Don't remove the trailing slash, it is to correctly reload the view
+            //when clicking on a TopAnat link with no trailing slash (as recent job or example links),
             //see http://stackoverflow.com/a/17588833/1768736
             .when("/result/:hash/", {
                 /*webapp: templateUrl: 'js/topanat/views/main.html',*/

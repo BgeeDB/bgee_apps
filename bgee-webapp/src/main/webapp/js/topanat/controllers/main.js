@@ -19,26 +19,26 @@
         var vm = this;
 
         //showMessage($scope, "bgee app");
-        
+
         $scope.$on('$routeChangeStart', function(event, next, current) {
             console.log("route changed");
             showMessage($scope, "bgee app");
-            //this only works thanks to the "hack" of the trailing slash (see topanat.js): 
-            //there is a route change only when clicking on the recent job or example links, 
-            //because there is no trailing slash in them. 
-            //Also, there are cases where a route change, but we don't want to display the message: 
-            //notably, when getting to a page with a pre-fill form, and clicking "start new job", 
-            //the hash in URL is reset, but Angular still keeps it in memory. So, if we modify 
-            //the parameters of the form and submit the job, the associated hash will change, 
-            //and Angular will see that as a change of route, from the old hash in memory 
-            //to the new hash following job submission. So, we never display the waiting message 
-            //when there is a form submission involved. And, also, we only display the message 
+            //this only works thanks to the "hack" of the trailing slash (see topanat.js):
+            //there is a route change only when clicking on the recent job or example links,
+            //because there is no trailing slash in them.
+            //Also, there are cases where a route change, but we don't want to display the message:
+            //notably, when getting to a page with a pre-fill form, and clicking "start new job",
+            //the hash in URL is reset, but Angular still keeps it in memory. So, if we modify
+            //the parameters of the form and submit the job, the associated hash will change,
+            //and Angular will see that as a change of route, from the old hash in memory
+            //to the new hash following job submission. So, we never display the waiting message
+            //when there is a form submission involved. And, also, we only display the message
             //when there is a hash used (potentially slow page to load).
 //            console.log(next.params.jobid + " - " + current.params.jobid + " - " + vm.formSubmitted
 //            		+ " - " + current.params.hash  + " - " + next.params.hash);
-            //FIXME: this actually doesn't work, there is too many route change, using update_path 
-            //without updating the route, etc. Bottom line, we don't want to display 
-            //the waiting message when there is a form submission involved, but it's almost impossible 
+            //FIXME: this actually doesn't work, there is too many route change, using update_path
+            //without updating the route, etc. Bottom line, we don't want to display
+            //the waiting message when there is a form submission involved, but it's almost impossible
             //to determine reliably (even the variable vm.formSubmitted is inconsistently used)
 //            if (!(typeof next.params.hash == 'undefined' || current.params.jobid || next.params.jobid)) {
 //            	console.log('display waiting message');
@@ -861,12 +861,12 @@
             vm.formSubmitted = false;
             vm.jobDone = false;
             vm.jobStatus = false;
-           
+
             /* Reset the filters of the results */
             vm.filterByStage = '';
             vm.filterbyExpression = '';
             vm.filterValue = '';
-            
+
             //clear URL, otherwise results from a previous analyses might be retrieved,
             //from the hash in the URL.
             //XXX: maybe there is a better way to handle this.
@@ -948,7 +948,7 @@
                 p_value_thr: vm.p_value_thr,
                 nb_node: vm.nb_node,
                 job_title: vm.job_title,
-                job_creation_date: new Date().toLocaleString(), 
+                job_creation_date: new Date().toLocaleString(),
                 email: vm.email,
                 submitted: true,
                 display_type: "json",
@@ -1064,8 +1064,8 @@
                             statuscounter = statuscounter + 1;
                             vm.jobStatus = data.status;
                             vm.message = lang.jobProgressBookmark+"<br/>"+lang.jobProgress+vm.jobId+'. ('+vm.jobStatus+') ';
-                            
-                            //scroll to result container with information about job, 
+
+                            //scroll to result container with information about job,
                             //otherwise it is possible to miss it.
                             if (statuscounter == 1) {
                                 $timeout(function(){
@@ -1306,7 +1306,7 @@
                         showMessage($scope, false);
                         console.info("could not get result");
                         console.info(data);
-                        
+
                         // Issue 117: I don't see why the species for FG should
                         // be reset when BG is incorrect.
                         if (type == 'fg') {
@@ -1320,7 +1320,7 @@
                         	vm.isValidBackground = false;
                         	vm.isValidBackgroundMessage = 'Error with your custom background. Please, check your data.';
                         }
-                        
+
                         if (typeof data.message !== 'undefined') {
                             logger.error('Getting result failed. error: ' + data.message, 'TopAnat fail');
                             vm.message = data.message;
@@ -1459,7 +1459,7 @@
                 	vm.isAdvancedOptionsChecked = 'checked';
                 	logger.info(vm.node_size + " valid genes in custom background. Updating the node size.");
                 }
-                
+
                 checkConsistency();
             }
         }

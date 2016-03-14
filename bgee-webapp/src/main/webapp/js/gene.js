@@ -1,14 +1,14 @@
 /**
  * JavaScript for the gene page.
- * 
+ *
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
  * @version Bgee 13, Jan 2016
  * @since   Bgee 13
  */
 
-$( document ).ready( function(){ 
-	
+$( document ).ready( function(){
+
 	$('table.expression').DataTable( {
 		"ordering": false,
 		responsive: {

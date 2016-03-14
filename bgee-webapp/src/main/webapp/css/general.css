@@ -107,4 +107,10 @@
 
 #archive_site {
     float: right;
+    font-size: 0.8em;
+}
+@media (max-width: 991px) {
+    #archive_site {
+        float: none;
+    }
 }

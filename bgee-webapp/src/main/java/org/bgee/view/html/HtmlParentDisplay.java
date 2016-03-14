@@ -278,7 +278,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("<body>");
         this.writeln("<noscript>Sorry, your browser does not support JavaScript!</noscript>");
         this.writeln("<div id='bgee_top'><span id='TOP'></span></div>");
-        this.writeln("<div id='sib_container'>");
+        this.writeln("<div id='sib_container' class='container-fluid'>");
         //FIXME: I noticed that this header disappear in printed version
         this.displayBgeeHeader();
         this.writeln("<div id='sib_body'>");

@@ -600,10 +600,12 @@ div.bgee_download_section figure.selected {
 }
 
 /****BGEE CREATIVE COMMONS****/
+#creativecommons_title, #creativecommons p {
+    font-size: 0.8em;
+}
+
 #creativecommons_title {
-    color: #515151;
-    font-weight: bold;
-    font-size: 0.6em;
+	margin: 0;
 }
 
 #creativecommons {
@@ -611,7 +613,5 @@ div.bgee_download_section figure.selected {
 }
 
 #creativecommons p {
-    font-size: 0.6em;
     margin: 2px 2%;
-    color: #515151;
 }

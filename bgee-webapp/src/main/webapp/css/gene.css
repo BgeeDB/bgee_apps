@@ -98,7 +98,7 @@ ul.dev-stage-list {
 span.quality {
 	padding: .2em .5em;
 	margin: .15em;
-	border-radius: .4em; 
+	border-radius: .4em;
 	width: 1em;
 	line-height: 1em;
 	vertical-align: middle;
@@ -116,7 +116,7 @@ span.expandable {
     padding-right: .5em;
     padding-left: .2em;
     color: #777;
-    font-weight: 300;   
+    font-weight: 300;
 }
 
 .small {
@@ -132,7 +132,7 @@ span.expandable {
 }
 
 .high {
-	background: #9efa9e; 
+	background: #9efa9e;
 	border-color: #0df20d;
 	color: #067906;
 }

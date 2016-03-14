@@ -25,7 +25,7 @@ table.call_download_file_desc, table.call_download_file_example {
     border-bottom: 1px solid black;
     font-size: 0.9em;
     /* needed to style borders of other table elements */
-    border-collapse: collapse; 
+    border-collapse: collapse;
     margin-bottom: 1em;
 }
 
@@ -37,12 +37,12 @@ table.call_download_file_desc caption, table.call_download_file_example caption 
     text-align: center;
     font-weight: bold;
 }
-	
+
 table.call_download_file_desc thead, table.call_download_file_example thead {
 	border-bottom: 1px solid black;
 }
 
-table.call_download_file_desc td, table.call_download_file_desc th, 
+table.call_download_file_desc td, table.call_download_file_desc th,
 table.call_download_file_example td, table.call_download_file_example th {
     vertical-align: top;
     padding: 0.5em;

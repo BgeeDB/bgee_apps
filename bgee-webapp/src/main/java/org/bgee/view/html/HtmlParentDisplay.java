@@ -429,7 +429,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<ul class='nav navbar-nav navbar-right'>");
         
         // Twitter
-        navbar.append("<li><a title='See @Bgeedb account' target='_blank' href='https://twitter.com/Bgeedb'>" + 
+        navbar.append("<li><a title='Follow @Bgeedb on Twitter' target='_blank' href='https://twitter.com/Bgeedb'>" + 
                 "<img class='social-img' alt='Twitter logo' src='" + this.prop.getLogoImagesRootDirectory() + 
                 "twitter_logo.png'></a></li>");
 

@@ -34,18 +34,29 @@
 	            </li>
 	        </ul>
             <span class="examples">
+                <!--  See popover text in help.json -->
                 <span class="glyphicon glyphicon-pushpin"></span> Examples 
                 <!-- Do not add a trailing slash to the example URLs, see comments in topanat.js -->
                 <a class="bgee-loading" href="?page=top_anat#/result/7919f27d143667bc6c137401ce0c91b51e257538"
-                   title='Mouse genes mapped to the GO term "spermatogenesis"'>1</a>
+                   uib-popover="{{vm.help}}" popover-trigger="mouseenter" popover-placement="bottom"
+                   popover-append-to-body="true" popover-title="Example 1"
+                   ng-mouseover="vm.getOnlineHelpForItem('Example 1')">1</a>
                 <a class="bgee-loading" href="?page=top_anat#/result/8fce889da7b4519c5792573ed3933032c8122819"
-                   title="Human genes involved in autism and epilepsy">2</a>
+                   uib-popover="{{vm.help}}" popover-trigger="mouseenter" popover-placement="bottom"
+                   popover-append-to-body="true" popover-title="Example 2"
+                   ng-mouseover="vm.getOnlineHelpForItem('Example 2')">2</a>
                 <a class="bgee-loading" href="?page=top_anat#/result/e37009ba698919c75d06e81b3eca5d48f78210a0"
-                   title='Mouse genes mapped to the GO term "neurological system process"'>3</a>
+                   uib-popover="{{vm.help}}" popover-trigger="mouseenter" popover-placement="bottom"
+                   popover-append-to-body="true" popover-title="Example 3"
+                   ng-mouseover="vm.getOnlineHelpForItem('Example 3')">3</a>
                 <a class="bgee-loading" href="?page=top_anat#/result/7e8c74c073be03be4c40810c16c6be06c0bef1be"
-                   title='Cow genes with the keyword "muscle" in their UniProtKB/Swiss-Prot description'>4</a>
+                   uib-popover="{{vm.help}}" popover-trigger="mouseenter" popover-placement="bottom"
+                   popover-append-to-body="true" popover-title="Example 4"
+                   ng-mouseover="vm.getOnlineHelpForItem('Example 4')">4</a>
                 <a class="bgee-loading" href="?page=top_anat#/result/5fc8ff1fcfed7cfba0f82f82a67b418ce8a709b6"
-                   title="Platypus genes located on X chromosome">5</a>
+                   uib-popover="{{vm.help}}" popover-trigger="mouseenter" popover-placement="bottom"
+                   popover-append-to-body="true" popover-title="Example 5"
+                   ng-mouseover="vm.getOnlineHelpForItem('Example 5')">5</a>
             </span>
         </div>
 

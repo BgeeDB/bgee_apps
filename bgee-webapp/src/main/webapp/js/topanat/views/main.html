@@ -105,7 +105,10 @@
                         </p>
 
 
-                        <p ng-show="vm.geneValidationMessage !== ''" ng-hide="vm.geneValidationMessage === '' || vm.showDevStageError" class="smaller">{{vm.geneValidationMessage}}</p>
+                        <p ng-show="vm.geneValidationMessage !== ''" 
+                            ng-hide="vm.geneValidationMessage === '' || vm.showDevStageError" 
+                            class="smaller" ng-bind-html="vm.geneValidationMessage">
+                        </p>
 
                         <p ng-show="vm.showDevStageError" ng-hide="!vm.showDevStageError" class="smaller">{{vm
                             .showDevStageError}}</p>

@@ -10,7 +10,7 @@
      */
 
     angular.module('app')
-        .controller('MainCtrl', MainCtrl, ['ui.bootstrap', 'angularFileUpload', 'ngLocationUpdate', 'ngFileSaver']);
+        .controller('MainCtrl', MainCtrl, ['ui.bootstrap', 'angularFileUpload', 'ngLocationUpdate', 'ngFileSaver', 'ngSanitize']);
 
     MainCtrl.$inject = ['$scope', '$sce', 'bgeedataservice', 'bgeejobservice', 'helpservice', 'DataTypeFactory', 'configuration', 'logger', 'FileUploader', '$timeout', '$location', '$interval', 'lang', 'jobStatus', '$filter', 'FileSaver', 'Blob', '$route', '$window'];
 
@@ -1354,11 +1354,25 @@
         }
 
         function parseMessage(message) {
-            var matcher = new RegExp('(.+) for fg_list');
+        	
+        	// For instance "461 genes entered, 457 in mouse, 2 in human, 2 not found in Bgee for fg_list"
+        	// match[1] = "461 genes entered, 457 in mouse, 2 in human, 2 in toto, 2 not found in Bgee"
+        	// match[2] = "461"
+        	// match[3] = "457"
+        	// match[4] = "in mouse"
+        	var matcher = new RegExp('((\\d+) genes entered, (\\d+) (in \\D+)(?:, \\d+ in \\D+)*(?:, \\d+ not found)? in Bgee) for fg_list');
+            
             var match = message.match(matcher);
 
             if (match != null && typeof match !== 'undefined') {
-                return match[1];
+            	var displayedText = match[2] + ' genes ' + match[4];
+            	if (match[2] > match[3]) {
+            		displayedText = $sce.trustAsHtml(displayedText + ' <span class="glyphicon glyphicon-info-sign" '
+            			+ 'uib-popover="' + match[1] + '" popover-trigger="mouseenter" '
+            			+ 'popover-placement="top" popover-append-to-body="true"'
+            			+ 'popover-title="Gene list details"></span>');
+            	}
+                return displayedText;
             }
             else {
                 return message;

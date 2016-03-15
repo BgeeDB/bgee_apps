@@ -442,7 +442,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<li><a id='sib_brand' href='http://www.sib.swiss' target='_blank' "
                 + "title='Link to the SIB Swiss Institute of Bioinformatics'>"
                 + "<img src='" + this.prop.getLogoImagesRootDirectory() +
-                "sib_logo.png' alt='SIB Swiss Institute of Bioinformatics' /></a></li>");
+                "sib_emblem.png' alt='SIB Swiss Institute of Bioinformatics' /></a></li>");
 
         navbar.append("</ul>");  // close right nav links
         

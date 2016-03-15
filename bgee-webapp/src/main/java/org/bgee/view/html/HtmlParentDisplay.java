@@ -357,7 +357,6 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         StringBuilder navbar = new StringBuilder();
 
         navbar.append("<nav id='bgee-menu' class='navbar navbar-default'>");
-        navbar.append("<div class='container-fluid'>");
 
         // Brand and toggle get grouped for better mobile display
         navbar.append("<div class='navbar-header'>");
@@ -448,7 +447,6 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         
         navbar.append("</div>"); // close nav links
 
-        navbar.append("</div>"); // close container-fluid
         navbar.append("</nav>"); // close navbar navbar-default
         
         this.writeln(navbar.toString());

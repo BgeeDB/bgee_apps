@@ -37,16 +37,17 @@ nav img {
 #sib_brand {
     height: 50px;
     padding: 15px 15px;
+    background-color: rgba(51, 51, 51, 1) !important;
 }
 
 #sib_brand img {
     height: 35px;
-    margin: -7px -15px 0 5px;
+    margin: -7px 0 0 5px;
 }
 
 nav img.social-img {
-    width: 19px;   
-    height: 19px;
+    width: 20px;   
+    height: 20px;
 }
 
 #bgee-menu.navbar-default {
@@ -57,13 +58,12 @@ nav img.social-img {
     border-radius: 0px;
     z-index: 100;
 }
-#bgee-menu.navbar-default .navbar-nav > li {
-    margin-top: -1px;
-}
+
 #bgee-menu.navbar-default .navbar-nav > li > a {
     color: rgba(255, 255, 255, 1);
     background-color: rgba(51, 51, 51, 1);
 }
+
 #bgee-menu.navbar-default .navbar-nav > li > a:hover,
 #bgee-menu.navbar-default .navbar-nav > li > a:focus {
     color: rgba(255, 255, 255, 1);
@@ -80,16 +80,17 @@ nav img.social-img {
     color: rgba(255, 255, 255, 1);
     background-color: rgba(85, 85, 85, 1);
 }
+
 #bgee-menu.navbar-default .navbar-toggle {
     border-color: rgba(85, 85, 85, 1);
 }
+
 #bgee-menu.navbar-default .navbar-toggle:hover,
-#bgee-menu.navbar-default .navbar-toggle:focus {
-    background-color: rgba(85, 85, 85, 1);
-}
+#bgee-menu.navbar-default .navbar-toggle:focus,
 #bgee-menu.navbar-default .navbar-toggle .icon-bar {
     background-color: rgba(85, 85, 85, 1);
 }
+
 #bgee-menu.navbar-default .navbar-toggle:hover .icon-bar,
 #bgee-menu.navbar-default .navbar-toggle:focus .icon-bar {
     background-color: rgba(153, 153, 153, 1);
@@ -101,31 +102,58 @@ nav img.social-img {
     border-left: 5px solid transparent;
 }
 
-@media (max-width: 1000px) {
-    #bgee-menu.navbar-header {
+@media (max-width: 910px) {
+    .navbar-header {
         float: none;
     }
-    #bgee-menu.navbar-toggle {
+    .navbar-left,.navbar-right {
+        float: none !important;
+    }
+    .navbar-toggle {
         display: block;
     }
-    #bgee-menu.navbar-collapse {
+    .navbar-collapse {
         border-top: 1px solid transparent;
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
     }
-    #bgee-menu.navbar-collapse.collapse {
+    .navbar-collapse.collapse {
         display: none!important;
     }
-    #bgee-menu.navbar-nav {
-        float: none !important;
-        margin: 7.5px -15px;
+    .navbar-nav {
+        float: none!important;
+        margin-top: 7.5px;
     }
-    #bgee-menu.navbar-nav > li {
+    .navbar-nav > li {
         float: none;
     }
-    #bgee-menu.navbar-nav > li > a {
+    .navbar-nav > li > a {
         padding-top: 10px;
         padding-bottom: 10px;
     }
+    .collapse.in {
+        display: block !important;
+    }
+   .navbar-nav .open .dropdown-menu {
+       position: static;
+       float: none;
+       width: auto;
+       margin-top: 0;
+       background-color: transparent;
+       border: 0;
+       -webkit-box-shadow: none;
+       box-shadow: none;
+    }
+    .navbar-nav .open .dropdown-menu > li > a {
+        color: #aaa !important;
+    }
+    .navbar-nav .open .dropdown-menu > li > a:hover {
+        color: #262626 !important;
+    }   
+}
+
+#bgee-menu .navbar-right a {
+	padding-top: 14px;
+    padding-bottom: 14px;
 }
 
 /****SIB BODY****/

@@ -46,7 +46,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * A {@code String} to be used in {@code class} attribute.
      */
     protected static final String CENTERED_ELEMENT_CLASS = 
-    		"col-xs-12 col-xs-offset-0 col-sm-offset-1 col-sm-10";
+            "col-xs-12 col-xs-offset-0 col-sm-offset-1 col-sm-10";
 
     /**
      * Escape HTML entities in the provided {@code String}
@@ -305,7 +305,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 
         this.writeln("<ul class='nav navbar-nav navbar-right'>");
         this.writeln("<li><a href='#TOP' id='sib_footer_gototop'>"
-        		+ "<span class='glyphicon glyphicon-menu-up'></span> Back to the top</a></li>");
+                + "<span class='glyphicon glyphicon-menu-up'></span> Back to the top</a></li>");
         this.writeln("</ul>");
         
         this.writeln("</div>"); // close container
@@ -322,8 +322,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * Display the Bgee header of the HTML page.
      */
     private void displayBgeeHeader() {
-    	log.entry();
-    	
+        log.entry();
+        
         RequestParameters urlTopAnat = this.getNewRequestParameters();
         urlTopAnat.setPage(RequestParameters.PAGE_TOP_ANAT);
 
@@ -361,7 +361,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         // Brand and toggle get grouped for better mobile display
         navbar.append("<div class='navbar-header'>");
         navbar.append("<button type='button' class='navbar-toggle collapsed' data-toggle='collapse' "
-        		+ "data-target='#bgee-navbar' aria-expanded='false'>");
+                + "data-target='#bgee-navbar' aria-expanded='false'>");
         navbar.append("<span class='sr-only'>Toggle navigation</span>");
         navbar.append("<span class='icon-bar'></span>");
         navbar.append("<span class='icon-bar'></span>");
@@ -369,7 +369,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("</button>");
         navbar.append("<a class='navbar-brand' href='" + this.getNewRequestParameters().getRequestURL() 
                 + "' title='Go to Bgee home page'><img id='bgee_logo' src='" 
-        		+ this.prop.getLogoImagesRootDirectory() + "bgee13_hp_logo.png' alt='Bgee logo'></a>");
+                + this.prop.getLogoImagesRootDirectory() + "bgee13_hp_logo.png' alt='Bgee logo'></a>");
         navbar.append("</div>"); //close navbar-header
 
         // Nav links
@@ -380,36 +380,46 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         
         // Analysis
         navbar.append("<li class='dropdown'>");
-        navbar.append("<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Analysis <span class='caret'></span></a>");
+        navbar.append("<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' "
+              + "aria-haspopup='true' aria-expanded='false'>Analysis <span class='caret'></span></a>");
         navbar.append("<ul class='dropdown-menu'>");
-        navbar.append("<li><a title='TopAnat: Enrichment analyses of expression localization' href='" + urlTopAnat.getRequestURL() + "'>" + TOP_ANAT_PAGE_NAME + "</a></li>");
+        navbar.append("<li><a title='TopAnat: Enrichment analyses of expression localization' "
+              + "href='" + urlTopAnat.getRequestURL() + "'>" + TOP_ANAT_PAGE_NAME + "</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
 
         // Search
         // For the moment, we only have gene search 
         navbar.append("<li class='dropdown'>");
-        navbar.append("<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Search <span class='caret'></span></a>");
+        navbar.append("<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' "
+              + "aria-haspopup='true' aria-expanded='false'>Search <span class='caret'></span></a>");
         navbar.append("<ul class='dropdown-menu'>");
-        navbar.append("<li><a title='Gene search' href='" + urlGeneSearch.getRequestURL() + "'>Gene search</a></li>");
+        navbar.append("<li><a title='Gene search' href='" + urlGeneSearch.getRequestURL() + 
+              "'>Gene search</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
 
         // Download
         navbar.append("<li class='dropdown'>");
-        navbar.append("<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Download <span class='caret'></span></a>");
+        navbar.append("<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' "
+              + "aria-haspopup='true' aria-expanded='false'>Download <span class='caret'></span></a>");
         navbar.append("<ul class='dropdown-menu'>");
-        navbar.append("<li><a href='" + urlDownloadExprCallFiles.getRequestURL() + "'>" + GENE_EXPR_CALLS_PAGE_NAME + "</a></li>");
-        navbar.append("<li><a href='" + urlDownloadProcValueFile.getRequestURL() + "'>" + PROCESSED_EXPR_VALUES_PAGE_NAME + "</a></li>");
+        navbar.append("<li><a href='" + urlDownloadExprCallFiles.getRequestURL() + "'>"
+              + GENE_EXPR_CALLS_PAGE_NAME + "</a></li>");
+        navbar.append("<li><a href='" + urlDownloadProcValueFile.getRequestURL() + "'>"
+              + PROCESSED_EXPR_VALUES_PAGE_NAME + "</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
 
         // Documentation
         navbar.append("<li class='dropdown'>");
-        navbar.append("<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-haspopup='true' aria-expanded='false'>Documentation <span class='caret'></span></a>");
+        navbar.append("<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' "
+              + "aria-haspopup='true' aria-expanded='false'>Documentation <span class='caret'></span></a>");
         navbar.append("<ul class='dropdown-menu'>");
-        navbar.append("<li><a title='See how to access to Bgee data' href='" + urlDocBgeeAccess.getRequestURL() + "'>How to access Bgee data</a></li>");
-        navbar.append("<li><a title='TopAnat documentation' href='" + urlDocTopAnat.getRequestURL() + "'>" + TOP_ANAT_PAGE_NAME + "</a></li>");
+        navbar.append("<li><a title='See how to access to Bgee data' href='" + urlDocBgeeAccess.getRequestURL()
+              + "'>How to access Bgee data</a></li>");
+        navbar.append("<li><a title='TopAnat documentation' href='" + urlDocTopAnat.getRequestURL()
+              + "'>" + TOP_ANAT_PAGE_NAME + "</a></li>");
         navbar.append("<li><a title='Gene expression call files documentation' href='" + urlDocExprCallFiles.getRequestURL() + "'>" + GENE_EXPR_CALLS_PAGE_NAME + "</a></li>");
 //        navbar.append("<li><a title='Processed expression value files documentation' href='" + urlDocProcValueFiles.getRequestURL() + "'>" + PROCESSED_EXPR_VALUES_PAGE_NAME + "</a></li>");
         navbar.append("<li><a title='Bgee blog' href='https://bgeedb.wordpress.com' target='_blank'>Bgee blog</a></li>");
@@ -451,7 +461,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         
         this.writeln(navbar.toString());
         log.exit();
-	}
+    }
 
     /**
      * @param nbCalled  An {@code int} that is the different number every time 

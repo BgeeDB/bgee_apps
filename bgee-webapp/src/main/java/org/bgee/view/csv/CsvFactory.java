@@ -1,4 +1,4 @@
-package org.bgee.view.dsv;
+package org.bgee.view.csv;
 
 import java.io.IOException;
 
@@ -20,19 +20,27 @@ import org.bgee.view.TopAnatDisplay;
 import org.bgee.view.ViewFactory;
 
 /**
- * {@code ViewFactory} that returns all displays for the DSV view.
+ * {@code ViewFactory} that returns all displays for the CSV views.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Feb. 2016
+ * @author  Frederic Bastian
+ * @version Bgee 13, Mar. 2016
+ * @see Delimiter
  * @since   Bgee 13
  */
-public class DsvFactory extends ViewFactory {	
+public class CsvFactory extends ViewFactory {	
     
-    private final static Logger log = LogManager.getLogger(DsvFactory.class.getName());
+    private final static Logger log = LogManager.getLogger(CsvFactory.class.getName());
     
-	public DsvFactory(HttpServletResponse response, String localDelimiter,
-	        RequestParameters requestParameters, BgeeProperties prop) {
+    /**
+     * A {@code Delimiter} defining the delimiter between columns in CSV views. 
+     */
+    private final Delimiter delimiter;
+    
+	public CsvFactory(HttpServletResponse response, RequestParameters requestParameters, BgeeProperties prop, 
+	        Delimiter delimiter) {
 		super(response, requestParameters, prop);
+		this.delimiter = delimiter;
 	}
 
 	@Override

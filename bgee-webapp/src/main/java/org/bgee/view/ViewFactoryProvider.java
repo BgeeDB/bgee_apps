@@ -6,7 +6,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
-import org.bgee.view.dsv.DsvFactory;
+import org.bgee.view.csv.CsvFactory;
+import org.bgee.view.csv.Delimiter;
 import org.bgee.view.html.HtmlFactory;
 import org.bgee.view.json.JsonFactory;
 import org.bgee.view.xml.XmlFactory;
@@ -63,7 +64,7 @@ public class ViewFactoryProvider {
      * @return                  the appropriate {@code ViewFactory}.
      * @see org.bgee.view.html.HtmlFactory
      * @see org.bgee.view.xml.XmlFactory
-     * @see org.bgee.view.dsv.DsvFactory
+     * @see org.bgee.view.csv.CsvFactory
      * @see org.bgee.view.json.JsonFactory
      * @see org.bgee.controller.URLParameters#DISPLAY_TYPE
      */
@@ -97,7 +98,7 @@ public class ViewFactoryProvider {
      * @return                  the appropriate {@code ViewFactory}.
      * @see org.bgee.view.html.HtmlFactory
      * @see org.bgee.view.xml.XmlFactory
-     * @see org.bgee.view.dsv.DsvFactory
+     * @see org.bgee.view.csv.CsvFactory
      * @see org.bgee.view.json.JsonFactory
      */
     public ViewFactory getFactory(HttpServletResponse response, 
@@ -110,10 +111,10 @@ public class ViewFactoryProvider {
             return new XmlFactory(response, requestParameters, this.prop);
         }
         if (displayType == DisplayType.CSV) {
-            return new DsvFactory(response, ",", requestParameters, this.prop);
+            return new CsvFactory(response, requestParameters, this.prop, Delimiter.COMMA);
         }
         if (displayType == DisplayType.TSV) {
-            return new DsvFactory(response, "\t", requestParameters, this.prop);
+            return new CsvFactory(response, requestParameters, this.prop, Delimiter.TAB);
         }
         return log.exit(new HtmlFactory(response, requestParameters, this.prop));
     }

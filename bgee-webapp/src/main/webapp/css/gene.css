@@ -135,8 +135,10 @@ span.expandable {
     display: none;
 }
 
-.dtr-modal ul.dev-stage-list {
+.dtr-modal ol.dev-stage-list,
+.dtr-modal ol.quality-list {
     display: inherit !important;
+    padding-left: 0px;
 }
 
 .high {

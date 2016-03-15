@@ -20,13 +20,11 @@ $( document ).ready( function(){
                     }
                 } ),
                 renderer: function ( api, rowIdx, columns ) {
-                    var data = $.map( columns, function ( col, i ) {
-                        return '<tr>'+
-                        '<td>'+col.title+':'+'</td> '+
-                        '<td>'+col.data+'</td>'+
-                        '</tr>';
-                    } ).join('');
-
+                	var data = 
+                		'<tr><td>' + columns[0].title + ':</td><td>' + columns[0].data + '</td></tr>' +
+                		'<tr><td>' + columns[1].title + ':</td><td>' + columns[1].data + '</td></tr>' +
+                		'<tr><td>' + columns[2].title + '</td><td>' + columns[2].data.replace('[+]','').replace('<ul','<ol').replace('</ul>','</ol>') + '</td></tr>' +
+                		'<tr><td>' + columns[3].title + '</td><td>' + columns[3].data.replace('<ul','<ol').replace('</ul>','</ol>') + '</td></tr>';
                     return $('<table class="table"/>').append( data );
                 }
             }

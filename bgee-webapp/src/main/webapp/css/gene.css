@@ -91,6 +91,14 @@ td > ul {
     list-style-type: none;
 }
 
+table.dataTable.dtr-inline.collapsed.compact > tbody > tr > td:first-child::before {
+    text-indent: 4px;
+}
+
+table.dataTable.dtr-inline.collapsed > tbody > tr > td:first-child::before {
+    background-color: #920209;
+}
+
 ul.dev-stage-list {
     padding-left: 1.1em;
 }

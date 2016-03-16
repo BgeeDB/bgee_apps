@@ -24,5 +24,6 @@ public interface DAODisplay {
      *                      of the {@code TransferObject}s to be printed, and their display order.
      * @param resultSet     A {@code DAOResultSet} to iterate to print {@code TransferObject}s.
      */
-    public void displayTOs(List<DAO.Attribute> attributes, DAOResultSet<TransferObject> resultSet);
+    public <T extends Enum<T> & DAO.Attribute, U extends TransferObject> void displayTOs(
+            List<T> attributes, DAOResultSet<U> resultSet);
 }

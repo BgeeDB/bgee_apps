@@ -34,8 +34,8 @@ public class CsvDAODisplay extends CsvParentDisplay implements DAODisplay {
     }
     
     @Override
-    public void displayTOs(List<DAO.Attribute> attributes, DAOResultSet<TransferObject> resultSet) 
-            throws IllegalStateException {
+    public <T extends Enum<T> & DAO.Attribute, U extends TransferObject> void displayTOs(
+            List<T> attributes, DAOResultSet<U> resultSet) throws IllegalStateException {
         log.entry(attributes, resultSet);
         
         try (final ICsvBeanWriter beanWriter = new CsvBeanWriter(this.getOut(), this.csvPref)) {

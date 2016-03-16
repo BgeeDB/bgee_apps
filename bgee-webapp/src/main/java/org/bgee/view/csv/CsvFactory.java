@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.AboutDisplay;
+import org.bgee.view.DAODisplay;
 import org.bgee.view.DocumentationDisplay;
 import org.bgee.view.DownloadDisplay;
 import org.bgee.view.ErrorDisplay;
@@ -87,4 +88,11 @@ public class CsvFactory extends ViewFactory {
 	public SearchDisplay getSearchDisplay() throws IOException {
         throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
 	}
+
+    @Override
+    public DAODisplay getDAODisplay() throws IOException {
+        log.entry();
+        return log.exit(new CsvDAODisplay(this.response, this.requestParameters, this.prop, this, 
+                this.delimiter));
+    }
 }

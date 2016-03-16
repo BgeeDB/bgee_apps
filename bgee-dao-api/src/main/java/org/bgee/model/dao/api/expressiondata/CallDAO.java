@@ -10,7 +10,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.TransferObject;
-import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 
 /**
  * DAO defining queries using or retrieving {@link CallTO}s. 

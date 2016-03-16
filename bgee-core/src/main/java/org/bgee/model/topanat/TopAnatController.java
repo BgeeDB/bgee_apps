@@ -392,4 +392,15 @@ public class TopAnatController {
                         this.serviceFactory, new TopAnatRManager(this.props, params), this))
                 .allMatch(a -> a.isAnalysisDone()));
     }
+    
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("TopAnatController [readWriteLocks=").append(readWriteLocks).append(", props=")
+        .append(props).append(", serviceFactory=").append(serviceFactory)
+        .append(", taskManager=").append(taskManager).append(", topAnatAnalysisSupplier=")
+        .append("").append(", topAnatParams=").append(topAnatParams)
+        .append("]");
+        return builder.toString();
+    }
 }

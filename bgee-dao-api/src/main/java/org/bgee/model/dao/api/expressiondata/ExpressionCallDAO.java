@@ -176,7 +176,7 @@ public interface ExpressionCallDAO extends CallDAO<ExpressionCallDAO.Attribute> 
      *                              to configure the minimum quality level for each data type, etc. 
      *                              If several {@code ExpressionCallTO}s are provided, 
      *                              they are seen as "OR" conditions. Attributes inside 
-     *                              a same {@code ExpressionCallTO} are seend as AND conditions. 
+     *                              a same {@code ExpressionCallTO} are seen as AND conditions. 
      *                              Can be {@code null} or empty.
      * @param includeSubstructures  A {@code boolean} defining whether the expression calls 
      *                              retrieved should be based on calls generated using data 

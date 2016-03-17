@@ -387,7 +387,7 @@ public class URLParameters {
      * Corresponds to the URL parameter "attr_list".
      */
     private static final Parameter<String> ATTRIBUTE_LIST = new Parameter<String>("attr_list",
-            false, true, DEFAULT_SEPARATORS, true, DEFAULT_IS_SECURE, 
+            true, false, DEFAULT_SEPARATORS, true, DEFAULT_IS_SECURE, 
             10000, DEFAULT_LIST_FORMAT, String.class);
 
     //    /**

@@ -39,7 +39,10 @@ public class CsvDAODisplay extends CsvParentDisplay implements DAODisplay {
         log.entry(attributes, resultSet);
         
         try (final ICsvBeanWriter beanWriter = new CsvBeanWriter(this.getOut(), this.csvPref)) {
+            
             String[] header = attributes.stream().map(attr -> attr.toString()).toArray(String[]::new);
+            
+            this.startDisplay();
             beanWriter.writeHeader(header);
             
             final String[] nameMapping = attributes.stream().map(attr -> attr.getTOFieldName())
@@ -47,6 +50,9 @@ public class CsvDAODisplay extends CsvParentDisplay implements DAODisplay {
             while (resultSet.next()) {
                 beanWriter.write(resultSet.getTO(), nameMapping);
             }
+            beanWriter.flush();
+            
+            this.endDisplay();
         } catch (IOException e) {
             log.catching(e);
             throw log.throwing(new IllegalStateException("Cannot write CSV response", e));

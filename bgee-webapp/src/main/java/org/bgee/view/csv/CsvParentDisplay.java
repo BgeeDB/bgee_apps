@@ -65,8 +65,22 @@ public class CsvParentDisplay extends ConcreteDisplayParent {
         this.sendHeaders();
         log.exit();
     }
+    /**
+     * Write end of CSV file. If you used another writer to write the content of the file, 
+     * you must make sure to flsuh it before calling this method.
+     */
     protected void endDisplay() {
         log.entry();
+        //we end the file with 5 (why not!) blank lines. 
+        //This is because, without a checksum mechanism, it is not possible to tell 
+        //whether a file transfer was completed successfully. We do not want to compute 
+        //such a checksum server-side, the response can be extremely large. 
+        //So, we use this dirty hack...
+        this.writeln("");
+        this.writeln("");
+        this.writeln("");
+        this.writeln("");
+        this.writeln("");
         log.exit();
     }
 }

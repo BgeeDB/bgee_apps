@@ -2263,21 +2263,6 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions));
         assertFalse("Incorrect filtering of duplicates", rs.isFilterDuplicates());
         assertFalse("Incorrect use of the LIMIT feature", rs.isUsingLimitFeature());
-        
-       // Test get only INCLUDE_SUBSTAGES without species filter and without including substructures, 
-        // but with including sub-stages
-        expectedExprCalls = new HashSet<>(Arrays.asList(
-                new ExpressionCallTO(null, null, null, null, null, null, null, null, null, true, null, null, null)));
-        // Compare
-        rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(Arrays.asList(filter), null, 
-                        false, true, null, null, Arrays.asList(ExpressionCallDAO.Attribute.INCLUDE_SUBSTAGES), null);
-        //no ordering requested, put results in a Set
-        expressions = new HashSet<>(rs.getAllTOs());
-        assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + expectedExprCalls 
-                + ", but was: " + expressions, 
-                TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions));
-        assertFalse("Incorrect filtering of duplicates", rs.isFilterDuplicates());
-        assertFalse("Incorrect use of the LIMIT feature", rs.isUsingLimitFeature());
 
         // Test get only ID with species filter and including substructures and sub-stages
         filter = new CallDAOFilter(null, 

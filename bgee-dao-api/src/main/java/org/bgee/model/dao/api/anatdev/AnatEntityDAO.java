@@ -34,7 +34,24 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
-        ID, NAME, DESCRIPTION, START_STAGE_ID, END_STAGE_ID, NON_INFORMATIVE;
+        ID("id"), NAME("name"), DESCRIPTION("description"), 
+        START_STAGE_ID("startStageId"), END_STAGE_ID("endStageId"), 
+        NON_INFORMATIVE("nonInformative");
+
+        /**
+         * A {@code String} that is the corresponding field name in {@code AnatEntityTO} class.
+         * @see {@link Attribute#getTOFieldName()}
+         */
+        private final String fieldName;
+        
+        private Attribute(String fieldName) {
+            this.fieldName = fieldName;
+        }
+
+        @Override
+        public String getTOFieldName() {
+            return this.fieldName;
+        }
     }
 
     /**

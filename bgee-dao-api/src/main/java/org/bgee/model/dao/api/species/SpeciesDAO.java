@@ -36,10 +36,26 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
-        ID, COMMON_NAME, GENUS, SPECIES_NAME, PARENT_TAXON_ID, GENOME_FILE_PATH, 
-        GENOME_SPECIES_ID, FAKE_GENE_ID_PREFIX, 
+        ID("id"), COMMON_NAME("name"), GENUS("genus"), SPECIES_NAME("speciesName"), 
+        PARENT_TAXON_ID("parentTaxonId"), GENOME_FILE_PATH("genomeFilePath"), 
+        GENOME_SPECIES_ID("genomeSpeciesId"), FAKE_GENE_ID_PREFIX("fakeGeneIdPrefix"), 
         // TODO currently this info is not present in the table
-        GENOME_VERSION;
+        GENOME_VERSION("genomeVersion");
+
+        /**
+         * A {@code String} that is the corresponding field name in {@code RelationTO} class.
+         * @see {@link Attribute#getTOFieldName()}
+         */
+        private final String fieldName;
+        
+        private Attribute(String fieldName) {
+            this.fieldName = fieldName;
+        }
+
+        @Override
+        public String getTOFieldName() {
+            return this.fieldName;
+        }
     }
     
     /**

@@ -36,7 +36,23 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
-        RELATION_ID, SOURCE_ID, TARGET_ID, RELATION_TYPE, RELATION_STATUS;
+        RELATION_ID("id"), SOURCE_ID("sourceId"), TARGET_ID("targetId"), 
+        RELATION_TYPE("relationType"), RELATION_STATUS("relationStatus");
+
+        /**
+         * A {@code String} that is the corresponding field name in {@code RelationTO} class.
+         * @see {@link Attribute#getTOFieldName()}
+         */
+        private final String fieldName;
+        
+        private Attribute(String fieldName) {
+            this.fieldName = fieldName;
+        }
+
+        @Override
+        public String getTOFieldName() {
+            return this.fieldName;
+        }
     }
 
     /**

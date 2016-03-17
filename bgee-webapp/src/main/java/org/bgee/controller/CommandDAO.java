@@ -3,6 +3,7 @@ package org.bgee.controller;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -16,12 +17,19 @@ import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOManager;
+import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
+import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTOResultSet;
 import org.bgee.model.dao.api.expressiondata.CallDAOFilter;
 import org.bgee.model.dao.api.expressiondata.DAOConditionFilter;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTOResultSet;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTOResultSet;
+import org.bgee.model.dao.api.species.SpeciesDAO;
+import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.view.DAODisplay;
@@ -71,6 +79,18 @@ public class CommandDAO extends CommandParent {
 
             this.processGetExpressionCalls();
             
+        } else if ("org.bgee.model.dao.api.anatdev.AnatEntityDAO.getAnatEntities".equals(
+                this.requestParameters.getAction())) { 
+            
+            this.processGetAnatEntities();
+        } else if ("org.bgee.model.dao.api.ontologycommon.RelationDAO.getAnatEntityRelations".equals(
+                this.requestParameters.getAction())) { 
+            
+            this.processGetAnatEntitiyRelations();
+        } else if ("org.bgee.model.dao.api.species.SpeciesDAO.getAllSpecies".equals(
+                this.requestParameters.getAction())) { 
+            
+            this.processGetAllSpecies();
         } else {
             throw log.throwing(new PageNotFoundException("Incorrect " + 
                     this.requestParameters.getUrlParametersInstance().getParamAction() + 
@@ -102,9 +122,16 @@ public class CommandDAO extends CommandParent {
         //parameters not needing processing
         final List<String> speciesIds = this.requestParameters.getSpeciesList();
         final List<String> stageIds   = this.requestParameters.getDevStage();
-        
+
+        //For now, we exclude any param that will trigger a GROUP BY in the expression query 
+        //(very slow when requesting data for a whole species)
         final List<ExpressionCallDAO.Attribute> attrs = getAttributes(this.requestParameters, 
-                ExpressionCallDAO.Attribute.class);
+                ExpressionCallDAO.Attribute.class).stream()
+                .filter(attr -> attr.equals(ExpressionCallDAO.Attribute.GENE_ID) || 
+                                attr.equals(ExpressionCallDAO.Attribute.ANAT_ENTITY_ID) || 
+                                attr.equals(ExpressionCallDAO.Attribute.STAGE_ID))
+                .collect(Collectors.toList());
+        
         
         //for now, we force to select one and only one species, to not return 
         //the complete expression table at once
@@ -116,12 +143,15 @@ public class CommandDAO extends CommandParent {
         // Create DAO filter objects
         //****************************************
         //CallDAOFilter: for now, we only allow to define one CallDAOFilter object.
-        DAOConditionFilter conditionFilter = new DAOConditionFilter(null, stageIds);
-        CallDAOFilter callDAOFilter = new CallDAOFilter(null, speciesIds, Arrays.asList(conditionFilter));
+        DAOConditionFilter conditionFilter = stageIds == null || stageIds.isEmpty()? 
+                null: new DAOConditionFilter(null, stageIds);
+        Set<String> geneIds = this.requestParameters.getBackgroundList() == null? 
+                null: new HashSet<>(this.requestParameters.getBackgroundList());
+        CallDAOFilter callDAOFilter = new CallDAOFilter(geneIds, speciesIds, Arrays.asList(conditionFilter));
         
         //convert data types and data qualities to ExpressionCallTO filters
         Set<ExpressionCallTO> callTOFilter = null;
-        if (!dataQuality.equals(DataQuality.LOW) || 
+        if (DataQuality.HIGH.equals(dataQuality) || 
                 (dataTypes != null && !dataTypes.isEmpty() && 
                 !dataTypes.containsAll(EnumSet.allOf(DataType.class)))) {
             
@@ -136,7 +166,8 @@ public class CommandDAO extends CommandParent {
                 
                 //convert DataQuality to DAO Enum
                 CallTO.DataState state = null;
-                switch(dataQuality) {
+                DataQuality usedDataQual = dataQuality == null? DataQuality.LOW: dataQuality;
+                switch(usedDataQual) {
                 case LOW: 
                     state = CallTO.DataState.LOWQUALITY;
                     break;
@@ -207,5 +238,113 @@ public class CommandDAO extends CommandParent {
         }
         return log.exit(requestedAttrs.stream().map(rqAttr -> Enum.valueOf(attrType, rqAttr))
                 .collect(Collectors.toList()));
+    }
+    
+    /**
+     * Performs the query and display the results when requesting {@code AnatEntityTO}s.
+     * 
+     * @throws InvalidRequestException  In case of invalid request parameter.
+     * @throws IOException              In case of issue when writing results. 
+     */
+    private void processGetAnatEntities() throws InvalidRequestException, IOException {
+        log.entry();
+        
+        DAOManager daoManager = this.serviceFactory.getDAOManager();
+        DAODisplay display = this.viewFactory.getDAODisplay();
+
+        //****************************************
+        // Retrieve and filter request parameters
+        //****************************************
+        final List<String> speciesIds = this.requestParameters.getSpeciesList();
+        
+        final List<AnatEntityDAO.Attribute> attrs = getAttributes(this.requestParameters, 
+                AnatEntityDAO.Attribute.class);
+        
+        //for now, we force to select one and only one species, to not return 
+        //the complete expression table at once
+        if (speciesIds == null || speciesIds.size() != 1) {
+            throw log.throwing(new InvalidRequestException("One and only one species ID must be provided"));
+        }
+        
+        //****************************************
+        // Perform query and display results
+        //****************************************
+        AnatEntityTOResultSet rs = daoManager.getAnatEntityDAO().getAnatEntities(
+                speciesIds, true, null, attrs);
+        
+        display.displayTOs(attrs, rs);
+        
+        log.exit();
+    }
+    
+    /**
+     * Performs the query and display the results when requesting {@code RelationTO}s 
+     * for anatomical entities.
+     * 
+     * @throws InvalidRequestException  In case of invalid request parameter.
+     * @throws IOException              In case of issue when writing results. 
+     */
+    private void processGetAnatEntitiyRelations() throws InvalidRequestException, IOException {
+        log.entry();
+        
+        DAOManager daoManager = this.serviceFactory.getDAOManager();
+        DAODisplay display = this.viewFactory.getDAODisplay();
+
+        //****************************************
+        // Retrieve and filter request parameters
+        //****************************************
+        final List<String> speciesIds = this.requestParameters.getSpeciesList();
+        
+        final List<RelationDAO.Attribute> attrs = getAttributes(this.requestParameters, 
+                RelationDAO.Attribute.class);
+        
+        //for now, we force to select one and only one species, to not return 
+        //the complete expression table at once
+        if (speciesIds == null || speciesIds.size() != 1) {
+            throw log.throwing(new InvalidRequestException("One and only one species ID must be provided"));
+        }
+        
+        //****************************************
+        // Perform query and display results
+        //****************************************
+        RelationTOResultSet rs = daoManager.getRelationDAO().getAnatEntityRelations(
+                speciesIds, true, null, null, true, 
+                EnumSet.of(RelationTO.RelationType.ISA_PARTOF), 
+                EnumSet.of(RelationTO.RelationStatus.DIRECT), 
+                attrs);
+        
+        display.displayTOs(attrs, rs);
+        
+        log.exit();
+    }
+    
+    /**
+     * Performs the query and display the results when requesting {@code SpeciesTO}s.
+     * 
+     * @throws InvalidRequestException  In case of invalid request parameter.
+     * @throws IOException              In case of issue when writing results. 
+     */
+    private void processGetAllSpecies() throws IOException {
+        log.entry();
+        
+        DAOManager daoManager = this.serviceFactory.getDAOManager();
+        DAODisplay display = this.viewFactory.getDAODisplay();
+
+        //****************************************
+        // Retrieve and filter request parameters
+        //****************************************
+        final List<SpeciesDAO.Attribute> attrs = getAttributes(this.requestParameters, 
+                SpeciesDAO.Attribute.class);
+        
+        //****************************************
+        // Perform query and display results
+        //****************************************
+        SpeciesDAO dao = daoManager.getSpeciesDAO();
+        dao.setAttributes(attrs);
+        SpeciesTOResultSet rs = dao.getAllSpecies();
+        
+        display.displayTOs(attrs, rs);
+        
+        log.exit();
     }
 }

@@ -268,7 +268,7 @@ abstract class CommandParent {
             if (rqDataQual.equalsIgnoreCase(DataQuality.HIGH.name())) {
                 dataQuality = DataQuality.HIGH;
             } else if (rqDataQual.equalsIgnoreCase(DataQuality.LOW.name()) || 
-                    rqDataQual.equalsIgnoreCase("all")) {
+                    rqDataQual.equalsIgnoreCase(RequestParameters.ALL_VALUE)) {
                 dataQuality = DataQuality.LOW;
             } else {
                 throw log.throwing(new InvalidRequestException("Incorrect data quality provided: "

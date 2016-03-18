@@ -151,6 +151,15 @@ public class CommandParentTest extends TestAncestor {
         assertEquals("Low quality should have been retrieved", DataQuality.LOW, 
                 command.checkAndGetDataQuality());
         
+        //ALL quality
+        params = new RequestParameters();
+        params.addValue(params.getUrlParametersInstance().getParamDataQuality(), RequestParameters.ALL_VALUE);
+        log.info("Generated query URL: " + params.getRequestURL());
+        command = new FakeCommand(response, params, BgeeProperties.getBgeeProperties(), 
+                null, null, context, null);
+        assertEquals("Low quality should have been retrieved", DataQuality.LOW, 
+                command.checkAndGetDataQuality());
+        
         //HIGH quality
         params = new RequestParameters();
         params.addValue(params.getUrlParametersInstance().getParamDataQuality(), DataQuality.HIGH.name().toLowerCase());

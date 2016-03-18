@@ -50,6 +50,7 @@ public class CsvDAODisplay extends CsvParentDisplay implements DAODisplay {
             while (resultSet.next()) {
                 beanWriter.write(resultSet.getTO(), nameMapping);
             }
+            //warning, it is needed to flush the writer before calling this.endDisplay()
             beanWriter.flush();
             
             this.endDisplay();

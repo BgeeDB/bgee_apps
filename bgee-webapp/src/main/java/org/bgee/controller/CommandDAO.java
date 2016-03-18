@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -220,27 +221,6 @@ public class CommandDAO extends CommandParent {
     }
     
     /**
-     * Return the {@code Attribute}s of a DAO corresponding to the attributes requested 
-     * in the request parameters of the query. 
-     * 
-     * @param rqParams  A {@code RequestParameters} holding parameters of a query to the webapp.
-     * @param attrType  A {@code Class} defining the type of {@code Attribute}s needed to be retrieved.
-     * @return          A {@code List} of {@code Attribute}s of type {@code attrType}.
-     */
-    private static <T extends Enum<T> & DAO.Attribute> List<T> getAttributes(RequestParameters rqParams, 
-            Class<T> attrType) {
-        log.entry(rqParams, attrType);
-        
-        List<String> requestedAttrs = rqParams.getValues(
-                rqParams.getUrlParametersInstance().getParamAttributeList());
-        if (requestedAttrs == null || requestedAttrs.isEmpty()) {
-            return log.exit(Arrays.asList(attrType.getEnumConstants()));
-        }
-        return log.exit(requestedAttrs.stream().map(rqAttr -> Enum.valueOf(attrType, rqAttr))
-                .collect(Collectors.toList()));
-    }
-    
-    /**
      * Performs the query and display the results when requesting {@code AnatEntityTO}s.
      * 
      * @throws InvalidRequestException  In case of invalid request parameter.
@@ -346,5 +326,29 @@ public class CommandDAO extends CommandParent {
         display.displayTOs(attrs, rs);
         
         log.exit();
+    }
+
+    /**
+     * Return the {@code Attribute}s of a DAO corresponding to the attributes requested 
+     * in the request parameters of the query. 
+     * 
+     * @param rqParams  A {@code RequestParameters} holding parameters of a query to the webapp.
+     * @param attrType  A {@code Class} defining the type of {@code Attribute}s needed to be retrieved.
+     * @return          A {@code List} of {@code Attribute}s of type {@code attrType}.
+     */
+    private static <T extends Enum<T> & DAO.Attribute> List<T> getAttributes(RequestParameters rqParams, 
+            Class<T> attrType) {
+        log.entry(rqParams, attrType);
+        
+        List<String> requestedAttrs = rqParams.getValues(
+                rqParams.getUrlParametersInstance().getParamAttributeList());
+        if (requestedAttrs == null || requestedAttrs.isEmpty()) {
+            return log.exit(Arrays.asList(attrType.getEnumConstants()));
+        }
+        //we don't use Enum.valueOf to be able to get parameters in lower case. 
+        final Map<String, T> nameToAttr = Arrays.stream(attrType.getEnumConstants())
+                .collect(Collectors.toMap(attr -> attr.name().toLowerCase(), attr -> attr));
+        return log.exit(requestedAttrs.stream().map(rqAttr -> nameToAttr.get(rqAttr.toLowerCase()))
+                .collect(Collectors.toList()));
     }
 }

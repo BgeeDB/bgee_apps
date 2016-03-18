@@ -64,8 +64,8 @@ public abstract class BgeeEnum {
             return log.exit(null);
         }
         for (T element: enumClass.getEnumConstants()) {
-            if (element.getStringRepresentation().equals(representation) || 
-                    element.name().equals(representation)) {
+            if (element.getStringRepresentation().toLowerCase().equals(representation.toLowerCase()) || 
+                    element.name().toLowerCase().equals(representation.toLowerCase())) {
                 return log.exit(element);
             }
         }
@@ -144,7 +144,7 @@ public abstract class BgeeEnum {
             Class<T> enumClass, String representation) {
         log.entry(enumClass, representation);
         for (BgeeEnumField bgeeEnum: EnumSet.allOf(enumClass)) {
-            if (bgeeEnum.getStringRepresentation().equals(representation)) {
+            if (bgeeEnum.getStringRepresentation().toLowerCase().equals(representation.toLowerCase())) {
                 return log.exit(true);
             }
         }

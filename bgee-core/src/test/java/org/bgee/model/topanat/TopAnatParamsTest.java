@@ -19,7 +19,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
- * Unit tests for {@link TopAnatController}.
+ * Unit tests for {@link TopAnatParams}.
  * 
  * @author Mathieu Seppey
  * @version Bgee 13, February 2016

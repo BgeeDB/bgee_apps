@@ -25,7 +25,7 @@ import static org.mockito.Mockito.when;
  */
 public class TopAnatResultsTest extends TestAncestor {
 
-    private final static Logger log = LogManager.getLogger(TopAnatParamsTest.class.getName());
+    private final static Logger log = LogManager.getLogger(TopAnatResultsTest.class.getName());
 
     @Override
     protected Logger getLogger() {
@@ -62,6 +62,7 @@ public class TopAnatResultsTest extends TestAncestor {
                 "test.tsv",
                 "","","","","","","","",
                 mockTopAnatController);
+        
     }
 
     /**

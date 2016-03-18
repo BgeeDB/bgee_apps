@@ -381,6 +381,15 @@ public class URLParameters {
             false, false, null, false, true, DEFAULT_MAX_SIZE, DEFAULT_FORMAT, 
             String.class);
 
+    /**
+     * A {@code Parameter<String>} that contains the attributes to retrieve when performing 
+     * a webservice query.
+     * Corresponds to the URL parameter "attr_list".
+     */
+    private static final Parameter<String> ATTRIBUTE_LIST = new Parameter<String>("attr_list",
+            true, false, DEFAULT_SEPARATORS, true, DEFAULT_IS_SECURE, 
+            10000, DEFAULT_LIST_FORMAT, String.class);
+
     //    /**
 //     * A {@code Parameter<Boolean>} to determine whether all anatomical structures of 
 //     * an ontology should be displayed. (and not only structures with the parent manually
@@ -440,6 +449,8 @@ public class URLParameters {
             EXPRESSION_TYPE, DATA_QUALITY, DATA_TYPE, DEV_STAGE, DECORRELATION_TYPE,
             NODE_SIZE, FDR_THRESHOLD, P_VALUE_THRESHOLD, NB_NODE, 
             GENE_INFO, ANALYSIS_ID, 
+            //DAO as webservice
+            ATTRIBUTE_LIST, 
 //            ALL_ORGANS,
 //            CHOSEN_DATA_TYPE,
 //            EMAIL,
@@ -724,6 +735,14 @@ public class URLParameters {
      */
     public Parameter<Boolean> getParamGeneInfo() {
         return GENE_INFO;
+    }
+    
+    /**
+     * @return  A {@code Parameter<String>} that contains the attributes to retrieve 
+     *          when performing a webservice query. Corresponds to the URL parameter "attr_list".
+     */
+    public Parameter<String> getParamAttributeList() {
+        return ATTRIBUTE_LIST;
     }
 
     /**

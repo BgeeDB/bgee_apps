@@ -1,5 +1,6 @@
 package org.bgee.model;
 
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
@@ -73,13 +74,13 @@ public abstract class BgeeEnum {
     }
     
     /**
-     * Convert a {@code Set} of {@code String}s into a {@code Set} of {@code BgeeEnumField}s, 
+     * Convert a {@code Collection} of {@code String}s into a {@code Set} of {@code BgeeEnumField}s, 
      * using the method {@link BgeeEnum#convert()}.
      * 
      * @param enumClass         The {@code Class} that is the {@code Enum} class 
      *                          implementing {@code BgeeEnumField}, for which we want 
      *                          to find an element corresponding to {@code representation}.
-     * @param representations   A {@code Set} of {@code String}s to be converted.
+     * @param representations   A {@code Collection} of {@code String}s to be converted.
      * @return                  The {@code Set} of {@code BgeeEnumField}s that are the 
      *                          representation of the {@code BgeeEnumField}s contained in 
      *                          {@code enums}. Can be {@code null} if {@code representations} is
@@ -88,15 +89,16 @@ public abstract class BgeeEnum {
      * @param T The type of {@code BgeeEnumField}
      */
     public static final <T extends Enum<T> & BgeeEnumField> Set<T> 
-        convertStringSetToEnumSet(Class<T> enumClass, Set<String> representations) {
+        convertStringSetToEnumSet(Class<T> enumClass, Collection<String> representations) {
         log.entry(representations);
 
         if (representations == null || representations.isEmpty()) {
             return log.exit(null);
         }
 
+        Set<String> filteredRepresentations = new HashSet<>(representations);
         Set<T> enumSet = new HashSet<>();
-        for (String repr: representations) {
+        for (String repr: filteredRepresentations) {
             T convertedRep = convert(enumClass, repr);
             enumSet.add(convertedRep);
         }
@@ -156,9 +158,13 @@ public abstract class BgeeEnum {
      * @param T The type of {@code BgeeEnumField}
      */
     public static final <T extends Enum<T> & BgeeEnumField> boolean areAllInEnum(
-            Class<T> enumClass, Set<String> representations) {
+            Class<T> enumClass, Collection<String> representations) {
         log.entry(enumClass, representations);
-        for (String representation: representations) {
+        if (representations == null) {
+            return log.exit(true);
+        }
+        Set<String> filteredRepresentations = new HashSet<>(representations);
+        for (String representation: filteredRepresentations) {
             if (!BgeeEnum.isInEnum(enumClass, representation)) {
                 return log.exit(false);
             }

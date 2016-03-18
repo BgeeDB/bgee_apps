@@ -485,9 +485,20 @@ implements ExpressionCallDAO {
         // Construct sql query
         final String exprTableName = includeSubstructures? "globalExpression": "expression";
         final String propagatedStageTableName = "propagatedStage";
+        //if no filtering based on stage ID is requested, and no group by on stage is needed, 
+        //then we don't need the join to stage table
+        final boolean realIncludeSubStages = includeSubStages && 
+                (updatedAttrs.contains(ExpressionCallDAO.Attribute.ID) || 
+                 updatedAttrs.contains(ExpressionCallDAO.Attribute.STAGE_ID) 
+                ||
+                callFilters.stream().anyMatch(
+                        callFilter -> callFilter.getConditionFilters().stream().anyMatch(
+                                condFilter -> !condFilter.getDevStageIds().isEmpty())) 
+                || 
+                groupByAttrs != null);
 
         //determine whether to use DISTINCT keyword.
-        boolean distinct = !(groupByAttrs != null || (!includeSubStages && 
+        boolean distinct = !(groupByAttrs != null || (!realIncludeSubStages && 
                 (updatedAttrs.contains(ExpressionCallDAO.Attribute.ID) || 
                 (updatedAttrs.contains(ExpressionCallDAO.Attribute.GENE_ID) && 
                  updatedAttrs.contains(ExpressionCallDAO.Attribute.ANAT_ENTITY_ID) && 
@@ -500,7 +511,7 @@ implements ExpressionCallDAO {
                     .collect(Collectors.toCollection(() -> 
                              EnumSet.noneOf(ExpressionCallDAO.Attribute.class))), 
                 distinct, groupByAttrs != null, 
-                includeSubstructures, includeSubStages, exprTableName, propagatedStageTableName);
+                includeSubstructures, realIncludeSubStages, exprTableName, propagatedStageTableName);
         
         sql += " FROM " + exprTableName;
 
@@ -508,7 +519,7 @@ implements ExpressionCallDAO {
         //to perform the query in several iterations, because includeSubStages is true 
         //and a high number of genes has to be considered. 
         boolean genesAndSpeciesFilteredForPropagation = false;
-        if (includeSubStages) {
+        if (realIncludeSubStages) {
             //propagate expression calls to parent stages.
             sql += " INNER JOIN stage ON " + exprTableName + ".stageId = stage.stageId " +
                    " INNER JOIN stage AS " + propagatedStageTableName + " ON " +
@@ -577,7 +588,7 @@ implements ExpressionCallDAO {
         String callDAOFilterClause = this.generateCallDAOFilterClause(callFilters, 
                 !globalGeneFilter, !globalSpeciesFilter, 
                 exprTableName, 
-                includeSubStages? propagatedStageTableName: exprTableName,
+                realIncludeSubStages? propagatedStageTableName: exprTableName,
                 "gene");
         if (!callDAOFilterClause.isEmpty()) {
             if (!whereClauseStarted) {
@@ -616,7 +627,7 @@ implements ExpressionCallDAO {
                     case ANAT_ENTITY_ID: 
                         return exprTableName + ".anatEntityId";
                     case STAGE_ID: 
-                        return (includeSubStages? propagatedStageTableName: exprTableName) 
+                        return (realIncludeSubStages? propagatedStageTableName: exprTableName) 
                                 + ".stageId";
                     default: 
                         throw log.throwing(new IllegalStateException("GROUP BY Attribute not supported: "
@@ -666,7 +677,7 @@ implements ExpressionCallDAO {
             
             int index = 1;
             int offsetParamIndex = 0;
-            if (includeSubStages && groupByAttrs != null && (allGeneIds.isEmpty() || 
+            if (realIncludeSubStages && groupByAttrs != null && (allGeneIds.isEmpty() || 
                     allGeneIds.size() > this.getManager().getExprPropagationGeneCount())) {
                     
                 if (!allSpeciesIds.isEmpty()) {

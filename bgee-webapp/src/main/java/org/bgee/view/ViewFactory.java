@@ -21,7 +21,7 @@ import org.bgee.controller.RequestParameters;
  * 
  * @see org.bgee.view.html.HtmlFactory
  * @see org.bgee.view.xml.XmlFactory
- * @see org.bgee.view.dsv.DsvFactory
+ * @see org.bgee.view.csv.CsvFactory
  * @see ViewFactoryProvider
  * 
  */
@@ -144,4 +144,12 @@ public abstract class ViewFactory {
      *                      response output.
      */
     public abstract SearchDisplay getSearchDisplay() throws IOException;
+
+    /**                      
+     * @return A {@code DAODisplay} instance of the appropriate display type.
+     * 
+     * @throws IOException  If an error occurs with the {@code PrintWriter} when writing the
+     *                      response output.
+     */
+    public abstract DAODisplay getDAODisplay() throws IOException;
 }

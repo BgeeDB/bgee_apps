@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.AboutDisplay;
+import org.bgee.view.DAODisplay;
 import org.bgee.view.DocumentationDisplay;
 import org.bgee.view.DownloadDisplay;
 import org.bgee.view.ErrorDisplay;
@@ -86,4 +87,10 @@ public class XmlFactory extends ViewFactory {
 	    log.entry();
 		return log.exit(new XmlSearchDisplay(this.response, this.requestParameters, this.prop, this));
 	}
+
+    @Override
+    public DAODisplay getDAODisplay() throws IOException {
+        log.entry();
+        throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
+    }
 }

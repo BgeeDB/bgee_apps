@@ -109,6 +109,11 @@ public class RequestParameters {
      * decoding query strings.
      */
     public static final String CHAR_ENCODING = "UTF-8";
+    /**
+     * A {@code String} that is a magic value to select all possible values of a parameter 
+     * accepting multiple values from an {@code Enum}.
+     */
+    public static final String ALL_VALUE = "all";
     
     /**
      * An {@code int} that is the maximum total length of the parameters, 

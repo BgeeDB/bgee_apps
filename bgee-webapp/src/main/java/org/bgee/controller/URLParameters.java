@@ -105,12 +105,6 @@ public class URLParameters {
     protected static final String DEFAULT_LIST_FORMAT = 
             "^[\\w ,.;:\\-_'@" + DEFAULT_SEPARATORS.stream()
                     .map(Pattern::quote).collect(Collectors.joining()) + "]*$";
-    
-    /**
-     * A {@code String} that is a magic value to select all possible values of a parameter 
-     * accepting multiple values from an {@code Enum}.
-     */
-    private static final String ALL_VALUE = "all";
 
     // *************************************
     //
@@ -255,10 +249,10 @@ public class URLParameters {
      */
     private static final Parameter<String> EXPRESSION_TYPE = new Parameter<String>("expr_type",
             true, false, null, true, DEFAULT_IS_SECURE, 
-            Stream.of(ALL_VALUE, CallType.Expression.EXPRESSED.getStringRepresentation(), 
+            Stream.of(RequestParameters.ALL_VALUE, CallType.Expression.EXPRESSED.getStringRepresentation(), 
                     CallType.DiffExpression.DIFF_EXPRESSED.getStringRepresentation())
                 .map(e -> e.length()).max(Comparator.naturalOrder()).get(), 
-            "(?i:" + ALL_VALUE + "|" 
+            "(?i:" + RequestParameters.ALL_VALUE + "|" 
                 + Stream.of(CallType.Expression.EXPRESSED, CallType.DiffExpression.DIFF_EXPRESSED)
                     .map(e -> e.getStringRepresentation())
                     .collect(Collectors.joining("|")) + ")", 
@@ -270,10 +264,10 @@ public class URLParameters {
      */
     private static final Parameter<String> DATA_QUALITY = new Parameter<String>("data_qual",
             false, false, null, true, DEFAULT_IS_SECURE, 
-            Math.max(ALL_VALUE.length(), EnumSet.allOf(DataQuality.class).stream()
+            Math.max(RequestParameters.ALL_VALUE.length(), EnumSet.allOf(DataQuality.class).stream()
                     .map(e -> e.getStringRepresentation().length())
                     .max(Comparator.naturalOrder()).get()), 
-            "(?i:" + ALL_VALUE + "|" + EnumSet.allOf(DataQuality.class).stream()
+            "(?i:" + RequestParameters.ALL_VALUE + "|" + EnumSet.allOf(DataQuality.class).stream()
                 .map(e -> e.getStringRepresentation())
                 .collect(Collectors.joining("|")) + ")", 
             String.class);
@@ -284,10 +278,10 @@ public class URLParameters {
      */
     private static final Parameter<String> DATA_TYPE = new Parameter<String>("data_type",
             true, false, null, true, DEFAULT_IS_SECURE, 
-            Math.max(ALL_VALUE.length(), EnumSet.allOf(DataType.class).stream()
+            Math.max(RequestParameters.ALL_VALUE.length(), EnumSet.allOf(DataType.class).stream()
                     .map(e -> e.getStringRepresentation().length())
                     .max(Comparator.naturalOrder()).get()), 
-            "(?i:" + ALL_VALUE + "|" + EnumSet.allOf(DataType.class).stream()
+            "(?i:" + RequestParameters.ALL_VALUE + "|" + EnumSet.allOf(DataType.class).stream()
                 .map(e -> e.getStringRepresentation())
                 .collect(Collectors.joining("|")) + ")", 
             String.class);
@@ -306,10 +300,10 @@ public class URLParameters {
      */
     private static final Parameter<String> DECORRELATION_TYPE = new Parameter<String>("decorr_type",
             false, false, null, true, DEFAULT_IS_SECURE, 
-            Math.max(ALL_VALUE.length(), EnumSet.allOf(DecorrelationType.class).stream()
+            Math.max(RequestParameters.ALL_VALUE.length(), EnumSet.allOf(DecorrelationType.class).stream()
                     .map(e -> e.getStringRepresentation().length())
                     .max(Comparator.naturalOrder()).get()), 
-            "(?i:" + ALL_VALUE + "|" + EnumSet.allOf(DecorrelationType.class).stream()
+            "(?i:" + RequestParameters.ALL_VALUE + "|" + EnumSet.allOf(DecorrelationType.class).stream()
                 .map(e -> e.getStringRepresentation())
                 .collect(Collectors.joining("|")) + ")", 
             String.class);

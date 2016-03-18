@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URLEncoder;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
@@ -241,6 +242,10 @@ abstract class CommandParent {
         log.entry();
         
         List<String> rqDatatypes  = this.requestParameters.getDataType();
+        if (rqDatatypes != null && 
+                rqDatatypes.size() == 1 && rqDatatypes.get(0).equals(RequestParameters.ALL_VALUE)) {
+            return log.exit(EnumSet.allOf(DataType.class));
+        }
         if (rqDatatypes != null && !BgeeEnum.areAllInEnum(DataType.class, rqDatatypes)) {
             throw log.throwing(new InvalidRequestException("Incorrect data types provided: "
                     + rqDatatypes));

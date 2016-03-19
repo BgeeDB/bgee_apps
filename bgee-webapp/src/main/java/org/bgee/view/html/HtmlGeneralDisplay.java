@@ -371,11 +371,11 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     	
         this.writeln("<div id='bgee_more_info' class='row'>");
     	
-        this.writeln("<div class='col-xs-16 col-sm-6'>");
+        this.writeln("<div class='col-xs-12 col-md-10'>");
         this.writeln(getImageSources());
         this.writeln("</div>");
 
-        this.writeln("<div class='col-xs-16 col-sm-6'>");
+        this.writeln("<div class='col-xs-12 col-md-2'>");
         this.writeln("<a id ='archive_site' title='Archive site' href='http://bgee.org/bgee/bgee' target='_blank'"
 	    		+ "title='Bgee 12 home page'>View archive site</a>");
         this.writeln("</div>");

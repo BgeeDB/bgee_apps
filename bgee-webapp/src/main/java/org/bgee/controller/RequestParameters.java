@@ -109,6 +109,11 @@ public class RequestParameters {
      * decoding query strings.
      */
     public static final String CHAR_ENCODING = "UTF-8";
+    /**
+     * A {@code String} that is a magic value to select all possible values of a parameter 
+     * accepting multiple values from an {@code Enum}.
+     */
+    public static final String ALL_VALUE = "all";
     
     /**
      * An {@code int} that is the maximum total length of the parameters, 
@@ -152,6 +157,11 @@ public class RequestParameters {
      * (see {@link URLParameters#getParamPage()}) when a page related to job management is requested.
      */
     public static final String PAGE_JOB = "job";
+    /**
+     * A {@code String} that is the value taken by the {@code page} parameter 
+     * (see {@link URLParameters#getParamPage()}) when a page related to DAO queries is requested.
+     */
+    public static final String PAGE_DAO = "dao";
 
     /**
      * A {@code String} that is the value taken by the {@code page} parameter 
@@ -2311,6 +2321,17 @@ public class RequestParameters {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
             this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_JOB)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    /**
+     * @return  A {@code boolean} to tell whether the request is related to DAO queries.
+     */
+    public boolean isDAOPageCategory() {
+        log.entry();
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
+            this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_DAO)) {
             return log.exit(true);
         }
         return log.exit(false);

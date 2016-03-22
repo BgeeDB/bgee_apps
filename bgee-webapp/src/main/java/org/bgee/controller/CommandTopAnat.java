@@ -950,7 +950,7 @@ public class CommandTopAnat extends CommandParent {
                 this.requestParameters.getBackgroundList()).orElse(new ArrayList<>())); 
         boolean hasBgList = !subBgIds.isEmpty();
     
-        // Data quality cannot be null
+        // Expr type cannot be null
         final List<String> subCallTypes = Collections.unmodifiableList(Optional.ofNullable(
                 this.requestParameters.getExprType()).orElse(new ArrayList<>()));
         if (subCallTypes.isEmpty()) {
@@ -966,23 +966,9 @@ public class CommandTopAnat extends CommandParent {
         }
         
         // Data quality can be null if there is no filter to be applied
-        final String subDataQuality = this.requestParameters.getDataQuality();
-        DataQuality dataQuality = null; 
-        if (subDataQuality != null) {
-            if (subDataQuality.equalsIgnoreCase(DataQuality.HIGH.name())) {
-                dataQuality = DataQuality.HIGH;
-            } else {
-                dataQuality = DataQuality.LOW;
-            }
-        }
-
+        DataQuality dataQuality = this.checkAndGetDataQuality();
         // Data types can be null if there is no filter to be applied
-        final List<String> subDataTypes = Collections.unmodifiableList(Optional.ofNullable(
-                this.requestParameters.getDataType()).orElse(new ArrayList<>()));
-        Set<String> dataTypes = null; 
-        if (!subDataTypes.isEmpty()) {
-            dataTypes = new HashSet<>(subDataTypes);
-        }
+        Set<DataType> dataTypes = this.checkAndGetDataTypes();
     
         // Dev. stages can be null if all selected species stages should be used
         final List<String> subDevStages = Collections.unmodifiableList(Optional.ofNullable(
@@ -1080,13 +1066,10 @@ public class CommandTopAnat extends CommandParent {
 
                 TopAnatParams.Builder builder = new TopAnatParams.Builder(
                         cleanFgIds, cleanBgIds, speciesId, callTypeEnum);
+                
                 builder.dataQuality(dataQuality);
-                if (dataTypes == null || BgeeEnum.areAllInEnum(DataType.class, dataTypes)) {
-                    builder.dataTypes(DataType.convertToDataTypeSet(dataTypes));
-                } else {
-                    throw log.throwing(new InvalidRequestException("Error in data types: " + 
-                            subDecorrType));
-                }
+                builder.dataTypes(dataTypes);
+                
                 builder.devStageId(devStageId);
                 if (BgeeEnum.isInEnum(DecorrelationType.class, subDecorrType)) {
                     builder.decorrelationType(DecorrelationType.convertToDecorrelationType(subDecorrType));

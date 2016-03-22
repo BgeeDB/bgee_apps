@@ -115,5 +115,11 @@ public class FakeFactory extends ViewFactory {
         }
         return null;
 	}
+
+    @Override
+    public DAODisplay getDAODisplay() throws IOException {
+        // TODO Auto-generated method stub
+        return null;
+    }
     
 }

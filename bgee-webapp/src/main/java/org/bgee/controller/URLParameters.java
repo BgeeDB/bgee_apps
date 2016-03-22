@@ -105,12 +105,6 @@ public class URLParameters {
     protected static final String DEFAULT_LIST_FORMAT = 
             "^[\\w ,.;:\\-_'@" + DEFAULT_SEPARATORS.stream()
                     .map(Pattern::quote).collect(Collectors.joining()) + "]*$";
-    
-    /**
-     * A {@code String} that is a magic value to select all possible values of a parameter 
-     * accepting multiple values from an {@code Enum}.
-     */
-    private static final String ALL_VALUE = "all";
 
     // *************************************
     //
@@ -255,10 +249,10 @@ public class URLParameters {
      */
     private static final Parameter<String> EXPRESSION_TYPE = new Parameter<String>("expr_type",
             true, false, null, true, DEFAULT_IS_SECURE, 
-            Stream.of(ALL_VALUE, CallType.Expression.EXPRESSED.getStringRepresentation(), 
+            Stream.of(RequestParameters.ALL_VALUE, CallType.Expression.EXPRESSED.getStringRepresentation(), 
                     CallType.DiffExpression.DIFF_EXPRESSED.getStringRepresentation())
                 .map(e -> e.length()).max(Comparator.naturalOrder()).get(), 
-            "(?i:" + ALL_VALUE + "|" 
+            "(?i:" + RequestParameters.ALL_VALUE + "|" 
                 + Stream.of(CallType.Expression.EXPRESSED, CallType.DiffExpression.DIFF_EXPRESSED)
                     .map(e -> e.getStringRepresentation())
                     .collect(Collectors.joining("|")) + ")", 
@@ -270,10 +264,10 @@ public class URLParameters {
      */
     private static final Parameter<String> DATA_QUALITY = new Parameter<String>("data_qual",
             false, false, null, true, DEFAULT_IS_SECURE, 
-            Math.max(ALL_VALUE.length(), EnumSet.allOf(DataQuality.class).stream()
+            Math.max(RequestParameters.ALL_VALUE.length(), EnumSet.allOf(DataQuality.class).stream()
                     .map(e -> e.getStringRepresentation().length())
                     .max(Comparator.naturalOrder()).get()), 
-            "(?i:" + ALL_VALUE + "|" + EnumSet.allOf(DataQuality.class).stream()
+            "(?i:" + RequestParameters.ALL_VALUE + "|" + EnumSet.allOf(DataQuality.class).stream()
                 .map(e -> e.getStringRepresentation())
                 .collect(Collectors.joining("|")) + ")", 
             String.class);
@@ -284,10 +278,10 @@ public class URLParameters {
      */
     private static final Parameter<String> DATA_TYPE = new Parameter<String>("data_type",
             true, false, null, true, DEFAULT_IS_SECURE, 
-            Math.max(ALL_VALUE.length(), EnumSet.allOf(DataType.class).stream()
+            Math.max(RequestParameters.ALL_VALUE.length(), EnumSet.allOf(DataType.class).stream()
                     .map(e -> e.getStringRepresentation().length())
                     .max(Comparator.naturalOrder()).get()), 
-            "(?i:" + ALL_VALUE + "|" + EnumSet.allOf(DataType.class).stream()
+            "(?i:" + RequestParameters.ALL_VALUE + "|" + EnumSet.allOf(DataType.class).stream()
                 .map(e -> e.getStringRepresentation())
                 .collect(Collectors.joining("|")) + ")", 
             String.class);
@@ -306,10 +300,10 @@ public class URLParameters {
      */
     private static final Parameter<String> DECORRELATION_TYPE = new Parameter<String>("decorr_type",
             false, false, null, true, DEFAULT_IS_SECURE, 
-            Math.max(ALL_VALUE.length(), EnumSet.allOf(DecorrelationType.class).stream()
+            Math.max(RequestParameters.ALL_VALUE.length(), EnumSet.allOf(DecorrelationType.class).stream()
                     .map(e -> e.getStringRepresentation().length())
                     .max(Comparator.naturalOrder()).get()), 
-            "(?i:" + ALL_VALUE + "|" + EnumSet.allOf(DecorrelationType.class).stream()
+            "(?i:" + RequestParameters.ALL_VALUE + "|" + EnumSet.allOf(DecorrelationType.class).stream()
                 .map(e -> e.getStringRepresentation())
                 .collect(Collectors.joining("|")) + ")", 
             String.class);
@@ -381,6 +375,15 @@ public class URLParameters {
             false, false, null, false, true, DEFAULT_MAX_SIZE, DEFAULT_FORMAT, 
             String.class);
 
+    /**
+     * A {@code Parameter<String>} that contains the attributes to retrieve when performing 
+     * a webservice query.
+     * Corresponds to the URL parameter "attr_list".
+     */
+    private static final Parameter<String> ATTRIBUTE_LIST = new Parameter<String>("attr_list",
+            true, false, DEFAULT_SEPARATORS, true, DEFAULT_IS_SECURE, 
+            10000, DEFAULT_LIST_FORMAT, String.class);
+
     //    /**
 //     * A {@code Parameter<Boolean>} to determine whether all anatomical structures of 
 //     * an ontology should be displayed. (and not only structures with the parent manually
@@ -440,6 +443,8 @@ public class URLParameters {
             EXPRESSION_TYPE, DATA_QUALITY, DATA_TYPE, DEV_STAGE, DECORRELATION_TYPE,
             NODE_SIZE, FDR_THRESHOLD, P_VALUE_THRESHOLD, NB_NODE, 
             GENE_INFO, ANALYSIS_ID, 
+            //DAO as webservice
+            ATTRIBUTE_LIST, 
 //            ALL_ORGANS,
 //            CHOSEN_DATA_TYPE,
 //            EMAIL,
@@ -724,6 +729,14 @@ public class URLParameters {
      */
     public Parameter<Boolean> getParamGeneInfo() {
         return GENE_INFO;
+    }
+    
+    /**
+     * @return  A {@code Parameter<String>} that contains the attributes to retrieve 
+     *          when performing a webservice query. Corresponds to the URL parameter "attr_list".
+     */
+    public Parameter<String> getParamAttributeList() {
+        return ATTRIBUTE_LIST;
     }
 
     /**

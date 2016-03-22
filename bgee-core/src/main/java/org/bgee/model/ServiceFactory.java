@@ -167,6 +167,13 @@ public class ServiceFactory implements AutoCloseable {
     }
     
     /**
+     * @return  The {@code DAOManager} used by this {@code ServiceFactory} to instantiate services.
+     */
+    public DAOManager getDAOManager() {
+        return this.daoManager;
+    }
+    
+    /**
      * Release all resources hold by this {@code ServiceFactory} (notably releasing 
      * the {@link DAOManager} used).
      */

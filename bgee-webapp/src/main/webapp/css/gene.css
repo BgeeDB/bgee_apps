@@ -91,6 +91,14 @@ td > ul {
     list-style-type: none;
 }
 
+table.dataTable.dtr-inline.collapsed.compact > tbody > tr > td:first-child::before {
+    text-indent: 4px;
+}
+
+table.dataTable.dtr-inline.collapsed > tbody > tr > td:first-child::before {
+    background-color: #920209;
+}
+
 ul.dev-stage-list {
     padding-left: 1.1em;
 }
@@ -127,8 +135,10 @@ span.expandable {
     display: none;
 }
 
-.dtr-modal ul.dev-stage-list {
+.dtr-modal ol.dev-stage-list,
+.dtr-modal ol.quality-list {
     display: inherit !important;
+    padding-left: 0px;
 }
 
 .high {

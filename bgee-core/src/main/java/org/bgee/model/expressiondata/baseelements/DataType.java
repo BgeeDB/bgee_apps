@@ -1,5 +1,6 @@
 package org.bgee.model.expressiondata.baseelements;
 
+import java.util.Collection;
 import java.util.Set;
 
 import org.bgee.model.BgeeEnum;
@@ -36,20 +37,20 @@ public enum DataType implements BgeeEnumField {
     }
     
     /**
-     * Convert the {@code Set} of {@code String}s that are string representations of data types
+     * Convert the {@code Collection} of {@code String}s that are string representations of data types
      * into a {@code Set} of {@code DataType}s.
      * Operation performed by calling {@link BgeeEnum#convertStringSetToEnumSet(Class, Set)} with 
      * {@code DataType} as the {@code Class} argument, and {@code representation} 
      * as the {@code String} argument.
      * 
-     * @param representations           A {@code Set} of {@code String}s that are string
+     * @param representations           A {@code Collection} of {@code String}s that are string
      *                                  representations of data types.
      * @return                          A {@code Set} of {@code DataType}s corresponding 
      *                                  to {@code representations}.
      * @throw IllegalArgumentException  If a representation does not correspond 
      *                                  to any {@code DataType}.
      */
-    public static final Set<DataType> convertToDataTypeSet(Set<String> representations) {
+    public static final Set<DataType> convertToDataTypeSet(Collection<String> representations) {
         return BgeeEnum.convertStringSetToEnumSet(DataType.class, representations);
     }
 }

@@ -29,25 +29,9 @@ public class XmlParentDisplay extends ConcreteDisplayParent {
 		super(response, requestParameters, prop, factory);
 	}
 
-	public void sendHeaders(boolean ajax) {
-		log.entry(ajax);
-		if (!this.headersAlreadySent) {
-			this.response.setContentType("text/xml");
-			if (ajax) {
-				this.response.setDateHeader("Expires", 1);
-				this.response.setHeader("Cache-Control", 
-						"no-store, no-cache, must-revalidate, proxy-revalidate");
-				this.response.addHeader("Cache-Control", "post-check=0, pre-check=0");
-				this.response.setHeader("Pragma", "No-cache");
-			}
-			this.headersAlreadySent = true;
-		}
-		log.exit();
-	}
-
-	protected void startDisplay(boolean ajax) {
-		log.entry(ajax);
-		this.sendHeaders(ajax);
+	protected void startDisplay() {
+		log.entry();
+		this.sendHeaders();
 		this.writeln("<?xml version='1.0' encoding='UTF-8' ?>");
 		log.exit();
 	}

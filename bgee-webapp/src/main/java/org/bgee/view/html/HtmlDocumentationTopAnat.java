@@ -91,7 +91,7 @@ public class HtmlDocumentationTopAnat extends HtmlDocumentationDownloadFile {
         this.writeln("<li><a href='?page=top_anat#/result/7919f27d143667bc6c137401ce0c91b51e257538' "
         		+ "title='TopAnat example'>Mouse genes mapped to the GO term \"spermatogenesis\"</a>.</li>");
         this.writeln("<li><a href='?page=top_anat#/result/8fce889da7b4519c5792573ed3933032c8122819' "
-                + "title='TopAnat example'>Human genes involved in autism and epilepsy, with decorrelation'</a>.</li>");
+                + "title='TopAnat example'>Human genes involved in autism and epilepsy, with decorrelation</a>.</li>");
         this.writeln("<li><a href='?page=top_anat#/result/e37009ba698919c75d06e81b3eca5d48f78210a0' "
         		+ "title='TopAnat example'>Mouse genes mapped to the GO term \"neurological system process\", "
         		+ "with decorrelation and high quality data only</a>.</li>");

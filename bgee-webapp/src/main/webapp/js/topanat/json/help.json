@@ -34,5 +34,25 @@
 {
     "topic": "job name",
     "help": "Title or short description of an analysis (Optional)."
+},
+{
+    "topic": "Example 1",
+    "help": "Mouse genes mapped to the GO term \"spermatogenesis\"."
+},
+{
+    "topic": "Example 2",
+    "help": "Human genes involved in autism and epilepsy."
+},
+{
+    "topic": "Example 3",
+    "help": "Mouse genes mapped to the GO term \"neurological system process\"."
+},
+{
+    "topic": "Example 4",
+    "help": "Cow genes with the keyword \"muscle\" in their UniProtKB/Swiss-Prot description."
+},
+{
+    "topic": "Example 5",
+    "help": "Platypus genes located on X chromosome."
 }
 ]

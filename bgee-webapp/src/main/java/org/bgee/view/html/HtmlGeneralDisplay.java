@@ -302,6 +302,8 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	    
 	    this.writeln("<div class='panel-body'>");
         
+        this.writeOneNews("2016-03-22", "Various improvements of our new interface.");
+        
         this.writeOneNews("2016-03-09", "Release of our new <a href='" + urlGenePage.getRequestURL()
                           + "'>gene page</a>, allowing to discover the most relevant conditions where a gene is expressed. "
                           + "This update also includes an important revamping of our interfaces.");
@@ -314,7 +316,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	                      + "for gene expression enrichment analyses: <a href='" + urlTopAnat.getRequestURL()
 	                      + "' title='Perform gene expression enrichment tests with TopAnat'>TopAnat</a>. "
 	                      + "This is a tool with absolutely no equivalent, developped in collaboration with "
-	                      + "the Web-Team  of the Swiss Institute of Bioinformatics. Check it out!");
+	                      + "the Web-Team  of the SIB Swiss Institute of Bioinformatics. Check it out!");
 	    this.writeOneNews("2015-08-26", "update of the home page.");
 	    
 	    this.writeOneNews("2015-06-08", "release of Bgee release 13.1: "
@@ -371,11 +373,11 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     	
         this.writeln("<div id='bgee_more_info' class='row'>");
     	
-        this.writeln("<div class='col-xs-16 col-sm-6'>");
+        this.writeln("<div class='col-xs-12 col-md-10'>");
         this.writeln(getImageSources());
         this.writeln("</div>");
 
-        this.writeln("<div class='col-xs-16 col-sm-6'>");
+        this.writeln("<div class='col-xs-12 col-md-2'>");
         this.writeln("<a id ='archive_site' title='Archive site' href='http://bgee.org/bgee/bgee' target='_blank'"
 	    		+ "title='Bgee 12 home page'>View archive site</a>");
         this.writeln("</div>");

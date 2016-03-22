@@ -302,6 +302,8 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 	    
 	    this.writeln("<div class='panel-body'>");
         
+        this.writeOneNews("2016-03-22", "Various improvements of our new interface.");
+        
         this.writeOneNews("2016-03-09", "Release of our new <a href='" + urlGenePage.getRequestURL()
                           + "'>gene page</a>, allowing to discover the most relevant conditions where a gene is expressed. "
                           + "This update also includes an important revamping of our interfaces.");

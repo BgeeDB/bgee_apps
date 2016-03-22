@@ -6,8 +6,8 @@ html, body {
 }
 
 /*
-bootstrap.css defines this property, and I guess we cannot simply override it.
-So we include it from scratch in all our pages, to adapt element sizes to it.
+bootstrap.css defines this property, and I guess we cannot simply override it. 
+So we include it from scratch in all our pages, to adapt element sizes to it. 
 */
 * {
     box-sizing: border-box;
@@ -45,7 +45,7 @@ nav img {
 }
 
 nav img.social-img {
-    width: 19px;
+    width: 19px;   
     height: 19px;
 }
 
@@ -154,7 +154,7 @@ nav img.social-img {
 #sib_body h2 {
     margin: 1em 0 1em 0;
     font-size: 1.2em;
-    width: 100%;
+    width: 100%; 
     border-top: 0;
     border-left: 0;
     border-right: 0;
@@ -224,7 +224,7 @@ span.header_details {
 }
 
 .feature_list figure {
-    vertical-align: top;
+    vertical-align: top; 
 }
 
 .feature_list figcaption {
@@ -245,8 +245,8 @@ span.header_details {
     box-shadow: 0px 0px 10px 4px #920209;
 }
 
-/* TODO: how to make sure that, when one of the figcaption is too long
-and uses 2 lines, but not the others, all the p elements below the figcaptions
+/* TODO: how to make sure that, when one of the figcaption is too long 
+and uses 2 lines, but not the others, all the p elements below the figcaptions 
 have the same vertical alignment?*/
 .feature_list p {
     margin-left: auto;
@@ -475,7 +475,7 @@ img.ajax_waiting {
 
 /**** SPECIES SECTION ****/
 /** All following properties are commons to home and download pages. **/
-
+             
 div.bgee_download_section figcaption p {
     color: #515151;
     font-size: 0.75em;
@@ -513,7 +513,7 @@ div.bgee_download_section figure.selected {
 #bgee_uniq_species figure:not(.selected) img.species_img:hover {
     box-shadow: 0px 0px 10px 4px #920209;
  }
-
+  
 /**** BGEE DATASELECTION (banner) ****/
 #bgee_data_selection {
     position: relative;
@@ -560,19 +560,19 @@ div.bgee_download_section figure.selected {
     list-style-image: url(../img/arrow.png);
     margin: 0;
 }
-
+  
 #bgee_data_selection li {
     display: inline;
     max-width: 400px;
 }
-
+ 
 #bgee_data_selection li img.bullet_point {
     width: 25px;
     height: 15px;
     margin: 0px 5px 5px 0;
 }
-
-#bgee_data_selection_cross {
+ 
+ #bgee_data_selection_cross {
     position: absolute;
     top: 10px;
     right: 10px;
@@ -584,16 +584,16 @@ div.bgee_download_section figure.selected {
     height: 20px !important;
     width: 20px !important;
 }
-
+ 
 #bgee_data_selection a.data_page_link {
     color: #AAA;
 }
-
+ 
 #bgee_data figure.selected,
 #bgee_uniq_species figure.selected {
 	padding: 0px;
 }
-
+ 
 #bgee_data figure.selected p,
 #bgee_uniq_species figure.selected p {
     color: #282828;

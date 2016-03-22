@@ -70,7 +70,7 @@ h1 img {
     z-index: 10;
     display: none;
     background-repeat: no-repeat;
-    background-size: 9px;
+    background-size: 9px; 
 }
 
 #bgee_more_results_up {
@@ -95,7 +95,7 @@ figure.highlight {
     border-radius: 12px;
     padding: 0px;
 }
-
+    
 #bgee_uniq_species figure.highlight figcaption p, #bgee_multi_species figure.highlight figcaption {
     color: #DBDBDB;
 }
@@ -142,7 +142,7 @@ p.file_info a:hover {
 }
 #bgee_data_selection_img {
     max-width: 290px;
-    max-height: 290px;
+    max-height: 290px;    
 }
 @media ( max-width : 767px) {
 	#bgee_data_selection_img {
@@ -151,8 +151,8 @@ p.file_info a:hover {
 }
 
 #bgee_data_selection_img img {
-    width: 100%;
-    height: auto;
+    width: 100%; 
+    height: auto; 
     display: block;
     position: relative;
     float: left;
@@ -181,7 +181,7 @@ p.file_info a:hover {
     #bgee_data_selection_text div.bgee_download_file_buttons {
         margin: 0;
         padding: 0;
-    }
+    }	
 }
 
 #sib_body .download_link, #bgee_data_selection p.no_data {
@@ -236,7 +236,7 @@ p.file_info a:hover {
 div.header_table table {
     display: block;
     width: 500px;
-    overflow-y: scroll;
+    overflow-y: scroll;    
     font-size: 0.7em;
     margin: 0.4em 0 0 0;
 	border-collapse: collapse;

@@ -1,5 +1,10 @@
 package org.bgee.model.dao.api;
 
+import java.math.BigDecimal;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,14 +33,9 @@ import org.bgee.model.dao.api.keyword.KeywordDAO.KeywordTO;
 import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTO;
 import org.bgee.model.dao.api.ontologycommon.EvidenceOntologyDAO.ECOTermTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
+import org.bgee.model.dao.api.source.SourceDAO.SourceTO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
-
-import java.math.BigDecimal;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
 
 
 /**
@@ -49,10 +49,10 @@ import java.util.Objects;
  * <p>
  * Methods of this class are tested in {@link TOComparatorTest}.
  * 
- * @author Valentine Rech de Laval
- * @author Frederic Bastian
- * @version Bgee 13
- * @since Bgee 13
+ * @author  Valentine Rech de Laval
+ * @author  Frederic Bastian
+ * @version Bgee 13, Mar. 2016
+ * @since   Bgee 13
  */
 public class TOComparator {
 
@@ -168,6 +168,8 @@ public class TOComparator {
             return log.exit(areTOsEqual((SpeciesDataGroupTO) to1,(SpeciesDataGroupTO) to2, compareId));
         } else if (to2 instanceof SpeciesToDataGroupTO) {
             return log.exit(areTOsEqual((SpeciesToDataGroupTO) to1,(SpeciesToDataGroupTO) to2));
+        } else if (to2 instanceof SourceTO) {
+            return log.exit(areTOsEqual((SourceTO) to1, (SourceTO) to2, compareId));
         }
 
         throw log.throwing(new IllegalArgumentException("There is no comparison method " +
@@ -937,6 +939,35 @@ public class TOComparator {
         log.entry(to1, to2);
         if (StringUtils.equals(to1.getEntityId(), to2.getEntityId()) &&
                 StringUtils.equals(to1.getKeywordId(), to2.getKeywordId())) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
+     * Method to compare two {@code SourceTO}s, to check for complete equality of each attribute. 
+     * 
+     * @param to1       A {@code SourceTO} to be compared to {@code to2}.
+     * @param to2       A {@code SourceTO} to be compared to {@code to1}.
+     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be 
+     *                  used for comparisons. 
+     * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
+     */
+    private static boolean areTOsEqual(SourceTO to1, SourceTO to2, boolean compareId) {
+        log.entry(to1, to2);
+                
+        if (TOComparator.areEntityTOsEqual(to1, to2, compareId) && 
+                StringUtils.equals(to1.getXRefUrl(), to2.getXRefUrl()) &&
+                StringUtils.equals(to1.getExperimentUrl(), to2.getExperimentUrl()) &&
+                StringUtils.equals(to1.getEvidenceUrl(), to2.getEvidenceUrl()) &&
+                StringUtils.equals(to1.getBaseUrl(), to2.getBaseUrl()) &&
+                (to1.getReleaseDate() == to2.getReleaseDate() ||
+                    (to1.getReleaseDate() != null && to1.getReleaseDate().equals(to2.getReleaseDate()))) &&
+                StringUtils.equals(to1.getReleaseVersion(), to2.getReleaseVersion()) &&
+                to1.isToDisplay() == to2.isToDisplay() &&
+                to1.getSourceCategory() == to2.getSourceCategory() &&
+                (to1.getDisplayOrder() == to2.getDisplayOrder() ||
+                    (to1.getDisplayOrder() != null && to1.getDisplayOrder().equals(to2.getDisplayOrder())))) {
             return log.exit(true);
         }
         return log.exit(false);

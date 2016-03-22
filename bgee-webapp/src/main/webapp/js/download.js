@@ -2,13 +2,13 @@
  * This code is loaded and run along with the download page to handle
  * the user's actions, to proceed to the search and update the display.
  * It is run when the document is fully loaded by using the jQuery method ready()
- *
+ * 
  * @author Mathieu Seppey
  * @author Valentine Rech de Laval
  * @version Bgee 13, Jul 2014
  */
 //Declaration of an object literal to contain the download page specific code.
-//XXX: Should we let this code generate URL by using RequestParameters, or should all URLs
+//XXX: Should we let this code generate URL by using RequestParameters, or should all URLs 
 //used to generate links provided server-side? (notably, documentation links)
 var download = {
         // Declaration of the variables used throughout the download page and accessible
@@ -36,7 +36,7 @@ var download = {
         $exprCompleteCsv: null,
         $diffExprAnatomyData: null,
         $diffExprAnatomySimpleCsv: null,
-        $diffExprAnatomyCompleteCsv: null,
+        $diffExprAnatomyCompleteCsv: null,   
         $diffExprDevelopmentData: null,
         $diffExprDevelopmentSimpleCsv: null,
         $diffExprDevelopmentCompleteCsv: null,
@@ -100,9 +100,9 @@ var download = {
             this.$bgeeDataSelection = $( "#bgee_data_selection" );
             this.$bgeeDataSelectionCross = $( "#bgee_data_selection_cross" );
             this.$bgeeDataSelectionImg = $( "#bgee_data_selection_img" );
-            this.$bgeeDataSelectionTextScientific =
+            this.$bgeeDataSelectionTextScientific = 
                 $( "#bgee_data_selection_text span.scientificname" );
-            this.$bgeeDataSelectionTextCommon =
+            this.$bgeeDataSelectionTextCommon = 
                 $( "#bgee_data_selection_text span.commonname" );
             this.$switchPageLink = $( "#switch_page_link" );
             this.$bgeeGroupDescription = $( "#bgee_data_selection_text p.groupdescription" );
@@ -112,11 +112,11 @@ var download = {
             this.$exprButtons = $( "#expr_buttons" );
             this.$exprSimpleData = $( "#expr_data" );
             this.$exprSimpleCsv = $( "#expr_simple_csv" );
-            this.$exprCompleteCsv = $( "#expr_complete_csv" );
+            this.$exprCompleteCsv = $( "#expr_complete_csv" );        
             this.$diffExprAnatomyButtons = $( "#diffexpr_anatomy_buttons" );
             this.$diffExprAnatomyData = $( "#diffexpr_anatomy_data" );
             this.$diffExprAnatomySimpleCsv = $( "#diffexpr_anatomy_simple_csv" );
-            this.$diffExprAnatomyCompleteCsv = $( "#diffexpr_anatomy_complete_csv" );
+            this.$diffExprAnatomyCompleteCsv = $( "#diffexpr_anatomy_complete_csv" );   
             this.$diffExprDevelopmentButtons = $( "#diffexpr_stage_buttons" );
             this.$diffExprDevelopmentData = $( "#diffexpr_development_data" );
             this.$diffExprDevelopmentSimpleCsv = $( "#diffexpr_development_simple_csv" );
@@ -156,7 +156,7 @@ var download = {
             this.$showSingleSimpleDiffexprDevelopmentHeaders = $( "#show_single_simple_diffexpr_development_headers" );
             this.$showSingleCompleteDiffexprDevelopmentHeaders = $( "#show_single_complete_diffexpr_development_headers" );
             this.$showOrthologsHeaders = $( "#show_ortholog_headers" );
-            // No data
+            // No data 
             this.$exprNoData = $( "#expr_no_data" );
             this.$diffExprAnatomyNoData = $( "#diffexpr_anatomy_no_data" );
             this.$diffExprDevelopmentNoData = $( "#diffexpr_development_no_data" );
@@ -169,7 +169,7 @@ var download = {
             // Creative commons
             this.$creativeCommonsTitleLink =  $( "#creativecommons_title a");
             this.$creativeCommons = $( "#creativecommons" );
-            // Initialize the values that have to be dynamically set, i.e. ids and search content
+            // Initialize the values that have to be dynamically set, i.e. ids and search content  
             this.generateSearchableContent();
             // Add the event listeners to all elements that have a dynamic behavior
 
@@ -179,7 +179,7 @@ var download = {
         		ga ('send', 'event', 'link', 'click', $( this ).attr("href"));
             });
 
-            // Add a click listener to every species/group to load the corresponding details
+            // Add a click listener to every species/group to load the corresponding details 
             // or to hide it if already displayed
             this.$species.click(function() {
                 download.toggleDetail( $( this ) );
@@ -205,7 +205,7 @@ var download = {
                 download.$bgeeMoreResultsUp.hide();
                 download.$bgeeMoreResultsDown.hide();
                 $( ".highlight" ).each(function() {
-                    if(! $( this ).visible( true,false,"vertical" ) ){ // the first true asks for
+                    if(! $( this ).visible( true,false,"vertical" ) ){ // the first true asks for 
                         if( $( this ).offset().top > position ){       // completely hidden elements
                             download.$bgeeMoreResultsDown.show();
                         } else if( $( this ).offset().top < position ){
@@ -237,14 +237,14 @@ var download = {
                     $( this ).text($( this ).text().replace( "Show","Hide" ));
                 }
             });
-
-            // For each links with show-header class,
-            // we add listener to show/hide headers and toggle plus/minus src, title and alt image.
+            
+            // For each links with show-header class, 
+            // we add listener to show/hide headers and toggle plus/minus src, title and alt image.          
             $( "a.show-header" ).each(function() {
                 $( this ).click( function(){
                 	var headerTableId = $( this ).attr( "id" ).replace( "show_" , "" );
                 	$( "#" + headerTableId ).toggle( "blind" );
-
+                	
                 	var source =  $( this ).find( "img" ).attr( "src" );
                 	var title = $( this ).find( "img" ).attr( "title" );
                 	var alt = $( this ).find( "img" ).attr( "alt" );
@@ -278,10 +278,10 @@ var download = {
             // Read the id in the this.hash of the URL and load the corresponding details if present
             this.hash = window.location.hash;
             if( this.hash.slice( 0, 3 ) == "#id" ){
-                var speciesId = this.hash.substr( 3 ); // Remove "id" before the real id that was
+                var speciesId = this.hash.substr( 3 ); // Remove "id" before the real id that was 
                 // added to avoid the automatic anchor behavior
             }
-            if( speciesId ){
+            if( speciesId ){                                  
                 var $currentSpecies = $( "#"+speciesId );
                 if( $currentSpecies.length > 0 ){
                     this.loadDetails( $currentSpecies );
@@ -295,7 +295,7 @@ var download = {
          */
         toggleDetail: function( $species ){
             if($species.hasClass( "selected" )){
-                this.closeDetailBox();
+                this.closeDetailBox(); 
             }
             else{
                 this.loadDetails( $species );
@@ -304,7 +304,7 @@ var download = {
                 //(see https://developers.google.com/analytics/devguides/collection/analyticsjs/events)
                 var name = speciesData[$species.attr("id")].name;
                 ga ('send', 'event', 'detailbox', 'click', name);
-            }
+            }        
         },
 
         /**
@@ -322,9 +322,9 @@ var download = {
         closeDetailBox: function(){
             this.$species.removeClass( "selected" );
             this.$bgeeDataSelection.hide( "blind" );
-            //we don't put just an empty hash, otherwise it jumps to the top
+            //we don't put just an empty hash, otherwise it jumps to the top 
             //of the document
-            window.location.hash = "!";
+            window.location.hash = "!";   
         },
 
 		/**
@@ -338,7 +338,7 @@ var download = {
         		}
         	}
         },
-
+        
         /**
         * Returns the formatted size for the file of the given category (undefined if no file found)
         */
@@ -361,12 +361,12 @@ var download = {
         		}
         	}
         },
-
+        
 
         /**
          * This function update and display the detail box for the species or group provided
-         *
-         * @param $currentSpecies    The DOM element <figure> that contains the species or group
+         * 
+         * @param $currentSpecies    The DOM element <figure> that contains the species or group 
          *                           to be loaded
          */
         loadDetails: function( $currentSpecies ){
@@ -374,53 +374,53 @@ var download = {
             // Fetch all DOM elements and values needed to update the display
             var id = $currentSpecies.attr( "id" );
             // Generate value for the hash.
-            // Add "id" in front to avoid the automatic anchor behavior
+            // Add "id" in front to avoid the automatic anchor behavior 
             //that would mess up the scroll
-            //TODO: this should be a proper data parameter stored in hash,
+            //TODO: this should be a proper data parameter stored in hash, 
             //like, e.g., species_id=id
             var hashToUse = "id"+id
-
+            
             //manage link to processed vaulues/gene expression calls
             var requestSwitchPage = new requestParameters();
             requestSwitchPage.setURLHash(hashToUse);
-
+            
         	if ( this.$exprCalls.length > 0 ) {
-        		requestSwitchPage.addValue(urlParameters.getParamPage(),
+        		requestSwitchPage.addValue(urlParameters.getParamPage(), 
         				requestSwitchPage.PAGE_DOWNLOAD());
-        		requestSwitchPage.addValue(urlParameters.getParamAction(),
+        		requestSwitchPage.addValue(urlParameters.getParamAction(), 
         				requestSwitchPage.ACTION_DOWLOAD_PROC_VALUE_FILES());
         		this.$switchPageLink.text( "See processed expression values" );
         	} else if ( this.$refExpr.length > 0 ) {
-        		requestSwitchPage.addValue(urlParameters.getParamPage(),
+        		requestSwitchPage.addValue(urlParameters.getParamPage(), 
         				requestSwitchPage.PAGE_DOWNLOAD());
-        		requestSwitchPage.addValue(urlParameters.getParamAction(),
+        		requestSwitchPage.addValue(urlParameters.getParamAction(), 
         				requestSwitchPage.ACTION_DOWLOAD_CALL_FILES());
-        		this.$switchPageLink.text( "See gene expression calls" );
+        		this.$switchPageLink.text( "See gene expression calls" );    
         	}
-        	this.$switchPageLink.attr( "href",
+        	this.$switchPageLink.attr( "href", 
         			requestSwitchPage.getRequestURL());
-
+            
             var species = null, bgeeSpeciesCommonNames =null, bgeeSpeciesName = null;
-        	var groupData = speciesData[id];
+        	var groupData = speciesData[id];	
         	// Get files urls for the current species/group
             var files = groupData.downloadFiles;
             var bgeeIsGroup = groupData.members.length > 1;
             var bgeeGroupName = groupData.name;
-
+            
             if (!bgeeIsGroup) {
             	 species = groupData.members[0]
             	 bgeeSpeciesCommonNames = species.name;
             	 bgeeSpeciesName = species.genus +" " +species.speciesName;
-
+                
             }
         	 var $images = $currentSpecies.find( ".species_img" );
-
+             
              // there are multiple images, in the case of group, but the field is not used in this case,
-             // so no need to care about
-
+             // so no need to care about 
+             
             var getUrlForFileCategory = download.getUrlForFileCategory;
             var getSizeForFileCategory = download.getSizeForFileCategory;
-
+          
             //var bgeeOrthologFileUrl = $currentSpecies.data( "bgeeorthologfileurl" );
             var bgeeOrthologFileUrl = getUrlForFileCategory(files, "ortholog");
             //var bgeeExprSimpleFileUrl = $currentSpecies.data( "bgeeexprsimplefileurl" );
@@ -439,7 +439,7 @@ var download = {
             var bgeeDiffExprAnatomyCompleteFileSize = getSizeForFileCategory(files, "diff_expr_anatomy_complete");
             var bgeeDiffExprDevelopmentSimpleFileSize = getSizeForFileCategory(files, "diff_expr_dev_simple");
             var bgeeDiffExprDevelopmentCompleteFileSize = getSizeForFileCategory(files, "diff_expr_dev_complete");
-
+            
            // RNA-Seq processed expression values
             var bgeeRnaSeqDataFileUrl = getUrlForFileCategory(files, "rnaseq_data");
             var bgeeRnaSeqAnnotFileUrl = getUrlForFileCategory(files, "rnaseq_annot");
@@ -453,7 +453,7 @@ var download = {
             var bgeeAffyDataRootURL = getUrlForFileCategory(files, "affy_root");
             var bgeeAffyDataFileSize = getSizeForFileCategory(files, "affy_data");
             var bgeeAffyAnnotFileSize = getSizeForFileCategory(files, "affy_annot");
-
+            
             // In situ processed expression values
             var bgeeInSituDataFileUrl = $currentSpecies.data( "bgeeinsitudatafileurl" );
             var bgeeInSituAnnotFileUrl = $currentSpecies.data( "bgeeinsituannotfileurl" );
@@ -480,11 +480,11 @@ var download = {
                 download.$bgeeDataSelectionImg.append( $newElement );
                 // Calculate the height so it would allow the images to fit into the space.
                 // Divide the height by 1 for 1 image, by 2 for 2,3,4 img, by 3 for 5,6,7,8,9 and etc.
-                var newHeight = 100 / ( Math.ceil( Math.sqrt( numberOfSpecies ) ) );
+                var newHeight = 100 / ( Math.ceil( Math.sqrt( numberOfSpecies ) ) ); 
                 // Assume that the image is a square, so height and width are the same
-                $newElement.css( "height" , newHeight + "%" ).css( "width" , newHeight + "%" );
+                $newElement.css( "height" , newHeight + "%" ).css( "width" , newHeight + "%" ); 
                 // Add the species short name to the name of all species field
-
+                
                 namesOfAllSpecies = namesOfAllSpecies + $( this ).attr("alt") + ", ";
             });
             namesOfAllSpecies = namesOfAllSpecies.slice( 0, - 2 ); // Remove the extra ' ,'
@@ -501,24 +501,24 @@ var download = {
                 this.$showSingleCompleteDiffexprAnatomyHeaders.hide();
                 if ( this.$exprCalls.length > 0 ) {
                     var urlDoc = new requestParameters();
-                    urlDoc.addValue(urlParameters.getParamPage(),
+                    urlDoc.addValue(urlParameters.getParamPage(), 
                     		urlDoc.PAGE_DOCUMENTATION());
-                    urlDoc.addValue(urlParameters.getParamAction(),
+                    urlDoc.addValue(urlParameters.getParamAction(), 
                     		urlDoc.ACTION_DOC_CALL_DOWLOAD_FILES());
                     urlDoc.setURLHash(urlDoc.HASH_DOC_CALL_MULTI());
                 	this.$exprHelp.attr( "href", urlDoc.getRequestURL());
                 	this.$diffDevHelp.attr( "href", urlDoc.getRequestURL());
                 	this.$diffAnatHelp.attr( "href", urlDoc.getRequestURL());
-
+                	
                 	urlDoc.setURLHash(urlDoc.HASH_DOC_CALL_OMA());
                 	this.$orthologsHelp.attr( "href", urlDoc.getRequestURL());
-
-                }
+                	
+                } 
             } else {
             	this.$switchPageLink.show();
                 this.$bgeeDataSelectionTextScientific.text( bgeeSpeciesName );
-                //we display the group name as subtitle rather than the species common name,
-                //because we used to have incorrect common names at some point,
+                //we display the group name as subtitle rather than the species common name, 
+                //because we used to have incorrect common names at some point, 
                 //and because this allows more flexibility (e.g. "human including GTEx data")
                 this.$bgeeDataSelectionTextCommon.text( "("+ bgeeGroupName +")" );
                 this.$bgeeGroupDescription.text( "" );
@@ -528,11 +528,11 @@ var download = {
                 this.$showSingleCompleteDiffexprAnatomyHeaders.show();
                 if ( this.$exprCalls.length > 0 ) {
                 	var urlDoc = new requestParameters("", true, "&");
-                    urlDoc.addValue(urlParameters.getParamPage(),
+                    urlDoc.addValue(urlParameters.getParamPage(), 
                     		urlDoc.PAGE_DOCUMENTATION());
-                    urlDoc.addValue(urlParameters.getParamAction(),
+                    urlDoc.addValue(urlParameters.getParamAction(), 
                     		urlDoc.ACTION_DOC_CALL_DOWLOAD_FILES());
-
+                    
                     urlDoc.setURLHash(urlDoc.HASH_DOC_CALL_SINGLE_EXPR());
                 	this.$exprHelp.attr( "href", urlDoc.getRequestURL());
                 	urlDoc.setURLHash(urlDoc.HASH_DOC_CALL_SINGLE_DIFF());
@@ -540,12 +540,12 @@ var download = {
                 	this.$diffAnatHelp.attr( "href", urlDoc.getRequestURL());
                 }
             }
-
+            
             // Hide all header table to hide tables already opened in another detail box (banner)
             $( ".header_table" ).each(function() {
                 $( this ).hide();
             });
-
+            
             // Reset all header details to plus image
             $( "a.show-header img.details" ).each(function() {
             	$( this ).attr( "src" , GLOBAL_PROPS.getImgURLStart() + "plus.png" );
@@ -585,16 +585,16 @@ var download = {
 
             // Differential expression - anatomy comparison
             if (bgeeDiffExprAnatomySimpleFileUrl === undefined) {
-            	this.$diffExprAnatomyData.hide();
+            	this.$diffExprAnatomyData.hide(); 
             	this.$diffExprAnatomyNoData.show();
             } else {
-            	this.$diffExprAnatomyData.show();
+            	this.$diffExprAnatomyData.show(); 
             	this.$diffExprAnatomyNoData.hide();
             	this.$diffExprAnatomySimpleCsv.attr( "href", bgeeDiffExprAnatomySimpleFileUrl );
             	this.$diffExprAnatomyCompleteCsv.attr( "href", bgeeDiffExprAnatomyCompleteFileUrl );
-            	this.$diffExprAnatomySimpleCsv.text(
+            	this.$diffExprAnatomySimpleCsv.text( 
             			"Download simple file (" + bgeeDiffExprAnatomySimpleFileSize + ")" );
-            	this.$diffExprAnatomyCompleteCsv.text(
+            	this.$diffExprAnatomyCompleteCsv.text( 
             			"Download complete file (" + bgeeDiffExprAnatomyCompleteFileSize + ")" );
             }
 
@@ -611,23 +611,23 @@ var download = {
                 }
             } else {
             	this.$diffExprDevelopmentButtons.show();
-            	this.$diffExprDevelopmentData.show();
+            	this.$diffExprDevelopmentData.show(); 
             	this.$diffDevHelp.show();
             	this.$diffExprDevelopmentNoData.hide();
             	this.$diffExprDevelopmentSimpleCsv.attr( "href", bgeeDiffExprDevelopmentSimpleFileUrl );
             	this.$diffExprDevelopmentCompleteCsv.attr( "href", bgeeDiffExprDevelopmentCompleteFileUrl );
-            	this.$diffExprDevelopmentSimpleCsv.text(
+            	this.$diffExprDevelopmentSimpleCsv.text( 
             			"Download simple file (" + bgeeDiffExprDevelopmentSimpleFileSize + ")" );
-            	this.$diffExprDevelopmentCompleteCsv.text(
+            	this.$diffExprDevelopmentCompleteCsv.text( 
             			"Download complete file (" + bgeeDiffExprDevelopmentCompleteFileSize + ")" );
             }
-
+            
             // RNA-Seq processed expression values
             if (!this.$refExpr.length || bgeeRnaSeqDataFileUrl === undefined) {
-            	this.$rnaSeqData.hide();
+            	this.$rnaSeqData.hide(); 
             	this.$rnaSeqNoData.show();
             } else {
-            	this.$rnaSeqData.show();
+            	this.$rnaSeqData.show(); 
             	this.$rnaSeqNoData.hide();
             	this.$rnaSeqDataCsv.attr( "href", bgeeRnaSeqDataFileUrl );
             	this.$rnaSeqAnnotCsv.attr( "href", bgeeRnaSeqAnnotFileUrl );
@@ -638,10 +638,10 @@ var download = {
 
             // Affymetrix processed expression values
             if (!this.$refExpr.length || bgeeAffyDataFileUrl === undefined) {
-            	this.$affyData.hide();
+            	this.$affyData.hide(); 
             	this.$affyNoData.show();
             } else {
-            	this.$affyData.show();
+            	this.$affyData.show(); 
             	this.$affyNoData.hide();
             	this.$affyDataCsv.attr( "href", bgeeAffyDataFileUrl );
             	this.$affyAnnotCsv.attr( "href", bgeeAffyAnnotFileUrl );
@@ -652,11 +652,11 @@ var download = {
 
             // In situ processed expression values
             if (!this.$refExpr.length || bgeeInSituDataFileUrl === undefined) {
-            	this.$inSituData.hide();
+            	this.$inSituData.hide(); 
             	this.$inSituNoData.hide();
             	//TODO remove when in situ data files are computed
             } else {
-            	this.$inSituData.show();
+            	this.$inSituData.show(); 
             	this.$inSituNoData.hide();
             	this.$inSituDataCsv.attr( "href", bgeeInSituDataFileUrl );
             	this.$inSituAnnotCsv.attr( "href", bgeeInSituAnnotFileUrl );
@@ -666,11 +666,11 @@ var download = {
 
             // EST processed expression values
             if (!this.$refExpr.length || bgeeEstDataFileUrl === undefined) {
-            	this.$estData.hide();
+            	this.$estData.hide(); 
             	this.$estNoData.hide();
             	//TODO remove when EST data files are computed
             } else {
-            	this.$estData.show();
+            	this.$estData.show(); 
             	this.$estNoData.hide();
             	this.$estDataCsv.attr( "href", bgeeEstDataFileUrl );
             	this.$estAnnotCsv.attr( "href", bgeeEstAnnotFileUrl );
@@ -678,14 +678,14 @@ var download = {
             	this.$estAnnotCsv.text( "Download annotation file (" + bgeeEstAnnotFileSize + ")" );
             }
 
-            // Add the "selected" css class to the current species and display the detail
+            // Add the "selected" css class to the current species and display the detail 
             // box with a visual effect
             this.$species.removeClass( "selected" ); // Unselected all other species
             $currentSpecies.addClass( "selected" );
             // Calculate before which element the detail box has to be placed, depending on its
             // vertical position
             var yPos = $currentSpecies.position().top;
-            var $nextLineFirstElement = null; // Will contain the element before which the detail
+            var $nextLineFirstElement = null; // Will contain the element before which the detail 
             // box will be moved
             $currentSpecies.nextAll().each(function() {
                 // Find the first element that has a yPos different from the element the user clicked on
@@ -695,8 +695,8 @@ var download = {
                 }
             });
 
-            // Move the detail box, before the next line first element if it was found, else
-            // after the last element ( the click was on the last line and thus there is no
+            // Move the detail box, before the next line first element if it was found, else 
+            // after the last element ( the click was on the last line and thus there is no 
             // element on the next line )
             if( $nextLineFirstElement == null ){
                 this.$bgeeDataSelection.insertAfter( $currentSpecies.nextAll().andSelf().last() );
@@ -709,7 +709,7 @@ var download = {
             this.$bgeeDataSelection.show( 120,function() {
                 download.$container.animate({
                     scrollTop: download.$bgeeDataSelection.offset().top
-                    - download.$container.offset().top
+                    - download.$container.offset().top 
                     - (1.5 * $currentSpecies.height()) // Let a bit of space on the top to see
                     // the selected figure
                 },{duration:500}
@@ -718,12 +718,12 @@ var download = {
 
             // Update the URL with the id, to allow the link to be copied and sent
             // Add "id" in front to avoid the automatic anchor behavior that would mess up the scroll
-            window.location.hash = '#' + hashToUse;
+            window.location.hash = '#' + hashToUse; 
         },
 
         /**
          * This function highlights the elements that contain the text provided
-         *
+         * 
          * @param text    The text to search, that should come from the search box
          */
         search: function( text ) {
@@ -731,7 +731,7 @@ var download = {
             this.$species.removeClass( "highlight" );
             this.$bgeeMoreResultsDown.hide();
             if( text.length > 1 ){
-                // Add the class on all species where the text match the searchContent
+                // Add the class on all species where the text match the searchContent 
                 this.$species.each(function (){
                     for (var i = 0; i < download.searchContent[$( this ).attr( "id" )].length; i++) {
                         if (download.searchContent[$( this ).attr( "id" )][i].toLowerCase()
@@ -749,7 +749,7 @@ var download = {
             }
             $( ".highlight" ).each(function() { // Check whether all result are visible
                 if(! $( this ).visible( true,false,"vertical" ) ){
-                    download.$bgeeMoreResultsDown.show(); // If not, display the "more result"
+                    download.$bgeeMoreResultsDown.show(); // If not, display the "more result" 
                 }                                 // box on the bottom of the page
             }
             );
@@ -767,7 +767,7 @@ var download = {
             }
             this.$bgeeSearchResults.text( "" );
             this.$bgeeMoreResultsDown.hide();
-            this.$bgeeMoreResultsUp.hide();
+            this.$bgeeMoreResultsUp.hide();        
             // Remove the highlight class everywhere it could be.
             this.$species.removeClass( "highlight" );
         },

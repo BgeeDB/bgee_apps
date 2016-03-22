@@ -1,10 +1,10 @@
 angular.module('services.config', [])
     .constant('configuration', {
-    	//XXX: mockupUrl has stopped being used in all URLs, but actually, this was maybe a bad idea,
+    	//XXX: mockupUrl has stopped being used in all URLs, but actually, this was maybe a bad idea, 
     	//as it would be nice to be ale to run the computations on a different server?
-    	//If we want to resurrect this, we would need to go through all URLs used
-    	//to query the server. But maybe this should be part of a bigger update,
-    	//making use of the Bgee JS objects to generate URLs, or maybe by using URLs
+    	//If we want to resurrect this, we would need to go through all URLs used 
+    	//to query the server. But maybe this should be part of a bigger update, 
+    	//making use of the Bgee JS objects to generate URLs, or maybe by using URLs 
     	//provided by the server in the responses...
         mockupUrl: '/',
         expr_type: 'EXPRESSED',

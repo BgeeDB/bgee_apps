@@ -1164,6 +1164,13 @@ public abstract class DAOManager implements AutoCloseable
 		return log.exit(this.getNewKeywordDAO());
 	}
 	
+    /**
+     * Get a new {@link GeneNameSynonymDAO}, unless this {@code DAOManager} is already closed.
+     *
+     * @return  A new {@code GeneNameSynonymDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see GeneNameSynonymDAO
+     */
 	public GeneNameSynonymDAO getGeneNameSynonymDAO() {
 		log.entry();
 		this.checkClosed();
@@ -1460,8 +1467,7 @@ public abstract class DAOManager implements AutoCloseable
 	
 	/**
 	 * Service provider must return a new {@link GeneNameSynonymDAO} instance when this method is called
-	 * @return A new {@link KeywordDAO}
+	 * @return A new {@link GeneNameSynonymDAO}
 	 */
 	protected abstract GeneNameSynonymDAO getNewGeneNameSynonymDAO();
-
 }

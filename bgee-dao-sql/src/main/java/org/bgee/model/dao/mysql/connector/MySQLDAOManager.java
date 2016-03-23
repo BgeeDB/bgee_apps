@@ -967,8 +967,8 @@ public class MySQLDAOManager extends DAOManager {
     //******************************************
     @Override
     protected MySQLSourceDAO getNewSourceDAO() {
-        throw log.throwing(new UnsupportedOperationException("Operation not yet implemented "
-                + "in MySQLDAOManager."));
+        log.entry();
+        return log.exit(new MySQLSourceDAO(this));
     }
     @Override
     protected MySQLSpeciesDAO getNewSpeciesDAO() {

@@ -165,7 +165,7 @@ nav img.social-img {
     color: #626262;
     z-index: 1;
 }
-@media (max-width: 767px) {
+@media (max-width: 910px) {
 	#sib_body {
 	   padding-bottom: 85px;
 	}

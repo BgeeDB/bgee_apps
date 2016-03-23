@@ -11,16 +11,35 @@ import org.bgee.model.BgeeEnum.BgeeEnumField;
  * @since   Bgee 13, Mar. 2016
  */
 public enum SourceCategory implements BgeeEnumField {
-    //WARNING: these Enums must be declared in order, from the lowest quality 
-    //to the highest quality. This is because the compareTo implementation 
+    //WARNING: these Enums must be declared in order, from the most important
+    //to the less important. This is because the compareTo implementation 
     //of the Enum class will be used.
-    NONE, GENOMICS, PROTEOMICS, IN_SITU, AFFYMETRIX, EST, RNA_SEQ, ONTOLOGY;
+    GENOMICS("Genomics databases"), PROTEOMICS("Proteomics databases"),
+    RNA_SEQ("RNA-Seq data sources"), AFFYMETRIX("Affymetrix data sources"),
+    IN_SITU("In situ data sources"), EST("EST data sources"), ONTOLOGY("Ontologies"), 
+    NONE("Other sources");
 
-    @Override
-    public String getStringRepresentation() {
-        return this.name();
+    /**
+     * A {@code String} that is the name of the source category.
+     */
+    String name;
+
+    SourceCategory(String name) {
+        this.name = name;
     }
     
+    @Override
+    public String getStringRepresentation() {
+        return this.getName();
+    }
+    
+    /**
+     * @return the {@code String} that is the name of the source category.
+     */
+    public String getName() {
+        return this.name;
+    }
+
     /**
      * Convert the {@code String} representation of a source category (for instance, 
      * retrieved from request) into a {@code SourceCategory}.

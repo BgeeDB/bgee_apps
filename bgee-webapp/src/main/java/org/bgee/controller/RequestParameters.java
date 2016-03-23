@@ -170,6 +170,12 @@ public class RequestParameters {
     public static final String PAGE_GENE = "gene";
     
     /**
+     * A {@code String} that is the value taken by the {@code page} parameter 
+     * (see {@link URLParameters#getParamPage()}) when a page related to sources is requested.
+     */
+    public static final String PAGE_SOURCE = "source";
+
+    /**
      * A {@code String} that encapsulates the value of the gene id parameter for the gene page.
      */
     public static final String GENE_ID = "gene_id";
@@ -2513,11 +2519,24 @@ public class RequestParameters {
      * @return  A {@code boolean} to tell whether the request corresponds to a page of the
      * category "gene"
      */
-    public boolean isAGenePageCategory()
-    {
+    public boolean isAGenePageCategory() {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
-                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("gene")) {
+                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_GENE)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    
+    /**
+     * 
+     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+     * category "source"
+     */
+    public boolean isASourcePageCategory() {
+        log.entry();
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
+                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_SOURCE)) {
             return log.exit(true);
         }
         return log.exit(false);

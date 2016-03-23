@@ -17,6 +17,7 @@ import org.bgee.view.GeneDisplay;
 import org.bgee.view.GeneralDisplay;
 import org.bgee.view.JsonHelper;
 import org.bgee.view.SearchDisplay;
+import org.bgee.view.SourceDisplay;
 import org.bgee.view.SpeciesDisplay;
 import org.bgee.view.TopAnatDisplay;
 import org.bgee.view.ViewFactory;
@@ -115,6 +116,10 @@ public class JsonFactory extends ViewFactory {
 	public SearchDisplay getSearchDisplay() throws IOException {
         throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
 	}
+    @Override
+    public SourceDisplay getSourceDisplay() throws IOException {
+        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
+    }
     @Override
     public DAODisplay getDAODisplay() throws IOException {
         log.entry();

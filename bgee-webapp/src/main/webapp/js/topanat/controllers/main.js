@@ -55,8 +55,9 @@
         });
 
 
-        vm.isFormValidDataTypes = vm.isFormValidDevStages = 'yes';
-
+        vm.isFormValidDataTypes = vm.isFormValidDevStages = vm.hasAllSelected = 'yes';
+        vm.hasNoDevStages = vm.hasBadCombinaison = '';
+        
         vm.fileType = "";
         vm.isOpen = true;
 
@@ -140,7 +141,12 @@
         // http://stackoverflow.com/questions/14514461/how-can-angularjs-bind-to-list-of-checkbox-values
         // Moreover, the stages have to be checked once retrieved from the server
         vm.selectedDevelopmentStages = [];
-        vm.developmentStages = [];
+        var devStageAllBox = {
+                name : 'all',
+                id : 'all',
+                checked : true
+            };
+        vm.developmentStages = [devStageAllBox];
 
         vm.isBackgroundChecked = 'checked';
 
@@ -677,10 +683,22 @@
 
         vm.devStagesChecked = function() {
             console.log("vm.devStageChecked");
-            if(typeof vm.developmentStages == 'undefined'){ return [];}
+            if(typeof vm.developmentStages == 'undefined'){ return 1;}
             var checked = vm.getChecked(vm.developmentStages);
             console.log(checked);
-            vm.isFormValidDevStages = checked.length ? 'yes' : '';
+            var hasAllId = false;
+            var hasOtherIds = false;
+            for(var prop in checked) {
+            	if (prop.id === "all") {
+            		hasAllId = true;   
+            	} else {
+            		hasOtherIds = true;
+            	}
+            }
+            vm.isFormValidDevStages = ((hasAllId && !hasOtherIds) || (!hasAllId && hasOtherIds)) ? 'yes' : '';
+            vm.hasNoDevStages = (!hasAllId && !hasOtherIds) ? 'yes' : '';
+            vm.hasBadCombinaison = (hasAllId && hasOtherIds) ? 'yes' : '';
+            vm.hasAllSelected = hasAllId ? 'yes' : '';
             return checked.length;
         };
 
@@ -1430,6 +1448,13 @@
                 var stages = [];
                 var isChecked = true;
                 console.log(data.data.fg_list.stages);
+
+                stages.push({
+                    name : 'all',
+                    id : 'all',
+                    checked : true
+                });
+
                 angular.forEach(data.data.fg_list.stages, function(devStage, key){
 
 

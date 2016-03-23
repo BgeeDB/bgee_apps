@@ -268,7 +268,7 @@
                 </div>-->
             </div>
 
-            <!-- OPTIONS (DEV STAGES + EXPRESSION TYPE) -->
+            <!-- OPTIONS (EXPRESSION TYPE) -->
             <div class="col-sm-4 repeat-animation hide-fade blink_me " ng-hide="!vm.isValidSpecies">
 
                 <div class="media gl-label">
@@ -280,35 +280,28 @@
 
                 <div class="row">
                     <div class="col-md-6">
-                        <span class="smallest_head" >Development stages</span>
-                        <div ng-repeat="(key, stage) in vm.developmentStages" class="checkbox checkbox-primary" style="padding: 0 0 0 15px;">
-                            <label ng-class="{'highlighted': !stage.checked}" class="checklist-label">
-                                <input type="checkbox" ng-model="stage.checked"
-                                       ng-change="vm.devStagesChecked()"
-                                       ng-disabled="vm.formSubmitted">
-                                {{stage.name}}
-                            </label>
-                        </div>
-                        <p ng-cloak ng-show="vm.isValidSpecies && !vm.isFormValidDevStages" class="help-block">At least one development stage is required</p>
-                    </div>
-                    <div class="col-md-6">
                         <div>
                             <span class="smallest_head">Expression types</span>
                             <p class="text-disabled" style="padding: 0 0 0 15px;">Present</p>
                         </div>
-                        <div>
+                    </div>
+                    <div class="col-md-6">
                             <span class="smallest_head">With data types:</span>
-                            <div ng-repeat="(key, dataType) in vm.data_type.names" class="checkbox checkbox-primary" style="padding:
-                         0 0 0 15px;">
-                                <label ng-class="{'highlighted': (!dataType.checked && vm.allowedDataTypes.indexOf(dataType.key) != -1), 'span-disabled': vm.allowedDataTypes.indexOf(dataType.key) == -1}" class="checklist-label">&nbsp;&nbsp;<input type="checkbox" ng-model="dataType.checked" ng-change="vm.dataTypesChecked()" ng-disabled="vm.allowedDataTypes.indexOf(dataType.key) == -1 || vm.formSubmitted" />{{dataType.name}}</label>
+                            <div ng-repeat="(key, dataType) in vm.data_type.names" 
+                                 class="checkbox checkbox-primary" style="padding: 0 0 0 15px;">
+                                <label ng-class="{'highlighted': (!dataType.checked && vm.allowedDataTypes.indexOf(dataType.key) != -1), 'span-disabled': vm.allowedDataTypes.indexOf(dataType.key) == -1}" 
+                                       class="checklist-label">&nbsp;&nbsp;
+                                    <input type="checkbox" ng-model="dataType.checked" 
+                                           ng-change="vm.dataTypesChecked()" 
+                                           ng-disabled="vm.allowedDataTypes.indexOf(dataType.key) == -1 || vm.formSubmitted" />
+                                       {{dataType.name}}
+                                </label>
                             </div>
-                            <p ng-cloak ng-show="vm.isValidSpecies && !vm.isFormValidDataTypes" class="help-block small">At least one data type is required</p>
-                        </div>
-
+                            <p ng-cloak ng-show="vm.isValidSpecies && !vm.isFormValidDataTypes" 
+                               class="help-block small">At least one data type is required</p>
                     </div>
                 </div>
             </div>
-
         </div>
 
 
@@ -318,6 +311,28 @@
             </div>
 
             <div style="margin-top: 5px;" ng-show="vm.isAdvancedOptionsChecked" ng-hide="!vm.isAdvancedOptionsChecked" class="vert-offset form-inline">
+            
+                <div class="row">
+                    <div class="col-sm-12">
+                        <label class="control-group" ng-class="{'highlighted': !vm.hasAllSelected || vm.hasNoDevStages}">
+                            Development stages:&nbsp;
+<!--                             <span class="glyphicon glyphicon-question-sign" uib-popover="{{vm.help}}" popover-trigger="mouseenter" popover-placement="top" popover-append-to-body="true" popover-title="Data quality" ng-mouseover="vm.getOnlineHelpForItem('Data quality')"></span> -->
+                        </label>
+                        <div ng-repeat="(key, stage) in vm.developmentStages" 
+                             class="checkbox checkbox-primary" style="padding: 0 0 0 15px;">
+                            <label class="checklist-label">
+                                <input type="checkbox" 
+                                       ng-model="stage.checked"
+                                       ng-change="vm.devStagesChecked()"
+                                       ng-disabled="vm.formSubmitted">
+                                {{stage.name}}
+                            </label>
+                        </div>
+                        <p ng-cloak ng-show="vm.hasNoDevStages" class="help-block">At least one development stage is required</p>
+                        <p ng-cloak ng-show="vm.isValidSpecies && vm.hasBadCombinaison" class="help-block">'All' cannot be checked with another development stage</p>
+                    </div>
+                </div>
+				<hr style="margin-top:5px;margin-bottom:5px;">
                 <div class="row">
                     <div class="col-sm-6 col-md-3 col-lg-3 form-group">
                         <label class="control-group" ng-class="{'highlighted': vm.data_qual != vm.data_qualDefault}">

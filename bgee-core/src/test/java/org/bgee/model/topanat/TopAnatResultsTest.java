@@ -17,7 +17,8 @@ import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for {@link TopAnatResults}.
- * It uses a fake results tsv file placed in the resources folder
+ * It uses a fake results tsv file placed in the resources folder and tests that 
+ * its content is correctly retrieved.
  * 
  * @author Mathieu Seppey
  * @version Bgee 13, March 2016
@@ -30,7 +31,7 @@ public class TopAnatResultsTest extends TestAncestor {
     @Override
     protected Logger getLogger() {
         return log;
-    } 
+    }
 
     /**
      * The {@link TopAnatResults} instance to be tested
@@ -57,8 +58,8 @@ public class TopAnatResultsTest extends TestAncestor {
         TopAnatController mockTopAnatController = mock(TopAnatController.class);
         when(mockTopAnatController.getBgeeProperties()).thenReturn(this.props);
         
-        this.topAnatResults = new TopAnatResults(mockTopAnatParams, 
-                "results",
+        this.topAnatResults = new TopAnatResults(mockTopAnatParams,
+                "topanat/results",
                 "test.tsv",
                 "","","","","","","","",
                 mockTopAnatController);

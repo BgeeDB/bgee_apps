@@ -46,8 +46,8 @@ import rcaller.exception.ParseException;
  * - the method for testing whether the analyses are completed works fine
  * 
  * @author Mathieu Seppey
- * @version Bgee 1x, March 2016
- * @since Bgee 1x
+ * @version Bgee 13, March 2016
+ * @since Bgee 13
  */
 
 public class TopAnatControllerTest extends TestAncestor {
@@ -250,7 +250,7 @@ public class TopAnatControllerTest extends TestAncestor {
      */
     private void copyResultFile() throws IOException{
         Files.copy(Paths.get(TopAnatControllerTest.class.getClassLoader().getResource("").getPath()
-                .toString()+"/results/test.tsv"),Paths.get(System.getProperty("java.io.tmpdir")
+                .toString()+"/topanat/results/test.tsv"),Paths.get(System.getProperty("java.io.tmpdir")
                         +"/test/topAnat_results.tsv.tmp"),StandardCopyOption.REPLACE_EXISTING);  
     }
 

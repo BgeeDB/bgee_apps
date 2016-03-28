@@ -20,9 +20,11 @@ import org.junit.Test;
 
 /**
  * Unit tests for {@link TopAnatParams}.
+ * - Get a hash key according to the parameter values
+ * - Get {@link CallFilter} corresponding to the parameter values
  * 
  * @author Mathieu Seppey
- * @version Bgee 13, February 2016
+ * @version Bgee 13, March 2016
  * @since Bgee 13
  */
 public class TopAnatParamsTest extends TestAncestor {
@@ -45,7 +47,7 @@ public class TopAnatParamsTest extends TestAncestor {
      */
     @Before
     public void initTest() throws MissingParameterException{
-        // Set all parameters
+        // Set all parameters and build topAnatParams
         TopAnatParams.Builder topAnatParamsBuilder = new TopAnatParams.Builder(
                 new HashSet<String>(Arrays.asList("G1","G2")),
                 new HashSet<String>(Arrays.asList("G1","G2","G3","G4")),"999",
@@ -85,6 +87,5 @@ public class TopAnatParamsTest extends TestAncestor {
                 + "dataPropagation=DataPropagation [anatEntityPropagationState=SELF, "
                 + "devStagePropagationState=SELF_OR_DESCENDANT, includingObservedData=null]]]]");
     }
-
 }
 

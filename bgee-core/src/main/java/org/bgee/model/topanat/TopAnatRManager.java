@@ -166,7 +166,7 @@ public class TopAnatRManager {
         code.addRCode("      rownames(organNames)<-organNames[,1]");
 
         //get the number of terms with p-value below 0.01
-        code.addRCode("      resultCount <- sum(as.numeric(tableOver[, 7]) <= "+ params.getPvalueThreashold() +")");
+        code.addRCode("      resultCount <- sum(as.numeric(tableOver[, 7]) <= "+ params.getPvalueThreshold() +")");
         //set the number of terms to be displayed (terms below p-value, but max 10)
         code.addRCode("      resultCount <- min(c(resultCount , "+ params.getNumberOfSignificantNodes() +"))");
         code.addRCode("      cat(paste('Number of nodes to display: ', resultCount, '\n'))");

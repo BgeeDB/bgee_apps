@@ -97,20 +97,27 @@ public class TopAnatControllerTest extends TestAncestor {
     @Before
     public void initTest() throws IOException {
 
-        // remove the result files from previous tests
-        String[] filesToDelete = {"topAnat_functions.R",
-                "topAnat_AnatEntitiesNames_1.tsv",
-                "topAnat_AnatEntitiesRelationships_1.tsv",
-                "topAnat_GeneToAnatEntities_1_DIFF_EXPRESSED_AFFYMETRIX_LOW.tsv",
-                "topAnat_results.tsv",                                  
-                "topAnat_Params.txt",
-        "topAnat_script.R"};
+        // create the result directory if needed
+        File newDir = new File(System.getProperty("java.io.tmpdir")+"test");        
 
-        for(String fileToDelete: filesToDelete){
-            File currentFile = new File(System.getProperty("java.io.tmpdir")+
-                    "/test/"+fileToDelete);
-            if(currentFile.exists()){
-                currentFile.delete();
+        if (!newDir.exists()) {
+            newDir.mkdirs();
+        }
+        else{
+            // remove the result files from previous tests
+            String[] filesToDelete = {"topAnat_functions.R",
+                    "topAnat_AnatEntitiesNames_1.tsv",
+                    "topAnat_AnatEntitiesRelationships_1.tsv",
+                    "topAnat_GeneToAnatEntities_1_DIFF_EXPRESSED_AFFYMETRIX_LOW.tsv",
+                    "topAnat_results.tsv",                                  
+                    "topAnat_Params.txt",
+            "topAnat_script.R"};
+            for(String fileToDelete: filesToDelete){
+                File currentFile = new File(System.getProperty("java.io.tmpdir")+"test/"
+                        +fileToDelete);
+                if(currentFile.exists()){
+                    currentFile.delete();
+                }
             }
         }
 

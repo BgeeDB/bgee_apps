@@ -2,7 +2,6 @@ package org.bgee.model.topanat;
 
 import java.io.FileNotFoundException;
 import java.nio.file.Paths;
-import java.util.Collection;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -12,6 +11,15 @@ import org.bgee.model.BgeeProperties;
 import rcaller.RCaller;
 import rcaller.RCode;
 
+/**
+ * TODO comment me.
+ * 
+ * @author Mathieu Seppey
+ * @author Frederic Bastian
+ * 
+ * @version Bgee 13, March 2016
+ * @since Bgee 13
+ */
 public class TopAnatRManager {
 
     private final static Logger log = LogManager.getLogger(TopAnatRManager.class.getName());

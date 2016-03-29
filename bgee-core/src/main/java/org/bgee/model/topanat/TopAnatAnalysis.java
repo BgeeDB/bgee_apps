@@ -36,8 +36,13 @@ import org.bgee.model.topanat.exception.InvalidForegroundException;
 import org.bgee.model.topanat.exception.InvalidSpeciesGenesException;
 
 /**
+ * TODO comment me.
+ * 
  * @author Mathieu Seppey
  * @author Frederic Bastian
+ * 
+ * @version Bgee 13, March 2016
+ * @since Bgee 13
  */
 public class TopAnatAnalysis {
 

@@ -1070,7 +1070,11 @@ public class CommandTopAnat extends CommandParent {
                 builder.dataQuality(dataQuality);
                 builder.dataTypes(dataTypes);
                 
-                builder.devStageId(devStageId);
+                if(devStageId.equals("ALL")) {
+                    builder.devStageIds(null);
+                } else {
+                    builder.devStageIds(Arrays.asList(devStageId));
+                }
                 if (BgeeEnum.isInEnum(DecorrelationType.class, subDecorrType)) {
                     builder.decorrelationType(DecorrelationType.convertToDecorrelationType(subDecorrType));
                 } else {

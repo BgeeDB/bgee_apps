@@ -143,7 +143,7 @@
         vm.selectedDevelopmentStages = [];
         var devStageAllBox = {
                 name : 'all',
-                id : 'all',
+                id : 'ALL',
                 checked : true
             };
         vm.developmentStages = [devStageAllBox];
@@ -688,8 +688,8 @@
             console.log(checked);
             var hasAllId = false;
             var hasOtherIds = false;
-            for(var prop in checked) {
-            	if (prop.id === "all") {
+            for(var idx in checked) {
+            	if (checked[idx].id === 'ALL') { // "all" ID
             		hasAllId = true;   
             	} else {
             		hasOtherIds = true;
@@ -724,9 +724,15 @@
             if(!idField){ idField = "id";}
 
             var c = checked.map(function(c) { return c.id });
+            if (c) {
+                for(var idx in c) {
+                	if (c[idx] === 'ALL') { 
+                		return null;
+                	}
+                }
+            }
             console.log(c);
             return c;
-
         }
 
         vm.viewResultsBy = function(stage) {
@@ -1445,21 +1451,19 @@
 
                 }
 
-                var stages = [];
-                var isChecked = true;
                 console.log(data.data.fg_list.stages);
 
-                stages.push({
-                    name : 'all',
-                    id : 'all',
-                    checked : true
-                });
+                var stages = [];
+                stages.push(devStageAllBox);
 
                 angular.forEach(data.data.fg_list.stages, function(devStage, key){
 
-
-                    // do we already have something from server
-                    isChecked = !(vm.stage_id && vm.stage_id.indexOf(devStage.id) == -1);
+                	// do we already have something from server
+                	var isChecked = true;
+                    if (!vm.stage_id || vm.stage_id.indexOf(devStage.id) == -1) {
+                    		// not found in params
+                        	isChecked = false;
+                    }
 
                     stages.push({
                         name : devStage.name,

@@ -1,5 +1,10 @@
 package org.bgee.model.dao.api;
 
+import java.math.BigDecimal;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,6 +26,7 @@ import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesDataGroupTO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesToDataGroupTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO;
+import org.bgee.model.dao.api.gene.GeneXRefDAO.GeneXRefTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTO;
 import org.bgee.model.dao.api.keyword.KeywordDAO.EntityToKeywordTO;
@@ -30,12 +36,6 @@ import org.bgee.model.dao.api.ontologycommon.EvidenceOntologyDAO.ECOTermTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
-
-import java.math.BigDecimal;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
 
 
 /**
@@ -49,10 +49,10 @@ import java.util.Objects;
  * <p>
  * Methods of this class are tested in {@link TOComparatorTest}.
  * 
- * @author Valentine Rech de Laval
- * @author Frederic Bastian
- * @version Bgee 13
- * @since Bgee 13
+ * @author  Valentine Rech de Laval
+ * @author  Frederic Bastian
+ * @version Bgee 13, Apr. 2016
+ * @since   Bgee 13
  */
 public class TOComparator {
 
@@ -112,6 +112,8 @@ public class TOComparator {
             return log.exit(areTOsEqual((GOTermTO) to1, (GOTermTO) to2, compareId));
         } else if (to1 instanceof GeneTO) {
             return log.exit(areTOsEqual((GeneTO) to1, (GeneTO) to2, compareId));
+        } else if (to1 instanceof GeneXRefTO) {
+            return log.exit(areTOsEqual((GeneXRefTO) to1, (GeneXRefTO) to2));
         } else if (to1 instanceof AnatEntityTO) {
             return log.exit(areTOsEqual((AnatEntityTO) to1, (AnatEntityTO) to2, compareId));
         } else if (to1 instanceof StageTO) {
@@ -407,6 +409,29 @@ public class TOComparator {
                 geneTO1.getGeneBioTypeId() == geneTO2.getGeneBioTypeId() && 
                 geneTO1.getOMAParentNodeId() == geneTO2.getOMAParentNodeId() && 
                 geneTO1.isEnsemblGene() == geneTO2.isEnsemblGene()) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
+     * Method to compare two {@code GeneXRefTO}s, to check for complete equality of each
+     * attribute. This is because the {@code equals} method of {@code GeneXRefTO}s is solely
+     * based on their ID, not on other attributes.
+     * <p>
+     * If {@code compareId} is {@code false}, the value returned by the method {@code getId} 
+     * will not be used for comparison.
+     * 
+     * @param xRefTO1 A {@code GeneXRefTO} to be compared to {@code geneTO2}.
+     * @param xRefTO2 A {@code GeneXRefTO} to be compared to {@code geneTO1}.
+     * @return {@code true} if {@code xRefTO1} and {@code xRefTO2} have all attributes equal.
+     */
+    private static boolean areTOsEqual(GeneXRefTO xRefTO1, GeneXRefTO xRefTO2) {
+        log.entry(xRefTO1, xRefTO2);
+        if (StringUtils.equals(xRefTO1.getGeneId(), xRefTO2.getGeneId()) &&
+                StringUtils.equals(xRefTO1.getXRefId(), xRefTO2.getXRefId()) &&
+                StringUtils.equals(xRefTO1.getXRefName(), xRefTO2.getXRefName()) &&
+                xRefTO1.getDataSourceId() == xRefTO2.getDataSourceId()) {
             return log.exit(true);
         }
         return log.exit(false);

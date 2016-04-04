@@ -26,6 +26,7 @@ import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesDataGroupTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO.Domain;
+import org.bgee.model.dao.api.gene.GeneXRefDAO.GeneXRefTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTO;
 import org.bgee.model.dao.api.keyword.KeywordDAO.EntityToKeywordTO;
@@ -138,6 +139,26 @@ public class TOComparatorTest extends TestAncestor {
         to2 = new GeneTO("ID2", "name1", "desc1", 1, 2, 3, true);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+    }
+    
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * using {@code GeneXRefTO}s.
+     */
+    @Test
+    public void testAreGeneXRefTOEqual() {
+        GeneXRefTO to1 = new GeneXRefTO("ID1", "xref1 ID", "xref1 name", 1);
+        GeneXRefTO to2 = new GeneXRefTO("ID1", "xref1 ID", "xref1 name", 1);
+        assertTrue(TOComparator.areTOsEqual(to1, to2));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+        
+        to2 = new GeneXRefTO("ID2", "xref1 ID", "xref1 name", 1);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        assertFalse(TOComparator.areTOsEqual(to1, to2, false));
+        
+        to2 = new GeneXRefTO("ID2", "xref1 ID", "xref1 name", 22);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        assertFalse(TOComparator.areTOsEqual(to1, to2, false));
     }
     
     /**

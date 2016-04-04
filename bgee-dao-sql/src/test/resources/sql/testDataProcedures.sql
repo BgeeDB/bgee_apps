@@ -16,7 +16,10 @@ BEGIN
         VALUES (12,'geneBioTypeName12');
         
         INSERT INTO dataSource (dataSourceId,dataSourceName,XRefUrl,experimentUrl,evidenceUrl,baseUrl,releaseDate,releaseVersion,dataSourceDescription,toDisplay,category,displayOrder)
-        VALUES (1,'First DataSource','XRefUrl','experimentUrl','evidenceUrl','baseUrl',NOW(),'1.0','My custom data source',1,'Genomics database',1);
+        VALUES (1,'First DataSource','XRefUrl','experimentUrl','evidenceUrl','baseUrl','2012-10-19','1.0','My custom data source',0,'Genomics database',1),
+               (2,'NCBI Taxonomy','','','','http://www.ncbi.nlm.nih.gov/taxonomy','2012-10-20','v13','Source taxonomy used in Bgee',1,'',3),
+               (3,'Ensembl','http://Oct2012.archive.ensembl.org/[species_ensembl_link]/Gene/Summary?g=[gene_id];gene_summary=das:http://bgee.unil.ch/das/bgee=label','','','http://May2012.archive.ensembl.org/','2014-02-18','v1','Ensembl desc',1,'',255),
+               (4,'ZFIN','http://zfin.org/cgi-bin/ZFIN_jump?record=[xref_id]','http://zfin.org/cgi-bin/ZFIN_jump?record=[experiment_id]','http://zfin.org/cgi-bin/ZFIN_jump?record=[evidence_id]','http://zfin.org/',null,'rv:2','ZFIN desc',1,'In situ data source',2);
 
         INSERT INTO taxon (taxonId,taxonScientificName,taxonCommonName,taxonLeftBound,taxonRightBound,taxonLevel,bgeeSpeciesLCA) 
         VALUES (111,'taxSName111','taxCName111',1,12,1,1),
@@ -49,6 +52,15 @@ BEGIN
                ('ID3','genN3','genDesc3',31,null,3,false),
                ('ID4','genN4','genDesc4',21,null,null,true);
         
+        INSERT INTO geneXRef (geneId,XRefId,XRefName,dataSourceId) 
+        VALUES ('ID1','A0A183','LCE6A_HUMAN', 1),
+               ('ID1','AL162596','',2),
+               ('ID1','DQ991251','',2),
+               ('ID2','A0AUZ9','KAL1L_HUMAN',1),
+               ('ID2','I6L9A8','I6L9A8_HUMAN',3),
+               ('ID2','AC007038','',2),
+               ('ID3','Bt.16194','',4);
+
         INSERT INTO geneNameSynonym (geneId,geneNameSynonym) 
         VALUES ('ID1','synonym1'),
                ('ID1','thesame1'),

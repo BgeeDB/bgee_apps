@@ -1071,9 +1071,9 @@ public class CommandTopAnat extends CommandParent {
                 builder.dataTypes(dataTypes);
                 
                 if(devStageId.equals("ALL")) {
-                    builder.devStageIds(null);
+                    builder.devStageId(null);
                 } else {
-                    builder.devStageIds(Arrays.asList(devStageId));
+                    builder.devStageId(devStageId);
                 }
                 if (BgeeEnum.isInEnum(DecorrelationType.class, subDecorrType)) {
                     builder.decorrelationType(DecorrelationType.convertToDecorrelationType(subDecorrType));

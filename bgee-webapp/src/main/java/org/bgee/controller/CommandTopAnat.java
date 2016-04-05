@@ -728,8 +728,10 @@ public class CommandTopAnat extends CommandParent {
      * @param paramName A {@code String} that is the name of the parameter.
      * @return          The {@code GeneListResponse} built from 
      *                  {@code geneList} and {@code paramName}.
+     * @throws InvalidRequestException  If at least one provided ID map to severals Bgee gene IDs.
      */
-    private GeneListResponse getGeneResponse(List<String> geneList, String paramName) {
+    private GeneListResponse getGeneResponse(List<String> geneList, String paramName) 
+            throws InvalidRequestException {
         log.entry(geneList, paramName);
         
         if (geneList.isEmpty()) {
@@ -737,14 +739,33 @@ public class CommandTopAnat extends CommandParent {
         }
 
         TreeSet<String> geneSet = new TreeSet<>(geneList);
-        // Load valid submitted gene IDs
-        final Set<Gene> validGenes = new HashSet<>(this.getGenes(null, geneSet));
-        // Identify undetermined gene IDs
-        final Set<String> undeterminedGeneIds = new HashSet<>(geneSet);
-        undeterminedGeneIds.removeAll(validGenes.stream()
-                .map(Gene::getId)
-                .collect(Collectors.toSet()));
         
+        // Load mapping cross-reference IDs to gene IDs
+        final Map<String, Set<String>> mappingIdsToGeneIds = 
+                serviceFactory.getGeneService().loadMappingAnyIdToGeneIds(geneSet);
+
+        Set<String> idsMappingMultipleGenes = mappingIdsToGeneIds.entrySet().stream()
+                .filter(e -> e.getValue().size() > 1)
+                .map(e -> e.getKey())
+                .collect(Collectors.toSet());
+        if (!idsMappingMultipleGenes.isEmpty()) {
+            throw log.throwing(new InvalidRequestException(
+                    "A provided ID map to severals gene IDs: " + idsMappingMultipleGenes));
+        }
+
+        // Load valid submitted gene IDs
+        final Set<Gene> validGenes = new HashSet<>(this.getGenes(null, 
+                mappingIdsToGeneIds.values().stream().flatMap(Collection::stream).collect(Collectors.toSet())));
+        final Set<String> validGeneIDs = validGenes.stream()
+                .map(Gene::getId)
+                .collect(Collectors.toSet());
+
+        // Identify undetermined gene IDs
+        final Set<String> undeterminedGeneIds = mappingIdsToGeneIds.entrySet().stream()
+                .filter(e -> !validGeneIDs.containsAll(e.getValue()))
+                .map(e -> e.getKey())
+                .collect(Collectors.toSet());
+
         // Map species ID to valid gene ID count
         final Map<String, Long> speciesIdToGeneCount = validGenes.stream()
                     .collect(Collectors.groupingBy(Gene::getSpeciesId, Collectors.counting()));
@@ -856,26 +877,30 @@ public class CommandTopAnat extends CommandParent {
         
         StringBuilder msg = new StringBuilder();
         msg.append(submittedGeneIds.size());
-        msg.append(" genes entered");
+        msg.append(" IDs provided");
         if (!speciesToGeneCount.isEmpty()) {
+            msg.append(": ");
+            msg.append(speciesToGeneCount.entrySet().stream().map(e -> e.getValue()).count());
+            msg.append(" unique genes found in Bgee");
+            
             msg.append(speciesToGeneCount.entrySet().stream()
-                //sort in descending order of gene count (and in case of equality, 
-                //by ascending order of key, for predictable message generation)
-                .sorted((e1, e2) -> {
-                    if (e1.getValue().equals(e2.getValue())) {
-                        return e1.getKey().getId().compareTo(e2.getKey().getId()); 
-                    } 
-                    return e2.getValue().compareTo(e1.getValue());
-                })
-                .map(e -> ", " + e.getValue() + " in " + e.getKey().getName())
-                .collect(Collectors.joining()));
+                    //sort in descending order of gene count (and in case of equality, 
+                    //by ascending order of key, for predictable message generation)
+                    .sorted((e1, e2) -> {
+                        if (e1.getValue().equals(e2.getValue())) {
+                            return e1.getKey().getId().compareTo(e2.getKey().getId()); 
+                        } 
+                        return e2.getValue().compareTo(e1.getValue());
+                    })
+                    .map(e -> ", " + e.getValue() + " in " + e.getKey().getName())
+                    .collect(Collectors.joining()));
         }
         if (!undeterminedGeneIds.isEmpty()) {
-            msg.append(", ");
+            msg.append(", and ");
             msg.append(undeterminedGeneIds.size());
-            msg.append(" not found");
+            msg.append(" IDs not found");
         }
-        msg.append(" in Bgee for ");
+        msg.append(" for ");
         msg.append(paramName);
         
         return log.exit(msg.toString());
@@ -893,7 +918,7 @@ public class CommandTopAnat extends CommandParent {
      *                                  {@code ServiceFactory} did not allow
      *                                  to obtain any {@code Gene}.
      */
-    private List<Gene> getGenes(Set<String> speciesIds, Set<String> geneIds) 
+    private List<Gene> getGenes(Collection<String> speciesIds, Collection<String> geneIds) 
             throws IllegalStateException {
         log.entry(speciesIds, geneIds);
         List<Gene> genes = serviceFactory.getGeneService().
@@ -1088,6 +1113,27 @@ public class CommandTopAnat extends CommandParent {
         TopAnatController controller = new TopAnatController(allTopAnatParams, this.prop, 
                 this.serviceFactory);
         return log.exit(controller);
+    }
+
+    /** 
+     * Retrieve Bgee gene IDs (Ensembl IDs) from any ID list.
+     * 
+     * @param ids   A {@code List} of {@code String}s that are the IDs to be converted in Bgee gene IDs.
+     * @return      The {@code List} of {@code String}s that are the Bgee gene IDs.
+     * @throws InvalidRequestException  If at least one provided ID map to severals Bgee gene IDs.
+     */
+    private List<String> loadBgeeIds(List<String> ids) throws InvalidRequestException {
+        log.entry(ids);
+
+        List<String> retrievedIds;
+        try {
+            retrievedIds = Collections.unmodifiableList(serviceFactory.getGeneService().loadGeneIdsByAnyId(
+                    Optional.ofNullable(ids).orElse(new ArrayList<>())).collect(Collectors.toList()));
+        } catch (IllegalArgumentException e) {
+            throw log.throwing(new InvalidRequestException(e.getMessage()));
+        }
+        
+        return log.exit(retrievedIds);
     }
 
     /**

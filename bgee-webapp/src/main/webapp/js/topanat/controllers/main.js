@@ -123,6 +123,7 @@
         // message from the gene validation query.
         // Filled only when more than one species detected in fg
         vm.geneValidationMessage = '';
+        vm.geneModalMessage = '';
 
         // getDevStage checks whether all the FG genes are in the BG.
         // In case of issue, isValidBackground is set to FALSE
@@ -1353,15 +1354,18 @@
 
         }
 
-        function parseMessage(message) {
-            var matcher = new RegExp('(.+) for fg_list');
-            var match = message.match(matcher);
+        function parseDataForMessage(data) {
+            var matcher = new RegExp('((.+ unique genes found in Bgee), .+) for fg_list');
+            var match = data.message.match(matcher);
 
             if (match != null && typeof match !== 'undefined') {
-                return match[1];
-            }
-            else {
-                return message;
+                vm.geneValidationMessage = match[2];
+                vm.geneModalMessage = match[1];
+                if (data.data.fg_list.undeterminedGeneIds.length > 0) {
+                	vm.geneModalMessage += (' which are ' + data.data.fg_list.undeterminedGeneIds).replace(',', ', '); 
+                }
+            } else {
+                vm.geneValidationMessage = message;
             }
         }
 
@@ -1421,10 +1425,8 @@
                     vm.selected_species = mapIdtoName(data, type + "_list");
                     console.log("selected species: "+vm.selected_species);
                     vm.isValidSpecies = true;
-                    vm.geneValidationMessage = parseMessage(data.message);
+                    parseDataForMessage(data);
                     //getNbDetectedSpecies(data, type + "_list") > 1 ? vm.geneValidationMessage = parseMessage(data.message) : vm.geneValidationMessage = '';
-
-
                 }
 
                 var stages = [];

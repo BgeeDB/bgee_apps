@@ -155,7 +155,7 @@ public class TopAnatTest extends TestAncestor {
         when(mockServiceFactory.getAnatEntityService()).thenReturn(mockAnatEntityService);
         when(mockGeneService
                 .loadGenesByIdsAndSpeciesIds(any(),any())) // TODO be more specific here
-        .thenReturn(Arrays.asList(mockGene1,mockGene2,mockGene3,mockGene4,mockGene5));
+        .thenReturn(Arrays.asList(mockGene1,mockGene2,mockGene3,mockGene4,mockGene5).stream());
         when(mockExpressionCall1.getCondition()).thenReturn(mockCondition);
         when(mockExpressionCall2.getCondition()).thenReturn(mockCondition);
         when(mockExpressionCall3.getCondition()).thenReturn(mockCondition);

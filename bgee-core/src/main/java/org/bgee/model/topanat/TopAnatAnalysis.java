@@ -221,7 +221,7 @@ public class TopAnatAnalysis {
             allGeneIds.addAll(this.params.getSubmittedBackgroundIds());
         }
         allGeneIds.removeAll(this.geneService.loadGenesByIdsAndSpeciesIds(allGeneIds, 
-                Arrays.asList(this.params.getSpeciesId())).stream()
+                Arrays.asList(this.params.getSpeciesId()))
                 .map(Gene::getId)
                 .collect(Collectors.toSet()));
         if (!allGeneIds.isEmpty()) {

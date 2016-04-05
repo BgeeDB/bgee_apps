@@ -37,8 +37,8 @@ import org.junit.Test;
  * Unit tests for {@link CommandTopAnat}.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13 Nov. 2015
- * @since   Bgee 13 Nov. 2015
+ * @version Bgee 13, Apr. 2016
+ * @since   Bgee 13, Nov. 2015
  */
 public class CommandTopAnatTest extends TestAncestor {
 
@@ -85,7 +85,7 @@ public class CommandTopAnatTest extends TestAncestor {
         List<Gene> bgGenes = Arrays.asList(
                 new Gene("ID1", "9606"), new Gene("ID2", "9606"), new Gene("ID3", "10090"));
         when(geneService.loadGenesByIdsAndSpeciesIds(new HashSet<>(bgSubmittedGeneIds), null))
-            .thenReturn(bgGenes);
+            .thenReturn(bgGenes.stream());
         
         TreeSet<String> fgUndeterminedGeneIds = new TreeSet<>();
 

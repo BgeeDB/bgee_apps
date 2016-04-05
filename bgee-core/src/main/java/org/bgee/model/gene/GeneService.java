@@ -1,6 +1,8 @@
 package org.bgee.model.gene;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -8,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,6 +19,7 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneDAO;
+import org.bgee.model.dao.api.gene.GeneXRefDAO;
 import org.bgee.model.dao.api.gene.GeneNameSynonymDAO.GeneNameSynonymTO;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
@@ -25,11 +29,11 @@ import org.bgee.model.species.SpeciesService;
  * A {@link Service} to obtain {@link Gene} objects. Users should use the
  * {@link ServiceFactory} to obtain {@code GeneService}s.
  * 
- * @author Philippe Moret
- * @author Frederic Bastian
- * @author Valentine Rech de Laval
- * @version Bgee 13 Nov. 2015
- * @since Bgee 13 Sept. 2015
+ * @author  Philippe Moret
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13, Apr. 2016
+ * @since   Bgee 13 Sept. 2015
  */
 public class GeneService extends Service {
     
@@ -71,21 +75,19 @@ public class GeneService extends Service {
      *                      for which to return the {@code Gene}s.
      * @param speciesIds    A {@code Collection} of {@code String}s that are IDs of species 
      *                      for which to return the {@code Gene}s.
-     * @return              A {@code List} of {@code Gene}s that are the {@code Gene}s 
+     * @return              A {@code Stream} of {@code Gene}s that are the {@code Gene}s 
      *                      for the given set of species IDs and the given set of gene IDs.
      */
-    public List<Gene> loadGenesByIdsAndSpeciesIds(Collection<String> geneIds, 
+    public Stream<Gene> loadGenesByIdsAndSpeciesIds(Collection<String> geneIds, 
             Collection<String> speciesIds) {
         log.entry(geneIds, speciesIds);
         
         Set<String> filteredGeneIds = geneIds == null? new HashSet<>(): new HashSet<>(geneIds);
         Set<String> filteredSpeciesIds = speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds);
-        
-        //XXX: shouldn't we return a Stream here?
+
         return log.exit(getDaoManager().getGeneDAO()
                     .getGenesBySpeciesIds(filteredSpeciesIds, filteredGeneIds).stream()
-                    .map(GeneService::mapFromTO)
-                    .collect(Collectors.toList()));
+                    .map(GeneService::mapFromTO));
     }
     
     /**
@@ -111,6 +113,70 @@ public class GeneService extends Service {
     	Species species = speciesService.loadSpeciesByIds(speciesIds).iterator().next();
     	gene.setSpecies(species);
 		return log.exit(gene);  		
+    }
+    
+    /**
+     * Retrieve gene IDs of data source for a given set of IDs (gene IDs or any cross-reference IDs).
+     * 
+     * @param ids   A {@code Collection} of {@code String}s that are IDs (gene IDs or any 
+     *              cross-reference IDs) for which to return the gene IDs.
+     * @return      The {@code Stream} of {@code String}s that are gene IDs.
+     * @throws IllegalArgumentException If severals provided IDs map to the same gene ID.
+     */
+    public Stream<String> loadGeneIdsByAnyId(Collection<String> ids) throws IllegalArgumentException {
+        log.entry(ids);        
+        Map<String, Set<String>> map = this.loadMappingAnyIdToGeneIds(ids);
+        
+        Set<String> idsMappingMultipleGenes = map.entrySet().stream()
+                .filter(e -> e.getValue().size() > 1)
+                .map(e -> e.getKey())
+                .collect(Collectors.toSet());
+        if (!idsMappingMultipleGenes.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "A provided ID map to severals gene IDs: " + idsMappingMultipleGenes));
+        }
+
+        return log.exit(this.loadGenesByIdsAndSpeciesIds(
+                map.values().stream().flatMap(Collection::stream).collect(Collectors.toSet()), null) 
+                .map(Gene::getId));
+    }
+    
+    /**
+     * Retrieve the mapping between a given set of IDs (gene IDs or any cross-reference IDs) 
+     * and gene IDs of the data source.
+     * 
+     * @param ids   A {@code Collection} of {@code String}s that are IDs (gene IDs or any 
+     *              cross-reference IDs) for which to return the mapping.
+     * @return      The {@code Map} where keys are {@code String}s corresponding to provided IDs,
+     *              and values are {@code String}s that are the associated gene IDs of the data source.
+     */
+    public Map<String, Set<String>> loadMappingAnyIdToGeneIds(Collection<String> ids) {
+        log.entry(ids);
+        
+        Map<String, Set<String>> geneIds = getDaoManager().getGeneXRefDAO()
+                .getGeneXRefsByXRefIds(ids, Arrays.asList(GeneXRefDAO.Attribute.GENE_ID, 
+                        GeneXRefDAO.Attribute.XREF_ID)).stream()
+                .collect(Collectors.toMap(
+                        e -> e.getXRefId(),
+                        e -> new HashSet<String>(Arrays.asList(e.getGeneId())), 
+                        (v1, v2) -> {
+                            Set<String> newSet = new HashSet<>(v1);
+                            newSet.addAll(v2);
+                            return newSet;
+                        }));
+        
+        // Add IDs that are not cross-reference IDs
+        Map<String, Set<String>> map = new HashMap<>();        
+        if (ids != null) {
+            for (String id : ids) {
+                if (geneIds.containsKey(id)) {
+                    map.put(id, geneIds.get(id));
+                } else {
+                    map.put(id, new HashSet<String>(Arrays.asList(id)));
+                }
+            }
+        }
+        return log.exit(map);
     }
 
     /**

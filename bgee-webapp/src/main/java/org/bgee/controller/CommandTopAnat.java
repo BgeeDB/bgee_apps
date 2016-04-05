@@ -66,7 +66,7 @@ import org.bgee.view.ViewFactory;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13 Dec. 2015
+ * @version Bgee 13, Apr. 2016
  * @since   Bgee 13
  */
 public class CommandTopAnat extends CommandParent {
@@ -897,7 +897,7 @@ public class CommandTopAnat extends CommandParent {
             throws IllegalStateException {
         log.entry(speciesIds, geneIds);
         List<Gene> genes = serviceFactory.getGeneService().
-                loadGenesByIdsAndSpeciesIds(geneIds, speciesIds);
+                loadGenesByIdsAndSpeciesIds(geneIds, speciesIds).collect(Collectors.toList());
         return log.exit(genes);
     }
     

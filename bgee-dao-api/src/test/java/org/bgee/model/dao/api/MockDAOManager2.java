@@ -20,6 +20,7 @@ import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneNameSynonymDAO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO;
+import org.bgee.model.dao.api.gene.GeneXRefDAO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
 import org.bgee.model.dao.api.keyword.KeywordDAO;
 import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO;
@@ -44,9 +45,10 @@ import static org.mockito.Mockito.mock;
  * when the {@code ServiceLoader} discovers several service providers. 
  * This provider should be the second one loaded by the {@code ServiceLoader}.
  * 
- * @author Frederic Bastian
- * @version Bgee 13
- * @since Bgee 13
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13, Apr. 2016
+ * @since   Bgee 13
  */
 public class MockDAOManager2 extends DAOManager {
 	
@@ -122,6 +124,10 @@ public class MockDAOManager2 extends DAOManager {
     @Override
     protected GeneDAO getNewGeneDAO() {
         return this.instanceMockManager.getNewGeneDAO();
+    }
+    @Override
+    protected GeneXRefDAO getNewGeneXRefDAO() {
+        return this.instanceMockManager.getNewGeneXRefDAO();
     }
     @Override
     protected HierarchicalGroupDAO getNewHierarchicalGroupDAO() {

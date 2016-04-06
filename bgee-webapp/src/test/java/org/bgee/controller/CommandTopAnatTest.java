@@ -5,13 +5,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -70,17 +71,29 @@ public class CommandTopAnatTest extends TestAncestor {
         when(serviceFac.getSpeciesService()).thenReturn(speciesService);
 
         //mock data returned by Services
-        List<String> fgSubmittedGeneIds = Arrays.asList("ID3");
+        List<String> fgSubmittedGeneIds = Arrays.asList("OtherID3");
+
         TreeSet<String> fgNotSelectedGeneIdSet = new TreeSet<>();
         String fgSelectedSpeciesId = "10090";
 
-        List<String> bgSubmittedGeneIds = Arrays.asList("ID1", "ID2", "ID3", "ID4");
+        List<String> bgSubmittedGeneIds = Arrays.asList("ID1", "OtherID2", "ID3", "ID4");
         TreeSet<String> bgNotSelectedGeneIdSet = new TreeSet<>(Arrays.asList("ID3"));
         String bgSelectedSpeciesId = "9606";
 
         List<Gene> fgGenes = Arrays.asList(new Gene("ID3", "10090"));
         when(geneService.loadGenesByIdsAndSpeciesIds(new HashSet<>(fgSubmittedGeneIds), null))
-            .thenReturn(fgGenes);
+            .thenReturn(fgGenes.stream());
+
+        Map<String, Set<Gene>> mapFg = new HashMap<>();
+        mapFg.put("OtherID3", new HashSet<>(Arrays.asList(new Gene("ID3", "10090"))));
+        when(geneService.loadGenesByAnyId(new TreeSet<>(fgSubmittedGeneIds))).thenReturn(mapFg.entrySet().stream());
+
+        Map<String, Set<Gene>> mapBg = new HashMap<>();
+        mapBg.put("ID1", new HashSet<>(Arrays.asList(new Gene("ID1", "9606"))));
+        mapBg.put("OtherID2", new HashSet<>(Arrays.asList(new Gene("ID2", "9606"))));
+        mapBg.put("ID3", new HashSet<>(Arrays.asList(new Gene("ID3", "10090"))));
+        mapBg.put("ID4", new HashSet<>());
+        when(geneService.loadGenesByAnyId(new TreeSet<>(bgSubmittedGeneIds))).thenReturn(mapBg.entrySet().stream());
 
         List<Gene> bgGenes = Arrays.asList(
                 new Gene("ID1", "9606"), new Gene("ID2", "9606"), new Gene("ID3", "10090"));
@@ -89,10 +102,7 @@ public class CommandTopAnatTest extends TestAncestor {
         
         TreeSet<String> fgUndeterminedGeneIds = new TreeSet<>();
 
-        TreeSet<String> bgUndeterminedGeneIds = new TreeSet<>(bgSubmittedGeneIds);
-        bgUndeterminedGeneIds.removeAll(bgGenes.stream()
-                .map(Gene::getId)
-                .collect(Collectors.toSet()));
+        TreeSet<String> bgUndeterminedGeneIds = new TreeSet<>(Arrays.asList("ID4"));
 
         Set<DevStage> devStages = new HashSet<>(Arrays.asList(
                 new DevStage("25", "embryo", "embryo desc", 2, 3, 2, false, true),
@@ -162,9 +172,10 @@ public class CommandTopAnatTest extends TestAncestor {
                 response2);
         
         verify(display).sendGeneListReponse(data, 
-                "1 genes entered, 1 in mouse in Bgee for " + 
+                "1 IDs provided: 1 unique genes found in Bgee, 1 in mouse for " + 
                         params.getUrlParametersInstance().getParamForegroundList().getName() + "\n" +
-                "4 genes entered, 2 in human, 1 in mouse, 1 not found in Bgee for " + 
+                "4 IDs provided: 2 unique genes found in Bgee, 2 in human, 1 in mouse, " +
+                        "and 1 IDs not found for " + 
                         params.getUrlParametersInstance().getParamBackgroundList().getName());
     }
     

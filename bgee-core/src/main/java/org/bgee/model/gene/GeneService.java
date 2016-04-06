@@ -2,11 +2,11 @@ package org.bgee.model.gene;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -17,10 +17,10 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.DAOManager;
-import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneDAO;
-import org.bgee.model.dao.api.gene.GeneXRefDAO;
+import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneNameSynonymDAO.GeneNameSynonymTO;
+import org.bgee.model.dao.api.gene.GeneXRefDAO;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
 
@@ -116,29 +116,60 @@ public class GeneService extends Service {
     }
     
     /**
-     * Retrieve gene IDs of data source for a given set of IDs (gene IDs or any cross-reference IDs).
+     * Retrieve {@code Gene}s for a given set of IDs (gene IDs or any cross-reference IDs).
      * 
      * @param ids   A {@code Collection} of {@code String}s that are IDs (gene IDs or any 
      *              cross-reference IDs) for which to return the gene IDs.
      * @return      The {@code Stream} of {@code String}s that are gene IDs.
-     * @throws IllegalArgumentException If severals provided IDs map to the same gene ID.
      */
-    public Stream<String> loadGeneIdsByAnyId(Collection<String> ids) throws IllegalArgumentException {
-        log.entry(ids);        
-        Map<String, Set<String>> map = this.loadMappingAnyIdToGeneIds(ids);
+    public Stream<Entry<String, Set<Gene>>> loadGenesByAnyId(Collection<String> ids) {
+        log.entry(ids);
         
-        Set<String> idsMappingMultipleGenes = map.entrySet().stream()
-                .filter(e -> e.getValue().size() > 1)
-                .map(e -> e.getKey())
-                .collect(Collectors.toSet());
-        if (!idsMappingMultipleGenes.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException(
-                    "A provided ID map to severals gene IDs: " + idsMappingMultipleGenes));
+        // Get mapping between given IDs and gene IDs
+        Map<String, Set<String>> mapAnyIdToGeneIds = this.loadMappingAnyIdToGeneIds(ids);
+
+        // Add IDs that are not cross-reference IDs
+        if (ids != null) {
+            for (String id : ids) {
+                if (mapAnyIdToGeneIds.containsKey(id)) {
+                    mapAnyIdToGeneIds.put(id, mapAnyIdToGeneIds.get(id));
+                } else {
+                    mapAnyIdToGeneIds.put(id, new HashSet<String>(Arrays.asList(id)));
+                }
+            }
         }
 
-        return log.exit(this.loadGenesByIdsAndSpeciesIds(
-                map.values().stream().flatMap(Collection::stream).collect(Collectors.toSet()), null) 
-                .map(Gene::getId));
+        // Get genes
+        Set<Gene> geneSet = this.loadGenesByIdsAndSpeciesIds(
+                mapAnyIdToGeneIds.values().stream()
+                    .flatMap(Collection::stream)
+                    .collect(Collectors.toSet()), null)
+                .collect(Collectors.toSet());
+
+        // Build mapping between given IDs and genes
+        Map<String, Set<Gene>> mapAnyIdToGenes = mapAnyIdToGeneIds.entrySet().stream()
+                .collect(Collectors.toMap(
+                    e -> e.getKey(),
+                    e -> {
+                        Set<Gene> newSet = new HashSet<Gene>();
+                        for (String s : e.getValue()) {
+                             newSet.addAll(geneSet.stream()
+                                     .filter(g -> g.getId().equals(s))
+                                     .collect(Collectors.toSet()));
+                        }
+                        return newSet;
+                    }
+                    ,
+                    (v1, v2) -> {
+                        Set<Gene> newSet = new HashSet<>(v1);
+                        for (Gene s : v2) {
+                             newSet.addAll(geneSet.stream()
+                                     .filter(g -> g.getId().equals(s.getId()))
+                                     .collect(Collectors.toSet()));
+                        }
+                        return newSet;
+                }));
+        return log.exit(mapAnyIdToGenes.entrySet().stream());
     }
     
     /**
@@ -153,7 +184,7 @@ public class GeneService extends Service {
     public Map<String, Set<String>> loadMappingAnyIdToGeneIds(Collection<String> ids) {
         log.entry(ids);
         
-        Map<String, Set<String>> geneIds = getDaoManager().getGeneXRefDAO()
+        Map<String, Set<String>> xRefIdToGeneIds = getDaoManager().getGeneXRefDAO()
                 .getGeneXRefsByXRefIds(ids, Arrays.asList(GeneXRefDAO.Attribute.GENE_ID, 
                         GeneXRefDAO.Attribute.XREF_ID)).stream()
                 .collect(Collectors.toMap(
@@ -164,19 +195,7 @@ public class GeneService extends Service {
                             newSet.addAll(v2);
                             return newSet;
                         }));
-        
-        // Add IDs that are not cross-reference IDs
-        Map<String, Set<String>> map = new HashMap<>();        
-        if (ids != null) {
-            for (String id : ids) {
-                if (geneIds.containsKey(id)) {
-                    map.put(id, geneIds.get(id));
-                } else {
-                    map.put(id, new HashSet<String>(Arrays.asList(id)));
-                }
-            }
-        }
-        return log.exit(map);
+        return log.exit(xRefIdToGeneIds);
     }
 
     /**

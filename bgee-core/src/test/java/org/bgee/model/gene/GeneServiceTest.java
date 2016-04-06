@@ -1,7 +1,6 @@
 package org.bgee.model.gene;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -67,10 +66,10 @@ public class GeneServiceTest extends TestAncestor {
     }
     
     /**
-     * Test {@link GeneService#loadGeneIdsByAnyId(java.util.Collection, java.util.Collection)}.
+     * Test {@link GeneService#loadGenesByAnyId(java.util.Collection, java.util.Collection)}.
      */
     @Test
-    public void shouldLoadGeneIdsByAnyId() {
+    public void shouldLoadGenesByAnyId() {
         // Initialize mocks
         DAOManager managerMock = mock(DAOManager.class);
         GeneDAO geneDao = mock(GeneDAO.class);
@@ -79,13 +78,14 @@ public class GeneServiceTest extends TestAncestor {
         when(managerMock.getGeneXRefDAO()).thenReturn(geneXrefDao);
         
         // Initialize params
-        Set<String> inputIds = new HashSet<String>(Arrays.asList("ID1", "OtherID2", "OtherID4"));
-        Set<String> filteredIds = new HashSet<String>(Arrays.asList("ID1", "ID2", "ID4"));
+        Set<String> inputIds = new HashSet<String>(Arrays.asList("ID1", "OtherID2", "OtherID4", "UnknownID"));
+        Set<String> filteredIds = new HashSet<String>(Arrays.asList("ID1", "ID2", "ID4", "UnknownID"));
 
         // Mock the GeneXrefDAO response
         GeneXRefTOResultSet mockGeneXRefRs = getMockResultSet(GeneXRefTOResultSet.class,
                 Arrays.asList(new GeneXRefTO("ID2", "OtherID2", null, null),
-                        new GeneXRefTO("ID4", "OtherID4", null, null)));
+                        new GeneXRefTO("ID4", "OtherID4", null, null),
+                        new GeneXRefTO("ID2", "OtherID4", null, null)));
         when(geneXrefDao.getGeneXRefsByXRefIds(inputIds, Arrays.asList(GeneXRefDAO.Attribute.GENE_ID, 
                 GeneXRefDAO.Attribute.XREF_ID))).thenReturn(mockGeneXRefRs);
         
@@ -95,25 +95,17 @@ public class GeneServiceTest extends TestAncestor {
                         new GeneTO("ID2", "Name2", 22),
                         new GeneTO("ID4", "Name4", 44)));
         when(geneDao.getGenesBySpeciesIds(new HashSet<>(), filteredIds)).thenReturn(mockGeneRs);
-        
-        Set<String> expectedGenes = new HashSet<>(Arrays.asList("ID1", "ID2", "ID4"));
+
+        Map<String,Set<Gene>> expectedMap = new HashMap<>();
+        expectedMap.put("ID1", new HashSet<>(Arrays.asList(new Gene("ID1", "11", "Name1"))));
+        expectedMap.put("OtherID2", new HashSet<>(Arrays.asList(new Gene("ID2", "22", "Name2"))));
+        expectedMap.put("OtherID4", new HashSet<>(
+                Arrays.asList(new Gene("ID2", "22", "Name2"), new Gene("ID4", "44", "Name4"))));
+        expectedMap.put("UnknownID", new HashSet<>(Arrays.asList()));
 
         GeneService service = new GeneService(managerMock);
-        assertEquals("Incorrect genes", expectedGenes,
-                service.loadGeneIdsByAnyId(inputIds).collect(Collectors.toSet()));
-        
-        mockGeneXRefRs = getMockResultSet(GeneXRefTOResultSet.class,
-                Arrays.asList(new GeneXRefTO("ID2", "OtherID2", null, null),
-                        new GeneXRefTO("ID4", "OtherID2", null, null),
-                        new GeneXRefTO("ID4", "OtherID4", null, null)));
-        when(geneXrefDao.getGeneXRefsByXRefIds(inputIds, Arrays.asList(GeneXRefDAO.Attribute.GENE_ID, 
-                GeneXRefDAO.Attribute.XREF_ID))).thenReturn(mockGeneXRefRs);
-        try {
-            service.loadGeneIdsByAnyId(inputIds).collect(Collectors.toSet());
-            fail("An exception should be thrown when provided ID map to severals gene IDs");
-        } catch (IllegalArgumentException e) {
-            //test passed
-        }
+        assertEquals("Incorrect genes", expectedMap, service.loadGenesByAnyId(inputIds)
+                .collect(Collectors.toMap(e->e.getKey(), e->e.getValue())));
     }
     
     /**
@@ -138,7 +130,6 @@ public class GeneServiceTest extends TestAncestor {
                 GeneXRefDAO.Attribute.XREF_ID))).thenReturn(mockGeneXRefRs);
                 
         Map<String, Set<String>> expectedMap = new HashMap<>();        
-        expectedMap.put("ID1", new HashSet<String>(Arrays.asList("ID1")));
         expectedMap.put("OtherID2", new HashSet<String>(Arrays.asList("ID2", "ID4")));
         expectedMap.put("OtherID4", new HashSet<String>(Arrays.asList("ID4")));
 

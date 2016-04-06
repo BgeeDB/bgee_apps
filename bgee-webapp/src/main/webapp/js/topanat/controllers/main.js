@@ -724,13 +724,6 @@
             if(!idField){ idField = "id";}
 
             var c = checked.map(function(c) { return c.id });
-            if (c) {
-                for(var idx in c) {
-                	if (c[idx] === 'ALL') { 
-                		return null;
-                	}
-                }
-            }
             console.log(c);
             return c;
         }

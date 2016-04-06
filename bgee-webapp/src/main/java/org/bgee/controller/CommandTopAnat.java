@@ -75,6 +75,8 @@ public class CommandTopAnat extends CommandParent {
      */
     private final static Logger log = LogManager.getLogger(CommandTopAnat.class.getName());
     
+    private final static String ALL_STAGES = "ALL";
+
     /**
      * Class responsible for launching a TopAnat job, and for sending a mail to the user 
      * on completion.
@@ -1070,7 +1072,7 @@ public class CommandTopAnat extends CommandParent {
                 builder.dataQuality(dataQuality);
                 builder.dataTypes(dataTypes);
                 
-                if(devStageId.equals("ALL")) {
+                if(devStageId.equals(ALL_STAGES)) {
                     builder.devStageId(null);
                 } else {
                     builder.devStageId(devStageId);
@@ -1133,7 +1135,9 @@ public class CommandTopAnat extends CommandParent {
             return log.exit(allDevStageIds);
         }
         Set<String> cleanDevStageIds = new HashSet<>(devStageIds);
-        if (!allDevStageIds.containsAll(cleanDevStageIds)) {
+
+        if (!allDevStageIds.containsAll(cleanDevStageIds) &&
+                !(cleanDevStageIds.size() == 1 && cleanDevStageIds.contains(ALL_STAGES))) {
             throw log.throwing(new IllegalArgumentException("Provided developmental stages " +
                     "are not from selected species"));
         }

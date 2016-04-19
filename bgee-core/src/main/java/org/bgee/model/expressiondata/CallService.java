@@ -131,6 +131,10 @@ public class CallService extends Service {
     
     //XXX: example single-species query, signature/returned value to be better defined
     //XXX: would several CallFilters represent AND or OR conditions?
+    
+    //XXX: this method should not return Call objects, it should only take care
+    //of the dispatch to different DAOs, and return a Map<CallFilter, Stream<TO>> or similar.
+    //no post-processing of the results returned by DAOs.
     public Stream<? extends Call<?, ?>> loadCalls(String speciesId, 
             Collection<CallFilter<?>> callFilters, Collection<Attribute> attributes, 
             LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes) 
@@ -165,6 +169,7 @@ public class CallService extends Service {
         }
 
         //OK, real work starts here
+        //XXX: NO, should not returned processed Calls, only retrieve streams from DAOs
         Set<Stream<? extends Call<?, ?>>> streamsJoinAnd = new HashSet<>();
         for (CallFilter<?> filter: clonedFilters) { 
             //dispatch the CallData per DAO needed. 

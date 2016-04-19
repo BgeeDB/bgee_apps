@@ -4,6 +4,10 @@
    "help": "By default, the gene universe considered for the enrichment analysis is all genes with data in Bgee for the selected species. It is possible to provide a custom gene universe, as a list of Ensembl gene IDs. All gene IDs present in the foreground must be present in the background."
 },
 {
+   "topic": "Developmental and life stages",
+   "help": "By default, all developmental and life stages are considered for the enrichment analysis. It is possible to provide a custom selection of developmental and life stages, selecting one or severals developmental and life stages."
+},
+{
     "topic": "Data quality",
     "help": "For each data type, Bgee applies dedicated analysis to generate calls of baseline presence/absence of expression, and of over-/under-expression, and to assign a level of confidence to the data: low or high. This field allows to specify whether the analysis should be based on data of any quality level, or on data of high quality level only."
 },

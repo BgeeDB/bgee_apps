@@ -55,8 +55,7 @@
         });
 
 
-        vm.isFormValidDataTypes = vm.isFormValidDevStages = vm.hasAllSelected = 'yes';
-        vm.hasNoDevStages = vm.hasBadCombinaison = '';
+        vm.isFormValidDataTypes = vm.isFormValidDevStages = 'yes';
         
         vm.fileType = "";
         vm.isOpen = true;
@@ -140,20 +139,14 @@
         // stages - See:
         // http://stackoverflow.com/questions/14514461/how-can-angularjs-bind-to-list-of-checkbox-values
         // Moreover, the stages have to be checked once retrieved from the server
-        vm.selectedDevelopmentStages = [];
-        var devStageAllBox = {
-                name : 'all',
-                id : 'ALL',
-                checked : true
-            };
-        vm.developmentStages = [devStageAllBox];
+        vm.developmentStages = [];
 
         vm.isBackgroundChecked = 'checked';
+        vm.isStageChecked = 'checked';
 
         vm.formSubmitted = false;
         vm.isAdvancedOptionsChecked = false;
         vm.jobStatus = null;
-
 
         /* result filtering */
         vm.filterValue = ''; // single filter (on organ names and ids)
@@ -246,7 +239,7 @@
             var gotDevStages = getDevStages('fg', vm.fg_list);
 
 
-            showMessage($scope, "development stages");
+            showMessage($scope, "developmental and life stages");
 
             gotDevStages.then(function(){
                 // Issue #109
@@ -353,30 +346,51 @@
         function getCombinedDevStageAndExpressionType() {
 
             vm.analysisList = []; // reset the array
-
-            var all = {id: 'ALL', name: 'All'};
-            vm.analysisList.push(all);
-
+            var specificStagesAnalysisList = []; // reset the array
+            
+            var developmentStagesCheckedCount = 0;
+            
             angular.forEach(vm.developmentStages, function(stage, key) {
-                var combined = '';
-                var object = {};
                 if (stage.checked) {
-                    /* SD: The correspondence between expressionType and their values should probably be stored somewhere */
-                    if (vm.expr_type == 'ALL' || vm.expr_type == 'EXPRESSED') {
-                        combined = stage.name + ', expression type "Present"';
-                    }
-                    if (vm.expr_type == 'ALL' || vm.expr_type == 'OVER_EXPRESSED') {
-                        combined = stage.name + ', expression type "Over-/Under-expression"';
-                    }
-
-                    if (combined != '') {
-                        object = {};
-                        object.id = stage.id + " ; " + vm.expr_type;
-                        object.name = combined;
-                        vm.analysisList.push(object);
-                    }
+                	var object = buildStage(stage.id, stage.name);
+                	if (object.size != 0) {
+                    	vm.analysisList.push(object);            	
+                    	developmentStagesCheckedCount += 1;
+                	}
                 }
             });
+            
+            if (developmentStagesCheckedCount == 0) {
+            	var object = buildStage('ALL-STAGES', 'all stages');
+            	if (object.size != 0) {
+                	vm.analysisList.push(object);            	
+            	}
+            }
+            
+            // We add at the beginning of the array 'All' only if there are severals checked stages
+            if (developmentStagesCheckedCount > 1) {
+                var all = {id: 'ALL', name: 'All'};
+                vm.analysisList.unshift(all);            	
+            }
+        }
+        
+        function buildStage(stageId, stageName) {
+        	var combined = '';
+        	var object = {};
+            /* SD: The correspondence between expressionType and their values should probably be stored somewhere */
+            if (vm.expr_type == 'ALL' || vm.expr_type == 'EXPRESSED') {
+                combined = stageName + ', expression type "Present"';
+            }
+            if (vm.expr_type == 'ALL' || vm.expr_type == 'OVER_EXPRESSED') {
+                combined = stageName + ', expression type "Over-/Under-expression"';
+            }
+
+            if (combined != '') {
+                object = {};
+                object.id = stageId + " ; " + vm.expr_type;
+                object.name = combined;
+            }
+            return object;
         }
         /***************************** End View result by stage and expression type **************************/
 
@@ -686,19 +700,7 @@
             if(typeof vm.developmentStages == 'undefined'){ return 1;}
             var checked = vm.getChecked(vm.developmentStages);
             console.log(checked);
-            var hasAllId = false;
-            var hasOtherIds = false;
-            for(var idx in checked) {
-            	if (checked[idx].id === 'ALL') { // "all" ID
-            		hasAllId = true;   
-            	} else {
-            		hasOtherIds = true;
-            	}
-            }
-            vm.isFormValidDevStages = ((hasAllId && !hasOtherIds) || (!hasAllId && hasOtherIds)) ? 'yes' : '';
-            vm.hasNoDevStages = (!hasAllId && !hasOtherIds) ? 'yes' : '';
-            vm.hasBadCombinaison = (hasAllId && hasOtherIds) ? 'yes' : '';
-            vm.hasAllSelected = hasAllId ? 'yes' : '';
+            vm.isFormValidDevStages = checked.length ? 'yes' : '';
             return checked.length;
         };
 
@@ -743,6 +745,16 @@
         vm.selectBackground = function(value) {
             vm.isBackgroundChecked = value;
             checkFgBg();
+        };
+        
+        vm.selectStage = function(value) {
+        	if (value === 'checked') {
+        		// Uncheck stages when click on 'All stages'
+        		angular.forEach(vm.developmentStages, function(stage, key) {
+                    stage.checked = '';
+                });
+        	}
+            vm.isStageChecked = value;
         };
 
         function checkConsistency()
@@ -948,6 +960,10 @@
 
             // BG checked takes precedence over BG list.
             vm.bg_list = vm.isBackgroundChecked == 'checked' ? '' : vm.bg_list;
+
+            // Stages checked takes precedence over stages list.
+            var devStageIDs = vm.isStageChecked == 'checked' ? '' : getCheckedIDs(vm.developmentStages);
+            
             //
             //expr_type: vm.expr_type,
             var formData = {
@@ -958,7 +974,7 @@
                 expr_type: vm.expr_type,
                 data_qual: vm.data_qual,
                 data_type: getCheckedIDs(vm.data_type.names),
-                stage_id: getCheckedIDs(vm.developmentStages),
+                stage_id: devStageIDs,
                 decorr_type: vm.decorr_type,
                 node_size: vm.node_size,
                 fdr_thr: vm.fdr_thr,
@@ -1167,9 +1183,10 @@
             vm.zipFileByAnalysis['ALL'] = '?page=top_anat&action=download&data=' + vm.hash;
             for (var i = 0; i < data.data.topAnatResults.length; i++) {
                 var devStageId = data.data.topAnatResults[i].devStageId;
+                devStageId = !devStageId ? 'ALL-STAGES' : devStageId;
                 var callType = data.data.topAnatResults[i].callType;
 
-                // we could probably use the sanme logic as for the zip file and put a composed key
+                // we could probably use the same logic as for the zip file and put a composed key
                 // no time for now
                 vm.gridOptionsByAnalysis[devStageId] = [];
                 vm.gridOptionsByAnalysis[devStageId][callType] = data.data.topAnatResults[i].results;
@@ -1268,14 +1285,14 @@
 
         function getDevStages(type, list) {
 
-            showMessage($scope, "development stages");
+            showMessage($scope, "developmental and life stages");
 
             console.log("Comparing fg and bg");
             if(!checkFgBg()){
                 // TODO should BG be cleared and bgee data activated? (might be confusing to the user)
                 console.log("fg and bg did not match");
                 // fg must be in bg
-                logger.error("Genelist contains genes not found in background genes");
+                logger.error("Gene list contains genes not found in background genes");
 
                 // Issue 112: same behavior as in issue 60
                 vm.background_species = '';
@@ -1357,9 +1374,9 @@
                                 vm.message = data.data.message;
                                 vm.showDevStageError = data.data.message;
                             } else {
-                                logger.error('Getting development stages failed. Unknown error.', 'TopAnat fail');
-                                vm.message = 'Getting development stages failed. Unknown error.';
-                                vm.showDevStageError = 'Getting development stages failed. Unknown error.';
+                                logger.error('Getting developmental and life stages failed. Unknown error.', 'TopAnat fail');
+                                vm.message = 'Getting developmental and life stages failed. Unknown error.';
+                                vm.showDevStageError = 'Getting developmental and life stages failed. Unknown error.';
                             }
 
                         }
@@ -1447,7 +1464,6 @@
                 console.log(data.data.fg_list.stages);
 
                 var stages = [];
-                stages.push(devStageAllBox);
 
                 angular.forEach(data.data.fg_list.stages, function(devStage, key){
 
@@ -1467,6 +1483,9 @@
                 });
 
                 vm.developmentStages = angular.copy(stages);
+
+                // set developmental and life stages to 'All stages'
+                vm.isStageChecked = 'checked';
 
             } else if (type === 'bg') {
 

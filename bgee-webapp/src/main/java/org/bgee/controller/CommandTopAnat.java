@@ -66,7 +66,7 @@ import org.bgee.view.ViewFactory;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13 Dec. 2015
+ * @version Bgee 13, Apr. 2016
  * @since   Bgee 13
  */
 public class CommandTopAnat extends CommandParent {
@@ -75,8 +75,6 @@ public class CommandTopAnat extends CommandParent {
      */
     private final static Logger log = LogManager.getLogger(CommandTopAnat.class.getName());
     
-    private final static String ALL_STAGES = "ALL";
-
     /**
      * Class responsible for launching a TopAnat job, and for sending a mail to the user 
      * on completion.
@@ -1053,9 +1051,6 @@ public class CommandTopAnat extends CommandParent {
             }
             for (String devStageId: devStageIds) {
                 log.debug("Iteration: callType={} - devStageId={}", callType, devStageId);
-                if (StringUtils.isBlank(devStageId)) {
-                    continue;
-                }
                 CallType callTypeEnum = null;
                 
                 if (BgeeEnum.isInEnum(CallType.Expression.class, callType)) {
@@ -1072,7 +1067,7 @@ public class CommandTopAnat extends CommandParent {
                 builder.dataQuality(dataQuality);
                 builder.dataTypes(dataTypes);
                 
-                if(devStageId.equals(ALL_STAGES)) {
+                if (StringUtils.isBlank(devStageId)) {
                     builder.devStageId(null);
                 } else {
                     builder.devStageId(devStageId);
@@ -1132,12 +1127,13 @@ public class CommandTopAnat extends CommandParent {
                 .collect(Collectors.toSet()); 
         if (devStageIds == null) {
             // We need stages to be able to build all TopAnatParams
-            return log.exit(allDevStageIds);
+            HashSet<String> allDevStages = new HashSet<>();
+            allDevStages.add(null);
+            return log.exit(allDevStages);
         }
         Set<String> cleanDevStageIds = new HashSet<>(devStageIds);
 
-        if (!allDevStageIds.containsAll(cleanDevStageIds) &&
-                !(cleanDevStageIds.size() == 1 && cleanDevStageIds.contains(ALL_STAGES))) {
+        if (!allDevStageIds.containsAll(cleanDevStageIds)) {
             throw log.throwing(new IllegalArgumentException("Provided developmental stages " +
                     "are not from selected species"));
         }

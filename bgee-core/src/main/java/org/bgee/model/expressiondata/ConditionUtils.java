@@ -21,9 +21,10 @@ import org.bgee.model.ontology.Ontology.RelationType;
 /**
  * Class providing convenience operations on {@link Condition}s.
  * 
- * @author Frederic Bastian
- * @version Bgee 13 Jan. 2016
- * @since Bgee 13 Dec. 2015
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13, Apr. 2016
+ * @since   Bgee 13, Dec. 2015
  */
 public class ConditionUtils {
 
@@ -46,6 +47,11 @@ public class ConditionUtils {
      * @see #getDevStageOntology()
      */
     private final Ontology<DevStage> devStageOnt;
+    
+    /**
+     * @see #isInferredAncestralConditions()
+     */
+    private final boolean inferAncestralConditions;
     
     /**
      * A {@code String} that is the ID of the species which the {@code Condition}s 
@@ -72,18 +78,19 @@ public class ConditionUtils {
     /**
      * Constructor accepting all required parameters. 
      * 
-     * @param speciesId         A {@code String} that is the ID of the species which the {@code Condition}s 
-     *                          should be valid in.
-     * @param conditions        A {@code Collection} of {@code Condition}s that will be managed 
-     *                          by this {@code ConditionUtils}.
-     * @param serviceFactory    A {@code ServiceFactory} to acquire {@code Service}s from.
+     * @param speciesId             A {@code String} that is the ID of the species which 
+     *                              the {@code Condition}s should be valid in.
+     * @param conditions            A {@code Collection} of {@code Condition}s that will be managed 
+     *                              by this {@code ConditionUtils}.
+     * @param inferAncestralConds   A {@code boolean} defining whether the ancestral conditions
+     *                              should be inferred.
+     * @param serviceFactory        A {@code ServiceFactory} to acquire {@code Service}s from.
      * @throws IllegalArgumentException If any of the arguments is {@code null} or empty, 
      *                                  or if the anat. entity or dev. stage of a {@code Condition} 
      *                                  does not exist in the requested species.
      */
     //XXX: we'll see what we'll do for multi-species later, for now we only accept a single species. 
     //I guess multi-species would need a separate class, e.g., MultiSpeciesConditionUtils.
-    //TODO: update javadoc for inferAncestralConds
     //TODO: unit test for ancestral condition inferrences
     //TODO: refactor this constructor, methods getAncestorConditions and getDescendantConditions
     public ConditionUtils(String speciesId, Collection<Condition> conditions, boolean inferAncestralConds, 
@@ -100,6 +107,7 @@ public class ConditionUtils {
         }
         
         this.speciesId = speciesId;
+        this.inferAncestralConditions = inferAncestralConds;
         this.serviceFactory = serviceFactory;
         Set<Condition> tempConditions = new HashSet<>(conditions);
         
@@ -212,10 +220,20 @@ public class ConditionUtils {
         return log.exit(true);
     }
     
-    //TODO: javadoc
     //TODO: unit tests
     //TODO: refactor this method, constructor and getDescendantConditions
-    public Set<Condition> getAncestorConditions(Condition cond, boolean directRelOnly) {
+    /**
+     * Get all the {@code Conditions} that are less precise than {@code cond}, 
+     * among the {@code Condition}s provided at instantiation. 
+     * 
+     * @param cond          A {@code Condition} for which we want to retrieve ancestors {@code Condition}s.
+     * @param directRelOnly A {@code boolean} defining whether only direct parents 
+     *                      or children of {@code element} should be returned.
+     * @return              A {@code Set} of {@code Condition}s that are ancestors of {@code cond}.
+     * @throws IllegalArgumentException If {@code cond} is not registered to this {@code ConditionUtils}.
+     */
+    public Set<Condition> getAncestorConditions(Condition cond, boolean directRelOnly) 
+            throws IllegalArgumentException {
         log.entry(cond, directRelOnly);
         if (!this.getConditions().contains(cond)) {
             throw log.throwing(new IllegalArgumentException("The provided condition "
@@ -255,11 +273,12 @@ public class ConditionUtils {
      * Get all the {@code Conditions} that are more precise than {@code cond}, 
      * among the {@code Condition}s provided at instantiation. 
      * 
-     * @param cond  A {@code Condition} for which we want to retrieve descendant {@code Condition}s.
-     * @return      A {@code Set} of {@code Condition}s that are descendants of {@code cond}.
+     * @param cond          A {@code Condition} for which we want to retrieve descendant {@code Condition}s.
+     * @param directRelOnly A {@code boolean} defining whether only direct parents 
+     *                      or children of {@code element} should be returned.
+     * @return              A {@code Set} of {@code Condition}s that are descendants of {@code cond}.
      * @throws IllegalArgumentException If {@code cond} is not registered to this {@code ConditionUtils}.
      */
-    //TODO: update javadoc for directRelOnly
     public Set<Condition> getDescendantConditions(Condition cond, boolean directRelOnly) {
         log.entry(cond, directRelOnly);
         if (!this.getConditions().contains(cond)) {
@@ -369,6 +388,12 @@ public class ConditionUtils {
      */
     public Ontology<DevStage> getDevStageOntology() {
         return devStageOnt;
+    }
+    /** 
+     * @return  The {@code boolean} defining whether the ancestral conditions should be inferred.
+     */
+    public boolean isInferredAncestralConditions() {
+        return this.inferAncestralConditions;
     }
     
 }

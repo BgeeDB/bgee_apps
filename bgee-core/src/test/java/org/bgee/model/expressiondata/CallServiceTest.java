@@ -1,20 +1,22 @@
 package org.bgee.model.expressiondata;
 
 import static org.junit.Assert.assertEquals;
-
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyCollectionOf;
 import static org.mockito.Matchers.anyObject;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.eq;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -29,6 +31,7 @@ import org.bgee.model.dao.api.expressiondata.CallDAOFilter;
 import org.bgee.model.dao.api.expressiondata.DAOConditionFilter;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
+import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO.OriginOfLine;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTOResultSet;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
@@ -45,9 +48,10 @@ import org.junit.Test;
 /**
  * Unit tests for {@link CallService}.
  * 
- * @author Frederic Bastian
- * @version Bgee 13 Nov. 2015
- * @since Bgee 13 Nov. 2015
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13, Apr. 2016
+ * @since   Bgee 13, Nov. 2015
  */
 public class CallServiceTest extends TestAncestor {
     private final static Logger log = LogManager.getLogger(CallServiceTest.class.getName());
@@ -379,5 +383,130 @@ public class CallServiceTest extends TestAncestor {
                                         !attr.isRankAttribute())
                         .collect(Collectors.toSet())), 
                 eq(orderingAttrs));
+    }
+    
+    /**
+     * Test the method {@link CallService#propagateExpressionTOs(java.util.Set, java.util.Set, java.util.Set)}.
+     */
+    @Test
+    public void shoudPropagateExpressionTOs() {
+        DAOManager manager = mock(DAOManager.class);
+
+        CallService service = new CallService(manager);
+        try {
+            service.propagateExpressionTOs(null, null, null, null);
+            fail("Should throw an IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            // test passed
+        }
+
+        ConditionUtils mockConditionUtils = mock(ConditionUtils.class);
+        
+        Set<Condition> conditions = new HashSet<>(Arrays.asList(
+                new Condition("organA", "stageA"),
+                new Condition("organA", "parentStageA1"),
+                new Condition("parentOrganA1", "stageA"),
+                new Condition("parentOrganA1", "parentStageA1")));
+        when(mockConditionUtils.getConditions()).thenReturn(conditions);
+        when(mockConditionUtils.isInferredAncestralConditions()).thenReturn(true);
+        
+        Condition childCond = new Condition("organA", "stageA");
+        Set<Condition> ancestorConds = new HashSet<>(Arrays.asList(
+                new Condition("organA", "parentStageA1"),
+                new Condition("parentOrganA1", "stageA"),
+                new Condition("parentOrganA1", "parentStageA1")));
+        when(mockConditionUtils.getAncestorConditions(childCond, true)).thenReturn(ancestorConds);
+        
+        childCond = new Condition("organA", "parentStageA1");
+        ancestorConds = new HashSet<>(Arrays.asList(
+                new Condition("parentOrganA1", "parentStageA1")));
+        when(mockConditionUtils.getAncestorConditions(childCond, true)).thenReturn(ancestorConds);
+
+        childCond = new Condition("parentOrganA1", "parentStageA1");
+        ancestorConds = new HashSet<>();
+        when(mockConditionUtils.getAncestorConditions(childCond, true)).thenReturn(ancestorConds);
+
+        childCond = new Condition("organB", "stageB");
+        ancestorConds = new HashSet<>(Arrays.asList(new Condition("organB", "parentStageB1")));
+        when(mockConditionUtils.getAncestorConditions(childCond, true)).thenReturn(ancestorConds);
+
+        Collection<ExpressionCallTO> exprTOs = Arrays.asList(
+                // ExpressionCallTO 1
+                new ExpressionCallTO("1", "geneA", "organA", "stageA", null,
+                        DataState.LOWQUALITY, null, DataState.NODATA, null,
+                        DataState.NODATA, null, DataState.HIGHQUALITY, null,
+                        false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
+                // ExpressionCallTO 2
+                new ExpressionCallTO("2", "geneA", "organA", "parentStageA1", null,
+                        DataState.NODATA,  null, DataState.HIGHQUALITY, null,
+                        DataState.HIGHQUALITY, null, DataState.NODATA, null,
+                        false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
+                // ExpressionCallTO 3
+                new ExpressionCallTO("3", "geneB", "parentOrganA1", "parentStageA1", null,
+                        DataState.NODATA, null, DataState.NODATA, null,
+                        DataState.NODATA, null, DataState.LOWQUALITY, null,
+                        false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
+                // ExpressionCallTO 4
+                new ExpressionCallTO("4", "geneB", "organB", "stageB", null,
+                        DataState.HIGHQUALITY, null, DataState.NODATA, null,
+                        DataState.NODATA, null, DataState.NODATA, null,
+                        false, false, OriginOfLine.SELF, OriginOfLine.SELF, true));
+
+        DataPropagation dpSelfSelf = new DataPropagation(PropagationState.SELF, PropagationState.SELF);
+        DataPropagation dpSelfDesc = new DataPropagation(PropagationState.SELF, PropagationState.DESCENDANT);
+        DataPropagation dpDescSelf = new DataPropagation(PropagationState.DESCENDANT, PropagationState.SELF);
+        DataPropagation dpDescDesc = new DataPropagation(PropagationState.DESCENDANT, PropagationState.DESCENDANT);
+        
+        Set<ExpressionCall> expectedResults = new HashSet<>(Arrays.asList(
+                // From ExpressionCallTO 1
+                new ExpressionCall("geneA", new Condition("organA", "stageA"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfSelf))), 
+                
+                new ExpressionCall("geneA", new Condition("organA", "parentStageA1"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfDesc),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfDesc))), 
+
+                new ExpressionCall("geneA", new Condition("parentOrganA1", "stageA"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpDescSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpDescSelf))), 
+
+                new ExpressionCall("geneA", new Condition("parentOrganA1", "parentStageA1"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpDescDesc),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpDescDesc))), 
+
+                // From ExpressionCallTO 2
+                new ExpressionCall("geneA", new Condition("organA", "parentStageA1"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.EST, dpSelfSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.IN_SITU, dpSelfSelf))), 
+                new ExpressionCall("geneA", new Condition("parentOrganA1", "parentStageA1"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.EST, dpDescSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.IN_SITU, dpDescSelf))), 
+
+                // From ExpressionCallTO 3
+                new ExpressionCall("geneB", new Condition("parentOrganA1", "parentStageA1"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.RNA_SEQ, dpSelfSelf))), 
+
+                // From ExpressionCallTO 4
+                new ExpressionCall("geneB", new Condition("organB", "stageB"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfSelf))), 
+                new ExpressionCall("geneB", new Condition("organB", "parentStageB1"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfDesc)))));
+
+        Set<ExpressionCall> actualResults = service.propagateExpressionTOs(
+                exprTOs, null, null, mockConditionUtils);
+        assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
+        
+//      TODO more tests
+//        Set<String> allowedOrganIds = new HashSet<>();
+//        actualResults = service.propagateExpressionTOs(exprTOs, allowedOrganIds, null);
+//        assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
+//
+//        Set<String> allowedStageIds = new HashSet<>();
+//        actualResults = service.propagateExpressionTOs(exprTOs, null, allowedStageIds);
+//        assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
+//
+//        actualResults = service.propagateExpressionTOs(exprTOs, allowedOrganIds, allowedStageIds);
+//        assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
     }
 }

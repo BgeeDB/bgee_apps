@@ -19,6 +19,11 @@ public class AnatEntitySimilarity {
     //private String cioId;    
     //private String taxonId;
     
+    /**
+     * 2-args constructor
+     * @param groupId        {@code String} representation of the group id 
+     * @param anatEntityIds  {@code Set} of anatomic entities IDs of group members
+     */
     public AnatEntitySimilarity(String groupId, Set<String> anatEntityIds) {
         this.groupId = groupId;
         this.anatEntityIds = anatEntityIds;

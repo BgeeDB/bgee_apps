@@ -11,6 +11,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.anatdev.StageDAO.StageTO;
+import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO.GroupToStageTO;
 
 /**
  * A {@link Service} to obtain {@link DevStage} objects. 
@@ -86,6 +87,25 @@ public class DevStageService extends Service {
     }
 
     /**
+     * 
+     * @param taxonId
+     * @param speciesIds
+     * @return
+     */
+    public Set<DevStageSimilarity> getDevStageSimilarities(String taxonId, Set<String> speciesIds) {
+       log.entry(taxonId, speciesIds);
+       return log.exit(this.getDaoManager().getStageGroupingDAO().getGroupToStage(taxonId, speciesIds).stream()
+             .collect(Collectors.groupingBy(GroupToStageTO::getGroupId)) // group by groupId
+              .entrySet().stream()
+              .map(e -> new DevStageSimilarity(e.getKey(),              // map to DevStageSimilarity
+                                              e.getValue().stream()
+                                                  .map(GroupToStageTO::getStageId)
+                                                  .collect(Collectors.toSet())
+                                             )
+             ).collect(Collectors.toSet()));
+    }
+
+    /**
      * Maps {@link StageTO} to a {@link DevStage}.
      * 
      * @param stageTO   The {@link StageTO} to map.
@@ -96,7 +116,7 @@ public class DevStageService extends Service {
         if (stageTO == null) {
             return log.exit(null);
         }
-        
+
         return log.exit(new DevStage(stageTO.getId(), stageTO.getName(), 
                 stageTO.getDescription(), stageTO.getLeftBound(), stageTO.getRightBound(), 
                 stageTO.getLevel(), stageTO.isTooGranular(), stageTO.isGroupingStage()));

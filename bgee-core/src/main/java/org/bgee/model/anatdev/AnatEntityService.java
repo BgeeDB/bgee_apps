@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -17,6 +18,8 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
+import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SimAnnotToAnatEntityTO;
+import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 
@@ -26,7 +29,8 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
  * 
  * @author Frederic Bastian
  * @author Valentine Rech de Laval
- * @version Bgee 13, Nov. 2015
+ * @author Philippe Moret
+ * @version Bgee 13, Apr. 2016
  * @since   Bgee 13, Nov. 2015
 */
 public class AnatEntityService extends Service {
@@ -112,6 +116,34 @@ public class AnatEntityService extends Service {
                         }));
     }
 
+    /**
+     * Get summary similarity annotations for a given taxonId, optionally restricting species
+     * @param taxonId    A {@code String} representation of the taxonId
+     * @param speciesIds A {@code Set} of string ids of the species (if empty or null all available species are used)
+     * @return A {@code Set} of {@link AnatEntitySimilarity}
+     */
+    public Set<AnatEntitySimilarity> getSimilarities(String taxonId, Set<String> speciesIds) {
+        log.entry(taxonId);
+        Map<String, SummarySimilarityAnnotationTO> simAnnotations = 
+                this.getDaoManager().getSummarySimilarityAnnotationDAO().getSummarySimilarityAnnotations(taxonId)
+        .stream().filter(to -> taxonId.equals(to.getTaxonId()))
+        .collect(Collectors.toMap(SummarySimilarityAnnotationTO::getId, Function.identity()));
+        
+        Set<AnatEntitySimilarity> results = this.getDaoManager().getSummarySimilarityAnnotationDAO()
+                .getSimAnnotToAnatEntity(taxonId, speciesIds).stream()
+                // group by group id
+                .collect(Collectors.groupingBy(SimAnnotToAnatEntityTO::getSummarySimilarityAnnotationId)) 
+                .entrySet().stream().map(
+                        e -> new AnatEntitySimilarity(simAnnotations.get(e.getKey()).getId(), 
+                                // collect anatEntities as a set
+                                e.getValue().stream()
+                                            .map(SimAnnotToAnatEntityTO::getAnatEntityId)
+                                            .collect(Collectors.toSet())) 
+                ).collect(Collectors.toSet());
+        
+        return log.exit(results);
+    }
+    
     /**
      * Maps a {@code AnatEntityTO} to an {@code AnatEntity} instance 
      * (Can be passed as a {@code Function}). 

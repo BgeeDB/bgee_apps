@@ -53,15 +53,9 @@ public class HtmlSourceDisplay extends HtmlParentDisplay implements SourceDispla
         
         this.writeln("<h1>Data sources</h1>");
 
-        this.writeln("<div id='bgee_introduction'>");
-        //TODO write page introduction
-        this.writeln("<p>Data sources used in this release of Bgee<p>");
-
-        this.writeln("</div>");
-
         this.writeln("<div class='row'>");
-        
         this.writeln("<div class='" + CENTERED_ELEMENT_CLASS + "'>");
+        this.writeln("<p>This page provides data sources used in this release of Bgee<p>");
         this.writeln(this.getContent(sources));
         this.writeln("</div>"); // end class
 
@@ -111,7 +105,7 @@ public class HtmlSourceDisplay extends HtmlParentDisplay implements SourceDispla
                 sb.append("    </div>"); // close source-name
                 sb.append("    <div class='source-details col-sm-9 col-md-10 row'>");
                 sb.append("        <div class='details row'>");
-                sb.append("            <div class='source-details-header col-sm-4 col-md-3'>Description</div>");
+//                sb.append("            <div class='source-details-header col-sm-4 col-md-3'>Description</div>");
                 sb.append("            <div class='source-details-content col-sm-8 col-md-9'>" + source.getDescription() + "</div>");
                 sb.append("        </div>");
                 // TODO uncomment when release versions and dates are added in db

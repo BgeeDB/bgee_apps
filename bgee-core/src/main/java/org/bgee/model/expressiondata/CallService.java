@@ -583,20 +583,24 @@ public class CallService extends Service {
     // METHODS PROPAGATION: from CallTOs to propagated Calls
     //*************************************************************************
     
-    /** TODO
-     * @param exprTOs
-     * @param allowedOrganIds
-     * @param allowedStageIds
-     * @param conditionUtils
-     * @return
+    /**
+     * Propagate {@code ExpressionTO}s to ancestor conditions in allowed developmental stages and 
+     * anatomical entities according to provided {@code conditionUtils}.
+     *  
+     * @param exprTOs           A {@code Collection} of {@code ExpressionCallTO} to be propagated.
+     * @param allowedOrganIds   A {@code Set} of {@code String}s that are anat. entity IDs in 
+     *                          which propagated calls are allowed. 
+     * @param allowedStageIds   A {@code Set} of {@code String}s that are dev. stage IDs in 
+     *                          which propagated calls are allowed. 
+     * @param conditionUtils    A {@code ConditionUtils} containing anat. entity and dev. stage
+     *                          {@code Ontology}s to use for the propagation. 
+     * @return                  A {@code Set} of {@code ExpressionCall}s that are propagated calls.
      */
+    // TODO: set to private and add argument to loadExpressionCalls() 
     // NOTE: No update ExpressionCalls, to provide better unicity of the method, and allow better unit testing
     public Set<ExpressionCall> propagateExpressionTOs(Collection<ExpressionCallTO> exprTOs,
             Set<String> allowedOrganIds, Set<String> allowedStageIds, ConditionUtils conditionUtils) {
         log.entry(exprTOs, allowedOrganIds, allowedStageIds, conditionUtils);        
-        
-        Set<String> filteredOrganIds = allowedOrganIds == null? new HashSet<>(): new HashSet<>(allowedOrganIds);
-        Set<String> filteredStageIds = allowedStageIds == null? new HashSet<>(): new HashSet<>(allowedStageIds);
         
         // Check that TOs are not empty and not already propagated
         if (exprTOs == null || exprTOs.isEmpty()) {
@@ -651,13 +655,11 @@ public class CallService extends Service {
 
             // Retrieve parent conditions of the species keeping conditions in allowed organs and stages only
             Set<Condition> ancestorConditions = 
-                    conditionUtils.getAncestorConditions(childCall.getCondition(), true).stream()
-                        .filter(c -> filteredOrganIds.isEmpty() || filteredOrganIds.contains(c.getAnatEntityId()))
-                        .filter(c -> filteredStageIds.isEmpty() || filteredStageIds.contains(c.getDevStageId()))
-                        .collect(Collectors.toSet());
+                    conditionUtils.getAncestorConditions(childCall.getCondition(), true);
 
             // Propagation to ancestor conditions
-            Set<ExpressionCall> propagatedCalls = this.propagateExpressionCall(childCall, ancestorConditions);
+            Set<ExpressionCall> propagatedCalls = this.propagateExpressionCall(
+                    childCall, ancestorConditions, allowedOrganIds, allowedStageIds);
             allPropagatedCalls.addAll(propagatedCalls);
             
             log.trace("Add the propagated expression calls: {}", propagatedCalls);
@@ -675,19 +677,32 @@ public class CallService extends Service {
      * @param childCall         An {@code ExpressionCall} that is the call to be propagated.
      * @param parentConditions  A {@code Set} of {@code Condition}s that are the conditions 
      *                          in which the propagation have to be done.
-     * @return                  A {@code Set} of {@code ExpressionCall}s that are the propagated calls.
+     * @param allowedOrganIds   A {@code Set} of {@code String}s that are anat. entity IDs in 
+     *                          which propagated calls are allowed. 
+     * @param allowedStageIds   A {@code Set} of {@code String}s that are dev. stage IDs in 
+     *                          which propagated calls are allowed. 
+     * @return                  A {@code Set} of {@code ExpressionCall}s that are propagated calls
+     *                          from provided {@code childCall}.
      */
-    private Set<ExpressionCall> propagateExpressionCall(
-            ExpressionCall childCall, Set<Condition> parentConditions) {
-        log.entry(childCall, parentConditions);
+    private Set<ExpressionCall> propagateExpressionCall(ExpressionCall childCall,
+            Set<Condition> parentConditions, Set<String> allowedOrganIds, Set<String> allowedStageIds) {
+        log.entry(childCall, parentConditions, allowedOrganIds, allowedStageIds);
         log.trace("Propagation for expression call: {}", childCall);
+        
+        Set<String> filteredOrganIds = allowedOrganIds == null? new HashSet<>(): new HashSet<>(allowedOrganIds);
+        Set<String> filteredStageIds = allowedStageIds == null? new HashSet<>(): new HashSet<>(allowedStageIds);
         
         Set<ExpressionCall> globalCalls = new HashSet<>();
         Condition childCondition = childCall.getCondition();
         
+
         // We should add child call condition to not loose that call
         Set<Condition> conditionsToBeUsed = new HashSet<>(parentConditions);
         conditionsToBeUsed.add(childCondition);
+        conditionsToBeUsed = conditionsToBeUsed.stream()
+            .filter(c -> filteredOrganIds.isEmpty() || filteredOrganIds.contains(c.getAnatEntityId()))
+            .filter(c -> filteredStageIds.isEmpty() || filteredStageIds.contains(c.getDevStageId()))
+            .collect(Collectors.toSet());
         
         for (Condition condition : conditionsToBeUsed) {
             log.trace("Propagation of the current expression call to parent condition: {}",

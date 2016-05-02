@@ -457,7 +457,7 @@ public class CallServiceTest extends TestAncestor {
         DataPropagation dpDescSelf = new DataPropagation(PropagationState.DESCENDANT, PropagationState.SELF);
         DataPropagation dpDescDesc = new DataPropagation(PropagationState.DESCENDANT, PropagationState.DESCENDANT);
         
-        Set<ExpressionCall> expectedResults = new HashSet<>(Arrays.asList(
+        Set<ExpressionCall> allResults = new HashSet<>(Arrays.asList(
                 // From ExpressionCallTO 1
                 new ExpressionCall("geneA", new Condition("organA", "stageA"), null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfSelf),
@@ -495,18 +495,30 @@ public class CallServiceTest extends TestAncestor {
 
         Set<ExpressionCall> actualResults = service.propagateExpressionTOs(
                 exprTOs, null, null, mockConditionUtils);
-        assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
+        assertEquals("Incorrect ExpressionCalls generated", allResults, actualResults);
         
-//      TODO more tests
-//        Set<String> allowedOrganIds = new HashSet<>();
-//        actualResults = service.propagateExpressionTOs(exprTOs, allowedOrganIds, null);
-//        assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
-//
-//        Set<String> allowedStageIds = new HashSet<>();
-//        actualResults = service.propagateExpressionTOs(exprTOs, null, allowedStageIds);
-//        assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
-//
-//        actualResults = service.propagateExpressionTOs(exprTOs, allowedOrganIds, allowedStageIds);
-//        assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
+        Set<String> allowedOrganIds = new HashSet<>(Arrays.asList("organA"));
+        Set<ExpressionCall> expectedResults = allResults.stream()
+                .filter(c -> allowedOrganIds.contains(c.getCondition().getAnatEntityId()))
+                .collect(Collectors.toSet());
+        actualResults = service.propagateExpressionTOs(
+                exprTOs, allowedOrganIds, null, mockConditionUtils);
+        assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
+
+        Set<String> allowedStageIds = new HashSet<>(Arrays.asList("parentStageA1"));
+        expectedResults = allResults.stream()
+                .filter(c -> allowedStageIds.contains(c.getCondition().getDevStageId()))
+                .collect(Collectors.toSet());
+        actualResults = service.propagateExpressionTOs(
+                exprTOs, null, allowedStageIds, mockConditionUtils);
+        assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
+
+        expectedResults = allResults.stream()
+                .filter(c -> allowedOrganIds.contains(c.getCondition().getAnatEntityId()))
+                .filter(c -> allowedStageIds.contains(c.getCondition().getDevStageId()))
+                .collect(Collectors.toSet());
+        actualResults = service.propagateExpressionTOs(
+                exprTOs, allowedOrganIds, allowedStageIds, mockConditionUtils);
+        assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
     }
 }

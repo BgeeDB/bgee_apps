@@ -523,7 +523,7 @@ public class CallServiceTest extends TestAncestor {
     }
     
     /**
-     * Test the method {@link CallService#reconcileCalls(Set)}.
+     * Test the method {@link CallService#reconcileSingleGeneCalls(Set)}.
      */
     @Test
     public void shoudReconcileCalls() {
@@ -552,7 +552,7 @@ public class CallServiceTest extends TestAncestor {
                 new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfAndSelf),
                 new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndDesc),
                 new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndSelf)));
-        ExpressionCall actualResult = service.reconcileCalls(inputCalls);
+        ExpressionCall actualResult = service.reconcileSingleGeneCalls(inputCalls);
         assertEquals("Incorrect ExpressionCall generated", expectedResult, actualResult);
         
         //
@@ -569,7 +569,7 @@ public class CallServiceTest extends TestAncestor {
                 new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpDescAndSelf),
                 new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndSelf),
                 new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndSelfDesc)));
-        actualResult = service.reconcileCalls(inputCalls);
+        actualResult = service.reconcileSingleGeneCalls(inputCalls);
         assertEquals("Incorrect ExpressionCall generated", expectedResult, actualResult);
 
         // EXPRESSED - LOW quality - not observed
@@ -583,7 +583,7 @@ public class CallServiceTest extends TestAncestor {
                 ExpressionSummary.EXPRESSED, DataQuality.LOW, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpDescAndSelf),
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.EST, dpSelfAndDesc)));
-        actualResult = service.reconcileCalls(inputCalls);
+        actualResult = service.reconcileSingleGeneCalls(inputCalls);
         assertEquals("Incorrect ExpressionCall generated", expectedResult, actualResult);
 
         // NOT_EXPRESSED - HIGH quality - not observed
@@ -597,7 +597,7 @@ public class CallServiceTest extends TestAncestor {
                 ExpressionSummary.NOT_EXPRESSED, DataQuality.HIGH, Arrays.asList(
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpAncAndSelf),
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.IN_SITU, dpAncAndSelf)));
-        actualResult = service.reconcileCalls(inputCalls);
+        actualResult = service.reconcileSingleGeneCalls(inputCalls);
         assertEquals("Incorrect ExpressionCall generated", expectedResult, actualResult);
 
         // WEAK_AMBIGUITY - null - observed
@@ -611,7 +611,7 @@ public class CallServiceTest extends TestAncestor {
                 ExpressionSummary.WEAK_AMBIGUITY, null, Arrays.asList(
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpAncAndSelf),
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndDesc)));
-        actualResult = service.reconcileCalls(inputCalls);
+        actualResult = service.reconcileSingleGeneCalls(inputCalls);
         assertEquals("Incorrect ExpressionCall generated", expectedResult, actualResult);
         
         //
@@ -625,7 +625,7 @@ public class CallServiceTest extends TestAncestor {
                 ExpressionSummary.WEAK_AMBIGUITY, null, Arrays.asList(
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpAncAndSelf),
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfDescAndAll)));
-        actualResult = service.reconcileCalls(inputCalls);
+        actualResult = service.reconcileSingleGeneCalls(inputCalls);
         assertEquals("Incorrect ExpressionCall generated", expectedResult, actualResult);
         
         // STRONG_AMBIGUITY - null - not observed
@@ -639,7 +639,7 @@ public class CallServiceTest extends TestAncestor {
                 ExpressionSummary.STRONG_AMBIGUITY, null, Arrays.asList(
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfAndSelf),
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndDesc)));
-        actualResult = service.reconcileCalls(inputCalls);
+        actualResult = service.reconcileSingleGeneCalls(inputCalls);
         assertEquals("Incorrect ExpressionCall generated", expectedResult, actualResult);
         
         // Two different gene IDs
@@ -647,7 +647,7 @@ public class CallServiceTest extends TestAncestor {
                 new ExpressionCall("geneA", new Condition("organA", "stageA"), null, null, null, null), 
                 new ExpressionCall("geneB", new Condition("organB", "parentStageB1"), null, null, null, null)));
         try {
-            service.reconcileCalls(inputCalls);
+            service.reconcileSingleGeneCalls(inputCalls);
             fail("Should throw an IllegalArgumentException");
         } catch (IllegalArgumentException e) {
             // Test passed
@@ -660,7 +660,7 @@ public class CallServiceTest extends TestAncestor {
                 new ExpressionCall("geneA", new Condition("organB", "parentStageB1"), null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpDescAndDesc)))));
         try {
-            service.reconcileCalls(inputCalls);
+            service.reconcileSingleGeneCalls(inputCalls);
             fail("Should throw an IllegalArgumentException");
         } catch (IllegalArgumentException e) {
             // Test passed

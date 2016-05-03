@@ -765,7 +765,19 @@ public class CallService extends Service {
         return log.exit(globalCalls);        
     }
     
-    public ExpressionCall reconcileCalls(Set<ExpressionCall> calls) {
+    /** 
+     * Reconcile calls for a single-gene: either for a single organ, or for a group of 
+     * homologous organs (e.g., expr affy vs. no-expr RNA-Seq). 
+     * <p>
+     * Return the representative {@code ExpressionCall} (with reconciled quality per data types,
+     * observed data state, conflict status etc., but not with organId-stageId.
+     * The condition is set to {@code null}.
+     * 
+     * @param calls A {@code Collection} of {@code ExpressionCall}s that are the calls to be reconciled.
+     * @return      The representative {@code ExpressionCall} (with reconciled quality per data types,
+     *              observed data state, conflict status etc. But not with organId-stageId)
+     */
+    public ExpressionCall reconcileSingleGeneCalls(Collection<ExpressionCall> calls) {
         log.entry(calls);
         
         // Check calls have same gene ID

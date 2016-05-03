@@ -588,10 +588,10 @@ public class CallService extends Service {
      * anatomical entities according to provided {@code conditionUtils}.
      *  
      * @param exprTOs           A {@code Collection} of {@code ExpressionCallTO} to be propagated.
-     * @param allowedOrganIds   A {@code Set} of {@code String}s that are anat. entity IDs in 
-     *                          which propagated calls are allowed. 
-     * @param allowedStageIds   A {@code Set} of {@code String}s that are dev. stage IDs in 
-     *                          which propagated calls are allowed. 
+     * @param conditionFilter   A {@code Collection} of {@code ConditionFilter}s to configure 
+     *                          the filtering of conditions in propagated calls. 
+     *                          If several {@code ConditionFilter}s are provided, they are seen as
+     *                          "OR" conditions. Can be {@code null} or empty. 
      * @param conditionUtils    A {@code ConditionUtils} containing anat. entity and dev. stage
      *                          {@code Ontology}s to use for the propagation. 
      * @return                  A {@code Set} of {@code ExpressionCall}s that are propagated calls.
@@ -599,8 +599,8 @@ public class CallService extends Service {
     // TODO: set to private and add argument to loadExpressionCalls() 
     // NOTE: No update ExpressionCalls, to provide better unicity of the method, and allow better unit testing
     public Set<ExpressionCall> propagateExpressionTOs(Collection<ExpressionCallTO> exprTOs,
-            Set<String> allowedOrganIds, Set<String> allowedStageIds, ConditionUtils conditionUtils) {
-        log.entry(exprTOs, allowedOrganIds, allowedStageIds, conditionUtils);        
+            Collection<ConditionFilter> conditionFilter, ConditionUtils conditionUtils) {
+        log.entry(exprTOs, conditionFilter, conditionUtils);        
         
         // Check that TOs are not empty and not already propagated
         if (exprTOs == null || exprTOs.isEmpty()) {
@@ -659,7 +659,7 @@ public class CallService extends Service {
 
             // Propagation to ancestor conditions
             Set<ExpressionCall> propagatedCalls = this.propagateExpressionCall(
-                    childCall, ancestorConditions, allowedOrganIds, allowedStageIds);
+                    childCall, ancestorConditions, conditionFilter);
             allPropagatedCalls.addAll(propagatedCalls);
             
             log.trace("Add the propagated expression calls: {}", propagatedCalls);
@@ -672,25 +672,22 @@ public class CallService extends Service {
     }
     
     /**
-     * Propagate {@code ExpressionCall} to provided parent conditions.
+     * Propagate {@code ExpressionCall} to provided {@code parentConditions}.
      * 
      * @param childCall         An {@code ExpressionCall} that is the call to be propagated.
      * @param parentConditions  A {@code Set} of {@code Condition}s that are the conditions 
      *                          in which the propagation have to be done.
-     * @param allowedOrganIds   A {@code Set} of {@code String}s that are anat. entity IDs in 
-     *                          which propagated calls are allowed. 
-     * @param allowedStageIds   A {@code Set} of {@code String}s that are dev. stage IDs in 
-     *                          which propagated calls are allowed. 
+     * @param conditionFilter   A {@code Collection} of {@code ConditionFilter}s to configure 
+     *                          the filtering of conditions in propagated calls. 
+     *                          If several {@code ConditionFilter}s are provided, they are seen as
+     *                          "OR" conditions. Can be {@code null} or empty. 
      * @return                  A {@code Set} of {@code ExpressionCall}s that are propagated calls
      *                          from provided {@code childCall}.
      */
     private Set<ExpressionCall> propagateExpressionCall(ExpressionCall childCall,
-            Set<Condition> parentConditions, Set<String> allowedOrganIds, Set<String> allowedStageIds) {
-        log.entry(childCall, parentConditions, allowedOrganIds, allowedStageIds);
+            Set<Condition> parentConditions, Collection<ConditionFilter> conditionFilter) {
+        log.entry(childCall, parentConditions, conditionFilter);
         log.trace("Propagation for expression call: {}", childCall);
-        
-        Set<String> filteredOrganIds = allowedOrganIds == null? new HashSet<>(): new HashSet<>(allowedOrganIds);
-        Set<String> filteredStageIds = allowedStageIds == null? new HashSet<>(): new HashSet<>(allowedStageIds);
         
         Set<ExpressionCall> globalCalls = new HashSet<>();
         Condition childCondition = childCall.getCondition();
@@ -700,8 +697,9 @@ public class CallService extends Service {
         Set<Condition> conditionsToBeUsed = new HashSet<>(parentConditions);
         conditionsToBeUsed.add(childCondition);
         conditionsToBeUsed = conditionsToBeUsed.stream()
-            .filter(c -> filteredOrganIds.isEmpty() || filteredOrganIds.contains(c.getAnatEntityId()))
-            .filter(c -> filteredStageIds.isEmpty() || filteredStageIds.contains(c.getDevStageId()))
+                //FIXME Add management of condition filter
+//            .filter(c -> filteredOrganIds.isEmpty() || filteredOrganIds.contains(c.getAnatEntityId()))
+//            .filter(c -> filteredStageIds.isEmpty() || filteredStageIds.contains(c.getDevStageId()))
             .collect(Collectors.toSet());
         
         for (Condition condition : conditionsToBeUsed) {

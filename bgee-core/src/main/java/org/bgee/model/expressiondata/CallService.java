@@ -765,4 +765,166 @@ public class CallService extends Service {
         return log.exit(globalCalls);        
     }
     
+    public ExpressionCall reconcileCalls(Set<ExpressionCall> calls) {
+        log.entry(calls);
+        
+        // Check calls have same gene ID
+        Set<String> geneIds = calls.stream().map(c -> c.getGeneId()).collect(Collectors.toSet());
+        if (geneIds.size() != 1) {
+            throw log.throwing(new IllegalArgumentException(
+                    "Provided no gene ID or several gene IDs: " + geneIds));
+        }
+        String geneId = geneIds.iterator().next();
+        
+        Set<ExpressionCallData> callData = calls.stream()
+                .map(c-> c.getCallData())
+                .flatMap(Set::stream)
+                .collect(Collectors.toSet());
+
+        // DataPropagation
+        PropagationState anatEntityPropagationState = this.summarizePropagationState(
+                callData.stream()
+                    .map(c -> c.getDataPropagation().getAnatEntityPropagationState())
+                    .collect(Collectors.toSet()));
+        PropagationState devStagePropagationState = this.summarizePropagationState(
+                callData.stream()
+                    .map(c -> c.getDataPropagation().getDevStagePropagationState())
+                    .collect(Collectors.toSet()));
+        
+        HashSet<PropagationState> selfStates = new HashSet<>(Arrays.asList(
+                PropagationState.SELF, PropagationState.SELF_AND_DESCENDANT,
+                PropagationState.SELF_AND_ANCESTOR, PropagationState.ALL));
+        Boolean includingObservedData = false;
+        if (selfStates.contains(anatEntityPropagationState) && selfStates.contains(devStagePropagationState)) {
+            includingObservedData = true;
+            
+        }
+        DataPropagation callDataProp = new DataPropagation(
+                anatEntityPropagationState, devStagePropagationState, includingObservedData);
+
+        // ExpressionSummary
+        ExpressionSummary expressionSummary;
+        Set<Expression> expression = callData.stream()
+                .map(c -> c.getCallType())
+                .collect(Collectors.toSet());
+        if (expression.size() == 1) {
+            Expression expr = expression.iterator().next();
+            switch (expr) {
+                case EXPRESSED:
+                    expressionSummary = ExpressionSummary.EXPRESSED;
+                    break;
+                case NOT_EXPRESSED:
+                    expressionSummary = ExpressionSummary.NOT_EXPRESSED;
+                    break;
+                default:
+                    throw log.throwing(new IllegalArgumentException("Unsupported Expression"));
+            }
+        } else {
+            long notPropagatedNoExprCount = callData.stream()
+                .filter(c -> Boolean.TRUE.equals(c.getDataPropagation().getIncludingObservedData()) &&
+                        c.getCallType().equals(Expression.NOT_EXPRESSED))
+                .count();
+            
+            if (notPropagatedNoExprCount == 0) {
+                expressionSummary = ExpressionSummary.WEAK_AMBIGUITY;
+            } else {
+                expressionSummary = ExpressionSummary.STRONG_AMBIGUITY;
+            }
+        }
+        
+        //DataQuality
+        DataQuality dataQuality = null;
+        if (expressionSummary == ExpressionSummary.EXPRESSED 
+                || expressionSummary == ExpressionSummary.NOT_EXPRESSED) {
+            Set<DataQuality> qualities = callData.stream()
+                    .map(c -> c.getDataQuality())
+                    .collect(Collectors.toSet());
+            if (qualities.contains(DataQuality.HIGH)) {
+                dataQuality = DataQuality.HIGH;
+            } else {
+                dataQuality = DataQuality.LOW;
+            }
+        } else {
+            // Ambiguity
+            dataQuality = null;
+        }
+
+        return log.exit(new ExpressionCall(
+                geneId, null, callDataProp, expressionSummary, dataQuality, callData));
+    }
+    
+    /**
+     * Summarize {@code PropagationState}s from {@code ExpressionCall}s.
+     * 
+     * @param propStates    A {@code Set} of {@code PropagationState}s that are propagation states
+     *                      to summarize in one {@code PropagationState}.
+     * @return              The {@code PropagationState} that is the summary of provided {@code propStates}.
+     * @throws IllegalArgumentException If it is impossible to summarize provided {@code PropagationState}s.
+     *                                  For instance, {@code PropagationState.DESCENDANT} and 
+     *                                  {@code PropagationState.SELF_OR_ANCESTOR} combination.
+     */
+    private PropagationState summarizePropagationState(Set<PropagationState> propStates) 
+            throws IllegalArgumentException {
+        log.entry(propStates);
+        
+        if (propStates.contains(PropagationState.ALL)) {
+            return log.exit(PropagationState.ALL);
+        }
+
+        if (propStates.size() == 1) {
+            return log.exit(propStates.iterator().next());
+        }
+
+        HashSet<PropagationState> desc = new HashSet<>(Arrays.asList(
+                PropagationState.DESCENDANT, PropagationState.SELF_AND_DESCENDANT, PropagationState.ALL));
+        HashSet<PropagationState> asc = new HashSet<>(Arrays.asList(
+                PropagationState.ANCESTOR, PropagationState.SELF_AND_ANCESTOR, PropagationState.ALL));
+        HashSet<PropagationState> self = new HashSet<>(Arrays.asList(
+                PropagationState.SELF, PropagationState.SELF_AND_DESCENDANT,
+                PropagationState.SELF_AND_ANCESTOR, PropagationState.ALL));
+
+        boolean fromDesc = !Collections.disjoint(propStates, desc);
+        boolean fromAsc = !Collections.disjoint(propStates, asc);
+        boolean fromSelf = !Collections.disjoint(propStates, self);
+        
+        if (fromDesc && fromAsc && fromSelf) {
+            return log.exit(PropagationState.ALL);
+        }
+
+        if (fromDesc && fromSelf) {
+            return log.exit(PropagationState.SELF_AND_DESCENDANT);
+        }
+
+        if (fromAsc && fromSelf) {
+            return log.exit(PropagationState.SELF_AND_ANCESTOR);
+        }
+        
+        if (propStates.containsAll(
+                Arrays.asList(PropagationState.SELF_OR_ANCESTOR, PropagationState.SELF))
+            || propStates.containsAll(
+                    Arrays.asList(PropagationState.SELF_OR_ANCESTOR, PropagationState.ANCESTOR))) {
+            return log.exit(PropagationState.SELF_OR_ANCESTOR);
+        }
+        if (propStates.containsAll(
+                Arrays.asList(PropagationState.SELF_OR_DESCENDANT, PropagationState.SELF))
+            || propStates.containsAll(
+                    Arrays.asList(PropagationState.SELF_OR_DESCENDANT, PropagationState.DESCENDANT))) {
+            return log.exit(PropagationState.SELF_OR_DESCENDANT);
+        }
+
+        // NOTE: Not resolved combinations:
+        // - ANCESTOR && DESCENDANT
+        // - DESCENDANT && SELF_OR_ANCESTOR
+        // - SELF_OR_ANCESTOR && SELF_OR_DESCENDANT
+        // - SELF && SELF_OR_ANCESTOR && SELF_OR_DESCENDANT
+        // - ANCESTOR && DESCENDANT && SELF_OR_ANCESTOR
+        // - ANCESTOR && DESCENDANT && SELF_OR_DESCENDANT
+        // - ANCESTOR && SELF_OR_ANCESTOR && SELF_OR_DESCENDANT
+        // - DESCENDANT && SELF_OR_ANCESTOR && SELF_OR_DESCENDANT
+        // - ANCESTOR && DESCENDANT && SELF_OR_ANCESTOR && SELF_OR_DESCENDANT
+        // - ANCESTOR && SELF_OR_DESCENDANT
+        throw log.throwing(new IllegalArgumentException(
+                "Impossible to summarize provided propagation states: " + propStates));
+    }
+
 }

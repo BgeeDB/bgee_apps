@@ -48,7 +48,7 @@ import org.bgee.model.species.TaxonomyFilter;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Apr. 2016
+ * @version Bgee 13, May 2016
  * @since   Bgee 13, Oct. 2015
  */
 public class CallService extends Service {
@@ -677,7 +677,7 @@ public class CallService extends Service {
      * @param childCall         An {@code ExpressionCall} that is the call to be propagated.
      * @param parentConditions  A {@code Set} of {@code Condition}s that are the conditions 
      *                          in which the propagation have to be done.
-     * @param conditionFilter   A {@code Collection} of {@code ConditionFilter}s to configure 
+     * @param conditionFilters  A {@code Collection} of {@code ConditionFilter}s to configure 
      *                          the filtering of conditions in propagated calls. 
      *                          If several {@code ConditionFilter}s are provided, they are seen as
      *                          "OR" conditions. Can be {@code null} or empty. 
@@ -685,8 +685,8 @@ public class CallService extends Service {
      *                          from provided {@code childCall}.
      */
     private Set<ExpressionCall> propagateExpressionCall(ExpressionCall childCall,
-            Set<Condition> parentConditions, Collection<ConditionFilter> conditionFilter) {
-        log.entry(childCall, parentConditions, conditionFilter);
+            Set<Condition> parentConditions, Collection<ConditionFilter> conditionFilters) {
+        log.entry(childCall, parentConditions, conditionFilters);
         log.trace("Propagation for expression call: {}", childCall);
         
         Set<ExpressionCall> globalCalls = new HashSet<>();
@@ -696,11 +696,7 @@ public class CallService extends Service {
         // We should add child call condition to not loose that call
         Set<Condition> conditionsToBeUsed = new HashSet<>(parentConditions);
         conditionsToBeUsed.add(childCondition);
-        conditionsToBeUsed = conditionsToBeUsed.stream()
-                //FIXME Add management of condition filter
-//            .filter(c -> filteredOrganIds.isEmpty() || filteredOrganIds.contains(c.getAnatEntityId()))
-//            .filter(c -> filteredStageIds.isEmpty() || filteredStageIds.contains(c.getDevStageId()))
-            .collect(Collectors.toSet());
+        conditionsToBeUsed = filterConditions(conditionsToBeUsed, conditionFilters);
         
         for (Condition condition : conditionsToBeUsed) {
             log.trace("Propagation of the current expression call to parent condition: {}",
@@ -761,6 +757,69 @@ public class CallService extends Service {
         }
     
         return log.exit(globalCalls);        
+    }
+    
+    /** 
+     * Filter {@code Condition}s according to {@code ConditionFilter}s defining conditions to be kept.
+     * 
+     * @param conditions        A {@code Set} of {@code Condition}s that are the conditions
+     *                          to be filtered.
+     * @param conditionFilters  A {@code Collection} of {@code ConditionFilter}s to configure 
+     *                          the filtering of conditions. If several {@code ConditionFilter}s  
+     *                          are provided, they are seen as "OR" conditions.
+     *                          Can be {@code null} or empty. 
+     * @return                  The {@code Set} of {@code Condition}s that are the
+     *                          filtered conditions.
+     * @throws IllegalArgumentException If {@code conditions} is {@code null} or empty.
+     */
+    // FIXME choose a better place for that method
+    public static Set<Condition> filterConditions(
+            Collection<Condition> conditions, Collection<ConditionFilter> conditionFilters) 
+                    throws IllegalArgumentException {
+        log.entry(conditions, conditionFilters);
+        
+        if (conditionFilters == null || conditionFilters.isEmpty()) {
+            return log.exit(new HashSet<>(conditions));
+        }
+        
+        if (conditions == null || conditions.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("No condition provided"));
+        }
+
+        Set<Condition> conditionsToKeep = new HashSet<>();
+        for (ConditionFilter filter: conditionFilters) {
+            for (Condition c : conditions) {
+                if ((filter.getAnatEntitieIds() != null && !filter.getAnatEntitieIds().isEmpty() && 
+                        filter.getDevStageIds() != null && !filter.getDevStageIds().isEmpty())) {
+                    // Filter has to be apply on anat. entity IDs and dev. stage IDs
+                    if (filter.getAnatEntitieIds().contains(c.getAnatEntityId()) &&
+                            filter.getDevStageIds().contains(c.getDevStageId()) ) {
+                        log.debug("{} filtered due to anat. entity {} and dev. stage {}", 
+                                c, c.getAnatEntityId(), c.getDevStageId());
+                        conditionsToKeep.add(c);
+                    }
+                    
+                } else  if (filter.getAnatEntitieIds() != null && !filter.getAnatEntitieIds().isEmpty()) {
+                    // Filter has to be apply only on anat. entity IDs 
+                    if (filter.getAnatEntitieIds().contains(c.getAnatEntityId())) {
+                        log.debug("{} filtered due to anat. entity {} only", c, c.getAnatEntityId());
+                        conditionsToKeep.add(c);
+                    }
+                    
+                } else  if (filter.getDevStageIds() != null && !filter.getDevStageIds().isEmpty()) {
+                    // Filter has to be apply only on dev. stage IDs 
+                    if (filter.getDevStageIds().contains(c.getDevStageId())) {
+                        log.debug("{} filtered due to dev. stage {} only", c, c.getDevStageId());
+                        conditionsToKeep.add(c);
+                    }
+                }
+            }
+        }
+        log.debug("Conditions to remove: {}", conditionsToKeep);
+        Set<Condition> filteredConditions = new HashSet<>(conditions);
+        filteredConditions.retainAll(conditionsToKeep);
+        
+        return log.exit(filteredConditions);
     }
     
     /** 

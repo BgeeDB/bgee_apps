@@ -50,7 +50,7 @@ import org.junit.Test;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Apr. 2016
+ * @version Bgee 13, May 2016
  * @since   Bgee 13, Nov. 2015
  */
 public class CallServiceTest extends TestAncestor {
@@ -520,6 +520,49 @@ public class CallServiceTest extends TestAncestor {
         actualResults = service.propagateExpressionTOs(
                 exprTOs, Arrays.asList(new ConditionFilter(allowedOrganIds, allowedStageIds)), mockConditionUtils);
         assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
+    }
+    
+    /**
+     * Test the method {@link CallService#filterConditions(Collection, Collection)}.
+     */
+    @Test
+    public void shoudFilterConditions() {
+        
+        Set<Condition> conditions = new HashSet<>(Arrays.asList(
+                new Condition("ae1", "ds1"),   // kept by filter 1
+                new Condition("ae2", "ds1"),   // kept by filter 1
+                new Condition("ae2", "ds2"),   // kept by filter 1
+                new Condition("ae4", "ds3"),   // kept by filter 2
+                new Condition("ae5", "ds3"),   // kept by filter 2
+                new Condition("ae3", "ds1"),   // kept by filter 3
+                new Condition("ae5", "ds4"),   // not kept even if ae5 is in filter 1
+                new Condition("ae4", "ds5"),   // not kept even if ds5 is in filter 1
+                new Condition("ae6", "ds6"))); // not kept by any filter
+        
+        Set<String> anatEntitieIds1 = new HashSet<>(Arrays.asList("ae1", "ae2", "ae5"));
+        Set<String> devStageIds1 = new HashSet<>(Arrays.asList("ds1", "ds2", "ds5"));
+        
+        Set<String> anatEntitieIds2 = null;
+        Set<String> devStageIds2 = new HashSet<>(Arrays.asList("ds3"));
+
+        Set<String> anatEntitieIds3 = new HashSet<>(Arrays.asList("ae3"));
+        Set<String> devStageIds3 = null;
+
+        Collection<ConditionFilter> conditionFilters = Arrays.asList(
+                new ConditionFilter(anatEntitieIds1, devStageIds1),
+                new ConditionFilter(anatEntitieIds2, devStageIds2),
+                new ConditionFilter(anatEntitieIds3, devStageIds3));
+        
+        Set<Condition> actualResult = CallService.filterConditions(conditions, conditionFilters);
+        Set<Condition> expectedResult = new HashSet<>(Arrays.asList(
+                new Condition("ae1", "ds1"),   // kept by filter 1
+                new Condition("ae2", "ds1"),   // kept by filter 1
+                new Condition("ae2", "ds2"),   // kept by filter 1
+                new Condition("ae4", "ds3"),   // kept by filter 2
+                new Condition("ae5", "ds3"),   // kept by filter 2
+                new Condition("ae3", "ds1")));   // kept by filter 3
+        
+        assertEquals("Incorrect conditions generated", expectedResult, actualResult);
     }
     
     /**

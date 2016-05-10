@@ -24,13 +24,13 @@ public interface SummaryCallType {
      * are always discarded if there exists a contradicting call of expression, 
      * from the same data type and for the same gene, in the same anatomical entity 
      * and developmental stage, or in a child entity or child developmental stage.
-     * <li>{@code LOW_AMBIGUITY}: there exists a call of expression generated from a data type, 
+     * <li>{@code WEAK_AMBIGUITY}: there exists a call of expression generated from a data type, 
      * but there exists a call of absence of expression generated from another data type 
      * for the same gene in a parent anatomical entity at the same developmental stage. 
      * For instance, gene A is reported to be expressed in the midbrain at young adult stage 
      * from Affymetrix data, but is reported to be not expressed in the brain at young adult stage 
      * from RNA-Seq data.
-     * <li>{@code HIGH_AMBIGUITY}: there exists a call of expression generated from a data type, 
+     * <li>{@code STRONG_AMBIGUITY}: there exists a call of expression generated from a data type, 
      * but there exists a call of absence of expression generated from another data type 
      * for the same gene, anatomical entity and developmental stage. For instance, gene A 
      * is reported to be expressed in the midbrain at young adult stage from Affymetrix data, 

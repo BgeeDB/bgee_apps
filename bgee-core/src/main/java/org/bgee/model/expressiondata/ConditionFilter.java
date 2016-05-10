@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -11,11 +12,12 @@ import org.apache.logging.log4j.Logger;
 /**
  * A filter to parameterize queries using expression data conditions. 
  * 
- * @author Frederic Bastian
- * @version Bgee 13 Oct. 2015
- * @since Bgee 13 Oct. 2015
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13, May 2016
+ * @since   Bgee 13 Oct. 2015
  */
-public class ConditionFilter {
+public class ConditionFilter implements Predicate<Condition> {
     private final static Logger log = LogManager.getLogger(ConditionFilter.class.getName());
     
     /**
@@ -106,5 +108,38 @@ public class ConditionFilter {
     public String toString() {
         return "ConditionFilter [anatEntitieIds=" + anatEntitieIds 
                 + ", devStageIds=" + devStageIds + "]";
+    }
+    
+    /**
+     * Evaluates this {@code ConditionFilter} on the given {@code Condition}.
+     * 
+     * @param condition A {@code Condition} that is the condition to be evaluated.
+     * @return          {@code true} if the {@code condition} matches the {@code ConditionFilter}.
+     */
+    @Override
+    public boolean test(Condition condition) {
+        log.entry(condition);
+
+        if ((this.getAnatEntitieIds() != null && !this.getAnatEntitieIds().isEmpty() && 
+                this.getDevStageIds() != null && !this.getDevStageIds().isEmpty())) {
+            // Filter has to be apply on anat. entity IDs and dev. stage IDs
+            if (this.getAnatEntitieIds().contains(condition.getAnatEntityId()) &&
+                    this.getDevStageIds().contains(condition.getDevStageId()) ) {
+                return log.exit(true);
+            }
+
+        } else  if (this.getAnatEntitieIds() != null && !this.getAnatEntitieIds().isEmpty()) {
+            // Filter has to be apply only on anat. entity IDs 
+            if (this.getAnatEntitieIds().contains(condition.getAnatEntityId())) {
+                return log.exit(true);
+            }
+
+        } else  if (this.getDevStageIds() != null && !this.getDevStageIds().isEmpty()) {
+            // Filter has to be apply only on dev. stage IDs 
+            if (this.getDevStageIds().contains(condition.getDevStageId())) {
+                return log.exit(true);
+            }
+        }
+        return log.exit(false);
     }
 }

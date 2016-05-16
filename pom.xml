@@ -247,14 +247,12 @@
             <!-- Filter for topanat-dev, enabling cross-domain queries 
                  (will make local development easier), 
                  see http://stackoverflow.com/a/30319456/1768736 -->
-            <!-- 
             <dependency>
                 <groupId>com.thetransactioncompany</groupId>
                 <artifactId>cors-filter</artifactId>
                 <version>2.4</version>
                 <scope>compile</scope>
             </dependency>
-            -->
             
 
             <!-- IMPORTANT : Keep this dependency with 'provided' scope even 

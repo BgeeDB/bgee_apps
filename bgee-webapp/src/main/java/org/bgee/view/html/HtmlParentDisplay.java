@@ -281,6 +281,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("<div id='sib_container' class='container-fluid'>");
         //FIXME: I noticed that this header disappear in printed version
         this.displayBgeeHeader();
+        this.displayWarningMessage();
         this.writeln("<div id='sib_body'>");
 
         log.exit();
@@ -460,6 +461,22 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("</nav>"); // close navbar navbar-default
         
         this.writeln(navbar.toString());
+        log.exit();
+    }
+    
+    /**
+     * Display a warning message on all pages if {@link BgeeProperties#getWarningMessage()} 
+     * returns a non-blank value (see {@link #prop}).
+     */
+    private void displayWarningMessage() {
+        log.entry();
+        
+        if (StringUtils.isNotBlank(this.prop.getWarningMessage())) {
+            this.writeln("<div class='alert alert-warning'>" + 
+                htmlEntities(this.prop.getWarningMessage()) + 
+            "</div>");
+        }
+        
         log.exit();
     }
 

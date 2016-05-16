@@ -57,6 +57,23 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
     public final static boolean MINIFY_DEFAULT = false;
         
     /**
+     * A {@code String} that is a warning message to be displayed on all pages. 
+     * Useful, e.g., to warn users about a downtime to come.
+     * 
+     * @see #WARNING_MESSAGE_DEFAULT
+     * @see #getWarningMessage()
+     */
+    public final static String WARNING_MESSAGE_KEY = "org.bgee.webapp.warning.message";
+
+    /**
+     * A {@code String} that is the default value of the warning message to be displayed on all pages. 
+     * 
+     * @see #WARNING_MESSAGE_KEY
+     * @see #getWarningMessage()
+     */
+    public final static String WARNING_MESSAGE_DEFAULT = "";
+
+    /**
      * A {@code String} that is the key to access to the System property that is read at the 
      * initialization of {@code BgeeProperties} to set the request parameters storage directory.
      * 
@@ -523,6 +540,12 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      * {@code boolean} defining whether CSS and JS files were minified. 
      */
     private final boolean minify;
+    
+    /**
+     * @see #getWarningMessage()
+     */
+    private final String warningMessage;
+
     /**
      * {@code String} that defines the directory where query strings holding storable parameters  
      * from previous large queries are stored. 
@@ -597,7 +620,7 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      * 
      */
     private final String javascriptVersionExtension;
-
+    
     /**
      * A {@code String} that defines the root directory where are located css files, 
      * to be added to the {@code bgeeRootDirectory} to generate URL to obtain css files.
@@ -706,6 +729,8 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
         // properties and then the file. The default value provided will be use if none of the
         // previous solutions contain the property
         minify = getBooleanOption(prop, SYS_PROPS, FILE_PROPS, MINIFY_KEY, MINIFY_DEFAULT);
+        warningMessage = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
+                WARNING_MESSAGE_KEY, WARNING_MESSAGE_DEFAULT);
         requestParametersStorageDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY,  
                 REQUEST_PARAMETERS_STORAGE_DIRECTORY_DEFAULT);
@@ -771,6 +796,18 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
     public boolean isMinify() {
         return minify;
     }
+    
+    /**
+     * @return  A {@code String} that is a warning message to be displayed on all pages.
+     *          Useful, e.g., to warn users about a downtime to come.
+     * 
+     * @see #WARNING_MESSAGE_KEY
+     * @see #WARNING_MESSAGE_DEFAULT
+     */
+    public String getWarningMessage() {
+        return warningMessage;
+    }
+
     /**
      * @return  A {@code String} that defines the directory where query strings holding storable 
      *          parameters from previous large queries are stored. 

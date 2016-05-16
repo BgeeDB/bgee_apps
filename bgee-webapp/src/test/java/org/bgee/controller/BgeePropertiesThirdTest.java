@@ -29,6 +29,8 @@ public class BgeePropertiesThirdTest extends BgeePropertiesParentTest {
      */
     @Test
     public void testLoadSystemProperties(){
+        System.setProperty(BgeeProperties.MINIFY_KEY, "true");
+        System.setProperty(BgeeProperties.WARNING_MESSAGE_KEY, "/test.warning");
         System.setProperty(BgeeProperties.PROPERTIES_FILE_NAME_KEY, "/test.properties");
         //BGEE_ROOT_DIRECTORY_KEY is not set in System properties, it should be retrieve 
         //from the file. 
@@ -65,6 +67,8 @@ public class BgeePropertiesThirdTest extends BgeePropertiesParentTest {
         
         // get the instance of bgeeproperties and check the values
         this.bgeeProp = BgeeProperties.getBgeeProperties();
+        assertEquals("Wrong property value retrieved", true, bgeeProp.isMinify());
+        assertEquals("Wrong property value retrieved", "/test.warning", bgeeProp.getWarningMessage());
         assertEquals("Wrong property value retrieved", "/file", bgeeProp.getBgeeRootDirectory());
         assertEquals("Wrong property value retrieved", 30, bgeeProp.getUrlMaxLength());
         assertEquals("Wrong property value retrieved",

@@ -30,6 +30,8 @@ public class BgeePropertiesFourthTest extends BgeePropertiesParentTest {
     @Test
     public void testLoadDefaultProperties(){
         // First clear the system properties that would be used if present.
+        System.clearProperty(BgeeProperties.MINIFY_KEY);
+        System.clearProperty(BgeeProperties.WARNING_MESSAGE_KEY);
         System.clearProperty(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.URL_MAX_LENGTH_KEY);
         System.clearProperty(BgeeProperties.REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY);  
@@ -59,6 +61,10 @@ public class BgeePropertiesFourthTest extends BgeePropertiesParentTest {
 
         // get the instance of bgeeproperties and check the values
         this.bgeeProp = BgeeProperties.getBgeeProperties();
+        assertEquals("Wrong property value retrieved", 
+                BgeeProperties.MINIFY_DEFAULT, bgeeProp.isMinify());
+        assertEquals("Wrong property value retrieved", 
+                BgeeProperties.WARNING_MESSAGE_DEFAULT, bgeeProp.getWarningMessage());
         assertEquals("Wrong property value retrieved", 
                 BgeeProperties.BGEE_ROOT_DIRECTORY_DEFAULT, bgeeProp.getBgeeRootDirectory());
         assertEquals("Wrong property value retrieved", BgeeProperties.URL_MAX_LENGTH_DEFAULT, 

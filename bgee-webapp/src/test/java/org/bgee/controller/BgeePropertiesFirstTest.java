@@ -40,6 +40,8 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
     public void testInjectedProperties(){
         // set the properties to inject
         Properties prop = new Properties();
+        prop.put(BgeeProperties.MINIFY_KEY, "true");
+        prop.put(BgeeProperties.WARNING_MESSAGE_KEY, "/injectedwarning");
         prop.put(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY, "/injectedroot");
         prop.put(BgeeProperties.URL_MAX_LENGTH_KEY, "10");
         prop.put(BgeeProperties.CSS_FILES_ROOT_DIRECTORY_KEY, "/injectedcss");
@@ -68,6 +70,8 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
 
         // get the instance of bgeeproperties and check the values
         this.bgeeProp = BgeeProperties.getBgeeProperties(prop);
+        assertEquals("Wrong property value retrieved", true, bgeeProp.isMinify());
+        assertEquals("Wrong property value retrieved", "/injectedwarning", bgeeProp.getWarningMessage());
         assertEquals("Wrong property value retrieved","/injectedroot",bgeeProp.getBgeeRootDirectory());
         assertEquals("Wrong property value retrieved",10,bgeeProp.getUrlMaxLength());
         assertEquals("Wrong property value retrieved", 

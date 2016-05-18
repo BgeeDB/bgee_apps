@@ -6,6 +6,7 @@ import java.util.Set;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.TransferObject;
+import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTOResultSet;
 import org.bgee.model.dao.api.exception.DAOException;
 
 /**
@@ -52,6 +53,27 @@ public interface SummarySimilarityAnnotationDAO extends
     public SummarySimilarityAnnotationTOResultSet getAllSummarySimilarityAnnotations() 
             throws DAOException;
     
+    
+    /**
+     * Retrieve similarity annotations valid at the level of {@code taxonId}, 
+     * or any of its ancestral taxa. The annotations can be positive or negative.
+     * <p>
+     * The summary similarity annotations are retrieved and returned as a 
+     * {@code SummarySimilarityAnnotationTOResultSet}. It is the responsibility of the caller 
+     * to close this {@code DAOResultSet} once results are retrieved.
+     * 
+     * @param taxonId           A {@code String} that is the NCBI ID of the taxon 
+     *                          for which the similarity annotations should be valid, 
+     *                          including all its ancestral taxa.
+     * @param onlyTrusted       Restrict the results to "trusted" annotations (should be the default).
+     * @return                  A {@code SummarySimilarityAnnotationTOResultSet} allowing 
+     *                          to retrieve the requested {@code SummarySimilarityAnnotationTO}s.
+     * @throws DAOException     If an error occurred when accessing the data source.
+     * @throws IllegalArgumentException If {@code taxonId} is {@code null} or empty.
+     */
+    public SummarySimilarityAnnotationTOResultSet getSummarySimilarityAnnotations(
+            String taxonId, boolean onlyTrusted) throws DAOException, IllegalArgumentException;
+    
     /**
      * Retrieve similarity annotations valid at the level of {@code taxonId}, 
      * or any of its ancestral taxa. The annotations can be positive or negative.
@@ -68,8 +90,8 @@ public interface SummarySimilarityAnnotationDAO extends
      * @throws DAOException     If an error occurred when accessing the data source.
      * @throws IllegalArgumentException If {@code taxonId} is {@code null} or empty.
      */
-    public SummarySimilarityAnnotationTOResultSet getSummarySimilarityAnnotations(
-            String taxonId) throws DAOException, IllegalArgumentException;
+    SummarySimilarityAnnotationTOResultSet getSummarySimilarityAnnotations(String taxonId)
+            throws DAOException, IllegalArgumentException;
     
     /**
      * Retrieve <strong>positive</strong> transitive similarity annotations and 
@@ -495,4 +517,6 @@ public interface SummarySimilarityAnnotationDAO extends
                     " - Anat. entity ID: " + anatEntityId;
         }        
     }
+
+    
 }

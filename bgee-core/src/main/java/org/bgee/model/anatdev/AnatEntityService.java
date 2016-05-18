@@ -122,10 +122,12 @@ public class AnatEntityService extends Service {
      * @param speciesIds A {@code Set} of string ids of the species (if empty or null all available species are used)
      * @return A {@code Set} of {@link AnatEntitySimilarity}
      */
-    public Set<AnatEntitySimilarity> getSimilarities(String taxonId, Set<String> speciesIds) {
+    public Set<AnatEntitySimilarity> getSimilarities(String taxonId, Set<String> speciesIds, boolean
+            onlyTrusted) {
         log.entry(taxonId);
         Map<String, SummarySimilarityAnnotationTO> simAnnotations = 
-                this.getDaoManager().getSummarySimilarityAnnotationDAO().getSummarySimilarityAnnotations(taxonId)
+                this.getDaoManager().getSummarySimilarityAnnotationDAO()
+                .getSummarySimilarityAnnotations(taxonId, onlyTrusted)
         .stream().filter(to -> taxonId.equals(to.getTaxonId()))
         .collect(Collectors.toMap(SummarySimilarityAnnotationTO::getId, Function.identity()));
         

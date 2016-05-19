@@ -87,6 +87,6 @@ public class SpeciesService extends Service {
         log.entry(speciesTO);
         return log.exit(new Species(speciesTO.getId(), speciesTO.getName(), 
                 speciesTO.getDescription(), speciesTO.getGenus(), speciesTO.getSpeciesName(), 
-                speciesTO.getGenomeVersion()));
+                speciesTO.getGenomeVersion(), speciesTO.getParentTaxonId()));
     }
 }

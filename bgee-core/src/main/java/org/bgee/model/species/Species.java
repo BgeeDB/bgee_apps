@@ -21,6 +21,8 @@ public class Species extends NamedEntity {
     /** @see #getGenomeVersion() */
     private final String genomeVersion;
 	
+    private final String parentTaxonId;
+    
     /**
      * 0-arg constructor private, at least an ID must be provided, see {@link #Species(String)}.
      */
@@ -48,7 +50,7 @@ public class Species extends NamedEntity {
      * @param description   A {@code String} description of this {@code Species}.
      */
     public Species(String id, String name, String description) throws IllegalArgumentException {
-        this(id, name, description, null, null, null);
+        this(id, name, description, null, null, null, null);
     }
     
     /**
@@ -63,13 +65,15 @@ public class Species extends NamedEntity {
      *                      {@code Species} (e.g., "sapiens" for human).
      * @param genomeVersion A {@code String} representing the genome version used for 
      *                      this {@code Species}.
+     * @param parentTaxonId A {@code String} representing the ID of the parent Taxon of this species
      */
     public Species(String id, String name, String description, String genus, String speciesName,
-            String genomeVersion) throws IllegalArgumentException {
+            String genomeVersion, String parentTaxonId) throws IllegalArgumentException {
         super(id, name, description);
         this.genus = genus;
         this.speciesName = speciesName;
         this.genomeVersion = genomeVersion;
+        this.parentTaxonId = parentTaxonId;
     }
 
     /**
@@ -119,6 +123,13 @@ public class Species extends NamedEntity {
     public String getShortName() {
     	if (genus == null || speciesName == null) return "";
     	return genus.toUpperCase().charAt(0) +". "+speciesName;
+    }
+    
+    /**
+     * @return A {@code String} representing the ID of the parent Taxon of this species
+     */
+    public String getParentTaxonId() {
+        return this.parentTaxonId;
     }
 
 	

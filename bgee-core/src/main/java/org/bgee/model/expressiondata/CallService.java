@@ -333,7 +333,6 @@ public class CallService extends Service {
     private static ExpressionCall mapCallTOToExpressionCall(NoExpressionCallTO callTO, 
             DataPropagation callFilterPropag) {
         log.entry(callTO, callFilterPropag);
-
         //at this point, we cannot know the propagation status per data type, 
         //the expression tables only store a global propagation status 
         //over all data types. To infer the status per data type, 
@@ -362,7 +361,7 @@ public class CallService extends Service {
                 Optional.ofNullable(convertNoExprOriginToPropagationState(callTO.getOriginOfLine()))
                 .orElse(callDataPropagation.getAnatEntityPropagationState()), 
                 PropagationState.SELF, 
-                callTO.isIncludeParentStructures() == null? observedData: callTO.isIncludeParentStructures());
+                observedData);
         
         return log.exit(new ExpressionCall(callTO.getGeneId(), 
                 callTO.getAnatEntityId() != null || callTO.getStageId() != null? 
@@ -708,7 +707,7 @@ public class CallService extends Service {
         }
         Set<NoExpressionCallTO> alreadyPropagatedTOs = noExprTOs.stream()
             .filter(to -> to.getOriginOfLine() != NoExpressionCallTO.OriginOfLine.SELF 
-                            || !to.isIncludeParentStructures())
+                            || to.isIncludeParentStructures())
             .collect(Collectors.toSet());
         if (!alreadyPropagatedTOs.isEmpty()) {
             throw log.throwing(new IllegalArgumentException(
@@ -783,7 +782,7 @@ public class CallService extends Service {
                     .map(to -> mapCallTOToExpressionCall((ExpressionCallTO) to, new DataPropagation()))
                     .collect(Collectors.toSet());
     
-        } else if (type.equals(NoExpressionCallDAO.class)) {
+        } else if (type.equals(NoExpressionCallTO.class)) {
             inputCalls = callTOs.stream()
                     .map(to -> mapCallTOToExpressionCall((NoExpressionCallTO) to, new DataPropagation()))
                     .collect(Collectors.toSet());
@@ -819,7 +818,7 @@ public class CallService extends Service {
                 propagatedConditions = 
                         conditionUtils.getAncestorConditions(call.getCondition(), true);
                 
-            } else if (type.equals(NoExpressionCallDAO.class)) {
+            } else if (type.equals(NoExpressionCallTO.class)) {
                 propagatedConditions = 
                         conditionUtils.getDescendantConditions(call.getCondition(), true);
             }
@@ -832,7 +831,6 @@ public class CallService extends Service {
             allPropagatedCalls.addAll(propagatedCalls);
             
             log.trace("Add the propagated calls: {}", propagatedCalls);
-    
         }
 
         log.trace("Done generating propagated calls.");
@@ -874,7 +872,7 @@ public class CallService extends Service {
             log.trace("Propagation of the current call to condition: {}", condition);
 
             Set<ExpressionCallData> selfCallData = new HashSet<>();
-            Set<ExpressionCallData> parentCallData = new HashSet<>();
+            Set<ExpressionCallData> relativeCallData = new HashSet<>();
             
             for (ExpressionCallData callData: call.getCallData()) {
                 
@@ -888,11 +886,18 @@ public class CallService extends Service {
                 
                 selfCallData.add(new ExpressionCallData(callData.getCallType(),
                         callData.getDataQuality(), callData.getDataType(), 
-                        new DataPropagation(PropagationState.SELF, PropagationState.SELF)));
+                        new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)));
 
-                // FIXME for no expression
-                PropagationState anatEntityPropagationState = PropagationState.DESCENDANT;
-                PropagationState devStagePropagationState = PropagationState.DESCENDANT;
+                PropagationState anatEntityPropagationState = null;
+                PropagationState devStagePropagationState = null;
+                if (callData.getCallType().equals(Expression.EXPRESSED)) {
+                    anatEntityPropagationState = PropagationState.DESCENDANT;
+                    devStagePropagationState = PropagationState.DESCENDANT;
+                } else if (callData.getCallType().equals(Expression.NOT_EXPRESSED)) {
+                    anatEntityPropagationState = PropagationState.ANCESTOR;
+                } else {
+                    throw log.throwing(new IllegalArgumentException("Unsupported Expression"));
+                }
                 
                 if (inputCondition.getAnatEntityId().equals(condition.getAnatEntityId())) {
                     anatEntityPropagationState = PropagationState.SELF;
@@ -900,13 +905,20 @@ public class CallService extends Service {
                 if (inputCondition.getDevStageId().equals(condition.getDevStageId())) {
                     devStagePropagationState = PropagationState.SELF;
                 }
+                
+                boolean includingObservedData = false;
+                if (anatEntityPropagationState == PropagationState.SELF 
+                        && devStagePropagationState == PropagationState.SELF) {
+                    includingObservedData = true;
+                }
+                assert anatEntityPropagationState != null && devStagePropagationState != null;
 
                 // NOTE: we do not manage includingObservedData here, 
                 // it's should be done during the grouping of ExpressionCalls
-                // FIXME
-                parentCallData.add(new ExpressionCallData(callData.getCallType(),
+                relativeCallData.add(new ExpressionCallData(callData.getCallType(),
                         callData.getDataQuality(), callData.getDataType(), 
-                        new DataPropagation(anatEntityPropagationState, devStagePropagationState)));
+                        new DataPropagation(anatEntityPropagationState, devStagePropagationState,
+                                includingObservedData)));
             }
             
             // Add propagated expression call.
@@ -914,7 +926,7 @@ public class CallService extends Service {
             if (inputCondition.equals(condition)) {
                 currentCallData = selfCallData;
             } else {
-                currentCallData = parentCallData;
+                currentCallData = relativeCallData;
             }
 
             ExpressionCall propagatedCall = new ExpressionCall(
@@ -925,7 +937,7 @@ public class CallService extends Service {
                     null, // DataQuality (update after the propagation of all TOs)
                     currentCallData);
 
-            log.trace("Add the propagated call: {}", propagatedCall);
+            log.debug("Add the propagated call: {}", propagatedCall);
             globalCalls.add(propagatedCall);
         }
     
@@ -976,7 +988,6 @@ public class CallService extends Service {
         Boolean includingObservedData = false;
         if (selfStates.contains(anatEntityPropagationState) && selfStates.contains(devStagePropagationState)) {
             includingObservedData = true;
-            
         }
         DataPropagation callDataProp = new DataPropagation(
                 anatEntityPropagationState, devStagePropagationState, includingObservedData);
@@ -1078,6 +1089,11 @@ public class CallService extends Service {
             return log.exit(PropagationState.SELF_AND_ANCESTOR);
         }
         
+        if (fromAsc && fromDesc && !propStates.contains(PropagationState.SELF_OR_ANCESTOR)
+                && !propStates.contains(PropagationState.SELF_OR_DESCENDANT)) {
+            return log.exit(PropagationState.ANCESTOR_AND_DESCENDANT);
+        }
+
         if (propStates.containsAll(
                 Arrays.asList(PropagationState.SELF_OR_ANCESTOR, PropagationState.SELF))
             || propStates.containsAll(
@@ -1091,17 +1107,28 @@ public class CallService extends Service {
             return log.exit(PropagationState.SELF_OR_DESCENDANT);
         }
 
-        // NOTE: Not resolved combinations:
-        // - ANCESTOR && DESCENDANT
-        // - DESCENDANT && SELF_OR_ANCESTOR
-        // - SELF_OR_ANCESTOR && SELF_OR_DESCENDANT
-        // - SELF && SELF_OR_ANCESTOR && SELF_OR_DESCENDANT
-        // - ANCESTOR && DESCENDANT && SELF_OR_ANCESTOR
-        // - ANCESTOR && DESCENDANT && SELF_OR_DESCENDANT
-        // - ANCESTOR && SELF_OR_ANCESTOR && SELF_OR_DESCENDANT
-        // - DESCENDANT && SELF_OR_ANCESTOR && SELF_OR_DESCENDANT
+        // XXX: Not resolved combinations:
+        // - ANCESTOR && DESCENDANT &  & SELF_OR_ANCESTOR
+        // - ANCESTOR && DESCENDANT && SELF_OR_ANCESTOR && ANCESTOR_AND_DESCENDANT
         // - ANCESTOR && DESCENDANT && SELF_OR_ANCESTOR && SELF_OR_DESCENDANT
+        // - ANCESTOR && DESCENDANT && SELF_OR_ANCESTOR && SELF_OR_DESCENDANT && ANCESTOR_AND_DESCENDANT
+        // - ANCESTOR && DESCENDANT && SELF_OR_DESCENDANT
+        // - ANCESTOR && DESCENDANT && SELF_OR_DESCENDANT && ANCESTOR_AND_DESCENDANT
+        // - ANCESTOR && SELF_OR_ANCESTOR && ANCESTOR_AND_DESCENDANT
+        // - ANCESTOR && SELF_OR_ANCESTOR && SELF_OR_DESCENDANT
+        // - ANCESTOR && SELF_OR_ANCESTOR && SELF_OR_DESCENDANT && ANCESTOR_AND_DESCENDANT
         // - ANCESTOR && SELF_OR_DESCENDANT
+        // - ANCESTOR && SELF_OR_DESCENDANT && ANCESTOR_AND_DESCENDANT
+        // - DESCENDANT && SELF_OR_ANCESTOR
+        // - DESCENDANT && SELF_OR_ANCESTOR && ANCESTOR_AND_DESCENDANT
+        // - DESCENDANT && SELF_OR_ANCESTOR && SELF_OR_DESCENDANT
+        // - DESCENDANT && SELF_OR_ANCESTOR && SELF_OR_DESCENDANT && ANCESTOR_AND_DESCENDANT
+        // - DESCENDANT && SELF_OR_DESCENDANT && ANCESTOR_AND_DESCENDANT
+        // - SELF_OR_ANCESTOR && ANCESTOR_AND_DESCENDANT
+        // - SELF_OR_ANCESTOR && SELF_OR_DESCENDANT
+        // - SELF_OR_ANCESTOR && SELF_OR_DESCENDANT && ANCESTOR_AND_DESCENDANT
+        // - SELF_OR_DESCENDANT && ANCESTOR_AND_DESCENDANT
+        // - SELF && SELF_OR_ANCESTOR && SELF_OR_DESCENDANT
         throw log.throwing(new IllegalArgumentException(
                 "Impossible to summarize provided propagation states: " + propStates));
     }

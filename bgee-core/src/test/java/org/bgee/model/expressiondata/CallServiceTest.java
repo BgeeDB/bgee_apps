@@ -33,6 +33,7 @@ import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO.OriginOfLine;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTOResultSet;
+import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
@@ -54,7 +55,19 @@ import org.junit.Test;
  * @since   Bgee 13, Nov. 2015
  */
 public class CallServiceTest extends TestAncestor {
+    
     private final static Logger log = LogManager.getLogger(CallServiceTest.class.getName());
+    
+    private final static DataPropagation dpSelfAndSelf = new DataPropagation(PropagationState.SELF, PropagationState.SELF, true);
+    private final static DataPropagation dpSelfAndDesc = new DataPropagation(PropagationState.SELF, PropagationState.DESCENDANT, false);
+    private final static DataPropagation dpSelfAndSelfDesc = new DataPropagation(PropagationState.SELF, PropagationState.SELF_AND_DESCENDANT, true);
+    private final static DataPropagation dpSelfDescAndAll= new DataPropagation(PropagationState.SELF_AND_DESCENDANT, PropagationState.ALL, true);
+    private final static DataPropagation dpDescAndSelf = new DataPropagation(PropagationState.DESCENDANT, PropagationState.SELF, false);
+    private final static DataPropagation dpDescAndDesc = new DataPropagation(PropagationState.DESCENDANT, PropagationState.DESCENDANT, false);
+    private final static DataPropagation dpAncAndSelf = new DataPropagation(PropagationState.ANCESTOR, PropagationState.SELF, false);
+    private final static DataPropagation dpSelfAncAndSelf = new DataPropagation(PropagationState.SELF_AND_ANCESTOR, PropagationState.SELF, true);
+    private final static DataPropagation dpSelfDescAndDesc = new DataPropagation(PropagationState.SELF_AND_DESCENDANT, PropagationState.DESCENDANT, false);
+    private final static DataPropagation dpSelfDescAndSelf = new DataPropagation(PropagationState.SELF_AND_DESCENDANT, PropagationState.SELF, true);
     @Override
     protected Logger getLogger() {
         return log;
@@ -452,46 +465,41 @@ public class CallServiceTest extends TestAncestor {
                         DataState.NODATA, null, DataState.NODATA, null,
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true));
 
-        DataPropagation dpSelfSelf = new DataPropagation(PropagationState.SELF, PropagationState.SELF);
-        DataPropagation dpSelfDesc = new DataPropagation(PropagationState.SELF, PropagationState.DESCENDANT);
-        DataPropagation dpDescSelf = new DataPropagation(PropagationState.DESCENDANT, PropagationState.SELF);
-        DataPropagation dpDescDesc = new DataPropagation(PropagationState.DESCENDANT, PropagationState.DESCENDANT);
-        
         Set<ExpressionCall> allResults = new HashSet<>(Arrays.asList(
                 // From ExpressionCallTO 1
                 new ExpressionCall("geneA", new Condition("organA", "stageA"), null, null, null, Arrays.asList(
-                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfSelf),
-                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfSelf))), 
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndSelf))), 
                 
                 new ExpressionCall("geneA", new Condition("organA", "parentStageA1"), null, null, null, Arrays.asList(
-                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfDesc),
-                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfDesc))), 
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfAndDesc),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndDesc))), 
 
                 new ExpressionCall("geneA", new Condition("parentOrganA1", "stageA"), null, null, null, Arrays.asList(
-                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpDescSelf),
-                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpDescSelf))), 
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpDescAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpDescAndSelf))), 
 
                 new ExpressionCall("geneA", new Condition("parentOrganA1", "parentStageA1"), null, null, null, Arrays.asList(
-                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpDescDesc),
-                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpDescDesc))), 
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpDescAndDesc),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpDescAndDesc))), 
 
                 // From ExpressionCallTO 2
                 new ExpressionCall("geneA", new Condition("organA", "parentStageA1"), null, null, null, Arrays.asList(
-                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.EST, dpSelfSelf),
-                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.IN_SITU, dpSelfSelf))), 
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.EST, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.IN_SITU, dpSelfAndSelf))), 
                 new ExpressionCall("geneA", new Condition("parentOrganA1", "parentStageA1"), null, null, null, Arrays.asList(
-                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.EST, dpDescSelf),
-                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.IN_SITU, dpDescSelf))), 
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.EST, dpDescAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.IN_SITU, dpDescAndSelf))), 
 
                 // From ExpressionCallTO 3
                 new ExpressionCall("geneB", new Condition("parentOrganA1", "parentStageA1"), null, null, null, Arrays.asList(
-                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.RNA_SEQ, dpSelfSelf))), 
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.RNA_SEQ, dpSelfAndSelf))), 
 
                 // From ExpressionCallTO 4
                 new ExpressionCall("geneB", new Condition("organB", "stageB"), null, null, null, Arrays.asList(
-                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfSelf))), 
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndSelf))), 
                 new ExpressionCall("geneB", new Condition("organB", "parentStageB1"), null, null, null, Arrays.asList(
-                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfDesc)))));
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndDesc)))));
 
         Set<ExpressionCall> actualResults = service.propagateExpressionTOs(
                 exprTOs, null, mockConditionUtils);
@@ -527,7 +535,246 @@ public class CallServiceTest extends TestAncestor {
      */
     @Test
     public void shoudPropagateNoExpressionTOs() {
-        // FIXME to be implemented
+        DAOManager manager = mock(DAOManager.class);
+
+        CallService service = new CallService(manager);
+        try {
+            service.propagateNoExpressionTOs(null, null, null);
+            fail("Should throw an IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            // test passed
+        }
+
+        ConditionUtils mockConditionUtils = mock(ConditionUtils.class);
+        
+        Set<Condition> conditions = new HashSet<>(Arrays.asList(
+                new Condition("organA", "stageA"),
+                new Condition("organA", "parentStageA1"),
+                new Condition("parentOrganA1", "parentStageA1"),
+                new Condition("parentOrganA2", "parentStageA1"),
+                new Condition("organB", "stageB"),
+                new Condition("parentOrganB1", "stageB")));
+        when(mockConditionUtils.getConditions()).thenReturn(conditions);
+        when(mockConditionUtils.isInferredAncestralConditions()).thenReturn(true);
+        
+        Condition parentCond = new Condition("organA", "stageA");
+        Set<Condition> descendantConds = new HashSet<>();
+        when(mockConditionUtils.getDescendantConditions(parentCond, true)).thenReturn(descendantConds);
+        
+        parentCond = new Condition("organA", "parentStageA1");
+        descendantConds = new HashSet<>();
+        when(mockConditionUtils.getDescendantConditions(parentCond, true)).thenReturn(descendantConds);
+
+        parentCond = new Condition("parentOrganA2", "parentStageA1");
+        descendantConds = new HashSet<>(Arrays.asList(
+                new Condition("parentOrganA1", "parentStageA1"),
+                new Condition("organA", "parentStageA1")));
+        when(mockConditionUtils.getDescendantConditions(parentCond, true)).thenReturn(descendantConds);
+
+        parentCond = new Condition("parentOrganB2", "stageB");
+        descendantConds = new HashSet<>(Arrays.asList(
+                new Condition("parentOrganB1", "stageB"),
+                new Condition("organB", "stageB")));
+        when(mockConditionUtils.getDescendantConditions(parentCond, true)).thenReturn(descendantConds);
+
+        Collection<NoExpressionCallTO> noExprTOs = Arrays.asList(
+                // NoExpressionCallTO 1
+                new NoExpressionCallTO("1", "geneA", "organA", "stageA",
+                        DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.NODATA, DataState.NODATA,
+                        false, NoExpressionCallTO.OriginOfLine.SELF),
+                // NoExpressionCallTO 2
+                new NoExpressionCallTO("2", "geneA", "organA", "parentStageA1",
+                        DataState.LOWQUALITY, DataState.NODATA,  DataState.NODATA, DataState.HIGHQUALITY,
+                        false, NoExpressionCallTO.OriginOfLine.SELF),
+                // NoExpressionCallTO 3
+                new NoExpressionCallTO("3", "geneA", "parentOrganA2", "parentStageA1",
+                        DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, DataState.LOWQUALITY,
+                        false, NoExpressionCallTO.OriginOfLine.SELF),
+                // NoExpressionCallTO 4
+                new NoExpressionCallTO("4", "geneB", "parentOrganB2", "stageB",
+                        DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, DataState.NODATA,
+                        false, NoExpressionCallTO.OriginOfLine.SELF));
+
+        Set<ExpressionCall> allResults = new HashSet<>(Arrays.asList(
+                // From NoExpressionCallTO 1
+                new ExpressionCall("geneA", new Condition("organA", "stageA"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.IN_SITU, dpSelfAndSelf))), 
+                
+                // From NoExpressionCallTO 2
+                new ExpressionCall("geneA", new Condition("organA", "parentStageA1"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndSelf))), 
+
+                // From NoExpressionCallTO 3
+                new ExpressionCall("geneA", new Condition("parentOrganA2", "parentStageA1"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.IN_SITU, dpSelfAndSelf), 
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.RNA_SEQ, dpSelfAndSelf))), 
+
+                new ExpressionCall("geneA", new Condition("parentOrganA1", "parentStageA1"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpAncAndSelf),
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.IN_SITU, dpAncAndSelf), 
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.RNA_SEQ, dpAncAndSelf))), 
+
+                new ExpressionCall("geneA", new Condition("organA", "parentStageA1"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpAncAndSelf),
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.IN_SITU, dpAncAndSelf), 
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.RNA_SEQ, dpAncAndSelf))), 
+
+                // From NoExpressionCallTO 4
+                new ExpressionCall("geneB", new Condition("parentOrganB2", "stageB"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndSelf))), 
+
+                new ExpressionCall("geneB", new Condition("parentOrganB1", "stageB"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpAncAndSelf))), 
+
+                new ExpressionCall("geneB", new Condition("organB", "stageB"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpAncAndSelf)))));
+
+        Set<ExpressionCall> actualResults = service.propagateNoExpressionTOs(
+                noExprTOs, null, mockConditionUtils);
+        assertEquals("Incorrect ExpressionCalls generated", allResults, actualResults);
+        
+        Set<String> allowedOrganIds = new HashSet<>(Arrays.asList("organA"));
+        Set<ExpressionCall> expectedResults = allResults.stream()
+                .filter(c -> allowedOrganIds.contains(c.getCondition().getAnatEntityId()))
+                .collect(Collectors.toSet());
+        actualResults = service.propagateNoExpressionTOs(
+                noExprTOs, Arrays.asList(new ConditionFilter(allowedOrganIds, null)), mockConditionUtils);
+        assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
+
+        Set<String> allowedStageIds = new HashSet<>(Arrays.asList("parentStageA1"));
+        expectedResults = allResults.stream()
+                .filter(c -> allowedStageIds.contains(c.getCondition().getDevStageId()))
+                .collect(Collectors.toSet());
+        actualResults = service.propagateNoExpressionTOs(
+                noExprTOs, Arrays.asList(new ConditionFilter(null, allowedStageIds)), mockConditionUtils);
+        assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
+
+        expectedResults = allResults.stream()
+                .filter(c -> allowedOrganIds.contains(c.getCondition().getAnatEntityId()))
+                .filter(c -> allowedStageIds.contains(c.getCondition().getDevStageId()))
+                .collect(Collectors.toSet());
+        actualResults = service.propagateNoExpressionTOs(
+                noExprTOs, Arrays.asList(new ConditionFilter(allowedOrganIds, allowedStageIds)), mockConditionUtils);
+        assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
+    }
+    
+    /**
+     * @return  the {@code Set} of {@code ExpressionCall}s from propagated {@code ExpressionCallTO}s,
+     */
+    private Set<ExpressionCall> getPropagationFromNoExpressionTOs() {
+        return new HashSet<>(Arrays.asList(
+                new ExpressionCall("ID1", new Condition("Anat_id1", "Stage_id1"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndSelf))), 
+                new ExpressionCall("ID1", new Condition("Anat_id2", "Stage_id1"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.IN_SITU, dpAncAndSelf))), 
+
+                new ExpressionCall("ID2", new Condition("Anat_id1", "Stage_id2"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndSelf))), 
+                new ExpressionCall("ID2", new Condition("Anat_id2", "Stage_id2"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpAncAndSelf))), 
+                new ExpressionCall("ID2", new Condition("Anat_id3", "ParentStage_id2"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndSelf))), 
+                new ExpressionCall("ID2", new Condition("Anat_id3", "Stage_id2"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpAncAndSelf))), 
+
+                new ExpressionCall("ID4", new Condition("Anat_id1", "Stage_id5"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.IN_SITU, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndSelf))), 
+                new ExpressionCall("ID4", new Condition("Anat_id4", "Stage_id5"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAncAndSelf), 
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.IN_SITU, dpSelfAncAndSelf), 
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAncAndSelf))), 
+                new ExpressionCall("ID4", new Condition("Anat_id5", "Stage_id5"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpAncAndSelf), 
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.IN_SITU, dpAncAndSelf), 
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpAncAndSelf))), 
+
+                new ExpressionCall("ID5", new Condition("Anat_id1", "Stage_id5"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndSelf))), 
+                new ExpressionCall("ID5", new Condition("Anat_id5", "Stage_id5"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpAncAndSelf))),
+                
+                new ExpressionCall("ID6", new Condition("Anat_id9", "Stage_id7"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndSelf))),
+                new ExpressionCall("ID6", new Condition("Anat_id8", "Stage_id6"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpAncAndSelf)))));
+    }
+    
+    /**
+     * @return  the {@code Set} of {@code NoExpressionCall}s from propagated {@code ExpressionCallTO}s,
+     */
+    private Set<ExpressionCall> getPropagationFromExpressionTOs() {
+        
+        return new HashSet<>(Arrays.asList(
+                new ExpressionCall("ID1", new Condition("Anat_id1", "Stage_id1"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.EST, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.IN_SITU, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.RNA_SEQ, dpSelfAndSelf))), 
+                new ExpressionCall("ID1", new Condition("Anat_id1", "ParentStage_id1"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.EST, dpSelfAndDesc),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.IN_SITU, dpSelfAndDesc),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.RNA_SEQ, dpSelfAndDesc))), 
+                new ExpressionCall("ID1", new Condition("Anat_id1", "ParentStage_id2"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.EST, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.IN_SITU, dpSelfAndSelf))), 
+                new ExpressionCall("ID1", new Condition("Anat_id1", "Stage_id2"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.EST, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.IN_SITU, dpSelfAndSelf))), 
+                
+                new ExpressionCall("ID2", new Condition("Anat_id1", "Stage_id2"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.EST, dpSelfAndSelf))), 
+                new ExpressionCall("ID2", new Condition("Anat_id1", "ParentStage_id2"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfDescAndDesc),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.EST, dpSelfDescAndDesc),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.IN_SITU, dpSelfDescAndDesc))), 
+                new ExpressionCall("ID2", new Condition("Anat_id2", "ParentStage_id2"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpDescAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.IN_SITU, dpDescAndSelf))), 
+                new ExpressionCall("ID2", new Condition("Anat_id3", "ParentStage_id2"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.IN_SITU, dpSelfAndSelf))), 
+                new ExpressionCall("ID2", new Condition("NonInfoAnatEnt1", "ParentStage_id2"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.IN_SITU, dpSelfAndSelf))), 
+
+                new ExpressionCall("ID3", new Condition("Anat_id1", "Stage_id2"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfDescAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.EST, dpSelfDescAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.IN_SITU, dpSelfDescAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfDescAndSelf))), 
+                new ExpressionCall("ID3", new Condition("Anat_id4", "Stage_id2"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpDescAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.EST, dpDescAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.IN_SITU, dpDescAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.RNA_SEQ, dpDescAndSelf))), 
+                new ExpressionCall("ID3", new Condition("Anat_id5", "Stage_id2"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.EST, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.IN_SITU, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.RNA_SEQ, dpSelfAndSelf))), 
+
+                new ExpressionCall("ID5", new Condition("Anat_id1", "Stage_id5"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpDescAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.EST, dpDescAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.IN_SITU, dpDescAndSelf))), 
+                new ExpressionCall("ID5", new Condition("Anat_id1", "ParentStage_id5"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpDescAndDesc),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.EST, dpDescAndDesc),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.IN_SITU, dpDescAndDesc))), 
+                new ExpressionCall("ID5", new Condition("Anat_id4", "Stage_id5"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.EST, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.IN_SITU, dpSelfAndSelf))), 
+                new ExpressionCall("ID5", new Condition("Anat_id4", "ParentStage_id5"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndDesc),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.EST, dpSelfAndDesc),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.IN_SITU, dpSelfAndDesc)))));
     }
     
     /**
@@ -538,49 +785,41 @@ public class CallServiceTest extends TestAncestor {
         DAOManager manager = mock(DAOManager.class);
         CallService service = new CallService(manager);
         
-        DataPropagation dpSelfAndSelf = new DataPropagation(PropagationState.SELF, PropagationState.SELF, true);
-        DataPropagation dpSelfAndDesc = new DataPropagation(PropagationState.SELF, PropagationState.DESCENDANT, false);
-        DataPropagation dpSelfAndSelfDesc = new DataPropagation(PropagationState.SELF, PropagationState.SELF_AND_DESCENDANT, true);
-        DataPropagation dpSelfDescAndAll= new DataPropagation(PropagationState.SELF_AND_DESCENDANT, PropagationState.ALL, true);
-        DataPropagation dpDescAndSelf = new DataPropagation(PropagationState.DESCENDANT, PropagationState.SELF, false);
-        DataPropagation dpDescAndDesc = new DataPropagation(PropagationState.DESCENDANT, PropagationState.DESCENDANT, false);
-        DataPropagation dpAncAndSelf = new DataPropagation(PropagationState.ANCESTOR, PropagationState.SELF, false);
-
         // EXPRESSED - HIGH quality - observed
         Set<ExpressionCall> inputCalls = new HashSet<>(Arrays.asList(
                 new ExpressionCall("geneA", new Condition("organA", "stageA"), null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfAndSelf),
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndSelf))), 
-
+                new ExpressionCall("geneA", new Condition("organA", "stageA"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfAndSelf))), 
                 new ExpressionCall("geneA", new Condition("organB", "parentStageB1"), null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndDesc)))));
         ExpressionCall expectedResult = new ExpressionCall("geneA", null, 
                 new DataPropagation(PropagationState.SELF, PropagationState.SELF_AND_DESCENDANT, true), 
                 ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
-                new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfAndSelf),
-                new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndDesc),
-                new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndSelf)));
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndDesc),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndSelf)));
         ExpressionCall actualResult = service.reconcileSingleGeneCalls(inputCalls);
         assertEquals("Incorrect ExpressionCall generated", expectedResult, actualResult);
         
-        //
         inputCalls = new HashSet<>(Arrays.asList(
                 new ExpressionCall("geneA", new Condition("organA", "stageA"), null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpDescAndSelf),
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndSelf))), 
-
                 new ExpressionCall("geneA", new Condition("organB", "parentStageB1"), null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndSelfDesc)))));
         expectedResult = new ExpressionCall("geneA", null, 
                 new DataPropagation(PropagationState.SELF_AND_DESCENDANT, PropagationState.SELF_AND_DESCENDANT, true), 
                 ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
-                new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpDescAndSelf),
-                new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndSelf),
-                new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndSelfDesc)));
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpDescAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndSelfDesc)));
         actualResult = service.reconcileSingleGeneCalls(inputCalls);
         assertEquals("Incorrect ExpressionCall generated", expectedResult, actualResult);
 
         // EXPRESSED - LOW quality - not observed
+        // FIXME this does not include observed data, no?
         inputCalls = new HashSet<>(Arrays.asList(
                 new ExpressionCall("geneA", new Condition("organA", "stageA"), null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpDescAndSelf))), 
@@ -609,6 +848,7 @@ public class CallServiceTest extends TestAncestor {
         assertEquals("Incorrect ExpressionCall generated", expectedResult, actualResult);
 
         // WEAK_AMBIGUITY - null - observed
+        // FIXME this does not include observed data, no?
         inputCalls = new HashSet<>(Arrays.asList(
                 new ExpressionCall("geneA", new Condition("organA", "stageA"), null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpAncAndSelf))), 
@@ -621,10 +861,12 @@ public class CallServiceTest extends TestAncestor {
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndDesc)));
         actualResult = service.reconcileSingleGeneCalls(inputCalls);
         assertEquals("Incorrect ExpressionCall generated", expectedResult, actualResult);
-        
-        //
+
+        // WEAK_AMBIGUITY - null - observed
         inputCalls = new HashSet<>(Arrays.asList(
                 new ExpressionCall("geneA", new Condition("organA", "stageA"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpAncAndSelf))), 
+                new ExpressionCall("geneA", new Condition("organA", "parentStageB1"), null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpAncAndSelf))), 
                 new ExpressionCall("geneA", new Condition("organB", "parentStageB1"), null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfDescAndAll)))));
@@ -632,11 +874,12 @@ public class CallServiceTest extends TestAncestor {
                 new DataPropagation(PropagationState.ALL, PropagationState.ALL, true), 
                 ExpressionSummary.WEAK_AMBIGUITY, null, Arrays.asList(
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpAncAndSelf),
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpAncAndSelf), 
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfDescAndAll)));
         actualResult = service.reconcileSingleGeneCalls(inputCalls);
         assertEquals("Incorrect ExpressionCall generated", expectedResult, actualResult);
-        
-        // STRONG_AMBIGUITY - null - not observed
+
+        // STRONG_AMBIGUITY - null - observed
         inputCalls = new HashSet<>(Arrays.asList(
                 new ExpressionCall("geneA", new Condition("organA", "stageA"), null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfAndSelf))), 
@@ -649,22 +892,37 @@ public class CallServiceTest extends TestAncestor {
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndDesc)));
         actualResult = service.reconcileSingleGeneCalls(inputCalls);
         assertEquals("Incorrect ExpressionCall generated", expectedResult, actualResult);
-        
+
+        // WEAK_AMBIGUITY - null - not observed
+        inputCalls = new HashSet<>(Arrays.asList(
+                new ExpressionCall("geneA", new Condition("organA", "stageA"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpAncAndSelf))), 
+                new ExpressionCall("geneA", new Condition("organB", "parentStageB1"), null, null, null, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpDescAndDesc)))));
+        expectedResult = new ExpressionCall("geneA", null, 
+                new DataPropagation(PropagationState.ANCESTOR_AND_DESCENDANT, PropagationState.SELF_AND_DESCENDANT, false), 
+                ExpressionSummary.WEAK_AMBIGUITY, null, Arrays.asList(
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpAncAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpDescAndDesc)));
+        actualResult = service.reconcileSingleGeneCalls(inputCalls);
+        assertEquals("Incorrect ExpressionCall generated", expectedResult, actualResult);
+
         // Two different gene IDs
         inputCalls = new HashSet<>(Arrays.asList(
                 new ExpressionCall("geneA", new Condition("organA", "stageA"), null, null, null, null), 
-                new ExpressionCall("geneB", new Condition("organB", "parentStageB1"), null, null, null, null)));
+                new ExpressionCall("geneB", new Condition("organA", "stageA"), null, null, null, null)));
         try {
             service.reconcileSingleGeneCalls(inputCalls);
             fail("Should throw an IllegalArgumentException");
         } catch (IllegalArgumentException e) {
             // Test passed
         }
-        
+
         // Reconciliation of DataPropagation.ANCESTOR with DataPropagation.DESCENDANT
         inputCalls = new HashSet<>(Arrays.asList(
                 new ExpressionCall("geneA", new Condition("organA", "stageA"), null, null, null, Arrays.asList(
-                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpAncAndSelf))), 
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, 
+                                new DataPropagation(PropagationState.SELF_OR_ANCESTOR, PropagationState.SELF, false)))), 
                 new ExpressionCall("geneA", new Condition("organB", "parentStageB1"), null, null, null, Arrays.asList(
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpDescAndDesc)))));
         try {
@@ -673,5 +931,263 @@ public class CallServiceTest extends TestAncestor {
         } catch (IllegalArgumentException e) {
             // Test passed
         }
+    }
+    
+    /**
+     * Test the method {@link CallService#reconcileSingleGeneCalls(Set)}.
+     */
+    @Test
+    public void shoudReconcileCalls_pipelineTest() {
+        DAOManager manager = mock(DAOManager.class);
+        CallService service = new CallService(manager);
+        
+        String geneId = "ID1";
+        Condition cond = new Condition("Anat_id1", "Stage_id1");
+        Set<ExpressionCall> inputCalls = filterExprTOs(geneId, cond);
+        inputCalls.addAll(filterNoExprTOs(geneId, cond));
+        ExpressionCall expectedResult = new ExpressionCall(geneId, null, 
+                dpSelfAndSelf, ExpressionSummary.STRONG_AMBIGUITY, null, Arrays.asList(
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.EST, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.IN_SITU, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.RNA_SEQ, dpSelfAndSelf)));
+        ExpressionCall actualResult = service.reconcileSingleGeneCalls(inputCalls);
+        assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
+        
+        cond = new Condition("Anat_id1", "ParentStage_id1");
+        inputCalls = filterExprTOs(geneId, cond);
+        inputCalls.addAll(filterNoExprTOs(geneId, cond));
+        expectedResult = new ExpressionCall(geneId, null, 
+                dpSelfAndDesc, ExpressionSummary.EXPRESSED, DataQuality.LOW, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.EST, dpSelfAndDesc),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.IN_SITU, dpSelfAndDesc),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.RNA_SEQ, dpSelfAndDesc)));
+        actualResult = service.reconcileSingleGeneCalls(inputCalls);
+        assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
+
+        cond = new Condition("Anat_id1", "ParentStage_id2");
+        inputCalls = filterExprTOs(geneId, cond);
+        inputCalls.addAll(filterNoExprTOs(geneId, cond));
+        expectedResult = new ExpressionCall(geneId, null, 
+                dpSelfAndSelf, ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.EST, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.IN_SITU, dpSelfAndSelf)));
+        actualResult = service.reconcileSingleGeneCalls(inputCalls);
+        assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
+
+        cond = new Condition("Anat_id1", "Stage_id2");
+        inputCalls = filterExprTOs(geneId, cond);
+        inputCalls.addAll(filterNoExprTOs(geneId, cond));
+        expectedResult = new ExpressionCall(geneId, null, 
+                dpSelfAndSelf, ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.EST, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.IN_SITU, dpSelfAndSelf)));
+        actualResult = service.reconcileSingleGeneCalls(inputCalls);
+        assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
+        
+        geneId = "ID2";
+        cond = new Condition("Anat_id1", "Stage_id2");
+        inputCalls = filterExprTOs(geneId, cond);
+        inputCalls.addAll(filterNoExprTOs(geneId, cond));
+        expectedResult = new ExpressionCall(geneId, null, 
+                dpSelfAndSelf, ExpressionSummary.STRONG_AMBIGUITY, null, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.EST, dpSelfAndSelf), 
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndSelf)));
+        actualResult = service.reconcileSingleGeneCalls(inputCalls);
+        assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
+
+        cond = new Condition("Anat_id1", "ParentStage_id2");
+        inputCalls = filterExprTOs(geneId, cond);
+        inputCalls.addAll(filterNoExprTOs(geneId, cond));
+        expectedResult = new ExpressionCall(geneId, null, 
+                dpSelfDescAndDesc, ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfDescAndDesc),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.EST, dpSelfDescAndDesc),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.IN_SITU, dpSelfDescAndDesc)));
+        actualResult = service.reconcileSingleGeneCalls(inputCalls);
+        assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
+
+        cond = new Condition("Anat_id2", "Stage_id2");
+        inputCalls = filterExprTOs(geneId, cond);
+        inputCalls.addAll(filterNoExprTOs(geneId, cond));
+        expectedResult = new ExpressionCall(geneId, null, 
+                dpAncAndSelf, ExpressionSummary.NOT_EXPRESSED, DataQuality.HIGH, Arrays.asList(
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpAncAndSelf)));
+        actualResult = service.reconcileSingleGeneCalls(inputCalls);
+        assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
+
+        cond = new Condition("Anat_id2", "ParentStage_id2");
+        inputCalls = filterExprTOs(geneId, cond);
+        inputCalls.addAll(filterNoExprTOs(geneId, cond));
+        expectedResult = new ExpressionCall(geneId, null, 
+                dpDescAndSelf, ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpDescAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.IN_SITU, dpDescAndSelf)));
+        actualResult = service.reconcileSingleGeneCalls(inputCalls);
+        assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
+
+        cond = new Condition("Anat_id3", "ParentStage_id2");
+        inputCalls = filterExprTOs(geneId, cond);
+        inputCalls.addAll(filterNoExprTOs(geneId, cond));
+        expectedResult = new ExpressionCall(geneId, null, 
+                dpSelfAndSelf, ExpressionSummary.STRONG_AMBIGUITY, null, Arrays.asList(
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndSelf), 
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.IN_SITU, dpSelfAndSelf)));
+        actualResult = service.reconcileSingleGeneCalls(inputCalls);
+        assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
+
+        geneId = "ID3";
+        cond = new Condition("Anat_id1", "Stage_id2");
+        inputCalls = filterExprTOs(geneId, cond);
+        inputCalls.addAll(filterNoExprTOs(geneId, cond));
+        expectedResult = new ExpressionCall(geneId, null, 
+                dpSelfDescAndSelf, ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfDescAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.EST, dpSelfDescAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.IN_SITU, dpSelfDescAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfDescAndSelf)));
+        actualResult = service.reconcileSingleGeneCalls(inputCalls);
+        assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
+
+        cond = new Condition("Anat_id4", "Stage_id2");
+        inputCalls = filterExprTOs(geneId, cond);
+        inputCalls.addAll(filterNoExprTOs(geneId, cond));
+        expectedResult = new ExpressionCall(geneId, null, 
+                dpDescAndSelf, ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpDescAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.EST, dpDescAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.IN_SITU, dpDescAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.RNA_SEQ, dpDescAndSelf)));
+        actualResult = service.reconcileSingleGeneCalls(inputCalls);
+        assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
+        
+        cond = new Condition("Anat_id5", "Stage_id2");
+        inputCalls = filterExprTOs(geneId, cond);
+        inputCalls.addAll(filterNoExprTOs(geneId, cond));
+        expectedResult = new ExpressionCall(geneId, null, 
+                dpSelfAndSelf, ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.EST, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.IN_SITU, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.RNA_SEQ, dpSelfAndSelf)));
+        actualResult = service.reconcileSingleGeneCalls(inputCalls);
+        assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
+
+        geneId = "ID4";
+        cond = new Condition("Anat_id1", "Stage_id5");
+        inputCalls = filterExprTOs(geneId, cond);
+        inputCalls.addAll(filterNoExprTOs(geneId, cond));
+        expectedResult = new ExpressionCall(geneId, null, 
+                dpSelfAndSelf, ExpressionSummary.NOT_EXPRESSED, DataQuality.HIGH, Arrays.asList(
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.IN_SITU, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndSelf)));
+        actualResult = service.reconcileSingleGeneCalls(inputCalls);
+        assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
+
+        cond = new Condition("Anat_id4", "Stage_id5");
+        inputCalls = filterExprTOs(geneId, cond);
+        inputCalls.addAll(filterNoExprTOs(geneId, cond));
+        expectedResult = new ExpressionCall(geneId, null, 
+                dpSelfAncAndSelf, ExpressionSummary.NOT_EXPRESSED, DataQuality.HIGH, Arrays.asList(
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAncAndSelf), 
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.IN_SITU, dpSelfAncAndSelf), 
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAncAndSelf)));
+        actualResult = service.reconcileSingleGeneCalls(inputCalls);
+        assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
+        
+        cond = new Condition("Anat_id5", "Stage_id5");
+        inputCalls = filterExprTOs(geneId, cond);
+        inputCalls.addAll(filterNoExprTOs(geneId, cond));
+        expectedResult = new ExpressionCall(geneId, null, 
+                dpAncAndSelf, ExpressionSummary.NOT_EXPRESSED, DataQuality.HIGH, Arrays.asList(
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpAncAndSelf), 
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.IN_SITU, dpAncAndSelf), 
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpAncAndSelf)));
+        actualResult = service.reconcileSingleGeneCalls(inputCalls);
+        assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
+
+        geneId = "ID5";
+        cond = new Condition("Anat_id1", "Stage_id5");
+        inputCalls = filterExprTOs(geneId, cond);
+        inputCalls.addAll(filterNoExprTOs(geneId, cond));
+        expectedResult = new ExpressionCall(geneId, null, 
+                dpSelfDescAndSelf, ExpressionSummary.STRONG_AMBIGUITY, null, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpDescAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.EST, dpDescAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.IN_SITU, dpDescAndSelf), 
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndSelf)));
+        actualResult = service.reconcileSingleGeneCalls(inputCalls);
+        assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
+
+        cond = new Condition("Anat_id1", "ParentStage_id5");
+        inputCalls = filterExprTOs(geneId, cond);
+        inputCalls.addAll(filterNoExprTOs(geneId, cond));
+        expectedResult = new ExpressionCall(geneId, null, 
+                dpDescAndDesc, ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpDescAndDesc),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.EST, dpDescAndDesc),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.IN_SITU, dpDescAndDesc)));
+        actualResult = service.reconcileSingleGeneCalls(inputCalls);
+        assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
+        
+        cond = new Condition("Anat_id4", "Stage_id5");
+        inputCalls = filterExprTOs(geneId, cond);
+        inputCalls.addAll(filterNoExprTOs(geneId, cond));
+        expectedResult = new ExpressionCall(geneId, null, 
+                dpSelfAndSelf, ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.EST, dpSelfAndSelf),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.IN_SITU, dpSelfAndSelf)));
+        actualResult = service.reconcileSingleGeneCalls(inputCalls);
+        assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
+
+        cond = new Condition("Anat_id4", "ParentStage_id5");
+        inputCalls = filterExprTOs(geneId, cond);
+        inputCalls.addAll(filterNoExprTOs(geneId, cond));
+        expectedResult = new ExpressionCall(geneId, null, 
+                dpSelfAndDesc, ExpressionSummary.EXPRESSED, DataQuality.HIGH, Arrays.asList(
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.AFFYMETRIX, dpSelfAndDesc),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.EST, dpSelfAndDesc),
+                        new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.IN_SITU, dpSelfAndDesc)));
+        actualResult = service.reconcileSingleGeneCalls(inputCalls);
+        assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
+
+        geneId = "ID6";
+        cond = new Condition("Anat_id9", "Stage_id7");
+        inputCalls = filterExprTOs(geneId, cond);
+        inputCalls.addAll(filterNoExprTOs(geneId, cond));
+        expectedResult = new ExpressionCall(geneId, null, 
+                dpSelfAndSelf, ExpressionSummary.NOT_EXPRESSED, DataQuality.HIGH, Arrays.asList(
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpSelfAndSelf)));
+        actualResult = service.reconcileSingleGeneCalls(inputCalls);
+        assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
+
+        cond = new Condition("Anat_id8", "Stage_id6");
+        inputCalls = filterExprTOs(geneId, cond);
+        inputCalls.addAll(filterNoExprTOs(geneId, cond));
+        expectedResult = new ExpressionCall(geneId, null, 
+                dpAncAndSelf, ExpressionSummary.NOT_EXPRESSED, DataQuality.HIGH, Arrays.asList(
+                        new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, dpAncAndSelf)));
+        actualResult = service.reconcileSingleGeneCalls(inputCalls);
+        assertEquals("Incorrect generated ExpressionCalls", expectedResult, actualResult);
+    }
+
+    private Set<ExpressionCall> filterExprTOs(String geneId, Condition cond) {
+        Set<ExpressionCall> inputCalls = getPropagationFromExpressionTOs().stream()
+                .filter(c -> c.getGeneId().equals(geneId))
+                .filter(c -> c.getCondition().equals(cond))
+                .collect(Collectors.toSet());
+        return inputCalls;
+    }
+    
+    private Set<ExpressionCall> filterNoExprTOs(String geneId, Condition cond) {
+        Set<ExpressionCall> inputCalls = getPropagationFromNoExpressionTOs().stream()
+                .filter(c -> c.getGeneId().equals(geneId))
+                .filter(c -> c.getCondition().equals(cond))
+                .collect(Collectors.toSet());
+        return inputCalls;
     }
 }

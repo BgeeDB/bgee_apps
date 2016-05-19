@@ -46,18 +46,21 @@ public class DataPropagation {
      * or in some ancestor of the condition element.
      * <li>{@code SELF_OR_DESCENDANT}: data observed either in the condition element itself, 
      * or in some descendant of the condition element.
+     * <li>{@code ANCESTOR_AND_DESCENDANT}: data observed both in some descendant, 
+     * and in some ancestor of the condition element.
      * <li>{@code ALL}: data observed both in the condition element itself, 
      * and in some descendant of the condition element, and in some ancestor of the condition element.
      * </ul>
      * 
-     * @author Frederic Bastian
-     * @version Bgee 13 Nov. 2015
-     * @see DataPropagation
-     * @since Bgee 13 Sept. 2015
+     * @author  Frederic Bastian
+     * @author  Valentine Rech de Laval
+     * @version Bgee 13, May 2016
+     * @see     DataPropagation
+     * @since   Bgee 13, Sept. 2015
      */
     public static enum PropagationState {
         SELF, ANCESTOR, DESCENDANT, SELF_AND_ANCESTOR, SELF_AND_DESCENDANT, 
-        SELF_OR_ANCESTOR, SELF_OR_DESCENDANT, ALL;
+        SELF_OR_ANCESTOR, SELF_OR_DESCENDANT, ANCESTOR_AND_DESCENDANT, ALL;
     }
     
     /**
@@ -126,7 +129,8 @@ public class DataPropagation {
         PropagationState[] states = new PropagationState[]{
                 anatEntityPropagationState, devStagePropagationState};
         if (new Boolean(true).equals(includingObservedData) && Arrays.stream(states).anyMatch(
-                e -> PropagationState.ANCESTOR.equals(e) || PropagationState.DESCENDANT.equals(e)) ||
+                e -> PropagationState.ANCESTOR.equals(e) || PropagationState.DESCENDANT.equals(e) || 
+                PropagationState.ANCESTOR_AND_DESCENDANT.equals(e)) ||
                 
             new Boolean(false).equals(includingObservedData) && Arrays.stream(states).allMatch(
                 e -> PropagationState.SELF.equals(e) || PropagationState.SELF_AND_ANCESTOR.equals(e) || 

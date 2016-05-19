@@ -158,17 +158,21 @@ public class Ontology<T extends NamedEntity & OntologyElement<T>> {
     }
     /**
      * Get ancestors of {@code element} in this ontology based on relations of types {@code relationTypes}.
+     * <p>
+     * If {@code directRelOnly} is {@code true}, only direct relations incoming from or outgoing to 
+     * {@code element} are considered, in order to only retrieve direct parents of {@code element}.
      * 
      * @param element       A {@code T} that is the element for which ancestors are retrieved.
      * @param relationTypes A {@code Set} of {@code RelationType}s that are the relation
      *                      types to consider.
+     * @param directRelOnly A {@code boolean} defining whether only direct parents
+     *                      of {@code element} should be returned.
      * @return              A {@code Set} of {@code T}s that are the ancestors
      *                      of {@code element} in this ontology. Can be empty if {@code element} 
      *                      has no ancestors according to the requested parameters.
      * @throws IllegalArgumentException If {@code element} is {@code null} or is not found 
      *                                  in this {@code Ontology}.
      */
-    //TODO: update javadoc for directRelOnly. 
     //TODO: unit test
     public Set<T> getAncestors(T element, Collection<RelationType> relationTypes, boolean directRelOnly) {
         log.entry(element, relationTypes, directRelOnly);
@@ -192,15 +196,19 @@ public class Ontology<T extends NamedEntity & OntologyElement<T>> {
     /**
      * Get ancestors of the given {@code element} in this ontology, according to 
      * any {@code RelationType}s that were considered to build this {@code Ontology}.
+     * <p>
+     * If {@code directRelOnly} is {@code true}, only direct relations incoming from or outgoing to 
+     * {@code element} are considered, in order to only retrieve direct parents of {@code element}.
      * 
      * @param element       A {@code T} that is the element for which ancestors are retrieved.
+     * @param directRelOnly A {@code boolean} defining whether only direct parents
+     *                      of {@code element} should be returned.
      * @return              A {@code Set} of {@code T}s that are the ancestors
      *                      of the given {@code element}. Can be empty if {@code element} 
      *                      has no ancestors according to the requested parameters.
      * @throws IllegalArgumentException If {@code element} is {@code null} or is not found 
      *                                  in this {@code Ontology}.
      */
-    //TODO: update javadoc for directRelOnly. 
     public Set<T> getAncestors(T element, boolean directRelOnly) {
         log.entry(element, directRelOnly);
         return log.exit(this.getAncestors(element, null, directRelOnly));
@@ -208,17 +216,21 @@ public class Ontology<T extends NamedEntity & OntologyElement<T>> {
 
     /**
      * Get descendants of {@code element} in this ontology based on relations of types {@code relationTypes}.
+     * <p>
+     * If {@code directRelOnly} is {@code true}, only direct relations incoming from or outgoing to 
+     * {@code element} are considered, in order to only retrieve direct children of {@code element}.
      * 
      * @param element       A {@code T} that is the element for which descendants are retrieved.
      * @param relationTypes A {@code Set} of {@code RelationType}s that are the relation
      *                      types allowing to filter the relations to retrieve.
+     * @param directRelOnly A {@code boolean} defining whether only direct children
+     *                      of {@code element} should be returned.
      * @return              A {@code Collection} of {@code T}s that are the descendants
      *                      of the given {@code element}. Can be empty if {@code element} 
      *                      has no descendants according to the requested parameters.
      * @throws IllegalArgumentException If {@code element} is {@code null} or is not found 
      *                                  in this {@code Ontology}.
      */
-    //TODO: update javadoc for directRelOnly
     public Set<T> getDescendants(T element, Collection<RelationType> relationTypes, boolean directRelOnly) {
         log.entry(element, relationTypes, directRelOnly);
         return log.exit(this.getRelatives(element, false, relationTypes, directRelOnly));
@@ -258,15 +270,19 @@ public class Ontology<T extends NamedEntity & OntologyElement<T>> {
     /**
      * Get descendants of the given {@code element} in this ontology, according to 
      * any {@code RelationType}s that were considered to build this {@code Ontology}.
+     * <p>
+     * If {@code directRelOnly} is {@code true}, only direct relations incoming from or outgoing to 
+     * {@code element} are considered, in order to only retrieve direct children of {@code element}.
      * 
      * @param element       A {@code T} that is the element for which descendants are retrieved.
+     * @param directRelOnly A {@code boolean} defining whether only direct children
+     *                      of {@code element} should be returned.
      * @return              A {@code Set} of {@code T}s that are the descendants
      *                      of the given {@code element} in this ontology. Can be empty if {@code element} 
      *                      has no descendants according to the requested parameters.
      * @throws IllegalArgumentException If {@code element} is {@code null} or is not found 
      *                                  in this {@code Ontology}.
      */
-    //TODO: update javadoc for directRelOnly
     public Set<T> getDescendants(T element, boolean directRelOnly) {
         log.entry(element, directRelOnly);
         return log.exit(this.getDescendants(element, null, directRelOnly));

@@ -56,8 +56,8 @@ public class JsonTopAnatDisplayTest extends TestAncestor {
         speciesToGeneCount.put("10090", 1L);
         
         TreeMap<String, Species> detectedSpecies = new TreeMap<>();
-        detectedSpecies.put("9606", new Species("9606", "human", "", "Homo", "sapiens", "genome9606"));
-        detectedSpecies.put("10090", new Species("10090", "mouse", "", "Mus", "musculus", "genome10090"));
+        detectedSpecies.put("9606", new Species("9606", "human", "", "Homo", "sapiens", "genome9606", null));
+        detectedSpecies.put("10090", new Species("10090", "mouse", "", "Mus", "musculus", "genome10090", null));
 
         String selectedSpeciesId = "9606";
         

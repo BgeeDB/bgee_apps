@@ -98,10 +98,10 @@ public class CommandDownloadTest extends TestAncestor {
     public static List<SpeciesDataGroup> getTestGroups() {
         log.entry();
         //Species:
-        Species spe1 = new Species("9606", "human", null, "Homo", "sapiens", "hsap1");
-        Species spe2 = new Species("10090", "mouse", null, "Mus", "musculus", "mmus1");
-        Species spe3 = new Species("7955", "zebrafish", null, "Danio", "rerio", "dre1");
-        Species spe4 = new Species("7227", "fly", null, "Drosophila", "melanogaster", "dmel1");
+        Species spe1 = new Species("9606", "human", null, "Homo", "sapiens", "hsap1","1234");
+        Species spe2 = new Species("10090", "mouse", null, "Mus", "musculus", "mmus1", "2322");
+        Species spe3 = new Species("7955", "zebrafish", null, "Danio", "rerio", "dre1", "2311");
+        Species spe4 = new Species("7227", "fly", null, "Drosophila", "melanogaster", "dmel1","211");
         
         //make all file types available for at least one species
         Set<DownloadFile> dlFileGroup1 = new HashSet<DownloadFile>();

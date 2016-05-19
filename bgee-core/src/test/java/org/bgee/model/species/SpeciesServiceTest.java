@@ -41,8 +41,8 @@ public class SpeciesServiceTest extends TestAncestor {
 		when(managerMock.getSpeciesDAO()).thenReturn(speciesDAOMock);
 		
 		Set<Species> expected = new HashSet<>(Arrays.asList(
-		        new Species("9606", "human", null, "Homo", "sapiens", "version1"), 
-		        new Species("1234", "name", null, "genus", "someSpecies", "versionA")));
+		        new Species("9606", "human", null, "Homo", "sapiens", "version1", "4312"), 
+		        new Species("1234", "name", null, "genus", "someSpecies", "versionA", "1123")));
 
 		// actual use of the service
 		SpeciesService service = new SpeciesService(managerMock);
@@ -66,8 +66,8 @@ public class SpeciesServiceTest extends TestAncestor {
 	    when(managerMock.getSpeciesDAO()).thenReturn(speciesDAOMock);
 
 	    Set<Species> expected = new HashSet<>(Arrays.asList(
-	            new Species("9606", "human", null, "Homo", "sapiens", "version1"),
-	            new Species("1234", "name", null, "genus", "someSpecies", "versionA")));
+	            new Species("9606", "human", null, "Homo", "sapiens", "version1", "4312"),
+	            new Species("1234", "name", null, "genus", "someSpecies", "versionA", "1123")));
 
 	    // actual use of the service
 	    SpeciesService service = new SpeciesService(managerMock);

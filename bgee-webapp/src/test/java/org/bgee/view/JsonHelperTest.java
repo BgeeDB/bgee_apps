@@ -67,7 +67,7 @@ public class JsonHelperTest extends TestAncestor {
     @Test
     public void testSpeciesDataGroupToJson() {
         SpeciesDataGroup group = new SpeciesDataGroup("singleSpeG1", "single spe g1", null, 
-                Arrays.asList(new Species("9606", "human", null, "Homo", "sapiens", "hsap1")), 
+                Arrays.asList(new Species("9606", "human", null, "Homo", "sapiens", "hsap1", null)), 
                 new HashSet<>(Arrays.asList(
                         new DownloadFile("my/path/fileg1_1.tsv.zip", "fileg1_1.tsv.zip", 
                         CategoryEnum.EXPR_CALLS_SIMPLE, 5000L, "singleSpeG1"))));

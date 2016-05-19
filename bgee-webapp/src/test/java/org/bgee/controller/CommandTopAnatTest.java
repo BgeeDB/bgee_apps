@@ -105,13 +105,13 @@ public class CommandTopAnatTest extends TestAncestor {
             .thenReturn(devStages);
 
         List<Species> fgSpecies = Arrays.asList(
-                new Species("10090", "mouse", "", "Mus", "musculus", "genome10090"));
+                new Species("10090", "mouse", "", "Mus", "musculus", "genome10090", null));
         when(speciesService.loadSpeciesByIds(new HashSet<>(Arrays.asList("10090"))))
             .thenReturn(new HashSet<>(fgSpecies));
 
         List<Species> bgSpecies = Arrays.asList(
-                new Species("9606", "human", "", "Homo", "sapiens", "genome9606"), 
-                new Species("10090", "mouse", "", "Mus", "musculus", "genome10090"));
+                new Species("9606", "human", "", "Homo", "sapiens", "genome9606", null), 
+                new Species("10090", "mouse", "", "Mus", "musculus", "genome10090", null));
         when(speciesService.loadSpeciesByIds(new HashSet<>(Arrays.asList("9606", "10090"))))
             .thenReturn(new HashSet<>(bgSpecies)).thenReturn(new HashSet<>(bgSpecies));
 

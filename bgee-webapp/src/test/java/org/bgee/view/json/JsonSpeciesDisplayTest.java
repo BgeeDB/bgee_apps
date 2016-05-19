@@ -42,8 +42,8 @@ public class JsonSpeciesDisplayTest extends TestAncestor {
 
         Set<Species> species = new HashSet<Species>();
         species.addAll(Arrays.asList(
-                new Species("10090", "mouse", null, "Mus", "musculus", "version1"),
-                new Species("9606", "human", "human desc", "Homo", "sapiens", "hs1")));
+                new Species("10090", "mouse", null, "Mus", "musculus", "version1", null),
+                new Species("9606", "human", "human desc", "Homo", "sapiens", "hs1", null)));
         
         BgeeProperties props = mock(BgeeProperties.class);
         JsonSpeciesDisplay display = new JsonSpeciesDisplay(getMockHttpServletResponse(), 

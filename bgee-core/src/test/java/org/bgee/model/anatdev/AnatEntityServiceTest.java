@@ -7,8 +7,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -17,6 +20,15 @@ import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTO;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTOResultSet;
+import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO;
+import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SimAnnotToAnatEntityTO;
+import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SimAnnotToAnatEntityTOResultSet;
+import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO;
+import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTOResultSet;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTO;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupToGeneTOResultSet;
+import org.bgee.model.gene.GeneService;
 import org.junit.Test;
 
 /**
@@ -100,6 +112,38 @@ public class AnatEntityServiceTest extends TestAncestor {
         AnatEntityService service = new AnatEntityService(managerMock);
         assertEquals("Incorrect anat. entities", expectedAnatEntity,
                 service.loadAnatEntities(speciesIds, true, anatEntityIds).collect(Collectors.toList()));
+    }
+    
+    @Test
+    public void testGetSimilarities() {
+        DAOManager managerMock = mock(DAOManager.class);
+        SummarySimilarityAnnotationDAO dao = mock(SummarySimilarityAnnotationDAO.class);
+        when(managerMock.getSummarySimilarityAnnotationDAO()).thenReturn(dao);
+        
+        SummarySimilarityAnnotationTOResultSet resultSetSim = getMockResultSet(
+                SummarySimilarityAnnotationTOResultSet.class, 
+                Arrays.asList(new SummarySimilarityAnnotationTO("sim1", "taxon1", false, "cio01"),
+                  new SummarySimilarityAnnotationTO("sim2", "taxon1", false, "cio01")));
+
+        SimAnnotToAnatEntityTOResultSet resultSetSimToAnat = getMockResultSet(
+                SimAnnotToAnatEntityTOResultSet.class, 
+                Arrays.asList(new SimAnnotToAnatEntityTO("sim1", "anat1"),
+               new SimAnnotToAnatEntityTO("sim1", "anat2"),
+                new SimAnnotToAnatEntityTO("sim2", "anat3")
+        ));
+       
+        when(dao.getSummarySimilarityAnnotations("taxon1",true)).thenReturn(resultSetSim);
+        when(dao.getSimAnnotToAnatEntity("taxon1", null)).thenReturn(resultSetSimToAnat);
+        
+        AnatEntityService service = new AnatEntityService(managerMock);
+        Collection<AnatEntitySimilarity> expected = new HashSet<>(Arrays.asList(
+                new AnatEntitySimilarity("sim1", new HashSet<>(Arrays.asList("anat1","anat2"))),
+                new AnatEntitySimilarity("sim2", new HashSet<>(Arrays.asList("anat3")))
+                ));
+        
+        Collection<AnatEntitySimilarity> actual = service.getSimilarities("taxon1", null, true);
+        assertEquals(expected, actual);
+        
     }
 
 

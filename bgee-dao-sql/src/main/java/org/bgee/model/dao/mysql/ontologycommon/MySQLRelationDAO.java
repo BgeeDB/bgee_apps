@@ -234,7 +234,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         // SELECT CLAUSE
         //*******************************
         String sql = null;
-        EnumdSet<RelationDAO.Attribute> clonedAttrs = Optional.ofNullable(attributes)
+        EnumSet<RelationDAO.Attribute> clonedAttrs = Optional.ofNullable(attributes)
                 .map(e -> e.isEmpty()? null: EnumSet.copyOf(e)).orElse(null);
         if (clonedAttrs == null || clonedAttrs.isEmpty()) {
             sql = "SELECT tempTable.*";

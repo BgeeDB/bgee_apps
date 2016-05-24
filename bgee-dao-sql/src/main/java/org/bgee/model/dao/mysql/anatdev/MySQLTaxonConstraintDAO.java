@@ -55,6 +55,62 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
     }
     
     @Override
+    /*
+     * (non-javadoc)
+     * That method is not factorize with other select method because of table names, 
+     * entity ID column names, and, most important of all, types of this column 
+     * (int or string) are different.
+     */
+    public TaxonConstraintTOResultSet getAnatEntityRelationTaxonConstraints(
+            Collection<String> speciesIds, Collection<TaxonConstraintDAO.Attribute> attributes)
+            throws DAOException {
+        log.entry(speciesIds, attributes);
+        
+        boolean filterBySpeciesIDs = speciesIds != null && !speciesIds.isEmpty();
+
+        String tableName = "anatEntityRelationTaxonConstraint";
+        String sql = "";
+        if (attributes == null || attributes.isEmpty()) {
+            attributes = EnumSet.allOf(TaxonConstraintDAO.Attribute.class);
+        }
+        for (TaxonConstraintDAO.Attribute attribute: attributes) {
+            if (sql.isEmpty()) {
+                sql += "SELECT DISTINCT ";
+            } else {
+                sql += ", ";
+            }
+            sql += tableName + ".";
+            if (attribute.equals(TaxonConstraintDAO.Attribute.ENTITY_ID)) {
+                sql += "anatEntityRelationId";
+            } else if (attribute.equals(TaxonConstraintDAO.Attribute.SPECIES_ID)) {
+                sql += "speciesId";
+            } else {
+                throw log.throwing(new IllegalArgumentException("The attribute provided (" + 
+                        attribute.toString() + ") is unknown for " + TaxonConstraintDAO.class.getName()));
+            }
+        }
+
+        sql += " FROM " + tableName;
+        
+        if (filterBySpeciesIDs) {
+            sql += " WHERE (" + tableName + ".speciesId IS NULL OR " + tableName + ".speciesId IN (" + 
+                    BgeePreparedStatement.generateParameterizedQueryString(speciesIds.size()) + "))";            
+        }
+
+        // we don't use a try-with-resource, because we return a pointer to the results,
+        // not the actual results, so we should not close this BgeePreparedStatement.
+        try {
+            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
+            if (filterBySpeciesIDs) {
+                stmt.setStringsToIntegers(1, speciesIds, true);
+            }
+            return log.exit(new MySQLTaxonConstraintTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+
+    @Override
     public TaxonConstraintTOResultSet getStageTaxonConstraints(
             Collection<String> speciesIds, Collection<TaxonConstraintDAO.Attribute> attributes)
             throws DAOException {

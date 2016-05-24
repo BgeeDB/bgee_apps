@@ -51,7 +51,7 @@ public class MySQLTaxonConstraintDAOIT extends MySQLITAncestor {
 
     /**
      * Test the select method 
-     * {@link MySQLTaxonConstraintDAO#getAnatEntityTaxonConstraints(java.util.Set, Collection)}.
+     * {@link MySQLTaxonConstraintDAO#getAnatEntityTaxonConstraints(Collection, Collection)}.
      */
     @Test
     public void shouldGetAnatEntityTaxonConstraints() throws SQLException {
@@ -108,6 +108,66 @@ public class MySQLTaxonConstraintDAOIT extends MySQLITAncestor {
         expectedTCs = allTCs.stream()
                 .filter(tc -> tc.getSpeciesId() == null || speciesIds.contains(tc.getSpeciesId()))
                 .map(tc -> new TaxonConstraintTO(tc.getEntityId(), null))
+                .distinct()
+                .collect(Collectors.toSet());
+        
+        assertTrue("TaxonConstraintTOs incorrectly retrieved:\n - actual: "+methTCs+"\n - expected:"+expectedTCs, 
+                TOComparator.areTOCollectionsEqual(methTCs, expectedTCs));
+    }
+    
+    /**
+     * Test the select method 
+     * {@link MySQLTaxonConstraintDAO#getAnatEntityRelationTaxonConstraints(Collection, Collection)}.
+     */
+    @Test
+    public void shouldGetAnatEntityRelationTaxonConstraints() throws SQLException {
+        
+        this.useSelectDB();
+
+        // Method should return all TOs with arguments equal to null. 
+        MySQLTaxonConstraintDAO dao = new MySQLTaxonConstraintDAO(this.getMySQLDAOManager());
+        List<TaxonConstraintTO> methTCs = 
+                dao.getAnatEntityRelationTaxonConstraints(null, null).getAllTOs();
+        List<TaxonConstraintTO> allTCs = Arrays.asList(
+                new TaxonConstraintTO("1",null), new TaxonConstraintTO("2","11"),
+                new TaxonConstraintTO("2","21"), new TaxonConstraintTO("3","31"),
+                new TaxonConstraintTO("4","11"), new TaxonConstraintTO("5",null),
+                new TaxonConstraintTO("6","31"), new TaxonConstraintTO("7","21"),
+                new TaxonConstraintTO("7","31"), new TaxonConstraintTO("8","11"),
+                new TaxonConstraintTO("9","31"), new TaxonConstraintTO("10",null),
+                new TaxonConstraintTO("11","21"), new TaxonConstraintTO("12","21"),
+                new TaxonConstraintTO("12","11"), new TaxonConstraintTO("13","31"),
+                new TaxonConstraintTO("14","11"), new TaxonConstraintTO("15",null),
+                new TaxonConstraintTO("16","31"), new TaxonConstraintTO("17","31"),
+                new TaxonConstraintTO("18","11"), new TaxonConstraintTO("18","21"),
+                new TaxonConstraintTO("19",null), new TaxonConstraintTO("20","31"),
+                new TaxonConstraintTO("21","21"), new TaxonConstraintTO("22","31"),
+                new TaxonConstraintTO("23",null)); 
+        assertTrue("TaxonConstraintTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(methTCs, allTCs));
+
+        // Method should return same TOs with all attributes or without specifying attributes 
+        Set<TaxonConstraintDAO.Attribute> allAttributes = 
+                new HashSet<>(Arrays.asList(TaxonConstraintDAO.Attribute.values()));
+        methTCs = dao.getAnatEntityRelationTaxonConstraints(null, allAttributes).getAllTOs();
+        assertTrue("TaxonConstraintTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(methTCs, allTCs));
+
+        // Specifying speciesIds
+        List<String> speciesIds = Arrays.asList("11", "22");
+        methTCs = dao.getAnatEntityRelationTaxonConstraints(speciesIds, null).getAllTOs();
+        Set<TaxonConstraintTO> expectedTCs = allTCs.stream()
+                .filter(tc -> tc.getSpeciesId() == null || speciesIds.contains(tc.getSpeciesId()))
+                .collect(Collectors.toSet());
+        assertTrue("TaxonConstraintTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(methTCs, expectedTCs));
+        
+        // Specifying attributes
+        methTCs = dao.getAnatEntityRelationTaxonConstraints(
+                speciesIds, Arrays.asList(TaxonConstraintDAO.Attribute.SPECIES_ID)).getAllTOs();
+        expectedTCs = allTCs.stream()
+                .filter(tc -> tc.getSpeciesId() == null || speciesIds.contains(tc.getSpeciesId()))
+                .map(tc -> new TaxonConstraintTO(null, tc.getSpeciesId()))
                 .distinct()
                 .collect(Collectors.toSet());
         

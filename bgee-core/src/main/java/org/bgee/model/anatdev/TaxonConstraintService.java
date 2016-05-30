@@ -56,6 +56,23 @@ public class TaxonConstraintService extends Service {
     }
     
     /**
+     * Retrieve anatomical entity relation taxon constraints for a given set of species IDs.
+     * 
+     * @param speciesIds    A {@code Collection} of {@code String}s that are IDs of species 
+     *                      for which to return the {@code TaxonConstraint}s.
+     * @return              A {@code Stream} of {@code TaxonConstraint}s that are 
+     *                      the {@code TaxonConstraint}s for the given set of species IDs.
+     */
+    public Stream<TaxonConstraint> loadAnatEntityRelationTaxonConstraintBySpeciesIds(
+            Collection<String> speciesIds) {
+        log.entry(speciesIds);
+        
+        return log.exit(getDaoManager().getTaxonConstraintDAO()
+                    .getAnatEntityRelationTaxonConstraints(speciesIds, null).stream()
+                    .map(TaxonConstraintService::mapFromTO));
+    }
+
+    /**
      * Retrieve developmental stage taxon constraints for a given set of species IDs.
      * 
      * @param speciesIds    A {@code Collection} of {@code String}s that are IDs of species 

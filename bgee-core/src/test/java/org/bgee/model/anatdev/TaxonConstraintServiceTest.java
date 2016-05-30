@@ -27,7 +27,8 @@ import org.junit.Test;
 public class TaxonConstraintServiceTest extends TestAncestor {
 
     /**
-     * Test the method {@link TaxonConstraintService#loadAnatEntityTaxonConstraintBySpeciesIds(java.util.Collection)}.
+     * Test the method 
+     * {@link TaxonConstraintService#loadAnatEntityTaxonConstraintBySpeciesIds(java.util.Collection)}.
      */
     @Test
     public void shouldLoadAnatEntityTaxonConstraintBySpeciesIds() {
@@ -48,7 +49,7 @@ public class TaxonConstraintServiceTest extends TestAncestor {
 
         TaxonConstraintTOResultSet mockRs1 = 
                 getMockResultSet(TaxonConstraintTOResultSet.class, taxonConstraintTOs);
-        when(dao.getAnatEntityTaxonConstraints(speciesIds,null)).thenReturn(mockRs1);
+        when(dao.getAnatEntityTaxonConstraints(speciesIds, null)).thenReturn(mockRs1);
         
         List<TaxonConstraint> expectedTCs = Arrays.asList(
                 new TaxonConstraint("UBERON:0001853", "11"), 
@@ -58,9 +59,45 @@ public class TaxonConstraintServiceTest extends TestAncestor {
         assertEquals("Incorrect anat. entity taxon constraints", expectedTCs,
                 service.loadAnatEntityTaxonConstraintBySpeciesIds(speciesIds).collect(Collectors.toList()));
     }
+    
+    /**
+     * Test the method 
+     * {@link TaxonConstraintService#loadAnatEntityRelationTaxonConstraintBySpeciesIds(java.util.Collection)}.
+     */
+    @Test
+    public void shouldLoadAnatEntityRelationTaxonConstraintBySpeciesIds() {
+
+        DAOManager managerMock = mock(DAOManager.class);
+        TaxonConstraintDAO dao = mock(TaxonConstraintDAO.class);
+        when(managerMock.getTaxonConstraintDAO()).thenReturn(dao);
+        
+        List<TaxonConstraintTO> taxonConstraintTOs = Arrays.asList(
+                new TaxonConstraintTO("1", null),
+                new TaxonConstraintTO("2", "11"),
+                new TaxonConstraintTO("2", "21")); 
+
+        // Filter on species IDs is not tested here (tested in TaxonConstraintDAO)
+        // but we need a variable to mock DAO answer
+        Set<String> speciesIds = new HashSet<String>();
+        speciesIds.addAll(Arrays.asList("11", "21"));
+
+        TaxonConstraintTOResultSet mockRs1 = 
+                getMockResultSet(TaxonConstraintTOResultSet.class, taxonConstraintTOs);
+        when(dao.getAnatEntityRelationTaxonConstraints(speciesIds, null)).thenReturn(mockRs1);
+        
+        List<TaxonConstraint> expectedTCs = Arrays.asList(
+                new TaxonConstraint("1", null), 
+                new TaxonConstraint("2", "11"), 
+                new TaxonConstraint("2", "21"));
+        TaxonConstraintService service = new TaxonConstraintService(managerMock);
+        assertEquals("Incorrect anat. entity relation taxon constraints", expectedTCs,
+                service.loadAnatEntityRelationTaxonConstraintBySpeciesIds(speciesIds)
+                    .collect(Collectors.toList()));
+    }
 
     /**
-     * Test the method {@link TaxonConstraintService#loadDevStageTaxonConstraintBySpeciesIds(java.util.Collection)}.
+     * Test the method 
+     * {@link TaxonConstraintService#loadDevStageTaxonConstraintBySpeciesIds(java.util.Collection)}.
      */
     @Test
     public void shouldLoadDevStageTaxonConstraintBySpeciesIds() {

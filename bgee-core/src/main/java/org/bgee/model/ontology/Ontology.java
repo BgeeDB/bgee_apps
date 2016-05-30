@@ -125,6 +125,14 @@ public class Ontology<T extends NamedEntity & OntologyElement<T>> {
     }
 
     /**
+     * @return  The {@code Set} of {@code RelationTO}s that are the relations
+     *          between elements of the ontology.
+     */
+    protected Set<RelationTO> getRelationTOs() {
+        return relations;
+    }
+
+    /**
      * Get the element corresponding to the given {@code id}.
      * 
      * @param id    A {@code String} that is the ID of the element to be retrieved.

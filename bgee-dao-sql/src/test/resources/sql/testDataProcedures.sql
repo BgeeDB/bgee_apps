@@ -117,6 +117,20 @@ BEGIN
                ('Stage_id17', 31), 
                ('Stage_id18', 11);
 
+--               Anat_id1 ----------------
+--                   |                    \
+--           --- Anat_id2 ----         Anat_id6
+--          /        |        \            |
+--         /         |         \       Anat_id7
+--        /          |          \          |   \
+--       /           |           \         |    Anat_id8
+--      /            |            \        |   /
+--  Anat_id3     Anat_id4          --- Anat_id5 -------
+--                                         |           \
+--                                     Anat_id9     Anat_id10
+--                                                      |
+--                                                  Anat_id11
+
         INSERT INTO anatEntity(anatEntityId,anatEntityName,anatEntityDescription,startStageId,endStageId,nonInformative)
         VALUES ('Anat_id1','anatStruct','anatStruct desc','Stage_id1','Stage_id2',true),
                ('Anat_id2','organ','organ desc','Stage_id10','Stage_id18',false),

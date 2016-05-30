@@ -230,7 +230,10 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
     public RelationTOResultSet getTaxonRelations( 
             Collection<String> speciesIds, boolean onlyCommonAncestor, Collection<RelationDAO.Attribute> attributes) {
         
-      //*******************************
+        if (true) {
+            throw new UnsupportedOperationException("Incorrect SQL query, it should be fixed before using this method"); 
+        }
+        //*******************************
         // SELECT CLAUSE
         //*******************************
         String sql = null;

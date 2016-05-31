@@ -77,27 +77,6 @@ public class Ontology<T extends NamedEntity & OntologyElement<T>> {
     private final Class<T> type;
 
     /**
-     * Constructor providing the elements, the relations, and the relations types.
-     * <p>
-     * This constructor should be used only for simple species ontology or ontology 
-     * <p>
-     * This constructor is protected to not expose the {@code RelationTO} objects 
-     * from the {@code bgee-dao-api} layer. {@code Ontology} objects can only be obtained 
-     * through {@code OntologyService}s.
-     * 
-     * @param elements          A {@code Collection} of {@code T}s that are
-     *                          the elements of this ontology.
-     * @param relations         A {@code Collection} of {@code RelationTO}s that are
-     *                          the relations between elements of the ontology.
-     * @param relationTypes     A {@code Collection} of {@code RelationType}s that were
-     *                          considered to build this ontology or sub-graph.
-     */
-    protected Ontology(Collection<T> elements, Collection<RelationTO> relations,
-            Collection<RelationType> relationTypes) {
-        this(elements, relations, relationTypes, null, null);
-    }
-    
-    /**
      * Constructor providing the elements, the relations, the relations types, the service factory,
      * and the type of elements of the ontology.
      * <p>
@@ -148,7 +127,7 @@ public class Ontology<T extends NamedEntity & OntologyElement<T>> {
         if (this.relationTypes.stream().anyMatch(Objects::isNull)) {
             throw log.throwing(new IllegalArgumentException("No relation type can be null."));
         }
-        if (type != null && this.elements.stream().anyMatch(e -> !type.equals(e.getClass()))) {
+        if (type != null && this.elements.stream().anyMatch(e -> !e.getClass().isAssignableFrom(type))) {
             throw log.throwing(new IllegalArgumentException(
                     "The class of all elements should be equals to provided class " + type));
         }
@@ -178,14 +157,12 @@ public class Ontology<T extends NamedEntity & OntologyElement<T>> {
     public Set<T> getElements(Collection<String> speciesIds) {
         log.entry(speciesIds);
         
-        this.checkIsMultiSpeciesOntology();
-
         // Get stage or anat. entity taxon constraints
         Stream<TaxonConstraint> taxonConstraints;
-        if (type.equals(AnatEntity.class)) {
+        if (AnatEntity.class.isAssignableFrom(type)) {
             taxonConstraints = serviceFactory.getTaxonConstraintService()
                     .loadAnatEntityTaxonConstraintBySpeciesIds(speciesIds);
-        } else if (type.equals(DevStage.class)) {
+        } else if (DevStage.class.isAssignableFrom(type)) {
             taxonConstraints = serviceFactory.getTaxonConstraintService()
                     .loadDevStageTaxonConstraintBySpeciesIds(speciesIds);
         } else {
@@ -200,17 +177,6 @@ public class Ontology<T extends NamedEntity & OntologyElement<T>> {
                 .collect(Collectors.toSet()));
     }
     
-    private void checkIsMultiSpeciesOntology() {
-        log.entry();
-
-        if (serviceFactory == null || type == null) {
-            throw log.throwing(new IllegalArgumentException("Impossible to filter by species "
-                    + "while used constructor is no species or single species specific"));
-        }
-
-        log.exit();
-    }
-
     /**
      * @return  The {@code Set} of {@code RelationType}s that were considered to build 
      *          this ontology or sub-graph.
@@ -511,9 +477,6 @@ public class Ontology<T extends NamedEntity & OntologyElement<T>> {
         }
         
         boolean isSpeciesSpecific = speciesIds != null && !speciesIds.isEmpty();
-        if (isSpeciesSpecific) {
-            this.checkIsMultiSpeciesOntology();
-        }
         
         final Set<T> curElements = isSpeciesSpecific ? 
                 this.getElements(speciesIds): Collections.unmodifiableSet(elements); 
@@ -529,7 +492,7 @@ public class Ontology<T extends NamedEntity & OntologyElement<T>> {
                 .collect(Collectors.toCollection(() -> EnumSet.noneOf(RelationTO.RelationType.class)));
 
         final Set<String> allowedRelationIds;
-        if (isSpeciesSpecific && type.equals(AnatEntity.class)) {
+        if (isSpeciesSpecific && AnatEntity.class.isAssignableFrom(type)) {
             Stream<TaxonConstraint> taxonConstraints = serviceFactory.getTaxonConstraintService()
                         .loadAnatEntityRelationTaxonConstraintBySpeciesIds(speciesIds);
             allowedRelationIds = taxonConstraints.map(ds -> ds.getEntityId()).collect(Collectors.toSet());

@@ -1,7 +1,6 @@
 package org.bgee.model.ontology;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -11,6 +10,7 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.bgee.model.Entity;
 import org.bgee.model.NamedEntity;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.TestAncestor;
@@ -27,7 +27,7 @@ import org.junit.Test;
  * This class holds the unit tests for the {@code Ontology} class.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Dec. 2015
+ * @version Bgee 13, May 2016
  * @since   Bgee 13, Dec. 2015
  */
 public class OntologyTest extends TestAncestor {
@@ -44,6 +44,9 @@ public class OntologyTest extends TestAncestor {
      */
     @Test
     public void shouldGetAncestors() {
+        
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+
         AnatEntity ae1 = new AnatEntity("UBERON:0001", "A", "A description"); 
         AnatEntity ae2 = new AnatEntity("UBERON:0002", "B", "B description"); 
         AnatEntity ae2p = new AnatEntity("UBERON:0002p", "Bprime", "Bprime description"); 
@@ -51,7 +54,8 @@ public class OntologyTest extends TestAncestor {
         Set<AnatEntity> elements = new HashSet<>(Arrays.asList(ae1, ae2, ae2p, ae3));
         Set<RelationTO> relations = this.getAnatEntityRelationTOs();
 
-        Ontology<AnatEntity> ontology = new Ontology<>(elements, relations, ALL_RELATIONS);
+        Ontology<AnatEntity> ontology = new Ontology<>(elements, relations, ALL_RELATIONS,
+                serviceFactory, AnatEntity.class);
         
         Set<AnatEntity> ancestors = ontology.getAncestors(ae3);
         Set<AnatEntity> expAncestors = new HashSet<>(Arrays.asList(ae1, ae2, ae2p));
@@ -78,13 +82,6 @@ public class OntologyTest extends TestAncestor {
         ancestors = ontology.getAncestors(ae1, null);
         expAncestors = new HashSet<>();
         assertEquals("Incorrects ancestors", expAncestors, ancestors);
-        
-        try {
-            ontology.getAncestors(new HashSet<>(Arrays.asList("sp1")), ae3, null, false);
-            fail("Test should fail");
-        } catch (IllegalArgumentException e) {
-            // test passed
-        }
     }
     
     /**
@@ -113,8 +110,8 @@ public class OntologyTest extends TestAncestor {
                 new TaxonConstraint("UBERON:0001", null),
                 new TaxonConstraint("UBERON:0002", "sp1"),
                 new TaxonConstraint("UBERON:0003", "sp1")));
+        // Note: we need to use thenReturn() twice because a stream can be use only once 
         when(tcService.loadAnatEntityTaxonConstraintBySpeciesIds(new HashSet<>(Arrays.asList("sp1"))))
-            .thenReturn(tc_sp1.stream()).thenReturn(tc_sp1.stream())
             .thenReturn(tc_sp1.stream()).thenReturn(tc_sp1.stream());
 
         Set<TaxonConstraint> relTc_sp1 = new HashSet<>(Arrays.asList(
@@ -127,6 +124,7 @@ public class OntologyTest extends TestAncestor {
                 new TaxonConstraint("3", "sp1"),
                 new TaxonConstraint("5", "sp1")));
         HashSet<String> speciesIds = new HashSet<>(Arrays.asList("sp1"));
+        // Note: we need to use thenReturn() twice because a stream can be use only once 
         when(tcService.loadAnatEntityRelationTaxonConstraintBySpeciesIds(speciesIds))
             .thenReturn(relTc_sp1.stream()).thenReturn(relTc_sp1.stream());
 
@@ -150,7 +148,7 @@ public class OntologyTest extends TestAncestor {
                 new TaxonConstraint("UBERON:0002p", "sp2"),
                 new TaxonConstraint("UBERON:0003", "sp2")));
         when(tcService.loadAnatEntityTaxonConstraintBySpeciesIds(speciesIds))
-            .thenReturn(tc_sp2.stream()).thenReturn(tc_sp2.stream());
+            .thenReturn(tc_sp2.stream());
 
         Set<TaxonConstraint> relTc_sp2 = new HashSet<>(Arrays.asList(
                 // UBERON:0001 ------------------
@@ -178,7 +176,7 @@ public class OntologyTest extends TestAncestor {
                 new TaxonConstraint("UBERON:0001", null),
                 new TaxonConstraint("UBERON:0002p", "sp3")));
         when(tcService.loadAnatEntityTaxonConstraintBySpeciesIds(speciesIds))
-            .thenReturn(tc_sp3.stream()).thenReturn(tc_sp3.stream());
+            .thenReturn(tc_sp3.stream());
         Set<TaxonConstraint> relTc_sp3 = new HashSet<>(Arrays.asList());
         when(tcService.loadAnatEntityRelationTaxonConstraintBySpeciesIds(speciesIds))
             .thenReturn(relTc_sp3.stream());
@@ -197,6 +195,8 @@ public class OntologyTest extends TestAncestor {
      */
     @Test
     public void shouldGetDescendants() {
+        ServiceFactory mockFact = mock(ServiceFactory.class);
+
         AnatEntity ae1 = new AnatEntity("UBERON:0001", "A", "A description"); 
         AnatEntity ae2 = new AnatEntity("UBERON:0002", "B", "B description"); 
         AnatEntity ae2p = new AnatEntity("UBERON:0002p", "Bprime", "Bprime description"); 
@@ -204,8 +204,8 @@ public class OntologyTest extends TestAncestor {
         Set<AnatEntity> elements = new HashSet<>(Arrays.asList(ae1, ae2, ae2p, ae3));
         Set<RelationTO> relations = this.getAnatEntityRelationTOs();
 
-        Ontology<AnatEntity> ontology = new Ontology<>(elements, relations, 
-                ALL_RELATIONS);
+        Ontology<AnatEntity> ontology = new Ontology<>(elements, relations, ALL_RELATIONS,
+                mockFact, AnatEntity.class);
         
         Set<AnatEntity> descendants = ontology.getDescendants(ae1);
         Set<AnatEntity> expDescendants = new HashSet<>(Arrays.asList(ae2, ae2p, ae3));
@@ -229,13 +229,6 @@ public class OntologyTest extends TestAncestor {
         descendants = ontology.getDescendants(ae3, ALL_RELATIONS);
         expDescendants = new HashSet<>();
         assertEquals("Incorrects descendants", expDescendants, descendants);
-        
-        try {
-            ontology.getDescendants(new HashSet<>(Arrays.asList("sp1")), ae3, null, false);
-            fail("Test should fail");
-        } catch (IllegalArgumentException e) {
-            // test passed
-        }
     }
     
     /**
@@ -261,12 +254,11 @@ public class OntologyTest extends TestAncestor {
                         new TaxonConstraint("stage2p", "sp2"),
                         new TaxonConstraint("stage3p", "sp2")));
 
+        // Note: we need to use thenReturn() twice because a stream can be use only once
         when(tcService.loadDevStageTaxonConstraintBySpeciesIds(speciesIds))
             .thenReturn(stageTCs.stream()).thenReturn(stageTCs.stream())
             .thenReturn(stageTCs.stream()).thenReturn(stageTCs.stream())
-            .thenReturn(stageTCs.stream()).thenReturn(stageTCs.stream())
-            .thenReturn(stageTCs.stream()).thenReturn(stageTCs.stream())
-            .thenReturn(stageTCs.stream()).thenReturn(stageTCs.stream());
+            .thenReturn(stageTCs.stream());
 
         DevStage ds1 = new DevStage("stage1"), ds2 = new DevStage("stage2"), 
                 ds3 = new DevStage("stage3"), ds2p = new DevStage("stage2p"), 
@@ -339,8 +331,9 @@ public class OntologyTest extends TestAncestor {
         Set<AnatEntity> elements = new HashSet<>(Arrays.asList(ae1, ae2));
         Set<RelationTO> relations = this.getAnatEntityRelationTOs();
 
-        Ontology<AnatEntity> ontology = new Ontology<>(elements, relations, 
-                ALL_RELATIONS);
+        ServiceFactory mockFact = mock(ServiceFactory.class);
+        Ontology<AnatEntity> ontology = new Ontology<>(elements, relations, ALL_RELATIONS,
+                mockFact, AnatEntity.class);
         
         assertEquals("Incorrect element", ae1, ontology.getElement("UBERON:0001"));
         assertEquals("Incorrect element", ae2, ontology.getElement("UBERON:0002"));
@@ -378,14 +371,6 @@ public class OntologyTest extends TestAncestor {
 
         expectedAE = new HashSet<>(Arrays.asList(ae1, ae2, ae3));
         assertEquals("Incorrect element", expectedAE, ontology.getElements(species));
-        
-        Ontology<AnatEntity> ontology2 = new Ontology<>(elements, relations, ALL_RELATIONS);
-        try {
-            ontology2.getElements(new HashSet<>(Arrays.asList("sp1")));
-            fail("Test should fail");
-        } catch (IllegalArgumentException e) {
-            // test passed
-        }
     }
 
     /**
@@ -408,5 +393,4 @@ public class OntologyTest extends TestAncestor {
                 new RelationTO("6", "totoA", "totoB", RelationTO.RelationType.ISA_PARTOF, RelationStatus.DIRECT)));
         return relations;
     }
-
 }

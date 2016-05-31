@@ -35,9 +35,10 @@ import org.bgee.view.ViewFactory;
 /**
  * Controller handling requests related to gene pages. 
  * 
- * @author Philippe Moret
- * @author Frederic Bastian
- * @version Bgee 13, Jan. 2016
+ * @author  Philippe Moret
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13, May 2016
  * @since   Bgee 13, Nov. 2015
  */
 public class CommandGene extends CommandParent {
@@ -138,7 +139,7 @@ public class CommandGene extends CommandParent {
 	    Gene gene = this.getGene(geneId);
 	    List<ExpressionCall> exprCalls = this.getExpressions(gene);
 	    if (!exprCalls.isEmpty()) {
-	    ConditionUtils conditionUtils = new ConditionUtils(gene.getSpeciesId(), 
+	    ConditionUtils conditionUtils = new ConditionUtils(Arrays.asList(gene.getSpeciesId()), 
 	            exprCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()), 
 	            serviceFactory);
         log.debug("Expressions: {} {}", exprCalls.size(), exprCalls);

@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
@@ -105,17 +106,22 @@ public class HtmlSourceDisplay extends HtmlParentDisplay implements SourceDispla
                 sb.append("    </div>"); // close source-name
                 sb.append("    <div class='source-details col-sm-9 col-md-10 row'>");
                 sb.append("        <div class='details row'>");
-//                sb.append("            <div class='source-details-header col-sm-4 col-md-3'>Description</div>");
+                // TODO uncomment when release versions and dates are added in db
+                // sb.append("            <div class='source-details-header col-sm-4 col-md-3'>Description</div>");
                 sb.append("            <div class='source-details-content col-sm-8 col-md-9'>" + source.getDescription() + "</div>");
                 sb.append("        </div>");
                 // TODO uncomment when release versions and dates are added in db
                 // sb.append("        <div class='details row border-top'>");
-                // sb.append("             <div class='source-details-header col-sm-4 col-md-3'>Version used release date</div>");
-                // sb.append("             <div class='source-details-content col-sm-8 col-md-9'>" + source.getReleaseDate() + "</div>");
+                // sb.append("             <div class='source-details-header col-sm-4 col-md-3'>Release date</div>");
+                // sb.append("             <div class='source-details-content col-sm-8 col-md-9'>" + 
+                //                             (source.getReleaseDate() == null? "-": source.getReleaseDate()) + "</div>");
                 // sb.append("        </div>");
                 // sb.append("        <div class='details row border-top'>");
-                // sb.append("             <div class='source-details-header col-sm-4 col-md-3'>Version used details</div>");
-                // sb.append("             <div class='source-details-content col-sm-8 col-md-9'>" + source.getReleaseVersion() + "</div>");
+                // sb.append("             <div class='source-details-header col-sm-4 col-md-3'>Release version</div>");
+                // sb.append("             <div class='source-details-content col-sm-8 col-md-9'>" + 
+                //                             (source.getReleaseVersion() == null 
+                //                                 || StringUtils.isBlank(source.getReleaseVersion())?
+                //                                     "-": source.getReleaseVersion()) + "</div>");
                 // sb.append("        </div>");
                 sb.append("    </div>"); // close source-details
                 sb.append("</div>");  // close source

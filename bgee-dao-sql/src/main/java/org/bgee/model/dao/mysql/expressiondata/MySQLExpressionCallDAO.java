@@ -962,44 +962,61 @@ implements ExpressionCallDAO {
         
         //Max Ranks: 
         Map<ExpressionCallDAO.Attribute, String> dataTypeToMaxRankSql = new HashMap<>();
+        Map<ExpressionCallDAO.Attribute, String> dataTypeToWeightedMaxRankSql = new HashMap<>();
         String affyMaxRank = exprTableName + ".affymetrixMaxRank ";
+        String affyMeanMaxRank = exprTableName + ".affymetrixRawMeanMaxRank ";
         if (groupByClause) {
         	affyMaxRank = "AVG(" + exprTableName + ".affymetrixMaxRank) ";
+        	affyMeanMaxRank = "AVG(" + exprTableName + ".affymetrixRawMeanMaxRank) ";
         }
         dataTypeToMaxRankSql.put(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA, affyMaxRank);
+        dataTypeToWeightedMaxRankSql.put(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA, affyMeanMaxRank);
         //for the global mean rank clause, we don't want the AS part, but we need it for the main query
         if (groupByClause) {
         	affyMaxRank += "AS affymetrixMaxRank ";
+            affyMeanMaxRank += "AS affymetrixMeanMaxRank ";
         }
         
         String estMaxRank = exprTableName + ".estMaxRank ";
+        String estMeanMaxRank = exprTableName + ".estRawMeanMaxRank ";
         if (groupByClause) {
         	estMaxRank = "AVG(" + exprTableName + ".estMaxRank) ";
+            estMeanMaxRank = "AVG(" + exprTableName + ".estRawMeanMaxRank) ";
         }
         dataTypeToMaxRankSql.put(ExpressionCallDAO.Attribute.EST_DATA, estMaxRank);
+        dataTypeToWeightedMaxRankSql.put(ExpressionCallDAO.Attribute.EST_DATA, estMeanMaxRank);
         //for the global mean rank clause, we don't want the AS part, but we need it for the main query
         if (groupByClause) {
         	estMaxRank += "AS estMaxRank ";
+            estMeanMaxRank += "AS estMeanMaxRank ";
         }
         
         String inSituMaxRank = exprTableName + ".inSituMaxRank ";
+        String inSituMeanMaxRank = exprTableName + ".inSituRawMeanMaxRank ";
         if (groupByClause) {
         	inSituMaxRank = "AVG(" + exprTableName + ".inSituMaxRank) ";
+            inSituMeanMaxRank = "AVG(" + exprTableName + ".inSituRawMeanMaxRank) ";
         }
         dataTypeToMaxRankSql.put(ExpressionCallDAO.Attribute.IN_SITU_DATA, inSituMaxRank);
+        dataTypeToWeightedMaxRankSql.put(ExpressionCallDAO.Attribute.IN_SITU_DATA, inSituMeanMaxRank);
         //for the global mean rank clause, we don't want the AS part, but we need it for the main query
         if (groupByClause) {
         	inSituMaxRank += "AS inSituMaxRank ";
+            inSituMeanMaxRank += "AS inSituMeanMaxRank ";
         }
         
-        String rnaSeqMaxRank = exprTableName + ".rnaSeqMaxRank";
+        String rnaSeqMaxRank = exprTableName + ".rnaSeqMaxRank ";
+        String rnaSeqMeanMaxRank = exprTableName + ".rnaSeqRawMeanMaxRank ";
         if (groupByClause) {
         	rnaSeqMaxRank = "AVG(" + exprTableName + ".rnaSeqMaxRank) ";
+            rnaSeqMeanMaxRank = "AVG(" + exprTableName + ".rnaSeqRawMeanMaxRank) ";
         }
         dataTypeToMaxRankSql.put(ExpressionCallDAO.Attribute.RNA_SEQ_DATA, rnaSeqMaxRank);
+        dataTypeToWeightedMaxRankSql.put(ExpressionCallDAO.Attribute.RNA_SEQ_DATA, rnaSeqMeanMaxRank);
         //for the global mean rank clause, we don't want the AS part, but we need it for the main query
         if (groupByClause) {
         	rnaSeqMaxRank += "AS rnaSeqMaxRank ";
+            rnaSeqMeanMaxRank += "AS rnaSeqMeanMaxRank ";
         }
         
         for (ExpressionCallDAO.Attribute attribute: attributes) {
@@ -1188,21 +1205,21 @@ implements ExpressionCallDAO {
                 sql +=  attributesForRank.stream()
                             .map(attr -> {
                                 String rankSql = dataTypeToSql.get(attr);
-                                String maxRankSql = dataTypeToMaxRankSql.get(attr);
-                                if (rankSql == null || maxRankSql == null) {
+                                String maxMeanRankSql = dataTypeToWeightedMaxRankSql.get(attr);
+                                if (rankSql == null || maxMeanRankSql == null) {
                                     throw log.throwing(new IllegalStateException(
                                         "No rank clause associated to data type: " + attr));
                                 }
                                 return "if (" + convertDataTypeAttrToColName(attr) + " + 0 = " 
                                            + convertDataStateToInt(DataState.NODATA) + ", 0, "
-                                           + rankSql + " * " + maxRankSql + ")";
+                                           + rankSql + " * " + maxMeanRankSql + ")";
                             })
                             .collect(Collectors.joining(" + ", "((", ")")) 
                             
                       + attributesForRank.stream()
                             .map(attr -> "if (" + convertDataTypeAttrToColName(attr) + " + 0 = " 
                                                 + convertDataStateToInt(DataState.NODATA) + ", 0, "
-                                         + dataTypeToMaxRankSql.get(attr) + ")")
+                                         + dataTypeToWeightedMaxRankSql.get(attr) + ")")
                             .collect(Collectors.joining(" + ", "/ (", ")) AS globalMeanRank "));
 
             } else if (attribute.equals(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA)) {

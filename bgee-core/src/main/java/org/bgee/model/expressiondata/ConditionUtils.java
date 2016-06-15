@@ -18,13 +18,15 @@ import org.bgee.model.ontology.OntologyService;
 
 /**
  * Class providing convenience operations on {@link Condition}s.
+ * <p>
+ * When this class is instantiated, the constructor retrieves ontologies for provided species IDs.
+ * If only one species is provided, methods with or without a species ID filter return same data. 
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @version Bgee 13, June 2016
  * @since   Bgee 13, Dec. 2015
  */
-// TODO: add methods allowing to filter by speciesIDs
 public class ConditionUtils {
 
     private static final Logger log = LogManager.getLogger(ConditionUtils.class.getName());
@@ -59,6 +61,10 @@ public class ConditionUtils {
     private final Set<String> speciesIds;
 
     /**
+     * Constructor accepting all required parameters.
+     * <p>
+     * The constructor retrieves ontologies for provided species IDs.
+     *   
      * @param speciesIds        A {@code Collection} of {@code String}s that are the IDs of 
      *                          the species which the {@code Condition}s should be valid in.
      * @param conditions        A {@code Collection} of {@code Condition}s that will be managed 
@@ -73,7 +79,9 @@ public class ConditionUtils {
         this(speciesIds, conditions, false, serviceFactory);
     }
     /**
-     * Constructor accepting all required parameters. 
+     * Constructor accepting all parameters.
+     * <p>
+     * The constructor retrieves ontologies for provided species IDs.  
      * 
      * @param speciesIds            A {@code Collection} of {@code String}s that are the IDs of 
      *                              the species which the {@code Condition}s should be valid in.

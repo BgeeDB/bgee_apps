@@ -21,7 +21,7 @@ import org.bgee.model.ontology.OntologyService;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, May 2016
+ * @version Bgee 13, June 2016
  * @since   Bgee 13, Dec. 2015
  */
 // TODO: add methods allowing to filter by speciesIDs
@@ -215,9 +215,8 @@ public class ConditionUtils {
         return log.exit(true);
     }
     
-    //TODO: refactor this method, constructor and getDescendantConditions
     /**
-     * Get all the {@code Conditions} that are less precise than {@code cond}, 
+     * Get all the {@code Condition}s that are less precise than {@code cond}, 
      * among the {@code Condition}s provided at instantiation. 
      * 
      * @param cond          A {@code Condition} for which we want to retrieve ancestors {@code Condition}s.
@@ -229,25 +228,45 @@ public class ConditionUtils {
     public Set<Condition> getAncestorConditions(Condition cond, boolean directRelOnly) 
             throws IllegalArgumentException {
         log.entry(cond, directRelOnly);
+        return log.exit(this.getAncestorConditions(cond, directRelOnly, null));
+    }
+
+    /**
+     * Get all the {@code Condition}s that are less precise than {@code cond}, 
+     * among the {@code Condition}s provided at instantiation, filtered by {@code speciesIds}.
+     * 
+     * @param cond          A {@code Condition} for which we want to retrieve ancestors {@code Condition}s.
+     * @param directRelOnly A {@code boolean} defining whether only direct parents 
+     *                      or children of {@code element} should be returned.
+     * @param speciesIds    A {@code Collection} of {@code String}s that is the IDs of species
+     *                      allowing to filter the {@code Condition}s to retrieve.
+     * @return              A {@code Set} of {@code Condition}s that are ancestors of {@code cond}.
+     * @throws IllegalArgumentException If {@code cond} is not registered to this {@code ConditionUtils}.
+     */
+    // TODO: refactor this method with constructor and getDescendantConditions
+    // TODO: unit tests with on species ID filter
+    public Set<Condition> getAncestorConditions(
+            Condition cond, boolean directRelOnly, Collection<String> speciesIds) 
+            throws IllegalArgumentException {
+        log.entry(cond, directRelOnly, speciesIds);
         if (!this.getConditions().contains(cond)) {
             throw log.throwing(new IllegalArgumentException("The provided condition "
                     + "is not registered to this ConditionUtils: " + cond));
         }
-        
+                
+        final Collection<String> curSpecies = speciesIds != null && !speciesIds.isEmpty() ? 
+                Collections.unmodifiableCollection(speciesIds) : null; 
+
         Set<String> devStageIds = this.devStageOnt.getAncestors(
-                    this.devStageOnt.getElement(cond.getDevStageId()), directRelOnly)
+                    this.devStageOnt.getElement(cond.getDevStageId()), directRelOnly, curSpecies)
                 .stream().map(e -> e.getId()).collect(Collectors.toSet());
         devStageIds.add(cond.getDevStageId());
-        log.debug("devStageIds {}", devStageIds);
+
         Set<String> anatEntityIds = this.anatEntityOnt.getAncestors(
-                    this.anatEntityOnt.getElement(cond.getAnatEntityId()), directRelOnly)
+                    this.anatEntityOnt.getElement(cond.getAnatEntityId()), directRelOnly, curSpecies)
                 .stream().map(e -> e.getId()).collect(Collectors.toSet());
         anatEntityIds.add(cond.getAnatEntityId());
-        log.debug("this.anatEntityOnt.getElement(cond.getAnatEntityId()) {}", this.anatEntityOnt.getElement(cond.getAnatEntityId()));
         
-        log.debug("anatEntityIds {}", anatEntityIds);
-        
-        log.debug("this.conditions {}", this.conditions);
         return log.exit(this.conditions.stream()
                 .filter(e -> !e.equals(cond) && 
                              devStageIds.contains(e.getDevStageId()) && 
@@ -256,7 +275,7 @@ public class ConditionUtils {
     }
 
     /**
-     * Get all the {@code Conditions} that are more precise than {@code cond}, 
+     * Get all the {@code Condition}s that are more precise than {@code cond}, 
      * among the {@code Condition}s provided at instantiation. 
      * 
      * @param cond  A {@code Condition} for which we want to retrieve descendant {@code Condition}s.
@@ -267,8 +286,9 @@ public class ConditionUtils {
         log.entry(cond);
         return log.exit(this.getDescendantConditions(cond, false));
     }
+    
     /**
-     * Get all the {@code Conditions} that are more precise than {@code cond}, 
+     * Get all the {@code Condition}s that are more precise than {@code cond}, 
      * among the {@code Condition}s provided at instantiation. 
      * 
      * @param cond          A {@code Condition} for which we want to retrieve descendant {@code Condition}s.
@@ -279,18 +299,41 @@ public class ConditionUtils {
      */
     public Set<Condition> getDescendantConditions(Condition cond, boolean directRelOnly) {
         log.entry(cond, directRelOnly);
+        return log.exit(this.getDescendantConditions(cond, directRelOnly, null));
+    }
+    
+    /**
+     * Get all the {@code Condition}s that are more precise than {@code cond} 
+     * among the {@code Condition}s provided at instantiation, filtered by {@code speciesIds}.
+     * 
+     * @param cond          A {@code Condition} for which we want to retrieve descendant {@code Condition}s.
+     * @param directRelOnly A {@code boolean} defining whether only direct parents 
+     *                      or children of {@code element} should be returned.
+     * @param speciesIds    A {@code Collection} of {@code String}s that is the IDs of species
+     *                      allowing to filter the {@code Condition}s to retrieve.
+     * @return              A {@code Set} of {@code Condition}s that are descendants of {@code cond}.
+     * @throws IllegalArgumentException If {@code cond} is not registered to this {@code ConditionUtils}.
+     */
+    // TODO: refactor this method with constructor and getAncestorConditions
+    // TODO: unit tests with on species ID filter
+    public Set<Condition> getDescendantConditions(
+            Condition cond, boolean directRelOnly, Collection<String> speciesIds) {
+        log.entry(cond, directRelOnly);
         if (!this.getConditions().contains(cond)) {
             throw log.throwing(new IllegalArgumentException("The provided condition "
                     + "is not registered to this ConditionUtils: " + cond));
         }
         
+        final Collection<String> curSpecies = speciesIds != null && !speciesIds.isEmpty() ? 
+                Collections.unmodifiableCollection(speciesIds) : null; 
+
         Set<String> devStageIds = this.devStageOnt.getDescendants(
-                    this.devStageOnt.getElement(cond.getDevStageId()), directRelOnly)
+                    this.devStageOnt.getElement(cond.getDevStageId()), directRelOnly, curSpecies)
                 .stream().map(e -> e.getId()).collect(Collectors.toSet());
         devStageIds.add(cond.getDevStageId());
         
         Set<String> anatEntityIds = this.anatEntityOnt.getDescendants(
-                    this.anatEntityOnt.getElement(cond.getAnatEntityId()), directRelOnly)
+                    this.anatEntityOnt.getElement(cond.getAnatEntityId()), directRelOnly, curSpecies)
                 .stream().map(e -> e.getId()).collect(Collectors.toSet());
         anatEntityIds.add(cond.getAnatEntityId());
         
@@ -300,7 +343,7 @@ public class ConditionUtils {
                              anatEntityIds.contains(e.getAnatEntityId()))
                 .collect(Collectors.toSet()));
     }
-    
+
     /**
      * Retrieve an {@code AnatEntity} present in a {@code Condition} provided at instantiation, 
      * based on its ID.
@@ -364,10 +407,18 @@ public class ConditionUtils {
     //  GETTERS/SETTERS
     //*********************************
     /**
-     * @return  The {@code Set} of {@code Condition}s to be considered for operations on this {@code ConditionUtils}.
+     * @return  The {@code Set} of {@code Condition}s to be considered for operations
+     *          on this {@code ConditionUtils}.
      */
     public Set<Condition> getConditions() {
         return conditions;
+    }
+    /**
+     * @return  The {@code Collection} of {@code String}s that are IDs of species considered
+     *          in this {@code ConditionUtils}.
+     */
+    public Collection<String> getSpeciesIds() {
+        return Collections.unmodifiableCollection(speciesIds);
     }
     /**
      * @return  An {@code Ontology} of {@code AnatEntity}s used to infer relations between {@code Condition}s. 

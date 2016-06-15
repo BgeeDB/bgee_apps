@@ -30,7 +30,7 @@ import org.junit.Test;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, May 2016
+ * @version Bgee 13, June 2016
  * @since   Bgee 13, Dec. 2015
  */
 public class ConditionUtilsTest extends TestAncestor {
@@ -95,11 +95,6 @@ public class ConditionUtilsTest extends TestAncestor {
                 new HashSet<>(Arrays.asList(devStageId1, devStageId2, devStageId3, devStageId4)), 
                 false, false, mockFact))
         .thenReturn(devStageOnt);
-        log.debug("#devStageOnt {}", devStageOnt);
-        log.debug("##getDevStageOntology({}, {}, {}, {}, {})", new HashSet<>(Arrays.asList("9606")), 
-                new HashSet<>(Arrays.asList(devStageId1, devStageId2, devStageId3)), 
-                false, false, mockFact);
-
         
         when(anatEntityOnt.getElements()).thenReturn(
                 new HashSet<>(Arrays.asList(anatEntity1, anatEntity2, anatEntity3, anatEntity4)));
@@ -121,18 +116,18 @@ public class ConditionUtilsTest extends TestAncestor {
         when(devStageOnt.getAncestors(devStage2)).thenReturn(new HashSet<>(Arrays.asList(devStage1)));
         when(devStageOnt.getAncestors(devStage3)).thenReturn(new HashSet<>(Arrays.asList(devStage1)));
 
-        when(anatEntityOnt.getAncestors(anatEntity1, false)).thenReturn(new HashSet<>());
-        when(anatEntityOnt.getAncestors(anatEntity2, false)).thenReturn(new HashSet<>(Arrays.asList(anatEntity1)));
-        when(anatEntityOnt.getAncestors(anatEntity3, false)).thenReturn(new HashSet<>(Arrays.asList(anatEntity1)));
-        when(anatEntityOnt.getAncestors(anatEntity4, false)).thenReturn(new HashSet<>(Arrays.asList(anatEntity1, anatEntity3)));
-        when(devStageOnt.getAncestors(devStage1, false)).thenReturn(new HashSet<>());
-        when(devStageOnt.getAncestors(devStage2, false)).thenReturn(new HashSet<>(Arrays.asList(devStage1)));
-        when(devStageOnt.getAncestors(devStage3, false)).thenReturn(new HashSet<>(Arrays.asList(devStage1)));
-        when(devStageOnt.getAncestors(devStage4, false)).thenReturn(new HashSet<>(Arrays.asList(devStage1, devStage3)));
+        when(anatEntityOnt.getAncestors(anatEntity1, false, null)).thenReturn(new HashSet<>());
+        when(anatEntityOnt.getAncestors(anatEntity2, false, null)).thenReturn(new HashSet<>(Arrays.asList(anatEntity1)));
+        when(anatEntityOnt.getAncestors(anatEntity3, false, null)).thenReturn(new HashSet<>(Arrays.asList(anatEntity1)));
+        when(anatEntityOnt.getAncestors(anatEntity4, false, null)).thenReturn(new HashSet<>(Arrays.asList(anatEntity1, anatEntity3)));
+        when(devStageOnt.getAncestors(devStage1, false, null)).thenReturn(new HashSet<>());
+        when(devStageOnt.getAncestors(devStage2, false, null)).thenReturn(new HashSet<>(Arrays.asList(devStage1)));
+        when(devStageOnt.getAncestors(devStage3, false, null)).thenReturn(new HashSet<>(Arrays.asList(devStage1)));
+        when(devStageOnt.getAncestors(devStage4, false, null)).thenReturn(new HashSet<>(Arrays.asList(devStage1, devStage3)));
         
-        when(anatEntityOnt.getDescendants(anatEntity1, false)).thenReturn(
+        when(anatEntityOnt.getDescendants(anatEntity1, false, null)).thenReturn(
                 new HashSet<>(Arrays.asList(anatEntity2, anatEntity3)));
-        when(devStageOnt.getDescendants(devStage1, false)).thenReturn(
+        when(devStageOnt.getDescendants(devStage1, false, null)).thenReturn(
                 new HashSet<>(Arrays.asList(devStage2, devStage3)));
         
         this.conditionUtils = new ConditionUtils(Arrays.asList("9606"), 

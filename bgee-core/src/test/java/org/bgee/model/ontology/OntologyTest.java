@@ -1,6 +1,7 @@
 package org.bgee.model.ontology;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -27,7 +28,7 @@ import org.junit.Test;
  * This class holds the unit tests for the {@code Ontology} class.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, May 2016
+ * @version Bgee 13, June 2016
  * @since   Bgee 13, Dec. 2015
  */
 public class OntologyTest extends TestAncestor {
@@ -112,7 +113,7 @@ public class OntologyTest extends TestAncestor {
                 new TaxonConstraint("UBERON:0003", "sp1")));
         // Note: we need to use thenReturn() twice because a stream can be use only once 
         when(tcService.loadAnatEntityTaxonConstraintBySpeciesIds(new HashSet<>(Arrays.asList("sp1"))))
-            .thenReturn(tc_sp1.stream()).thenReturn(tc_sp1.stream());
+            .thenReturn(tc_sp1.stream()).thenReturn(tc_sp1.stream()).thenReturn(tc_sp1.stream());
 
         Set<TaxonConstraint> relTc_sp1 = new HashSet<>(Arrays.asList(
                 // UBERON:0001 ------------------
@@ -126,14 +127,18 @@ public class OntologyTest extends TestAncestor {
         HashSet<String> speciesIds = new HashSet<>(Arrays.asList("sp1"));
         // Note: we need to use thenReturn() twice because a stream can be use only once 
         when(tcService.loadAnatEntityRelationTaxonConstraintBySpeciesIds(speciesIds))
-            .thenReturn(relTc_sp1.stream()).thenReturn(relTc_sp1.stream());
+            .thenReturn(relTc_sp1.stream()).thenReturn(relTc_sp1.stream()).thenReturn(relTc_sp1.stream());
 
-        Set<AnatEntity> ancestors = ontology.getAncestors(speciesIds, ae3, ALL_RELATIONS, false);
+        Set<AnatEntity> ancestors = ontology.getAncestors(ae3, ALL_RELATIONS, false, speciesIds);
         Set<AnatEntity> expAncestors = new HashSet<>(Arrays.asList(ae1, ae2));
         assertEquals("Incorrects ancestors", expAncestors, ancestors);
 
-        ancestors = ontology.getAncestors(speciesIds, ae3, ALL_RELATIONS, true);
+        ancestors = ontology.getAncestors(ae3, ALL_RELATIONS, true, speciesIds);
         expAncestors = new HashSet<>(Arrays.asList(ae2));
+        assertEquals("Incorrects ancestors", expAncestors, ancestors);
+
+        ancestors = ontology.getAncestors(ae3, false, speciesIds);
+        expAncestors = new HashSet<>(Arrays.asList(ae1, ae2));
         assertEquals("Incorrects ancestors", expAncestors, ancestors);
 
         speciesIds = new HashSet<>(Arrays.asList("sp2"));
@@ -162,7 +167,7 @@ public class OntologyTest extends TestAncestor {
                 new TaxonConstraint("5", "sp2")));
         when(tcService.loadAnatEntityRelationTaxonConstraintBySpeciesIds(speciesIds))
             .thenReturn(relTc_sp2.stream());
-        ancestors = ontology.getAncestors(speciesIds, ae3, ISA_RELATIONS, false);
+        ancestors = ontology.getAncestors(ae3, ISA_RELATIONS, false, speciesIds);
         expAncestors = new HashSet<>(Arrays.asList(ae1, ae2p));
         assertEquals("Incorrects ancestors", expAncestors, ancestors);
 
@@ -181,9 +186,12 @@ public class OntologyTest extends TestAncestor {
         when(tcService.loadAnatEntityRelationTaxonConstraintBySpeciesIds(speciesIds))
             .thenReturn(relTc_sp3.stream());
 
-        ancestors = ontology.getAncestors(speciesIds, ae2p, ALL_RELATIONS, false);
-        expAncestors = new HashSet<>();
-        assertEquals("Incorrects ancestors", expAncestors, ancestors);
+        try {
+            ancestors = ontology.getAncestors(ae3, ALL_RELATIONS, false, speciesIds);
+            fail("Should fail due to element not in provided species");
+        } catch (IllegalArgumentException e) {
+            // Test passed
+        }
     }
     
     /**
@@ -258,7 +266,7 @@ public class OntologyTest extends TestAncestor {
         when(tcService.loadDevStageTaxonConstraintBySpeciesIds(speciesIds))
             .thenReturn(stageTCs.stream()).thenReturn(stageTCs.stream())
             .thenReturn(stageTCs.stream()).thenReturn(stageTCs.stream())
-            .thenReturn(stageTCs.stream());
+            .thenReturn(stageTCs.stream()).thenReturn(stageTCs.stream());
 
         DevStage ds1 = new DevStage("stage1"), ds2 = new DevStage("stage2"), 
                 ds3 = new DevStage("stage3"), ds2p = new DevStage("stage2p"), 
@@ -295,23 +303,27 @@ public class OntologyTest extends TestAncestor {
         assertEquals("Incorrects descendants", expDescendants, descendants);
 
         // with provided species
-        descendants = ontology.getDescendants(speciesIds, ds1, ISA_RELATIONS, false);
+        descendants = ontology.getDescendants(ds1, ISA_RELATIONS, false, speciesIds);
         expDescendants = new HashSet<>(Arrays.asList(ds2, ds3p));
         assertEquals("Incorrects descendants", expDescendants, descendants);
 
-        descendants = ontology.getDescendants(speciesIds, ds1, ISA_RELATIONS, true);
+        descendants = ontology.getDescendants(ds1, ISA_RELATIONS, true, speciesIds);
         expDescendants = new HashSet<>(Arrays.asList(ds2));
         assertEquals("Incorrects descendants", expDescendants, descendants);
 
-        descendants = ontology.getDescendants(speciesIds, ds1, ALL_RELATIONS, false);
+        descendants = ontology.getDescendants(ds1, ALL_RELATIONS, false, speciesIds);
         expDescendants = new HashSet<>(Arrays.asList(ds2, ds2p, ds3p));
         assertEquals("Incorrects descendants", expDescendants, descendants);
 
-        descendants = ontology.getDescendants(speciesIds, ds1, ALL_RELATIONS, true);
+        descendants = ontology.getDescendants(ds1, false, speciesIds);
+        expDescendants = new HashSet<>(Arrays.asList(ds2, ds2p, ds3p));
+        assertEquals("Incorrects descendants", expDescendants, descendants);
+
+        descendants = ontology.getDescendants(ds1, ALL_RELATIONS, true, speciesIds);
         expDescendants = new HashSet<>(Arrays.asList(ds2, ds2p));
         assertEquals("Incorrects descendants", expDescendants, descendants);
 
-        descendants = ontology.getDescendants(speciesIds, ds2, ALL_RELATIONS, false);
+        descendants = ontology.getDescendants(ds2, ALL_RELATIONS, false, speciesIds);
         expDescendants = new HashSet<>();
         assertEquals("Incorrects descendants", expDescendants, descendants);
 

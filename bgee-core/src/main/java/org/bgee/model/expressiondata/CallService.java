@@ -698,8 +698,9 @@ public class CallService extends Service {
     // TODO: set to private because argument are TOs? 
     // NOTE: No update ExpressionCalls, to provide better unicity of the method, and allow better unit testing
     public Set<ExpressionCall> propagateNoExpressionTOs(Collection<NoExpressionCallTO> noExprTOs,
-            Collection<ConditionFilter> conditionFilter, ConditionUtils conditionUtils) {
-        log.entry(noExprTOs, conditionFilter, conditionUtils);
+            Collection<ConditionFilter> conditionFilter, ConditionUtils conditionUtils,
+            Collection<String> speciesIds) {
+        log.entry(noExprTOs, conditionFilter, conditionUtils, speciesIds);
         
         // Check that TOs are not empty and not already propagated
         if (noExprTOs == null || noExprTOs.isEmpty()) {
@@ -715,7 +716,8 @@ public class CallService extends Service {
         }
         
         return log.exit(
-                this.propagateTOs(noExprTOs, conditionFilter, conditionUtils, NoExpressionCallTO.class));
+                this.propagateTOs(noExprTOs, conditionFilter, conditionUtils,
+                        NoExpressionCallTO.class, speciesIds));
     }
     
     /**
@@ -737,8 +739,9 @@ public class CallService extends Service {
     // TODO: set to private because argument are TOs? 
     // NOTE: No update ExpressionCalls, to provide better unicity of the method, and allow better unit testing
     public Set<ExpressionCall> propagateExpressionTOs(Collection<ExpressionCallTO> exprTOs,
-            Collection<ConditionFilter> conditionFilter, ConditionUtils conditionUtils) {
-        log.entry(exprTOs, conditionFilter, conditionUtils);
+            Collection<ConditionFilter> conditionFilter, ConditionUtils conditionUtils,
+            Collection<String> speciesIds) {
+        log.entry(exprTOs, conditionFilter, conditionUtils, speciesIds);
         
         // Check that TOs are not empty and not already propagated
         if (exprTOs == null || exprTOs.isEmpty()) {
@@ -755,13 +758,24 @@ public class CallService extends Service {
         }
         
         return log.exit(
-                this.propagateTOs(exprTOs, conditionFilter, conditionUtils, ExpressionCallTO.class));
+                this.propagateTOs(exprTOs, conditionFilter, conditionUtils,
+                        ExpressionCallTO.class, speciesIds));
     }
     
     private <T extends CallTO> Set<ExpressionCall> propagateTOs(Collection<T> callTOs,
-            Collection<ConditionFilter> conditionFilter, ConditionUtils conditionUtils, Class<T> type)
+            Collection<ConditionFilter> conditionFilter, ConditionUtils conditionUtils, 
+            Class<T> type, Collection<String> speciesIds)
                     throws IllegalArgumentException {
-        log.entry(callTOs, conditionFilter, conditionUtils);
+        log.entry(callTOs, conditionFilter, conditionUtils, speciesIds);
+        
+        final Collection<String> curSpecies = speciesIds != null && !speciesIds.isEmpty() ? 
+                Collections.unmodifiableCollection(speciesIds) : null; 
+
+        // Check conditionUtils contains all species of speciesIds
+        if (curSpecies != null && !conditionUtils.getSpeciesIds().containsAll(curSpecies)) {
+            throw log.throwing(new IllegalArgumentException(
+                    "Species IDs are not registered to provided ConditionUtils"));
+        }
         
         // Check conditionUtils contains all conditions of callTOs
         Set<Condition> conditions = callTOs.stream()
@@ -817,11 +831,11 @@ public class CallService extends Service {
             Set<Condition> propagatedConditions = null;
             if (type.equals(ExpressionCallTO.class)) {
                 propagatedConditions = 
-                        conditionUtils.getAncestorConditions(call.getCondition(), true);
+                        conditionUtils.getAncestorConditions(call.getCondition(), true, curSpecies);
                 
             } else if (type.equals(NoExpressionCallTO.class)) {
                 propagatedConditions = 
-                        conditionUtils.getDescendantConditions(call.getCondition(), true);
+                        conditionUtils.getDescendantConditions(call.getCondition(), true, curSpecies);
             }
             
             assert propagatedConditions != null;

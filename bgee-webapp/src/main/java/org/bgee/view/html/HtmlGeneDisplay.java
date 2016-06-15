@@ -222,7 +222,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		        .append("<thead><tr><th class='anat-entity-id'>Anat. entity ID</th>")
 		        .append("<th class='anat-entity'>Anatomical entity</th>")
                 .append("<th class='dev-stages desktop'><strong>Developmental stage(s)</strong></th>")
-                .append("<th class='dev-stages desktop'><strong>Score</strong></th>")
+                .append("<th class='score desktop'><strong>Score</strong></th>")
 				.append("<th class='quality'><strong>Quality</strong></th></tr></thead>\n");
 		sb.append("<tbody>").append(elements).append("</tbody>");
 		sb.append("</table>");

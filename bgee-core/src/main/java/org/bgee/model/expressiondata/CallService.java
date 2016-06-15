@@ -49,7 +49,7 @@ import org.bgee.model.species.TaxonomyFilter;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, May 2016
+ * @version Bgee 13, June 2016
  * @since   Bgee 13, Oct. 2015
  */
 public class CallService extends Service {
@@ -763,11 +763,12 @@ public class CallService extends Service {
                     throws IllegalArgumentException {
         log.entry(callTOs, conditionFilter, conditionUtils);
         
-        // Check conditionUtils contains all conditions of exprTOs
+        // Check conditionUtils contains all conditions of callTOs
         Set<Condition> conditions = callTOs.stream()
             .map(to -> new Condition(to.getAnatEntityId(), to.getStageId()))
             .collect(Collectors.toSet());
-        if (conditionUtils.getConditions().containsAll(conditions)) {
+        
+        if (!conditionUtils.getConditions().containsAll(conditions)) {
             throw log.throwing(new IllegalArgumentException(
                     "Conditions are not registered to provided ConditionUtils"));
         }

@@ -51,7 +51,7 @@ import org.junit.Test;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, May 2016
+ * @version Bgee 13, June 2016
  * @since   Bgee 13, Nov. 2015
  */
 public class CallServiceTest extends TestAncestor {
@@ -419,7 +419,8 @@ public class CallServiceTest extends TestAncestor {
                 new Condition("organA", "stageA"),
                 new Condition("organA", "parentStageA1"),
                 new Condition("parentOrganA1", "stageA"),
-                new Condition("parentOrganA1", "parentStageA1")));
+                new Condition("parentOrganA1", "parentStageA1"),
+                new Condition("organB", "stageB")));
         when(mockConditionUtils.getConditions()).thenReturn(conditions);
         when(mockConditionUtils.isInferredAncestralConditions()).thenReturn(true);
         
@@ -553,7 +554,8 @@ public class CallServiceTest extends TestAncestor {
                 new Condition("parentOrganA1", "parentStageA1"),
                 new Condition("parentOrganA2", "parentStageA1"),
                 new Condition("organB", "stageB"),
-                new Condition("parentOrganB1", "stageB")));
+                new Condition("parentOrganB1", "stageB"),
+                new Condition("parentOrganB2", "stageB")));
         when(mockConditionUtils.getConditions()).thenReturn(conditions);
         when(mockConditionUtils.isInferredAncestralConditions()).thenReturn(true);
         

@@ -2,10 +2,12 @@ package org.bgee.view.html;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -34,7 +36,7 @@ import org.bgee.view.JsonHelper;
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 13, Mar. 2016
+ * @version Bgee 13, June 2016
  * @since   Bgee 13, Oct. 2015
  */
 public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
@@ -219,7 +221,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		sb.append("<table class='expression stripe nowrap compact responsive'>")
 		        .append("<thead><tr><th class='anat-entity-id'>Anat. entity ID</th>")
 		        .append("<th class='anat-entity'>Anatomical entity</th>")
-				.append("<th class='dev-stages desktop'><strong>Developmental stage(s)</strong></th>")
+                .append("<th class='dev-stages desktop'><strong>Developmental stage(s)</strong></th>")
+                .append("<th class='dev-stages desktop'><strong>Score</strong></th>")
 				.append("<th class='quality'><strong>Quality</strong></th></tr></thead>\n");
 		sb.append("<tbody>").append(elements).append("</tbody>");
 		sb.append("</table>");
@@ -268,6 +271,20 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 			}).collect(Collectors.joining("\n")))      
 			.append("</ul></td>");
 		
+        // FIXME This is a fake score to test ordering. It need to be replaced by the real score
+        Optional<ExpressionCall> max = calls.stream().max(Comparator.comparing(c -> tmpFakeFloat(c)));
+	    sb.append("<td><span class='expandable' title='click to expand'>[+] ").append(tmpFakeFloat(max.get()))
+	        .append("</span>")
+	        .append("<ul class='masked score-list'>")
+	        .append(calls.stream().map(call -> {
+	            // FIXME This is a fake score to test ordering. It need to be replaced by the real score
+	            Float score = Float.valueOf(tmpFakeFloat(call));
+	            StringBuilder sb2 = new StringBuilder();
+	            sb2.append("<li class='score'>").append(htmlEntities(String.valueOf(score))).append("</li>");
+	            return sb2.toString();
+	        }).collect(Collectors.joining("\n")))      
+	        .append("</ul></td>");
+
 		// Quality cell
 		sb.append("<td>")
 		        .append(getQualitySpans(
@@ -284,6 +301,11 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		sb.append("</tr>");
 
 		return log.exit(sb.toString());
+	}
+	
+    // FIXME This method generates a fake score to test ordering. It need to be deleted.
+	private Float tmpFakeFloat(ExpressionCall call) {
+	    return Float.valueOf(call.getCondition().getDevStageId().replaceAll("[A-Z]", "").replaceAll("[:]", ""));
 	}
 
 	/**

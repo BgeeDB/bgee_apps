@@ -3,14 +3,14 @@
  * 
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Jan 2016
+ * @version Bgee 13, June 2016
  * @since   Bgee 13
  */
 
 $( document ).ready( function(){ 
     
     $('table.expression').DataTable( {
-        "ordering": false,
+    	"order": [[ 3, "desc" ]],
         responsive: {
             details: {
                 display: $.fn.dataTable.Responsive.display.modal( {
@@ -29,11 +29,19 @@ $( document ).ready( function(){
                 }
             }
         },
-        columnDefs: [ // Higher responsivePriority are remove first
-           { responsivePriority: 1, targets: 1 }, // Anatomical entity
+        columnDefs: [ // Higher responsivePriority are removed first, target define the order
            { responsivePriority: 2, targets: 0 }, // Anat. entity ID
-           { responsivePriority: 3, targets: 3 }, // Quality
-           { responsivePriority: 4, targets: 2 }  // Developmental stage(s)
+           { responsivePriority: 1, targets: 1 }, // Anatomical entity
+           { responsivePriority: 5, targets: 2 }, // Developmental stage(s)
+           { responsivePriority: 3, targets: 3 }, // Score
+           { responsivePriority: 4, targets: 4 }  // Quality
+        ],
+        columns: [ // sorting definition
+           null, // Anatomical entity
+           null, // Anat. entity ID
+           null,  // Developmental stage(s)
+           { "orderDataType": "dom-text", "type": "score" }, // Score
+           { "bSortable": false } // Quality
         ]
     });
 
@@ -49,6 +57,23 @@ $( document ).ready( function(){
             $(this).parent().parent().find("ul").hide(250);
         }
     } );
+    
+    jQuery.fn.dataTableExt.oSort['score-asc'] = function(a, b) {
+    	// Example: "<span class="expandable" title="click to expand">[+] 38.0</span>
+    	//           <ul class="masked score-list">
+    	//               <li class="score">37.0</li>
+    	//               <li class="score">38.0</li>
+    	//           </ul>"
+    	var x = parseFloat(a.substring(a.indexOf(']') + 2, a.indexOf('/') - 2));
+    	var y = parseFloat(b.substring(b.indexOf(']') + 2, b.indexOf('/') - 2));
+    	return ((x < y) ? -1 : ((x > y) ? 1 : 0));
+    };
+     
+    jQuery.fn.dataTableExt.oSort['score-desc'] = function(a, b) {
+    	var x = parseFloat(a.substring(a.indexOf(']') + 2, a.indexOf('/') - 2));
+    	var y = parseFloat(b.substring(b.indexOf(']') + 2, b.indexOf('/') - 2));
+        return ((x < y) ? 1 : ((x > y) ? -1 : 0));
+    };
 
     loadAutocompleteGene();
 } );

@@ -10,7 +10,8 @@
 $( document ).ready( function(){ 
     
     $('table.expression').DataTable( {
-    	"order": [[ 3, "desc" ]],
+    	//enable ordering but apply no ordering during initialization
+    	"order": [],
         responsive: {
             details: {
                 display: $.fn.dataTable.Responsive.display.modal( {

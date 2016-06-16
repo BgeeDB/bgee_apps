@@ -212,8 +212,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		StringBuilder sb = new StringBuilder();
 
 		String elements = byAnatEntityId.entrySet().stream().map(e -> {
-			final AnatEntity a = conditionUtils.getAnatEntity(e.getKey());
-			final List<ExpressionCall> calls = e.getValue();
+		    final AnatEntity a = conditionUtils.getAnatEntity(e.getKey());
+		    final List<ExpressionCall> calls = e.getValue();
 
 			return getExpressionRowsForAnatEntity(a, conditionUtils, calls);
 		}).collect(Collectors.joining("\n"));
@@ -272,9 +272,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 			.append("</ul></td>");
 		
         // FIXME This is a fake score to test ordering. It need to be replaced by the real score
-        Optional<ExpressionCall> max = calls.stream().max(Comparator.comparing(c -> tmpFakeFloat(c)));
-	    sb.append("<td><span class='expandable' title='click to expand'>[+] ").append(tmpFakeFloat(max.get()))
-	        .append("</span>")
+	    sb.append("<td>").append(tmpFakeFloat(calls.get(0)))
 	        .append("<ul class='masked score-list'>")
 	        .append(calls.stream().map(call -> {
 	            // FIXME This is a fake score to test ordering. It need to be replaced by the real score
@@ -305,7 +303,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 	
     // FIXME This method generates a fake score to test ordering. It need to be deleted.
 	private Float tmpFakeFloat(ExpressionCall call) {
-	    return Float.valueOf(call.getCondition().getDevStageId().replaceAll("[A-Z]", "").replaceAll("[:]", ""));
+	    return Float.valueOf(call.getCondition().getDevStageId().replaceAll("[A-Za-z]", "").replaceAll("[:]", ""));
 	}
 
 	/**

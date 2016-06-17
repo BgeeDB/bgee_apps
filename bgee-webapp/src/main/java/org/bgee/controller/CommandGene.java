@@ -180,7 +180,7 @@ public class CommandGene extends CommandParent {
 	    
 		LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
 	                new LinkedHashMap<>();
-	    serviceOrdering.put(CallService.OrderingAttribute.RANK, Service.Direction.ASC);
+	    serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
 	        
 		CallService service = serviceFactory.getCallService();
 		return log.exit(service.loadExpressionCalls(
@@ -189,7 +189,7 @@ public class CommandGene extends CommandParent {
                         Arrays.asList(new ExpressionCallData(Expression.EXPRESSED))), 
                 EnumSet.of(CallService.Attribute.GENE_ID, CallService.Attribute.ANAT_ENTITY_ID, 
                         CallService.Attribute.DEV_STAGE_ID, CallService.Attribute.CALL_DATA, 
-                        CallService.Attribute.GLOBAL_DATA_QUALITY), 
+                        CallService.Attribute.GLOBAL_DATA_QUALITY, CallService.Attribute.GLOBAL_RANK), 
                 serviceOrdering)
             .collect(Collectors.toList()));
 	}

@@ -2,12 +2,10 @@ package org.bgee.view.html;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -259,7 +257,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		
 		// Dev stage cell
 		sb.append("<td><span class='expandable' title='click to expand'>[+] ").append(calls.size())
-			.append(" stage(s)</span>")
+			.append(" stage").append(calls.size() > 1? "s": "").append("</span>")
 			.append("<ul class='masked dev-stage-list'>")
 			.append(calls.stream().map(call -> {
 				DevStage stage = conditionUtils.getDevStage(call.getCondition().getDevStageId());
@@ -271,14 +269,13 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 			}).collect(Collectors.joining("\n")))      
 			.append("</ul></td>");
 		
-        // FIXME This is a fake score to test ordering. It need to be replaced by the real score
-	    sb.append("<td>").append(tmpFakeFloat(calls.get(0)))
+		//Global mean rank
+	    sb.append("<td>").append(htmlEntities(calls.get(0).getFormattedGlobalMeanRank()))
 	        .append("<ul class='masked score-list'>")
 	        .append(calls.stream().map(call -> {
-	            // FIXME This is a fake score to test ordering. It need to be replaced by the real score
-	            Float score = Float.valueOf(tmpFakeFloat(call));
 	            StringBuilder sb2 = new StringBuilder();
-	            sb2.append("<li class='score'>").append(htmlEntities(String.valueOf(score))).append("</li>");
+	            sb2.append("<li class='score'>").append(htmlEntities(call.getFormattedGlobalMeanRank()))
+	               .append("</li>");
 	            return sb2.toString();
 	        }).collect(Collectors.joining("\n")))      
 	        .append("</ul></td>");
@@ -299,11 +296,6 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		sb.append("</tr>");
 
 		return log.exit(sb.toString());
-	}
-	
-    // FIXME This method generates a fake score to test ordering. It need to be deleted.
-	private Float tmpFakeFloat(ExpressionCall call) {
-	    return Float.valueOf(call.getCondition().getDevStageId().replaceAll("[A-Za-z]", "").replaceAll("[:]", ""));
 	}
 
 	/**

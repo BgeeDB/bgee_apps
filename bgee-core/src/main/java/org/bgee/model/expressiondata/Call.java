@@ -1,8 +1,12 @@
 package org.bgee.model.expressiondata;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.NumberFormat;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -23,16 +27,118 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
     //   INNER CLASSES
     //**********************************************
     public static class ExpressionCall extends Call<ExpressionSummary, ExpressionCallData> {
+        /**
+         * @see #getGlobalMeanRank()
+         */
+        private final BigDecimal globalMeanRank;
+        /**
+         * A {@code NumberFormat} used to format {@link #globalMeanRank} 
+         * (see {@link #getFormattedGlobalMeanRank()}). It is not taken into account for equals/hashCode.
+         */
+        private final NumberFormat formatter;
+        
         public ExpressionCall(String geneId, Condition condition, DataPropagation dataPropagation, 
                 ExpressionSummary summaryCallType, DataQuality summaryQual, 
-                Collection<ExpressionCallData> callData) {
+                Collection<ExpressionCallData> callData, BigDecimal globalMeanRank) {
             super(geneId, condition, dataPropagation, summaryCallType, summaryQual, callData);
+            
+            //BigDecimal are immutable, no need to copy it
+            this.globalMeanRank = globalMeanRank;
+            //set up a formatter for nice display of the score
+            if (globalMeanRank != null) {
+                NumberFormat formatter = NumberFormat.getInstance(Locale.US);
+                formatter.setMaximumFractionDigits(2);
+                formatter.setMinimumFractionDigits(2);
+                formatter.setRoundingMode(RoundingMode.HALF_UP);
+                this.formatter = formatter;
+            } else {
+                this.formatter = null;
+            }
+        }
+        
+        /**
+         * @return  The {@code BigDecimal} corresponding to the score allowing to rank 
+         *          this {@code ExpressionCall}.
+         *          
+         * @see #getFormattedGlobalMeanRank()
+         * @see #getFormattedGlobalMeanRank(NumberFormat)
+         */
+        public BigDecimal getGlobalMeanRank() {
+            return this.globalMeanRank;
+        }
+        /**
+         * @return  A {@code String} formatted by default, corresponding to the {@code BigDecimal} 
+         *          allowing to rank this {@code ExpressionCall}. 
+         *          
+         * @see #getGlobalMeanRank()
+         * @see #getFormattedGlobalMeanRank(NumberFormat)
+         */
+        public String getFormattedGlobalMeanRank() {
+            log.entry();
+            return log.exit(this.getFormattedGlobalMeanRank(this.formatter));
+        }
+        /**
+         * Format the score allowing to rank this {@code ExpressionCall}, according to the provided 
+         * {@code NumberFormat}.
+         * 
+         * @param formatter The {@code NumberFormat} used to format the score returned by 
+         *                  {@link #getGlobalMeanRank()}.
+         * @return          A {@code String} formatted by {@code formatter}, corresponding to 
+         *                  the {@code BigDecimal} allowing to rank this {@code ExpressionCall}. 
+         * @throws IllegalStateException    If no ranking score was provided at instantiation.
+         * @see #getGlobalMeanRank()
+         * @see #getFormattedGlobalMeanRank()
+         */
+        public String getFormattedGlobalMeanRank(NumberFormat formatter) {
+            if (this.globalMeanRank == null) {
+                throw log.throwing(new IllegalStateException("No rank was provided for this call."));
+            }
+            return log.exit(formatter.format(this.globalMeanRank));
+        }
+        
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = super.hashCode();
+            result = prime * result + ((globalMeanRank == null) ? 0 : globalMeanRank.hashCode());
+            return result;
+        }
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (!super.equals(obj)) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            ExpressionCall other = (ExpressionCall) obj;
+            if (globalMeanRank == null) {
+                if (other.globalMeanRank != null) {
+                    return false;
+                }
+            } else if (!globalMeanRank.equals(other.globalMeanRank)) {
+                return false;
+            }
+            return true;
+        }
+        
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("ExpressionCall [globalMeanRank=").append(globalMeanRank).append("]");
+            return builder.toString();
         }
     }
     
     //TODO: check that all DiffExpressionCallData 
     //have the same DiffExpressionFactor, consistent with the DiffExpressionCall
     public static class DiffExpressionCall extends Call<DiffExpressionSummary, DiffExpressionCallData> {
+        /**
+         * @see #getDiffExpressionFactor()
+         */
         private final DiffExpressionFactor diffExpressionFactor;
         
         public DiffExpressionCall(DiffExpressionFactor factor, String geneId, 
@@ -42,6 +148,10 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             this.diffExpressionFactor = factor;
         }
 
+        /**
+         * @return  A {@code DiffExpressionFactor} defining the criteria on which comparisons 
+         *          of expression levels were made. 
+         */
         public DiffExpressionFactor getDiffExpressionFactor() {
             return diffExpressionFactor;
         }

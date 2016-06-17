@@ -47,6 +47,7 @@ import org.junit.rules.ExpectedException;
  * @see org.bgee.model.dao.api.expressiondata.ExpressionCallDAO
  * @since Bgee 13
  */
+//TODO: test when retrieving global mean score
 public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
 
     private final static Logger log = 

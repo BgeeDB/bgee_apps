@@ -75,12 +75,12 @@ public class CallService extends Service {
 //******************
     
     public static enum Attribute implements Service.Attribute {
-        GENE_ID, ANAT_ENTITY_ID, DEV_STAGE_ID, GLOBAL_DATA_QUALITY, CALL_DATA, 
+        GENE_ID, ANAT_ENTITY_ID, DEV_STAGE_ID, GLOBAL_DATA_QUALITY, GLOBAL_RANK, CALL_DATA, 
         GLOBAL_ANAT_PROPAGATION, GLOBAL_STAGE_PROPAGATION, GLOBAL_OBSERVED_DATA, 
         CALL_DATA_OBSERVED_DATA;
     }
     public static enum OrderingAttribute implements Service.OrderingAttribute {
-        GENE_ID, ANAT_ENTITY_ID, DEV_STAGE_ID, RANK;
+        GENE_ID, ANAT_ENTITY_ID, DEV_STAGE_ID, GLOBAL_RANK;
     }
 
     /**
@@ -323,7 +323,8 @@ public class CallService extends Service {
                             convertExprAttributeToDataType(entry.getKey()), 
                             callDataPropagation))
                     
-                    .collect(Collectors.toSet())
+                    .collect(Collectors.toSet()), 
+                callTO.getGlobalMeanRank()
                 ));
     }
     
@@ -489,7 +490,7 @@ public class CallService extends Service {
                     return ExpressionCallDAO.OrderingAttribute.ANAT_ENTITY_ID;
                 case DEV_STAGE_ID: 
                     return ExpressionCallDAO.OrderingAttribute.STAGE_ID;
-                case RANK: 
+                case GLOBAL_RANK: 
                     return ExpressionCallDAO.OrderingAttribute.MEAN_RANK;
                 default: 
                     throw log.throwing(new IllegalStateException("Unsupported OrderingAttributes from CallService: "
@@ -552,7 +553,7 @@ public class CallService extends Service {
                 return Stream.of(ExpressionCallDAO.Attribute.STAGE_ID);
             //Whether we need to get a global quality level over all requested data types, 
             //or the detailed quality level per data type, it's the same DAO attributes that we need. 
-            case GLOBAL_DATA_QUALITY: 
+            case GLOBAL_DATA_QUALITY:
             case CALL_DATA: 
                 return dataTypesRequested.stream().map(type -> Optional.ofNullable(typeToDAOAttr.get(type))
                         //bug of javac for type inference, we need to type the exception 
@@ -570,6 +571,8 @@ public class CallService extends Service {
                 //nothing here, the only way to get this information is by performing 2 queries, 
                 //one including substructures/sub-stages, another one without substructures/sub-stages.
                 return Stream.empty();
+            case GLOBAL_RANK: 
+                return Stream.of(ExpressionCallDAO.Attribute.GLOBAL_MEAN_RANK);
             default: 
                 throw log.throwing(new IllegalStateException("Unsupported Attributes from CallService: "
                         + attr));

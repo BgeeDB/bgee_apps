@@ -40,9 +40,9 @@ $( document ).ready( function(){
         columns: [ // sorting definition
            null, // Anatomical entity
            null, // Anat. entity ID
-           null,  // Developmental stage(s)
+           { "orderable": false },  // Developmental stage(s)
            { "orderDataType": "dom-text", "type": "score" }, // Score
-           { "bSortable": false } // Quality
+           { "orderable": false } // Quality
         ]
     });
 
@@ -60,19 +60,21 @@ $( document ).ready( function(){
     } );
     
     jQuery.fn.dataTableExt.oSort['score-asc'] = function(a, b) {
-    	// Example: "<span class="expandable" title="click to expand">[+] 38.0</span>
+    	// Example: "1,037.0
     	//           <ul class="masked score-list">
-    	//               <li class="score">37.0</li>
-    	//               <li class="score">38.0</li>
+    	//               <li class="score">1,037.0</li>
+    	//               <li class="score">21,200.0</li>
     	//           </ul>"
-    	var x = parseFloat(a.substring(a.indexOf(']') + 2, a.indexOf('/') - 2));
-    	var y = parseFloat(b.substring(b.indexOf(']') + 2, b.indexOf('/') - 2));
+    	//substring: start including, end excluded
+    	//parseFloat: doesn't deal with US comma separator for thousands
+    	var x = parseFloat(a.substring(0, a.indexOf('<ul')).replace(/,/g,''));
+    	var y = parseFloat(b.substring(0, b.indexOf('<ul')).replace(/,/g,''));
     	return ((x < y) ? -1 : ((x > y) ? 1 : 0));
     };
      
     jQuery.fn.dataTableExt.oSort['score-desc'] = function(a, b) {
-    	var x = parseFloat(a.substring(a.indexOf(']') + 2, a.indexOf('/') - 2));
-    	var y = parseFloat(b.substring(b.indexOf(']') + 2, b.indexOf('/') - 2));
+    	var x = parseFloat(a.substring(0, a.indexOf('<ul')).replace(/,/g,''));
+    	var y = parseFloat(b.substring(0, b.indexOf('<ul')).replace(/,/g,''));
         return ((x < y) ? 1 : ((x > y) ? -1 : 0));
     };
 

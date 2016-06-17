@@ -3,14 +3,15 @@
  * 
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Jan 2016
+ * @version Bgee 13, June 2016
  * @since   Bgee 13
  */
 
 $( document ).ready( function(){ 
     
     $('table.expression').DataTable( {
-        "ordering": false,
+    	//enable ordering but apply no ordering during initialization
+    	"order": [],
         responsive: {
             details: {
                 display: $.fn.dataTable.Responsive.display.modal( {
@@ -29,11 +30,19 @@ $( document ).ready( function(){
                 }
             }
         },
-        columnDefs: [ // Higher responsivePriority are remove first
-           { responsivePriority: 1, targets: 1 }, // Anatomical entity
+        columnDefs: [ // Higher responsivePriority are removed first, target define the order
            { responsivePriority: 2, targets: 0 }, // Anat. entity ID
-           { responsivePriority: 3, targets: 3 }, // Quality
-           { responsivePriority: 4, targets: 2 }  // Developmental stage(s)
+           { responsivePriority: 1, targets: 1 }, // Anatomical entity
+           { responsivePriority: 5, targets: 2 }, // Developmental stage(s)
+           { responsivePriority: 3, targets: 3 }, // Score
+           { responsivePriority: 4, targets: 4 }  // Quality
+        ],
+        columns: [ // sorting definition
+           null, // Anatomical entity
+           null, // Anat. entity ID
+           { "orderable": false },  // Developmental stage(s)
+           { "orderDataType": "dom-text", "type": "score" }, // Score
+           { "orderable": false } // Quality
         ]
     });
 
@@ -49,6 +58,25 @@ $( document ).ready( function(){
             $(this).parent().parent().find("ul").hide(250);
         }
     } );
+    
+    jQuery.fn.dataTableExt.oSort['score-asc'] = function(a, b) {
+    	// Example: "1,037.0
+    	//           <ul class="masked score-list">
+    	//               <li class="score">1,037.0</li>
+    	//               <li class="score">21,200.0</li>
+    	//           </ul>"
+    	//substring: start including, end excluded
+    	//parseFloat: doesn't deal with US comma separator for thousands
+    	var x = parseFloat(a.substring(0, a.indexOf('<ul')).replace(/,/g,''));
+    	var y = parseFloat(b.substring(0, b.indexOf('<ul')).replace(/,/g,''));
+    	return ((x < y) ? -1 : ((x > y) ? 1 : 0));
+    };
+     
+    jQuery.fn.dataTableExt.oSort['score-desc'] = function(a, b) {
+    	var x = parseFloat(a.substring(0, a.indexOf('<ul')).replace(/,/g,''));
+    	var y = parseFloat(b.substring(0, b.indexOf('<ul')).replace(/,/g,''));
+        return ((x < y) ? 1 : ((x > y) ? -1 : 0));
+    };
 
     loadAutocompleteGene();
 } );

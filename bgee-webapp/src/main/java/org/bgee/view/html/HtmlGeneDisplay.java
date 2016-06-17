@@ -34,7 +34,7 @@ import org.bgee.view.JsonHelper;
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 13, Mar. 2016
+ * @version Bgee 13, June 2016
  * @since   Bgee 13, Oct. 2015
  */
 public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
@@ -210,8 +210,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		StringBuilder sb = new StringBuilder();
 
 		String elements = byAnatEntityId.entrySet().stream().map(e -> {
-			final AnatEntity a = conditionUtils.getAnatEntity(e.getKey());
-			final List<ExpressionCall> calls = e.getValue();
+		    final AnatEntity a = conditionUtils.getAnatEntity(e.getKey());
+		    final List<ExpressionCall> calls = e.getValue();
 
 			return getExpressionRowsForAnatEntity(a, conditionUtils, calls);
 		}).collect(Collectors.joining("\n"));
@@ -219,7 +219,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		sb.append("<table class='expression stripe nowrap compact responsive'>")
 		        .append("<thead><tr><th class='anat-entity-id'>Anat. entity ID</th>")
 		        .append("<th class='anat-entity'>Anatomical entity</th>")
-				.append("<th class='dev-stages desktop'><strong>Developmental stage(s)</strong></th>")
+                .append("<th class='dev-stages desktop'><strong>Developmental stage(s)</strong></th>")
+                .append("<th class='score desktop'><strong>Score</strong></th>")
 				.append("<th class='quality'><strong>Quality</strong></th></tr></thead>\n");
 		sb.append("<tbody>").append(elements).append("</tbody>");
 		sb.append("</table>");
@@ -256,7 +257,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		
 		// Dev stage cell
 		sb.append("<td><span class='expandable' title='click to expand'>[+] ").append(calls.size())
-			.append(" stage(s)</span>")
+			.append(" stage").append(calls.size() > 1? "s": "").append("</span>")
 			.append("<ul class='masked dev-stage-list'>")
 			.append(calls.stream().map(call -> {
 				DevStage stage = conditionUtils.getDevStage(call.getCondition().getDevStageId());
@@ -268,6 +269,17 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 			}).collect(Collectors.joining("\n")))      
 			.append("</ul></td>");
 		
+		//Global mean rank
+	    sb.append("<td>").append(htmlEntities(calls.get(0).getFormattedGlobalMeanRank()))
+	        .append("<ul class='masked score-list'>")
+	        .append(calls.stream().map(call -> {
+	            StringBuilder sb2 = new StringBuilder();
+	            sb2.append("<li class='score'>").append(htmlEntities(call.getFormattedGlobalMeanRank()))
+	               .append("</li>");
+	            return sb2.toString();
+	        }).collect(Collectors.joining("\n")))      
+	        .append("</ul></td>");
+
 		// Quality cell
 		sb.append("<td>")
 		        .append(getQualitySpans(

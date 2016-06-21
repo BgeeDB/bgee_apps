@@ -115,7 +115,17 @@
             <artifactId>cors-filter</artifactId>
         </dependency>
         -->
-
+        
+        <!-- To return CSV files -->
+        <dependency>
+            <groupId>net.sf.supercsv</groupId>
+            <artifactId>super-csv</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>net.sf.supercsv</groupId>
+            <artifactId>super-csv-dozer</artifactId>
+        </dependency>
+        
     </dependencies>
 
     <properties>

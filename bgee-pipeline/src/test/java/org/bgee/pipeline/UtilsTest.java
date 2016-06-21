@@ -230,7 +230,7 @@ public class UtilsTest extends TestAncestor {
      */
     @Test
     public void shouldExecuteFmtMultipleStringValues() {
-        CsvContext mockContext = mock(CsvContext.class);  
+        CsvContext context = new CsvContext(0, 0, 0);  
         //to test that next processor in the chain is called
         CellProcessor next = mock(CellProcessor.class);
         
@@ -239,32 +239,32 @@ public class UtilsTest extends TestAncestor {
         //The next processor will simply pass the value it received.
         //Note that if the test fails, the assertEquals will not be able to display 
         //the "actual" result, because the next CellProcessor would have returned null.
-        when(next.execute(expectedValue, mockContext)).thenReturn(expectedValue);
+        when(next.execute(expectedValue, context)).thenReturn(expectedValue);
         assertEquals("Incorrect separated-value string generated.", 
                 expectedValue, 
                new Utils.FmtMultipleStringValues(next).execute(
-                       Arrays.asList(" abcd  123  ", " dfgd2", "qwe rty"), mockContext));
+                       Arrays.asList(" abcd  123  ", " dfgd2", "qwe rty"), context));
         //verification a bit useless, if the test succeeded this processor has 
         //to have returned a value
-        verify(next).execute(expectedValue, mockContext);
+        verify(next).execute(expectedValue, context);
         
         next = mock(CellProcessor.class);
         expectedValue = " abcd  123  ";
         //The next processor will simply pass the value it received.
         //Note that if the test fails, the assertEquals will not be able to display 
         //the "actual" result, because the next CellProcessor would have returned null.
-        when(next.execute(expectedValue, mockContext)).thenReturn(expectedValue);
+        when(next.execute(expectedValue, context)).thenReturn(expectedValue);
         assertEquals("Incorrect separated-value string generated.", 
                 expectedValue, 
                new Utils.FmtMultipleStringValues(next).execute(Arrays.asList(" abcd  123  "), 
-                       mockContext));
+                       context));
         //verification a bit useless, if the test succeeded this processor has 
         //to have returned a value
-        verify(next).execute(expectedValue, mockContext);
+        verify(next).execute(expectedValue, context);
         
         try {
             new Utils.FmtMultipleStringValues().execute(new ArrayList<String>(), 
-                    mockContext);
+                    context);
             throw log.throwing(new AssertionError("An exception should have been thrown "
                     + "when using an empty List"));
         } catch (Exception e) {
@@ -272,7 +272,7 @@ public class UtilsTest extends TestAncestor {
         }
         try {
             new Utils.FmtMultipleStringValues().execute(Arrays.asList("fsdfdfs", "", "fdfds"), 
-                    mockContext);
+                    context);
             throw log.throwing(new AssertionError("An exception should have been thrown "
                     + "when using Blank elements"));
         } catch (Exception e) {
@@ -280,7 +280,7 @@ public class UtilsTest extends TestAncestor {
         }
         try {
             new Utils.FmtMultipleStringValues().execute(Arrays.asList("fsdfdfs", null, "fdfds"), 
-                    mockContext);
+                    context);
             throw log.throwing(new AssertionError("An exception should have been thrown "
                     + "when using Blank elements"));
         } catch (Exception e) {
@@ -289,7 +289,7 @@ public class UtilsTest extends TestAncestor {
 
         try {
             new Utils.FmtMultipleStringValues().execute(Arrays.asList(1, 2, 3), 
-                    mockContext);
+                    context);
             throw log.throwing(new AssertionError("An exception should have been thrown "
                     + "when using non-String elements"));
         } catch (Exception e) {
@@ -302,32 +302,32 @@ public class UtilsTest extends TestAncestor {
         //The next processor will simply pass the value it received.
         //Note that if the test fails, the assertEquals will not be able to display 
         //the "actual" result, because the next CellProcessor would have returned null.
-        when(next.execute(expectedValue, mockContext)).thenReturn(expectedValue);
+        when(next.execute(expectedValue, context)).thenReturn(expectedValue);
         assertEquals("Incorrect separated-value string generated.", 
                 expectedValue, 
                new Utils.FmtMultipleStringValues(next, true).execute(
-                       Arrays.asList(" abcd  123  ", " dfgd2", "qwe rty"), mockContext));
+                       Arrays.asList(" abcd  123  ", " dfgd2", "qwe rty"), context));
         //verification a bit useless, if the test succeeded this processor has 
         //to have returned a value
-        verify(next).execute(expectedValue, mockContext);
+        verify(next).execute(expectedValue, context);
         
         next = mock(CellProcessor.class);
         expectedValue = " abcd  123  ";
         //The next processor will simply pass the value it received.
         //Note that if the test fails, the assertEquals will not be able to display 
         //the "actual" result, because the next CellProcessor would have returned null.
-        when(next.execute(expectedValue, mockContext)).thenReturn(expectedValue);
+        when(next.execute(expectedValue, context)).thenReturn(expectedValue);
         assertEquals("Incorrect separated-value string generated.", 
                 expectedValue, 
                new Utils.FmtMultipleStringValues(next, true).execute(Arrays.asList(" abcd  123  "), 
-                       mockContext));
+                       context));
         //verification a bit useless, if the test succeeded this processor has 
         //to have returned a value
-        verify(next).execute(expectedValue, mockContext);
+        verify(next).execute(expectedValue, context);
         
         try {
             new Utils.FmtMultipleStringValues(true).execute(new ArrayList<String>(), 
-                    mockContext);
+                    context);
             throw log.throwing(new AssertionError("An exception should have been thrown "
                     + "when using an empty List"));
         } catch (Exception e) {
@@ -336,26 +336,26 @@ public class UtilsTest extends TestAncestor {
         
         expectedValue = " abcd  123  " + Utils.VALUE_SEPARATORS.get(0) + "" 
                 + Utils.VALUE_SEPARATORS.get(0) + "qwe rty";
-        when(next.execute(expectedValue, mockContext)).thenReturn(expectedValue);
+        when(next.execute(expectedValue, context)).thenReturn(expectedValue);
         assertEquals("Incorrect separated-value string generated.", 
                 expectedValue, 
                new Utils.FmtMultipleStringValues(next, true).execute(
-            		   Arrays.asList(" abcd  123  ", "", "qwe rty"), mockContext));
+            		   Arrays.asList(" abcd  123  ", "", "qwe rty"), context));
         //verification a bit useless, if the test succeeded this processor has 
         //to have returned a value
-        verify(next).execute(expectedValue, mockContext);
+        verify(next).execute(expectedValue, context);
 
         expectedValue = "fsdfdfs" + Utils.VALUE_SEPARATORS.get(0) + "" 
                 + Utils.VALUE_SEPARATORS.get(0) + "fdfds";
-        when(next.execute(expectedValue, mockContext)).thenReturn(expectedValue);
+        when(next.execute(expectedValue, context)).thenReturn(expectedValue);
         assertEquals("Incorrect separated-value string generated.", 
                 expectedValue, 
                 new Utils.FmtMultipleStringValues(true).execute(Arrays.asList("fsdfdfs", null, "fdfds"), 
-                        mockContext));
+                        context));
 
         try {
             new Utils.FmtMultipleStringValues(true).execute(Arrays.asList(1, 2, 3), 
-                    mockContext);
+                    context);
             throw log.throwing(new AssertionError("An exception should have been thrown "
                     + "when using non-String elements"));
         } catch (Exception e) {

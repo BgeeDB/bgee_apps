@@ -3,10 +3,14 @@ package org.bgee.model.expressiondata;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -20,6 +24,7 @@ import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.*;
 
 //XXX: and what if it was a multi-species query? Should we use something like a MultiSpeciesCondition?
+//TODO: move inner classes to different files
 public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallData<?>> {
     private final static Logger log = LogManager.getLogger(Call.class.getName());
 
@@ -27,6 +32,81 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
     //   INNER CLASSES
     //**********************************************
     public static class ExpressionCall extends Call<ExpressionSummary, ExpressionCallData> {
+
+        /**
+         * A {@code double} that is the threshold of the distance between two expression scores, 
+         * to consider them as part of different clusters. 
+         * @see #getCallsToScoreGroupIndex(Collection)
+         */
+        public final static double DISTANCE_THRESHOLD = 0.35;
+        /**
+         * Generate a clustering of {@code ExpressionCall}s based on their expression score 
+         * (see {@link #getGlobalMeanRank()}).
+         * 
+         * @param calls A {@code Collection} of {@code ExpressionCall}s with expression scores.
+         * @return      A {@code Map} where keys are {@code ExpressionCall}s, the associated value 
+         *              being the index of the group in which they are clustered, 
+         *              based on their expression score. Group indexes are assigned in ascending 
+         *              order of expression score, starting from 0.
+         */
+        public static Map<ExpressionCall, Integer> generateCallsToScoreGroupIndex(
+                Collection<ExpressionCall> calls) {
+            log.entry(calls);
+            List<ExpressionCall> sortedCalls = new ArrayList<>((calls == null? 
+                    new HashSet<ExpressionCall>(): new HashSet<ExpressionCall>(calls)));
+            Collections.sort(sortedCalls, 
+                    (c1, c2) -> c1.getGlobalMeanRank().compareTo(c2.getGlobalMeanRank()));
+            return log.exit(generateCallsToScoreGroupIndex(sortedCalls));
+        }
+        /**
+         * Generate a clustering of {@code ExpressionCall}s based on their expression score 
+         * (see {@link #getGlobalMeanRank()}).
+         * 
+         * @param calls A {@code List} of {@code ExpressionCall}s ranked based on 
+         *              their expression score.
+         * @return      A {@code Map} where keys are {@code ExpressionCall}s, the associated value 
+         *              being the index of the group in which they are clustered, 
+         *              based on their expression score. Group indexes are assigned in ascending 
+         *              order of expression score, starting from 0.
+         */
+        public static Map<ExpressionCall, Integer> generateCallsToScoreGroupIndex(
+                List<ExpressionCall> calls) {
+            log.entry(calls);
+            
+            Map<ExpressionCall, Integer> callsToGroup = new HashMap<>();
+            int groupIndex = -1;
+            List<ExpressionCall> groupMember = null;
+            for (ExpressionCall call: calls) {
+                if (groupMember == null || getDistance(
+                        //compute the mean score of the current group
+                        groupMember.stream().mapToDouble(c -> c.getGlobalMeanRank().doubleValue())
+                        .average().getAsDouble(),
+                        //compare it to the currently iterated score (will be less then the mean 
+                        //of the next group, for sure)
+                        call.getGlobalMeanRank().doubleValue()) > DISTANCE_THRESHOLD) {
+                    groupIndex++;
+                    groupMember = new ArrayList<>();
+                }
+                groupMember.add(call);
+                callsToGroup.put(call, groupIndex);
+            }
+            
+            return log.exit(callsToGroup);
+        }
+        /**
+         * Compute a distance score for expression score clustering. 
+         * 
+         * @param score1    A {@code double} that is the first score to compare.
+         * @param score2    A {@code double} that is the second score to compare.
+         * @return          A {@code double} that is the distance score between the provided arguments.
+         */
+        private static double getDistance(double score1, double score2) {
+            log.entry(score1, score2);
+            //Canberra distance
+            return log.exit( Math.abs(score1 - score2)/(Math.abs(score1) + Math.abs(score2)) );
+        }
+        
+        
         /**
          * @see #getGlobalMeanRank()
          */

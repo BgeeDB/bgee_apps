@@ -4,9 +4,11 @@ package org.bgee.controller;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -144,7 +146,7 @@ public class CommandGene extends CommandParent {
         log.debug("Expressions: {} {}", exprCalls.size(), exprCalls);
 	    
 	    return log.exit(new GeneResponse(gene, exprCalls, 
-	            getRedundantCalls(exprCalls, conditionUtils),  
+	            getRedundantCalls(exprCalls, conditionUtils), 
 	            conditionUtils));
 	    }
 	    
@@ -226,5 +228,39 @@ public class CommandGene extends CommandParent {
         log.debug("Redundant calls filtered in {} ms", System.currentTimeMillis() - startFilteringTimeInMs);
         
         return log.exit(redundantCalls);
+    }
+
+    /**
+     * @param calls A {@code List} of {@code ExpressionCall}s ranked based on 
+     *              their expression score.
+     * @return      A {@code Map} where keys are {@code ExpressionCall}s, the associated value 
+     *              being the index of the group in which they are clustered, 
+     *              based on their expression score. Group indexes are assigned in ascending 
+     *              order of expression score, starting from 0.
+     */
+    public static Map<ExpressionCall, Integer> getCallsToScoreGroupIndex(List<ExpressionCall> calls) {
+        log.entry(calls);
+        
+        final double distanceThreshold = 0.35;
+        Map<ExpressionCall, Integer> callsToGroup = new HashMap<>();
+        int groupIndex = 0;
+        ExpressionCall previousCall = null;
+        for (ExpressionCall call: calls) {
+            if (previousCall != null && getDistance(previousCall.getGlobalMeanRank().doubleValue(), 
+                    call.getGlobalMeanRank().doubleValue()) > distanceThreshold) {
+                groupIndex++;
+            }
+            callsToGroup.put(call, groupIndex);
+            previousCall = call;
+        }
+        
+        return log.exit(callsToGroup);
+    }
+    
+    private static double getDistance(double score1, double score2) {
+        log.entry(score1, score2);
+        
+        //Canberra distance
+        return log.exit( Math.abs(score1 - score2)/(Math.abs(score1) + Math.abs(score2)) );
     }
 }

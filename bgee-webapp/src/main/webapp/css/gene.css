@@ -162,3 +162,7 @@ span.expandable {
 div.dtr-modal div.dtr-modal-display {
     height: 95% !important;
 }
+
+.gene-score-shift {
+	border-top: 2px solid #e2011b;
+}

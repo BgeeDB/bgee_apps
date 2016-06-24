@@ -6,6 +6,7 @@ import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -15,6 +16,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
+import org.bgee.controller.CommandGene;
 import org.bgee.controller.CommandGene.GeneResponse;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.anatdev.AnatEntity;
@@ -165,9 +167,11 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		//table-container
 		this.writeln("<div class='col-xs-12 col-sm-10'>");
 		this.writeln("<div id='table-container'>");
+
 		this.writeln(getExpressionHTMLByAnat(
 		        filterAndGroupByAnatEntity(geneResponse), 
 		        geneResponse.getConditionUtils()));
+        
 		this.writeln("</div>"); // end table-container
 		this.writeln("</div>"); // end class
 		
@@ -207,22 +211,39 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 	        final ConditionUtils conditionUtils) {
 	    log.entry(byAnatEntityId, conditionUtils);
 
-		StringBuilder sb = new StringBuilder();
 
-		String elements = byAnatEntityId.entrySet().stream().map(e -> {
-		    final AnatEntity a = conditionUtils.getAnatEntity(e.getKey());
-		    final List<ExpressionCall> calls = e.getValue();
+		StringBuilder rowSb = new StringBuilder();
+		//To determine whether there is a shift in expression score, 
+		//we collect the best non-redundant call from each anatomical structure
+		List<ExpressionCall> bestCalls = byAnatEntityId.values().stream().map(
+		        list -> list.get(0)).collect(Collectors.toList());
+		Map<ExpressionCall, Integer> callsToScoreGroupIndex = 
+		        CommandGene.getCallsToScoreGroupIndex(bestCalls);
+		Integer previousGroupIndex = null;
+		for (Entry<String, List<ExpressionCall>> anatRow: byAnatEntityId.entrySet()) {
+            final AnatEntity a = conditionUtils.getAnatEntity(anatRow.getKey());
+            final List<ExpressionCall> calls = anatRow.getValue();
+            
+            boolean scoreShift = false;
+            Integer currentGroupIndex = callsToScoreGroupIndex.get(calls.get(0));
+            assert currentGroupIndex != null: "Every best call should be part of a group.";
+            if (previousGroupIndex != null && previousGroupIndex != currentGroupIndex) {
+                scoreShift = true;
+            }
+            
+            rowSb.append(getExpressionRowsForAnatEntity(a, conditionUtils, calls, scoreShift))
+                 .append("\n");
+            previousGroupIndex = currentGroupIndex;
+		}
 
-			return getExpressionRowsForAnatEntity(a, conditionUtils, calls);
-		}).collect(Collectors.joining("\n"));
-
+        StringBuilder sb = new StringBuilder();
 		sb.append("<table class='expression stripe nowrap compact responsive'>")
 		        .append("<thead><tr><th class='anat-entity-id'>Anat. entity ID</th>")
 		        .append("<th class='anat-entity'>Anatomical entity</th>")
                 .append("<th class='dev-stages desktop'><strong>Developmental stage(s)</strong></th>")
                 .append("<th class='score desktop'><strong>Score</strong></th>")
 				.append("<th class='quality'><strong>Quality</strong></th></tr></thead>\n");
-		sb.append("<tbody>").append(elements).append("</tbody>");
+		sb.append("<tbody>").append(rowSb.toString()).append("</tbody>");
 		sb.append("</table>");
 		return log.exit(sb.toString());
 
@@ -240,48 +261,80 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 	 * @return                 A {@code String} that is the generated HTML.
 	 */
 	private String getExpressionRowsForAnatEntity(AnatEntity anatEntity, ConditionUtils conditionUtils,
-	        List<ExpressionCall> calls) {
-	    log.entry(anatEntity, conditionUtils, calls);
-	    
+	        List<ExpressionCall> calls, boolean scoreShift) {
+	    log.entry(anatEntity, conditionUtils, calls, scoreShift);
+
+        //find expression score shifts specific to this anatomical structure
+        Map<ExpressionCall, Integer> callsToScoreGroupIndex = CommandGene.getCallsToScoreGroupIndex(calls);
+        
 		StringBuilder sb = new StringBuilder();
-		sb.append("<tr>");
+		String scoreShiftClassName = "gene-score-shift";
+		sb.append("<tr");
+		//score shift *between* anatomical structures
+		if (scoreShift) {
+		    sb.append(" class='").append(scoreShiftClassName).append("' ");
+		}
+		sb.append(">");
+		//FIXME: I can't make the border to appear on the 'tr' element, so I add it to all 'td' elements...
+		String toAddToTd = "";
+		if (scoreShift) {
+		    toAddToTd = " class='" + scoreShiftClassName + "' ";
+        }
 		
 		// Anat entity ID and Anat entity cells 
 		String anatEntityUrl = "http://purl.obolibrary.org/obo/" 
 		    + this.urlEncode(anatEntity.getId().replace(':', '_'));
-		sb.append("<td class='details small'><a target='_blank' href='").append(anatEntityUrl)
+		sb.append("<td class='details small ").append(!toAddToTd.equals("")? scoreShiftClassName: "")
+		    .append("'><a target='_blank' href='").append(anatEntityUrl)
 		    .append("' title='External link to ontology visualization'>")
 		    .append(htmlEntities(anatEntity.getId()))
-		    .append("</a></td><td>")
+		    .append("</a></td><td").append(toAddToTd)
+            .append(">")
 			.append(htmlEntities(anatEntity.getName())).append("</td>");
 		
+		
 		// Dev stage cell
-		sb.append("<td><span class='expandable' title='click to expand'>[+] ").append(calls.size())
+		sb.append("<td").append(toAddToTd)
+            .append("><span class='expandable' title='click to expand'>[+] ").append(calls.size())
 			.append(" stage").append(calls.size() > 1? "s": "").append("</span>")
-			.append("<ul class='masked dev-stage-list'>")
-			.append(calls.stream().map(call -> {
-				DevStage stage = conditionUtils.getDevStage(call.getCondition().getDevStageId());
-				StringBuilder sb2 = new StringBuilder();
-				sb2.append("<li class='dev-stage'><span class='details small'>")
-				    .append(htmlEntities(stage.getId())).append("</span>")
-					.append(htmlEntities(stage.getName())).append("</li>");
-				return sb2.toString();
-			}).collect(Collectors.joining("\n")))      
-			.append("</ul></td>");
+			.append("<ul class='masked dev-stage-list'>");
+		Integer previousGroupInd = null;
+		for (ExpressionCall call: calls) {
+		    DevStage stage = conditionUtils.getDevStage(call.getCondition().getDevStageId());
+		    int currentGroupInd = callsToScoreGroupIndex.get(call);
+            sb.append("<li class='dev-stage ");
+            if (previousGroupInd != null && previousGroupInd != currentGroupInd) {
+                sb.append(scoreShiftClassName);
+            }
+            sb.append("'><span class='details small'>")
+                .append(htmlEntities(stage.getId())).append("</span>")
+                .append(htmlEntities(stage.getName())).append("</li>");
+            sb.append("\n");
+            previousGroupInd = currentGroupInd;
+		}
+		sb.append("</ul></td>");
 		
 		//Global mean rank
-	    sb.append("<td>").append(htmlEntities(calls.get(0).getFormattedGlobalMeanRank()))
-	        .append("<ul class='masked score-list'>")
-	        .append(calls.stream().map(call -> {
-	            StringBuilder sb2 = new StringBuilder();
-	            sb2.append("<li class='score'>").append(htmlEntities(call.getFormattedGlobalMeanRank()))
-	               .append("</li>");
-	            return sb2.toString();
-	        }).collect(Collectors.joining("\n")))      
-	        .append("</ul></td>");
+	    sb.append("<td").append(toAddToTd)
+            .append(">").append(htmlEntities(calls.get(0).getFormattedGlobalMeanRank()))
+	        .append("<ul class='masked score-list'>");
+        previousGroupInd = null;
+	    for (ExpressionCall call: calls) {
+            int currentGroupInd = callsToScoreGroupIndex.get(call);
+            sb.append("<li class='score ");
+            if (previousGroupInd != null && previousGroupInd != currentGroupInd) {
+                sb.append(scoreShiftClassName);
+            }
+            sb.append("'>").append(htmlEntities(call.getFormattedGlobalMeanRank()))
+              .append("</li>");
+            sb.append("\n");
+            previousGroupInd = currentGroupInd;
+        }
+        sb.append("</ul></td>");
 
 		// Quality cell
-		sb.append("<td>")
+		sb.append("<td").append(toAddToTd)
+            .append(">")
 		        .append(getQualitySpans(
 		                calls.stream().flatMap(e -> e.getCallData().stream()).collect(Collectors.toList())))
 				.append("<ul class='masked quality-list'>")

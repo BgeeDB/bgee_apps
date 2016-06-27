@@ -65,13 +65,16 @@ table th, table td {
     padding: 0.2em;
 }
 th.anat-entity-id {
-	width: 15% !important;
+	width: 12% !important;
 }
 th.anat-entity {
-	width: 33% !important;
+	width: 30% !important;
 }
 th.dev-stages {
-	width: 42% !important;
+	width: 40% !important;
+}
+th.score {
+	width: 8% !important;
 }
 th.quality {
 	width: 10% !important;

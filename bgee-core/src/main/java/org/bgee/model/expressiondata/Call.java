@@ -121,7 +121,8 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         
         /**
          * Generate a clustering of {@code ExpressionCall}s based on their global mean rank  
-         * (see {@link #getGlobalMeanRank()}).
+         * (see {@link #getGlobalMeanRank()}), using the {@code ClusteringMethod} {@code CANBERRA_DBSCAN} 
+         * and the distance threshold {@code 0.19}.
          * 
          * @param calls A {@code Collection} of {@code ExpressionCall}s with global mean ranks defined.
          * @return      A {@code Map} where keys are {@code ExpressionCall}s, the associated value 
@@ -133,7 +134,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                 Collection<ExpressionCall> calls) {
             log.entry(calls);
             return log.exit(generateMeanRankScoreClustering(
-                    calls, ClusteringMethod.FIXED_CANBERRA_DIST_TO_MAX, 0.19));
+                    calls, ClusteringMethod.CANBERRA_DBSCAN, 0.19));
         }
         /**
          * Generate a clustering of {@code ExpressionCall}s based on their global mean rank 

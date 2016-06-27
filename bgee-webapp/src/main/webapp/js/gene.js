@@ -9,6 +9,14 @@
 
 $( document ).ready( function(){ 
     
+	removeMaskedClass = function(text) {
+        return text.replace('masked','');
+    };
+
+    changeUlToOl = function(text) {
+        return text.replace('<ul','<ol').replace('</ul>','</ol>');
+    };
+    
     $('table.expression').DataTable( {
     	//enable ordering but apply no ordering during initialization
     	"order": [],
@@ -22,10 +30,11 @@ $( document ).ready( function(){
                 } ),
                 renderer: function ( api, rowIdx, columns ) {
                 	var data = 
-                		'<tr><td>' + columns[0].title + ':</td><td>' + columns[0].data + '</td></tr>' +
-                		'<tr><td>' + columns[1].title + ':</td><td>' + columns[1].data + '</td></tr>' +
-                		'<tr><td>' + columns[2].title + '</td><td>' + columns[2].data.replace('[+]','').replace('<ul','<ol').replace('</ul>','</ol>') + '</td></tr>' +
-                		'<tr><td>' + columns[3].title + '</td><td>' + columns[3].data.replace('<ul','<ol').replace('</ul>','</ol>') + '</td></tr>';
+                		'<tr><td>' + columns[0].title + '</td><td>' + columns[0].data + '</td></tr>' +
+                		'<tr><td>' + columns[1].title + '</td><td>' + columns[1].data + '</td></tr>' +
+                		'<tr><td>' + columns[2].title + '</td><td>' + changeUlToOl(removeMaskedClass(columns[2].data.replace('[+]',''))) + '</td></tr>' +
+                		'<tr><td>' + columns[3].title + '</td><td>' + changeUlToOl(removeMaskedClass(columns[3].data)) + '</td></tr>' +
+            			'<tr><td>' + columns[4].title + '</td><td>' + changeUlToOl(removeMaskedClass(columns[4].data)) + '</td></tr>';
                     return $('<table class="table"/>').append( data );
                 }
             }

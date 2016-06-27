@@ -138,10 +138,8 @@ span.expandable {
     display: none;
 }
 
-.dtr-modal ol.dev-stage-list,
-.dtr-modal ol.quality-list {
-    display: inherit !important;
-    padding-left: 0px;
+.dtr-modal tr > td:first-child {
+    font-weight: bold;
 }
 
 .high {

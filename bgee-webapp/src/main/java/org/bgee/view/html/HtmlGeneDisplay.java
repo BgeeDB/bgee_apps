@@ -189,6 +189,9 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 "<tr><td><span class='quality high'>high quality</span></td></tr>" +
                 "<tr><td><span class='quality low'>low quality</span></td></tr>" +
                 "<tr><td><span class='quality nodata'>no data</span></td></tr></table>");
+        this.writeln("<table class='col-xs-offset-2 col-xs-5 col-sm-offset-0 col-sm-12'>"
+                + "<caption>Scores</caption>" +
+                "<tr><th><hr class='dotted-line' /></th><td>shift</td></tr></table>");
         this.writeln("</div>"); // end legend
         
 		this.writeln("</div>"); // end expr_data 
@@ -297,7 +300,6 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		    sb.append(" class='").append(scoreShiftClassName).append("' ");
 		}
 		sb.append(">");
-		//FIXME: I can't make the border to appear on the 'tr' element, so I add it to all 'td' elements...
 		String toAddToTd = "";
 		if (scoreShift) {
 		    toAddToTd = " class='" + scoreShiftClassName + "' ";
@@ -306,8 +308,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		// Anat entity ID and Anat entity cells 
 		String anatEntityUrl = "http://purl.obolibrary.org/obo/" 
 		    + this.urlEncode(anatEntity.getId().replace(':', '_'));
-		sb.append("<td class='details small ").append(!toAddToTd.equals("")? scoreShiftClassName: "")
-		    .append("'><a target='_blank' href='").append(anatEntityUrl)
+		sb.append("<td class='details small'><a target='_blank' href='").append(anatEntityUrl)
 		    .append("' title='External link to ontology visualization'>")
 		    .append(htmlEntities(anatEntity.getId()))
 		    .append("</a></td><td").append(toAddToTd)
@@ -316,8 +317,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		
 		
 		// Dev stage cell
-		sb.append("<td").append(toAddToTd)
-            .append("><span class='expandable' title='click to expand'>[+] ").append(calls.size())
+		sb.append("<td><span class='expandable' title='click to expand'>[+] ").append(calls.size())
 			.append(" stage").append(calls.size() > 1? "s": "").append("</span>")
 			.append("<ul class='masked dev-stage-list'>");
 		Integer previousGroupInd = null;
@@ -337,8 +337,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		sb.append("</ul></td>");
 		
 		//Global mean rank
-	    sb.append("<td").append(toAddToTd)
-            .append(">").append(htmlEntities(calls.get(0).getFormattedGlobalMeanRank()))
+	    sb.append("<td>").append(htmlEntities(calls.get(0).getFormattedGlobalMeanRank()))
 	        .append("<ul class='masked score-list'>");
         previousGroupInd = null;
 	    for (ExpressionCall call: calls) {
@@ -355,8 +354,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         sb.append("</ul></td>");
 
 		// Quality cell
-		sb.append("<td").append(toAddToTd)
-            .append(">")
+		sb.append("<td>")
 		        .append(getQualitySpans(
 		                calls.stream().flatMap(e -> e.getCallData().stream()).collect(Collectors.toList())))
 				.append("<ul class='masked quality-list'>")

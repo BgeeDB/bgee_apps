@@ -187,7 +187,17 @@ public class CommandGene extends CommandParent {
         // Expression calls, ConditionUtils, and redundant calls
         //*********************
 	    List<ExpressionCall> exprCalls = this.getExpressions(gene);
-	    if (!exprCalls.isEmpty()) {
+	    if (exprCalls.isEmpty()) {
+	        log.debug("No calls for gene {}", geneId);
+	         return log.exit(new GeneResponse(gene, exprCalls, new HashSet<ExpressionCall>(), 
+	                 null, null, null));
+	    }
+        //we need to make sure that the ExpressionCalls are ordered exactly as used for the clustering, 
+        //otherwise the display will be buggy, notably for calls with equal scores. 
+        //So, even if they were ordered through the query to the data source, we reorder them 
+        //using the ExpressionCall Comparator.
+        Collections.sort(exprCalls, ExpressionCall.RANK_COMPARATOR);
+        
 	    ConditionUtils conditionUtils = new ConditionUtils(gene.getSpeciesId(), 
 	            exprCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()), 
 	            serviceFactory);
@@ -213,7 +223,7 @@ public class CommandGene extends CommandParent {
                 c -> ExpressionCall.generateMeanRankScoreClustering(c);
         //if clustering method specified in properties
         if (this.prop.getGeneScoreClusteringMethod() != null) {
-            
+            //Distance threshold
             if (this.prop.getGeneScoreClusteringThreshold() == null || 
                     //we don't want negative nor near-zero values
                     this.prop.getGeneScoreClusteringThreshold() < 0.000001) {
@@ -289,11 +299,6 @@ public class CommandGene extends CommandParent {
 	    return log.exit(new GeneResponse(gene, exprCalls, redundantCalls, 
 	            clusteringBestEachAnatEntityNoRedundant, clusteringWithinAnatEntityNoRedundant, 
 	            conditionUtils));
-	    }
-	    
-	  	 log.info("No calls for gene "+geneId);
-	  	 return log.exit(new GeneResponse(gene, exprCalls, new HashSet<ExpressionCall>(), 
-	  	         null, null, null));
 	}
 	
 	/**
@@ -325,6 +330,9 @@ public class CommandGene extends CommandParent {
 		LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
 	                new LinkedHashMap<>();
 	    serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
+	    //important for consistent ranking of equal scores
+        serviceOrdering.put(CallService.OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.ASC);
+        serviceOrdering.put(CallService.OrderingAttribute.DEV_STAGE_ID, Service.Direction.ASC);
 	        
 		CallService service = serviceFactory.getCallService();
 		return log.exit(service.loadExpressionCalls(

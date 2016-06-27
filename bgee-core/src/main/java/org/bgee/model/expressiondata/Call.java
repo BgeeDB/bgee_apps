@@ -7,6 +7,7 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -87,6 +88,17 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         }
         
         /**
+         * A {@code Comparator} to sort {@code ExpressionCall}s based on their global mean rank 
+         * (see {@link #getGlobalMeanRank()}), and provide consistent comparisons 
+         * in case of rank equality. 
+         */
+        public final static Comparator<ExpressionCall> RANK_COMPARATOR = Comparator
+                .comparing(ExpressionCall::getGlobalMeanRank, Comparator.nullsLast(BigDecimal::compareTo))
+                //important in case of score equality
+                .thenComparing(ExpressionCall::getGeneId, Comparator.nullsLast(String::compareTo))
+                .thenComparing(ExpressionCall::getCondition, Comparator.nullsLast(Condition::compareTo));
+        
+        /**
          * Remove equal calls from the {@code Collection} and order them based on their global mean rank 
          * (see {@link #getGlobalMeanRank()}).
          * 
@@ -94,17 +106,16 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          *              and to order based on their global mean rank.
          * @return      A {@code List} of {@code ExpressionCall}s filtered and ordered. 
          *              {@code null} if {@code calls} was {@code null}.
+         * @see #RANK_COMPARATOR
          */
-        public static List<ExpressionCall> filterAndOrderByGlobalMeanRank(
+        private static List<ExpressionCall> filterAndOrderByGlobalMeanRank(
                 Collection<ExpressionCall> calls) {
             log.entry(calls);
-            
             if (calls == null) {
                 return log.exit(null);
             }
             List<ExpressionCall> sortedCalls = new ArrayList<>(new HashSet<ExpressionCall>(calls));
-            Collections.sort(sortedCalls, 
-                    (c1, c2) -> c1.getGlobalMeanRank().compareTo(c2.getGlobalMeanRank()));
+            Collections.sort(sortedCalls, RANK_COMPARATOR);
             return log.exit(sortedCalls);
         }
         
@@ -311,9 +322,16 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                     
                     double distance = measure.compute(refScore, 
                             new double[]{call.getGlobalMeanRank().doubleValue()});
-                    log.trace("Reference score: {} - current score: {} - Distance: {} - Distance threshold: {}", 
+                    if (log.isTraceEnabled()) {
+                        log.trace("Reference score: {} - current score: {} - Distance: {} - "
+                                + "Distance threshold: {} - Compare to min: {} - "
+                                + "Rank of first member: {}, Distance to ref: {}", 
                               refScore[0], call.getGlobalMeanRank().doubleValue(), 
-                              distance, distanceThreshold);
+                              distance, distanceThreshold, compareToMin, 
+                              groupMember.get(0).getGlobalMeanRank().doubleValue(), 
+                              measure.compute(refScore, 
+                                  new double[]{groupMember.get(0).getGlobalMeanRank().doubleValue()}));
+                    }
                     
                         //if the distance between the ref score 
                         //and the currently iterated score is over the threshold 
@@ -329,11 +347,13 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                 }
                 
                 if (createGroup) {
+                    log.trace("Create new group");
                     groupIndex++;
                     groupMember = new ArrayList<>();
                 }
                 groupMember.add(call);
                 callsToGroup.put(call, groupIndex);
+                log.trace("Assign Call {} to group index {}", call, groupIndex);
             }
             
             return log.exit(callsToGroup);

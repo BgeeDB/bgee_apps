@@ -1,5 +1,7 @@
 package org.bgee.model.expressiondata;
 
+import java.util.Comparator;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,8 +19,15 @@ import org.apache.logging.log4j.Logger;
 //XXX: how to manage multi-species conditions? Should we have a class SingleSpeciesCondition 
 //and a class MultiSpeciesCondition? Or, only a Condition, using a "SingleSpeciesAnatEntity" 
 //or a "MultiSpeciesAnatEntity", etc?
-public class Condition {
+public class Condition implements Comparable<Condition> {
     private final static Logger log = LogManager.getLogger(Condition.class.getName());
+
+    /**
+     * A {@code Comparator} of {@code Condition}s used for {@link #compareTo(Condition)}.
+     */
+    private static final Comparator<Condition> COND_COMPARATOR = Comparator
+            .comparing(Condition::getAnatEntityId, Comparator.nullsLast(String::compareTo))
+            .thenComparing(Condition::getDevStageId, Comparator.nullsLast(String::compareTo));
     
     /**
      * @see #getAnatEntityId()
@@ -87,8 +96,13 @@ public class Condition {
     }
 
     //*********************************
-    //  HASHCODE/EQUALS/TOSTRING
+    //  COMPARETO/HASHCODE/EQUALS/TOSTRING
     //*********************************
+    @Override
+    public int compareTo(Condition other) {
+        return COND_COMPARATOR.compare(this, other);
+    }
+    
     @Override
     public int hashCode() {
         final int prime = 31;

@@ -649,6 +649,16 @@ implements ExpressionCallDAO {
                     case MEAN_RANK: 
                         orderBy = "globalMeanRank";
                         break;
+                    case GENE_ID: 
+                        orderBy = exprTableName + ".geneId";
+                        break;
+                    case ANAT_ENTITY_ID: 
+                        orderBy = exprTableName + ".anatEntityId";
+                        break;
+                    case STAGE_ID: 
+                        orderBy = (realIncludeSubStages? propagatedStageTableName: exprTableName) 
+                                + ".stageId";
+                        break;
                     default: 
                         throw log.throwing(new IllegalStateException("Unsupported OrderingAttribute: " 
                                 + entry.getKey()));

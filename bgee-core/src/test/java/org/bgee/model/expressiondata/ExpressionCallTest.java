@@ -40,22 +40,28 @@ public class ExpressionCallTest extends TestAncestor {
         ExpressionCall c1 = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("1.25"));
         ExpressionCall c2 = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("1.27"));
         ExpressionCall c3 = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("10000"));
-        ExpressionCall c4 = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("40000"));
-        ExpressionCall c5 = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("40010"));
+        ExpressionCall c4 = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("20000"));
+        ExpressionCall c5 = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("40000"));
+        ExpressionCall c6 = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("40010"));
+        ExpressionCall c7 = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("70000"));
+        ExpressionCall c8 = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("70010"));
         //on purpose we incorrectly order the calls (regression test)
-        List<ExpressionCall> toCluster = Arrays.asList(c5, c1, c3, c4, c2);
+        List<ExpressionCall> toCluster = Arrays.asList(c5, c1, c7, c3, c6, c8, c4, c2);
         Map<ExpressionCall, Integer> expectedClusters = new HashMap<>();
         expectedClusters.put(c1, 0);
         expectedClusters.put(c2, 0);
         expectedClusters.put(c3, 1);
         expectedClusters.put(c4, 2);
-        expectedClusters.put(c5, 2);
+        expectedClusters.put(c5, 3);
+        expectedClusters.put(c6, 3);
+        expectedClusters.put(c7, 4);
+        expectedClusters.put(c8, 4);
         
         for (ExpressionCall.ClusteringMethod method: ExpressionCall.ClusteringMethod.values()) {
             log.debug("Testing clustering method: " + method.name());
             assertEquals("Incorrect clustering of expression scores for method: " + method.name(), 
                     expectedClusters, 
-                    ExpressionCall.generateMeanRankScoreClustering(toCluster, method, 0.2));
+                    ExpressionCall.generateMeanRankScoreClustering(toCluster, method, 0.1));
         }
     }
     

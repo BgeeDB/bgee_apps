@@ -212,6 +212,8 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                 }
             }
             
+            //DBScan doesn't use a sorted List, but we need one to "fill the gaps" 
+            //caused by DBScan outliers, see later. 
             List<ExpressionCall> sortedCalls = filterAndOrderByGlobalMeanRank(calls);
             
             DBSCANClusterer<ExpressionCallClusterable> clusterer = 
@@ -228,25 +230,23 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             }).collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
             log.debug("Original DBScan clustering: {}", tmpCallsToGroup);
             
-            //Now, we fill the ExpressionCalls missing from the clustering because of outliers. 
+            //Now, we fill the ExpressionCalls missing from the clustering because of outliers.
             Map<ExpressionCall, Integer> callsToGroup = new HashMap<>();
-            //important to set the following variables to -1 and not to null
             int computedGroupIndex = -1;
-            int lastRealGroupIndex = -1;
-            Integer lastIndex = -1;
+            Integer lastIndex = null;
             for (ExpressionCall call: sortedCalls) {
                 Integer groupIndex = tmpCallsToGroup.get(call);
-                //if the call was the first of an outlier serie, we create a new cluster for them. 
-                //Or, if we are really iterating a new group
-                if ((groupIndex == null && lastIndex != null) || 
-                        (groupIndex != null && (groupIndex != lastRealGroupIndex || lastIndex == null))) {
+                //we create a new cluster for each outlier, or if we are really iterating a new group. 
+                //So, in groupIndex is null, we are iterating an outlier, we create a cluster; 
+                //if lastIndex is null, the last call was an outlier, so either we iterate 
+                //another outlier, or a new group, in any case we create a new cluster; 
+                //finally, if groupIndex != lastIndex, we are moving from a real cluster 
+                //to another cluster.
+                if (groupIndex == null || lastIndex == null || groupIndex != lastIndex) {
                     computedGroupIndex++;
                 }
                 callsToGroup.put(call, computedGroupIndex);
                 lastIndex = groupIndex;
-                if (groupIndex != null) {
-                    lastRealGroupIndex = groupIndex;
-                }
             }
             log.debug("Secondary DBScan clustering: {}", callsToGroup);
             

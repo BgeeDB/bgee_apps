@@ -165,7 +165,7 @@ div.dtr-modal div.dtr-modal-display {
 }
 
 .gene-score-shift {
-	border-top: 2px dotted #e2011b;
+	border-top: 1px dotted #920209;
 }
 
 table.dataTable {
@@ -173,6 +173,5 @@ table.dataTable {
 }
 
 .dotted-line {
-    width: 80%;
-    border-top: 2px dotted #e2011b;
+    border-top: 1px dotted #920209;
 }	

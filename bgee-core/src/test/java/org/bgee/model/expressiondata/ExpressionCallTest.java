@@ -61,7 +61,8 @@ public class ExpressionCallTest extends TestAncestor {
             log.debug("Testing clustering method: " + method.name());
             assertEquals("Incorrect clustering of expression scores for method: " + method.name(), 
                     expectedClusters, 
-                    ExpressionCall.generateMeanRankScoreClustering(toCluster, method, 0.1));
+                    ExpressionCall.generateMeanRankScoreClustering(toCluster, method, 
+                            (method.isDistanceMeasureAboveOne()? 1.5: 0.1)));
         }
     }
     
@@ -91,5 +92,17 @@ public class ExpressionCallTest extends TestAncestor {
         
         assertEquals("Incorrect sorting of ExpressionCalls based on their rank", 
                 expectedResult, toSort);
+    }
+    
+    @Test
+    public void testBgeeRankDistance() {
+        ExpressionCall.BgeeRankDistance measure = new ExpressionCall.BgeeRankDistance();
+        
+        double score1 = 12;
+        double score2 = 33;
+        double expected = Math.pow(score2, 1.03)/score1;
+        assertEquals("Incorrect BgeeRankDistance computed", expected, 
+                measure.compute(new double[]{score1}, new double[]{score2}), 0.0000001);
+        
     }
 }

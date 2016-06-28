@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.ml.clustering.Cluster;
 import org.apache.commons.math3.ml.clustering.Clusterable;
 import org.apache.commons.math3.ml.clustering.DBSCANClusterer;
@@ -70,11 +71,33 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          * are all below the distance threshold, using Canberra distance. 
          * </ul>
          * 
+         * @author Frederic Bastian
+         * @version Bgee 13 June 2016
          * @see #generateMeanRankScoreClustering(Collection, ClusteringMethod, double)
+         * @since Bgee 13 June 2016
          */
         public static enum ClusteringMethod {
-            FIXED_CANBERRA_DIST_TO_MAX, CANBERRA_DIST_TO_MAX, CANBERRA_DBSCAN, 
-            CANBERRA_DIST_TO_MEAN, CANBERRA_DIST_TO_MEDIAN, CANBERRA_DIST_TO_MIN;
+            FIXED_CANBERRA_DIST_TO_MAX(false), CANBERRA_DIST_TO_MAX(false), CANBERRA_DBSCAN(false), 
+            CANBERRA_DIST_TO_MEAN(false), CANBERRA_DIST_TO_MEDIAN(false), CANBERRA_DIST_TO_MIN(false), 
+            BGEE_DIST_TO_MAX(true);
+            /**
+             * @see #isDistanceMeasureAboveOne()
+             */
+            private final boolean distanceMeasureAboveOne;
+            /**
+             * @param distanceMeasureAboveOne   See {@link #isDistanceMeasureAboveOne()}.
+             */
+            private ClusteringMethod(boolean distanceMeasureAboveOne) {
+                this.distanceMeasureAboveOne = distanceMeasureAboveOne;
+            }
+            /**
+             * @return  A {@code boolean} defining whether the distance measure 
+             *          used by this clustering method ranges from 0 to 1 (if {@code false}), 
+             *          or if it is always greater than or equal to 1 (if {@code true}).
+             */
+            public boolean isDistanceMeasureAboveOne() {
+                return distanceMeasureAboveOne;
+            }
         }
         /**
          * Used internally to specify the reference score to use when performing 
@@ -85,6 +108,44 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          */
         private static enum DistanceReference {
             MEAN, MEDIAN, MIN, MAX;
+        }
+        
+        /**
+         * A {@code DistanceMeasure} specific to Bgee for clustering {@code ExpressionCall}s 
+         * based on their mean global ranks. The provided {@code Array}s can only have a dimension of 1, 
+         * otherwise a {@code DimensionMismatchException} will be thrown. Values in the {@code Array}s 
+         * can only be stricly positive, otherwise an {@code IllegalArgumentException} will be thrown.
+         * <p>
+         * Distance measure: {@code (max(score1, score2)^1.03)/min(score1, score2)}.
+         * 
+         * @author Frederic Bastian
+         * @version Bgee 13 June 2016
+         * @since Bgee 13 June 2016
+         */
+        protected static class BgeeRankDistance implements DistanceMeasure {
+            private static final long serialVersionUID = -1963975219509338786L;
+
+            @Override
+            public double compute(double[] a, double[] b) 
+                    throws DimensionMismatchException, IllegalArgumentException {
+                if (a.length != 1) {
+                    throw log.throwing(new DimensionMismatchException(a.length, 1));
+                }
+                if (b.length != 1) {
+                    throw log.throwing(new DimensionMismatchException(b.length, 1));
+                }
+                if (a[0] <= 0.000001 || b[0] <= 0.0000001) {
+                    throw log.throwing(new IllegalArgumentException("This distance measure "
+                            + "doesn't manage negative nor near 0 values"));
+                }
+                double max = b[0];
+                double min = a[0];
+                if (a[0] > b[0]) {
+                    max = a[0];
+                    min = b[0];
+                }
+                return log.exit(Math.pow(max, 1.03)/min);
+            }
         }
         
         /**
@@ -172,6 +233,9 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                         new CanberraDistance(), DistanceReference.MAX));
             case FIXED_CANBERRA_DIST_TO_MAX:
                 return log.exit(generateFixedCanberraDistToMaxClustering(calls, distanceThreshold));
+            case BGEE_DIST_TO_MAX:
+                return log.exit(generateDistBasedClustering(calls, distanceThreshold, 
+                        new BgeeRankDistance(), DistanceReference.MAX));
             default: 
                 throw log.throwing(new IllegalArgumentException("Unrecognized clustering method: " 
                         + method));

@@ -3,12 +3,10 @@ package org.bgee.view.html;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.EnumSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
@@ -168,7 +166,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		this.writeln("<div id='table-container'>");
 
 		this.writeln(getExpressionHTMLByAnat(
-		        filterAndGroupByAnatEntity(geneResponse), 
+		        geneResponse.getCallsByAnatEntityId(), 
 		        geneResponse.getClusteringBestEachAnatEntity(), 
 		        geneResponse.getClusteringWithinAnatEntity(), 
 		        geneResponse.getConditionUtils()));
@@ -466,30 +464,6 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		}
 		sb.append("</span>");
 		return log.exit(sb.toString());
-	}
-
-	/**
-	 * Build a {@code Map} associating anatomic entities ID to the {@code List}
-	 * of associated {@code ExpressionCall}s. The order of the input list is
-	 * preserved, and redundant {@code ExpressionCall}s are filtered out.
-	 * 
-	 * @param geneResponse A {@code GeneResponse}, notably containing the {@code List} of 
-	 *                     {@code ExpressionCall}s, and {@code Set} of redundant {@code ExpressionCall}s.
-	 * @return             The @{code {@link LinkedHashMap} containing the association, 
-	 *                     with {@code String}s representing anat. entity ID as key, the associated value 
-	 *                     being a ranked {@code List} of {@code ExpressionCall}s.
-	 */
-	private static LinkedHashMap<String, List<ExpressionCall>> filterAndGroupByAnatEntity(
-	        GeneResponse geneResponse) {
-	    log.entry(geneResponse);
-	    //we explicitly define the Collector, otherwise javac has a bug preventing to infer correct type.
-	    Collector<ExpressionCall, ?, LinkedHashMap<String, List<ExpressionCall>>> collector = 
-	            Collectors.groupingBy(ec -> ec.getCondition().getAnatEntityId(), 
-	                    LinkedHashMap::new, Collectors.toList());
-	    
-		return log.exit(geneResponse.getExprCalls().stream()
-		        .filter(call -> !geneResponse.getRedundantExprCalls().contains(call))
-		        .collect(collector));
 	}
 
 	@Override

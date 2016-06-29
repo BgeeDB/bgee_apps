@@ -520,7 +520,7 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      * @see #GENE_SCORE_CLUSTERING_METHOD_KEY
      * @see #getGeneScoreClusteringMethod()
      */
-    public final static String GENE_SCORE_CLUSTERING_METHOD_DEFAULT = null;  
+    public final static String GENE_SCORE_CLUSTERING_METHOD_DEFAULT = "BGEE_DIST_TO_MAX";  
     /**
      * A {@code String} that is the key to access to the property containing 
      * the distance threshold used when clustering {@code ExpressionCall}s based on 
@@ -538,7 +538,7 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      * @see #GENE_SCORE_CLUSTERING_THRESHOLD_KEY
      * @see #getGeneScoreClusteringThreshold()
      */
-    public final static Double GENE_SCORE_CLUSTERING_THRESHOLD_DEFAULT = null; 
+    public final static Double GENE_SCORE_CLUSTERING_THRESHOLD_DEFAULT = 1.9; 
 
     /**
      * @return  An instance of {@code BgeeProperties} with values based on the System properties

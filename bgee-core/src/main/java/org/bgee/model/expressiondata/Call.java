@@ -418,6 +418,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                 List<ExpressionCall> calls, ClusteringMethod method, double distanceThreshold) 
                         throws IllegalArgumentException {
             log.entry(calls, method, distanceThreshold);
+            long startFilteringTimeInMs = System.currentTimeMillis();
             
             //sanity check
             ExpressionCall previousCall = null;
@@ -434,31 +435,42 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                 }
             }
             
+            Map<ExpressionCall, Integer> clustering = null;
             switch(method) {
             case CANBERRA_DBSCAN: 
-                return log.exit(generateDBScanClustering(calls, distanceThreshold, 1, 
-                        new CanberraDistance()));
+                clustering = generateDBScanClustering(calls, distanceThreshold, 1, 
+                        new CanberraDistance());
+                break;
             case CANBERRA_DIST_TO_MEAN: 
-                return log.exit(generateDistBasedClustering(calls, distanceThreshold, 
-                        new CanberraDistance(), DistanceReference.MEAN));
+                clustering = generateDistBasedClustering(calls, distanceThreshold, 
+                        new CanberraDistance(), DistanceReference.MEAN);
+                break;
             case CANBERRA_DIST_TO_MEDIAN: 
-                return log.exit(generateDistBasedClustering(calls, distanceThreshold, 
-                        new CanberraDistance(), DistanceReference.MEDIAN));
+                clustering = generateDistBasedClustering(calls, distanceThreshold, 
+                        new CanberraDistance(), DistanceReference.MEDIAN);
+                break;
             case CANBERRA_DIST_TO_MIN: 
-                return log.exit(generateDistBasedClustering(calls, distanceThreshold, 
-                        new CanberraDistance(), DistanceReference.MIN));
+                clustering = generateDistBasedClustering(calls, distanceThreshold, 
+                        new CanberraDistance(), DistanceReference.MIN);
+                break;
             case CANBERRA_DIST_TO_MAX:
-                return log.exit(generateDistBasedClustering(calls, distanceThreshold, 
-                        new CanberraDistance(), DistanceReference.MAX));
+                clustering = generateDistBasedClustering(calls, distanceThreshold, 
+                        new CanberraDistance(), DistanceReference.MAX);
+                break;
             case FIXED_CANBERRA_DIST_TO_MAX:
-                return log.exit(generateFixedCanberraDistToMaxClustering(calls, distanceThreshold));
+                clustering = generateFixedCanberraDistToMaxClustering(calls, distanceThreshold);
+                break;
             case BGEE_DIST_TO_MAX:
-                return log.exit(generateDistBasedClustering(calls, distanceThreshold, 
-                        new BgeeRankDistance(), DistanceReference.MAX));
+                clustering = generateDistBasedClustering(calls, distanceThreshold, 
+                        new BgeeRankDistance(), DistanceReference.MAX);
+                break;
             default: 
                 throw log.throwing(new IllegalArgumentException("Unrecognized clustering method: " 
                         + method));
             }
+            log.trace("Calls clustered in {} ms", System.currentTimeMillis() - startFilteringTimeInMs);
+            assert clustering != null;
+            return log.exit(clustering);
         }
         /**
          * Generate a clustering of {@code ExpressionCall}s based on their global mean rank 

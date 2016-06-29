@@ -11,9 +11,13 @@ import org.apache.logging.log4j.Logger;
  * the IDs of an anatomical entity and a developmental stage used in a gene expression condition. 
  * It could be easily extended to also manage other parameters, such as the sex of a sample, 
  * the strain, or other experimental conditions (gene knock-out, drug treatment, etc).
+ * <p>
+ * Note that this class implements {@code Comparable<Condition>}, allowing to perform 
+ * simple comparisons based on the attributes of this class. For an ordering based 
+ * on the relations between {@code Condition}s, see {@link ConditionUtils#compare(Condition, Condition)}.
  * 
  * @author Frederic Bastian
- * @version Bgee 13 Dec. 2015
+ * @version Bgee 13 June 2016
  * @since Bgee 13 Sept. 2015
  */
 //XXX: how to manage multi-species conditions? Should we have a class SingleSpeciesCondition 
@@ -98,6 +102,15 @@ public class Condition implements Comparable<Condition> {
     //*********************************
     //  COMPARETO/HASHCODE/EQUALS/TOSTRING
     //*********************************
+    /**
+     * Performs a simple comparison based on the attributes of this class. For an ordering based 
+     * on the relations between {@code Condition}s, see {@link ConditionUtils#compare(Condition, Condition)}.
+     * 
+     * @param other A {@code Condition} to be compared to this one.
+     * @return      a negative {@code int}, zero, or a positive {@code int} 
+     *              as the first argument is less than, equal to, or greater than the second.
+     * @see ConditionUtils#compare(Condition, Condition)
+     */
     @Override
     public int compareTo(Condition other) {
         return COND_COMPARATOR.compare(this, other);

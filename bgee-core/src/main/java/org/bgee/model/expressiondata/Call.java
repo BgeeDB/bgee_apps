@@ -256,15 +256,127 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         }
         
         /**
-         * Generate a clustering of {@code ExpressionCall}s based on their global mean rank  
-         * (see {@link #getGlobalMeanRank()}), using the {@code ClusteringMethod} {@code CANBERRA_DBSCAN} 
-         * and the distance threshold {@code 0.19}.
+         * Identifies redundant {@code ExpressionCall}s from the provided {@code Collection}. 
+         * This method returns {@code ExpressionCall}s for which there exists a more precise call 
+         * (i.e., with a more precise condition), at a better or equal rank (see 
+         * {@link #getGlobalMeanRank()}). {@code calls} can contain {@code ExpressionCall}s 
+         * for different genes. 
          * 
-         * @param calls A {@code Collection} of {@code ExpressionCall}s with global mean ranks defined.
+         * @param calls            A {@code Collection} of {@code ExpressionCall}s to filter. 
+         *                         If the information of global mean rank or of Condition is missing, 
+         *                         an {@code IllegalArgumentException} is thrown. 
+         * @param conditionUtils   A {@code ConditionUtils}, containing all the {@code Condition}s 
+         *                         related to {@code calls}. Otherwise, an {@code IllegalArgumentException} 
+         *                         is thrown. 
+         * @return                 A {@code Set} containing the {@code ExpressionCall}s that are redundant.
+         * @throws IllegalArgumentException If the {@code Condition} of a provided {@code ExpressionCall} 
+         *                                  could not be found in the provided {@code ConditionUtils}, 
+         *                                  or if an information of global mean rank or of Condition 
+         *                                  was missing in an {@code ExpressionCall}.
+         * @see #identifyRedundantCalls(List, ConditionUtils)
+         * @see ConditionUtils#isConditionMorePrecise(Condition, Condition)
+         * @see ConditionUtils#getDescendantConditions(Condition)
+         */
+        public static Set<ExpressionCall> identifyRedundantCalls(Collection<ExpressionCall> calls, 
+                ConditionUtils conditionUtils) throws IllegalArgumentException {
+            log.entry(calls, conditionUtils);
+            
+            //for the computations, we absolutely need to order the calls using RankComparator
+            return log.exit(identifyRedundantCalls(filterAndOrderByGlobalMeanRank(calls, conditionUtils), 
+                    conditionUtils));
+            
+        }
+        
+        /**
+         * Identifies redundant {@code ExpressionCall}s using an already sorted {@code List}. 
+         * This method performs exactly the same operation as {@link #identifyRedundantCalls(
+         * Collection, ConditionUtils)}, but is provided for performance issue: several methods, 
+         * in this class and outside, absolutely need to use a {@code List} of {@code ExpressionCall}s 
+         * sorted by the {@code RankComparator} using a {@code ConditionUtils}, which can be costly 
+         * for considering relations between {@code Condition}s; it is then possible 
+         * to sort a {@code List} of {@code ExpressionCall}s outside of this method, to reuse it 
+         * for different method calls.
+         * 
+         * @param calls            A {@code List} of {@code ExpressionCall}s to filter, sorted using 
+         *                         the {@code RankComparator}. 
+         * @param conditionUtils   A {@code ConditionUtils}, containing all the {@code Condition}s 
+         *                         related to {@code calls}. Otherwise, an {@code IllegalArgumentException} 
+         *                         is thrown. 
+         * @return                 A {@code Set} containing the {@code ExpressionCall}s that are redundant.
+         * @throws IllegalArgumentException If the {@code Condition} of a provided {@code ExpressionCall} 
+         *                                  could not be found in the provided {@code ConditionUtils}, 
+         *                                  or if an information of global mean rank or of Condition 
+         *                                  was missing in an {@code ExpressionCall}, or if the list 
+         *                                  was not sorted at least based on ranks.
+         * @see ExpressionCall.RankComparator
+         * @see ConditionUtils#isConditionMorePrecise(Condition, Condition)
+         * @see ConditionUtils#getDescendantConditions(Condition)
+         */
+        public static Set<ExpressionCall> identifyRedundantCalls(List<ExpressionCall> calls, 
+                ConditionUtils conditionUtils) throws IllegalArgumentException {
+            log.entry(calls, conditionUtils);
+        
+            long startFilteringTimeInMs = System.currentTimeMillis();
+            
+            Set<ExpressionCall> redundantCalls = new HashSet<>();
+            Set<ExpressionCall> validatedCalls = new HashSet<>();
+            ExpressionCall previousCall = null;
+            for (ExpressionCall call: calls) {
+                //We cannot make sure that the List was ordered using a RankComparator 
+                //with a ConditionUtils, it would be too costly, but we perform a minimal check 
+                //on ranks and conditions
+                if (call.getGlobalMeanRank() == null) {
+                    throw log.throwing(new IllegalArgumentException("Missing rank for call: "
+                            + call));
+                }
+                if (call.getCondition() == null) {
+                    throw log.throwing(new IllegalArgumentException("Missing Condition for call: "
+                            + call));
+                }
+                if (previousCall != null && 
+                        previousCall.getGlobalMeanRank().compareTo(call.getGlobalMeanRank()) > 0) {
+                    throw log.throwing(new IllegalArgumentException("Provided List incorrectly sorted"));
+                }
+                
+                //Retrieve the validated conditions for the currently iterated gene
+                Set<Condition> validatedConditions = validatedCalls.stream()
+                        .filter(c -> Objects.equals(c.getGeneId(), call.getGeneId()))
+                        .map(ExpressionCall::getCondition)
+                        .collect(Collectors.toSet());
+                //check whether any of the validated Condition is a descendant 
+                //of the Condition of the iterated call
+                if (validatedConditions.isEmpty() || Collections.disjoint(validatedConditions, 
+                        conditionUtils.getDescendantConditions(call.getCondition()))) {
+                    
+                    log.trace("Valid call: {}", call);
+                    validatedCalls.add(call);
+                } else {
+                    log.trace("Redundant call: {}", call);
+                    redundantCalls.add(call);
+                }
+                previousCall = call;
+            }
+            
+            log.debug("Redundant calls filtered in {} ms", System.currentTimeMillis() - startFilteringTimeInMs);
+            return log.exit(redundantCalls);
+        }
+        
+        /**
+         * Generate a clustering of {@code ExpressionCall}s based on their global mean rank 
+         * (see {@link #getGlobalMeanRank()}). The {@code ExpressionCall}s of only one gene 
+         * can be clustered at a time, otherwise an {@code IllegalArgumentException} is thrown.
+         * 
+         * @param calls             A {@code Collection} of {@code ExpressionCall}s of one gene 
+         *                          with global mean ranks defined.
+         * @param method            The {@code ClusteringMethod} to use for clustering. 
+         * @param distanceThreshold A {@code double} that is the distance threshold applied to 
+         *                          the {@code ClusteringMethod}. 
          * @return      A {@code Map} where keys are {@code ExpressionCall}s, the associated value 
          *              being the index of the group in which they are clustered, 
          *              based on their expression score. Group indexes are assigned in ascending 
          *              order of expression score, starting from 0.
+         * @throws IllegalArgumentException If {@code calls} represents the expression of several genes, 
+         *                                  of if the global mean ranks are not defined. 
          */
         public static Map<ExpressionCall, Integer> generateMeanRankScoreClustering(
                 Collection<ExpressionCall> calls, ClusteringMethod method, double distanceThreshold) 

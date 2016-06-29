@@ -146,4 +146,53 @@ public class ExpressionCallTest extends TestAncestor {
                 measure.compute(new double[]{score1}, new double[]{score2}), 0.0000001);
         
     }
+    
+    /**
+     * Test for {@link ExpressionCall#identifyRedundantCalls(Collection, ConditionUtils)}.
+     */
+    @Test
+    public void shouldIdentifyRedundantCalls() {
+      //These calls and conditions allow a regression test for management of equal ranks
+        //cond2 and cond3 will be considered more precise than cond1, and unrelated to each other
+        Condition cond1 = new Condition("Anat1", "stage1");
+        Condition cond2 = new Condition("Anat2", "stage1");
+        Condition cond3 = new Condition("Anat3", "stage1");
+        //we mock the ConditionUtils used to compare Conditions
+        ConditionUtils condUtils = mock(ConditionUtils.class);
+        Set<Condition> allConds = new HashSet<>(Arrays.asList(cond1, cond2, cond3));
+        when(condUtils.getConditions()).thenReturn(allConds);
+        when(condUtils.compare(cond1, cond1)).thenReturn(0);
+        when(condUtils.compare(cond2, cond2)).thenReturn(0);
+        when(condUtils.compare(cond3, cond3)).thenReturn(0);
+        when(condUtils.compare(cond1, cond2)).thenReturn(1);
+        when(condUtils.compare(cond2, cond1)).thenReturn(-1);
+        when(condUtils.compare(cond1, cond3)).thenReturn(1);
+        when(condUtils.compare(cond3, cond1)).thenReturn(-1);
+        when(condUtils.compare(cond2, cond3)).thenReturn(0);
+        when(condUtils.compare(cond3, cond2)).thenReturn(0);
+        when(condUtils.getDescendantConditions(cond1)).thenReturn(new HashSet<>(Arrays.asList(cond2, cond3)));
+        when(condUtils.getDescendantConditions(cond2)).thenReturn(new HashSet<>());
+        when(condUtils.getDescendantConditions(cond3)).thenReturn(new HashSet<>());
+        
+        
+        //Nothing too complicated with gene ID1, c3 is redundant
+        ExpressionCall c1 = new ExpressionCall("ID1", cond3, null, null, null, null, new BigDecimal("1.25000"));
+        ExpressionCall c2 = new ExpressionCall("ID1", cond2, null, null, null, null, new BigDecimal("2.0"));
+        ExpressionCall c3 = new ExpressionCall("ID1", cond1, null, null, null, null, new BigDecimal("3.00"));
+        //for gene ID2 we test identification with equal ranks and relations between conditions. 
+        //c4 is redundant because less precise condition
+        ExpressionCall c4 = new ExpressionCall("ID2", cond1, null, null, null, null, new BigDecimal("1.250"));
+        ExpressionCall c5 = new ExpressionCall("ID2", cond3, null, null, null, null, new BigDecimal("1.25000"));
+        ExpressionCall c6 = new ExpressionCall("ID2", cond2, null, null, null, null, new BigDecimal("1.25"));
+        //for gene ID3 we test identification with equal ranks and relations between conditions. 
+        //nothing redundant
+        ExpressionCall c7 = new ExpressionCall("ID3", cond1, null, null, null, null, new BigDecimal("1"));
+        ExpressionCall c8 = new ExpressionCall("ID3", cond3, null, null, null, null, new BigDecimal("1.25000"));
+        ExpressionCall c9 = new ExpressionCall("ID3", cond2, null, null, null, null, new BigDecimal("1.25"));
+        
+        Set<ExpressionCall> withRedundancy = new HashSet<>(Arrays.asList(c1, c2, c3, c4, c5, c6, c7, c8, c9));
+        Set<ExpressionCall> expectedRedundants = new HashSet<>(Arrays.asList(c3, c4));
+        assertEquals("Incorrect redundant calls identified", 
+                expectedRedundants, ExpressionCall.identifyRedundantCalls(withRedundancy, condUtils));
+    }
 }

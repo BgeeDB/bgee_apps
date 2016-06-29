@@ -1,13 +1,17 @@
 package org.bgee.model.expressiondata;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -45,8 +49,8 @@ public class ExpressionCallTest extends TestAncestor {
         ExpressionCall c6 = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("40010"));
         ExpressionCall c7 = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("70000"));
         ExpressionCall c8 = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("70010"));
-        //on purpose we incorrectly order the calls (regression test)
-        List<ExpressionCall> toCluster = Arrays.asList(c5, c1, c7, c3, c6, c8, c4, c2);
+        //we'd like to incorrectly order the calls, but there is a method signature accepting a List...
+        Set<ExpressionCall> toCluster = new HashSet<>(Arrays.asList(c5, c1, c7, c3, c6, c8, c4, c2));
         Map<ExpressionCall, Integer> expectedClusters = new HashMap<>();
         expectedClusters.put(c1, 0);
         expectedClusters.put(c2, 0);
@@ -67,30 +71,67 @@ public class ExpressionCallTest extends TestAncestor {
     }
     
     /**
-     * Test {@link ExpressionCall#RANK_COMPARATOR}.
+     * Test {@link ExpressionCall.RankComparator}.
      */
     @Test
     public void testRankComparator() {
+        
+        //These calls and conditions allow a regression test for management of equal ranks
+        //cond2 and cond3 will be considered more precise than cond1, and unrelated to each other. 
+        //It is important for the test that cond1 would be sorted first alphabetically. 
+        Condition cond1 = new Condition("Anat1", "stage1");
+        Condition cond2 = new Condition("Anat2", "stage1");
+        Condition cond3 = new Condition("Anat3", "stage1");
+        //we mock the ConditionUtils used to compare Conditions
+        ConditionUtils condUtils = mock(ConditionUtils.class);
+        Set<Condition> allConds = new HashSet<>(Arrays.asList(cond1, cond2, cond3));
+        when(condUtils.getConditions()).thenReturn(allConds);
+        when(condUtils.compare(cond1, cond1)).thenReturn(0);
+        when(condUtils.compare(cond2, cond2)).thenReturn(0);
+        when(condUtils.compare(cond3, cond3)).thenReturn(0);
+        when(condUtils.compare(cond1, cond2)).thenReturn(1);
+        when(condUtils.compare(cond2, cond1)).thenReturn(-1);
+        when(condUtils.compare(cond1, cond3)).thenReturn(1);
+        when(condUtils.compare(cond3, cond1)).thenReturn(-1);
+        when(condUtils.compare(cond2, cond3)).thenReturn(0);
+        when(condUtils.compare(cond3, cond2)).thenReturn(0);
+
         ExpressionCall c1 = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("1.25"));
-        
-        //These calls allow a regression test for management of equal ranks
-        ExpressionCall c2 = new ExpressionCall("ID1", new Condition("Anat1", "stage1"), null, null, 
+
+        //test ordering by geneId
+        ExpressionCall c2 = new ExpressionCall("ID0", null, null, null, null, null, new BigDecimal("1.27"));
+        //Test ordering based on Conditions
+        //anat2 will be considered more precise than anat1, and as precise as anat3, 
+        //the order between anat2 and anat3 should be based on their attributes
+        ExpressionCall c3 = new ExpressionCall("ID1", cond2, null, null, 
                 null, null, new BigDecimal("1.27"));
-        ExpressionCall c3 = new ExpressionCall("ID1", new Condition("Anat1", null), null, null, 
+        //anat3 will be considered more precise than anat1, so we will have different ordering 
+        //whether we consider the relations between Conditions, or only attributes of Conditions
+        ExpressionCall c4 = new ExpressionCall("ID1", cond3, null, null, 
                 null, null, new BigDecimal("1.27"));
-        ExpressionCall c4 = new ExpressionCall("ID1", null, null, null, null, null, new BigDecimal("1.27"));
-        ExpressionCall c5 = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("1.27"));
-        ExpressionCall c6 = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("1.27"));
+        ExpressionCall c5 = new ExpressionCall("ID1", cond1, null, null, 
+                null, null, new BigDecimal("1.27"));
+        //test null Conditions last
+        ExpressionCall c6 = new ExpressionCall("ID1", null, null, null, null, null, new BigDecimal("1.27"));
+        //test null geneID last
+        ExpressionCall c7 = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("1.27"));
+        //test equal ExpressionCalls
+        ExpressionCall c8 = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("1.27"));
         
-        ExpressionCall c7 = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("10000"));
-        ExpressionCall c8 = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("40000"));
-        ExpressionCall c9 = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("40010"));
+        ExpressionCall c9 = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("10000"));
+        ExpressionCall c10 = new ExpressionCall(null, null, null, null, null, null, new BigDecimal("40000"));
         
-        List<ExpressionCall> toSort = Arrays.asList(c2, c1, c6, c8, c4, c9, c7, c3, c5);
-        List<ExpressionCall> expectedResult = Arrays.asList(c1, c2, c3, c4, c5, c5, c7, c8, c9);
-        Collections.sort(toSort, ExpressionCall.RANK_COMPARATOR);
+        List<ExpressionCall> toSort = Arrays.asList(c10, c2, c1, c6, c8, c4, c9, c7, c3, c5);
+        List<ExpressionCall> expectedResult = Arrays.asList(c1, c2, c3, c4, c5, c6, c7, c7, c9, c10);
+        Collections.sort(toSort, new ExpressionCall.RankComparator(condUtils));
         
-        assertEquals("Incorrect sorting of ExpressionCalls based on their rank", 
+        assertEquals("Incorrect sorting of ExpressionCalls based on their rank and relations", 
+                expectedResult, toSort);
+        
+        //ordering without taking the relations between Conditions into account
+        expectedResult = Arrays.asList(c1, c2, c5, c3, c4, c6, c7, c7, c9, c10);
+        Collections.sort(toSort, new ExpressionCall.RankComparator());
+        assertEquals("Incorrect sorting of ExpressionCalls based on their rank without relations", 
                 expectedResult, toSort);
     }
     

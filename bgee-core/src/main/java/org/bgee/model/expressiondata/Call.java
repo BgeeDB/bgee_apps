@@ -13,6 +13,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -149,34 +150,108 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         }
         
         /**
-         * A {@code Comparator} to sort {@code ExpressionCall}s based on their global mean rank 
-         * (see {@link #getGlobalMeanRank()}), and provide consistent comparisons 
-         * in case of rank equality. 
+         * A {@code Comparator} of {@code ExpressionCall}s, performing the following comparisons 
+         * in order: 
+         * <ol>
+         * <li>comparison based on {@link ExpressionCall#getGlobalMeanRank()}
+         * <li>in case of equality, comparison based on {@link ExpressionCall#getGeneId()}
+         * <li>in case of equality, and if a {@code ConditionUtils} was provided at instantiation, 
+         * comparison based on the relations between {@code Condition}s (see 
+         * {@link ExpressionCall#getCondition()} and {@link ConditionUtils#compare(Condition, Condition)})
+         * <li>in case of equality, comparison based on the attributes of {@code Condition}s 
+         * (see {@link ExpressionCall#getCondition()} and {@link Condition#compareTo(Condition)}.
+         * </ol>
+         * 
+         * @author Frederic Bastian
+         * @version Bgee 13 June 2016
+         * @since Bgee 13 June 2016
+         *
          */
-        public final static Comparator<ExpressionCall> RANK_COMPARATOR = Comparator
-                .comparing(ExpressionCall::getGlobalMeanRank, Comparator.nullsLast(BigDecimal::compareTo))
-                //important in case of score equality
-                .thenComparing(ExpressionCall::getGeneId, Comparator.nullsLast(String::compareTo))
-                .thenComparing(ExpressionCall::getCondition, Comparator.nullsLast(Condition::compareTo));
+        public static class RankComparator implements Comparator<ExpressionCall> {
+            /**
+             * The {@code Comparator} to use in method {@link #compare(ExpressionCall, ExpressionCall)}.
+             */
+            private final Comparator<ExpressionCall> rankComparator;
+            /**
+             * The {@code ConditionUtils} used by the {@link #rankComparator}. Can be {@code null}.
+             */
+            private final ConditionUtils conditionUtils;
+            
+            /**
+             * Instantiate a {@code RankComparator} not using any {@code ConditionUtils}.
+             */
+            public RankComparator() {
+                this(null);
+            }
+            /**
+             * Instantiate a {@code RankComparator} that can take into account 
+             * relations between {@code Condition}s, thanks to a {@code ConditionUtils}.
+             * 
+             * @param condUtils A {@code ConditionUtils} used to sort {@code Condition}s based on 
+             *                  their relations between each other, in case of equal ranks 
+             *                  and equal gene IDs. Can be {@code null} if it is not needed 
+             *                  to do such a sorting based on relations.
+             */
+            public RankComparator(ConditionUtils condUtils) {
+                Comparator<ExpressionCall> tmpComparator = Comparator
+                        //Order first by global mean rank
+                        .comparing(ExpressionCall::getGlobalMeanRank, 
+                                Comparator.nullsLast(Comparator.naturalOrder()))
+                        //important in case of score equality: 
+                        //Order by genes
+                        .thenComparing(ExpressionCall::getGeneId, 
+                                Comparator.nullsLast(Comparator.naturalOrder()));
+                if (condUtils != null) {
+                    tmpComparator = tmpComparator
+                            //Then, we want the most precise conditions first (for the method 
+                            //identifyRedundantCalls, and also for better display)
+                            .thenComparing(ExpressionCall::getCondition, 
+                                    Comparator.nullsLast(condUtils::compare));
+                }
+                this.rankComparator = tmpComparator
+                        //If everything else fails, simply order by the attributes of the Condition
+                        .thenComparing(ExpressionCall::getCondition, 
+                                Comparator.nullsLast(Comparator.naturalOrder()));
+                this.conditionUtils = condUtils;
+            }
+            @Override
+            public int compare(ExpressionCall call1, ExpressionCall call2) {
+                log.entry(call1, call2);
+                return log.exit(this.rankComparator.compare(call1, call2));
+            }
+            /**
+             * @return  The {@code ConditionUtils} used by this {@code Comparator}. Can be {@code null} 
+             *          if none was used. 
+             */
+            public ConditionUtils getConditionUtils() {
+                return conditionUtils;
+            }
+        }
         
         /**
-         * Remove equal calls from the {@code Collection} and order them based on their global mean rank 
-         * (see {@link #getGlobalMeanRank()}).
+         * Remove equal calls from the {@code Collection} and order them using 
+         * {@link ExpressionCall.RankComparator}.
          * 
-         * @param calls A {@code Collection} of {@code ExpressionCall}s to filter for redundant calls 
-         *              and to order based on their global mean rank.
-         * @return      A {@code List} of {@code ExpressionCall}s filtered and ordered. 
-         *              {@code null} if {@code calls} was {@code null}.
-         * @see #RANK_COMPARATOR
+         * @param calls     A {@code Collection} of {@code ExpressionCall}s to filter 
+         *                  for redundant calls and to order based on their global mean rank.
+         * @param condUtils A {@code ConditionUtils} used to sort {@code Condition}s based on 
+         *                  their relations between each other, in case of equal ranks 
+         *                  and equal gene IDs. Can be {@code null} if it is not needed 
+         *                  to do such a sorting based on relations.
+         * @return          A {@code List} of {@code ExpressionCall}s filtered and ordered. 
+         *                  {@code null} if {@code calls} was {@code null}.
+         * @see ExpressionCall.RankComparator
          */
         private static List<ExpressionCall> filterAndOrderByGlobalMeanRank(
-                Collection<ExpressionCall> calls) {
-            log.entry(calls);
+                Collection<ExpressionCall> calls, ConditionUtils conditionUtils) {
+            log.entry(calls, conditionUtils);
             if (calls == null) {
                 return log.exit(null);
             }
             List<ExpressionCall> sortedCalls = new ArrayList<>(new HashSet<ExpressionCall>(calls));
-            Collections.sort(sortedCalls, RANK_COMPARATOR);
+            long startFilteringTimeInMs = System.currentTimeMillis();
+            Collections.sort(sortedCalls, new RankComparator(conditionUtils));
+            log.debug("Calls sorted in {} ms", System.currentTimeMillis() - startFilteringTimeInMs);
             return log.exit(sortedCalls);
         }
         
@@ -192,17 +267,31 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          *              order of expression score, starting from 0.
          */
         public static Map<ExpressionCall, Integer> generateMeanRankScoreClustering(
-                Collection<ExpressionCall> calls) {
-            log.entry(calls);
-            return log.exit(generateMeanRankScoreClustering(
-                    calls, ClusteringMethod.CANBERRA_DBSCAN, 0.19));
+                Collection<ExpressionCall> calls, ClusteringMethod method, double distanceThreshold) 
+                        throws IllegalArgumentException {
+            log.entry(calls, method, distanceThreshold);
+
+            //for the computations, we need a List sorted by rank, but we don't need to take 
+            //relations between Conditions into account
+            return log.exit(generateMeanRankScoreClustering(filterAndOrderByGlobalMeanRank(calls, null), 
+                    method, distanceThreshold));
+            
         }
+
         /**
-         * Generate a clustering of {@code ExpressionCall}s based on their global mean rank 
-         * (see {@link #getGlobalMeanRank()}).
+         * Generate a clustering of {@code ExpressionCall}s using a {@code List}. 
+         * This method performs exactly the same operation as {@link #generateMeanRankScoreClustering(
+         * Collection, ClusteringMethod, double)}, but is provided for performance issue: 
+         * some clustering methods need to sort the {@code ExpressionCall}s based on their rank, 
+         * and several methods, in this class or outside, absolutely need to use a {@code List} 
+         * of {@code ExpressionCall}s sorted by the {@code RankComparator}, 
+         * which can be costly when relations between {@code Condition}s need to be considered; 
+         * because the clustering needs to be consistent with such lists, it is then possible 
+         * to sort a {@code List} of {@code ExpressionCall}s outside of this method, to reuse it 
+         * for different method calls.
          * 
-         * @param calls             A {@code Collection} of {@code ExpressionCall}s 
-         *                          with global mean ranks defined.
+         * @param calls             A {@code List} of {@code ExpressionCall}s of one gene 
+         *                          sorted at least by their global mean ranks.
          * @param method            The {@code ClusteringMethod} to use for clustering. 
          * @param distanceThreshold A {@code double} that is the distance threshold applied to 
          *                          the {@code ClusteringMethod}. 
@@ -210,10 +299,28 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          *              being the index of the group in which they are clustered, 
          *              based on their expression score. Group indexes are assigned in ascending 
          *              order of expression score, starting from 0.
+         * @throws IllegalArgumentException If {@code calls} is not correctly sorted, 
+         *                                  or represents the expression of several genes. 
          */
         public static Map<ExpressionCall, Integer> generateMeanRankScoreClustering(
-                Collection<ExpressionCall> calls, ClusteringMethod method, double distanceThreshold) {
+                List<ExpressionCall> calls, ClusteringMethod method, double distanceThreshold) 
+                        throws IllegalArgumentException {
             log.entry(calls, method, distanceThreshold);
+            
+            //sanity check
+            ExpressionCall previousCall = null;
+            for (ExpressionCall call: calls) {
+                if (previousCall != null) { 
+                    if (previousCall.getGlobalMeanRank().compareTo(call.getGlobalMeanRank()) > 0) {
+                        throw log.throwing(new IllegalArgumentException(
+                                "Provided List incorrectly sorted"));
+                    }
+                    if (!Objects.equals(previousCall.getGeneId(), call.getGeneId())) {
+                        throw log.throwing(new IllegalArgumentException(
+                                "A clustering can only be performed one gene at a time"));
+                    }
+                }
+            }
             
             switch(method) {
             case CANBERRA_DBSCAN: 
@@ -246,7 +353,9 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          * using DBScan (see {@link #getGlobalMeanRank()} and <a href='https://commons.apache.org/proper/commons-math/apidocs/org/apache/commons/math3/ml/clustering/DBSCANClusterer.html'>
          * org.apache.commons.math3.ml.clustering.DBSCANClusterer</a>).
          * 
-         * @param calls     A {@code Collection} of {@code ExpressionCall}s with global mean ranks defined.
+         * @param calls     A {@code List} of {@code ExpressionCall}s ordered by their global mean rank. 
+         *                  DBScan doesn't use a sorted List, but we need one to "fill the gaps" 
+         *                  caused by DBScan outliers.
          * @param epislon   A {@code double} that is the distance radius to use for DBScan.
          * @param minSize   An {@code int} that is the minimum size of a resulting cluster.
          * @param measure   A {@code DistanceMeasure} to compute distances. 
@@ -256,7 +365,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          *                  order of expression score, starting from 0.
          */
         private static Map<ExpressionCall, Integer> generateDBScanClustering(
-                Collection<ExpressionCall> calls, double epislon, int minSize, DistanceMeasure measure) {
+                List<ExpressionCall> calls, double epislon, int minSize, DistanceMeasure measure) {
             log.entry(calls, epislon, minSize, measure);
 
             /**
@@ -277,14 +386,10 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                 }
             }
             
-            //DBScan doesn't use a sorted List, but we need one to "fill the gaps" 
-            //caused by DBScan outliers, see later. 
-            List<ExpressionCall> sortedCalls = filterAndOrderByGlobalMeanRank(calls);
-            
             DBSCANClusterer<ExpressionCallClusterable> clusterer = 
                     new DBSCANClusterer<>(epislon, minSize, measure);
             List<Cluster<ExpressionCallClusterable>> clusters = clusterer.cluster(
-                    sortedCalls.stream().map(ExpressionCallClusterable::new).collect(Collectors.toList()));
+                    calls.stream().map(ExpressionCallClusterable::new).collect(Collectors.toList()));
             
             //first, we extract a mapping ExpressionCall -> group index from DBScan clustering
             Map<ExpressionCall, Integer> tmpCallsToGroup = clusters.stream().flatMap(c -> {
@@ -299,7 +404,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             Map<ExpressionCall, Integer> callsToGroup = new HashMap<>();
             int computedGroupIndex = -1;
             Integer lastIndex = null;
-            for (ExpressionCall call: sortedCalls) {
+            for (ExpressionCall call: calls) {
                 Integer groupIndex = tmpCallsToGroup.get(call);
                 //we create a new cluster for each outlier, or if we are really iterating a new group. 
                 //So, in groupIndex is null, we are iterating an outlier, we create a cluster; 
@@ -321,8 +426,8 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          * Generate a clustering of {@code ExpressionCall}s based on their global mean rank 
          * using distance from a reference score, defined depending on {@code ref} argument.
          * 
-         * @param calls                 A {@code Collection} of {@code ExpressionCall}s 
-         *                              with global mean ranks defined.
+         * @param calls                 A {@code List} of {@code ExpressionCall}s 
+         *                              ordered by their global mean rank.
          * @param distanceThreshold     A {@code double} that is the distance threshold to the reference 
          *                              score of a cluster to consider a call outside of the cluster.
          * @param measure               A {@code DistanceMeasure} to compute distances.
@@ -340,16 +445,14 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          *                  order of expression score, starting from 0.
          */
         private static Map<ExpressionCall, Integer> generateDistBasedClustering(
-                Collection<ExpressionCall> calls, double distanceThreshold, 
+                List<ExpressionCall> calls, double distanceThreshold, 
                 DistanceMeasure measure, DistanceReference ref) {
             log.entry(calls, distanceThreshold, measure, ref);
-            
-            List<ExpressionCall> sortedCalls = filterAndOrderByGlobalMeanRank(calls);
             
             Map<ExpressionCall, Integer> callsToGroup = new HashMap<>();
             int groupIndex = -1;
             List<ExpressionCall> groupMember = null;
-            for (ExpressionCall call: sortedCalls) {
+            for (ExpressionCall call: calls) {
                 log.trace("Iterating call for distance-based clustering: {}", call);
                 boolean createGroup = false;
 
@@ -427,8 +530,8 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         /**
          * Generates clustering for {@link ClusteringMethod FIXED_CANBERRA_DIST_TO_MAX}.
          * 
-         * @param calls                 A {@code Collection} of {@code ExpressionCall}s 
-         *                              with global mean ranks defined.
+         * @param calls                 A {@code List} of {@code ExpressionCall}s 
+         *                              ordered by their global mean rank.
          * @param distanceThreshold     A {@code double} that is the distance threshold to the reference 
          *                              score of a cluster to consider a call outside of the cluster.
          * @return          A {@code Map} where keys are {@code ExpressionCall}s, the associated value 
@@ -437,17 +540,14 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          *                  order of expression score, starting from 0.
          */
         private static Map<ExpressionCall, Integer> generateFixedCanberraDistToMaxClustering(
-                Collection<ExpressionCall> calls, double distanceThreshold) {
+                List<ExpressionCall> calls, double distanceThreshold) {
             log.entry(calls, distanceThreshold);
-
-            List<ExpressionCall> sortedCalls = filterAndOrderByGlobalMeanRank(calls);
             
             Map<ExpressionCall, Integer> callsToGroup = new HashMap<>();
             int groupIndex = -1;
             double groupAllowedScoreDiff = 0;
             double previousScore = 0;
-            
-            for (ExpressionCall call: sortedCalls) {
+            for (ExpressionCall call: calls) {
                 double currentScore = call.getGlobalMeanRank().doubleValue();
 
                 // create a new group if first iteration, 
@@ -526,6 +626,10 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             this.globalMeanRank = globalMeanRank;
             //set up a formatter for nice display of the score
             if (globalMeanRank != null) {
+                if (globalMeanRank.compareTo(new BigDecimal(0)) <= 0) {
+                    throw log.throwing(new IllegalArgumentException(
+                            "A rank cannot be less than or equal to 0."));
+                }
                 NumberFormat formatter = NumberFormat.getInstance(Locale.US);
                 formatter.setMaximumFractionDigits(2);
                 formatter.setMinimumFractionDigits(2);

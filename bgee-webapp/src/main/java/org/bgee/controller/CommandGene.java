@@ -297,10 +297,6 @@ public class CommandGene extends CommandParent {
         // Clustering
         //*********************
         //define clustering method
-        //ClusteringMethod.CANBERRA_DIST_TO_MAX, 0.19
-        //ClusteringMethod.FIXED_CANBERRA_DIST_TO_MAX, 0.19
-        //ClusteringMethod.CANBERRA_DIST_TO_MIN, 0.2
-        //ClusteringMethod.CANBERRA_DIST_TO_MEAN, 0.18
         Function<List<ExpressionCall>, Map<ExpressionCall, Integer>> clusteringFunction = 
                 getClusteringFunction();
         

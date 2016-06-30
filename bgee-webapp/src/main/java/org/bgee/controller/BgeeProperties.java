@@ -4,6 +4,7 @@ import java.util.Properties;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.expressiondata.Call.ExpressionCall;
 
 /**
  * This class loads the properties for Bgee webapp and extends {@link BgeeProperties} from
@@ -520,7 +521,8 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      * @see #GENE_SCORE_CLUSTERING_METHOD_KEY
      * @see #getGeneScoreClusteringMethod()
      */
-    public final static String GENE_SCORE_CLUSTERING_METHOD_DEFAULT = "BGEE_DIST_TO_MAX";  
+    public final static String GENE_SCORE_CLUSTERING_METHOD_DEFAULT = 
+            ExpressionCall.DEFAULT_CLUSTERING_METHOD.name();  
     /**
      * A {@code String} that is the key to access to the property containing 
      * the distance threshold used when clustering {@code ExpressionCall}s based on 
@@ -538,7 +540,8 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      * @see #GENE_SCORE_CLUSTERING_THRESHOLD_KEY
      * @see #getGeneScoreClusteringThreshold()
      */
-    public final static Double GENE_SCORE_CLUSTERING_THRESHOLD_DEFAULT = 1.9; 
+    public final static Double GENE_SCORE_CLUSTERING_THRESHOLD_DEFAULT = 
+            ExpressionCall.DEFAULT_DISTANCE_THRESHOLD; 
 
     /**
      * @return  An instance of {@code BgeeProperties} with values based on the System properties

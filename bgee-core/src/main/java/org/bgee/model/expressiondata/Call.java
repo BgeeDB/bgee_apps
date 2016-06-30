@@ -49,27 +49,37 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         //**********************************************************
         /**
          * Allows to specify the method to use to cluster {@code ExpressionCall}s based on 
-         * their global mean rank score.
+         * their global mean rank score. Recommended clustering method as of Bgee 13: 
+         * {@code BGEE_DIST_TO_MAX}.
          * <ul>
          * <li>{@code CANBERRA_DIST_TO_MAX}: define clusters so that each member is connected 
          * to another member by a distance below the threshold, using Canberra distance. 
          * This allows to identify "shifts" or "jumps" of rank scores between {@code ExpressionCall}s. 
+         * Recommended threshold as of Bgee 13: around 0.19. 
+         * <li>{@code BGEE_DIST_TO_MAX}: same as {@code CANBERRA_DIST_TO_MAX}, 
+         * but the distance metric used is a Bgee metric, see {@link ExpressionCall.BgeeRankDistance}.
+         * Recommended threshold as of Bgee 13: around 1.9. 
          * <li>{@code FIXED_CANBERRA_DIST_TO_MAX}: same as {@code CANBERRA_DIST_TO_MAX}, but each member 
          * is connected by a fixed score distance rather than by a Canberra distance threshold.  
          * The fixed score distance is the difference between the minimum score of the cluster, 
          * and a score defined so that their Canberra distance is equal to the threshold.
          * This avoids to have increasing differences of score corresponding to the same 
          * Canberra distance inside a given cluster. 
+         * Recommended threshold as of Bgee 13: around 0.19. 
          * <li>{@code CANBERRA_DBSCAN}: perform a DBScan analysis, using Canberra distance 
          * as distance score, and 1 as the minimum cluster size. The distance threshold 
-         * will correspond to the allowed "radius" of clusters. In practice, this is almost equivalent to 
-         * {@code CANBERRA_DIST_TO_MAX}, except that outliers may be defined and clustered together. 
+         * will correspond to the allowed "radius" of clusters. In practice, there is no difference with
+         * {@code CANBERRA_DIST_TO_MAX}, as we define outliers as being part of their own cluster. 
+         * Recommended threshold as of Bgee 13: around 0.19. 
          * <li>{@code CANBERRA_DIST_TO_MEAN}: define clusters so that the distance between each member, 
          * and the mean of the cluster, is below the distance threshold, using Canberra distance. 
+         * Recommended threshold as of Bgee 13: around 0.18. 
          * <li>{@code CANBERRA_DIST_TO_MEDIAN}: define clusters so that the distance between each member, 
          * and the median of the cluster, is below the distance threshold, using Canberra distance. 
+         * Recommended threshold as of Bgee 13: around 0.18. 
          * <li>{@code CANBERRA_DIST_TO_MIN}: define clusters so that the distances between all members 
          * are all below the distance threshold, using Canberra distance. 
+         * Recommended threshold as of Bgee 13: around 0.2. 
          * </ul>
          * 
          * @author Frederic Bastian
@@ -227,6 +237,25 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                 return conditionUtils;
             }
         }
+        
+        /**
+         * A {@code ClusteringMethod} that is the default recommended method for clustering 
+         * {@code ExpressionCall}s based on their global mean rank. The default distance threshold 
+         * to use is provided by {@link #DEFAULT_DISTANCE_THRESHOLD}.
+         * 
+         * @see #DEFAULT_DISTANCE_THRESHOLD
+         * @see #generateMeanRankScoreClustering(Collection, ClusteringMethod, double)
+         */
+        public static final ClusteringMethod DEFAULT_CLUSTERING_METHOD = ClusteringMethod.BGEE_DIST_TO_MAX;
+        /**
+         * A {@code double} that is the default recommended distance threshold to apply 
+         * to the clustering method defined by {@link #DEFAULT_CLUSTERING_METHOD}, 
+         * for clustering {@code ExpressionCall}s based on their global mean rank.
+         * 
+         * @see #DEFAULT_CLUSTERING_METHOD
+         * @see #generateMeanRankScoreClustering(Collection, ClusteringMethod, double)
+         */
+        public static final double DEFAULT_DISTANCE_THRESHOLD = 1.9;
         
         /**
          * Remove equal calls from the {@code Collection} and order them using 

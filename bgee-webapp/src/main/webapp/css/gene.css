@@ -173,5 +173,6 @@ table.dataTable {
 }
 
 .dotted-line {
-    border-top: 1px dotted #920209;
+    border-top: 2px dotted #920209;
+    width: 2em;
 }	

@@ -157,7 +157,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         //Expression data
 		this.writeln("<h2>Expression</h2>");
 		this.writeln("<div id='expr_intro'>Calls of presence of expression, "
-		        + "ordered by the normalized rank of the gene in the conditions: </div>");
+		        + "ordered by the normalized rank score of the gene in the conditions: </div>");
 		
 		this.writeln("<div id='expr_data' class='row'>");
 		
@@ -188,7 +188,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 "<tr><td><span class='quality low'>low quality</span></td></tr>" +
                 "<tr><td><span class='quality nodata'>no data</span></td></tr></table>");
         this.writeln("<table class='col-xs-offset-2 col-xs-5 col-sm-offset-0 col-sm-12'>"
-                + "<caption>Ranks</caption>" +
+                + "<caption>Rank scores</caption>" +
                 "<tr><th><hr class='dotted-line' /></th><td>important variation</td></tr></table>");
         this.writeln("</div>"); // end legend
         
@@ -254,7 +254,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		        .append("<thead><tr><th class='anat-entity-id'>Anat. entity ID</th>")
 		        .append("<th class='anat-entity'>Anatomical entity</th>")
                 .append("<th class='dev-stages desktop'>Developmental stage(s)</th>")
-                .append("<th class='score desktop'>Rank</th>")
+                .append("<th class='score desktop'>Rank score</th>")
 				.append("<th class='quality'>Quality</th></tr></thead>\n");
 		sb.append("<tbody>").append(rowSb.toString()).append("</tbody>");
 		sb.append("</table>");

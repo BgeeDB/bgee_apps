@@ -183,10 +183,15 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 "<tr><th>I</th><td>In Situ</td></tr>" +
                 "<tr><th>R</th><td>RNA-Seq</li></td></tr></table>");
         this.writeln("<table class='col-xs-offset-2 col-xs-5 col-sm-offset-0 col-sm-12'>"
-        		+ "<caption>Qualities</caption>" +
-                "<tr><td><span class='quality high'>high quality</span></td></tr>" +
-                "<tr><td><span class='quality low'>low quality</span></td></tr>" +
-                "<tr><td><span class='quality nodata'>no data</span></td></tr></table>");
+                //XXX: temporarily "hide" qualities, as they are so incorrect at the moment. 
+                //for now we only report presence/absence of data per data type.
+//        		+ "<caption>Qualities</caption>" +
+//                "<tr><td><span class='quality high'>high quality</span></td></tr>" +
+//                "<tr><td><span class='quality low'>low quality</span></td></tr>" +
+//                "<tr><td><span class='quality nodata'>no data</span></td></tr></table>");
+                + "<caption>Data support</caption>" +
+                  "<tr><td><span class='quality high'>data</span></td></tr>" +
+                  "<tr><td><span class='quality nodata'>no data</span></td></tr></table>");
         this.writeln("<table class='col-xs-offset-2 col-xs-5 col-sm-offset-0 col-sm-12'>"
                 + "<caption>Rank scores</caption>" +
                 "<tr><th><hr class='dotted-line' /></th><td>important variation</td></tr></table>");
@@ -255,7 +260,11 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		        .append("<th class='anat-entity'>Anatomical entity</th>")
                 .append("<th class='dev-stages desktop'>Developmental stage(s)</th>")
                 .append("<th class='score desktop'>Rank score</th>")
-				.append("<th class='quality'>Quality</th></tr></thead>\n");
+                //XXX: temporarily "hide" qualities, as they are so incorrect at the moment. 
+                //for now we only report presence/absence of data per data type.
+//				.append("<th class='quality'>Quality</th></tr></thead>\n");
+                .append("<th class='quality'>Sources</th></tr></thead>\n");
+		
 		sb.append("<tbody>").append(rowSb.toString()).append("</tbody>");
 		sb.append("</table>");
 		return log.exit(sb.toString());
@@ -436,7 +445,10 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 			sb.append("high");
 			break;
 		case LOW:
-			sb.append("low");
+            //XXX: temporarily "hide" qualities, as they are so incorrect at the moment. 
+            //for now we only report presence/absence of data per data type.
+//			sb.append("low");
+            sb.append("high");
 			break;
 		case NODATA:
 			sb.append("nodata");

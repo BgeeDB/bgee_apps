@@ -46,6 +46,12 @@ div.legend {
 
 div.legend span.quality {
 	font-size: 1em;
+	display: inline-block;
+	
+ /* XXX: temporarily "hide" qualities, as they are so incorrect at the moment. 
+    for now we only report presence/absence of data per data type. 
+    This width will need to be made greater to display quality info */
+	width: 6em !important;
 }
 
 div.legend table caption {
@@ -117,6 +123,7 @@ span.quality {
 	border-style: solid;
 	font-size: .8em;
 	font-family: monospace;
+	text-align: center;
 }
 
 span.expandable {

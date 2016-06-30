@@ -34,6 +34,7 @@ import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO.CIOStatementTO;
 import org.bgee.model.dao.api.ontologycommon.EvidenceOntologyDAO.ECOTermTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.source.SourceDAO.SourceTO;
+import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
 
@@ -51,7 +52,7 @@ import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 13, Mar. 2016
+ * @version Bgee 13, June 2016
  * @since   Bgee 13
  */
 public class TOComparator {
@@ -170,6 +171,8 @@ public class TOComparator {
             return log.exit(areTOsEqual((SpeciesToDataGroupTO) to1,(SpeciesToDataGroupTO) to2));
         } else if (to2 instanceof SourceTO) {
             return log.exit(areTOsEqual((SourceTO) to1, (SourceTO) to2, compareId));
+        } else if (to2 instanceof SourceToSpeciesTO) {
+            return log.exit(areTOsEqual((SourceToSpeciesTO) to1,(SourceToSpeciesTO) to2));
         }
 
         throw log.throwing(new IllegalArgumentException("There is no comparison method " +
@@ -968,6 +971,25 @@ public class TOComparator {
                 to1.getSourceCategory() == to2.getSourceCategory() &&
                 (to1.getDisplayOrder() == to2.getDisplayOrder() ||
                     (to1.getDisplayOrder() != null && to1.getDisplayOrder().equals(to2.getDisplayOrder())))) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
+     * Method to compare two {@code SourceToSpeciesTO}s, to check for complete 
+     * equality of each attribute. 
+     * 
+     * @param to1       A {@code SourceToSpeciesTO} to be compared to {@code to2}.
+     * @param to2       A {@code SourceToSpeciesTO} to be compared to {@code to1}.
+     * @return      {@code true} if {@code to1} and {@code to2} have all attributes equal.
+     */
+    private static boolean areTOsEqual(SourceToSpeciesTO to1, SourceToSpeciesTO to2) {
+        log.entry(to1, to2);
+        if (StringUtils.equals(to1.getDatasourceId(), to2.getDatasourceId()) &&
+                StringUtils.equals(to1.getSpeciesId(), to2.getSpeciesId()) &&
+                to1.getDataType() == to2.getDataType() &&
+                to1.getInfoType() == to2.getInfoType()) {
             return log.exit(true);
         }
         return log.exit(false);

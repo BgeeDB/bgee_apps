@@ -39,6 +39,9 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStat
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType;
 import org.bgee.model.dao.api.source.SourceDAO.SourceTO;
 import org.bgee.model.dao.api.source.SourceDAO.SourceTO.SourceCategory;
+import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO;
+import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO.DataType;
+import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO.InfoType;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
 import org.junit.Test;
@@ -48,7 +51,7 @@ import org.junit.Test;
  *  
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Mar. 2016
+ * @version Bgee 13, June 2016
  * @since   Bgee 13
  */
 public class TOComparatorTest extends TestAncestor {
@@ -665,6 +668,30 @@ public class TOComparatorTest extends TestAncestor {
                 SourceCategory.GENOMICS, displayOrder);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+    }
+
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * using {@code SourceToSpeciesTO}s.
+     */
+    @Test
+    public void testAreSourceToSpeciesTOEqual() {
+        SourceToSpeciesTO to1 = new SourceToSpeciesTO("1", "11", DataType.EST, InfoType.DATA);
+        SourceToSpeciesTO to2 = new SourceToSpeciesTO("1", "11", DataType.EST, InfoType.DATA);
+        assertTrue(TOComparator.areTOsEqual(to1, to2));
+
+        to2 = new SourceToSpeciesTO("1", "11", DataType.AFFYMETRIX, InfoType.DATA);
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+
+        to2 = new SourceToSpeciesTO("1", "11", DataType.EST, InfoType.ANNOTATION);
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+        
+        to2 = new SourceToSpeciesTO("1", "21", DataType.EST, InfoType.DATA);
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+
+        to2 = new SourceToSpeciesTO("2", "11", DataType.EST, InfoType.DATA);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        assertFalse(TOComparator.areTOsEqual(to1, to2, false));
     }
 
     /**

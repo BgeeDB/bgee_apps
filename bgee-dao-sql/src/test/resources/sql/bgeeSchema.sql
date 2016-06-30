@@ -57,6 +57,13 @@ create table dataSource (
     displayOrder tinyint unsigned not null default 255 COMMENT 'Data source display ordering'
 ) engine = innodb;
 
+create table dataSourceToSpecies (
+    dataSourceId smallInt unsigned not null COMMENT 'Data source id',
+    speciesId mediumint unsigned not null COMMENT 'NCBI species taxon id',
+    dataType enum('affymetrix', 'est', 'in situ', 'rna-seq') not null COMMENT 'Data type',
+    infoType enum('data', 'annotation') not null COMMENT 'Information type'
+) engine = innodb;
+
 create table keyword (
     keywordId int unsigned not null,
     keyword varchar(255) not null COMMENT 'Aggregate keywords seen in all tables'

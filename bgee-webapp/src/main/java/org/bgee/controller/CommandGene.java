@@ -58,7 +58,7 @@ public class CommandGene extends CommandParent {
         private final List<ExpressionCall> exprCalls;
         private final Set<ExpressionCall> redundantExprCalls;
         private final LinkedHashMap<String, List<ExpressionCall>> callsByAnatEntityId;
-        private final boolean includingRedundantCalls;
+        private final boolean includingAllRedundantCalls;
         private final Map<ExpressionCall, Integer> clusteringBestEachAnatEntity;
         private final Map<ExpressionCall, Integer> clusteringWithinAnatEntity;
         private final ConditionUtils conditionUtils;
@@ -67,7 +67,7 @@ public class CommandGene extends CommandParent {
          * @param gene                          See {@link #getGene()}.
          * @param exprCalls                     See {@link #getExprCalls()}.
          * @param redundantExprCalls            See {@link #getRedundantExprCalls()}.
-         * @param includingRedundantCalls       See {@link #isIncludingRedundantCalls()}.
+         * @param includingAllRedundantCalls    See {@link #isIncludingAllRedundantCalls()}.
          * @param callsByAnatEntityId           See {@link #getCallsByAnatEntityId()}.
          * @param clusteringBestEachAnatEntity  See {@link #getClusteringBestEachAnatEntity()}.
          * @param clusteringWithinAnatEntity    See {@link #getClusteringWithinAnatEntity()}.
@@ -75,7 +75,7 @@ public class CommandGene extends CommandParent {
          */
         public GeneResponse(Gene gene, List<ExpressionCall> exprCalls, 
                 Set<ExpressionCall> redundantExprCalls, 
-                boolean includingRedundantCalls, 
+                boolean includingAllRedundantCalls, 
                 LinkedHashMap<String, List<ExpressionCall>> callsByAnatEntityId, 
                 Map<ExpressionCall, Integer> clusteringBestEachAnatEntity, 
                 Map<ExpressionCall, Integer> clusteringWithinAnatEntity, 
@@ -83,7 +83,7 @@ public class CommandGene extends CommandParent {
             this.gene = gene;
             this.exprCalls = BgeeUtils.toList(exprCalls);
             this.redundantExprCalls = BgeeUtils.toSet(redundantExprCalls);
-            this.includingRedundantCalls = includingRedundantCalls;
+            this.includingAllRedundantCalls = includingAllRedundantCalls;
             //too boring to protect the Maps for this internal class...
             this.callsByAnatEntityId = callsByAnatEntityId;
             this.clusteringBestEachAnatEntity = clusteringBestEachAnatEntity;
@@ -115,11 +115,11 @@ public class CommandGene extends CommandParent {
         /**
          * @return  A {@code boolean} that is {@code true} if the information returned by 
          *          {@link #getCallsByAnatEntityId}, {@link #getClusteringBestEachAnatEntity()}, 
-         *          and {@link #getClusteringWithinAnatEntity()}, were built by including 
+         *          and {@link #getClusteringWithinAnatEntity()}, were built by including all 
          *          redundant calls (see {@link #getRedundantExprCalls()}), {@code false} otherwise.
          */
-        public boolean isIncludingRedundantCalls() {
-            return includingRedundantCalls;
+        public boolean isIncludingAllRedundantCalls() {
+            return includingAllRedundantCalls;
         }
         /**
          * @return  A {@code LinkedHashMap} where keys are {@code String}s corresponding to 
@@ -247,7 +247,7 @@ public class CommandGene extends CommandParent {
         // Grouping of Calls per anat. entity, 
         // Clustering, Building GeneResponse
         //**************************************
-	    return log.exit(this.buildGeneResponse(gene, exprCalls, redundantCalls, false, conditionUtils));
+	    return log.exit(this.buildGeneResponse(gene, exprCalls, redundantCalls, true, conditionUtils));
 	}
 	
 	/**
@@ -258,28 +258,40 @@ public class CommandGene extends CommandParent {
 	 * @param exprCalls                A {@code List} of {@code ExpressionCall}s sorted using 
 	 *                                 the {@link ExpressionCall.RankComparator}.
 	 * @param redundantCalls           A {@code Set} of {@code ExpressionCall}s that are redundant.
-	 * @param considerRedundantCalls   A {@code boolean} defining whether redundant calls 
-	 *                                 should be considered for the grouping and clustering steps.
+	 * @param filterRedundantCalls     A {@code boolean} defining whether redundant calls 
+	 *                                 should be filtered for the grouping and clustering steps.
 	 * @param conditionUtils           A {@code ConditionUtils} built from {@code exprCalls}.
 	 * @return                         A built {@code GeneResponse}.
 	 */
 	private GeneResponse buildGeneResponse(Gene gene, List<ExpressionCall> exprCalls, 
-	        Set<ExpressionCall> redundantCalls, boolean considerRedundantCalls, 
+	        Set<ExpressionCall> redundantCalls, boolean filterRedundantCalls, 
 	        ConditionUtils conditionUtils) {
-	    log.entry(exprCalls, redundantCalls, considerRedundantCalls, conditionUtils);
+	    log.entry(exprCalls, redundantCalls, filterRedundantCalls, conditionUtils);
 	    
 	    //*********************
         // Grouping
         //*********************
         long startFilteringTimeInMs = System.currentTimeMillis();
         //first, filter calls and group calls by anat. entity. We need to preserve the order 
-        //of the keys, as we have already sorted the calls by their rank
+        //of the keys, as we have already sorted the calls by their rank. 
+        //If filterRedundantCalls is true, we completely discard anat. entities 
+        //that have only redundant calls, but if an anat. entity has some non-redundant calls 
+        //and is not discarded, we preserve all its calls, even the redundant ones. 
         LinkedHashMap<String, List<ExpressionCall>> callsByAnatEntityId = exprCalls.stream()
-                .filter(c -> considerRedundantCalls || !redundantCalls.contains(c))
+                //group by anat. entity
                 .collect(Collectors.groupingBy(
                         c -> c.getCondition().getAnatEntityId(), 
                         LinkedHashMap::new, 
-                        Collectors.toList()));
+                        Collectors.toList()))
+                .entrySet().stream()
+                //discard if all calls of an anat. entity are redundant
+                .filter(entry -> !filterRedundantCalls || !redundantCalls.containsAll(entry.getValue()))
+                //reconstruct the LinkedHashMap
+                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(), 
+                        (l1, l2) -> {
+                            throw log.throwing(new AssertionError("Not possible to have key collision"));
+                        }, 
+                        LinkedHashMap::new));
 
         //*********************
         // Clustering
@@ -313,7 +325,7 @@ public class CommandGene extends CommandParent {
         //*********************
         // Build GeneResponse
         //*********************
-        return log.exit(new GeneResponse(gene, exprCalls, redundantCalls, considerRedundantCalls, 
+        return log.exit(new GeneResponse(gene, exprCalls, redundantCalls, !filterRedundantCalls, 
                 callsByAnatEntityId, clusteringBestEachAnatEntity, clusteringWithinAnatEntity, 
                 conditionUtils));
 	}

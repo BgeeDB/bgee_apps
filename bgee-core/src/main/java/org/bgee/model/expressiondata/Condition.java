@@ -23,6 +23,11 @@ import org.apache.logging.log4j.Logger;
 //XXX: how to manage multi-species conditions? Should we have a class SingleSpeciesCondition 
 //and a class MultiSpeciesCondition? Or, only a Condition, using a "SingleSpeciesAnatEntity" 
 //or a "MultiSpeciesAnatEntity", etc?
+//TODO: for various reasons, I think this class should be single species, 
+//and simply have a mandatory speciesId attribute. Mapping between homologous conditions 
+//should be managed in a different way. 
+//TODO: I guess this means the ConditionUtils should use the new MultiSpeciesOntology mechanism, 
+//to be able to perform computations over any species. 
 public class Condition implements Comparable<Condition> {
     private final static Logger log = LogManager.getLogger(Condition.class.getName());
 

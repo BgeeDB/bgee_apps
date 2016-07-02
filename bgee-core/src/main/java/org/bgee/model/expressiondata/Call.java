@@ -763,6 +763,8 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         /**
          * @see #getGlobalMeanRank()
          */
+        //TODO: Maybe create a new RankScore class, storing the rank, 
+        //plus an information of confidence about it.
         private final BigDecimal globalMeanRank;
         /**
          * A {@code NumberFormat} used to format {@link #globalMeanRank} 

@@ -951,6 +951,16 @@ implements ExpressionCallDAO {
                 exprTableName + ".estMaxRank ");
         dataTypeToWeightSql.put(ExpressionCallDAO.Attribute.IN_SITU_DATA, 
                 exprTableName + ".inSituMaxRank ");
+
+        Set<ExpressionCallDAO.Attribute> attributesForRank = 
+                (filteringDataTypes == null || filteringDataTypes.isEmpty()? 
+                        EnumSet.allOf(ExpressionCallDAO.Attribute.class): filteringDataTypes)
+                .stream()
+                //in case we retrieved all Attributes because no filtering on data types
+                .filter(dataType -> dataType.isDataTypeAttribute())
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(ExpressionCallDAO.Attribute.class)));
+        //use for dividing afterwards, don't want a division by 0 :p
+        assert attributesForRank.size() > 0;
         
         for (ExpressionCallDAO.Attribute attribute: attributes) {
             if (sql.isEmpty()) {
@@ -1124,16 +1134,6 @@ implements ExpressionCallDAO {
                 
             } else if (attribute.equals(ExpressionCallDAO.Attribute.GLOBAL_MEAN_RANK)) {
                 
-                Set<ExpressionCallDAO.Attribute> attributesForRank = (filteringDataTypes.isEmpty()? 
-                        EnumSet.allOf(ExpressionCallDAO.Attribute.class): filteringDataTypes)
-                    .stream()
-                    //in case we retrieved all Attributes because no filtering on data types
-                    .filter(dataType -> dataType.isDataTypeAttribute())
-                    .collect(Collectors.toCollection(() -> 
-                             EnumSet.noneOf(ExpressionCallDAO.Attribute.class)));
-                //use for dividing afterwards, don't want a division by 0 :p
-                assert attributesForRank.size() > 0;
-                
                 //in case several raws are grouped, we retrieve the min value of the ranking score
                 sql +=  groupByClause? "MIN(": "" + attributesForRank.stream()
                             .map(attr -> {
@@ -1167,9 +1167,14 @@ implements ExpressionCallDAO {
                 sql += "AS affymetrixData ";
             } else if (attribute.equals(ExpressionCallDAO.Attribute.AFFYMETRIX_MEAN_RANK)) {
                 
-                sql += (groupByClause? "MIN(": "") 
-                        + dataTypeToNormRankSql.get(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA) 
-                        + (groupByClause? ")": "") + " AS affymetrixRank ";
+                if (attributesForRank.contains(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA)) {
+                    sql += (groupByClause? "MIN(": "") 
+                            + dataTypeToNormRankSql.get(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA) 
+                            + (groupByClause? ")": "");
+                } else {
+                    sql += "NULL";
+                }
+                sql += " AS affymetrixRank ";
                 
             } else if (attribute.equals(ExpressionCallDAO.Attribute.EST_DATA)) {
                 if (!groupByClause) {
@@ -1182,9 +1187,14 @@ implements ExpressionCallDAO {
                 sql += "AS estData ";
             } else if (attribute.equals(ExpressionCallDAO.Attribute.EST_MEAN_RANK)) {
                 
-                sql += (groupByClause? "MIN(": "") 
-                        + dataTypeToNormRankSql.get(ExpressionCallDAO.Attribute.EST_DATA) 
-                        + (groupByClause? ")": "") + " AS estRank ";
+                if (attributesForRank.contains(ExpressionCallDAO.Attribute.EST_DATA)) {
+                    sql += (groupByClause? "MIN(": "") 
+                            + dataTypeToNormRankSql.get(ExpressionCallDAO.Attribute.EST_DATA) 
+                            + (groupByClause? ")": "");
+                } else {
+                    sql += "NULL";
+                }
+                sql += " AS estRank ";
                 
             } else if (attribute.equals(ExpressionCallDAO.Attribute.IN_SITU_DATA)) {
                 if (!groupByClause) {
@@ -1197,9 +1207,14 @@ implements ExpressionCallDAO {
                 sql += "AS inSituData ";
             } else if (attribute.equals(ExpressionCallDAO.Attribute.IN_SITU_MEAN_RANK)) {
                 
-                sql += (groupByClause? "MIN(": "") 
-                        + dataTypeToNormRankSql.get(ExpressionCallDAO.Attribute.IN_SITU_DATA) 
-                        + (groupByClause? ")": "") + " AS inSituRank ";
+                if (attributesForRank.contains(ExpressionCallDAO.Attribute.IN_SITU_DATA)) {
+                    sql += (groupByClause? "MIN(": "") 
+                            + dataTypeToNormRankSql.get(ExpressionCallDAO.Attribute.IN_SITU_DATA) 
+                            + (groupByClause? ")": "");
+                } else {
+                    sql += "NULL";
+                }
+                sql += " AS inSituRank ";
                 
             } else if (attribute.equals(ExpressionCallDAO.Attribute.RNA_SEQ_DATA)) {
                 if (!groupByClause) {
@@ -1212,9 +1227,14 @@ implements ExpressionCallDAO {
                 sql += "AS rnaSeqData ";
             } else if (attribute.equals(ExpressionCallDAO.Attribute.RNA_SEQ_MEAN_RANK)) {
                 
-                sql += (groupByClause? "MIN(": "") 
-                        + dataTypeToNormRankSql.get(ExpressionCallDAO.Attribute.RNA_SEQ_DATA) 
-                        + (groupByClause? ")": "") + " AS rnaSeqRank ";
+                if (attributesForRank.contains(ExpressionCallDAO.Attribute.RNA_SEQ_DATA)) {
+                    sql += (groupByClause? "MIN(": "") 
+                            + dataTypeToNormRankSql.get(ExpressionCallDAO.Attribute.RNA_SEQ_DATA) 
+                            + (groupByClause? ")": "");
+                } else {
+                    sql += "NULL";
+                }
+                sql += " AS rnaSeqRank ";
                 
             } else {
                 throw log.throwing(new IllegalArgumentException("The attribute provided (" +

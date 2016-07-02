@@ -65,7 +65,12 @@ public class ConditionUtilsTest extends TestAncestor {
         Condition cond5 = new Condition(anatEntityId1, devStageId3);
         Condition cond6 = new Condition(anatEntityId2, devStageId3);
         Condition cond7 = new Condition(anatEntityId3, devStageId2);
-        this.conditions = Arrays.asList(cond1, cond2, cond3, cond4, cond5, cond6, cond7);
+        Condition cond1_anatOnly = new Condition(anatEntityId1, null);
+        Condition cond2_anatOnly = new Condition(anatEntityId2, null);
+        Condition cond1_stageOnly = new Condition(null, devStageId1);
+        Condition cond3_stageOnly = new Condition(null, devStageId3);
+        this.conditions = Arrays.asList(cond1, cond2, cond3, cond4, cond5, cond6, cond7, 
+                cond1_anatOnly, cond2_anatOnly, cond1_stageOnly, cond3_stageOnly);
         
         ServiceFactory mockFact = mock(ServiceFactory.class);
         OntologyService ontService = mock(OntologyService.class);
@@ -115,7 +120,8 @@ public class ConditionUtilsTest extends TestAncestor {
                 new HashSet<>(Arrays.asList(devStage2, devStage3)));
         
         this.conditionUtils = new ConditionUtils("9606", 
-                Arrays.asList(cond1, cond2, cond3, cond4, cond5, cond6, cond7), 
+                Arrays.asList(cond1, cond2, cond3, cond4, cond5, cond6, cond7, 
+                        cond1_anatOnly, cond2_anatOnly, cond1_stageOnly, cond3_stageOnly), 
                 mockFact);
     }
 
@@ -126,12 +132,22 @@ public class ConditionUtilsTest extends TestAncestor {
     public void testIsConditionMorePrecise() {
         assertTrue("Incorrect determination of precision for more precise condition", 
                 this.conditionUtils.isConditionMorePrecise(this.conditions.get(0), this.conditions.get(1)));
+        assertTrue("Incorrect determination of precision for more precise condition", 
+                this.conditionUtils.isConditionMorePrecise(this.conditions.get(7), this.conditions.get(8)));
         assertFalse("Incorrect determination of precision for less precise condition", 
                 this.conditionUtils.isConditionMorePrecise(this.conditions.get(1), this.conditions.get(0)));
+        assertFalse("Incorrect determination of precision for less precise condition", 
+                this.conditionUtils.isConditionMorePrecise(this.conditions.get(8), this.conditions.get(7)));
         assertTrue("Incorrect determination of precision for more precise condition", 
                 this.conditionUtils.isConditionMorePrecise(this.conditions.get(0), this.conditions.get(2)));
+        assertTrue("Incorrect determination of precision for more precise condition", 
+                this.conditionUtils.isConditionMorePrecise(this.conditions.get(9), this.conditions.get(10)));
         assertFalse("Incorrect determination of precision for less precise condition", 
                 this.conditionUtils.isConditionMorePrecise(this.conditions.get(2), this.conditions.get(0)));
+        assertFalse("Incorrect determination of precision for less precise condition", 
+                this.conditionUtils.isConditionMorePrecise(this.conditions.get(10), this.conditions.get(9)));
+        assertFalse("Incorrect determination of precision for less precise condition", 
+                this.conditionUtils.isConditionMorePrecise(this.conditions.get(7), this.conditions.get(10)));
         assertFalse("Incorrect determination of precision for as precise conditions", 
                 this.conditionUtils.isConditionMorePrecise(this.conditions.get(1), this.conditions.get(2)));
 
@@ -203,7 +219,7 @@ public class ConditionUtilsTest extends TestAncestor {
     @Test
     public void shouldGetDescendantConditions() {
         Set<Condition> expectedDescendants = conditions.stream()
-                .filter(e -> !e.equals(this.conditions.get(0)))
+                .filter(e -> !e.equals(this.conditions.get(0)) && this.conditions.indexOf(e) <= 6)
                 .collect(Collectors.toSet());
         assertEquals("Incorrect descendants retrieved", expectedDescendants, 
                 this.conditionUtils.getDescendantConditions(this.conditions.get(0)));
@@ -219,5 +235,13 @@ public class ConditionUtilsTest extends TestAncestor {
         expectedDescendants = new HashSet<>();
         assertEquals("Incorrect descendants retrieved", expectedDescendants, 
                 this.conditionUtils.getDescendantConditions(this.conditions.get(6)));
+        
+        expectedDescendants = new HashSet<>(Arrays.asList(this.conditions.get(8)));
+        assertEquals("Incorrect descendants retrieved", expectedDescendants, 
+                this.conditionUtils.getDescendantConditions(this.conditions.get(7)));
+        
+        expectedDescendants = new HashSet<>(Arrays.asList(this.conditions.get(10)));
+        assertEquals("Incorrect descendants retrieved", expectedDescendants, 
+                this.conditionUtils.getDescendantConditions(this.conditions.get(9)));
     }
 }

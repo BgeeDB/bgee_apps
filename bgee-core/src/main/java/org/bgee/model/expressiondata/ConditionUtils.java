@@ -107,33 +107,51 @@ public class ConditionUtils implements Comparator<Condition> {
         Set<String> anatEntityIds = new HashSet<>();
         Set<String> devStageIds = new HashSet<>();
         for (Condition cond: tempConditions) {
-            anatEntityIds.add(cond.getAnatEntityId());
-            devStageIds.add(cond.getDevStageId());
+            if (cond.getAnatEntityId() != null) {
+                anatEntityIds.add(cond.getAnatEntityId());
+            }
+            if (cond.getDevStageId() != null) {
+                devStageIds.add(cond.getDevStageId());
+            }
         }
         
         OntologyService ontService = this.serviceFactory.getOntologyService();
-        this.anatEntityOnt = ontService.getAnatEntityOntology(Arrays.asList(this.speciesId), 
-                anatEntityIds, EnumSet.of(RelationType.ISA_PARTOF), 
-                inferAncestralConds? true: false, false, this.serviceFactory.getAnatEntityService());
-        this.devStageOnt = ontService.getDevStageOntology(Arrays.asList(this.speciesId), 
-                devStageIds, inferAncestralConds? true: false, false, 
-                this.serviceFactory.getDevStageService());
+        if (!anatEntityIds.isEmpty()) {
+            this.anatEntityOnt = ontService.getAnatEntityOntology(Arrays.asList(this.speciesId), 
+                    anatEntityIds, EnumSet.of(RelationType.ISA_PARTOF), 
+                    inferAncestralConds? true: false, false, this.serviceFactory.getAnatEntityService());
+        } else {
+            this.anatEntityOnt = null;
+        }
+        if (!devStageIds.isEmpty()) {
+            this.devStageOnt = ontService.getDevStageOntology(Arrays.asList(this.speciesId), 
+                    devStageIds, inferAncestralConds? true: false, false, 
+                            this.serviceFactory.getDevStageService());
+        } else {
+            this.devStageOnt = null;
+        }
 
         if (inferAncestralConds) {
             Set<Condition> ancConditions = tempConditions.stream().flatMap(cond -> {
-                Set<String> ancStageIds = this.devStageOnt.getAncestors(
-                        this.devStageOnt.getElement(cond.getDevStageId()))
-                    .stream().map(e -> e.getId()).collect(Collectors.toSet());
+                Set<String> ancStageIds = new HashSet<>();
                 ancStageIds.add(cond.getDevStageId());
+                if (this.devStageOnt != null && cond.getDevStageId() != null) {
+                    ancStageIds.addAll(this.devStageOnt.getAncestors(
+                            this.devStageOnt.getElement(cond.getDevStageId()))
+                            .stream().map(e -> e.getId()).collect(Collectors.toSet()));
+                }
                 
-                Set<String> ancAnatEntityIds = this.anatEntityOnt.getAncestors(
-                            this.anatEntityOnt.getElement(cond.getAnatEntityId()))
-                        .stream().map(e -> e.getId()).collect(Collectors.toSet());
+                Set<String> ancAnatEntityIds = new HashSet<>();
                 ancAnatEntityIds.add(cond.getAnatEntityId());
+                if (this.anatEntityOnt != null && cond.getAnatEntityId() != null) {
+                    ancAnatEntityIds.addAll(this.anatEntityOnt.getAncestors(
+                            this.anatEntityOnt.getElement(cond.getAnatEntityId()))
+                            .stream().map(e -> e.getId()).collect(Collectors.toSet()));
+                }
                 
                 return ancAnatEntityIds.stream().flatMap(ancAnatEntityId -> 
                     ancStageIds.stream().map(ancStageId -> new Condition(ancAnatEntityId, ancStageId))
-                ).filter(ancCond -> !cond.equals(ancCond));
+                    ).filter(ancCond -> !cond.equals(ancCond));
                 
             }).collect(Collectors.toSet());
             
@@ -158,6 +176,10 @@ public class ConditionUtils implements Comparator<Condition> {
      */
     private void checkEntityExistence(Set<String> entityIds, Ontology<?> ont) throws IllegalArgumentException {
         log.entry(entityIds, ont);
+        
+        if (ont == null) {
+            log.exit(); return;
+        }
         
         Set<String> recognizedEntityIds = ont.getElements().stream()
                 .map(e -> e.getId()).collect(Collectors.toSet());
@@ -196,17 +218,30 @@ public class ConditionUtils implements Comparator<Condition> {
         
         //Of note, computations are three times faster when checking stages before anat. entities. 
         
-        if (!firstCond.getDevStageId().equals(secondCond.getDevStageId()) && 
+        if (this.devStageOnt != null && 
+                firstCond.getDevStageId() != null && secondCond.getDevStageId() != null && 
+                !firstCond.getDevStageId().equals(secondCond.getDevStageId()) && 
                 !this.devStageOnt.getAncestors(
                         this.devStageOnt.getElement(secondCond.getDevStageId()))
                 .contains(this.devStageOnt.getElement(firstCond.getDevStageId()))) {
             return log.exit(false);
         }
         
-        if (!firstCond.getAnatEntityId().equals(secondCond.getAnatEntityId()) && 
+        if (this.anatEntityOnt != null && 
+                firstCond.getAnatEntityId() != null && secondCond.getAnatEntityId() != null && 
+                !firstCond.getAnatEntityId().equals(secondCond.getAnatEntityId()) && 
                 !this.anatEntityOnt.getAncestors(
                         this.anatEntityOnt.getElement(secondCond.getAnatEntityId()))
                 .contains(this.anatEntityOnt.getElement(firstCond.getAnatEntityId()))) {
+            return log.exit(false);
+        }
+        
+        if (firstCond.getDevStageId() != null && secondCond.getDevStageId() == null || 
+                secondCond.getDevStageId() != null && firstCond.getDevStageId() == null) {
+            return log.exit(false);
+        }
+        if (firstCond.getAnatEntityId() != null && secondCond.getAnatEntityId() == null || 
+                secondCond.getAnatEntityId() != null && firstCond.getAnatEntityId() == null) {
             return log.exit(false);
         }
         
@@ -252,15 +287,21 @@ public class ConditionUtils implements Comparator<Condition> {
                     + "is not registered to this ConditionUtils: " + cond));
         }
         
-        Set<String> devStageIds = this.devStageOnt.getAncestors(
-                    this.devStageOnt.getElement(cond.getDevStageId()), directRelOnly)
-                .stream().map(e -> e.getId()).collect(Collectors.toSet());
+        Set<String> devStageIds = new HashSet<>();
         devStageIds.add(cond.getDevStageId());
+        if (this.devStageOnt != null && cond.getDevStageId() != null) {
+            devStageIds.addAll(this.devStageOnt.getAncestors(
+                    this.devStageOnt.getElement(cond.getDevStageId()), directRelOnly)
+                    .stream().map(e -> e.getId()).collect(Collectors.toSet()));
+        }
         
-        Set<String> anatEntityIds = this.anatEntityOnt.getAncestors(
-                    this.anatEntityOnt.getElement(cond.getAnatEntityId()), directRelOnly)
-                .stream().map(e -> e.getId()).collect(Collectors.toSet());
+        Set<String> anatEntityIds = new HashSet<>();
         anatEntityIds.add(cond.getAnatEntityId());
+        if (this.anatEntityOnt != null && cond.getAnatEntityId() != null) {
+            anatEntityIds.addAll(this.anatEntityOnt.getAncestors(
+                    this.anatEntityOnt.getElement(cond.getAnatEntityId()), directRelOnly)
+                    .stream().map(e -> e.getId()).collect(Collectors.toSet()));
+        }
         
         return log.exit(this.conditions.stream()
                 .filter(e -> !e.equals(cond) && 
@@ -297,15 +338,21 @@ public class ConditionUtils implements Comparator<Condition> {
                     + "is not registered to this ConditionUtils: " + cond));
         }
         
-        Set<String> devStageIds = this.devStageOnt.getDescendants(
-                    this.devStageOnt.getElement(cond.getDevStageId()), directRelOnly)
-                .stream().map(e -> e.getId()).collect(Collectors.toSet());
+        Set<String> devStageIds = new HashSet<>();
         devStageIds.add(cond.getDevStageId());
+        if (this.devStageOnt != null && cond.getDevStageId() != null) {
+            devStageIds.addAll(this.devStageOnt.getDescendants(
+                    this.devStageOnt.getElement(cond.getDevStageId()), directRelOnly)
+                    .stream().map(e -> e.getId()).collect(Collectors.toSet()));
+        }
         
-        Set<String> anatEntityIds = this.anatEntityOnt.getDescendants(
-                    this.anatEntityOnt.getElement(cond.getAnatEntityId()), directRelOnly)
-                .stream().map(e -> e.getId()).collect(Collectors.toSet());
+        Set<String> anatEntityIds = new HashSet<>();
         anatEntityIds.add(cond.getAnatEntityId());
+        if (this.anatEntityOnt != null && cond.getAnatEntityId() != null) {
+            anatEntityIds.addAll(this.anatEntityOnt.getDescendants(
+                    this.anatEntityOnt.getElement(cond.getAnatEntityId()), directRelOnly)
+                    .stream().map(e -> e.getId()).collect(Collectors.toSet()));
+        }
         
         return log.exit(this.conditions.stream()
                 .filter(e -> !e.equals(cond) && 

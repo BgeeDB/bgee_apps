@@ -929,26 +929,28 @@ implements ExpressionCallDAO {
             propagatedStageTableName + ".stageId" + ", 1, 0)";
         
         //Ranks: 
-        Map<ExpressionCallDAO.Attribute, String> dataTypeToMeanNormRankSql = new HashMap<>();
-        dataTypeToMeanNormRankSql.put(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA, 
+        Map<ExpressionCallDAO.Attribute, String> dataTypeToNormRankSql = new HashMap<>();
+        dataTypeToNormRankSql.put(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA, 
                 exprTableName + ".affymetrixMeanRankNorm ");
-        dataTypeToMeanNormRankSql.put(ExpressionCallDAO.Attribute.EST_DATA, 
-                exprTableName + ".estMeanRankNorm ");
-        dataTypeToMeanNormRankSql.put(ExpressionCallDAO.Attribute.IN_SITU_DATA, 
-                exprTableName + ".inSituMeanRankNorm ");
-        dataTypeToMeanNormRankSql.put(ExpressionCallDAO.Attribute.RNA_SEQ_DATA, 
+        dataTypeToNormRankSql.put(ExpressionCallDAO.Attribute.EST_DATA, 
+                exprTableName + ".estRankNorm ");
+        dataTypeToNormRankSql.put(ExpressionCallDAO.Attribute.IN_SITU_DATA, 
+                exprTableName + ".inSituRankNorm ");
+        dataTypeToNormRankSql.put(ExpressionCallDAO.Attribute.RNA_SEQ_DATA, 
                 exprTableName + ".rnaSeqMeanRankNorm ");
         
-        //Sum of max ranks for weighted mean computation: 
-        Map<ExpressionCallDAO.Attribute, String> dataTypeToMaxRankSumSql = new HashMap<>();
-        dataTypeToMaxRankSumSql.put(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA, 
-                exprTableName + ".affymetrixMaxRankSum ");
-        dataTypeToMaxRankSumSql.put(ExpressionCallDAO.Attribute.EST_DATA, 
-                exprTableName + ".estMaxRankSum ");
-        dataTypeToMaxRankSumSql.put(ExpressionCallDAO.Attribute.IN_SITU_DATA, 
-                exprTableName + ".inSituMaxRankSum ");
-        dataTypeToMaxRankSumSql.put(ExpressionCallDAO.Attribute.RNA_SEQ_DATA, 
-                exprTableName + ".rnaSeqMaxRankSum ");
+        //for weighted mean computation: sum of numbers of distinct ranks for data using 
+        //fractional ranking (Affy and RNA-Seq), max ranks for data using dense ranking 
+        //and pooling of all samples in a condition (EST and in situ)
+        Map<ExpressionCallDAO.Attribute, String> dataTypeToWeightSql = new HashMap<>();
+        dataTypeToWeightSql.put(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA, 
+                exprTableName + ".affymetrixDistinctRankSum ");
+        dataTypeToWeightSql.put(ExpressionCallDAO.Attribute.RNA_SEQ_DATA, 
+                exprTableName + ".rnaSeqDistinctRankSum ");
+        dataTypeToWeightSql.put(ExpressionCallDAO.Attribute.EST_DATA, 
+                exprTableName + ".estMaxRank ");
+        dataTypeToWeightSql.put(ExpressionCallDAO.Attribute.IN_SITU_DATA, 
+                exprTableName + ".inSituMaxRank ");
         
         for (ExpressionCallDAO.Attribute attribute: attributes) {
             if (sql.isEmpty()) {
@@ -1135,22 +1137,22 @@ implements ExpressionCallDAO {
                 //in case several raws are grouped, we retrieve the min value of the ranking score
                 sql +=  groupByClause? "MIN(": "" + attributesForRank.stream()
                             .map(attr -> {
-                                String rankSql = dataTypeToMeanNormRankSql.get(attr);
-                                String distinctRankSumSql = dataTypeToMaxRankSumSql.get(attr);
-                                if (rankSql == null || distinctRankSumSql == null) {
+                                String rankSql = dataTypeToNormRankSql.get(attr);
+                                String weightSql = dataTypeToWeightSql.get(attr);
+                                if (rankSql == null || weightSql == null) {
                                     throw log.throwing(new IllegalStateException(
                                         "No rank clause associated to data type: " + attr));
                                 }
                                 return "if (" + convertDataTypeAttrToColName(attr) + " + 0 = " 
                                            + convertDataStateToInt(DataState.NODATA) + ", 0, "
-                                           + rankSql + " * " + distinctRankSumSql + ")";
+                                           + rankSql + " * " + weightSql + ")";
                             })
                             .collect(Collectors.joining(" + ", "((", ")")) 
                             
                       + attributesForRank.stream()
                             .map(attr -> "if (" + convertDataTypeAttrToColName(attr) + " + 0 = " 
                                                 + convertDataStateToInt(DataState.NODATA) + ", 0, "
-                                         + dataTypeToMaxRankSumSql.get(attr) + ")")
+                                         + dataTypeToWeightSql.get(attr) + ")")
                             .collect(Collectors.joining(" + ", "/ (", 
                                      groupByClause? ")": "" + ")) AS globalMeanRank "));
 
@@ -1165,8 +1167,9 @@ implements ExpressionCallDAO {
                 sql += "AS affymetrixData ";
             } else if (attribute.equals(ExpressionCallDAO.Attribute.AFFYMETRIX_MEAN_RANK)) {
                 
-                throw log.throwing(new UnsupportedOperationException(
-                        "Retrieval of rank per data type not implemented"));
+                sql += (groupByClause? "MIN(": "") 
+                        + dataTypeToNormRankSql.get(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA) 
+                        + (groupByClause? ")": "") + " AS affymetrixRank ";
                 
             } else if (attribute.equals(ExpressionCallDAO.Attribute.EST_DATA)) {
                 if (!groupByClause) {
@@ -1178,9 +1181,10 @@ implements ExpressionCallDAO {
                 }
                 sql += "AS estData ";
             } else if (attribute.equals(ExpressionCallDAO.Attribute.EST_MEAN_RANK)) {
-
-                throw log.throwing(new UnsupportedOperationException(
-                        "Retrieval of rank per data type not implemented"));
+                
+                sql += (groupByClause? "MIN(": "") 
+                        + dataTypeToNormRankSql.get(ExpressionCallDAO.Attribute.EST_DATA) 
+                        + (groupByClause? ")": "") + " AS estRank ";
                 
             } else if (attribute.equals(ExpressionCallDAO.Attribute.IN_SITU_DATA)) {
                 if (!groupByClause) {
@@ -1192,9 +1196,10 @@ implements ExpressionCallDAO {
                 }
                 sql += "AS inSituData ";
             } else if (attribute.equals(ExpressionCallDAO.Attribute.IN_SITU_MEAN_RANK)) {
-
-                throw log.throwing(new UnsupportedOperationException(
-                        "Retrieval of rank per data type not implemented"));
+                
+                sql += (groupByClause? "MIN(": "") 
+                        + dataTypeToNormRankSql.get(ExpressionCallDAO.Attribute.IN_SITU_DATA) 
+                        + (groupByClause? ")": "") + " AS inSituRank ";
                 
             } else if (attribute.equals(ExpressionCallDAO.Attribute.RNA_SEQ_DATA)) {
                 if (!groupByClause) {
@@ -1206,9 +1211,10 @@ implements ExpressionCallDAO {
                 }
                 sql += "AS rnaSeqData ";
             } else if (attribute.equals(ExpressionCallDAO.Attribute.RNA_SEQ_MEAN_RANK)) {
-
-                throw log.throwing(new UnsupportedOperationException(
-                        "Retrieval of rank per data type not implemented"));
+                
+                sql += (groupByClause? "MIN(": "") 
+                        + dataTypeToNormRankSql.get(ExpressionCallDAO.Attribute.RNA_SEQ_DATA) 
+                        + (groupByClause? ")": "") + " AS rnaSeqRank ";
                 
             } else {
                 throw log.throwing(new IllegalArgumentException("The attribute provided (" +
@@ -1817,25 +1823,25 @@ implements ExpressionCallDAO {
             if (colName.equals("affymetrixData")) {
                 return log.exit(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA);
             } 
-            if (colName.equals("affymetrixMeanRankNorm")) {
+            if (colName.equals("affymetrixRank")) {
                 return log.exit(ExpressionCallDAO.Attribute.AFFYMETRIX_MEAN_RANK);
             } 
             if (colName.equals("estData")) {
                 return log.exit(ExpressionCallDAO.Attribute.EST_DATA);
             } 
-            if (colName.equals("estMeanRankNorm")) {
+            if (colName.equals("estRank")) {
                 return log.exit(ExpressionCallDAO.Attribute.EST_MEAN_RANK);
             } 
             if (colName.equals("inSituData")) {
                 return log.exit(ExpressionCallDAO.Attribute.IN_SITU_DATA);
             } 
-            if (colName.equals("inSituMeanRankNorm")) {
+            if (colName.equals("inSituRank")) {
                 return log.exit(ExpressionCallDAO.Attribute.IN_SITU_MEAN_RANK);
             } 
             if (colName.equals("rnaSeqData")) {
                 return log.exit(ExpressionCallDAO.Attribute.RNA_SEQ_DATA);
             } 
-            if (colName.equals("rnaSeqMeanRankNorm")) {
+            if (colName.equals("rnaSeqRank")) {
                 return log.exit(ExpressionCallDAO.Attribute.RNA_SEQ_MEAN_RANK);
             } 
             if (colName.equals("originOfLine") || colName.equals("anatOriginOfLine")) {

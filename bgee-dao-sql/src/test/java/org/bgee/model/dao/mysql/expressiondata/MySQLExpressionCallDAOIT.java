@@ -31,7 +31,6 @@ import org.bgee.model.dao.mysql.MySQLITAncestor;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO.MySQLExpressionCallTOResultSet;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -43,11 +42,12 @@ import org.junit.rules.ExpectedException;
  * important information.
  * 
  * @author Valentine Rech de Laval
- * @version Bgee 13
+ * @author Frederic Bastian
+ * @version Bgee 13 June 2016
  * @see org.bgee.model.dao.api.expressiondata.ExpressionCallDAO
  * @since Bgee 13
  */
-//TODO: test when retrieving global mean score
+//TODO: test when retrieving global mean score with GROUP BY
 public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
 
     private final static Logger log = 
@@ -78,7 +78,6 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
      * Collection, String, Collection, LinkedHashMap)}, when not needing a GROUP BY clause.
      */
     @Test
-    @Ignore
     public void shouldGetExpressionCallsNoSubStages() throws SQLException {
         
         this.useSelectDB();
@@ -115,46 +114,46 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
             );
         List<ExpressionCallTO> orderedExpectedExprCalls = Arrays.asList(
                 //calls retrieved thanks to first filter
-                new ExpressionCallTO("1", "ID3", "Anat_id1", "Stage_id1", BigDecimal.valueOf(952.513333),
-                        DataState.LOWQUALITY, BigDecimal.valueOf(234.33),
+                new ExpressionCallTO("1", "ID3", "Anat_id1", "Stage_id1", BigDecimal.valueOf(2232.28742515),
+                        DataState.LOWQUALITY, BigDecimal.valueOf(937.32),
                         DataState.NODATA, null,
-                        DataState.HIGHQUALITY, BigDecimal.valueOf(123.20),
+                        DataState.HIGHQUALITY, BigDecimal.valueOf(24640.00),
                         DataState.HIGHQUALITY, BigDecimal.valueOf(2500.01),
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("2", "ID1", "Anat_id6", "Stage_id6", BigDecimal.valueOf(3557.675000),
-                        DataState.LOWQUALITY,  BigDecimal.valueOf(12554.2),
-                        DataState.HIGHQUALITY, BigDecimal.valueOf(233.3),
-                        DataState.HIGHQUALITY, BigDecimal.valueOf(200.0),
+                new ExpressionCallTO("2", "ID1", "Anat_id6", "Stage_id6", BigDecimal.valueOf(9393.20132013),
+                        DataState.LOWQUALITY,  BigDecimal.valueOf(25108.40),
+                        DataState.HIGHQUALITY, BigDecimal.valueOf(23330),
+                        DataState.HIGHQUALITY, BigDecimal.valueOf(40000.0),
                         DataState.LOWQUALITY, BigDecimal.valueOf(1243.2),
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
                 new ExpressionCallTO("3", "ID1", "Anat_id6", "Stage_id7", BigDecimal.valueOf(5.0),
                         DataState.NODATA, null,
                         DataState.NODATA, null,
-                        DataState.NODATA, BigDecimal.valueOf(5.0),
-                        DataState.LOWQUALITY, null,
+                        DataState.NODATA, null, 
+                        DataState.LOWQUALITY, BigDecimal.valueOf(5.0),
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
                 //retrieved thanks to second filter
-                new ExpressionCallTO("4", "ID2", "Anat_id2", "Stage_id18", BigDecimal.valueOf(1209.807500),
-                        DataState.HIGHQUALITY, BigDecimal.valueOf(234.5),
-                        DataState.HIGHQUALITY,  BigDecimal.valueOf(42.1),
-                        DataState.HIGHQUALITY, BigDecimal.valueOf(241.13),
+                new ExpressionCallTO("4", "ID2", "Anat_id2", "Stage_id18", BigDecimal.valueOf(1811.07590028),
+                        DataState.HIGHQUALITY, BigDecimal.valueOf(469.00),
+                        DataState.HIGHQUALITY,  BigDecimal.valueOf(16840.00),
+                        DataState.HIGHQUALITY, BigDecimal.valueOf(24113),
                         DataState.HIGHQUALITY,  BigDecimal.valueOf(4321.5),
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("6", "ID2", "Anat_id11", "Stage_id12", BigDecimal.valueOf(2817.675000),
-                        DataState.HIGHQUALITY,  BigDecimal.valueOf(4325.0),
-                        DataState.LOWQUALITY, BigDecimal.valueOf(2341.0),
-                        DataState.NODATA,  BigDecimal.valueOf(252.3),
+                new ExpressionCallTO("6", "ID2", "Anat_id11", "Stage_id12", BigDecimal.valueOf(6886.5),
+                        DataState.HIGHQUALITY,  BigDecimal.valueOf(8650.00),
+                        DataState.LOWQUALITY, BigDecimal.valueOf(23410.00),
+                        DataState.NODATA,  null,
                         DataState.HIGHQUALITY,  BigDecimal.valueOf(4352.4),
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("9", "ID2", "Anat_id1", "Stage_id9", BigDecimal.valueOf( (241.5+4321.1+123.4)/3.),
-                        DataState.HIGHQUALITY, BigDecimal.valueOf(241.5),
-                        DataState.LOWQUALITY, BigDecimal.valueOf(4321.1),
-                        DataState.NODATA, BigDecimal.valueOf(123.4),
-                        DataState.HIGHQUALITY, null ,
+                new ExpressionCallTO("9", "ID2", "Anat_id1", "Stage_id9", BigDecimal.valueOf(2756.47058824),
+                        DataState.HIGHQUALITY, BigDecimal.valueOf(483.00),
+                        DataState.LOWQUALITY, BigDecimal.valueOf(21605.5),
+                        DataState.NODATA, null, 
+                        DataState.HIGHQUALITY, BigDecimal.valueOf(123.4),
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("10", "ID1", "Anat_id6", "Stage_id8", BigDecimal.valueOf((1222.5+122.3)/2.), //
-                        DataState.HIGHQUALITY, BigDecimal.valueOf(1222.5),
-                        DataState.HIGHQUALITY, BigDecimal.valueOf(122.3),
+                new ExpressionCallTO("10", "ID1", "Anat_id6", "Stage_id8", BigDecimal.valueOf(2554.52736318), 
+                        DataState.HIGHQUALITY, BigDecimal.valueOf(2445.00),
+                        DataState.HIGHQUALITY, BigDecimal.valueOf(24460.00),
                         DataState.NODATA, null,
                         DataState.NODATA, null,
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true));

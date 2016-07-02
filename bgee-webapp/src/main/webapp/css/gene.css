@@ -38,7 +38,7 @@ div.legend {
 	margin-top: 2em;
 	font-size: 0.85em;
 }
-@media (max-width: 768px) {
+@media (max-width: 992px) {
 	div.legend {
 	   border: none;
 	}
@@ -74,13 +74,13 @@ th.anat-entity-id {
 	width: 12% !important;
 }
 th.anat-entity {
-	width: 30% !important;
+	width: 29% !important;
 }
 th.dev-stages {
 	width: 40% !important;
 }
 th.score {
-	width: 8% !important;
+	width: 7% !important;
 }
 th.quality {
 	width: 10% !important;

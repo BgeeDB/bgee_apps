@@ -37,7 +37,27 @@ $( document ).ready( function(){
             			'<tr><td>' + columns[4].title + '</td><td>' + changeUlToOl(removeMaskedClass(columns[4].data)) + '</td></tr>';
                     return $('<table class="table"/>').append( data );
                 }
-            }
+            }, 
+            breakpoints: [
+                //make the default datatable breakpoints to be the same as bootstrap
+                { name: 'desktop',  width: Infinity },
+                { name: 'tablet-l', width: 992 },
+                { name: 'tablet-p', width: 768 },
+                { name: 'mobile-l', width: 480 },
+                { name: 'mobile-p', width: 320 }, 
+                //(default datatable parameters: )
+                //{ name: 'desktop',  width: Infinity },
+                //{ name: 'tablet-l', width: 1024 },
+                //{ name: 'tablet-p', width: 768 },
+                //{ name: 'mobile-l', width: 480 },
+                //{ name: 'mobile-p', width: 320 }
+                
+                //create breakpoints corresponding exactly to bootstrap
+                { name: 'table_lg', width: Infinity },
+                { name: 'table_md', width: 1200 },
+                { name: 'table_sm', width: 992 },
+                { name: 'table_xs', width: 768 }
+            ]
         },
         columnDefs: [ // Higher responsivePriority are removed first, target define the order
            { responsivePriority: 2, targets: 0 }, // Anat. entity ID

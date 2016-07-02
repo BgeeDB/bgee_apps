@@ -174,6 +174,11 @@ div.dtr-modal div.dtr-modal-display {
 .gene-score-shift {
 	border-top: 1px dotted #920209;
 }
+.low-qual-score {
+	/* same color as class .nodata, see above */
+	color: #b8b8b8;
+	font-weight: normal !important;
+}
 
 table.dataTable {
     border-collapse: collapse !important;

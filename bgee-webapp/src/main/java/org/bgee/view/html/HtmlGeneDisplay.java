@@ -1,6 +1,7 @@
 package org.bgee.view.html;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
@@ -193,8 +194,11 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                   "<tr><td><span class='quality high'>data</span></td></tr>" +
                   "<tr><td><span class='quality nodata'>no data</span></td></tr></table>");
         this.writeln("<table class='col-xs-offset-2 col-xs-5 col-sm-offset-0 col-sm-12'>"
-                + "<caption>Rank scores</caption>" +
-                "<tr><th><hr class='dotted-line' /></th><td>important variation</td></tr></table>");
+                + "<caption>Rank scores</caption>"
+                + "<tr><th><span class='low-qual-score'>32,500.10</span></th>"
+                    + "<td>low confidence rank scores are darkened</td></tr>" +
+                "<tr><th><hr class='dotted-line' /></th>"
+                + "  <td>important rank score variation</td></tr></table>");
         this.writeln("</div>"); // end legend
         
 		this.writeln("</div>"); // end expr_data 
@@ -344,7 +348,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		sb.append("</ul></td>");
 		
 		//Global mean rank
-	    sb.append("<td>").append(htmlEntities(calls.get(0).getFormattedGlobalMeanRank()))
+	    sb.append("<td>").append(getRankScoreHTML(calls.get(0)))
 	        .append("<ul class='masked score-list'>");
         previousGroupInd = null;
 	    for (ExpressionCall call: calls) {
@@ -353,7 +357,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             if (previousGroupInd != null && previousGroupInd != currentGroupInd) {
                 sb.append(scoreShiftClassName);
             }
-            sb.append("'>").append(htmlEntities(call.getFormattedGlobalMeanRank()))
+            sb.append("'>").append(getRankScoreHTML(call))
               .append("</li>");
             sb.append("\n");
             previousGroupInd = currentGroupInd;
@@ -476,6 +480,32 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		}
 		sb.append("</span>");
 		return log.exit(sb.toString());
+	}
+	
+	/**
+	 * @param call An {@code ExpressionCall} for which we want to display global mean rank.
+	 * @return     A {@code String} containing the HTML to display the global mean rank, 
+	 *             notably displaying information about confidence in the rank.
+	 */
+	private static String getRankScoreHTML(ExpressionCall call) {
+	    log.entry(call);
+
+        //If the rank is above a threshold and is only supported by ESTs and/or in situ data, 
+        //they we consider it of low confidence
+        //TODO: there should be a better mechanism to handle that, and definitely not in the view, 
+        //it is not its role to determine what is of low confidence...
+        //Maybe create in bgee-core a new RankScore class, storing the rank and the confidence.
+        Set<DataType> dataTypes = call.getCallData().stream().map(ExpressionCallData::getDataType)
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(DataType.class)));
+        String rankScore = htmlEntities(call.getFormattedGlobalMeanRank());
+        if (dataTypes.contains(DataType.AFFYMETRIX) || 
+                dataTypes.contains(DataType.RNA_SEQ) || 
+                call.getGlobalMeanRank().compareTo(BigDecimal.valueOf(20000)) < 0) {
+            return log.exit(rankScore);
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("<span class='low-qual-score'>").append(rankScore).append("</span>");
+        return log.exit(sb.toString());
 	}
 
 	@Override

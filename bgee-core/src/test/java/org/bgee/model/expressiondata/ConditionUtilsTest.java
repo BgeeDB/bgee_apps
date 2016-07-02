@@ -29,7 +29,7 @@ import org.junit.Test;
  * Unit tests for {@link ConditionUtils}.
  * 
  * @author Frederic Bastian
- * @version Bgee 13 Dec. 2015
+ * @version Bgee 13 June 2016
  * @since Bgee 13 Dec. 2015
  */
 public class ConditionUtilsTest extends TestAncestor {
@@ -126,10 +126,10 @@ public class ConditionUtilsTest extends TestAncestor {
     public void testIsConditionMorePrecise() {
         assertTrue("Incorrect determination of precision for more precise condition", 
                 this.conditionUtils.isConditionMorePrecise(this.conditions.get(0), this.conditions.get(1)));
-        assertTrue("Incorrect determination of precision for more precise condition", 
-                this.conditionUtils.isConditionMorePrecise(this.conditions.get(0), this.conditions.get(2)));
         assertFalse("Incorrect determination of precision for less precise condition", 
                 this.conditionUtils.isConditionMorePrecise(this.conditions.get(1), this.conditions.get(0)));
+        assertTrue("Incorrect determination of precision for more precise condition", 
+                this.conditionUtils.isConditionMorePrecise(this.conditions.get(0), this.conditions.get(2)));
         assertFalse("Incorrect determination of precision for less precise condition", 
                 this.conditionUtils.isConditionMorePrecise(this.conditions.get(2), this.conditions.get(0)));
         assertFalse("Incorrect determination of precision for as precise conditions", 
@@ -161,6 +161,40 @@ public class ConditionUtilsTest extends TestAncestor {
             //test passed
         }
         
+    }
+    
+    /**
+     * Test {@link ConditionUtils#compare(Condition, Condition)}
+     */
+    @Test
+    public void testCompare() {
+        assertEquals("Incorrect comparison based on rels between Conditions", 1, 
+                this.conditionUtils.compare(this.conditions.get(0), this.conditions.get(1)));
+        assertEquals("Incorrect comparison based on rels between Conditions", -1, 
+                this.conditionUtils.compare(this.conditions.get(1), this.conditions.get(0)));
+        assertEquals("Incorrect comparison based on rels between Conditions", 1, 
+                this.conditionUtils.compare(this.conditions.get(0), this.conditions.get(2)));
+        assertEquals("Incorrect comparison based on rels between Conditions", -1, 
+                this.conditionUtils.compare(this.conditions.get(2), this.conditions.get(0)));
+        assertEquals("Incorrect comparison based on rels between Conditions", 0, 
+                this.conditionUtils.compare(this.conditions.get(1), this.conditions.get(2)));
+        assertEquals("Incorrect comparison based on rels between Conditions", 0, 
+                this.conditionUtils.compare(this.conditions.get(2), this.conditions.get(1)));
+
+        assertEquals("Incorrect comparison based on rels between Conditions", 0, 
+                this.conditionUtils.compare(this.conditions.get(5), this.conditions.get(1)));
+        assertEquals("Incorrect comparison based on rels between Conditions", 0, 
+                this.conditionUtils.compare(this.conditions.get(1), this.conditions.get(5)));
+        assertEquals("Incorrect comparison based on rels between Conditions", 1, 
+                this.conditionUtils.compare(this.conditions.get(0), this.conditions.get(4)));
+        assertEquals("Incorrect comparison based on rels between Conditions", -1, 
+                this.conditionUtils.compare(this.conditions.get(4), this.conditions.get(0)));
+        assertEquals("Incorrect comparison based on rels between Conditions", 0, 
+                this.conditionUtils.compare(this.conditions.get(1), this.conditions.get(1)));
+        assertEquals("Incorrect comparison based on rels between Conditions", 1, 
+                this.conditionUtils.compare(this.conditions.get(0), this.conditions.get(3)));
+        assertEquals("Incorrect comparison based on rels between Conditions", -1, 
+                this.conditionUtils.compare(this.conditions.get(3), this.conditions.get(0)));
     }
     
     /**

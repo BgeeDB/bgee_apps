@@ -3,6 +3,7 @@ package org.bgee.model.expressiondata;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
@@ -22,10 +23,10 @@ import org.bgee.model.ontology.Ontology.RelationType;
  * Class providing convenience operations on {@link Condition}s.
  * 
  * @author Frederic Bastian
- * @version Bgee 13 Jan. 2016
+ * @version Bgee 13 June 2016
  * @since Bgee 13 Dec. 2015
  */
-public class ConditionUtils {
+public class ConditionUtils implements Comparator<Condition> {
 
     private static final Logger log = LogManager.getLogger(ConditionUtils.class.getName());
     
@@ -210,6 +211,35 @@ public class ConditionUtils {
         }
         
         return log.exit(true);
+    }
+    
+    /**
+     * Compare two {@code Condition}s based on their relations between each other. 
+     * Will return a negative {@code int} if {@code cond1} is more precise than {@code cond2}, 
+     * a positive {@code int} if {@code cond1} is less precise than {@code cond2}, 
+     * {@code 0} if {@code cond1} and {@code cond2} are unrelated.
+     * <p>
+     * For a comparison of {@code Condition}s simply based on their attributes, 
+     * see {@code Condition#compareTo(Condition)}. 
+     * 
+     * @param cond1 The first {@code Condition} to be compared. 
+     * @param cond2 The second {@code Condition} to be compared. 
+     * @return      a negative {@code int}, zero, or a positive {@code int} 
+     *              as the first argument is more precise than, unrelated to, or less precise 
+     *              than the second.
+     * @see #isConditionMorePrecise(Condition, Condition)
+     */
+    @Override
+    public int compare(Condition cond1, Condition cond2) {
+        log.entry(cond1, cond2);
+
+        if (this.isConditionMorePrecise(cond1, cond2)) {
+            return log.exit(1);
+        }
+        if (this.isConditionMorePrecise(cond2, cond1)) {
+            return log.exit(-1);
+        }
+        return log.exit(0);
     }
     
     //TODO: javadoc

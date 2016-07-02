@@ -3,14 +3,23 @@
  * 
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Jan 2016
+ * @version Bgee 13, June 2016
  * @since   Bgee 13
  */
 
 $( document ).ready( function(){ 
     
+	removeMaskedClass = function(text) {
+        return text.replace('masked','');
+    };
+
+    changeUlToOl = function(text) {
+        return text.replace('<ul','<ol').replace('</ul>','</ol>');
+    };
+    
     $('table.expression').DataTable( {
-        "ordering": false,
+    	//enable ordering but apply no ordering during initialization
+    	"order": [],
         responsive: {
             details: {
                 display: $.fn.dataTable.Responsive.display.modal( {
@@ -21,19 +30,48 @@ $( document ).ready( function(){
                 } ),
                 renderer: function ( api, rowIdx, columns ) {
                 	var data = 
-                		'<tr><td>' + columns[0].title + ':</td><td>' + columns[0].data + '</td></tr>' +
-                		'<tr><td>' + columns[1].title + ':</td><td>' + columns[1].data + '</td></tr>' +
-                		'<tr><td>' + columns[2].title + '</td><td>' + columns[2].data.replace('[+]','').replace('<ul','<ol').replace('</ul>','</ol>') + '</td></tr>' +
-                		'<tr><td>' + columns[3].title + '</td><td>' + columns[3].data.replace('<ul','<ol').replace('</ul>','</ol>') + '</td></tr>';
+                		'<tr><td>' + columns[0].title + '</td><td>' + columns[0].data + '</td></tr>' +
+                		'<tr><td>' + columns[1].title + '</td><td>' + columns[1].data + '</td></tr>' +
+                		'<tr><td>' + columns[2].title + '</td><td>' + changeUlToOl(removeMaskedClass(columns[2].data.replace('[+]',''))) + '</td></tr>' +
+                		'<tr><td>' + columns[3].title + '</td><td>' + changeUlToOl(removeMaskedClass(columns[3].data)) + '</td></tr>' +
+            			'<tr><td>' + columns[4].title + '</td><td>' + changeUlToOl(removeMaskedClass(columns[4].data)) + '</td></tr>';
                     return $('<table class="table"/>').append( data );
                 }
-            }
+            }, 
+            breakpoints: [
+                //make the default datatable breakpoints to be the same as bootstrap
+                { name: 'desktop',  width: Infinity },
+                { name: 'tablet-l', width: 992 },
+                { name: 'tablet-p', width: 768 },
+                { name: 'mobile-l', width: 480 },
+                { name: 'mobile-p', width: 320 }, 
+                //(default datatable parameters: )
+                //{ name: 'desktop',  width: Infinity },
+                //{ name: 'tablet-l', width: 1024 },
+                //{ name: 'tablet-p', width: 768 },
+                //{ name: 'mobile-l', width: 480 },
+                //{ name: 'mobile-p', width: 320 }
+                
+                //create breakpoints corresponding exactly to bootstrap
+                { name: 'table_lg', width: Infinity },
+                { name: 'table_md', width: 1200 },
+                { name: 'table_sm', width: 992 },
+                { name: 'table_xs', width: 768 }
+            ]
         },
-        columnDefs: [ // Higher responsivePriority are remove first
-           { responsivePriority: 1, targets: 1 }, // Anatomical entity
+        columnDefs: [ // Higher responsivePriority are removed first, target define the order
            { responsivePriority: 2, targets: 0 }, // Anat. entity ID
-           { responsivePriority: 3, targets: 3 }, // Quality
-           { responsivePriority: 4, targets: 2 }  // Developmental stage(s)
+           { responsivePriority: 1, targets: 1 }, // Anatomical entity
+           { responsivePriority: 5, targets: 2 }, // Developmental stage(s)
+           { responsivePriority: 3, targets: 3 }, // Score
+           { responsivePriority: 4, targets: 4 }  // Quality
+        ],
+        columns: [ // sorting definition
+           null, // Anatomical entity - null = default sorting
+           null, // Anat. entity ID - null = default sorting
+           { "orderable": false },  // Developmental stage(s) - ordering disabled
+           { "orderDataType": "dom-text", "type": "score" }, // Score - custom function
+           { "orderable": false } // Quality - ordering disabled
         ]
     });
 
@@ -49,6 +87,25 @@ $( document ).ready( function(){
             $(this).parent().parent().find("ul").hide(250);
         }
     } );
+    
+    jQuery.fn.dataTableExt.oSort['score-asc'] = function(a, b) {
+    	// Example: "1,037.0
+    	//           <ul class="masked score-list">
+    	//               <li class="score">1,037.0</li>
+    	//               <li class="score">21,200.0</li>
+    	//           </ul>"
+    	//substring: start including, end excluded
+    	//parseFloat: doesn't deal with US comma separator for thousands
+    	var x = parseFloat(a.substring(0, a.indexOf('<ul')).replace(/,/g,''));
+    	var y = parseFloat(b.substring(0, b.indexOf('<ul')).replace(/,/g,''));
+    	return ((x < y) ? -1 : ((x > y) ? 1 : 0));
+    };
+     
+    jQuery.fn.dataTableExt.oSort['score-desc'] = function(a, b) {
+    	var x = parseFloat(a.substring(0, a.indexOf('<ul')).replace(/,/g,''));
+    	var y = parseFloat(b.substring(0, b.indexOf('<ul')).replace(/,/g,''));
+        return ((x < y) ? 1 : ((x > y) ? -1 : 0));
+    };
 
     loadAutocompleteGene();
 } );

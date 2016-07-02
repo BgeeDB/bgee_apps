@@ -69,7 +69,7 @@ import org.junit.Test;
 //with a message containing "Can not parse output: The generated file xxx is empty" (important, this message is expected); 
 //An empty result file should be created, and execution of TopAnatAnalysis should continue normally. 
 public class TopAnatTest extends TestAncestor {
-    private final static Logger log = LogManager.getLogger(TopAnatRealTest.class.getName());
+    private final static Logger log = LogManager.getLogger(TopAnatTest.class.getName());
     @Override
     protected Logger getLogger() {
         return log;

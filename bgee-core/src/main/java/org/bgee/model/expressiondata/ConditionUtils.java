@@ -16,7 +16,6 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.ontology.Ontology;
-import org.bgee.model.ontology.OntologyService;
 import org.bgee.model.ontology.Ontology.RelationType;
 
 /**
@@ -34,10 +33,6 @@ public class ConditionUtils implements Comparator<Condition> {
      * @see #getConditions()
      */
     private final Set<Condition> conditions;
-    /**
-     * A {@code ServiceFactory} allowing to acquire the {@code Service}s necessary to {@code ConditionUtils}.
-     */
-    private final ServiceFactory serviceFactory;
     
     /**
      * @see #getAnatEntityOntology()
@@ -70,6 +65,21 @@ public class ConditionUtils implements Comparator<Condition> {
             ServiceFactory serviceFactory) {
         this(speciesId, conditions, false, serviceFactory);
     }
+    //TODO: update javadoc
+    public ConditionUtils(String speciesId, Collection<Condition> conditions, boolean inferAncestralConds, 
+            ServiceFactory serviceFactory) throws IllegalArgumentException {
+        this(speciesId, conditions, inferAncestralConds, serviceFactory, null, null);
+    }
+    //TODO: update javadoc
+    public ConditionUtils(String speciesId, Collection<Condition> conditions, 
+            Ontology<AnatEntity> anatEntityOnt, Ontology<DevStage> devStageOnt) throws IllegalArgumentException {
+        this(speciesId, conditions, false, anatEntityOnt, devStageOnt);
+    }
+    //TODO: update javadoc
+    public ConditionUtils(String speciesId, Collection<Condition> conditions, boolean inferAncestralConds, 
+            Ontology<AnatEntity> anatEntityOnt, Ontology<DevStage> devStageOnt) throws IllegalArgumentException {
+        this(speciesId, conditions, inferAncestralConds, null, anatEntityOnt, devStageOnt);
+    }
     /**
      * Constructor accepting all required parameters. 
      * 
@@ -84,24 +94,25 @@ public class ConditionUtils implements Comparator<Condition> {
      */
     //XXX: we'll see what we'll do for multi-species later, for now we only accept a single species. 
     //I guess multi-species would need a separate class, e.g., MultiSpeciesConditionUtils.
-    //TODO: update javadoc for inferAncestralConds
-    //TODO: unit test for ancestral condition inferrences
+    //TODO: update javadoc
+    //TODO: unit test for ancestral condition inferences
     //TODO: refactor this constructor, methods getAncestorConditions and getDescendantConditions
-    public ConditionUtils(String speciesId, Collection<Condition> conditions, boolean inferAncestralConds, 
-            ServiceFactory serviceFactory) throws IllegalArgumentException {
-        log.entry(speciesId, conditions, inferAncestralConds, serviceFactory);
+    private ConditionUtils(String speciesId, Collection<Condition> conditions, boolean inferAncestralConds, 
+            ServiceFactory serviceFactory, Ontology<AnatEntity> anatEntityOnt, 
+            Ontology<DevStage> devStageOnt) throws IllegalArgumentException {
+        log.entry(speciesId, conditions, inferAncestralConds, serviceFactory, anatEntityOnt, devStageOnt);
         if (StringUtils.isBlank(speciesId)) {
             throw log.throwing(new IllegalArgumentException("A species ID must be provided."));
         }
         if (conditions == null || conditions.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Some conditions must be provided."));
         }
-        if (serviceFactory == null) {
-            throw log.throwing(new IllegalArgumentException("A ServiceFactory must be provided."));
+        if (serviceFactory == null && anatEntityOnt == null && devStageOnt == null) {
+            throw log.throwing(new IllegalArgumentException(
+                    "A ServiceFactory or some ontologies must be provided."));
         }
         
         this.speciesId = speciesId;
-        this.serviceFactory = serviceFactory;
         Set<Condition> tempConditions = new HashSet<>(conditions);
         
         Set<String> anatEntityIds = new HashSet<>();
@@ -115,18 +126,33 @@ public class ConditionUtils implements Comparator<Condition> {
             }
         }
         
-        OntologyService ontService = this.serviceFactory.getOntologyService();
         if (!anatEntityIds.isEmpty()) {
-            this.anatEntityOnt = ontService.getAnatEntityOntology(Arrays.asList(this.speciesId), 
-                    anatEntityIds, EnumSet.of(RelationType.ISA_PARTOF), 
-                    inferAncestralConds? true: false, false, this.serviceFactory.getAnatEntityService());
+            //it will be checked later that all anat. entities are present in the ontology
+            if (anatEntityOnt != null) {
+                this.anatEntityOnt = anatEntityOnt;
+            } else if (serviceFactory != null) {
+                this.anatEntityOnt = serviceFactory.getOntologyService().getAnatEntityOntology(
+                        Arrays.asList(this.speciesId), anatEntityIds, EnumSet.of(RelationType.ISA_PARTOF), 
+                        inferAncestralConds? true: false, false, serviceFactory.getAnatEntityService());
+            } else {
+                throw log.throwing(new IllegalArgumentException(
+                        "No ServiceFactory nor anatomical ontology provided."));
+            }
         } else {
             this.anatEntityOnt = null;
         }
         if (!devStageIds.isEmpty()) {
-            this.devStageOnt = ontService.getDevStageOntology(Arrays.asList(this.speciesId), 
-                    devStageIds, inferAncestralConds? true: false, false, 
-                            this.serviceFactory.getDevStageService());
+            //it will be checked later that all dev. stages are present in the ontology
+            if (devStageOnt != null) {
+                this.devStageOnt = devStageOnt;
+            } else if (serviceFactory != null) {
+                this.devStageOnt = serviceFactory.getOntologyService().getDevStageOntology(
+                        Arrays.asList(this.speciesId), devStageIds, 
+                        inferAncestralConds? true: false, false, serviceFactory.getDevStageService());
+            } else {
+                throw log.throwing(new IllegalArgumentException(
+                        "No ServiceFactory nor developmental ontology provided."));
+            }
         } else {
             this.devStageOnt = null;
         }
@@ -331,6 +357,7 @@ public class ConditionUtils implements Comparator<Condition> {
      * @throws IllegalArgumentException If {@code cond} is not registered to this {@code ConditionUtils}.
      */
     //TODO: update javadoc for directRelOnly
+    //TODO: refactor this method, constructor and getAncestorConditions
     public Set<Condition> getDescendantConditions(Condition cond, boolean directRelOnly) {
         log.entry(cond, directRelOnly);
         if (!this.getConditions().contains(cond)) {

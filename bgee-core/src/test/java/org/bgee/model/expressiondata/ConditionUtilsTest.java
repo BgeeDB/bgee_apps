@@ -22,7 +22,6 @@ import org.bgee.model.anatdev.DevStageService;
 import org.bgee.model.ontology.Ontology;
 import org.bgee.model.ontology.OntologyService;
 import org.bgee.model.ontology.Ontology.RelationType;
-import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -43,8 +42,12 @@ public class ConditionUtilsTest extends TestAncestor {
     private ConditionUtils conditionUtils;
     private List<Condition> conditions;
     
-    @Before
-    public void loadConditionUtils() {
+    /**
+     * @param fromService   A {@code boolean} {@code true} if the {@code ConditionUtils} 
+     *                      should be loaded from the {@code ServiceFactory}, 
+     *                      {@code false} if it should be loaded directly from {@code Ontology}s.
+     */
+    public void loadConditionUtils(boolean fromService) {
         String anatEntityId1 = "anat1";
         AnatEntity anatEntity1 = new AnatEntity(anatEntityId1);
         String anatEntityId2 = "anat2";
@@ -119,16 +122,32 @@ public class ConditionUtilsTest extends TestAncestor {
         when(devStageOnt.getDescendants(devStage1, false)).thenReturn(
                 new HashSet<>(Arrays.asList(devStage2, devStage3)));
         
-        this.conditionUtils = new ConditionUtils("9606", 
-                Arrays.asList(cond1, cond2, cond3, cond4, cond5, cond6, cond7, 
-                        cond1_anatOnly, cond2_anatOnly, cond1_stageOnly, cond3_stageOnly), 
-                mockFact);
+        if (fromService) {
+            this.conditionUtils = new ConditionUtils("9606", 
+                    Arrays.asList(cond1, cond2, cond3, cond4, cond5, cond6, cond7, 
+                            cond1_anatOnly, cond2_anatOnly, cond1_stageOnly, cond3_stageOnly), 
+                    mockFact);
+        } else {
+            this.conditionUtils = new ConditionUtils("9606", 
+                    Arrays.asList(cond1, cond2, cond3, cond4, cond5, cond6, cond7, 
+                            cond1_anatOnly, cond2_anatOnly, cond1_stageOnly, cond3_stageOnly), 
+                    anatEntityOnt, devStageOnt);
+        }
     }
 
     /**
      * Test the method {@link ConditionUtils#isConditionMorePrecise(Condition, Condition)}.
      */
     @Test
+    public void testIsConditionMorePreciseDifferentLoadings() {
+        this.loadConditionUtils(true);
+        this.testIsConditionMorePrecise();
+        this.loadConditionUtils(false);
+        this.testIsConditionMorePrecise();
+    }
+    /**
+     * Test the method {@link ConditionUtils#isConditionMorePrecise(Condition, Condition)}.
+     */
     public void testIsConditionMorePrecise() {
         assertTrue("Incorrect determination of precision for more precise condition", 
                 this.conditionUtils.isConditionMorePrecise(this.conditions.get(0), this.conditions.get(1)));
@@ -178,11 +197,20 @@ public class ConditionUtilsTest extends TestAncestor {
         }
         
     }
-    
+
     /**
      * Test {@link ConditionUtils#compare(Condition, Condition)}
      */
     @Test
+    public void testCompareDifferentLoadings() {
+        this.loadConditionUtils(true);
+        this.testCompare();
+        this.loadConditionUtils(false);
+        this.testCompare();
+    }
+    /**
+     * Test {@link ConditionUtils#compare(Condition, Condition)}
+     */
     public void testCompare() {
         assertEquals("Incorrect comparison based on rels between Conditions", 1, 
                 this.conditionUtils.compare(this.conditions.get(0), this.conditions.get(1)));
@@ -212,11 +240,20 @@ public class ConditionUtilsTest extends TestAncestor {
         assertEquals("Incorrect comparison based on rels between Conditions", -1, 
                 this.conditionUtils.compare(this.conditions.get(3), this.conditions.get(0)));
     }
-    
+
     /**
      * Test the method {@link ConditionUtils#getDescendantConditions(Condition)}.
      */
     @Test
+    public void shouldGetDescendantConditionsDifferentLoadings() {
+        this.loadConditionUtils(true);
+        this.shouldGetDescendantConditions();
+        this.loadConditionUtils(false);
+        this.shouldGetDescendantConditions();
+    }
+    /**
+     * Test the method {@link ConditionUtils#getDescendantConditions(Condition)}.
+     */
     public void shouldGetDescendantConditions() {
         Set<Condition> expectedDescendants = conditions.stream()
                 .filter(e -> !e.equals(this.conditions.get(0)) && this.conditions.indexOf(e) <= 6)

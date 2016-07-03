@@ -5,6 +5,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -169,11 +170,14 @@ public class GenerateRankFile {
      * @param dataType          The {@code DataType} that is considered to generate the file. 
      *                          If {@code null}, then all data types were considered. 
      * @param outputDir         A {@code String} that is the path to the directory where the file is stored.
+     * @param tmpFile           A {@code boolean} defining whether a temp file name should be returned 
+     *                          (if {@code true}), or the name of the final file (if {@code false}).
      * @return                  A {@code File} pointing to a file with a name capturing information 
      *                          about the arguments, to be stored in {@code outputDir}.
      */
-    protected static File getOutputFile(Species species, boolean anatEntityOnly, DataType dataType, String outputDir) {
-        log.entry(species, anatEntityOnly, dataType, outputDir);
+    protected static File getOutputFile(Species species, boolean anatEntityOnly, DataType dataType, 
+            String outputDir, boolean tmpFile) {
+        log.entry(species, anatEntityOnly, dataType, outputDir, tmpFile);
         
         String fileName = species.getId();
         if (anatEntityOnly) {
@@ -188,6 +192,9 @@ public class GenerateRankFile {
         }
         fileName += "_" + species.getScientificName().replace(" ", "_");
         fileName += ".tsv";
+        if (tmpFile) {
+            fileName += ".tmp";
+        }
         
         return log.exit(Paths.get(outputDir, fileName).toFile());
     }
@@ -591,14 +598,15 @@ public class GenerateRankFile {
         //********************
         // COMPUTATIONS AND WRITING INTO FILE
         //********************
-        //Open TSV file for writing
-        File outputFile = getOutputFile(species, anatEntityOnly, dataType, outputDir);
-        Files.deleteIfExists(outputFile.toPath());
+        //Open TSV file for writing. We'll write in tmp file and will move it at the end 
+        //if everything worked fine
+        File tmpOutputFile = getOutputFile(species, anatEntityOnly, dataType, outputDir, true);
+        Files.deleteIfExists(tmpOutputFile.toPath());
         String[] header = getFileHeader(anatEntityOnly, dataType);
         String[] colToAttribute = getColToAttributeMapping(anatEntityOnly, dataType);
         CellProcessor[] processors = getCellProcessors(anatEntityOnly, dataType);
         boolean rowWritten = false;
-        try (ICsvBeanWriter beanWriter = new CsvBeanWriter(new FileWriter(outputFile), 
+        try (ICsvBeanWriter beanWriter = new CsvBeanWriter(new FileWriter(tmpOutputFile), 
                 Utils.TSVCOMMENTED)) {
             
             // write the header
@@ -638,7 +646,11 @@ public class GenerateRankFile {
             }
         }
         if (!rowWritten) {
+            Files.deleteIfExists(tmpOutputFile.toPath());
+        } else {
+            File outputFile = getOutputFile(species, anatEntityOnly, dataType, outputDir, false);
             Files.deleteIfExists(outputFile.toPath());
+            Files.move(tmpOutputFile.toPath(), outputFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
         
         log.exit();

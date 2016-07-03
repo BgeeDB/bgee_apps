@@ -299,7 +299,7 @@ public class GenerateRankFileTest extends TestAncestor {
         log.entry(species, anatEntityOnly, dataType, expectedValues, folder, expectedFileName);
         
         File file = GenerateRankFile.getOutputFile(species, anatEntityOnly, dataType, 
-                folder.getAbsolutePath());
+                folder.getAbsolutePath(), false);
         log.debug("Checking file {}", file.getName());
         assertEquals("Incorrect generated file name", expectedFileName, file.getName());
         assertTrue("File not created: " + file.getName(), file.exists());

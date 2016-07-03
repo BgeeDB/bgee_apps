@@ -33,7 +33,16 @@ public class DevStage extends NestedSetModelEntity implements OntologyElement<De
      * @throws IllegalArgumentException     if {@code id} is blank. 
      */
     public DevStage(String id) throws IllegalArgumentException {
-        this(id, null, null, 0, 0, 0, false, false);
+        this(id, null, null);
+    }
+    /**
+     * @param id            A {@code String} representing the ID of this entity. 
+     *                      Cannot be blank.
+     * @param name          A {@code String} that is the name of this entity.
+     * @param description   A {@code String} that is the description of this entity.
+     */
+    public DevStage(String id, String name, String description) {
+        this(id, name, description, 0, 0, 0, false, false);
     }
     /**
      * Constructor providing all parameters of this {@code DevStage}. 

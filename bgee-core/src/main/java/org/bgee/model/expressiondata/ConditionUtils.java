@@ -25,6 +25,9 @@ import org.bgee.model.ontology.Ontology.RelationType;
  * @version Bgee 13 June 2016
  * @since Bgee 13 Dec. 2015
  */
+//TODO: Actually, maybe we should have an UtilsFactory, as we have a ServiceFactory. 
+//Could return also the ExpressionCallUtils, the ExpressionCall.RankComparator... 
+//that would be much cleaner for unit tests. 
 public class ConditionUtils implements Comparator<Condition> {
 
     private static final Logger log = LogManager.getLogger(ConditionUtils.class.getName());

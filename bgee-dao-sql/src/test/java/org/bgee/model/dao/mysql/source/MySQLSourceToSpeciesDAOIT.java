@@ -27,7 +27,7 @@ import org.junit.Test;
  * See the documentation of {@link org.bgee.model.dao.mysql.MySQLITAncestor} for important information.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, June 2016
+ * @version Bgee 13, July 2016
  * @since   Bgee 13, June 2016
  */
 public class MySQLSourceToSpeciesDAOIT extends MySQLITAncestor {
@@ -63,7 +63,7 @@ public class MySQLSourceToSpeciesDAOIT extends MySQLITAncestor {
         EnumSet<Attribute> attributes = EnumSet.of(SourceToSpeciesDAO.Attribute.DATASOURCE_ID,
                 SourceToSpeciesDAO.Attribute.DATA_TYPE);
         expectedTOs = this.getAllSourceToSpeciesTOs().stream()
-                .map(s -> new SourceToSpeciesTO(s.getDatasourceId(), null, s.getDataType(), null))
+                .map(s -> new SourceToSpeciesTO(s.getDataSourceId(), null, s.getDataType(), null))
                 .distinct()
                 .collect(Collectors.toList());
         assertTrue("SourceToSpeciesTOs incorrectly retrieved",
@@ -115,7 +115,7 @@ public class MySQLSourceToSpeciesDAOIT extends MySQLITAncestor {
         Set<String> dataSourceIds = new HashSet<String>(Arrays.asList("4","99"));
         EnumSet<DataType> dataTypes = EnumSet.of(DataType.EST, DataType.IN_SITU);
         expectedTOs = this.getAllSourceToSpeciesTOs().stream()
-                .filter(s -> dataSourceIds.contains(s.getDatasourceId()))
+                .filter(s -> dataSourceIds.contains(s.getDataSourceId()))
                 .filter(s -> dataTypes.contains(s.getDataType()))
                 .map(s -> new SourceToSpeciesTO(null, null, s.getDataType(), null))
                 .distinct()
@@ -129,7 +129,7 @@ public class MySQLSourceToSpeciesDAOIT extends MySQLITAncestor {
         attributes = EnumSet.of(SourceToSpeciesDAO.Attribute.SPECIES_ID, 
                 SourceToSpeciesDAO.Attribute.INFO_TYPE);
         expectedTOs = this.getAllSourceToSpeciesTOs().stream()
-                .filter(s -> dataSourceIds.contains(s.getDatasourceId()))
+                .filter(s -> dataSourceIds.contains(s.getDataSourceId()))
                 .filter(s -> speciesIds.contains(s.getSpeciesId()))
                 .filter(s -> dataTypes.contains(s.getDataType()))
                 .filter(s -> infoTypes.contains(s.getInfoType()))

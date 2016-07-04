@@ -15,7 +15,7 @@ import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO.InfoTy
  * DAO defining queries using or retrieving {@link SourceToSpeciesTO}s. 
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, June 2016
+ * @version Bgee 13, July 2016
  * @since   Bgee 13, June 2016
  * @see     SourceToSpeciesTO
  */
@@ -25,7 +25,7 @@ public interface SourceToSpeciesDAO extends DAO<SourceToSpeciesDAO.Attribute> {
      * {@code Enum} used to define the attributes to populate in the {@code SourceToSpeciesTO}s 
      * obtained from this {@code SourceToSpeciesDAO}.
      * <ul>
-     * <li>{@code DATASOURCE_ID}: corresponds to {@link SourceToSpeciesTO#getDatasourceId()}.
+     * <li>{@code DATASOURCE_ID}: corresponds to {@link SourceToSpeciesTO#getDataSourceId()}.
      * <li>{@code SPECIES_ID}: corresponds to {@link SourceToSpeciesTO#getSpeciesId()}.
      * <li>{@code DATA_TYPE}: corresponds to {@link SourceToSpeciesTO#getDataType()}.
      * <li>{@code INFO_TYPE}: corresponds to {@link SourceToSpeciesTO#getInfoType()}.
@@ -217,7 +217,7 @@ public interface SourceToSpeciesDAO extends DAO<SourceToSpeciesDAO.Attribute> {
         /**
          * A {@code String} that is the ID of the data source.
          */
-        private String datasourceId;
+        private String dataSourceId;
 
         /**
          * A {@code String} that is the ID of the species.
@@ -247,7 +247,7 @@ public interface SourceToSpeciesDAO extends DAO<SourceToSpeciesDAO.Attribute> {
          */
         public SourceToSpeciesTO(String datasourceId, String speciesId, 
                 DataType dataType, InfoType infoType) {
-            this.datasourceId   = datasourceId;
+            this.dataSourceId   = datasourceId;
             this.speciesId      = speciesId;
             this.dataType       = dataType;
             this.infoType       = infoType;
@@ -256,8 +256,8 @@ public interface SourceToSpeciesDAO extends DAO<SourceToSpeciesDAO.Attribute> {
         /**
          * @return the {@code String} that is the ID of the data source.
          */
-        public String getDatasourceId() {
-            return datasourceId;
+        public String getDataSourceId() {
+            return dataSourceId;
         }
 
         /**
@@ -285,7 +285,7 @@ public interface SourceToSpeciesDAO extends DAO<SourceToSpeciesDAO.Attribute> {
         public int hashCode() {
             final int prime = 31;
             int result = 1;
-            result = prime * result + ((datasourceId == null) ? 0 : datasourceId.hashCode());
+            result = prime * result + ((dataSourceId == null) ? 0 : dataSourceId.hashCode());
             result = prime * result + ((speciesId == null) ? 0 : speciesId.hashCode());
             result = prime * result + ((dataType == null) ? 0 : dataType.hashCode());
             result = prime * result + ((infoType == null) ? 0 : infoType.hashCode());
@@ -301,10 +301,10 @@ public interface SourceToSpeciesDAO extends DAO<SourceToSpeciesDAO.Attribute> {
             if (getClass() != obj.getClass())
                 return false;
             SourceToSpeciesTO other = (SourceToSpeciesTO) obj;
-            if (datasourceId == null) {
-                if (other.datasourceId != null)
+            if (dataSourceId == null) {
+                if (other.dataSourceId != null)
                     return false;
-            } else if (!datasourceId.equals(other.datasourceId))
+            } else if (!dataSourceId.equals(other.dataSourceId))
                 return false;
             if (speciesId == null) {
                 if (other.speciesId != null)
@@ -320,7 +320,7 @@ public interface SourceToSpeciesDAO extends DAO<SourceToSpeciesDAO.Attribute> {
 
         @Override
         public String toString() {
-            return "Data source ID: " + this.getDatasourceId() + 
+            return "Data source ID: " + this.getDataSourceId() + 
                     " - Species ID: " + this.getSpeciesId() + 
                     " - Data type: " + this.getDataType() + 
                     " - Information type: " + this.getInfoType();

@@ -52,7 +52,7 @@ import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 13, June 2016
+ * @version Bgee 13, July 2016
  * @since   Bgee 13
  */
 public class TOComparator {
@@ -986,7 +986,7 @@ public class TOComparator {
      */
     private static boolean areTOsEqual(SourceToSpeciesTO to1, SourceToSpeciesTO to2) {
         log.entry(to1, to2);
-        if (StringUtils.equals(to1.getDatasourceId(), to2.getDatasourceId()) &&
+        if (StringUtils.equals(to1.getDataSourceId(), to2.getDataSourceId()) &&
                 StringUtils.equals(to1.getSpeciesId(), to2.getSpeciesId()) &&
                 to1.getDataType() == to2.getDataType() &&
                 to1.getInfoType() == to2.getInfoType()) {

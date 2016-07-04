@@ -48,6 +48,7 @@ import org.junit.rules.ExpectedException;
  * @since Bgee 13
  */
 //TODO: test when retrieving global mean score with GROUP BY
+//TODO: then when retrieve mean rank with specific data types
 public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
 
     private final static Logger log = 

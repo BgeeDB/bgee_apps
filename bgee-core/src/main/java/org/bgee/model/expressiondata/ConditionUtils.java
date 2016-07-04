@@ -402,6 +402,9 @@ public class ConditionUtils implements Comparator<Condition> {
      */
     public AnatEntity getAnatEntity(String anatEntityId) {
         log.entry(anatEntityId);
+        if (this.getAnatEntityOntology() == null) {
+            return log.exit(null);
+        }
         return log.exit(this.getAnatEntityOntology().getElement(anatEntityId));
     }
     /**
@@ -415,6 +418,9 @@ public class ConditionUtils implements Comparator<Condition> {
      */
     public AnatEntity getAnatEntity(Condition condition) {
         log.entry(condition);
+        if (this.getAnatEntityOntology() == null) {
+            return log.exit(null);
+        }
         if (!this.conditions.contains(condition)) {
             throw log.throwing(new IllegalArgumentException("Unrecognized condition: " + condition));
         }
@@ -431,6 +437,9 @@ public class ConditionUtils implements Comparator<Condition> {
      */
     public DevStage getDevStage(String devStageId) {
         log.entry(devStageId);
+        if (this.getDevStageOntology() == null) {
+            return log.exit(null);
+        }
         return log.exit(this.getDevStageOntology().getElement(devStageId));
     }
     /**
@@ -444,6 +453,9 @@ public class ConditionUtils implements Comparator<Condition> {
      */
     public DevStage getDevStage(Condition condition) {
         log.entry(condition);
+        if (this.getDevStageOntology() == null) {
+            return log.exit(null);
+        }
         if (!this.conditions.contains(condition)) {
             throw log.throwing(new IllegalArgumentException("Unrecognized condition: " + condition));
         }

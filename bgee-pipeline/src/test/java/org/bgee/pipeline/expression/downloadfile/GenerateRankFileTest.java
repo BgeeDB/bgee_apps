@@ -104,6 +104,11 @@ public class GenerateRankFileTest extends TestAncestor {
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX), 
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.EST)), 
                 new BigDecimal("1.25"));
+        //just one without call data for testing when data type requested
+        ExpressionCall c1bis = new ExpressionCall(gene1.getId(), cond1, new DataPropagation(), 
+                null, null, 
+                Arrays.asList(), 
+                new BigDecimal("1.25"));
         ExpressionCall c2 = new ExpressionCall(gene2.getId(), cond2, new DataPropagation(), 
                 ExpressionSummary.EXPRESSED, DataQuality.HIGH, 
                 Arrays.asList( 
@@ -190,11 +195,17 @@ public class GenerateRankFileTest extends TestAncestor {
         when(serviceFactory.getCallService()).thenReturn(callService);
         Set<CallService.Attribute> attrsNoDev = EnumSet.of(
                 CallService.Attribute.GENE_ID, CallService.Attribute.ANAT_ENTITY_ID, 
-                CallService.Attribute.CALL_DATA, CallService.Attribute.GLOBAL_DATA_QUALITY, 
+                /*CallService.Attribute.CALL_DATA, CallService.Attribute.GLOBAL_DATA_QUALITY, */
+                CallService.Attribute.GLOBAL_RANK);
+        Set<CallService.Attribute> attrsNoDevNoCall = EnumSet.of(
+                CallService.Attribute.GENE_ID, CallService.Attribute.ANAT_ENTITY_ID, 
                 CallService.Attribute.GLOBAL_RANK);
         Set<CallService.Attribute> attrsWithDev = EnumSet.of(
                 CallService.Attribute.GENE_ID, CallService.Attribute.ANAT_ENTITY_ID, 
-                CallService.Attribute.CALL_DATA, CallService.Attribute.GLOBAL_DATA_QUALITY, 
+                /*CallService.Attribute.CALL_DATA, CallService.Attribute.GLOBAL_DATA_QUALITY, */
+                CallService.Attribute.GLOBAL_RANK, CallService.Attribute.DEV_STAGE_ID);
+        Set<CallService.Attribute> attrsWithDevNoCall = EnumSet.of(
+                CallService.Attribute.GENE_ID, CallService.Attribute.ANAT_ENTITY_ID, 
                 CallService.Attribute.GLOBAL_RANK, CallService.Attribute.DEV_STAGE_ID);
         
         when(callService.loadExpressionCalls(eq(spe1.getId()), 
@@ -203,15 +214,15 @@ public class GenerateRankFileTest extends TestAncestor {
         .thenReturn(Stream.of(c1, c2, c3));
         when(callService.loadExpressionCalls(eq(spe1.getId()), 
                 eq(new ExpressionCallFilter(new ExpressionCallData(Expression.EXPRESSED, DataType.AFFYMETRIX))), 
-                eq(attrsNoDev), (LinkedHashMap<OrderingAttribute, Direction>) anyObject()))
-        .thenReturn(Stream.of(c1, c3));
+                eq(attrsNoDevNoCall), (LinkedHashMap<OrderingAttribute, Direction>) anyObject()))
+        .thenReturn(Stream.of(c1bis, c3));
         when(callService.loadExpressionCalls(eq(spe2.getId()), 
                 eq(new ExpressionCallFilter(new ExpressionCallData(Expression.EXPRESSED, null))), 
                 eq(attrsNoDev), (LinkedHashMap<OrderingAttribute, Direction>) anyObject()))
         .thenReturn(Stream.of(c4));
         when(callService.loadExpressionCalls(eq(spe2.getId()), 
                 eq(new ExpressionCallFilter(new ExpressionCallData(Expression.EXPRESSED, DataType.AFFYMETRIX))), 
-                eq(attrsNoDev), (LinkedHashMap<OrderingAttribute, Direction>) anyObject()))
+                eq(attrsNoDevNoCall), (LinkedHashMap<OrderingAttribute, Direction>) anyObject()))
         .thenReturn(Stream.of());
         when(callService.loadExpressionCalls(eq(spe1.getId()), 
                 eq(new ExpressionCallFilter(new ExpressionCallData(Expression.EXPRESSED, null))), 
@@ -219,15 +230,15 @@ public class GenerateRankFileTest extends TestAncestor {
         .thenReturn(Stream.of(c1, c2, c3));
         when(callService.loadExpressionCalls(eq(spe1.getId()), 
                 eq(new ExpressionCallFilter(new ExpressionCallData(Expression.EXPRESSED, DataType.AFFYMETRIX))), 
-                eq(attrsWithDev), (LinkedHashMap<OrderingAttribute, Direction>) anyObject()))
-        .thenReturn(Stream.of(c1, c3));
+                eq(attrsWithDevNoCall), (LinkedHashMap<OrderingAttribute, Direction>) anyObject()))
+        .thenReturn(Stream.of(c1bis, c3));
         when(callService.loadExpressionCalls(eq(spe2.getId()), 
                 eq(new ExpressionCallFilter(new ExpressionCallData(Expression.EXPRESSED, null))), 
                 eq(attrsWithDev), (LinkedHashMap<OrderingAttribute, Direction>) anyObject()))
         .thenReturn(Stream.of(c4));
         when(callService.loadExpressionCalls(eq(spe2.getId()), 
                 eq(new ExpressionCallFilter(new ExpressionCallData(Expression.EXPRESSED, DataType.AFFYMETRIX))), 
-                eq(attrsWithDev), (LinkedHashMap<OrderingAttribute, Direction>) anyObject()))
+                eq(attrsWithDevNoCall), (LinkedHashMap<OrderingAttribute, Direction>) anyObject()))
         .thenReturn(Stream.of());
         
         
@@ -246,47 +257,47 @@ public class GenerateRankFileTest extends TestAncestor {
         this.checkFile(spe1, false, null, 
                 Arrays.asList(
                         Arrays.asList("gene1", "gene 1", "anat1", "Anat name 1", "stage1", "Stage name 1", 
-                                "1.25", "T", "T", "F", "F", "F", "BTO:0001"), 
+                                "1.25", /*"T", "T", "F", "F", "F",*/ "BTO:0001"), 
                         Arrays.asList("gene2", "gene 2", "anat2", "Anat name 2", "stage2", "Stage name 2", 
-                                "1.25", "F", "T", "T", "F", "F", null), 
+                                "1.25", /*"F", "T", "T", "F", "F",*/ null), 
                         Arrays.asList("gene2", "gene 2", "anat1", "Anat name 1", "stage1", "Stage name 1", 
-                                "10.00", "T", "T", "T", "T", "T", "BTO:0001")), 
-                folder1, "spe1_byCondition_allData_my_species1.tsv");
+                                "10.00", /*"T", "T", "T", "T", "T",*/ "BTO:0001")), 
+                folder1, "spe1_condition_all_data_my_species1.tsv");
         this.checkFile(spe1, true, null, 
                 Arrays.asList(
                         Arrays.asList("gene1", "gene 1", "anat1", "Anat name 1", 
-                                "1.25", "T", "T", "F", "F", "F", "BTO:0001"), 
+                                "1.25", /*"T", "T", "F", "F", "F",*/ "BTO:0001"), 
                         Arrays.asList("gene2", "gene 2", "anat2", "Anat name 2", 
-                                "1.25", "F", "T", "T", "F", "F", null), 
+                                "1.25", /*"F", "T", "T", "F", "F",*/ null), 
                         Arrays.asList("gene2", "gene 2", "anat1", "Anat name 1", 
-                                "10.00", "T", "T", "T", "T", "T", "BTO:0001")), 
-                folder2, "spe1_byAnatEntity_allData_my_species1.tsv");
+                                "10.00", /*"T", "T", "T", "T", "T",*/ "BTO:0001")), 
+                folder2, "spe1_anat_entity_all_data_my_species1.tsv");
         this.checkFile(spe1, false, DataType.AFFYMETRIX, 
                 Arrays.asList(
                         Arrays.asList("gene1", "gene 1", "anat1", "Anat name 1", "stage1", "Stage name 1", 
-                                "1.25", "F", "BTO:0001"), 
+                                "1.25", /*"F",*/ "BTO:0001"), 
                         Arrays.asList("gene2", "gene 2", "anat1", "Anat name 1", "stage1", "Stage name 1", 
-                                "10.00", "T", "BTO:0001")), 
-                folder1, "spe1_byCondition_affymetrix_my_species1.tsv");
+                                "10.00", /*"T",*/ "BTO:0001")), 
+                folder1, "spe1_condition_affymetrix_my_species1.tsv");
         this.checkFile(spe1, true, DataType.AFFYMETRIX, 
                 Arrays.asList(
                         Arrays.asList("gene1", "gene 1", "anat1", "Anat name 1", 
-                                "1.25", "F", "BTO:0001"), 
+                                "1.25", /*"F",*/ "BTO:0001"), 
                         Arrays.asList("gene2", "gene 2", "anat1", "Anat name 1", 
-                                "10.00", "T", "BTO:0001")), 
-                folder2, "spe1_byAnatEntity_affymetrix_my_species1.tsv");
+                                "10.00", /*"T",*/ "BTO:0001")), 
+                folder2, "spe1_anat_entity_affymetrix_my_species1.tsv");
         
         //species2
         this.checkFile(spe2, false, null, 
                 Arrays.asList(
                         Arrays.asList("gene3", "gene 3", "anat2", "Anat name 2", "stage2", "Stage name 2", 
-                                "10.00", "F", "T", "T", "T", "F", null)), 
-                folder1, "spe2_byCondition_allData_my_species2.tsv");
+                                "10.00", /*"F", "T", "T", "T", "F",*/ null)), 
+                folder1, "spe2_condition_all_data_my_species2.tsv");
         this.checkFile(spe2, true, null, 
                 Arrays.asList(
                         Arrays.asList("gene3", "gene 3", "anat2", "Anat name 2", 
-                                "10.00", "F", "T", "T", "T", "F", null)), 
-                folder2, "spe2_byAnatEntity_allData_my_species2.tsv");
+                                "10.00", /*"F", "T", "T", "T", "F",*/ null)), 
+                folder2, "spe2_anat_entity_all_data_my_species2.tsv");
         File notExists = Paths.get(folder1.getAbsolutePath(), "spe2_byCondition_affymetrix_my_species2.tsv").toFile();
         assertFalse("File should not have been created: " + notExists.getName(), notExists.exists());
         notExists = Paths.get(folder2.getAbsolutePath(), "spe2_byAnatEntity_affymetrix_my_species2.tsv").toFile();

@@ -181,12 +181,12 @@ public class GenerateRankFile {
         
         String fileName = species.getId();
         if (anatEntityOnly) {
-            fileName += "_byAnatEntity";
+            fileName += "_anat_entity";
         } else {
-            fileName += "_byCondition";
+            fileName += "_condition";
         }
         if (dataType == null) {
-            fileName += "_allData";
+            fileName += "_all_data";
         } else {
             fileName += "_" + dataType.getStringRepresentation().toLowerCase(Locale.ENGLISH);
         }
@@ -214,7 +214,7 @@ public class GenerateRankFile {
     protected static String[] getFileHeader(boolean anatEntityOnly, DataType dataType) {
         log.entry(anatEntityOnly, dataType);
         
-        int arrLength = 7 + (anatEntityOnly? 0: 2) + (dataType != null? 0: 4);
+        int arrLength = 6 + (anatEntityOnly? 0: 2) + (dataType != null? 0: 0);
         String[] header = new String[arrLength];
         header[0] = "Ensembl gene ID";
         header[1] = "gene name";
@@ -229,18 +229,20 @@ public class GenerateRankFile {
         }
         header[i] = "rank score";
         i++;
-        if (dataType == null) {
-            header[i] = "Affymetrix data";
-            i++;
-            header[i] = "EST data";
-            i++;
-            header[i] = "in situ hybridization data";
-            i++;
-            header[i] = "RNA-Seq data";
-            i++;
-        }
-        header[i] = "is redundant";
-        i++;
+        //XXX: deactivate this until MySQLExpressionCallDAO is debugged. 
+//        if (dataType == null) {
+//            header[i] = "Affymetrix data";
+//            i++;
+//            header[i] = "EST data";
+//            i++;
+//            header[i] = "in situ hybridization data";
+//            i++;
+//            header[i] = "RNA-Seq data";
+//            i++;
+//        }
+        //XXX: deactivate because too slow
+//        header[i] = "is redundant";
+//        i++;
         header[i] = "XRefs to BTO";
         i++;
         
@@ -264,7 +266,7 @@ public class GenerateRankFile {
     private static String[] getColToAttributeMapping(boolean anatEntityOnly, DataType dataType) {
         log.entry(anatEntityOnly, dataType);
     
-        int arrLength = 7 + (anatEntityOnly? 0: 2) + (dataType != null? 0: 4);
+        int arrLength = 6 + (anatEntityOnly? 0: 2) + (dataType != null? 0: 0);
         String[] colToAttribute = new String[arrLength];
         colToAttribute[0] = "geneId";
         colToAttribute[1] = "geneName";
@@ -279,18 +281,20 @@ public class GenerateRankFile {
         }
         colToAttribute[i] = "formattedRank";
         i++;
-        if (dataType == null) {
-            colToAttribute[i] = "affymetrixData";
-            i++;
-            colToAttribute[i] = "estData";
-            i++;
-            colToAttribute[i] = "inSituData";
-            i++;
-            colToAttribute[i] = "rnaSeqData";
-            i++;
-        }
-        colToAttribute[i] = "redundant";
-        i++;
+        //XXX: deactivate this until MySQLExpressionCallDAO is debugged. 
+//        if (dataType == null) {
+//            colToAttribute[i] = "affymetrixData";
+//            i++;
+//            colToAttribute[i] = "estData";
+//            i++;
+//            colToAttribute[i] = "inSituData";
+//            i++;
+//            colToAttribute[i] = "rnaSeqData";
+//            i++;
+//        }
+        //XXX: deactivate because too slow
+//        colToAttribute[i] = "redundant";
+//        i++;
         colToAttribute[i] = "btoXRefs";
         i++;
         
@@ -313,7 +317,7 @@ public class GenerateRankFile {
     private static CellProcessor[] getCellProcessors(boolean anatEntityOnly, DataType dataType) {
         log.entry(anatEntityOnly, dataType);
     
-        int arrLength = 7 + (anatEntityOnly? 0: 2) + (dataType != null? 0: 4);
+        int arrLength = 6 + (anatEntityOnly? 0: 2) + (dataType != null? 0: 0);
         CellProcessor[] processors = new CellProcessor[arrLength];
         processors[0] = new StrNotNullOrEmpty();
         processors[1] = new Optional();
@@ -328,18 +332,20 @@ public class GenerateRankFile {
         }
         processors[i] = new StrNotNullOrEmpty();
         i++;
-        if (dataType == null) {
-            processors[i] = new FmtBool("T", "F");
-            i++;
-            processors[i] = new FmtBool("T", "F");
-            i++;
-            processors[i] = new FmtBool("T", "F");
-            i++;
-            processors[i] = new FmtBool("T", "F");
-            i++;
-        }
-        processors[i] = new FmtBool("T", "F");
-        i++;
+        //XXX: deactivate this until MySQLExpressionCallDAO is debugged. 
+//        if (dataType == null) {
+//            processors[i] = new FmtBool("T", "F");
+//            i++;
+//            processors[i] = new FmtBool("T", "F");
+//            i++;
+//            processors[i] = new FmtBool("T", "F");
+//            i++;
+//            processors[i] = new FmtBool("T", "F");
+//            i++;
+//        }
+        //XXX: deactivate because too slow
+//        processors[i] = new FmtBool("T", "F");
+//        i++;
         processors[i] = new Optional(new Utils.FmtMultipleStringValues());
         i++;
         
@@ -680,14 +686,25 @@ public class GenerateRankFile {
         //The ordering by rank is not mandatory, for a given gene we are going to reorder anyway
         serviceOrdering.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
         serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
+        //XXX: originally we wanted to order using ExpressionCall.RankComparator, 
+        //to detect redundant calls and order most precise conditions first, 
+        //but it is too slow, so we do a basic ordering in the query
+        serviceOrdering.put(CallService.OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.ASC);
+        if (!anatEntityOnly) {
+            serviceOrdering.put(CallService.OrderingAttribute.DEV_STAGE_ID, Service.Direction.ASC);
+        }
         
         Set<CallService.Attribute> attrs = EnumSet.of(
                 CallService.Attribute.GENE_ID, CallService.Attribute.ANAT_ENTITY_ID, 
-                CallService.Attribute.CALL_DATA, CallService.Attribute.GLOBAL_DATA_QUALITY, 
                 CallService.Attribute.GLOBAL_RANK);
         if (!anatEntityOnly) {
             attrs.add(CallService.Attribute.DEV_STAGE_ID);
         }
+        //XXX: deactivate this until MySQLExpressionCallDAO is debugged. 
+//        if (dataType == null) {
+//            attrs.add(CallService.Attribute.CALL_DATA);
+//            attrs.add(CallService.Attribute.GLOBAL_DATA_QUALITY);
+//        }
         
         CallService service = serviceFactory.getCallService();
         return log.exit(service.loadExpressionCalls(
@@ -760,14 +777,14 @@ public class GenerateRankFile {
         ConditionUtils conditionUtils = this.condUtilsSupplier.apply(gene.getSpeciesId(), 
                 singleGeneExprCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()), 
                 anatEntityOnt, devStageOnt);
-        
-        //first, we rank the calls with the ExpressionCall.RankComparator, it is mandatory 
-        //for correct detection of redundant calls and consistency with the display. 
-        Collections.sort(singleGeneExprCalls, this.rankComparatorSupplier.apply(conditionUtils));
-        
-        //identify redundant calls
-        Set<ExpressionCall> redundantCalls = this.redundantCallsFuncSupplier.apply(
-                singleGeneExprCalls, conditionUtils);
+
+        //XXX: deactivate because too slow
+//        //first, we rank the calls with the ExpressionCall.RankComparator, it is mandatory 
+//        //for correct detection of redundant calls and consistency with the display. 
+//        Collections.sort(singleGeneExprCalls, this.rankComparatorSupplier.apply(conditionUtils));
+//        //identify redundant calls
+//        Set<ExpressionCall> redundantCalls = this.redundantCallsFuncSupplier.apply(
+//                singleGeneExprCalls, conditionUtils);
         
         //map ExpressionCalls to ExpressionCallBean to be written in output file
         return log.exit(singleGeneExprCalls.stream().map(c -> {
@@ -787,10 +804,6 @@ public class GenerateRankFile {
                                     callData -> type.equals(callData.getDataType()) && 
                                     callData.getDataQuality() != null && 
                                     !DataQuality.NODATA.equals(callData.getDataQuality()))));
-            if (!dataTypeToStatus.containsValue(true)) {
-                throw log.throwing(new IllegalArgumentException("The provided calls does not contain "
-                        + "data type information."));
-            }
             
             return new ExpressionCallBean(
                 c.getGeneId(), gene.getName(), 
@@ -801,7 +814,7 @@ public class GenerateRankFile {
                 dataTypeToStatus.get(DataType.EST), 
                 dataTypeToStatus.get(DataType.IN_SITU), 
                 dataTypeToStatus.get(DataType.RNA_SEQ), 
-                redundantCalls.contains(c), 
+                /*redundantCalls.contains(c)*/ false, 
                 this.getBTOXRefs(c));
         }));
     }
@@ -816,6 +829,11 @@ public class GenerateRankFile {
     //rather than needing to provide an ontology. 
     private List<String> getBTOXRefs(ExpressionCall call) {
         log.entry(call);
+        
+        //hack for adult mammalian kidney UBERON:0000082
+        if ("UBERON:0000082".equals(call.getCondition().getAnatEntityId())) {
+            return log.exit(Arrays.asList("BTO:0000671"));
+        }
 
         OWLGraphWrapper wrapper = this.uberonOnt.getOntologyUtils().getWrapper();
         OWLClass cls = wrapper.getOWLClassByIdentifier(call.getCondition().getAnatEntityId(), true);

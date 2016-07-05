@@ -15,7 +15,7 @@ public class Gene extends NamedEntity {
 	/**
 	 * The {@code Species} this {@code Gene} belongs to.
 	 */
-	private Species species;
+	private final Species species;
 	
 	/**
 	 * A {@code String} representing the ID of the {@code Species} 
@@ -23,42 +23,40 @@ public class Gene extends NamedEntity {
 	 * should correspond to the value returned by the {@code getId()} method 
 	 * on this {@code Species} object.
 	 */
-	private String speciesId;
+	private final String speciesId;
 	
 	/**
      * Constructor providing the {@code id} of this {@code Gene}.
      * This {@code id} cannot be {@code null}, or blank,
      * otherwise an {@code IllegalArgumentException} will be thrown.
      * 
-     * @param id    A {@code String} representing the ID of this object.
+     * @param id            A  {@code String} representing the ID of this object.
      * @throws IllegalArgumentException If {@code id} is {@code null}, or blank. 
      */
     public Gene (String id) throws IllegalArgumentException {
-    	super(id);
-    	this.setSpecies(null);
-    	this.setSpeciesId(null);
+    	this(id, null);
     }
     /**
      * Constructor providing the {@code id} of this {@code Gene} and of the species.
      * This {@code id} cannot be {@code null}, or blank,
      * otherwise an {@code IllegalArgumentException} will be thrown.
      * 
-     * @param id        A {@code String} representing the ID of this object.
-     * @param speciesId A {@code String} representing the ID of the species.
+     * @param id            A  {@code String} representing the ID of this object.
+     * @param speciesId     A {@code String} representing the ID of the species this gene belongs to.
      * @throws IllegalArgumentException     if {@code id} is {@code null}, or blank.
      */
     public Gene (String id, String speciesId) throws IllegalArgumentException {
-        super(id);
-        this.setSpecies(null);
-        this.setSpeciesId(speciesId);
+        this(id, null, null);
     }
 
     /**
-     * Constructor providing the {@code id} of this {@code Gene} and of the species. 
+     * Constructor providing the {@code id} of this {@code Gene} and of the species, and the name. 
      * This {@code id} cannot be {@code null}, or blank,
      * otherwise an {@code IllegalArgumentException} will be thrown.
-     * @param id        A {@code String} representing the ID of this object.
-     * @param speciesId A {@code String} representing the ID of the species.
+     * 
+     * @param id            A  {@code String} representing the ID of this object.
+     * @param speciesId     A {@code String} representing the ID of the species this gene belongs to.
+     * @param name          A {@code String} representing the name of this gene.
      * @throws IllegalArgumentException     if {@code id} is {@code null}, or blank.
      */
     public Gene(String id, String speciesId, String name) throws IllegalArgumentException {
@@ -66,19 +64,38 @@ public class Gene extends NamedEntity {
     }
     
     /**
-     * Constructor providing the {@code id} of this {@code Gene} and of the species. 
+     * Constructor providing the {@code id} of this {@code Gene} and of the species, the name, and the description. 
      * This {@code id} cannot be {@code null}, or blank,
      * otherwise an {@code IllegalArgumentException} will be thrown.
-     * @param id        A {@code String} representing the ID of this object.
-     * @param speciesId A {@code String} representing the ID of the species.
-     * @param description A {@code String} representing the description of the gene.
+     * 
+     * @param id            A  {@code String} representing the ID of this object.
+     * @param speciesId     A {@code String} representing the ID of the species this gene belongs to.
+     * @param name          A {@code String} representing the name of this gene.
+     * @param description   A {@code String} representing the description of this gene.
      * @throws IllegalArgumentException     if {@code id} is {@code null}, or blank.
      */
     public Gene(String id, String speciesId, String name, String description) throws IllegalArgumentException {
-    	super(id, name, description);
-    	this.setSpeciesId(speciesId);
+    	this(id, speciesId, name, description, null);
     }
     
+    /**
+     * Constructor providing the {@code id} of this {@code Gene} and of the species, the name,
+     * the description, and the {@code Species}. 
+     * This {@code id} cannot be {@code null}, or blank,
+     * otherwise an {@code IllegalArgumentException} will be thrown.
+     * 
+     * @param id            A  {@code String} representing the ID of this object.
+     * @param speciesId     A {@code String} representing the ID of the species this gene belongs to.
+     * @param name          A {@code String} representing the name of this gene.
+     * @param description   A {@code String} representing the description of this gene.
+     * @param species       A {@code Species} representing the species this gene belongs to.
+     * @throws IllegalArgumentException     if {@code id} is {@code null}, or blank.
+     */
+    public Gene(String id, String speciesId, String name, String description, Species species) throws IllegalArgumentException {
+        super(id, name, description);
+        this.speciesId = speciesId;
+        this.species = species;
+    }
     
 	/**
 	 * Returns the {@code Species} this {@code Gene} belongs to.
@@ -86,18 +103,6 @@ public class Gene extends NamedEntity {
 	 */
 	public Species getSpecies() {
 		return this.species;
-	}
-	/**
-	 * Sets the {@code Species} this {@code Gene} belongs to. 
-	 * <p>
-	 * Following calls to {@link #getSpeciesId()} will return the value returned 
-	 * by a call to {@code getId()} on {@code species}, 
-	 * even if {@link #setSpeciesId(String)} is used previously or afterwards. 
-	 * 
-	 * @param species 	the {@code Species} to set, that this {@code Gene} belongs to.
-	 */
-	public void setSpecies(Species species) {
-		this.species = species;
 	}
 	
 	/**
@@ -121,22 +126,6 @@ public class Gene extends NamedEntity {
 		return this.speciesId;
 	}
 	
-	/**
-	 * Sets the ID of the species this {@code Gene} belongs to. 
-	 * <p>
-	 * Note that the value returned by {@link #getSpeciesId()} might not correspond 
-	 * to the value set here: if {@link #getSpecies()} returns 
-	 * a {@code Species} object not null, then the value set here is not used, 
-	 * and only the value returned by a call to {@code getId()} 
-	 * on the {@code Species} object is used. 
-	 * 
-	 * @param speciesId 	A {@code String} corresponding to the ID of the species 
-	 * 						this {@code Gene} belongs to. 
-	 */
-	public void setSpeciesId(String speciesId) {
-		this.speciesId = speciesId;
-	}
-
 	@Override
 	public int hashCode() {
 	    final int prime = 31;

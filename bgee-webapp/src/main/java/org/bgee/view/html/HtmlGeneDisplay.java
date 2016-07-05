@@ -282,42 +282,14 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 this.writeln(" data come from ");
                 StringJoiner sj = new StringJoiner(", ");
                 for (Source source : e.getValue()) {
-                    sj.add("<a href='" + source.getBaseUrl() + "' target='_blank'>" + 
+                    String target = source.getName().toLowerCase().equals("bgee")? "" : " target='_blank'";
+                    sj.add("<a href='" + source.getBaseUrl() + "'" + target + ">" + 
                             source.getName() + "</a>");
                 }
                 this.writeln(sj.toString());
             }
             this.writeln("</ul>");
             this.writeln("</div>");
-
-//            this.writeln("<div class='source-table'>");
-//
-//            this.writeln("<div>"+text+"</div>");
-//
-//            this.writeln("<table>");
-//            this.writeln("<tr><th>Data type</th><th>Source(s)</th></tr>");
-//            
-//            for (Entry<DataType, Set<Source>> e : dsByDataTypes.entrySet()) {
-//                this.writeln("<tr>");
-//                this.writeln("<td>");
-//                this.writeln(e.getKey().getStringRepresentation());
-//                this.writeln("</td>");
-//                this.writeln("<td>");
-//                StringJoiner sj = new StringJoiner(", ");
-//                for (Source source : e.getValue()) {
-//                    sj.add("<a href='" + source.getBaseUrl() + "' target='_blank'>" + 
-//                            source.getName() + "</a>");
-//                }
-//                this.writeln(sj.toString());
-//                this.writeln("</td>");
-//
-//                this.writeln("</tr>");
-//            }
-//
-//
-//            this.writeln("</table>");
-//            this.writeln("</div>");
-
         }
 
         log.exit();

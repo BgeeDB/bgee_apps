@@ -8,7 +8,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.gene.Gene;
 import org.bgee.model.source.Source;
 import org.bgee.view.SourceDisplay;
 import org.bgee.view.ViewFactory;
@@ -62,22 +61,4 @@ public class CommandSource extends CommandParent {
         }
         log.exit();
     }
-    
-    /**
-     * Gets the {@code Gene} instance from its id. 
-     * 
-     * @param geneId A {@code String} containing the gene id.
-     * @return       The {@code Gene} instance.
-     * @throws PageNotFoundException   If no {@code Gene} could be found corresponding to {@code geneId}.
-     */
-    private Gene getGene(String geneId) throws PageNotFoundException {
-        log.entry(geneId);
-        Gene gene = serviceFactory.getGeneService().loadGeneById(geneId);
-        if (gene == null) {
-            throw log.throwing(new PageNotFoundException("No gene corresponding to " + geneId));
-        }
-        return log.exit(gene);
-    }
-
-
 }

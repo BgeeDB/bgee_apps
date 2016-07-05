@@ -67,8 +67,8 @@ $( document ).ready( function(){
            { responsivePriority: 4, targets: 4 }  // Quality
         ],
         columns: [ // sorting definition
-           null, // Anatomical entity - null = default sorting
-           null, // Anat. entity ID - null = default sorting
+           { "orderable": false }, // Anatomical entity - null = default sorting
+           { "orderable": false }, // Anat. entity ID - null = default sorting
            { "orderable": false },  // Developmental stage(s) - ordering disabled
            { "orderDataType": "dom-text", "type": "score" }, // Score - custom function
            { "orderable": false } // Quality - ordering disabled

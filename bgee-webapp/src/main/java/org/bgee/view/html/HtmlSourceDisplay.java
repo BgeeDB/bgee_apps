@@ -56,7 +56,7 @@ public class HtmlSourceDisplay extends HtmlParentDisplay implements SourceDispla
 
         this.writeln("<div class='row'>");
         this.writeln("<div class='" + CENTERED_ELEMENT_CLASS + "'>");
-        this.writeln("<p>This page provides data sources used in this release of Bgee<p>");
+        this.writeln("<p>This page provides information about the data sources used in this release of Bgee.<p>");
         this.writeln(this.getContent(sources));
         this.writeln("</div>"); // end class
 

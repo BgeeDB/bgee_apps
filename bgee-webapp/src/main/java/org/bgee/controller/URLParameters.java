@@ -279,10 +279,10 @@ public class URLParameters {
     private static final Parameter<String> DATA_TYPE = new Parameter<String>("data_type",
             true, false, null, true, DEFAULT_IS_SECURE, 
             Math.max(RequestParameters.ALL_VALUE.length(), EnumSet.allOf(DataType.class).stream()
-                    .map(e -> e.getStringRepresentation().length())
+                    .map(e -> e.name().length())
                     .max(Comparator.naturalOrder()).get()), 
             "(?i:" + RequestParameters.ALL_VALUE + "|" + EnumSet.allOf(DataType.class).stream()
-                .map(e -> e.getStringRepresentation())
+                .map(e -> e.name())
                 .collect(Collectors.joining("|")) + ")", 
             String.class);
     /**

@@ -2,10 +2,13 @@ package org.bgee.view.html;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.AbstractMap;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -162,7 +165,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         //Expression data
 		this.writeln("<h2>Expression</h2>");
 		this.writeln("<div id='expr_intro'>Calls of presence of expression, "
-		        + "ordered by the normalized rank score of the gene in the conditions: </div>");
+		        + "ordered by the normalized rank score of the gene in the conditions. "
+		        + "A lower rank score means that the gene is more highly expressed in the condition. </div>");
 		
 		this.writeln("<div id='expr_data' class='row'>");
 		
@@ -208,6 +212,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		this.writeln("</div>"); // end expr_data 
 
 
+		//Source info
 		Set<DataType> allowedDataTypes = geneResponse.getExprCalls().stream()
 		        .flatMap(call -> call.getCallData().stream())
 		        .map(d -> d.getDataType())
@@ -219,20 +224,19 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		        !gene.getSpecies().getDataTypesByDataSourcesForData().isEmpty();
 
 		if (hasSourcesForAnnot && hasSourcesForData) {
-		      this.writeln("<h2>Sources</h2>");
-		      this.writeln("<div class='sources row'>");
+		      this.writeln("<div class='row'><div class='sources col-xs-offset-1 col-sm-offset-2 col-md-offset-0 row'>");
 		}
 		if (hasSourcesForAnnot) {
 		    this.writeSources(gene.getSpecies().getDataTypesByDataSourcesForAnnotation(), 
-		            allowedDataTypes, "Annotation sources");
+		            allowedDataTypes, "Sources of annotations to anatomy and development");
 		}
 		if (hasSourcesForData) {
 		    this.writeSources(gene.getSpecies().getDataTypesByDataSourcesForData(), 
-		            allowedDataTypes, "Raw data sources");
+		            allowedDataTypes, "Sources of raw data");
 		}
 		
 		if (hasSourcesForAnnot && hasSourcesForData) {
-		    this.writeln("</div>"); // end info_sources 
+		    this.writeln("</div></div>"); // end info_sources 
 		}
 		
 		this.endDisplay();
@@ -254,20 +258,15 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
         // First, we invert map to be able to display data sources according to data types.
         // We use TreeMap to conserve order of data types.
-        Map<DataType, Set<Source>> dsByDataTypes = new TreeMap<DataType, Set<Source>>(); 
-        for (Entry<Source, Set<DataType>> entry : map.entrySet()) {
-            for (DataType dt: entry.getValue()) {
-                if (!allowedDataTypes.contains(dt)) {
-                    continue;
-                }
-                Set<Source> sources = dsByDataTypes.get(dt);
-                if (sources == null || sources.isEmpty()) {
-                    sources = new HashSet<>();
-                }
-                sources.add(entry.getKey());
-                dsByDataTypes.put(dt, sources);
-            }
-        }
+        TreeMap<DataType, Set<Source>> dsByDataTypes = map.entrySet().stream()
+                //transform the Entry<Source, Set<DataType>> into several Entry<DataType, Source>
+                .flatMap(e -> e.getValue().stream().map(t -> new AbstractMap.SimpleEntry<>(t, e.getKey())))
+                //keep only allowed data types
+                .filter(e -> allowedDataTypes.contains(e.getKey()))
+                //collect the Entry<DataType, Source> into a TreeMap<DataType, Set<Source>>
+                .collect(Collectors.toMap(e -> e.getKey(), e -> new HashSet<>(Arrays.asList(e.getValue())), 
+                        (s1, s2) -> {s1.addAll(s2); return s1;}, 
+                        TreeMap::new));
         
         // Then, we display informations
         if (!dsByDataTypes.isEmpty()) {
@@ -278,8 +277,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
             for (Entry<DataType, Set<Source>> e : dsByDataTypes.entrySet()) {
                 this.writeln("<li>");
-                this.writeln(e.getKey().getStringRepresentation());
-                this.writeln(" data come from ");
+                this.writeln(e.getKey().getStringRepresentation().substring(0, 1).toUpperCase(Locale.ENGLISH) 
+                        + e.getKey().getStringRepresentation().substring(1) + " data: ");
                 StringJoiner sj = new StringJoiner(", ");
                 for (Source source : e.getValue()) {
                     String target = source.getName().toLowerCase().equals("bgee")? "" : " target='_blank'";

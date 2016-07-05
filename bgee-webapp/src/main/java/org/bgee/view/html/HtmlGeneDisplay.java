@@ -241,12 +241,12 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      * @param text              A {@code String} that is the sentence before the list of sources.
      */
     private void writeSources(Map<Source, Set<DataType>> map, Set<DataType> allowedDataTypes, String text) {
-        log.entry(map, allowedDataTypes);
+        log.entry(map, allowedDataTypes, text);
 
         StringBuilder list = new StringBuilder();
         for (Entry<Source, Set<DataType>> entry : map.entrySet()) {
 		    String dataTypesToDisplay = entry.getValue().stream()
-		        .filter(dt -> !allowedDataTypes.contains(dt))
+		        .filter(dt -> allowedDataTypes.contains(dt))
 		        .map(DataType::getStringRepresentation)
 		        .collect(Collectors.joining(", "));
 		    if (!StringUtils.isBlank(dataTypesToDisplay)) {

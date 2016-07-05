@@ -112,7 +112,7 @@ public class SpeciesService extends Service {
                 .map(SpeciesService::mapFromTO)
                 .collect(Collectors.toSet());
         if (withSpeciesInfo) {
-//            species = this.loadDataSourceInfo(species);
+            species = this.loadDataSourceInfo(species);
         }
         return log.exit(species);
     }

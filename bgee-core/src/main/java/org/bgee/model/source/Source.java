@@ -1,14 +1,17 @@
 package org.bgee.model.source;
 
 import java.util.Date;
+import java.util.Map;
+import java.util.Set;
 
 import org.bgee.model.NamedEntity;
+import org.bgee.model.expressiondata.baseelements.DataType;
 
 /**
  * Class allowing to describe data sources. 
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Mar. 2016
+ * @version Bgee 13, July 2016
  * @since   Bgee 13, Mar. 2016
  */
 public class Source extends NamedEntity {
@@ -65,6 +68,20 @@ public class Source extends NamedEntity {
      * Default value is the highest value, so that this field is the last to be displayed
      */
     private Integer displayOrder;
+
+    /**
+     * A {@code Map} where keys are {@code String}s corresponding to species IDs,
+     * the associated values being a {@code Set} of {@code DataType}s corresponding to 
+     * data types of raw data of this data source.
+     */
+    private Map<String, Set<DataType>> dataTypesBySpeciesforData;
+
+    /**
+     * A {@code Map} where keys are {@code String}s corresponding to species IDs,
+     * the associated values being a {@code Set} of {@code DataType}s corresponding to 
+     * data types of annotation data of this data source.
+     */
+    private Map<String, Set<DataType>> dataTypesBySpeciesForAnnotations;
 
     /**
      * Constructor providing the {@code id} of this {@code Source}.
@@ -130,6 +147,47 @@ public class Source extends NamedEntity {
         this.displayOrder = displayOrder;
     }
 
+    /**
+     * Constructor providing the {@code id}, {@code name}, and {@code description} of this {@code Source}.
+     * <p> 
+     * This {@code id} cannot be {@code null}, or blank, 
+     * otherwise an {@code IllegalArgumentException} will be thrown.
+     * 
+     * @param id                A {@code String} that is the ID of the data source.
+     * @param name              A {@code String} that is the name of the data source.
+     * @param description       A {@code String} that is the description of the data source.
+     * @param xRefUrl           A {@code String} that is the URL for cross-references to data source.
+     * @param experimentUrl     A {@code String} that is the URL to experiment (for expression data source).
+     * @param evidenceUrl       A {@code String} that is the URL to evidence (for expression data source).
+     * @param baseUrl           A {@code String} that is the URL to the home page of the data source.
+     * @param releaseDate       A {@code String} that is the date of data source used.
+     * @param releaseVersion    A {@code String} that is the version of data source used.
+     * @param toDisplay         A {@code Boolean} defining whether the data source should be displayed.
+     * @param category          A {@code Category} that is the data source category.
+     * @param displayOrder      An {@code Integer} that is the data source display ordering.
+     * @param dataTypesBySpeciesforData         A {@code Map} where keys are {@code String}s
+     *                                          corresponding to species IDs, the associated values
+     *                                          being a {@code Set} of {@code DataType}s 
+     *                                          corresponding to data types of raw data
+     *                                          of this data source.
+     * @param dataTypesBySpeciesForAnnotations  A {@code Map} where keys are {@code String}s 
+     *                                          corresponding to species IDs, the associated values 
+     *                                          being a {@code Set} of {@code DataType}s 
+     *                                          corresponding to data types of annotation data
+     *                                          of this data source.
+     * @throws IllegalArgumentException     If {@code id} is {@code null}, or blank.
+     */
+    public Source(String id, String name, String description, String xRefUrl,
+            String experimentUrl, String evidenceUrl, String baseUrl, Date releaseDate,
+            String releaseVersion, Boolean toDisplay, SourceCategory category, Integer displayOrder,
+            Map<String, Set<DataType>> dataTypesBySpeciesforData, Map<String, Set<DataType>> dataTypesBySpeciesForAnnotations)
+                    throws IllegalArgumentException {
+        this(id, name, description, xRefUrl, experimentUrl, evidenceUrl, baseUrl, releaseDate,
+                releaseVersion, toDisplay, category, displayOrder);
+        this.dataTypesBySpeciesforData = dataTypesBySpeciesforData;
+        this.dataTypesBySpeciesForAnnotations = dataTypesBySpeciesForAnnotations;
+    }
+
     public String getxRefUrl() {
         return xRefUrl;
     }
@@ -165,6 +223,14 @@ public class Source extends NamedEntity {
     public Integer getDisplayOrder() {
         return displayOrder;
     }
+    
+    public Map<String, Set<DataType>> getDataTypesBySpeciesForData() {
+        return dataTypesBySpeciesforData;
+    }
+
+    public Map<String, Set<DataType>> getDataTypesBySpeciesForAnnotation() {
+        return dataTypesBySpeciesForAnnotations;
+    }
 
     @Override
     public int hashCode() {
@@ -179,6 +245,8 @@ public class Source extends NamedEntity {
         result = prime * result + ((releaseVersion == null) ? 0 : releaseVersion.hashCode());
         result = prime * result + ((toDisplay == null) ? 0 : toDisplay.hashCode());
         result = prime * result + ((xRefUrl == null) ? 0 : xRefUrl.hashCode());
+        result = prime * result + ((dataTypesBySpeciesforData == null) ? 0 : dataTypesBySpeciesforData.hashCode());
+        result = prime * result + ((dataTypesBySpeciesForAnnotations == null) ? 0 : dataTypesBySpeciesForAnnotations.hashCode());
         return result;
     }
 
@@ -233,6 +301,16 @@ public class Source extends NamedEntity {
                 return false;
         } else if (!xRefUrl.equals(other.xRefUrl))
             return false;
+        if (dataTypesBySpeciesForAnnotations == null) {
+            if (other.dataTypesBySpeciesForAnnotations != null)
+                return false;
+        } else if (!dataTypesBySpeciesForAnnotations.equals(other.dataTypesBySpeciesForAnnotations))
+            return false;
+        if (dataTypesBySpeciesforData == null) {
+            if (other.dataTypesBySpeciesforData != null)
+                return false;
+        } else if (!dataTypesBySpeciesforData.equals(other.dataTypesBySpeciesforData))
+            return false;
         return true;
     }
 
@@ -242,6 +320,8 @@ public class Source extends NamedEntity {
                 " - Experiment URL: " + getExperimentUrl() + " - Evidence URL: " + getEvidenceUrl() + 
                 " - Base URL: " + getBaseUrl() + " - Release date: " + getReleaseDate() + 
                 " - Release version: " + getReleaseVersion() + " - To display: " + getToDisplay() + 
-                " - Category: " + getCategory() + " - Display order: " + getDisplayOrder();
+                " - Category: " + getCategory() + " - Display order: " + getDisplayOrder() +
+                " - Data types by species for data: " + getDataTypesBySpeciesForData()  + 
+                " - Data types by species for annotation: " + getDataTypesBySpeciesForAnnotation();
     }
 }

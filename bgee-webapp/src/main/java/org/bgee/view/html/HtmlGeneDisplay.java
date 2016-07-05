@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
@@ -165,11 +166,11 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 		this.writeln("<div id='expr_data' class='row'>");
 		
 		//table-container
+		LinkedHashMap<String, List<ExpressionCall>> callsGroupByAnatEntity = 
+		        filterAndGroupByAnatEntity(geneResponse);
 		this.writeln("<div class='col-xs-12 col-sm-10'>");
 		this.writeln("<div id='table-container'>");
-		this.writeln(getExpressionHTMLByAnat(
-		        filterAndGroupByAnatEntity(geneResponse), 
-		        geneResponse.getConditionUtils()));
+		this.writeln(getExpressionHTMLByAnat(callsGroupByAnatEntity, geneResponse.getConditionUtils()));
 		this.writeln("</div>"); // end table-container
 		this.writeln("</div>"); // end class
 		
@@ -192,16 +193,23 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
 		this.writeln("<div id='info_sources' class='row'>");
 
+		 Set<DataType> allowedDataTypes = callsGroupByAnatEntity.values().stream()
+		    .flatMap(list -> list.stream())
+		    .flatMap(call -> call.getCallData().stream())
+		    .map(d -> d.getDataType())
+		    .distinct()
+		    .collect(Collectors.toSet());
+		
 		if (gene.getSpecies().getDataTypesByDataSourcesForAnnotation() != null && 
 		        !gene.getSpecies().getDataTypesByDataSourcesForAnnotation().isEmpty()) {
-	        this.writeln("Sources for annotations are: ");
-	        writeSources(gene.getSpecies().getDataTypesByDataSourcesForAnnotation());
+	        this.writeSources(gene.getSpecies().getDataTypesByDataSourcesForAnnotation(), 
+	                allowedDataTypes, "Sources for annotations are: ");
 		}
 
         if (gene.getSpecies().getDataTypesByDataSourcesForData() != null && 
                 !gene.getSpecies().getDataTypesByDataSourcesForData().isEmpty()) {
-            this.writeln("Sources for data are: ");
-            writeSources(gene.getSpecies().getDataTypesByDataSourcesForData());
+            this.writeSources(gene.getSpecies().getDataTypesByDataSourcesForData(), 
+                    allowedDataTypes, "Sources for data are: ");
         }
 		
         this.writeln("</div>"); // end info_sources 
@@ -213,23 +221,36 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
     /** 
      * Write sources corresponding to the gene species.
      * 
-     * @param map   A {@code Map} where keys are {@code Source}s corresponding to data sources,
-     *              the associated values being a {@code Set} of {@code DataType}s corresponding to 
-     *              data types of data.
+     * @param map               A {@code Map} where keys are {@code Source}s corresponding to 
+     *                          data sources, the associated values being a {@code Set} of 
+     *                          {@code DataType}s corresponding to data types of data.
+     * @param allowedDataTypes  A {@code Set} of {@code DataType}s that are allowed data types
+     *                          to display.
+     * @param text              A {@code String} that is the sentence before the list of sources.
      */
-    private void writeSources(Map<Source, Set<DataType>> map) {
-        log.entry(map);
-        this.writeln("<ul>");
-		for (Entry<Source, Set<DataType>> entry : map.entrySet()) {
-            this.writeln("<li>");
-            this.writeln("<a href='" + entry.getKey().getBaseUrl() + "' target='_blank'>" + 
-                    entry.getKey().getName() + "</a>");
-            this.writeln(" for ");
-            this.writeln(entry.getValue().stream()
-                    .map(DataType::getStringRepresentation)
-                    .collect(Collectors.joining(", ")));
+    private void writeSources(Map<Source, Set<DataType>> map, Set<DataType> allowedDataTypes, String text) {
+        log.entry(map, allowedDataTypes);
+
+        StringBuilder list = new StringBuilder();
+        for (Entry<Source, Set<DataType>> entry : map.entrySet()) {
+		    String dataTypesToDisplay = entry.getValue().stream()
+		        .filter(dt -> !allowedDataTypes.contains(dt))
+		        .map(DataType::getStringRepresentation)
+		        .collect(Collectors.joining(", "));
+		    if (!StringUtils.isBlank(dataTypesToDisplay)) {
+		        list.append("<li>");
+		        list.append("<a href='" + entry.getKey().getBaseUrl() + "' target='_blank'>" + 
+		                entry.getKey().getName() + "</a>");
+		        list.append(" for ");
+		        list.append(dataTypesToDisplay);
+		    }
         }
-        this.writeln("</ul>");
+        if (list.length() > 0) {
+            this.writeln(text);
+            this.writeln("<ul>");
+            this.writeln(list.toString());
+            this.writeln("</ul>");
+        }
         log.exit();
     }
 

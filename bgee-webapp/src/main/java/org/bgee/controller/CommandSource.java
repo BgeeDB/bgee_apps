@@ -9,9 +9,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.gene.Gene;
-import org.bgee.model.gene.GeneMatch;
 import org.bgee.model.source.Source;
-import org.bgee.view.SearchDisplay;
 import org.bgee.view.SourceDisplay;
 import org.bgee.view.ViewFactory;
 
@@ -20,7 +18,7 @@ import org.bgee.view.ViewFactory;
  * i.e. with the parameter page=source
  *
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Mar. 2016
+ * @version Bgee 13, July 2016
  * @since   Bgee 13, Mar. 2016
  */
 public class CommandSource extends CommandParent {
@@ -53,7 +51,7 @@ public class CommandSource extends CommandParent {
 
         if (this.requestParameters.getAction() == null) {
             
-            List<Source> sources = serviceFactory.getSourceService().loadDisplayableSources();
+            List<Source> sources = serviceFactory.getSourceService().loadDisplayableSources(false);
             
             display.displaySources(sources);
             

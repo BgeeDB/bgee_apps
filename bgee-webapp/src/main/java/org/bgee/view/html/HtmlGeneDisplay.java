@@ -6,6 +6,7 @@ import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -25,6 +26,7 @@ import org.bgee.model.expressiondata.ConditionUtils;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.gene.Gene;
+import org.bgee.model.source.Source;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.JsonHelper;
 
@@ -34,7 +36,7 @@ import org.bgee.view.JsonHelper;
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 13, Mar. 2016
+ * @version Bgee 13, July 2016
  * @since   Bgee 13, Oct. 2015
  */
 public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
@@ -188,9 +190,48 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         
 		this.writeln("</div>"); // end expr_data 
 
+		this.writeln("<div id='info_sources' class='row'>");
+
+		if (gene.getSpecies().getDataTypesByDataSourcesForAnnotation() != null && 
+		        !gene.getSpecies().getDataTypesByDataSourcesForAnnotation().isEmpty()) {
+	        this.writeln("Sources for annotations are: ");
+	        writeSources(gene.getSpecies().getDataTypesByDataSourcesForAnnotation());
+		}
+
+        if (gene.getSpecies().getDataTypesByDataSourcesForData() != null && 
+                !gene.getSpecies().getDataTypesByDataSourcesForData().isEmpty()) {
+            this.writeln("Sources for data are: ");
+            writeSources(gene.getSpecies().getDataTypesByDataSourcesForData());
+        }
+		
+        this.writeln("</div>"); // end info_sources 
+
 		this.endDisplay();
 		log.exit();
 	}
+
+    /** 
+     * Write sources corresponding to the gene species.
+     * 
+     * @param map   A {@code Map} where keys are {@code Source}s corresponding to data sources,
+     *              the associated values being a {@code Set} of {@code DataType}s corresponding to 
+     *              data types of data.
+     */
+    private void writeSources(Map<Source, Set<DataType>> map) {
+        log.entry(map);
+        this.writeln("<ul>");
+		for (Entry<Source, Set<DataType>> entry : map.entrySet()) {
+            this.writeln("<li>");
+            this.writeln("<a href='" + entry.getKey().getBaseUrl() + "' target='_blank'>" + 
+                    entry.getKey().getName() + "</a>");
+            this.writeln(" for ");
+            this.writeln(entry.getValue().stream()
+                    .map(DataType::getStringRepresentation)
+                    .collect(Collectors.joining(", ")));
+        }
+        this.writeln("</ul>");
+        log.exit();
+    }
 
 	/**
 	 * Generates the HTML code displaying information about expression calls.

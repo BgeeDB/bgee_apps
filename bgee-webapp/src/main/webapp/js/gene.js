@@ -69,8 +69,10 @@ $( document ).ready( function(){
         columns: [ // sorting definition
            { "orderable": false }, // Anatomical entity - null = default sorting
            { "orderable": false }, // Anat. entity ID - null = default sorting
-           { "orderable": false },  // Developmental stage(s) - ordering disabled
-           { "orderDataType": "dom-text", "type": "score" }, // Score - custom function
+           { "orderable": false }, // Developmental stage(s) - ordering disabled
+           { "orderable": false},  //score - ordering disabled
+           //score ordering disabled, otherwise, use: 
+           //{ "orderDataType": "dom-text", "type": "score" }, // Score - custom function
            { "orderable": false } // Quality - ordering disabled
         ]
     });

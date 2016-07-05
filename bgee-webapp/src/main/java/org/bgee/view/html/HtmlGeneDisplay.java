@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
@@ -25,6 +26,7 @@ import org.bgee.model.expressiondata.ConditionUtils;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.gene.Gene;
+import org.bgee.model.source.Source;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.JsonHelper;
 
@@ -34,7 +36,7 @@ import org.bgee.view.JsonHelper;
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 13, June 2016
+ * @version Bgee 13, July 2016
  * @since   Bgee 13, Oct. 2015
  */
 public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
@@ -203,9 +205,66 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         
 		this.writeln("</div>"); // end expr_data 
 
+		this.writeln("<div id='info_sources' class='row'>");
+
+		 Set<DataType> allowedDataTypes = geneResponse.getExprCalls().stream()
+		    .flatMap(call -> call.getCallData().stream())
+		    .map(d -> d.getDataType())
+		    .collect(Collectors.toSet());
+		
+		if (gene.getSpecies().getDataTypesByDataSourcesForAnnotation() != null && 
+		        !gene.getSpecies().getDataTypesByDataSourcesForAnnotation().isEmpty()) {
+	        this.writeSources(gene.getSpecies().getDataTypesByDataSourcesForAnnotation(), 
+	                allowedDataTypes, "Sources for annotations are: ");
+		}
+
+        if (gene.getSpecies().getDataTypesByDataSourcesForData() != null && 
+                !gene.getSpecies().getDataTypesByDataSourcesForData().isEmpty()) {
+            this.writeSources(gene.getSpecies().getDataTypesByDataSourcesForData(), 
+                    allowedDataTypes, "Sources for data are: ");
+        }
+		
+        this.writeln("</div>"); // end info_sources 
+
 		this.endDisplay();
 		log.exit();
 	}
+
+    /** 
+     * Write sources corresponding to the gene species.
+     * 
+     * @param map               A {@code Map} where keys are {@code Source}s corresponding to 
+     *                          data sources, the associated values being a {@code Set} of 
+     *                          {@code DataType}s corresponding to data types of data.
+     * @param allowedDataTypes  A {@code Set} of {@code DataType}s that are allowed data types
+     *                          to display.
+     * @param text              A {@code String} that is the sentence before the list of sources.
+     */
+    private void writeSources(Map<Source, Set<DataType>> map, Set<DataType> allowedDataTypes, String text) {
+        log.entry(map, allowedDataTypes);
+
+        StringBuilder list = new StringBuilder();
+        for (Entry<Source, Set<DataType>> entry : map.entrySet()) {
+		    String dataTypesToDisplay = entry.getValue().stream()
+		        .filter(dt -> !allowedDataTypes.contains(dt))
+		        .map(DataType::getStringRepresentation)
+		        .collect(Collectors.joining(", "));
+		    if (!StringUtils.isBlank(dataTypesToDisplay)) {
+		        list.append("<li>");
+		        list.append("<a href='" + entry.getKey().getBaseUrl() + "' target='_blank'>" + 
+		                entry.getKey().getName() + "</a>");
+		        list.append(" for ");
+		        list.append(dataTypesToDisplay);
+		    }
+        }
+        if (list.length() > 0) {
+            this.writeln(text);
+            this.writeln("<ul>");
+            this.writeln(list.toString());
+            this.writeln("</ul>");
+        }
+        log.exit();
+    }
 
 	/**
 	 * Generates the HTML code displaying information about expression calls.

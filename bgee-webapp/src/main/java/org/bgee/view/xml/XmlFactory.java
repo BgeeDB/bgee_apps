@@ -16,6 +16,7 @@ import org.bgee.view.ErrorDisplay;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.GeneralDisplay;
 import org.bgee.view.SearchDisplay;
+import org.bgee.view.SourceDisplay;
 import org.bgee.view.SpeciesDisplay;
 import org.bgee.view.TopAnatDisplay;
 import org.bgee.view.ViewFactory;
@@ -87,6 +88,11 @@ public class XmlFactory extends ViewFactory {
 	    log.entry();
 		return log.exit(new XmlSearchDisplay(this.response, this.requestParameters, this.prop, this));
 	}
+
+    @Override
+    public SourceDisplay getSourceDisplay() throws IOException {
+        throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
+    }
 
     @Override
     public DAODisplay getDAODisplay() throws IOException {

@@ -25,11 +25,11 @@ import org.bgee.model.species.SpeciesService;
  * A {@link Service} to obtain {@link Gene} objects. Users should use the
  * {@link ServiceFactory} to obtain {@code GeneService}s.
  * 
- * @author Philippe Moret
- * @author Frederic Bastian
- * @author Valentine Rech de Laval
- * @version Bgee 13 Nov. 2015
- * @since Bgee 13 Sept. 2015
+ * @author  Philippe Moret
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13, July 2015
+ * @since   Bgee 13, Sept. 2015
  */
 public class GeneService extends Service {
     
@@ -108,7 +108,7 @@ public class GeneService extends Service {
     	Set<String> speciesIds = new HashSet<>();
     	assert gene.getSpeciesId() != null;
     	speciesIds.add(gene.getSpeciesId());
-    	Species species = speciesService.loadSpeciesByIds(speciesIds).iterator().next();
+    	Species species = speciesService.loadSpeciesByIds(speciesIds, true).iterator().next();
     	gene.setSpecies(species);
 		return log.exit(gene);  		
     }
@@ -130,7 +130,7 @@ public class GeneService extends Service {
         }
         
         Set<String> speciesIds = matchedGeneList.stream().map(Gene::getSpeciesId).collect(Collectors.toSet());
-        Map<String, Species> speciesMap = speciesService.loadSpeciesByIds(speciesIds).stream()
+        Map<String, Species> speciesMap = speciesService.loadSpeciesByIds(speciesIds, false).stream()
                 .collect(Collectors.toMap(Species::getId, Function.identity()));
         
         Set<String> geneIds = matchedGeneList.stream().map(Gene::getId).collect(Collectors.toSet());

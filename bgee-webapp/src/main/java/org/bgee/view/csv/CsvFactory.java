@@ -16,6 +16,7 @@ import org.bgee.view.ErrorDisplay;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.GeneralDisplay;
 import org.bgee.view.SearchDisplay;
+import org.bgee.view.SourceDisplay;
 import org.bgee.view.SpeciesDisplay;
 import org.bgee.view.TopAnatDisplay;
 import org.bgee.view.ViewFactory;
@@ -90,6 +91,11 @@ public class CsvFactory extends ViewFactory {
 	public SearchDisplay getSearchDisplay() throws IOException {
         throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
 	}
+	
+	@Override
+    public SourceDisplay getSourceDisplay() throws IOException {
+        throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
+    }
 
     @Override
     public DAODisplay getDAODisplay() throws IOException {

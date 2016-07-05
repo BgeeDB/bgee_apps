@@ -26,6 +26,7 @@ import org.bgee.model.dao.api.ontologycommon.CIOStatementDAO;
 import org.bgee.model.dao.api.ontologycommon.EvidenceOntologyDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.source.SourceDAO;
+import org.bgee.model.dao.api.source.SourceToSpeciesDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.api.species.TaxonDAO;
 
@@ -36,9 +37,10 @@ import static org.mockito.Mockito.mock;
  * by the {@code Service Loader} thanks to the test file 
  * {@code META-INF/services/org.bgee.model.dao.api.DAOManager}. 
  * 
- * @author Frederic Bastian
- * @version Bgee 13
- * @since Bgee 13
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13, June 2016
+ * @since   Bgee 13
  */
 public class MockDAOManager extends DAOManager {
 	
@@ -199,5 +201,10 @@ public class MockDAOManager extends DAOManager {
 	protected GeneNameSynonymDAO getNewGeneNameSynonymDAO() {
 		return this.instanceMockManager.getNewGeneNameSynonymDAO();
 	}
+
+    @Override
+    protected SourceToSpeciesDAO getNewSourceToSpeciesDAO() {
+        return this.instanceMockManager.getNewSourceToSpeciesDAO();
+    }
 	
 }

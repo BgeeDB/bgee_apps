@@ -145,6 +145,15 @@ public abstract class ViewFactory {
      */
     public abstract SearchDisplay getSearchDisplay() throws IOException;
 
+    /**
+     *                              
+     * @return A {@code SourceDisplay} instance of the appropriate display type.
+     * 
+     * @throws IOException  If an error occurs with the {@code PrintWriter} when writing the
+     *                      response output.
+     */
+    public abstract SourceDisplay getSourceDisplay() throws IOException;
+
     /**                      
      * @return A {@code DAODisplay} instance of the appropriate display type.
      * 

@@ -25,7 +25,7 @@ import static org.mockito.Mockito.when;
  * 
  * @author Philippe Moret
  * @author Valentine Rech de Laval
- * @version Bgee 13, Nov. 2015
+ * @version Bgee 13, July 2016
  * @since   Bgee 13
  */
 public class SpeciesDataGroupServiceTest extends TestAncestor {
@@ -75,7 +75,7 @@ public class SpeciesDataGroupServiceTest extends TestAncestor {
         when(dao.getAllSpeciesDataGroup(Matchers.anyCollection(), Matchers.anyObject())).thenReturn(sdgResultSet);
         when(managerMock.getSpeciesDataGroupDAO()).thenReturn(dao);
 
-        when(speciesService.loadSpeciesInDataGroups()).thenReturn(species);
+        when(speciesService.loadSpeciesInDataGroups(false)).thenReturn(species);
         when(downloadFileService.getAllDownloadFiles()).thenReturn(downloadFiles);
 
 		//expectd values

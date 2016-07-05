@@ -13,7 +13,7 @@ import org.bgee.model.source.Source;
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @version Bgee 13, July 2016
- * @since   Bgee 01
+ * @since   Bgee 13, Mar 2013
  */
 public class Species extends NamedEntity {
     

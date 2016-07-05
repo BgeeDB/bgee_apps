@@ -243,7 +243,7 @@ public class GenerateRankFileTest extends TestAncestor {
         
         
         //*** Launch test ***
-        GenerateRankFile generate = new GenerateRankFile(serviceFactory, uberon, 
+        GenerateRankFile generate = new GenerateRankFile(() -> serviceFactory, uberon, 
                 ((speId, conds, anatOnt, devOnt) -> condUtils), 
                 (cu -> comparator), redundantCallsFuncSupplier);
         File folder1 = testFolder.newFolder("f1");

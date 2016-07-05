@@ -21,6 +21,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -425,9 +426,9 @@ public class GenerateRankFile {
     
     
     /**
-     * {@code ServiceFactory} to obtain Bgee services from.
+     * A {@code Supplier} of {@code ServiceFactory}s to be able to provide one to each thread.
      */
-    private final ServiceFactory serviceFactory;
+    private final Supplier<ServiceFactory> serviceFactorySupplier;
     /**
      * The {@code Uberon} utility to extract XRefs to BTO.
      */
@@ -466,30 +467,32 @@ public class GenerateRankFile {
      */
     public GenerateRankFile(String pathToUberon) 
             throws OBOFormatParserException, OWLOntologyCreationException, IOException {
-        this(new ServiceFactory(), new Uberon(pathToUberon));
+        this(ServiceFactory::new, new Uberon(pathToUberon));
     }
     /**
-     * @param serviceFactory    A {@code ServiceFactory} providing Bgee services.
-     * @param uberonOnt         An {@code Uberon} utiliy to extract XRefs to BTO from.
+     * @param serviceFactorySupplier    A {@code Supplier} of {@code ServiceFactory}s 
+     *                                  to be able to provide one to each thread.
+     * @param uberonOnt                 An {@code Uberon} utiliy to extract XRefs to BTO from.
      */
-    public GenerateRankFile(ServiceFactory serviceFactory, Uberon uberonOnt) {
-        this(serviceFactory, uberonOnt, ConditionUtils::new, ExpressionCall.RankComparator::new, 
+    public GenerateRankFile(Supplier<ServiceFactory> serviceFactorySupplier, Uberon uberonOnt) {
+        this(serviceFactorySupplier, uberonOnt, ConditionUtils::new, ExpressionCall.RankComparator::new, 
                 ExpressionCall::identifyRedundantCalls);
     }
     /**
-     * @param serviceFactory                A {@code ServiceFactory} providing Bgee services.
+     * @param serviceFactorySupplier        A {@code Supplier} of {@code ServiceFactory}s 
+     *                                      to be able to provide one to each thread.
      * @param uberonOnt                     An {@code Uberon} utiliy to extract XRefs to BTO from.
      * @param condUtilsSupplier             To inject {@code ConditionUtils} instances.
      * @param rankComparatorSupplier        To inject {@code ExpressionCall.RankComparator} instances.
      * @param redundantCallsFuncSupplier    To inject the method {@code ExpressionCall::identifyRedundantCalls}.
      */
     //TODO: stop using these functional interfaces once we'll have created an UtilsFactory in bgee-core
-    protected GenerateRankFile(ServiceFactory serviceFactory, Uberon uberonOnt, 
+    protected GenerateRankFile(Supplier<ServiceFactory> serviceFactorySupplier, Uberon uberonOnt, 
             QuadriFunction<String, Collection<Condition>, Ontology<AnatEntity>, Ontology<DevStage>, 
             ConditionUtils> condUtilsSupplier, 
             Function<ConditionUtils, ExpressionCall.RankComparator> rankComparatorSupplier, 
             BiFunction<List<ExpressionCall>, ConditionUtils, Set<ExpressionCall>> redundantCallsFuncSupplier) {
-        this.serviceFactory = serviceFactory;
+        this.serviceFactorySupplier = serviceFactorySupplier;
         this.uberonOnt = uberonOnt;
         this.condUtilsSupplier = condUtilsSupplier;
         this.rankComparatorSupplier = rankComparatorSupplier;
@@ -527,8 +530,9 @@ public class GenerateRankFile {
             throw log.throwing(new IllegalArgumentException("Data types must be specified."));
         }
         
+        ServiceFactory serviceFactory = this.serviceFactorySupplier.get();
         //Retrieve requested species, or all species if none were requested
-        Set<String> retrievedSpeciesIds = this.serviceFactory.getSpeciesService().loadSpeciesByIds(
+        Set<String> retrievedSpeciesIds = serviceFactory.getSpeciesService().loadSpeciesByIds(
                 speciesIds).stream().map(s -> s.getId()).collect(Collectors.toSet());
         if (speciesIds != null && !speciesIds.isEmpty() && !retrievedSpeciesIds.containsAll(speciesIds)) {
             throw log.throwing(new IllegalArgumentException("Some species IDs were not recognized: "
@@ -567,15 +571,16 @@ public class GenerateRankFile {
      */
     public void generateSpeciesRankFile(String speciesId, boolean anatEntityOnly, DataType dataType, 
             String outputDir) throws IllegalArgumentException, IOException {
-        log.entry();
+        log.entry(speciesId, anatEntityOnly, dataType, outputDir);
 
         //********************
         // DATA RETRIEVAL
         //********************
+        ServiceFactory serviceFactory = this.serviceFactorySupplier.get();
         //Retrieve the species 
         Species species = null;
         try {
-            species = this.serviceFactory.getSpeciesService().loadSpeciesByIds(
+            species = serviceFactory.getSpeciesService().loadSpeciesByIds(
                     new HashSet<>(Arrays.asList(speciesId))).stream().findFirst().get();
         } catch (NoSuchElementException e) {
             throw log.throwing(new IllegalArgumentException("No species with ID " + speciesId));
@@ -583,22 +588,22 @@ public class GenerateRankFile {
         assert species != null;
         
         //Retrieve the genes of the species, mapped to their gene IDs, notably to display their names
-        Map<String, Gene> genes = this.serviceFactory.getGeneService()
+        Map<String, Gene> genes = serviceFactory.getGeneService()
                 .loadGenesByIdsAndSpeciesIds(null, Arrays.asList(speciesId)).stream()
                 .collect(Collectors.toMap(g -> g.getId(), g -> g));
         
         //Load ontologies with all data for the requested species, will avoid to make one query 
         //for each gene
-        Ontology<AnatEntity> anatEntityOnt = this.serviceFactory.getOntologyService()
+        Ontology<AnatEntity> anatEntityOnt = serviceFactory.getOntologyService()
                 .getAnatEntityOntology(Arrays.asList(speciesId), null, 
-                        this.serviceFactory.getAnatEntityService());
-        Ontology<DevStage> devStageOnt = this.serviceFactory.getOntologyService()
+                        serviceFactory.getAnatEntityService());
+        Ontology<DevStage> devStageOnt = serviceFactory.getOntologyService()
                 .getDevStageOntology(Arrays.asList(speciesId), null, 
-                        this.serviceFactory.getDevStageService());
+                        serviceFactory.getDevStageService());
         
         //Query expression data for the species. 
-        Iterator<ExpressionCall> callIt = this.getExpressionCalls(speciesId, anatEntityOnly, dataType)
-                .iterator();
+        Iterator<ExpressionCall> callIt = this.getExpressionCalls(speciesId, anatEntityOnly, 
+                dataType, serviceFactory).iterator();
         
 
         //********************
@@ -673,11 +678,12 @@ public class GenerateRankFile {
      *                          if {@code false}).
      * @param dataType          The {@code DataType} that should be considered to retrieve the calls. 
      *                          If {@code null}, then all data types are considered. 
+     * @param serviceFactory    A {@code ServiceFactory} to retrieve Bgee services from.
      * @return                  A {@code Stream} of the {@code ExpressionCall}s retrieved. 
      */
     private Stream<ExpressionCall> getExpressionCalls(String speciesId, boolean anatEntityOnly, 
-            DataType dataType) {
-        log.entry(speciesId, anatEntityOnly, dataType);
+            DataType dataType, ServiceFactory serviceFactory) {
+        log.entry(speciesId, anatEntityOnly, dataType, serviceFactory);
         
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
                 new LinkedHashMap<>();

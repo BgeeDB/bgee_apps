@@ -46,7 +46,7 @@ public class Gene extends NamedEntity {
      * @throws IllegalArgumentException     if {@code id} is {@code null}, or blank.
      */
     public Gene (String id, String speciesId) throws IllegalArgumentException {
-        this(id, null, null);
+        this(id, speciesId, null);
     }
 
     /**

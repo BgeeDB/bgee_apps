@@ -3,7 +3,6 @@ package org.bgee.model.dao.mysql.source;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -22,9 +21,9 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
  * A {@code SourceDAO} for MySQL.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Mar. 2016
+ * @version Bgee 13, July 2016
  * @since   Bgee 13
- * @see org.bgee.model.dao.api.source.SourceDAO.SourceTO
+ * @see     org.bgee.model.dao.api.source.SourceDAO.SourceTO
  */
 public class MySQLSourceDAO extends MySQLDAO<SourceDAO.Attribute> implements SourceDAO {
 
@@ -64,14 +63,10 @@ public class MySQLSourceDAO extends MySQLDAO<SourceDAO.Attribute> implements Sou
     }
 
     @Override
-    public SourceTO getDataSourceById(String dataSourceId, Collection<SourceDAO.Attribute> attributes)
-            throws DAOException, IllegalStateException {
-        log.entry(dataSourceId, attributes);
-        List<SourceTO> tos = this.getDataSources(dataSourceId, false, attributes).getAllTOs();
-        if (tos == null || tos.size() != 1) {
-            throw log.throwing(new IllegalStateException("Shoud get only 1 element: " + tos));
-        }
-        return log.exit(tos.iterator().next());
+    public SourceTOResultSet getDataSourceByIds(Collection<String> dataSourceIds,
+            Collection<SourceDAO.Attribute> attributes) throws DAOException, IllegalStateException {
+        log.entry(dataSourceIds, attributes);
+        return log.exit(this.getDataSources(dataSourceIds, false, attributes));
     }
     
     /**
@@ -138,7 +133,8 @@ public class MySQLSourceDAO extends MySQLDAO<SourceDAO.Attribute> implements Sou
      * Return sources used in Bgee from data source, according to {@code dataSourceId},
      * {@code displayableOnly}, and {@code attributes}.
      * 
-     * @param dataSourceId      A {@code String} representing the ID of the data source to retrieve.
+     * @param dataSourceIds     A {@code Collection} of {@code String}s representing the IDs
+     *                          of the data source to retrieve.
      * @param displayableOnly   A {@code Boolean} defining whether retrieved data source should be
      *                          displayable on the page listing data sources.
      * @param attributes        A {@code Collection} of {@code SourceDAO.Attribute}s defining the
@@ -149,11 +145,11 @@ public class MySQLSourceDAO extends MySQLDAO<SourceDAO.Attribute> implements Sou
      *                          and {@code attributes}.
      * @throws DAOException     If an error occurred when accessing the data source.
      */
-    private SourceTOResultSet getDataSources(String dataSourceId, boolean displayableOnly, 
+    private SourceTOResultSet getDataSources(Collection<String> dataSourceIds, boolean displayableOnly, 
             Collection<SourceDAO.Attribute> attributes) throws DAOException {
-        log.entry(dataSourceId, displayableOnly, attributes);
+        log.entry(dataSourceIds, displayableOnly, attributes);
         
-        boolean isIdFilter = dataSourceId != null && !dataSourceId.isEmpty();
+        boolean isIdFilter = dataSourceIds != null && !dataSourceIds.isEmpty();
 
         // Construct sql query
         String sql = this.generateSelectClause(attributes, SOURCE_TABLE_NAME);
@@ -165,7 +161,9 @@ public class MySQLSourceDAO extends MySQLDAO<SourceDAO.Attribute> implements Sou
         }
         
         if (isIdFilter) {
-            sql += "dataSourceId = ?";
+            sql += SOURCE_TABLE_NAME + ".dataSourceId IN (" + 
+                    BgeePreparedStatement.generateParameterizedQueryString(dataSourceIds.size())
+            + ")";
         }
 
         if (isIdFilter && displayableOnly) {
@@ -173,7 +171,7 @@ public class MySQLSourceDAO extends MySQLDAO<SourceDAO.Attribute> implements Sou
         }
 
         if (displayableOnly) {
-            sql += "toDisplay = ?";            
+            sql += SOURCE_TABLE_NAME + ".toDisplay = ?";            
         }
             
         // we don't use a try-with-resource, because we return a pointer to the results,
@@ -182,10 +180,10 @@ public class MySQLSourceDAO extends MySQLDAO<SourceDAO.Attribute> implements Sou
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             
             if (isIdFilter) {
-                stmt.setString(1, dataSourceId);
+                stmt.setStringsToIntegers(1, dataSourceIds, true);
             }
             if (displayableOnly) {
-                int offsetParamIndex = (isIdFilter? 2: 1);
+                int offsetParamIndex = (isIdFilter ? dataSourceIds.size() + 1 : 1);
                 stmt.setBoolean(offsetParamIndex, displayableOnly);
             }
 

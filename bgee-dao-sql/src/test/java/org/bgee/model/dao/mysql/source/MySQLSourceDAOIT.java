@@ -25,7 +25,7 @@ import org.junit.Test;
  * important information.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13, Mar. 2016
+ * @version Bgee 13, July 2016
  * @since   Bgee 13, Mar. 2016
  * @see     org.bgee.model.dao.api.source.SourceDAO
  */
@@ -120,40 +120,50 @@ public class MySQLSourceDAOIT extends MySQLITAncestor {
     }
 
     /**
-     * Test the select method {@link MySQLSourceDAO#getDataSourceById(String, java.util.Collection)}.
+     * Test the select method
+     * {@link MySQLSourceDAO#getDataSourceByIds(java.util.Collection, java.util.Collection)}.
      */
     @Test
-    public void shouldGetDataSourceById() throws SQLException {
+    public void shouldGetDataSourceByIds() throws SQLException {
         this.useSelectDB();
 
-        // Generate result with the method
+        // Test with no attributes declared. 
         MySQLSourceDAO dao = new MySQLSourceDAO(this.getMySQLDAOManager());
-        SourceTO methSource = dao.getDataSourceById("2", null);
-
-        // Generate manually expected result
         List<SourceTO> expectedSources = getAllSources().stream()
                 .filter(s -> s.getId().equals("2"))
                 .collect(Collectors.toList()); 
-        SourceTO expectedSource = expectedSources.iterator().next();
-        //Compare
-        assertTrue("SourceTO incorrectly retrieved: expectedSource= " + expectedSource + 
-                " methSource= " + methSource, TOComparator.areTOsEqual(expectedSource, methSource));
+        assertTrue("SourceTO incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(expectedSources,
+                        dao.getDataSourceByIds(Arrays.asList("2"), null).getAllTOs()));
 
-        // with all attributes declared should return same TOs that with all attributes 
+        // Test with all attributes declared. This should return same TOs that with all attributes. 
         List<SourceDAO.Attribute> attributes = Arrays.asList(SourceDAO.Attribute.values()); 
-        methSource = dao.getDataSourceById("2", attributes);
         //Compare
-        assertTrue("SourceTO incorrectly retrieved: expectedSource= " + expectedSource + 
-                " methSource= " + methSource, TOComparator.areTOsEqual(expectedSource, methSource));
+        assertTrue("SourceTO incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(expectedSources, 
+                        dao.getDataSourceByIds(Arrays.asList("2"), attributes).getAllTOs()));
 
-        // Generate manually expected result
+        // Test single attribute
         attributes = Arrays.asList(SourceDAO.Attribute.DESCRIPTION);
-        methSource = dao.getDataSourceById("3", attributes);
-        expectedSource = 
-                new SourceTO(null, null, "Ensembl desc", null, null, null, null, null, null, null, null, null); 
-        //Compare
-        assertTrue("SourceTO incorrectly retrieved: expectedSource= " + expectedSource + 
-                " methSource= " + methSource, TOComparator.areTOsEqual(expectedSource, methSource));
+        expectedSources = Arrays.asList(
+                new SourceTO(null, null, "Ensembl desc", null, null, null, null, null, null, null, null, null)); 
+        assertTrue("SourceTO incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(expectedSources,
+                        dao.getDataSourceByIds(Arrays.asList("3"), attributes).getAllTOs()));
+        
+        // Test single attribute with multiple species IDs
+        attributes = Arrays.asList(SourceDAO.Attribute.EXPERIMENT_URL, SourceDAO.Attribute.BASE_URL,
+                SourceDAO.Attribute.CATEGORY);
+        expectedSources = Arrays.asList(
+                new SourceTO(null, null, null, null, "experimentUrl", null, "baseUrl", null,
+                        null, null, SourceCategory.GENOMICS, null),
+                new SourceTO(null, null, null, null, "", null, "http://May2012.archive.ensembl.org/", 
+                        null, null, null, SourceCategory.NONE, null));
+        log.debug("#1# "+expectedSources);
+        log.debug("#2# "+dao.getDataSourceByIds(Arrays.asList("1", "3"), attributes).getAllTOs());
+        assertTrue("SourceTO incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(expectedSources,
+                        dao.getDataSourceByIds(Arrays.asList("1", "3"), attributes).getAllTOs()));
     }
 
     /**

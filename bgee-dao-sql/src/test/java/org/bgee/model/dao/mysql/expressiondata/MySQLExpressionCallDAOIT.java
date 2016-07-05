@@ -48,6 +48,7 @@ import org.junit.rules.ExpectedException;
  * @since Bgee 13
  */
 //TODO: test when retrieving global mean score with GROUP BY
+//TODO: then when retrieve mean rank with specific data types
 public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
 
     private final static Logger log = 
@@ -120,9 +121,9 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         DataState.HIGHQUALITY, BigDecimal.valueOf(24640.00),
                         DataState.HIGHQUALITY, BigDecimal.valueOf(2500.01),
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("2", "ID1", "Anat_id6", "Stage_id6", BigDecimal.valueOf(9393.20132013),
+                new ExpressionCallTO("2", "ID1", "Anat_id6", "Stage_id6", BigDecimal.valueOf(9300.59800664),
                         DataState.LOWQUALITY,  BigDecimal.valueOf(25108.40),
-                        DataState.HIGHQUALITY, BigDecimal.valueOf(23330),
+                        DataState.HIGHQUALITY, null,
                         DataState.HIGHQUALITY, BigDecimal.valueOf(40000.0),
                         DataState.LOWQUALITY, BigDecimal.valueOf(1243.2),
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
@@ -133,27 +134,27 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         DataState.LOWQUALITY, BigDecimal.valueOf(5.0),
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
                 //retrieved thanks to second filter
-                new ExpressionCallTO("4", "ID2", "Anat_id2", "Stage_id18", BigDecimal.valueOf(1811.07590028),
+                new ExpressionCallTO("4", "ID2", "Anat_id2", "Stage_id18", BigDecimal.valueOf(1802.74501109),
                         DataState.HIGHQUALITY, BigDecimal.valueOf(469.00),
-                        DataState.HIGHQUALITY,  BigDecimal.valueOf(16840.00),
+                        DataState.HIGHQUALITY,  null,
                         DataState.HIGHQUALITY, BigDecimal.valueOf(24113),
                         DataState.HIGHQUALITY,  BigDecimal.valueOf(4321.5),
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("6", "ID2", "Anat_id11", "Stage_id12", BigDecimal.valueOf(6886.5),
+                new ExpressionCallTO("6", "ID2", "Anat_id11", "Stage_id12", BigDecimal.valueOf(5784.93333333),
                         DataState.HIGHQUALITY,  BigDecimal.valueOf(8650.00),
-                        DataState.LOWQUALITY, BigDecimal.valueOf(23410.00),
+                        DataState.LOWQUALITY, null,
                         DataState.NODATA,  null,
                         DataState.HIGHQUALITY,  BigDecimal.valueOf(4352.4),
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("9", "ID2", "Anat_id1", "Stage_id9", BigDecimal.valueOf(2756.47058824),
+                new ExpressionCallTO("9", "ID2", "Anat_id1", "Stage_id9", BigDecimal.valueOf(243.26666667),
                         DataState.HIGHQUALITY, BigDecimal.valueOf(483.00),
-                        DataState.LOWQUALITY, BigDecimal.valueOf(21605.5),
+                        DataState.LOWQUALITY, null,
                         DataState.NODATA, null, 
                         DataState.HIGHQUALITY, BigDecimal.valueOf(123.4),
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true),
-                new ExpressionCallTO("10", "ID1", "Anat_id6", "Stage_id8", BigDecimal.valueOf(2554.52736318), 
+                new ExpressionCallTO("10", "ID1", "Anat_id6", "Stage_id8", BigDecimal.valueOf(2445.00000000), 
                         DataState.HIGHQUALITY, BigDecimal.valueOf(2445.00),
-                        DataState.HIGHQUALITY, BigDecimal.valueOf(24460.00),
+                        DataState.HIGHQUALITY, null,
                         DataState.NODATA, null,
                         DataState.NODATA, null,
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF, true));

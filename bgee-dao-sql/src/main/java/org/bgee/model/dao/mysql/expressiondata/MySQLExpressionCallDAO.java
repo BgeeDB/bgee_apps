@@ -150,7 +150,7 @@ implements ExpressionCallDAO {
                     throws DAOException, IllegalArgumentException {
         log.entry(callFilters, includeSubstructures, includeSubStages, globalGeneIds, taxonId, 
                 attributes, orderingAttributes);
-        
+
         //needs a LinkedHashSet for consistent settings of the parameters. 
         LinkedHashSet<CallDAOFilter> clonedCallFilters = Optional.ofNullable(callFilters)
                 .map(e -> new LinkedHashSet<>(e)).orElse(new LinkedHashSet<>());
@@ -290,17 +290,31 @@ implements ExpressionCallDAO {
                     log.trace("GROUP BY needed because of AND conditions between data types. {}", 
                             filteringDataTypesPerCallTO);
                 }
-                havingClauseNeeded = true;
+
+                //FIXME: Actually, if it is needed to compute some rank scores, the filtering must be done 
+                //in the WHERE clause. Otherwise, if we want to compute ranks only based on, e.g., Affymetrix, 
+                //filtering in the HAVING clause would lead to consider all calls for, e.g., a gene-anat, 
+                //as long as at least one is supported by Affymetrix data.
+                if (updatedAttrs.stream()
+                        .anyMatch(attr -> attr.isDataTypeAttribute() || attr.isPropagationAttribute()) || 
+                        filteringDataTypesPerCallTO.stream().flatMap(attrs -> attrs.stream())
+                        .collect(Collectors.toSet()).size() > 1) {
+                    havingClauseNeeded = true;
+                    //add in the SELECT clause the columns we will need in the HAVING clause, 
+                    //to avoid over-verbose HAVING clause.
+                    updatedAttrs.addAll(filteringDataTypesPerCallTO.stream()
+                            .flatMap(Set::stream)
+                            .collect(Collectors.toSet()));
+                }
                 groupingByNeeded = true;
-                //add in the SELECT clause the columns we will need in the HAVING clause, 
-                //to avoid over-verbose HAVING clause.
-                updatedAttrs.addAll(filteringDataTypesPerCallTO.stream()
-                        .flatMap(Set::stream)
-                        .collect(Collectors.toSet()));
             }
             
             if ((includeSubStages || includeSubstructures) && 
                     clonedCallTOFilters.stream().anyMatch(e -> e.isObservedData() != null)) {
+                //FIXME: opposite problem: if we request Affymetrix data only, with the HAVING clause 
+                //we will determine whether a call having *some* affymetrix data has been observed 
+                //*somewhere* (maybe somewhere else). Is it really what we want?
+                log.warn("having clause needed");
                 havingClauseNeeded = true;
                 groupingByNeeded = true;
                 //add in the SELECT clause the columns we will need in the HAVING clause, 
@@ -310,6 +324,8 @@ implements ExpressionCallDAO {
             }
             if (includeSubstructures && 
                     clonedCallTOFilters.stream().anyMatch(e -> e.getAnatOriginOfLine() != null)) {
+                //FIXME: same here
+                log.warn("having clause needed");
                 havingClauseNeeded = true;
                 groupingByNeeded = true;
                 //add in the SELECT clause the columns we will need in the HAVING clause, 
@@ -319,6 +335,8 @@ implements ExpressionCallDAO {
             }
             if (includeSubStages && 
                     clonedCallTOFilters.stream().anyMatch(e -> e.getStageOriginOfLine() != null)) {
+                //FIXME: same here
+                log.warn("having clause needed");
                 havingClauseNeeded = true;
                 groupingByNeeded = true;
                 //add in the SELECT clause the columns we will need in the HAVING clause, 
@@ -326,8 +344,16 @@ implements ExpressionCallDAO {
                 updatedAttrs.add(ExpressionCallDAO.Attribute.STAGE_ORIGIN_OF_LINE);
                 log.trace("GROUP BY needed because of filtering based on STAGE_ORIGIN_OF_LINE.");
             }
+
+            //FIXME: THIS ALL GROUP BY / INCLUDE SUBSTAGES STUFF IS BROKEN. Let's think 
+            //if it is needed if we manage propagation in bgee-core.
+            //Poor fix meanwhile.
+            if (havingClauseNeeded && updatedAttrs.stream().anyMatch(attr -> attr.isRankAttribute())) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Retrieval of ranks when a HAVING clause is needed is not supported."));
+            }
             
-            if (log.isWarnEnabled() && groupingByNeeded && 
+            if (log.isWarnEnabled() && includeSubStages && groupingByNeeded && 
                     (geneIds.isEmpty() || geneIds.size() > this.getManager().getExprPropagationGeneCount())) {
                 log.warn("IncludeSubStages is true and some parameters highly costly to compute "
                         + "are needed, this will take lots of time... "
@@ -507,7 +533,7 @@ implements ExpressionCallDAO {
                 updatedAttrs, 
                 //Attributes corresponding to data types used for filtering the results
                 callTOFilters.stream()
-                    .flatMap(callTO -> callTO.extractDataTypesToDataStates().keySet().stream())
+                    .flatMap(callTO -> callTO.extractFilteringDataTypes().keySet().stream())
                     .collect(Collectors.toCollection(() -> 
                              EnumSet.noneOf(ExpressionCallDAO.Attribute.class))), 
                 distinct, groupByAttrs != null, 
@@ -601,10 +627,10 @@ implements ExpressionCallDAO {
         }
 
         //The filtering based on CallTOs must be done in a HAVING clause in case of GROUP BY, 
-        //otherwise, in the WHERE clause
+        //otherwise, in the WHERE clause. 
         String callTOFilterClause = this.generateCallTOFilterClause(callTOFilters, 
                 havingClauseNeeded? null: exprTableName, 
-                includeSubstructures, includeSubStages, groupByAttrs != null);
+                includeSubstructures, includeSubStages, groupByAttrs != null, havingClauseNeeded);
         if (!havingClauseNeeded && !callTOFilterClause.isEmpty()) {
             if (!whereClauseStarted) {
                 sql += "WHERE ";
@@ -1135,7 +1161,7 @@ implements ExpressionCallDAO {
             } else if (attribute.equals(ExpressionCallDAO.Attribute.GLOBAL_MEAN_RANK)) {
                 
                 //in case several raws are grouped, we retrieve the min value of the ranking score
-                sql +=  groupByClause? "MIN(": "" + attributesForRank.stream()
+                sql +=  (groupByClause? "MIN(": "") + attributesForRank.stream()
                             .map(attr -> {
                                 String rankSql = dataTypeToNormRankSql.get(attr);
                                 String weightSql = dataTypeToWeightSql.get(attr);
@@ -1154,7 +1180,7 @@ implements ExpressionCallDAO {
                                                 + convertDataStateToInt(DataState.NODATA) + ", 0, "
                                          + dataTypeToWeightSql.get(attr) + ")")
                             .collect(Collectors.joining(" + ", "/ (", 
-                                     groupByClause? ")": "" + ")) AS globalMeanRank "));
+                                     (groupByClause? ")": "") + ")) AS globalMeanRank "));
 
             } else if (attribute.equals(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA)) {
                 if (!groupByClause) {
@@ -1367,11 +1393,12 @@ implements ExpressionCallDAO {
      */
     private String generateCallTOFilterClause(LinkedHashSet<ExpressionCallTO> callTOFilters, 
             String exprTableName, 
-            boolean includeSubstructures, boolean includeSubStages, boolean groupByClause) {
+            boolean includeSubstructures, boolean includeSubStages, boolean groupByClause, 
+            boolean havingClauseNeeded) {
         log.entry(callTOFilters, exprTableName, 
-                includeSubstructures, includeSubStages, groupByClause);
+                includeSubstructures, includeSubStages, groupByClause, havingClauseNeeded);
         
-        if (groupByClause && exprTableName!= null && !exprTableName.isEmpty()) {
+        if (havingClauseNeeded && exprTableName!= null && !exprTableName.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("A table name should not be used "
                     + "in a HAVING clause."));
         }

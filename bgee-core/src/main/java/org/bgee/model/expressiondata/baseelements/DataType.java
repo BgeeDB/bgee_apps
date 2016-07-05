@@ -28,6 +28,8 @@ import org.bgee.model.BgeeEnum.BgeeEnumField;
  * @version Bgee 13 Sept. 2015
  * @since Bgee 13
  */
+//TODO: why don't we have a "ALL" data type?? This would be much cleaner than having to provide "null" 
+//everywhere...
 public enum DataType implements BgeeEnumField {
     AFFYMETRIX, EST, IN_SITU, RNA_SEQ;
 

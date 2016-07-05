@@ -16,6 +16,7 @@ import org.bgee.pipeline.expression.InsertGlobalCalls;
 import org.bgee.pipeline.expression.downloadfile.GenerateExprFile;
 import org.bgee.pipeline.expression.downloadfile.GenerateDiffExprFile;
 import org.bgee.pipeline.expression.downloadfile.GenerateMultiSpeciesDiffExprFile;
+import org.bgee.pipeline.expression.downloadfile.GenerateRankFile;
 import org.bgee.pipeline.expression.downloadfile.InsertSpeciesDataGroups;
 import org.bgee.pipeline.gene.InsertGO;
 import org.bgee.pipeline.gene.ParseOrthoXML;
@@ -267,6 +268,10 @@ public class CommandRunner {
             break;
         case "InsertSpeciesDataGroups":
             InsertSpeciesDataGroups.main(newArgs);
+            break;
+        //Rank download files
+        case "GenerateRankFile": 
+            GenerateRankFile.main(newArgs);
             break;
             
         default: 

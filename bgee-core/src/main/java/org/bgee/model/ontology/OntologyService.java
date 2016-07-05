@@ -32,6 +32,8 @@ import org.bgee.model.ontology.Ontology.RelationType;
  * @since   Bgee 13, Dec. 2015
  * @param <T>
  */
+//TODO: why do we inject AnatEntityService and DevStageService to methods, rather than injecting 
+//the ServiceFactory to the constructor? I don't remember. 
 public class OntologyService extends Service {
 
     private static final Logger log = LogManager.getLogger(OntologyService.class.getName());

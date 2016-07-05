@@ -429,7 +429,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 //            urlDocProcValueFiles.getRequestURL() + "'>" + PROCESSED_EXPR_VALUES_PAGE_NAME + "</a></li>");
         navbar.append("<li><a title='Bgee blog' href='https://bgeedb.wordpress.com' target='_blank'>Bgee blog</a></li>");
         navbar.append("<li><a title='Bgee sources' href='" + urlBgeeSources.getRequestURL()
-              + "' target='_blank'>Bgee sources</a></li>");
+              + "'>Bgee sources</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
         

@@ -199,7 +199,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         
         this.startDisplay("Bgee release 13 documentation home page");
 
-        this.writeln("<h1>Bgee release 13 documentation pages</h1>");
+        this.writeln("<h1>Bgee release 13 documentation</h1>");
 
         this.writeln("<div class='feature_list'>");
 
@@ -233,20 +233,31 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         urlTopAnatGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
         urlTopAnatGenerator.setAction(RequestParameters.ACTION_DOC_TOP_ANAT);
 
+        RequestParameters urlSourcesGenerator = this.getNewRequestParameters();
+        urlSourcesGenerator.setPage(RequestParameters.PAGE_SOURCE);
+
         StringBuilder logos = new StringBuilder(); 
 
         logos.append(HtmlParentDisplay.getSingleFeatureLogo(urlHowToAccessGenerator.getRequestURL(), 
                 false, "How to access to Bgee data", "Access to Bgee data", 
                 this.prop.getLogoImagesRootDirectory() + "bgee_access_logo.png", null));
 
+        //TODO update image when top anat logo is created
+        logos.append(HtmlParentDisplay.getSingleFeatureLogo(urlTopAnatGenerator.getRequestURL(), 
+                false, "TopAnat documentation page", "TopAnat documentation", 
+                this.prop.getLogoImagesRootDirectory() + "bgee_access_logo.png", null));
+
         logos.append(HtmlParentDisplay.getSingleFeatureLogo(urlCallFilesGenerator.getRequestURL(), 
                 false, "Download file documentation page", "Download file documentation", 
                 this.prop.getLogoImagesRootDirectory() + "download_logo.png", null));
 
-        //TODO uncomment when top ant logo is created
-//        logos.append(HtmlParentDisplay.getSingleFeatureLogo(urlTopAnatGenerator.getRequestURL(), 
-//                false, "TopAnat documentation page", "TopAnat documentation", 
-//                this.prop.getLogoImagesRootDirectory() + "topAnat_logo.png", null));
+        logos.append(HtmlParentDisplay.getSingleFeatureLogo("https://bgeedb.wordpress.com", 
+                true, "Bgee blog", "Bgee blog", 
+                this.prop.getLogoImagesRootDirectory() + "bgee_access_logo.png", null));
+
+        logos.append(HtmlParentDisplay.getSingleFeatureLogo(urlSourcesGenerator.getRequestURL(), 
+                false, "Data sources of Bgee", "Bgee data sources", 
+                this.prop.getLogoImagesRootDirectory() + "bgee_access_logo.png", null));
 
         return log.exit(logos.toString());
     }

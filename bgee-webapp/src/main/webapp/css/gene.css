@@ -90,8 +90,13 @@ table.expression td {
 	vertical-align:text-top;
 }
 
-div.gene {
+div.gene, div.sources {
 	margin: 1em 2%;
+}
+
+div.source-info {
+	margin-right: 40px;
+	float: left;
 }
 
 td > ul {

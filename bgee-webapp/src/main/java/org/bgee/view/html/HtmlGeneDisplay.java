@@ -4,10 +4,15 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.StringJoiner;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
@@ -205,27 +210,34 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         
 		this.writeln("</div>"); // end expr_data 
 
-		this.writeln("<div id='info_sources' class='row'>");
 
-		 Set<DataType> allowedDataTypes = geneResponse.getExprCalls().stream()
-		    .flatMap(call -> call.getCallData().stream())
-		    .map(d -> d.getDataType())
-		    .collect(Collectors.toSet());
-		
-		if (gene.getSpecies().getDataTypesByDataSourcesForAnnotation() != null && 
-		        !gene.getSpecies().getDataTypesByDataSourcesForAnnotation().isEmpty()) {
-	        this.writeSources(gene.getSpecies().getDataTypesByDataSourcesForAnnotation(), 
-	                allowedDataTypes, "Sources for annotations are: ");
+		Set<DataType> allowedDataTypes = geneResponse.getExprCalls().stream()
+		        .flatMap(call -> call.getCallData().stream())
+		        .map(d -> d.getDataType())
+		        .collect(Collectors.toSet());
+
+		boolean hasSourcesForAnnot = gene.getSpecies().getDataTypesByDataSourcesForAnnotation() != null && 
+		        !gene.getSpecies().getDataTypesByDataSourcesForAnnotation().isEmpty();
+		boolean hasSourcesForData = gene.getSpecies().getDataTypesByDataSourcesForData() != null && 
+		        !gene.getSpecies().getDataTypesByDataSourcesForData().isEmpty();
+
+		if (hasSourcesForAnnot && hasSourcesForData) {
+		      this.writeln("<h2>Sources</h2>");
+		      this.writeln("<div class='sources row'>");
 		}
-
-        if (gene.getSpecies().getDataTypesByDataSourcesForData() != null && 
-                !gene.getSpecies().getDataTypesByDataSourcesForData().isEmpty()) {
-            this.writeSources(gene.getSpecies().getDataTypesByDataSourcesForData(), 
-                    allowedDataTypes, "Sources for data are: ");
-        }
+		if (hasSourcesForAnnot) {
+		    this.writeSources(gene.getSpecies().getDataTypesByDataSourcesForAnnotation(), 
+		            allowedDataTypes, "Annotation sources");
+		}
+		if (hasSourcesForData) {
+		    this.writeSources(gene.getSpecies().getDataTypesByDataSourcesForData(), 
+		            allowedDataTypes, "Raw data sources");
+		}
 		
-        this.writeln("</div>"); // end info_sources 
-
+		if (hasSourcesForAnnot && hasSourcesForData) {
+		    this.writeln("</div>"); // end info_sources 
+		}
+		
 		this.endDisplay();
 		log.exit();
 	}
@@ -243,26 +255,74 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
     private void writeSources(Map<Source, Set<DataType>> map, Set<DataType> allowedDataTypes, String text) {
         log.entry(map, allowedDataTypes, text);
 
-        StringBuilder list = new StringBuilder();
+        // First, we invert map to be able to display data sources according to data types.
+        // We use TreeMap to conserve order of data types.
+        Map<DataType, Set<Source>> dsByDataTypes = new TreeMap<DataType, Set<Source>>(); 
         for (Entry<Source, Set<DataType>> entry : map.entrySet()) {
-		    String dataTypesToDisplay = entry.getValue().stream()
-		        .filter(dt -> allowedDataTypes.contains(dt))
-		        .map(DataType::getStringRepresentation)
-		        .collect(Collectors.joining(", "));
-		    if (!StringUtils.isBlank(dataTypesToDisplay)) {
-		        list.append("<li>");
-		        list.append("<a href='" + entry.getKey().getBaseUrl() + "' target='_blank'>" + 
-		                entry.getKey().getName() + "</a>");
-		        list.append(" for ");
-		        list.append(dataTypesToDisplay);
-		    }
+            for (DataType dt: entry.getValue()) {
+                if (!allowedDataTypes.contains(dt)) {
+                    continue;
+                }
+                Set<Source> sources = dsByDataTypes.get(dt);
+                if (sources == null || sources.isEmpty()) {
+                    sources = new HashSet<>();
+                }
+                sources.add(entry.getKey());
+                dsByDataTypes.put(dt, sources);
+            }
         }
-        if (list.length() > 0) {
-            this.writeln(text);
+        
+        // Then, we display informations
+        if (!dsByDataTypes.isEmpty()) {
+            this.writeln("<div class='source-info'>");
+
+            this.writeln(text + ": ");
             this.writeln("<ul>");
-            this.writeln(list.toString());
+
+            for (Entry<DataType, Set<Source>> e : dsByDataTypes.entrySet()) {
+                this.writeln("<li>");
+                this.writeln(e.getKey().getStringRepresentation());
+                this.writeln(" data come from ");
+                StringJoiner sj = new StringJoiner(", ");
+                for (Source source : e.getValue()) {
+                    sj.add("<a href='" + source.getBaseUrl() + "' target='_blank'>" + 
+                            source.getName() + "</a>");
+                }
+                this.writeln(sj.toString());
+            }
             this.writeln("</ul>");
+            this.writeln("</div>");
+
+//            this.writeln("<div class='source-table'>");
+//
+//            this.writeln("<div>"+text+"</div>");
+//
+//            this.writeln("<table>");
+//            this.writeln("<tr><th>Data type</th><th>Source(s)</th></tr>");
+//            
+//            for (Entry<DataType, Set<Source>> e : dsByDataTypes.entrySet()) {
+//                this.writeln("<tr>");
+//                this.writeln("<td>");
+//                this.writeln(e.getKey().getStringRepresentation());
+//                this.writeln("</td>");
+//                this.writeln("<td>");
+//                StringJoiner sj = new StringJoiner(", ");
+//                for (Source source : e.getValue()) {
+//                    sj.add("<a href='" + source.getBaseUrl() + "' target='_blank'>" + 
+//                            source.getName() + "</a>");
+//                }
+//                this.writeln(sj.toString());
+//                this.writeln("</td>");
+//
+//                this.writeln("</tr>");
+//            }
+//
+//
+//            this.writeln("</table>");
+//            this.writeln("</div>");
+
         }
+
         log.exit();
     }
 

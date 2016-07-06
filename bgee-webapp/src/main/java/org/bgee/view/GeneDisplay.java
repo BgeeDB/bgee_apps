@@ -23,5 +23,8 @@ public interface GeneDisplay {
 	 * @param geneResponse     A {@code GeneResponse} containing information about a {@code Gene} 
 	 *                         to be displayed.
 	 */
+	//XXX: note that if a view needed to display information both considering and not considering 
+	//redundant calls, then this method should simply accept two GeneResponses; CommandGene was built 
+	//to easily handle this need. 
 	void displayGene(GeneResponse geneResponse);
 }

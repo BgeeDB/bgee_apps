@@ -2,4 +2,5 @@
 -- for performance issues (unique indexes are therefore not present in this file, 
 -- but in bgeeConstraint.sql)
 
-CREATE INDEX affym_chip_idx ON affymetrixProbeset(bgeeAffymetrixChipId);
+-- index needed to improve performances when inserting ranks in affymetrixProbeset table
+ALTER TABLE affymetrixProbeset ADD INDEX (geneId, bgeeAffymetrixChipId);

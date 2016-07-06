@@ -53,7 +53,7 @@ function bgeeProperties() {
         webAppPath = path;
     };
     
-    var imgPath = '/img/';
+    var imgPath = 'img/';
     /**
      * @return  A {@code String} that defines the path to retrieve Bgee images, 
      * 			to be added to the host used (see {@link #getBgeeHost()}), 
@@ -94,6 +94,6 @@ function bgeeProperties() {
      * 			For definitions of URL parts, see http://bl.ocks.org/abernier/3070589.
      */
     this.getImgURLStart = function() {
-        return 'http://' + this.getBgeeHost() + this.getImgPath();
+        return this.getWebAppURLStart() + this.getImgPath();
     };
 };

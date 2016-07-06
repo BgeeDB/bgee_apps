@@ -3,6 +3,7 @@ package org.bgee.model;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -143,8 +144,10 @@ public abstract class BgeeEnum {
     public static final <T extends Enum<T> & BgeeEnumField> boolean isInEnum(
             Class<T> enumClass, String representation) {
         log.entry(enumClass, representation);
-        for (BgeeEnumField bgeeEnum: EnumSet.allOf(enumClass)) {
-            if (bgeeEnum.getStringRepresentation().toLowerCase().equals(representation.toLowerCase())) {
+        String lowCaseRepresentation = representation.toLowerCase(Locale.ENGLISH);
+        for (T bgeeEnum: EnumSet.allOf(enumClass)) {
+            if (bgeeEnum.getStringRepresentation().toLowerCase(Locale.ENGLISH).equals(lowCaseRepresentation) || 
+                bgeeEnum.name().toLowerCase(Locale.ENGLISH).equals(lowCaseRepresentation)) {
                 return log.exit(true);
             }
         }

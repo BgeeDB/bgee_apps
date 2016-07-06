@@ -5,6 +5,7 @@ import java.util.Collection;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
@@ -60,7 +61,10 @@ public class XmlSearchDisplay extends XmlParentDisplay implements SearchDisplay 
         			"label='" + XmlParentDisplay.xmlEntities(label) + "' " +
         			"label_source='" + labelSource + "' " +
         			"species_id='" + XmlParentDisplay.xmlEntities(gene.getGene().getSpeciesId()) + "' " +
-        			"species_name='" + XmlParentDisplay.xmlEntities(gene.getGene().getSpecies().getName())+"' "+ 
+        			"species_name='" + XmlParentDisplay.xmlEntities(
+        			        StringUtils.isNotBlank(gene.getGene().getSpecies().getName())? 
+        			                gene.getGene().getSpecies().getName(): 
+        			                gene.getGene().getSpecies().getShortName()) +"' "+ 
         			"/>");
         }
 		this.writeln("</genes>");

@@ -37,8 +37,8 @@ import org.junit.Test;
  * Unit tests for {@link CommandTopAnat}.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 13 Nov. 2015
- * @since   Bgee 13 Nov. 2015
+ * @version Bgee 13, July 2015
+ * @since   Bgee 13, Nov. 2015
  */
 public class CommandTopAnatTest extends TestAncestor {
 
@@ -106,13 +106,13 @@ public class CommandTopAnatTest extends TestAncestor {
 
         List<Species> fgSpecies = Arrays.asList(
                 new Species("10090", "mouse", "", "Mus", "musculus", "genome10090"));
-        when(speciesService.loadSpeciesByIds(new HashSet<>(Arrays.asList("10090"))))
+        when(speciesService.loadSpeciesByIds(new HashSet<>(Arrays.asList("10090")), false))
             .thenReturn(new HashSet<>(fgSpecies));
 
         List<Species> bgSpecies = Arrays.asList(
                 new Species("9606", "human", "", "Homo", "sapiens", "genome9606"), 
                 new Species("10090", "mouse", "", "Mus", "musculus", "genome10090"));
-        when(speciesService.loadSpeciesByIds(new HashSet<>(Arrays.asList("9606", "10090"))))
+        when(speciesService.loadSpeciesByIds(new HashSet<>(Arrays.asList("9606", "10090")), false))
             .thenReturn(new HashSet<>(bgSpecies)).thenReturn(new HashSet<>(bgSpecies));
 
         //mock view

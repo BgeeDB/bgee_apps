@@ -11,6 +11,7 @@ import org.bgee.model.file.SpeciesDataGroupService;
 import org.bgee.model.gene.GeneService;
 import org.bgee.model.keyword.KeywordService;
 import org.bgee.model.ontology.OntologyService;
+import org.bgee.model.source.SourceService;
 import org.bgee.model.species.SpeciesService;
 
 /**
@@ -93,7 +94,7 @@ public class ServiceFactory implements AutoCloseable {
      */
     public SpeciesService getSpeciesService() {
         log.entry();
-        return log.exit(new SpeciesService(this.daoManager));
+        return log.exit(new SpeciesService(this.daoManager, getSourceService()));
     }
 
     /**
@@ -164,6 +165,14 @@ public class ServiceFactory implements AutoCloseable {
     public OntologyService getOntologyService() {
         log.entry();
         return log.exit(new OntologyService(this.daoManager));
+    }
+    
+    /**
+     * @return A newly instantiated {@code SourceService}
+     */
+    public SourceService getSourceService() {
+        log.entry();
+        return log.exit(new SourceService(this.daoManager));
     }
     
     /**

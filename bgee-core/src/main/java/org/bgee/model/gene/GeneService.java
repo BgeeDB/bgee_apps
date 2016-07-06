@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
-import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneDAO;
@@ -25,11 +24,11 @@ import org.bgee.model.species.SpeciesService;
  * A {@link Service} to obtain {@link Gene} objects. Users should use the
  * {@link ServiceFactory} to obtain {@code GeneService}s.
  * 
- * @author Philippe Moret
- * @author Frederic Bastian
- * @author Valentine Rech de Laval
- * @version Bgee 13 Nov. 2015
- * @since Bgee 13 Sept. 2015
+ * @author  Philippe Moret
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13, July 2016
+ * @since   Bgee 13, Sept. 2015
  */
 public class GeneService extends Service {
     
@@ -108,8 +107,8 @@ public class GeneService extends Service {
     	Set<String> speciesIds = new HashSet<>();
     	assert gene.getSpeciesId() != null;
     	speciesIds.add(gene.getSpeciesId());
-    	Species species = speciesService.loadSpeciesByIds(speciesIds).iterator().next();
-    	gene.setSpecies(species);
+    	Species species = speciesService.loadSpeciesByIds(speciesIds, true).iterator().next();
+    	gene = new Gene(gene.getId(), gene.getSpeciesId(), gene.getName(), gene.getDescription(), species);
 		return log.exit(gene);  		
     }
 
@@ -118,6 +117,7 @@ public class GeneService extends Service {
      * @param term A {@code String} containing the query 
      * @return A {@code List} of results (ordered).
      */
+    //XXX: is it really needed to create Genes twice?...
     public List<GeneMatch> searchByTerm(final String term) {
         log.entry(term);
         GeneDAO dao = getDaoManager().getGeneDAO();
@@ -130,14 +130,15 @@ public class GeneService extends Service {
         }
         
         Set<String> speciesIds = matchedGeneList.stream().map(Gene::getSpeciesId).collect(Collectors.toSet());
-        Map<String, Species> speciesMap = speciesService.loadSpeciesByIds(speciesIds).stream()
+        Map<String, Species> speciesMap = speciesService.loadSpeciesByIds(speciesIds, false).stream()
                 .collect(Collectors.toMap(Species::getId, Function.identity()));
         
         Set<String> geneIds = matchedGeneList.stream().map(Gene::getId).collect(Collectors.toSet());
         
-        for (Gene g: matchedGeneList) {
-            g.setSpecies(speciesMap.get(g.getSpeciesId()));
-        }
+        //give Species objects to new Gene objects
+        matchedGeneList = matchedGeneList.stream().map(g -> new Gene(g.getId(), g.getSpeciesId(), 
+                g.getName(), g.getDescription(), speciesMap.get(g.getSpeciesId())))
+                .collect(Collectors.toList());
 
         final Map<String, List<String>> synonymMap = getDaoManager().getGeneNameSynonymDAO().getGeneNameSynonyms(geneIds)
                 .stream()

@@ -16,7 +16,10 @@ BEGIN
         VALUES (12,'geneBioTypeName12');
         
         INSERT INTO dataSource (dataSourceId,dataSourceName,XRefUrl,experimentUrl,evidenceUrl,baseUrl,releaseDate,releaseVersion,dataSourceDescription,toDisplay,category,displayOrder)
-        VALUES (1,'First DataSource','XRefUrl','experimentUrl','evidenceUrl','baseUrl',NOW(),'1.0','My custom data source',1,'Genomics database',1);
+        VALUES (1,'First DataSource','XRefUrl','experimentUrl','evidenceUrl','baseUrl','2012-10-19','1.0','My custom data source',0,'Genomics database',1),
+               (2,'NCBI Taxonomy','','','','http://www.ncbi.nlm.nih.gov/taxonomy','2012-10-20','v13','Source taxonomy used in Bgee',1,'',3),
+               (3,'Ensembl','http://Oct2012.archive.ensembl.org/[species_ensembl_link]/Gene/Summary?g=[gene_id];gene_summary=das:http://bgee.unil.ch/das/bgee=label','','','http://May2012.archive.ensembl.org/','2014-02-18','v1','Ensembl desc',1,'',255),
+               (4,'ZFIN','http://zfin.org/cgi-bin/ZFIN_jump?record=[xref_id]','http://zfin.org/cgi-bin/ZFIN_jump?record=[experiment_id]','http://zfin.org/cgi-bin/ZFIN_jump?record=[evidence_id]','http://zfin.org/',null,'rv:2','ZFIN desc',1,'In situ data source',2);
 
         INSERT INTO taxon (taxonId,taxonScientificName,taxonCommonName,taxonLeftBound,taxonRightBound,taxonLevel,bgeeSpeciesLCA) 
         VALUES (111,'taxSName111','taxCName111',1,12,1,1),
@@ -42,6 +45,18 @@ BEGIN
                (41,'gen41','sp41','spCName41', 2, 411,'gen41_sp41/gen41_sp41.genome41', 0,''),
                (42,'gen41','sp42','spCName42', 5, 411,'gen41_sp41/gen41_sp41.genome41', 41,'PREFIX41'),
                (51,'gen51','sp51','spCName51', 6, 511,'gen51_sp51/gen51_sp51.genome51', 0,'');
+
+        INSERT INTO dataSourceToSpecies (dataSourceId, speciesId, dataType, infoType)
+        VALUES (1, 11, 'affymetrix','data'),
+               (1, 11, 'affymetrix','annotation'),
+               (1, 21, 'affymetrix','data'),
+               (1, 21, 'affymetrix','annotation'),
+               (2, 11, 'est','data'),
+               (3, 11, 'est','annotation'),
+               (4, 11, 'est','data'),
+               (4, 11, 'est','annotation'),
+               (4, 21, 'rna-seq','data'),
+               (4, 21, 'in situ','annotation');
 
         INSERT INTO gene (geneId,geneName,geneDescription,speciesId,geneBioTypeId,OMAParentNodeId,ensemblGene) 
         VALUES ('ID1','genN1','genDesc1',11,12,5,true),
@@ -199,20 +214,72 @@ BEGIN
                (22,31),
                (23,null);
 
-        INSERT INTO expression(expressionId,geneId,anatEntityId,stageId,estData,affymetrixData,inSituData,rnaSeqData, estMeanRank, affymetrixMeanRank, rnaSeqMeanRank, inSituMeanRank,
-        estMeanRankNorm, affymetrixMeanRankNorm, rnaSeqMeanRankNorm, inSituMeanRankNorm)
-        VALUES (1,'ID3','Anat_id1','Stage_id1','no data','poor quality','high quality','high quality', null, 234.33, 2500.01, 123.2, null, 234.33, 2500.01, 123.2),
-               (10,'ID1','Anat_id6','Stage_id8','high quality','high quality','no data','no data', 122.3, 1222.5, null, null, 122.3, 1222.5, null, null ),
-               (2,'ID1','Anat_id6','Stage_id6','high quality','poor quality','high quality','poor quality', 233.3, 12554.2, 1243.2, 200.0, 233.3, 12554.2, 1243.2, 200.0),
-               (3,'ID1','Anat_id6','Stage_id7','no data','no data','no data','poor quality', null, null, null, 5.0, null, null, null, 5.0),
-               (4,'ID2','Anat_id2','Stage_id18','high quality','high quality','high quality','high quality', 42.1, 234.5, 4321.5, 241.13412, 42.1, 234.5, 4321.5, 241.13412),
-               (5,'ID1','Anat_id7','Stage_id10','poor quality','poor quality','poor quality','poor quality', 2343.0, 9032.3, 12003.0, 2353.1, 2343.0, 9032.3, 12003.0, 2353.1),
-               (6,'ID2','Anat_id11','Stage_id12','poor quality','high quality','no data','high quality', 2341.0, 4325.0, 4352.4,252.3, 2341.0, 4325.0, 4352.4,252.3),
-               (7,'ID2','Anat_id11','Stage_id13','high quality','no data','poor quality','no data', 2341.0, null, 6533.1, null, 2341.0, null, 6533.1, null),
-               (8,'ID3','Anat_id3','Stage_id1','high quality','no data','poor quality','no data', 214.2, null, 23421.1, null, 214.2, null, 23421.1, null),
-               (9,'ID2','Anat_id1','Stage_id9','poor quality','high quality','no data','high quality', 4321.1, 241.5, null, 123.4, 4321.1, 241.5, null, 123.4),
-               (11,'ID2','Anat_id1','Stage_id2','high quality','no data','poor quality','no data', 12.2, null, 4214.2, null, 12.2, null, 4214.2, null),
-               (12,'ID1','Anat_id1','Stage_id1','no data','no data','poor quality','no data', null, null, 14422.1 ,null, null, null, 14422.1, null);
+        INSERT INTO expression (expressionId, geneId, anatEntityId, stageId, 
+        estData, affymetrixData,inSituData,rnaSeqData, 
+        estRank, affymetrixMeanRank, rnaSeqMeanRank, inSituRank, 
+        estMaxRank, affymetrixMaxRank, rnaSeqMaxRank, inSituMaxRank, 
+        estRankNorm, affymetrixMeanRankNorm, rnaSeqMeanRankNorm, inSituRankNorm, 
+        affymetrixDistinctRankSum, rnaSeqDistinctRankSum)
+        VALUES (1,'ID3','Anat_id1','Stage_id1','no data','poor quality','high quality','high quality', 
+                   null, 234.33, 2500.01, 123.2, 
+                   400.00, 10000.00, 40000.00, 200.00, 
+                   null, 937.32, 2500.01, 24640.00, 
+                   20000.00, 80000.00),
+               (10,'ID1','Anat_id6','Stage_id8','high quality','high quality','no data','no data', 
+                   122.3, 1222.5, null, null, 
+                   200.00, 20000.00, 40000.00, 100.00,  
+                   24460.00, 2445.00, null, null, 
+                   40000, null),
+               (2,'ID1','Anat_id6','Stage_id6','high quality','poor quality','high quality','poor quality', 
+                   233.3, 12554.2, 1243.2, 200.0, 
+                   400.00, 20000.00, 40000.00, 200.00, 
+                   23330, 25108.40, 1243.2, 40000.0, 
+                   20000.00, 40000.00),
+               (3,'ID1','Anat_id6','Stage_id7','no data','no data','no data','poor quality', 
+                   null, null, 5.0, null, 
+                   400.00, 20000.00, 40000.00, 40.00, 
+                   null, null, 5.0, null, 
+                   null, 40000.00),
+               (4,'ID2','Anat_id2','Stage_id18','high quality','high quality','high quality','high quality', 
+                   42.1, 234.5, 4321.5, 241.13, 
+                   100.00, 20000.00, 40000.00, 400.00, 
+                   16840.00, 469.00, 4321.5, 24113, 
+                   120000.00, 60000.00),
+               (5,'ID1','Anat_id7','Stage_id10','poor quality','poor quality','poor quality','poor quality', 
+                   2343.0, 9032.3, 12003.0, 2353.1, 
+                   4000.00, 20000.00, 40000.00, 4000.00, 
+                   23430, 18064.6, 12003.0, 23531, 
+                   13000.00, 60000.00),
+               (6,'ID2','Anat_id11','Stage_id12','poor quality','high quality','no data','high quality', 
+                   2341.0, 4325.0, 4352.4, null, 
+                   4000.00, 20000.00, 40000.00, 400.00, 
+                   23410.00, 8650.00, 4352.4, null, 
+                   20000.00, 40000.00),
+               (7,'ID2','Anat_id11','Stage_id13','high quality','no data','poor quality','no data', 
+                   2341.0, null, 6533.1, null, 
+                   4000.00, 10000.00, 40000.00, 5.00, 
+                   23410, null, 6533.1, null, 
+                   null, 160000.00),
+               (8,'ID3','Anat_id3','Stage_id1','high quality','no data','poor quality','no data', 
+                   214.2, null, 23421.1, null, 
+                   400.00, 20000.00, 40000.00, 10.00, 
+                   21420, null, 23421.1, null, 
+                   null, 30000.00),
+               (9,'ID2','Anat_id1','Stage_id9','poor quality','high quality','no data','high quality', 
+                   4321.1, 241.5, 123.4, null, 
+                   8000.00, 20000.00, 40000.00, 200.00, 
+                   21605.5, 483.00, 123.4, null, 
+                   20000.00, 40000.00),
+               (11,'ID2','Anat_id1','Stage_id2','high quality','no data','poor quality','no data', 
+                   12.2, null, 4214.2, null, 
+                   100.00, 10000.00, 40000.00, 50.00, 
+                   4880.00, null, 4214.2, null, 
+                   null, 80000.00),
+               (12,'ID1','Anat_id1','Stage_id1','no data','no data','poor quality','no data', 
+                   null, null, 14422.1 ,null, 
+                   400, 10000, 40000, 200, 
+                   null, null, 14422.1, null, 
+                   null, 40000.00);
 
         INSERT INTO globalExpression(globalExpressionId,geneId,anatEntityId,stageId,estData,affymetrixData,inSituData,rnaSeqData,originOfLine)
         VALUES (1,'ID3','Anat_id1','Stage_id1','no data','poor quality','high quality','high quality','self'),
@@ -335,12 +402,12 @@ BEGIN
         VALUES (12359, 'h4a', 'E-AFMX-1', 'A-AFFY-1', '03/18/03 15:00:03', 'gcRMA', 'Schuster', 'Anat_id7', 'Stage_id2', 52229.94, 45.00),
                (12361, 'h6a', 'E-AFMX-1', 'A-AFFY-1', '03/18/03 17:03:23', 'gcRMA', 'Schuster', 'Anat_id11', 'Stage_id15', 51850.62, 48.92);
 
-        INSERT INTO affymetrixProbeset (affymetrixProbesetId, bgeeAffymetrixChipId, geneId, normalizedSignalIntensity, detectionFlag, expressionId, noExpressionId, affymetrixData, reasonForExclusion)
-        VALUES ('1006_at', 12359, 'ID2', 2.21, 'absent', NULL, 1, 'high quality', 'not excluded'),
-               ('1007_s_at', 12359, 'ID3', 9.08, 'present', 1, NULL, 'high quality', 'not excluded'),
-               ('1041_at', 12361, 'ID1', 2.21, 'absent', NULL, NULL, 'high quality', 'pre-filtering'),
-               ('1041_xx', 12361, 'ID2', 2.24, 'absent', NULL, 4, 'high quality', 'not excluded'),
-               ('32233_at', 12361, 'ID2', 2.66, 'marginal', NULL, NULL, 'poor quality', 'undefined');
+        INSERT INTO affymetrixProbeset (affymetrixProbesetId, bgeeAffymetrixChipId, geneId, normalizedSignalIntensity, detectionFlag, expressionId, noExpressionId, rank, normalizedRank, affymetrixData, reasonForExclusion)
+        VALUES ('1006_at', 12359, 'ID2', 2.21, 'absent', NULL, 1, 10000.50, 12000.00, 'high quality', 'not excluded'),
+               ('1007_s_at', 12359, 'ID3', 9.08, 'present', 1, NULL, 1, 1, 'high quality', 'not excluded'),
+               ('1041_at', 12361, 'ID1', 2.21, 'absent', NULL, NULL, 9500.50, 9500.50, 'high quality', 'pre-filtering'),
+               ('1041_xx', 12361, 'ID2', 2.24, 'absent', NULL, 4, 9500.50, 9500.50, 'high quality', 'not excluded'),
+               ('32233_at', 12361, 'ID2', 2.66, 'marginal', NULL, NULL, 9500.50, 9500.50, 'poor quality', 'undefined');
 
         INSERT INTO inSituExperiment (inSituExperimentId, inSituExperimentName, inSituExperimentDescription, dataSourceId)
         VALUES ('MGI:3041492', 'name1', '', 1),
@@ -371,11 +438,11 @@ BEGIN
                ('GSM1015164', 'SRX191163', 'GSE41338', 'Illumina HiSeq 2000', 'Anat_id13', 'Stage_id18', 0.9155, 0.9, 43.85, 37.72, 6.23, 81401754, 28408829, 28299304, 75, 75, 'paired', 'unstranded'),
                ('GSM1015162', 'SRX191161', 'GSE41338', 'Illumina HiSeq 2000', 'Anat_id10', 'Stage_id4', 1.000000, 1.54, 60.13, 51.96, 12.61, 81401754, 43858614, 10260750, 75, 75, 'paired', 'unstranded');
 
-        INSERT INTO rnaSeqResult (rnaSeqLibraryId, geneId, rpkm, tpm, readsCount, expressionId, noExpressionId, detectionFlag, rnaSeqData, reasonForExclusion)
-        VALUES ('GSM1015164', 'ID1', 0.780113, 2.54, 117, 2, NULL, 'present', 'high quality', 'not excluded'),
-               ('GSM1015161', 'ID1', 16552.65, 0, 0, NULL, NULL, 'absent', 'high quality', 'pre-filtering'),
-               ('GSM1015161', 'ID2', 22.65, 54.3, 31, NULL, 4, 'absent', 'high quality', 'not excluded'),
-               ('GSM1015162', 'ID3', 10000, 9955.3223, 31, NULL, 8, 'absent', 'poor quality', 'not excluded');
+        INSERT INTO rnaSeqResult (rnaSeqLibraryId, geneId, rpkm, tpm, rank, readsCount, expressionId, noExpressionId, detectionFlag, rnaSeqData, reasonForExclusion)
+        VALUES ('GSM1015164', 'ID1', 0.780113, 2.54, 1.00, 117, 2, NULL, 'present', 'high quality', 'not excluded'),
+               ('GSM1015161', 'ID1', 16552.65, 0, 40000.50, 0, NULL, NULL, 'absent', 'high quality', 'pre-filtering'),
+               ('GSM1015161', 'ID2', 22.65, 54.3, 1.00, 31, NULL, 4, 'absent', 'high quality', 'not excluded'),
+               ('GSM1015162', 'ID3', 10000, 9955.3223, 30000.00, 31, NULL, 8, 'absent', 'poor quality', 'not excluded');
                
         INSERT INTO differentialExpression(differentialExpressionId, geneId, anatEntityId, stageId, comparisonFactor, diffExprCallAffymetrix, diffExprAffymetrixData, bestPValueAffymetrix, consistentDEACountAffymetrix, inconsistentDEACountAffymetrix, diffExprCallRNASeq, diffExprRNASeqData, bestPValueRNASeq, consistentDEACountRNASeq, inconsistentDEACountRNASeq)
         VALUES (321, 'ID1', 'Anat_id1', 'Stage_id1', 'anatomy', 'no diff expression', 'high quality', 0.02, 2, 0, 'no diff expression', 'poor quality', 0.05, 1, 0),

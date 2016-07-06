@@ -22,7 +22,11 @@ table#geneinfo td {
 
 div#expr_intro {
 	display: inline-flex;
-    margin: 0 2% 1.5em;
+    margin-top: 2em;
+    margin-bottom: 2em;
+    font-size: 0.9em;
+    /* padding disabled when max.width < 992px (bootstrap manages the placement afterwards) */
+    padding-left: 2%;
 }
 
 div#table-container {
@@ -33,19 +37,44 @@ div#table-container label {
     font-weight: normal;
 }
 
+
+div.sources {
+    margin-top: 2em;
+    margin-bottom: 0.5em;
+    font-size: 0.9em;
+    /* padding disabled when max.width < 992px (bootstrap manages the placement afterwards) */
+    padding-left: 2%;
+}
+div.source-info {
+    margin-right: 40px;
+    display: inline-block;
+}
+
 div.legend {
 	border-left: 1px solid #ccc;
 	margin-top: 2em;
 	font-size: 0.85em;
 }
-@media (max-width: 768px) {
+@media (max-width: 992px) {
 	div.legend {
 	   border: none;
 	}
+	div.sources {
+        padding-left: 0;
+    }
+    div#expr_intro {
+        padding-left: 0;
+    }
 }
 
 div.legend span.quality {
 	font-size: 1em;
+	display: inline-block;
+	
+ /* XXX: temporarily "hide" qualities, as they are so incorrect at the moment. 
+    for now we only report presence/absence of data per data type. 
+    This width will need to be made greater to display quality info */
+	width: 6em !important;
 }
 
 div.legend table caption {
@@ -65,13 +94,16 @@ table th, table td {
     padding: 0.2em;
 }
 th.anat-entity-id {
-	width: 15% !important;
+	width: 12% !important;
 }
 th.anat-entity {
-	width: 33% !important;
+	width: 29% !important;
 }
 th.dev-stages {
-	width: 42% !important;
+	width: 40% !important;
+}
+th.score {
+	width: 7% !important;
 }
 th.quality {
 	width: 10% !important;
@@ -114,6 +146,7 @@ span.quality {
 	border-style: solid;
 	font-size: .8em;
 	font-family: monospace;
+	text-align: center;
 }
 
 span.expandable {
@@ -135,10 +168,8 @@ span.expandable {
     display: none;
 }
 
-.dtr-modal ol.dev-stage-list,
-.dtr-modal ol.quality-list {
-    display: inherit !important;
-    padding-left: 0px;
+.dtr-modal tr > td:first-child {
+    font-weight: bold;
 }
 
 .high {
@@ -162,3 +193,21 @@ span.expandable {
 div.dtr-modal div.dtr-modal-display {
     height: 95% !important;
 }
+
+.gene-score-shift {
+	border-top: 1px dotted #920209;
+}
+.low-qual-score {
+	/* same color as class .nodata, see above */
+	color: #b8b8b8;
+	font-weight: normal !important;
+}
+
+table.dataTable {
+    border-collapse: collapse !important;
+}
+
+.dotted-line {
+    border-top: 2px dotted #920209;
+    width: 2em;
+}	

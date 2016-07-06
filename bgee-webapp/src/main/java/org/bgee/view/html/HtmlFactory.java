@@ -18,6 +18,7 @@ import org.bgee.view.GeneralDisplay;
 import org.bgee.view.TopAnatDisplay;
 import org.bgee.view.JsonHelper;
 import org.bgee.view.SearchDisplay;
+import org.bgee.view.SourceDisplay;
 import org.bgee.view.SpeciesDisplay;
 import org.bgee.view.ViewFactory;
 
@@ -119,11 +120,19 @@ public class HtmlFactory extends ViewFactory {
         return log.exit(new HtmlTopAnatDisplay(
                 this.response, this.requestParameters, this.prop, this));
     }
+    
 	@Override
 	public GeneDisplay getGeneDisplay() throws IOException {
 		log.entry();
 		return log.exit(new HtmlGeneDisplay(response, requestParameters, prop, jsonHelper, this));
 	}
+	
+	@Override
+	public SourceDisplay getSourceDisplay() throws IOException {
+	    log.entry();
+	    return log.exit(new HtmlSourceDisplay(this.response, this.requestParameters, this.prop, this));
+	}
+	
     @Override
     public SpeciesDisplay getSpeciesDisplay() throws IOException {
         throw log.throwing(new UnsupportedOperationException("Not available for HTML display"));

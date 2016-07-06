@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.eq;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -113,7 +114,8 @@ public class CallServiceTest extends TestAncestor {
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.IN_SITU, 
                                 new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)), 
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.RNA_SEQ, 
-                                new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)))), 
+                                new DataPropagation(PropagationState.SELF, PropagationState.SELF, true))), 
+                    null), 
                 new ExpressionCall("geneId1", new Condition("anatEntityId1", "stageId2"), 
                         new DataPropagation(PropagationState.SELF, PropagationState.SELF, true), 
                         ExpressionSummary.EXPRESSED, DataQuality.HIGH, 
@@ -125,12 +127,13 @@ public class CallServiceTest extends TestAncestor {
                             new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.IN_SITU, 
                                     new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)), 
                             new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.RNA_SEQ, 
-                                    new DataPropagation(PropagationState.SELF, PropagationState.SELF, true))))
+                                    new DataPropagation(PropagationState.SELF, PropagationState.SELF, true))), 
+                        null)
             );
         
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
                 new LinkedHashMap<>();
-        serviceOrdering.put(CallService.OrderingAttribute.RANK, Service.Direction.DESC);
+        serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.DESC);
         
         CallService service = new CallService(manager);
         List<ExpressionCall> actualResults = service.loadExpressionCalls("speciesId1", 
@@ -210,15 +213,15 @@ public class CallServiceTest extends TestAncestor {
                 new ExpressionCall("geneId1", new Condition("anatEntityId1", null), 
                     new DataPropagation(PropagationState.SELF, PropagationState.SELF, true), 
                     ExpressionSummary.EXPRESSED, null, 
-                    new HashSet<>()), 
+                    new HashSet<>(), null), 
                 new ExpressionCall("geneId1", new Condition("anatEntityId2", null), 
                         new DataPropagation(PropagationState.SELF, PropagationState.SELF, true), 
                         ExpressionSummary.EXPRESSED, null, 
-                        new HashSet<>()), 
+                        new HashSet<>(), null), 
                 new ExpressionCall("geneId2", new Condition("anatEntityId1", null), 
                         new DataPropagation(PropagationState.SELF, PropagationState.SELF, true), 
                         ExpressionSummary.EXPRESSED, null, 
-                        new HashSet<>())
+                        new HashSet<>(), null)
             );
         
         CallService service = new CallService(manager);
@@ -269,11 +272,11 @@ public class CallServiceTest extends TestAncestor {
         ExpressionCallTOResultSet resultSetMock = getMockResultSet(ExpressionCallTOResultSet.class, 
                 Arrays.asList(
                     new ExpressionCallTO(null, "geneId1", "anatEntityId1", "stageId1", 
-                        null, CallTO.DataState.LOWQUALITY, null, CallTO.DataState.HIGHQUALITY, 
+                        new BigDecimal(1257.34), CallTO.DataState.LOWQUALITY, null, CallTO.DataState.HIGHQUALITY, 
                         null, CallTO.DataState.LOWQUALITY, null, CallTO.DataState.LOWQUALITY, null, 
                         null, null, null, null, null), 
                     new ExpressionCallTO(null, "geneId1", "anatEntityId1", "stageId2", 
-                            null, CallTO.DataState.LOWQUALITY, null, CallTO.DataState.HIGHQUALITY, 
+                            new BigDecimal(125.42), CallTO.DataState.LOWQUALITY, null, CallTO.DataState.HIGHQUALITY, 
                             null, CallTO.DataState.LOWQUALITY, null, CallTO.DataState.LOWQUALITY, null, 
                             null, null, null, null, null)));
         
@@ -312,7 +315,8 @@ public class CallServiceTest extends TestAncestor {
                                         PropagationState.SELF_OR_DESCENDANT, null)), 
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.RNA_SEQ, 
                                 new DataPropagation(PropagationState.SELF_OR_DESCENDANT, 
-                                        PropagationState.SELF_OR_DESCENDANT, null)))), 
+                                        PropagationState.SELF_OR_DESCENDANT, null))), 
+                    new BigDecimal(1257.34)), 
                 new ExpressionCall("geneId1", new Condition("anatEntityId1", "stageId2"), 
                         new DataPropagation(PropagationState.SELF_OR_DESCENDANT, 
                                 PropagationState.SELF_OR_DESCENDANT, null), 
@@ -329,12 +333,13 @@ public class CallServiceTest extends TestAncestor {
                                             PropagationState.SELF_OR_DESCENDANT, null)), 
                             new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.RNA_SEQ, 
                                     new DataPropagation(PropagationState.SELF_OR_DESCENDANT, 
-                                            PropagationState.SELF_OR_DESCENDANT, null))))
+                                            PropagationState.SELF_OR_DESCENDANT, null))), 
+                        new BigDecimal(125.42))
             );
         
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
                 new LinkedHashMap<>();
-        serviceOrdering.put(CallService.OrderingAttribute.RANK, Service.Direction.DESC);
+        serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.DESC);
         
         CallService service = new CallService(manager);
         List<ExpressionCall> actualResults = service.loadExpressionCalls("speciesId1", 
@@ -347,7 +352,7 @@ public class CallServiceTest extends TestAncestor {
                                 new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.AFFYMETRIX))), 
                 EnumSet.of(CallService.Attribute.GENE_ID, CallService.Attribute.ANAT_ENTITY_ID, 
                         CallService.Attribute.DEV_STAGE_ID, CallService.Attribute.CALL_DATA, 
-                        CallService.Attribute.GLOBAL_DATA_QUALITY), 
+                        CallService.Attribute.GLOBAL_DATA_QUALITY, CallService.Attribute.GLOBAL_RANK), 
                 serviceOrdering)
                 .collect(Collectors.toList());
         assertEquals("Incorrect ExpressionCalls generated", expectedResults, actualResults);
@@ -376,7 +381,7 @@ public class CallServiceTest extends TestAncestor {
                                         attr != ExpressionCallDAO.Attribute.IN_SITU_DATA && 
                                         attr != ExpressionCallDAO.Attribute.RNA_SEQ_DATA && 
                                         !attr.isPropagationAttribute() && 
-                                        !attr.isRankAttribute())
+                                        (!attr.isRankAttribute() || attr == ExpressionCallDAO.Attribute.GLOBAL_MEAN_RANK))
                         .collect(Collectors.toSet())), 
                 eq(orderingAttrs));
     }

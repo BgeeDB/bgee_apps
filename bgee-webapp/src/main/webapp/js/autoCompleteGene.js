@@ -15,7 +15,8 @@ function autocompleteGeneSelected(event, ui) {
  	event.preventDefault();
  	
  	var selectedGeneId = ui.item.id;
- 	window.location.href="/?page=gene&gene_id="+selectedGeneId;
+ 	//XXX: should we use the requestParameters object?
+ 	window.location.href = GLOBAL_PROPS.getWebAppURLStart() + "?page=gene&gene_id="+selectedGeneId;
 
  	return this;
 }
@@ -177,7 +178,7 @@ function loadAutocompleteGene() {
         	$(waitingElement).append($("<img />").attr("class", 'ajax_waiting') 
 		        	.attr("src", "img/wait.gif")
                     .attr("alt", 'Loading'));
-        	autocompleteGeneSelected(event, ui).delay( 2000 );
+        	setTimeout(autocompleteGeneSelected(event, ui), 2000);
         }, 
         //displayLabel is a custom option for Bgee, 
         //see the overridden version of $.ui.autocomplete.prototype._renderItem 

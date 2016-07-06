@@ -351,6 +351,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         urlDocTopAnat.setPage(RequestParameters.PAGE_DOCUMENTATION);
         urlDocTopAnat.setAction(RequestParameters.ACTION_DOC_TOP_ANAT);
         
+        RequestParameters urlBgeeSources = this.getNewRequestParameters();
+        urlBgeeSources.setPage(RequestParameters.PAGE_SOURCE);
+
         RequestParameters urlAbout = this.getNewRequestParameters();
         urlAbout.setPage(RequestParameters.PAGE_ABOUT);
 
@@ -421,9 +424,13 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
               + "'>How to access Bgee data</a></li>");
         navbar.append("<li><a title='TopAnat documentation' href='" + urlDocTopAnat.getRequestURL()
               + "'>" + TOP_ANAT_PAGE_NAME + "</a></li>");
-        navbar.append("<li><a title='Gene expression call files documentation' href='" + urlDocExprCallFiles.getRequestURL() + "'>" + GENE_EXPR_CALLS_PAGE_NAME + "</a></li>");
-//        navbar.append("<li><a title='Processed expression value files documentation' href='" + urlDocProcValueFiles.getRequestURL() + "'>" + PROCESSED_EXPR_VALUES_PAGE_NAME + "</a></li>");
+        navbar.append("<li><a title='Gene expression call files documentation' href='" + 
+              urlDocExprCallFiles.getRequestURL() + "'>" + GENE_EXPR_CALLS_PAGE_NAME + "</a></li>");
+//        navbar.append("<li><a title='Processed expression value files documentation' href='" + 
+//            urlDocProcValueFiles.getRequestURL() + "'>" + PROCESSED_EXPR_VALUES_PAGE_NAME + "</a></li>");
         navbar.append("<li><a title='Bgee blog' href='https://bgeedb.wordpress.com' target='_blank'>Bgee blog</a></li>");
+        navbar.append("<li><a title='Bgee sources' href='" + urlBgeeSources.getRequestURL()
+              + "'>Bgee sources</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
         

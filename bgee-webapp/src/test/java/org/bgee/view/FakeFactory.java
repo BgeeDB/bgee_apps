@@ -116,6 +116,16 @@ public class FakeFactory extends ViewFactory {
         return null;
 	}
 
+	@Override
+	public SourceDisplay getSourceDisplay() throws IOException {
+	    if(prop.getUrlMaxLength() == 9999 && this.requestParameters.getFirstValue(
+	            ((TestURLParameters)this.requestParameters.getUrlParametersInstance())
+	            .getParamTestString()).equals("test")){
+	        return new FakeSourceDisplay(this.response, this.requestParameters, prop, this);
+	    }
+	    return null;
+	}
+
     @Override
     public DAODisplay getDAODisplay() throws IOException {
         // TODO Auto-generated method stub

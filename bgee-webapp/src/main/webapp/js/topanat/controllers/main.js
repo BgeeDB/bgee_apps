@@ -717,7 +717,7 @@
 
         vm.species_img = function(taxid) {
             if (taxid !== "" && typeof (taxid) !== 'undefined') {
-                return 'http://bgee.org/img/species/'+ taxid + '_light.jpg';
+                return GLOBAL_PROPS.getImgURLStart() + 'species/'+ taxid + '_light.jpg';
             } else {
                 return "//:0";
             }

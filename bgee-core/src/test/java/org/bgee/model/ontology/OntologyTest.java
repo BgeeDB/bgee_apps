@@ -36,7 +36,6 @@ public class OntologyTest extends TestAncestor {
 
         Ontology<AnatEntity> ontology = new Ontology<>(elements, relations, 
                 EnumSet.allOf(Ontology.RelationType.class));
-        System.out.println(ontology);
         
         Set<AnatEntity> ancestors = ontology.getAncestors(ae3, EnumSet.allOf(Ontology.RelationType.class));
         Set<AnatEntity> expAncestors = new HashSet<>(Arrays.asList(ae1, ae2, ae2p));

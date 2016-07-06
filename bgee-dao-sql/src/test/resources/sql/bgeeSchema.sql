@@ -57,6 +57,13 @@ create table dataSource (
     displayOrder tinyint unsigned not null default 255 COMMENT 'Data source display ordering'
 ) engine = innodb;
 
+create table dataSourceToSpecies (
+    dataSourceId smallInt unsigned not null COMMENT 'Data source id',
+    speciesId mediumint unsigned not null COMMENT 'NCBI species taxon id',
+    dataType enum('affymetrix', 'est', 'in situ', 'rna-seq') not null COMMENT 'Data type',
+    infoType enum('data', 'annotation') not null COMMENT 'Information type'
+) engine = innodb;
+
 create table keyword (
     keywordId int unsigned not null,
     keyword varchar(255) not null COMMENT 'Aggregate keywords seen in all tables'
@@ -529,7 +536,7 @@ create table estRank (
     estLibraryId varchar(50) not null,
     estCount int unsigned not null,
 -- rank is not "not null" because we update this information afterwards
-    rank mediumint unsigned
+    rank decimal(9,2) unsigned
 ) engine = innodb;
 
 
@@ -621,9 +628,13 @@ create table affymetrixProbeset (
 -- expressionId and noExpressionId can never be both not null simultaneously (but can be both null simultaneously)
     expressionId int unsigned,
     noExpressionId int unsigned,
--- rank is not "not null" because we update this information afterwards
-    rank mediumint unsigned,
--- rank normalized taking into account the other chips used in the same conditions
+-- rank is not "not null" because we update this information afterwards. 
+-- note that this corresponds to the rank of the gene, not of the probeset 
+-- (so, all probesets mapped to a same gene have the same rank, based on its highest signal intensity)
+    rank decimal(9, 2) unsigned,
+-- rank normalized taking into account the other chips used in the same conditions 
+-- (normalizedRank = rank * max number of genes in condition / number of genes on chip)
+-- note that this corresponds to the rank of the gene, not of the probeset.
     normalizedRank decimal(9, 2) unsigned,
 -- Warning, qualities must be ordered, the index in the enum is used in many queries
     affymetrixData enum('no data', 'poor quality', 'high quality') not null default 'no data',
@@ -785,7 +796,7 @@ create table rnaSeqResult (
     rpkm decimal(16, 6) not null,
     tpm decimal(16, 6) not null,
 -- rank is not "not null" because we update this information afterwards
-    rank mediumint unsigned,
+    rank decimal(9, 2) unsigned,
 -- for information, measure not normalized for reads or genes lengths
     readsCount int unsigned not null,
 -- expressionId and noExpressionId can never be both not null simultaneously (but can be both null simultaneously)
@@ -947,18 +958,68 @@ create table expression (
     affymetrixData enum('no data', 'poor quality', 'high quality') default 'no data',
     inSituData enum('no data', 'poor quality', 'high quality') default 'no data',
     rnaSeqData enum('no data', 'poor quality', 'high quality') default 'no data',
-    estMeanRank decimal(9, 2) unsigned,
-    affymetrixMeanRank decimal(9, 2) unsigned,
-    inSituMeanRank decimal(9, 2) unsigned,
+    
+    
+-- ** RANKS **
+-- For RNA-Seq data: mean ranks before normalization between data types and conditions. 
+-- Used for convenience during rank computations. It corresponds to the following: 
+-- gene ranks are computed for each sample, then a mean is computed for each gene and condition 
+-- of the expression table, weighted by the number of distinct ranks in each sample. 
     rnaSeqMeanRank decimal(9, 2) unsigned,
-    estMeanRankNorm decimal(9, 2) unsigned,
-    affymetrixMeanRankNorm decimal(9, 2) unsigned,
-    inSituMeanRankNorm decimal(9, 2) unsigned,
-    rnaSeqMeanRankNorm decimal(9, 2) unsigned,
-    estMaxRank decimal(9,2) unsigned,
+-- For Affymetrix: 
+-- mean ranks *after within-datatype normalization*, before normalization between data types and conditions. 
+-- Used for convenience during rank computations. It corresponds to the following: 
+-- ranks are computed for each sample, then "normalized" between samples in a same condition 
+-- of the expression table ("within-datatype normalization", based on the genomic coverage of each chip type);
+-- then a mean is computed for each gene and condition, weighted by the number of distinct ranks 
+-- in each sample. 
+    affymetrixMeanRank decimal(9, 2) unsigned,
+-- For EST and in situ data: ranks before normalization between data types and conditions. 
+-- Used for convenience during rank computations. It corresponds to the following: 
+-- For each condition of the expression table, all data are pooled together; they are not first 
+-- analyzed independently per libraries or experiments, as for Affymetrix and RNA-Seq data. 
+-- This is because the genomic coverage of EST or in situ experiments is usually very low, 
+-- and highly variable. Genes are ranked based on number of ESTs or of in situ evidence in each condition. 
+-- They are ranked using "dense ranking" instead of fractional ranking. 
+    estRank decimal(9, 2) unsigned,
+    inSituRank decimal(9, 2) unsigned,
+    
+-- max ranks in each data type and condition, notably used to allow normalization 
+-- between data types and conditions. For EST and in situ data, they are also used for computation 
+-- of weighted mean between data types: for these data types, because we pool together all data 
+-- in a same condition, instead of computing a mean between samples, and because we use "dense ranking" 
+-- instead of fractional ranking (so that the max rank is equal to the number of distinct ranks), 
+-- it is irrelevant to consider a sum of the number of distinct ranks in each sample for weighting 
+-- the mean, as for Affymetrix and EST data. 
+-- TODO: These values are the same for all genes in a condition-species, should be stored in the Condition table.
     affymetrixMaxRank decimal(9,2) unsigned,
+    rnaSeqMaxRank decimal(9,2) unsigned,
+    estMaxRank decimal(9,2) unsigned,
     inSituMaxRank decimal(9,2) unsigned,
-    rnaSeqMaxRank decimal(9,2) unsigned
+    
+-- All ranks are normalized between all data types and conditons, this is what we use to compute 
+-- the global mean rank of a gene in a condition. Basically, the max rank over all data types 
+-- and all conditions is retrieved, and used to normalize all ranks. 
+-- normalized rank = rank * (max of max rank over all conditions and data types) / (max rank for this condition and data type)
+    affymetrixMeanRankNorm decimal(9, 2) unsigned,
+    rnaSeqMeanRankNorm decimal(9, 2) unsigned,
+-- For EST and in situ, the rank is not a mean
+    estRankNorm decimal(9, 2) unsigned,
+    inSituRankNorm decimal(9, 2) unsigned,
+
+-- For Affymetrix and RNA-Seq data: sum of the number of distinct ranks in each sample 
+-- where this gene is considered, in this condition and data type (for RNA-Seq: the same set of genes 
+-- is considered in all conditions, so these values are all the same for all genes in a same condition-species; 
+-- for Affymetrix, it depends on the chip types, so it can vary between genes of same condition-species ).
+-- Distinct ranks in samples are used to weight the mean rank of genes for each data type and condition. 
+-- By storing the sum of the distinct rank count, we will be able to compute the weighted mean 
+-- over all data types in a condition. 
+-- TODO: shoud we store this information in the condition table for RNA-Seq?
+-- For EST and in situ data, this is irrelevant as we pool all data for a same condition together, 
+-- and use dense ranking instead of fractional ranking. As a result, the max rank in each condition 
+-- is used for weighted mean computation between data types. 
+    affymetrixDistinctRankSum decimal(9, 2) unsigned,
+    rnaSeqDistinctRankSum decimal(9, 2) unsigned
 ) engine = innodb;
 
 -- precomputed expression table where the expression of an organ and

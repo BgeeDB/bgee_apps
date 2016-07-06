@@ -3,9 +3,13 @@ package org.bgee.pipeline.expression.downloadfile;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -158,7 +162,19 @@ public class GenerateRankFile {
         }
     }
     
-    
+    /**
+     * A {@code Function} accepting a {@code BigDecimal} and returning a formatted {@code String}. 
+     * It is more convenient than directly using a {@code NumberFormat}, as we might need 
+     * additional formatting operation. 
+     */
+    private static final Function<BigDecimal, String> FORMATTER = d -> {
+        NumberFormat formatter = NumberFormat.getInstance();
+        formatter.setMaximumFractionDigits(2);
+        formatter.setMinimumFractionDigits(2);
+        formatter.setGroupingUsed(false);
+        formatter.setRoundingMode(RoundingMode.HALF_UP);
+        return formatter.format(d);
+    };
     
     /**
      * Generate a file name and return the related {@code File} according to the arguments. 
@@ -815,7 +831,7 @@ public class GenerateRankFile {
                 c.getGeneId(), gene.getName(), 
                 cond.getAnatEntityId(), anatEntity == null? null: anatEntity.getName(), 
                 cond.getDevStageId(), devStage == null? null: devStage.getName(), 
-                c.getFormattedGlobalMeanRank(), 
+                FORMATTER.apply(c.getGlobalMeanRank()), 
                 dataTypeToStatus.get(DataType.AFFYMETRIX), 
                 dataTypeToStatus.get(DataType.EST), 
                 dataTypeToStatus.get(DataType.IN_SITU), 

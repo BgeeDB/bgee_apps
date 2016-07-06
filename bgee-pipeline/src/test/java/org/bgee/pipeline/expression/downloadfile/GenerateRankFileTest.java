@@ -122,14 +122,14 @@ public class GenerateRankFileTest extends TestAncestor {
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.EST), 
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.IN_SITU), 
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ)), 
-                new BigDecimal("10"));
+                new BigDecimal("10000.00"));
         ExpressionCall c4 = new ExpressionCall(gene3.getId(), cond2, new DataPropagation(), 
                 ExpressionSummary.EXPRESSED, DataQuality.HIGH, 
                 Arrays.asList( 
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.EST), 
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.IN_SITU), 
                         new ExpressionCallData(Expression.EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ)), 
-                new BigDecimal("10"));
+                new BigDecimal("10000.45"));
         
         
         //*** Mock services and utils ***
@@ -261,7 +261,7 @@ public class GenerateRankFileTest extends TestAncestor {
                         Arrays.asList("gene2", "gene 2", "anat2", "Anat name 2", "stage2", "Stage name 2", 
                                 "1.25", /*"F", "T", "T", "F", "F",*/ null), 
                         Arrays.asList("gene2", "gene 2", "anat1", "Anat name 1", "stage1", "Stage name 1", 
-                                "10.00", /*"T", "T", "T", "T", "T",*/ "BTO:0001")), 
+                                "10000.00", /*"T", "T", "T", "T", "T",*/ "BTO:0001")), 
                 folder1, "spe1_condition_all_data_my_species1.tsv");
         this.checkFile(spe1, true, null, 
                 Arrays.asList(
@@ -270,33 +270,33 @@ public class GenerateRankFileTest extends TestAncestor {
                         Arrays.asList("gene2", "gene 2", "anat2", "Anat name 2", 
                                 "1.25", /*"F", "T", "T", "F", "F",*/ null), 
                         Arrays.asList("gene2", "gene 2", "anat1", "Anat name 1", 
-                                "10.00", /*"T", "T", "T", "T", "T",*/ "BTO:0001")), 
+                                "10000.00", /*"T", "T", "T", "T", "T",*/ "BTO:0001")), 
                 folder2, "spe1_anat_entity_all_data_my_species1.tsv");
         this.checkFile(spe1, false, DataType.AFFYMETRIX, 
                 Arrays.asList(
                         Arrays.asList("gene1", "gene 1", "anat1", "Anat name 1", "stage1", "Stage name 1", 
                                 "1.25", /*"F",*/ "BTO:0001"), 
                         Arrays.asList("gene2", "gene 2", "anat1", "Anat name 1", "stage1", "Stage name 1", 
-                                "10.00", /*"T",*/ "BTO:0001")), 
+                                "10000.00", /*"T",*/ "BTO:0001")), 
                 folder1, "spe1_condition_affymetrix_my_species1.tsv");
         this.checkFile(spe1, true, DataType.AFFYMETRIX, 
                 Arrays.asList(
                         Arrays.asList("gene1", "gene 1", "anat1", "Anat name 1", 
                                 "1.25", /*"F",*/ "BTO:0001"), 
                         Arrays.asList("gene2", "gene 2", "anat1", "Anat name 1", 
-                                "10.00", /*"T",*/ "BTO:0001")), 
+                                "10000.00", /*"T",*/ "BTO:0001")), 
                 folder2, "spe1_anat_entity_affymetrix_my_species1.tsv");
         
         //species2
         this.checkFile(spe2, false, null, 
                 Arrays.asList(
                         Arrays.asList("gene3", "gene 3", "anat2", "Anat name 2", "stage2", "Stage name 2", 
-                                "10.00", /*"F", "T", "T", "T", "F",*/ null)), 
+                                "10000.45", /*"F", "T", "T", "T", "F",*/ null)), 
                 folder1, "spe2_condition_all_data_my_species2.tsv");
         this.checkFile(spe2, true, null, 
                 Arrays.asList(
                         Arrays.asList("gene3", "gene 3", "anat2", "Anat name 2", 
-                                "10.00", /*"F", "T", "T", "T", "F",*/ null)), 
+                                "10000.45", /*"F", "T", "T", "T", "F",*/ null)), 
                 folder2, "spe2_anat_entity_all_data_my_species2.tsv");
         File notExists = Paths.get(folder1.getAbsolutePath(), "spe2_byCondition_affymetrix_my_species2.tsv").toFile();
         assertFalse("File should not have been created: " + notExists.getName(), notExists.exists());
